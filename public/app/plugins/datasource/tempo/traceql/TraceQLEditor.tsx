@@ -22,7 +22,7 @@ interface Props {
 }
 
 export function TraceQLEditor(props: Props) {
-  const [alertText, setAlertText] = useState('');
+  const [alertText, setAlertText] = useState('error error');
 
   const { onChange, onRunQuery, placeholder } = props;
   const setupAutocompleteFn = useAutocomplete(props.datasource, setAlertText);
@@ -34,6 +34,14 @@ export function TraceQLEditor(props: Props) {
   onRunQueryRef.current = onRunQuery;
 
   const errorTimeoutId = useRef<number>();
+
+  useEffect(() => {
+    setAlertText('Error 1!');
+
+    setTimeout(() => {
+      setAlertText('Error 2!');
+    }, 5000);
+  }, []);
 
   return (
     <>
@@ -179,8 +187,7 @@ function setupAutoSize(editor: monacoTypes.editor.IStandaloneCodeEditor) {
 /**
  * Hook that returns function that will set up monaco autocomplete for the label selector
  * @param datasource the Tempo datasource instance
- * @param setAlertVisible setter to show/hide the alert
- * @param setAlertVisible setter for alert's text
+ * @param setAlertText setter for alert's text
  */
 function useAutocomplete(datasource: TempoDatasource, setAlertText: (text: string) => void) {
   // We need the provider ref so we can pass it the label/values data later. This is because we run the call for the
