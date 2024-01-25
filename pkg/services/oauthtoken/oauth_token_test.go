@@ -28,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var VALID_JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
+var EXPIRED_JWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
 
 func TestService_HasOAuthEntry(t *testing.T) {
 	testCases := []struct {
@@ -317,18 +317,9 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:     "should not find the user as the user has no AuthInfo",
+			desc:    "should skip when the user did not authenticate through oauth",
 			identity: &authn.Identity{ID: "user:1234"},
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
-				authInfoService.ExpectedError = user.ErrUserNotFound
-			},
-			expectedErr: nil,
-		},
-		{
-			desc:     "should not find the user as the user has no AuthInfo",
-			identity: &authn.Identity{ID: "user:1234"},
-			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
-				authInfoService.ExpectedError = user.ErrUserNotFound
 				authInfoService.ExpectedUserAuth = &login.UserAuth{
 					AuthModule: login.SAMLAuthModule,
 				}
