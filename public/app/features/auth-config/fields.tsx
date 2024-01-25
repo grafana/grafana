@@ -100,19 +100,19 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     clientId: {
       label: 'Client Id',
       type: 'text',
-      description: 'The client ID of your OAuth2 app.',
+      description: 'The client Id of your OAuth2 app.',
       validation: {
         required: true,
         message: 'This field is required',
       },
     },
     clientSecret: {
-      label: 'Client Secret',
+      label: 'Client secret',
       type: 'secret',
       description: 'The client secret of your OAuth2 app.',
     },
     allowedOrganizations: {
-      label: 'Allowed Organizations',
+      label: 'Allowed organizations',
       type: 'select',
       description:
         'List of comma- or space-separated organizations. The user should be a member \n' +
@@ -123,7 +123,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       placeholder: 'Enter organizations (my-team, myteam...) and press Enter to add',
     },
     allowedDomains: {
-      label: 'Allowed Domains',
+      label: 'Allowed domains',
       type: 'select',
       description:
         'List of comma- or space-separated domains. The user should belong to at least \n' + 'one domain to log in.',
@@ -132,7 +132,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       options: [],
     },
     authUrl: {
-      label: 'Auth Url',
+      label: 'Auth URL',
       type: 'text',
       description: 'The authorization endpoint of your OAuth2 provider.',
       validation: {
@@ -140,7 +140,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       },
     },
     authStyle: {
-      label: 'Auth Style',
+      label: 'Auth style',
       type: 'select',
       description: 'It determines how client_id and client_secret are sent to Oauth2 provider. Default is AutoDetect.',
       multi: false,
@@ -152,7 +152,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       defaultValue: 'AutoDetect',
     },
     tokenUrl: {
-      label: 'Token Url',
+      label: 'Token URL',
       type: 'text',
       description: 'The token endpoint of your OAuth2 provider.',
       validation: {
@@ -168,7 +168,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       options: [],
     },
     allowedGroups: {
-      label: 'Allowed Groups',
+      label: 'Allowed groups',
       type: 'select',
       description:
         'List of comma- or space-separated groups. The user should be a member of \n' +
@@ -179,7 +179,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       options: [],
     },
     apiUrl: {
-      label: 'API Url',
+      label: 'API URL',
       type: 'text',
       description: (
         <>
@@ -196,7 +196,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       },
     },
     roleAttributePath: {
-      label: 'Role Attribute Path',
+      label: 'Role attribute path',
       description: 'JMESPath expression to use for Grafana role lookup.',
       type: 'text',
       validation: {
@@ -269,15 +269,15 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'switch',
     },
     defineAllowedGroups: {
-      label: 'Define Allowed Groups',
+      label: 'Define allowed groups',
       type: 'switch',
     },
     defineAllowedTeamsIds: {
-      label: 'Define Allowed Teams Ids',
+      label: 'Define allowed teams ids',
       type: 'switch',
     },
     usePkce: {
-      label: 'Use Pkce',
+      label: 'Use PKCE',
       description: (
         <>
           If enabled, Grafana will use{' '}
@@ -290,7 +290,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'checkbox',
     },
     useRefreshToken: {
-      label: 'Use Refresh Token',
+      label: 'Use refresh token',
       description:
         'If enabled, Grafana will fetch a new access token using the refresh token provided by the OAuth2 provider.',
       type: 'checkbox',
@@ -300,22 +300,22 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'switch',
     },
     tlsClientCa: {
-      label: 'TLS Client CA',
-      description: 'The path to the trusted certificate authority list.',
+      label: 'TLS client ca',
+      description: 'The path to the trusted certificate authority list. Does not applicable on Grafana Cloud.',
       type: 'text',
     },
     tlsClientCert: {
-      label: 'TLS Client Cert',
-      description: 'The path to the certificate',
+      label: 'TLS client cert',
+      description: 'The path to the certificate. Does not applicable on Grafana Cloud.',
       type: 'text',
     },
     tlsClientKey: {
-      label: 'TLS Client Key',
-      description: 'The path to the key',
+      label: 'TLS client key',
+      description: 'The path to the key. Does not applicable on Grafana Cloud.',
       type: 'text',
     },
     tlsSkipVerifyInsecure: {
-      label: 'TLS Skip Verify',
+      label: 'TLS skip verify',
       description:
         'If enabled, the client accepts any certificate presented by the server and any host \n' +
         'name in that certificate. You should only use this for testing, because this mode leaves \n' +
@@ -326,20 +326,14 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       label: 'Groups attribute path',
       description:
         'JMESPath expression to use for user group lookup. If you configure allowed_groups, \n' +
-        'you must also configure groups_attribute_path.',
+        'you must also configure groupsƒ_attribute_path.',
       type: 'text',
     },
     teamsUrl: {
       label: 'Teams URL',
       description:
-        'The URL used to query for team IDs. If not set, the default value is /teams. \n' +
+        'The URL used to query for Team Ids. If not set, the default value is /teams. \n' +
         'If you configure teams_url, you must also configure team_ids_attribute_path.',
-      type: 'text',
-    },
-    teamIdsAttributePath: {
-      label: 'Team IDs attribute path',
-      description:
-        'The JMESPath expression to use for Grafana team ID lookup within the results returned by the teams_url endpoint.',
       type: 'text',
       validation: {
         validate: (value, formValues) => {
@@ -348,19 +342,34 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           }
           return true;
         },
-        message: 'This field must be set if Team IDs are configured.',
+        message: 'This field must be set if Team Ids are configured.',
+      },
+    },
+    teamIdsAttributePath: {
+      label: 'Team Ids attribute path',
+      description:
+        'The JMESPath expression to use for Grafana Team Id lookup within the results returned by the teams_url endpoint.',
+      type: 'text',
+      validation: {
+        validate: (value, formValues) => {
+          if (formValues.teamIds.length) {
+            return !!value;
+          }
+          return true;
+        },
+        message: 'This field must be set if Team Ids are configured.',
       },
     },
     teamIds: {
       label: 'Team Ids',
       type: 'select',
       description:
-        'String list of team IDs. If set, the user must be a member of one of the given teams to log in. \n' +
+        'String list of Team Ids. If set, the user must be a member of one of the given teams to log in. \n' +
         'If you configure team_ids, you must also configure teams_url and team_ids_attribute_path.',
       multi: true,
       allowCustomValue: true,
       options: [],
-      placeholder: 'Enter team IDs and press Enter to add',
+      placeholder: 'Enter Team Ids and press Enter to add',
       validation:
         provider === 'generic_oauth'
           ? undefined
@@ -374,7 +383,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
                 }
                 return true;
               },
-              message: 'Team ID must be a number.',
+              message: 'Team Ids must be numbers.',
             },
     },
   };

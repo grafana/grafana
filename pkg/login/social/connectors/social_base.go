@@ -222,7 +222,7 @@ func getRoleFromSearch(role string) (org.RoleType, bool) {
 
 func validateInfo(info *social.OAuthInfo) error {
 	if info.ClientId == "" {
-		return ssosettings.ErrEmptyClientId.Errorf("clientId is empty")
+		return ssosettings.ErrOauthValidationError("ClientId is empty", map[string]any{"clientId": ""})
 	}
 
 	return nil

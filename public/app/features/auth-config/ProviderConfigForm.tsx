@@ -44,11 +44,17 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
     setSubmitError(false);
     const requestData = dtoToData(data, provider);
     try {
-      await getBackendSrv().put(`/api/v1/sso-settings/${provider}`, {
-        id: config?.id,
-        provider: config?.provider,
-        settings: { ...requestData },
-      });
+      await getBackendSrv().put(
+        `/api/v1/sso-settings/${provider}`,
+        {
+          id: config?.id,
+          provider: config?.provider,
+          settings: { ...requestData },
+        },
+        {
+          showErrorAlert: false,
+        }
+      );
 
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
