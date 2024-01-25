@@ -175,8 +175,10 @@ For more information about port-forwarding, refer to [Use Port Forwarding to Acc
 4. To sign in, enter `admin` for the username.
 5. For the password paste it which you have saved to a file after decoding it earlier.
 
+# Customizing Grafana default Configuraiton settings
 
+Helm is a popular package manager for Kubernetes. It bundles Kubernetes resource manifests in a way that they may be re-used across different environments. These manifests are written in a templating language, allowing us to provide configuration values (via `values.yaml` file, or in-line using helm, to replace the placeholders in the manifest where these configurations should reside.
 
+The `values.yaml` file allows you to customize the chart's configuration by specifying values for various parameters such as image versions, resource limits, service configurations, etc.
 
-
-
+By modifying the values in the `values.yaml` file, you can tailor the deployment of a Helm chart to your specific requirements by using the helm install or upgrade commands. For more information about configuring Helm, refer to [Values Files](https://helm.sh/docs/chart_template_guide/values_files/).
