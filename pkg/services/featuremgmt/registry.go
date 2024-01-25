@@ -314,17 +314,6 @@ var (
 			Created:        time.Date(2023, time.July, 24, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:              "emptyDashboardPage",
-			Description:       "Enable the redesigned user interface of a dashboard page that includes no panels",
-			Stage:             FeatureStageGeneralAvailability,
-			FrontendOnly:      true,
-			Expression:        "true", // enabled by default
-			Owner:             grafanaDashboardsSquad,
-			AllowSelfServe:    false,
-			HideFromAdminPage: true,
-			Created:           time.Date(2023, time.March, 28, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:           "disablePrometheusExemplarSampling",
 			Description:    "Disable Prometheus exemplar sampling",
 			Stage:          FeatureStageGeneralAvailability,
@@ -1046,7 +1035,7 @@ var (
 		{
 			Name:            "managedPluginsInstall",
 			Description:     "Install managed plugins directly from plugins catalog",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStagePublicPreview,
 			RequiresDevMode: false,
 			Owner:           grafanaPluginsPlatformSquad,
 			Created:         time.Date(2023, time.October, 18, 12, 0, 0, 0, time.UTC),
@@ -1274,9 +1263,8 @@ var (
 			Name:            "alertingPreviewUpgrade",
 			Description:     "Show Unified Alerting preview and upgrade page in legacy alerting",
 			FrontendOnly:    false,
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStagePublicPreview,
 			Owner:           grafanaAlertingSquad,
-			HideFromDocs:    true,
 			RequiresRestart: true,
 			Created:         time.Date(2024, time.January, 3, 12, 0, 0, 0, time.UTC),
 		},

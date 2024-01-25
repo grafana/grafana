@@ -91,7 +91,7 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
           title: 'My cool dashboard',
           panels: [
             {
-              type: 'add-panel',
+              type: 'stat',
               gridPos: { x: 0, y: 0, w: 12, h: 9 },
               title: 'Panel Title',
               id: 2,

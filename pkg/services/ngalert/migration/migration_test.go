@@ -550,7 +550,6 @@ func TestDashAlertMigration(t *testing.T) {
 			expectedRulesMap := expected[orgId]
 			require.Len(t, rules, len(expectedRulesMap))
 			for _, r := range rules {
-				delete(r.Labels, "rule_uid") // Not checking this here.
 				exp := expectedRulesMap[r.Title].Labels
 				require.Lenf(t, r.Labels, len(exp), "rule doesn't have correct number of labels: %s", r.Title)
 				for l := range r.Labels {
@@ -657,7 +656,6 @@ func TestDashAlertMigration(t *testing.T) {
 			expectedRulesMap := expected[orgId]
 			require.Len(t, rules, len(expectedRulesMap))
 			for _, r := range rules {
-				delete(r.Labels, "rule_uid") // Not checking this here.
 				exp := expectedRulesMap[r.Title].Labels
 				require.Lenf(t, r.Labels, len(exp), "rule doesn't have correct number of labels: %s", r.Title)
 				for l := range r.Labels {
@@ -707,7 +705,6 @@ func TestDashAlertMigration(t *testing.T) {
 			expectedRulesMap := expected[orgId]
 			require.Len(t, rules, len(expectedRulesMap))
 			for _, r := range rules {
-				delete(r.Labels, "rule_uid") // Not checking this here.
 				exp := expectedRulesMap[*r.PanelID]
 				require.Equal(t, exp, r.Title)
 			}
@@ -743,7 +740,6 @@ func TestDashAlertMigration(t *testing.T) {
 			expectedRulesMap := expected[orgId]
 			require.Len(t, rules, len(expectedRulesMap))
 			for _, r := range rules {
-				delete(r.Labels, "rule_uid") // Not checking this here.
 				exp := expectedRulesMap[*r.PanelID]
 				require.Equal(t, exp, r.Title)
 			}
@@ -1216,8 +1212,6 @@ func TestDashAlertQueryMigration(t *testing.T) {
 
 				for _, r := range rules {
 					// Remove generated fields.
-					require.NotEqual(t, r.Labels["rule_uid"], "")
-					delete(r.Labels, "rule_uid")
 					require.NotEqual(t, r.Annotations[ngModels.MigratedAlertIdAnnotation], "")
 					delete(r.Annotations, ngModels.MigratedAlertIdAnnotation)
 
@@ -1365,6 +1359,8 @@ func createAlertWithCond(t *testing.T, orgId int, dashboardId int, panelsId int,
 
 // createDashboard creates a folder for inserting into the test database.
 func createFolder(t *testing.T, id int64, orgId int64, uid string) *dashboards.Dashboard {
+	// TODO this should create also the entries in the folder table
+	// or better call the folder service to take care of both
 	f := createDashboard(t, id, orgId, uid, 0, nil)
 	f.IsFolder = true
 	return f
@@ -1440,14 +1436,20 @@ func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*mod
 	}
 
 	// Setup folders.
-	if len(folders) > 0 {
-		_, err := x.Insert(folders)
+	// this loop is required because nullable it does not seem to work
+	// when inserting multiple rows at once
+	for _, f := range folders {
+		// if folder_uid is empty string, it will be set to NULL
+		_, err := x.NewSession().Nullable("folder_uid").Insert(f)
 		require.NoError(t, err)
 	}
 
 	// Setup dashboards.
-	if len(dashes) > 0 {
-		_, err := x.Insert(dashes)
+	// this loop is required because nullable it does not seem to work
+	// when inserting multiple rows at once
+	for _, d := range dashes {
+		// if folder_uid is empty string, it will be set to NULL
+		_, err := x.NewSession().Nullable("folder_uid").Insert(d)
 		require.NoError(t, err)
 	}
 

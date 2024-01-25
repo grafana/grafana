@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -101,6 +102,7 @@ func (hs *HTTPServer) GetAlerts(c *contextmodel.ReqContext) response.Response {
 			folderID, err := strconv.ParseInt(id, 10, 64)
 			if err == nil {
 				folderIDs = append(folderIDs, folderID)
+				metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetAlerts).Inc()
 			}
 		}
 

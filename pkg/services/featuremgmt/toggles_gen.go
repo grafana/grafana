@@ -151,10 +151,6 @@ const (
 	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle
 	FlagNestedFolderPicker = "nestedFolderPicker"
 
-	// FlagEmptyDashboardPage
-	// Enable the redesigned user interface of a dashboard page that includes no panels
-	FlagEmptyDashboardPage = "emptyDashboardPage"
-
 	// FlagDisablePrometheusExemplarSampling
 	// Disable Prometheus exemplar sampling
 	FlagDisablePrometheusExemplarSampling = "disablePrometheusExemplarSampling"
