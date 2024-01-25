@@ -2,7 +2,7 @@ import { useObservable } from 'react-use';
 import { BehaviorSubject } from 'rxjs';
 
 import { AppEvents, NavModel, NavModelItem, PageLayoutType, UrlQueryValue } from '@grafana/data';
-import { config, locationService, reportInteraction, getReturnToPrevious } from '@grafana/runtime';
+import { config, locationService, reportInteraction, getReturnToPrevious, setReturnToPrevious } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import store from 'app/core/store';
@@ -65,14 +65,9 @@ export class AppChromeService {
   }
 
   public update(update: Partial<AppChromeState>) {
-    const returnToPrevious = getReturnToPrevious();
     const current = this.state.getValue();
     const newState: AppChromeState = {
       ...current,
-      returnToPrevious: {
-        href: returnToPrevious.href,
-        title: returnToPrevious.title,
-      },
     };
 
     // when route change update props from route and clear fields
@@ -93,6 +88,11 @@ export class AppChromeService {
     if (!this.ignoreStateUpdate(newState, current)) {
       this.state.next(newState);
     }
+  }
+
+  public setReturnToPrevious(returnToPrevious: ReturnToPreviousProps) {
+    this.update({ returnToPrevious });
+    setReturnToPrevious(returnToPrevious);
   }
 
   private ignoreStateUpdate(newState: AppChromeState, current: AppChromeState) {

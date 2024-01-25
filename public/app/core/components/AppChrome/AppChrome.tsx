@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import classNames from 'classnames';
-import React, { PropsWithChildren } from 'react';
+import React, { PropsWithChildren, useEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { setReturnToPrevious } from '@grafana/runtime';
+import { clearReturnToPrevious, locationService } from '@grafana/runtime';
 import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -21,6 +21,7 @@ import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { SectionNav } from './SectionNav/SectionNav';
 import { TopSearchBar } from './TopBar/TopSearchBar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
+
 export interface Props extends PropsWithChildren<{}> {}
 
 export function AppChrome({ children }: Props) {
@@ -54,17 +55,17 @@ export function AppChrome({ children }: Props) {
     chrome.setMegaMenuOpen(!state.megaMenuOpen);
   };
 
-  const shouldShowReturnToPrevious = () => {
-    if (state.returnToPrevious && location.pathname === state.returnToPrevious.href) {
-      setReturnToPrevious({ title: '', href: '' });
+  const path = locationService.getLocation().pathname;
+  const shouldShowReturnToPrevious = state.returnToPrevious && path !== state.returnToPrevious.href;
+
+  useEffect(() => {
+    if (state.returnToPrevious && path === state.returnToPrevious.href) {
+      clearReturnToPrevious();
+      chrome.update({ returnToPrevious: undefined });
     }
-    return (
-      state.returnToPrevious &&
-      state.returnToPrevious.href &&
-      state.returnToPrevious.title &&
-      location.pathname !== state.returnToPrevious.href
-    );
-  };
+    // We only want to pay attention when the location changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chrome, path]);
 
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
@@ -118,7 +119,7 @@ export function AppChrome({ children }: Props) {
         </>
       )}
       {!state.chromeless && <CommandPalette />}
-      {config.featureToggles.returnToPrevious && state.returnToPrevious && shouldShowReturnToPrevious() && (
+      {config.featureToggles.returnToPrevious && state.returnToPrevious && shouldShowReturnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}
     </div>
