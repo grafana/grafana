@@ -274,7 +274,7 @@ export const CandlestickPanel = ({
                     return null;
                   }
 
-                  if (timeRange2 != null) {
+                  if (enableAnnotationCreation && timeRange2 != null) {
                     setNewAnnotationRange(timeRange2);
                     dismiss();
                     return;
@@ -320,7 +320,7 @@ export const CandlestickPanel = ({
                 annotations={data.annotations ?? []}
                 config={uplotConfig}
                 timeZone={timeZone}
-                newRange={enableAnnotationCreation ? newAnnotationRange : null}
+                newRange={newAnnotationRange}
                 setNewRange={setNewAnnotationRange}
               />
             ) : (
