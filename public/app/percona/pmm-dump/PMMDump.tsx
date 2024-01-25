@@ -215,8 +215,13 @@ export const PMMDump = () => {
         Header: Messages.dumps.columns.timeRange,
         accessor: 'timeRange',
         type: FilterFieldTypes.TEXT,
-        Cell: ({ value, row }: { row: Row<PMMDumpServices>; value: string }) =>
-          dateDifferenceInWords(row.original.endTime, row.original.startTime),
+        Cell: ({ value, row }: { row: Row<PMMDumpServices>; value?: string }) => {
+          if (value === undefined) {
+            return 'N/A';
+          } else {
+            return dateDifferenceInWords(row.original.endTime, row.original.startTime);
+          }
+        },
       },
       {
         Header: Messages.dumps.columns.startDate,
