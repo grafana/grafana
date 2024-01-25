@@ -85,7 +85,7 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
         <Select
           isClearable={true}
           options={frameNames}
-          placeholder={frameNames[0].label}
+          placeholder={'Change filter'}
           value={frameNames.find((v) => v.value === value?.frame)}
           onChange={(v) => {
             onChange({
