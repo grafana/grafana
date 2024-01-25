@@ -28,7 +28,7 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 		title := "Very complex :title with: and /" + util.GenerateShortUID()
 		db := &folder.Folder{Title: title, UID: util.GenerateShortUID()}
 		folderStore := foldertest.NewFakeFolderStore(t)
-		folderStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything).Return(db, nil).Once()
+		folderStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(db, nil).Once()
 
 		scope := "folders:name:" + title
 
@@ -37,7 +37,7 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, resolvedScopes, 1)
 		require.Equal(t, fmt.Sprintf("folders:uid:%v", db.UID), resolvedScopes[0])
-		folderStore.AssertCalled(t, "GetFolderByTitle", mock.Anything, orgId, title)
+		folderStore.AssertCalled(t, "GetFolderByTitle", mock.Anything, orgId, title, mock.Anything)
 	})
 	t.Run("resolver should include inherited scopes if any", func(t *testing.T) {
 		orgId := rand.Int63()
@@ -46,7 +46,7 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 		db := &folder.Folder{Title: title, UID: util.GenerateShortUID()}
 
 		folderStore := foldertest.NewFakeFolderStore(t)
-		folderStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything).Return(db, nil).Once()
+		folderStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(db, nil).Once()
 
 		scope := "folders:name:" + title
 
@@ -73,7 +73,7 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
 
-		folderStore.AssertCalled(t, "GetFolderByTitle", mock.Anything, orgId, title)
+		folderStore.AssertCalled(t, "GetFolderByTitle", mock.Anything, orgId, title, mock.Anything)
 	})
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
 		_, resolver := NewFolderNameScopeResolver(foldertest.NewFakeFolderStore(t), foldertest.NewFakeService())
@@ -92,7 +92,7 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 		_, resolver := NewFolderNameScopeResolver(folderStore, foldertest.NewFakeService())
 
 		orgId := rand.Int63()
-		folderStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything).Return(nil, ErrDashboardNotFound).Once()
+		folderStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, ErrDashboardNotFound).Once()
 
 		scope := "folders:name:" + util.GenerateShortUID()
 

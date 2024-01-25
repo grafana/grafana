@@ -172,7 +172,16 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 		case q.ID != nil:
 			exists, err = sess.SQL("SELECT * FROM folder WHERE id = ?", q.ID).Get(foldr)
 		case q.Title != nil:
-			exists, err = sess.SQL("SELECT * FROM folder WHERE title = ? AND org_id = ?", q.Title, q.OrgID).Get(foldr)
+			s := strings.Builder{}
+			s.WriteString("SELECT * FROM folder WHERE title = ? AND org_id = ?")
+			args := []any{*q.Title, q.OrgID}
+			if q.ParentUID != nil {
+				s.WriteString(" AND parent_uid = ?")
+				args = append(args, *q.ParentUID)
+			} else {
+				s.WriteString(" AND parent_uid IS NULL")
+			}
+			exists, err = sess.SQL(s.String(), args...).Get(foldr)
 		default:
 			return folder.ErrBadRequest.Errorf("one of ID, UID, or Title must be included in the command")
 		}

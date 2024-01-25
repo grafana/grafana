@@ -40,25 +40,25 @@ func (_m *FakeFolderStore) GetFolderByID(ctx context.Context, orgID int64, id in
 	return r0, r1
 }
 
-// GetFolderByTitle provides a mock function with given fields: ctx, orgID, title
-func (_m *FakeFolderStore) GetFolderByTitle(ctx context.Context, orgID int64, title string) (*folder.Folder, error) {
-	ret := _m.Called(ctx, orgID, title)
+// GetFolderByTitle provides a mock function with given fields: ctx, orgID, title, folderUID
+func (_m *FakeFolderStore) GetFolderByTitle(ctx context.Context, orgID int64, title string, folderUID *string) (*folder.Folder, error) {
+	ret := _m.Called(ctx, orgID, title, folderUID)
 
 	var r0 *folder.Folder
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string) (*folder.Folder, error)); ok {
-		return rf(ctx, orgID, title)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string, *string) (*folder.Folder, error)); ok {
+		return rf(ctx, orgID, title, folderUID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string) *folder.Folder); ok {
-		r0 = rf(ctx, orgID, title)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string, *string) *folder.Folder); ok {
+		r0 = rf(ctx, orgID, title, folderUID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*folder.Folder)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
-		r1 = rf(ctx, orgID, title)
+	if rf, ok := ret.Get(1).(func(context.Context, int64, string, *string) error); ok {
+		r1 = rf(ctx, orgID, title, folderUID)
 	} else {
 		r1 = ret.Error(1)
 	}
