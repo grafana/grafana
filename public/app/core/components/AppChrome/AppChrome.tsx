@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import React, { PropsWithChildren, useEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { clearReturnToPrevious, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -60,7 +60,6 @@ export function AppChrome({ children }: Props) {
 
   useEffect(() => {
     if (state.returnToPrevious && path === state.returnToPrevious.href) {
-      clearReturnToPrevious();
       chrome.update({ returnToPrevious: undefined });
     }
     // We only want to pay attention when the location changes

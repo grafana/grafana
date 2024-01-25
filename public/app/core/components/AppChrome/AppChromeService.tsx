@@ -2,7 +2,7 @@ import { useObservable } from 'react-use';
 import { BehaviorSubject } from 'rxjs';
 
 import { AppEvents, NavModel, NavModelItem, PageLayoutType, UrlQueryValue } from '@grafana/data';
-import { config, locationService, reportInteraction, getReturnToPrevious, setReturnToPrevious } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import store from 'app/core/store';
@@ -54,7 +54,6 @@ export class AppChromeService {
     megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
     layout: PageLayoutType.Canvas,
-    returnToPrevious: getReturnToPrevious(),
   });
 
   public setMatchedRoute(route: RouteDescriptor) {
@@ -92,7 +91,6 @@ export class AppChromeService {
 
   public setReturnToPrevious(returnToPrevious: ReturnToPreviousProps) {
     this.update({ returnToPrevious });
-    setReturnToPrevious(returnToPrevious);
   }
 
   private ignoreStateUpdate(newState: AppChromeState, current: AppChromeState) {
