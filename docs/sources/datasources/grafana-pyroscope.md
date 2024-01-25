@@ -49,6 +49,8 @@ To configure basic settings for the data source, complete the following steps:
 You can link profile and tracing data using your Pyroscope data source with the Tempo data source.
 For more information, refer to the [Traces to profile section][configure-tempo-data-source] of the Tempo data source documentation.
 
+{{< youtube id="AG8VzfFMLxo" >}}
+
 ## Querying
 
 You can query your profiling data using the query editor.

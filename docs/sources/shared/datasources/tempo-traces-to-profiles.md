@@ -21,6 +21,8 @@ Using Trace to profiles, you can use Grafana’s ability to correlate different 
 **Trace to profiles** lets you link your Grafana Pyroscope data source to tracing data.
 When configured, this connection lets you run queries from a trace span into the profile data.
 
+{{< youtube id="AG8VzfFMLxo" >}}
+
 There are two ways to configure the trace to profiles feature:
 
 - Use a simplified configuration with default query, or
