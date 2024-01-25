@@ -206,7 +206,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         for (const nestedFrames of field.values) {
           for (let nfIndex = 0; nfIndex < nestedFrames.length; nfIndex++) {
             for (const valueField of nestedFrames[nfIndex].fields) {
-
               // Get display processor for nested fields
               valueField.display = getDisplayProcessor({
                 field: valueField,

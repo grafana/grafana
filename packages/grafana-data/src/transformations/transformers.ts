@@ -54,5 +54,5 @@ export const standardTransformers = {
   convertFieldTypeTransformer,
   groupingToMatrixTransformer,
   limitTransformer,
-  groupToSubframeTransformer
+  groupToSubframeTransformer,
 };

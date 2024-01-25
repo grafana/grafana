@@ -23,7 +23,7 @@ export interface GroupByTransformerOptions {
 }
 
 interface FieldMap {
-  [key: string]: Field,
+  [key: string]: Field;
 }
 
 export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> = {
@@ -79,18 +79,17 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
         const processed: DataFrame[] = [];
 
         for (const frame of data) {
-
           // Create a list of fields to group on
           // If there are none we skip the rest
           const groupByFields: Field[] = frame.fields.filter((field) => shouldGroupOnField(field, options));
           if (groupByFields.length === 0) {
-            continue; 
+            continue;
           }
 
           // Group the values by fields and groups so we can get all values for a
           // group for a given field.
           const valuesByGroupKey = groupValuesByKey(frame, groupByFields);
-          
+
           // Add the grouped fields to the resulting fields of the transformation
           const fields: Field[] = createGroupedFields(groupByFields, valuesByGroupKey);
 
@@ -169,12 +168,11 @@ function detectFieldType(aggregation: string, sourceField: Field, targetField: F
     default:
       return guessFieldTypeForField(targetField) ?? FieldType.string;
   }
-};
-
+}
 
 /**
- * 
- * @param frame 
+ *
+ * @param frame
  */
 export function groupValuesByKey(frame: DataFrame, groupByFields: Field[]) {
   const valuesByGroupKey = new Map<string, FieldMap>();
@@ -205,7 +203,6 @@ export function groupValuesByKey(frame: DataFrame, groupByFields: Field[]) {
 
   return valuesByGroupKey;
 }
-
 
 export function createGroupedFields(groupByFields: Field[], valuesByGroupKey: Map<string, FieldMap>) {
   const fields: Field[] = [];
