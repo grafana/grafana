@@ -190,26 +190,28 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
   const isLastPage = model.versions.find((rev) => rev.version === 1);
 
   const viewModeCompare = (
-    <VersionHistoryHeader
-      onClick={model.reset}
-      baseVersion={baseInfo?.version}
-      newVersion={newInfo?.version}
-      isNewLatest={isNewLatest}
-    />
-  );
-  {
-    isLoading ? (
-      <VersionsHistorySpinner msg="Fetching changes&hellip;" />
-    ) : (
-      <VersionHistoryComparison
-        newInfo={newInfo!}
-        baseInfo={baseInfo!}
-        isNewLatest={isNewLatest!}
-        diffData={model.diffData}
-        onRestore={dashboard.onRestore}
+    <>
+      <VersionHistoryHeader
+        onClick={model.reset}
+        baseVersion={baseInfo?.version}
+        newVersion={newInfo?.version}
+        isNewLatest={isNewLatest}
       />
-    );
-  }
+      {
+        isLoading ? (
+          <VersionsHistorySpinner msg="Fetching changes&hellip;" />
+        ) : (
+          <VersionHistoryComparison
+            newInfo={newInfo!}
+            baseInfo={baseInfo!}
+            isNewLatest={isNewLatest!}
+            diffData={model.diffData}
+            onRestore={dashboard.onRestore}
+          />
+        )
+      }
+    </>
+  );
 
   const viewModeList = (
     <>
