@@ -12,18 +12,13 @@ export interface Props extends StandardEditorProps<ScatterSeriesConfig, unknown,
   frameFilter?: number;
 }
 
-export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, frameFilter }: Props) => {
+export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, frameFilter = -1 }: Props) => {
   const onFieldChange = (val: unknown | undefined, field: string) => {
     onChange({ ...value, [field]: val });
   };
 
-  //TODO add onDataFilterChange
-  //TODO make fieldnamepicker options dependet upon data filter select
+  const frame = context.data && frameFilter > -1 ? context.data[frameFilter] : undefined;
 
-  const frame = context.data ? context.data[frameFilter ?? 0] : undefined;
-  if (frame) {
-    console.log(frame);
-  }
   return (
     <div>
       <Field label={'X Field'}>
