@@ -17,17 +17,22 @@ import {
   buildEmptyValues,
   buildParamsFromKey,
   buildSearchOptions,
+  getFilteredData,
   getQueryParams,
-  isInOptions,
   isOtherThanTextType,
-  isValueInTextColumn,
 } from './Filter.utils';
 import { RadioButtonField } from './components/fields/RadioButtonField';
 import { SearchTextField } from './components/fields/SearchTextField';
 import { SelectColumnField } from './components/fields/SelectColumnField';
 import { SelectDropdownField } from './components/fields/SelectDropdownField';
 
-export const Filter = ({ columns, rawData, setFilteredData, hasBackendFiltering = false, tableKey }: FilterProps) => {
+export const Filter = <T,>({
+  columns,
+  rawData,
+  setFilteredData,
+  hasBackendFiltering = false,
+  tableKey,
+}: FilterProps<T>) => {
   const [openCollapse, setOpenCollapse] = useState(false);
   const [openSearchFields, setOpenSearchFields] = useState(false);
   const styles = useStyles2(getStyles);
@@ -89,12 +94,7 @@ export const Filter = ({ columns, rawData, setFilteredData, hasBackendFiltering 
   useEffect(() => {
     const queryParamsObj = getQueryParams(columns, queryParamsByKey);
     if (Object.keys(queryParamsByKey).length > 0 && !hasBackendFiltering) {
-      const dataArray = rawData.filter(
-        (filterValue) =>
-          isValueInTextColumn(columns, filterValue, queryParamsObj) &&
-          isInOptions(columns, filterValue, queryParamsObj, FilterFieldTypes.DROPDOWN) &&
-          isInOptions(columns, filterValue, queryParamsObj, FilterFieldTypes.RADIO_BUTTON)
-      );
+      const dataArray = getFilteredData(rawData, columns, queryParamsObj);
       setFilteredData(dataArray);
     } else {
       setFilteredData(rawData);

@@ -10,6 +10,7 @@ export const Messages = {
       monitoring: 'Monitoring',
       address: 'Address',
       port: 'Port',
+      cluster: 'Cluster',
     },
     actions: {
       dashboard: 'Dashboard',
@@ -29,6 +30,10 @@ export const Messages = {
       `${deletedItems} of ${totalItems} services successfully deleted`,
     organizeByClusters: 'Organize by Clusters',
     technicalPreview: '(Technical Preview) ',
+  },
+  clusters: {
+    empty: 'No clusters available',
+    noMatch: 'No clusters found',
   },
   agents: {
     goBackToServices: 'Go back to services',

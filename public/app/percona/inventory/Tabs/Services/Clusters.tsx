@@ -1,15 +1,21 @@
 import React, { FC, useCallback, useMemo, useState } from 'react';
 import { Row } from 'react-table';
 
+import { SearchFilter } from 'app/percona/shared/components/SearchFilter';
+
+import { Messages } from '../../Inventory.messages';
 import { FlattenService } from '../../Inventory.types';
 
 import ClusterItem from './ClusterItem';
+import { CLUSTERS_COLUMNS } from './Clusters.constants';
 import { ClustersProps, ServicesCluster } from './Clusters.type';
 import { getClustersFromServices } from './Clusters.utils';
 
 const Clusters: FC<ClustersProps> = ({ services, onDelete, onSelectionChange }) => {
-  const clusters = useMemo(() => getClustersFromServices(services), [services]);
+  const [filtered, setFiltered] = useState(services);
+  const clusters = useMemo(() => getClustersFromServices(filtered), [filtered]);
   const [selection, setSelection] = useState({});
+  const filterEnabled = filtered !== services;
 
   const handleSelectionChange = useCallback(
     (cluster: ServicesCluster, selectedServices: Array<Row<FlattenService>>) => {
@@ -25,16 +31,33 @@ const Clusters: FC<ClustersProps> = ({ services, onDelete, onSelectionChange }) 
     [onSelectionChange]
   );
 
+  const handleFiltering = useCallback((rows: FlattenService[]) => {
+    setFiltered(rows);
+  }, []);
+
   return (
     <div>
-      {clusters.map((cluster) => (
-        <ClusterItem
-          key={cluster.name}
-          cluster={cluster}
-          onDelete={onDelete}
-          onSelectionChange={handleSelectionChange}
-        />
-      ))}
+      <SearchFilter
+        tableKey="clusters-global"
+        rawData={services}
+        columns={CLUSTERS_COLUMNS}
+        onFilteredDataChange={handleFiltering}
+      />
+      {clusters.length ? (
+        clusters.map((cluster) => (
+          <ClusterItem
+            key={cluster.name}
+            cluster={cluster}
+            onDelete={onDelete}
+            openByDefault={filterEnabled}
+            onSelectionChange={handleSelectionChange}
+          />
+        ))
+      ) : filterEnabled ? (
+        <div>{Messages.clusters.noMatch}</div>
+      ) : (
+        <div>{Messages.clusters.empty}</div>
+      )}
     </div>
   );
 };

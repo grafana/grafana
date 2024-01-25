@@ -16,6 +16,7 @@ export interface Backup {
   vendor: Databases;
   mode: BackupMode;
   folder: string;
+  type?: Databases | 'external';
 }
 
 export interface BackupRow extends Backup {

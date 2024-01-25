@@ -12,6 +12,7 @@ export interface ClustersProps {
 
 export interface ClusterItemProps {
   cluster: ServicesCluster;
+  openByDefault?: boolean;
   onDelete: (service: FlattenService) => void;
   onSelectionChange: (cluster: ServicesCluster, services: Array<Row<FlattenService>>) => void;
 }

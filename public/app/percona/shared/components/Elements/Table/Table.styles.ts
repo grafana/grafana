@@ -31,6 +31,10 @@ export const getStyles = (theme: GrafanaTheme) => {
           tr {
             height: 48px;
 
+            /* Allow the actions dialog to be visible */
+            position: relative;
+            z-index: 0;
+
             th {
               position: sticky;
               top: 0;

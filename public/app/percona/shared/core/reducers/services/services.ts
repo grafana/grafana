@@ -26,7 +26,7 @@ import {
 } from './services.utils';
 
 const initialState: ServicesState = {
-  activeTypes: [],
+  activeTypes: Object.values(ServiceType) as ServiceType[],
   services: [],
   isLoading: false,
 };

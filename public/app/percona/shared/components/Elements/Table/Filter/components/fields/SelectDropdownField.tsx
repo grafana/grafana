@@ -7,11 +7,11 @@ import { ExtendedColumn } from '../../..';
 import { ALL_LABEL, ALL_VALUE } from '../../Filter.constants';
 import { buildColumnOptions } from '../../Filter.utils';
 
-export const SelectDropdownField = ({ column }: { column: ExtendedColumn }) => {
+export const SelectDropdownField = <T extends object>({ column }: { column: ExtendedColumn<T> }) => {
   const columnOptions = buildColumnOptions(column);
   return (
     <div>
-      <Field name={`${column.accessor}`}>
+      <Field name={String(column.accessor)}>
         {({ input }) => (
           <SelectField
             options={columnOptions}

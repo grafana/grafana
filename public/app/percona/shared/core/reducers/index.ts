@@ -25,6 +25,7 @@ import perconaK8SClusterListReducer, { fetchK8sListAction } from './dbaas/k8sClu
 import perconaUpdateDBCluster from './dbaas/updateDBCluster/updateDBCluster';
 import navigationReducer from './navigation';
 import nodesReducer from './nodes';
+import pmmDumpsReducers from './pmmDump/pmmDump';
 import rolesReducers from './roles/roles';
 import servicesReducer from './services';
 import tourReducer from './tour/tour';
@@ -257,5 +258,6 @@ export default {
     roles: rolesReducers,
     users: usersReducers,
     advisors: advisorsReducers,
+    pmmDumps: pmmDumpsReducers,
   }),
 };

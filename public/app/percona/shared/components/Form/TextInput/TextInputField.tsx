@@ -2,7 +2,7 @@ import { cx } from '@emotion/css';
 import React, { FC, useMemo } from 'react';
 import { Field, FieldInputProps, FieldMetaState, UseFieldConfig } from 'react-final-form';
 
-import { useStyles2 } from '@grafana/ui';
+import { Button, Icon, IconName, useStyles2 } from '@grafana/ui';
 import { compose, Validator } from 'app/percona/shared/helpers/validatorsForm';
 
 import { FieldInputAttrs, LabeledFieldProps } from '../../../helpers/types';
@@ -23,6 +23,8 @@ export interface TextInputFieldProps extends UseFieldConfig<string>, LabeledFiel
   showErrorOnBlur?: boolean;
   showErrorOnRender?: boolean;
   validators?: Validator[];
+  placeholderIcon?: IconName;
+  clearable?: boolean;
 }
 
 interface TextFieldRenderProps {
@@ -51,6 +53,8 @@ export const TextInputField: FC<TextInputFieldProps> = React.memo(
     tooltipDataTestId,
     tooltipLinkTarget,
     tooltipInteractive,
+    placeholderIcon,
+    clearable,
     ...fieldConfig
   }) => {
     const styles = useStyles2(getStyles);
@@ -77,15 +81,35 @@ export const TextInputField: FC<TextInputFieldProps> = React.memo(
                 tooltipIcon={tooltipIcon}
                 tooltipInteractive={tooltipInteractive}
               />
-              <input
-                id={inputId}
-                {...input}
-                {...inputProps}
-                disabled={disabled}
-                placeholder={placeholder}
-                data-testid={`${name}-text-input`}
-                className={cx(styles.input, { invalid: !!validationError }, className)}
-              />
+              <div className={styles.inputContainer}>
+                {!!placeholderIcon && (
+                  <div className={styles.iconContainer}>
+                    <Icon className={styles.icon} name={placeholderIcon} />
+                  </div>
+                )}
+                <input
+                  id={inputId}
+                  {...input}
+                  {...inputProps}
+                  disabled={disabled}
+                  placeholder={placeholder}
+                  data-testid={`${name}-text-input`}
+                  className={cx(
+                    styles.input,
+                    !!placeholderIcon && styles.inputWithIcon,
+                    clearable && styles.inputClearable,
+                    { invalid: !!validationError },
+                    className
+                  )}
+                />
+                {clearable && !!input.value && (
+                  <div className={styles.clearContainer}>
+                    <Button fill="text" type="button" onClick={() => input.onChange('')} size="xs">
+                      Clear
+                    </Button>
+                  </div>
+                )}
+              </div>
               <div data-testid={`${name}-field-error-message`} className={styles.errorMessage}>
                 {validationError}
               </div>
