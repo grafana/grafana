@@ -375,6 +375,10 @@ func (hs *HTTPServer) PostDashboard(c *contextmodel.ReqContext) response.Respons
 }
 
 func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.SaveDashboardCommand) response.Response {
+	if cmd.IsFolder {
+		return response.Error(http.StatusBadRequest, "Use folders endpoint for creating folders.", nil)
+	}
+
 	ctx := c.Req.Context()
 	var err error
 
