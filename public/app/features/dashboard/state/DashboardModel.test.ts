@@ -116,16 +116,10 @@ describe('DashboardModel', () => {
       expect(keys[1]).toBe('editable');
     });
 
-    it('should remove add panel panels', () => {
+    it('should have only 1 panel after adding panel to a new dashboard', () => {
       const model = createDashboardModelFixture();
       model.addPanel({
-        type: 'add-panel',
-      });
-      model.addPanel({
         type: 'graph',
-      });
-      model.addPanel({
-        type: 'add-panel',
       });
       const saveModel = model.getSaveModelClone();
       const panels = saveModel.panels;

@@ -314,17 +314,6 @@ var (
 			Created:        time.Date(2023, time.July, 24, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:              "emptyDashboardPage",
-			Description:       "Enable the redesigned user interface of a dashboard page that includes no panels",
-			Stage:             FeatureStageGeneralAvailability,
-			FrontendOnly:      true,
-			Expression:        "true", // enabled by default
-			Owner:             grafanaDashboardsSquad,
-			AllowSelfServe:    false,
-			HideFromAdminPage: true,
-			Created:           time.Date(2023, time.March, 28, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:           "disablePrometheusExemplarSampling",
 			Description:    "Disable Prometheus exemplar sampling",
 			Stage:          FeatureStageGeneralAvailability,

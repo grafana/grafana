@@ -302,12 +302,8 @@ export class DashboardModel implements TimeModel {
   }
 
   private getPanelSaveModels() {
-    // Todo: Remove panel.type === 'add-panel' when we remove the emptyDashboardPage toggle
     return this.panels
-      .filter(
-        (panel) =>
-          this.isSnapshotTruthy() || !(panel.type === 'add-panel' || panel.repeatPanelId || panel.repeatedByRow)
-      )
+      .filter((panel) => this.isSnapshotTruthy() || !(panel.repeatPanelId || panel.repeatedByRow))
       .map((panel) => {
         // Clean libarary panels on save
         if (panel.libraryPanel) {

@@ -130,7 +130,7 @@ async function fetchDashboard(
         if (args.urlFolderUid) {
           await dispatch(getFolderByUid(args.urlFolderUid));
         }
-        return getNewDashboardModelData(args.urlFolderUid, args.panelType);
+        return getNewDashboardModelData(args.urlFolderUid);
       }
       case DashboardRoutes.Path: {
         const path = args.urlSlug ?? '';
@@ -300,20 +300,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   };
 }
 
-export function getNewDashboardModelData(
-  urlFolderUid?: string,
-  panelType?: string
-): { dashboard: any; meta: DashboardMeta } {
-  const panels = config.featureToggles.emptyDashboardPage
-    ? []
-    : [
-        {
-          type: panelType ?? 'add-panel',
-          gridPos: { x: 0, y: 0, w: 12, h: 9 },
-          title: 'Panel Title',
-        },
-      ];
-
+export function getNewDashboardModelData(urlFolderUid?: string): { dashboard: any; meta: DashboardMeta } {
   const data = {
     meta: {
       canStar: false,
@@ -324,7 +311,7 @@ export function getNewDashboardModelData(
     },
     dashboard: {
       title: 'New dashboard',
-      panels,
+      panels: [],
     },
   };
 

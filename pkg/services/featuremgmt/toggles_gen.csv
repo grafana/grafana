@@ -35,7 +35,6 @@ mysqlAnsiQuotes,experimental,@grafana/backend-platform,2022-10-12,false,false,fa
 accessControlOnCall,preview,@grafana/identity-access-team,2022-10-19,false,false,false,false
 nestedFolders,preview,@grafana/backend-platform,2022-10-22,false,false,false,false
 nestedFolderPicker,GA,@grafana/grafana-frontend-platform,2023-07-24,false,false,false,true
-emptyDashboardPage,GA,@grafana/dashboards-squad,2023-03-28,false,false,false,true
 disablePrometheusExemplarSampling,GA,@grafana/observability-metrics,2022-12-19,false,false,false,false
 alertingBacktesting,experimental,@grafana/alerting-squad,2022-10-20,false,false,false,false
 editPanelCSVDragAndDrop,experimental,@grafana/grafana-bi-squad,2022-12-20,false,false,false,true

@@ -37,7 +37,6 @@ import { liveTimer } from '../dashgrid/liveTimer';
 import { getTimeSrv } from '../services/TimeSrv';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { initDashboard } from '../state/initDashboard';
-import { calculateNewPanelGridPos } from '../utils/panel';
 
 import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './types';
 
@@ -265,29 +264,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     return updateStatePageNavFromProps(props, updatedState);
   }
 
-  // Todo: Remove this when we remove the emptyDashboardPage toggle
-  onAddPanel = () => {
-    const { dashboard } = this.props;
-
-    if (!dashboard) {
-      return;
-    }
-
-    // Return if the "Add panel" exists already
-    if (dashboard.panels.length > 0 && dashboard.panels[0].type === 'add-panel') {
-      return;
-    }
-
-    dashboard.addPanel({
-      type: 'add-panel',
-      gridPos: calculateNewPanelGridPos(dashboard),
-      title: 'Panel Title',
-    });
-
-    // scroll to top after adding panel
-    this.setState({ updateScrollTop: 0 });
-  };
-
   setScrollRef = (scrollElement: HTMLDivElement): void => {
     this.setState({ scrollElement });
   };
@@ -355,7 +331,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
                 title={dashboard.title}
                 folderTitle={dashboard.meta.folderTitle}
                 isFullscreen={!!viewPanel}
-                onAddPanel={this.onAddPanel}
                 kioskMode={kioskMode}
                 hideTimePicker={dashboard.timepicker.hidden}
               />
