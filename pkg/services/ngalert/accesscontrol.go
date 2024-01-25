@@ -25,10 +25,6 @@ var (
 					Action: accesscontrol.ActionAlertingRuleExternalRead,
 					Scope:  datasources.ScopeAll,
 				},
-				{
-					Action: "new:action",
-					Scope:  "scope:uid:two",
-				},
 			},
 		},
 	}
