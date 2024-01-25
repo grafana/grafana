@@ -317,7 +317,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:    "should skip when the user did not authenticate through oauth",
+			desc:     "should skip when the user did not authenticate through oauth",
 			identity: &authn.Identity{ID: "user:1234"},
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedUserAuth = &login.UserAuth{
@@ -342,7 +342,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedUserAuth = &login.UserAuth{
 					AuthModule:   login.GenericOAuthModule,
-					OAuthIdToken: VALID_JWT,
+					OAuthIdToken: EXPIRED_JWT,
 				}
 			},
 			expectedErr: nil,
@@ -354,7 +354,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedUserAuth = &login.UserAuth{
 					AuthModule:   login.GenericOAuthModule,
-					OAuthIdToken: VALID_JWT,
+					OAuthIdToken: EXPIRED_JWT,
 				}
 			},
 			expectedErr: nil,
@@ -368,7 +368,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedUserAuth = &login.UserAuth{
 					AuthModule:   login.GenericOAuthModule,
-					OAuthIdToken: VALID_JWT,
+					OAuthIdToken: EXPIRED_JWT,
 				}
 			},
 			expectedErr: nil,
