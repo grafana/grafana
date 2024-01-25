@@ -56,6 +56,70 @@ export function SaveDashboardForm({ dashboard, saveModel, hasChanges, options, o
     </Button>
   );
 
+  function renderFooter(error?: Error) {
+    if (isVersionMismatchError(error)) {
+      return (
+        <Alert title="Someone else has updated this dashboard" severity="error">
+          <p>Would you still like to save this dashboard?</p>
+          <Box paddingTop={2}>
+            <Stack alignItems="center">
+              {cancelButton}
+              {saveButton('Save and overwrite', 'destructive')}
+            </Stack>
+          </Box>
+        </Alert>
+      );
+    }
+
+    if (isNameExistsError(error)) {
+      return (
+        <Alert title="Name already exists" severity="error">
+          <p>
+            A dashboard with the same name in selected folder already exists. Would you still like to save this
+            dashboard?
+          </p>
+          <Box paddingTop={2}>
+            <Stack alignItems="center">
+              {cancelButton}
+              {saveButton('Save and overwrite', 'destructive')}
+            </Stack>
+          </Box>
+        </Alert>
+      );
+    }
+
+    if (isPluginDashboardError(error)) {
+      return (
+        <Alert title="Plugin dashboard" severity="error">
+          <p>
+            Your changes will be lost when you update the plugin. Use <strong>Save As</strong> to create custom version.
+          </p>
+          <Box paddingTop={2}>
+            <Stack alignItems="center">
+              {cancelButton}
+              {saveButton('Save and overwrite', 'destructive')}
+            </Stack>
+          </Box>
+        </Alert>
+      );
+    }
+
+    return (
+      <>
+        {error && (
+          <Alert title="Failed to save dashboard" severity="error">
+            <p>{error.message}</p>
+          </Alert>
+        )}
+        <Stack alignItems="center">
+          {cancelButton}
+          {saveButton('Save', 'primary')}
+          {!hasChanges && <div>No changes to save</div>}
+        </Stack>
+      </>
+    );
+  }
+
   return (
     <Stack gap={2} direction="column">
       {hasTimeChanged && (
@@ -114,31 +178,21 @@ export function SaveDashboardForm({ dashboard, saveModel, hasChanges, options, o
         />
       </div>
 
-      {state.error && isVersionMismatchError(state.error) && (
-        <Alert title="Someone else has updated this dashboard" severity="error">
-          <p>Would you still like to save this dashboard?</p>
-          <Box paddingTop={2}>
-            <Stack alignItems="center">
-              {cancelButton}
-              {saveButton('Save and overwrite', 'destructive')}
-            </Stack>
-          </Box>
-        </Alert>
-      )}
-
-      {!state.error && (
-        <Stack alignItems="center">
-          {cancelButton}
-          {saveButton('Save', 'primary')}
-          {!hasChanges && <div>No changes to save</div>}
-        </Stack>
-      )}
+      {renderFooter(state.error)}
     </Stack>
   );
 }
 
-function isVersionMismatchError(error: Error) {
+function isVersionMismatchError(error?: Error) {
   return isFetchError(error) && error.data && error.data.status === 'version-mismatch';
+}
+
+function isNameExistsError(error?: Error) {
+  return isFetchError(error) && error.data && error.data.status === 'name-exists';
+}
+
+function isPluginDashboardError(error?: Error) {
+  return isFetchError(error) && error.data && error.data.status === 'plugin-dashboard';
 }
 
 function getStyles(theme: GrafanaTheme2) {

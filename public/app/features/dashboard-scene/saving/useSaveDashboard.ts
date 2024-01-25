@@ -14,25 +14,6 @@ import { DashboardSavedEvent } from 'app/types/events';
 import { updateDashboardUidLastUsedDatasource } from '../../dashboard/utils/dashboard';
 import { DashboardScene } from '../scene/DashboardScene';
 
-const saveDashboard = async (
-  saveModel: any,
-  options: SaveDashboardOptions,
-  saveDashboardRtkQuery: ReturnType<typeof useSaveDashboardMutation>[0]
-) => {
-  const query = await saveDashboardRtkQuery({
-    dashboard: saveModel,
-    folderUid: options.folderUid,
-    message: options.message,
-    overwrite: options.overwrite,
-  });
-
-  if ('error' in query) {
-    throw query.error;
-  }
-
-  return query.data;
-};
-
 export function useDashboardSave(isCopy = false) {
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
@@ -41,15 +22,27 @@ export function useDashboardSave(isCopy = false) {
   const [state, onSaveDashboard] = useAsyncFn(
     async (scene: DashboardScene, saveModel: Dashboard, options: SaveDashboardOptions) => {
       {
-        const result = await saveDashboard(saveModel, options, saveDashboardRtkQuery);
+        const result = await saveDashboardRtkQuery({
+          dashboard: saveModel,
+          folderUid: options.folderUid,
+          message: options.message,
+          overwrite: options.overwrite,
+          showErrorAlert: false,
+        });
+
+        if ('error' in result) {
+          throw result.error;
+        }
+
+        const resultData = result.data;
 
         scene.setState({
-          version: result.version,
+          version: resultData.version,
           meta: {
             ...scene.state.meta,
-            uid: result.uid,
-            url: result.url,
-            slug: result.slug,
+            uid: resultData.uid,
+            url: resultData.url,
+            slug: resultData.slug,
             folderUid: options.folderUid,
           },
         });
@@ -61,22 +54,22 @@ export function useDashboardSave(isCopy = false) {
         notifyApp.success('Dashboard saved');
 
         //Update local storage dashboard to handle things like last used datasource
-        updateDashboardUidLastUsedDatasource(result.uid);
+        updateDashboardUidLastUsedDatasource(resultData.uid);
 
         if (isCopy) {
           reportInteraction('grafana_dashboard_copied', {
             name: saveModel.title,
-            url: result.url,
+            url: resultData.url,
           });
         } else {
-          reportInteraction(`grafana_dashboard_${result.uid ? 'saved' : 'created'}`, {
+          reportInteraction(`grafana_dashboard_${resultData.uid ? 'saved' : 'created'}`, {
             name: saveModel.title,
-            url: result.url,
+            url: resultData.url,
           });
         }
 
         const currentPath = locationService.getLocation().pathname;
-        const newUrl = locationUtil.stripBaseFromUrl(result.url);
+        const newUrl = locationUtil.stripBaseFromUrl(resultData.url);
 
         if (newUrl !== currentPath) {
           setTimeout(() => locationService.replace(newUrl));
@@ -84,13 +77,14 @@ export function useDashboardSave(isCopy = false) {
         if (scene.state.meta.isStarred) {
           dispatch(
             updateDashboardName({
-              id: result.uid,
+              id: resultData.uid,
               title: scene.state.title,
               url: newUrl,
             })
           );
         }
-        return result;
+
+        return resultData;
       }
     },
     [dispatch, notifyApp]
