@@ -53,6 +53,17 @@ describe('AnnotationsEditView', () => {
     it('should return the correct urlKey', () => {
       expect(annotationsView.getUrlKey()).toBe('annotations');
     });
+
+    it('should return the scene data layers', () => {
+      const dataLayers = annotationsView.getSceneDataLayers();
+
+      expect(dataLayers).toBeInstanceOf(SceneDataLayers);
+      expect(dataLayers?.state.layers.length).toBe(2);
+    });
+
+    it('should return the annotations length', () => {
+      expect(annotationsView.getAnnotationsLength()).toBe(1);
+    });
   });
 });
 

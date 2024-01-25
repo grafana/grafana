@@ -35,7 +35,7 @@ type Props = {
 
 export const newAnnotationName = 'New annotation';
 
-export const AnnotationSettingsEdit = ({ editIdx, annotations }: Props) => {
+export const AnnotationSettingsEdit = ({ annotations, editIdx }: Props) => {
   const styles = useStyles2(getStyles);
   const [annotation, setAnnotation] = useState(annotations[editIdx]);
 

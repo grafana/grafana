@@ -11,36 +11,22 @@ type Props = {
   annotations: AnnotationQuery[];
   onNew: () => void;
   onEdit: (idx: number) => void;
+  onMove: (idx: number, dir: number) => void;
+  onDelete: (idx: number) => void;
 };
 
-export const AnnotationSettingsList = ({ annotations, onNew, onEdit }: Props) => {
+export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onDelete }: Props) => {
   const styles = useStyles2(getStyles);
-
-  const onMove = (idx: number, direction: number) => {
-    console.log('todo: onMove');
-  };
-
-  const onDelete = (idx: number) => {
-    console.log('todo: onDelete');
-  };
 
   const showEmptyListCTA = annotations.length === 0 || (annotations.length === 1 && annotations[0].builtIn);
 
   const getAnnotationName = (anno: AnnotationQuery) => {
     if (anno.enable === false) {
-      return (
-        <>
-          <em className="muted">(Disabled) &nbsp; {anno.name}</em>
-        </>
-      );
+      return <em className="muted">(Disabled) &nbsp; {anno.name}</em>;
     }
 
     if (anno.builtIn) {
-      return (
-        <>
-          <em className="muted">{anno.name} &nbsp; (Built-in)</em>
-        </>
-      );
+      return <em className="muted">{anno.name} &nbsp; (Built-in)</em>;
     }
 
     return <>{anno.name}</>;
