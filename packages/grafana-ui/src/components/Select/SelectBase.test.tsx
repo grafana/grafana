@@ -1,12 +1,15 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useState } from 'react';
+import { select } from 'react-select-event';
 
 import { SelectableValue } from '@grafana/data';
 
-import { selectOptionInTest } from '../../../../../public/test/helpers/selectOptionInTest';
-
 import { SelectBase } from './SelectBase';
+
+// Used to select an option or options from a Select in unit tests
+const selectOptionInTest = async (input: HTMLElement, optionOrOptions: string | RegExp | Array<string | RegExp>) =>
+  await waitFor(() => select(input, optionOrOptions, { container: document.body }));
 
 describe('SelectBase', () => {
   const onChangeHandler = jest.fn();

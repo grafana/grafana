@@ -141,11 +141,6 @@ build-js: ## Build frontend assets.
 	yarn run build
 	yarn run plugins:build-bundled
 
-build-plugins-go: ## Build decoupled plugins
-	@echo "build plugins"
-	@cd pkg/tsdb; \
-	mage -v
-
 PLUGIN_ID ?=
 
 build-plugin-go: ## Build decoupled plugins
