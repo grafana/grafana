@@ -35,14 +35,6 @@ export function TraceQLEditor(props: Props) {
 
   const errorTimeoutId = useRef<number>();
 
-  useEffect(() => {
-    setAlertText('Error 1!');
-
-    setTimeout(() => {
-      setAlertText('Error 2!');
-    }, 5000);
-  }, []);
-
   return (
     <>
       <CodeEditor
