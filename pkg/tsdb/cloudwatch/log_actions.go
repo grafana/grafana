@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"math"
 	"sort"
 	"strings"
@@ -19,7 +20,6 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
@@ -212,7 +212,7 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 		QueryString: aws.String(modifiedQueryString),
 	}
 
-	if logsQuery.LogGroups != nil && len(logsQuery.LogGroups) > 0 && e.features.IsEnabled(ctx, featuremgmt.FlagCloudWatchCrossAccountQuerying) {
+	if logsQuery.LogGroups != nil && len(logsQuery.LogGroups) > 0 && features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying) {
 		var logGroupIdentifiers []string
 		for _, lg := range logsQuery.LogGroups {
 			arn := lg.Arn

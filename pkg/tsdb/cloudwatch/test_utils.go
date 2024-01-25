@@ -2,6 +2,8 @@ package cloudwatch
 
 import (
 	"context"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -269,4 +271,10 @@ func (e fakeAWSError) Code() string {
 
 func (e fakeAWSError) Message() string {
 	return e.message
+}
+
+func ContextWithFeaturesEnabled(enabled ...string) context.Context {
+	featureString := strings.Join(enabled, ",")
+	cfg := backend.NewGrafanaCfg(map[string]string{featuretoggles.EnabledFeatures: featureString})
+	return backend.WithGrafanaConfig(context.Background(), cfg)
 }
