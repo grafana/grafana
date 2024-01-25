@@ -71,7 +71,7 @@ export const NotificationPreview = ({
     <Stack direction="column">
       <div className={styles.routePreviewHeaderRow}>
         <div className={styles.previewHeader}>
-          <Text element="h4">Alert instance routing preview</Text>
+          <Text element="h5">Alert instance routing preview</Text>
           {isLoading && previewUninitialized && (
             <Text color="secondary" variant="bodySmall">
               Loading...
@@ -124,6 +124,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex-direction: row;
     justify-content: space-between;
     align-items: flex-start;
+    margin-top: ${theme.spacing(1)};
   `,
   collapseLabel: css`
     flex: 1;
