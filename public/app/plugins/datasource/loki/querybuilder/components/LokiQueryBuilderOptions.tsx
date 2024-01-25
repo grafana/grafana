@@ -2,10 +2,9 @@ import { trim } from 'lodash';
 import React, { useMemo, useState } from 'react';
 
 import { CoreApp, isValidDuration, isValidGrafanaDuration, SelectableValue } from '@grafana/data';
-import { EditorField, EditorRow } from '@grafana/experimental';
+import { EditorField, EditorRow, QueryOptionGroup } from '@grafana/experimental';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Alert, AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
-import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
 import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
 import { getLokiQueryType, isLogsQuery } from '../../queryUtils';

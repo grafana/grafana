@@ -1,12 +1,17 @@
-import { LokiAndPromQueryModellerBase } from '../../prometheus/querybuilder/shared/LokiAndPromQueryModellerBase';
-import { QueryBuilderLabelFilter } from '../../prometheus/querybuilder/shared/types';
+import {
+  QueryModellerBase,
+  QueryBuilderLabelFilter,
+  VisualQuery,
+  QueryBuilderOperation,
+  VisualQueryBinary,
+} from '@grafana/experimental';
 
-import { getOperationDefinitions } from './operations';
+import { operationDefinitions } from './operations';
 import { LokiOperationId, LokiQueryPattern, LokiQueryPatternType, LokiVisualQueryOperationCategory } from './types';
 
-export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
+export class LokiQueryModeller extends QueryModellerBase {
   constructor() {
-    super(getOperationDefinitions);
+    super(operationDefinitions, '<expr>');
 
     this.setOperationCategories([
       LokiVisualQueryOperationCategory.Aggregations,
@@ -18,12 +23,65 @@ export class LokiQueryModeller extends LokiAndPromQueryModellerBase {
     ]);
   }
 
-  renderLabels(labels: QueryBuilderLabelFilter[]) {
+  renderOperations(queryString: string, operations: QueryBuilderOperation[]): string {
+    for (const operation of operations) {
+      const def = this.operationsRegistry.getIfExists(operation.id);
+      if (!def) {
+        console.error(`Could not find operation ${operation.id} in the registry`);
+        continue;
+      }
+      queryString = def.renderer(operation, def, queryString);
+    }
+    return queryString;
+  }
+
+  renderBinaryQueries(queryString: string, binaryQueries?: Array<VisualQueryBinary<VisualQuery>>) {
+    if (binaryQueries) {
+      for (const binQuery of binaryQueries) {
+        queryString = `${this.renderBinaryQuery(queryString, binQuery)}`;
+      }
+    }
+    return queryString;
+  }
+
+  private renderBinaryQuery(leftOperand: string, binaryQuery: VisualQueryBinary<VisualQuery>) {
+    let result = leftOperand + ` ${binaryQuery.operator} `;
+
+    if (binaryQuery.vectorMatches) {
+      result += `${binaryQuery.vectorMatchesType}(${binaryQuery.vectorMatches}) `;
+    }
+
+    return result + this.renderQuery(binaryQuery.query, true);
+  }
+
+  renderLabels(labels: QueryBuilderLabelFilter[]): string {
     if (labels.length === 0) {
       return '{}';
     }
 
-    return super.renderLabels(labels);
+    let expr = '{';
+    for (const filter of labels) {
+      if (expr !== '{') {
+        expr += ', ';
+      }
+
+      expr += `${filter.label}${filter.op}"${filter.value}"`;
+    }
+
+    return expr + `}`;
+  }
+
+  renderQuery(query: VisualQuery, nested?: boolean): string {
+    let queryString = this.renderLabels(query.labels);
+    queryString = this.renderOperations(queryString, query.operations);
+
+    if (!nested && this.hasBinaryOp(query) && Boolean(query.binaryQueries?.length)) {
+      queryString = `(${queryString})`;
+    }
+
+    queryString = this.renderBinaryQueries(queryString, query.binaryQueries);
+
+    return queryString;
   }
 
   getQueryPatterns(): LokiQueryPattern[] {

@@ -1,25 +1,28 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { DataSourceApi, getDefaultTimeRange, LoadingState, PanelData, SelectableValue, TimeRange } from '@grafana/data';
-import { EditorRow } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
-import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
-import { OperationExplainedBox } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationExplainedBox';
-import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
-import { OperationListExplained } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationListExplained';
-import { OperationsEditorRow } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationsEditorRow';
-import { QueryBuilderHints } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryBuilderHints';
-import { RawQuery } from 'app/plugins/datasource/prometheus/querybuilder/shared/RawQuery';
 import {
+  EditorRow,
+  // LabelFilters, this is broken in @grafana/experimental so we need to use the one from prometheus
+  OperationExplainedBox,
+  OperationList,
+  OperationListExplained,
+  OperationsEditorRow,
+  QueryBuilderHints,
+  RawQuery,
   QueryBuilderLabelFilter,
   QueryBuilderOperation,
-} from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
+} from '@grafana/experimental';
+import { config } from '@grafana/runtime';
+import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
 
 import { testIds } from '../../components/LokiQueryEditor';
 import { LokiDatasource } from '../../datasource';
 import { escapeLabelValueInSelector } from '../../languageUtils';
 import logqlGrammar from '../../syntax';
+import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
+import { isConflictingFilter } from '../operationUtils';
 import { buildVisualQueryFromString } from '../parsing';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
@@ -130,7 +133,7 @@ export const LokiQueryBuilder = React.memo<Props>(
         {showExplain && (
           <OperationExplainedBox
             stepNumber={1}
-            title={<RawQuery query={`${lokiQueryModeller.renderLabels(query.labels)}`} lang={lang} />}
+            title={<RawQuery query={`${lokiQueryModeller.renderLabels(query.labels)}`} language={lang} />}
           >
             {EXPLAIN_LABEL_FILTER_CONTENT}
           </OperationExplainedBox>
@@ -143,14 +146,19 @@ export const LokiQueryBuilder = React.memo<Props>(
             onRunQuery={onRunQuery}
             datasource={datasource as DataSourceApi}
             highlightedOp={highlightedOp}
+            isConflictingOperation={(operation: QueryBuilderOperation, otherOperations: QueryBuilderOperation[]) =>
+              operation.id === LokiOperationId.LabelFilter && isConflictingFilter(operation, otherOperations)
+            }
           />
-          <QueryBuilderHints<LokiVisualQuery>
+          <QueryBuilderHints<LokiVisualQuery, LokiQuery>
             datasource={datasource}
             query={query}
             onChange={onChange}
             data={sampleData}
             queryModeller={lokiQueryModeller}
             buildVisualQueryFromString={buildVisualQueryFromString}
+            buildDataQueryFromQueryString={(queryString) => ({ expr: queryString, refId: 'hints' })}
+            buildQueryStringFromDataQuery={(query) => query.expr}
           />
         </OperationsEditorRow>
         {showExplain && (
@@ -158,7 +166,7 @@ export const LokiQueryBuilder = React.memo<Props>(
             stepNumber={2}
             queryModeller={lokiQueryModeller}
             query={query}
-            lang={lang}
+            language={lang}
             onMouseEnter={(op) => {
               setHighlightedOp(op);
             }}

@@ -1,6 +1,7 @@
 import { NodeType, SyntaxNode } from '@lezer/common';
 import { sortBy } from 'lodash';
 
+import { QueryBuilderLabelFilter } from '@grafana/experimental';
 import {
   Identifier,
   LabelFilter,
@@ -21,8 +22,6 @@ import {
   LogfmtExpressionParser,
   Expr,
 } from '@grafana/lezer-logql';
-
-import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types';
 
 import { unescapeLabelValue } from './languageUtils';
 import { getNodePositionsFromQuery } from './queryUtils';
