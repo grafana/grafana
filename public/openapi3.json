@@ -7786,8 +7786,8 @@
         "additionalProperties": {
           "$ref": "#/components/schemas/Scopes"
         },
-        "description": "example: {\"teams.read\": [\"teams:id:1\", \"teams:id:2\"]}",
-        "title": "Permissions with scopes grouped by action",
+        "description": "Permissions with scopes grouped by action.\n\nexample: {\"teams.read\": [\"teams:id:1\", \"teams:id:2\"]}",
+        "title": "PermissionsByAction",
         "type": "object"
       },
       "Playlist": {
@@ -9850,11 +9850,11 @@
         "type": "object"
       },
       "Scopes": {
-        "description": "example: [\"teams:id:1\", \"teams:id:2\"]",
+        "description": "List of scopes.\n\nexample: [\"teams:id:1\", \"teams:id:2\"]",
         "items": {
           "type": "string"
         },
-        "title": "List of scopes",
+        "title": "Scopes",
         "type": "array"
       },
       "SearchDeviceQueryResult": {

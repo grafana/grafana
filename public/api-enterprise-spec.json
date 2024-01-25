@@ -5562,9 +5562,9 @@
       "format": "int64"
     },
     "PermissionsByAction": {
-      "description": "example: {\"teams.read\": [\"teams:id:1\", \"teams:id:2\"]}",
+      "description": "Permissions with scopes grouped by action.\n\nexample: {\"teams.read\": [\"teams:id:1\", \"teams:id:2\"]}",
       "type": "object",
-      "title": "Permissions with scopes grouped by action",
+      "title": "PermissionsByAction",
       "additionalProperties": {
         "$ref": "#/definitions/Scopes"
       }
@@ -6588,9 +6588,9 @@
       }
     },
     "Scopes": {
-      "description": "example: [\"teams:id:1\", \"teams:id:2\"]",
+      "description": "List of scopes.\n\nexample: [\"teams:id:1\", \"teams:id:2\"]",
       "type": "array",
-      "title": "List of scopes",
+      "title": "Scopes",
       "items": {
         "type": "string"
       }
