@@ -423,7 +423,16 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 		})
 
 		if !isSubfolder {
-			for _, parentUID := range f.ParentUIDs {
+			// Get parents UIDs
+			parentUIDs := make([]string, 0)
+			pathUIDs := strings.Split(f.FullpathUIDs, "/")
+			for _, p := range pathUIDs {
+				if p != "" && p != f.UID {
+					parentUIDs = append(parentUIDs, p)
+				}
+			}
+
+			for _, parentUID := range parentUIDs {
 				contains := slices.ContainsFunc(allFolders, func(f *folder.Folder) bool {
 					return f.UID == parentUID
 				})

@@ -450,22 +450,11 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 		return nil, err
 	}
 
+	// Add URLs
 	for i, f := range folders {
 		f.Fullpath = strings.TrimLeft(f.Fullpath, "/")
 		f.FullpathUIDs = strings.TrimLeft(f.FullpathUIDs, "/")
 		folders[i] = f.WithURL()
-
-		// Add parent UIDs
-		if q.WithFullpath {
-			parents := make([]string, 0)
-			parentUIDs := strings.Split(f.FullpathUIDs, "/")
-			for _, p := range parentUIDs {
-				if p != "" && p != f.UID {
-					parents = append(parents, p)
-				}
-			}
-			f.ParentUIDs = parents
-		}
 	}
 
 	return folders, nil

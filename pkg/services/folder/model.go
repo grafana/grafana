@@ -50,7 +50,6 @@ type Folder struct {
 	HasACL       bool
 	Fullpath     string `xorm:"fullpath"`
 	FullpathUIDs string `xorm:"fullpath_uids"`
-	ParentUIDs   []string
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}
