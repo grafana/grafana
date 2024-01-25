@@ -299,8 +299,8 @@ export const CandlestickPanel = ({
                     />
                   );
                 }}
-                maxWidth={options.tooltip.maxWidth}
-                maxHeight={options.tooltip.maxHeight}
+                maxWidth={options.tooltip?.maxWidth}
+                maxHeight={options.tooltip?.maxHeight}
               />
             ) : (
               <>
@@ -320,7 +320,7 @@ export const CandlestickPanel = ({
                 annotations={data.annotations ?? []}
                 config={uplotConfig}
                 timeZone={timeZone}
-                newRange={newAnnotationRange}
+                newRange={enableAnnotationCreation ? newAnnotationRange : null}
                 setNewRange={setNewAnnotationRange}
               />
             ) : (

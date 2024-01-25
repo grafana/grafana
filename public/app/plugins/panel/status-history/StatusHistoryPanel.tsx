@@ -275,7 +275,7 @@ export const StatusHistoryPanel = ({
                   annotations={data.annotations ?? []}
                   config={builder}
                   timeZone={timeZone}
-                  newRange={newAnnotationRange}
+                  newRange={enableAnnotationCreation ? newAnnotationRange : null}
                   setNewRange={setNewAnnotationRange}
                   canvasRegionRendering={false}
                 />
