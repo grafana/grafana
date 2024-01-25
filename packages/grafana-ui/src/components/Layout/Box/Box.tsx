@@ -7,7 +7,7 @@ import { useStyles2 } from '../../../themes';
 import { AlignItems, FlexProps, JustifyContent } from '../types';
 import { ResponsiveProp, getResponsiveStyle } from '../utils/responsiveness';
 
-type Display = 'flex' | 'block' | 'inline' | 'none';
+type Display = 'flex' | 'block' | 'inline' | 'inline-block' | 'none';
 export type BackgroundColor = keyof GrafanaTheme2['colors']['background'] | 'error' | 'success' | 'warning' | 'info';
 export type BorderStyle = 'solid' | 'dashed';
 export type BorderColor = keyof GrafanaTheme2['colors']['border'] | 'error' | 'success' | 'warning' | 'info';

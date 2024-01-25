@@ -3,9 +3,9 @@ import { useCopyToClipboard } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect, Space } from '@grafana/experimental';
+import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, InlineSwitch, RadioButtonGroup, Tooltip } from '@grafana/ui';
+import { Button, InlineSwitch, RadioButtonGroup, Tooltip, Space } from '@grafana/ui';
 
 import { QueryWithDefaults } from '../defaults';
 import { SQLQuery, QueryFormat, QueryRowFilter, QUERY_FORMAT_OPTIONS, DB, SQLDialect } from '../types';
