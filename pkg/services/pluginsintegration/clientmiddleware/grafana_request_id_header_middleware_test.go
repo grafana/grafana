@@ -5,17 +5,17 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -68,6 +68,30 @@ func Test_HostedGrafanaACHeaderMiddleware(t *testing.T) {
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
 					URL: "https://logs.not-grafana.net",
+				},
+			},
+		}, nopCallResourceSender)
+		require.NoError(t, err)
+
+		require.Len(t, cdt.CallResourceReq.Headers[GrafanaRequestID], 0)
+		require.Len(t, cdt.CallResourceReq.Headers[GrafanaSignedRequestID], 0)
+	})
+
+	t.Run("Should set Grafana request ID headers if a sanitized data source URL is in the allow list", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.IPRangeACAllowedURLs = []string{"https://logs.GRAFANA.net/"}
+		cfg.IPRangeACSecretKey = "secret"
+		cdt := clienttest.NewClientDecoratorTest(t, clienttest.WithMiddlewares(NewHostedGrafanaACHeaderMiddleware(cfg)))
+
+		ctx := context.WithValue(context.Background(), ctxkey.Key{}, &contextmodel.ReqContext{
+			Context:      &web.Context{Req: &http.Request{}},
+			SignedInUser: &user.SignedInUser{},
+		})
+
+		err := cdt.Decorator.CallResource(ctx, &backend.CallResourceRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					URL: "https://logs.grafana.net/abc/../",
 				},
 			},
 		}, nopCallResourceSender)

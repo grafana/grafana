@@ -5,7 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	"slices"
+	"path"
 
 	"github.com/google/uuid"
 
@@ -47,22 +47,31 @@ func (m *HostedGrafanaACHeaderMiddleware) applyGrafanaRequestIDHeader(pCtx backe
 	}
 
 	// Check if the request is for a datasource that is allowed to have the header
-	url := pCtx.DataSourceInstanceSettings.URL
-	if !slices.Contains(m.cfg.IPRangeACAllowedURLs, url) {
+	target := pCtx.DataSourceInstanceSettings.URL
+
+	foundMatch := false
+	for _, allowedURL := range m.cfg.IPRangeACAllowedURLs {
+		if path.Clean(allowedURL) == path.Clean(target) {
+			foundMatch = true
+			break
+		}
+	}
+	if !foundMatch {
+		m.log.Debug("Data source URL not among the allow-listed URLs", "url", target)
 		return
 	}
 
 	// Generate a new Grafana request ID and sign it with the secret key
 	uid, err := uuid.NewRandom()
 	if err != nil {
-		m.log.Error("Failed to generate Grafana request ID", "error", err)
+		m.log.Debug("Failed to generate Grafana request ID", "error", err)
 		return
 	}
 	grafanaRequestID := uid.String()
 
 	hmac := hmac.New(sha256.New, []byte(m.cfg.IPRangeACSecretKey))
 	if _, err := hmac.Write([]byte(grafanaRequestID)); err != nil {
-		m.log.Error("Failed to sign IP range access control header", "error", err)
+		m.log.Debug("Failed to sign IP range access control header", "error", err)
 		return
 	}
 	signedGrafanaRequestID := hex.EncodeToString(hmac.Sum(nil))
