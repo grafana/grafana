@@ -35,10 +35,26 @@ func testCases() []testCase {
 	}
 
 	return []testCase{
+		//{
+		//	desc:          "empty permissions lead to empty permissions",
+		//	putRolePerms:  map[int64]map[string][]rawPermission{},
+		//	wantRolePerms: map[int64]map[string][]rawPermission{},
+		//},
 		{
-			desc:          "empty permissions lead to empty permissions",
-			putRolePerms:  map[int64]map[string][]rawPermission{},
-			wantRolePerms: map[int64]map[string][]rawPermission{},
+			desc: "adds new permissions for instances without basic roles (should only be OSS instances)",
+			putRolePerms: map[int64]map[string][]rawPermission{
+				1: {
+					"managed:users:1:permissions": {{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:test"}},
+				},
+			},
+			wantRolePerms: map[int64]map[string][]rawPermission{
+				1: {
+					"managed:users:1:permissions": {
+						{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:test"},
+						{Action: accesscontrol.ActionAnnotationsRead, Scope: "dashboards:uid:test"},
+					},
+				},
+			},
 		},
 		{
 			desc: "doesn't add any new permissions if has default annotation permissions on basic roles but no dashboard or folder permissions",

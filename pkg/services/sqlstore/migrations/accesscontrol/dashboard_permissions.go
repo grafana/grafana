@@ -677,17 +677,17 @@ func (m *managedDashboardAnnotationActionsMigrator) SQL(dialect migrator.Dialect
 
 func (m *managedDashboardAnnotationActionsMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	// Check if roles have been populated and return early if they haven't - this avoids logging a warning from hasDefaultAnnotationPermissions
-	roleCount, err := sess.Count(&ac.Role{})
+	roleCount, err := sess.Where(`uid IN ("basic_viewer", "basic_editor", "basic_admin")`).Count(&ac.Role{})
 	if err != nil {
-		return fmt.Errorf("failed to check if roles have been populated: %w", err)
+		return fmt.Errorf("failed to check if basic roles have been populated: %w", err)
 	}
-	if roleCount == 0 {
-		return nil
-	}
-
-	// Check that default annotation permissions are assigned to basic roles. If that is not the case, skip the migration.
-	if hasDefaultPerms, err := m.hasDefaultAnnotationPermissions(sess, mg); err != nil || !hasDefaultPerms {
-		return err
+	// Role count will be 0 either for new Grafana installations (in that case no managed roles will exist either, and the next conditional will return nil)
+	// or for OSS instances, for which basic role permissions can't be changed, so we don't need to run the default permission check in that case.
+	if roleCount != 0 {
+		// Check that default annotation permissions are assigned to basic roles. If that is not the case, skip the migration.
+		if hasDefaultPerms, err := m.hasDefaultAnnotationPermissions(sess, mg); err != nil || !hasDefaultPerms {
+			return err
+		}
 	}
 
 	var ids []any
