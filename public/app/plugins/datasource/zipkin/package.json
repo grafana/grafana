@@ -24,7 +24,7 @@
     "@testing-library/react": "14.1.2",
     "@types/lodash": "4.14.202",
     "@types/react": "18.2.48",
-    "@types/uuid": "9.0.7",
+    "@types/uuid": "9.0.8",
     "ts-node": "10.9.2",
     "webpack": "5.90.0"
   },
