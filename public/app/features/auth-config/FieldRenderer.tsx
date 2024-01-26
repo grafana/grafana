@@ -97,9 +97,8 @@ export const FieldRenderer = ({
     case 'select':
       const watchOptions = watch(name);
       let options = fieldData.options;
-
       if (!fieldData.options?.length) {
-        options = isSelectableValue(watchOptions) ? watchOptions : [{ label: '', value: '' }];
+        options = isSelectableValue(watchOptions) ? watchOptions : [];
       }
       return (
         <Field {...fieldProps} htmlFor={name}>
