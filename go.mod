@@ -111,7 +111,7 @@ require (
 	golang.org/x/oauth2 v0.15.0 // @grafana/grafana-authnz-team
 	golang.org/x/sync v0.5.0 // @grafana/alerting-squad-backend
 	golang.org/x/time v0.5.0 // @grafana/backend-platform
-	golang.org/x/tools v0.16.0 // @grafana/grafana-as-code
+	golang.org/x/tools v0.16.1 // @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.12.0 // @grafana/observability-metrics
 	google.golang.org/api v0.149.0 // @grafana/backend-platform
 	google.golang.org/grpc v1.60.1 // @grafana/plugins-platform-backend
@@ -483,6 +483,8 @@ require (
 )
 
 require k8s.io/apiextensions-apiserver v0.29.0 // @grafana/grafana-app-platform-squad
+
+require k8s.io/code-generator v0.29.1 // @grafana/grafana-app-platform-squad
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20231025143828-a6c0e9b86a4c
