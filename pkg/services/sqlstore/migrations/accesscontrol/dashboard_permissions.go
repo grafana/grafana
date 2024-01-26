@@ -701,7 +701,7 @@ func (m *managedDashboardAnnotationActionsMigrator) Exec(sess *xorm.Session, mg 
 
 	var permissions []ac.Permission
 	roleQueryBatchSize := 100
-	batch(len(ids), roleQueryBatchSize, func(start, end int) error {
+	err = batch(len(ids), roleQueryBatchSize, func(start, end int) error {
 		var batchPermissions []ac.Permission
 		if err := sess.SQL("SELECT role_id, action, scope FROM permission WHERE role_id IN(?"+strings.Repeat(" ,?", len(ids[start:end])-1)+") AND (scope LIKE 'folders:%' or scope LIKE 'dashboards:%')", ids[start:end]...).Find(&batchPermissions); err != nil {
 			return err
@@ -709,6 +709,9 @@ func (m *managedDashboardAnnotationActionsMigrator) Exec(sess *xorm.Session, mg 
 		permissions = append(permissions, batchPermissions...)
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
 	mapped := make(map[int64]map[string]map[string]bool, len(ids)-1)
 	for _, p := range permissions {

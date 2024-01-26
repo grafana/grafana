@@ -116,8 +116,11 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 
 	// https://github.com/grafana/identity-access-team/issues/546: tracks removal of the feature toggle from the annotation permission migration
 	// nolint:staticcheck
-	if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAnnotationPermissionUpdate) {
-		accesscontrol.AddManagedDashboardAnnotationActionsMigration(mg)
+	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
+		// nolint:staticcheck
+		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAnnotationPermissionUpdate) {
+			accesscontrol.AddManagedDashboardAnnotationActionsMigration(mg)
+		}
 	}
 
 	addKVStoreMySQLValueTypeLongTextMigration(mg)
