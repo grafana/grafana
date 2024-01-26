@@ -30,9 +30,9 @@ export function DataTrailCard({ trail, onSelect, onDelete }: Props) {
     <Card onClick={() => onSelect(trail)}>
       <Card.Heading className={styles.title}>{getMetricName(trail.state.metric)}</Card.Heading>
       <div className={styles.description}>
-        <Stack gap={2}>
+        <Stack gap={1.5}>
           {filters.map((f) => (
-            <Tag key={f.key} name={`${f.key}=${f.value}`} colorIndex={9} className={styles.tag} />
+            <Tag key={f.key} name={`${f.key}: ${f.value}`} colorIndex={9} className={styles.tag} />
           ))}
         </Stack>
       </div>
@@ -40,7 +40,7 @@ export function DataTrailCard({ trail, onSelect, onDelete }: Props) {
         <Stack gap={1} justifyContent={'space-between'} grow={1}>
           <div className={styles.secondary}>Datasource: {getDataSourceName(dsValue)}</div>
           {trail.state.createdAt && (
-            <div className={styles.secondary}>{new Date(trail.state.createdAt).toLocaleDateString()}</div>
+            <i className={styles.secondary}>{new Date(trail.state.createdAt).toLocaleDateString()}</i>
           )}
         </Stack>
       </Card.Actions>
@@ -81,7 +81,7 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     tag: css({
-      maxWidth: '150px',
+      maxWidth: '145px',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
     }),
