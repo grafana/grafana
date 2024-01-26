@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React from 'react';
+import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { LoadingPlaceholder, Pagination, Spinner, useStyles2 } from '@grafana/ui';
@@ -7,13 +8,16 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
+import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
 import { flattenGrafanaManagedRules } from '../../hooks/useCombinedRuleNamespaces';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
+import { GrafanaRulesExporter } from '../export/GrafanaRulesExporter';
 
+import { ActionButton } from './ActionButton';
 import { RulesGroup } from './RulesGroup';
 import { useCombinedGroupNamespace } from './useCombinedGroupNamespace';
 
@@ -45,10 +49,30 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
     DEFAULT_PER_PAGE_PAGINATION
   );
 
+  const [exportRulesSupported, exportRulesAllowed] = useAlertingAbility(AlertingAction.ExportGrafanaManagedRules);
+  const canExportRules = exportRulesSupported && exportRulesAllowed;
+
+  const [showExportDrawer, toggleShowExportDrawer] = useToggle(false);
+  const hasGrafanaAlerts = namespaces.length > 0;
+
   return (
     <section className={styles.wrapper}>
       <div className={styles.sectionHeader}>
-        <h5>Grafana</h5>
+        <div className={styles.headerRow}>
+          <h5>Grafana</h5>
+          {hasGrafanaAlerts && canExportRules && (
+            <ActionButton
+              aria-label="export all grafana rules"
+              data-testid="export-all-grafana-rules"
+              icon="download-alt"
+              tooltip="Export all Grafana-managed rules"
+              onClick={toggleShowExportDrawer}
+              className={styles.exportButton}
+            >
+              Export
+            </ActionButton>
+          )}
+        </div>
         {loading ? <LoadingPlaceholder className={styles.loader} text="Loading..." /> : <div />}
       </div>
 
@@ -70,6 +94,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
         onNavigate={onPageChange}
         hideWhenSinglePage
       />
+      {canExportRules && showExportDrawer && <GrafanaRulesExporter onClose={toggleShowExportDrawer} />}
     </section>
   );
 };
@@ -91,4 +116,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(2)};
   `,
   pagination: getPaginationStyles(theme),
+  headerRow: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    flexDirection: 'row',
+  }),
+  exportButton: css({
+    fontSize: theme.typography.size.md,
+  }),
 });
