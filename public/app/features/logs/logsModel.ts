@@ -844,6 +844,7 @@ export function logRowToSingleRowDataFrame(logRow: LogRowModel): DataFrame | nul
   // create a new data frame containing only the single row from `logRow`
   const frame = createDataFrame({
     fields: originFrame.fields.map((field) => ({ ...field, values: [field.values[logRow.rowIndex]] })),
+    refId: originFrame.refId,
   });
 
   return frame;

@@ -1636,6 +1636,7 @@ const mockLogRow = {
       },
       { name: 'labels', type: FieldType.other, values: [{ app: 'app01' }, { app: 'app02' }] },
     ],
+    refId: 'Z',
   }),
   rowIndex: 0,
 } as unknown as LogRowModel;
@@ -1673,5 +1674,10 @@ describe('logRowToDataFrame', () => {
     const result = logRowToSingleRowDataFrame({ ...mockLogRow, rowIndex: invalidRowIndex });
 
     expect(result).toBe(null);
+  });
+
+  it('should use refId from original DataFrame', () => {
+    const result = logRowToSingleRowDataFrame(mockLogRow);
+    expect(result?.refId).toBe(mockLogRow.dataFrame.refId);
   });
 });
