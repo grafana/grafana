@@ -32,7 +32,7 @@ type ContactPointService struct {
 }
 
 type receiverService interface {
-	GetReceiverGroups(ctx context.Context, query notifier.ReceiverGroupQuery, user identity.Requester) ([]apimodels.GettableApiReceiver, error)
+	GetReceiverGroups(ctx context.Context, query models.ReceiverGroupQuery, user identity.Requester) ([]apimodels.GettableApiReceiver, error)
 }
 
 func NewContactPointService(store AMConfigStore, encryptionService secrets.Service,
@@ -59,7 +59,7 @@ type ContactPointQuery struct {
 
 // GetContactPoints returns contact points. If q.Decrypt is true and the user is an OrgAdmin, decrypted secure settings are included instead of redacted ones.
 func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactPointQuery, u identity.Requester) ([]apimodels.EmbeddedContactPoint, error) {
-	receiverQuery := notifier.ReceiverGroupQuery{
+	receiverQuery := models.ReceiverGroupQuery{
 		OrgID:   q.OrgID,
 		Decrypt: q.Decrypt,
 	}

@@ -25,14 +25,6 @@ var (
 	ErrPermissionDenied = errors.New("permission denied")
 )
 
-type ReceiverGroupQuery struct {
-	OrgID   int64
-	Names   []string
-	Limit   int
-	Offset  int
-	Decrypt bool
-}
-
 type ReceiverGroupService struct {
 	ac                 accesscontrol.AccessControl
 	provisioningStore  provisoningStore
@@ -78,7 +70,7 @@ func (rs *ReceiverGroupService) canDecrypt(ctx context.Context, user identity.Re
 	return receiverAccess || provisioningAccess, nil
 }
 
-func (rs *ReceiverGroupService) GetReceiverGroups(ctx context.Context, q ReceiverGroupQuery, user identity.Requester) ([]definitions.GettableApiReceiver, error) {
+func (rs *ReceiverGroupService) GetReceiverGroups(ctx context.Context, q models.ReceiverGroupQuery, user identity.Requester) ([]definitions.GettableApiReceiver, error) {
 	rev, err := rs.versionedConfStore.GetLockingConfig(ctx, q.OrgID)
 	if err != nil {
 		return nil, err

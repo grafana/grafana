@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -147,8 +148,8 @@ func createEncryptedConfig(t *testing.T, secretService secrets.Service) string {
 	return string(bytes)
 }
 
-func rQuery(orgID int64, names ...string) ReceiverGroupQuery {
-	return ReceiverGroupQuery{
+func rQuery(orgID int64, names ...string) models.ReceiverGroupQuery {
+	return models.ReceiverGroupQuery{
 		OrgID: orgID,
 		Names: names,
 	}
