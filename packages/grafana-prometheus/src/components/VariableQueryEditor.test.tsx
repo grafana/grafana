@@ -149,6 +149,7 @@ describe('PromVariableQueryEditor', () => {
     await waitFor(() => expect(screen.getByText('Metrics')).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText('Query result')).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText('Series query')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Classic query')).toBeInTheDocument());
   });
 
   test('Calls onChange for label_names(match) query', async () => {
@@ -167,10 +168,11 @@ describe('PromVariableQueryEditor', () => {
     expect(onChange).toHaveBeenCalledWith({
       query: 'label_names(that)',
       refId,
+      qryType: 0,
     });
   });
 
-  test('Calls onChange for label_names, label_values, metrics, and query result queries', async () => {
+  test('Calls onChange for label_names, label_values, metrics, query result and and classic query.', async () => {
     const onChange = jest.fn();
 
     props.query = {
@@ -184,8 +186,9 @@ describe('PromVariableQueryEditor', () => {
     await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
     await selectOptionInTest(screen.getByLabelText('Query type'), 'Metrics');
     await selectOptionInTest(screen.getByLabelText('Query type'), 'Query result');
+    await selectOptionInTest(screen.getByLabelText('Query type'), 'Classic query');
 
-    expect(onChange).toHaveBeenCalledTimes(4);
+    expect(onChange).toHaveBeenCalledTimes(5);
   });
 
   test('Does not call onChange for series query', async () => {
@@ -220,6 +223,7 @@ describe('PromVariableQueryEditor', () => {
       expect(onChange).toHaveBeenCalledWith({
         query: 'metrics(a)',
         refId,
+        qryType: 2,
       })
     );
   });
@@ -230,6 +234,7 @@ describe('PromVariableQueryEditor', () => {
     props.query = {
       refId: 'test',
       query: 'label_names()',
+      qryType: 0,
     };
 
     render(<PromVariableQueryEditor {...props} onChange={onChange} />);
@@ -243,6 +248,7 @@ describe('PromVariableQueryEditor', () => {
       expect(onChange).toHaveBeenCalledWith({
         query: 'label_values(this)',
         refId,
+        qryType: 1,
       })
     );
   });
@@ -270,6 +276,7 @@ describe('PromVariableQueryEditor', () => {
       expect(onChange).toHaveBeenCalledWith({
         query: 'label_values(that,this)',
         refId,
+        qryType: 1,
       })
     );
   });
@@ -292,6 +299,7 @@ describe('PromVariableQueryEditor', () => {
     expect(onChange).toHaveBeenCalledWith({
       query: 'query_result(a)',
       refId,
+      qryType: 3,
     });
   });
 
@@ -313,6 +321,30 @@ describe('PromVariableQueryEditor', () => {
     expect(onChange).toHaveBeenCalledWith({
       query: '{a: "example"}',
       refId,
+      qryType: 4,
+    });
+  });
+
+  test('Calls onChange for classic query onBlur', async () => {
+    const onChange = jest.fn();
+
+    props.query = {
+      refId: 'test',
+      qryType: 5,
+      query: 'label_values(instance)',
+    };
+
+    render(<PromVariableQueryEditor {...props} onChange={onChange} />);
+
+    const labelSelect = screen.getByLabelText('Classic Query');
+    await userEvent.click(labelSelect);
+    const functionSelect = screen.getByLabelText('Query type').parentElement!;
+    await userEvent.click(functionSelect);
+
+    expect(onChange).toHaveBeenCalledWith({
+      query: 'label_values(instance)',
+      refId,
+      qryType: 5,
     });
   });
 });

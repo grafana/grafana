@@ -27,6 +27,7 @@ export const variableOptions = [
   { label: 'Metrics', value: QueryType.MetricNames },
   { label: 'Query result', value: QueryType.VarQueryResult },
   { label: 'Series query', value: QueryType.SeriesQuery },
+  { label: 'Classic query', value: QueryType.ClassicQuery },
 ];
 
 export type Props = QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions, PromVariableQuery>;
@@ -50,6 +51,9 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
   // seriesQuery is only a whole
   const [seriesQuery, setSeriesQuery] = useState('');
 
+  // the original variable query implementation
+  const [classicQuery, setClassicQuery] = useState('');
+
   // list of label names for label_values(), /api/v1/labels, contains the same results as label_names() function
   const [labelOptions, setLabelOptions] = useState<Array<SelectableValue<string>>>([]);
 
@@ -60,17 +64,24 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
     if (!query) {
       return;
     }
-    // 1. Changing from standard to custom variable editor changes the string attr from expr to query
-    // 2. jsonnet grafana as code passes a variable as a string
-    const variableQuery = variableMigration(query);
 
-    setLabelNamesMatch(variableQuery.match ?? '');
-    setQryType(variableQuery.qryType);
-    setLabel(variableQuery.label ?? '');
-    setMetric(variableQuery.metric ?? '');
-    setLabelFilters(variableQuery.labelFilters ?? []);
-    setVarQuery(variableQuery.varQuery ?? '');
-    setSeriesQuery(variableQuery.seriesQuery ?? '');
+    if (query.qryType === QueryType.ClassicQuery) {
+      setQryType(query.qryType);
+      setClassicQuery(query.query ?? '');
+    } else {
+      // 1. Changing from standard to custom variable editor changes the string attr from expr to query
+      // 2. jsonnet grafana as code passes a variable as a string
+      const variableQuery = variableMigration(query);
+
+      setLabelNamesMatch(variableQuery.match ?? '');
+      setQryType(variableQuery.qryType);
+      setLabel(variableQuery.label ?? '');
+      setMetric(variableQuery.metric ?? '');
+      setLabelFilters(variableQuery.labelFilters ?? []);
+      setVarQuery(variableQuery.varQuery ?? '');
+      setSeriesQuery(variableQuery.seriesQuery ?? '');
+      setClassicQuery(variableQuery.classicQuery ?? '');
+    }
   }, [query]);
 
   // set the label names options for the label values var query
@@ -117,6 +128,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
       match: labelNamesMatch,
       varQuery,
       seriesQuery,
+      classicQuery,
       refId: 'PrometheusVariableQueryEditor-VariableQuery',
     };
 
@@ -129,6 +141,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
     // setting query.query property allows for update of variable definition
     onChange({
       query: queryString,
+      qryType: updatedVar.qryType,
       refId,
     });
   };
@@ -199,6 +212,10 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
    */
   const onSeriesQueryChange = (e: FormEvent<HTMLInputElement>) => {
     setSeriesQuery(e.currentTarget.value);
+  };
+
+  const onClassicQueryChange = (e: FormEvent<HTMLInputElement>) => {
+    setClassicQuery(e.currentTarget.value);
   };
 
   const promVisualQuery = useCallback(() => {
@@ -374,6 +391,35 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
               }}
               width={100}
               data-testid={selectors.components.DataSource.Prometheus.variableQueryEditor.seriesQuery}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      )}
+
+      {qryType === QueryType.ClassicQuery && (
+        <InlineFieldRow>
+          <InlineField
+            label="Classic Query"
+            labelWidth={20}
+            tooltip={
+              <div>
+                The original implemetation of the Prometheus variable query editor. Enter a string with the correct
+                query type and parameters as described in these docs. For example, label_values(label, metric).
+              </div>
+            }
+          >
+            <Input
+              type="text"
+              aria-label="Classic Query"
+              placeholder="Classic Query"
+              value={classicQuery}
+              onChange={onClassicQueryChange}
+              onBlur={() => {
+                if (qryType === QueryType.ClassicQuery && classicQuery) {
+                  onChangeWithVariableString({ qryType });
+                }
+              }}
+              width={100}
             />
           </InlineField>
         </InlineFieldRow>

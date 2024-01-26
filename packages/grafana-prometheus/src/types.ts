@@ -197,6 +197,7 @@ export enum PromVariableQueryType {
   MetricNames,
   VarQueryResult,
   SeriesQuery,
+  ClassicQuery,
 }
 
 export interface PromVariableQuery extends DataQuery {
@@ -209,6 +210,7 @@ export interface PromVariableQuery extends DataQuery {
   seriesQuery?: string;
   labelFilters?: QueryBuilderLabelFilter[];
   match?: string;
+  classicQuery?: string;
 }
 
 export type StandardPromVariableQuery = {
