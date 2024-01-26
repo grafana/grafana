@@ -120,6 +120,8 @@ func Test_setRequestVariables(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
 	}
+	println(req)
+	println(cloudMonitor)
 	_, _, err = s.setRequestVariables(req, cloudMonitor)
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)

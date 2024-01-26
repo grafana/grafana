@@ -39,7 +39,6 @@ type (
 
 	cloudMonitoringTimeSeriesList struct {
 		refID      string
-		logger     log.Logger
 		aliasBy    string
 		parameters *dataquery.TimeSeriesList
 		// Processed properties
@@ -48,7 +47,6 @@ type (
 	// cloudMonitoringSLO is used to build time series with a filter but for the SLO case
 	cloudMonitoringSLO struct {
 		refID      string
-		logger     log.Logger
 		aliasBy    string
 		parameters *dataquery.SLOQuery
 		// Processed properties
