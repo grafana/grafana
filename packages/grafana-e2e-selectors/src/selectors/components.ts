@@ -164,6 +164,7 @@ export const Components = {
         container: 'data-testid hover-header-container',
         dragIcon: 'data-testid drag-icon',
       },
+      PanelDataErrorMessage: 'data-testid Panel data error message',
     },
     Visualization: {
       Graph: {
@@ -306,6 +307,7 @@ export const Components = {
   },
   Transforms: {
     card: (name: string) => `data-testid New transform ${name}`,
+    disableTransformationButton: 'data-testid Disable transformation button',
     Reduce: {
       modeLabel: 'data-testid Transform mode label',
       calculationsLabel: 'data-testid Transform calculations label',
