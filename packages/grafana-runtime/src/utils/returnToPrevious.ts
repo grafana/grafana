@@ -13,7 +13,10 @@ export const setReturnToPreviousHook = (hook: ReturnToPreviousHook) => {
 
 export const useReturnToPrevious: ReturnToPreviousHook = () => {
   if (!rtpHook) {
-    throw new Error('rtpHook not defined yet');
+    if (process.env.NODE_ENV !== 'production') {
+      throw new Error("useReturnToPrevious hook not found in @grafana/runtime")
+    }
+    return () => console.error("ReturnToPrevious hook not found")
   }
 
   return rtpHook();
