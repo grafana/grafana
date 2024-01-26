@@ -71,7 +71,13 @@ export const AddPermission = ({
       <CloseButton onClick={onCancel} />
       <h5>{title}</h5>
 
-      <form name="addPermission" onSubmit={() => onAdd({ userId, teamId, builtInRole, permission, target })}>
+      <form
+        name="addPermission"
+        onSubmit={(event) => {
+          event.preventDefault();
+          onAdd({ userId, teamId, builtInRole, permission, target });
+        }}
+      >
         <Stack gap={1} direction="row">
           <Select
             aria-label="Role to add new permission to"
