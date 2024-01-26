@@ -9,20 +9,23 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/dskit/concurrency"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/exp/slices"
 
-	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -56,7 +59,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	r prometheus.Registerer,
 ) folder.Service {
-	store := ProvideStore(db, cfg, features)
+	store := ProvideStore(db, cfg)
 	srv := &Service{
 		cfg:                  cfg,
 		log:                  log.New("folder-service"),
@@ -70,6 +73,7 @@ func ProvideService(
 		registry:             make(map[string]folder.RegistryService),
 		metrics:              newFoldersMetrics(r),
 	}
+	srv.DBMigration(db)
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
@@ -77,31 +81,104 @@ func ProvideService(
 	return srv
 }
 
-func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.Folder, error) {
-	if cmd.SignedInUser == nil {
+func (s *Service) DBMigration(db db.DB) {
+	s.log.Debug("syncing dashboard and folder tables started")
+
+	ctx := context.Background()
+	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		var err error
+		if db.GetDialect().DriverName() == migrator.SQLite {
+			_, err = sess.Exec(`
+				INSERT INTO folder (uid, org_id, title, created, updated)
+				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1
+				ON CONFLICT DO UPDATE SET title=excluded.title, updated=excluded.updated
+			`)
+		} else if db.GetDialect().DriverName() == migrator.Postgres {
+			_, err = sess.Exec(`
+				INSERT INTO folder (uid, org_id, title, created, updated)
+				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true
+				ON CONFLICT(uid, org_id) DO UPDATE SET title=excluded.title, updated=excluded.updated
+			`)
+		} else {
+			_, err = sess.Exec(`
+				INSERT INTO folder (uid, org_id, title, created, updated)
+				SELECT * FROM (SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1) AS derived
+				ON DUPLICATE KEY UPDATE title=derived.title, updated=derived.updated
+			`)
+		}
+		if err != nil {
+			return err
+		}
+		_, err = sess.Exec(`
+			DELETE FROM folder WHERE NOT EXISTS
+				(SELECT 1 FROM dashboard WHERE dashboard.uid = folder.uid AND dashboard.org_id = folder.org_id AND dashboard.is_folder = true)
+		`)
+		return err
+	})
+	if err != nil {
+		s.log.Error("DB migration on folder service start failed.", "err", err)
+	}
+
+	s.log.Debug("syncing dashboard and folder tables finished")
+}
+
+func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
+	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && cmd.UID != nil && *cmd.UID == folder.SharedWithMeFolderUID {
+	qry := NewGetFoldersQuery(q)
+	permissions := q.SignedInUser.GetPermissions()
+	folderPermissions := permissions[dashboards.ActionFoldersRead]
+	qry.ancestorUIDs = make([]string, 0, len(folderPermissions))
+	for _, p := range folderPermissions {
+		if p == dashboards.ScopeFoldersAll {
+			// no need to query for folders with permissions
+			// the user has permission to access all folders
+			qry.ancestorUIDs = nil
+			break
+		}
+		if folderUid, found := strings.CutPrefix(p, dashboards.ScopeFoldersPrefix); found {
+			if !slices.Contains(qry.ancestorUIDs, folderUid) {
+				qry.ancestorUIDs = append(qry.ancestorUIDs, folderUid)
+			}
+		}
+	}
+
+	dashFolders, err := s.store.GetFolders(ctx, qry)
+	if err != nil {
+		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)
+	}
+
+	return dashFolders, nil
+}
+
+func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
+	if q.SignedInUser == nil {
+		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
+	}
+
+	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && q.UID != nil && *q.UID == folder.SharedWithMeFolderUID {
 		return folder.SharedWithMeFolder.WithURL(), nil
 	}
 
 	var dashFolder *folder.Folder
 	var err error
 	switch {
-	case cmd.UID != nil && *cmd.UID != "":
-		dashFolder, err = s.getFolderByUID(ctx, cmd.OrgID, *cmd.UID)
+	case q.UID != nil && *q.UID != "":
+		dashFolder, err = s.getFolderByUID(ctx, q.OrgID, *q.UID)
 		if err != nil {
 			return nil, err
 		}
 	// nolint:staticcheck
-	case cmd.ID != nil:
-		dashFolder, err = s.getFolderByID(ctx, *cmd.ID, cmd.OrgID)
+	case q.ID != nil:
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
+		dashFolder, err = s.getFolderByID(ctx, *q.ID, q.OrgID)
 		if err != nil {
 			return nil, err
 		}
-	case cmd.Title != nil:
-		dashFolder, err = s.getFolderByTitle(ctx, cmd.OrgID, *cmd.Title)
+	case q.Title != nil:
+		dashFolder, err = s.getFolderByTitle(ctx, q.OrgID, *q.Title, q.ParentUID)
 		if err != nil {
 			return nil, err
 		}
@@ -116,7 +193,7 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 	// do not get guardian by the folder ID because it differs from the nested folder ID
 	// and the legacy folder ID has been associated with the permissions:
 	// use the folde UID instead that is the same for both
-	g, err := guardian.NewByFolder(ctx, dashFolder, dashFolder.OrgID, cmd.SignedInUser)
+	g, err := guardian.NewByFolder(ctx, dashFolder, dashFolder.OrgID, q.SignedInUser)
 	if err != nil {
 		return nil, err
 	}
@@ -131,19 +208,20 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		return dashFolder, nil
 	}
-
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
-	if cmd.ID != nil {
-		cmd.ID = nil
-		cmd.UID = &dashFolder.UID
+	if q.ID != nil {
+		q.ID = nil
+		q.UID = &dashFolder.UID
 	}
 
-	f, err := s.store.Get(ctx, *cmd)
+	f, err := s.store.Get(ctx, *q)
 	if err != nil {
 		return nil, err
 	}
 
 	// always expose the dashboard store sequential ID
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	f.ID = dashFolder.ID
 	f.Version = dashFolder.Version
@@ -152,6 +230,14 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 }
 
 func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+	defer func(t time.Time) {
+		parent := q.UID
+		if q.UID != folder.SharedWithMeFolderUID {
+			parent = "folder"
+		}
+		s.metrics.foldersGetChildrenRequestsDuration.WithLabelValues(parent).Observe(time.Since(t).Seconds())
+	}(time.Now())
+
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
@@ -204,6 +290,7 @@ func (s *Service) GetChildren(ctx context.Context, q *folder.GetChildrenQuery) (
 		}
 
 		// always expose the dashboard store sequential ID
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 		// nolint:staticcheck
 		f.ID = dashFolder.ID
 	}
@@ -253,6 +340,7 @@ func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery
 			s.log.Error("failed to fetch folder by UID from dashboard store", "orgID", f.OrgID, "uid", f.UID)
 		}
 		// always expose the dashboard store sequential ID
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 		// nolint:staticcheck
 		f.ID = dashFolder.ID
 
@@ -270,19 +358,20 @@ func (s *Service) getRootFolders(ctx context.Context, q *folder.GetChildrenQuery
 }
 
 // GetSharedWithMe returns folders available to user, which cannot be accessed from the root folders
-func (s *Service) GetSharedWithMe(ctx context.Context, cmd *folder.GetChildrenQuery) ([]*folder.Folder, error) {
+func (s *Service) GetSharedWithMe(ctx context.Context, q *folder.GetChildrenQuery) ([]*folder.Folder, error) {
 	start := time.Now()
-	availableNonRootFolders, err := s.getAvailableNonRootFolders(ctx, cmd.OrgID, cmd.SignedInUser)
+	availableNonRootFolders, err := s.getAvailableNonRootFolders(ctx, q.OrgID, q.SignedInUser)
 	if err != nil {
 		s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("failure").Observe(time.Since(start).Seconds())
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders to which the user has explicit access: %w", err)
 	}
-	rootFolders, err := s.GetChildren(ctx, &folder.GetChildrenQuery{UID: "", OrgID: cmd.OrgID, SignedInUser: cmd.SignedInUser})
+	rootFolders, err := s.GetChildren(ctx, &folder.GetChildrenQuery{UID: "", OrgID: q.OrgID, SignedInUser: q.SignedInUser})
 	if err != nil {
 		s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("failure").Observe(time.Since(start).Seconds())
 		return nil, folder.ErrInternal.Errorf("failed to fetch root folders to which the user has access: %w", err)
 	}
-	availableNonRootFolders = s.deduplicateAvailableFolders(ctx, availableNonRootFolders, rootFolders)
+
+	availableNonRootFolders = s.deduplicateAvailableFolders(ctx, availableNonRootFolders, rootFolders, q.OrgID)
 	s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("success").Observe(time.Since(start).Seconds())
 	return availableNonRootFolders, nil
 }
@@ -305,7 +394,12 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, u
 		return nonRootFolders, nil
 	}
 
-	dashFolders, err := s.store.GetFolders(ctx, orgID, folderUids)
+	dashFolders, err := s.GetFolders(ctx, folder.GetFoldersQuery{
+		UIDs:             folderUids,
+		OrgID:            orgID,
+		SignedInUser:     user,
+		WithFullpathUIDs: true,
+	})
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)
 	}
@@ -319,24 +413,28 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, orgID int64, u
 	return nonRootFolders, nil
 }
 
-func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder, rootFolders []*folder.Folder) []*folder.Folder {
+func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder, rootFolders []*folder.Folder, orgID int64) []*folder.Folder {
 	allFolders := append(folders, rootFolders...)
 	foldersDedup := make([]*folder.Folder, 0)
+
 	for _, f := range folders {
 		isSubfolder := slices.ContainsFunc(allFolders, func(folder *folder.Folder) bool {
 			return f.ParentUID == folder.UID
 		})
 
 		if !isSubfolder {
-			parents, err := s.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
-			if err != nil {
-				s.log.Error("failed to fetch folder parents", "uid", f.UID, "error", err)
-				continue
+			// Get parents UIDs
+			parentUIDs := make([]string, 0)
+			pathUIDs := strings.Split(f.FullpathUIDs, "/")
+			for _, p := range pathUIDs {
+				if p != "" && p != f.UID {
+					parentUIDs = append(parentUIDs, p)
+				}
 			}
 
-			for _, parent := range parents {
+			for _, parentUID := range parentUIDs {
 				contains := slices.ContainsFunc(allFolders, func(f *folder.Folder) bool {
-					return f.UID == parent.UID
+					return f.UID == parentUID
 				})
 				if contains {
 					isSubfolder = true
@@ -374,8 +472,8 @@ func (s *Service) getFolderByUID(ctx context.Context, orgID int64, uid string) (
 	return s.dashboardFolderStore.GetFolderByUID(ctx, orgID, uid)
 }
 
-func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title string) (*folder.Folder, error) {
-	return s.dashboardFolderStore.GetFolderByTitle(ctx, orgID, title)
+func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title string, parentUID *string) (*folder.Folder, error) {
+	return s.dashboardFolderStore.GetFolderByTitle(ctx, orgID, title, parentUID)
 }
 
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
@@ -457,7 +555,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 			// well, but for now we take the UID from the newly created folder.
 			UID:         dash.UID,
 			OrgID:       cmd.OrgID,
-			Title:       cmd.Title,
+			Title:       dashFolder.Title,
 			Description: cmd.Description,
 			ParentUID:   cmd.ParentUID,
 		}
@@ -498,7 +596,7 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		if foldr, err = s.store.Update(ctx, folder.UpdateFolderCommand{
 			UID:            cmd.UID,
 			OrgID:          cmd.OrgID,
-			NewTitle:       cmd.NewTitle,
+			NewTitle:       &dashFolder.Title,
 			NewDescription: cmd.NewDescription,
 			SignedInUser:   user,
 		}); err != nil {
@@ -508,6 +606,7 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 		if cmd.NewTitle != nil {
 			namespace, id := cmd.SignedInUser.GetNamespacedID()
 
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 			if err := s.bus.Publish(context.Background(), &events.FolderTitleUpdated{
 				Timestamp: foldr.Updated,
 				Title:     foldr.Title,
@@ -533,6 +632,7 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 	}
 
 	// always expose the dashboard store sequential ID
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	foldr.ID = dashFolder.ID
 	foldr.Version = dashFolder.Version
@@ -705,6 +805,7 @@ func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folde
 }
 
 func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, dashFolder *folder.Folder) error {
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, ID: dashFolder.ID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 
@@ -771,6 +872,9 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 			NewParentUID: &newParentUID,
 			SignedInUser: cmd.SignedInUser,
 		}); err != nil {
+			if s.db.GetDialect().IsUniqueConstraintViolation(err) {
+				return folder.ErrConflict.Errorf("%w", dashboards.ErrFolderSameNameExists)
+			}
 			return folder.ErrInternal.Errorf("failed to move folder: %w", err)
 		}
 
@@ -782,6 +886,9 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 			// bypass optimistic locking used for dashboards
 			Overwrite: true,
 		}); err != nil {
+			if s.db.GetDialect().IsUniqueConstraintViolation(err) {
+				return folder.ErrConflict.Errorf("%w", dashboards.ErrFolderSameNameExists)
+			}
 			return folder.ErrInternal.Errorf("failed to move legacy folder: %w", err)
 		}
 
@@ -835,22 +942,22 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 	return result, nil
 }
 
-func (s *Service) GetDescendantCounts(ctx context.Context, cmd *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
+func (s *Service) GetDescendantCounts(ctx context.Context, q *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
 	logger := s.log.FromContext(ctx)
-	if cmd.SignedInUser == nil {
+	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed-in user")
 	}
-	if *cmd.UID == "" {
+	if *q.UID == "" {
 		return nil, folder.ErrBadRequest.Errorf("missing UID")
 	}
-	if cmd.OrgID < 1 {
+	if q.OrgID < 1 {
 		return nil, folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
-	result := []string{*cmd.UID}
+	result := []string{*q.UID}
 	countsMap := make(folder.DescendantCounts, len(s.registry)+1)
 	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		subfolders, err := s.getNestedFolders(ctx, cmd.OrgID, *cmd.UID)
+		subfolders, err := s.getNestedFolders(ctx, q.OrgID, *q.UID)
 		if err != nil {
 			logger.Error("failed to get subfolders", "error", err)
 			return nil, err
@@ -861,7 +968,7 @@ func (s *Service) GetDescendantCounts(ctx context.Context, cmd *folder.GetDescen
 
 	for _, v := range s.registry {
 		for _, folder := range result {
-			c, err := v.CountInFolder(ctx, cmd.OrgID, folder, cmd.SignedInUser)
+			c, err := v.CountInFolder(ctx, q.OrgID, folder, q.SignedInUser)
 			if err != nil {
 				logger.Error("failed to count folder descendants", "error", err)
 				return nil, err
@@ -931,6 +1038,7 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 	}
 
 	if dash.ID == 0 {
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 		// nolint:staticcheck
 		if canCreate, err := guard.CanCreate(dash.FolderID, dash.IsFolder); err != nil || !canCreate {
 			if err != nil {
@@ -958,6 +1066,7 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 		}
 	}
 
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	cmd := &dashboards.SaveDashboardCommand{
 		Dashboard: dash.Data,
 		Message:   dto.Message,
@@ -984,6 +1093,7 @@ func getGuardianForSavePermissionCheck(ctx context.Context, d *dashboards.Dashbo
 
 	if newDashboard {
 		// if it's a new dashboard/folder check the parent folder permissions
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 		// nolint:staticcheck
 		guard, err := guardian.New(ctx, d.FolderID, d.OrgID, user)
 		if err != nil {

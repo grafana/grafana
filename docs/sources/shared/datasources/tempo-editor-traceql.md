@@ -86,6 +86,8 @@ Query results for both the editor and the builder are returned in a table. Selec
 
 Selecting the trace ID from the returned results opens a trace diagram. Selecting a span from the returned results opens a trace diagram and reveals the relevant span in the trace diagram (above, the highlighted blue line).
 
+In the trace diagram, the bold text on the left side of each span indicates the service name, for example `mythical-requester: requester`, and it is hidden when subsequent spans have the same service name (nested spans). Each service has a color assigned to it, which is visible to the left of the name and timeline in the graph. Spans with the same color belong to the same service. The grey text to the right of the service name indicates the span name.
+
 ### Streaming results
 
 The Tempo data source supports streaming responses to TraceQL queries so you can see partial query results as they come in without waiting for the whole query to finish.

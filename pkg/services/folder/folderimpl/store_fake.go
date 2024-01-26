@@ -45,7 +45,7 @@ func (f *fakeStore) Get(ctx context.Context, cmd folder.GetFolderQuery) (*folder
 	return f.ExpectedFolder, f.ExpectedError
 }
 
-func (f *fakeStore) GetParents(ctx context.Context, cmd folder.GetParentsQuery) ([]*folder.Folder, error) {
+func (f *fakeStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
 	return f.ExpectedParentFolders, f.ExpectedError
 }
 
@@ -57,6 +57,6 @@ func (f *fakeStore) GetHeight(ctx context.Context, folderUID string, orgID int64
 	return f.ExpectedFolderHeight, f.ExpectedError
 }
 
-func (f *fakeStore) GetFolders(ctx context.Context, orgID int64, uids []string) ([]*folder.Folder, error) {
+func (f *fakeStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folder.Folder, error) {
 	return f.ExpectedFolders, f.ExpectedError
 }

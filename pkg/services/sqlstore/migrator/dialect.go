@@ -1,10 +1,12 @@
 package migrator
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"golang.org/x/exp/slices"
 	"xorm.io/xorm"
 )
@@ -82,6 +84,17 @@ type Dialect interface {
 	// column names to values to use in the where clause.
 	// It returns a query string and a slice of parameters that can be executed against the database.
 	UpdateQuery(tableName string, row map[string]any, where map[string]any) (string, []any, error)
+	// Insert accepts a table name and a map of column names to insert.
+	// The insert is executed as part of the provided session.
+	Insert(ctx context.Context, tx *session.SessionTx, tableName string, row map[string]any) error
+	// Update accepts a table name, a map of column names to values to update, and a map of
+	// column names to values to use in the where clause.
+	// The update is executed as part of the provided session.
+	Update(ctx context.Context, tx *session.SessionTx, tableName string, row map[string]any, where map[string]any) error
+	// Concat returns the sql statement for concating multiple strings
+	// Implementations are not expected to quote the arguments
+	// therefore any callers should take care to quote arguments as necessary
+	Concat(...string) string
 }
 
 type LockCfg struct {
@@ -420,4 +433,28 @@ func (b *BaseDialect) UpdateQuery(tableName string, row map[string]any, where ma
 	}
 
 	return fmt.Sprintf("UPDATE %s SET %s WHERE %s", b.dialect.Quote(tableName), strings.Join(cols, ", "), strings.Join(whereCols, " AND ")), vals, nil
+}
+
+func (b *BaseDialect) Insert(ctx context.Context, tx *session.SessionTx, tableName string, row map[string]any) error {
+	query, args, err := b.InsertQuery(tableName, row)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(ctx, query, args...)
+	return err
+}
+
+func (b *BaseDialect) Update(ctx context.Context, tx *session.SessionTx, tableName string, row map[string]any, where map[string]any) error {
+	query, args, err := b.UpdateQuery(tableName, row, where)
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(ctx, query, args...)
+	return err
+}
+
+func (b *BaseDialect) Concat(strs ...string) string {
+	return fmt.Sprintf("CONCAT(%s)", strings.Join(strs, ", "))
 }

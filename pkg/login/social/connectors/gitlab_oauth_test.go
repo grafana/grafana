@@ -164,7 +164,7 @@ func TestSocialGitlab_UserInfo(t *testing.T) {
 	for _, test := range tests {
 		provider.info.RoleAttributePath = test.RoleAttributePath
 		provider.info.AllowAssignGrafanaAdmin = test.Cfg.AllowAssignGrafanaAdmin
-		provider.autoAssignOrgRole = string(test.Cfg.AutoAssignOrgRole)
+		provider.cfg.AutoAssignOrgRole = string(test.Cfg.AutoAssignOrgRole)
 		provider.info.RoleAttributeStrict = test.Cfg.RoleAttributeStrict
 		provider.info.SkipOrgRoleSync = test.Cfg.SkipOrgRoleSync
 
@@ -514,6 +514,86 @@ func TestSocialGitlab_Validate(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestSocialGitlab_Reload(t *testing.T) {
+	testCases := []struct {
+		name           string
+		info           *social.OAuthInfo
+		settings       ssoModels.SSOSettings
+		expectError    bool
+		expectedInfo   *social.OAuthInfo
+		expectedConfig *oauth2.Config
+	}{
+		{
+			name: "SSO provider successfully updated",
+			info: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":     "new-client-id",
+					"client_secret": "new-client-secret",
+					"auth_url":      "some-new-url",
+				},
+			},
+			expectError: false,
+			expectedInfo: &social.OAuthInfo{
+				ClientId:     "new-client-id",
+				ClientSecret: "new-client-secret",
+				AuthUrl:      "some-new-url",
+			},
+			expectedConfig: &oauth2.Config{
+				ClientID:     "new-client-id",
+				ClientSecret: "new-client-secret",
+				Endpoint: oauth2.Endpoint{
+					AuthURL: "some-new-url",
+				},
+				RedirectURL: "/login/gitlab",
+			},
+		},
+		{
+			name: "fails if settings contain invalid values",
+			info: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":     "new-client-id",
+					"client_secret": "new-client-secret",
+					"auth_url":      []string{"first", "second"},
+				},
+			},
+			expectError: true,
+			expectedInfo: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+			},
+			expectedConfig: &oauth2.Config{
+				ClientID:     "client-id",
+				ClientSecret: "client-secret",
+				RedirectURL:  "/login/gitlab",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewGitLabProvider(tc.info, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+
+			err := s.Reload(context.Background(), tc.settings)
+			if tc.expectError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			require.EqualValues(t, tc.expectedInfo, s.info)
+			require.EqualValues(t, tc.expectedConfig, s.Config)
 		})
 	}
 }

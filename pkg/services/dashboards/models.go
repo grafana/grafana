@@ -4,12 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/kinds"
-	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -65,55 +62,6 @@ func (d *Dashboard) SetUID(uid string) {
 func (d *Dashboard) SetVersion(version int) {
 	d.Version = version
 	d.Data.Set("version", version)
-}
-
-func (d *Dashboard) ToResource() kinds.GrafanaResource[simplejson.Json, any] {
-	parent := dashboard.NewK8sResource(d.UID, nil)
-	res := kinds.GrafanaResource[simplejson.Json, any]{
-		Kind:       parent.Kind,
-		APIVersion: parent.APIVersion,
-		Metadata: kinds.GrafanaResourceMetadata{
-			Name:              d.UID,
-			Annotations:       make(map[string]string),
-			Labels:            make(map[string]string),
-			CreationTimestamp: v1.NewTime(d.Created),
-			ResourceVersion:   fmt.Sprintf("%d", d.Version),
-		},
-	}
-	if d.Data != nil {
-		copy := &simplejson.Json{}
-		db, _ := d.Data.ToDB()
-		_ = copy.FromDB(db)
-
-		copy.Del("id")
-		copy.Del("version") // ???
-		copy.Del("uid")     // duplicated to name
-		res.Spec = copy
-	}
-
-	d.UpdateSlug()
-	res.Metadata.SetUpdatedTimestamp(&d.Updated)
-	res.Metadata.SetSlug(d.Slug)
-	if d.CreatedBy > 0 {
-		res.Metadata.SetCreatedBy(fmt.Sprintf("user:%d", d.CreatedBy))
-	}
-	if d.UpdatedBy > 0 {
-		res.Metadata.SetUpdatedBy(fmt.Sprintf("user:%d", d.UpdatedBy))
-	}
-	if d.PluginID != "" {
-		res.Metadata.SetOriginInfo(&kinds.ResourceOriginInfo{
-			Name: "plugin",
-			Key:  d.PluginID,
-		})
-	}
-	// nolint:staticcheck
-	if d.FolderID > 0 {
-		res.Metadata.SetFolder(fmt.Sprintf("folder:%d", d.FolderID))
-	}
-	if d.IsFolder {
-		res.Kind = "Folder"
-	}
-	return res
 }
 
 // NewDashboard creates a new dashboard
@@ -189,6 +137,7 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.OrgID = cmd.OrgID
 	dash.PluginID = cmd.PluginID
 	dash.IsFolder = cmd.IsFolder
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 	// nolint:staticcheck
 	dash.FolderID = cmd.FolderID
 	dash.FolderUID = cmd.FolderUID
@@ -301,8 +250,9 @@ type GetDashboardQuery struct {
 	UID   string
 	Title *string
 	// Deprecated: use FolderUID instead
-	FolderID *int64
-	OrgID    int64
+	FolderID  *int64
+	FolderUID string
+	OrgID     int64
 }
 
 type DashboardTagCloudItem struct {
@@ -378,6 +328,7 @@ type CountDashboardsInFolderRequest struct {
 }
 
 func FromDashboard(dash *Dashboard) *folder.Folder {
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 	return &folder.Folder{
 		ID:        dash.ID, // nolint:staticcheck
 		UID:       dash.UID,

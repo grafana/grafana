@@ -1,17 +1,18 @@
+import { flatten } from 'lodash';
 import { LRUCache } from 'lru-cache';
-import Prism from 'prismjs';
 
 import { LanguageProvider, AbstractQuery, KeyValue, getDefaultTimeRange, TimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { extractLabelMatchers, processLabels, toPromLikeExpr } from 'app/plugins/datasource/prometheus/language_utils';
 
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
+import { abstractQueryToExpr, mapAbstractOperatorsToOp, processLabels } from './languageUtils';
+import { getStreamSelectorsFromQuery } from './queryUtils';
+import { buildVisualQueryFromString } from './querybuilder/parsing';
 import {
   extractLabelKeysFromDataFrame,
   extractLogParserFromDataFrame,
   extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
-import syntax from './syntax';
 import { ParserAndLabelKeysResult, LokiQuery, LokiQueryType, LabelType } from './types';
 
 const NS_IN_MS = 1000000;
@@ -88,20 +89,32 @@ export default class LokiLanguageProvider extends LanguageProvider {
   importFromAbstractQuery(labelBasedQuery: AbstractQuery): LokiQuery {
     return {
       refId: labelBasedQuery.refId,
-      expr: toPromLikeExpr(labelBasedQuery),
+      expr: abstractQueryToExpr(labelBasedQuery),
       queryType: LokiQueryType.Range,
     };
   }
 
   exportToAbstractQuery(query: LokiQuery): AbstractQuery {
-    const lokiQuery = query.expr;
-    if (!lokiQuery || lokiQuery.length === 0) {
+    if (!query.expr || query.expr.length === 0) {
       return { refId: query.refId, labelMatchers: [] };
     }
-    const tokens = Prism.tokenize(lokiQuery, syntax);
+    const streamSelectors = getStreamSelectorsFromQuery(query.expr);
+
+    const labelMatchers = streamSelectors.map((streamSelector) => {
+      const visualQuery = buildVisualQueryFromString(streamSelector).query;
+      const matchers = visualQuery.labels.map((label) => {
+        return {
+          name: label.label,
+          value: label.value,
+          operator: mapAbstractOperatorsToOp[label.op],
+        };
+      });
+      return matchers;
+    });
+
     return {
       refId: query.refId,
-      labelMatchers: extractLabelMatchers(tokens),
+      labelMatchers: flatten(labelMatchers),
     };
   }
 
@@ -159,6 +172,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
     if (!value) {
       const params = { 'match[]': interpolatedMatch, start, end };
       const data = await this.request(url, params);
+      if (!Array.isArray(data)) {
+        return {};
+      }
       const { values } = processLabels(data);
       value = values;
       this.seriesCache.set(cacheKey, value);

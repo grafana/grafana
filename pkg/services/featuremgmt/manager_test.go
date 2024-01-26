@@ -26,7 +26,8 @@ func TestFeatureManager(t *testing.T) {
 
 	t.Run("check license validation", func(t *testing.T) {
 		ft := FeatureManager{
-			flags: map[string]*FeatureFlag{},
+			flags:    map[string]*FeatureFlag{},
+			warnings: map[string]string{},
 		}
 		ft.registerFlags(FeatureFlag{
 			Name:            "a",
@@ -73,5 +74,26 @@ func TestFeatureManager(t *testing.T) {
 		flag := ft.flags["a"]
 		require.Equal(t, "second", flag.Description)
 		require.Equal(t, "http://something", flag.DocsURL)
+	})
+
+	t.Run("check startup false flags", func(t *testing.T) {
+		ft := FeatureManager{
+			flags: map[string]*FeatureFlag{},
+			startup: map[string]bool{
+				"a": true,
+				"b": false, // but default true
+			},
+		}
+		ft.registerFlags(FeatureFlag{
+			Name: "a",
+		}, FeatureFlag{
+			Name:       "b",
+			Expression: "true",
+		}, FeatureFlag{
+			Name: "c",
+		})
+		require.True(t, ft.IsEnabledGlobally("a"))
+		require.False(t, ft.IsEnabledGlobally("b"))
+		require.False(t, ft.IsEnabledGlobally("c"))
 	})
 }

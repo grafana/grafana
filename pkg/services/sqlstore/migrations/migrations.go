@@ -115,6 +115,8 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.CreateOrgMigratedKVStoreEntries(mg)
 
 	accesscontrol.AddManagedDashboardAnnotationActionsMigration(mg)
+
+	addKVStoreMySQLValueTypeLongTextMigration(mg)
 }
 
 func addStarMigrations(mg *Migrator) {

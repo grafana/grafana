@@ -44,7 +44,7 @@ To determine which notification policy will handle which alert instances, you ha
 
 If no policies other than the default policy are configured, the default policy will handle the alert instance.
 
-If policies other than the default policy are defined, it will inspect those notification policies in descending order.
+If policies other than the default policy are defined, it will evaluate those notification policies in the order they are displayed.
 
 If a notification policy has label matchers that match the labels of the alert instance, it will descend in to its child policies and, if there are any, will continue to look for any child policies that might have label matchers that further narrow down the set of labels, and so forth until no more child policies have been found.
 

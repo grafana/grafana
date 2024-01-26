@@ -108,6 +108,7 @@ groups:
         # <string> the state the alert rule will have when the query execution
         #          failed - possible values: "Error", "Alerting", "OK"
         #          default = Alerting
+        execErrState: Alerting
         # <duration, required> for how long should the alert fire before alerting
         for: 60s
         # <map<string, string>> a map of strings to pass around any data
@@ -605,7 +606,7 @@ apiVersion: 1
 # List of templates to import or update
 templates:
   # <int> organization ID, default = 1
-  - orgID: 1
+  - orgId: 1
     # <string, required> name of the template, must be unique
     name: my_first_template
     # <string, required> content of the the template
