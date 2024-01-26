@@ -677,7 +677,8 @@ func (m *managedDashboardAnnotationActionsMigrator) SQL(dialect migrator.Dialect
 
 func (m *managedDashboardAnnotationActionsMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	// Check if roles have been populated and return early if they haven't - this avoids logging a warning from hasDefaultAnnotationPermissions
-	roleCount, err := sess.Where(`uid IN ("basic_viewer", "basic_editor", "basic_admin")`).Count(&ac.Role{})
+	roleCount := 0
+	_, err := sess.SQL(`SELECT COUNT( DISTINCT r.uid ) FROM role AS r INNER JOIN permission AS p ON r.id = p.role_id WHERE r.uid IN (?, ?, ?)`, "basic_viewer", "basic_editor", "basic_admin").Get(&roleCount)
 	if err != nil {
 		return fmt.Errorf("failed to check if basic roles have been populated: %w", err)
 	}
