@@ -18,16 +18,16 @@ labels:
     - oss
 menuTitle: Manage dashboards
 title: Manage dashboards
-description: Learn about dashboard folder management and generative AI features for dashboards
+description: Learn about dashboard management and generative AI features for dashboards
 weight: 8
 ---
 
 # Manage dashboards
 
-This topic includes techniques you can use to manage your Grafana dashboards, including:
+On the **Dashboards** page, you can perform dashboard management tasks such as:
 
 - [Browsing](#browse-dashboards) and [creating](#create-a-dashboard-folder) dashboard folders
-- [Folder permissions](#folder-permissions)
+- [Managing folder permissions](#folder-permissions)
 - [Adding generative AI features to dashboards](#set-up-generative-ai-features-for-dashboards)
 
 For more information about creating dashboards, refer to [Build dashboards][].
@@ -42,9 +42,9 @@ On the **Dashboards** page, you can browse and manage folders and dashboards. Th
 - Navigate to a folder.
 - Manage folder permissions. For more information, refer to [Dashboard permissions][].
 
-{{% admonition type="note" %}}
-As of Grafana 10.2, there is no longer a special **General** folder. Dashboards without a folder are now shown at the top level alongside folders.
-{{% /admonition %}}
+The list of dashboards on this page is grouped into folders; dashboards without a folder are displayed at the top level alongside folders. The page may also include a **Shared with me** section.
+
+<!--TO DO: Confirm what the Shared with me section looks like and clarify if/when it's displayed -->
 
 ### Shared with me
 
