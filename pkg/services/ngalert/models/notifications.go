@@ -112,6 +112,13 @@ func (s *NotificationSettings) IsAllDefault() bool {
 	return len(s.GroupBy) == 0 && s.GroupWait == nil && s.GroupInterval == nil && s.RepeatInterval == nil && len(s.MuteTimeIntervals) == 0
 }
 
+// NewDefaultNotificationSettings creates a new default NotificationSettings with the specified receiver.
+func NewDefaultNotificationSettings(receiver string) NotificationSettings {
+	return NotificationSettings{
+		Receiver: receiver,
+	}
+}
+
 // Fingerprint calculates a hash value based on the NotificationSettings object.
 // The hash is calculated by concatenating the strings and durations of the NotificationSettings attributes
 // and using an invalid UTF-8 sequence as a separator. The field GroupBy is normalized to the consistent canonical form.
