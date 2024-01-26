@@ -606,7 +606,7 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				Group:       "Annotations",
 				Permissions: []ac.Permission{
 					{Action: ac.ActionAnnotationsRead, Scope: ac.ScopeAnnotationsTypeOrganization},
-					{Action: ac.ActionAnnotationsRead, Scope: dashboards.ScopeDashboardsAll},
+					{Action: ac.ActionAnnotationsRead, Scope: dashboards.ScopeFoldersAll},
 				},
 			},
 			Grants: []string{string(org.RoleAdmin)},
@@ -620,11 +620,11 @@ func (hs *HTTPServer) declareFixedRoles() error {
 				Group:       "Annotations",
 				Permissions: []ac.Permission{
 					{Action: ac.ActionAnnotationsCreate, Scope: ac.ScopeAnnotationsTypeOrganization},
-					{Action: ac.ActionAnnotationsCreate, Scope: dashboards.ScopeDashboardsAll},
+					{Action: ac.ActionAnnotationsCreate, Scope: dashboards.ScopeFoldersAll},
 					{Action: ac.ActionAnnotationsDelete, Scope: ac.ScopeAnnotationsTypeOrganization},
-					{Action: ac.ActionAnnotationsDelete, Scope: dashboards.ScopeDashboardsAll},
+					{Action: ac.ActionAnnotationsDelete, Scope: dashboards.ScopeFoldersAll},
 					{Action: ac.ActionAnnotationsWrite, Scope: ac.ScopeAnnotationsTypeOrganization},
-					{Action: ac.ActionAnnotationsWrite, Scope: dashboards.ScopeDashboardsAll},
+					{Action: ac.ActionAnnotationsWrite, Scope: dashboards.ScopeFoldersAll},
 				},
 			},
 			Grants: []string{string(org.RoleAdmin)},

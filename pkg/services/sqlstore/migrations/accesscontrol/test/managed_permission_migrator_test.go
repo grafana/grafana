@@ -2,7 +2,6 @@ package test
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -256,7 +255,10 @@ func TestManagedPermissionsMigrationRunTwice(t *testing.T) {
 func putTestPermissions(t *testing.T, x *xorm.Engine, rolePerms map[int64]map[string][]rawPermission) {
 	for orgID, roles := range rolePerms {
 		for roleName, perms := range roles {
-			uid := strconv.FormatInt(orgID, 10) + strings.ReplaceAll(roleName, ":", "_")
+			uid := strings.ReplaceAll(roleName, ":", "_")
+			if !strings.HasPrefix(roleName, "basic") {
+				uid = fmt.Sprintf("%d_%s", orgID, uid)
+			}
 			role := accesscontrol.Role{
 				OrgID:   orgID,
 				Version: 1,

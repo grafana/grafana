@@ -661,6 +661,171 @@ func (m *managedFolderLibraryPanelActionsMigrator) Exec(sess *xorm.Session, mg *
 	return nil
 }
 
+const ManagedDashboardAnnotationActionsMigratorID = "managed dashboard permissions annotation actions migration"
+
+func AddManagedDashboardAnnotationActionsMigration(mg *migrator.Migrator) {
+	mg.AddMigration(ManagedDashboardAnnotationActionsMigratorID, &managedDashboardAnnotationActionsMigrator{})
+}
+
+type managedDashboardAnnotationActionsMigrator struct {
+	migrator.MigrationBase
+}
+
+func (m *managedDashboardAnnotationActionsMigrator) SQL(dialect migrator.Dialect) string {
+	return CodeMigrationSQL
+}
+
+func (m *managedDashboardAnnotationActionsMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	// Check if roles have been populated and return early if they haven't - this avoids logging a warning from hasDefaultAnnotationPermissions
+	roleCount := 0
+	_, err := sess.SQL(`SELECT COUNT( DISTINCT r.uid ) FROM role AS r INNER JOIN permission AS p ON r.id = p.role_id WHERE r.uid IN (?, ?, ?)`, "basic_viewer", "basic_editor", "basic_admin").Get(&roleCount)
+	if err != nil {
+		return fmt.Errorf("failed to check if basic roles have been populated: %w", err)
+	}
+	// Role count will be 0 either for new Grafana installations (in that case no managed roles will exist either, and the next conditional will return nil)
+	// or for OSS instances, for which basic role permissions can't be changed, so we don't need to run the default permission check in that case.
+	if roleCount != 0 {
+		// Check that default annotation permissions are assigned to basic roles. If that is not the case, skip the migration.
+		if hasDefaultPerms, err := m.hasDefaultAnnotationPermissions(sess, mg); err != nil || !hasDefaultPerms {
+			return err
+		}
+	}
+
+	var ids []any
+	if err := sess.SQL("SELECT id FROM role WHERE name LIKE 'managed:%'").Find(&ids); err != nil {
+		return err
+	}
+
+	if len(ids) == 0 {
+		return nil
+	}
+
+	var permissions []ac.Permission
+	roleQueryBatchSize := 100
+	err = batch(len(ids), roleQueryBatchSize, func(start, end int) error {
+		var batchPermissions []ac.Permission
+		if err := sess.SQL("SELECT role_id, action, scope FROM permission WHERE role_id IN(?"+strings.Repeat(" ,?", len(ids[start:end])-1)+") AND (scope LIKE 'folders:%' or scope LIKE 'dashboards:%')", ids[start:end]...).Find(&batchPermissions); err != nil {
+			return err
+		}
+		permissions = append(permissions, batchPermissions...)
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	mapped := make(map[int64]map[string]map[string]bool, len(ids)-1)
+	for _, p := range permissions {
+		if mapped[p.RoleID] == nil {
+			mapped[p.RoleID] = make(map[string]map[string]bool)
+		}
+		if mapped[p.RoleID][p.Scope] == nil {
+			mapped[p.RoleID][p.Scope] = make(map[string]bool)
+		}
+		mapped[p.RoleID][p.Scope][p.Action] = true
+	}
+
+	var toAdd []ac.Permission
+	now := time.Now()
+
+	for roleId, mappedPermissions := range mapped {
+		for scope, roleActions := range mappedPermissions {
+			if roleActions[dashboards.ActionDashboardsRead] {
+				if !roleActions[ac.ActionAnnotationsRead] {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:  roleId,
+						Updated: now,
+						Created: now,
+						Scope:   scope,
+						Action:  ac.ActionAnnotationsRead,
+					})
+				}
+			}
+
+			if roleActions[dashboards.ActionDashboardsWrite] {
+				if !roleActions[ac.ActionAnnotationsCreate] {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:  roleId,
+						Updated: now,
+						Created: now,
+						Scope:   scope,
+						Action:  ac.ActionAnnotationsCreate,
+					})
+				}
+				if !roleActions[ac.ActionAnnotationsDelete] {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:  roleId,
+						Updated: now,
+						Created: now,
+						Scope:   scope,
+						Action:  ac.ActionAnnotationsDelete,
+					})
+				}
+				if !roleActions[ac.ActionAnnotationsWrite] {
+					toAdd = append(toAdd, ac.Permission{
+						RoleID:  roleId,
+						Updated: now,
+						Created: now,
+						Scope:   scope,
+						Action:  ac.ActionAnnotationsWrite,
+					})
+				}
+			}
+		}
+	}
+
+	if len(toAdd) == 0 {
+		return nil
+	}
+
+	return batch(len(toAdd), batchSize, func(start, end int) error {
+		_, err := sess.InsertMulti(toAdd[start:end])
+		return err
+	})
+}
+
+func (m *managedDashboardAnnotationActionsMigrator) hasDefaultAnnotationPermissions(sess *xorm.Session, mg *migrator.Migrator) (bool, error) {
+	type basicRolePermission struct {
+		Uid    string
+		Action string
+		Scope  string
+	}
+
+	var basicRolePermissions []basicRolePermission
+	basicRoleUIDs := []any{"basic_viewer", "basic_editor", "basic_admin"}
+	query := `SELECT r.uid, p.action, p.scope FROM role r
+LEFT OUTER JOIN permission p ON p.role_id = r.id
+WHERE r.uid IN (?, ?, ?) AND p.action LIKE 'annotations:%' AND p.scope IN ('*', 'annotations:*', 'annotations:type:*', 'annotations:type:dashboard')
+`
+	if err := sess.SQL(query, basicRoleUIDs...).Find(&basicRolePermissions); err != nil {
+		return false, fmt.Errorf("failed to list basic role permissions: %w", err)
+	}
+
+	mappedBasicRolePerms := make(map[string]map[string]bool, 0)
+	for _, p := range basicRolePermissions {
+		if mappedBasicRolePerms[p.Uid] == nil {
+			mappedBasicRolePerms[p.Uid] = make(map[string]bool)
+		}
+		mappedBasicRolePerms[p.Uid][p.Action] = true
+	}
+
+	expectedAnnotationActions := []string{ac.ActionAnnotationsRead, ac.ActionAnnotationsCreate, ac.ActionAnnotationsDelete, ac.ActionAnnotationsWrite}
+
+	for _, uid := range basicRoleUIDs {
+		if mappedBasicRolePerms[uid.(string)] == nil {
+			mg.Logger.Warn("basic role permissions missing annotation permissions, skipping annotation permission migration", "uid", uid)
+			return false, nil
+		}
+		for _, action := range expectedAnnotationActions {
+			if !mappedBasicRolePerms[uid.(string)][action] {
+				mg.Logger.Warn("basic role permissions missing annotation permissions, skipping annotation permission migration", "uid", uid, "action", action)
+				return false, nil
+			}
+		}
+	}
+	return true, nil
+}
+
 func hasFolderAdmin(permissions []ac.Permission) bool {
 	return hasActions(folderPermissionTranslation[dashboardaccess.PERMISSION_ADMIN], permissions)
 }
