@@ -33,7 +33,7 @@ type PermissionsByAction map[string][]string
 // swagger:model
 // UsersPermissions are permissions grouped by userID
 // example: { 1: { "teams.read": [ "teams:id:1", "teams:id:2" ] }, 3: { "teams.read": [ "teams:id:3" ] } }
-type UsersPermissions map[string]PermissionsByAction
+type UsersPermissions map[int64]PermissionsByAction
 
 // swagger:response searchPermissionsResponse
 type SearchPermissionsResponse struct {
