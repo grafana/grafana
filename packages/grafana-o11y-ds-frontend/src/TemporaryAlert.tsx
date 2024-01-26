@@ -27,7 +27,7 @@ const timeoutMap = {
   ['warning']: AlertTimeout.Warning,
 };
 
-export const TemporaryAlert = (props: { severity: AlertVariant; text: string }) => {
+export const TemporaryAlert = (props: { duration?: number; severity: AlertVariant; text: string }) => {
   const style = getStyle(useTheme2());
   const [visible, setVisible] = useState(false);
   const [timer, setTimer] = useState<NodeJS.Timeout>();
@@ -46,10 +46,10 @@ export const TemporaryAlert = (props: { severity: AlertVariant; text: string }) 
 
       const timer = setTimeout(() => {
         setVisible(false);
-      }, timeoutMap[props.severity]);
+      }, props.duration || timeoutMap[props.severity]);
       setTimer(timer);
     }
-  }, [props.severity, props.text]);
+  }, [props.duration, props.severity, props.text]);
 
   return <>{visible && <Alert className={style} elevated={true} title={props.text} severity={props.severity} />}</>;
 };

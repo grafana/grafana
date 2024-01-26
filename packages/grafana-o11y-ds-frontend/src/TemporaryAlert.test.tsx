@@ -4,15 +4,15 @@ import React from 'react';
 import { TemporaryAlert } from './TemporaryAlert';
 
 describe('TemporaryAlert', () => {
-  it('full life cycle', async () => {
-    render(<TemporaryAlert severity="error" text="" />);
+  it('full component life cycle', async () => {
+    render(<TemporaryAlert duration={1000} severity="error" text="" />);
     expect(screen.queryByTestId('data-testid Alert error')).not.toBeInTheDocument();
 
-    render(<TemporaryAlert severity="error" text="error message" />);
+    render(<TemporaryAlert duration={1000} severity="error" text="error message" />);
     expect(screen.queryByTestId('data-testid Alert error')).toBeInTheDocument();
     expect(screen.getByText('error message')).toBeInTheDocument();
 
-    await act(() => new Promise((_) => setTimeout(_, 7500)));
+    await act(() => new Promise((_) => setTimeout(_, 1000)));
     expect(screen.queryByTestId('data-testid Alert error')).not.toBeInTheDocument();
     expect(screen.queryByText('error message')).not.toBeInTheDocument();
   });
