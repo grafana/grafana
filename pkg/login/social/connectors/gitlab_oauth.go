@@ -255,7 +255,7 @@ func (s *SocialGitlab) extractFromAPI(ctx context.Context, client *http.Client, 
 		idData.Role = role
 	}
 
-	if setting.Env == setting.Dev {
+	if s.cfg.Env == setting.Dev {
 		s.log.Debug("Resolved ID", "data", fmt.Sprintf("%+v", idData))
 	}
 

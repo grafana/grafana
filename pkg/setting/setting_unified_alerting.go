@@ -98,7 +98,8 @@ type UnifiedAlertingSettings struct {
 	RemoteAlertmanager            RemoteAlertmanagerSettings
 	Upgrade                       UnifiedAlertingUpgradeSettings
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
-	MaxStateSaveConcurrency int
+	MaxStateSaveConcurrency   int
+	StatePeriodicSaveInterval time.Duration
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
@@ -170,20 +171,20 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 			cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
 			// feature flag overrides the legacy alerting setting
 			legacyAlerting := false
-			AlertingEnabled = &legacyAlerting
+			cfg.AlertingEnabled = &legacyAlerting
 			unifiedAlerting := true
 			return &unifiedAlerting, nil
 		}
 
 		// if legacy alerting has not been configured then enable unified alerting
-		if AlertingEnabled == nil {
+		if cfg.AlertingEnabled == nil {
 			unifiedAlerting := true
 			return &unifiedAlerting, nil
 		}
 
 		// enable unified alerting and disable legacy alerting
 		legacyAlerting := false
-		AlertingEnabled = &legacyAlerting
+		cfg.AlertingEnabled = &legacyAlerting
 		unifiedAlerting := true
 		return &unifiedAlerting, nil
 	}
@@ -192,18 +193,18 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 	if err != nil {
 		// the value for unified alerting is invalid so disable all alerting
 		legacyAlerting := false
-		AlertingEnabled = &legacyAlerting
+		cfg.AlertingEnabled = &legacyAlerting
 		return nil, fmt.Errorf("invalid value %s, should be either true or false", section.Key("enabled"))
 	}
 
 	// If both legacy and unified alerting are enabled then return an error
-	if AlertingEnabled != nil && *AlertingEnabled && unifiedAlerting {
+	if cfg.AlertingEnabled != nil && *(cfg.AlertingEnabled) && unifiedAlerting {
 		return nil, errors.New("legacy and unified alerting cannot both be enabled at the same time, please disable one of them and restart Grafana")
 	}
 
-	if AlertingEnabled == nil {
+	if cfg.AlertingEnabled == nil {
 		legacyAlerting := !unifiedAlerting
-		AlertingEnabled = &legacyAlerting
+		cfg.AlertingEnabled = &legacyAlerting
 	}
 
 	return &unifiedAlerting, nil
@@ -402,6 +403,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.StateHistory = uaCfgStateHistory
 
 	uaCfg.MaxStateSaveConcurrency = ua.Key("max_state_save_concurrency").MustInt(1)
+
+	uaCfg.StatePeriodicSaveInterval, err = gtime.ParseDuration(valueAsString(ua, "state_periodic_save_interval", (time.Minute * 5).String()))
+	if err != nil {
+		return err
+	}
 
 	upgrade := iniFile.Section("unified_alerting.upgrade")
 	uaCfgUpgrade := UnifiedAlertingUpgradeSettings{

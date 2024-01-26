@@ -79,7 +79,7 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 	}
 
 	userProfile.AccessControl = hs.getAccessControlMetadata(c, c.SignedInUser.GetOrgID(), "global.users:id:", strconv.FormatInt(userID, 10))
-	userProfile.AvatarURL = dtos.GetGravatarUrl(userProfile.Email)
+	userProfile.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, userProfile.Email)
 
 	return response.JSON(http.StatusOK, userProfile)
 }
@@ -324,7 +324,7 @@ func (hs *HTTPServer) getUserTeamList(c *contextmodel.ReqContext, orgID int64, u
 	}
 
 	for _, team := range queryResult {
-		team.AvatarURL = dtos.GetGravatarUrlWithDefault(team.Email, team.Name)
+		team.AvatarURL = dtos.GetGravatarUrlWithDefault(hs.Cfg, team.Email, team.Name)
 	}
 	return response.JSON(http.StatusOK, queryResult)
 }
