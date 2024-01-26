@@ -21,7 +21,9 @@
   },
   "devDependencies": {
     "@grafana/plugin-configs": "workspace:*",
+    "@testing-library/jest-dom": "6.3.0",
     "@testing-library/react": "14.1.2",
+    "@types/jest": "29.5.11",
     "@types/lodash": "4.14.202",
     "@types/react": "18.2.48",
     "@types/uuid": "9.0.8",
