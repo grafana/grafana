@@ -30,6 +30,7 @@ export const groupToSubframeTransformer: DataTransformerInfo<GroupToSubframeTran
   name: 'Group to Subframe',
   description: 'Group and then place in a sub-frame',
   defaultOptions: {
+    showSubframeHeaders: SHOW_SUBFRAME_HEADERS_DEFAULT,
     fields: {},
   },
 
