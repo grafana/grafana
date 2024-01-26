@@ -26,17 +26,24 @@ type SearchPermissionsParams struct {
 	Scope string `json:"scope"`
 }
 
+// swagger:model
 // PermissionsByAction are permissions with scopes grouped by action
 // example: { "teams.read": [ "teams:id:1", "teams:id:2" ] }
 type PermissionsByAction map[string][]string
 
 // swagger:model
+// UserID
+// example: 12
+// pattern: \d+
+type UserID string
+
+// swagger:model
 // UsersPermissions are permissions grouped by userID
-// example: { 1: { "teams.read": [ "teams:id:1", "teams:id:2" ] }, 3: { "teams.read": [ "teams:id:3" ] } }
-type UsersPermissions map[int64]PermissionsByAction
+// example: { "1": { "teams.read": [ "teams:id:1", "teams:id:2" ] }, "3": { "teams.read": [ "teams:id:3" ] } }
+type UsersPermissions map[UserID]PermissionsByAction
 
 // swagger:response searchPermissionsResponse
 type SearchPermissionsResponse struct {
 	// in: body
-	Body UsersPermissions `json:"body"`
+	Body map[UserID]PermissionsByAction `json:"body"`
 }
