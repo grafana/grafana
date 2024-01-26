@@ -115,8 +115,8 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(3),
     }),
     column: css({
-      width: 500,
       display: 'flex',
+      flexGrow: 1,
       flexDirection: 'column',
       gap: theme.spacing(2),
     }),

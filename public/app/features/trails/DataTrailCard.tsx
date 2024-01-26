@@ -28,7 +28,7 @@ export function DataTrailCard({ trail, onSelect, onDelete }: Props) {
 
   return (
     <Card onClick={() => onSelect(trail)}>
-      <Card.Heading className={styles.title}>{getMetricName(trail.state.metric)}</Card.Heading>
+      <Card.Heading>{getMetricName(trail.state.metric)}</Card.Heading>
       <div className={styles.description}>
         <Stack gap={1.5}>
           {filters.map((f) => (
@@ -38,9 +38,13 @@ export function DataTrailCard({ trail, onSelect, onDelete }: Props) {
       </div>
       <Card.Actions className={styles.actions}>
         <Stack gap={1} justifyContent={'space-between'} grow={1}>
-          <div className={styles.secondary}>Datasource: {getDataSourceName(dsValue)}</div>
+          <div className={styles.secondary}>
+            <b>Datasource:</b> {getDataSourceName(dsValue)}
+          </div>
           {trail.state.createdAt && (
-            <i className={styles.secondary}>Created: {dateTimeFormat(trail.state.createdAt, { format: 'LL' })}</i>
+            <i className={styles.secondary}>
+              <b>Created:</b> {dateTimeFormat(trail.state.createdAt, { format: 'LL' })}
+            </i>
           )}
         </Stack>
       </Card.Actions>
@@ -73,15 +77,8 @@ function getMetricName(metric?: string) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    title: css({
-      width: '445px',
-      '& button': {
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-      },
-    }),
     tag: css({
-      maxWidth: '145px',
+      maxWidth: '225px',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
     }),
