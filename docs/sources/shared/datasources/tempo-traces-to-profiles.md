@@ -32,9 +32,9 @@ To use trace to profiles, navigate to **Explore** and query a trace. Each span n
 
 To use trace to profiles, you must have a configured Grafana Pyroscope data source. For more information, refer to the [Grafana Pyroscope data source documentation](/docs/grafana/latest/datasources/grafana-pyroscope/).
 
-**Embedded flame graphs** are also inserted into each span details section that has a linked profile (requires a  configured Grafana Pyroscope data source). This lets you see resource consumption in a flame graph visualization for each span without having to navigate away from the current view. Hover over a particular block in the flame graph to see more details about the resources being consumed.
+**Embedded flame graphs** are also inserted into each span details section that has a linked profile (requires a configured Grafana Pyroscope data source). This lets you see resource consumption in a flame graph visualization for each span without having to navigate away from the current view. Hover over a particular block in the flame graph to see more details about the resources being consumed.
 
-In order to determine that there is a profile for a given span and render the **Profiles for this span** button or an embedded flame graph in the span details, the ‘pyroscope.profile.id’ key-value pair must exist in your span tags.
+If you have configured a Pyroscope data source and no profile data is available or the Profiles for this span button & embedded flame graph is not visible, verify that the pyroscope.profile.id key-value pair exists in your span tags.
 
 ## Simple configuration
 
