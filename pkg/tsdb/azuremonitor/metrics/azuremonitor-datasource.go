@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
@@ -27,7 +28,8 @@ import (
 
 // AzureMonitorDatasource calls the Azure Monitor API - one of the four API's supported
 type AzureMonitorDatasource struct {
-	Proxy types.ServiceProxy
+	Proxy  types.ServiceProxy
+	Logger log.Logger
 }
 
 var (
@@ -276,7 +278,7 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			backend.Logger.Warn("Failed to close response body", "err", err)
+			e.Logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
@@ -328,7 +330,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			backend.Logger.Warn("Failed to close response body", "err", err)
+			e.Logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
