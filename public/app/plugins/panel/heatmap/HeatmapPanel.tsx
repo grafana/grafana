@@ -248,7 +248,7 @@ export const HeatmapPanel = ({
                         return null;
                       }
 
-                      if (timeRange2 != null) {
+                      if (enableAnnotationCreation && timeRange2 != null) {
                         setNewAnnotationRange(timeRange2);
                         dismiss();
                         return;

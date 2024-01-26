@@ -80,6 +80,11 @@ func (in *DataSourcePlugin) DeepCopyInto(out *DataSourcePlugin) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
+	if in.AliasIDs != nil {
+		in, out := &in.AliasIDs, &out.AliasIDs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.Capabilities != nil {
 		in, out := &in.Capabilities, &out.Capabilities
 		*out = make([]string, len(*in))
