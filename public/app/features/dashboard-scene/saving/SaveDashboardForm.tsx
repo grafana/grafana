@@ -1,14 +1,20 @@
 import React, { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { isFetchError } from '@grafana/runtime';
-import { Button, Checkbox, TextArea, Stack, Alert, Box, ButtonVariant, Field } from '@grafana/ui';
+import { Button, Checkbox, TextArea, Stack, Alert, Box, Field } from '@grafana/ui';
 import { SaveDashboardOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
-import { DashboardChangeInfo } from './types';
+import {
+  DashboardChangeInfo,
+  NameAlreadyExistsError,
+  SaveButton,
+  isNameExistsError,
+  isPluginDashboardError,
+  isVersionMismatchError,
+} from './shared';
 import { useDashboardSave } from './useSaveDashboard';
 
 export interface Props {
@@ -39,16 +45,8 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
     </Button>
   );
 
-  const saveButton = (text: string, variant: ButtonVariant) => (
-    <Button
-      disabled={!hasChanges || state.loading}
-      icon={state.loading ? 'spinner' : undefined}
-      aria-label={selectors.pages.SaveDashboardModal.save}
-      onClick={() => onSave(variant === 'destructive')}
-      variant={variant}
-    >
-      {state.loading ? 'Saving...' : text}
-    </Button>
+  const saveButton = (overwrite: boolean) => (
+    <SaveButton isValid={hasChanges} isLoading={state.loading} onSave={onSave} overwrite={overwrite} />
   );
 
   function renderFooter(error?: Error) {
@@ -59,7 +57,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
           <Box paddingTop={2}>
             <Stack alignItems="center">
               {cancelButton}
-              {saveButton('Save and overwrite', 'destructive')}
+              {saveButton(true)}
             </Stack>
           </Box>
         </Alert>
@@ -67,20 +65,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
     }
 
     if (isNameExistsError(error)) {
-      return (
-        <Alert title="Name already exists" severity="error">
-          <p>
-            A dashboard with the same name in selected folder already exists. Would you still like to save this
-            dashboard?
-          </p>
-          <Box paddingTop={2}>
-            <Stack alignItems="center">
-              {cancelButton}
-              {saveButton('Save and overwrite', 'destructive')}
-            </Stack>
-          </Box>
-        </Alert>
-      );
+      return <NameAlreadyExistsError cancelButton={cancelButton} saveButton={saveButton} />;
     }
 
     if (isPluginDashboardError(error)) {
@@ -92,7 +77,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
           <Box paddingTop={2}>
             <Stack alignItems="center">
               {cancelButton}
-              {saveButton('Save and overwrite', 'destructive')}
+              {saveButton(true)}
             </Stack>
           </Box>
         </Alert>
@@ -108,7 +93,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
         )}
         <Stack alignItems="center">
           {cancelButton}
-          {saveButton('Save', 'primary')}
+          {saveButton(false)}
           {!hasChanges && <div>No changes to save</div>}
         </Stack>
       </>
@@ -168,16 +153,4 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
       <Box paddingTop={2}>{renderFooter(state.error)}</Box>
     </Stack>
   );
-}
-
-function isVersionMismatchError(error?: Error) {
-  return isFetchError(error) && error.data && error.data.status === 'version-mismatch';
-}
-
-function isNameExistsError(error?: Error) {
-  return isFetchError(error) && error.data && error.data.status === 'name-exists';
-}
-
-function isPluginDashboardError(error?: Error) {
-  return isFetchError(error) && error.data && error.data.status === 'plugin-dashboard';
 }

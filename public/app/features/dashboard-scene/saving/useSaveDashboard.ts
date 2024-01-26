@@ -68,12 +68,13 @@ export function useDashboardSave(isCopy = false) {
           });
         }
 
-        const currentPath = locationService.getLocation().pathname;
+        const currentLocation = locationService.getLocation();
         const newUrl = locationUtil.stripBaseFromUrl(resultData.url);
 
-        if (newUrl !== currentPath) {
-          setTimeout(() => locationService.replace(newUrl));
+        if (newUrl !== currentLocation.pathname) {
+          setTimeout(() => locationService.replace({ pathname: newUrl, search: currentLocation.search }));
         }
+
         if (scene.state.meta.isStarred) {
           dispatch(
             updateDashboardName({

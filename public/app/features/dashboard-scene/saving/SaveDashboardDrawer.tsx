@@ -11,7 +11,7 @@ import { jsonDiff } from '../settings/version-history/utils';
 
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
-import { DashboardChangeInfo } from './types';
+import { DashboardChangeInfo } from './shared';
 
 interface SaveDashboardDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
