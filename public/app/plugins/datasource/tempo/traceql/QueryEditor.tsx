@@ -27,8 +27,10 @@ export function QueryEditor(props: Props) {
     return genQuery === query.query || genQuery === '{}';
   });
 
+  const queryRef = useRef(query);
+  queryRef.current = query;
   const onEditorChange = (value: string) => {
-    props.onChange({ ...query, query: value });
+    props.onChange({ ...queryRef.current, query: value });
   };
 
   return (
