@@ -157,20 +157,14 @@ describe('Check field state calculations (displayName and id)', () => {
     const title = checkScenario({
       frames: [
         toDataFrame({
-          fields: [
-            { name: TIME_SERIES_VALUE_FIELD_NAME, config: { test: 1 } },
-            { name: TIME_SERIES_VALUE_FIELD_NAME, config: { test: 2 } },
-          ],
+          fields: [{ name: TIME_SERIES_VALUE_FIELD_NAME }, { name: TIME_SERIES_VALUE_FIELD_NAME }],
         }),
       ],
     });
     const title2 = checkScenario({
       frames: [
         toDataFrame({
-          fields: [
-            { name: TIME_SERIES_VALUE_FIELD_NAME, config: { test: 1 } },
-            { name: TIME_SERIES_VALUE_FIELD_NAME, config: { test: 2 } },
-          ],
+          fields: [{ name: TIME_SERIES_VALUE_FIELD_NAME }, { name: TIME_SERIES_VALUE_FIELD_NAME }],
         }),
       ],
       fieldIndex: 1,
@@ -184,7 +178,7 @@ describe('Check field state calculations (displayName and id)', () => {
     const title2 = checkScenario({
       frames: [
         toDataFrame({
-          fields: [{ name: 'A', config: { test: 'A' } }, { name: 'A' }],
+          fields: [{ name: 'A' }, { name: 'A' }],
         }),
       ],
       fieldIndex: 1,
