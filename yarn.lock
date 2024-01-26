@@ -3629,6 +3629,46 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana/sql@workspace:*, @grafana/sql@workspace:packages/grafana-sql":
+  version: 0.0.0-use.local
+  resolution: "@grafana/sql@workspace:packages/grafana-sql"
+  dependencies:
+    "@emotion/css": "npm:11.11.2"
+    "@grafana/data": "workspace:*"
+    "@grafana/experimental": "npm:1.7.7"
+    "@grafana/runtime": "workspace:*"
+    "@grafana/tsconfig": "npm:^1.3.0-rc1"
+    "@grafana/ui": "workspace:*"
+    "@react-awesome-query-builder/ui": "npm:6.4.2"
+    "@testing-library/jest-dom": "npm:^6.1.2"
+    "@testing-library/react": "npm:14.1.2"
+    "@testing-library/react-hooks": "npm:^8.0.1"
+    "@testing-library/user-event": "npm:14.5.2"
+    "@types/jest": "npm:^29.5.4"
+    "@types/lodash": "npm:4.14.202"
+    "@types/react": "npm:18.2.48"
+    "@types/react-virtualized-auto-sizer": "npm:1.0.4"
+    "@types/systemjs": "npm:6.13.5"
+    "@types/testing-library__jest-dom": "npm:5.14.9"
+    "@types/uuid": "npm:9.0.7"
+    immutable: "npm:4.3.4"
+    jest: "npm:^29.6.4"
+    lodash: "npm:4.17.21"
+    react: "npm:18.2.0"
+    react-use: "npm:17.4.0"
+    react-virtualized-auto-sizer: "npm:1.0.21"
+    rxjs: "npm:7.8.1"
+    sql-formatter-plus: "npm:^1.3.6"
+    ts-jest: "npm:29.1.2"
+    ts-node: "npm:10.9.2"
+    tslib: "npm:2.6.2"
+    typescript: "npm:5.2.2"
+    uuid: "npm:9.0.1"
+  peerDependencies:
+    "@grafana/runtime": "workspace:*"
+  languageName: unknown
+  linkType: soft
+
 "@grafana/tsconfig@npm:^1.2.0-rc1":
   version: 1.2.0-rc1
   resolution: "@grafana/tsconfig@npm:1.2.0-rc1"
@@ -17300,6 +17340,7 @@ __metadata:
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": "npm:^2.0.0"
     "@grafana/schema": "workspace:*"
+    "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
     "@grafana/ui": "workspace:*"
     "@kusto/monaco-kusto": "npm:^7.4.0"
@@ -17572,7 +17613,6 @@ __metadata:
     slate: "npm:0.47.9"
     slate-plain-serializer: "npm:0.7.13"
     slate-react: "npm:0.22.10"
-    sql-formatter-plus: "npm:^1.3.6"
     style-loader: "npm:3.3.4"
     stylelint: "npm:15.11.0"
     stylelint-config-prettier: "npm:9.0.5"
