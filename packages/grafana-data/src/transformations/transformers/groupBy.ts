@@ -173,7 +173,7 @@ function detectFieldType(aggregation: string, sourceField: Field, targetField: F
 /**
  * Groups values together by key. This will create a mapping of strings
  * to _FieldMaps_ that will then be used to group values on.
- * 
+ *
  * @param frame
  *  The dataframe containing the data to group.
  * @param groupByFields
@@ -211,9 +211,9 @@ export function groupValuesByKey(frame: DataFrame, groupByFields: Field[]) {
 
 /**
  * Create new fields which will be used to display grouped values.
- * 
- * @param groupByFields 
- * @param valuesByGroupKey 
+ *
+ * @param groupByFields
+ * @param valuesByGroupKey
  * @returns
  *  Returns an array of fields that have been grouped.
  */

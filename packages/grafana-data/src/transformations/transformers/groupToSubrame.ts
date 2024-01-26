@@ -130,8 +130,8 @@ export const groupToSubframeTransformer: DataTransformerInfo<GroupToSubframeTran
  * which can then be displayed in a sub-table.
  */
 function createSubframe(fields: Field[], frameLength: number, options: GroupToSubframeTransformerOptions) {
-  const showHeaders = options.showSubframeHeaders === undefined ?
-    SHOW_SUBFRAME_HEADERS_DEFAULT : options.showSubframeHeaders;
+  const showHeaders =
+    options.showSubframeHeaders === undefined ? SHOW_SUBFRAME_HEADERS_DEFAULT : options.showSubframeHeaders;
 
   return {
     meta: { custom: { noHeader: !showHeaders } },

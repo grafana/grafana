@@ -16,7 +16,10 @@ import {
   GroupByOperationID,
   GroupByTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/groupBy';
-import { GroupToSubframeTransformerOptions, SHOW_SUBFRAME_HEADERS_DEFAULT } from '@grafana/data/src/transformations/transformers/groupToSubrame';
+import {
+  GroupToSubframeTransformerOptions,
+  SHOW_SUBFRAME_HEADERS_DEFAULT,
+} from '@grafana/data/src/transformations/transformers/groupToSubrame';
 import { Stack } from '@grafana/experimental';
 import { useTheme2, Select, StatsPicker, InlineField, Field, Switch } from '@grafana/ui';
 
@@ -34,8 +37,8 @@ export const GroupToSubframeTransformerEditor = ({
   onChange,
 }: TransformerUIProps<GroupToSubframeTransformerOptions>) => {
   const fieldNames = useAllFieldNamesFromDataFrames(input);
-  const showHeaders = options.showSubframeHeaders === undefined ?
-    SHOW_SUBFRAME_HEADERS_DEFAULT : options.showSubframeHeaders;
+  const showHeaders =
+    options.showSubframeHeaders === undefined ? SHOW_SUBFRAME_HEADERS_DEFAULT : options.showSubframeHeaders;
 
   console.log(options);
 
@@ -56,19 +59,20 @@ export const GroupToSubframeTransformerEditor = ({
 
   const onShowFieldNamesChange = useCallback(
     () => {
-      const showSubframeHeaders = options.showSubframeHeaders === undefined ?
-        !SHOW_SUBFRAME_HEADERS_DEFAULT : !options.showSubframeHeaders;
+      const showSubframeHeaders =
+        options.showSubframeHeaders === undefined ? !SHOW_SUBFRAME_HEADERS_DEFAULT : !options.showSubframeHeaders;
 
       onChange({
         showSubframeHeaders,
         fields: {
-          ...options.fields
-        }
-      })
-    }
+          ...options.fields,
+        },
+      });
+    },
     // Adding options to the dependency array causes infinite loop here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    , [onChange]);
+    [onChange]
+  );
 
   return (
     <Stack direction="row">
@@ -82,13 +86,8 @@ export const GroupToSubframeTransformerEditor = ({
           />
         ))}
       </div>
-      <Field
-        label="Show field names in subframe"
-        description="If enabled subframes will show field names">
-        <Switch
-          value={showHeaders}
-          onChange={onShowFieldNamesChange}
-        />
+      <Field label="Show field names in subframe" description="If enabled subframes will show field names">
+        <Switch value={showHeaders} onChange={onShowFieldNamesChange} />
       </Field>
     </Stack>
   );
