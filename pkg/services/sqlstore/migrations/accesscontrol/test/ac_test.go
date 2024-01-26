@@ -262,6 +262,9 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 	mg := migrator.NewMigrator(x, &setting.Cfg{
 		Logger: log.New("acmigration.test"),
 		Raw:    ini.Empty(),
+		IsFeatureToggleEnabled: func(key string) bool {
+			return true
+		},
 	})
 	migrations := &migrations.OSSMigrations{}
 	migrations.AddMigration(mg)
