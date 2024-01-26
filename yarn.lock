@@ -3068,7 +3068,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana-plugins/jaeger@workspace:public/app/plugins/datasource/jaeger":
+"@grafana-plugins/jaeger@workspace:*, @grafana-plugins/jaeger@workspace:public/app/plugins/datasource/jaeger":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/jaeger@workspace:public/app/plugins/datasource/jaeger"
   dependencies:
@@ -17365,6 +17365,7 @@ __metadata:
     "@grafana-plugins/grafana-azure-monitor-datasource": "workspace:*"
     "@grafana-plugins/grafana-pyroscope-datasource": "workspace:*"
     "@grafana-plugins/grafana-testdata-datasource": "workspace:*"
+    "@grafana-plugins/jaeger": "workspace:*"
     "@grafana-plugins/parca": "workspace:*"
     "@grafana-plugins/tempo": "workspace:*"
     "@grafana/aws-sdk": "npm:0.3.1"

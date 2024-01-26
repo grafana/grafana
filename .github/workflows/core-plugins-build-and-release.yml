@@ -10,6 +10,7 @@ on:
         options:
           - grafana-azure-monitor-datasource
           - grafana-testdata-datasource
+          - jaeger
           - parca
           - tempo
 
