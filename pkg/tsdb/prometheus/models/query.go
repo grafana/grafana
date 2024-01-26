@@ -2,12 +2,15 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/prometheus/prometheus/model/labels"
+	"github.com/prometheus/prometheus/promql/parser"
 
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
@@ -75,6 +78,11 @@ type Query struct {
 	RangeQuery    bool
 	ExemplarQuery bool
 	UtcOffsetSec  int64
+	Scope         Scope
+}
+
+type Scope struct {
+	Matchers []*labels.Matcher
 }
 
 func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool) (*Query, error) {
@@ -99,6 +107,17 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 		dsScrapeInterval,
 		timeRange,
 	)
+	var matchers []*labels.Matcher
+	if model.Scope != nil && model.Scope.Matchers != "" {
+		matchers, err = parser.ParseMetricSelector(model.Scope.Matchers)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse metric selector %v in scope", model.Scope.Matchers)
+		}
+		expr, err = applyScope(expr, matchers)
+		if err != nil {
+			return nil, err
+		}
+	}
 	var rangeQuery, instantQuery bool
 	if model.Instant == nil {
 		instantQuery = false
