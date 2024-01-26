@@ -157,33 +157,45 @@ export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFr
   return displayName;
 }
 
+let _frame: DataFrame | undefined;
+let _allUnique = false;
+
 export function getUniqueFieldName(field: Field, frame?: DataFrame) {
   let dupeCount = 0;
   let foundSelf = false;
 
   if (frame) {
-    for (let i = 0; i < frame.fields.length; i++) {
-      const otherField = frame.fields[i];
+    const { fields } = frame;
 
-      if (field === otherField) {
-        foundSelf = true;
+    if (_frame !== frame) {
+      _frame = frame;
+      _allUnique = fields.length === new Set(fields.map(f => f.name)).size;
+    }
 
-        if (dupeCount > 0) {
+    if (!_allUnique) {
+      for (let i = 0; i < fields.length; i++) {
+        const otherField = fields[i];
+
+        if (field === otherField) {
+          foundSelf = true;
+
+          if (dupeCount > 0) {
+            dupeCount++;
+            break;
+          }
+        } else if (field.name === otherField.name) {
           dupeCount++;
-          break;
-        }
-      } else if (field.name === otherField.name) {
-        dupeCount++;
 
-        if (foundSelf) {
-          break;
+          if (foundSelf) {
+            break;
+          }
         }
       }
     }
-  }
 
-  if (dupeCount) {
-    return `${field.name} ${dupeCount}`;
+    if (dupeCount) {
+      return `${field.name} ${dupeCount}`;
+    }
   }
 
   return field.name;
