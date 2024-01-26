@@ -922,7 +922,10 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 	for _, f := range descendants {
 		result = append(result, f.UID)
 		logger.Info("deleting descendant", "org_id", f.OrgID, "uid", f.UID)
-		err = s.store.Delete(ctx, f.UID, f.OrgID)
+		if err != nil {
+			logger.Error("failed descendant folder", "org_id", f.OrgID, "uid", f.UID, "error", err)
+			return result, err
+		}
 	}
 	logger.Info("deleting folder and its contents", "org_id", cmd.OrgID, "uid", cmd.UID)
 	err = s.store.Delete(ctx, cmd.UID, cmd.OrgID)
