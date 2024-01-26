@@ -1,3 +1,6 @@
+// Copied from https://github.com/grafana/grafana/blob/main/pkg/tsdb/intervalv2/intervalv2.go
+// We're copying this to not block ourselves from decoupling until the conversation here is resolved
+// https://raintank-corp.slack.com/archives/C05QFJUHUQ6/p1700064431005089
 package converter
 
 import (
@@ -8,10 +11,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/jsonitere"
 	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/exp/slices"
-
-	"github.com/grafana/grafana/pkg/util/converter/jsonitere"
 )
 
 // helpful while debugging all the options that may appear

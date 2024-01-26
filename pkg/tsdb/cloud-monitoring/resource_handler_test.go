@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -115,13 +116,12 @@ func Test_setRequestVariables(t *testing.T) {
 				},
 			},
 		},
+		logger: log.DefaultLogger,
 	}
 	req, err := http.NewRequest(http.MethodGet, "http://foo/cloudmonitoring/v3/projects/bar/metricDescriptors", nil)
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
 	}
-	println(req)
-	println(cloudMonitor)
 	_, _, err = s.setRequestVariables(req, cloudMonitor)
 	if err != nil {
 		t.Fatalf("Unexpected error %v", err)
