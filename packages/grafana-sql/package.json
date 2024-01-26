@@ -23,7 +23,7 @@
     "@types/lodash": "4.14.202",
     "@types/react-virtualized-auto-sizer": "1.0.4",
     "@types/uuid": "9.0.8",
-    "immutable": "4.3.4",
+    "immutable": "4.3.5",
     "lodash": "4.17.21",
     "react-use": "17.4.0",
     "react-virtualized-auto-sizer": "1.0.21",
