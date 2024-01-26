@@ -265,7 +265,7 @@ func escape(unescapedValue string) string {
 	beginning := `/^`
 	ending := `$/`
 	value := unescapedValue
-	substitute := `\\$0`
+	substitute := `\$0`
 	fullMatch := false
 
 	// get the value only in between /^...$/
