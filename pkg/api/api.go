@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ssoutils"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/correlations"
@@ -217,7 +218,15 @@ func (hs *HTTPServer) registerRoutes() {
 		r.Get("/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthTokenRedirect))
 	}
 
-	r.Get("/admin/authentication/", authorize(evalAuthenticationSettings()), hs.Index)
+	adminAuthPageEvaluator := func() ac.Evaluator {
+		authnSettingsEval := ssoutils.EvalAuthenticationSettings(hs.Cfg)
+		if hs.Features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
+			return ac.EvalAny(authnSettingsEval, ssoutils.OauthSettingsEvaluator(hs.Cfg))
+		}
+		return authnSettingsEval
+	}
+
+	r.Get("/admin/authentication/", authorize(adminAuthPageEvaluator()), hs.Index)
 	r.Get("/admin/authentication/ldap", authorize(ac.EvalPermission(ac.ActionLDAPStatusRead)), hs.Index)
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
 		providerParam := ac.Parameter("provider")
@@ -629,11 +638,4 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots/:key", routing.Wrap(hs.GetDashboardSnapshot))
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, hs.DeleteDashboardSnapshotByDeleteKey)
 	r.Delete("/api/snapshots/:key", reqSignedIn, routing.Wrap(hs.DeleteDashboardSnapshot))
-}
-
-func evalAuthenticationSettings() ac.Evaluator {
-	return ac.EvalAny(ac.EvalAll(
-		ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsSAML),
-		ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsSAML),
-	), ac.EvalPermission(ac.ActionLDAPStatusRead))
 }

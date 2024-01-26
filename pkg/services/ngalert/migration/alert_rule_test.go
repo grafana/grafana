@@ -265,6 +265,30 @@ func TestMakeAlertRule(t *testing.T) {
 		suffix := fmt.Sprintf(" - %ds", ar.IntervalSeconds)
 		require.Equal(t, fmt.Sprintf("%s%s", strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-len(suffix)), suffix), ar.RuleGroup)
 	})
+
+	t.Run("keep last state error dash alert is silenced", func(t *testing.T) {
+		service := NewTestMigrationService(t, sqlStore, nil)
+		m := service.newOrgMigration(1)
+		da := createTestDashAlert()
+		da.Settings.Set("executionErrorState", "keep_state")
+
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
+		require.NoError(t, err)
+
+		require.Equal(t, ar.Labels[models.MigratedSilenceLabelErrorKeepState], "true")
+	})
+
+	t.Run("keep last state nodata dash alert is silenced", func(t *testing.T) {
+		service := NewTestMigrationService(t, sqlStore, nil)
+		m := service.newOrgMigration(1)
+		da := createTestDashAlert()
+		da.Settings.Set("noDataState", "keep_state")
+
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
+		require.NoError(t, err)
+
+		require.Equal(t, ar.Labels[models.MigratedSilenceLabelNodataKeepState], "true")
+	})
 }
 
 func createTestDashAlert() *legacymodels.Alert {

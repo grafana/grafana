@@ -95,7 +95,7 @@ const instance2SettingsMock = {
 jest.mock('app/core/store', () => ({
   exists: jest.fn(),
   get: jest.fn(),
-  getObject: jest.fn(),
+  getObject: jest.fn((_a, b) => b),
   setObject: jest.fn(),
 }));
 
@@ -500,6 +500,26 @@ describe('VizPanelManager', () => {
           type: 'grafana-prometheus-datasource',
         });
       });
+    });
+  });
+
+  describe('change transformations', () => {
+    it('should update and reprocess transformations', () => {
+      const { scene, panel } = setupTest('panel-3');
+      scene.setState({
+        editPanel: buildPanelEditScene(panel),
+      });
+
+      const vizPanelManager = scene.state.editPanel!.state.panelRef.resolve();
+      vizPanelManager.activate();
+      vizPanelManager.state.panel.state.$data?.activate();
+
+      const reprocessMock = jest.fn();
+      vizPanelManager.dataTransformer.reprocessTransformations = reprocessMock;
+      vizPanelManager.changeTransformations([{ id: 'calculateField', options: {} }]);
+
+      expect(reprocessMock).toHaveBeenCalledTimes(1);
+      expect(vizPanelManager.dataTransformer.state.transformations).toEqual([{ id: 'calculateField', options: {} }]);
     });
   });
 

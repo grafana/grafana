@@ -248,7 +248,6 @@ steps:
     \"\nTranslation extraction has not been committed. Please run 'yarn i18n:extract',
     commit the changes and push again.\"\n                exit 1\n            fi\n
     \           "
-  - yarn run i18n:compile
   depends_on:
   - yarn-install
   failure: ignore
@@ -1562,7 +1561,6 @@ steps:
     \"\nTranslation extraction has not been committed. Please run 'yarn i18n:extract',
     commit the changes and push again.\"\n                exit 1\n            fi\n
     \           "
-  - yarn run i18n:compile
   depends_on:
   - yarn-install
   failure: ignore
@@ -4779,6 +4777,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 51ad95c27b1414d9e4acd0b920a3e9ceab5ccb2ef8df60fc43eb90c70cdf34d5
+hmac: 42c4eb79bab004d2916c7ab27b58e654300d2683345ea959bc052d1b3f107cd7
 
 ...

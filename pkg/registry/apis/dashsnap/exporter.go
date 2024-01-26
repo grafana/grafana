@@ -115,11 +115,11 @@ func (d *dashExporter) doExport() {
 
 		fmt.Printf("TODO, export: %s (len: %d)\n", snap.Key, len(dash))
 
-		w, err := bucket.NewWriter(ctx, "foo.txt", nil)
-		if err != nil {
-			d.status.Error = err.Error()
-			return
-		}
+		// w, err := bucket.NewWriter(ctx, "foo.txt", nil)
+		// if err != nil {
+		// 	d.status.Error = err.Error()
+		// 	return
+		// }
 
 		time.Sleep(time.Second * 1)
 		d.status.Updated = time.Now().UnixMilli()
