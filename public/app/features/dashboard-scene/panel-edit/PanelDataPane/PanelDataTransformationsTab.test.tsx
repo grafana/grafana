@@ -103,7 +103,7 @@ describe('PanelDataTransformationsTab', () => {
     );
     const button = transformationCard.getElementsByTagName('button').item(0);
     await act(async () => {
-      userEvent.click(button!);
+      await userEvent.click(button!);
     });
 
     expect(onChangeTransformation).toHaveBeenCalledWith([{ id: 'calculateField', options: {} }]);
@@ -131,7 +131,7 @@ describe('PanelDataTransformationsTab', () => {
     );
     const button = transformationCard.getElementsByTagName('button').item(0);
     await act(async () => {
-      userEvent.click(button!);
+      await userEvent.click(button!);
     });
     expect(onChangeTransformation).toHaveBeenCalledWith([
       { id: 'calculateField', options: {} },
