@@ -171,8 +171,13 @@ function detectFieldType(aggregation: string, sourceField: Field, targetField: F
 }
 
 /**
- *
+ * Groups values together by key. This will create a mapping of strings
+ * to _FieldMaps_ that will then be used to group values on.
+ * 
  * @param frame
+ *  The dataframe containing the data to group.
+ * @param groupByFields
+ *  An array of fields to group on.
  */
 export function groupValuesByKey(frame: DataFrame, groupByFields: Field[]) {
   const valuesByGroupKey = new Map<string, FieldMap>();
@@ -204,7 +209,15 @@ export function groupValuesByKey(frame: DataFrame, groupByFields: Field[]) {
   return valuesByGroupKey;
 }
 
-export function createGroupedFields(groupByFields: Field[], valuesByGroupKey: Map<string, FieldMap>) {
+/**
+ * Create new fields which will be used to display grouped values.
+ * 
+ * @param groupByFields 
+ * @param valuesByGroupKey 
+ * @returns
+ *  Returns an array of fields that have been grouped.
+ */
+export function createGroupedFields(groupByFields: Field[], valuesByGroupKey: Map<string, FieldMap>): Field[] {
   const fields: Field[] = [];
 
   for (const field of groupByFields) {

@@ -16,8 +16,9 @@ import {
   GroupByOperationID,
   GroupByTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/groupBy';
+import { GroupToSubframeTransformerOptions, SHOW_SUBFRAME_HEADERS_DEFAULT } from '@grafana/data/src/transformations/transformers/groupToSubrame';
 import { Stack } from '@grafana/experimental';
-import { useTheme2, Select, StatsPicker, InlineField } from '@grafana/ui';
+import { useTheme2, Select, StatsPicker, InlineField, Field, Switch } from '@grafana/ui';
 
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
@@ -31,8 +32,12 @@ export const GroupToSubframeTransformerEditor = ({
   input,
   options,
   onChange,
-}: TransformerUIProps<GroupByTransformerOptions>) => {
+}: TransformerUIProps<GroupToSubframeTransformerOptions>) => {
   const fieldNames = useAllFieldNamesFromDataFrames(input);
+  const showHeaders = options.showSubframeHeaders === undefined ?
+    SHOW_SUBFRAME_HEADERS_DEFAULT : options.showSubframeHeaders;
+
+  console.log(options);
 
   const onConfigChange = useCallback(
     (fieldName: string) => (config: GroupByFieldOptions) => {
@@ -49,17 +54,43 @@ export const GroupToSubframeTransformerEditor = ({
     [onChange]
   );
 
+  const onShowFieldNamesChange = useCallback(
+    () => {
+      const showSubframeHeaders = options.showSubframeHeaders === undefined ?
+        !SHOW_SUBFRAME_HEADERS_DEFAULT : !options.showSubframeHeaders;
+
+      onChange({
+        showSubframeHeaders,
+        fields: {
+          ...options.fields
+        }
+      })
+    }
+    // Adding options to the dependency array causes infinite loop here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    , [onChange]);
+
   return (
-    <div>
-      {fieldNames.map((key) => (
-        <GroupByFieldConfiguration
-          onConfigChange={onConfigChange(key)}
-          fieldName={key}
-          config={options.fields[key]}
-          key={key}
+    <Stack direction="row">
+      <div>
+        {fieldNames.map((key) => (
+          <GroupByFieldConfiguration
+            onConfigChange={onConfigChange(key)}
+            fieldName={key}
+            config={options.fields[key]}
+            key={key}
+          />
+        ))}
+      </div>
+      <Field
+        label="Show field names in subframe"
+        description="If enabled subframes will show field names">
+        <Switch
+          value={showHeaders}
+          onChange={onShowFieldNamesChange}
         />
-      ))}
-    </div>
+      </Field>
+    </Stack>
   );
 };
 

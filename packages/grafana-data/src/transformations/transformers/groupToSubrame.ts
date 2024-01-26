@@ -2,24 +2,23 @@ import { map } from 'rxjs/operators';
 
 import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, FieldType, Field } from '../../types/dataFrame';
+import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import { DataTransformerInfo } from '../../types/transformations';
 import { ReducerID, reduceField } from '../fieldReducer';
 
-import { createGroupedFields, groupValuesByKey, GroupByFieldOptions } from './groupBy';
+import { GroupByFieldOptions, createGroupedFields, groupValuesByKey } from './groupBy';
 import { DataTransformerID } from './ids';
+
+export const SHOW_SUBFRAME_HEADERS_DEFAULT = true;
 
 export enum GroupByOperationID {
   aggregate = 'aggregate',
   groupBy = 'groupby',
 }
 
-export interface GroupToSubframeFieldOptions extends GroupByFieldOptions {
-  showSubtableHeaders?: boolean;
-}
-
 export interface GroupToSubframeTransformerOptions {
-  fields: Record<string, GroupToSubframeFieldOptions>;
+  showSubframeHeaders?: boolean;
+  fields: Record<string, GroupByFieldOptions>;
 }
 
 interface FieldMap {
@@ -130,19 +129,33 @@ export const groupToSubframeTransformer: DataTransformerInfo<GroupToSubframeTran
  * Given the appropriate data, create a sub-frame
  * which can then be displayed in a sub-table.
  */
-function createSubframe(fields: Field[], frameLength: number) {
+function createSubframe(fields: Field[], frameLength: number, options: GroupToSubframeTransformerOptions) {
+  const showHeaders = options.showSubframeHeaders === undefined ?
+    SHOW_SUBFRAME_HEADERS_DEFAULT : options.showSubframeHeaders;
+
   return {
-    meta: { custom: { noHeader: false } },
+    meta: { custom: { noHeader: !showHeaders } },
     length: frameLength,
     fields,
   };
 }
 
+/**
+ * Determines whether a field should be grouped on.
+ *
+ * @returns boolean
+ *  This will return _true_ if a field should be grouped on and _false_ if it should not.
+ */
 const shouldGroupOnField = (field: Field, options: GroupToSubframeTransformerOptions): boolean => {
   const fieldName = getFieldDisplayName(field);
   return options?.fields[fieldName]?.operation === GroupByOperationID.groupBy;
 };
 
+/**
+ * Determines whether field aggregations should be calculated
+ * @returns boolean
+ *  This will return _true_ if a field should be calculated and _false_ if it should not.
+ */
 const shouldCalculateField = (field: Field, options: GroupToSubframeTransformerOptions): boolean => {
   const fieldName = getFieldDisplayName(field);
   return (
@@ -152,6 +165,9 @@ const shouldCalculateField = (field: Field, options: GroupToSubframeTransformerO
   );
 };
 
+/**
+ * Detect the type of field given the relevant aggregation.
+ */
 const detectFieldType = (aggregation: string, sourceField: Field, targetField: Field): FieldType => {
   switch (aggregation) {
     case ReducerID.allIsNull:
@@ -167,9 +183,13 @@ const detectFieldType = (aggregation: string, sourceField: Field, targetField: F
 };
 
 /**
+ * Group values into subframes so that they'll be displayed
+ * inside of a subtable.
  *
  * @param valuesByGroupKey
+ *  A mapping of group keys to their respective grouped values.
  * @param options
+ *   Transformation options, which are used to find ungrouped/unaggregated fields.
  * @returns
  */
 function groupToSubframes(
@@ -204,9 +224,9 @@ function groupToSubframes(
     // push a new subframe with the fields
     // otherwise push an empty frame
     if (nestedFields.length > 0) {
-      subFrames.push([createSubframe(nestedFields, nestedFields[0].values.length)]);
+      subFrames.push([createSubframe(nestedFields, nestedFields[0].values.length, options)]);
     } else {
-      subFrames.push([createSubframe([], 0)]);
+      subFrames.push([createSubframe([], 0, options)]);
     }
   }
 
