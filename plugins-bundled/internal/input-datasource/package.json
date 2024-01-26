@@ -24,7 +24,7 @@
     "jest-environment-jsdom": "29.3.1",
     "swc-loader": "0.2.3",
     "ts-jest": "29.0.5",
-    "ts-node": "10.9.1",
+    "ts-node": "10.9.2",
     "webpack": "5.76.0"
   },
   "dependencies": {
