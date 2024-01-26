@@ -46,9 +46,9 @@ func TestServiceRevert(t *testing.T) {
 		createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
 	}
 	dashes := []*dashboards.Dashboard{
-		createDashboard(t, 1, 1, "dash1-1", 5, nil),
-		createDashboard(t, 2, 1, "dash2-1", 5, nil),
-		createDashboard(t, 8, 1, "dash-in-general-1", 0, nil),
+		createDashboard(t, 1, 1, "dash1-1", "folder5-1", 5, nil),
+		createDashboard(t, 2, 1, "dash2-1", "folder5-1", 5, nil),
+		createDashboard(t, 8, 1, "dash-in-general-1", "", 0, nil),
 	}
 	folders := []*dashboards.Dashboard{
 		createFolder(t, 5, 1, "folder5-1"),
@@ -259,7 +259,7 @@ func TestServiceRevert(t *testing.T) {
 
 		// Create dashboard in general alerting.
 		newDashes := []*dashboards.Dashboard{
-			createDashboard(t, 99, 1, "dash-in-general-alerting-1", generalAlertingFolder.ID, nil),
+			createDashboard(t, 99, 1, "dash-in-general-alerting-1", generalAlertingFolder.UID, generalAlertingFolder.ID, nil),
 		}
 		_, err = x.Insert(newDashes)
 		require.NoError(t, err)
@@ -1826,7 +1826,7 @@ func (h *serviceHelper) genFolder() *dashboards.Dashboard {
 }
 
 func (h *serviceHelper) genDash(folder *dashboards.Dashboard) *dashboards.Dashboard {
-	d := createDashboard(h.t, h.dashIncr, 1, fmt.Sprintf("dash%d", h.dashIncr), folder.ID, nil)
+	d := createDashboard(h.t, h.dashIncr, 1, fmt.Sprintf("dash%d", h.dashIncr), folder.UID, folder.ID, nil)
 	d.Title = fmt.Sprintf("dash title%d", h.dashIncr)
 
 	h.dashIncr++
