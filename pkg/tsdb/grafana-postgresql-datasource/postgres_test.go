@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"math/rand"
 	"os"
@@ -1369,17 +1368,6 @@ func TestIntegrationPostgres(t *testing.T) {
 			require.Empty(t, frames[0].Fields)
 		})
 	})
-}
-
-func InitPostgresTestDB(t *testing.T, jsonData sqleng.JsonData) *sql.DB {
-	connStr := postgresTestDBConnString()
-	db, err := sql.Open("postgres", connStr)
-	require.NoError(t, err, "Failed to init postgres DB")
-
-	db.SetMaxOpenConns(jsonData.MaxOpenConns)
-	db.SetMaxIdleConns(jsonData.MaxIdleConns)
-	db.SetConnMaxLifetime(time.Duration(jsonData.ConnMaxLifetime) * time.Second)
-	return db
 }
 
 func genTimeRangeByInterval(from time.Time, duration time.Duration, interval time.Duration) []time.Time {
