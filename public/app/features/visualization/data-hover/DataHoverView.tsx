@@ -42,7 +42,7 @@ export function getDisplayValuesAndLinks(
   mode?: TooltipDisplayMode | null
 ) {
   const fields = data.fields;
-  const hovered = columnIndex != null ? fields[columnIndex] : null;
+  const hoveredField = columnIndex != null ? fields[columnIndex] : null;
 
   const visibleFields = fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
   const traceIDField = visibleFields.find((field) => field.name === 'traceID') || fields[0];
@@ -62,8 +62,7 @@ export function getDisplayValuesAndLinks(
   const linkLookup = new Set<string>();
 
   for (const field of orderedVisibleFields) {
-    const isFieldHovered = columnIndex === fields.indexOf(field);
-    if (mode === TooltipDisplayMode.Single && columnIndex != null && !isFieldHovered) {
+    if (mode === TooltipDisplayMode.Single && columnIndex != null && field !== hoveredField) {
       continue;
     }
 
@@ -84,7 +83,7 @@ export function getDisplayValuesAndLinks(
       name: getFieldDisplayName(field, data),
       value,
       valueString: formattedValueToString(fieldDisplay),
-      highlight: field === hovered,
+      highlight: field === hoveredField,
     });
   }
 
