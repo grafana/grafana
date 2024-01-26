@@ -159,7 +159,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         if (!panel.parent?.state.key) {
           return;
         }
-        removePanel(dashboard, panel.parent?.state.key);
+        removePanel(dashboard, panel.parent, true);
       },
     });
 
@@ -322,11 +322,20 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
   };
 }
 
-function removePanel(dashboard: DashboardScene, panelKey: string) {
+function removePanel(dashboard: DashboardScene, panel: SceneObject, ask: boolean) {
+  //TODO: ask for confirmation - modal should pop up
+  if (ask !== false) {
+    // const text2 =
+    //   panel.alert && !config.unifiedAlertingEnabled
+    //     ? 'Panel includes an alert rule. removing the panel will also remove the alert rule'
+    //     : undefined;
+    // const confirmText = panel.alert ? 'YES' : undefined;
+  }
+
   const panels: SceneObject[] = [];
   dashboard.state.body.forEachChild((child: SceneObject) => {
-    if (child.state.key !== panelKey) {
-      panels.push(child);
+    if (child.state.key !== panel.parent?.state.key) {
+      panels.push(child.clone());
     }
   });
 
