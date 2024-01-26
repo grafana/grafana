@@ -7,6 +7,7 @@ import {
   SceneDataLayerProvider,
   SceneDataLayers,
   SceneObjectBase,
+  dataLayers,
   sceneGraph,
 } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
@@ -79,8 +80,12 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     const data = this.getSceneDataLayers();
 
     if (data) {
+      const layers = [...data.state.layers];
+      //keep annotation layers together
+      layers.splice(this.getAnnotationsLength(), 0, newAnnotation);
+
       data.setState({
-        layers: [...data.state.layers, newAnnotation],
+        layers,
       });
 
       this.setState({ editIndex: this.getAnnotationsLength() - 1 });
@@ -89,6 +94,20 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
 
   public onEdit = (idx: number) => {
     this.setState({ editIndex: idx });
+  };
+
+  public goBackToList = () => {
+    this.setState({ editIndex: undefined });
+  };
+
+  public onPreview = () => {
+    this.setState({ editIndex: undefined });
+
+    this._dashboard.stopUrlSync();
+
+    locationService.partial({ editview: null });
+
+    this._dashboard.startUrlSync();
   };
 
   public onMove = (idx: number, direction: number) => {
@@ -117,6 +136,29 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
       });
     }
   };
+
+  public onUpdate = (annotation: AnnotationQuery, editIndex: number) => {
+    const data = this.getSceneDataLayers();
+
+    if (data) {
+      const layers = [...data.state.layers];
+      const layer = layers[editIndex];
+
+      if (layer instanceof dataLayers.AnnotationsDataLayer) {
+        layer.setState({
+          key: `annotations-${annotation.name}`,
+          name: annotation.name,
+          isEnabled: Boolean(annotation.enable),
+          isHidden: Boolean(annotation.hide),
+          query: annotation,
+        });
+
+        data.setState({
+          layers,
+        });
+      }
+    }
+  };
 }
 
 function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditView>) {
@@ -124,6 +166,7 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
   const sceneDataLayers = model.getSceneDataLayers();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   const { editIndex } = model.useState();
+  const panels = dashboard.getVizPanels();
 
   let annotations: AnnotationQuery[] = [];
 
@@ -146,7 +189,17 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
           onMove={model.onMove}
         />
       )}
-      {isEditing && <AnnotationSettingsEdit annotations={annotations} editIdx={editIndex!} />}
+      {isEditing && (
+        <AnnotationSettingsEdit
+          annotation={annotations[editIndex]}
+          editIndex={editIndex}
+          panels={panels}
+          onUpdate={model.onUpdate}
+          goBackToList={model.goBackToList}
+          onDelete={model.onDelete}
+          onPreview={model.onPreview}
+        />
+      )}
     </Page>
   );
 }

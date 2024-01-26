@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import {
@@ -10,7 +10,8 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getDataSourceSrv, locationService } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
+import { VizPanel } from '@grafana/scenes';
 import { AnnotationPanelFilter } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import {
   Button,
@@ -28,16 +29,30 @@ import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
+import { getPanelIdForVizPanel } from '../../utils/utils';
+
 type Props = {
-  editIdx: number;
-  annotations: AnnotationQuery[];
+  annotation: AnnotationQuery;
+  editIndex: number;
+  panels: VizPanel[];
+  onUpdate: (annotation: AnnotationQuery, editIndex: number) => void;
+  goBackToList: () => void;
+  onDelete: (index: number) => void;
+  onPreview: () => void;
 };
 
 export const newAnnotationName = 'New annotation';
 
-export const AnnotationSettingsEdit = ({ annotations, editIdx }: Props) => {
+export const AnnotationSettingsEdit = ({
+  annotation,
+  editIndex,
+  panels,
+  onUpdate,
+  goBackToList,
+  onDelete,
+  onPreview,
+}: Props) => {
   const styles = useStyles2(getStyles);
-  const [annotation, setAnnotation] = useState(annotations[editIdx]);
 
   const panelFilter = useMemo(() => {
     if (!annotation.filter) {
@@ -52,56 +67,64 @@ export const AnnotationSettingsEdit = ({ annotations, editIdx }: Props) => {
 
   const dsi = getDataSourceSrv().getInstanceSettings(annotation.datasource);
 
-  const onUpdate = (annotation: AnnotationQuery) => {
-    // const list = [...annotations.list];
-    // list.splice(editIdx, 1, annotation);
-    // setAnnotation(annotation);
-    // dashboard.annotations.list = list;
-  };
-
   const onNameChange = (ev: React.FocusEvent<HTMLInputElement>) => {
-    onUpdate({
-      ...annotation,
-      name: ev.currentTarget.value,
-    });
+    onUpdate(
+      {
+        ...annotation,
+        name: ev.currentTarget.value,
+      },
+      editIndex
+    );
   };
 
   const onDataSourceChange = (ds: DataSourceInstanceSettings) => {
     const dsRef = getDataSourceRef(ds);
 
     if (annotation.datasource?.type !== dsRef.type) {
-      onUpdate({
-        datasource: dsRef,
-        builtIn: annotation.builtIn,
-        enable: annotation.enable,
-        iconColor: annotation.iconColor,
-        name: annotation.name,
-        hide: annotation.hide,
-        filter: annotation.filter,
-        mappings: annotation.mappings,
-        type: annotation.type,
-      });
+      onUpdate(
+        {
+          datasource: dsRef,
+          builtIn: annotation.builtIn,
+          enable: annotation.enable,
+          iconColor: annotation.iconColor,
+          name: annotation.name,
+          hide: annotation.hide,
+          filter: annotation.filter,
+          mappings: annotation.mappings,
+          type: annotation.type,
+        },
+        editIndex
+      );
     } else {
-      onUpdate({
-        ...annotation,
-        datasource: dsRef,
-      });
+      onUpdate(
+        {
+          ...annotation,
+          datasource: dsRef,
+        },
+        editIndex
+      );
     }
   };
 
   const onChange = (ev: React.FocusEvent<HTMLInputElement>) => {
     const target = ev.currentTarget;
-    onUpdate({
-      ...annotation,
-      [target.name]: target.type === 'checkbox' ? target.checked : target.value,
-    });
+    onUpdate(
+      {
+        ...annotation,
+        [target.name]: target.type === 'checkbox' ? target.checked : target.value,
+      },
+      editIndex
+    );
   };
 
   const onColorChange = (color?: string) => {
-    onUpdate({
-      ...annotation,
-      iconColor: color!,
-    });
+    onUpdate(
+      {
+        ...annotation,
+        iconColor: color!,
+      },
+      editIndex
+    );
   };
 
   const onFilterTypeChange = (v: SelectableValue<PanelFilterType>) => {
@@ -112,7 +135,7 @@ export const AnnotationSettingsEdit = ({ annotations, editIdx }: Props) => {
             exclude: v.value === PanelFilterType.ExcludePanels,
             ids: annotation.filter?.ids ?? [],
           };
-    onUpdate({ ...annotation, filter });
+    onUpdate({ ...annotation, filter }, editIndex);
   };
 
   const onAddFilterPanelID = (selections: Array<SelectableValue<number>>) => {
@@ -126,47 +149,42 @@ export const AnnotationSettingsEdit = ({ annotations, editIdx }: Props) => {
     };
 
     selections.forEach((selection) => selection.value && filter.ids.push(selection.value));
-    onUpdate({ ...annotation, filter });
+    onUpdate({ ...annotation, filter }, editIndex);
   };
 
   const onApply = goBackToList;
 
-  const onPreview = () => {
-    locationService.partial({ editview: null, editIndex: null });
-  };
-
-  const onDelete = () => {
-    // const annotations = dashboard.annotations.list;
-    // dashboard.annotations.list = [...annotations.slice(0, editIdx), ...annotations.slice(editIdx + 1)];
+  const onDeleteAndLeavePage = () => {
+    onDelete(editIndex);
     goBackToList();
   };
 
   const isNewAnnotation = annotation.name === newAnnotationName;
 
-  // const sortFn = (a: SelectableValue<number>, b: SelectableValue<number>) => {
-  //   if (a.label && b.label) {
-  //     return a.label.toLowerCase().localeCompare(b.label.toLowerCase());
-  //   }
+  const sortFn = (a: SelectableValue<number>, b: SelectableValue<number>) => {
+    if (a.label && b.label) {
+      return a.label.toLowerCase().localeCompare(b.label.toLowerCase());
+    }
 
-  //   return -1;
-  // };
+    return -1;
+  };
 
-  const panels: Array<SelectableValue<number>> = useMemo(() => [], []);
-  // () =>
-  //   dashboard?.panels
-  //     // Filtering out rows at the moment, revisit to only include panels that support annotations
-  //     // However the information to know if a panel supports annotations requires it to be already loaded
-  //     // panel.plugin?.dataSupport?.annotations
-  //     .filter((panel) => config.panels[panel.type])
-  //     .map((panel) => ({
-  //       value: panel.id,
-  //       label: panel.title ?? `Panel ${panel.id}`,
-  //       description: panel.description,
-  //       imgUrl: config.panels[panel.type].info.logos.small,
-  //     }))
-  //     .sort(sortFn) ?? [],
-  // [dashboard]
-  // );
+  const selectablePanels: Array<SelectableValue<number>> = useMemo(
+    () =>
+      panels
+        // Filtering out rows at the moment, revisit to only include panels that support annotations
+        // However the information to know if a panel supports annotations requires it to be already loaded
+        // panel.plugin?.dataSupport?.annotations
+        .filter((panel) => config.panels[panel.state.pluginId])
+        .map((panel) => ({
+          value: getPanelIdForVizPanel(panel),
+          label: panel.state.title ?? `Panel ${getPanelIdForVizPanel(panel)}`,
+          description: panel.state.description,
+          imgUrl: config.panels[panel.state.pluginId].info.logos.small,
+        }))
+        .sort(sortFn) ?? [],
+    [panels]
+  );
 
   return (
     <div>
@@ -208,8 +226,8 @@ export const AnnotationSettingsEdit = ({ annotations, editIdx }: Props) => {
             />
             {panelFilter !== PanelFilterType.AllPanels && (
               <MultiSelect
-                options={panels}
-                value={panels.filter((panel) => annotation.filter?.ids.includes(panel.value!))}
+                options={selectablePanels}
+                value={selectablePanels.filter((panel) => annotation.filter?.ids.includes(panel.value!))}
                 onChange={onAddFilterPanelID}
                 isClearable={true}
                 placeholder="Choose panels"
@@ -229,14 +247,14 @@ export const AnnotationSettingsEdit = ({ annotations, editIdx }: Props) => {
             datasource={ds}
             datasourceInstanceSettings={dsi}
             annotation={annotation}
-            onChange={onUpdate}
+            onChange={(annotation) => onUpdate(annotation, editIndex)}
           />
         )}
         {/* do we need this?? {ds && !ds.annotations && <AngularEditorLoader datasource={ds} annotation={annotation} onChange={onUpdate} />} */}
       </FieldSet>
       <Stack>
         {!annotation.builtIn && (
-          <Button variant="destructive" onClick={onDelete}>
+          <Button variant="destructive" onClick={onDeleteAndLeavePage}>
             Delete
           </Button>
         )}
@@ -266,10 +284,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
-
-function goBackToList() {
-  locationService.partial({ editIndex: null });
-}
 
 // Synthetic type
 enum PanelFilterType {
