@@ -22,6 +22,7 @@ const (
 	WeightInfrastructure
 	WeightApplication
 	WeightFrontend
+	WeightAsserts
 	WeightDataConnections
 	WeightApps
 	WeightPlugin
