@@ -30,7 +30,7 @@ const timeoutMap = {
 export const TemporaryAlert = (props: { severity: AlertVariant; text: string }) => {
   const style = getStyle(useTheme2());
   const [visible, setVisible] = useState(false);
-  const [timer, setTimer] = useState<NodeJS.Timeout | undefined>(undefined);
+  const [timer, setTimer] = useState<NodeJS.Timeout>();
 
   useEffect(() => {
     return () => {
