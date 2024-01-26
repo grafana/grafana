@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
 import { useStyles2, Stack, Card, Tag, IconButton } from '@grafana/ui';
 
@@ -40,7 +40,7 @@ export function DataTrailCard({ trail, onSelect, onDelete }: Props) {
         <Stack gap={1} justifyContent={'space-between'} grow={1}>
           <div className={styles.secondary}>Datasource: {getDataSourceName(dsValue)}</div>
           {trail.state.createdAt && (
-            <i className={styles.secondary}>{new Date(trail.state.createdAt).toLocaleDateString()}</i>
+            <i className={styles.secondary}>Created: {dateTimeFormat(trail.state.createdAt, { format: 'LL' })}</i>
           )}
         </Stack>
       </Card.Actions>
@@ -87,6 +87,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     secondary: css({
       color: theme.colors.text.secondary,
+      fontSize: '12px',
     }),
     description: css({
       width: '100%',
