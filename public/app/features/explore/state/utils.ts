@@ -33,7 +33,7 @@ import { setLastUsedDatasourceUID } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 
-const MAX_HISTORY_ITEMS = 100;
+export const MAX_HISTORY_AUTOCOMPLETE_ITEMS = 100;
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -130,7 +130,7 @@ export async function loadAndInitDatasource(
     sortOrder: SortOrder.Ascending,
     datasourceFilters: [instance.name],
     from: 0,
-    to: MAX_HISTORY_ITEMS,
+    to: MAX_HISTORY_AUTOCOMPLETE_ITEMS,
     starred: false,
   });
 
@@ -143,14 +143,14 @@ export async function loadAndInitDatasource(
     });
   }
 
-  if (history.length < MAX_HISTORY_ITEMS) {
+  if (history.length < MAX_HISTORY_AUTOCOMPLETE_ITEMS) {
     // check the last 100 mixed history results seperately
     const historyMixedResults = await localStorageHistory.getRichHistory({
       search: '',
       sortOrder: SortOrder.Ascending,
       datasourceFilters: [MIXED_DATASOURCE_NAME],
       from: 0,
-      to: MAX_HISTORY_ITEMS,
+      to: MAX_HISTORY_AUTOCOMPLETE_ITEMS,
       starred: false,
     });
 
@@ -165,9 +165,13 @@ export async function loadAndInitDatasource(
     }
   }
 
+  if (history.length > MAX_HISTORY_AUTOCOMPLETE_ITEMS) {
+    history.length = MAX_HISTORY_AUTOCOMPLETE_ITEMS;
+  }
+
   // Save last-used datasource
   setLastUsedDatasourceUID(orgId, instance.uid);
-  return { history: history.splice(100), instance };
+  return { history: history, instance };
 }
 
 export function createCacheKey(absRange: AbsoluteTimeRange) {
