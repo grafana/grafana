@@ -13,21 +13,16 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 		Description:       "Nested folder statistics of the Grafana instance",
 		IncludedByDefault: false,
 		Default:           false,
-		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {
-			return &supportbundles.SupportItem{
-				Filename:  "folder-stats.json",
-				FileBytes: []byte("hello world"),
-			}, nil
-		},
+		Fn:                s.supportBundleCollectorFn(),
 	}
 }
 
-// func (s *Service) supportBundleCollectorFn() func(context.Context) (*supportbundles.SupportItem, error) {
-// 	return func(ctx context.Context) (*supportbundles.SupportItem, error) {
+func (s *Service) supportBundleCollectorFn() func(context.Context) (*supportbundles.SupportItem, error) {
+	return func(ctx context.Context) (*supportbundles.SupportItem, error) {
 
-// 		return &supportbundles.SupportItem{
-// 			Filename:  "folder-stats.json",
-// 			FileBytes: []byte("hello world"),
-// 		}, nil
-// 	}
-// }
+		return &supportbundles.SupportItem{
+			Filename:  "folder-stats.json",
+			FileBytes: []byte("hello world"),
+		}, nil
+	}
+}
