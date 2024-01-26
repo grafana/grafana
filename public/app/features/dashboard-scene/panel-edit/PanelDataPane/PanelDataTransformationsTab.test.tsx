@@ -102,8 +102,9 @@ describe('PanelDataTransformationsTab', () => {
       selectors.components.TransformTab.newTransform('Add field from calculation')
     );
     const button = transformationCard.getElementsByTagName('button').item(0);
-
-    await userEvent.click(button!);
+    await act(async () => {
+      await userEvent.click(button!);
+    });
 
     expect(onChangeTransformation).toHaveBeenCalledWith([{ id: 'calculateField', options: {} }]);
   });
@@ -129,9 +130,9 @@ describe('PanelDataTransformationsTab', () => {
       selectors.components.TransformTab.newTransform('Add field from calculation')
     );
     const button = transformationCard.getElementsByTagName('button').item(0);
-
-    await userEvent.click(button!);
-
+    await act(async () => {
+      await userEvent.click(button!);
+    });
     expect(onChangeTransformation).toHaveBeenCalledWith([
       { id: 'calculateField', options: {} },
       { id: 'calculateField', options: {} },
