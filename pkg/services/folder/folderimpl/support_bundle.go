@@ -26,7 +26,7 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 // 	return func(ctx context.Context) (*supportbundles.SupportItem, error) {
 
 // 		return &supportbundles.SupportItem{
-// 			Filename:  "folder.json ",
+// 			Filename:  "folder-stats.json",
 // 			FileBytes: []byte("hello world"),
 // 		}, nil
 // 	}

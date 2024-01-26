@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -49,6 +50,7 @@ func NewTestMigrationStore(t testing.TB, sqlStore *sqlstore.SQLStore, cfg *setti
 	}
 	bus := bus.ProvideBus(tracing.InitializeTracerForTest())
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	supportBundle := supportbundlestest.NewFakeBundleService()
 
 	cache := localcache.ProvideService()
 	quotaService := &quotatest.FakeQuotaService{}
@@ -67,7 +69,7 @@ func NewTestMigrationStore(t testing.TB, sqlStore *sqlstore.SQLStore, cfg *setti
 
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
-	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, sqlStore, features, nil)
+	folderService := folderimpl.ProvideService(ac, supportBundle, bus, cfg, dashboardStore, folderStore, sqlStore, features, nil)
 
 	err = folderService.RegisterService(alertingStore)
 	require.NoError(t, err)
