@@ -222,7 +222,11 @@ func getRoleFromSearch(role string) (org.RoleType, bool) {
 
 func validateInfo(info *social.OAuthInfo) error {
 	if info.ClientId == "" {
-		return ssosettings.ErrOauthValidationError("ClientId is empty", map[string]any{"clientId": ""})
+		return ssosettings.ErrOauthValidationError("ClientId is empty")
+	}
+
+	if info.AllowAssignGrafanaAdmin && info.SkipOrgRoleSync {
+		return ssosettings.ErrOauthValidationError("Allow assign Grafana Admin and Skip org role sync are both set thus Grafana Admin role will not be synced. Consider setting one or the other.")
 	}
 
 	return nil

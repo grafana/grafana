@@ -12,10 +12,9 @@ var (
 
 	errInvalidOAuthInfo = errutil.ValidationFailed("sso.invalidOAuthInfo")
 
-	ErrOauthValidationError = func(msg string, payload map[string]any) error {
+	ErrOauthValidationError = func(msg string) error {
 		base := errInvalidOAuthInfo.Errorf("OAuth settings are invalid")
 		base.PublicMessage = msg
-		base.PublicPayload = payload
 		return base
 	}
 
