@@ -85,7 +85,7 @@ To use a variable you need to wrap it in `${}`. For example, `${__span.name}`.
 
 ## Configure trace to profiles
 
-The following table describes the ways in which you can configure your trace to profiles settings:
+The following table describes options for configuring your trace to profiles settings:
 
 | Setting name         | Description                                                                                                                                                                                                                                                                                                     |
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
