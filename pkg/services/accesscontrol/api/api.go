@@ -83,15 +83,29 @@ func (api *AccessControlAPI) getUserPermissions(c *contextmodel.ReqContext) resp
 // 403: forbiddenError
 // 500: internalServerError
 func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) response.Response {
+	userIDString := c.Query("userId")
+	userID, err := strconv.ParseInt(userIDString, 10, 64)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "user ID is invalid", err)
+	}
 	searchOptions := ac.SearchOptions{
+		UserLogin:    c.Query("userLogin"),
 		ActionPrefix: c.Query("actionPrefix"),
 		Action:       c.Query("action"),
 		Scope:        c.Query("scope"),
 	}
+	searchOptions.UserID = userID
 
 	// Validate inputs
-	if (searchOptions.ActionPrefix != "") == (searchOptions.Action != "") {
-		return response.JSON(http.StatusBadRequest, "provide one of 'action' or 'actionPrefix'")
+	if (searchOptions.ActionPrefix != "") && (searchOptions.Action != "") {
+		return response.JSON(http.StatusBadRequest, "'action' and 'actionPrefix' are mutually exclusive")
+	}
+	if (searchOptions.UserLogin != "") && (searchOptions.UserID > 0) {
+		return response.JSON(http.StatusBadRequest, "'userId' and 'userLogin' are mutually exclusive")
+	}
+	if searchOptions.UserID <= 0 && searchOptions.UserLogin == "" &&
+		searchOptions.ActionPrefix == "" && searchOptions.Action == "" {
+		return response.JSON(http.StatusBadRequest, "at least one search option must be provided")
 	}
 
 	// Compute metadata
@@ -112,7 +126,7 @@ func (api *AccessControlAPI) searchUserPermissions(c *contextmodel.ReqContext) r
 	userIDString := web.Params(c.Req)[":userID"]
 	userID, err := strconv.ParseInt(userIDString, 10, 64)
 	if err != nil {
-		response.Error(http.StatusBadRequest, "user ID is invalid", err)
+		return response.Error(http.StatusBadRequest, "user ID is invalid", err)
 	}
 
 	searchOptions := ac.SearchOptions{

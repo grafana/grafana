@@ -212,7 +212,7 @@ export const StateTimelinePanel = ({
                         return null;
                       }
 
-                      if (timeRange2 != null) {
+                      if (enableAnnotationCreation && timeRange2 != null) {
                         setNewAnnotationRange(timeRange2);
                         dismiss();
                         return;
@@ -249,7 +249,7 @@ export const StateTimelinePanel = ({
                   annotations={data.annotations ?? []}
                   config={builder}
                   timeZone={timeZone}
-                  newRange={enableAnnotationCreation ? newAnnotationRange : null}
+                  newRange={newAnnotationRange}
                   setNewRange={setNewAnnotationRange}
                   canvasRegionRendering={false}
                 />
