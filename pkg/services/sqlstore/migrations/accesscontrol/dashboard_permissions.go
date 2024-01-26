@@ -675,11 +675,6 @@ func (m *managedDashboardAnnotationActionsMigrator) SQL(dialect migrator.Dialect
 	return CodeMigrationSQL
 }
 
-// Make this migration run every time until we feel like it's safe to remove it
-func (m *managedDashboardAnnotationActionsMigrator) SkipMigrationLog() bool {
-	return true
-}
-
 func (m *managedDashboardAnnotationActionsMigrator) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	// Check if roles have been populated and return early if they haven't - this avoids logging a warning from hasDefaultAnnotationPermissions
 	roleCount, err := sess.Count(&ac.Role{})
@@ -709,21 +704,24 @@ func (m *managedDashboardAnnotationActionsMigrator) Exec(sess *xorm.Session, mg 
 		return err
 	}
 
-	mapped := make(map[int64]map[string][]ac.Permission, len(ids)-1)
+	mapped := make(map[int64]map[string]map[string]bool, len(ids)-1)
 	for _, p := range permissions {
 		if mapped[p.RoleID] == nil {
-			mapped[p.RoleID] = make(map[string][]ac.Permission)
+			mapped[p.RoleID] = make(map[string]map[string]bool)
 		}
-		mapped[p.RoleID][p.Scope] = append(mapped[p.RoleID][p.Scope], p)
+		if mapped[p.RoleID][p.Action] == nil {
+			mapped[p.RoleID][p.Action] = make(map[string]bool)
+		}
+		mapped[p.RoleID][p.Scope][p.Action] = true
 	}
 
 	var toAdd []ac.Permission
 	now := time.Now()
 
 	for roleId, mappedPermissions := range mapped {
-		for scope, rolePermissions := range mappedPermissions {
-			if hasAction(dashboards.ActionDashboardsRead, rolePermissions) {
-				if !hasAction(ac.ActionAnnotationsRead, rolePermissions) {
+		for scope, roleActions := range mappedPermissions {
+			if roleActions[dashboards.ActionDashboardsRead] {
+				if !roleActions[ac.ActionAnnotationsRead] {
 					toAdd = append(toAdd, ac.Permission{
 						RoleID:  roleId,
 						Updated: now,
@@ -734,8 +732,8 @@ func (m *managedDashboardAnnotationActionsMigrator) Exec(sess *xorm.Session, mg 
 				}
 			}
 
-			if hasAction(dashboards.ActionDashboardsWrite, rolePermissions) {
-				if !hasAction(ac.ActionAnnotationsCreate, rolePermissions) {
+			if roleActions[dashboards.ActionDashboardsWrite] {
+				if !roleActions[ac.ActionAnnotationsCreate] {
 					toAdd = append(toAdd, ac.Permission{
 						RoleID:  roleId,
 						Updated: now,
@@ -744,7 +742,7 @@ func (m *managedDashboardAnnotationActionsMigrator) Exec(sess *xorm.Session, mg 
 						Action:  ac.ActionAnnotationsCreate,
 					})
 				}
-				if !hasAction(ac.ActionAnnotationsDelete, rolePermissions) {
+				if !roleActions[ac.ActionAnnotationsDelete] {
 					toAdd = append(toAdd, ac.Permission{
 						RoleID:  roleId,
 						Updated: now,
@@ -753,7 +751,7 @@ func (m *managedDashboardAnnotationActionsMigrator) Exec(sess *xorm.Session, mg 
 						Action:  ac.ActionAnnotationsDelete,
 					})
 				}
-				if !hasAction(ac.ActionAnnotationsWrite, rolePermissions) {
+				if !roleActions[ac.ActionAnnotationsWrite] {
 					toAdd = append(toAdd, ac.Permission{
 						RoleID:  roleId,
 						Updated: now,
@@ -771,7 +769,7 @@ func (m *managedDashboardAnnotationActionsMigrator) Exec(sess *xorm.Session, mg 
 	}
 
 	return batch(len(toAdd), batchSize, func(start, end int) error {
-		_, err := sess.InsertMulti(toAdd[start:end]);
+		_, err := sess.InsertMulti(toAdd[start:end])
 		return err
 	})
 }
@@ -793,7 +791,7 @@ WHERE r.uid IN (?, ?, ?) AND p.action LIKE 'annotations:%'
 		return false, fmt.Errorf("failed to list basic role permissions: %w", err)
 	}
 
-	mappedBasicRolePerms := make(map[any]map[string][]string, 0)
+	mappedBasicRolePerms := make(map[string]map[string][]string, 0)
 	for _, p := range basicRolePermissions {
 		if mappedBasicRolePerms[p.Uid] == nil {
 			mappedBasicRolePerms[p.Uid] = make(map[string][]string)
@@ -804,13 +802,13 @@ WHERE r.uid IN (?, ?, ?) AND p.action LIKE 'annotations:%'
 	expectedAnnotationActions := []string{ac.ActionAnnotationsRead, ac.ActionAnnotationsCreate, ac.ActionAnnotationsDelete, ac.ActionAnnotationsWrite}
 
 	for _, uid := range basicRoleUIDs {
-		if mappedBasicRolePerms[uid] == nil {
+		if mappedBasicRolePerms[uid.(string)] == nil {
 			mg.Logger.Warn("basic role permissions missing annotation permissions, skipping annotation permission migration", "uid", uid)
 			return false, nil
 		}
 		for _, action := range expectedAnnotationActions {
 			foundDashScope := false
-			for _, scope := range mappedBasicRolePerms[uid][action] {
+			for _, scope := range mappedBasicRolePerms[uid.(string)][action] {
 				if scope == ac.ScopeAnnotationsAll || scope == ac.ScopeAnnotationsTypeDashboard {
 					foundDashScope = true
 					break

@@ -114,7 +114,11 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 
 	ualert.CreateOrgMigratedKVStoreEntries(mg)
 
-	accesscontrol.AddManagedDashboardAnnotationActionsMigration(mg)
+	// https://github.com/grafana/identity-access-team/issues/546: tracks removal of the feature toggle from the annotation permission migration
+	// nolint:staticcheck
+	if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAnnotationPermissionUpdate) {
+		accesscontrol.AddManagedDashboardAnnotationActionsMigration(mg)
+	}
 
 	addKVStoreMySQLValueTypeLongTextMigration(mg)
 }
