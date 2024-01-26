@@ -84,7 +84,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 	generatedDash.Del("__inputs")
 	generatedDash.Del("__requires")
 
-	metrics.MFolderIDsServiceCount.WithLabelValues("dashboardimport").Inc()
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.DashboardImport).Inc()
 	// here we need to get FolderId from FolderUID if it present in the request, if both exist, FolderUID would overwrite FolderID
 	if req.FolderUid != "" {
 		folder, err := s.folderService.Get(ctx, &folder.GetFolderQuery{
@@ -139,7 +139,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 		return nil, err
 	}
 
-	metrics.MFolderIDsServiceCount.WithLabelValues("dashboardimport").Inc()
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.DashboardImport).Inc()
 	// nolint:staticcheck
 	err = s.libraryPanelService.ImportLibraryPanelsForDashboard(ctx, req.User, libraryElements, generatedDash.Get("panels").MustArray(), req.FolderId)
 	if err != nil {
@@ -152,7 +152,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 	}
 
 	revision := savedDashboard.Data.Get("revision").MustInt64(0)
-	metrics.MFolderIDsServiceCount.WithLabelValues("dashboardimport").Inc()
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.DashboardImport).Inc()
 	return &dashboardimport.ImportDashboardResponse{
 		UID:              savedDashboard.UID,
 		PluginId:         req.PluginId,

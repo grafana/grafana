@@ -235,6 +235,8 @@ const (
 	GetFolderACL              string = "getFolderACL"
 	Search                    string = "Search"
 	GetDashboardACL           string = "getDashboardACL"
+	NewToFolderDTO            string = "newToFolderDto"
+	GetFolders                string = "GetFolders"
 	// FolderID services
 	Folder           string = "folder"
 	Dashboard        string = "dashboards"
@@ -245,13 +247,14 @@ const (
 	PublicDashboards string = "publicdashboards"
 	AccessControl    string = "accesscontrol"
 	Guardian         string = "guardian"
+	DashboardImport  string = "dashboardimport"
 )
 
 func init() {
 	httpStatusCodes := []string{"200", "404", "500", "unknown"}
 	objectiveMap := map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001}
-	apiFolderIDMethods := []string{GetAlerts, GetDashboard, RestoreDashboardVersion, GetFolderByID, GetFolderDescendantCounts, SearchFolders, GetFolderPermissionList, UpdateFolderPermissions, GetFolderACL, Search, GetDashboardACL}
-	serviceFolderIDMethods := []string{Folder, Dashboard, LibraryElements, LibraryPanels, NGAlerts, Provisioning, PublicDashboards, AccessControl, Guardian, Search}
+	apiFolderIDMethods := []string{GetAlerts, GetDashboard, RestoreDashboardVersion, GetFolderByID, GetFolderDescendantCounts, SearchFolders, GetFolderPermissionList, UpdateFolderPermissions, GetFolderACL, Search, GetDashboardACL, NewToFolderDTO, GetFolders}
+	folderIDServices := []string{Folder, Dashboard, LibraryElements, LibraryPanels, NGAlerts, Provisioning, PublicDashboards, AccessControl, Guardian, Search, DashboardImport}
 
 	MInstanceStart = prometheus.NewCounter(prometheus.CounterOpts{
 		Name:      "instance_start_total",
@@ -499,7 +502,7 @@ func init() {
 		Name:      "folder_id_service_count",
 		Help:      "counter for folder id usage in service package",
 		Namespace: ExporterName,
-	}, []string{"method"}, map[string][]string{"method": serviceFolderIDMethods})
+	}, []string{"service"}, map[string][]string{"service": folderIDServices})
 
 	MStatTotalDashboards = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard",
