@@ -12,7 +12,7 @@ import {
   DataFrame,
 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
-import { Icon, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, Select, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { getLogsVolumeDataSourceInfo, isLogsVolumeLimited } from '../../logs/utils';
 import { ExploreGraph } from '../Graph/ExploreGraph';
@@ -29,6 +29,9 @@ type Props = {
   onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
   eventBus: EventBus;
   annotations: DataFrame[];
+  onChangeLabel: (label: string) => void;
+  labels: string[];
+  selectedLabel: string | undefined;
 };
 
 export function LogsVolumePanel(props: Props) {
@@ -66,29 +69,46 @@ export function LogsVolumePanel(props: Props) {
   }
 
   return (
-    <div style={{ height }} className={styles.contentContainer}>
-      <ExploreGraph
-        vizLegendOverrides={{
-          calcs: ['sum'],
-        }}
-        graphStyle="lines"
-        loadingState={logsVolumeData.state ?? LoadingState.Done}
-        data={logsVolumeData.data}
-        height={height}
-        width={width - spacing * 2}
-        absoluteRange={props.absoluteRange}
-        onChangeTime={onUpdateTimeRange}
-        timeZone={timeZone}
-        splitOpenFn={splitOpen}
-        tooltipDisplayMode={TooltipDisplayMode.Multi}
-        onHiddenSeriesChanged={onHiddenSeriesChanged}
-        anchorToZero
-        yAxisMaximum={allLogsVolumeMaximum}
-        eventBus={props.eventBus}
-        annotations={props.annotations}
-      />
-      {extraInfoComponent && <div className={styles.extraInfoContainer}>{extraInfoComponent}</div>}
-    </div>
+    <>
+      <div>
+        <Select
+          value={props.selectedLabel}
+          options={[
+            { label: 'level', value: 'level' },
+            { label: 'cluster', value: 'cluster' },
+            { label: 'container', value: 'container' },
+          ]}
+          onChange={(e) => {
+            if (e.value) {
+              props.onChangeLabel(e.value);
+            }
+          }}
+        />
+      </div>
+      <div style={{ height }} className={styles.contentContainer}>
+        <ExploreGraph
+          vizLegendOverrides={{
+            calcs: ['sum'],
+          }}
+          graphStyle="lines"
+          loadingState={logsVolumeData.state ?? LoadingState.Done}
+          data={logsVolumeData.data}
+          height={height}
+          width={width - spacing * 2}
+          absoluteRange={props.absoluteRange}
+          onChangeTime={onUpdateTimeRange}
+          timeZone={timeZone}
+          splitOpenFn={splitOpen}
+          tooltipDisplayMode={TooltipDisplayMode.Multi}
+          onHiddenSeriesChanged={onHiddenSeriesChanged}
+          anchorToZero
+          yAxisMaximum={allLogsVolumeMaximum}
+          eventBus={props.eventBus}
+          annotations={props.annotations}
+        />
+        {extraInfoComponent && <div className={styles.extraInfoContainer}>{extraInfoComponent}</div>}
+      </div>
+    </>
   );
 }
 

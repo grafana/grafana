@@ -538,6 +538,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
       absoluteRange,
       cache,
       supplementaryQueries,
+      // metadata: {label: exploreState}
     } = exploreItemState;
 
     let newQuerySource: Observable<ExplorePanelData>;
@@ -694,6 +695,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
             supplementaryQueries,
             queries,
             absoluteRange,
+            metadata: { label: exploreItemState.panelsState.logs?.label ?? 'level' },
           })
         );
       }
@@ -817,6 +819,7 @@ type HandleSupplementaryQueriesOptions = {
   supplementaryQueries: SupplementaryQueries;
   queries: DataQuery[];
   absoluteRange: AbsoluteTimeRange;
+  metadata: { label: string };
 };
 
 const handleSupplementaryQueries = createAsyncThunk(
@@ -830,6 +833,7 @@ const handleSupplementaryQueries = createAsyncThunk(
       supplementaryQueries,
       queries,
       absoluteRange,
+      metadata,
     }: HandleSupplementaryQueriesOptions,
     { dispatch }
   ) => {
@@ -850,7 +854,8 @@ const handleSupplementaryQueries = createAsyncThunk(
           ...transaction.request,
           requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
         },
-        newQuerySource
+        newQuerySource,
+        metadata
       );
 
       if (dataProvider) {

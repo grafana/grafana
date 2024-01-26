@@ -625,15 +625,17 @@ function getLogVolumeFieldConfig(level: LogLevel, oneLevelDetected: boolean) {
 
 const updateLogsVolumeConfig = (
   dataFrame: DataFrame,
-  extractLevel: (dataFrame: DataFrame) => LogLevel,
-  oneLevelDetected: boolean
+  oneLevelDetected: boolean,
+  extractLevel?: (dataFrame: DataFrame) => LogLevel
 ): DataFrame => {
   dataFrame.fields = dataFrame.fields.map((field) => {
     if (field.type === FieldType.number) {
-      field.config = {
-        ...field.config,
-        ...getLogVolumeFieldConfig(extractLevel(dataFrame), oneLevelDetected),
-      };
+      if (extractLevel) {
+        field.config = {
+          ...field.config,
+          ...getLogVolumeFieldConfig(extractLevel(dataFrame), oneLevelDetected),
+        };
+      }
     }
     return field;
   });
@@ -641,7 +643,7 @@ const updateLogsVolumeConfig = (
 };
 
 type LogsVolumeQueryOptions<T extends DataQuery> = {
-  extractLevel: (dataFrame: DataFrame) => LogLevel;
+  extractLevel?: (dataFrame: DataFrame) => LogLevel;
   targets: T[];
   range: TimeRange;
 };
@@ -717,7 +719,7 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
                 ...logsVolumeCustomMetaData,
               },
             };
-            return updateLogsVolumeConfig(dataFrame, options.extractLevel, framesByRefId[dataFrame.refId].length === 1);
+            return updateLogsVolumeConfig(dataFrame, framesByRefId[dataFrame.refId].length === 1, options.extractLevel);
           });
 
           observer.next({

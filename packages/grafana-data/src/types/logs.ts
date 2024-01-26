@@ -185,6 +185,7 @@ export type SupplementaryQueryOptions = LogsVolumeOption | LogsSampleOptions;
  */
 export type LogsVolumeOption = {
   type: SupplementaryQueryType.LogsVolume;
+  label?: string;
 };
 
 /**
@@ -228,7 +229,10 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
    */
   getDataProvider(
     type: SupplementaryQueryType,
-    request: DataQueryRequest<TQuery>
+    request: DataQueryRequest<TQuery>,
+    metadata?: {
+      label: string;
+    }
   ): Observable<DataQueryResponse> | undefined;
   /**
    * Returns supplementary query types that data source supports.
