@@ -58,10 +58,6 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 }
 
 func newPostgres(cfg *setting.Cfg, dsInfo sqleng.DataSourceInfo, cnnstr string, logger log.Logger) (*sql.DB, *sqleng.DataSourceHandler, error) {
-	if cfg.Env == setting.Dev {
-		logger.Debug("GetEngine", "connection", cnnstr)
-	}
-
 	connector, err := pq.NewConnector(cnnstr)
 	if err != nil {
 		logger.Error("postgres connector creation failed", "error", err)
