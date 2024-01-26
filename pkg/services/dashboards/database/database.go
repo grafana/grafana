@@ -1012,8 +1012,7 @@ func (d *dashboardStore) GetDashboardTags(ctx context.Context, query *dashboards
 func (d *dashboardStore) CountDashboardsInFolder(
 	ctx context.Context, req *dashboards.CountDashboardsInFolderRequest) (int64, error) {
 	var count int64
-	var err error
-	err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 		s := strings.Builder{}
 		args := make([]any, 0, 3)
