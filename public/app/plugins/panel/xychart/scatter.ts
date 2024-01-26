@@ -224,6 +224,10 @@ function prepSeries(options: Options, frames: DataFrame[]): ScatterSeries[] {
       }
 
       for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
+        // When a frame filter is applied, only include matching frame index
+        if (series.frame !== undefined && series.frame !== frameIndex) {
+          continue;
+        }
         const frame = frames[frameIndex];
         const xIndex = findFieldIndex(series.x, frame, frames);
 
