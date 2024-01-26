@@ -1064,7 +1064,6 @@ func TestSocialAzureAD_Validate(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-
 		})
 	}
 }

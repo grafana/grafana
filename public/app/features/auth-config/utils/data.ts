@@ -93,7 +93,7 @@ export function dtoToData(dto: SSOProviderDTO, provider: string) {
   let current: Partial<SSOProviderDTO> = dto;
 
   if (fields[provider]) {
-    current = includeRequiredKeysOnly(dto, [...fields[provider], 'enabled'])
+    current = includeRequiredKeysOnly(dto, [...fields[provider], 'enabled']);
   }
   const settings = { ...current };
 
