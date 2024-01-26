@@ -16,8 +16,8 @@ import {
   setBackendSrv,
   VariableInterpolation,
 } from '@grafana/runtime';
+import { SQLQuery } from '@grafana/sql';
 
-import { SQLQuery } from '../../../features/plugins/sql';
 import { TemplateSrv } from '../../../features/templating/template_srv';
 
 import InfluxDatasource from './datasource';
