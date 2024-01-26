@@ -555,7 +555,7 @@ func createAlertRule(t *testing.T, sql db.DB, title string, generator func() *ng
 func createAlertRuleFromDashboard(t *testing.T, sql db.DB, title string, dashboard dashboards.Dashboard, generator func() *ngmodels.AlertRule) *ngmodels.AlertRule {
 	t.Helper()
 
-	var panelID *int64 = new(int64)
+	panelID := new(int64)
 	*panelID = 123
 
 	if generator == nil {
