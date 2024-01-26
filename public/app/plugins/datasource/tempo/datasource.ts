@@ -530,7 +530,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       search: this.templateSrv.replace(query.search ?? '', scopedVars),
       minDuration: this.templateSrv.replace(query.minDuration ?? '', scopedVars),
       maxDuration: this.templateSrv.replace(query.maxDuration ?? '', scopedVars),
-      serviceMapQuery: this.templateSrv.replace(query.serviceMapQuery ?? '', scopedVars),
+      serviceMapQuery: Array.isArray(query.serviceMapQuery)
+        ? query.serviceMapQuery.map((query) => this.templateSrv.replace(query, scopedVars))
+        : this.templateSrv.replace(query.serviceMapQuery ?? '', scopedVars),
     };
   }
 
@@ -1084,12 +1086,16 @@ function makePromServiceMapRequest(options: DataQueryRequest<TempoQuery>): DataQ
     targets: serviceMapMetrics.map((metric) => {
       const { serviceMapQuery, serviceMapIncludeNamespace: serviceMapIncludeNamespace } = options.targets[0];
       const extraSumByFields = serviceMapIncludeNamespace ? ', client_service_namespace, server_service_namespace' : '';
+      const queries = Array.isArray(serviceMapQuery) ? serviceMapQuery : [serviceMapQuery];
+      const subExprs = queries.map(
+        (query) => `sum by (client, server${extraSumByFields}) (rate(${metric}${query || ''}[$__range]))`
+      );
       return {
         format: 'table',
         refId: metric,
         // options.targets[0] is not correct here, but not sure what should happen if you have multiple queries for
         // service map at the same time anyway
-        expr: `sum by (client, server${extraSumByFields}) (rate(${metric}${serviceMapQuery || ''}[$__range]))`,
+        expr: subExprs.join(' OR '),
         instant: true,
       };
     }),
@@ -1254,24 +1260,33 @@ function getServiceGraphView(
 }
 
 export function buildExpr(
-  metric: { expr: string; params: string[] },
+  metric: { expr: string; params: string[]; topk?: number },
   extraParams: string,
   request: DataQueryRequest<TempoQuery>
-) {
+): string {
   let serviceMapQuery = request.targets[0]?.serviceMapQuery ?? '';
-  const serviceMapQueryMatch = serviceMapQuery.match(/^{(.*)}$/);
-  if (serviceMapQueryMatch?.length) {
-    serviceMapQuery = serviceMapQueryMatch[1];
+  const serviceMapQueries = Array.isArray(serviceMapQuery) ? serviceMapQuery : [serviceMapQuery];
+  const metricParamsArray = serviceMapQueries.map((query) => {
+    // remove surrounding curly braces from serviceMapQuery
+    const serviceMapQueryMatch = query.match(/^{(.*)}$/);
+    if (serviceMapQueryMatch?.length) {
+      query = serviceMapQueryMatch[1];
+    }
+    // map serviceGraph metric tags to serviceGraphView metric tags
+    query = query.replace('client', 'service').replace('server', 'service');
+    return query.includes('span_name')
+      ? metric.params.concat(query)
+      : metric.params
+          .concat(query)
+          .concat(extraParams)
+          .filter((item: string) => item);
+  });
+  const exprs = metricParamsArray.map((params) => metric.expr.replace('{}', '{' + params.join(',') + '}'));
+  const expr = exprs.join(' OR ');
+  if (metric.topk) {
+    return `topk(${metric.topk}, ${expr})`;
   }
-  // map serviceGraph metric tags to serviceGraphView metric tags
-  serviceMapQuery = serviceMapQuery.replace('client', 'service').replace('server', 'service');
-  const metricParams = serviceMapQuery.includes('span_name')
-    ? metric.params.concat(serviceMapQuery)
-    : metric.params
-        .concat(serviceMapQuery)
-        .concat(extraParams)
-        .filter((item: string) => item);
-  return metric.expr.replace('{}', '{' + metricParams.join(',') + '}');
+  return expr;
 }
 
 export function buildLinkExpr(expr: string) {
