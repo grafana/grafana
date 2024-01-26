@@ -65,8 +65,12 @@ export class AppChromeService {
 
   public update(update: Partial<AppChromeState>) {
     const current = this.state.getValue();
+    const sessionStorageReturnToPrevious = window.sessionStorage.getItem('returnToPrevious');
     const newState: AppChromeState = {
       ...current,
+      returnToPrevious: sessionStorageReturnToPrevious
+        ? JSON.parse(sessionStorageReturnToPrevious)
+        : current.returnToPrevious,
     };
 
     // when route change update props from route and clear fields
@@ -91,6 +95,7 @@ export class AppChromeService {
 
   public setReturnToPrevious(returnToPrevious: ReturnToPreviousProps) {
     this.update({ returnToPrevious });
+    window.sessionStorage.setItem('returnToPrevious', JSON.stringify(returnToPrevious));
   }
 
   private ignoreStateUpdate(newState: AppChromeState, current: AppChromeState) {

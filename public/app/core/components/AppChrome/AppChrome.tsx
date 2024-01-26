@@ -61,6 +61,7 @@ export function AppChrome({ children }: Props) {
   useEffect(() => {
     if (state.returnToPrevious && path === state.returnToPrevious.href) {
       chrome.update({ returnToPrevious: undefined });
+      window.sessionStorage.removeItem('returnToPrevious');
     }
     // We only want to pay attention when the location changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
