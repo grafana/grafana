@@ -113,6 +113,15 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	ssosettings.AddMigration(mg)
 
 	ualert.CreateOrgMigratedKVStoreEntries(mg)
+
+	// https://github.com/grafana/identity-access-team/issues/546: tracks removal of the feature toggle from the annotation permission migration
+	// nolint:staticcheck
+	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
+		// nolint:staticcheck
+		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAnnotationPermissionUpdate) {
+			accesscontrol.AddManagedDashboardAnnotationActionsMigration(mg)
+		}
+	}
 }
 
 func addStarMigrations(mg *Migrator) {
