@@ -347,6 +347,7 @@ func (s *SocialGenericOAuth) extractFromAPI(ctx context.Context, client *http.Cl
 	data.rawJSON = rawJSON
 	data.source = "API"
 	s.log.Debug("Received user info response from API", "raw_json", string(rawJSON), "data", data.String())
+
 	return &data
 }
 
