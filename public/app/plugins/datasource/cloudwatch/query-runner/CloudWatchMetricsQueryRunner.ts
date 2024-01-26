@@ -1,7 +1,9 @@
 import { isEmpty } from 'lodash';
+import React from 'react';
 import { catchError, map, Observable, of } from 'rxjs';
 
 import {
+  AppEvents,
   DataFrame,
   DataQueryError,
   DataQueryRequest,
@@ -12,8 +14,10 @@ import {
   rangeUtil,
   ScopedVars,
 } from '@grafana/data';
-import { TemplateSrv } from '@grafana/runtime';
+import { TemplateSrv, getAppEvents } from '@grafana/runtime';
 
+import { ThrottlingErrorMessage } from '../components/Errors/ThrottlingErrorMessage';
+import memoizedDebounce from '../memoizedDebounce';
 import { migrateMetricQuery } from '../migrations/metricQueryMigrations';
 import { CloudWatchJsonData, CloudWatchMetricsQuery, CloudWatchQuery } from '../types';
 import { filterMetricsQuery } from '../utils/utils';
@@ -23,8 +27,21 @@ import { CloudWatchRequest } from './CloudWatchRequest';
 const getThrottlingErrorMessage = (region: string, message: string) =>
   `Please visit the AWS Service Quotas console at https://${region}.console.aws.amazon.com/servicequotas/home?region=${region}#!/services/monitoring/quotas/L-5E141212 to request a quota increase or see our documentation at https://grafana.com/docs/grafana/latest/datasources/cloudwatch/#manage-service-quotas to learn more. ${message}`;
 
+const displayAlert = (datasourceName: string, region: string) =>
+  getAppEvents().publish({
+    type: AppEvents.alertError.name,
+    payload: [
+      `CloudWatch request limit reached in ${region} for data source ${datasourceName}`,
+      '',
+      undefined,
+      React.createElement(ThrottlingErrorMessage, { region }, null),
+    ],
+  });
+
 // This class handles execution of CloudWatch metrics query data queries
 export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
+  debouncedThrottlingAlert: (datasourceName: string, region: string) => void = memoizedDebounce(displayAlert, 7000);
+
   constructor(instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>, templateSrv: TemplateSrv) {
     super(instanceSettings, templateSrv);
   }
@@ -101,6 +118,10 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
           });
         });
 
+        if (res.errors?.length) {
+          this.alertOnThrottlingErrors(res.errors, request);
+        }
+
         return {
           data: dataframes,
           // DataSourceWithBackend will not throw an error, instead it will return "errors" field along with the response
@@ -131,6 +152,28 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
       }
     });
     return result;
+  }
+
+  alertOnThrottlingErrors(errors: DataQueryError[], request: DataQueryRequest<CloudWatchQuery>) {
+    const hasThrottlingError = errors.some(
+      (err) => err.message && (/^Throttling:.*/.test(err.message) || /^Rate exceeded.*/.test(err.message))
+    );
+    if (hasThrottlingError) {
+      const failedRefIds = errors.map((error) => error.refId).filter((refId) => refId);
+      if (failedRefIds.length > 0) {
+        const regionsAffected = Object.values(request.targets).reduce(
+          (res: string[], { refId, region }) =>
+            (refId && !failedRefIds.includes(refId)) || res.includes(region) ? res : [...res, region],
+          []
+        );
+        regionsAffected.forEach((region) => {
+          const actualRegion = this.getActualRegion(region);
+          if (actualRegion) {
+            this.debouncedThrottlingAlert(this.instanceSettings.name, actualRegion);
+          }
+        });
+      }
+    }
   }
 
   filterMetricQuery(query: CloudWatchMetricsQuery): boolean {
