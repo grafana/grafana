@@ -17,8 +17,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	"github.com/stretchr/testify/assert"
@@ -46,7 +44,7 @@ func Test_executeSyncLogQuery(t *testing.T) {
 		executor := newExecutor(im, newTestConfig(), &sess, featuremgmt.WithFeatures())
 
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-			Headers:       map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
+			Headers:       map[string]string{headerFromAlert: "some value"},
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{
@@ -72,7 +70,7 @@ func Test_executeSyncLogQuery(t *testing.T) {
 
 		executor := newExecutor(im, newTestConfig(), &sess, featuremgmt.WithFeatures())
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-			Headers:       map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
+			Headers:       map[string]string{headerFromAlert: "some value"},
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{
@@ -97,12 +95,12 @@ func Test_executeSyncLogQuery(t *testing.T) {
 		}{
 			{
 				"alert header",
-				map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
+				map[string]string{headerFromAlert: "some value"},
 				true,
 			},
 			{
 				"expression header",
-				map[string]string{fmt.Sprintf("http_%s", query.HeaderFromExpression): "some value"},
+				map[string]string{fmt.Sprintf("http_%s", headerFromExpression): "some value"},
 				true,
 			},
 			{
@@ -212,7 +210,7 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
 		res, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-			Headers:       map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
+			Headers:       map[string]string{headerFromAlert: "some value"},
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{
@@ -241,7 +239,7 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
 		res, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-			Headers:       map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
+			Headers:       map[string]string{headerFromAlert: "some value"},
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{
@@ -310,7 +308,7 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
 		res, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-			Headers:       map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
+			Headers:       map[string]string{headerFromAlert: "some value"},
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{
@@ -356,7 +354,7 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-			Headers:       map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
+			Headers:       map[string]string{headerFromAlert: "some value"},
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{
@@ -388,7 +386,7 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
 
 		res, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-			Headers:       map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
+			Headers:       map[string]string{headerFromAlert: "some value"},
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{

@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestSSOSettingsService_GetForProvider(t *testing.T) {
+func TestService_GetForProvider(t *testing.T) {
 	testCases := []struct {
 		name    string
 		setup   func(env testEnv)
@@ -205,7 +205,7 @@ func TestSSOSettingsService_GetForProvider(t *testing.T) {
 	}
 }
 
-func TestSSOSettingsService_GetForProviderWithRedactedSecrets(t *testing.T) {
+func TestService_GetForProviderWithRedactedSecrets(t *testing.T) {
 	testCases := []struct {
 		name    string
 		setup   func(env testEnv)
@@ -304,7 +304,7 @@ func TestSSOSettingsService_GetForProviderWithRedactedSecrets(t *testing.T) {
 	}
 }
 
-func TestSSOSettingsService_List(t *testing.T) {
+func TestService_List(t *testing.T) {
 	testCases := []struct {
 		name    string
 		setup   func(env testEnv)
@@ -447,7 +447,7 @@ func TestSSOSettingsService_List(t *testing.T) {
 	}
 }
 
-func TestSSOSettingsService_ListWithRedactedSecrets(t *testing.T) {
+func TestService_ListWithRedactedSecrets(t *testing.T) {
 	testCases := []struct {
 		name    string
 		setup   func(env testEnv)
@@ -741,7 +741,7 @@ func TestSSOSettingsService_ListWithRedactedSecrets(t *testing.T) {
 	}
 }
 
-func TestSSOSettingsService_Upsert(t *testing.T) {
+func TestService_Upsert(t *testing.T) {
 	t.Run("successfully upsert SSO settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
@@ -1003,7 +1003,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 	})
 }
 
-func TestSSOSettingsService_Delete(t *testing.T) {
+func TestService_Delete(t *testing.T) {
 	t.Run("successfully delete SSO settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
@@ -1048,7 +1048,7 @@ func TestSSOSettingsService_Delete(t *testing.T) {
 	})
 }
 
-func TestSSOSettingsService_DoReload(t *testing.T) {
+func TestService_DoReload(t *testing.T) {
 	t.Run("successfully reload settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
@@ -1101,7 +1101,7 @@ func TestSSOSettingsService_DoReload(t *testing.T) {
 	})
 }
 
-func TestSSOSettingsService_decryptSecrets(t *testing.T) {
+func TestService_decryptSecrets(t *testing.T) {
 	testCases := []struct {
 		name     string
 		setup    func(env testEnv)
@@ -1216,7 +1216,7 @@ func setupTestEnv(t *testing.T) testEnv {
 		},
 	}
 
-	svc := &SSOSettingsService{
+	svc := &Service{
 		logger:       log.NewNopLogger(),
 		cfg:          cfg,
 		store:        store,
@@ -1239,7 +1239,7 @@ func setupTestEnv(t *testing.T) testEnv {
 
 type testEnv struct {
 	cfg              *setting.Cfg
-	service          *SSOSettingsService
+	service          *Service
 	store            *ssosettingstests.FakeStore
 	ac               accesscontrol.AccessControl
 	fallbackStrategy *ssosettingstests.FakeFallbackStrategy

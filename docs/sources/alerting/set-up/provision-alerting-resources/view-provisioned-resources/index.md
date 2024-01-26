@@ -88,15 +88,18 @@ To enable editing of API-provisioned resources in the Grafana UI, add the `X-Dis
 
 To reset the notification policy tree to the default and unlock it for editing in the Grafana UI, use the `DELETE /api/v1/provisioning/policies` endpoint.
 
-To pass the `X-Disable-Provenance` header from Terraform, add it to the `http_headers` field on the provider object:
+In Terraform, you can use the `disable_provenance` attribute on alerting resources:
 
 ```
 provider "grafana" {
   url  = "http://grafana.example.com/"
   auth = var.grafana_auth
-  http_headers = {
-    "X-Disable-Provenance" = "true"
-  }
+}
+
+resource "grafana_mute_timing" "mute_all" {
+  name = "mute all"
+  disable_provenance = true
+  intervals {}
 }
 ```
 

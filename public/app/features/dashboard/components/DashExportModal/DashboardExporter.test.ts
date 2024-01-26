@@ -16,7 +16,7 @@ import { DashboardExporter, LibraryElementExport } from './DashboardExporter';
 jest.mock('app/core/store', () => {
   return {
     getBool: jest.fn(),
-    getObject: jest.fn(),
+    getObject: jest.fn((_a, b) => b),
     get: jest.fn(),
   };
 });

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
@@ -53,6 +54,7 @@ func (om *OrgMigration) migrateDashboard(ctx context.Context, dashID int64, aler
 	du := migmodels.NewDashboardUpgrade(dashID)
 	du.UID = dashboard.UID
 	du.Title = dashboard.Title
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.NGAlerts).Inc()
 	// nolint:staticcheck
 	du.FolderID = dashboard.FolderID
 

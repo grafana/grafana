@@ -36,7 +36,7 @@ import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 export const MAX_HISTORY_AUTOCOMPLETE_ITEMS = 100;
 
 export const DEFAULT_RANGE = {
-  from: 'now-6h',
+  from: 'now-1h',
   to: 'now',
 };
 

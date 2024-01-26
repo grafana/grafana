@@ -330,7 +330,8 @@ func TestIntegrationMySQL(t *testing.T) {
 								"rawSql": "SELECT $__timeGroup(time, $__interval) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 								"format": "time_series"
 							}`),
-							RefID: "A",
+							RefID:    "A",
+							Interval: time.Second * 60,
 							TimeRange: backend.TimeRange{
 								From: fromStart,
 								To:   fromStart.Add(30 * time.Minute),
