@@ -64,7 +64,7 @@ func apiBuilderServices(cfg *setting.Cfg, features featuremgmt.FeatureToggles, p
 	}
 
 	inProcBus := bus.ProvideBus(tracingService)
-	ossMigrations := migrations.ProvideOSSMigrations()
+	ossMigrations := migrations.ProvideOSSMigrations(features)
 	sqlStore, err := sqlstore.ProvideService(cfg, features, ossMigrations, inProcBus, tracingService)
 	if err != nil {
 		return nil, nil, nil, nil, err
