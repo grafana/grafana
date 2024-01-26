@@ -747,13 +747,13 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 
 	result := []string{cmd.UID}
 	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
-		subfolders, err := s.nestedFolderDelete(ctx, cmd)
+		descendants, err := s.nestedFolderDelete(ctx, cmd)
 
 		if err != nil {
 			logger.Error("the delete folder on folder table failed with err: ", "error", err)
 			return err
 		}
-		result = append(result, subfolders...)
+		result = append(result, descendants...)
 
 		dashFolders, err := s.dashboardFolderStore.GetFolders(ctx, cmd.OrgID, result)
 		if err != nil {
@@ -918,21 +918,12 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 		return result, err
 	}
 
-	folders, err := s.store.GetChildren(ctx, folder.GetChildrenQuery{UID: cmd.UID, OrgID: cmd.OrgID})
-	if err != nil {
-		return result, err
-	}
-	for _, f := range folders {
+	descendants, err := s.store.GetDescendants(ctx, cmd.OrgID, cmd.UID)
+	for _, f := range descendants {
 		result = append(result, f.UID)
-		logger.Info("deleting subfolder", "org_id", f.OrgID, "uid", f.UID)
-		subfolders, err := s.nestedFolderDelete(ctx, &folder.DeleteFolderCommand{UID: f.UID, OrgID: f.OrgID, ForceDeleteRules: cmd.ForceDeleteRules, SignedInUser: cmd.SignedInUser})
-		if err != nil {
-			logger.Error("failed deleting subfolder", "org_id", f.OrgID, "uid", f.UID, "error", err)
-			return result, err
-		}
-		result = append(result, subfolders...)
+		logger.Info("deleting descendant", "org_id", f.OrgID, "uid", f.UID)
+		err = s.store.Delete(ctx, f.UID, f.OrgID)
 	}
-
 	logger.Info("deleting folder and its contents", "org_id", cmd.OrgID, "uid", cmd.UID)
 	err = s.store.Delete(ctx, cmd.UID, cmd.OrgID)
 	if err != nil {
