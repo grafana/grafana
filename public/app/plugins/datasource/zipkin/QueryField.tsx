@@ -163,7 +163,6 @@ export function useServices(
     } catch (error) {
       const errorToShow = error instanceof Error ? error : 'An unknown error occurred';
       const errorText = `Failed to load spans from Zipkin: ${errorToShow.toString()}`;
-      console.error(errorText);
       setErrorText(errorText);
       throw error;
     }
@@ -210,7 +209,6 @@ export function useLoadOptions(datasource: ZipkinDatasource, setErrorText: (text
       } catch (error) {
         const errorToShow = error instanceof Error ? error : 'An unknown error occurred';
         const errorText = `Failed to load spans from Zipkin: ${errorToShow.toString()}`;
-        console.error(errorText);
         setErrorText(errorText);
         throw error;
       }
@@ -254,7 +252,6 @@ export function useLoadOptions(datasource: ZipkinDatasource, setErrorText: (text
       } catch (error) {
         const errorToShow = error instanceof Error ? error : 'An unknown error occurred';
         const errorText = `Failed to load spans from Zipkin: ${errorToShow.toString()}`;
-        console.error(errorText);
         setErrorText(errorText);
         throw error;
       }
