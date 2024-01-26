@@ -245,7 +245,7 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 	if len(folders) < 1 {
 		// the query is expected to return at least the same folder
 		// if it's empty it means that the folder does not exist
-		return nil, folder.ErrFolderNotFound
+		return nil, folder.ErrFolderNotFound.Errorf("folder not found")
 	}
 
 	return util.Reverse(folders[1:]), nil
@@ -308,7 +308,7 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, q folder.GetParentsQuer
 			return err
 		}
 		if !ok {
-			return folder.ErrFolderNotFound
+			return folder.ErrFolderNotFound.Errorf("folder not found")
 		}
 		for {
 			f := &folder.Folder{}
