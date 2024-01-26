@@ -8,12 +8,12 @@ describe('TemporaryAlert', () => {
     render(<TemporaryAlert duration={1000} severity="error" text="" />);
     expect(screen.queryByTestId('data-testid Alert error')).not.toBeInTheDocument();
 
-    render(<TemporaryAlert duration={1000} severity="error" text="error message" />);
+    render(<TemporaryAlert duration={1000} severity="error" text="Error message" />);
     expect(screen.queryByTestId('data-testid Alert error')).toBeInTheDocument();
-    expect(screen.getByText('error message')).toBeInTheDocument();
+    expect(screen.getByText('Error message')).toBeInTheDocument();
 
     await act(() => new Promise((_) => setTimeout(_, 1000)));
     expect(screen.queryByTestId('data-testid Alert error')).not.toBeInTheDocument();
-    expect(screen.queryByText('error message')).not.toBeInTheDocument();
+    expect(screen.queryByText('Error message')).not.toBeInTheDocument();
   });
 });
