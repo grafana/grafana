@@ -919,15 +919,21 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 	}
 
 	descendants, err := s.store.GetDescendants(ctx, cmd.OrgID, cmd.UID)
+	if err != nil {
+		logger.Error("failed to get descendant folders", "error", err)
+		return result, err
+	}
+
+	// TODO use bulk delete query to delete all descendants in one query
 	for _, f := range descendants {
 		result = append(result, f.UID)
 		logger.Info("deleting descendant", "org_id", f.OrgID, "uid", f.UID)
-		if err != nil {
-			logger.Error("failed descendant folder", "org_id", f.OrgID, "uid", f.UID, "error", err)
+		if err := s.store.Delete(ctx, f.UID, f.OrgID); err != nil {
+			logger.Error("failed deleting descendant folder", "org_id", f.OrgID, "uid", f.UID, "error", err)
 			return result, err
 		}
 	}
-	logger.Info("deleting folder and its contents", "org_id", cmd.OrgID, "uid", cmd.UID)
+	logger.Info("deleting folder and its descendants", "org_id", cmd.OrgID, "uid", cmd.UID)
 	err = s.store.Delete(ctx, cmd.UID, cmd.OrgID)
 	if err != nil {
 		logger.Info("failed deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID, "err", err)
