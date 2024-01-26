@@ -75,7 +75,7 @@ func ProvideService(
 		metrics:              newFoldersMetrics(r),
 	}
 	srv.DBMigration(db)
-	// srv.registerSupportBundleCollectors(bundleRegistry)
+	bundleRegistry.RegisterSupportItemCollector(srv.supportBundleCollector())
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
