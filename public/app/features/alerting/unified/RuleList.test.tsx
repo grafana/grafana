@@ -25,9 +25,9 @@ import { discoverFeatures } from './api/buildInfo';
 import { fetchRules } from './api/prometheus';
 import { deleteNamespace, deleteRulerRulesGroup, fetchRulerRules, setRulerRuleGroup } from './api/ruler';
 import {
+  MockDataSourceSrv,
   grantUserPermissions,
   mockDataSource,
-  MockDataSourceSrv,
   mockPromAlert,
   mockPromAlertingRule,
   mockPromRecordingRule,
@@ -120,11 +120,8 @@ const ui = {
   rulesFilterInput: byTestId('search-query-input'),
   moreErrorsButton: byRole('button', { name: /more errors/ }),
   editCloudGroupIcon: byTestId('edit-group'),
-  newRuleButton: byRole('link', { name: 'New alert rule' }),
-  moreButton: byRole('button', { name: 'More' }),
-  exportButton: byRole('menuitem', {
-    name: /export all grafana\-managed rules/i,
-  }),
+  newRuleButton: byText(/new alert rule/i),
+  exportButton: byText(/export rules/i),
   editGroupModal: {
     dialog: byRole('dialog'),
     namespaceInput: byRole('textbox', { name: /^Namespace/ }),
@@ -728,7 +725,8 @@ describe('RuleList', () => {
 
         renderRuleList();
 
-        await userEvent.click(ui.moreButton.get());
+        await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
+
         expect(ui.exportButton.get()).toBeInTheDocument();
       });
     });
