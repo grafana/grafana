@@ -30,9 +30,6 @@ export const ManualEditor = ({
   }, [context.data]);
 
   const [selected, setSelected] = useState(0);
-  // TODO make data filter changes trigger value update using onChange()
-  // const [dataFilter, setDataFilter] = useState<DataFilterBySeries[]>([{ frame: 0 }]);
-  // const [currentFrame, setCurrentFrame] = useState<any>();
   const style = useStyles2(getStyles);
 
   const onFieldChange = (val: unknown | undefined, index: number, field: string) => {
