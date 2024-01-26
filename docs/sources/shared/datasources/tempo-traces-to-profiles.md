@@ -28,11 +28,15 @@ There are two ways to configure the trace to profiles feature:
 
 To use trace to profiles, navigate to **Explore** and query a trace. Each span now links to your queries. Clicking a link runs the query in a split panel. If tags are configured, Grafana dynamically inserts the span attribute values into the query. The query runs over the time range of the (span start time - 60) to (span end time + 60 seconds).
 
-![Selecting a link in the span queries the profile data source](/static/img/docs/tempo/profiles/tempo-profiles-Span-link-profile-data-source.png)
+{{< figure src="/static/img/docs/tempo/profiles/tempo-trace-to-profile.png" max-width="900px" class="docs-image--no-shadow" alt="Selecting a link in the span queries the profile data source" >}}
 
 To use trace to profiles, you must have a configured Grafana Pyroscope data source. For more information, refer to the [Grafana Pyroscope data source documentation](/docs/grafana/latest/datasources/grafana-pyroscope/).
 
-## Use a simple configuration
+**Embedded flame graphs** are also inserted into each span details section that has a linked profile (requires a configured Grafana Pyroscope data source). This lets you see resource consumption in a flame graph visualization for each span without having to navigate away from the current view. Hover over a particular block in the flame graph to see more details about the resources being consumed.
+
+If you have configured a Pyroscope data source and no profile data is available or the Profiles for this span button & embedded flame graph is not visible, verify that the pyroscope.profile.id key-value pair exists in your span tags.
+
+## Simple configuration
 
 To use a simple configuration, follow these steps:
 
@@ -49,7 +53,7 @@ To use a simple configuration, follow these steps:
 1. Do not select **Use custom query**.
 1. Select **Save and Test**.
 
-## Configure a custom query
+## Custom query
 
 To use a custom query with the configuration, follow these steps:
 
@@ -63,7 +67,7 @@ To use a custom query with the configuration, follow these steps:
 1. Specify a custom query to be used to query profile data. You can use various variables to make that query relevant for current span. The link is shown only if all the variables are interpolated with non-empty values to prevent creating an invalid query. You can interpolate the configured tags using the `$__tags` keyword.
 1. Select **Save and Test**.
 
-## Variables that can be used in a custom query
+## Custom query variables
 
 To use a variable you need to wrap it in `${}`. For example, `${__span.name}`.
 
@@ -78,3 +82,15 @@ To use a variable you need to wrap it in `${}`. For example, `${__span.name}`.
 | **\_\_trace.traceId**  | The ID of the trace.                                                                                                                                                                                                                                                                                                                     |
 | **\_\_trace.duration** | The duration of the trace.                                                                                                                                                                                                                                                                                                               |
 | **\_\_trace.name**     | The name of the trace.                                                                                                                                                                                                                                                                                                                   |
+
+## Configure trace to profiles
+
+The following table describes options for configuring your trace to profiles settings:
+
+| Setting name         | Description                                                                                                                                                                                                                                                                                                     |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Data source**      | Defines the target data source. You can currently select a Pyroscope \[profiling\] data source.                                                                                                                                                                                                                 |
+| **Tags**             | Defines the tags to use in the profile query. Default: `cluster`, `hostname`, `namespace`, `pod`, `service.name`, `service.namespace`. You can change the tag name for example to remove dots from the name if they are not allowed in the target data source. For example, map `http.status` to `http_status`. |
+| **Profile type**     | Defines the profile type that will be used in the query.                                                                                                                                                                                                                                                        |
+| **Use custom query** | Toggles use of custom query with interpolation.                                                                                                                                                                                                                                                                 |
+| **Query**            | Input to write custom query. Use variable interpolation to customize it with variables from span.                                                                                                                                                                                                               |

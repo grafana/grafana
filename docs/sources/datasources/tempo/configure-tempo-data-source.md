@@ -86,6 +86,8 @@ To use a variable you need to wrap it in `${}`. For example `${__span.name}`.
 | **\_\_trace.duration** | The duration of the trace.                                                                                                                                                                                                                                                                                                               |
 | **\_\_trace.name**     | The name of the trace.                                                                                                                                                                                                                                                                                                                   |
 
+### Configure trace to logs
+
 The following table describes the ways in which you can configure your trace to logs settings:
 
 | Setting name              | Description                                                                                                                                                                                                                                                                                                  |
@@ -224,6 +226,12 @@ datasources:
         queries:
           - name: 'Sample query'
             query: 'sum(rate(traces_spanmetrics_latency_bucket{$$__tags}[5m]))'
+      traceToProfiles:
+        datasourceUid: 'grafana-pyroscope-datasource'
+        tags: ['job', 'instance', 'pod', 'namespace']
+        profileTypeId: 'process_cpu:cpu:nanoseconds:cpu:nanoseconds'
+        customQuery: true
+        query: 'method="${__span.tags.method}"'
       serviceMap:
         datasourceUid: 'prometheus'
       nodeGraph:
