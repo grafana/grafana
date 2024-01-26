@@ -12,7 +12,6 @@ import {
   getFrameDisplayName,
   LoadingState,
   SplitOpen,
-  TimeZone,
   ThresholdsConfig,
   DashboardCursorSync,
   EventBus,
@@ -24,6 +23,7 @@ import {
   TooltipDisplayMode,
   SortOrder,
   GraphThresholdsStyleConfig,
+  TimeZone,
 } from '@grafana/schema';
 import { PanelContext, PanelContextProvider, SeriesVisibilityChangeMode, useTheme2 } from '@grafana/ui';
 import { GraphFieldConfig } from 'app/plugins/panel/graph/types';
