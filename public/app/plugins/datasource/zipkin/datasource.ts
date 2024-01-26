@@ -12,10 +12,9 @@ import {
   ScopedVars,
   urlUtil,
 } from '@grafana/data';
+import { NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
 import { BackendSrvRequest, FetchResponse, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
-import { NodeGraphOptions } from './_importedDependencies/components/NodeGraphSettings';
-import { SpanBarOptions } from './_importedDependencies/components/TraceView/SpanBarSettings';
 import { apiPrefix } from './constants';
 import { ZipkinQuery, ZipkinSpan } from './types';
 import { createGraphFrames } from './utils/graphTransform';

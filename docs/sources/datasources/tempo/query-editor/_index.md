@@ -12,12 +12,12 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Query editor
-title: Tempo query editor
+menuTitle: Query tracing data
+title: Query tracing data
 weight: 300
 ---
 
-# Tempo query editor
+# Query tracing data
 
 The Tempo data source's query editor helps you query and display traces from Tempo in [Explore][explore].
 

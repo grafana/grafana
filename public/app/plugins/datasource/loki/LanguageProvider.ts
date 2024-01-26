@@ -172,6 +172,9 @@ export default class LokiLanguageProvider extends LanguageProvider {
     if (!value) {
       const params = { 'match[]': interpolatedMatch, start, end };
       const data = await this.request(url, params);
+      if (!Array.isArray(data)) {
+        return {};
+      }
       const { values } = processLabels(data);
       value = values;
       this.seriesCache.set(cacheKey, value);

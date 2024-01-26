@@ -21,7 +21,7 @@ import {
   TestDataSourceResponse,
   urlUtil,
 } from '@grafana/data';
-import { TraceToLogsOptions } from '@grafana/o11y-ds-frontend';
+import { NodeGraphOptions, SpanBarOptions, TraceToLogsOptions } from '@grafana/o11y-ds-frontend';
 import {
   BackendSrvRequest,
   config,
@@ -36,8 +36,6 @@ import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@gr
 
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
-import { NodeGraphOptions } from './_importedDependencies/components/NodeGraphSettings';
-import { SpanBarOptions } from './_importedDependencies/components/TraceView/SpanBarSettings';
 import { LokiOptions } from './_importedDependencies/datasources/loki/types';
 import { PromQuery, PrometheusDatasource } from './_importedDependencies/datasources/prometheus/types';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
