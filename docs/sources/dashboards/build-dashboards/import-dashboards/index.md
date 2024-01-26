@@ -33,12 +33,10 @@ To import a dashboard, follow these steps:
    - Paste a [Grafana.com dashboard](#discover-dashboards-on-grafanacom) URL or ID into the field provided.
    - Paste dashboard JSON text directly into the text area.
 
-1. (Optional) Change the dashboard name, folder, or UID.
+1. (Optional) Change the dashboard name, folder, or UID, and specify metric prefixes, if the dashboard uses any.
 1. Select a data source, if required.
 1. Click **Import**.
 1. Save the dashboard.
-
-<!--specify any metric prefixes (if the dashboard uses any). - what does this step look like -->
 
 ## Discover dashboards on grafana.com
 
@@ -46,13 +44,16 @@ The [Dashboards page](https://grafana.com/grafana/dashboards/) on grafana.com pr
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-gcom-dashboards.png" alt="Preconfigured dashboards on grafana.com">}}
 
-You can also add to this library by exporting one of your own dashboards. For more information, refer to [Share dashboards and panels](https://grafana.com/docs/grafana/GRAFANA_VERSION/dashboards/share-dashboards-panels/).
-
-{{% docs/reference %}}
-[HTTP API]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api"
-[HTTP API]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/developer-resources/api-reference/http-api"
-{{% /docs/reference %}}
+You can also add to this library by exporting one of your own dashboards. For more information, refer to [Share dashboards and panels][].
 
 ## More examples
 
 Your Grafana Cloud stack comes with several default dashboards in the **Grafana Cloud** folder in **Dashboards**. If you're running your own installation of Grafana, you can find more example dashboards in the `public/dashboards/` directory.
+
+{{% docs/reference %}}
+[HTTP API]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api"
+[HTTP API]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/developer-resources/api-reference/http-api"
+
+[Share dashboards and panels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/share-dashboards-panels"
+[Share dashboards and panels]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/share-dashboards-panels"
+{{% /docs/reference %}}
