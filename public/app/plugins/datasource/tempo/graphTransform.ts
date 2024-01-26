@@ -138,11 +138,13 @@ export const failedMetric = 'traces_service_graph_request_failed_total';
 export const histogramMetric = 'traces_service_graph_request_server_seconds_bucket';
 
 export const rateMetric = {
-  expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
+  expr: 'sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name)',
+  topk: 5,
   params: [],
 };
 export const errorRateMetric = {
-  expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))',
+  expr: 'sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name)',
+  topk: 5,
   params: ['status_code="STATUS_CODE_ERROR"'],
 };
 export const durationMetric = {
