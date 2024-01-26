@@ -12,7 +12,7 @@ import {
 import { BackendSrv } from '@grafana/runtime';
 
 import { createFetchResponse } from './_importedDependencies/test/helpers/createFetchResponse';
-import { TimeSrv } from './_importedDependencies/timeSrv';
+import { TimeSrv } from './_importedDependencies/utils/timeSrv';
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { JaegerDatasource, JaegerJsonData } from './datasource';
 import mockJson from './mockJsonResponse.json';

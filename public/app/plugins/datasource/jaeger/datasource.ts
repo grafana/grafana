@@ -16,10 +16,9 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
-import { NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
 import { BackendSrvRequest, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
-import { getTimeSrv, TimeSrv } from './_importedDependencies/timeSrv';
+import { getTimeSrv, TimeSrv } from './_importedDependencies/utils/timeSrv';
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { TraceIdTimeParamsOptions } from './configuration/TraceIdTimeParams';
 import { mapJaegerDependenciesResponse } from './dependencyGraphTransform';
