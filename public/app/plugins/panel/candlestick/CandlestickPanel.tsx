@@ -266,7 +266,9 @@ export const CandlestickPanel = ({
             {showNewVizTooltips ? (
               <TooltipPlugin2
                 config={uplotConfig}
-                hoverMode={TooltipHoverMode.xAll}
+                hoverMode={
+                  options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
+                }
                 queryZoom={onChangeTimeRange}
                 clientZoom={true}
                 render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
@@ -293,14 +295,14 @@ export const CandlestickPanel = ({
                       seriesFrame={alignedDataFrame}
                       dataIdxs={dataIdxs}
                       seriesIdx={seriesIdx}
-                      mode={TooltipDisplayMode.Multi}
+                      mode={options.tooltip.mode}
                       isPinned={isPinned}
                       annotate={enableAnnotationCreation ? annotate : undefined}
                     />
                   );
                 }}
-                maxWidth={options.tooltip?.maxWidth}
-                maxHeight={options.tooltip?.maxHeight}
+                maxWidth={options.tooltip.maxWidth}
+                maxHeight={options.tooltip.maxHeight}
               />
             ) : (
               <>
