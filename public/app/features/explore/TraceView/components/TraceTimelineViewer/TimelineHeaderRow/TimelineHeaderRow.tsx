@@ -51,8 +51,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: TimelineHeaderWrapper;
       align-items: center;
       display: flex;
-      padding-left: 0.5rem;
-      padding-right: 0.5rem;
+      padding-left: ${theme.spacing(1)};
+      padding-right: ${theme.spacing(1)};
     `,
   };
 };
