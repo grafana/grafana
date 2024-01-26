@@ -105,6 +105,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
       {hasTimeChanged && (
         <Field label="Save current time range" description="Will make current time range the new default">
           <Checkbox
+            id="save-timerange"
             checked={saveTimeRange}
             onChange={drawer.onToggleSaveTimeRange}
             aria-label={selectors.pages.SaveDashboardModal.saveTimerange}
