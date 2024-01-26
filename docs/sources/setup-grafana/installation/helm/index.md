@@ -11,7 +11,11 @@ title: Deploy Grafana using Helm Charts
 weight: 500
 ---
 
-# Introduction
+# Deploy Grafana using Helm Charts
+
+On this page, you will find instructions for installing and running Grafana on Kubernetes using Helm Charts.
+
+## Introduction
 
 [Helm](https://helm.sh/) is an open-source command line tool used for managing Kubernetes applications. It is a graduate project in the [CNCF Landscape](https://www.cncf.io/projects/helm/).
 
@@ -22,12 +26,14 @@ The Grafana open-source community offers Helm Charts for running it on Kubernete
 ### Before you begin
 
 To install Grafana using Helm, ensure you have completed the following:
+
 - Install a Kubernetes server on your machine. For information about installing Kubernetes, refer to [Deploy Grafana on Kubernetes](/docs/grafana/latest/setup-grafana/installation/kubernetes/)
 - Install the latest stable version of Helm. For information on installing Helm, refer to [Install Helm](https://helm.sh/docs/intro/install/).
 
 ## Install Grafana using Helm
 
 When you install Grafana using Helm, you complete the following tasks:
+
 1. Setting up the Grafana Helm repository: Provides a space in which you will install Grafana.
 2. Deploy Grafana using Helm: Involves installing Grafana into a namespace.
 3. Accessing Grafana: Provides steps to sign in to Grafana
@@ -38,8 +44,8 @@ The first step is to define the URL to the repository so that you download the c
 
 To set up, complete the following steps:
 
-1. To add the Grafana repository, use the following command syntax.
-   
+1. To add the Grafana repository, use the following command syntax:
+
    `helm repo add <DESIRED-NAME> <HELM-REPO-URL>`
 
    The following example adds the `grafana` Helm repository.
@@ -48,11 +54,11 @@ To set up, complete the following steps:
    helm repo add grafana https://grafana.github.io/helm-charts
    ```
 
-2. Run the following command to verify the repository was added.
-   
+2. Run the following command to verify the repository was added:
+
    ```bash
-	 helm repo list
-	 ```
+   helm repo list
+   ```
 
    When the repository is successfully added, you should see an output similar to the following:
 
@@ -62,7 +68,7 @@ To set up, complete the following steps:
    ```
 
 3. Run the following command to update the repository to download the latest Grafana Helm charts:
-   
+
    ```bash
    helm repo update
    ```
@@ -72,10 +78,11 @@ To set up, complete the following steps:
 Now we have setup the Grafana Helm repository succesfully, we can start to deploy it on our Kubernetes cluster.
 
 When you deploy Grafana Helm charts, use a separate namespace instead of relying on the default namespace. The default namespace might already have other applications running, which can lead to conflicts and other potential issues.
+
 When you create a new namespace in Kubernetes, you can better organize, allocate, and manage cluster resources. For more information about Namespaces, refer to [Namespaces](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/).
 
-1. To create a namespace, run the following command.
-   
+1. To create a namespace, run the following command:
+
    ```bash
    kubectl create namespace monitoring
    ```
@@ -86,8 +93,8 @@ When you create a new namespace in Kubernetes, you can better organize, allocate
    namespace/monitoring created
    ```
 
-2. Search for the official grafana/grafana repository using the command:
-   
+2. Search for the official `grafana/grafana` repository using the command:
+
    `helm search repo <repo-name/package-name>`
 
    For example, the following command provides a list of the Grafana Helm Charts from which you will install the latest version of the Grafana chart.
@@ -97,19 +104,19 @@ When you create a new namespace in Kubernetes, you can better organize, allocate
    ```
 
 3. Run the following command to deploy the Grafana Helm Chart inside your created namespace.
-   
+
    ```bash
    helm install my-grafana grafana/grafana --namespace monitoring
    ```
 
    Where:
-   - helm install: installs the chart by deploying it on the Kubernetes cluster
-   - my-grafana: the logical chart name that we had given
-   - grafana/grafana: the repository and package name to install
-   - --namespace: the Kubernetes namespace (for example, `monitoring`) where you want to deploy the chart
+   - `helm install`: installs the chart by deploying it on the Kubernetes cluster
+   - `my-grafana`: the logical chart name that we had given
+   - `grafana/grafana`: the repository and package name to install
+   - `--namespace`: the Kubernetes namespace (i.e. `monitoring`) where you want to deploy the chart
 
-4. To verify the deployment status, run the following command and verify that `deployed` appears in the STATUS column:
-   
+4. To verify the deployment status, run the following command and verify that `deployed` appears in the **STATUS** column:
+
    ```bash
    helm list -n monitoring
    ```
@@ -122,12 +129,12 @@ When you create a new namespace in Kubernetes, you can better organize, allocate
    ```
 
 5. To check the overall status of all the objects in the namespace, run the following command:
-   
-	```bash
-	kubectl get all -n monitoring
-	```
 
-   If you encounter errors or warnings in the STATUS column, check the logs and refer to Troubleshooting.
+      ```bash
+      kubectl get all -n monitoring
+      ```
+
+   If you encounter errors or warnings in the **STATUS** column, check the logs and refer to Troubleshooting setction of this documentation.
 
 ### Accessing Grafana
 
@@ -142,9 +149,10 @@ helm status my-grafana -n monitoring
 This command will give you the complete status of the release information such as last deployment time, namespace (where it is deployed), release status, additional notes provided by the chart etc.
 
 Within the additonal release notes, it provides the following 2 key information i.e.
+
 1. How to decode the login password for the admin account
 2. Expose service to the web browser
-   
+
 #### Decoding the admin account password
 
 Run the command as follows (it should be the same command you saw when you executed the `helm status` command):
@@ -169,7 +177,7 @@ It will give you a decoded `base64` string output which is the password for the 
    kubectl --namespace monitoring port-forward $POD_NAME 3000
    ```
 
-For more information about port-forwarding, refer to [Use Port Forwarding to Access Applications in a Cluster](https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/).
+   For more information about port-forwarding, refer to [Use Port Forwarding to Access Applications in a Cluster](https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/).
 
 2. Navigate to `127.0.0.1:3000` in your browser.
 3. The Grafana sign-in page appears.
@@ -187,9 +195,12 @@ By modifying the values in the `values.yaml` file, you can tailor the deployment
 ### Download the values.yaml file
 
 In order to make any configuration changes, download the `values.yaml` file from the Grafana Helm Charts repository:
+
 https://github.com/grafana/helm-charts/edit/main/charts/grafana/values.yaml
 
-> **Note:** Depending on your use case requirements, you can use a single YAML file that contains your configuration changes or you can create multiple YAML files.
+{{% admonition type="note" %}}
+Depending on your use case requirements, you can use a single YAML file that contains your configuration changes or you can create multiple YAML files.
+{{% /admonition %}}
 
 ### Enable persistent storage **(recommended)**
 
@@ -204,7 +215,7 @@ To enable the persistent storage in the Grafana Helm charts, complete the follow
 1. Open the `values.yaml` file in your favorite editor.
 
 2. Edit the values and under the section of `persistence`, change the `enable` flag from `false` to `true`
-   
+
    ```yaml
    .......
    ............
@@ -217,8 +228,9 @@ To enable the persistent storage in the Grafana Helm charts, complete the follow
    ............
    ......
    ```
+
 3. Run the following `helm upgrade` command by specifying the `values.yaml` file to make the changes take effect:
-   
+
    ```bash
    helm upgrade my-grafana grafana/grafana -f values.yaml -n monitoring
    ```
@@ -237,29 +249,29 @@ To install plugins in the Grafana Helm Charts, complete the following steps:
 
 2. Find the line that says `plugins:` and under that section, define the plugins that you would like to install e.g.
 
-```yaml
-.......
-............
-......
-plugins:
-# here we are installing two plugins, make sure to keep the indentation correct as written here.
-  - alexanderzobnin-zabbix-app
-  - grafana-clock-panel
-.......
-............
-......
-```
+   ```yaml
+   .......
+   ............
+   ......
+   plugins:
+   # here we are installing two plugins, make sure to keep the indentation correct as written here.
 
-3. After that save the changes and use the `helm upgrade` command to get these plugins installed.
+   - alexanderzobnin-zabbix-app
+   - grafana-clock-panel
+   .......
+   ............
+   ......
+   ```
 
-```bash
-helm upgrade my-grafana grafana/grafana -f values.yaml -n monitoring
-```
+3. After that save the changes and use the `helm upgrade` command to get these plugins installed:
 
-You can verify if the above plugins got installed by login into the Grafana UI -> Administration -> Plugins.
+   ```bash
+   helm upgrade my-grafana grafana/grafana -f values.yaml -n monitoring
+   ```
+
+   You can verify if the above plugins got installed by login into the Grafana UI -> Administration -> Plugins.
 
 ## Troubleshooting
-
 
 This section includes troubleshooting tips you might find helpful when deploying Grafana on Kubernetes via Helm.
 
@@ -272,7 +284,7 @@ To check the Grafana logs, run the following command:
 ```bash
 # dump Pod logs for a Deployment (single-container case)
 
-kubectl logs \--namespace=monitoring deploy/my-grafana
+kubectl logs --namespace=monitoring deploy/my-grafana
 ```
 
 If you have multiple containers running in the deployment, run the following command to obtain the logs only for the Grafana deployment:
@@ -280,14 +292,14 @@ If you have multiple containers running in the deployment, run the following com
 ```bash
 # dump Pod logs for a Deployment (multi-container case)
 
-kubectl logs \--namespace=monitoring deploy/grafana \-c my-grafana
+kubectl logs --namespace=monitoring deploy/grafana -c my-grafana
 ```
 
 For more information about accessing Kubernetes application logs, refer to [Pods](https://kubernetes.io/docs/reference/kubectl/cheatsheet/#interacting-with-running-pods) and [Deployments](https://kubernetes.io/docs/reference/kubectl/cheatsheet/#interacting-with-deployments-and-services).
 
 ### Increasing log levels
 
-By default, the Grafana log level is set to `info`, but you can increase it to `debug` mode to fetch information needed to diagnose and troubleshoot a problem. For more information about Grafana log levels, refer to [Configuring logs](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana#log).**
+By default, the Grafana log level is set to `info`, but you can increase it to `debug` mode to fetch information needed to diagnose and troubleshoot a problem. For more information about Grafana log levels, refer to [Configuring logs](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana#log).
 
 To increase log level to `debug` mode, use the following steps:
 
@@ -295,32 +307,32 @@ To increase log level to `debug` mode, use the following steps:
 
 2. Add level: `debug` just below the line `mode: console`
 
-```yaml
-# This is the values.yaml file
-    .....
-  .......
-  ....
-grafana.ini:
-  paths:
-    data: /var/lib/grafana/
-    .....
-  .......
-  ....
-    mode: console
-    level: debug
-```
+   ```yaml
+   # This is the values.yaml file
+      .....
+   .......
+   ....
+   grafana.ini:
+   paths:
+      data: /var/lib/grafana/
+      .....
+   .......
+   ....
+      mode: console
+      level: debug
+   ```
 
-Make sure to keep the indentation level the same otherwise it will not work.
+   Make sure to keep the indentation level the same otherwise it will not work.
 
 3. Now to apply this, run the `helm upgrade` command as follows:
 
-```bash
-helm upgrade my-grafana grafana/grafana -f values.yaml --reuse-values -n monitoring
-```
+   ```bash
+   helm upgrade my-grafana grafana/grafana -f values.yaml -n monitoring
+   ```
 
 4. To verify it, access the Grafana UI in the browser using the provided `IP:Port`. The Grafana sign-in page appears.
-   
-5. To sign in to Grafana, enter admin for the username and paste the password which was decoded earlier. Navigate to Server Admin > Settings and then search for log. You should see the level to `debug` mode.
+
+5. To sign in to Grafana, enter `admin` for the username and paste the password which was decoded earlier. Navigate to Server Admin > Settings and then search for log. You should see the level to `debug` mode.
 
 ### Reset Grafana admin secrets (login credentials)
 
@@ -328,37 +340,36 @@ By default the login credentials for the super admin account are generated via `
 
 1. Edit the `values.yaml` file and search for the string `adminPassword`. There you can define a new password:
 
-```yaml
-# Administrator credentials when not using an existing secret (see below)
-adminUser: admin
-adminPassword: admin
-```
+   ```yaml
+   # Administrator credentials when not using an existing secret (see below)
+   adminUser: admin
+   adminPassword: admin
+   ```
 
 2. Then use the `helm upgrade` command as follows:
 
-```bash
-helm upgrade my-grafana grafana/grafana -f values.yaml -n monitoring
-```
+   ```bash
+   helm upgrade my-grafana grafana/grafana -f values.yaml -n monitoring
+   ```
 
-This command will now make your super admin login credentials as `admin` for both username and password.
+   This command will now make your super admin login credentials as `admin` for both username and password.
 
 3. To verify it, sign in to Grafana, enter `admin` for both username and password. You sould be able to login as super admin.
-
 
 ## Uninstalling the Grafana Deployment
 
 To uninstall the Grafana deployment, run the command:
 
-`helm uninstall <RELEASE-NAME> <NAMESPACE-NAME>`
+   `helm uninstall <RELEASE-NAME> <NAMESPACE-NAME>`
 
-```bash
-helm uninstall my-grafana -n monitoring
-```
+   ```bash
+   helm uninstall my-grafana -n monitoring
+   ```
 
-This deletes all of the objects from the given namespace monitoring.
+   This deletes all of the objects from the given namespace monitoring.
 
 If you want to delete the namespace `monitoring`, then run the command:
 
-```bash
-kubectl delete namespace monitoring
-```
+   ```bash
+   kubectl delete namespace monitoring
+   ```
