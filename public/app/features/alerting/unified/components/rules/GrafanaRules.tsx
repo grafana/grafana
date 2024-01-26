@@ -3,7 +3,7 @@ import React from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { LoadingPlaceholder, Pagination, Spinner, useStyles2 } from '@grafana/ui';
+import { Button, LoadingPlaceholder, Pagination, Spinner, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
@@ -17,7 +17,6 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
 import { GrafanaRulesExporter } from '../export/GrafanaRulesExporter';
 
-import { ActionButton } from './ActionButton';
 import { RulesGroup } from './RulesGroup';
 import { useCombinedGroupNamespace } from './useCombinedGroupNamespace';
 
@@ -61,16 +60,16 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
         <div className={styles.headerRow}>
           <h5>Grafana</h5>
           {hasGrafanaAlerts && canExportRules && (
-            <ActionButton
+            <Button
               aria-label="export all grafana rules"
               data-testid="export-all-grafana-rules"
               icon="download-alt"
               tooltip="Export all Grafana-managed rules"
               onClick={toggleShowExportDrawer}
-              className={styles.exportButton}
+              variant="secondary"
             >
-              Export
-            </ActionButton>
+              Export rules
+            </Button>
           )}
         </div>
         {loading ? <LoadingPlaceholder className={styles.loader} text="Loading..." /> : <div />}
@@ -122,8 +121,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
     width: '100%',
     flexDirection: 'row',
-  }),
-  exportButton: css({
-    fontSize: theme.typography.size.md,
   }),
 });

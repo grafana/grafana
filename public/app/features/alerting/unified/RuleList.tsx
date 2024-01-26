@@ -99,6 +99,7 @@ const RuleList = withErrorBoundary(
     // Show splash only when we loaded all of the data sources and none of them has alerts
     const hasNoAlertRulesCreatedYet =
       allPromLoaded && allPromEmpty && promRequests.length > 0 && allRulerEmpty && allRulerLoaded;
+    const hasAlertRulesCreated = !hasNoAlertRulesCreatedYet;
 
     const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
     const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
@@ -106,10 +107,10 @@ const RuleList = withErrorBoundary(
     return (
       // We don't want to show the Loading... indicator for the whole page.
       // We show separate indicators for Grafana-managed and Cloud rules
-      <AlertingPageWrapper navId="alert-list" isLoading={false} actions={<CreateAlertButton />}>
+      <AlertingPageWrapper navId="alert-list" isLoading={false} actions={hasAlertRulesCreated && <CreateAlertButton />}>
         <RuleListErrors />
         <RulesFilter onFilterCleared={onFilterCleared} />
-        {!hasNoAlertRulesCreatedYet && (
+        {hasAlertRulesCreated && (
           <>
             <div className={styles.break} />
             <div className={styles.buttonsContainer}>
@@ -130,7 +131,7 @@ const RuleList = withErrorBoundary(
           </>
         )}
         {hasNoAlertRulesCreatedYet && <NoRulesSplash />}
-        {!hasNoAlertRulesCreatedYet && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
+        {hasAlertRulesCreated && <ViewComponent expandAll={expandAll} namespaces={filteredNamespaces} />}
       </AlertingPageWrapper>
     );
   },
@@ -163,12 +164,15 @@ export default RuleList;
 
 export function CreateAlertButton() {
   const [createRuleSupported, createRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
+  const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
 
   const location = useLocation();
 
+  const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;
+
   const canCreateGrafanaRules = createRuleSupported && createRuleAllowed;
 
-  if (canCreateGrafanaRules) {
+  if (canCreateGrafanaRules || canCreateCloudRules) {
     return (
       <LinkButton
         href={urlUtil.renderUrl('alerting/new/alerting', { returnTo: location.pathname + location.search })}

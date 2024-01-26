@@ -116,6 +116,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
+    marginBottom: theme.spacing(1),
   }),
 });
 
