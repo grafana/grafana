@@ -219,12 +219,8 @@ export class PanelQueryRunner {
   private applyTransformations(data: PanelData): Observable<PanelData> {
     const transformations = this.dataConfigSource.getTransformations();
 
-    if (
-      // add a check to see if all transformations are disabled and return early if that is the case...
-      // (transformations && transformations.length === 1 && transformations[0].disabled) ||
-      !transformations ||
-      transformations.length === 0
-    ) {
+    const allTransformationsDisabled = transformations && transformations.every((t) => t.disabled);
+    if (allTransformationsDisabled || !transformations || transformations.length === 0) {
       return of(data);
     }
 
