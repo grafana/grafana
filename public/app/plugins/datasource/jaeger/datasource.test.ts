@@ -1,5 +1,4 @@
 import { lastValueFrom, of, throwError } from 'rxjs';
-import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import {
   DataQueryRequest,
@@ -10,9 +9,10 @@ import {
   PluginType,
   ScopedVars,
 } from '@grafana/data';
-import { backendSrv } from 'app/core/services/backend_srv';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { BackendSrv } from '@grafana/runtime';
 
+import { createFetchResponse } from './_importedDependencies/test/helpers/createFetchResponse';
+import { TimeSrv } from './_importedDependencies/timeSrv';
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { JaegerDatasource, JaegerJsonData } from './datasource';
 import mockJson from './mockJsonResponse.json';
@@ -23,6 +23,8 @@ import {
   testResponseNodesFields,
 } from './testResponse';
 import { JaegerQuery } from './types';
+
+export const backendSrv = { fetch: jest.fn() } as unknown as BackendSrv;
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

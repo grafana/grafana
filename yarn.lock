@@ -3068,6 +3068,49 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana-plugins/jaeger@workspace:public/app/plugins/datasource/jaeger":
+  version: 0.0.0-use.local
+  resolution: "@grafana-plugins/jaeger@workspace:public/app/plugins/datasource/jaeger"
+  dependencies:
+    "@emotion/css": "npm:11.11.2"
+    "@grafana/data": "workspace:*"
+    "@grafana/experimental": "npm:1.7.5"
+    "@grafana/o11y-ds-frontend": "workspace:*"
+    "@grafana/plugin-configs": "workspace:*"
+    "@grafana/runtime": "workspace:*"
+    "@grafana/scenes": "npm:1.28.5"
+    "@grafana/ui": "workspace:*"
+    "@reduxjs/toolkit": "npm:1.9.5"
+    "@testing-library/jest-dom": "npm:6.2.0"
+    "@testing-library/react": "npm:14.0.0"
+    "@testing-library/user-event": "npm:14.5.1"
+    "@types/jest": "npm:29.5.4"
+    "@types/lodash": "npm:4.14.195"
+    "@types/logfmt": "npm:^1.2.3"
+    "@types/react": "npm:18.2.15"
+    "@types/react-window": "npm:1.8.8"
+    "@types/uuid": "npm:9.0.7"
+    buffer: "npm:6.0.3"
+    events: "npm:3.3.0"
+    jest: "npm:29.7.0"
+    lodash: "npm:4.17.21"
+    logfmt: "npm:^1.3.2"
+    react: "npm:18.2.0"
+    react-window: "npm:1.8.10"
+    redux: "npm:4.2.1"
+    reselect: "npm:4.1.8"
+    rxjs: "npm:7.8.1"
+    stream-browserify: "npm:3.0.0"
+    string_decoder: "npm:1.2.0"
+    ts-node: "npm:10.9.1"
+    tslib: "npm:2.6.0"
+    uuid: "npm:9.0.0"
+    webpack: "npm:5.89.0"
+  peerDependencies:
+    "@grafana/runtime": "*"
+  languageName: unknown
+  linkType: soft
+
 "@grafana-plugins/parca@workspace:*, @grafana-plugins/parca@workspace:public/app/plugins/datasource/parca":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/parca@workspace:public/app/plugins/datasource/parca"
@@ -3366,6 +3409,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/experimental@npm:1.7.5":
+  version: 1.7.5
+  resolution: "@grafana/experimental@npm:1.7.5"
+  dependencies:
+    "@types/uuid": "npm:^8.3.3"
+    react-use: "npm:^17.4.2"
+    semver: "npm:^7.5.4"
+    uuid: "npm:^8.3.2"
+  peerDependencies:
+    "@emotion/css": 11.1.3
+    "@grafana/data": ^10.0.0
+    "@grafana/runtime": ^10.0.0
+    "@grafana/ui": ^10.0.0
+    react: 17.0.2
+    react-dom: 17.0.2
+    react-select: ^5.2.1
+    rxjs: 7.8.0
+  checksum: 33f5e739bbc1646ea00c00b419c35a0b02abbfc35b0fa42d61f05a78a1929567388e4132093a029f88783264e739baeb8bcb53a68bcf1152f055a20be3b87e24
+  languageName: node
+  linkType: hard
+
 "@grafana/experimental@npm:1.7.7":
   version: 1.7.7
   resolution: "@grafana/experimental@npm:1.7.7"
@@ -3530,7 +3594,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-configs@npm:10.4.0-pre, @grafana/plugin-configs@workspace:packages/grafana-plugin-configs":
+"@grafana/plugin-configs@npm:10.4.0-pre, @grafana/plugin-configs@workspace:*, @grafana/plugin-configs@workspace:packages/grafana-plugin-configs":
   version: 0.0.0-use.local
   resolution: "@grafana/plugin-configs@workspace:packages/grafana-plugin-configs"
   dependencies:
@@ -3590,6 +3654,24 @@ __metadata:
     react-dom: ^17.0.0 || ^18.0.0
   languageName: unknown
   linkType: soft
+
+"@grafana/scenes@npm:1.28.5":
+  version: 1.28.5
+  resolution: "@grafana/scenes@npm:1.28.5"
+  dependencies:
+    "@grafana/e2e-selectors": "npm:10.0.2"
+    react-grid-layout: "npm:1.3.4"
+    react-use: "npm:17.4.0"
+    react-virtualized-auto-sizer: "npm:1.0.7"
+    uuid: "npm:^9.0.0"
+  peerDependencies:
+    "@grafana/data": 10.0.3
+    "@grafana/runtime": 10.0.3
+    "@grafana/schema": 10.0.3
+    "@grafana/ui": 10.0.3
+  checksum: 9aec680a56196f844908afb395a2c401d85333ebe4f20cf1cdfdbd4a675d22174b647bb63155f95228198e6ba7a431392b8a27bcea44072ccdfa04c95e41dacb
+  languageName: node
+  linkType: hard
 
 "@grafana/scenes@npm:^2.0.0":
   version: 2.0.0
@@ -7812,6 +7894,36 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@testing-library/jest-dom@npm:6.2.0":
+  version: 6.2.0
+  resolution: "@testing-library/jest-dom@npm:6.2.0"
+  dependencies:
+    "@adobe/css-tools": "npm:^4.3.2"
+    "@babel/runtime": "npm:^7.9.2"
+    aria-query: "npm:^5.0.0"
+    chalk: "npm:^3.0.0"
+    css.escape: "npm:^1.5.1"
+    dom-accessibility-api: "npm:^0.6.3"
+    lodash: "npm:^4.17.15"
+    redent: "npm:^3.0.0"
+  peerDependencies:
+    "@jest/globals": ">= 28"
+    "@types/jest": ">= 28"
+    jest: ">= 28"
+    vitest: ">= 0.32"
+  peerDependenciesMeta:
+    "@jest/globals":
+      optional: true
+    "@types/jest":
+      optional: true
+    jest:
+      optional: true
+    vitest:
+      optional: true
+  checksum: 4af88d4b6208eda58fad47a520057893a381b972e7b043d7787c0111c887bdc82ed959bed07c21700f2816d4a1e315a519a0aabce120708ad7ba79577374f0fd
+  languageName: node
+  linkType: hard
+
 "@testing-library/jest-dom@npm:6.3.0, @testing-library/jest-dom@npm:^6.1.2":
   version: 6.3.0
   resolution: "@testing-library/jest-dom@npm:6.3.0"
@@ -7867,6 +7979,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@testing-library/react@npm:14.0.0":
+  version: 14.0.0
+  resolution: "@testing-library/react@npm:14.0.0"
+  dependencies:
+    "@babel/runtime": "npm:^7.12.5"
+    "@testing-library/dom": "npm:^9.0.0"
+    "@types/react-dom": "npm:^18.0.0"
+  peerDependencies:
+    react: ^18.0.0
+    react-dom: ^18.0.0
+  checksum: 1f2a4f78d107e741b35671e9c7dd992d5c9f49b48ee24112ccfe636179be72f3c62a65b1405901b59eb6cde996176ebc2c99099e04d9f14575641e46688747f0
+  languageName: node
+  linkType: hard
+
 "@testing-library/react@npm:14.1.2":
   version: 14.1.2
   resolution: "@testing-library/react@npm:14.1.2"
@@ -7878,6 +8004,15 @@ __metadata:
     react: ^18.0.0
     react-dom: ^18.0.0
   checksum: 1664990ad9673403ee1d74c1c1b60ec30591d42a3fe1e2175c28cb935cd49bc9a4ba398707f702acc3278c3b0cb492ee57fe66f41ceb040c5da57de98cba5414
+  languageName: node
+  linkType: hard
+
+"@testing-library/user-event@npm:14.5.1":
+  version: 14.5.1
+  resolution: "@testing-library/user-event@npm:14.5.1"
+  peerDependencies:
+    "@testing-library/dom": ">=7.21.4"
+  checksum: 696e1328c230b0a7063a41d82b5350c6be926696106809a4d79d446d190ff56bebb850fe564ff0952cb74ae81e59a6f10534a88ecbb3792083271a249e04e728
   languageName: node
   linkType: hard
 
@@ -8699,6 +8834,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/jest@npm:29.5.4":
+  version: 29.5.4
+  resolution: "@types/jest@npm:29.5.4"
+  dependencies:
+    expect: "npm:^29.0.0"
+    pretty-format: "npm:^29.0.0"
+  checksum: c56081b958c06f4f3a30f7beabf4e94e70db96a4b41b8a73549fea7f9bf0a8c124ab3998ea4e6d040d1b8c95cfbe0b8d4a607da4bdea03c9e116f92c147df193
+  languageName: node
+  linkType: hard
+
 "@types/jquery@npm:3.5.29":
   version: 3.5.29
   resolution: "@types/jquery@npm:3.5.29"
@@ -9171,6 +9316,17 @@ __metadata:
     "@types/scheduler": "npm:*"
     csstype: "npm:^3.0.2"
   checksum: 7a752e6c5e76139f258bc14827d2c574bb76d6e7eb1b240f24f79b269153cb88668c34ba7078d3de99ec1973b7022e1f788e71117bd52a287f382d24bb80be40
+  languageName: node
+  linkType: hard
+
+"@types/react@npm:18.2.15":
+  version: 18.2.15
+  resolution: "@types/react@npm:18.2.15"
+  dependencies:
+    "@types/prop-types": "npm:*"
+    "@types/scheduler": "npm:*"
+    csstype: "npm:^3.0.2"
+  checksum: 282f3f86f94983ef1af1d66cb552b78131cf3650d29c3080e08a4de8f81489e5b6111c635ad59acf6984ce72281dfcf95004514985b84b5af35898d10414e84f
   languageName: node
   linkType: hard
 
@@ -27981,6 +28137,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"string_decoder@npm:1.2.0":
+  version: 1.2.0
+  resolution: "string_decoder@npm:1.2.0"
+  dependencies:
+    safe-buffer: "npm:~5.1.0"
+  checksum: 5ec46dfa2ba2315b3449a71cfc06e45db836ff059bc3227d8fcb77cc86b5e35731d93f07481aaaa903d31829ed647449cfe4204664388b87116ea9745a439b33
+  languageName: node
+  linkType: hard
+
 "string_decoder@npm:1.3.0, string_decoder@npm:^1.1.1":
   version: 1.3.0
   resolution: "string_decoder@npm:1.3.0"
@@ -28982,6 +29147,44 @@ __metadata:
     typescript: "*"
     webpack: "*"
   checksum: d5cd87c1070840e0502ca8f348c385980a159efbe2d2d24cc259a4063b562c9e1c3e38c7b150f8aabeee3097132aca20a60eced335037631cb25e3f3f906ea0c
+  languageName: node
+  linkType: hard
+
+"ts-node@npm:10.9.1":
+  version: 10.9.1
+  resolution: "ts-node@npm:10.9.1"
+  dependencies:
+    "@cspotcode/source-map-support": "npm:^0.8.0"
+    "@tsconfig/node10": "npm:^1.0.7"
+    "@tsconfig/node12": "npm:^1.0.7"
+    "@tsconfig/node14": "npm:^1.0.0"
+    "@tsconfig/node16": "npm:^1.0.2"
+    acorn: "npm:^8.4.1"
+    acorn-walk: "npm:^8.1.1"
+    arg: "npm:^4.1.0"
+    create-require: "npm:^1.1.0"
+    diff: "npm:^4.0.1"
+    make-error: "npm:^1.1.1"
+    v8-compile-cache-lib: "npm:^3.0.1"
+    yn: "npm:3.1.1"
+  peerDependencies:
+    "@swc/core": ">=1.2.50"
+    "@swc/wasm": ">=1.2.50"
+    "@types/node": "*"
+    typescript: ">=2.7"
+  peerDependenciesMeta:
+    "@swc/core":
+      optional: true
+    "@swc/wasm":
+      optional: true
+  bin:
+    ts-node: dist/bin.js
+    ts-node-cwd: dist/bin-cwd.js
+    ts-node-esm: dist/bin-esm.js
+    ts-node-script: dist/bin-script.js
+    ts-node-transpile-only: dist/bin-transpile.js
+    ts-script: dist/bin-script-deprecated.js
+  checksum: bee56d4dc96ccbafc99dfab7b73fbabc62abab2562af53cdea91c874a301b9d11e42bc33c0a032a6ed6d813dbdc9295ec73dde7b73ea4ebde02b0e22006f7e04
   languageName: node
   linkType: hard
 
