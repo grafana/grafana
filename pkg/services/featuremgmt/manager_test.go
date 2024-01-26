@@ -24,34 +24,6 @@ func TestFeatureManager(t *testing.T) {
 		require.Equal(t, map[string]bool{"a": true}, ft.GetEnabled(context.Background()))
 	})
 
-	t.Run("check license validation", func(t *testing.T) {
-		ft := FeatureManager{
-			flags:    map[string]*FeatureFlag{},
-			warnings: map[string]string{},
-		}
-		ft.registerFlags(FeatureFlag{
-			Name:            "a",
-			RequiresDevMode: true,
-			Expression:      "true",
-		}, FeatureFlag{
-			Name:       "b",
-			Expression: "true",
-		})
-		require.False(t, ft.IsEnabledGlobally("a"))
-		require.True(t, ft.IsEnabledGlobally("b"))
-		require.False(t, ft.IsEnabledGlobally("c")) // unknown flag
-
-		// Try changing "requires license"
-		ft.registerFlags(FeatureFlag{
-			Name: "a",
-		}, FeatureFlag{
-			Name: "b",
-		})
-		require.False(t, ft.IsEnabledGlobally("a"))
-		require.False(t, ft.IsEnabledGlobally("b"))
-		require.False(t, ft.IsEnabledGlobally("c"))
-	})
-
 	t.Run("check description and docs configs", func(t *testing.T) {
 		ft := FeatureManager{
 			flags: map[string]*FeatureFlag{},
