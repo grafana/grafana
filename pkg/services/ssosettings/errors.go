@@ -10,10 +10,10 @@ var (
 
 	ErrNotConfigurable = errNotFoundBase.Errorf("not configurable")
 
-	errInvalidOAuthInfo = errutil.ValidationFailed("sso.invalidOAuthInfo")
+	ErrBaseInvalidOAuthConfig = errutil.ValidationFailed("sso.invalidOauthConfig")
 
-	ErrOauthValidationError = func(msg string) error {
-		base := errInvalidOAuthInfo.Errorf("OAuth settings are invalid")
+	ErrInvalidOAuthConfig = func(msg string) error {
+		base := ErrBaseInvalidOAuthConfig.Errorf("OAuth settings are invalid")
 		base.PublicMessage = msg
 		return base
 	}

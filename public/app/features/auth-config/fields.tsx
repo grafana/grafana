@@ -1,4 +1,5 @@
 import React from 'react';
+import { validate as uuidValidate } from 'uuid';
 
 import { TextLink } from '@grafana/ui';
 
@@ -177,6 +178,21 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       multi: true,
       allowCustomValue: true,
       options: [],
+      validation:
+        provider === 'azuread'
+          ? {
+              validate: (value) => {
+                if (typeof value === 'string') {
+                  return uuidValidate(value);
+                }
+                if (isSelectableValue(value)) {
+                  return value.every((v) => v?.value && uuidValidate(v.value));
+                }
+                return true;
+              },
+              message: 'Allowed groups must be Object Ids.',
+            }
+          : undefined,
     },
     apiUrl: {
       label: 'API URL',
@@ -371,9 +387,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       options: [],
       placeholder: 'Enter Team Ids and press Enter to add',
       validation:
-        provider === 'generic_oauth'
-          ? undefined
-          : {
+        provider === 'github'
+          ? {
               validate: (value) => {
                 if (typeof value === 'string') {
                   return isNumeric(value);
@@ -384,7 +399,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
                 return true;
               },
               message: 'Team Ids must be numbers.',
-            },
+            }
+          : undefined,
     },
   };
 }
