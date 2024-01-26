@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -53,7 +52,7 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 		t.Skip()
 	}
 
-	openDB := func() *sql.DB {
+	getCnnStr := func() string {
 		host := os.Getenv("POSTGRES_HOST")
 		if host == "" {
 			host = "localhost"
@@ -63,12 +62,8 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 			port = "5432"
 		}
 
-		connStr := fmt.Sprintf("user=grafanatest password=grafanatest host=%s port=%s dbname=grafanadstest sslmode=disable",
+		return fmt.Sprintf("user=grafanatest password=grafanatest host=%s port=%s dbname=grafanadstest sslmode=disable",
 			host, port)
-
-		db, err := sql.Open("postgres", connStr)
-		require.NoError(t, err)
-		return db
 	}
 
 	sqlQueryCommentRe := regexp.MustCompile(`^-- (.+)\n`)
@@ -146,17 +141,9 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 				return sql, nil
 			}
 
-			db := openDB()
-
-			t.Cleanup((func() {
-				_, err := db.Exec("DROP TABLE tbl")
-				require.NoError(t, err)
-				err = db.Close()
-				require.NoError(t, err)
-			}))
-
 			cfg := setting.NewCfg()
 			cfg.DataPath = t.TempDir()
+			cfg.DataProxyRowLimit = 10000
 
 			jsonData := sqleng.JsonData{
 				MaxOpenConns:        0,
@@ -171,17 +158,18 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 				DecryptedSecureJSONData: map[string]string{},
 			}
 
-			config := sqleng.DataPluginConfiguration{
-				DSInfo:            dsInfo,
-				MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
-				RowLimit:          1000000,
-			}
-
-			queryResultTransformer := postgresQueryResultTransformer{}
-
 			logger := log.New()
-			handler, err := sqleng.NewQueryDataHandler(cfg, db, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
-				logger)
+
+			cnnstr := getCnnStr()
+
+			db, handler, err := newPostgres(cfg, dsInfo, cnnstr, logger)
+
+			t.Cleanup((func() {
+				_, err := db.Exec("DROP TABLE tbl")
+				require.NoError(t, err)
+				err = db.Close()
+				require.NoError(t, err)
+			}))
 
 			require.NoError(t, err)
 
