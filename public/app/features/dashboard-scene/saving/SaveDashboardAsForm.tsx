@@ -24,16 +24,15 @@ export interface Props {
   dashboard: DashboardScene;
   drawer: SaveDashboardDrawer;
   changeInfo: DashboardChangeInfo;
-  isNew?: boolean;
 }
 
-export function SaveDashboardAsForm({ dashboard, drawer, changeInfo, isNew }: Props) {
+export function SaveDashboardAsForm({ dashboard, drawer, changeInfo }: Props) {
   const { changedSaveModel } = changeInfo;
 
   const { register, handleSubmit, setValue, formState, getValues } = useForm<SaveDashboardAsFormDTO>({
     mode: 'onBlur',
     defaultValues: {
-      title: isNew ? changedSaveModel.title! : `${changedSaveModel.title} Copy`,
+      title: changeInfo.isNew ? changedSaveModel.title! : `${changedSaveModel.title} Copy`,
       description: changedSaveModel.description ?? '',
       folder: {
         uid: dashboard.state.meta.folderUid,
@@ -50,7 +49,7 @@ export function SaveDashboardAsForm({ dashboard, drawer, changeInfo, isNew }: Pr
   const onSave = async (overwrite: boolean) => {
     const data = getValues();
 
-    const dashboardToSave: Dashboard = getSaveAsDashboardSaveModel(changedSaveModel, data, isNew);
+    const dashboardToSave: Dashboard = getSaveAsDashboardSaveModel(changedSaveModel, data, changeInfo.isNew);
     const result = await onSaveDashboard(dashboard, dashboardToSave, { overwrite, folderUid: data.folder.uid });
 
     if (result.status === 'success') {
@@ -123,7 +122,7 @@ export function SaveDashboardAsForm({ dashboard, drawer, changeInfo, isNew }: Pr
           enableCreateNew
         />
       </Field>
-      {!isNew && (
+      {!changeInfo.isNew && (
         <Field label="Copy tags">
           <Switch {...register('copyTags')} />
         </Field>

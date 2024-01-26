@@ -19,7 +19,6 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveTimeRange?: boolean;
   saveVariables?: boolean;
   saveAsCopy?: boolean;
-  saveAsNew?: boolean;
 }
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
@@ -63,12 +62,13 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
       diffCount,
       hasChanges: diffCount > 0,
       hasTimeChanged,
+      isNew: changedSaveModel.version === 0,
       hasVariableValuesChanged,
     };
   }
 
   static Component = ({ model }: SceneComponentProps<SaveDashboardDrawer>) => {
-    const { showDiff, saveAsCopy, saveAsNew } = model.useState();
+    const { showDiff, saveAsCopy } = model.useState();
     const changeInfo = model.getSaveDashboardChange();
     const { changedSaveModel, initialSaveModel, diffs, diffCount } = changeInfo;
     const dashboard = model.state.dashboardRef.resolve();
@@ -101,11 +101,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
         return <SaveDashboardDiff diff={diffs} oldValue={initialSaveModel} newValue={changedSaveModel} />;
       }
 
-      if (saveAsCopy) {
-        return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
-      }
-
-      if (saveAsNew) {
+      if (saveAsCopy || changeInfo.isNew) {
         return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
       }
 

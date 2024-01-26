@@ -122,19 +122,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
         </Field>
       )}
       <Field label="Message">
-        {/* {config.featureToggles.dashgpt && (
-          <GenAIDashboardChangesButton
-            dashboard={dashboard}
-            onGenerate={(text) => {
-              onOptionsChange({
-                ...options,
-                message: text,
-              });
-              setMessage(text);
-            }}
-            disabled={!saveModel.hasChanges}
-          />
-        )} */}
+        {/* config.featureToggles.dashgpt * TOOD GenAIDashboardChangesButton */}
 
         <TextArea
           aria-label="message"
