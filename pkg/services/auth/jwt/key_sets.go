@@ -152,7 +152,7 @@ func (s *AuthService) initKeySet() error {
 		if err != nil {
 			return err
 		}
-		if urlParsed.Scheme != "https" && setting.Env != setting.Dev {
+		if urlParsed.Scheme != "https" && s.Cfg.Env != setting.Dev {
 			return ErrJWTSetURLMustHaveHTTPSScheme
 		}
 		s.keySet = &keySetHTTP{
