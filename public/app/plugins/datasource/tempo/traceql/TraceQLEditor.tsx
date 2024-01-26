@@ -1,13 +1,11 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { reportInteraction } from '@grafana/runtime';
 import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 
-import { notifyApp } from '../_importedDependencies/actions/appNotification';
-import { createErrorNotification } from '../_importedDependencies/core/appNotification';
-import { dispatch } from '../_importedDependencies/store';
 import { TempoDatasource } from '../datasource';
 
 import { CompletionProvider, CompletionType } from './autocomplete';
@@ -24,8 +22,10 @@ interface Props {
 }
 
 export function TraceQLEditor(props: Props) {
+  const [alertText, setAlertText] = useState('error error');
+
   const { onChange, onRunQuery, placeholder } = props;
-  const setupAutocompleteFn = useAutocomplete(props.datasource);
+  const setupAutocompleteFn = useAutocomplete(props.datasource, setAlertText);
   const theme = useTheme2();
   const styles = getStyles(theme, placeholder);
   // work around the problem that `onEditorDidMount` is called once
@@ -36,73 +36,76 @@ export function TraceQLEditor(props: Props) {
   const errorTimeoutId = useRef<number>();
 
   return (
-    <CodeEditor
-      value={props.value}
-      language={langId}
-      onBlur={onChange}
-      onChange={onChange}
-      containerStyles={styles.queryField}
-      readOnly={props.readOnly}
-      monacoOptions={{
-        folding: false,
-        fontSize: 14,
-        lineNumbers: 'off',
-        overviewRulerLanes: 0,
-        renderLineHighlight: 'none',
-        scrollbar: {
-          vertical: 'hidden',
-          verticalScrollbarSize: 8, // used as "padding-right"
-          horizontal: 'hidden',
-          horizontalScrollbarSize: 0,
-        },
-        scrollBeyondLastLine: false,
-        wordWrap: 'on',
-      }}
-      onBeforeEditorMount={ensureTraceQL}
-      onEditorDidMount={(editor, monaco) => {
-        if (!props.readOnly) {
-          setupAutocompleteFn(editor, monaco, setupRegisterInteractionCommand(editor));
-          setupActions(editor, monaco, () => onRunQueryRef.current());
-          setupPlaceholder(editor, monaco, styles);
-        }
-        setupAutoSize(editor);
+    <>
+      <CodeEditor
+        value={props.value}
+        language={langId}
+        onBlur={onChange}
+        onChange={onChange}
+        containerStyles={styles.queryField}
+        readOnly={props.readOnly}
+        monacoOptions={{
+          folding: false,
+          fontSize: 14,
+          lineNumbers: 'off',
+          overviewRulerLanes: 0,
+          renderLineHighlight: 'none',
+          scrollbar: {
+            vertical: 'hidden',
+            verticalScrollbarSize: 8, // used as "padding-right"
+            horizontal: 'hidden',
+            horizontalScrollbarSize: 0,
+          },
+          scrollBeyondLastLine: false,
+          wordWrap: 'on',
+        }}
+        onBeforeEditorMount={ensureTraceQL}
+        onEditorDidMount={(editor, monaco) => {
+          if (!props.readOnly) {
+            setupAutocompleteFn(editor, monaco, setupRegisterInteractionCommand(editor));
+            setupActions(editor, monaco, () => onRunQueryRef.current());
+            setupPlaceholder(editor, monaco, styles);
+          }
+          setupAutoSize(editor);
 
-        // Parse query that might already exist (e.g., after a page refresh)
-        const model = editor.getModel();
-        if (model) {
-          const errorNodes = getErrorNodes(model.getValue());
-          setMarkers(monaco, model, errorNodes);
-        }
-
-        // Register callback for query changes
-        editor.onDidChangeModelContent((changeEvent) => {
+          // Parse query that might already exist (e.g., after a page refresh)
           const model = editor.getModel();
-
-          if (!model) {
-            return;
+          if (model) {
+            const errorNodes = getErrorNodes(model.getValue());
+            setMarkers(monaco, model, errorNodes);
           }
 
-          // Remove previous callback if existing, to prevent squiggles from been shown while the user is still typing
-          window.clearTimeout(errorTimeoutId.current);
+          // Register callback for query changes
+          editor.onDidChangeModelContent((changeEvent) => {
+            const model = editor.getModel();
 
-          const errorNodes = getErrorNodes(model.getValue());
-          const cursorPosition = changeEvent.changes[0].rangeOffset;
+            if (!model) {
+              return;
+            }
 
-          // Immediately updates the squiggles, in case the user fixed an error,
-          // excluding the error around the cursor position
-          setMarkers(
-            monaco,
-            model,
-            errorNodes.filter((errorNode) => !(errorNode.from <= cursorPosition && cursorPosition <= errorNode.to))
-          );
+            // Remove previous callback if existing, to prevent squiggles from been shown while the user is still typing
+            window.clearTimeout(errorTimeoutId.current);
 
-          // Later on, show all errors
-          errorTimeoutId.current = window.setTimeout(() => {
-            setMarkers(monaco, model, errorNodes);
-          }, 500);
-        });
-      }}
-    />
+            const errorNodes = getErrorNodes(model.getValue());
+            const cursorPosition = changeEvent.changes[0].rangeOffset;
+
+            // Immediately updates the squiggles, in case the user fixed an error,
+            // excluding the error around the cursor position
+            setMarkers(
+              monaco,
+              model,
+              errorNodes.filter((errorNode) => !(errorNode.from <= cursorPosition && cursorPosition <= errorNode.to))
+            );
+
+            // Later on, show all errors
+            errorTimeoutId.current = window.setTimeout(() => {
+              setMarkers(monaco, model, errorNodes);
+            }, 500);
+          });
+        }}
+      />
+      {alertText && <TemporaryAlert severity={'error'} text={alertText} />}
+    </>
   );
 }
 
@@ -175,9 +178,10 @@ function setupAutoSize(editor: monacoTypes.editor.IStandaloneCodeEditor) {
 
 /**
  * Hook that returns function that will set up monaco autocomplete for the label selector
- * @param datasource
+ * @param datasource the Tempo datasource instance
+ * @param setAlertText setter for alert's text
  */
-function useAutocomplete(datasource: TempoDatasource) {
+function useAutocomplete(datasource: TempoDatasource, setAlertText: (text: string) => void) {
   // We need the provider ref so we can pass it the label/values data later. This is because we run the call for the
   // values here but there is additional setup needed for the provider later on. We could run the getSeries() in the
   // returned function but that is run after the monaco is mounted so would delay the request a bit when it does not
@@ -192,12 +196,13 @@ function useAutocomplete(datasource: TempoDatasource) {
         await datasource.languageProvider.start();
       } catch (error) {
         if (error instanceof Error) {
-          dispatch(notifyApp(createErrorNotification('Error', error)));
+          console.error(error);
+          setAlertText(error.message);
         }
       }
     };
     fetchTags();
-  }, [datasource]);
+  }, [datasource, setAlertText]);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
   useEffect(() => {

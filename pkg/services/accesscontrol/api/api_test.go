@@ -162,6 +162,19 @@ func TestAccessControlAPI_searchUsersPermissions(t *testing.T) {
 			expectedCode:   http.StatusOK,
 			expectedOutput: map[int64]map[string][]string{2: {"users:read": {"users:*"}}},
 		},
+		{
+			desc:    "Should work with valid action filter",
+			filters: "?actionPrefix=users:",
+			permissions: map[int64][]ac.Permission{
+				1: {{Action: "users:write", Scope: "users:id:1"}},
+				2: {{Action: "users:read", Scope: "users:id:2"}},
+			},
+			expectedCode: http.StatusOK,
+			expectedOutput: map[int64]map[string][]string{
+				1: {"users:write": {"users:id:1"}},
+				2: {"users:read": {"users:id:2"}},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
