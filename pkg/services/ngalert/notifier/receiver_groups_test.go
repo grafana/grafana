@@ -66,8 +66,7 @@ func TestReceiverGroupService_DecryptRedact(t *testing.T) {
 
 		testedSettings, err := simplejson.NewJson([]byte(grafanaReceiver.Settings))
 		require.NoError(t, err)
-		_, keyExists := testedSettings.CheckGet("url")
-		require.False(t, keyExists)
+		require.Equal(t, definitions.RedactedValue, testedSettings.Get("url").MustString())
 	})
 
 	t.Run("service returns error when trying to decrypt with nil user", func(t *testing.T) {
