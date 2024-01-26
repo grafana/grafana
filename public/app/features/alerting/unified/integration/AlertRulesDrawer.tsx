@@ -1,17 +1,13 @@
 import React from 'react';
-import { useAsync, useToggle } from 'react-use';
 
-import { Drawer, LoadingPlaceholder, Stack, TextLink, ToolbarButton } from '@grafana/ui';
+import { Drawer, LoadingPlaceholder, Stack, TextLink } from '@grafana/ui';
 
 import { t } from '../../../../core/internationalization';
-import { useDispatch } from '../../../../types';
-import { alertRuleApi } from '../api/alertRuleApi';
-import { RulesTable } from '../components/rules/RulesTable';
-import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
-import { fetchPromAndRulerRulesAction } from '../state/actions';
-import { Annotation } from '../utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { createUrl } from '../utils/url';
+
+const AlertRulesDrawerContent = React.lazy(
+  () => import(/* webpackChunkName: "alert-rules-drawer-content" */ './AlertRulesDrawerContent')
+);
 
 interface Props {
   dashboardUid: string;
@@ -19,25 +15,11 @@ interface Props {
 }
 
 export function AlertRulesDrawer({ dashboardUid, onClose }: Props) {
-  const dispatch = useDispatch();
-
-  const { loading } = useAsync(async () => {
-    await dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
-  }, [dispatch]);
-
-  const grafanaNamespaces = useCombinedRuleNamespaces(GRAFANA_RULES_SOURCE_NAME);
-  const rules = grafanaNamespaces
-    .flatMap((ns) => ns.groups)
-    .flatMap((g) => g.rules)
-    .filter((rule) => rule.annotations[Annotation.dashboardUID] === dashboardUid);
-
   return (
     <Drawer title="Alert rules" subtitle={<DrawerSubtitle dashboardUid={dashboardUid} />} onClose={onClose} size="lg">
-      {loading ? (
-        <LoadingPlaceholder text="Loading alert rules" />
-      ) : (
-        <RulesTable rules={rules} showNextEvaluationColumn={false} showGroupColumn={false} />
-      )}
+      <React.Suspense fallback={<LoadingPlaceholder text="Loading alert rules" />}>
+        <AlertRulesDrawerContent dashboardUid={dashboardUid} />
+      </React.Suspense>
     </Drawer>
   );
 }
@@ -52,33 +34,5 @@ function DrawerSubtitle({ dashboardUid }: { dashboardUid: string }) {
         {t('dashboard.toolbar.alert-rules.redirect-link', 'List in Grafana Alerting')}
       </TextLink>
     </Stack>
-  );
-}
-interface AlertRulesToolbarButtonProps {
-  dashboardUid: string;
-}
-
-export function AlertRulesToolbarButton({ dashboardUid }: AlertRulesToolbarButtonProps) {
-  const [showDrawer, toggleShowDrawer] = useToggle(false);
-
-  const { data: namespaces = [] } = alertRuleApi.endpoints.prometheusRuleNamespaces.useQuery({
-    ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
-    dashboardUid: dashboardUid,
-  });
-
-  if (namespaces.length === 0) {
-    return null;
-  }
-
-  return (
-    <>
-      <ToolbarButton
-        tooltip={t('dashboard.toolbar.alert-rules', 'Alert rules')}
-        icon="bell"
-        onClick={toggleShowDrawer}
-        key="button-alerting"
-      />
-      {showDrawer && <AlertRulesDrawer dashboardUid={dashboardUid} onClose={toggleShowDrawer} />}
-    </>
   );
 }
