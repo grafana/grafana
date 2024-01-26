@@ -343,7 +343,7 @@ func (proxy *DataSourceProxy) logRequest() {
 		}
 	}
 
-	panelPluginId := proxy.ctx.Req.Header.Get("X-Panel-Plugin-Id")
+	panelPluginType := proxy.ctx.Req.Header.Get("X-Panel-Plugin-Type")
 
 	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
 	ctxLogger.Info("Proxying incoming request",
@@ -353,7 +353,7 @@ func (proxy *DataSourceProxy) logRequest() {
 		"datasource", proxy.ds.Type,
 		"uri", proxy.ctx.Req.RequestURI,
 		"method", proxy.ctx.Req.Method,
-		"panelPluginId", panelPluginId,
+		"panelPluginType", panelPluginType,
 		"body", body)
 }
 

@@ -125,13 +125,13 @@ describe('DashboardScene', () => {
       scene.onEnterEditMode();
     });
 
-    it('Should add app, uid, panelId and panelPluginId', () => {
+    it('Should add app, uid, panelId and panelPluginType', () => {
       const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner')!;
       expect(scene.enrichDataRequest(queryRunner)).toEqual({
         app: CoreApp.Dashboard,
         dashboardUID: 'dash-1',
         panelId: 1,
-        panelPluginId: 'table',
+        panelPluginType: 'table',
       });
     });
 

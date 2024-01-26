@@ -23,6 +23,7 @@ export class MockDataQueryRequest implements DataQueryRequest<MockQuery> {
   startTime = 0;
   targets: MockQuery[];
   timezone = 'utc';
+  panelPluginType = 'timeseries';
 
   constructor({ targets }: { targets: MockQuery[] }) {
     this.targets = targets || [];

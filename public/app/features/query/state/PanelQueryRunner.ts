@@ -50,7 +50,7 @@ export interface QueryRunnerOptions<
   datasource: DataSourceRef | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
   panelId?: number;
-  panelPluginId?: string;
+  panelPluginType?: string;
   dashboardUID?: string;
   timezone: TimeZone;
   timeRange: TimeRange;
@@ -257,7 +257,7 @@ export class PanelQueryRunner {
       timezone,
       datasource,
       panelId,
-      panelPluginId,
+      panelPluginType,
       dashboardUID,
       timeRange,
       timeInfo,
@@ -279,7 +279,7 @@ export class PanelQueryRunner {
       requestId: getNextRequestId(),
       timezone,
       panelId,
-      panelPluginId,
+      panelPluginType,
       dashboardUID,
       range: timeRange,
       timeInfo,
