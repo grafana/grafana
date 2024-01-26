@@ -274,7 +274,7 @@ export const CandlestickPanel = ({
                     return null;
                   }
 
-                  if (timeRange2 != null) {
+                  if (enableAnnotationCreation && timeRange2 != null) {
                     setNewAnnotationRange(timeRange2);
                     dismiss();
                     return;
@@ -299,8 +299,8 @@ export const CandlestickPanel = ({
                     />
                   );
                 }}
-                maxWidth={options.tooltip.maxWidth}
-                maxHeight={options.tooltip.maxHeight}
+                maxWidth={options.tooltip?.maxWidth}
+                maxHeight={options.tooltip?.maxHeight}
               />
             ) : (
               <>
