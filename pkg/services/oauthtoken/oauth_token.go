@@ -128,7 +128,7 @@ func (o *Service) HasOAuthEntry(ctx context.Context, usr identity.Requester) (*l
 // It uses a singleflight.Group to prevent getting the Refresh Token multiple times for a given User
 func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) error {
 	if usr == nil || usr.IsNil() {
-		logger.Warn("Can only refresh OAuth tokens for users", "user", "nil")
+		logger.Warn("Can only refresh OAuth tokens for existing users", "user", "nil")
 		// Not user, no token.
 		return nil
 	}

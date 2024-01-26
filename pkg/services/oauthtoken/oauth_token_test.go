@@ -296,12 +296,12 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:        "should fail if the user identity cannot be converted to an int",
+			desc:        "should return nil if namespace and id cannot be converted to user ID",
 			identity:    &authn.Identity{ID: "user:invalidIdentifierFormat"},
 			expectedErr: nil,
 		},
 		{
-			desc:     "should skip if the expiration check has been cached",
+			desc:     "should skip token refresh if the expiration check has already been cached",
 			identity: &authn.Identity{ID: "user:1234"},
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				cache.Set("oauth-refresh-token-1234", true, 1*time.Minute)
@@ -309,7 +309,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:     "should skip when fetching authInfo returns an error",
+			desc:     "should skip token refresh if there's an unexpected error while looking up the user oauth entry, additionally, no error should be returned",
 			identity: &authn.Identity{ID: "user:1234"},
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedError = errors.New("some error")
@@ -317,7 +317,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:     "should skip when the user did not authenticate through oauth",
+			desc:     "should skip token refresh if the user doens't has an oauth entry",
 			identity: &authn.Identity{ID: "user:1234"},
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedUserAuth = &login.UserAuth{
@@ -327,7 +327,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:     "should refresh the token if the auth module is oauth",
+			desc:     "should refresh the token refresh if acces token or id token have not expired yet",
 			identity: &authn.Identity{ID: "user:1234"},
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedUserAuth = &login.UserAuth{
@@ -337,7 +337,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:     "should skip sync with an unknown idp",
+			desc:     "should skip token refresh when no oauth provider was found",
 			identity: &authn.Identity{ID: "user:1234"},
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedUserAuth = &login.UserAuth{
@@ -349,7 +349,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			oauthInfo:   nil,
 		},
 		{
-			desc:     "should skip refresh token if oauth provider token handling is disabled",
+			desc:     "should skip token refresh when oauth provider token handling is disabled (UseRefreshToken is false)",
 			identity: &authn.Identity{ID: "user:1234"},
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedUserAuth = &login.UserAuth{
@@ -363,12 +363,13 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			},
 		},
 		{
-			desc:     "should skip refresh token if oauth provider token handling is disabled",
+			desc:     "should skip token refresh when oauth provider token handling is disabled and the refresh token is empty",
 			identity: &authn.Identity{ID: "user:1234"},
 			setupEnv: func(cache *localcache.CacheService, authInfoService *authinfotest.FakeService) {
 				authInfoService.ExpectedUserAuth = &login.UserAuth{
-					AuthModule:   login.GenericOAuthModule,
-					OAuthIdToken: EXPIRED_JWT,
+					AuthModule:        login.GenericOAuthModule,
+					OAuthIdToken:      EXPIRED_JWT,
+					OAuthRefreshToken: "",
 				}
 			},
 			expectedErr: nil,
@@ -378,25 +379,27 @@ func TestService_TryTokenRefresh(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		socialService := &socialtest.FakeSocialService{
-			ExpectedAuthInfoProvider: tt.oauthInfo,
-		}
+		t.Run(tt.desc, func(t *testing.T) {
+			socialService := &socialtest.FakeSocialService{
+				ExpectedAuthInfoProvider: tt.oauthInfo,
+			}
 
-		authInfoService := &authinfotest.FakeService{}
+			authInfoService := &authinfotest.FakeService{}
 
-		service := &Service{
-			AuthInfoService:   authInfoService,
-			SocialService:     socialService,
-			singleFlightGroup: new(singleflight.Group),
-			cache:             localcache.New(0, 0),
-		}
+			service := &Service{
+				AuthInfoService:   authInfoService,
+				SocialService:     socialService,
+				singleFlightGroup: new(singleflight.Group),
+				cache:             localcache.New(0, 0),
+			}
 
-		if tt.setupEnv != nil {
-			tt.setupEnv(service.cache, authInfoService)
-		}
+			if tt.setupEnv != nil {
+				tt.setupEnv(service.cache, authInfoService)
+			}
 
-		err := service.TryTokenRefresh(context.Background(), tt.identity)
-		assert.ErrorIs(t, err, tt.expectedErr)
+			err := service.TryTokenRefresh(context.Background(), tt.identity)
+			assert.ErrorIs(t, err, tt.expectedErr)
+		})
 	}
 }
 
