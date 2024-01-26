@@ -62,7 +62,8 @@ export function getDisplayValuesAndLinks(
   const linkLookup = new Set<string>();
 
   for (const field of orderedVisibleFields) {
-    if (mode === TooltipDisplayMode.Single && columnIndex != null && columnIndex !== fields.indexOf(field)) {
+    const isFieldHovered = columnIndex === fields.indexOf(field);
+    if (mode === TooltipDisplayMode.Single && columnIndex != null && !isFieldHovered) {
       continue;
     }
 
