@@ -156,9 +156,9 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	return result, nil
 }
 
-func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config definitions.PostableUserConfig) error {
+func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Context, orgId int64, config definitions.PostableUserConfig) error {
 	// Get the last known working configuration
-	_, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, org)
+	_, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, orgId)
 	if err != nil {
 		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
 		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
@@ -166,7 +166,7 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 		}
 	}
 
-	if err := moa.Crypto.ProcessSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
+	if err := moa.Crypto.ProcessSecureSettings(ctx, orgId, config.AlertmanagerConfig.Receivers); err != nil {
 		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
 	}
 
@@ -174,7 +174,7 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 		return fmt.Errorf("failed to assign missing uids: %w", err)
 	}
 
-	am, err := moa.AlertmanagerFor(org)
+	am, err := moa.AlertmanagerFor(orgId)
 	if err != nil {
 		// It's okay if the alertmanager isn't ready yet, we're changing its config anyway.
 		if !errors.Is(err, ErrAlertmanagerNotReady) {
@@ -182,7 +182,7 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 		}
 	}
 
-	if err := moa.SaveAndApplyConfig(ctx, org, am, &config); err != nil {
+	if err := moa.SaveAndApplyConfig(ctx, orgId, am, &config); err != nil {
 		moa.logger.Error("Unable to save and apply alertmanager configuration", "error", err)
 		return AlertmanagerConfigRejectedError{err}
 	}
