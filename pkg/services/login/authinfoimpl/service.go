@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type Service struct {
@@ -24,7 +25,7 @@ type Service struct {
 const remoteCachePrefix = "authinfo-"
 const remoteCacheTTL = 60 * time.Hour
 
-var errMissingParameters = errors.New("user ID and auth ID must be set")
+var errMissingParameters = errutil.NewBase(errutil.StatusBadRequest, "auth-missing-parameters", errutil.WithPublicMessage("Missing parameters for auth info"))
 
 func ProvideService(authInfoStore login.Store,
 	remoteCache remotecache.CacheStorage,
@@ -118,12 +119,12 @@ func generateCacheKey(query *login.GetAuthInfoQuery) string {
 }
 
 func (s *Service) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error {
-	if cmd.UserId == 0 || cmd.AuthId == "" {
-		return errMissingParameters
+	// Only update auth info if we have an (user id + auth module)
+	if cmd.UserId == 0 || cmd.AuthModule == "" {
+		return errMissingParameters.Errorf("missing parameters for auth info %v", cmd)
 	}
 
-	err := s.authInfoStore.UpdateAuthInfo(ctx, cmd)
-	if err != nil {
+	if err := s.authInfoStore.UpdateAuthInfo(ctx, cmd); err != nil {
 		return err
 	}
 
@@ -137,12 +138,12 @@ func (s *Service) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoC
 }
 
 func (s *Service) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
-	if cmd.UserId == 0 || cmd.AuthId == "" {
-		return errMissingParameters
+	// Only set auth info if we have an (user id + auth module)
+	if cmd.UserId == 0 || cmd.AuthModule == "" {
+		return errMissingParameters.Errorf("missing parameters for auth info %v", cmd)
 	}
 
-	err := s.authInfoStore.SetAuthInfo(ctx, cmd)
-	if err != nil {
+	if err := s.authInfoStore.SetAuthInfo(ctx, cmd); err != nil {
 		return err
 	}
 
@@ -172,28 +173,32 @@ func (s *Service) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
 }
 
 func (s *Service) deleteUserAuthInfoInCache(ctx context.Context, query *login.GetAuthInfoQuery) {
-	err := s.remoteCache.Delete(ctx, generateCacheKey(&login.GetAuthInfoQuery{
-		AuthModule: query.AuthModule,
-		AuthId:     query.AuthId,
-	}))
-	if err != nil {
-		s.logger.Warn("failed to delete auth info from cache", "error", err)
-	}
-
-	errN := s.remoteCache.Delete(ctx, generateCacheKey(
-		&login.GetAuthInfoQuery{
-			UserId: query.UserId,
-		}))
-	if errN != nil {
-		s.logger.Warn("failed to delete user auth info from cache", "error", errN)
-	}
-
-	errA := s.remoteCache.Delete(ctx, generateCacheKey(
-		&login.GetAuthInfoQuery{
-			UserId:     query.UserId,
+	if query.AuthId != "" {
+		err := s.remoteCache.Delete(ctx, generateCacheKey(&login.GetAuthInfoQuery{
 			AuthModule: query.AuthModule,
+			AuthId:     query.AuthId,
 		}))
-	if errA != nil {
-		s.logger.Warn("failed to delete user module auth info from cache", "error", errA)
+		if err != nil {
+			s.logger.Warn("failed to delete auth info from cache", "error", err)
+		}
+	}
+
+	if query.UserId != 0 {
+		errN := s.remoteCache.Delete(ctx, generateCacheKey(
+			&login.GetAuthInfoQuery{
+				UserId: query.UserId,
+			}))
+		if errN != nil {
+			s.logger.Warn("failed to delete user auth info from cache", "error", errN)
+		}
+
+		errA := s.remoteCache.Delete(ctx, generateCacheKey(
+			&login.GetAuthInfoQuery{
+				UserId:     query.UserId,
+				AuthModule: query.AuthModule,
+			}))
+		if errA != nil {
+			s.logger.Warn("failed to delete user module auth info from cache", "error", errA)
+		}
 	}
 }
