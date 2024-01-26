@@ -49,6 +49,38 @@ export interface AmRoutesExpandedFormProps {
   defaults?: Partial<FormAmRoute>;
 }
 
+function unwrapQuotes(value: string): { unquoted: string; hasQuotes: boolean } {
+  if (value.startsWith('"') && value.endsWith('"')) {
+    return { unquoted: value.slice(1, -1), hasQuotes: true };
+  }
+  return { unquoted: value, hasQuotes: false };
+}
+
+const matcherValueValidator = {
+  containsReservedCharacter: (value: string) => {
+    const { unquoted, hasQuotes } = unwrapQuotes(value);
+    const reservedCharacters = ['{', '}', '!', '=', '~', '\\', '"'];
+
+    // Reserved characters are allowed ONLY IF wrapped in quotes
+    if (hasQuotes) {
+      return true;
+    }
+
+    return reservedCharacters.some((char) => unquoted.includes(char)) ? 'Contains reserved character.' : true;
+  },
+  containsUnescapedCharacters: (value: string) => {
+    const unescapedQuotesRegex = /(?<!\\)"/g;
+    const unescapedBackslashRegex = /(?<!\\)\\[^\\"]/g;
+    const { unquoted } = unwrapQuotes(value);
+
+    return unescapedQuotesRegex.test(unquoted)
+      ? 'Contains unescaped double quotes.'
+      : unescapedBackslashRegex.test(unquoted)
+        ? 'Contains unescaped backslash.'
+        : true;
+  },
+};
+
 export const AmRoutesExpandedForm = ({
   actionButtons,
   receivers,
@@ -105,7 +137,9 @@ export const AmRoutesExpandedForm = ({
                               error={errors.object_matchers?.[index]?.name?.message}
                             >
                               <Input
-                                {...register(`object_matchers.${index}.name`, { required: 'Field is required' })}
+                                {...register(`object_matchers.${index}.name`, {
+                                  required: 'Field is required',
+                                })}
                                 defaultValue={field.name}
                                 placeholder="label"
                                 autoFocus
@@ -134,7 +168,10 @@ export const AmRoutesExpandedForm = ({
                               error={errors.object_matchers?.[index]?.value?.message}
                             >
                               <Input
-                                {...register(`object_matchers.${index}.value`, { required: 'Field is required' })}
+                                {...register(`object_matchers.${index}.value`, {
+                                  required: 'Field is required',
+                                  validate: matcherValueValidator,
+                                })}
                                 defaultValue={field.value}
                                 placeholder="value"
                               />
