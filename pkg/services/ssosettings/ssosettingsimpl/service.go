@@ -193,13 +193,9 @@ func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings) erro
 		return err
 	}
 
-	go func() {
-		settings.Settings = overrideMaps(storedSettings.Settings, settings.Settings, secrets)
-		err = social.Reload(context.Background(), *settings)
-		if err != nil {
-			s.logger.Error("failed to reload the provider", "provider", settings.Provider, "error", err)
-		}
-	}()
+	settings.Settings = overrideMaps(storedSettings.Settings, settings.Settings, secrets)
+
+	go s.reload(social, settings.Provider, *settings)
 
 	return nil
 }
@@ -212,7 +208,32 @@ func (s *Service) Delete(ctx context.Context, provider string) error {
 	if !s.isProviderConfigurable(provider) {
 		return ssosettings.ErrNotConfigurable
 	}
-	return s.store.Delete(ctx, provider)
+
+	social, ok := s.reloadables[provider]
+	if !ok {
+		return ssosettings.ErrInvalidProvider.Errorf("provider %s not found in reloadables", provider)
+	}
+
+	err := s.store.Delete(ctx, provider)
+	if err != nil {
+		return err
+	}
+
+	currentSettings, err := s.GetForProvider(ctx, provider)
+	if err != nil {
+		return err
+	}
+
+	go s.reload(social, provider, *currentSettings)
+
+	return nil
+}
+
+func (s *Service) reload(reloadable ssosettings.Reloadable, provider string, currentSettings models.SSOSettings) {
+	err := reloadable.Reload(context.Background(), currentSettings)
+	if err != nil {
+		s.logger.Error("failed to reload the provider", "provider", provider, "error", err)
+	}
 }
 
 func (s *Service) Reload(ctx context.Context, provider string) {

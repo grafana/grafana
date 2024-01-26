@@ -1007,17 +1007,45 @@ func TestService_Delete(t *testing.T) {
 	t.Run("successfully delete SSO settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
+		var wg sync.WaitGroup
+		wg.Add(1)
+
 		provider := social.AzureADProviderName
-		env.store.ExpectedError = nil
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		env.reloadables[provider] = reloadable
+
+		env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
+			provider: {
+				"client_id":     "client-id",
+				"client_secret": "client-secret",
+				"enabled":       true,
+			},
+		}
+
+		reloadable.On("Reload", mock.Anything, mock.MatchedBy(func(settings models.SSOSettings) bool {
+			wg.Done()
+			return settings.Provider == provider &&
+				settings.ID == "" &&
+				maps.Equal(settings.Settings, map[string]any{
+					"client_id":     "client-id",
+					"client_secret": "client-secret",
+					"enabled":       true,
+				})
+		})).Return(nil).Once()
 
 		err := env.service.Delete(context.Background(), provider)
 		require.NoError(t, err)
+
+		// wait for the goroutine first to assert the Reload call
+		wg.Wait()
 	})
 
-	t.Run("SSO settings not found for the specified provider", func(t *testing.T) {
+	t.Run("return error if SSO setting was not found for the specified provider", func(t *testing.T) {
 		env := setupTestEnv(t)
 
 		provider := social.AzureADProviderName
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		env.reloadables[provider] = reloadable
 		env.store.ExpectedError = ssosettings.ErrNotFound
 
 		err := env.service.Delete(context.Background(), provider)
