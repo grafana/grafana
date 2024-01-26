@@ -322,9 +322,8 @@ type CountDashboardsInFolderQuery struct {
 // to the store layer. The FolderID will be replaced with FolderUID when
 // dashboards are updated with parent folder UIDs.
 type CountDashboardsInFolderRequest struct {
-	// Deprecated: use FolderUID instead
-	FolderID int64
-	OrgID    int64
+	FolderUID string
+	OrgID     int64
 }
 
 func FromDashboard(dash *Dashboard) *folder.Folder {

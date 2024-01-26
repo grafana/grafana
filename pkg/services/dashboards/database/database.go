@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"xorm.io/xorm"
@@ -1008,19 +1009,25 @@ func (d *dashboardStore) GetDashboardTags(ctx context.Context, query *dashboards
 
 // CountDashboardsInFolder returns a count of all dashboards associated with the
 // given parent folder ID.
-//
-// This will be updated to take CountDashboardsInFolderQuery as an argument and
-// lookup dashboards using the ParentFolderUID when dashboards are associated with a parent folder UID instead of ID.
 func (d *dashboardStore) CountDashboardsInFolder(
 	ctx context.Context, req *dashboards.CountDashboardsInFolderRequest) (int64, error) {
 	var count int64
 	var err error
 	err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
-		// nolint:staticcheck
-		session := sess.In("folder_id", req.FolderID).In("org_id", req.OrgID).
-			In("is_folder", d.store.GetDialect().BooleanStr(false))
-		count, err = session.Count(&dashboards.Dashboard{})
+		s := strings.Builder{}
+		args := make([]any, 0, 3)
+		s.WriteString("SELECT COUNT(*) FROM dashboard WHERE ")
+		if req.FolderUID == "" {
+			s.WriteString("folder_uid IS NULL")
+		} else {
+			s.WriteString("folder_uid = ?")
+			args = append(args, req.FolderUID)
+		}
+		s.WriteString(" AND org_id = ? AND is_folder = ?")
+		args = append(args, req.OrgID, d.store.GetDialect().BooleanStr(false))
+		sql := s.String()
+		_, err := sess.SQL(sql, args...).Get(&count)
 		return err
 	})
 	return count, err
