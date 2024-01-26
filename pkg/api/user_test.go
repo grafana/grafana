@@ -450,7 +450,7 @@ func TestUser_UpdateEmail(t *testing.T) {
 				for _, ttt := range tests {
 					settings := setting.NewCfg()
 					settings.Smtp.Enabled = ttt.smtpConfigured
-					setting.VerifyEmailEnabled = ttt.verifyEmailEnabled
+					settings.VerifyEmailEnabled = ttt.verifyEmailEnabled
 
 					usr, hs, nsMock := setupUpdateEmailTests(t, settings)
 
@@ -591,10 +591,10 @@ func TestUser_UpdateEmail(t *testing.T) {
 	}
 
 	setupScenario := func(cfg *setting.Cfg) (*webtest.Server, user.Service, tempuser.Service, *notifications.NotificationServiceMock) {
-		setting.VerifyEmailEnabled = true
 		settings := setting.NewCfg()
 		settings.Smtp.Enabled = true
 		settings.VerificationEmailMaxLifetime = 1 * time.Hour
+		settings.VerifyEmailEnabled = true
 
 		if cfg != nil {
 			settings = cfg
@@ -868,6 +868,7 @@ func TestUser_UpdateEmail(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.Smtp.Enabled = true
 		cfg.VerificationEmailMaxLifetime = 0 // Expire instantly
+		cfg.VerifyEmailEnabled = true
 
 		server, userSvc, tempUserSvc, nsMock := setupScenario(cfg)
 

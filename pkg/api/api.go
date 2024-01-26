@@ -190,7 +190,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Post("/api/user/signup/step2", routing.Wrap(hs.SignUpStep2))
 
 	// update user email
-	if hs.Cfg.Smtp.Enabled && setting.VerifyEmailEnabled {
+	if hs.Cfg.Smtp.Enabled && hs.Cfg.VerifyEmailEnabled {
 		r.Get("/user/email/update", reqSignedInNoAnonymous, routing.Wrap(hs.UpdateUserEmail))
 	}
 

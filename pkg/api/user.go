@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -241,7 +240,7 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 	// To avoid breaking changes, email verification is implemented in a way that if the email field is being updated,
 	// all the other fields being updated in the same request are disregarded. We do this because email might need to
 	// be verified and if so, it goes through a different code flow.
-	if hs.Cfg.Smtp.Enabled && setting.VerifyEmailEnabled {
+	if hs.Cfg.Smtp.Enabled && hs.Cfg.VerifyEmailEnabled {
 		query := user.GetUserByIDQuery{ID: cmd.UserID}
 		usr, err := hs.userService.GetByID(ctx, &query)
 		if err != nil {
