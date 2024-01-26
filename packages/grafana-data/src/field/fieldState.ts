@@ -1,5 +1,3 @@
-import { isEqual } from 'lodash';
-
 import { DataFrame, Field, TIME_SERIES_VALUE_FIELD_NAME, FieldType, TIME_SERIES_TIME_FIELD_NAME } from '../types';
 import { formatLabels } from '../utils/labels';
 
@@ -167,7 +165,7 @@ export function getUniqueFieldName(field: Field, frame?: DataFrame) {
     for (let i = 0; i < frame.fields.length; i++) {
       const otherField = frame.fields[i];
 
-      if (isEqual(field, otherField)) {
+      if (field === otherField) {
         foundSelf = true;
 
         if (dupeCount > 0) {
