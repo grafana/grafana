@@ -71,7 +71,7 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr identity.Request
 		return nil
 	}
 
-	token, err := o.tryGetOrRefreshAccessToken(ctx, authInfo)
+	token, err := o.tryGetOrRefreshOAuthToken(ctx, authInfo)
 	if err != nil {
 		if errors.Is(err, ErrNoRefreshTokenFound) {
 			return buildOAuthTokenFromAuthInfo(authInfo)
@@ -185,7 +185,7 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester) e
 			return nil, nil
 		}
 
-		return o.tryGetOrRefreshAccessToken(ctx, authInfo)
+		return o.tryGetOrRefreshOAuthToken(ctx, authInfo)
 	})
 	// Silence ErrNoRefreshTokenFound
 	if errors.Is(err, ErrNoRefreshTokenFound) {
@@ -240,7 +240,7 @@ func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr *login.UserAuth
 	})
 }
 
-func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *login.UserAuth) (*oauth2.Token, error) {
+func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, usr *login.UserAuth) (*oauth2.Token, error) {
 	key := getCheckCacheKey(usr.UserId)
 	if _, ok := o.cache.Get(key); ok {
 		logger.Debug("Expiration check has been cached", "userID", usr.UserId)

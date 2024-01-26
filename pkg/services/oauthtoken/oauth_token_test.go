@@ -296,7 +296,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:        "should return nil if namespace and id cannot be converted to user ID",
+			desc:        "should skipt token refresh and return nil if namespace and id cannot be converted to user ID",
 			identity:    &authn.Identity{ID: "user:invalidIdentifierFormat"},
 			expectedErr: nil,
 		},
