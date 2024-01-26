@@ -91,8 +91,8 @@ func ProvideService(cfg *setting.Cfg,
 	return s, nil
 }
 
-func ProvideServiceForTests(cfg *setting.Cfg, migrations registry.DatabaseMigrator) (*SQLStore, error) {
-	return initTestDB(cfg, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
+func ProvideServiceForTests(cfg *setting.Cfg, features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator) (*SQLStore, error) {
+	return initTestDB(cfg, features, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
 }
 
 func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine,
@@ -406,15 +406,11 @@ type InitTestDBOpt struct {
 	FeatureFlags            []string
 }
 
-var featuresEnabledDuringTests = []string{
-	featuremgmt.FlagPanelTitleSearch,
-	featuremgmt.FlagUnifiedStorage,
-}
-
 // InitTestDBWithMigration initializes the test DB given custom migrations.
 func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
-	store, err := initTestDB(setting.NewCfg(), migration, opts...)
+	features := getFeaturesForTesting(opts...)
+	store, err := initTestDB(setting.NewCfg(), features, migration, opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -424,7 +420,9 @@ func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opt
 // InitTestDB initializes the test DB.
 func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
-	store, err := initTestDB(setting.NewCfg(), &migrations.OSSMigrations{}, opts...)
+	features := getFeaturesForTesting(opts...)
+
+	store, err := initTestDB(setting.NewCfg(), features, migrations.ProvideOSSMigrations(features), opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -436,23 +434,32 @@ func InitTestDBWithCfg(t ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cf
 	return store, store.Cfg
 }
 
+func getFeaturesForTesting(opts ...InitTestDBOpt) featuremgmt.FeatureToggles {
+	featureKeys := []any{
+		featuremgmt.FlagPanelTitleSearch,
+		featuremgmt.FlagUnifiedStorage,
+	}
+	for _, opt := range opts {
+		if len(opt.FeatureFlags) > 0 {
+			for _, f := range opt.FeatureFlags {
+				featureKeys = append(featureKeys, f)
+			}
+		}
+	}
+	return featuremgmt.WithFeatures(featureKeys...)
+}
+
 //nolint:gocyclo
-func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQLStore, error) {
+func initTestDB(testCfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	migration registry.DatabaseMigrator,
+	opts ...InitTestDBOpt) (*SQLStore, error) {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
 
 	if len(opts) == 0 {
 		opts = []InitTestDBOpt{{EnsureDefaultOrgAndUser: false, FeatureFlags: []string{}}}
 	}
-
-	featureKeys := make([]string, len(featuresEnabledDuringTests))
-	copy(featureKeys, featuresEnabledDuringTests)
-	for _, opt := range opts {
-		if len(opt.FeatureFlags) > 0 {
-			featureKeys = append(featureKeys, opt.FeatureFlags...)
-		}
-	}
-	//features := featuremgmt.WithFeatures(featureKeys)
 
 	if testSQLStore == nil {
 		dbType := migrator.SQLite
@@ -465,14 +472,7 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 		// set test db config
 		cfg := setting.NewCfg()
 		// nolint:staticcheck
-		cfg.IsFeatureToggleEnabled = func(key string) bool {
-			for _, enabledFeature := range featureKeys {
-				if enabledFeature == key {
-					return true
-				}
-			}
-			return false
-		}
+		cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
 		sec, err := cfg.Raw.NewSection("database")
 		if err != nil {
@@ -560,14 +560,7 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 	}
 
 	// nolint:staticcheck
-	testSQLStore.Cfg.IsFeatureToggleEnabled = func(key string) bool {
-		for _, enabledFeature := range featureKeys {
-			if enabledFeature == key {
-				return true
-			}
-		}
-		return false
-	}
+	testSQLStore.Cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
 	if err := testSQLStore.Dialect.TruncateDBTables(testSQLStore.GetEngine()); err != nil {
 		return nil, err
