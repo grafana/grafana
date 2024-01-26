@@ -3591,7 +3591,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^2.0.0":
+"@grafana/scenes@npm:^2.1.0":
   version: 2.1.0
   resolution: "@grafana/scenes@npm:2.1.0"
   dependencies:
@@ -17338,7 +17338,7 @@ __metadata:
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:^2.0.0"
+    "@grafana/scenes": "npm:^2.1.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
