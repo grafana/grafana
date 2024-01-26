@@ -38,6 +38,7 @@ type ContextSessionKey struct{}
 
 type SQLStore struct {
 	Cfg         *setting.Cfg
+	features    featuremgmt.FeatureToggles
 	sqlxsession *session.SessionDB
 
 	bus                          bus.Bus
@@ -52,7 +53,10 @@ type SQLStore struct {
 	recursiveQueriesMu           sync.Mutex
 }
 
-func ProvideService(cfg *setting.Cfg, migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
+func ProvideService(cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	migrations registry.DatabaseMigrator,
+	bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
@@ -61,9 +65,9 @@ func ProvideService(cfg *setting.Cfg, migrations registry.DatabaseMigrator, bus 
 	if err != nil {
 		return nil, err
 	}
+	s.features = features
 
-	// nolint:staticcheck
-	if err := s.Migrate(cfg.IsFeatureToggleEnabled(featuremgmt.FlagMigrationLocking)); err != nil {
+	if err := s.Migrate(features.IsEnabledGlobally(featuremgmt.FlagMigrationLocking)); err != nil {
 		return nil, err
 	}
 
@@ -239,7 +243,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		return nil
 	}
 
-	dbCfg, err := NewDatabaseConfig(ss.Cfg)
+	dbCfg, err := NewDatabaseConfig(ss.Cfg, ss.features)
 	if err != nil {
 		return err
 	}
@@ -441,13 +445,14 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 		opts = []InitTestDBOpt{{EnsureDefaultOrgAndUser: false, FeatureFlags: []string{}}}
 	}
 
-	features := make([]string, len(featuresEnabledDuringTests))
-	copy(features, featuresEnabledDuringTests)
+	featureKeys := make([]string, len(featuresEnabledDuringTests))
+	copy(featureKeys, featuresEnabledDuringTests)
 	for _, opt := range opts {
 		if len(opt.FeatureFlags) > 0 {
-			features = append(features, opt.FeatureFlags...)
+			featureKeys = append(featureKeys, opt.FeatureFlags...)
 		}
 	}
+	//features := featuremgmt.WithFeatures(featureKeys)
 
 	if testSQLStore == nil {
 		dbType := migrator.SQLite
@@ -461,7 +466,7 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 		cfg := setting.NewCfg()
 		// nolint:staticcheck
 		cfg.IsFeatureToggleEnabled = func(key string) bool {
-			for _, enabledFeature := range features {
+			for _, enabledFeature := range featureKeys {
 				if enabledFeature == key {
 					return true
 				}
@@ -556,7 +561,7 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 
 	// nolint:staticcheck
 	testSQLStore.Cfg.IsFeatureToggleEnabled = func(key string) bool {
-		for _, enabledFeature := range features {
+		for _, enabledFeature := range featureKeys {
 			if enabledFeature == key {
 				return true
 			}

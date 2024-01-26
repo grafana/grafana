@@ -31,7 +31,6 @@ func TestFeatureManager(t *testing.T) {
 		}
 		ft.registerFlags(FeatureFlag{
 			Name:            "a",
-			RequiresLicense: true,
 			RequiresDevMode: true,
 			Expression:      "true",
 		}, FeatureFlag{
@@ -40,15 +39,13 @@ func TestFeatureManager(t *testing.T) {
 		})
 		require.False(t, ft.IsEnabledGlobally("a"))
 		require.True(t, ft.IsEnabledGlobally("b"))
-		require.False(t, ft.IsEnabledGlobally("c")) // uknown flag
+		require.False(t, ft.IsEnabledGlobally("c")) // unknown flag
 
 		// Try changing "requires license"
 		ft.registerFlags(FeatureFlag{
-			Name:            "a",
-			RequiresLicense: false, // shuld still require license!
+			Name: "a",
 		}, FeatureFlag{
-			Name:            "b",
-			RequiresLicense: true, // expression is still "true"
+			Name: "b",
 		})
 		require.False(t, ft.IsEnabledGlobally("a"))
 		require.False(t, ft.IsEnabledGlobally("b"))

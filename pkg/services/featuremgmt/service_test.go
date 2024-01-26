@@ -10,35 +10,8 @@ import (
 )
 
 func TestFeatureService(t *testing.T) {
-	license := stubLicenseServier{
-		flags: []FeatureFlag{
-			{
-				Name:            "a.yes.default",
-				RequiresLicense: true,
-				Expression:      "true",
-			},
-			{
-				Name:            "a.yes",
-				RequiresLicense: true,
-				Expression:      "",
-			},
-			{
-				Name:            "b.no",
-				RequiresLicense: true,
-			},
-		},
-		enabled: map[string]bool{
-			"a.yes.default": true,
-			"a.yes":         true,
-		},
-	}
-	require.False(t, license.FeatureEnabled("unknown"))
-	require.False(t, license.FeatureEnabled("b.no"))
-	require.True(t, license.FeatureEnabled("a.yes"))
-	require.True(t, license.FeatureEnabled("a.yes.default"))
-
 	cfg := setting.NewCfg()
-	mgmt, err := ProvideManagerService(cfg, license)
+	mgmt, err := ProvideManagerService(cfg)
 	require.NoError(t, err)
 	require.NotNil(t, mgmt)
 
