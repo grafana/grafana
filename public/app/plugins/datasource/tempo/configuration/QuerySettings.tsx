@@ -71,14 +71,14 @@ export function QuerySettings({ options, onOptionsChange }: Props) {
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  infoText: css`
-    padding-bottom: ${theme.spacing(2)};
-    color: ${theme.colors.text.secondary};
-  `,
-  container: css`
-    width: 100%;
-  `,
-  row: css`
-    align-items: baseline;
-  `,
+  infoText: css({
+    paddingBottom: theme.spacing(2),
+    color: theme.colors.text.secondary,
+  }),
+  container: css({
+    width: '100%',
+  }),
+  row: css({
+    alignItems: 'baseline',
+  }),
 });

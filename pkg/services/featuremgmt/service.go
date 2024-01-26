@@ -20,7 +20,7 @@ var (
 
 func ProvideManagerService(cfg *setting.Cfg, licensing licensing.Licensing) (*FeatureManager, error) {
 	mgmt := &FeatureManager{
-		isDevMod:  setting.Env != setting.Prod,
+		isDevMod:  cfg.Env != setting.Prod,
 		licensing: licensing,
 		flags:     make(map[string]*FeatureFlag, 30),
 		enabled:   make(map[string]bool),

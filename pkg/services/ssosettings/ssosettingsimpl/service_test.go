@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestSSOSettingsService_GetForProvider(t *testing.T) {
+func TestService_GetForProvider(t *testing.T) {
 	testCases := []struct {
 		name    string
 		setup   func(env testEnv)
@@ -205,7 +205,7 @@ func TestSSOSettingsService_GetForProvider(t *testing.T) {
 	}
 }
 
-func TestSSOSettingsService_GetForProviderWithRedactedSecrets(t *testing.T) {
+func TestService_GetForProviderWithRedactedSecrets(t *testing.T) {
 	testCases := []struct {
 		name    string
 		setup   func(env testEnv)
@@ -304,7 +304,7 @@ func TestSSOSettingsService_GetForProviderWithRedactedSecrets(t *testing.T) {
 	}
 }
 
-func TestSSOSettingsService_List(t *testing.T) {
+func TestService_List(t *testing.T) {
 	testCases := []struct {
 		name    string
 		setup   func(env testEnv)
@@ -447,7 +447,7 @@ func TestSSOSettingsService_List(t *testing.T) {
 	}
 }
 
-func TestSSOSettingsService_ListWithRedactedSecrets(t *testing.T) {
+func TestService_ListWithRedactedSecrets(t *testing.T) {
 	testCases := []struct {
 		name    string
 		setup   func(env testEnv)
@@ -588,16 +588,6 @@ func TestSSOSettingsService_ListWithRedactedSecrets(t *testing.T) {
 					},
 					Source: models.System,
 				},
-				{
-					Provider: "grafana_com",
-					Settings: map[string]any{
-						"enabled":       true,
-						"secret":        "*********",
-						"client_secret": "*********",
-						"client_id":     "client_id",
-					},
-					Source: models.System,
-				},
 			},
 			wantErr: false,
 		},
@@ -718,16 +708,6 @@ func TestSSOSettingsService_ListWithRedactedSecrets(t *testing.T) {
 					},
 					Source: models.System,
 				},
-				{
-					Provider: "grafana_com",
-					Settings: map[string]any{
-						"enabled":       false,
-						"secret":        "*********",
-						"client_secret": "*********",
-						"client_id":     "client_id",
-					},
-					Source: models.System,
-				},
 			},
 			wantErr: false,
 		},
@@ -761,7 +741,7 @@ func TestSSOSettingsService_ListWithRedactedSecrets(t *testing.T) {
 	}
 }
 
-func TestSSOSettingsService_Upsert(t *testing.T) {
+func TestService_Upsert(t *testing.T) {
 	t.Run("successfully upsert SSO settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
@@ -1023,7 +1003,7 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 	})
 }
 
-func TestSSOSettingsService_Delete(t *testing.T) {
+func TestService_Delete(t *testing.T) {
 	t.Run("successfully delete SSO settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
@@ -1045,6 +1025,17 @@ func TestSSOSettingsService_Delete(t *testing.T) {
 		require.ErrorIs(t, err, ssosettings.ErrNotFound)
 	})
 
+	t.Run("should not delete the SSO settings if the provider is not configurable", func(t *testing.T) {
+		env := setupTestEnv(t)
+		env.cfg.SSOSettingsConfigurableProviders = map[string]bool{social.AzureADProviderName: true}
+
+		provider := social.GrafanaComProviderName
+		env.store.ExpectedError = nil
+
+		err := env.service.Delete(context.Background(), provider)
+		require.ErrorIs(t, err, ssosettings.ErrNotConfigurable)
+	})
+
 	t.Run("store fails to delete the SSO settings for the specified provider", func(t *testing.T) {
 		env := setupTestEnv(t)
 
@@ -1057,7 +1048,7 @@ func TestSSOSettingsService_Delete(t *testing.T) {
 	})
 }
 
-func TestSSOSettingsService_DoReload(t *testing.T) {
+func TestService_DoReload(t *testing.T) {
 	t.Run("successfully reload settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
@@ -1110,7 +1101,7 @@ func TestSSOSettingsService_DoReload(t *testing.T) {
 	})
 }
 
-func TestSSOSettingsService_decryptSecrets(t *testing.T) {
+func TestService_decryptSecrets(t *testing.T) {
 	testCases := []struct {
 		name     string
 		setup    func(env testEnv)
@@ -1214,8 +1205,20 @@ func setupTestEnv(t *testing.T) testEnv {
 
 	fallbackStrategy.ExpectedIsMatch = true
 
-	svc := &SSOSettingsService{
+	cfg := &setting.Cfg{
+		SSOSettingsConfigurableProviders: map[string]bool{
+			"github":        true,
+			"okta":          true,
+			"azuread":       true,
+			"google":        true,
+			"generic_oauth": true,
+			"gitlab":        true,
+		},
+	}
+
+	svc := &Service{
 		logger:       log.NewNopLogger(),
+		cfg:          cfg,
 		store:        store,
 		ac:           accessControl,
 		fbStrategies: []ssosettings.FallbackStrategy{fallbackStrategy},
@@ -1224,6 +1227,7 @@ func setupTestEnv(t *testing.T) testEnv {
 	}
 
 	return testEnv{
+		cfg:              cfg,
 		service:          svc,
 		store:            store,
 		ac:               accessControl,
@@ -1234,7 +1238,8 @@ func setupTestEnv(t *testing.T) testEnv {
 }
 
 type testEnv struct {
-	service          *SSOSettingsService
+	cfg              *setting.Cfg
+	service          *Service
 	store            *ssosettingstests.FakeStore
 	ac               accesscontrol.AccessControl
 	fallbackStrategy *ssosettingstests.FakeFallbackStrategy
