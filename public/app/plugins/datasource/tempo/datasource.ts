@@ -473,7 +473,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         let uploadedString;
         if (typeof this.uploadedJson !== 'string') {
           console.error('Unexpected type for uploadedJson. Expected string, got', typeof this.uploadedJson);
-          uploadedString = this.uploadedJson.toString();
+          uploadedString = this.uploadedJson.toString(); // tentative fallback
         } else {
           uploadedString = this.uploadedJson;
         }
