@@ -18,13 +18,13 @@ func TestCreate(t *testing.T) {
 
 	tests := []struct {
 		name             string
-		ent              entity.Entity
+		ent              *entity.Entity
 		errIsExpected    bool
 		statusIsExpected bool
 	}{
 		{
 			"request with key and entity creator",
-			entity.Entity{
+			&entity.Entity{
 				Group:     "playlist.grafana.app",
 				Resource:  "playlists",
 				Namespace: "default",
@@ -37,7 +37,7 @@ func TestCreate(t *testing.T) {
 		},
 		{
 			"request with no entity creator",
-			entity.Entity{
+			&entity.Entity{
 				Key: "/playlist.grafana.app/playlists/default/set-only-key",
 			},
 			true,
@@ -45,7 +45,7 @@ func TestCreate(t *testing.T) {
 		},
 		{
 			"request with no key",
-			entity.Entity{
+			&entity.Entity{
 				CreatedBy: "entity-creator",
 			},
 			true,

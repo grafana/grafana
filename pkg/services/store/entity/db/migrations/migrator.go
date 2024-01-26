@@ -3,11 +3,11 @@ package migrations
 import (
 	"context"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/store/entity/db"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/services/store/entity/db"
 )
 
 func MigrateEntityStore(db db.EntityDBInterface, features featuremgmt.FeatureToggles) error {
