@@ -21,9 +21,7 @@ export interface DashboardChangeInfo {
 }
 
 export function getSaveDashboardChange(dashboard: DashboardScene, saveTimeRange?: boolean): DashboardChangeInfo {
-  const initialState = dashboard.getInitialState();
-  const initialScene = new DashboardScene(initialState!);
-  const initialSaveModel = transformSceneToSaveModel(initialScene);
+  const initialSaveModel = dashboard.getInitialSaveModel()!;
   const changedSaveModel = transformSceneToSaveModel(dashboard);
   const hasTimeChanged = getHasTimeChanged(changedSaveModel, initialSaveModel);
   const hasVariableValuesChanged = getVariableValueChanges(changedSaveModel, initialSaveModel);

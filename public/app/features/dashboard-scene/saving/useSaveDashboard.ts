@@ -35,19 +35,7 @@ export function useDashboardSave(isCopy = false) {
         }
 
         const resultData = result.data;
-
-        scene.setState({
-          version: resultData.version,
-          meta: {
-            ...scene.state.meta,
-            uid: resultData.uid,
-            url: resultData.url,
-            slug: resultData.slug,
-            folderUid: options.folderUid,
-          },
-        });
-
-        scene.onSaveCompleted();
+        scene.saveCompleted(saveModel, resultData, options.folderUid);
 
         // important that these happen before location redirect below
         appEvents.publish(new DashboardSavedEvent());
@@ -85,7 +73,7 @@ export function useDashboardSave(isCopy = false) {
           );
         }
 
-        return resultData;
+        return result.data;
       }
     },
     [dispatch, notifyApp]
