@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -70,6 +71,7 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 			return err
 		}
 
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 		foldr, err = ss.Get(ctx, folder.GetFolderQuery{
 			ID: &lastInsertedID, // nolint:staticcheck
 		})
@@ -170,9 +172,19 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 			exists, err = sess.SQL("SELECT * FROM folder WHERE uid = ? AND org_id = ?", q.UID, q.OrgID).Get(foldr)
 		// nolint:staticcheck
 		case q.ID != nil:
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 			exists, err = sess.SQL("SELECT * FROM folder WHERE id = ?", q.ID).Get(foldr)
 		case q.Title != nil:
-			exists, err = sess.SQL("SELECT * FROM folder WHERE title = ? AND org_id = ?", q.Title, q.OrgID).Get(foldr)
+			s := strings.Builder{}
+			s.WriteString("SELECT * FROM folder WHERE title = ? AND org_id = ?")
+			args := []any{*q.Title, q.OrgID}
+			if q.ParentUID != nil {
+				s.WriteString(" AND parent_uid = ?")
+				args = append(args, *q.ParentUID)
+			} else {
+				s.WriteString(" AND parent_uid IS NULL")
+			}
+			exists, err = sess.SQL(s.String(), args...).Get(foldr)
 		default:
 			return folder.ErrBadRequest.Errorf("one of ID, UID, or Title must be included in the command")
 		}
@@ -233,7 +245,7 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 	if len(folders) < 1 {
 		// the query is expected to return at least the same folder
 		// if it's empty it means that the folder does not exist
-		return nil, folder.ErrFolderNotFound
+		return nil, folder.ErrFolderNotFound.Errorf("folder not found")
 	}
 
 	return util.Reverse(folders[1:]), nil
@@ -296,7 +308,7 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, q folder.GetParentsQuer
 			return err
 		}
 		if !ok {
-			return folder.ErrFolderNotFound
+			return folder.ErrFolderNotFound.Errorf("folder not found")
 		}
 		for {
 			f := &folder.Folder{}
