@@ -1,6 +1,8 @@
+import { capitalize } from 'lodash';
 import React from 'react';
 
-import { Badge, Button, Card, Dropdown, Menu, Stack } from '@grafana/ui';
+import { Badge, Button, Card, Icon, Stack, Text, TextLink } from '@grafana/ui';
+import { useDataSourcesRoutes } from 'app/features/datasources/state';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -8,7 +10,7 @@ import {
   ExternalAlertmanagerDataSourceWithStatus,
   useExternalDataSourceAlertmanagers,
 } from '../../hooks/useExternalAmSelector';
-import MoreButton from '../MoreButton';
+import { createUrl } from '../../utils/url';
 
 interface Props {
   onEditConfiguration: () => void;
@@ -41,25 +43,40 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
   return (
     <>
       {dataSourceAlertmanagers.map((alertmanager) => {
-        const { uid, name } = alertmanager.dataSourceSettings;
+        const { uid, name, jsonData, url } = alertmanager.dataSourceSettings;
         const { status } = alertmanager;
 
         const isReceiving = isReceivingOnAlertmanager(alertmanager);
+        const dataSourceHref = useDataSourceEditLink(uid);
 
         return (
           <Card key={uid}>
-            <Card.Heading>{name}</Card.Heading>
+            <Card.Heading>
+              <TextLink href={dataSourceHref}>{name}</TextLink>
+            </Card.Heading>
             <Card.Figure>
               <img alt="Alertmanager logo" src="public/app/plugins/datasource/alertmanager/img/logo.svg" />
             </Card.Figure>
 
             <Card.Meta>
-              {status === 'uninterested' && 'Not receiving Grafana-managed alerts'}
-              {status === 'pending' && <Badge text="Activation in progress" color="orange" />}
-              {status === 'active' && <Badge text="Receiving Grafana-managed alerts" color="green" />}
-              {status === 'dropped' && <Badge text="Failed to adopt Alertmanager" color="red" />}
-              {status === 'inconclusive' && <Badge text="Inconclusive" color="orange" />}
+              {capitalize(jsonData.implementation ?? 'Prometheus')}
+              <div>
+                <Icon name="link" size="xs" /> {url}
+              </div>
             </Card.Meta>
+
+            <Card.Description>
+              {!isReceiving ? (
+                <Text variant="bodySmall">Not receiving Grafana-managed alerts</Text>
+              ) : (
+                <>
+                  {status === 'pending' && <Badge text="Activation in progress" color="orange" />}
+                  {status === 'active' && <Badge text="Receiving Grafana-managed alerts" color="green" />}
+                  {status === 'dropped' && <Badge text="Failed to adopt Alertmanager" color="red" />}
+                  {status === 'inconclusive' && <Badge text="Inconclusive" color="orange" />}
+                </>
+              )}
+            </Card.Description>
 
             {/* we'll use the "tags" to append buttons and actions */}
             <Card.Tags>
@@ -67,21 +84,15 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
                 <Button onClick={onEditConfiguration} icon="pen" variant="secondary" fill="outline">
                   Edit configuration
                 </Button>
-                <Dropdown
-                  overlay={
-                    <Menu>
-                      <Menu.Item icon="eye" label="View" />
-                      <Menu.Divider />
-                      {isReceiving ? (
-                        <Menu.Item icon="toggle-on" label="Disable" destructive />
-                      ) : (
-                        <Menu.Item icon="toggle-off" label="Enable" />
-                      )}
-                    </Menu>
-                  }
-                >
-                  <MoreButton fill="outline" size="md" />
-                </Dropdown>
+                {isReceiving ? (
+                  <Button icon="times" variant="destructive" fill="outline">
+                    Disable
+                  </Button>
+                ) : (
+                  <Button icon="check" variant="secondary" fill="outline">
+                    Enable
+                  </Button>
+                )}
               </Stack>
             </Card.Tags>
           </Card>
@@ -90,3 +101,10 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
     </>
   );
 };
+
+function useDataSourceEditLink(uid: string) {
+  const dataSourcesRoutes = useDataSourcesRoutes();
+  const dsLink = createUrl(dataSourcesRoutes.Edit.replace(/:uid/gi, uid));
+
+  return dsLink;
+}

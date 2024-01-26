@@ -35,11 +35,11 @@ export default function InternalAlertmanager({ onEditConfiguration }: Props) {
             Edit configuration
           </Button>
           {isReceiving ? (
-            <Button icon="toggle-on" variant="destructive" fill="outline" disabled={isLoading}>
+            <Button icon="times" variant="destructive" fill="outline" disabled={isLoading}>
               Disable
             </Button>
           ) : (
-            <Button icon="toggle-off" variant="secondary" fill="outline" disabled={isLoading}>
+            <Button icon="check" variant="secondary" fill="outline" disabled={isLoading}>
               Enable
             </Button>
           )}
