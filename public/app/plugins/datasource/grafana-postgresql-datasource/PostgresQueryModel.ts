@@ -1,8 +1,7 @@
 import { ScopedVars } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
-import { applyQueryDefaults } from 'app/features/plugins/sql/defaults';
-import { SQLQuery, SqlQueryModel } from 'app/features/plugins/sql/types';
+import { SQLQuery, SqlQueryModel, applyQueryDefaults } from '@grafana/sql';
 
 export class PostgresQueryModel implements SqlQueryModel {
   target: SQLQuery;

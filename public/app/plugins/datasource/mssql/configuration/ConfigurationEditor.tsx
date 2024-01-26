@@ -11,6 +11,7 @@ import {
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
 import { ConfigSection, ConfigSubSection, DataSourceDescription } from '@grafana/experimental';
+import { ConnectionLimits, useMigrateDatabaseFields } from '@grafana/sql';
 import {
   Alert,
   FieldSet,
@@ -26,8 +27,6 @@ import {
 } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 import { config } from 'app/core/config';
-import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
-import { useMigrateDatabaseFields } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseFields';
 
 import { AzureAuthSettings } from '../azureauth/AzureAuthSettings';
 import {

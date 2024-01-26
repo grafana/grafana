@@ -9,6 +9,7 @@ import {
 } from '@grafana/data';
 import { ConfigSection, ConfigSubSection, DataSourceDescription, Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
+import { ConnectionLimits, Divider, TLSSecretsConfig, useMigrateDatabaseFields } from '@grafana/sql';
 import {
   Collapse,
   Field,
@@ -20,10 +21,6 @@ import {
   Switch,
   Tooltip,
 } from '@grafana/ui';
-import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
-import { Divider } from 'app/features/plugins/sql/components/configuration/Divider';
-import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
-import { useMigrateDatabaseFields } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseFields';
 
 import { MySQLOptions } from '../types';
 

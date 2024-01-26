@@ -341,6 +341,7 @@
 /plugins-bundled/ @grafana/plugins-platform-frontend
 /packages/grafana-plugin-configs/ @grafana/plugins-platform-frontend
 /packages/grafana-o11y-ds-frontend/ @grafana/observability-logs @grafana/observability-traces-and-profiling
+/packages/grafana-sql/ @grafana/partner-datasources @grafana/oss-big-tent
 
 # root files, mostly frontend 
 .browserslistrc @grafana/frontend-ops
@@ -409,7 +410,6 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/features/panel/ @grafana/dashboards-squad
 /public/app/features/playlist/ @grafana/dashboards-squad
 /public/app/features/plugins/ @grafana/plugins-platform-frontend
-/public/app/features/plugins/sql/ @grafana/partner-datasources @grafana/oss-big-tent
 /public/app/features/profile/ @grafana/grafana-frontend-platform
 /public/app/features/runtime/ @ryantxu
 /public/app/features/query/ @grafana/dashboards-squad
