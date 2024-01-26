@@ -1,5 +1,4 @@
 import { dateMath, dateTime, DateTime, getDefaultTimeRange, isDateTime, TimeRange, TimeZone } from '@grafana/data';
-import { sceneGraph } from '@grafana/scenes';
 
 interface TimeModel {
   fiscalYearStartMonth?: number;
@@ -24,11 +23,13 @@ export class TimeSrv {
   };
 
   timeRange = (): TimeRange => {
-    // Scenes can set this global object to the current time range.
-    // This is a patch to support data sources that rely on TimeSrv.getTimeRange()
-    if (window.__grafanaSceneContext && window.__grafanaSceneContext.isActive) {
-      return sceneGraph.getTimeRange(window.__grafanaSceneContext).state.value;
-    }
+    // Scenes would need the following code:
+    // ```
+    // if (window.__grafanaSceneContext && window.__grafanaSceneContext.isActive) {
+    //   return sceneGraph.getTimeRange(window.__grafanaSceneContext).state.value;
+    // }
+    // ```
+    // Since we do not use scenes in Jaeger, we ignore this and remove the dependency with `@grafana/scenes`.
 
     const time = getDefaultTimeRange().raw;
     const timeModel = undefined;

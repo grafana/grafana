@@ -3078,7 +3078,6 @@ __metadata:
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:^2.1.0"
     "@grafana/ui": "workspace:*"
     "@reduxjs/toolkit": "npm:1.9.5"
     "@testing-library/jest-dom": "npm:6.3.0"
