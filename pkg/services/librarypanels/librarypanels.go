@@ -192,6 +192,10 @@ func (lps LibraryPanelService) CountInFolder(ctx context.Context, orgID int64, f
 	var count int64
 	return count, lps.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryPanels).Inc()
+		// the sequential IDs for the respective entries of dashboard and folder tables are different,
+		// so we need to get the folder ID from the dashboard table
+		// TODO: In the future, we should consider adding a folder UID column to the library_element table
+		// and use that instead of the folder ID.
 		s := `SELECT COUNT(*) FROM library_element
 			WHERE org_id = ? AND folder_id = (SELECT id FROM dashboard WHERE org_id = ? AND uid = ?) AND kind = ?`
 		_, err := sess.SQL(s, orgID, orgID, folderUID, int64(model.PanelElement)).Get(&count)
