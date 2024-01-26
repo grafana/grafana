@@ -33,6 +33,7 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, fr
               filter: (field) =>
                 frame?.fields.some((obj) => obj.state?.displayName === field.state?.displayName) ?? true,
               baseNameMode,
+              placeholderText: 'select X field',
             },
           }}
         />
@@ -43,12 +44,13 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, fr
           context={context}
           onChange={(field) => onFieldChange(field, 'y')}
           item={{
-            id: 'x',
-            name: 'x',
+            id: 'y',
+            name: 'y',
             settings: {
               filter: (field) =>
                 frame?.fields.some((obj) => obj.state?.displayName === field.state?.displayName) ?? true,
               baseNameMode,
+              placeholderText: 'select Y field',
             },
           }}
         />
