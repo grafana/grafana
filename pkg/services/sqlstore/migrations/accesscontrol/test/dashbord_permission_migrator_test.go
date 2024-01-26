@@ -34,12 +34,19 @@ func testCases() []testCase {
 		{Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsTypeOrganization},
 	}
 
+	wildcardAnnotationPermissions := []rawPermission{
+		{Action: accesscontrol.ActionAnnotationsRead, Scope: "*"},
+		{Action: accesscontrol.ActionAnnotationsCreate, Scope: "annotations:*"},
+		{Action: accesscontrol.ActionAnnotationsDelete, Scope: "annotations:type:*"},
+		{Action: accesscontrol.ActionAnnotationsWrite, Scope: accesscontrol.ScopeAnnotationsAll},
+	}
+
 	return []testCase{
-		//{
-		//	desc:          "empty permissions lead to empty permissions",
-		//	putRolePerms:  map[int64]map[string][]rawPermission{},
-		//	wantRolePerms: map[int64]map[string][]rawPermission{},
-		//},
+		{
+			desc:          "empty permissions lead to empty permissions",
+			putRolePerms:  map[int64]map[string][]rawPermission{},
+			wantRolePerms: map[int64]map[string][]rawPermission{},
+		},
 		{
 			desc: "adds new permissions for instances without basic roles (should only be OSS instances)",
 			putRolePerms: map[int64]map[string][]rawPermission{
@@ -239,6 +246,28 @@ func testCases() []testCase {
 					"basic:viewer": onlyOrgAnnotations,
 					"basic:editor": allAnnotationPermissions,
 					"basic:admin":  allAnnotationPermissions,
+				},
+			},
+		},
+		{
+			desc: "adds new permissions if has default annotation permissions with different wildcard scopes",
+			putRolePerms: map[int64]map[string][]rawPermission{
+				1: {
+					"basic:viewer":                wildcardAnnotationPermissions,
+					"basic:editor":                wildcardAnnotationPermissions,
+					"basic:admin":                 wildcardAnnotationPermissions,
+					"managed:users:1:permissions": {{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:test"}},
+				},
+			},
+			wantRolePerms: map[int64]map[string][]rawPermission{
+				1: {
+					"basic:viewer": wildcardAnnotationPermissions,
+					"basic:editor": wildcardAnnotationPermissions,
+					"basic:admin":  wildcardAnnotationPermissions,
+					"managed:users:1:permissions": {
+						{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:test"},
+						{Action: accesscontrol.ActionAnnotationsRead, Scope: "dashboards:uid:test"},
+					},
 				},
 			},
 		},

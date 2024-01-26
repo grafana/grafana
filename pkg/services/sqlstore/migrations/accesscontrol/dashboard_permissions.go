@@ -791,18 +791,18 @@ func (m *managedDashboardAnnotationActionsMigrator) hasDefaultAnnotationPermissi
 	basicRoleUIDs := []any{"basic_viewer", "basic_editor", "basic_admin"}
 	query := `SELECT r.uid, p.action, p.scope FROM role r
 LEFT OUTER JOIN permission p ON p.role_id = r.id
-WHERE r.uid IN (?, ?, ?) AND p.action LIKE 'annotations:%'
+WHERE r.uid IN (?, ?, ?) AND p.action LIKE 'annotations:%' AND p.scope IN ('*', 'annotations:*', 'annotations:type:*', 'annotations:type:dashboard')
 `
 	if err := sess.SQL(query, basicRoleUIDs...).Find(&basicRolePermissions); err != nil {
 		return false, fmt.Errorf("failed to list basic role permissions: %w", err)
 	}
 
-	mappedBasicRolePerms := make(map[string]map[string][]string, 0)
+	mappedBasicRolePerms := make(map[string]map[string]bool, 0)
 	for _, p := range basicRolePermissions {
 		if mappedBasicRolePerms[p.Uid] == nil {
-			mappedBasicRolePerms[p.Uid] = make(map[string][]string)
+			mappedBasicRolePerms[p.Uid] = make(map[string]bool)
 		}
-		mappedBasicRolePerms[p.Uid][p.Action] = append(mappedBasicRolePerms[p.Uid][p.Action], p.Scope)
+		mappedBasicRolePerms[p.Uid][p.Action] = true
 	}
 
 	expectedAnnotationActions := []string{ac.ActionAnnotationsRead, ac.ActionAnnotationsCreate, ac.ActionAnnotationsDelete, ac.ActionAnnotationsWrite}
@@ -813,14 +813,7 @@ WHERE r.uid IN (?, ?, ?) AND p.action LIKE 'annotations:%'
 			return false, nil
 		}
 		for _, action := range expectedAnnotationActions {
-			foundDashScope := false
-			for _, scope := range mappedBasicRolePerms[uid.(string)][action] {
-				if scope == ac.ScopeAnnotationsAll || scope == ac.ScopeAnnotationsTypeDashboard {
-					foundDashScope = true
-					break
-				}
-			}
-			if !foundDashScope {
+			if !mappedBasicRolePerms[uid.(string)][action] {
 				mg.Logger.Warn("basic role permissions missing annotation permissions, skipping annotation permission migration", "uid", uid, "action", action)
 				return false, nil
 			}
