@@ -770,18 +770,10 @@ func (m *managedDashboardAnnotationActionsMigrator) Exec(sess *xorm.Session, mg 
 		return nil
 	}
 
-	err = batch(len(toAdd), batchSize, func(start, end int) error {
-		if _, err := sess.InsertMulti(toAdd[start:end]); err != nil {
-			return err
-		}
-		return nil
-	})
-
-	if err != nil {
+	return batch(len(toAdd), batchSize, func(start, end int) error {
+		_, err := sess.InsertMulti(toAdd[start:end]);
 		return err
-	}
-
-	return nil
+	})
 }
 
 func (m *managedDashboardAnnotationActionsMigrator) hasDefaultAnnotationPermissions(sess *xorm.Session, mg *migrator.Migrator) (bool, error) {
