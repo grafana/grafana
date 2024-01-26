@@ -37,6 +37,7 @@ export interface DataTrailState extends SceneObjectState {
   controls: SceneObject[];
   history: DataTrailHistory;
   settings: DataTrailSettings;
+  createdAt: number;
 
   // just for for the starting data source
   initialDS?: string;
@@ -61,6 +62,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       ],
       history: state.history ?? new DataTrailHistory({}),
       settings: state.settings ?? new DataTrailSettings({}),
+      createdAt: state.createdAt ?? new Date().getTime(),
       ...state,
     });
 
