@@ -160,6 +160,33 @@ func testCases() []testCase {
 			},
 		},
 		{
+			desc: "adds new permissions to several managed roles if has default annotation permissions on basic roles and dashboard read permissions",
+			putRolePerms: map[int64]map[string][]rawPermission{
+				1: {
+					"basic:viewer":                allAnnotationPermissions,
+					"basic:editor":                allAnnotationPermissions,
+					"basic:admin":                 allAnnotationPermissions,
+					"managed:users:1:permissions": {{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:test"}},
+					"managed:teams:1:permissions": {{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:test2"}},
+				},
+			},
+			wantRolePerms: map[int64]map[string][]rawPermission{
+				1: {
+					"basic:viewer": allAnnotationPermissions,
+					"basic:editor": allAnnotationPermissions,
+					"basic:admin":  allAnnotationPermissions,
+					"managed:users:1:permissions": {
+						{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:test"},
+						{Action: accesscontrol.ActionAnnotationsRead, Scope: "dashboards:uid:test"},
+					},
+					"managed:teams:1:permissions": {
+						{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:test2"},
+						{Action: accesscontrol.ActionAnnotationsRead, Scope: "dashboards:uid:test2"},
+					},
+				},
+			},
+		},
+		{
 			desc: "doesn't add any new permissions if annotation permissions are missing from the basic roles",
 			putRolePerms: map[int64]map[string][]rawPermission{
 				1: {
