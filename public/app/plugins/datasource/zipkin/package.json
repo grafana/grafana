@@ -1,0 +1,40 @@
+{
+  "name": "@grafana-plugins/zipkin",
+  "description": "Zipkin plugin for Grafana",
+  "private": true,
+  "version": "10.3.0-pre",
+  "dependencies": {
+    "@emotion/css": "11.11.2",
+    "@grafana/data": "workspace:*",
+    "@grafana/experimental": "1.7.7",
+    "@grafana/o11y-ds-frontend": "workspace:*",
+    "@grafana/runtime": "workspace:*",
+    "@grafana/ui": "workspace:*",
+    "@reduxjs/toolkit": "1.9.5",
+    "lodash": "4.17.21",
+    "react": "18.2.0",
+    "react-use": "17.5.0",
+    "redux": "4.2.1",
+    "rxjs": "7.8.1",
+    "tslib": "2.6.2",
+    "uuid": "9.0.1"
+  },
+  "devDependencies": {
+    "@grafana/plugin-configs": "workspace:*",
+    "@testing-library/react": "14.1.2",
+    "@types/lodash": "4.14.202",
+    "@types/react": "18.2.48",
+    "@types/uuid": "9.0.7",
+    "ts-node": "10.9.2",
+    "webpack": "5.90.0"
+  },
+  "peerDependencies": {
+    "@grafana/runtime": "*"
+  },
+  "scripts": {
+    "build": "webpack -c ./webpack.config.ts --env production",
+    "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
+    "dev": "webpack -w -c ./webpack.config.ts --env development"
+  },
+  "packageManager": "yarn@3.6.0"
+}
