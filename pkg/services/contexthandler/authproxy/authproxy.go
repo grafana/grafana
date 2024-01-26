@@ -362,6 +362,19 @@ func (auth *AuthProxy) Remember(reqCtx *contextmodel.ReqContext, id int64) error
 		return err
 	}
 
+	// For storing the latest key used by the user
+	userKey := strings.TrimSpace(auth.getDecodedHeader(reqCtx, auth.cfg.AuthProxyHeaderName))
+	userKey, err = HashCacheKey(userKey)
+	if err != nil {
+		return err
+	}
+
+	// Invalidate the previous key in case user's role has changed
+	prevKey, err := auth.remoteCache.Get(reqCtx.Req.Context(), userKey)
+	if err == nil && len(prevKey) != 0 {
+		auth.remoteCache.Delete(reqCtx.Req.Context(), string(prevKey))
+	}
+
 	// Check if user already in cache
 	userID, err := auth.remoteCache.Get(reqCtx.Req.Context(), key)
 	if err == nil && userID != nil {
@@ -374,7 +387,8 @@ func (auth *AuthProxy) Remember(reqCtx *contextmodel.ReqContext, id int64) error
 		return err
 	}
 
-	return nil
+	// Store the user's key in cache to invalidate it later
+	return auth.remoteCache.Set(reqCtx.Req.Context(), userKey, []byte(key), expiration)
 }
 
 // coerceProxyAddress gets network of the presented CIDR notation
