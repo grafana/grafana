@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -40,6 +41,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -73,11 +76,23 @@ func apiBuilderServices(cfg *setting.Cfg, pluginID string) (
 
 	kvStore := kvstore.ProvideService(sqlStore)
 	featureToggles := featuremgmt.ProvideToggles(featureManager)
-	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, featureToggles)
+	bundleRegistry := bundleregistry.ProvideService()
+
+	quota := quotaimpl.ProvideService(sqlStore, cfg)
+	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quota)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-	bundleRegistry := bundleregistry.ProvideService()
+	teamService := teamimpl.ProvideService(sqlStore, cfg)
+	userService, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamService, cacheService, quota, bundleRegistry)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userService, featureToggles)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
 	usageStats, err := service.ProvideService(cfg, kvStore, routeRegisterImpl, tracingService, accessControl, acimplService, bundleRegistry)
 	if err != nil {
 		return nil, nil, nil, nil, err

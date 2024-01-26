@@ -71,7 +71,7 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get feature management service", err)
 	}
-	acService, err := acimpl.ProvideService(cfg, s, routing, nil, nil, featMgmt)
+	acService, err := acimpl.ProvideService(cfg, s, routing, nil, nil, nil, featMgmt)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get access control", err)
 	}
