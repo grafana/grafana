@@ -25,7 +25,7 @@ To install Grafana using Helm, ensure you have completed the following:
 - Install a Kubernetes server on your machine. For information about installing Kubernetes, refer to [Deploy Grafana on Kubernetes](/docs/grafana/latest/setup-grafana/installation/kubernetes/)
 - Install the latest stable version of Helm. For information on installing Helm, refer to [Install Helm](https://helm.sh/docs/intro/install/).
 
-# Install Grafana using Helm
+## Install Grafana using Helm
 
 When you install Grafana using Helm, you complete the following tasks:
 1. Setting up the Grafana Helm repository: Provides a space in which you will install Grafana.
@@ -176,7 +176,7 @@ For more information about port-forwarding, refer to [Use Port Forwarding to Acc
 4. To sign in, enter `admin` for the username.
 5. For the password paste it which you have saved to a file after decoding it earlier.
 
-# Customizing Grafana default configuraiton
+## Customizing Grafana default configuraiton
 
 Helm is a popular package manager for Kubernetes. It bundles Kubernetes resource manifests in a way that they may be re-used across different environments. These manifests are written in a templating language, allowing us to provide configuration values via `values.yaml` file, or in-line using helm, to replace the placeholders in the manifest where these configurations should reside.
 
@@ -184,7 +184,7 @@ The `values.yaml` file allows you to customize the chart's configuration by spec
 
 By modifying the values in the `values.yaml` file, you can tailor the deployment of a Helm chart to your specific requirements by using the helm install or upgrade commands. For more information about configuring Helm, refer to [Values Files](https://helm.sh/docs/chart_template_guide/values_files/).
 
-## Download the values.yaml file
+### Download the values.yaml file
 
 In order to make any configuration changes, download the `values.yaml` file from the Grafana Helm Charts repository:
 https://github.com/grafana/helm-charts/edit/main/charts/grafana/values.yaml
@@ -258,11 +258,12 @@ helm upgrade my-grafana grafana/grafana -f values.yaml -n monitoring
 
 You can verify if the above plugins got installed by login into the Grafana UI -> Administration -> Plugins.
 
-# Troubleshooting
+## Troubleshooting
+
 
 This section includes troubleshooting tips you might find helpful when deploying Grafana on Kubernetes via Helm.
 
-## Collecting logs
+### Collecting logs
 
 It is important to view the Grafana server logs while troubleshooting any issues.
 
@@ -284,7 +285,7 @@ kubectl logs \--namespace=monitoring deploy/grafana \-c my-grafana
 
 For more information about accessing Kubernetes application logs, refer to [Pods](https://kubernetes.io/docs/reference/kubectl/cheatsheet/#interacting-with-running-pods) and [Deployments](https://kubernetes.io/docs/reference/kubectl/cheatsheet/#interacting-with-deployments-and-services).
 
-## Increasing log levels
+### Increasing log levels
 
 By default, the Grafana log level is set to `info`, but you can increase it to `debug` mode to fetch information needed to diagnose and troubleshoot a problem. For more information about Grafana log levels, refer to [Configuring logs](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana#log).**
 
@@ -321,7 +322,7 @@ helm upgrade my-grafana grafana/grafana -f values.yaml --reuse-values -n monitor
    
 5. To sign in to Grafana, enter admin for the username and paste the password which was decoded earlier. Navigate to Server Admin > Settings and then search for log. You should see the level to `debug` mode.
 
-## Reset Grafana admin secrets (login credentials)
+### Reset Grafana admin secrets (login credentials)
 
 By default the login credentials for the super admin account are generated via `secrets`.  However, this can be changed easily. To achieve this, use the following steps:
 
