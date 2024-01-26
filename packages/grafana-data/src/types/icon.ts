@@ -23,7 +23,7 @@ export const availableIconsIndex = {
   'align-right': true,
   'application-observability': true,
   apps: true,
-  archive: true,
+  'archive-alt': true,
   arrow: true,
   'arrow-down': true,
   'arrow-from-right': true,
