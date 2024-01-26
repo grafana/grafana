@@ -2,14 +2,7 @@ import { css } from '@emotion/css';
 import { identity } from 'lodash';
 import React from 'react';
 
-import {
-  AbsoluteTimeRange,
-  DataQueryResponse,
-  LoadingState,
-  SplitOpen,
-  EventBus,
-  GrafanaTheme2,
-} from '@grafana/data';
+import { AbsoluteTimeRange, DataQueryResponse, LoadingState, SplitOpen, EventBus, GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { Icon, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 
