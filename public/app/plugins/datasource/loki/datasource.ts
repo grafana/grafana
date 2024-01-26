@@ -753,7 +753,7 @@ export class LokiDatasource
    * Implemented as part of the DataSourceAPI. Retrieves tag keys that can be used for ad-hoc filtering.
    * @returns A Promise that resolves to an array of label names represented as MetricFindValue objects.
    */
-  async getTagKeys(options?: DataSourceGetTagKeysOptions): Promise<MetricFindValue[]> {
+  async getTagKeys(options?: DataSourceGetTagKeysOptions<LokiQuery>): Promise<MetricFindValue[]> {
     const result = await this.languageProvider.fetchLabels({ timeRange: options?.timeRange });
     return result.map((value: string) => ({ text: value }));
   }

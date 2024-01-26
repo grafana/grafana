@@ -287,7 +287,7 @@ abstract class DataSourceApi<
   /**
    * Get tag keys for adhoc filters
    */
-  getTagKeys?(options?: DataSourceGetTagKeysOptions): Promise<MetricFindValue[]>;
+  getTagKeys?(options?: DataSourceGetTagKeysOptions<TQuery>): Promise<MetricFindValue[]>;
 
   /**
    * Get tag values for adhoc filters
@@ -367,7 +367,7 @@ abstract class DataSourceApi<
 /**
  * Options argument to DataSourceAPI.getTagKeys
  */
-export interface DataSourceGetTagKeysOptions {
+export interface DataSourceGetTagKeysOptions<TQuery extends DataQuery = DataQuery> {
   /**
    * The other existing filters or base filters. New in v10.3
    */
@@ -376,6 +376,7 @@ export interface DataSourceGetTagKeysOptions {
    * Context time range. New in v10.3
    */
   timeRange?: TimeRange;
+  queries?: TQuery[];
 }
 
 /**
