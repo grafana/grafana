@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -163,6 +164,7 @@ func importLibraryPanelsRecursively(c context.Context, service libraryelements.S
 				return err
 			}
 
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryPanels).Inc()
 			var cmd = model.CreateLibraryElementCommand{
 				FolderID: folderID, // nolint:staticcheck
 				Name:     name,
@@ -193,6 +195,7 @@ func (lps LibraryPanelService) CountInFolder(ctx context.Context, orgID int64, f
 		if err != nil {
 			return err
 		}
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryPanels).Inc()
 		// nolint:staticcheck
 		q := sess.Table("library_element").Where("org_id = ?", u.GetOrgID()).
 			Where("folder_id = ?", folder.ID).Where("kind = ?", int64(model.PanelElement))

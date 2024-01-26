@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { useToggle } from 'react-use';
 
 import { DataTransformerConfig, TransformerRegistryItem, FrameMatcherID, DataTopic } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 import {
@@ -13,7 +14,7 @@ import config from 'app/core/config';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 import { TransformationEditor } from './TransformationEditor';
-import { TransformationEditorHelperModal } from './TransformationEditorHelperModal';
+import { TransformationEditorHelpDisplay } from './TransformationEditorHelpDisplay';
 import { TransformationFilter } from './TransformationFilter';
 import { TransformationData } from './TransformationsEditor';
 import { TransformationsEditorTransformation } from './types';
@@ -120,6 +121,7 @@ export const TransformationOperationRow = ({
           icon={disabled ? 'eye-slash' : 'eye'}
           onClick={instrumentToggleCallback(() => onDisableToggle(index), 'disabled', disabled)}
           active={disabled}
+          dataTestId={selectors.components.Transforms.disableTransformationButton}
         />
         <QueryOperationAction
           title="Remove"
@@ -172,7 +174,7 @@ export const TransformationOperationRow = ({
           toggleShowDebug={toggleShowDebug}
         />
       </QueryOperationRow>
-      <TransformationEditorHelperModal transformer={uiConfig} isOpen={showHelp} onCloseClick={toggleShowHelp} />
+      <TransformationEditorHelpDisplay transformer={uiConfig} isOpen={showHelp} onCloseClick={toggleShowHelp} />
     </>
   );
 };

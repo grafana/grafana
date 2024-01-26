@@ -358,8 +358,8 @@ function useColorFunction(
         (colorScheme === ColorSchemeDiff.Default || colorScheme === ColorSchemeDiff.DiffColorBlind)
           ? getBarColorByDiff(item.value, item.valueRight!, totalTicks, totalTicksRight!, colorScheme)
           : colorScheme === ColorScheme.ValueBased
-          ? getBarColorByValue(item.value, totalTicks, rangeMin, rangeMax)
-          : getBarColorByPackage(label, theme);
+            ? getBarColorByValue(item.value, totalTicks, rangeMin, rangeMax)
+            : getBarColorByPackage(label, theme);
 
       if (matchedLabels) {
         // Means we are searching, we use color for matches and gray the rest

@@ -1,9 +1,7 @@
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { LanguageDefinition } from '@grafana/experimental';
 import { TemplateSrv } from '@grafana/runtime';
-import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
-import { DB, SQLQuery, SQLSelectableValue } from 'app/features/plugins/sql/types';
-import { formatSQL } from 'app/features/plugins/sql/utils/formatSQL';
+import { SqlDatasource, DB, SQLQuery, SQLSelectableValue, formatSQL } from '@grafana/sql';
 
 import { PostgresQueryModel } from './PostgresQueryModel';
 import { getSchema, getTimescaleDBVersion, getVersion, showTables } from './postgresMetaQuery';
@@ -67,7 +65,12 @@ export class PostgresDatasource extends SqlDatasource {
   }
 
   async fetchFields(query: SQLQuery): Promise<SQLSelectableValue[]> {
-    const schema = await this.runSql<{ column: string; type: string }>(getSchema(query.table), { refId: 'columns' });
+    const { table } = query;
+    if (table === undefined) {
+      // if no table-name, we are not able to query for fields
+      return [];
+    }
+    const schema = await this.runSql<{ column: string; type: string }>(getSchema(table), { refId: 'columns' });
     const result: SQLSelectableValue[] = [];
     for (let i = 0; i < schema.length; i++) {
       const column = schema.fields.column.values[i];
