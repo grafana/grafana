@@ -258,11 +258,11 @@ helm upgrade my-grafana grafana/grafana -f values.yaml -n monitoring
 
 You can verify if the above plugins got installed by login into the Grafana UI -> Administration -> Plugins.
 
-## roubleshooting
+# Troubleshooting
 
 This section includes troubleshooting tips you might find helpful when deploying Grafana on Kubernetes via Helm.
 
-### Collecting logs
+## Collecting logs
 
 It is important to view the Grafana server logs while troubleshooting any issues.
 
