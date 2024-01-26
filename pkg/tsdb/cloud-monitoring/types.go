@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/huandu/xstrings"
 
@@ -17,9 +18,9 @@ import (
 
 type (
 	cloudMonitoringQueryExecutor interface {
-		run(ctx context.Context, req *backend.QueryDataRequest, s *Service, dsInfo datasourceInfo) (
+		run(ctx context.Context, req *backend.QueryDataRequest, s *Service, dsInfo datasourceInfo, logger log.Logger) (
 			*backend.DataResponse, any, string, error)
-		parseResponse(dr *backend.DataResponse, data any, executedQueryString string) error
+		parseResponse(dr *backend.DataResponse, data any, executedQueryString string, logger log.Logger) error
 		buildDeepLink() string
 		getRefID() string
 		getAliasBy() string
@@ -38,6 +39,7 @@ type (
 
 	cloudMonitoringTimeSeriesList struct {
 		refID      string
+		logger     log.Logger
 		aliasBy    string
 		parameters *dataquery.TimeSeriesList
 		// Processed properties
@@ -46,6 +48,7 @@ type (
 	// cloudMonitoringSLO is used to build time series with a filter but for the SLO case
 	cloudMonitoringSLO struct {
 		refID      string
+		logger     log.Logger
 		aliasBy    string
 		parameters *dataquery.SLOQuery
 		// Processed properties
@@ -55,6 +58,7 @@ type (
 	// cloudMonitoringProm is used to build a promQL queries
 	cloudMonitoringProm struct {
 		refID      string
+		logger     log.Logger
 		aliasBy    string
 		parameters *dataquery.PromQLQuery
 		timeRange  backend.TimeRange
@@ -64,6 +68,7 @@ type (
 	// cloudMonitoringTimeSeriesQuery is used to build MQL queries
 	cloudMonitoringTimeSeriesQuery struct {
 		refID      string
+		logger     log.Logger
 		aliasBy    string
 		parameters *dataquery.TimeSeriesQuery
 		// Processed properties

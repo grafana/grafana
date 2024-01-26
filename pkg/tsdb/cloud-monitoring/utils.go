@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	gcmTime "github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/time"
@@ -69,7 +70,7 @@ func createRequest(ctx context.Context, dsInfo *datasourceInfo, proxyPass string
 	return req, nil
 }
 
-func doRequestPage(ctx context.Context, r *http.Request, dsInfo datasourceInfo, params url.Values, body map[string]any) (cloudMonitoringResponse, error) {
+func doRequestPage(ctx context.Context, r *http.Request, dsInfo datasourceInfo, params url.Values, body map[string]any, logger log.Logger) (cloudMonitoringResponse, error) {
 	if params != nil {
 		r.URL.RawQuery = params.Encode()
 	}
@@ -92,7 +93,7 @@ func doRequestPage(ctx context.Context, r *http.Request, dsInfo datasourceInfo, 
 		}
 	}()
 
-	dnext, err := unmarshalResponse(res)
+	dnext, err := unmarshalResponse(res, logger)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
 	}
@@ -100,8 +101,8 @@ func doRequestPage(ctx context.Context, r *http.Request, dsInfo datasourceInfo, 
 	return dnext, nil
 }
 
-func doRequestWithPagination(ctx context.Context, r *http.Request, dsInfo datasourceInfo, params url.Values, body map[string]any) (cloudMonitoringResponse, error) {
-	d, err := doRequestPage(ctx, r, dsInfo, params, body)
+func doRequestWithPagination(ctx context.Context, r *http.Request, dsInfo datasourceInfo, params url.Values, body map[string]any, logger log.Logger) (cloudMonitoringResponse, error) {
+	d, err := doRequestPage(ctx, r, dsInfo, params, body, logger)
 	if err != nil {
 		return cloudMonitoringResponse{}, err
 	}
@@ -112,7 +113,7 @@ func doRequestWithPagination(ctx context.Context, r *http.Request, dsInfo dataso
 		if body != nil {
 			body["pageToken"] = d.NextPageToken
 		}
-		nextPage, err := doRequestPage(ctx, r, dsInfo, params, body)
+		nextPage, err := doRequestPage(ctx, r, dsInfo, params, body, logger)
 		if err != nil {
 			return cloudMonitoringResponse{}, err
 		}
@@ -136,7 +137,7 @@ func traceReq(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasou
 }
 
 func runTimeSeriesRequest(ctx context.Context, req *backend.QueryDataRequest,
-	s *Service, dsInfo datasourceInfo, projectName string, params url.Values, body map[string]any) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
+	s *Service, dsInfo datasourceInfo, projectName string, params url.Values, body map[string]any, logger log.Logger) (*backend.DataResponse, cloudMonitoringResponse, string, error) {
 	dr := &backend.DataResponse{}
 	projectName, err := s.ensureProject(ctx, dsInfo, projectName)
 	if err != nil {
@@ -156,7 +157,7 @@ func runTimeSeriesRequest(ctx context.Context, req *backend.QueryDataRequest,
 	span := traceReq(ctx, req, dsInfo, r, params.Encode())
 	defer span.End()
 
-	d, err := doRequestWithPagination(ctx, r, dsInfo, params, body)
+	d, err := doRequestWithPagination(ctx, r, dsInfo, params, body, logger)
 	if err != nil {
 		dr.Error = err
 		return dr, cloudMonitoringResponse{}, "", nil
