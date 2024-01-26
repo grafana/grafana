@@ -67,7 +67,9 @@ export function ServiceGraphSection({
     );
   }
 
-  const filters = queryToFilter(query.serviceMapQuery || '');
+  const filters = queryToFilter(
+    (Array.isArray(query.serviceMapQuery) ? query.serviceMapQuery[0] : query.serviceMapQuery) || ''
+  );
 
   return (
     <div>
