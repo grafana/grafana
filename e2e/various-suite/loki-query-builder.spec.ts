@@ -70,10 +70,10 @@ describe('Loki query builder', () => {
     // wait until labels are loaded and set on the component before starting to type
     cy.wait('@labelsRequest');
     cy.get("[aria-label='Select label']").type('instance{enter}');
-    cy.get("[aria-label='Select match operator'").should('be.visible').click().type('=~{enter}', { force: true });
-    cy.get("[aria-label='Select value'").should('be.visible').click();
+    cy.get("[aria-label='Select match operator']").should('be.visible').click().type('=~{enter}', { force: true });
+    cy.get("[aria-label='Select value']").should('be.visible').click();
     cy.wait('@valuesRequest');
-    cy.get("[aria-label='Select value'").type('instance1{enter}').type('instance2{enter}');
+    cy.get("[aria-label='Select value']").type('instance1{enter}').type('instance2{enter}');
     cy.contains(MISSING_LABEL_FILTER_ERROR_MESSAGE).should('not.exist');
     cy.contains(finalQuery).should('be.visible');
 
