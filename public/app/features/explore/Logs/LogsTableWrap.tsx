@@ -268,13 +268,10 @@ export function LogsTableWrap(props: Props) {
 
   const [sidebarWidth, setSidebarWidth] = useState(220);
   const totalWidth = props.width;
-  const [tableWidth, setTableWidth] = useState(totalWidth - sidebarWidth);
-
-  useEffect(() => {
-    setTableWidth(totalWidth - sidebarWidth);
-    // We don't want to update the tableWidth when the sidebar width changes, only when the window width changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalWidth]);
+  // const [tableWidth, setTableWidth] = useState(totalWidth - sidebarWidth);
+  const tableWidth = totalWidth - sidebarWidth;
+  console.log('tableWidth', tableWidth);
+  console.log('sidebarWidth', sidebarWidth);
 
   if (!columnsWithMeta) {
     return null;
@@ -487,8 +484,9 @@ export function LogsTableWrap(props: Props) {
 
   const getOnResize: ResizeCallback = (event, direction, ref) => {
     const newSidebarWidth = Number(ref.style.width.slice(0, -2));
-    setSidebarWidth(newSidebarWidth);
-    setTableWidth(props.width - newSidebarWidth);
+    if (!isNaN(newSidebarWidth)) {
+      setSidebarWidth(newSidebarWidth);
+    }
   };
 
   return (
