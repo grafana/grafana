@@ -38,8 +38,8 @@ composableKinds: DataQuery: {
 					minDuration?: string
 					// @deprecated Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
 					maxDuration?: string
-					// Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}
-					serviceMapQuery?: string
+					// Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}. Providing multiple values will produce union of results for each filter, using PromQL OR operator internally.
+					serviceMapQuery?: string | [...string]
 					// Use service.namespace in addition to service.name to uniquely identify a service.
 					serviceMapIncludeNamespace?: bool
 					// Defines the maximum number of traces that are returned from Tempo
