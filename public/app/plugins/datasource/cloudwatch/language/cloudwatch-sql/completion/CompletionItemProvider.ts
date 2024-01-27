@@ -184,7 +184,7 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
                 region: this.templateSrv.replace(this.region),
                 metricName: metricNameToken?.value,
                 dimensionFilters,
-              });
+              }, false);
               keys.map((m) => {
                 const key = /[\s\.-]/.test(m.value ?? '') ? `"${m.value}"` : m.value;
                 key && addSuggestion(key);

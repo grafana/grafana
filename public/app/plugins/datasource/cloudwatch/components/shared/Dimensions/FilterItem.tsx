@@ -4,10 +4,10 @@ import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
-import { Select, useStyles2 } from '@grafana/ui';
+import { Alert, Select, useStyles2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
-import { useDimensionKeys } from '../../../hooks';
+import { useDimensionKeys, useEnsureVariableHasSingleSelection } from '../../../hooks';
 import { Dimensions, MetricStat } from '../../../types';
 import { appendTemplateVariables } from '../../../utils/utils';
 
@@ -34,6 +34,7 @@ const excludeCurrentKey = (dimensions: Dimensions, currentKey: string | undefine
 
 export const FilterItem = ({ filter, metricStat, datasource, disableExpressions, onChange, onDelete }: Props) => {
   const { region, namespace, metricName, dimensions, accountId } = metricStat;
+  const error = useEnsureVariableHasSingleSelection(datasource, filter.key);
   const dimensionsExcludingCurrentKey = useMemo(
     () => excludeCurrentKey(dimensions ?? {}, filter.key),
     [dimensions, filter]
@@ -111,6 +112,7 @@ export const FilterItem = ({ filter, metricStat, datasource, disableExpressions,
         />
         <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} type="button" />
       </InputGroup>
+      {error && <Alert title={error} severity="error" topSpacing={1} />}
     </div>
   );
 };

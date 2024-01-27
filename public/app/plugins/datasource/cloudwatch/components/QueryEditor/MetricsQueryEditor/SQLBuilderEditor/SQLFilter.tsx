@@ -3,7 +3,7 @@ import { useAsyncFn } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, EditorList, InputGroup } from '@grafana/experimental';
-import { Select } from '@grafana/ui';
+import { Alert, Select } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../../datasource';
 import {
@@ -11,7 +11,7 @@ import {
   QueryEditorOperatorExpression,
   QueryEditorPropertyType,
 } from '../../../../expressions';
-import { useDimensionKeys } from '../../../../hooks';
+import { useDimensionKeys, useEnsureVariableHasSingleSelection } from '../../../../hooks';
 import { COMPARISON_OPERATORS, EQUALS } from '../../../../language/cloudwatch-sql/language';
 import { CloudWatchMetricsQuery } from '../../../../types';
 import { appendTemplateVariables } from '../../../../utils/utils';
@@ -127,36 +127,49 @@ const FilterItem = (props: FilterItemProps) => {
     filter.property?.name,
   ]);
 
+  const propertyNameError = useEnsureVariableHasSingleSelection(datasource, filter.property?.name);
+  const operatorValueError = useEnsureVariableHasSingleSelection(
+    datasource,
+    typeof filter.operator?.value === 'string' ? filter.operator?.value : undefined
+  );
+
   return (
-    <InputGroup>
-      <Select
-        width="auto"
-        value={filter.property?.name ? toOption(filter.property?.name) : null}
-        options={dimensionKeys}
-        allowCustomValue
-        onChange={({ value }) => value && onChange(setOperatorExpressionProperty(filter, value))}
-      />
+    <>
+      <InputGroup>
+        <Select
+          width="auto"
+          value={filter.property?.name ? toOption(filter.property?.name) : null}
+          options={dimensionKeys}
+          allowCustomValue
+          onChange={({ value }) => value && onChange(setOperatorExpressionProperty(filter, value))}
+        />
 
-      <Select
-        width="auto"
-        value={filter.operator?.name && toOption(filter.operator.name)}
-        options={OPERATORS}
-        onChange={({ value }) => value && onChange(setOperatorExpressionName(filter, value))}
-      />
+        <Select
+          width="auto"
+          value={filter.operator?.name && toOption(filter.operator.name)}
+          options={OPERATORS}
+          onChange={({ value }) => value && onChange(setOperatorExpressionName(filter, value))}
+        />
 
-      <Select
-        width="auto"
-        isLoading={state.loading}
-        value={
-          filter.operator?.value && typeof filter.operator?.value === 'string' ? toOption(filter.operator?.value) : null
-        }
-        options={state.value}
-        allowCustomValue
-        onOpenMenu={loadOptions}
-        onChange={({ value }) => value && onChange(setOperatorExpressionValue(filter, value))}
-      />
+        <Select
+          width="auto"
+          isLoading={state.loading}
+          value={
+            filter.operator?.value && typeof filter.operator?.value === 'string'
+              ? toOption(filter.operator?.value)
+              : null
+          }
+          options={state.value}
+          allowCustomValue
+          onOpenMenu={loadOptions}
+          onChange={({ value }) => value && onChange(setOperatorExpressionValue(filter, value))}
+        />
 
-      <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />
-    </InputGroup>
+        <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />
+      </InputGroup>
+
+      {propertyNameError && <Alert title={propertyNameError} severity="error" topSpacing={1} />}
+      {operatorValueError && <Alert title={operatorValueError} severity="error" topSpacing={1} />}
+    </>
   );
 };

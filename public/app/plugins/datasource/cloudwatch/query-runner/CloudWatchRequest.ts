@@ -1,11 +1,7 @@
 import { Observable } from 'rxjs';
 
-import { DataSourceInstanceSettings, DataSourceRef, getDataSourceRef, ScopedVars } from '@grafana/data';
-import { BackendDataSourceResponse, FetchResponse, getBackendSrv, TemplateSrv } from '@grafana/runtime';
-import { notifyApp } from 'app/core/actions';
-import { createErrorNotification } from 'app/core/copy/appNotification';
-import { store } from 'app/store/store';
-import { AppNotificationTimeout } from 'app/types';
+import { DataSourceInstanceSettings, DataSourceRef, getDataSourceRef, ScopedVars, AppEvents } from '@grafana/data';
+import { BackendDataSourceResponse, FetchResponse, getBackendSrv, TemplateSrv, getAppEvents } from '@grafana/runtime';
 
 import memoizedDebounce from '../memoizedDebounce';
 import { CloudWatchJsonData, Dimensions, MetricRequest, MultiFilters } from '../types';
@@ -15,10 +11,7 @@ export abstract class CloudWatchRequest {
   templateSrv: TemplateSrv;
   ref: DataSourceRef;
   dsQueryEndpoint = '/api/ds/query';
-  debouncedCustomAlert: (title: string, message: string) => void = memoizedDebounce(
-    displayCustomError,
-    AppNotificationTimeout.Error
-  );
+  debouncedCustomAlert: (title: string, message: string) => void = memoizedDebounce(displayCustomError);
 
   constructor(
     public instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>,
@@ -43,9 +36,18 @@ export abstract class CloudWatchRequest {
     return getBackendSrv().fetch<BackendDataSourceResponse>(options);
   }
 
-  convertDimensionFormat(dimensions: Dimensions, scopedVars: ScopedVars): Dimensions {
+  convertDimensionFormat(
+    dimensions: Dimensions,
+    scopedVars: ScopedVars,
+    displayErrorIfIsMultiTemplateVariable = true
+  ): Dimensions {
     return Object.entries(dimensions).reduce((result, [key, value]) => {
-      key = this.replaceVariableAndDisplayWarningIfMulti(key, scopedVars, true, 'dimension keys');
+      key = this.replaceVariableAndDisplayWarningIfMulti(
+        key,
+        scopedVars,
+        displayErrorIfIsMultiTemplateVariable,
+        'dimension keys'
+      );
 
       if (Array.isArray(value)) {
         return { ...result, [key]: value };
@@ -93,23 +95,35 @@ export abstract class CloudWatchRequest {
     }, {});
   }
 
+  isMultiVariable(target?: string) {
+    if (target) {
+      const variables = this.templateSrv.getVariables();
+      const variable = variables.find(({ name }) => name === getVariableName(target));
+      const type = variable?.type;
+      return (type === 'custom' || type === 'query' || type === 'datasource') && variable?.multi;
+    }
+
+    return false;
+  }
+
+  isVariableWithMultipleOptionsSelected(target?: string, scopedVars?: ScopedVars) {
+    if (!target || !this.isMultiVariable(target)) {
+      return false;
+    }
+    return this.expandVariableToArray(target, scopedVars || {}).length > 1;
+  }
+
   replaceVariableAndDisplayWarningIfMulti(
     target?: string,
     scopedVars?: ScopedVars,
     displayErrorIfIsMultiTemplateVariable?: boolean,
     fieldName?: string
   ) {
-    if (displayErrorIfIsMultiTemplateVariable && !!target) {
-      const variables = this.templateSrv.getVariables();
-      const variable = variables.find(({ name }) => name === getVariableName(target));
-      const isMultiVariable =
-        variable?.type === 'custom' || variable?.type === 'query' || variable?.type === 'datasource';
-      if (isMultiVariable && variable.multi) {
-        this.debouncedCustomAlert(
-          'CloudWatch templating error',
-          `Multi template variables are not supported for ${fieldName || target}`
-        );
-      }
+    if (displayErrorIfIsMultiTemplateVariable && this.isVariableWithMultipleOptionsSelected(target)) {
+      this.debouncedCustomAlert(
+        'CloudWatch templating error',
+        `Multi template variables are not supported for ${fieldName || target}`
+      );
     }
 
     return this.templateSrv.replace(target, scopedVars);
@@ -128,4 +142,7 @@ export abstract class CloudWatchRequest {
 }
 
 const displayCustomError = (title: string, message: string) =>
-  store.dispatch(notifyApp(createErrorNotification(title, message)));
+  getAppEvents().publish({
+    type: AppEvents.alertError.name,
+    payload: [title, message],
+  });
