@@ -1,7 +1,3 @@
-// Copied from https://github.com/grafana/grafana/blob/main/pkg/util/converter/jsonitere/jsonitere.go
-// We're copying this to not block ourselves from decoupling until the conversation here is resolved
-// https://raintank-corp.slack.com/archives/C05QFJUHUQ6/p1700064431005089
-
 // Package jsonitere wraps json-iterator/go's Iterator methods with error returns
 // so linting can catch unchecked errors.
 // The underlying iterator's Error property is returned and not reset.

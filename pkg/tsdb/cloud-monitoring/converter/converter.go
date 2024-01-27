@@ -1,4 +1,4 @@
-// Copied from https://github.com/grafana/grafana/blob/main/pkg/util/converter/prom.go
+// Copied from https://github.com/grafana/grafana/blob/main/pkg/tsdb/intervalv2/intervalv2.go
 // We're copying this to not block ourselves from decoupling until the conversation here is resolved
 // https://raintank-corp.slack.com/archives/C05QFJUHUQ6/p1700064431005089
 package converter
