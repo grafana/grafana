@@ -138,7 +138,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(CandlestickPane
     });
 
     if (config.featureToggles.newVizTooltips) {
-      commonOptionsBuilder.addTooltipOptions(builder, false, opts);
+      commonOptionsBuilder.addTooltipOptions(builder, false, true, opts);
     }
 
     commonOptionsBuilder.addLegendOptions(builder);
