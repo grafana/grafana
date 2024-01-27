@@ -152,7 +152,7 @@ backend grafana_backend
   server grafana localhost:3000
 ```
 
-If your Grafana configuration doen't set `server.serve_from_sub_path` to `true`, then you must add a rewrite rule to the `backend grafana_backend` block:
+If your Grafana configuration doesn't set `server.serve_from_sub_path` to `true`, then you must add a rewrite rule to the `backend grafana_backend` block:
 
 ```diff
 backend grafana_backend
