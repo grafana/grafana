@@ -15,7 +15,6 @@ export class PrometheusVariableSupport extends CustomVariableSupport<PrometheusD
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super();
-    this.query = this.query.bind(this);
   }
 
   editor = PromVariableQueryEditor;
