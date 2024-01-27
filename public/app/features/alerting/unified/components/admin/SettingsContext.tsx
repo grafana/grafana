@@ -109,6 +109,7 @@ function determineDeliveryMode(interestedAlertmanagers: string[]): AlertmanagerC
   }
 
   // if we get here we probably have no targets at all and that's not supposed to be possible.
+  // @TODO we're currently not handling this error and we should show the user that they need at least 1 target.
   throw new Error('No interested Alertmanager targets found, illegal configuration');
 }
 
