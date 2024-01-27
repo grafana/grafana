@@ -30,10 +30,11 @@ import {
   serializeStateToUrlParam,
   SplitOpen,
   TimeRange,
+  TimeZone,
   urlUtil,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { DataQuery, TimeZone } from '@grafana/schema';
+import { DataQuery } from '@grafana/schema';
 import {
   Button,
   FeatureBadge,

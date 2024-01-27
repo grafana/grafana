@@ -1,8 +1,7 @@
 import React from 'react';
 
-import { EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
+import { DataQuery, EventBusSrv, serializeStateToUrlParam } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { DataQuery } from '@grafana/schema';
 
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 
