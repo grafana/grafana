@@ -106,6 +106,9 @@ export const TimeSeriesTooltip = ({
       }
 
       const v = seriesFrame.fields[i].values[dataIdxs[i]!];
+      if (v == null) {
+        continue;
+      }
       const display = field.display!(v); // super expensive :(
 
       sortIdx.push(v);
