@@ -17,7 +17,7 @@ export interface ExternalAlertmanagerDataSourceWithStatus {
  */
 export function useExternalDataSourceAlertmanagers(): ExternalAlertmanagerDataSourceWithStatus[] {
   // firstly we'll fetch the settings for all datasources and filter for "alertmanager" type
-  const { alertmanagerDataSources } = dataSourcesApi.endpoints.getDataSourceSettings.useQuery(undefined, {
+  const { alertmanagerDataSources } = dataSourcesApi.endpoints.getAllDataSourceSettings.useQuery(undefined, {
     refetchOnReconnect: true,
     refetchOnFocus: true,
     selectFromResult: (result) => {

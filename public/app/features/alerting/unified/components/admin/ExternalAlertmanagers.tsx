@@ -1,30 +1,23 @@
 import { capitalize } from 'lodash';
 import React from 'react';
 
-import { Badge, Button, Card, Icon, Stack, Text, TextLink } from '@grafana/ui';
+import { Badge, Button, Card, Stack, Text, TextLink } from '@grafana/ui';
 import { useDataSourcesRoutes } from 'app/features/datasources/state';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
-import { alertmanagerApi } from '../../api/alertmanagerApi';
-import {
-  ExternalAlertmanagerDataSourceWithStatus,
-  useExternalDataSourceAlertmanagers,
-} from '../../hooks/useExternalAmSelector';
+import { ExternalAlertmanagerDataSourceWithStatus } from '../../hooks/useExternalAmSelector';
+import { isAlertmanagerDataSourceInterestedInAlerts } from '../../utils/datasource';
 import { createUrl } from '../../utils/url';
+import { ProvisioningBadge } from '../Provisioning';
+
+import { useSettings } from './SettingsContext';
 
 interface Props {
   onEditConfiguration: () => void;
 }
 
 export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
-  const dataSourceAlertmanagers = useExternalDataSourceAlertmanagers();
-  const { currentData: deliverySettings } = alertmanagerApi.endpoints.getExternalAlertmanagerConfig.useQuery(
-    undefined,
-    {
-      refetchOnReconnect: true,
-      refetchOnFocus: true,
-    }
-  );
+  const { externalAlertmanagers, deliverySettings, enableAlertmanager, disableAlertmanager } = useSettings();
 
   // determine if the alertmanger is receiving alerts
   // this is true if Grafana is configured to send to either "both" or "external" and the Alertmanager datasource _wants_ to receive alerts.
@@ -34,25 +27,30 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
     const sendingToExternal = [AlertmanagerChoice.All, AlertmanagerChoice.External].some(
       (choice) => deliverySettings?.alertmanagersChoice === choice
     );
-    const wantsAlertsReceived =
-      externalDataSourceAlertmanager.dataSourceSettings.jsonData.handleGrafanaManagedAlerts === true;
+    const wantsAlertsReceived = isAlertmanagerDataSourceInterestedInAlerts(
+      externalDataSourceAlertmanager.dataSourceSettings
+    );
 
     return sendingToExternal && wantsAlertsReceived;
   };
 
   return (
     <>
-      {dataSourceAlertmanagers.map((alertmanager) => {
+      {externalAlertmanagers.map((alertmanager) => {
         const { uid, name, jsonData, url } = alertmanager.dataSourceSettings;
         const { status } = alertmanager;
 
         const isReceiving = isReceivingOnAlertmanager(alertmanager);
         const dataSourceHref = useDataSourceEditLink(uid);
+        const provisionedDataSource = alertmanager.dataSourceSettings.readOnly === true;
 
         return (
           <Card key={uid}>
             <Card.Heading>
-              <TextLink href={dataSourceHref}>{name}</TextLink>
+              <Stack alignItems="center" gap={1}>
+                <TextLink href={dataSourceHref}>{name}</TextLink>
+                {provisionedDataSource && <ProvisioningBadge />}
+              </Stack>
             </Card.Heading>
             <Card.Figure>
               <img alt="Alertmanager logo" src="public/app/plugins/datasource/alertmanager/img/logo.svg" />
@@ -60,9 +58,7 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
 
             <Card.Meta>
               {capitalize(jsonData.implementation ?? 'Prometheus')}
-              <div>
-                <Icon name="link" size="xs" /> {url}
-              </div>
+              {url}
             </Card.Meta>
 
             <Card.Description>
@@ -84,14 +80,23 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
                 <Button onClick={onEditConfiguration} icon="pen" variant="secondary" fill="outline">
                   Edit configuration
                 </Button>
-                {isReceiving ? (
-                  <Button icon="times" variant="destructive" fill="outline">
-                    Disable
-                  </Button>
-                ) : (
-                  <Button icon="check" variant="secondary" fill="outline">
-                    Enable
-                  </Button>
+                {provisionedDataSource ? null : (
+                  <>
+                    {isReceiving ? (
+                      <Button
+                        icon="times"
+                        variant="destructive"
+                        fill="outline"
+                        onClick={() => disableAlertmanager(uid)}
+                      >
+                        Disable
+                      </Button>
+                    ) : (
+                      <Button icon="check" variant="secondary" fill="outline" onClick={() => enableAlertmanager(uid)}>
+                        Enable
+                      </Button>
+                    )}
+                  </>
                 )}
               </Stack>
             </Card.Tags>
@@ -102,6 +107,7 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
   );
 };
 
+// I copied this from the datasources list page – maybe we should make this DRY? :)
 function useDataSourceEditLink(uid: string) {
   const dataSourcesRoutes = useDataSourcesRoutes();
   const dsLink = createUrl(dataSourcesRoutes.Edit.replace(/:uid/gi, uid));
