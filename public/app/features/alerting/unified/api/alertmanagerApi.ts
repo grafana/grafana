@@ -101,6 +101,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
     getExternalAlertmanagers: build.query<ExternalAlertmanagers, void>({
       query: () => ({ url: '/api/v1/ngalert/alertmanagers' }),
       transformResponse: (response: ExternalAlertmanagersResponse) => response.data,
+      providesTags: ['AlertmanagerConnectionStatus'],
     }),
 
     saveExternalAlertmanagersConfig: build.mutation<{ message: string }, ExternalAlertmanagerConfig>({

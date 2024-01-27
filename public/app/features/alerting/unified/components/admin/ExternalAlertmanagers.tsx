@@ -2,7 +2,7 @@ import { capitalize } from 'lodash';
 import React from 'react';
 
 import { Badge, Button, Card, Stack, Text, TextLink } from '@grafana/ui';
-import { useDataSourcesRoutes } from 'app/features/datasources/state';
+import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { ExternalAlertmanagerDataSourceWithStatus } from '../../hooks/useExternalAmSelector';
@@ -17,7 +17,12 @@ interface Props {
 }
 
 export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
-  const { externalAlertmanagers, deliverySettings, enableAlertmanager, disableAlertmanager } = useSettings();
+  const {
+    externalAlertmanagerDataSourcesWithStatus: externalAlertmanagersWithStatus,
+    deliverySettings,
+    enableAlertmanager,
+    disableAlertmanager,
+  } = useSettings();
 
   // determine if the alertmanger is receiving alerts
   // this is true if Grafana is configured to send to either "both" or "external" and the Alertmanager datasource _wants_ to receive alerts.
@@ -36,19 +41,19 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
 
   return (
     <>
-      {externalAlertmanagers.map((alertmanager) => {
+      {externalAlertmanagersWithStatus.map((alertmanager) => {
         const { uid, name, jsonData, url } = alertmanager.dataSourceSettings;
         const { status } = alertmanager;
 
         const isReceiving = isReceivingOnAlertmanager(alertmanager);
-        const dataSourceHref = useDataSourceEditLink(uid);
         const provisionedDataSource = alertmanager.dataSourceSettings.readOnly === true;
+        const detailHref = createUrl(DATASOURCES_ROUTES.Edit.replace(/:uid/gi, uid));
 
         return (
           <Card key={uid}>
             <Card.Heading>
               <Stack alignItems="center" gap={1}>
-                <TextLink href={dataSourceHref}>{name}</TextLink>
+                <TextLink href={detailHref}>{name}</TextLink>
                 {provisionedDataSource && <ProvisioningBadge />}
               </Stack>
             </Card.Heading>
@@ -106,11 +111,3 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
     </>
   );
 };
-
-// I copied this from the datasources list page – maybe we should make this DRY? :)
-function useDataSourceEditLink(uid: string) {
-  const dataSourcesRoutes = useDataSourcesRoutes();
-  const dsLink = createUrl(dataSourcesRoutes.Edit.replace(/:uid/gi, uid));
-
-  return dsLink;
-}

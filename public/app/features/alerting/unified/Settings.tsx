@@ -35,7 +35,7 @@ function SettingsContent() {
         <Stack>
           <Text variant="h5">Other Alertmanagers</Text>
           <Spacer />
-          <LinkButton href="/connections/datasources/alertmanager" variant="secondary">
+          <LinkButton href="/connections/datasources/alertmanager" icon="plus" variant="secondary">
             Add Alertmanager
           </LinkButton>
         </Stack>

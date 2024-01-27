@@ -9,11 +9,14 @@ export const dataSourcesApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     getAllDataSourceSettings: build.query<Array<DataSourceSettings<DataSourceJsonData>>, void>({
       query: () => ({ url: 'api/datasources' }),
-      providesTags: ['DataSourceSettings'],
+      providesTags: (result) => {
+        // we'll create individual cache entries for each datasource
+        return result ? result.map(({ uid }) => ({ type: 'DataSourceSettings', id: uid })) : ['DataSourceSettings'];
+      },
     }),
-    getDataSourceSettings: build.query<DataSourceSettings<DataSourceJsonData>, string>({
+    getDataSourceSettingsForUID: build.query<DataSourceSettings<DataSourceJsonData>, string>({
       query: (uid) => ({ url: `api/datasources/uid/${uid}` }),
-      providesTags: ['DataSourceSettings'],
+      providesTags: (_result, _error, uid) => [{ type: 'DataSourceSettings', id: uid }],
     }),
   }),
 });
@@ -21,10 +24,13 @@ export const dataSourcesApi = alertingApi.injectEndpoints({
 // I've split these up to get TypeScript type inference working properly when calling endpoints within endpoints
 dataSourcesApi.injectEndpoints({
   endpoints: (build) => ({
-    updateAlertmanagerReceiveSetting: build.mutation<unknown, { uid: string; handleGrafanaManagedAlerts: boolean }>({
-      queryFn: async ({ uid, handleGrafanaManagedAlerts }, queryApi, _extraOptions, fetchQuery) => {
+    enableOrDisableHandlingGrafanaManagedAlerts: build.mutation<
+      unknown,
+      { uid: string; handleGrafanaManagedAlerts: boolean }
+    >({
+      queryFn: async ({ uid, handleGrafanaManagedAlerts }, queryApi, _extraOptions, baseQuery) => {
         // @TODO calling endpoint from another endpoint like this is a bit weird - refactor this?
-        const fetchSettingsThunk = dataSourcesApi.endpoints.getDataSourceSettings.initiate(uid);
+        const fetchSettingsThunk = dataSourcesApi.endpoints.getDataSourceSettingsForUID.initiate(uid);
         const { data: existingSettings } = await queryApi.dispatch(fetchSettingsThunk);
 
         if (!existingSettings) {
@@ -34,19 +40,20 @@ dataSourcesApi.injectEndpoints({
         const newSettings = produce(
           existingSettings,
           (settings: DataSourceSettings<AlertManagerDataSourceJsonData>) => {
-            settings.jsonData = settings.jsonData ?? {};
             settings.jsonData.handleGrafanaManagedAlerts = handleGrafanaManagedAlerts;
           }
         );
 
-        return fetchQuery({
+        return baseQuery({
           method: 'PUT',
           url: `api/datasources/uid/${uid}`,
           data: newSettings,
           showSuccessAlert: false,
         });
       },
-      invalidatesTags: ['DataSourceSettings'],
+      // we need to invalidate the settings for a single Datasource because otherwise the backend will complain
+      // about it already having been edited by another user – edits are tracked with a version number
+      invalidatesTags: (_result, _error, args) => [{ type: 'DataSourceSettings', id: args.uid }],
     }),
   }),
 });

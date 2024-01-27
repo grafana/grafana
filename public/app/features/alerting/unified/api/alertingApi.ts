@@ -30,6 +30,7 @@ export const alertingApi = createApi({
   tagTypes: [
     'AlertmanagerChoice',
     'AlertmanagerConfiguration',
+    'AlertmanagerConnectionStatus',
     'OnCallIntegrations',
     'OrgMigrationState',
     'DataSourceSettings',

@@ -19,7 +19,6 @@ export function useExternalDataSourceAlertmanagers(): ExternalAlertmanagerDataSo
   // firstly we'll fetch the settings for all datasources and filter for "alertmanager" type
   const { alertmanagerDataSources } = dataSourcesApi.endpoints.getAllDataSourceSettings.useQuery(undefined, {
     refetchOnReconnect: true,
-    refetchOnFocus: true,
     selectFromResult: (result) => {
       const alertmanagerDataSources = result.currentData?.filter(isAlertmanagerDataSource) ?? [];
       return { ...result, alertmanagerDataSources };
@@ -30,10 +29,7 @@ export function useExternalDataSourceAlertmanagers(): ExternalAlertmanagerDataSo
   // @TODO use polling when we have one or more alertmanagers in pending state
   const { currentData: externalAlertmanagers } = alertmanagerApi.endpoints.getExternalAlertmanagers.useQuery(
     undefined,
-    {
-      refetchOnReconnect: true,
-      refetchOnFocus: true,
-    }
+    { refetchOnReconnect: true }
   );
 
   if (!alertmanagerDataSources) {

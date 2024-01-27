@@ -1,7 +1,8 @@
-import { union, without } from 'lodash';
-import React, { PropsWithChildren } from 'react';
+import { union, without, debounce } from 'lodash';
+import React, { PropsWithChildren, useEffect, useRef } from 'react';
 
 import { AlertmanagerChoice, ExternalAlertmanagerConfig } from 'app/plugins/datasource/alertmanager/types';
+import { dispatch } from 'app/store/store';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { dataSourcesApi } from '../../api/dataSourcesApi';
@@ -15,7 +16,7 @@ const USING_INTERNAL_ALERTMANAGER_SETTINGS = [AlertmanagerChoice.Internal, Alert
 
 interface Context {
   deliverySettings?: ExternalAlertmanagerConfig;
-  externalAlertmanagers: ExternalAlertmanagerDataSourceWithStatus[];
+  externalAlertmanagerDataSourcesWithStatus: ExternalAlertmanagerDataSourceWithStatus[];
   isLoading: boolean;
   isUpdating: boolean;
   enableAlertmanager: (uid: string) => void;
@@ -36,23 +37,22 @@ export const SettingsProvider = (props: PropsWithChildren) => {
   const [updateDeliverySettings, updateDeliverySettingsState] =
     alertmanagerApi.endpoints.saveExternalAlertmanagersConfig.useMutation();
   const [updateAlertmanagerDataSource, updateAlertmanagerDataSourceState] =
-    dataSourcesApi.endpoints.updateAlertmanagerReceiveSetting.useMutation();
+    dataSourcesApi.endpoints.enableOrDisableHandlingGrafanaManagedAlerts.useMutation();
 
-  const externalAlertmanagers = useExternalDataSourceAlertmanagers();
+  const externalAlertmanagersWithStatus = useExternalDataSourceAlertmanagers();
 
-  const interstedInternal = USING_INTERNAL_ALERTMANAGER_SETTINGS.some(
+  const interestedInternal = USING_INTERNAL_ALERTMANAGER_SETTINGS.some(
     (choice) => deliverySettings?.alertmanagersChoice === choice
   );
-  if (interstedInternal) {
+  if (interestedInternal) {
     interestedAlertmanagers.push(GRAFANA_RULES_SOURCE_NAME);
   }
 
-  const interestedExternal = externalAlertmanagers.filter((alertmanager) =>
-    isAlertmanagerDataSourceInterestedInAlerts(alertmanager.dataSourceSettings)
-  );
-  interestedExternal.forEach((alertmanager) => {
-    interestedAlertmanagers.push(alertmanager.dataSourceSettings.uid);
-  });
+  externalAlertmanagersWithStatus
+    .filter((dataSource) => isAlertmanagerDataSourceInterestedInAlerts(dataSource.dataSourceSettings))
+    .forEach((alertmanager) => {
+      interestedAlertmanagers.push(alertmanager.dataSourceSettings.uid);
+    });
 
   const enableAlertmanager = (uid: string) => {
     const updatedInterestedAlertmanagers = union([uid], interestedAlertmanagers); // union will give us a unique array of uids
@@ -82,7 +82,7 @@ export const SettingsProvider = (props: PropsWithChildren) => {
 
   const value: Context = {
     deliverySettings,
-    externalAlertmanagers,
+    externalAlertmanagerDataSourcesWithStatus: externalAlertmanagersWithStatus,
     enableAlertmanager,
     disableAlertmanager,
     isLoading: isLoadingDeliverySettings,
@@ -118,6 +118,23 @@ export function useSettings() {
   if (context === undefined) {
     throw new Error('useSettings must be used within a SettingsContext');
   }
+
+  // we'll automatically re-fetch the Alertmanager connection status while any Alertmanagers are pending by invalidating the cache entry
+  const debouncedUpdateStatus = debounce(() => {
+    dispatch(dataSourcesApi.util.invalidateTags(['AlertmanagerConnectionStatus']));
+  }, 3000);
+  const refetchAlertmanagerConnectionStatus = useRef(debouncedUpdateStatus);
+
+  const hasAlertmanagersPending = context.externalAlertmanagerDataSourcesWithStatus.some(
+    ({ status }) => status === 'pending'
+  );
+  if (hasAlertmanagersPending) {
+    refetchAlertmanagerConnectionStatus.current();
+  }
+
+  useEffect(() => {
+    debouncedUpdateStatus.cancel();
+  }, []);
 
   return context;
 }
