@@ -1,5 +1,4 @@
-import { TimeRange, toUtc, SupplementaryQueryType } from '@grafana/data';
-import { defaultTimeZone } from '@grafana/schema';
+import { DefaultTimeZone, TimeRange, toUtc, SupplementaryQueryType } from '@grafana/data';
 
 export const createDefaultInitialState = () => {
   const t = toUtc();
@@ -15,7 +14,7 @@ export const createDefaultInitialState = () => {
   const defaultInitialState = {
     user: {
       orgId: '1',
-      timeZone: defaultTimeZone,
+      timeZone: DefaultTimeZone,
     },
     explore: {
       panes: {

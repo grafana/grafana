@@ -1,4 +1,4 @@
-import { createDataFrame, LogLevel, LogRowModel, LogsSortOrder } from '@grafana/data';
+import { MutableDataFrame, LogLevel, LogRowModel, LogsSortOrder } from '@grafana/data';
 import { sortLogRows } from 'app/features/logs/utils';
 export const makeLogs = (numberOfLogsToCreate: number, overrides?: Partial<LogRowModel>): LogRowModel[] => {
   const array: LogRowModel[] = [];
@@ -12,7 +12,7 @@ export const makeLogs = (numberOfLogsToCreate: number, overrides?: Partial<LogRo
       uid: uuid,
       entryFieldIndex: 0,
       rowIndex: 0,
-      dataFrame: createDataFrame({ fields: [] }),
+      dataFrame: new MutableDataFrame(),
       logLevel: LogLevel.debug,
       entry,
       hasAnsi: false,
