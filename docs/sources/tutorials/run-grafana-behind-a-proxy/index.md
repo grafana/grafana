@@ -38,7 +38,7 @@ You can also serve Grafana behind a _sub path_, such as `http://example.com/graf
 
 To serve Grafana behind a sub path:
 
-- Include the sub path at the end of the `root_url`.
+1. Include the sub path at the end of the `root_url`.
 - Set `serve_from_sub_path` to `true`, **OR** let proxy rewrite the path for you (see proxy config examples bellow).
 
 ```bash
