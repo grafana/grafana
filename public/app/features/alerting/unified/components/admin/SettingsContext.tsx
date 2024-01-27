@@ -134,7 +134,7 @@ export function useSettings() {
 
   useEffect(() => {
     debouncedUpdateStatus.cancel();
-  }, []);
+  }, [debouncedUpdateStatus]);
 
   return context;
 }

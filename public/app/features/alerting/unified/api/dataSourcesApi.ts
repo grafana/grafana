@@ -10,7 +10,7 @@ export const dataSourcesApi = alertingApi.injectEndpoints({
     getAllDataSourceSettings: build.query<Array<DataSourceSettings<DataSourceJsonData>>, void>({
       query: () => ({ url: 'api/datasources' }),
       providesTags: (result) => {
-        // we'll create individual cache entries for each datasource
+        // we'll create individual cache entries for each datasource UID
         return result ? result.map(({ uid }) => ({ type: 'DataSourceSettings', id: uid })) : ['DataSourceSettings'];
       },
     }),
