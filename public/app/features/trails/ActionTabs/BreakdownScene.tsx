@@ -19,7 +19,7 @@ import {
   SceneQueryRunner,
   VariableDependencyConfig,
 } from '@grafana/scenes';
-import { Button, Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, Field, RadioButtonList, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
@@ -125,13 +125,18 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
     const { labels, body, loading, value } = model.useState();
     const styles = useStyles2(getStyles);
 
-    return (
+    const useVerticalLabelSelector = labels.length > 6;
+
+    const container = (
       <div className={styles.container}>
         {loading && <div>Loading...</div>}
         <div className={styles.controls}>
-          <Field label="By label">
-            <RadioButtonGroup options={labels} value={value} onChange={model.onChange} />
-          </Field>
+          {' '}
+          {!useVerticalLabelSelector && (
+            <Field label="By label">
+              <RadioButtonGroup options={labels} value={value} onChange={model.onChange} />
+            </Field>
+          )}
           {body instanceof LayoutSwitcher && (
             <div className={styles.controlsRight}>
               <body.Selector model={body} />
@@ -139,6 +144,21 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
           )}
         </div>
         <div className={styles.content}>{body && <body.Component model={body} />}</div>
+      </div>
+    );
+
+    if (!useVerticalLabelSelector) {
+      return container;
+    }
+
+    return (
+      <div className={styles.splitContainer}>
+        <div className={styles.verticalLabelSelector}>
+          <Field label="By label">
+            <RadioButtonList name="By label" options={labels} value={value} onChange={model.onChange} />
+          </Field>
+        </div>
+        {container}
       </div>
     );
   };
@@ -171,6 +191,17 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       display: 'flex',
       justifyContent: 'flex-end',
+    }),
+    splitContainer: css({
+      flexGrow: 1,
+      display: 'flex',
+      minHeight: '100%',
+      flexDirection: 'row',
+    }),
+    verticalLabelSelector: css({
+      minWidth: 50,
+      paddingRight: theme.spacing(2),
+      alignItems: 'flex-start',
     }),
   };
 }
