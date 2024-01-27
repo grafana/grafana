@@ -1,5 +1,5 @@
 import { buildVisualQueryFromString } from './parsing';
-import { PromVisualQuery } from './types';
+import { PromOperationId, PromVisualQuery } from './types';
 
 describe('buildVisualQueryFromString', () => {
   it('creates no errors for empty query', () => {
@@ -10,6 +10,50 @@ describe('buildVisualQueryFromString', () => {
         metric: '',
       })
     );
+  });
+  it('parses simple binary comparison', () => {
+    expect(buildVisualQueryFromString('{app="aggregator"} == 11')).toEqual({
+      query: {
+        labels: [
+          {
+            label: 'app',
+            op: '=',
+            value: 'aggregator',
+          },
+        ],
+        metric: '',
+        operations: [
+          {
+            id: PromOperationId.EqualTo,
+            params: [11, false],
+          },
+        ],
+      },
+      errors: [],
+    });
+  });
+
+  // This still fails because loki doesn't properly parse the bool operator
+  it('parses simple query with with boolean operator', () => {
+    expect(buildVisualQueryFromString('{app="aggregator"} == bool 12')).toEqual({
+      query: {
+        labels: [
+          {
+            label: 'app',
+            op: '=',
+            value: 'aggregator',
+          },
+        ],
+        metric: '',
+        operations: [
+          {
+            id: PromOperationId.EqualTo,
+            params: [12, true],
+          },
+        ],
+      },
+      errors: [],
+    });
   });
   it('parses simple query', () => {
     expect(buildVisualQueryFromString('counters_logins{app="frontend"}')).toEqual(
