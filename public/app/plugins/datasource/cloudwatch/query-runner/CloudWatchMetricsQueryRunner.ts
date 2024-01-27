@@ -40,7 +40,7 @@ const displayAlert = (datasourceName: string, region: string) =>
 
 // This class handles execution of CloudWatch metrics query data queries
 export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
-  debouncedThrottlingAlert: (datasourceName: string, region: string) => void = memoizedDebounce(displayAlert, 7000);
+  debouncedThrottlingAlert: (datasourceName: string, region: string) => void = memoizedDebounce(displayAlert);
 
   constructor(instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>, templateSrv: TemplateSrv) {
     super(instanceSettings, templateSrv);
