@@ -110,6 +110,7 @@ describe('richHistory', () => {
     it('should append query to query history', async () => {
       Date.now = jest.fn(() => 2);
       const { limitExceeded, richHistoryStorageFull } = await addToRichHistory(
+        false,
         mock.testDatasourceUid,
         mock.testDatasourceName,
         mock.testQueries,
@@ -143,6 +144,7 @@ describe('richHistory', () => {
       });
 
       const { richHistoryStorageFull, limitExceeded } = await addToRichHistory(
+        false,
         mock.testDatasourceUid,
         mock.testDatasourceName,
         mock.testQueries,

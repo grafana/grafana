@@ -74,12 +74,14 @@ const forEachExplorePane = (state: ExploreState, callback: (item: ExploreItemSta
 };
 
 export const addHistoryItem = (
+  localOverride: boolean,
   datasourceUid: string,
   datasourceName: string,
   queries: DataQuery[]
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const { richHistoryStorageFull, limitExceeded } = await addToRichHistory(
+      localOverride,
       datasourceUid,
       datasourceName,
       queries,

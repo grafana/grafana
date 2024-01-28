@@ -15,7 +15,7 @@ import {
   RichHistoryStorageWarning,
   RichHistoryStorageWarningDetails,
 } from '../history/RichHistoryStorage';
-import { getRichHistoryStorage } from '../history/richHistoryStorageProvider';
+import { getLocalRichHistoryStorage, getRichHistoryStorage } from '../history/richHistoryStorageProvider';
 
 import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from './richHistoryTypes';
 
@@ -27,6 +27,7 @@ export { RichHistorySearchFilters, RichHistorySettings, SortOrder };
  */
 
 export async function addToRichHistory(
+  localOverride: boolean,
   datasourceUid: string,
   datasourceName: string | null,
   queries: DataQuery[],
@@ -44,7 +45,8 @@ export async function addToRichHistory(
     let warning: RichHistoryStorageWarningDetails | undefined;
 
     try {
-      const result = await getRichHistoryStorage().addToRichHistory({
+      const storage = localOverride ? getLocalRichHistoryStorage() : getRichHistoryStorage();
+      const result = await storage.addToRichHistory({
         datasourceUid: datasourceUid,
         datasourceName: datasourceName ?? '',
         queries: newQueriesToSave,

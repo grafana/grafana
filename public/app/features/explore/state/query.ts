@@ -484,7 +484,10 @@ async function handleHistory(
   queries: DataQuery[],
   exploreId: string
 ) {
-  dispatch(addHistoryItem(datasource.uid, datasource.name, queries));
+  dispatch(addHistoryItem(true, datasource.uid, datasource.name, queries)); // always write to local
+  if (config.queryHistoryEnabled) {
+    dispatch(addHistoryItem(false, datasource.uid, datasource.name, queries));
+  }
 
   // Because filtering happens in the backend we cannot add a new entry without checking if it matches currently
   // used filters. Instead, we refresh the query history list.
