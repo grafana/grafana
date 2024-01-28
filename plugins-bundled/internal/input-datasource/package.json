@@ -14,23 +14,23 @@
   },
   "author": "Grafana Labs",
   "devDependencies": {
-    "@grafana/tsconfig": "^1.2.0-rc1",
+    "@grafana/tsconfig": "1.2.0-rc1",
     "@types/jest": "26.0.15",
-    "@types/react": "18.0.28",
+    "@types/react": "18.2.48",
     "copy-webpack-plugin": "11.0.0",
-    "eslint-webpack-plugin": "4.0.0",
+    "eslint-webpack-plugin": "4.0.1",
     "fork-ts-checker-webpack-plugin": "8.0.0",
-    "jest": "29.3.1",
-    "jest-environment-jsdom": "29.3.1",
+    "jest": "29.7.0",
+    "jest-environment-jsdom": "29.7.0",
     "swc-loader": "0.2.3",
-    "ts-jest": "29.0.5",
+    "ts-jest": "29.1.2",
     "ts-node": "10.9.2",
-    "webpack": "5.76.0"
+    "webpack": "5.90.0"
   },
   "dependencies": {
     "@grafana/data": "10.4.0-pre",
     "@grafana/ui": "10.4.0-pre",
     "react": "18.2.0",
-    "tslib": "2.5.0"
+    "tslib": "2.6.2"
   }
 }
