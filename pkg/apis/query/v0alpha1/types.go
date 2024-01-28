@@ -43,6 +43,7 @@ type DataSourceList struct {
 // The data source resource is a reflection of the individual datasource instances
 // that are exposed in the groups: {datasource}.datasource.grafana.app
 // The status is updated periodically.
+// The name is the plugin id
 //
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type DataSourcePlugin struct {
@@ -53,10 +54,7 @@ type DataSourcePlugin struct {
 	Title string `json:"title"`
 
 	// Describe the plugin
-	Description string `json:"description"`
-
-	// The plugin type ID
-	PluginID string `json:"string"`
+	Description string `json:"description,omitempty"`
 
 	// The group + preferred version
 	GroupVersion string `json:"groupVersion"`
@@ -66,9 +64,6 @@ type DataSourcePlugin struct {
 
 	// Supported operations of this plugin type
 	Capabilities []string `json:"capabilities,omitempty"`
-
-	// SVG icon for this plugin
-	IconURL string `json:"icon"`
 }
 
 // List of datasource plugins

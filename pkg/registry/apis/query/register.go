@@ -17,9 +17,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 var _ grafanaapiserver.APIGroupBuilder = (*QueryAPIBuilder)(nil)
@@ -33,20 +38,40 @@ type QueryAPIBuilder struct {
 	registry runner.DataSourceRegistry
 }
 
-func NewQueryAPIBuilder() *QueryAPIBuilder {
+func NewQueryAPIBuilder(runner runner.QueryRunner, registry runner.DataSourceRegistry) *QueryAPIBuilder {
 	return &QueryAPIBuilder{
 		concurrentQueryLimit: 4, // from config?
 		log:                  log.New("query_apiserver"),
-		runner:               runner.NewDummyTestRunner(),
-		registry:             runner.NewDummyRegistry(),
+		runner:               runner,
+		registry:             registry,
 	}
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration grafanaapiserver.APIRegistrar) *QueryAPIBuilder {
+func RegisterAPIService(features featuremgmt.FeatureToggles,
+	apiregistration grafanaapiserver.APIRegistrar,
+	dataSourcesService datasources.DataSourceService, // TODO... replace limited, read/only flavor
+	pluginStore pluginstore.Store,
+	accessControl accesscontrol.AccessControl,
+	pluginClient plugins.Client,
+	pCtxProvider *plugincontext.Provider,
+) *QueryAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
-	builder := NewQueryAPIBuilder()
+
+	builder := NewQueryAPIBuilder(
+		runner.NewDirectQueryRunner(pluginClient, pCtxProvider),
+		runner.NewDirectRegistry(pluginStore, dataSourcesService),
+	)
+
+	// ONLY testdata...
+	if false {
+		builder = NewQueryAPIBuilder(
+			runner.NewDummyTestRunner(),
+			runner.NewDummyRegistry(),
+		)
+	}
+
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
@@ -79,10 +104,8 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 	gv := v0alpha1.SchemeGroupVersion
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(gv.Group, scheme, metav1.ParameterCodec, codecs)
 
-	cache := runner.NewDummyRegistry()
-
-	ds := newDataSourceStorage(cache)
-	plugins := newPluginsStorage(cache)
+	ds := newDataSourceStorage(b.registry)
+	plugins := newPluginsStorage(b.registry)
 
 	storage := map[string]rest.Storage{}
 	storage[ds.resourceInfo.StoragePath()] = ds

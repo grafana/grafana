@@ -31,6 +31,7 @@ type groupedQueries struct {
 	query []backend.DataQuery
 }
 
+// Internally define what makes this request unique (eventually may include the apiVersion)
 func (d *groupedQueries) key() string {
 	return fmt.Sprintf("%s/%s", d.pluginId, d.uid)
 }

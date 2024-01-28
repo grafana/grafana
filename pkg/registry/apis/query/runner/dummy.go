@@ -96,10 +96,8 @@ func (d *testdataDummy) GetDatasourcePlugins(ctx context.Context, options *inter
 				},
 				Title:        "Test Data",
 				GroupVersion: "testdata.datasource.grafana.app/v0alpha1",
-				PluginID:     "grafana-testdata-datasource",
 				AliasIDs:     []string{"testdata"},
-				Capabilities: []string{"QueryData"},
-				IconURL:      "https://grafana.com/api/plugins/grafana-testdata-datasource/versions/10.3.0-pre-6b4337a/logos/large",
+				Capabilities: []string{"???"},
 			},
 		},
 	}, nil

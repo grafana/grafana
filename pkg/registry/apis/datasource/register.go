@@ -140,7 +140,7 @@ func (b *DataSourceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 }
 
 func resourceFromPluginID(pluginID string) (common.ResourceInfo, error) {
-	group, err := getDatasourceGroupNameFromPluginID(pluginID)
+	group, err := pluginstore.GetDatasourceGroupNameFromPluginID(pluginID)
 	if err != nil {
 		return common.ResourceInfo{}, err
 	}

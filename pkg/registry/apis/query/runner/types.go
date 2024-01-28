@@ -24,6 +24,7 @@ type QueryRunner interface {
 	) (*backend.QueryDataResponse, error)
 }
 
+// Global
 type DataSourceRegistry interface {
 	// Get the group and preferred version for a plugin
 	GetDatasourceAPI(pluginId string) (schema.GroupVersion, error)
@@ -34,5 +35,6 @@ type DataSourceRegistry interface {
 
 	// Get the list of all datasource instances (across all plugins)
 	// The values will be managed though API discovery/reconciliation
+	// This does not need access to the configs
 	GetDataSources(ctx context.Context, namespace string, options *internalversion.ListOptions) (*v0alpha1.DataSourceList, error)
 }
