@@ -16,6 +16,7 @@ import (
 type DSInfo struct {
 	ID                      int64
 	Updated                 time.Time
+	URL                     string
 	JSONData                map[string]any
 	DecryptedSecureJSONData map[string]string
 }
@@ -25,6 +26,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	ds DSInfo, cfg *setting.Cfg) {
 	proxyPath = strings.TrimPrefix(proxyPath, route.Path)
 	data := templateData{
+		URL:            ds.URL,
 		JsonData:       ds.JSONData,
 		SecureJsonData: ds.DecryptedSecureJSONData,
 	}
@@ -48,9 +50,6 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		req.URL.Host = routeURL.Host
 		req.Host = routeURL.Host
 		req.URL.Path = util.JoinURLFragments(routeURL.Path, proxyPath)
-	} else {
-		// If the route URL is empty, we still need to update the request path with the proxy one.
-		req.URL.Path = proxyPath
 	}
 
 	if err := addQueryString(req, route, data); err != nil {
