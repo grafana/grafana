@@ -38,6 +38,7 @@ type ContextSessionKey struct{}
 
 type SQLStore struct {
 	Cfg         *setting.Cfg
+	features    featuremgmt.FeatureToggles
 	sqlxsession *session.SessionDB
 
 	bus                          bus.Bus
@@ -52,7 +53,10 @@ type SQLStore struct {
 	recursiveQueriesMu           sync.Mutex
 }
 
-func ProvideService(cfg *setting.Cfg, migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
+func ProvideService(cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	migrations registry.DatabaseMigrator,
+	bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
@@ -61,9 +65,9 @@ func ProvideService(cfg *setting.Cfg, migrations registry.DatabaseMigrator, bus 
 	if err != nil {
 		return nil, err
 	}
+	s.features = features
 
-	// nolint:staticcheck
-	if err := s.Migrate(cfg.IsFeatureToggleEnabled(featuremgmt.FlagMigrationLocking)); err != nil {
+	if err := s.Migrate(features.IsEnabledGlobally(featuremgmt.FlagMigrationLocking)); err != nil {
 		return nil, err
 	}
 
@@ -87,8 +91,8 @@ func ProvideService(cfg *setting.Cfg, migrations registry.DatabaseMigrator, bus 
 	return s, nil
 }
 
-func ProvideServiceForTests(cfg *setting.Cfg, migrations registry.DatabaseMigrator) (*SQLStore, error) {
-	return initTestDB(cfg, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
+func ProvideServiceForTests(cfg *setting.Cfg, features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator) (*SQLStore, error) {
+	return initTestDB(cfg, features, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
 }
 
 func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine,
@@ -239,7 +243,7 @@ func (ss *SQLStore) initEngine(engine *xorm.Engine) error {
 		return nil
 	}
 
-	dbCfg, err := NewDatabaseConfig(ss.Cfg)
+	dbCfg, err := NewDatabaseConfig(ss.Cfg, ss.features)
 	if err != nil {
 		return err
 	}
@@ -402,15 +406,11 @@ type InitTestDBOpt struct {
 	FeatureFlags            []string
 }
 
-var featuresEnabledDuringTests = []string{
-	featuremgmt.FlagPanelTitleSearch,
-	featuremgmt.FlagUnifiedStorage,
-}
-
 // InitTestDBWithMigration initializes the test DB given custom migrations.
 func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
-	store, err := initTestDB(setting.NewCfg(), migration, opts...)
+	features := getFeaturesForTesting(opts...)
+	store, err := initTestDB(setting.NewCfg(), features, migration, opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -420,7 +420,9 @@ func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opt
 // InitTestDB initializes the test DB.
 func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
-	store, err := initTestDB(setting.NewCfg(), &migrations.OSSMigrations{}, opts...)
+	features := getFeaturesForTesting(opts...)
+
+	store, err := initTestDB(setting.NewCfg(), features, migrations.ProvideOSSMigrations(features), opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -432,21 +434,31 @@ func InitTestDBWithCfg(t ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cf
 	return store, store.Cfg
 }
 
+func getFeaturesForTesting(opts ...InitTestDBOpt) featuremgmt.FeatureToggles {
+	featureKeys := []any{
+		featuremgmt.FlagPanelTitleSearch,
+		featuremgmt.FlagUnifiedStorage,
+	}
+	for _, opt := range opts {
+		if len(opt.FeatureFlags) > 0 {
+			for _, f := range opt.FeatureFlags {
+				featureKeys = append(featureKeys, f)
+			}
+		}
+	}
+	return featuremgmt.WithFeatures(featureKeys...)
+}
+
 //nolint:gocyclo
-func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQLStore, error) {
+func initTestDB(testCfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	migration registry.DatabaseMigrator,
+	opts ...InitTestDBOpt) (*SQLStore, error) {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
 
 	if len(opts) == 0 {
 		opts = []InitTestDBOpt{{EnsureDefaultOrgAndUser: false, FeatureFlags: []string{}}}
-	}
-
-	features := make([]string, len(featuresEnabledDuringTests))
-	copy(features, featuresEnabledDuringTests)
-	for _, opt := range opts {
-		if len(opt.FeatureFlags) > 0 {
-			features = append(features, opt.FeatureFlags...)
-		}
 	}
 
 	if testSQLStore == nil {
@@ -460,14 +472,7 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 		// set test db config
 		cfg := setting.NewCfg()
 		// nolint:staticcheck
-		cfg.IsFeatureToggleEnabled = func(key string) bool {
-			for _, enabledFeature := range features {
-				if enabledFeature == key {
-					return true
-				}
-			}
-			return false
-		}
+		cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
 		sec, err := cfg.Raw.NewSection("database")
 		if err != nil {
@@ -555,14 +560,7 @@ func initTestDB(testCfg *setting.Cfg, migration registry.DatabaseMigrator, opts 
 	}
 
 	// nolint:staticcheck
-	testSQLStore.Cfg.IsFeatureToggleEnabled = func(key string) bool {
-		for _, enabledFeature := range features {
-			if enabledFeature == key {
-				return true
-			}
-		}
-		return false
-	}
+	testSQLStore.Cfg.IsFeatureToggleEnabled = features.IsEnabledGlobally
 
 	if err := testSQLStore.Dialect.TruncateDBTables(testSQLStore.GetEngine()); err != nil {
 		return nil, err

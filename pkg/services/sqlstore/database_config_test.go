@@ -5,10 +5,11 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type databaseConfigTest struct {
@@ -109,7 +110,7 @@ func TestIntegrationSQLConnectionString(t *testing.T) {
 	for _, testCase := range databaseConfigTestCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			cfg := makeDatabaseTestConfig(t, testCase)
-			dbCfg, err := NewDatabaseConfig(cfg)
+			dbCfg, err := NewDatabaseConfig(cfg, testCase.features)
 			require.Equal(t, testCase.err, err)
 			if testCase.expConnStr != "" {
 				assert.Equal(t, testCase.expConnStr, dbCfg.ConnectionString)

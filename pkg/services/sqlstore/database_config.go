@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/go-sql-driver/mysql"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -45,7 +46,7 @@ type DatabaseConfig struct {
 	TransactionRetries int
 }
 
-func NewDatabaseConfig(cfg *setting.Cfg) (*DatabaseConfig, error) {
+func NewDatabaseConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*DatabaseConfig, error) {
 	if cfg == nil {
 		return nil, errors.New("cfg cannot be nil")
 	}
@@ -55,7 +56,7 @@ func NewDatabaseConfig(cfg *setting.Cfg) (*DatabaseConfig, error) {
 		return nil, err
 	}
 
-	if err := dbCfg.buildConnectionString(cfg); err != nil {
+	if err := dbCfg.buildConnectionString(cfg, features); err != nil {
 		return nil, err
 	}
 
@@ -120,7 +121,7 @@ func (dbCfg *DatabaseConfig) readConfig(cfg *setting.Cfg) error {
 	return nil
 }
 
-func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg) error {
+func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg, features featuremgmt.FeatureToggles) error {
 	if dbCfg.ConnectionString != "" {
 		return nil
 	}
@@ -154,8 +155,7 @@ func (dbCfg *DatabaseConfig) buildConnectionString(cfg *setting.Cfg) error {
 			cnnstr += fmt.Sprintf("&transaction_isolation=%s", val)
 		}
 
-		// nolint:staticcheck
-		if cfg.IsFeatureToggleEnabled(featuremgmt.FlagMysqlAnsiQuotes) {
+		if features != nil && features.IsEnabledGlobally(featuremgmt.FlagMysqlAnsiQuotes) {
 			cnnstr += "&sql_mode='ANSI_QUOTES'"
 		}
 

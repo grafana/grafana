@@ -28,9 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionService "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
-	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -46,7 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func apiBuilderServices(cfg *setting.Cfg, pluginID string) (
+func apiBuilderServices(cfg *setting.Cfg, features featuremgmt.FeatureToggles, pluginID string) (
 	*acimpl.AccessControl,
 	*pluginstore.Service,
 	*datasourceService.Service,
@@ -60,16 +58,14 @@ func apiBuilderServices(cfg *setting.Cfg, pluginID string) (
 		return nil, nil, nil, nil, err
 	}
 	routeRegisterImpl := routing.ProvideRegister()
-	hooksService := hooks.ProvideService()
-	ossLicensingService := licensing.ProvideService(cfg, hooksService)
-	featureManager, err := featuremgmt.ProvideManagerService(cfg, ossLicensingService)
+	featureManager, err := featuremgmt.ProvideManagerService(cfg)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
 
 	inProcBus := bus.ProvideBus(tracingService)
-	ossMigrations := migrations.ProvideOSSMigrations()
-	sqlStore, err := sqlstore.ProvideService(cfg, ossMigrations, inProcBus, tracingService)
+	ossMigrations := migrations.ProvideOSSMigrations(features)
+	sqlStore, err := sqlstore.ProvideService(cfg, features, ossMigrations, inProcBus, tracingService)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
