@@ -49,7 +49,7 @@ func NewQueryAPIBuilder(runner runner.QueryRunner, registry runner.DataSourceReg
 
 func RegisterAPIService(features featuremgmt.FeatureToggles,
 	apiregistration grafanaapiserver.APIRegistrar,
-	dataSourcesService datasources.DataSourceService, // TODO... replace limited, read/only flavor
+	dataSourcesService datasources.DataSourceService,
 	pluginStore pluginstore.Store,
 	accessControl accesscontrol.AccessControl,
 	pluginClient plugins.Client,

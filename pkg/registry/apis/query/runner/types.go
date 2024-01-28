@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 
+// We can not yet put this in /apis/ because it depends on plugins sdk
 type QueryRunner interface {
 	// Runs the query as the user in context
 	ExecuteQueryData(ctx context.Context,
