@@ -7,12 +7,14 @@ import (
 	"strings"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/util/openapi"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -26,6 +28,18 @@ func SetupConfig(serverConfig *genericapiserver.RecommendedConfig, builders []AP
 	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
 		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
+
+	serverConfig.OpenAPIV3Config.GetOperationIDAndTagsFromRoute = func(r common.Route) (string, []string, error) {
+		tags := []string{}
+		prop, ok := r.Metadata()["x-kubernetes-group-version-kind"]
+		if ok {
+			gvk, ok := prop.(metav1.GroupVersionKind)
+			if ok && gvk.Kind != "" {
+				tags = append(tags, gvk.Kind)
+			}
+		}
+		return r.OperationName(), tags, nil
+	}
 
 	// Add the custom routes to service discovery
 	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(builders)
