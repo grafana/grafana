@@ -187,7 +187,12 @@ export class DashboardModel implements TimeModel {
     }
 
     // Explicit handling of graph -> time series migration (and eventually others)
-    if (options?.autoMigrateOldPanels || !config.angularSupportEnabled || config.featureToggles.autoMigrateGraphPanel) {
+    if (
+      options?.autoMigrateOldPanels ||
+      !config.angularSupportEnabled ||
+      config.featureToggles.autoMigrateOldPanels ||
+      config.featureToggles.autoMigrateGraphPanel
+    ) {
       for (const p of this.panelIterator()) {
         if (!p.autoMigrateFrom && p.type === 'graph') {
           p.autoMigrateFrom = p.type;
