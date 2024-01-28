@@ -96,4 +96,9 @@ export const PromFlavorVersions: { [index: string]: Array<{ value?: string; labe
     { value: '1.13.0', label: '1.13.x' },
     { value: '1.14.0', label: '> 1.13.x' },
   ],
+  VictoriaMetrics: [
+    { value: undefined, label: 'Please select' },
+    { value: '0.0.0', label: '< 1.31.x' },
+    { value: '1.31.1', label: '> 1.31.x' },
+  ],
 };

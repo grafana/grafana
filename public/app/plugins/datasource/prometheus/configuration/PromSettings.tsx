@@ -46,6 +46,7 @@ const prometheusFlavorSelectItems: PrometheusSelectItemsType = [
   { value: PromApplication.Cortex, label: PromApplication.Cortex },
   { value: PromApplication.Mimir, label: PromApplication.Mimir },
   { value: PromApplication.Thanos, label: PromApplication.Thanos },
+  { value: PromApplication.VictoriaMetrics, label: PromApplication.VictoriaMetrics },
 ];
 
 type Props = Pick<DataSourcePluginOptionsEditorProps<PromOptions>, 'options' | 'onOptionsChange'>;
