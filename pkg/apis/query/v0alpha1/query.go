@@ -55,6 +55,7 @@ type DataSourceRef struct {
 	UID string `json:"uid"`
 }
 
+// GenericDataQuery is a replacement for `dtos.MetricRequest` that provides more explicit types
 type GenericDataQuery struct {
 	// RefID is the unique identifier of the query, set by the frontend call.
 	RefID string `json:"refId"`
@@ -139,8 +140,12 @@ func (g GenericDataQuery) MarshalJSON() ([]byte, error) {
 	if g.DatasourceId > 0 {
 		vals["datasourceId"] = g.DatasourceId
 	}
-	vals["intervalMs"] = g.IntervalMS
-	vals["maxDataPoints"] = g.MaxDataPoints
+	if g.IntervalMS > 0 {
+		vals["intervalMs"] = g.IntervalMS
+	}
+	if g.MaxDataPoints > 0 {
+		vals["maxDataPoints"] = g.MaxDataPoints
+	}
 	return json.Marshal(vals)
 }
 
@@ -166,13 +171,21 @@ func (g *GenericDataQuery) UnmarshalJSON(b []byte) error {
 	v, ok = vals[key]
 	if ok {
 		wrap, ok := v.(map[string]any)
-		if !ok {
-			return fmt.Errorf("expected datsource as object (got: %t)", v)
+		if ok {
+			g.Datasource = &DataSourceRef{}
+			g.Datasource.Type, _ = wrap["type"].(string)
+			g.Datasource.UID, _ = wrap["uid"].(string)
+			delete(vals, key)
+		} else {
+			// Old old queries may arrive with just the name
+			name, ok := v.(string)
+			if !ok {
+				return fmt.Errorf("expected datasource as object (got: %t)", v)
+			}
+			g.Datasource = &DataSourceRef{}
+			g.Datasource.UID = name // Not great, but the lookup function will try its best to resolve
+			delete(vals, key)
 		}
-		g.Datasource = &DataSourceRef{}
-		g.Datasource.Type, _ = wrap["type"].(string)
-		g.Datasource.UID, _ = wrap["uid"].(string)
-		delete(vals, key)
 	}
 
 	key = "intervalMs"

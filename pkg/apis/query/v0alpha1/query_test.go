@@ -23,6 +23,15 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 				"datasourceId": 4,
 				"intervalMs": 30000,
 				"maxDataPoints": 794
+			},
+			{
+				"refId": "Z",
+				"datasource": "old",
+				"maxDataPoints": 10,
+				"timeRange": {
+					"from": "100",
+					"to": "200"
+				}
 			}
 		],
 		"from": "1692624667389",
@@ -33,7 +42,7 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 	err := json.Unmarshal(request, req)
 	require.NoError(t, err)
 
-	require.Len(t, req.Queries, 1)
+	require.Len(t, req.Queries, 2)
 	require.Equal(t, "b1808c48-9fc9-4045-82d7-081781f8a553", req.Queries[0].Datasource.UID)
 	require.Equal(t, "spreadsheetID", req.Queries[0].AdditionalProperties()["spreadsheet"])
 
@@ -46,4 +55,21 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 	err = json.Unmarshal(out, query)
 	require.NoError(t, err)
 	require.Equal(t, "spreadsheetID", query.AdditionalProperties()["spreadsheet"])
+
+	// The second query has an explicit time range, and legacy datasource name
+	out, err = json.MarshalIndent(req.Queries[1], "", "  ")
+	require.NoError(t, err)
+	// fmt.Printf("%s\n", string(out))
+	require.JSONEq(t, `{
+		"datasource": {
+		  "type": "", ` /* NOTE! this implies legacy naming */ +`
+		  "uid": "old"
+		},
+		"maxDataPoints": 10,
+		"refId": "Z",
+		"timeRange": {
+		  "from": "100",
+		  "to": "200"
+		}
+	  }`, string(out))
 }
