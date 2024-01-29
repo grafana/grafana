@@ -11,14 +11,15 @@ type DatasourceInfo struct {
 	Token string
 	URL   string
 
-	DbName        string `json:"dbName"`
-	Version       string `json:"version"`
-	HTTPMode      string `json:"httpMode"`
-	TimeInterval  string `json:"timeInterval"`
-	DefaultBucket string `json:"defaultBucket"`
-	Organization  string `json:"organization"`
-	MaxSeries     int    `json:"maxSeries"`
-	Timeout       time.Duration
+	DbName          string `json:"dbName"`
+	Version         string `json:"version"`
+	HTTPMode        string `json:"httpMode"`
+	TimeInterval    string `json:"timeInterval"`
+	DefaultBucket   string `json:"defaultBucket"`
+	Organization    string `json:"organization"`
+	MaxSeries       int    `json:"maxSeries"`
+	Timeout         time.Duration
+	ConcurrentQuery int
 
 	// FlightSQL grpc connection
 	SecureGrpc bool `json:"secureGrpc"`
