@@ -91,6 +91,10 @@ type Dialect interface {
 	// column names to values to use in the where clause.
 	// The update is executed as part of the provided session.
 	Update(ctx context.Context, tx *session.SessionTx, tableName string, row map[string]any, where map[string]any) error
+	// Concat returns the sql statement for concating multiple strings
+	// Implementations are not expected to quote the arguments
+	// therefore any callers should take care to quote arguments as necessary
+	Concat(...string) string
 }
 
 type LockCfg struct {
@@ -449,4 +453,8 @@ func (b *BaseDialect) Update(ctx context.Context, tx *session.SessionTx, tableNa
 
 	_, err = tx.Exec(ctx, query, args...)
 	return err
+}
+
+func (b *BaseDialect) Concat(strs ...string) string {
+	return fmt.Sprintf("CONCAT(%s)", strings.Join(strs, ", "))
 }

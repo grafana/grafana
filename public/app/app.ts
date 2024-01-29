@@ -33,6 +33,7 @@ import {
   setRunRequest,
   setPluginImportUtils,
   setPluginExtensionGetter,
+  setEmbeddedDashboard,
   setAppEvents,
   type GetPluginExtensions,
 } from '@grafana/runtime';
@@ -73,6 +74,7 @@ import { initDevFeatures } from './dev';
 import { initAlerting } from './features/alerting/unified/initAlerting';
 import { initAuthConfig } from './features/auth-config';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
+import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
 import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
@@ -135,6 +137,7 @@ export class GrafanaApp {
       setPluginPage(PluginPage);
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
+      setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => config.bootData.user.timezone);
       initGrafanaLive();
 
