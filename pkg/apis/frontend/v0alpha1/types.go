@@ -33,6 +33,7 @@ type ExtensionInfo struct {
 	Module string `json:"module,omitempty"`
 
 	// List of required APIs
+	// +listType=set
 	APIs []metav1.GroupVersion `json:"apis,omitempty"`
 }
 

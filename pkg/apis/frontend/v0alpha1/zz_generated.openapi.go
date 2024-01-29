@@ -72,6 +72,11 @@ func schema_pkg_apis_frontend_v0alpha1_ExtensionInfo(ref common.ReferenceCallbac
 						},
 					},
 					"apis": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "List of required APIs",
 							Type:        []string{"array"},
