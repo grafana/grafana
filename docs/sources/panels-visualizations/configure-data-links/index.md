@@ -38,6 +38,37 @@ For visualizations like stat, gauge, or bar gauge you can click anywhere on the 
 
 If there's only one data link in the visualization, clicking anywhere on the visualization opens the link rather than the context menu.
 
+## Supported visualizations
+
+<!--
+
+- [Bar chart][bar chart]
+- [Bar gauge][bar gauge]
+- [Candlestick][candlestick]
+- [Canvas][canvas]
+- [Gauge][gauge]
+- [Geomap][geomap]
+- [Heatmap][]
+- [Histogram][histogram]
+- [Pie chart][pie chart]
+- [Stat][stat]
+- [State timeline][state timeline]
+- [Status history][status history]
+- [Table][table]
+- [Time series][time series]
+- [Trend][trend] -->
+
+|                            |                                  |
+| -------------------------- | -------------------------------- |
+| [Bar chart][bar chart]     | [Pie chart][pie chart]           |
+| [Bar gauge][bar gauge]     | [Stat][stat]                     |
+| [Candlestick][candlestick] | [State timeline][state timeline] |
+| [Canvas][canvas]           | [Status history][status history] |
+| [Gauge][gauge]             | [Table][table]                   |
+| [Geomap][geomap]           | [Time series][time series]       |
+| [Heatmap][]                | [Trend][trend]                   |
+| [Histogram][histogram]     |                                  |
+
 ## Data link variables
 
 Variables in data links let you send people to a detailed dashboard with preserved data filters. For example, you could use variables to specify a label, time range, series, or variable selection.
