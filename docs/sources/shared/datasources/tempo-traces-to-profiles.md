@@ -34,6 +34,10 @@ To use trace to profiles, navigate to **Explore** and query a trace. Each span n
 
 To use trace to profiles, you must have a configured Grafana Pyroscope data source. For more information, refer to the [Grafana Pyroscope data source](/docs/grafana/latest/datasources/grafana-pyroscope/) documentation.
 
+**Embedded flame graphs** are also inserted into each span details section that has a linked profile (requires a configured Grafana Pyroscope data source).
+This lets you see resource consumption in a flame graph visualization for each span without having to navigate away from the current view.
+Hover over a particular block in the flame graph to see more details about the resources being consumed.
+
 ## Use a basic configuration
 
 To use a simple configuration, follow these steps:
@@ -41,7 +45,9 @@ To use a simple configuration, follow these steps:
 1. Select a Pyroscope data source from the **Data source** drop-down.
 1. Optional: Choose any tags to use in the query. If left blank, the default values of `service.name` and `service.namespace` are used.
 
-   The tags you configure must be present in the spans attributes or resources for a trace to profiles span link to appear. You can optionally configure a new name for the tag. This is useful for example if the tag has dots in the name and the target data source doesn't allow using dots in labels. In that case you can for example remap `service.name` to `service_name`.
+   The tags you configure must be present in the spans attributes or resources for a trace to profiles span link to appear.
+
+   You can optionally configure a new name for the tag. This is useful if the tag has dots in the name and the target data source doesn't allow dots in labels. In that case, you can remap `service.name` to `service_name`.
 
 1. Select one or more profile types to use in the query. Select the drop-down and choose options from the menu.
 
@@ -50,6 +56,8 @@ To use a simple configuration, follow these steps:
 
 1. Do not select **Use custom query**.
 1. Select **Save and Test**.
+
+If you have configured a Pyroscope data source and no profile data is available or the **Profiles for this span** button and the embedded flame graph is not visible, verify that the `pyroscope.profile.id` key-value pair exists in your span tags.
 
 ## Configure a custom query
 
