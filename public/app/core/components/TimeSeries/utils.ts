@@ -569,11 +569,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         }
 
         const yVal = self.data[seriesIdx][hoveredIdx];
-        if (yVal == null) {
+        if (yVal === null) {
           return hoverNullProximityPx;
-        } else {
-          return null;
         }
+
+        return null;
       },
       skip: [null],
     },
