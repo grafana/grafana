@@ -3161,7 +3161,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "workspace:*"
-    "@grafana/experimental": "npm:1.7.7"
+    "@grafana/experimental": "npm:1.7.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "workspace:*"
     "@grafana/runtime": "workspace:*"
