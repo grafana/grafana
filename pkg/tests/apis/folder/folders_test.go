@@ -54,7 +54,7 @@ func TestFoldersApp(t *testing.T) {
 				"name": "folders/children",
 				"singularName": "",
 				"namespaced": true,
-				"kind": "FolderResult",
+				"kind": "FolderInfoList",
 				"verbs": [
 				  "get"
 				]
@@ -63,7 +63,7 @@ func TestFoldersApp(t *testing.T) {
 				"name": "folders/parents",
 				"singularName": "",
 				"namespaced": true,
-				"kind": "FolderResult",
+				"kind": "FolderInfoList",
 				"verbs": [
 				  "get"
 				]
