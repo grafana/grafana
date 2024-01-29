@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
@@ -11,13 +12,18 @@ import (
 )
 
 var varRegex = regexp.MustCompile(`(\$\{.+?\})`)
+var errMessage = "dashboard import failed due to missing input variable"
 
 type DashboardInputMissingError struct {
 	VariableName string
 }
 
 func (e DashboardInputMissingError) Error() string {
-	return fmt.Sprintf("Dashboard input variable: %v missing from import command", e.VariableName)
+	return fmt.Sprintf("%s: %v", errMessage, e.VariableName)
+}
+
+func (e DashboardInputMissingError) Is(other error) bool {
+	return strings.Contains(other.Error(), errMessage)
 }
 
 type DashTemplateEvaluator struct {
