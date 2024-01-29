@@ -2980,7 +2980,7 @@ __metadata:
     "@grafana/data": "npm:10.4.0-pre"
     "@grafana/e2e-selectors": "npm:10.4.0-pre"
     "@grafana/experimental": "npm:1.7.8"
-    "@grafana/google-sdk": "npm:0.1.1"
+    "@grafana/google-sdk": "npm:0.1.2"
     "@grafana/plugin-configs": "npm:10.4.0-pre"
     "@grafana/runtime": "npm:10.4.0-pre"
     "@grafana/schema": "npm:10.4.0-pre"
@@ -3502,18 +3502,6 @@ __metadata:
     react-dom: ^17.0.0 || ^18.0.0
   languageName: unknown
   linkType: soft
-
-"@grafana/google-sdk@npm:0.1.1":
-  version: 0.1.1
-  resolution: "@grafana/google-sdk@npm:0.1.1"
-  peerDependencies:
-    "@grafana/data": 9.4.1
-    "@grafana/ui": 9.4.1
-    react: 17.0.2
-    react-dom: 17.0.2
-  checksum: a21544b624f432e19bad05c5dcb2441581453ab34d5a5709cf63191a59f442f8dcd60a935a39bfa7074e554e1761dfa50b4871729dec6b5f2f0485627208ba16
-  languageName: node
-  linkType: hard
 
 "@grafana/google-sdk@npm:0.1.2":
   version: 0.1.2
