@@ -46,9 +46,8 @@ type SocialGenericOAuth struct {
 }
 
 func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGenericOAuth {
-	config := createOAuthConfig(info, cfg, social.GenericOAuthProviderName)
 	provider := &SocialGenericOAuth{
-		SocialBase:           newSocialBase(social.GenericOAuthProviderName, config, info, cfg.AutoAssignOrgRole, features),
+		SocialBase:           newSocialBase(social.GenericOAuthProviderName, info, features, cfg),
 		teamsUrl:             info.TeamsUrl,
 		emailAttributeName:   info.EmailAttributeName,
 		emailAttributePath:   info.EmailAttributePath,
@@ -79,7 +78,38 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, settings ssoModels.SS
 		return err
 	}
 
-	// add specific validation rules for Generic OAuth
+	if info.Extra[teamIdsKey] != "" && (info.TeamIdsAttributePath == "" || info.TeamsUrl == "") {
+		return ssosettings.ErrInvalidOAuthConfig("If Team Ids are configured then Team Ids attribute path and Teams URL must be configured.")
+	}
+
+	if info.AllowedGroups != nil && len(info.AllowedGroups) > 0 && info.GroupsAttributePath == "" {
+		return ssosettings.ErrInvalidOAuthConfig("If Allowed groups are configured then Groups attribute path must be configured.")
+	}
+
+	return nil
+}
+
+func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
+
+	s.SocialBase = newSocialBase(social.GenericOAuthProviderName, newInfo, s.features, s.cfg)
+
+	s.teamsUrl = newInfo.TeamsUrl
+	s.emailAttributeName = newInfo.EmailAttributeName
+	s.emailAttributePath = newInfo.EmailAttributePath
+	s.nameAttributePath = newInfo.Extra[nameAttributePathKey]
+	s.groupsAttributePath = newInfo.GroupsAttributePath
+	s.loginAttributePath = newInfo.Extra[loginAttributePathKey]
+	s.idTokenAttributeName = newInfo.Extra[idTokenAttributeNameKey]
+	s.teamIdsAttributePath = newInfo.TeamIdsAttributePath
+	s.teamIds = util.SplitString(newInfo.Extra[teamIdsKey])
+	s.allowedOrganizations = util.SplitString(newInfo.Extra[allowedOrganizationsKey])
 
 	return nil
 }

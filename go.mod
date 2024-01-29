@@ -59,7 +59,7 @@ require (
 	github.com/google/uuid v1.5.0 // @grafana/backend-platform
 	github.com/google/wire v0.5.0 // @grafana/backend-platform
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/alerting v0.0.0-20231221110807-c17ec6241a66 // @grafana/alerting-squad-backend
+	github.com/grafana/alerting v0.0.0-20240123184432-1d58deb6074c // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.19.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.11.0 // @grafana/partner-datasources
@@ -78,7 +78,7 @@ require (
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/backend-platform
 	github.com/magefile/mage v1.15.0 // @grafana/grafana-delivery
 	github.com/mattn/go-isatty v0.0.18 // @grafana/backend-platform
-	github.com/mattn/go-sqlite3 v1.14.16 // @grafana/backend-platform
+	github.com/mattn/go-sqlite3 v1.14.19 // @grafana/backend-platform
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-squad-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
@@ -111,7 +111,7 @@ require (
 	golang.org/x/oauth2 v0.15.0 // @grafana/grafana-authnz-team
 	golang.org/x/sync v0.5.0 // @grafana/alerting-squad-backend
 	golang.org/x/time v0.5.0 // @grafana/backend-platform
-	golang.org/x/tools v0.16.0 // @grafana/grafana-as-code
+	golang.org/x/tools v0.16.1 // @grafana/grafana-as-code
 	gonum.org/v1/gonum v0.12.0 // @grafana/observability-metrics
 	google.golang.org/api v0.149.0 // @grafana/backend-platform
 	google.golang.org/grpc v1.60.1 // @grafana/plugins-platform-backend
@@ -308,7 +308,7 @@ require (
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
 	github.com/bwmarrin/snowflake v0.3.0 // @grafan/grafana-app-platform-squad
 	github.com/centrifugal/protocol v0.10.0 // indirect
-	github.com/cloudflare/circl v1.3.3 // indirect
+	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/cockroachdb/errors v1.9.1 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20211118104740-dabe8e521a4f // indirect
 	github.com/cockroachdb/redact v1.1.3 // indirect
@@ -483,6 +483,8 @@ require (
 )
 
 require k8s.io/apiextensions-apiserver v0.29.0 // @grafana/grafana-app-platform-squad
+
+require k8s.io/code-generator v0.29.1 // @grafana/grafana-app-platform-squad
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20231025143828-a6c0e9b86a4c

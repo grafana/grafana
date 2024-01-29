@@ -57,6 +57,7 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		folderID, err := strconv.ParseInt(id, 10, 64)
 		if err == nil {
 			folderIDs = append(folderIDs, folderID)
+			metrics.MFolderIDsAPICount.WithLabelValues(metrics.Search).Inc()
 		}
 	}
 

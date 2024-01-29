@@ -46,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -439,7 +440,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 
-	acSvc := acimpl.ProvideOSSService(sc.cfg, acdb.ProvideService(sc.db), localcache.ProvideService(), features)
+	acSvc := acimpl.ProvideOSSService(sc.cfg, acdb.ProvideService(sc.db), localcache.ProvideService(), usertest.NewUserServiceFake(), features)
 
 	quotaSrv := quotatest.New(false, nil)
 
@@ -451,11 +452,12 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	ac := acimpl.ProvideAccessControl(sc.cfg)
 	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sc.cfg, dashStore, folderStore, sc.db, features, nil)
 
+	cfg := setting.NewCfg()
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
 	require.NoError(b, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
 	require.NoError(b, err)
 
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
