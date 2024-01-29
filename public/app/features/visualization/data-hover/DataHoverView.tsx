@@ -10,9 +10,12 @@ import {
   GrafanaTheme2,
   LinkModel,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { TextLink, useStyles2 } from '@grafana/ui';
 import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
+
+import { ExemplarHoverView } from './ExemplarHoverView';
 
 export interface Props {
   data?: DataFrame; // source data
@@ -21,24 +24,26 @@ export interface Props {
   sortOrder?: SortOrder;
   mode?: TooltipDisplayMode | null;
   header?: string;
+  padding?: number;
 }
 
-interface DisplayValue {
+export interface DisplayValue {
   name: string;
   value: unknown;
   valueString: string;
   highlight: boolean;
 }
 
-export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, header = undefined }: Props) => {
-  const styles = useStyles2(getStyles);
+export function getDisplayValuesAndLinks(
+  data: DataFrame,
+  rowIndex: number,
+  columnIndex?: number | null,
+  sortOrder?: SortOrder,
+  mode?: TooltipDisplayMode | null
+) {
+  const fields = data.fields;
+  const hoveredField = columnIndex != null ? fields[columnIndex] : null;
 
-  if (!data || rowIndex == null) {
-    return null;
-  }
-  const fields = data.fields.map((f, idx) => {
-    return { ...f, hovered: idx === columnIndex };
-  });
   const visibleFields = fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.tooltip));
   const traceIDField = visibleFields.find((field) => field.name === 'traceID') || fields[0];
   const orderedVisibleFields = [];
@@ -57,7 +62,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
   const linkLookup = new Set<string>();
 
   for (const field of orderedVisibleFields) {
-    if (mode === TooltipDisplayMode.Single && columnIndex != null && !field.hovered) {
+    if (mode === TooltipDisplayMode.Single && field !== hoveredField) {
       continue;
     }
 
@@ -74,19 +79,38 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
       });
     }
 
-    // Sanitize field by removing hovered property to fix unique display name issue
-    const { hovered, ...sanitizedField } = field;
-
     displayValues.push({
-      name: getFieldDisplayName(sanitizedField, data),
+      name: getFieldDisplayName(field, data),
       value,
       valueString: formattedValueToString(fieldDisplay),
-      highlight: field.hovered,
+      highlight: field === hoveredField,
     });
   }
 
   if (sortOrder && sortOrder !== SortOrder.None) {
     displayValues.sort((a, b) => arrayUtils.sortValues(sortOrder)(a.value, b.value));
+  }
+
+  return { displayValues, links };
+}
+
+export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, header, padding = 0 }: Props) => {
+  const styles = useStyles2(getStyles, padding);
+
+  if (!data || rowIndex == null) {
+    return null;
+  }
+
+  const dispValuesAndLinks = getDisplayValuesAndLinks(data, rowIndex, columnIndex, sortOrder, mode);
+
+  if (dispValuesAndLinks == null) {
+    return null;
+  }
+
+  const { displayValues, links } = dispValuesAndLinks;
+
+  if (config.featureToggles.newVizTooltips && header === 'Exemplar') {
+    return <ExemplarHoverView displayValues={displayValues} links={links} header={header} />;
   }
 
   return (
@@ -119,46 +143,46 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
     </div>
   );
 };
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, padding = 0) => {
   return {
-    wrapper: css`
-      background: ${theme.components.tooltip.background};
-      border-radius: ${theme.shape.borderRadius(2)};
-    `,
-    header: css`
-      background: ${theme.colors.background.secondary};
-      align-items: center;
-      align-content: center;
-      display: flex;
-      padding-bottom: ${theme.spacing(1)};
-    `,
-    title: css`
-      font-weight: ${theme.typography.fontWeightMedium};
-      overflow: hidden;
-      display: inline-block;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      flex-grow: 1;
-    `,
-    infoWrap: css`
-      padding: ${theme.spacing(1)};
-      background: transparent;
-      border: none;
-      th {
-        font-weight: ${theme.typography.fontWeightMedium};
-        padding: ${theme.spacing(0.25, 2, 0.25, 0)};
-      }
+    wrapper: css({
+      padding: `${padding}px`,
+      background: theme.components.tooltip.background,
+      borderRadius: theme.shape.borderRadius(2),
+    }),
+    header: css({
+      background: theme.colors.background.secondary,
+      alignItems: 'center',
+      alignContent: 'center',
+      display: 'flex',
+      paddingBottom: theme.spacing(1),
+    }),
+    title: css({
+      fontWeight: theme.typography.fontWeightMedium,
+      overflow: 'hidden',
+      display: 'inline-block',
+      whiteSpace: 'nowrap',
+      textOverflow: 'ellipsis',
+      flexGrow: 1,
+    }),
+    infoWrap: css({
+      padding: theme.spacing(1),
+      background: 'transparent',
+      border: 'none',
+      th: {
+        fontWeight: theme.typography.fontWeightMedium,
+        padding: theme.spacing(0.25, 2, 0.25, 0),
+      },
 
-      tr {
-        border-bottom: 1px solid ${theme.colors.border.weak};
-        &:last-child {
-          border-bottom: none;
-        }
-      }
-    `,
-    highlight: css``,
-    link: css`
-      color: ${theme.colors.text.link};
-    `,
+      tr: {
+        borderBottom: `1px solid ${theme.colors.border.weak}`,
+        '&:last-child': {
+          borderBottom: 'none',
+        },
+      },
+    }),
+    link: css({
+      color: theme.colors.text.link,
+    }),
   };
 };

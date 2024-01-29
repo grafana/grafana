@@ -29,8 +29,8 @@ type Client struct {
 
 func NewClient(skipTLSVerify bool, logger log.PrettyLogger) *Client {
 	return &Client{
-		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
-		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 0),
+		httpClient:          MakeHttpClient(skipTLSVerify, 10*time.Second),
+		httpClientNoTimeout: MakeHttpClient(skipTLSVerify, 0),
 		log:                 logger,
 	}
 }
@@ -164,7 +164,7 @@ func (c *Client) downloadFile(tmpFile *os.File, pluginURL, checksum string, comp
 		return fmt.Errorf("failed to write to %q: %w", tmpFile.Name(), err)
 	}
 	if len(checksum) > 0 && checksum != fmt.Sprintf("%x", h.Sum(nil)) {
-		return ErrChecksumMismatch{archiveURL: pluginURL}
+		return ErrChecksumMismatch(pluginURL)
 	}
 	return nil
 }
@@ -234,7 +234,7 @@ func (c *Client) handleResp(res *http.Response, compatOpts CompatOpts) (io.ReadC
 	return res.Body, nil
 }
 
-func makeHttpClient(skipTLSVerify bool, timeout time.Duration) http.Client {
+func MakeHttpClient(skipTLSVerify bool, timeout time.Duration) http.Client {
 	return http.Client{
 		Timeout: timeout,
 		Transport: &http.Transport{

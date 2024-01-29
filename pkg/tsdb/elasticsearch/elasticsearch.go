@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	exphttpclient "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource/httpclient"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -87,7 +88,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			httpCliOpts.SigV4.Service = "es"
 		}
 
-		httpCli, err := httpClientProvider.New(httpCliOpts)
+		// enable experimental http client to support errors with source
+		httpCli, err := exphttpclient.New(httpCliOpts)
 		if err != nil {
 			return nil, err
 		}
@@ -116,11 +118,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		interval, ok := jsonData["interval"].(string)
 		if !ok {
 			interval = ""
-		}
-
-		timeInterval, ok := jsonData["timeInterval"].(string)
-		if !ok {
-			timeInterval = ""
 		}
 
 		index, ok := jsonData["index"].(string)
@@ -169,7 +166,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			MaxConcurrentShardRequests: int64(maxConcurrentShardRequests),
 			ConfiguredFields:           configuredFields,
 			Interval:                   interval,
-			TimeInterval:               timeInterval,
 			IncludeFrozen:              includeFrozen,
 			XPack:                      xpack,
 		}
@@ -192,9 +188,10 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	logger := eslog.FromContext(ctx)
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
-	// - ?/_mapping for fetching index mapping
+	// - /_mapping for fetching index mapping, e.g. requests going to `index/_mapping`
 	// - _msearch for executing getTerms queries
-	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_msearch" {
+	// - _mapping for fetching "root" index mappings
+	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_msearch" && req.Path != "_mapping" {
 		logger.Error("Invalid resource path", "path", req.Path)
 		return fmt.Errorf("invalid resource URL: %s", req.Path)
 	}

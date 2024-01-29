@@ -1,13 +1,10 @@
 import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TemplateSrv } from '@grafana/runtime';
 
 import { ElasticDatasource } from './datasource';
 import { ElasticsearchOptions } from './types';
 
-export function createElasticDatasource(
-  settings: Partial<DataSourceInstanceSettings<ElasticsearchOptions>> = {},
-  templateSrv: TemplateSrv
-) {
+export function createElasticDatasource(settings: Partial<DataSourceInstanceSettings<ElasticsearchOptions>> = {}) {
   const { jsonData, ...rest } = settings;
 
   const instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions> = {
@@ -42,10 +39,23 @@ export function createElasticDatasource(
     jsonData: {
       timeField: '',
       timeInterval: '',
+      index: '[test-]YYYY.MM.DD',
       ...jsonData,
     },
-    database: '[test-]YYYY.MM.DD',
     ...rest,
+  };
+
+  const templateSrv: TemplateSrv = {
+    getVariables: () => [],
+    replace: (text?: string) => {
+      if (text?.startsWith('$')) {
+        return `resolvedVariable`;
+      } else {
+        return text || '';
+      }
+    },
+    containsTemplate: (text?: string) => text?.includes('$') ?? false,
+    updateTimeRange: () => {},
   };
 
   return new ElasticDatasource(instanceSettings, templateSrv);

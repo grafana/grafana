@@ -213,6 +213,10 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   const noAlertsMessage = rules.length === 0 ? 'No alerts matching filters' : undefined;
 
+  const renderLoading = grafanaRulesLoading || (dispatched && loading && !haveResults);
+
+  const havePreviousResults = Object.values(promRulesRequests).some((state) => state.result);
+
   if (
     !contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
     !contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead)
@@ -225,33 +229,36 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
       <div className={styles.container}>
-        {(grafanaRulesLoading || (dispatched && loading && !haveResults)) && <LoadingPlaceholder text="Loading..." />}
-        {noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
-        <section>
-          {props.options.viewMode === ViewMode.Stat && haveResults && (
-            <BigValue
-              width={props.width}
-              height={props.height}
-              graphMode={BigValueGraphMode.None}
-              textMode={BigValueTextMode.Auto}
-              justifyMode={BigValueJustifyMode.Auto}
-              theme={config.theme2}
-              value={{ text: `${rules.length}`, numeric: rules.length }}
-            />
-          )}
-          {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Custom && haveResults && (
-            <GroupedModeView rules={rules} options={parsedOptions} />
-          )}
-          {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && haveResults && (
-            <UngroupedModeView
-              rules={rules}
-              options={parsedOptions}
-              handleInstancesLimit={handleInstancesLimit}
-              limitInstances={limitInstances}
-              hideViewRuleLinkText={hideViewRuleLinkText}
-            />
-          )}
-        </section>
+        {havePreviousResults && noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
+        {havePreviousResults && (
+          <section>
+            {props.options.viewMode === ViewMode.Stat && (
+              <BigValue
+                width={props.width}
+                height={props.height}
+                graphMode={BigValueGraphMode.None}
+                textMode={BigValueTextMode.Auto}
+                justifyMode={BigValueJustifyMode.Auto}
+                theme={config.theme2}
+                value={{ text: `${rules.length}`, numeric: rules.length }}
+              />
+            )}
+            {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Custom && (
+              <GroupedModeView rules={rules} options={parsedOptions} />
+            )}
+            {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && (
+              <UngroupedModeView
+                rules={rules}
+                options={parsedOptions}
+                handleInstancesLimit={handleInstancesLimit}
+                limitInstances={limitInstances}
+                hideViewRuleLinkText={hideViewRuleLinkText}
+              />
+            )}
+          </section>
+        )}
+        {/* loading moved here to avoid twitching  */}
+        {renderLoading && <LoadingPlaceholder text="Loading..." />}
       </div>
     </CustomScrollbar>
   );

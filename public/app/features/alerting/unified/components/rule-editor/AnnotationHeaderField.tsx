@@ -1,8 +1,7 @@
 import React from 'react';
 import { FieldArrayWithId, useFormContext } from 'react-hook-form';
 
-import { Stack } from '@grafana/experimental';
-import { InputControl, Text } from '@grafana/ui';
+import { InputControl, Text, Stack } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationDescriptions, annotationLabels } from '../../utils/constants';
@@ -39,8 +38,10 @@ const AnnotationHeaderField = ({
               switch (annotationField.key) {
                 case Annotation.dashboardUID:
                   label = 'Dashboard and panel';
+                  break;
                 case Annotation.panelID:
                   label = '';
+                  break;
                 default:
                   label = annotationLabels[annotation] && annotationLabels[annotation] + ' (optional)';
               }

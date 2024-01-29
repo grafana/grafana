@@ -18,8 +18,8 @@ import { DashboardDTO } from 'app/types';
 import { PanelRepeaterGridItem, RepeatDirection } from '../scene/PanelRepeaterGridItem';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 
-export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>) {
-  const loadDashboardMock = jest.fn().mockResolvedValue(rsp);
+export function setupLoadDashboardMock(rsp: DeepPartial<DashboardDTO>, spy?: jest.Mock) {
+  const loadDashboardMock = (spy || jest.fn()).mockResolvedValue(rsp);
   setDashboardLoaderSrv({
     loadDashboard: loadDashboardMock,
     // disabling type checks since this is a test util

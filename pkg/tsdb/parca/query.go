@@ -31,6 +31,7 @@ const (
 
 // query processes single Parca query transforming the response to data.Frame packaged in DataResponse
 func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
+	ctxLogger := logger.FromContext(ctx)
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.parca.query", trace.WithAttributes(attribute.String("query_type", query.QueryType)))
 	defer span.End()
 
@@ -40,6 +41,7 @@ func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext,
 	err := json.Unmarshal(query.JSON, &qm)
 	if err != nil {
 		response.Error = err
+		ctxLogger.Error("Failed to unmarshall query", "error", err, "function", logEntrypoint())
 		span.RecordError(response.Error)
 		span.SetStatus(codes.Error, response.Error.Error())
 		return response
@@ -49,6 +51,7 @@ func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext,
 		seriesResp, err := d.client.QueryRange(ctx, makeMetricRequest(qm, query))
 		if err != nil {
 			response.Error = err
+			ctxLogger.Error("Failed to process query", "error", err, "queryType", query.QueryType, "function", logEntrypoint())
 			span.RecordError(response.Error)
 			span.SetStatus(codes.Error, response.Error.Error())
 			return response
@@ -57,10 +60,11 @@ func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext,
 	}
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
-		logger.Debug("Querying SelectMergeStacktraces()", "queryModel", qm)
+		ctxLogger.Debug("Querying SelectMergeStacktraces()", "queryModel", qm, "function", logEntrypoint())
 		resp, err := d.client.Query(ctx, makeProfileRequest(qm, query))
 		if err != nil {
 			response.Error = err
+			ctxLogger.Error("Failed to process query", "error", err, "queryType", query.QueryType, "function", logEntrypoint())
 			span.RecordError(response.Error)
 			span.SetStatus(codes.Error, response.Error.Error())
 			return response

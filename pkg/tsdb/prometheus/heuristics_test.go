@@ -52,7 +52,7 @@ func Test_GetHeuristics(t *testing.T) {
 		//httpProvider := getHeuristicsMockProvider(&rt)
 		httpProvider := newHeuristicsSDKProvider(rt)
 		s := &Service{
-			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, nil, backend.NewLoggerWith("logger", "test"))),
+			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, backend.NewLoggerWith("logger", "test"))),
 		}
 
 		req := HeuristicsRequest{
@@ -72,7 +72,7 @@ func Test_GetHeuristics(t *testing.T) {
 		}
 		httpProvider := newHeuristicsSDKProvider(rt)
 		s := &Service{
-			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, nil, backend.NewLoggerWith("logger", "test"))),
+			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, backend.NewLoggerWith("logger", "test"))),
 		}
 
 		req := HeuristicsRequest{

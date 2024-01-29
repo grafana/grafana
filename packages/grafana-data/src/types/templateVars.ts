@@ -36,6 +36,8 @@ export enum VariableSort {
   numericalDesc,
   alphabeticalCaseInsensitiveAsc,
   alphabeticalCaseInsensitiveDesc,
+  naturalAsc,
+  naturalDesc,
 }
 
 export enum VariableHide {
@@ -162,4 +164,5 @@ export interface BaseVariableModel {
   state: LoadingState;
   error: any | null;
   description: string | null;
+  usedInRepeat?: boolean;
 }

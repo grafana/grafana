@@ -2,8 +2,6 @@ import { DataQuery } from '@grafana/data';
 import { Dashboard, DataSourceRef } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
-import { DashboardAcl } from './acl';
-
 export interface DashboardDTO {
   redirectUri?: string;
   dashboard: DashboardDataDTO;
@@ -52,6 +50,7 @@ export interface DashboardMeta {
   publicDashboardUid?: string;
   publicDashboardEnabled?: boolean;
   dashboardNotFound?: boolean;
+  isEmbedded?: boolean;
 }
 
 export interface AnnotationActions {
@@ -112,5 +111,4 @@ export interface DashboardState {
   initPhase: DashboardInitPhase;
   initialDatasource?: DataSourceRef['uid'];
   initError: DashboardInitError | null;
-  permissions: DashboardAcl[];
 }

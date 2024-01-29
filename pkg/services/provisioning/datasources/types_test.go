@@ -13,3 +13,11 @@ func TestUIDFromNames(t *testing.T) {
 		require.Equal(t, safeUIDFromName("AAA"), "PCB1AD2119D8FAFB6")
 	})
 }
+
+func TestCreateUpdateCommand(t *testing.T) {
+	t.Run("includes the version in the command", func(t *testing.T) {
+		ds := &upsertDataSourceFromConfig{OrgID: 1, Version: 1, Name: "test"}
+		cmd := createUpdateCommand(ds, 1)
+		require.Equal(t, 1, cmd.Version)
+	})
+}

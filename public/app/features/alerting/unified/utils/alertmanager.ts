@@ -53,18 +53,6 @@ export function renameMuteTimings(newMuteTimingName: string, oldMuteTimingName: 
   };
 }
 
-function isReceiverUsedInRoute(receiver: string, route: Route): boolean {
-  return (
-    (route.receiver === receiver || route.routes?.some((route) => isReceiverUsedInRoute(receiver, route))) ?? false
-  );
-}
-
-export function isReceiverUsed(receiver: string, config: AlertManagerCortexConfig): boolean {
-  return (
-    (config.alertmanager_config.route && isReceiverUsedInRoute(receiver, config.alertmanager_config.route)) ?? false
-  );
-}
-
 export function matcherToOperator(matcher: Matcher): MatcherOperator {
   if (matcher.isEqual) {
     if (matcher.isRegex) {

@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
@@ -80,8 +79,7 @@ func EncryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt defini
 // LoadSecureSettings adds the corresponding unencrypted secrets stored to the list of input receivers.
 func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error {
 	// Get the last known working configuration.
-	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: orgId}
-	amConfig, err := c.configs.GetLatestAlertmanagerConfiguration(ctx, &query)
+	amConfig, err := c.configs.GetLatestAlertmanagerConfiguration(ctx, orgId)
 	if err != nil {
 		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one.
 		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {

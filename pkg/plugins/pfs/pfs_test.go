@@ -107,6 +107,10 @@ func TestParsePluginTestdata(t *testing.T) {
 			rootid:  "test-datasource",
 			subpath: "plugin",
 		},
+		"plugin-with-dist": {
+			rootid:  "test-datasource",
+			subpath: "plugin",
+		},
 		"no-rootfile": {
 			err: ErrNoRootFile,
 		},
@@ -120,6 +124,10 @@ func TestParsePluginTestdata(t *testing.T) {
 		"panel-does-not-follow-slot-joinschema": {
 			err:  ErrInvalidLineage,
 			skip: "TODO implement BindOption in thema, SatisfiesJoinSchema, then use it here",
+		},
+		"pluginRootWithDist": {
+			err:  ErrNoRootFile,
+			skip: "This folder is used to test multiple plugins in the same folder",
 		},
 		"name-mismatch-panel": {
 			err: ErrInvalidGrafanaPluginInstance,
@@ -139,7 +147,7 @@ func TestParsePluginTestdata(t *testing.T) {
 		},
 	}
 
-	staticRootPath, err := filepath.Abs("../manager/testdata")
+	staticRootPath, err := filepath.Abs(filepath.Join("..", "manager", "testdata"))
 	require.NoError(t, err)
 	dfs := os.DirFS(staticRootPath)
 	ents, err := fs.ReadDir(dfs, ".")
@@ -232,7 +240,7 @@ func TestParseTreeZips(t *testing.T) {
 		},
 	}
 
-	staticRootPath, err := filepath.Abs("../storage/testdata")
+	staticRootPath, err := filepath.Abs(filepath.Join("..", "storage", "testdata"))
 	require.NoError(t, err)
 	ents, err := os.ReadDir(staticRootPath)
 	require.NoError(t, err)

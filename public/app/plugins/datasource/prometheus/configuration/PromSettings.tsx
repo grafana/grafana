@@ -8,6 +8,7 @@ import {
   SelectableValue,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { ConfigSubSection } from '@grafana/experimental';
 import { getBackendSrv } from '@grafana/runtime/src';
 import { InlineField, Input, Select, Switch, useTheme2 } from '@grafana/ui';
@@ -202,6 +203,7 @@ export const PromSettings = (props: Props) => {
                         timeInterval: e.currentTarget.value,
                       })
                     }
+                    data-testid={selectors.components.DataSource.Prometheus.configPage.scrapeInterval}
                   />
                   {validateInput(validDuration.timeInterval, DURATION_REGEX, durationError)}
                 </>
@@ -231,6 +233,7 @@ export const PromSettings = (props: Props) => {
                         queryTimeout: e.currentTarget.value,
                       })
                     }
+                    data-testid={selectors.components.DataSource.Prometheus.configPage.queryTimeout}
                   />
                   {validateInput(validDuration.queryTimeout, DURATION_REGEX, durationError)}
                 </>
@@ -259,6 +262,7 @@ export const PromSettings = (props: Props) => {
                 }
                 onChange={onChangeHandler('defaultEditor', options, onOptionsChange)}
                 width={40}
+                data-testid={selectors.components.DataSource.Prometheus.configPage.defaultEditor}
               />
             </InlineField>
           </div>
@@ -280,6 +284,7 @@ export const PromSettings = (props: Props) => {
               <Switch
                 value={options.jsonData.disableMetricsLookup ?? false}
                 onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableMetricsLookup')}
+                id={selectors.components.DataSource.Prometheus.configPage.disableMetricLookup}
               />
             </InlineField>
           </div>
@@ -309,7 +314,7 @@ export const PromSettings = (props: Props) => {
                   <>
                     Set this to the type of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos. Changing
                     this field will save your current settings, and attempt to detect the version. Certain types of
-                    Prometheus support or do not support various APIs. For example, some types support regex matching
+                    Prometheus supports or does not support various APIs. For example, some types support regex matching
                     for label queries to improve performance. Some types have an API for metadata. If you set this
                     incorrectly you may experience odd behavior when querying metrics and labels. Please check your
                     Prometheus documentation to ensure you enter the correct type. {docsTip()}
@@ -338,6 +343,7 @@ export const PromSettings = (props: Props) => {
                     }
                   )}
                   width={40}
+                  data-testid={selectors.components.DataSource.Prometheus.configPage.prometheusType}
                 />
               </InlineField>
             </div>
@@ -365,6 +371,7 @@ export const PromSettings = (props: Props) => {
                     )}
                     onChange={onChangeHandler('prometheusVersion', options, onOptionsChange)}
                     width={40}
+                    data-testid={selectors.components.DataSource.Prometheus.configPage.prometheusVersion}
                   />
                 </InlineField>
               </div>
@@ -392,6 +399,7 @@ export const PromSettings = (props: Props) => {
                   value={
                     cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel) ?? PrometheusCacheLevel.Low
                   }
+                  data-testid={selectors.components.DataSource.Prometheus.configPage.cacheLevel}
                 />
               </InlineField>
             </div>
@@ -416,6 +424,7 @@ export const PromSettings = (props: Props) => {
                 <Switch
                   value={options.jsonData.incrementalQuerying ?? false}
                   onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'incrementalQuerying')}
+                  id={selectors.components.DataSource.Prometheus.configPage.incrementalQuerying}
                 />
               </InlineField>
             </div>
@@ -447,6 +456,7 @@ export const PromSettings = (props: Props) => {
                     value={options.jsonData.incrementalQueryOverlapWindow ?? defaultPrometheusQueryOverlapWindow}
                     onChange={onChangeHandler('incrementalQueryOverlapWindow', options, onOptionsChange)}
                     spellCheck={false}
+                    data-testid={selectors.components.DataSource.Prometheus.configPage.queryOverlapWindow}
                   />
                   {validateInput(validDuration.incrementalQueryOverlapWindow, MULTIPLE_DURATION_REGEX, durationError)}
                 </>
@@ -459,7 +469,7 @@ export const PromSettings = (props: Props) => {
               <InlineField
                 label="Disable recording rules (beta)"
                 labelWidth={PROM_CONFIG_LABEL_WIDTH}
-                tooltip={<>This feature will disable recording rules Turn this on to improve dashboard performance</>}
+                tooltip={<>This feature will disable recording rules. Turn this on to improve dashboard performance</>}
                 interactive={true}
                 className={styles.switchField}
                 disabled={options.readOnly}
@@ -467,6 +477,7 @@ export const PromSettings = (props: Props) => {
                 <Switch
                   value={options.jsonData.disableRecordingRules ?? false}
                   onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableRecordingRules')}
+                  id={selectors.components.DataSource.Prometheus.configPage.disableRecordingRules}
                 />
               </InlineField>
             </div>
@@ -496,6 +507,7 @@ export const PromSettings = (props: Props) => {
                   onChange={onChangeHandler('customQueryParameters', options, onOptionsChange)}
                   spellCheck={false}
                   placeholder="Example: max_source_resolution=5m&timeout=10"
+                  data-testid={selectors.components.DataSource.Prometheus.configPage.customQueryParameters}
                 />
               </InlineField>
             </div>
@@ -522,6 +534,7 @@ export const PromSettings = (props: Props) => {
                   options={httpOptions}
                   value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
                   onChange={onChangeHandler('httpMethod', options, onOptionsChange)}
+                  data-testid={selectors.components.DataSource.Prometheus.configPage.httpMethod}
                 />
               </InlineField>
             </div>
@@ -549,11 +562,11 @@ export const getValueFromEventItem = (eventItem: SyntheticEvent<HTMLInputElement
     return '';
   }
 
-  if (eventItem.hasOwnProperty('currentTarget')) {
+  if ('currentTarget' in eventItem) {
     return eventItem.currentTarget.value;
   }
 
-  return (eventItem as SelectableValue<string>).value;
+  return eventItem.value;
 };
 
 const onChangeHandler =

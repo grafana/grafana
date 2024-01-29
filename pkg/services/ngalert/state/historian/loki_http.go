@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/weaveworks/common/http/client"
 )
 
 const defaultPageSize = 1000
@@ -27,7 +27,7 @@ func NewRequester() client.Requester {
 // encoder serializes log streams to some byte format.
 type encoder interface {
 	// encode serializes a set of log streams to bytes.
-	encode(s []stream) ([]byte, error)
+	encode(s []Stream) ([]byte, error)
 	// headers returns a set of HTTP-style headers that describes the encoding scheme used.
 	headers() map[string]string
 }
@@ -79,7 +79,7 @@ func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig,
 	}, nil
 }
 
-type httpLokiClient struct {
+type HttpLokiClient struct {
 	client  client.Requester
 	encoder encoder
 	cfg     LokiConfig
@@ -101,9 +101,9 @@ const (
 	NeqRegEx Operator = "!~"
 )
 
-func newLokiClient(cfg LokiConfig, req client.Requester, metrics *metrics.Historian, logger log.Logger) *httpLokiClient {
+func NewLokiClient(cfg LokiConfig, req client.Requester, metrics *metrics.Historian, logger log.Logger) *HttpLokiClient {
 	tc := client.NewTimedClient(req, metrics.WriteDuration)
-	return &httpLokiClient{
+	return &HttpLokiClient{
 		client:  tc,
 		encoder: cfg.Encoder,
 		cfg:     cfg,
@@ -112,7 +112,7 @@ func newLokiClient(cfg LokiConfig, req client.Requester, metrics *metrics.Histor
 	}
 }
 
-func (c *httpLokiClient) ping(ctx context.Context) error {
+func (c *HttpLokiClient) Ping(ctx context.Context) error {
 	uri := c.cfg.ReadPathURL.JoinPath("/loki/api/v1/labels")
 	req, err := http.NewRequest(http.MethodGet, uri.String(), nil)
 	if err != nil {
@@ -140,23 +140,23 @@ func (c *httpLokiClient) ping(ctx context.Context) error {
 	return nil
 }
 
-type stream struct {
+type Stream struct {
 	Stream map[string]string `json:"stream"`
-	Values []sample          `json:"values"`
+	Values []Sample          `json:"values"`
 }
 
-type sample struct {
+type Sample struct {
 	T time.Time
 	V string
 }
 
-func (r *sample) MarshalJSON() ([]byte, error) {
+func (r *Sample) MarshalJSON() ([]byte, error) {
 	return json.Marshal([2]string{
 		fmt.Sprintf("%d", r.T.UnixNano()), r.V,
 	})
 }
 
-func (r *sample) UnmarshalJSON(b []byte) error {
+func (r *Sample) UnmarshalJSON(b []byte) error {
 	// A Loki stream sample is formatted like a list with two elements, [At, Val]
 	// At is a string wrapping a timestamp, in nanosecond unix epoch.
 	// Val is a string containing the log line.
@@ -173,7 +173,7 @@ func (r *sample) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (c *httpLokiClient) push(ctx context.Context, s []stream) error {
+func (c *HttpLokiClient) Push(ctx context.Context, s []Stream) error {
 	enc, err := c.encoder.encode(s)
 	if err != nil {
 		return err
@@ -216,7 +216,7 @@ func (c *httpLokiClient) push(ctx context.Context, s []stream) error {
 	return nil
 }
 
-func (c *httpLokiClient) setAuthAndTenantHeaders(req *http.Request) {
+func (c *HttpLokiClient) setAuthAndTenantHeaders(req *http.Request) {
 	if c.cfg.BasicAuthUser != "" || c.cfg.BasicAuthPassword != "" {
 		req.SetBasicAuth(c.cfg.BasicAuthUser, c.cfg.BasicAuthPassword)
 	}
@@ -226,10 +226,10 @@ func (c *httpLokiClient) setAuthAndTenantHeaders(req *http.Request) {
 	}
 }
 
-func (c *httpLokiClient) rangeQuery(ctx context.Context, logQL string, start, end, limit int64) (queryRes, error) {
+func (c *HttpLokiClient) RangeQuery(ctx context.Context, logQL string, start, end, limit int64) (QueryRes, error) {
 	// Run the pre-flight checks for the query.
 	if start > end {
-		return queryRes{}, fmt.Errorf("start time cannot be after end time")
+		return QueryRes{}, fmt.Errorf("start time cannot be after end time")
 	}
 	if limit < 1 {
 		limit = defaultPageSize
@@ -251,7 +251,7 @@ func (c *httpLokiClient) rangeQuery(ctx context.Context, logQL string, start, en
 	req, err := http.NewRequest(http.MethodGet,
 		queryURL.String(), nil)
 	if err != nil {
-		return queryRes{}, fmt.Errorf("error creating request: %w", err)
+		return QueryRes{}, fmt.Errorf("error creating request: %w", err)
 	}
 
 	req = req.WithContext(ctx)
@@ -259,7 +259,7 @@ func (c *httpLokiClient) rangeQuery(ctx context.Context, logQL string, start, en
 
 	res, err := c.client.Do(req)
 	if err != nil {
-		return queryRes{}, fmt.Errorf("error executing request: %w", err)
+		return QueryRes{}, fmt.Errorf("error executing request: %w", err)
 	}
 
 	defer func() {
@@ -268,7 +268,7 @@ func (c *httpLokiClient) rangeQuery(ctx context.Context, logQL string, start, en
 
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
-		return queryRes{}, fmt.Errorf("error reading request response: %w", err)
+		return QueryRes{}, fmt.Errorf("error reading request response: %w", err)
 	}
 
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
@@ -277,23 +277,23 @@ func (c *httpLokiClient) rangeQuery(ctx context.Context, logQL string, start, en
 		} else {
 			c.log.Error("Error response from Loki with an empty body", "status", res.StatusCode)
 		}
-		return queryRes{}, fmt.Errorf("received a non-200 response from loki, status: %d", res.StatusCode)
+		return QueryRes{}, fmt.Errorf("received a non-200 response from loki, status: %d", res.StatusCode)
 	}
 
-	result := queryRes{}
+	result := QueryRes{}
 	err = json.Unmarshal(data, &result)
 	if err != nil {
 		fmt.Println(string(data))
-		return queryRes{}, fmt.Errorf("error parsing request response: %w", err)
+		return QueryRes{}, fmt.Errorf("error parsing request response: %w", err)
 	}
 
 	return result, nil
 }
 
-type queryRes struct {
-	Data queryData `json:"data"`
+type QueryRes struct {
+	Data QueryData `json:"data"`
 }
 
-type queryData struct {
-	Result []stream `json:"result"`
+type QueryData struct {
+	Result []Stream `json:"result"`
 }

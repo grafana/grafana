@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/go-jose/go-jose/v3/jwt"
+
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
@@ -18,4 +19,5 @@ type IDSigner interface {
 
 type IDClaims struct {
 	jwt.Claims
+	AuthenticatedBy string `json:"authenticatedBy,omitempty"`
 }

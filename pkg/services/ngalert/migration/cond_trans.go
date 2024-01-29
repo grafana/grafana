@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -21,11 +22,53 @@ import (
 // It is defined in pkg/expr/service.go as "DatasourceType"
 const expressionDatasourceUID = "__expr__"
 
+// dashAlertSettings is a type for the JSON that is in the settings field of
+// the alert table.
+type dashAlertSettings struct {
+	NoDataState         string               `json:"noDataState"`
+	ExecutionErrorState string               `json:"executionErrorState"`
+	Conditions          []dashAlertCondition `json:"conditions"`
+	AlertRuleTags       any                  `json:"alertRuleTags"`
+	Notifications       []notificationKey    `json:"notifications"`
+}
+
+// notificationKey is the object that represents the Notifications array in legacymodels.Alert.Settings.
+// At least one of ID or UID should always be present, otherwise the legacy channel was invalid.
+type notificationKey struct {
+	UID string `json:"uid,omitempty"`
+	ID  int64  `json:"id,omitempty"`
+}
+
+// dashAlertingConditionJSON is like classic.ClassicConditionJSON except that it
+// includes the model property with the query.
+type dashAlertCondition struct {
+	Evaluator evaluator `json:"evaluator"`
+
+	Operator struct {
+		Type string `json:"type"`
+	} `json:"operator"`
+
+	Query struct {
+		Params       []string `json:"params"`
+		DatasourceID int64    `json:"datasourceId"`
+		Model        json.RawMessage
+	} `json:"query"`
+
+	Reducer struct {
+		// Params []any `json:"params"` (Unused)
+		Type string `json:"type"`
+	}
+}
+
+type evaluator struct {
+	Params []float64 `json:"params"`
+	Type   string    `json:"type"` // e.g. "gt"
+}
+
 //nolint:gocyclo
-func transConditions(ctx context.Context, alert *migrationStore.DashAlert, store migrationStore.Store) (*condition, error) {
+func transConditions(ctx context.Context, l log.Logger, set dashAlertSettings, orgID int64, store migrationStore.ReadStore) (*condition, error) {
 	// TODO: needs a significant refactor to reduce complexity.
-	usr := getMigrationUser(alert.OrgID)
-	set := alert.ParsedSettings
+	usr := getMigrationUser(orgID)
 
 	refIDtoCondIdx := make(map[string][]int) // a map of original refIds to their corresponding condition index
 	for i, cond := range set.Conditions {
@@ -49,10 +92,13 @@ func transConditions(ctx context.Context, alert *migrationStore.DashAlert, store
 		condIdxes := refIDtoCondIdx[refID]
 
 		if len(condIdxes) == 1 {
-			// If the refID is used in only condition, keep the letter a new refID
-			newRefIDstoCondIdx[refID] = append(newRefIDstoCondIdx[refID], condIdxes[0])
-			newRefIDsToTimeRanges[refID] = [2]string{set.Conditions[condIdxes[0]].Query.Params[1], set.Conditions[condIdxes[0]].Query.Params[2]}
-			continue
+			// If the refID does not exist yet and the condition only has one reference, we can add it directly.
+			if _, exists := newRefIDstoCondIdx[refID]; !exists {
+				// If the refID is used in only condition, keep the letter a new refID
+				newRefIDstoCondIdx[refID] = append(newRefIDstoCondIdx[refID], condIdxes[0])
+				newRefIDsToTimeRanges[refID] = [2]string{set.Conditions[condIdxes[0]].Query.Params[1], set.Conditions[condIdxes[0]].Query.Params[2]}
+				continue
+			}
 		}
 
 		// track unique time ranges within the same refID
@@ -65,12 +111,15 @@ func transConditions(ctx context.Context, alert *migrationStore.DashAlert, store
 		}
 
 		if len(timeRangesToCondIdx) == 1 {
-			// if all shared time range, no need to create a new query with a new RefID
-			for i := range condIdxes {
-				newRefIDstoCondIdx[refID] = append(newRefIDstoCondIdx[refID], condIdxes[i])
-				newRefIDsToTimeRanges[refID] = [2]string{set.Conditions[condIdxes[i]].Query.Params[1], set.Conditions[condIdxes[i]].Query.Params[2]}
+			// If the refID does not exist yet and the condition only has one reference, we can add it directly.
+			if _, exists := newRefIDstoCondIdx[refID]; !exists {
+				// if all shared time range, no need to create a new query with a new RefID
+				for i := range condIdxes {
+					newRefIDstoCondIdx[refID] = append(newRefIDstoCondIdx[refID], condIdxes[i])
+					newRefIDsToTimeRanges[refID] = [2]string{set.Conditions[condIdxes[i]].Query.Params[1], set.Conditions[condIdxes[i]].Query.Params[2]}
+				}
+				continue
 			}
-			continue
 		}
 
 		// This referenced query/refID has different time ranges, so new queries are needed for each unique time range.
@@ -136,13 +185,9 @@ func transConditions(ctx context.Context, alert *migrationStore.DashAlert, store
 			}
 
 			// Could have an alert saved but datasource deleted, so can not require match.
-			dsUid := ""
-			if ds, err := store.GetDatasource(ctx, set.Conditions[condIdx].Query.DatasourceID, usr); err == nil {
-				dsUid = ds.UID
-			} else {
-				if !errors.Is(err, datasources.ErrDataSourceNotFound) {
-					return nil, err
-				}
+			ds, err := store.GetDatasource(ctx, set.Conditions[condIdx].Query.DatasourceID, usr)
+			if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
+				return nil, err
 			}
 
 			queryObj["refId"] = refID
@@ -157,7 +202,17 @@ func transConditions(ctx context.Context, alert *migrationStore.DashAlert, store
 
 			rawFrom := newRefIDsToTimeRanges[refID][0]
 			rawTo := newRefIDsToTimeRanges[refID][1]
-			calculatedInterval, err := calculateInterval(legacydata.NewDataTimeRange(rawFrom, rawTo), simpleJson, nil)
+
+			// We check if the minInterval stored in the model is parseable. If it's not, we use "1s" instead.
+			// The reason for this is because of a bug in legacy alerting which allows arbitrary variables to be used
+			// as the min interval, even though those variables do not work and will cause the legacy alert
+			// to fail with `interval calculation failed: time: invalid duration`.
+			if _, err := interval.GetIntervalFrom(ds, simpleJson, time.Millisecond*1); err != nil {
+				l.Warn("failed to parse min interval from query model, using '1s' instead", "interval", simpleJson.Get("interval").MustString(), "err", err)
+				simpleJson.Set("interval", "1s")
+			}
+
+			calculatedInterval, err := calculateInterval(legacydata.NewDataTimeRange(rawFrom, rawTo), simpleJson, ds)
 			if err != nil {
 				return nil, err
 			}
@@ -177,18 +232,22 @@ func transConditions(ctx context.Context, alert *migrationStore.DashAlert, store
 				RefID:             refID,
 				Model:             encodedObj,
 				RelativeTimeRange: *rTR,
-				DatasourceUID:     dsUid,
 				QueryType:         queryType,
 			}
+
+			if ds != nil {
+				alertQuery.DatasourceUID = ds.UID
+			}
+
 			newCond.Data = append(newCond.Data, alertQuery)
 		}
 	}
 
 	// build the new classic condition pointing our new equivalent queries
-	conditions := make([]classicConditionJSON, len(set.Conditions))
+	conditions := make([]classicCondition, len(set.Conditions))
 	for i, cond := range set.Conditions {
-		newCond := classicConditionJSON{}
-		newCond.Evaluator = migrationStore.ConditionEvalJSON{
+		newCond := classicCondition{}
+		newCond.Evaluator = evaluator{
 			Type:   cond.Evaluator.Type,
 			Params: cond.Evaluator.Params,
 		}
@@ -204,12 +263,12 @@ func transConditions(ctx context.Context, alert *migrationStore.DashAlert, store
 		return nil, err
 	}
 	newCond.Condition = ccRefID // set the alert condition to point to the classic condition
-	newCond.OrgID = alert.OrgID
+	newCond.OrgID = orgID
 
 	exprModel := struct {
-		Type       string                 `json:"type"`
-		RefID      string                 `json:"refId"`
-		Conditions []classicConditionJSON `json:"conditions"`
+		Type       string             `json:"type"`
+		RefID      string             `json:"refId"`
+		Conditions []classicCondition `json:"conditions"`
 	}{
 		"classic_conditions",
 		ccRefID,
@@ -265,7 +324,7 @@ func getNewRefID(refIDs map[string][]int) (string, error) {
 		}
 		return sR, nil
 	}
-	return "", fmt.Errorf("failed to generate unique RefID")
+	return "", errors.New("failed to generate unique RefID")
 }
 
 // getRelativeDuration turns the alerting durations for dashboard conditions
@@ -316,8 +375,8 @@ func getTo(to string) (time.Duration, error) {
 	return -d, nil
 }
 
-type classicConditionJSON struct {
-	Evaluator migrationStore.ConditionEvalJSON `json:"evaluator"`
+type classicCondition struct {
+	Evaluator evaluator `json:"evaluator"`
 
 	Operator struct {
 		Type string `json:"type"`

@@ -25,9 +25,9 @@ type SubjectsInsteadOfObservables<T> = {
   [key in keyof T]: T[key] extends Observable<infer U> ? Subject<U> : T[key];
 };
 
-type DepsWithSubjectsInsteadOfObservables<T = any> = SubjectsInsteadOfObservables<DataStreamHandlerDeps<T>>;
+type DepsWithSubjectsInsteadOfObservables<T = unknown> = SubjectsInsteadOfObservables<DataStreamHandlerDeps<T>>;
 
-const createDeps = <T = any>(
+const createDeps = <T = unknown>(
   overrides?: Partial<DepsWithSubjectsInsteadOfObservables<T>>
 ): DepsWithSubjectsInsteadOfObservables<T> => {
   return {
@@ -43,7 +43,7 @@ const createDeps = <T = any>(
 
 class ValuesCollection<T> implements Unsubscribable {
   values: T[] = [];
-  errors: any[] = [];
+  errors: unknown[] = [];
   receivedComplete = false;
   subscription: Subscription | undefined;
 
@@ -898,8 +898,8 @@ describe('LiveDataStream', () => {
             return isStreamingResponseData(data, StreamingResponseDataType.FullFrame)
               ? fieldsOf(data)
               : isStreamingResponseData(data, StreamingResponseDataType.NewValuesSameSchema)
-              ? data.values
-              : response;
+                ? data.values
+                : response;
           })
         )
       ).toEqual({

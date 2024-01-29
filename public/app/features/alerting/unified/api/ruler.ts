@@ -1,5 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
+import { isObject } from '@grafana/data';
 import { FetchResponse, getBackendSrv } from '@grafana/runtime';
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
 import { PostableRulerRuleGroupDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
@@ -40,8 +41,8 @@ export function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
       path: `${rulerPath}/${encodeURIComponent(namespace)}`,
       params: Object.fromEntries(rulerSearchParams),
     }),
-    namespaceGroup: (namespace: string, group: string): RulerRequestUrl => ({
-      path: `${rulerPath}/${encodeURIComponent(namespace)}/${encodeURIComponent(group)}`,
+    namespaceGroup: (namespaceUID: string, group: string): RulerRequestUrl => ({
+      path: `${rulerPath}/${encodeURIComponent(namespaceUID)}/${encodeURIComponent(group)}`,
       params: Object.fromEntries(rulerSearchParams),
     }),
   };
@@ -50,10 +51,10 @@ export function rulerUrlBuilder(rulerConfig: RulerDataSourceConfig) {
 // upsert a rule group. use this to update rule
 export async function setRulerRuleGroup(
   rulerConfig: RulerDataSourceConfig,
-  namespace: string,
+  namespaceIdentifier: string,
   group: PostableRulerRuleGroupDTO
 ): Promise<void> {
-  const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespace);
+  const { path, params } = rulerUrlBuilder(rulerConfig).namespace(namespaceIdentifier);
   await lastValueFrom(
     getBackendSrv().fetch<unknown>({
       method: 'POST',
@@ -101,10 +102,10 @@ export async function fetchTestRulerRulesGroup(dataSourceName: string): Promise<
 
 export async function fetchRulerRulesGroup(
   rulerConfig: RulerDataSourceConfig,
-  namespace: string,
+  namespaceIdentifier: string, // can be the namespace name or namespace UID
   group: string
 ): Promise<RulerRuleGroupDTO | null> {
-  const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespace, group);
+  const { path, params } = rulerUrlBuilder(rulerConfig).namespaceGroup(namespaceIdentifier, group);
   return rulerGetRequest<RulerRuleGroupDTO | null>(path, null, params);
 }
 
@@ -155,8 +156,13 @@ async function rulerGetRequest<T>(url: string, empty: T, params?: Record<string,
 }
 
 function isResponseError(error: unknown): error is FetchResponse<ErrorResponseMessage> {
-  const hasErrorMessage = (error as FetchResponse<ErrorResponseMessage>).data != null;
-  const hasErrorCode = Number.isFinite((error as FetchResponse<ErrorResponseMessage>).status);
+  if (!isObject(error)) {
+    return false;
+  }
+
+  const hasErrorMessage = 'data' in error && error.data !== null && error.data !== undefined;
+  const hasErrorCode = 'status' in error && Number.isFinite(error.status);
+
   return hasErrorCode && hasErrorMessage;
 }
 

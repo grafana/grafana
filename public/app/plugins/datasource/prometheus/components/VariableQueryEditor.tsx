@@ -1,6 +1,7 @@
 import React, { FormEvent, useCallback, useEffect, useState } from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { InlineField, InlineFieldRow, Input, Select, TextArea } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../datasource';
@@ -33,7 +34,7 @@ export type Props = QueryEditorProps<PrometheusDatasource, PromQuery, PromOption
 
 const refId = 'PrometheusVariableQueryEditor-VariableQuery';
 
-export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) => {
+export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: Props) => {
   // to select the query type, i.e. label_names, label_values, etc.
   const [qryType, setQryType] = useState<number | undefined>(undefined);
   // list of variables for each function
@@ -58,6 +59,11 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
 
   // label filters have been added as a filter for metrics in label values query type
   const [labelFilters, setLabelFilters] = useState<QueryBuilderLabelFilter[]>([]);
+
+  useEffect(() => {
+    datasource.languageProvider.start(range);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!query) {
@@ -100,19 +106,11 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
       const labelToConsider = [{ label: '__name__', op: '=', value: metric }];
       const expr = promQueryModeller.renderLabels(labelToConsider);
 
-      if (datasource.hasLabelsMatchAPISupport()) {
-        datasource.languageProvider.fetchSeriesLabelsMatch(expr).then((labelsIndex: Record<string, string[]>) => {
-          const labelNames = Object.keys(labelsIndex);
-          const names = labelNames.map((value) => ({ label: value, value: value }));
-          setLabelOptions([...variables, ...names]);
-        });
-      } else {
-        datasource.languageProvider.fetchSeriesLabels(expr).then((labelsIndex: Record<string, string[]>) => {
-          const labelNames = Object.keys(labelsIndex);
-          const names = labelNames.map((value) => ({ label: value, value: value }));
-          setLabelOptions([...variables, ...names]);
-        });
-      }
+      datasource.languageProvider.fetchLabelsWithMatch(expr).then((labelsIndex: Record<string, string[]>) => {
+        const labelNames = Object.keys(labelsIndex);
+        const names = labelNames.map((value) => ({ label: value, value: value }));
+        setLabelOptions([...variables, ...names]);
+      });
     }
   }, [datasource, qryType, metric]);
 
@@ -238,6 +236,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
             value={qryType}
             options={variableOptions}
             width={25}
+            data-testid={selectors.components.DataSource.Prometheus.variableQueryEditor.queryType}
           />
         </InlineField>
       </InlineFieldRow>
@@ -264,6 +263,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
                 width={25}
                 allowCustomValue
                 isClearable={true}
+                data-testid={selectors.components.DataSource.Prometheus.variableQueryEditor.labelValues.labelSelect}
               />
             </InlineField>
           </InlineFieldRow>
@@ -298,6 +298,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
                 setLabelNamesMatch(e.currentTarget.value);
               }}
               width={25}
+              data-testid={selectors.components.DataSource.Prometheus.variableQueryEditor.labelnames.metricRegex}
             />
           </InlineField>
         </InlineFieldRow>
@@ -324,6 +325,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
                 onMetricChange(e.currentTarget.value);
               }}
               width={25}
+              data-testid={selectors.components.DataSource.Prometheus.variableQueryEditor.metricNames.metricRegex}
             />
           </InlineField>
         </InlineFieldRow>
@@ -353,6 +355,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
                 }
               }}
               cols={100}
+              data-testid={selectors.components.DataSource.Prometheus.variableQueryEditor.varQueryResult}
             />
           </InlineField>
         </InlineFieldRow>
@@ -384,6 +387,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
                 }
               }}
               width={100}
+              data-testid={selectors.components.DataSource.Prometheus.variableQueryEditor.seriesQuery}
             />
           </InlineField>
         </InlineFieldRow>
@@ -413,6 +417,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource }: Props) 
                 }
               }}
               width={100}
+              data-testid={selectors.components.DataSource.Prometheus.variableQueryEditor.classicQuery}
             />
           </InlineField>
         </InlineFieldRow>

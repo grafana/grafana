@@ -26,8 +26,8 @@ func QueryParse(query backend.DataQuery) (*Query, error) {
 	limit := model.Get("limit").MustString("")
 	slimit := model.Get("slimit").MustString("")
 	orderByTime := model.Get("orderByTime").MustString("")
-
 	measurement := model.Get("measurement").MustString("")
+	resultFormat := model.Get("resultFormat").MustString("")
 
 	tags, err := parseTags(model)
 	if err != nil {
@@ -54,19 +54,20 @@ func QueryParse(query backend.DataQuery) (*Query, error) {
 	}
 
 	return &Query{
-		Measurement: measurement,
-		Policy:      policy,
-		GroupBy:     groupBys,
-		Tags:        tags,
-		Selects:     selects,
-		RawQuery:    rawQuery,
-		Interval:    interval,
-		Alias:       alias,
-		UseRawQuery: useRawQuery,
-		Tz:          tz,
-		Limit:       limit,
-		Slimit:      slimit,
-		OrderByTime: orderByTime,
+		Measurement:  measurement,
+		Policy:       policy,
+		GroupBy:      groupBys,
+		Tags:         tags,
+		Selects:      selects,
+		RawQuery:     rawQuery,
+		Interval:     interval,
+		Alias:        alias,
+		UseRawQuery:  useRawQuery,
+		Tz:           tz,
+		Limit:        limit,
+		Slimit:       slimit,
+		OrderByTime:  orderByTime,
+		ResultFormat: resultFormat,
 	}, nil
 }
 

@@ -6,10 +6,10 @@ import { createErrorNotification } from 'app/core/copy/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 import store from 'app/core/store';
-import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { getFolderByUid } from 'app/features/folders/state/actions';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -62,6 +62,13 @@ async function fetchDashboard(
   try {
     switch (args.routeName) {
       case DashboardRoutes.Home: {
+        const stateManager = getDashboardScenePageStateManager();
+        const cachedDashboard = stateManager.getFromCache(DashboardRoutes.Home);
+
+        if (cachedDashboard) {
+          return cachedDashboard;
+        }
+
         // load home dash
         const dashDTO: DashboardDTO = await backendSrv.get('/api/dashboards/home');
 
@@ -92,7 +99,7 @@ async function fetchDashboard(
         // only the folder API has information about ancestors
         // get parent folder (if it exists) and put it in the store
         // this will be used to populate the full breadcrumb trail
-        if (newBrowseDashboardsEnabled() && dashDTO.meta.folderUid) {
+        if (dashDTO.meta.folderUid) {
           try {
             await dispatch(getFolderByUid(dashDTO.meta.folderUid));
           } catch (err) {
@@ -120,10 +127,10 @@ async function fetchDashboard(
         // only the folder API has information about ancestors
         // get parent folder (if it exists) and put it in the store
         // this will be used to populate the full breadcrumb trail
-        if (newBrowseDashboardsEnabled() && args.urlFolderUid) {
+        if (args.urlFolderUid) {
           await dispatch(getFolderByUid(args.urlFolderUid));
         }
-        return getNewDashboardModelData(args.urlFolderUid, args.panelType);
+        return getNewDashboardModelData(args.urlFolderUid);
       }
       case DashboardRoutes.Path: {
         const path = args.urlSlug ?? '';
@@ -293,20 +300,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   };
 }
 
-export function getNewDashboardModelData(
-  urlFolderUid?: string,
-  panelType?: string
-): { dashboard: any; meta: DashboardMeta } {
-  const panels = config.featureToggles.emptyDashboardPage
-    ? []
-    : [
-        {
-          type: panelType ?? 'add-panel',
-          gridPos: { x: 0, y: 0, w: 12, h: 9 },
-          title: 'Panel Title',
-        },
-      ];
-
+export function getNewDashboardModelData(urlFolderUid?: string): { dashboard: any; meta: DashboardMeta } {
   const data = {
     meta: {
       canStar: false,
@@ -317,7 +311,7 @@ export function getNewDashboardModelData(
     },
     dashboard: {
       title: 'New dashboard',
-      panels,
+      panels: [],
     },
   };
 

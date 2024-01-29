@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/prometheus/alertmanager/cluster"
+	alertingCluster "github.com/grafana/alerting/cluster"
 	"github.com/prometheus/client_golang/prometheus"
 
 	alertingNotify "github.com/grafana/alerting/notify"
@@ -30,6 +30,7 @@ var (
 	ErrAlertmanagerNotReady = fmt.Errorf("Alertmanager is not ready yet")
 )
 
+//go:generate mockery --name Alertmanager --structname AlertmanagerMock --with-expecter --output alertmanager_mock --outpkg alertmanager_mock
 type Alertmanager interface {
 	// Configuration
 	ApplyConfig(context.Context, *models.AlertConfiguration) error
@@ -54,11 +55,9 @@ type Alertmanager interface {
 	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*TestTemplatesResults, error)
 
 	// State
+	CleanUp()
 	StopAndWait()
 	Ready() bool
-	FileStore() *FileStore
-	OrgID() int64
-	ConfigHash() [16]byte
 }
 
 type MultiOrgAlertmanager struct {
@@ -78,7 +77,7 @@ type MultiOrgAlertmanager struct {
 	configStore AlertingStore
 	orgStore    store.OrgStore
 	kvStore     kvstore.KVStore
-	factory     orgAlertmanagerFactory
+	factory     OrgAlertmanagerFactory
 
 	decryptFn alertingNotify.GetDecryptedValueFn
 
@@ -86,13 +85,13 @@ type MultiOrgAlertmanager struct {
 	ns      notifications.Service
 }
 
-type orgAlertmanagerFactory func(ctx context.Context, orgID int64) (Alertmanager, error)
+type OrgAlertmanagerFactory func(ctx context.Context, orgID int64) (Alertmanager, error)
 
 type Option func(*MultiOrgAlertmanager)
 
-func WithAlertmanagerOverride(f orgAlertmanagerFactory) Option {
+func WithAlertmanagerOverride(f func(OrgAlertmanagerFactory) OrgAlertmanagerFactory) Option {
 	return func(moa *MultiOrgAlertmanager) {
-		moa.factory = f
+		moa.factory = f(moa.factory)
 	}
 }
 
@@ -123,7 +122,7 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgSto
 	// Set up the default per tenant Alertmanager factory.
 	moa.factory = func(ctx context.Context, orgID int64) (Alertmanager, error) {
 		m := metrics.NewAlertmanagerMetrics(moa.metrics.GetOrCreateOrgRegistry(orgID))
-		return newAlertmanager(ctx, orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, moa.decryptFn, moa.ns, m)
+		return NewAlertmanager(ctx, orgID, moa.settings, moa.configStore, moa.kvStore, moa.peer, moa.decryptFn, moa.ns, m)
 	}
 
 	for _, opt := range opts {
@@ -138,7 +137,7 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 	// We set the settlement timeout to be a multiple of the gossip interval,
 	// ensuring that a sufficient number of broadcasts have occurred, thereby
 	// increasing the probability of success when waiting for the cluster to settle.
-	const settleTimeout = cluster.DefaultGossipInterval * 10
+	const settleTimeout = alertingCluster.DefaultGossipInterval * 10
 	// Redis setup.
 	if cfg.UnifiedAlerting.HARedisAddr != "" {
 		redisPeer, err := newRedisPeer(redisConfig{
@@ -161,7 +160,7 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 	}
 	// Memberlist setup.
 	if len(cfg.UnifiedAlerting.HAPeers) > 0 {
-		peer, err := cluster.Create(
+		peer, err := alertingCluster.Create(
 			clusterLogger,
 			moa.metrics.Registerer,
 			cfg.UnifiedAlerting.HAListenAddr,
@@ -170,9 +169,9 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 			true,
 			cfg.UnifiedAlerting.HAPushPullInterval,
 			cfg.UnifiedAlerting.HAGossipInterval,
-			cluster.DefaultTCPTimeout,
-			cluster.DefaultProbeTimeout,
-			cluster.DefaultProbeInterval,
+			alertingCluster.DefaultTCPTimeout,
+			alertingCluster.DefaultProbeTimeout,
+			alertingCluster.DefaultProbeInterval,
 			nil,
 			true,
 			cfg.UnifiedAlerting.HALabel,
@@ -182,7 +181,7 @@ func (moa *MultiOrgAlertmanager) setupClustering(cfg *setting.Cfg) error {
 			return fmt.Errorf("unable to initialize gossip mesh: %w", err)
 		}
 
-		err = peer.Join(cluster.DefaultReconnectInterval, cluster.DefaultReconnectTimeout)
+		err = peer.Join(alertingCluster.DefaultReconnectInterval, alertingCluster.DefaultReconnectTimeout)
 		if err != nil {
 			moa.logger.Error("Msg", "Unable to join gossip mesh while initializing cluster for high availability mode", "error", err)
 		}
@@ -270,6 +269,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 			am, err := moa.factory(ctx, orgID)
 			if err != nil {
 				moa.logger.Error("Unable to create Alertmanager for org", "org", orgID, "error", err)
+				continue
 			}
 			moa.alertmanagers[orgID] = am
 			alertmanager = am
@@ -314,8 +314,8 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 		moa.logger.Info("Stopping Alertmanager", "org", orgID)
 		am.StopAndWait()
 		moa.logger.Info("Stopped Alertmanager", "org", orgID)
-		// Cleanup all the remaining resources from this alertmanager.
-		am.FileStore().CleanUp()
+		// Clean up all the remaining resources from this alertmanager.
+		am.CleanUp()
 	}
 
 	// We look for orphan directories and remove them. Orphan directories can
@@ -350,14 +350,14 @@ func (moa *MultiOrgAlertmanager) cleanupOrphanLocalOrgState(ctx context.Context,
 			moa.logger.Info("Found orphan organization directory", "orgID", orgID)
 			workingDirPath := filepath.Join(dataDir, strconv.FormatInt(orgID, 10))
 			fileStore := NewFileStore(orgID, moa.kvStore, workingDirPath)
-			// Cleanup all the remaining resources from this alertmanager.
+			// Clean up all the remaining resources from this alertmanager.
 			fileStore.CleanUp()
 		}
 	}
 	// Remove all orphaned items from kvstore by listing all existing items
 	// in our used namespace and comparing them to the currently active
 	// organizations.
-	storedFiles := []string{notificationLogFilename, silencesFilename}
+	storedFiles := []string{NotificationLogFilename, SilencesFilename}
 	for _, fileName := range storedFiles {
 		keys, err := moa.kvStore.Keys(ctx, kvstore.AllOrganizations, KVNamespace, fileName)
 		if err != nil {
@@ -385,7 +385,7 @@ func (moa *MultiOrgAlertmanager) StopAndWait() {
 		am.StopAndWait()
 	}
 
-	p, ok := moa.peer.(*cluster.Peer)
+	p, ok := moa.peer.(*alertingCluster.Peer)
 	if ok {
 		moa.settleCancel()
 		if err := p.Leave(10 * time.Second); err != nil {
@@ -423,7 +423,7 @@ type NilPeer struct{}
 
 func (p *NilPeer) Position() int                   { return 0 }
 func (p *NilPeer) WaitReady(context.Context) error { return nil }
-func (p *NilPeer) AddState(string, cluster.State, prometheus.Registerer) cluster.ClusterChannel {
+func (p *NilPeer) AddState(string, alertingCluster.State, prometheus.Registerer) alertingCluster.ClusterChannel {
 	return &NilChannel{}
 }
 

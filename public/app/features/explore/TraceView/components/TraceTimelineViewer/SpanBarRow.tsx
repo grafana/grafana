@@ -17,11 +17,11 @@ import cx from 'classnames';
 import * as React from 'react';
 
 import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
+import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
 import { Icon, stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
-import { DURATION, NONE, TAG } from '../settings/SpanBarSettings';
-import { SpanBarOptions, SpanLinkFunc, TraceSpan, TNil } from '../types';
+import { SpanBarOptions, SpanLinkFunc, TraceSpan, TNil, CriticalPathSection } from '../types';
 
 import SpanBar from './SpanBar';
 import { SpanLinksMenu } from './SpanLinks';
@@ -324,6 +324,7 @@ export type SpanBarRowProps = {
   createSpanLink?: SpanLinkFunc;
   datasourceType: string;
   visibleSpanIds: string[];
+  criticalPath: CriticalPathSection[];
 };
 
 /**
@@ -377,6 +378,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       datasourceType,
       showServiceName,
       visibleSpanIds,
+      criticalPath,
     } = this.props;
     const {
       duration,
@@ -530,6 +532,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
         >
           <Ticks numTicks={numTicks} />
           <SpanBar
+            criticalPath={criticalPath}
             rpc={rpc}
             viewStart={viewStart}
             viewEnd={viewEnd}

@@ -11,7 +11,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "10.3.0-pre";
+export const pluginVersion = "10.4.0-pre";
 
 export enum HorizontalConstraint {
   Center = 'center',
@@ -65,6 +65,7 @@ export interface LineConfig {
 export enum HttpRequestMethod {
   GET = 'GET',
   POST = 'POST',
+  PUT = 'PUT',
 }
 
 export interface ConnectionCoordinates {
@@ -109,6 +110,10 @@ export interface Options {
    */
   inlineEditing: boolean;
   /**
+   * Enable pan and zoom
+   */
+  panZoom: boolean;
+  /**
    * The root element of canvas (frame), where all canvas elements are nested
    * TODO: Figure out how to define a default value for this
    */
@@ -134,5 +139,6 @@ export interface Options {
 
 export const defaultOptions: Partial<Options> = {
   inlineEditing: true,
+  panZoom: true,
   showAdvancedTypes: true,
 };

@@ -3,13 +3,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { logInfo } from '@grafana/runtime';
-import { Button, Field, Icon, Input, Label, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Field, Icon, Input, Label, RadioButtonGroup, Tooltip, useStyles2, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { LogMessages } from '../../Analytics';
+import { logInfo, LogMessages } from '../../Analytics';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RuleHealth } from '../../search/rulesSearchParser';
 import { alertStateToReadable } from '../../utils/rules';

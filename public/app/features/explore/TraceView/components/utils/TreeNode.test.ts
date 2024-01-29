@@ -29,7 +29,7 @@ it('TreeNode constructor should return a tree node', () => {
 });
 
 it('depth should work for a single node', () => {
-  expect(new TreeNode().depth).toBe(1);
+  expect(new TreeNode<number>(0).depth).toBe(1);
 });
 
 it('depth should caluclate the depth', () => {
@@ -119,8 +119,8 @@ it('find() should return the found item for a function', () => {
   treeRoot.addChild(11);
   treeRoot.addChild(12);
 
-  expect(treeRoot.find((value) => value === 6)).toEqual(secondChildNode);
-  expect(treeRoot.find(12)).toEqual(new TreeNode(12));
+  expect(treeRoot.find((value: number) => value === 6)).toEqual(secondChildNode);
+  expect(treeRoot.find((value: number) => value === 12)).toEqual(new TreeNode(12));
 });
 
 it('find() should return the found item for a value', () => {
@@ -140,8 +140,8 @@ it('find() should return the found item for a value', () => {
   treeRoot.addChild(11);
   treeRoot.addChild(12);
 
-  expect(treeRoot.find(7)).toEqual(thirdDeepestChildNode);
-  expect(treeRoot.find(12)).toEqual(new TreeNode(12));
+  expect(treeRoot.find((value: number) => value === 7)).toEqual(thirdDeepestChildNode);
+  expect(treeRoot.find((value: number) => value === 12)).toEqual(new TreeNode(12));
 });
 
 it('find() should return the found item for a treenode', () => {
@@ -182,8 +182,8 @@ it('find() should return null for none found', () => {
   treeRoot.addChild(11);
   treeRoot.addChild(12);
 
-  expect(treeRoot.find(13)).toBe(null);
-  expect(treeRoot.find((value) => value === 'foo')).toBe(null);
+  expect(treeRoot.find((value: number) => value === 13)).toBe(null);
+  expect(treeRoot.find((value: string) => value === 'foo')).toBe(null);
 });
 
 it('getPath() should return the path to the node', () => {
@@ -225,7 +225,7 @@ it('getPath() should return null if the node is not in the tree', () => {
 
   const exteriorNode = new TreeNode(15);
 
-  expect(treeRoot.getPath(exteriorNode)).toEqual(null);
+  expect(treeRoot.getPath((value: TreeNode<number>) => value === exteriorNode)).toEqual(null);
 });
 
 it('walk() should iterate over every item once in the right order', () => {

@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
 import { dateMath, GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { CollapsableSection, Icon, Link, LinkButton, useStyles2 } from '@grafana/ui';
+import { CollapsableSection, Icon, Link, LinkButton, useStyles2, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { AlertmanagerAlert, Silence, SilenceState } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
@@ -147,15 +146,14 @@ const useFilteredSilences = (silences: Silence[], expired = false) => {
       }
       if (queryString) {
         const matchers = parseMatchers(queryString);
-        const matchersMatch = matchers.every(
-          (matcher) =>
-            silence.matchers?.some(
-              ({ name, value, isEqual, isRegex }) =>
-                matcher.name === name &&
-                matcher.value === value &&
-                matcher.isEqual === isEqual &&
-                matcher.isRegex === isRegex
-            )
+        const matchersMatch = matchers.every((matcher) =>
+          silence.matchers?.some(
+            ({ name, value, isEqual, isRegex }) =>
+              matcher.name === name &&
+              matcher.value === value &&
+              matcher.isEqual === isEqual &&
+              matcher.isRegex === isRegex
+          )
         );
         if (!matchersMatch) {
           return false;

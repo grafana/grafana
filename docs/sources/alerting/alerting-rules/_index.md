@@ -5,7 +5,7 @@ aliases:
   - unified-alerting/alerting-rules/
   - ./create-alerts/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/
-description: Configure alerting
+description: Configure the features and integrations you need to create and manage your alerts
 labels:
   products:
     - cloud
@@ -13,7 +13,7 @@ labels:
     - oss
 menuTitle: Configure
 title: Configure Alerting
-weight: 130
+weight: 120
 ---
 
 # Configure Alerting

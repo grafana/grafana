@@ -3,7 +3,7 @@ aliases:
   - alerting-limitations/
   - alerting/performance-limitations/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/performance-limitations/
-description: Performance considerations and limitations
+description: Learn about performance considerations and limitations
 keywords:
   - grafana
   - alerting
@@ -55,3 +55,15 @@ Grafana cannot be used to receive external alerts. You can only send alerts to t
 You have the option to send Grafana managed alerts to an external Alertmanager, you can find this option in the admin tab on the Alerting page.
 
 For more information, refer to [this GitHub discussion](https://github.com/grafana/grafana/discussions/45773).
+
+## High load on database caused by a high number of alert instances
+
+If you have a high number of alert instances, it can happen that the load on the database gets very high, as each state
+transition of an alert instance will be saved in the database.
+
+This can be prevented by writing to the database periodically. For this the feature flag `alertingSaveStatePeriodic` needs
+to be enabled. By default it will save the states every 5 minutes to the database and on each shutdown. The periodic interval
+can also be configured using the `state_periodic_save_interval` configuration flag.
+
+The time it takes to write to the database periodically can be monitored using the `state_full_sync_duration_seconds` metric
+that is exposed by Grafana.

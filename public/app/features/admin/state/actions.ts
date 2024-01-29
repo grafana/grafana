@@ -6,7 +6,15 @@ import { FetchDataArgs } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { ThunkResult, LdapUser, UserSession, UserDTO, AccessControlAction, UserFilter } from 'app/types';
+import {
+  ThunkResult,
+  LdapUser,
+  UserSession,
+  UserDTO,
+  AccessControlAction,
+  UserFilter,
+  AnonUserFilter,
+} from 'app/types';
 
 import {
   userAdminPageLoadedAction,
@@ -28,6 +36,10 @@ import {
   usersFetchBegin,
   usersFetchEnd,
   sortChanged,
+  usersAnonymousDevicesFetched,
+  anonUserSortChanged,
+  anonPageChanged,
+  anonQueryChanged,
 } from './reducers';
 // UserAdminPage
 
@@ -334,3 +346,74 @@ export function changeSort({ sortBy }: FetchDataArgs<UserDTO>): ThunkResult<void
     }
   };
 }
+
+// UserListAnonymousPage
+const getAnonFilters = (filters: AnonUserFilter[]) => {
+  return filters
+    .map((filter) => {
+      if (Array.isArray(filter.value)) {
+        return filter.value.map((v) => `${filter.name}=${v.value}`).join('&');
+      }
+      return `${filter.name}=${filter.value}`;
+    })
+    .join('&');
+};
+
+export function fetchUsersAnonymousDevices(): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    try {
+      const { perPage, page, query, filters, sort } = getState().userListAnonymousDevices;
+      let url = `/api/anonymous/search?perpage=${perPage}&page=${page}&query=${query}&${getAnonFilters(filters)}`;
+      if (sort) {
+        url += `&sort=${sort}`;
+      }
+      const result = await getBackendSrv().get(url);
+      dispatch(usersAnonymousDevicesFetched(result));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+}
+
+const fetchAnonUsersWithDebounce = debounce((dispatch) => dispatch(fetchUsersAnonymousDevices()), 500);
+
+export function changeAnonUserSort({ sortBy }: FetchDataArgs<UserDTO>): ThunkResult<void> {
+  const sort = sortBy.length ? `${sortBy[0].id}-${sortBy[0].desc ? 'desc' : 'asc'}` : undefined;
+  return async (dispatch, getState) => {
+    const currentSort = getState().userListAnonymousDevices.sort;
+    if (currentSort !== sort) {
+      // dispatch(usersFetchBegin());
+      dispatch(anonUserSortChanged(sort));
+      dispatch(fetchUsersAnonymousDevices());
+    }
+  };
+}
+
+export function changeAnonQuery(query: string): ThunkResult<void> {
+  return async (dispatch) => {
+    // dispatch(usersFetchBegin());
+    dispatch(anonQueryChanged(query));
+    fetchAnonUsersWithDebounce(dispatch);
+  };
+}
+
+export function changeAnonPage(page: number): ThunkResult<void> {
+  return async (dispatch) => {
+    // dispatch(usersFetchBegin());
+    dispatch(anonPageChanged(page));
+    dispatch(fetchUsersAnonymousDevices());
+  };
+}
+
+// export function fetchUsersAnonymousDevices(): ThunkResult<void> {
+//   return async (dispatch, getState) => {
+//     try {
+//       let url = `/api/anonymous/devices`;
+//       const result = await getBackendSrv().get(url);
+//       dispatch(usersAnonymousDevicesFetched({ devices: result }));
+//     } catch (error) {
+//       usersFetchEnd();
+//       console.error(error);
+//     }
+//   };
+// }

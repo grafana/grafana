@@ -129,7 +129,7 @@ func TestProcessLogsResponse(t *testing.T) {
 			require.Equal(t, data.FieldTypeNullableFloat64, logsFieldMap["number"].Type())
 
 			require.Contains(t, logsFieldMap, "_source")
-			require.Equal(t, data.FieldTypeNullableJSON, logsFieldMap["_source"].Type())
+			require.Equal(t, data.FieldTypeNullableString, logsFieldMap["_source"].Type())
 
 			requireStringAt(t, "fdsfs", logsFieldMap["_id"], 0)
 			requireStringAt(t, "kdospaidopa", logsFieldMap["_id"], 1)
@@ -138,10 +138,8 @@ func TestProcessLogsResponse(t *testing.T) {
 			requireStringAt(t, "mock-index", logsFieldMap["_index"], 0)
 			requireStringAt(t, "mock-index", logsFieldMap["_index"], 1)
 
-			actualJson1, err := json.Marshal(logsFieldMap["_source"].At(0).(*json.RawMessage))
-			require.NoError(t, err)
-			actualJson2, err := json.Marshal(logsFieldMap["_source"].At(1).(*json.RawMessage))
-			require.NoError(t, err)
+			actualJson1 := logsFieldMap["_source"].At(0).(*string)
+			actualJson2 := logsFieldMap["_source"].At(1).(*string)
 
 			expectedJson1 := `
 					{
@@ -165,8 +163,8 @@ func TestProcessLogsResponse(t *testing.T) {
 						"fields.lvl": "info"
 					}`
 
-			require.JSONEq(t, expectedJson1, string(actualJson1))
-			require.JSONEq(t, expectedJson2, string(actualJson2))
+			require.JSONEq(t, expectedJson1, *actualJson1)
+			require.JSONEq(t, expectedJson2, *actualJson2)
 		})
 
 		t.Run("creates correct level field", func(t *testing.T) {
@@ -600,6 +598,92 @@ func TestProcessRawDataResponse(t *testing.T) {
 			// we need to test that the only changed setting is `filterable`
 			require.Equal(t, filterableConfig, *field.Config)
 		}
+	})
+
+	t.Run("gets correct time field from fields", func(t *testing.T) {
+		query := []byte(`
+			[
+				{
+				  "refId": "A",
+				  "metrics": [{ "type": "raw_data", "id": "1" }]
+				}
+			]
+		`)
+
+		response := []byte(`
+			{
+				"responses": [
+				  {
+					"aggregations": {},
+					"hits": {
+					  "hits": [
+						{
+						  "_id": "fdsfs",
+						  "_type": "_doc",
+						  "_index": "mock-index",
+						  "_source": {
+							"testtime": "06/24/2019",
+							"host": "djisaodjsoad",
+							"number": 1,
+							"line": "hello, i am a message",
+							"level": "debug",
+							"fields": { "lvl": "debug" }
+						  },
+						  "highlight": {
+								"message": [
+							  	"@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"
+								]
+						  },
+							"fields": {
+								"testtime": [ "2019-06-24T09:51:19.765Z" ]
+							}
+						},
+						{
+						  "_id": "kdospaidopa",
+						  "_type": "_doc",
+						  "_index": "mock-index",
+						  "_source": {
+							"testtime": "06/24/2019",
+							"host": "dsalkdakdop",
+							"number": 2,
+							"line": "hello, i am also message",
+							"level": "error",
+							"fields": { "lvl": "info" }
+						  },
+						  "highlight": {
+								"message": [
+							  	"@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"
+								]
+						  },
+							"fields": {
+								"testtime": [ "2019-06-24T09:52:19.765Z" ]
+							}
+						}
+					  ]
+					}
+				  }
+				]
+			}
+			`)
+		result, err := queryDataTest(query, response)
+		require.NoError(t, err)
+
+		require.Len(t, result.response.Responses, 1)
+		frames := result.response.Responses["A"].Frames
+		require.Len(t, frames, 1)
+
+		logsFrame := frames[0]
+
+		logsFieldMap := make(map[string]*data.Field)
+		for _, field := range logsFrame.Fields {
+			logsFieldMap[field.Name] = field
+		}
+		t0 := time.Date(2019, time.June, 24, 9, 51, 19, 765000000, time.UTC)
+		t1 := time.Date(2019, time.June, 24, 9, 52, 19, 765000000, time.UTC)
+		require.Contains(t, logsFieldMap, "testtime")
+		require.Equal(t, data.FieldTypeNullableTime, logsFieldMap["testtime"].Type())
+		require.Equal(t, &t0, logsFieldMap["testtime"].At(0))
+		require.Equal(t, &t1, logsFieldMap["testtime"].At(1))
 	})
 }
 

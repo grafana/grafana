@@ -69,4 +69,5 @@ const nodeDatum = {
   mainStat: { name: 'stat', values: [1234], type: FieldType.number, config: {} },
   secondaryStat: { name: 'stat2', values: [9876], type: FieldType.number, config: {} },
   arcSections: [],
+  highlighted: false,
 };

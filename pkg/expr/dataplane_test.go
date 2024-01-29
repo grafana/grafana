@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/dataplane/examples"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -22,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/stretchr/testify/require"
 )
 
 func TestPassThroughDataplaneExamples(t *testing.T) {
@@ -60,7 +61,8 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 			PluginList: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "test"}},
 			}},
-			&datafakes.FakeDataSourceService{}, nil, pluginFakes.NewFakeLicensingService(), &config.Cfg{}),
+			&datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{},
+			nil, pluginFakes.NewFakeLicensingService(), &config.Cfg{}),
 		tracer:  tracing.InitializeTracerForTest(),
 		metrics: newMetrics(nil),
 	}

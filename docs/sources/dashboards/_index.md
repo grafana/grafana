@@ -8,6 +8,7 @@ labels:
     - oss
 title: Dashboards
 weight: 70
+description: Create and manage dashboards
 ---
 
 # Dashboards
@@ -31,6 +32,9 @@ Before you begin, ensure that you have configured a data source. See also:
 - [JSON model][]
 
 {{% docs/reference %}}
+[data source]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
+[data source]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources"
+
 [Reporting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/create-reports"
 [Reporting]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/create-reports"
 

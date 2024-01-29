@@ -1428,10 +1428,12 @@ func TestExecuteElasticsearchDataQuery(t *testing.T) {
 
 		t.Run("With invalid query should return error", (func(t *testing.T) {
 			c := newFakeClient()
-			_, err := executeElasticsearchDataQuery(c, `{
+			res, err := executeElasticsearchDataQuery(c, `{
 				"query": "foo",
 			}`, from, to)
-			require.Error(t, err)
+			require.NoError(t, err)
+			require.Equal(t, res.Responses["A"].ErrorSource, backend.ErrorSourcePlugin)
+			require.Equal(t, res.Responses["A"].Error.Error(), "invalid character '}' looking for beginning of object key string")
 		}))
 	})
 }
@@ -1856,6 +1858,7 @@ func executeElasticsearchDataQuery(c es.Client, body string, from, to time.Time)
 			{
 				JSON:      json.RawMessage(body),
 				TimeRange: timeRange,
+				RefID:     "A",
 			},
 		},
 	}

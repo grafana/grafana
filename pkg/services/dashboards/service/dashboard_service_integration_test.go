@@ -128,7 +128,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						Dashboard: simplejson.NewFromAny(map[string]any{
 							"title": "Dash",
 						}),
-						FolderID:  sc.otherSavedFolder.ID,
+						FolderUID: sc.otherSavedFolder.UID,
 						UserID:    10000,
 						Overwrite: true,
 					}
@@ -151,7 +151,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 						Dashboard: simplejson.NewFromAny(map[string]any{
 							"title": sc.savedDashInFolder.Title,
 						}),
-						FolderID:  sc.savedFolder.ID,
+						FolderUID: sc.savedFolder.UID,
 						UserID:    10000,
 						Overwrite: true,
 					}
@@ -175,7 +175,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							"uid":   sc.savedDashInFolder.UID,
 							"title": "New dash",
 						}),
-						FolderID:  sc.savedFolder.ID,
+						FolderUID: sc.savedFolder.UID,
 						UserID:    10000,
 						Overwrite: true,
 					}
@@ -199,7 +199,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							"id":    sc.savedDashInGeneralFolder.ID,
 							"title": "Dash",
 						}),
-						FolderID:  sc.savedDashInGeneralFolder.FolderID,
+						FolderUID: sc.savedDashInGeneralFolder.FolderUID,
 						UserID:    10000,
 						Overwrite: true,
 					}
@@ -223,7 +223,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							"id":    sc.savedDashInFolder.ID,
 							"title": "Dash",
 						}),
-						FolderID:  sc.savedDashInFolder.FolderID,
+						FolderUID: sc.savedDashInFolder.FolderUID,
 						UserID:    10000,
 						Overwrite: true,
 					}
@@ -247,7 +247,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							"id":    sc.savedDashInGeneralFolder.ID,
 							"title": "Dash",
 						}),
-						FolderID:  sc.otherSavedFolder.ID,
+						FolderUID: sc.otherSavedFolder.UID,
 						UserID:    10000,
 						Overwrite: true,
 					}
@@ -271,7 +271,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							"id":    sc.savedDashInFolder.ID,
 							"title": "Dash",
 						}),
-						FolderID:  0,
+						FolderUID: "",
 						UserID:    10000,
 						Overwrite: true,
 					}
@@ -295,7 +295,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							"uid":   sc.savedDashInGeneralFolder.UID,
 							"title": "Dash",
 						}),
-						FolderID:  sc.otherSavedFolder.ID,
+						FolderUID: sc.otherSavedFolder.UID,
 						UserID:    10000,
 						Overwrite: true,
 					}
@@ -319,7 +319,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							"uid":   sc.savedDashInFolder.UID,
 							"title": "Dash",
 						}),
-						FolderID:  0,
+						FolderUID: "",
 						UserID:    10000,
 						Overwrite: true,
 					}
@@ -350,7 +350,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"id":    nil,
 								"title": sc.savedDashInFolder.Title,
 							}),
-							FolderID:  0,
+							FolderUID: "",
 							Overwrite: shouldOverwrite,
 						}
 
@@ -373,7 +373,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"id":    nil,
 								"title": sc.savedDashInGeneralFolder.Title,
 							}),
-							FolderID:  sc.savedFolder.ID,
+							FolderUID: sc.savedFolder.UID,
 							Overwrite: shouldOverwrite,
 						}
 
@@ -464,12 +464,12 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 							Dashboard: simplejson.NewFromAny(map[string]any{
 								"title": "Expect error",
 							}),
-							FolderID:  123412321,
+							FolderUID: "123412321",
 							Overwrite: shouldOverwrite,
 						}
 
 						err := callSaveWithError(t, cmd, sc.sqlStore)
-						assert.Equal(t, dashboards.ErrDashboardFolderNotFound, err)
+						assert.Equal(t, dashboards.ErrFolderNotFound, err)
 					})
 
 				permissionScenario(t, "When updating an existing dashboard by id without current version", canSave,
@@ -480,7 +480,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"id":    sc.savedDashInGeneralFolder.ID,
 								"title": "test dash 23",
 							}),
-							FolderID:  sc.savedFolder.ID,
+							FolderUID: sc.savedFolder.UID,
 							Overwrite: shouldOverwrite,
 						}
 
@@ -497,7 +497,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"title":   "Updated title",
 								"version": sc.savedDashInGeneralFolder.Version,
 							}),
-							FolderID:  sc.savedFolder.ID,
+							FolderUID: sc.savedFolder.UID,
 							Overwrite: shouldOverwrite,
 						}
 
@@ -520,7 +520,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"uid":   sc.savedDashInFolder.UID,
 								"title": "test dash 23",
 							}),
-							FolderID:  0,
+							FolderUID: "",
 							Overwrite: shouldOverwrite,
 						}
 
@@ -537,7 +537,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"title":   "Updated title",
 								"version": sc.savedDashInFolder.Version,
 							}),
-							FolderID:  0,
+							FolderUID: "",
 							Overwrite: shouldOverwrite,
 						}
 
@@ -559,7 +559,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"id":    nil,
 								"title": sc.savedDashInFolder.Title,
 							}),
-							FolderID:  sc.savedDashInFolder.FolderID,
+							FolderUID: sc.savedDashInFolder.FolderUID,
 							Overwrite: shouldOverwrite,
 						}
 
@@ -575,7 +575,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"id":    nil,
 								"title": sc.savedDashInGeneralFolder.Title,
 							}),
-							FolderID:  sc.savedDashInGeneralFolder.FolderID,
+							FolderUID: sc.savedDashInGeneralFolder.FolderUID,
 							Overwrite: shouldOverwrite,
 						}
 
@@ -611,7 +611,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"id":    sc.savedDashInGeneralFolder.ID,
 								"title": "Updated title",
 							}),
-							FolderID:  sc.savedFolder.ID,
+							FolderUID: sc.savedFolder.UID,
 							Overwrite: shouldOverwrite,
 						}
 
@@ -633,7 +633,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"uid":   sc.savedDashInFolder.UID,
 								"title": "Updated title",
 							}),
-							FolderID:  0,
+							FolderUID: "",
 							Overwrite: shouldOverwrite,
 						}
 
@@ -695,7 +695,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"id":    nil,
 								"title": sc.savedDashInFolder.Title,
 							}),
-							FolderID:  sc.savedDashInFolder.FolderID,
+							FolderUID: sc.savedDashInFolder.FolderUID,
 							Overwrite: shouldOverwrite,
 						}
 
@@ -719,7 +719,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 								"id":    nil,
 								"title": sc.savedDashInGeneralFolder.Title,
 							}),
-							FolderID:  sc.savedDashInGeneralFolder.FolderID,
+							FolderUID: sc.savedDashInGeneralFolder.FolderUID,
 							Overwrite: shouldOverwrite,
 						}
 
@@ -853,12 +853,12 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 	}
 
 	t.Run(desc, func(t *testing.T) {
+		features := featuremgmt.WithFeatures()
 		cfg := setting.NewCfg()
-		cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 		sqlStore := db.InitTestDB(t)
 		quotaService := quotatest.New(false, nil)
 		ac := actest.FakeAccessControl{ExpectedEvaluate: true}
-		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
 		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 		folderPermissions := accesscontrolmock.NewMockedPermissionsService()
@@ -871,28 +871,27 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 			dashboardPermissions,
 			ac,
 			foldertest.NewFakeService(),
+			nil,
 		)
 		require.NoError(t, err)
 		guardian.InitAccessControlGuardian(cfg, ac, dashboardService)
 
 		savedFolder := saveTestFolder(t, "Saved folder", testOrgID, sqlStore)
-		savedDashInFolder := saveTestDashboard(t, "Saved dash in folder", testOrgID, savedFolder.ID, sqlStore)
-		saveTestDashboard(t, "Other saved dash in folder", testOrgID, savedFolder.ID, sqlStore)
-		savedDashInGeneralFolder := saveTestDashboard(t, "Saved dashboard in general folder", testOrgID, 0, sqlStore)
+		savedDashInFolder := saveTestDashboard(t, "Saved dash in folder", testOrgID, savedFolder.UID, sqlStore)
+		saveTestDashboard(t, "Other saved dash in folder", testOrgID, savedFolder.UID, sqlStore)
+		savedDashInGeneralFolder := saveTestDashboard(t, "Saved dashboard in general folder", testOrgID, "", sqlStore)
 		otherSavedFolder := saveTestFolder(t, "Other saved folder", testOrgID, sqlStore)
 
 		require.Equal(t, "Saved folder", savedFolder.Title)
 		require.Equal(t, "saved-folder", savedFolder.Slug)
 		require.NotEqual(t, int64(0), savedFolder.ID)
 		require.True(t, savedFolder.IsFolder)
-		require.Equal(t, int64(0), savedFolder.FolderID)
 		require.NotEmpty(t, savedFolder.UID)
 
 		require.Equal(t, "Saved dash in folder", savedDashInFolder.Title)
 		require.Equal(t, "saved-dash-in-folder", savedDashInFolder.Slug)
 		require.NotEqual(t, int64(0), savedDashInFolder.ID)
 		require.False(t, savedDashInFolder.IsFolder)
-		require.Equal(t, savedFolder.ID, savedDashInFolder.FolderID)
 		require.NotEmpty(t, savedDashInFolder.UID)
 
 		origNewDashboardGuardian := guardian.New
@@ -918,11 +917,11 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlStore db.DB) *dashboards.Dashboard {
 	t.Helper()
 
+	features := featuremgmt.WithFeatures()
 	dto := toSaveDashboardDto(cmd)
 	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
@@ -937,6 +936,7 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		dashboardPermissions,
 		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
+		nil,
 	)
 	require.NoError(t, err)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
@@ -946,11 +946,11 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 }
 
 func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlStore db.DB) error {
+	features := featuremgmt.WithFeatures()
 	dto := toSaveDashboardDto(cmd)
 	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	service, err := ProvideDashboardServiceImpl(
@@ -960,19 +960,20 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 		accesscontrolmock.NewMockedPermissionsService(),
 		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
+		nil,
 	)
 	require.NoError(t, err)
 	_, err = service.SaveDashboard(context.Background(), &dto, false)
 	return err
 }
 
-func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlStore db.DB) *dashboards.Dashboard {
+func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string, sqlStore db.DB) *dashboards.Dashboard {
 	t.Helper()
 
 	cmd := dashboards.SaveDashboardCommand{
-		OrgID:    orgID,
-		FolderID: folderID,
-		IsFolder: false,
+		OrgID:     orgID,
+		FolderUID: folderUID,
+		IsFolder:  false,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": title,
@@ -987,21 +988,22 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 			OrgRole: org.RoleAdmin,
 		},
 	}
+	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 	dashboardPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	service, err := ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore, &dummyDashAlertExtractor{},
-		featuremgmt.WithFeatures(),
+		features,
 		accesscontrolmock.NewMockedPermissionsService(),
 		dashboardPermissions,
 		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
+		nil,
 	)
 	require.NoError(t, err)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)
@@ -1014,9 +1016,9 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
-		OrgID:    orgID,
-		FolderID: 0,
-		IsFolder: true,
+		OrgID:     orgID,
+		FolderUID: "",
+		IsFolder:  true,
 		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": title,
@@ -1036,10 +1038,10 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		},
 	}
 
+	features := featuremgmt.WithFeatures()
 	cfg := setting.NewCfg()
-	cfg.IsFeatureToggleEnabled = featuremgmt.WithFeatures().IsEnabled
 	quotaService := quotatest.New(false, nil)
-	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, features, tagimpl.ProvideService(sqlStore), quotaService)
 	require.NoError(t, err)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	folderPermissions := accesscontrolmock.NewMockedPermissionsService()
@@ -1051,6 +1053,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		accesscontrolmock.NewMockedPermissionsService(),
 		actest.FakeAccessControl{},
 		foldertest.NewFakeService(),
+		nil,
 	)
 	require.NoError(t, err)
 	res, err := service.SaveDashboard(context.Background(), &dto, false)

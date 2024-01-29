@@ -229,6 +229,25 @@ ENABLE_METRICS=true
 }
 ```
 
+#### Enable detailed timing metrics
+
+With the [Prometheus metrics enabled](#enable-prometheus-metrics), you can also enable detailed metrics to get the duration of every rendering step.
+
+Default is `false`.
+
+```bash
+# Available from v3.9.0+
+RENDERING_TIMING_METRICS=true
+```
+
+```json
+{
+  "rendering": {
+    "timingMetrics": true
+  }
+}
+```
+
 #### Log level
 
 Change the log level. Default is `info` and will include log messages with level `error`, `warning` and `info`.
@@ -370,6 +389,11 @@ BROWSER_TZ=Europe/Stockholm
 Instruct headless browser instance to use a default language when not provided by Grafana, e.g. when rendering panel image of alert.
 Refer to the HTTP header Accept-Language to understand how to format this value.
 
+```bash
+# Available from v3.9.0+
+RENDERING_LANGUAGE="fr-CH, fr;q=0.9, en;q=0.8, de;q=0.7, *;q=0.5"
+```
+
 ```json
 {
   "rendering": {
@@ -381,6 +405,11 @@ Refer to the HTTP header Accept-Language to understand how to format this value.
 #### Viewport width
 
 Default viewport width when width is not specified in the rendering request. Default is `1000`.
+
+```bash
+# Available from v3.9.0+
+RENDERING_VIEWPORT_WIDTH=1000
+```
 
 ```json
 {
@@ -394,6 +423,11 @@ Default viewport width when width is not specified in the rendering request. Def
 
 Default viewport height when height is not specified in the rendering request. Default is `500`.
 
+```bash
+# Available from v3.9.0+
+RENDERING_VIEWPORT_HEIGHT=500
+```
+
 ```json
 {
   "rendering": {
@@ -406,6 +440,11 @@ Default viewport height when height is not specified in the rendering request. D
 
 Limit the maximum viewport width that can be requested. Default is `3000`.
 
+```bash
+# Available from v3.9.0+
+RENDERING_VIEWPORT_MAX_WIDTH=1000
+```
+
 ```json
 {
   "rendering": {
@@ -417,6 +456,11 @@ Limit the maximum viewport width that can be requested. Default is `3000`.
 #### Viewport maximum height
 
 Limit the maximum viewport height that can be requested. Default is `3000`.
+
+```bash
+# Available from v3.9.0+
+RENDERING_VIEWPORT_MAX_HEIGHT=500
+```
 
 ```json
 {
@@ -431,6 +475,11 @@ Limit the maximum viewport height that can be requested. Default is `3000`.
 Specify default device scale factor for rendering images. `2` is enough for monitor resolutions, `4` would be better for printed material. Setting a higher value affects performance and memory. Default is `1`.
 This can be overridden in the rendering request.
 
+```bash
+# Available from v3.9.0+
+RENDERING_VIEWPORT_DEVICE_SCALE_FACTOR=2
+```
+
 ```json
 {
   "rendering": {
@@ -442,6 +491,11 @@ This can be overridden in the rendering request.
 #### Maximum device scale factor
 
 Limit the maximum device scale factor that can be requested. Default is `4`.
+
+```bash
+# Available from v3.9.0+
+RENDERING_VIEWPORT_MAX_DEVICE_SCALE_FACTOR=4
+```
 
 ```json
 {

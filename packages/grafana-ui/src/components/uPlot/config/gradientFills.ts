@@ -68,8 +68,8 @@ export function getHueGradientFn(
       ctx
     );
 
-    const color1 = tinycolor(color).spin(-15);
-    const color2 = tinycolor(color).spin(15);
+    const color1 = tinycolor(color).spin(-25).darken(5);
+    const color2 = tinycolor(color).saturate(20).spin(20).brighten(10);
 
     if (theme.isDark) {
       gradient.addColorStop(0, color2.lighten(10).setAlpha(opacity).toString());
@@ -229,6 +229,11 @@ export function getGradientRange(
   return [min, max];
 }
 
+function isStepTransparent(color: string) {
+  // steps are stored as names or 8-char hex
+  return color === 'transparent' || (color[0] === '#' && color.slice(-2) === '00');
+}
+
 export function getScaleGradientFn(
   opacity: number,
   theme: GrafanaTheme2,
@@ -256,7 +261,9 @@ export function getScaleGradientFn(
       if (thresholds.mode === ThresholdsMode.Absolute) {
         const valueStops: ValueStop[] = thresholds.steps.map((step) => [
           step.value,
-          colorManipulator.alpha(theme.visualization.getColorByName(step.color), opacity),
+          isStepTransparent(step.color)
+            ? '#0000'
+            : colorManipulator.alpha(theme.visualization.getColorByName(step.color), opacity),
         ]);
         gradient = scaleGradient(plot, scaleKey, valueStops, true);
       } else {

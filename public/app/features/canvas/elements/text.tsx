@@ -95,26 +95,26 @@ const TextEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
 };
 
 const getStyles = (data: TextData | undefined) => (theme: GrafanaTheme2) => ({
-  container: css`
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    display: table;
-  `,
-  inlineEditorContainer: css`
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    padding: 10px;
-  `,
-  span: css`
-    display: table-cell;
-    vertical-align: ${data?.valign};
-    text-align: ${data?.align};
-    font-size: ${data?.size}px;
-    color: ${data?.color};
-  `,
+  container: css({
+    position: 'absolute',
+    height: '100%',
+    width: '100%',
+    display: 'table',
+  }),
+  inlineEditorContainer: css({
+    height: '100%',
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    padding: theme.spacing(1),
+  }),
+  span: css({
+    display: 'table-cell',
+    verticalAlign: data?.valign,
+    textAlign: data?.align,
+    fontSize: `${data?.size}px`,
+    color: data?.color,
+  }),
 });
 
 export const textItem: CanvasElementItem<TextConfig, TextData> = {

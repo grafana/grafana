@@ -3,14 +3,14 @@ aliases:
   - ../metrics/
   - ../unified-alerting/fundamentals/evaluate-grafana-alerts/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/evaluate-grafana-alerts/
-description: How to alert on numeric data
+description: Learn how how Grafana-managed alerts are evaluated by the backend engine as well as how Grafana handles alerting on numeric rather than time series data
 labels:
   products:
     - cloud
     - enterprise
     - oss
 title: Alerting on numeric data
-weight: 116
+weight: 110
 ---
 
 # Alerting on numeric data

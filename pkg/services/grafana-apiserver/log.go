@@ -1,7 +1,8 @@
 package grafanaapiserver
 
 import (
-	"cuelang.org/go/pkg/strings"
+	"strings"
+
 	"github.com/go-logr/logr"
 
 	"github.com/grafana/grafana/pkg/infra/log"

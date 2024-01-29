@@ -11,6 +11,7 @@ import {
   QueryHint,
   TimeRange,
 } from '@grafana/data';
+import { TemplateSrv } from '@grafana/runtime';
 
 import { PrometheusDatasource } from '../../datasource';
 import PromQlLanguageProvider from '../../language_provider';
@@ -107,7 +108,7 @@ describe('PromQueryBuilder', () => {
   it('tries to load labels when metric selected', async () => {
     const { languageProvider } = setup();
     await openLabelNameSelect();
-    await waitFor(() => expect(languageProvider.fetchSeriesLabels).toBeCalledWith('{__name__="random_metric"}'));
+    await waitFor(() => expect(languageProvider.fetchLabelsWithMatch).toBeCalledWith('{__name__="random_metric"}'));
   });
 
   it('tries to load variables in label field', async () => {
@@ -127,7 +128,9 @@ describe('PromQueryBuilder', () => {
     });
     await openLabelNameSelect(1);
     await waitFor(() =>
-      expect(languageProvider.fetchSeriesLabels).toBeCalledWith('{label_name="label_value", __name__="random_metric"}')
+      expect(languageProvider.fetchLabelsWithMatch).toBeCalledWith(
+        '{label_name="label_value", __name__="random_metric"}'
+      )
     );
   });
   //</LegacyPrometheus>
@@ -274,7 +277,7 @@ describe('PromQueryBuilder', () => {
       jsonData: { prometheusVersion: '2.38.1', prometheusType: PromApplication.Prometheus },
     });
     await openLabelNameSelect();
-    await waitFor(() => expect(languageProvider.fetchSeriesLabelsMatch).toBeCalledWith('{__name__="random_metric"}'));
+    await waitFor(() => expect(languageProvider.fetchLabelsWithMatch).toBeCalledWith('{__name__="random_metric"}'));
   });
 
   it('tries to load variables in label field modern prom', async () => {
@@ -300,7 +303,7 @@ describe('PromQueryBuilder', () => {
     );
     await openLabelNameSelect(1);
     await waitFor(() =>
-      expect(languageProvider.fetchSeriesLabelsMatch).toBeCalledWith(
+      expect(languageProvider.fetchLabelsWithMatch).toBeCalledWith(
         '{label_name="label_value", __name__="random_metric"}'
       )
     );
@@ -317,8 +320,7 @@ function createDatasource(options?: Partial<DataSourceInstanceSettings<PromOptio
       meta: {} as DataSourcePluginMeta,
       ...options,
     } as DataSourceInstanceSettings<PromOptions>,
-    undefined,
-    undefined,
+    mockTemplateSrv(),
     languageProvider
   );
   return { datasource, languageProvider };
@@ -355,4 +357,10 @@ async function openMetricSelect(container: HTMLElement) {
 async function openLabelNameSelect(index = 0) {
   const { name } = getLabelSelects(index);
   await userEvent.click(name);
+}
+
+function mockTemplateSrv(): TemplateSrv {
+  return {
+    getVariables: () => [],
+  } as unknown as TemplateSrv;
 }

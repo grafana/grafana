@@ -16,6 +16,7 @@ labels:
     - enterprise
     - oss
 title: Variable syntax
+description: Learn about different types of variable syntax
 weight: 300
 ---
 

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
@@ -30,7 +31,8 @@ type AzureResourceGraphResponse struct {
 
 // AzureResourceGraphDatasource calls the Azure Resource Graph API's
 type AzureResourceGraphDatasource struct {
-	Proxy types.ServiceProxy
+	Proxy  types.ServiceProxy
+	Logger log.Logger
 }
 
 // AzureResourceGraphQuery is the query request that is built from the saved values for
@@ -160,7 +162,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, query *
 	)
 
 	defer span.End()
-	backend.Logger.Debug("azure resource graph query", "traceID", trace.SpanContextFromContext(ctx).TraceID())
+	e.Logger.Debug("azure resource graph query", "traceID", trace.SpanContextFromContext(ctx).TraceID())
 
 	res, err := client.Do(req)
 	if err != nil {
@@ -224,7 +226,7 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(res *http.Response) (Az
 
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			backend.Logger.Warn("Failed to close response body", "err", err)
+			e.Logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 

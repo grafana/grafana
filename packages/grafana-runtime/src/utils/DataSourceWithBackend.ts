@@ -82,6 +82,7 @@ enum PluginRequestHeaders {
   PanelID = 'X-Panel-Id', // mainly useful for debugging slow queries
   QueryGroupID = 'X-Query-Group-Id', // mainly useful to find related queries with query splitting
   FromExpression = 'X-Grafana-From-Expr', // used by datasources to identify expression queries
+  SkipQueryCache = 'X-Cache-Skip', // used by datasources to skip the query cache
 }
 
 /**
@@ -190,12 +191,11 @@ class DataSourceWithBackend<
       return of({ data: [] });
     }
 
-    const body: any = { queries };
-
-    if (range) {
-      body.from = range.from.valueOf().toString();
-      body.to = range.to.valueOf().toString();
-    }
+    const body = {
+      queries,
+      from: range?.from.valueOf().toString(),
+      to: range?.to.valueOf().toString(),
+    };
 
     if (config.featureToggles.queryOverLive) {
       return getGrafanaLiveSrv().getQueryData({
@@ -228,6 +228,9 @@ class DataSourceWithBackend<
     }
     if (request.queryGroupId) {
       headers[PluginRequestHeaders.QueryGroupID] = `${request.queryGroupId}`;
+    }
+    if (request.skipQueryCache) {
+      headers[PluginRequestHeaders.SkipQueryCache] = 'true';
     }
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({
@@ -265,7 +268,7 @@ class DataSourceWithBackend<
    * Apply template variables for explore
    */
   interpolateVariablesInQueries(queries: TQuery[], scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): TQuery[] {
-    return queries.map((q) => this.applyTemplateVariables(q, scopedVars, filters) as TQuery);
+    return queries.map((q) => this.applyTemplateVariables(q, scopedVars, filters));
   }
 
   /**
@@ -287,7 +290,7 @@ class DataSourceWithBackend<
    *
    * @virtual
    */
-  applyTemplateVariables(query: TQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): Record<string, any> {
+  applyTemplateVariables(query: TQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]) {
     return query;
   }
 
@@ -320,7 +323,7 @@ class DataSourceWithBackend<
   /**
    * Send a POST request to the datasource resource path
    */
-  async postResource<T = any>(
+  async postResource<T = unknown>(
     path: string,
     data?: BackendSrvRequest['data'],
     options?: Partial<BackendSrvRequest>

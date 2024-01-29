@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 )
 
 type duplicate struct {
@@ -102,6 +103,8 @@ func (c *duplicateValidator) logWarnings(duplicatesByOrg map[int64]duplicateEntr
 
 		for id, usage := range duplicates.Titles {
 			if usage.Sum > 1 {
+				metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Provisioning).Inc()
+				// nolint:staticcheck
 				c.logger.Warn("dashboard title is not unique in folder", "orgId", orgID, "title", id.title, "folderID", id.folderID, "times",
 					usage.Sum, "providers", keysToSlice(usage.InvolvedReaders))
 			}

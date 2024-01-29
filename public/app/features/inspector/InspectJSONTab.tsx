@@ -131,7 +131,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
             Apply
           </Button>
         )}
-        {show === ShowContent.DataFrames && (
+        {show === ShowContent.DataFrames && dashboard !== undefined && (
           <Button className={styles.toolbarItem} onClick={onShowHelpWizard}>
             Support
           </Button>
@@ -146,7 +146,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
               height={height}
               language="json"
               showLineNumbers={true}
-              showMiniMap={(text && text.length) > 100}
+              showMiniMap={text.length > 100}
               value={text || ''}
               readOnly={!isPanelJSON}
               onBlur={setText}

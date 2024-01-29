@@ -269,22 +269,13 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 
-	if proxy.features.IsEnabled(featuremgmt.FlagIdForwarding) {
+	if proxy.features.IsEnabled(req.Context(), featuremgmt.FlagIdForwarding) {
 		proxyutil.ApplyForwardIDHeader(req, proxy.ctx.SignedInUser)
-	}
-
-	if proxy.features.IsEnabled(featuremgmt.FlagTeamHttpHeaders) {
-		err := proxyutil.ApplyTeamHTTPHeaders(req, proxy.ds, proxy.ctx.Teams)
-		if err != nil {
-			// NOTE: could downgrade the errors to warnings
-			ctxLogger.Error("Error applying teamHTTPHeaders", "error", err)
-			return
-		}
 	}
 }
 
 func (proxy *DataSourceProxy) validateRequest() error {
-	if !checkWhiteList(proxy.ctx, proxy.targetUrl.Host) {
+	if !proxy.checkWhiteList() {
 		return errors.New("target URL is not a valid target")
 	}
 
@@ -363,10 +354,10 @@ func (proxy *DataSourceProxy) logRequest() {
 		"body", body)
 }
 
-func checkWhiteList(c *contextmodel.ReqContext, host string) bool {
-	if host != "" && len(setting.DataProxyWhiteList) > 0 {
-		if _, exists := setting.DataProxyWhiteList[host]; !exists {
-			c.JsonApiErr(403, "Data proxy hostname and ip are not included in whitelist", nil)
+func (proxy *DataSourceProxy) checkWhiteList() bool {
+	if proxy.targetUrl.Host != "" && len(proxy.cfg.DataProxyWhiteList) > 0 {
+		if _, exists := proxy.cfg.DataProxyWhiteList[proxy.targetUrl.Host]; !exists {
+			proxy.ctx.JsonApiErr(403, "Data proxy hostname and ip are not included in whitelist", nil)
 			return false
 		}
 	}

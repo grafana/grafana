@@ -1,8 +1,7 @@
 import { groupBy } from 'lodash';
 import React, { FC, useCallback, useMemo, useState } from 'react';
 
-import { Stack } from '@grafana/experimental';
-import { Button, Icon, Modal, ModalProps, Spinner } from '@grafana/ui';
+import { Button, Icon, Modal, ModalProps, Spinner, Stack } from '@grafana/ui';
 import {
   AlertmanagerGroup,
   AlertState,
@@ -239,7 +238,7 @@ const useAlertGroupsModal = (): [
         closeOnBackdropClick={true}
         closeOnEscape={true}
         title={
-          <Stack direction="row" alignItems="center" gap={1} flexGrow={1}>
+          <Stack direction="row" alignItems="center" gap={1} wrap={'wrap'}>
             <Stack direction="row" alignItems="center" gap={0.5}>
               <Icon name="x" /> Matchers
             </Stack>

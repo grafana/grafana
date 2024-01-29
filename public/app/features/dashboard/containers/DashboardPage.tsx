@@ -14,7 +14,6 @@ import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { newBrowseDashboardsEnabled } from 'app/features/browse-dashboards/featureFlag';
 import { PanelModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { AngularDeprecationNotice } from 'app/features/plugins/angularDeprecation/AngularDeprecationNotice';
@@ -38,29 +37,8 @@ import { liveTimer } from '../dashgrid/liveTimer';
 import { getTimeSrv } from '../services/TimeSrv';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { initDashboard } from '../state/initDashboard';
-import { calculateNewPanelGridPos } from '../utils/panel';
 
-export interface DashboardPageRouteParams {
-  uid?: string;
-  type?: string;
-  slug?: string;
-  accessToken?: string;
-}
-
-export type DashboardPageRouteSearchParams = {
-  tab?: string;
-  folderUid?: string;
-  editPanel?: string;
-  viewPanel?: string;
-  editview?: string;
-  addWidget?: boolean;
-  panelType?: string;
-  inspect?: string;
-  from?: string;
-  to?: string;
-  refresh?: string;
-  kiosk?: string | true;
-};
+import { DashboardPageRouteParams, DashboardPageRouteSearchParams } from './types';
 
 export const mapStateToProps = (state: StoreState) => ({
   initPhase: state.dashboard.initPhase,
@@ -286,29 +264,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     return updateStatePageNavFromProps(props, updatedState);
   }
 
-  // Todo: Remove this when we remove the emptyDashboardPage toggle
-  onAddPanel = () => {
-    const { dashboard } = this.props;
-
-    if (!dashboard) {
-      return;
-    }
-
-    // Return if the "Add panel" exists already
-    if (dashboard.panels.length > 0 && dashboard.panels[0].type === 'add-panel') {
-      return;
-    }
-
-    dashboard.addPanel({
-      type: 'add-panel',
-      gridPos: calculateNewPanelGridPos(dashboard),
-      title: 'Panel Title',
-    });
-
-    // scroll to top after adding panel
-    this.setState({ updateScrollTop: 0 });
-  };
-
   setScrollRef = (scrollElement: HTMLDivElement): void => {
     this.setState({ scrollElement });
   };
@@ -376,7 +331,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
                 title={dashboard.title}
                 folderTitle={dashboard.meta.folderTitle}
                 isFullscreen={!!viewPanel}
-                onAddPanel={this.onAddPanel}
                 kioskMode={kioskMode}
                 hideTimePicker={dashboard.timepicker.hidden}
               />
@@ -445,29 +399,16 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
     };
   }
 
-  const { folderTitle, folderUid } = dashboard.meta;
+  const { folderUid } = dashboard.meta;
   if (folderUid && pageNav) {
-    if (newBrowseDashboardsEnabled()) {
-      const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
-      // If the folder hasn't loaded (maybe user doesn't have permission on it?) then
-      // don't show the "page not found" breadcrumb
-      if (folderNavModel.id !== 'not-found') {
-        pageNav = {
-          ...pageNav,
-          parentItem: folderNavModel,
-        };
-      }
-    } else {
-      // Check if folder changed
-      if (folderTitle && pageNav.parentItem?.text !== folderTitle) {
-        pageNav = {
-          ...pageNav,
-          parentItem: {
-            text: folderTitle,
-            url: `/dashboards/f/${dashboard.meta.folderUid}`,
-          },
-        };
-      }
+    const folderNavModel = getNavModel(navIndex, `folder-dashboards-${folderUid}`).main;
+    // If the folder hasn't loaded (maybe user doesn't have permission on it?) then
+    // don't show the "page not found" breadcrumb
+    if (folderNavModel.id !== 'not-found') {
+      pageNav = {
+        ...pageNav,
+        parentItem: folderNavModel,
+      };
     }
   }
 

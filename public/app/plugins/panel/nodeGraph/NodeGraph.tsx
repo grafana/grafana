@@ -7,7 +7,6 @@ import { DataFrame, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { Icon, Spinner, useStyles2 } from '@grafana/ui';
 
 import { Edge } from './Edge';
-import { EdgeArrowMarker } from './EdgeArrowMarker';
 import { EdgeLabel } from './EdgeLabel';
 import { Legend } from './Legend';
 import { Marker } from './Marker';
@@ -208,7 +207,6 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit }: Props) {
             className={styles.mainGroup}
             style={{ transform: `scale(${scale}) translate(${Math.floor(position.x)}px, ${Math.floor(position.y)}px)` }}
           >
-            <EdgeArrowMarker />
             {!config.gridLayout && (
               <Edges
                 edges={edges}
@@ -307,8 +305,8 @@ const Nodes = memo(function Nodes(props: NodesProps) {
             !props.hoveringIds || props.hoveringIds.length === 0
               ? 'default'
               : props.hoveringIds?.includes(n.id)
-              ? 'active'
-              : 'inactive'
+                ? 'active'
+                : 'inactive'
           }
         />
       ))}
