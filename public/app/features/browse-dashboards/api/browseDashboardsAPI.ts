@@ -275,9 +275,10 @@ export const browseDashboardsAPI = createApi({
     }),
     // save an existing dashboard
     saveDashboard: builder.mutation<SaveDashboardResponseDTO, SaveDashboardCommand>({
-      query: ({ dashboard, folderUid, message, overwrite }) => ({
+      query: ({ dashboard, folderUid, message, overwrite, showErrorAlert }) => ({
         url: `/dashboards/db`,
         method: 'POST',
+        showErrorAlert,
         data: {
           dashboard,
           folderUid,
