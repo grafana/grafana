@@ -372,11 +372,9 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           tagValues = await this.getTagValues(situation.tagName, situation.query);
         } catch (error) {
           if (isFetchError(error)) {
-            console.error(error.data.error);
             setErrorText(error.data.error);
           } else if (error instanceof Error) {
-            const message = `Error: ${error.message}`;
-            setErrorText(message);
+            setErrorText(`Error: ${error.message}`);
           }
         }
 

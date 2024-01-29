@@ -196,7 +196,7 @@ function useAutocomplete(datasource: TempoDatasource, setAlertText: (text: strin
         await datasource.languageProvider.start();
       } catch (error) {
         if (error instanceof Error) {
-          setAlertText(error.message);
+          setAlertText(`Error: ${error.message}`);
         }
       }
     };

@@ -20,7 +20,6 @@ interface Props {
 
 export function TagsField(props: Props) {
   const [alertText, setAlertText] = useState('');
-
   const { onChange, onBlur, placeholder } = props;
   const setupAutocompleteFn = useAutocomplete(props.datasource, setAlertText);
   const theme = useTheme2();
@@ -124,7 +123,7 @@ function useAutocomplete(datasource: TempoDatasource, setAlertText: (text: strin
         await datasource.languageProvider.start();
       } catch (error) {
         if (error instanceof Error) {
-          setAlertText(error.message);
+          setAlertText(`Error: ${error.message}`);
         }
       }
     };

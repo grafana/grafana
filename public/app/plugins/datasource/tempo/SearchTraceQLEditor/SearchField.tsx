@@ -66,8 +66,7 @@ const SearchField = ({
       if (isFetchError(error) && error?.status === 404) {
         setError(error);
       } else if (error instanceof Error) {
-        const message = `Error: ${error.message}`;
-        setAlertText(message);
+        setAlertText(`Error: ${error.message}`);
       }
     }
     return [];

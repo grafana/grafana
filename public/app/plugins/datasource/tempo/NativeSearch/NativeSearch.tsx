@@ -51,8 +51,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         if (isFetchError(error) && error?.status === 404) {
           setError(error);
         } else if (error instanceof Error) {
-          const message = `Error: ${error.message}`;
-          setAlertText(message);
+          setAlertText(`Error: ${error.message}`);
         }
         return [];
       } finally {
@@ -79,8 +78,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         if (isFetchError(error) && error?.status === 404) {
           setError(error);
         } else if (error instanceof Error) {
-          const message = `Error: ${error.message}`;
-          setAlertText(message);
+          setAlertText(`Error: ${error.message}`);
         }
       }
     };

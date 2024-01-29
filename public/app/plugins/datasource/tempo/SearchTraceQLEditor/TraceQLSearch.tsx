@@ -74,8 +74,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
         setIsTagsLoading(false);
       } catch (error) {
         if (error instanceof Error) {
-          const message = `Error: ${error.message}`;
-          setAlertText(message);
+          setAlertText(`Error: ${error.message}`);
         }
       }
     };
