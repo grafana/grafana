@@ -13,10 +13,19 @@ type SceneTransformWrapperProps = {
 export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransformWrapperProps) => {
   const onZoom = (zoomPanPinchRef: ReactZoomPanPinchRef) => {
     const scale = zoomPanPinchRef.state.scale;
+    scene.scale = scale;
+    updateMoveable(scale);
+  };
+
+  const updateMoveable = (scale: number) => {
     if (scene.moveable && scale > 0) {
       scene.moveable.zoom = 1 / scale;
+      if (scale === 1) {
+        scene.moveable.snappable = true;
+      } else {
+        scene.moveable.snappable = false;
+      }
     }
-    scene.scale = scale;
   };
 
   const onSceneContainerMouseDown = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
@@ -39,7 +48,9 @@ export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransf
       ref={scene.transformComponentRef}
       onZoom={onZoom}
       onTransformed={(_, state) => {
-        scene.scale = state.scale;
+        const scale = state.scale;
+        scene.scale = scale;
+        updateMoveable(scale);
       }}
       limitToBounds={true}
       disabled={!config.featureToggles.canvasPanelPanZoom || !scene.shouldPanZoom}
