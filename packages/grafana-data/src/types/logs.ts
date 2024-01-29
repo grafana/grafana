@@ -4,7 +4,7 @@ import { DataQuery } from '@grafana/schema';
 
 import { KeyValue, Labels } from './data';
 import { DataFrame } from './dataFrame';
-import { DataQueryRequest, DataQueryResponse, QueryFixAction, QueryFixType } from './datasource';
+import { DataQueryRequest, DataQueryResponse, DataSourceApi, QueryFixAction, QueryFixType } from './datasource';
 import { AbsoluteTimeRange } from './time';
 export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
 
@@ -251,19 +251,18 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
 }
 
 export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
-  datasource: unknown,
+  datasource: DataSourceApi | DataSourceApi & DataSourceWithSupplementaryQueriesSupport<TQuery>,
   type: SupplementaryQueryType
-): datasource is DataSourceWithSupplementaryQueriesSupport<TQuery> => {
+): datasource is DataSourceApi & DataSourceWithSupplementaryQueriesSupport<TQuery> => {
   if (!datasource) {
     return false;
   }
 
-  const withSupplementaryQueriesSupport = datasource as DataSourceWithSupplementaryQueriesSupport<TQuery>;
-
   return (
-    withSupplementaryQueriesSupport.getDataProvider !== undefined &&
-    withSupplementaryQueriesSupport.getSupplementaryQuery !== undefined &&
-    withSupplementaryQueriesSupport.getSupportedSupplementaryQueryTypes().includes(type)
+    ('getDataProvider' in datasource || 'getSupplementaryRequest' in datasource) &&
+    'getSupplementaryQuery' in datasource &&
+    'getSupportedSupplementaryQueryTypes' in datasource &&
+    datasource.getSupportedSupplementaryQueryTypes().includes(type)
   );
 };
 
