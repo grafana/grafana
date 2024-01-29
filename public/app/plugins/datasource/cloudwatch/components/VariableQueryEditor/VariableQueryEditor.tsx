@@ -272,6 +272,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
                   onChange({ ...parsedQuery, ec2Filters: filters });
                 }}
                 keyPlaceholder="filter/tag"
+                datasource={datasource}
               />
             </EditorField>
           ) : (
@@ -298,6 +299,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
                   onChange({ ...parsedQuery, ec2Filters: filters });
                 }}
                 keyPlaceholder="filter/tag"
+                datasource={datasource}
               />
             </InlineField>
           )}
@@ -319,6 +321,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
                   onChange({ ...parsedQuery, tags: filters });
                 }}
                 keyPlaceholder="tag"
+                datasource={datasource}
               />
             </EditorField>
           ) : (
@@ -329,6 +332,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
                   onChange({ ...parsedQuery, tags: filters });
                 }}
                 keyPlaceholder="tag"
+                datasource={datasource}
               />
             </InlineField>
           )}
