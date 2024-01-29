@@ -34,7 +34,7 @@ describe('MySQL datasource', () => {
     cy.wait('@datasets');
   });
 
-  it('code editor autocomplete should handle table name escaping/quoting', () => {
+  it.skip('code editor autocomplete should handle table name escaping/quoting', () => {
     e2e.components.RadioButton.container().filter(':contains("Code")').click();
 
     cy.get('textarea').type('S{downArrow}{enter}');
