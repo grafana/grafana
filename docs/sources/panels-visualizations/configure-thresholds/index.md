@@ -20,10 +20,6 @@ weight: 100
 
 # Configure thresholds
 
-This section includes information about using thresholds in your visualizations. You'll learn about thresholds, their defaults, how to add or delete a threshold, and adding a threshold to a legacy panel.
-
-## About thresholds
-
 A threshold is a value that you specify for a metric that is visually reflected in a dashboard when the threshold value is met or exceeded.
 
 Thresholds provide one method for you to conditionally style and color your visualizations based on query results. You can apply thresholds to most, but not all, visualizations. For more information about visualizations, refer to [Visualization panels][].
