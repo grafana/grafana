@@ -12,11 +12,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
-const GrafanaRequestID = "X-Grafana-Request-ID"
-const GrafanaSignedRequestID = "X-Grafana-Signed-Request-ID"
+const GrafanaRequestID = "X-Grafana-Request-Id"
+const GrafanaSignedRequestID = "X-Grafana-Signed-Request-Id"
+const GrafanaInternalRequest = "X-Grafana-Internal-Request"
 
 // NewHostedGrafanaACHeaderMiddleware creates a new plugins.ClientMiddleware that will
 // generate a random request ID, sign it using internal key and populate X-Grafana-Request-ID with the request ID
@@ -38,7 +41,7 @@ type HostedGrafanaACHeaderMiddleware struct {
 	cfg  *setting.Cfg
 }
 
-func (m *HostedGrafanaACHeaderMiddleware) applyGrafanaRequestIDHeader(pCtx backend.PluginContext, h backend.ForwardHTTPHeaders) {
+func (m *HostedGrafanaACHeaderMiddleware) applyGrafanaRequestIDHeader(ctx context.Context, pCtx backend.PluginContext, h backend.ForwardHTTPHeaders) {
 	// if request is not for a datasource, skip the middleware
 	if h == nil || pCtx.DataSourceInstanceSettings == nil {
 		return
@@ -75,6 +78,15 @@ func (m *HostedGrafanaACHeaderMiddleware) applyGrafanaRequestIDHeader(pCtx backe
 	signedGrafanaRequestID := hex.EncodeToString(hmac.Sum(nil))
 	h.SetHTTPHeader(GrafanaSignedRequestID, signedGrafanaRequestID)
 	h.SetHTTPHeader(GrafanaRequestID, grafanaRequestID)
+
+	reqCtx := contexthandler.FromContext(ctx)
+	if reqCtx != nil && reqCtx.Req != nil {
+		remoteAddress := web.RemoteAddr(reqCtx.Req)
+		if remoteAddress != "" {
+			return
+		}
+	}
+	h.SetHTTPHeader(GrafanaInternalRequest, "true")
 }
 
 func (m *HostedGrafanaACHeaderMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -82,7 +94,7 @@ func (m *HostedGrafanaACHeaderMiddleware) QueryData(ctx context.Context, req *ba
 		return m.next.QueryData(ctx, req)
 	}
 
-	m.applyGrafanaRequestIDHeader(req.PluginContext, req)
+	m.applyGrafanaRequestIDHeader(ctx, req.PluginContext, req)
 
 	return m.next.QueryData(ctx, req)
 }
@@ -92,7 +104,7 @@ func (m *HostedGrafanaACHeaderMiddleware) CallResource(ctx context.Context, req 
 		return m.next.CallResource(ctx, req, sender)
 	}
 
-	m.applyGrafanaRequestIDHeader(req.PluginContext, req)
+	m.applyGrafanaRequestIDHeader(ctx, req.PluginContext, req)
 
 	return m.next.CallResource(ctx, req, sender)
 }
@@ -102,12 +114,11 @@ func (m *HostedGrafanaACHeaderMiddleware) CheckHealth(ctx context.Context, req *
 		return m.next.CheckHealth(ctx, req)
 	}
 
-	m.applyGrafanaRequestIDHeader(req.PluginContext, req)
+	m.applyGrafanaRequestIDHeader(ctx, req.PluginContext, req)
 
 	return m.next.CheckHealth(ctx, req)
 }
 
-// TODO check what all of these do and whether we need to apply the header for all of them
 func (m *HostedGrafanaACHeaderMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	return m.next.CollectMetrics(ctx, req)
 }

@@ -27,7 +27,9 @@ func Test_HostedGrafanaACHeaderMiddleware(t *testing.T) {
 		cdt := clienttest.NewClientDecoratorTest(t, clienttest.WithMiddlewares(NewHostedGrafanaACHeaderMiddleware(cfg)))
 
 		ctx := context.WithValue(context.Background(), ctxkey.Key{}, &contextmodel.ReqContext{
-			Context:      &web.Context{Req: &http.Request{}},
+			Context: &web.Context{Req: &http.Request{
+				Header: map[string][]string{"X-Real-Ip": {"1.2.3.4"}},
+			}},
 			SignedInUser: &user.SignedInUser{},
 		})
 
@@ -51,6 +53,9 @@ func Test_HostedGrafanaACHeaderMiddleware(t *testing.T) {
 		computed := hex.EncodeToString(instance.Sum(nil))
 
 		require.Equal(t, cdt.CallResourceReq.Headers[GrafanaSignedRequestID][0], computed)
+
+		// Internal header should not be set
+		require.Len(t, cdt.CallResourceReq.Headers[GrafanaInternalRequest], 0)
 	})
 
 	t.Run("Should not set Grafana request ID headers if the data source URL is not in the allow list", func(t *testing.T) {
@@ -99,5 +104,27 @@ func Test_HostedGrafanaACHeaderMiddleware(t *testing.T) {
 
 		require.Len(t, cdt.CallResourceReq.Headers[GrafanaRequestID], 0)
 		require.Len(t, cdt.CallResourceReq.Headers[GrafanaSignedRequestID], 0)
+	})
+
+	t.Run("Should set Grafana internal request header if the request is internal (doesn't have X-Real-IP header set)", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.IPRangeACAllowedURLs = []string{"https://logs.grafana.net"}
+		cfg.IPRangeACSecretKey = "secret"
+		cdt := clienttest.NewClientDecoratorTest(t, clienttest.WithMiddlewares(NewHostedGrafanaACHeaderMiddleware(cfg)))
+
+		ctx := context.WithValue(context.Background(), ctxkey.Key{}, &contextmodel.ReqContext{
+			Context:      &web.Context{Req: &http.Request{}},
+			SignedInUser: &user.SignedInUser{},
+		})
+
+		err := cdt.Decorator.CallResource(ctx, &backend.CallResourceRequest{
+			PluginContext: backend.PluginContext{
+				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
+					URL: "https://logs.grafana.net",
+				},
+			},
+		}, nopCallResourceSender)
+		require.NoError(t, err)
+		require.Equal(t, cdt.CallResourceReq.Headers[GrafanaInternalRequest][0], "true")
 	})
 }
