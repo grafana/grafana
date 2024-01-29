@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
-import { getAppEvents, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { getAppEvents, getBackendSrv, isFetchError, locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Button, CollapsableSection, ConfirmModal, Field, LinkButton, Stack, Switch } from '@grafana/ui';
 
 import { FormPrompt } from '../../core/components/FormPrompt/FormPrompt';
@@ -56,6 +56,11 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
         }
       );
 
+      reportInteraction('grafana_authentication_ssosettings_updated', {
+        provider,
+        enabled: requestData.enabled,
+      });
+
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
         payload: ['Settings saved'],
@@ -84,7 +89,11 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
 
   const onResetConfig = async () => {
     try {
-      await getBackendSrv().delete(`/api/v1/sso-settings/${provider}`);
+      await getBackendSrv().delete(`/api/v1/sso-settings/${provider}`, undefined, { showSuccessAlert: false });
+      reportInteraction('grafana_authentication_ssosettings_removed', {
+        provider,
+      });
+
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
         payload: ['Settings reset to defaults'],
@@ -113,6 +122,9 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
           <FormPrompt
             confirmRedirect={!!Object.keys(dirtyFields).length && !dataSubmitted}
             onDiscard={() => {
+              reportInteraction('grafana_authentication_ssosettings_abandoned', {
+                provider,
+              });
               reset();
             }}
           />
