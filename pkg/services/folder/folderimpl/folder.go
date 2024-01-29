@@ -131,6 +131,9 @@ func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*
 	permissions := q.SignedInUser.GetPermissions()
 	folderPermissions := permissions[dashboards.ActionFoldersRead]
 	qry.ancestorUIDs = make([]string, 0, len(folderPermissions))
+	if len(folderPermissions) == 0 && !q.SignedInUser.GetIsGrafanaAdmin() {
+		return nil, nil
+	}
 	for _, p := range folderPermissions {
 		if p == dashboards.ScopeFoldersAll {
 			// no need to query for folders with permissions
