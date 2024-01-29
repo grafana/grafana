@@ -8,9 +8,6 @@ import { AccessoryButton } from '@grafana/experimental';
 import { FetchError, getTemplateSrv, isFetchError } from '@grafana/runtime';
 import { Select, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
-import { notifyApp } from '../_importedDependencies/actions/appNotification';
-import { createErrorNotification } from '../_importedDependencies/core/appNotification';
-import { dispatch } from '../_importedDependencies/store';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import { operators as allOperators, stringOperators, numberOperators, keywordOperators } from '../traceql/traceql';
@@ -52,6 +49,8 @@ const SearchField = ({
   query,
 }: Props) => {
   const styles = useStyles2(getStyles);
+  // TODO show alert
+  const [alertText, setAlertText] = useState<string>();
   const scopedTag = useMemo(() => filterScopedTag(filter), [filter]);
   // We automatically change the operator to the regex op when users select 2 or more values
   // However, they expect this to be automatically rolled back to the previous operator once
@@ -67,7 +66,8 @@ const SearchField = ({
       if (isFetchError(error) && error?.status === 404) {
         setError(error);
       } else if (error instanceof Error) {
-        dispatch(notifyApp(createErrorNotification('Error', error)));
+        const message = `Error: ${error.message}`;
+        setAlertText(message);
       }
     }
     return [];

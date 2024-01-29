@@ -22,7 +22,7 @@ interface Props {
 }
 
 export function TraceQLEditor(props: Props) {
-  const [alertText, setAlertText] = useState('');
+  const [alertText, setAlertText] = useState<string>();
 
   const { onChange, onRunQuery, placeholder } = props;
   const setupAutocompleteFn = useAutocomplete(props.datasource, setAlertText);
@@ -104,7 +104,7 @@ export function TraceQLEditor(props: Props) {
           });
         }}
       />
-      {alertText && <TemporaryAlert severity={'error'} text={alertText} />}
+      {alertText && <TemporaryAlert severity="error" text={alertText} />}
     </>
   );
 }
@@ -187,7 +187,7 @@ function useAutocomplete(datasource: TempoDatasource, setAlertText: (text: strin
   // returned function but that is run after the monaco is mounted so would delay the request a bit when it does not
   // need to.
   const providerRef = useRef<CompletionProvider>(
-    new CompletionProvider({ languageProvider: datasource.languageProvider })
+    new CompletionProvider({ languageProvider: datasource.languageProvider, setAlertText })
   );
 
   useEffect(() => {
@@ -196,7 +196,6 @@ function useAutocomplete(datasource: TempoDatasource, setAlertText: (text: strin
         await datasource.languageProvider.start();
       } catch (error) {
         if (error instanceof Error) {
-          console.error(error);
           setAlertText(error.message);
         }
       }

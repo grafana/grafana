@@ -5,9 +5,6 @@ import { GrafanaTheme2, isValidGoDuration, SelectableValue, toOption } from '@gr
 import { FetchError, getTemplateSrv, isFetchError, TemplateSrv } from '@grafana/runtime';
 import { InlineFieldRow, InlineField, Input, Alert, useStyles2, fuzzyMatch, Select } from '@grafana/ui';
 
-import { notifyApp } from '../_importedDependencies/actions/appNotification';
-import { createErrorNotification } from '../_importedDependencies/core/appNotification';
-import { dispatch } from '../_importedDependencies/store';
 import { DEFAULT_LIMIT, TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { TempoQuery } from '../types';
@@ -26,6 +23,8 @@ const durationPlaceholder = 'e.g. 1.2s, 100ms';
 
 const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props) => {
   const styles = useStyles2(getStyles);
+  // TODO show alert
+  const [alertText, setAlertText] = useState<string>();
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [serviceOptions, setServiceOptions] = useState<Array<SelectableValue<string>>>();
   const [spanOptions, setSpanOptions] = useState<Array<SelectableValue<string>>>();
@@ -52,7 +51,8 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         if (isFetchError(error) && error?.status === 404) {
           setError(error);
         } else if (error instanceof Error) {
-          dispatch(notifyApp(createErrorNotification('Error', error)));
+          const message = `Error: ${error.message}`;
+          setAlertText(message);
         }
         return [];
       } finally {
@@ -79,7 +79,8 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         if (isFetchError(error) && error?.status === 404) {
           setError(error);
         } else if (error instanceof Error) {
-          dispatch(notifyApp(createErrorNotification('Error', error)));
+          const message = `Error: ${error.message}`;
+          setAlertText(message);
         }
       }
     };

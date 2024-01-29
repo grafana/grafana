@@ -5,10 +5,7 @@ import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { config, FetchError, getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, HorizontalGroup, Select, useStyles2 } from '@grafana/ui';
 
-import { notifyApp } from '../_importedDependencies/actions/appNotification';
-import { createErrorNotification } from '../_importedDependencies/core/appNotification';
 import { RawQuery } from '../_importedDependencies/datasources/prometheus/RawQuery';
-import { dispatch } from '../_importedDependencies/store';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import { TempoQueryBuilderOptions } from '../traceql/TempoQueryBuilderOptions';
@@ -35,6 +32,8 @@ const hardCodedFilterIds = ['min-duration', 'max-duration', 'status'];
 
 const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Props) => {
   const styles = useStyles2(getStyles);
+  // TODO show alert
+  const [alertText, setAlertText] = useState<string>();
   const [error, setError] = useState<Error | FetchError | null>(null);
 
   const [isTagsLoading, setIsTagsLoading] = useState(true);
@@ -75,7 +74,8 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
         setIsTagsLoading(false);
       } catch (error) {
         if (error instanceof Error) {
-          dispatch(notifyApp(createErrorNotification('Error', error)));
+          const message = `Error: ${error.message}`;
+          setAlertText(message);
         }
       }
     };
