@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, GrafanaTheme2 } from '@grafana/data';
+import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { config, FetchError, getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, HorizontalGroup, Select, useStyles2 } from '@grafana/ui';
 
@@ -32,7 +33,6 @@ const hardCodedFilterIds = ['min-duration', 'max-duration', 'status'];
 
 const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Props) => {
   const styles = useStyles2(getStyles);
-  // TODO show alert
   const [alertText, setAlertText] = useState<string>();
   const [error, setError] = useState<Error | FetchError | null>(null);
 
@@ -246,6 +246,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
           configure it in the <a href={`/datasources/edit/${datasource.uid}`}>datasource settings</a>.
         </Alert>
       ) : null}
+      {alertText && <TemporaryAlert severity="error" text={alertText} />}
     </>
   );
 };
