@@ -36,28 +36,43 @@ You can use thresholds to:
 
 ## Default thresholds
 
-On visualizations that support it, Grafana sets default threshold values of:
+On visualizations that support it, Grafana has the following default threshold settings:
 
 - 80 = red
 - Base = green
 - Mode = Absolute
 
-The **Base** value represents minus infinity. It's generally the “good” color.
-
 ## Threshold options
 
-TBA
+You can set the following options to further define how thresholds look.
+
+{{< admonition type="note" >}}
+Not all of the options listed apply to all visualizations with thresholds.
+{{< /admonition >}}
+
+### Threshold value
+
+This number is the value that triggers the threshold. You also set the color associated with the threshold in this field.
+
+The **Base** value represents minus infinity. By default, it's set to the color green, which is generally the “good” color.
 
 ### Threshold mode
 
-There are two types of thresholds:
+There are two threshold modes:
 
 - **Absolute** thresholds are defined by a number. For example, 80 on a scale of 1 to 150.
 - **Percentage** thresholds are defined relative to minimum or maximum. For example, 80 percent.
 
 ### Show threshold
 
-TBA
+Set how thresholds are displayed with the following options:
+
+- **Off** - Don't show thresholds.
+- **As lines**
+- **As lines (dashed)**
+- **As filled regions**
+- **As filled regions and lines**
+- **As filled regions and lines (dashed)**
 
 ## Add a threshold
 
