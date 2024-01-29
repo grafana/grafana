@@ -23,7 +23,7 @@ export const UserSignup = () => {
         variant="secondary"
         fill="outline"
       >
-        <Trans i18nkey="login.signup.button-label">Sign up</Trans>
+        <Trans i18nKey="login.signup.button-label">Sign up</Trans>
       </LinkButton>
     </VerticalGroup>
   );
