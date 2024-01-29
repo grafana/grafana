@@ -5,6 +5,7 @@ import useAsync from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
+import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { FetchError, getTemplateSrv, isFetchError } from '@grafana/runtime';
 import { Select, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
@@ -49,7 +50,6 @@ const SearchField = ({
   query,
 }: Props) => {
   const styles = useStyles2(getStyles);
-  // TODO show alert
   const [alertText, setAlertText] = useState<string>();
   const scopedTag = useMemo(() => filterScopedTag(filter), [filter]);
   // We automatically change the operator to the regex op when users select 2 or more values
@@ -136,87 +136,94 @@ const SearchField = ({
   };
 
   return (
-    <HorizontalGroup spacing={'none'} width={'auto'}>
-      {!hideScope && (
+    <>
+      <HorizontalGroup spacing={'none'} width={'auto'}>
+        {!hideScope && (
+          <Select
+            className={styles.dropdown}
+            inputId={`${filter.id}-scope`}
+            options={withTemplateVariableOptions(scopeOptions)}
+            value={filter.scope}
+            onChange={(v) => {
+              updateFilter({ ...filter, scope: v?.value });
+            }}
+            placeholder="Select scope"
+            aria-label={`select ${filter.id} scope`}
+          />
+        )}
+        {!hideTag && (
+          <Select
+            className={styles.dropdown}
+            inputId={`${filter.id}-tag`}
+            isLoading={isTagsLoading}
+            // Add the current tag to the list if it doesn't exist in the tags prop, otherwise the field will be empty even though the state has a value
+            options={withTemplateVariableOptions(
+              (filter.tag !== undefined ? uniq([filter.tag, ...tags]) : tags).map((t) => ({
+                label: t,
+                value: t,
+              }))
+            )}
+            value={filter.tag}
+            onChange={(v) => {
+              updateFilter({ ...filter, tag: v?.value });
+            }}
+            placeholder="Select tag"
+            isClearable
+            aria-label={`select ${filter.id} tag`}
+            allowCustomValue={true}
+          />
+        )}
         <Select
           className={styles.dropdown}
-          inputId={`${filter.id}-scope`}
-          options={withTemplateVariableOptions(scopeOptions)}
-          value={filter.scope}
+          inputId={`${filter.id}-operator`}
+          options={withTemplateVariableOptions(operatorList.map(operatorSelectableValue))}
+          value={filter.operator}
           onChange={(v) => {
-            updateFilter({ ...filter, scope: v?.value });
+            updateFilter({ ...filter, operator: v?.value });
           }}
-          placeholder="Select scope"
-          aria-label={`select ${filter.id} scope`}
-        />
-      )}
-      {!hideTag && (
-        <Select
-          className={styles.dropdown}
-          inputId={`${filter.id}-tag`}
-          isLoading={isTagsLoading}
-          // Add the current tag to the list if it doesn't exist in the tags prop, otherwise the field will be empty even though the state has a value
-          options={withTemplateVariableOptions(
-            (filter.tag !== undefined ? uniq([filter.tag, ...tags]) : tags).map((t) => ({
-              label: t,
-              value: t,
-            }))
-          )}
-          value={filter.tag}
-          onChange={(v) => {
-            updateFilter({ ...filter, tag: v?.value });
-          }}
-          placeholder="Select tag"
-          isClearable
-          aria-label={`select ${filter.id} tag`}
-          allowCustomValue={true}
-        />
-      )}
-      <Select
-        className={styles.dropdown}
-        inputId={`${filter.id}-operator`}
-        options={withTemplateVariableOptions(operatorList.map(operatorSelectableValue))}
-        value={filter.operator}
-        onChange={(v) => {
-          updateFilter({ ...filter, operator: v?.value });
-        }}
-        isClearable={false}
-        aria-label={`select ${filter.id} operator`}
-        allowCustomValue={true}
-        width={8}
-      />
-      {!hideValue && (
-        <Select
-          className={styles.dropdown}
-          inputId={`${filter.id}-value`}
-          isLoading={isLoadingValues}
-          options={withTemplateVariableOptions(options)}
-          value={filter.value}
-          onChange={(val) => {
-            if (Array.isArray(val)) {
-              updateFilter({ ...filter, value: val.map((v) => v.value), valueType: val[0]?.type || uniqueOptionType });
-            } else {
-              updateFilter({ ...filter, value: val?.value, valueType: val?.type || uniqueOptionType });
-            }
-          }}
-          placeholder="Select value"
           isClearable={false}
-          aria-label={`select ${filter.id} value`}
+          aria-label={`select ${filter.id} operator`}
           allowCustomValue={true}
-          isMulti
-          allowCreateWhileLoading
+          width={8}
         />
-      )}
-      {allowDelete && (
-        <AccessoryButton
-          variant={'secondary'}
-          icon={'times'}
-          onClick={() => deleteFilter?.(filter)}
-          tooltip={'Remove tag'}
-          aria-label={`remove tag with ID ${filter.id}`}
-        />
-      )}
-    </HorizontalGroup>
+        {!hideValue && (
+          <Select
+            className={styles.dropdown}
+            inputId={`${filter.id}-value`}
+            isLoading={isLoadingValues}
+            options={withTemplateVariableOptions(options)}
+            value={filter.value}
+            onChange={(val) => {
+              if (Array.isArray(val)) {
+                updateFilter({
+                  ...filter,
+                  value: val.map((v) => v.value),
+                  valueType: val[0]?.type || uniqueOptionType,
+                });
+              } else {
+                updateFilter({ ...filter, value: val?.value, valueType: val?.type || uniqueOptionType });
+              }
+            }}
+            placeholder="Select value"
+            isClearable={false}
+            aria-label={`select ${filter.id} value`}
+            allowCustomValue={true}
+            isMulti
+            allowCreateWhileLoading
+          />
+        )}
+        {allowDelete && (
+          <AccessoryButton
+            variant={'secondary'}
+            icon={'times'}
+            onClick={() => deleteFilter?.(filter)}
+            tooltip={'Remove tag'}
+            aria-label={`remove tag with ID ${filter.id}`}
+          />
+        )}
+      </HorizontalGroup>
+      {alertText && <TemporaryAlert severity="error" text={alertText} />}
+    </>
   );
 };
 
