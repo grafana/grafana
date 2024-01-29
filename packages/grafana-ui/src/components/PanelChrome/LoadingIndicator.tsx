@@ -12,7 +12,6 @@ import { Tooltip } from '../Tooltip/Tooltip';
  */
 export type LoadingIndicatorProps = {
   loading?: boolean;
-  onCancel: () => void;
   mandatory: string;
   field?: string;
 };
@@ -20,12 +19,14 @@ export type LoadingIndicatorProps = {
 /**
  * @internal
  */
-export const LoadingIndicator = ({ onCancel, loading }: LoadingIndicatorProps) => {
+export const LoadingIndicator = ({ loading }: LoadingIndicatorProps) => {
   const styles = useStyles2(getStyles);
 
   if (!loading) {
     return null;
   }
+
+  const onCancel = () => {};
 
   return (
     <Tooltip content="Cancel query">
