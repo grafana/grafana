@@ -22,9 +22,9 @@ weight: 100
 
 A threshold is a value that you specify for a metric that's visually reflected in a dashboard when the threshold value is met or exceeded.
 
-Thresholds provide one method for you to conditionally style and color your visualizations based on query results. You can apply thresholds to most, but not all, visualizations. For more information about visualizations, refer to [Visualization panels][].
+<!--this definition is bad-->
 
-You can use thresholds to:
+Thresholds are one way you can conditionally style and color your visualizations based on query results. You can use thresholds to:
 
 - Color grid lines or grid areas in the [Time-series visualization][]
 - Color lines in the [Time-series visualization][]
@@ -34,13 +34,34 @@ You can use thresholds to:
 - Color cell text or background in the [Table visualization][]
 - Define regions and region colors in the [State timeline visualization][]
 
+<!--Maybe have fewer of these examples but actually show what these examples would look like visually -->
+
+## Supported visualizations
+
+Thresholds are supported for the following visualizations:
+
+- [Bar chart][bar chart]
+- [Bar gauge][bar gauge]
+- [Candlestick][candlestick]
+- [Canvas][canvas]
+- [Gauge][gauge]
+- [Geomap][geomap]
+- [Histogram][histogram]
+- [Stat][stat]
+- [State timeline][state timeline]
+- [Status history][status history]
+- [Table][table]
+- [Time series][time series]
+- [Trend][trend]
+
 ## Default thresholds
 
-On visualizations that support it, Grafana has the following default threshold settings:
+On visualizations that support thresholds, Grafana has the following default threshold settings:
 
 - 80 = red
 - Base = green
 - Mode = Absolute
+- Show thresholds = Off (for some visualizations); for more information, see the [Show thresholds](#show-threshold) option.
 
 ## Threshold options
 
@@ -52,7 +73,7 @@ Not all of the options listed apply to all visualizations with thresholds.
 
 ### Threshold value
 
-This number is the value that triggers the threshold. You also set the color associated with the threshold in this field.
+This number is the value that triggers the threshold. You can also set the color associated with the threshold in this field.
 
 The **Base** value represents minus infinity. By default, it's set to the color green, which is generally the “good” color.
 
@@ -73,6 +94,13 @@ Set how thresholds are displayed with the following options:
 - **As filled regions**
 - **As filled regions and lines**
 - **As filled regions and lines (dashed)**
+
+This option is supported for the following visualizations:
+
+- Bar chart
+- Candlestick
+- Time series
+- Trend
 
 ## Add a threshold
 
@@ -97,6 +125,8 @@ To delete a threshold, navigate to the panel that contains the threshold and cli
 
 ## Add a threshold to a legacy graph panel
 
+<!--do we still need this section-->
+
 In the Graph panel visualization, thresholds enable you to add lines or sections to a graph to make it easier to recognize when the graph crosses a threshold.
 
 1. Navigate to the graph panel to which you want to add a threshold.
@@ -117,24 +147,60 @@ In the Graph panel visualization, thresholds enable you to add lines or sections
 1. Click **Save** to save the changes in the dashboard.
 
 {{% docs/reference %}}
-[Table visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
-[Table visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
+[bar chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/bar-chart"
+[bar chart]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/bar-chart"
 
-[Stat visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/stat"
-[Stat visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/stat"
+[bar gauge]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/bar-gauge"
+[bar gauge]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/bar-gauge"
+
+[candlestick]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/candlestick"
+[candlestick]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/candlestick"
+
+[canvas]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/canvas"
+[canvas]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/canvas"
+
+[gauge]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/gauge"
+[gauge]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/gauge"
+
+[geomap]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap"
+[geomap]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/geomap"
+
+[histogram]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/histogram"
+[histogram]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/histogram"
+
+[stat]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/stat"
+[stat]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/stat"
+
+[state timeline]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/state-timeline"
+[state timeline]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/state-timeline"
+
+[status history]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/status-history"
+[status history]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/status-history"
+
+[table]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
+[table]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/table"
+
+[time series]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
+[time series]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series"
+
+[trend]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/trend"
+[trend]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/trend"
 
 [Time-series visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series#from-thresholds"
-[Time-series visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series#from-thresholds"
+[Time-series visualization]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series#from-thresholds"
 
-[State timeline visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/state-timeline"
-[State timeline visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/state-timeline"
+[Stat visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/stat"
+[Stat visualization]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/stat"
 
 [Gauge visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/gauge"
-[Gauge visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/gauge"
+[Gauge visualization]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/gauge"
 
-[Visualization panels]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations"
-[Visualization panels]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations"
+[Geomap visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/gauge"
+[Geomap visualization]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/gauge"
 
-[Geomap visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap"
-[Geomap visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap"
+[Table visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
+[Table visualization]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/table"
+
+[State timeline visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/state-timeline"
+[State timeline visualization]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/state-timeline"
 {{% /docs/reference %}}
