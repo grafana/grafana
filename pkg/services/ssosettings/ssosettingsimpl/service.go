@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/strategies"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var _ ssosettings.Service = (*Service)(nil)
@@ -31,6 +32,7 @@ type Service struct {
 	store   ssosettings.Store
 	ac      ac.AccessControl
 	secrets secrets.Service
+	metrics *metrics
 
 	fbStrategies []ssosettings.FallbackStrategy
 	reloadables  map[string]ssosettings.Reloadable
@@ -38,7 +40,7 @@ type Service struct {
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 	routeRegister routing.RouteRegister, features featuremgmt.FeatureToggles,
-	secrets secrets.Service, usageStats usagestats.Service) *Service {
+	secrets secrets.Service, usageStats usagestats.Service, registerer prometheus.Registerer) *Service {
 	strategies := []ssosettings.FallbackStrategy{
 		strategies.NewOAuthStrategy(cfg),
 		// register other strategies here, for example SAML
@@ -53,6 +55,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, ac ac.AccessControl,
 		ac:           ac,
 		fbStrategies: strategies,
 		secrets:      secrets,
+		metrics:      newMetrics(registerer),
 		reloadables:  make(map[string]ssosettings.Reloadable),
 	}
 
@@ -193,13 +196,9 @@ func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings) erro
 		return err
 	}
 
-	go func() {
-		settings.Settings = overrideMaps(storedSettings.Settings, settings.Settings, secrets)
-		err = social.Reload(context.Background(), *settings)
-		if err != nil {
-			s.logger.Error("failed to reload the provider", "provider", settings.Provider, "error", err)
-		}
-	}()
+	settings.Settings = overrideMaps(storedSettings.Settings, settings.Settings, secrets)
+
+	go s.reload(social, settings.Provider, *settings)
 
 	return nil
 }
@@ -212,7 +211,34 @@ func (s *Service) Delete(ctx context.Context, provider string) error {
 	if !s.isProviderConfigurable(provider) {
 		return ssosettings.ErrNotConfigurable
 	}
-	return s.store.Delete(ctx, provider)
+
+	social, ok := s.reloadables[provider]
+	if !ok {
+		return ssosettings.ErrInvalidProvider.Errorf("provider %s not found in reloadables", provider)
+	}
+
+	err := s.store.Delete(ctx, provider)
+	if err != nil {
+		return err
+	}
+
+	currentSettings, err := s.GetForProvider(ctx, provider)
+	if err != nil {
+		s.logger.Error("failed to get current settings, skipping reload", "provider", provider, "error", err)
+		return nil
+	}
+
+	go s.reload(social, provider, *currentSettings)
+
+	return nil
+}
+
+func (s *Service) reload(reloadable ssosettings.Reloadable, provider string, currentSettings models.SSOSettings) {
+	err := reloadable.Reload(context.Background(), currentSettings)
+	if err != nil {
+		s.metrics.reloadFailures.WithLabelValues(provider).Inc()
+		s.logger.Error("failed to reload the provider", "provider", provider, "error", err)
+	}
 }
 
 func (s *Service) Reload(ctx context.Context, provider string) {
@@ -327,6 +353,7 @@ func (s *Service) doReload(ctx context.Context) {
 
 		err = connector.Reload(ctx, *setting)
 		if err != nil {
+			s.metrics.reloadFailures.WithLabelValues(provider).Inc()
 			s.logger.Error("failed to reload SSO Settings", "provider", provider, "err", err)
 			continue
 		}
