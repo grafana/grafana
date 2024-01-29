@@ -1,3 +1,5 @@
+import { Observable } from 'rxjs';
+
 import { DataQuery } from '@grafana/schema';
 
 import { KeyValue, Labels } from './data';
@@ -223,8 +225,17 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
   /**
    * Returns an observable that will be used to fetch supplementary data based on the provided
    * supplementary query type and original request.
+   * @deprecated Use getSupplementaryQueryRequest() instead
    */
-  getDataProvider(
+  getDataProvider?(
+    type: SupplementaryQueryType,
+    request: DataQueryRequest<TQuery>
+  ): Observable<DataQueryResponse> | undefined;
+  /**
+   * Given a DataQueryRequest returns a new DataQueryRequest to be used to fetch supplementary data.
+   * If provided reqeust is not suitable for a supplementary data request, undefined should be returned.
+   */
+  getSupplementaryRequest?(
     type: SupplementaryQueryType,
     request: DataQueryRequest<TQuery>
   ): DataQueryRequest<TQuery> | undefined;
@@ -234,7 +245,7 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
   getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[];
   /**
    * Returns a supplementary query to be used to fetch supplementary data based on the provided type and original query.
-   * If provided query is not suitable for provided supplementary query type, undefined should be returned.
+   * If the provided query is not suitable for the provided supplementary query type, undefined should be returned.
    */
   getSupplementaryQuery(options: SupplementaryQueryOptions, originalQuery: TQuery): TQuery | undefined;
 }
