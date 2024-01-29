@@ -72,7 +72,11 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
     autoMigrateOldPanels: false,
   });
 
-  return createDashboardSceneFromDashboardModel(oldModel);
+  const scene = createDashboardSceneFromDashboardModel(oldModel);
+  // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
+  scene.setInitialSaveModel(rsp.dashboard);
+
+  return scene;
 }
 
 export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
