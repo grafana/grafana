@@ -268,93 +268,93 @@ describe('CloudWatchMetricsQueryRunner', () => {
           expect(result.data[0].fields[1].values[0]).toBe(1);
         });
       });
-      describe('and throttling exception is thrown', () => {
-        const partialQuery: CloudWatchMetricsQuery = {
-          metricQueryType: MetricQueryType.Search,
-          metricEditorMode: MetricEditorMode.Builder,
-          queryMode: 'Metrics',
-          namespace: 'AWS/EC2',
-          metricName: 'CPUUtilization',
-          dimensions: {
-            InstanceId: 'i-12345678',
-          },
-          statistic: 'Average',
-          period: '300',
-          expression: '',
-          id: '',
-          region: '',
-          refId: '',
-        };
+    });
+    describe('and throttling exception is thrown', () => {
+      const partialQuery: CloudWatchMetricsQuery = {
+        metricQueryType: MetricQueryType.Search,
+        metricEditorMode: MetricEditorMode.Builder,
+        queryMode: 'Metrics',
+        namespace: 'AWS/EC2',
+        metricName: 'CPUUtilization',
+        dimensions: {
+          InstanceId: 'i-12345678',
+        },
+        statistic: 'Average',
+        period: '300',
+        expression: '',
+        id: '',
+        region: '',
+        refId: '',
+      };
 
-        const queries: CloudWatchMetricsQuery[] = [
-          { ...partialQuery, refId: 'A', region: 'us-east-1' },
-          { ...partialQuery, refId: 'B', region: 'us-east-2' },
-          { ...partialQuery, refId: 'C', region: 'us-east-1' },
-          { ...partialQuery, refId: 'D', region: 'us-east-2' },
-          { ...partialQuery, refId: 'E', region: 'eu-north-1' },
-        ];
+      const queries: CloudWatchMetricsQuery[] = [
+        { ...partialQuery, refId: 'A', region: 'us-east-1' },
+        { ...partialQuery, refId: 'B', region: 'us-east-2' },
+        { ...partialQuery, refId: 'C', region: 'us-east-1' },
+        { ...partialQuery, refId: 'D', region: 'us-east-2' },
+        { ...partialQuery, refId: 'E', region: 'eu-north-1' },
+      ];
 
-        const dataWithThrottlingError = {
-          data: {
-            message: 'Throttling: exception',
-            results: {
-              A: {
-                frames: [],
-                series: [],
-                tables: [],
-                error: 'Throttling: exception',
-                refId: 'A',
-                meta: {},
-              },
-              B: {
-                frames: [],
-                series: [],
-                tables: [],
-                error: 'Throttling: exception',
-                refId: 'B',
-                meta: {},
-              },
-              C: {
-                frames: [],
-                series: [],
-                tables: [],
-                error: 'Throttling: exception',
-                refId: 'C',
-                meta: {},
-              },
-              D: {
-                frames: [],
-                series: [],
-                tables: [],
-                error: 'Throttling: exception',
-                refId: 'D',
-                meta: {},
-              },
-              E: {
-                frames: [],
-                series: [],
-                tables: [],
-                error: 'Throttling: exception',
-                refId: 'E',
-                meta: {},
-              },
+      const dataWithThrottlingError = {
+        data: {
+          message: 'Throttling: exception',
+          results: {
+            A: {
+              frames: [],
+              series: [],
+              tables: [],
+              error: 'Throttling: exception',
+              refId: 'A',
+              meta: {},
+            },
+            B: {
+              frames: [],
+              series: [],
+              tables: [],
+              error: 'Throttling: exception',
+              refId: 'B',
+              meta: {},
+            },
+            C: {
+              frames: [],
+              series: [],
+              tables: [],
+              error: 'Throttling: exception',
+              refId: 'C',
+              meta: {},
+            },
+            D: {
+              frames: [],
+              series: [],
+              tables: [],
+              error: 'Throttling: exception',
+              refId: 'D',
+              meta: {},
+            },
+            E: {
+              frames: [],
+              series: [],
+              tables: [],
+              error: 'Throttling: exception',
+              refId: 'E',
+              meta: {},
             },
           },
-        };
+        },
+      };
 
-        it('should display one alert error message per region+datasource combination', async () => {
-          const { runner, request, queryMock } = setupMockedMetricsQueryRunner({
-            response: toDataQueryResponse(dataWithThrottlingError),
-          });
-          const memoizedDebounceSpy = jest.spyOn(runner, 'debouncedThrottlingAlert');
+      it('should display one alert error message per region+datasource combination', async () => {
+        const { runner, request, queryMock } = setupMockedMetricsQueryRunner({
+          response: toDataQueryResponse(dataWithThrottlingError),
+        });
+        const memoizedDebounceSpy = jest.spyOn(runner, 'debouncedThrottlingAlert');
 
-          await expect(runner.handleMetricQueries(queries, request, queryMock)).toEmitValuesWith((received) => {
-            expect(received[0].errors).toHaveLength(5);
-            expect(memoizedDebounceSpy).toHaveBeenCalledWith('CloudWatch Test Datasource', 'us-east-1');
-            expect(memoizedDebounceSpy).toHaveBeenCalledWith('CloudWatch Test Datasource', 'us-east-2');
-            expect(memoizedDebounceSpy).toHaveBeenCalledWith('CloudWatch Test Datasource', 'eu-north-1');
-            expect(memoizedDebounceSpy).toBeCalledTimes(3);
-          });
+        await expect(runner.handleMetricQueries(queries, request, queryMock)).toEmitValuesWith((received) => {
+          expect(received[0].errors).toHaveLength(5);
+          expect(memoizedDebounceSpy).toHaveBeenCalledWith('CloudWatch Test Datasource', 'us-east-1');
+          expect(memoizedDebounceSpy).toHaveBeenCalledWith('CloudWatch Test Datasource', 'us-east-2');
+          expect(memoizedDebounceSpy).toHaveBeenCalledWith('CloudWatch Test Datasource', 'eu-north-1');
+          expect(memoizedDebounceSpy).toBeCalledTimes(3);
         });
       });
     });
