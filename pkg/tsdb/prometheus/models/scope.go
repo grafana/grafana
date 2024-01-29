@@ -33,7 +33,6 @@ func ApplyQueryScope(rawExpr string, matchers []*labels.Matcher) (string, error)
 					matcher.Name = newM.Name
 					matcher.Type = newM.Type
 					matcher.Value = newM.Value
-
 				}
 			}
 			for i, f := range found {
