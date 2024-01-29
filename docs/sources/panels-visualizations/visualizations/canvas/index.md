@@ -107,6 +107,12 @@ When right clicking an element, you are able to edit, delete, duplicate, and mod
 
 {{< figure src="/static/img/docs/canvas-panel/canvas-context-menu-9-2-0.png" max-width="750px" caption="Canvas element context menu" >}}
 
+### Element snapping and alignment
+
+When moving elements around the canvas, snapping and alignment guides to help you create more precise layouts.
+
+// TODO: Add demo video
+
 ## Canvas options
 
 ### Inline editing
