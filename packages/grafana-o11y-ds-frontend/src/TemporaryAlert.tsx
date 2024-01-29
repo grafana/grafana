@@ -28,8 +28,6 @@ const timeoutMap = {
 };
 
 type AlertProps = {
-  // Custom duration of the alert. If not provided a default duration, dependent on the severity, is used
-  duration?: number;
   // Severity of the alert. Controls the style of the alert (e.g., background color)
   severity: AlertVariant;
   // Displayed message. If set to empty string, the alert is not displayed
@@ -55,10 +53,10 @@ export const TemporaryAlert = (props: AlertProps) => {
 
       const timer = setTimeout(() => {
         setVisible(false);
-      }, props.duration || timeoutMap[props.severity]);
+      }, timeoutMap[props.severity]);
       setTimer(timer);
     }
-  }, [props.duration, props.severity, props.text]);
+  }, [props.severity, props.text]);
 
   return <>{visible && <Alert className={style} elevated={true} title={props.text} severity={props.severity} />}</>;
 };
