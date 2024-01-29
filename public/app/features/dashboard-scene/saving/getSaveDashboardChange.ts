@@ -53,7 +53,7 @@ export function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Da
   let hasVariableValueChanges = false;
 
   for (const variable of variablesToSave) {
-    const original = originalVariables.find(({ name, type }: any) => name === variable.name && type === variable.type);
+    const original = originalVariables.find(({ name, type }) => name === variable.name && type === variable.type);
 
     if (!original) {
       continue;
