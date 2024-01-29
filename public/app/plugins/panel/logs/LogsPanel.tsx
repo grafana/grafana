@@ -33,11 +33,12 @@ import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import { InfiniteScroll } from 'app/features/logs/components/InfiniteScroll';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
+import { SupportingQueryType } from 'app/plugins/datasource/loki/types';
 
 import { createAndCopyShortLink } from '../../../core/utils/shortLinks';
 import { LogLabels } from '../../../features/logs/components/LogLabels';
 import { LogRows } from '../../../features/logs/components/LogRows';
-import { COMMON_LABELS, dataFrameToLogsModel, dedupLogRows } from '../../../features/logs/logsModel';
+import { COMMON_LABELS, dataFrameToLogsModel, dedupLogRows, infiniteScrollRefId } from '../../../features/logs/logsModel';
 
 import { Options } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
@@ -166,7 +167,11 @@ export const LogsPanel = ({
   // Important to memoize stuff here, as panel rerenders a lot for example when resizing.
   const [logRows, deduplicatedRows, commonLabels] = useMemo(() => {
     const logs = panelData
-      ? dataFrameToLogsModel(panelData.series, data.request?.intervalMs, undefined, data.request?.targets)
+      ? dataFrameToLogsModel(panelData.series, data.request?.intervalMs, undefined, data.request?.targets.map(query => ({
+        ...query,
+        // Needed to trigger de-duplication. Will be stripped by dataFrameToLogsModel()
+        refId: `${infiniteScrollRefId}${query.refId}`,
+      })))
       : null;
     const logRows = logs?.rows || [];
     const commonLabels = logs?.meta?.find((m) => m.label === COMMON_LABELS);
@@ -387,7 +392,10 @@ async function requestMoreLogs(panelData: PanelData, timeRange: AbsoluteTimeRang
       dataSource.query({
         ...panelData.request,
         range,
-        targets: targetGroups[uid],
+        targets: targetGroups[uid].map(query => ({
+          ...query,
+          supportingQueryType: SupportingQueryType.InfiniteScroll,
+        })),
       })
     );
   }
