@@ -254,7 +254,7 @@ Are you having issues with setting up your environment? Here are some tips that 
 
 Configure your IDE to use the Typescript version from the Grafana repository. The version should match the Typescript version in the package.json file, and is typically at the path `node_modules/.bin/tsc`.
 
-Previously Grafana used Yarn PnP to install frontend dependencies, which required additional special IDE configuration. This is no longer the case.
+Previously Grafana used Yarn PnP to install frontend dependencies, which required additional special IDE configuration. This is no longer the case. If you have custom paths in your IDE for ESLint, Prettier, or Typescript, you can now remove them and use the defaults from node_modules.
 
 ### Too many open files when running `make run`
 
