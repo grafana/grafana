@@ -17,9 +17,8 @@ export interface ExternalAlertmanagerDataSourceWithStatus {
  */
 export function useExternalDataSourceAlertmanagers(): ExternalAlertmanagerDataSourceWithStatus[] {
   // firstly we'll fetch the settings for all datasources and filter for "alertmanager" type
-  const { alertmanagerDataSources } = dataSourcesApi.endpoints.getDataSourceSettings.useQuery(undefined, {
+  const { alertmanagerDataSources } = dataSourcesApi.endpoints.getAllDataSourceSettings.useQuery(undefined, {
     refetchOnReconnect: true,
-    refetchOnFocus: true,
     selectFromResult: (result) => {
       const alertmanagerDataSources = result.currentData?.filter(isAlertmanagerDataSource) ?? [];
       return { ...result, alertmanagerDataSources };
@@ -30,10 +29,7 @@ export function useExternalDataSourceAlertmanagers(): ExternalAlertmanagerDataSo
   // @TODO use polling when we have one or more alertmanagers in pending state
   const { currentData: externalAlertmanagers } = alertmanagerApi.endpoints.getExternalAlertmanagers.useQuery(
     undefined,
-    {
-      refetchOnReconnect: true,
-      refetchOnFocus: true,
-    }
+    { refetchOnReconnect: true }
   );
 
   if (!alertmanagerDataSources) {
@@ -62,18 +58,15 @@ function determineAlertmanagerConnectionStatus(
     return 'uninterested';
   }
 
-  const activeMatches =
-    externalAlertmanagers?.activeAlertManagers.filter((am) => {
+  const isActive =
+    externalAlertmanagers?.activeAlertManagers.some((am) => {
       return isAlertmanagerMatchByURL(dataSourceSettings.url, am.url);
     }) ?? [];
 
-  const droppedMatches =
-    externalAlertmanagers?.droppedAlertManagers.filter((am) => {
+  const isDropped =
+    externalAlertmanagers?.droppedAlertManagers.some((am) => {
       return isAlertmanagerMatchByURL(dataSourceSettings.url, am.url);
     }) ?? [];
-
-  const isActive = Boolean(activeMatches.length);
-  const isDropped = Boolean(droppedMatches.length);
 
   // the Alertmanager is being adopted (pending) if it is interested in handling alerts but not in either "active" or "dropped"
   const isPending = !isActive && !isDropped;

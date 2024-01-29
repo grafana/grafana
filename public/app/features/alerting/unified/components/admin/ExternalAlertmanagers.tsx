@@ -23,7 +23,7 @@ export const ExternalAlertmanagers = () => {
   const dispatch = useDispatch();
 
   const externalDsAlertManagers = useExternalDataSourceAlertmanagers();
-  const externalDsAlertManagersInterested = externalDsAlertManagers.filter(
+  const gmaHandlingAlertmanagers = externalDsAlertManagers.filter(
     (settings) => settings.dataSourceSettings.jsonData.handleGrafanaManagedAlerts === true
   );
 
@@ -74,7 +74,7 @@ export const ExternalAlertmanagers = () => {
       </div>
 
       <ExternalAlertmanagerDataSources
-        alertmanagers={externalDsAlertManagersInterested}
+        alertmanagers={gmaHandlingAlertmanagers}
         inactive={alertmanagersChoice === AlertmanagerChoice.Internal}
       />
     </div>
