@@ -346,9 +346,15 @@ func getExistingDashboardByIDOrUIDForUpdate(sess *db.Session, dash *dashboards.D
 func getExistingDashboardByTitleAndFolder(sess *db.Session, dash *dashboards.Dashboard, dialect migrator.Dialect, overwrite,
 	isParentFolderChanged bool) (bool, error) {
 	var existing dashboards.Dashboard
-	// nolint:staticcheck
-	exists, err := sess.Where("org_id=? AND title=? AND (is_folder=? OR folder_id=?)", dash.OrgID, dash.Title,
-		dialect.BooleanStr(true), dash.FolderID).Get(&existing)
+	condition := "org_id=? AND title=?"
+	args := []any{dash.OrgID, dash.Title}
+	if dash.FolderUID != "" {
+		condition += " AND folder_uid=?"
+		args = append(args, dash.FolderUID)
+	} else {
+		condition += " AND folder_uid IS NULL"
+	}
+	exists, err := sess.Where(condition, args...).Get(&existing)
 	if err != nil {
 		return isParentFolderChanged, fmt.Errorf("SQL query for existing dashboard by org ID or folder ID failed: %w", err)
 	}
@@ -361,6 +367,7 @@ func getExistingDashboardByTitleAndFolder(sess *db.Session, dash *dashboards.Das
 			return isParentFolderChanged, dashboards.ErrDashboardFolderWithSameNameAsDashboard
 		}
 
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 		// nolint:staticcheck
 		if !dash.IsFolder && (dash.FolderID != existing.FolderID || dash.ID == 0) {
 			isParentFolderChanged = true
@@ -812,6 +819,7 @@ func (d *dashboardStore) deleteAlertDefinition(dashboardId int64, sess *db.Sessi
 func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
 	var queryResult *dashboards.Dashboard
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 		// nolint:staticcheck
 		if query.ID == 0 && len(query.UID) == 0 && (query.Title == nil || (query.FolderID == nil && query.FolderUID == "")) {
 			return dashboards.ErrDashboardIdentifierNotSet
@@ -831,6 +839,7 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 			// nolint:staticcheck
 			dashboard.FolderID = *query.FolderID
 			mustCols = append(mustCols, "folder_id")
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 		}
 
 		has, err := sess.MustCols(mustCols...).Get(&dashboard)
@@ -934,7 +943,7 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	if len(query.Type) > 0 {
 		filters = append(filters, searchstore.TypeFilter{Dialect: d.store.GetDialect(), Type: query.Type})
 	}
-
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 	// nolint:staticcheck
 	if len(query.FolderIds) > 0 {
 		filters = append(filters, searchstore.FolderFilter{IDs: query.FolderIds})
@@ -1007,6 +1016,7 @@ func (d *dashboardStore) CountDashboardsInFolder(
 	var count int64
 	var err error
 	err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 		// nolint:staticcheck
 		session := sess.In("folder_id", req.FolderID).In("org_id", req.OrgID).
 			In("is_folder", d.store.GetDialect().BooleanStr(false))

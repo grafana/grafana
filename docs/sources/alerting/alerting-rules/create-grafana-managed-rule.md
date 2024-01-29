@@ -71,6 +71,7 @@ Define a query to get the data you want to measure and a condition that needs to
    All alert rules are managed by Grafana by default. If you want to switch to a data source-managed alert rule, click **Switch to data source-managed alert rule**.
 
 1. Add one or more [expressions][expression-queries].
+
    a. For each expression, select either **Classic condition** to create a single alert rule, or choose from the **Math**, **Reduce**, and **Resample** options to generate separate alert for each series.
 
    {{% admonition type="note" %}}
@@ -78,6 +79,14 @@ Define a query to get the data you want to measure and a condition that needs to
    {{% /admonition %}}
 
    b. Click **Preview** to verify that the expression is successful.
+
+{{% admonition type="note" %}}
+The recovery threshold feature is currently only available in OSS.
+{{% /admonition %}}
+
+1. To add a recovery threshold, turn the **Custom recovery threshold** toggle on and fill in a value for when your alert rule should stop firing.
+
+   You can only add one recovery threshold in a query and it must be the alert condition.
 
 1. Click **Set as alert condition** on the query or expression you want to set as your alert condition.
 
@@ -112,29 +121,6 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
    Use the guidelines in [No data and error handling](#configure-no-data-and-error-handling).
 
-## Add annotations
-
-Add [annotations][annotation-label]. to provide more context on the alert in your alert notifications.
-
-Annotations add metadata to provide more information on the alert in your alert notifications. For example, add a **Summary** annotation to tell you which value caused the alert to fire or which server it happened on.
-
-1. [Optional] Add a summary.
-
-   Short summary of what happened and why.
-
-2. [Optional] Add a description.
-
-   Description of what the alert rule does.
-
-3. [Optional] Add a Runbook URL.
-
-   Webpage where you keep your runbook for the alert
-
-4. [Optional] Add a custom annotation
-5. [Optional] Add a dashboard and panel link.
-
-   Links alerts to panels in a dashboard.
-
 ## Configure notifications
 
 Add labels to your alert rules to set which notification policy should handle your firing alert instances.
@@ -152,6 +138,29 @@ All alert rules and instances, irrespective of their labels, match the default n
    Expand each notification policy below to view more details.
 
 1. Click **See details** to view alert routing details and an email preview.
+
+## Add annotations
+
+Add [annotations][annotation-label]. to provide more context on the alert in your alert notification message.
+
+Annotations add metadata to provide more information on the alert in your alert notification message. For example, add a **Summary** annotation to tell you which value caused the alert to fire or which server it happened on.
+
+1. [Optional] Add a summary.
+
+   Short summary of what happened and why.
+
+1. [Optional] Add a description.
+
+   Description of what the alert rule does.
+
+1. [Optional] Add a Runbook URL.
+
+   Webpage where you keep your runbook for the alert
+
+1. [Optional] Add a custom annotation
+1. [Optional] Add a dashboard and panel link.
+
+   Links alerts to panels in a dashboard.
 
 1. Click **Save rule**.
 

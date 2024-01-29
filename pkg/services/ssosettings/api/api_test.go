@@ -134,7 +134,7 @@ func TestSSOSettingsAPI_Update(t *testing.T) {
 
 			service := ssosettingstests.NewMockService(t)
 			if tt.expectedServiceCall {
-				service.On("Upsert", mock.Anything, settings).Return(tt.expectedError).Once()
+				service.On("Upsert", mock.Anything, &settings).Return(tt.expectedError).Once()
 			}
 			server := setupTests(t, service)
 
@@ -335,6 +335,16 @@ func TestSSOSettingsAPI_GetForProvider(t *testing.T) {
 			expectedError:       errors.New("something went wrong"),
 			expectedServiceCall: true,
 			expectedStatusCode:  http.StatusInternalServerError,
+		},
+		{
+			desc:                "fails with not found error when the provider is not configurable",
+			key:                 "grafana_com",
+			action:              "settings:read",
+			scope:               "settings:*",
+			expectedResult:      nil,
+			expectedError:       ssosettings.ErrNotConfigurable,
+			expectedServiceCall: true,
+			expectedStatusCode:  http.StatusNotFound,
 		},
 	}
 

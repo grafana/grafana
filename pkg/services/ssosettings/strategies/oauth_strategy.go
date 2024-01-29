@@ -2,6 +2,7 @@ package strategies
 
 import (
 	"context"
+	"maps"
 
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -31,7 +32,10 @@ func (s *OAuthStrategy) IsMatch(provider string) bool {
 }
 
 func (s *OAuthStrategy) GetProviderConfig(_ context.Context, provider string) (map[string]any, error) {
-	return s.settingsByProvider[provider], nil
+	providerConfig := s.settingsByProvider[provider]
+	result := make(map[string]any, len(providerConfig))
+	maps.Copy(result, providerConfig)
+	return result, nil
 }
 
 func (s *OAuthStrategy) loadAllSettings() {

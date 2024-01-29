@@ -174,8 +174,9 @@ func TestCreateReceivers(t *testing.T) {
 }
 
 func TestMigrateNotificationChannelSecureSettings(t *testing.T) {
+	cfg := setting.NewCfg()
 	legacyEncryptFn := func(data string) string {
-		raw, err := util.Encrypt([]byte(data), setting.SecretKey)
+		raw, err := util.Encrypt([]byte(data), cfg.SecretKey)
 		require.NoError(t, err)
 		return string(raw)
 	}
