@@ -38,6 +38,7 @@ const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
     verticalScrollbarSize: 8, // used as "padding-right"
     horizontal: 'hidden',
     horizontalScrollbarSize: 0,
+    alwaysConsumeMouseWheel: false,
   },
   scrollBeyondLastLine: false,
   suggest: getSuggestOptions(),
