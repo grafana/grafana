@@ -1,6 +1,9 @@
 package peakq
 
 import (
+	"encoding/json"
+	"net/http"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -10,6 +13,8 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -86,7 +91,74 @@ func (b *PeakQAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 	return peakq.GetOpenAPIDefinitions
 }
 
-// Register additional routes with the server
+// NOT A GREAT APPROACH... BUT will make a UI for statically defined
 func (b *PeakQAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
-	return nil
+	defs := peakq.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
+	renderedQuery := defs["github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.RenderedQuery"].Schema
+	playgroundExample := basicTemplateWithSelectedValue
+
+	params := []*spec3.Parameter{}
+	for _, v := range playgroundExample.Variables {
+		params = append(params, &spec3.Parameter{
+			ParameterProps: spec3.ParameterProps{
+				Name:    v.Key,
+				Schema:  spec.StringProperty(),
+				Example: v.SelectedValue,
+			},
+		})
+	}
+
+	return &grafanaapiserver.APIRoutes{
+		Root: []grafanaapiserver.APIRouteHandler{
+			{
+				Path: "playground",
+				Spec: &spec3.PathProps{
+					Summary:     "an example at the root level",
+					Description: "longer description here?",
+					Get: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Parameters: params,
+							Responses: &spec3.Responses{
+								ResponsesProps: spec3.ResponsesProps{
+									StatusCodeResponses: map[int]*spec3.Response{
+										200: {
+											ResponseProps: spec3.ResponseProps{
+												Description: "OK",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &renderedQuery,
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Handler: func(w http.ResponseWriter, r *http.Request) {
+					input := map[string]string{}
+					for key, vals := range r.URL.Query() {
+						if len(vals) > 0 {
+							input[key] = vals[0] // ignore second values?
+						}
+					}
+
+					results, err := Render(playgroundExample, input)
+					if err != nil {
+						_, _ = w.Write([]byte("ERROR: " + err.Error()))
+						w.WriteHeader(500)
+						return
+					}
+
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(http.StatusOK)
+					_ = json.NewEncoder(w).Encode(results)
+				},
+			},
+		},
+	}
 }

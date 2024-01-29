@@ -4,6 +4,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 )
 
@@ -16,9 +17,16 @@ type QueryTemplate struct {
 }
 
 type QueryTemplateSpec struct {
-	Title     string          `json:"title"`
+	Title string `json:"title"`
+
+	// The variables that can be used to render
+	// +listType=map
+	// +listMapKey=key
 	Variables []QueryVariable `json:"vars,omitempty"`
-	Targets   []Target        `json:"targets"`
+
+	// Output variables
+	// +listType=set
+	Targets []Target `json:"targets"`
 }
 
 type Target struct {
@@ -48,6 +56,7 @@ type QueryVariable struct {
 
 	// Positions is a list of where to perform the interpolation
 	// within targets during render.
+	// +listType=atomic
 	Positions []Position `json:"positions"`
 
 	// ValueListDefinition is the object definition used by the FE
@@ -76,7 +85,6 @@ type Position struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type QueryTemplateList struct {
 	metav1.TypeMeta `json:",inline"`
-	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []QueryTemplate `json:"items,omitempty"`
@@ -87,5 +95,6 @@ type QueryTemplateList struct {
 type RenderedQuery struct {
 	metav1.TypeMeta `json:",inline"`
 
+	// +listType=atomic
 	Targets []Target `json:"targets,omitempty"`
 }

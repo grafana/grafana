@@ -173,8 +173,17 @@ func schema_pkg_apis_peakq_v0alpha1_QueryTemplateSpec(ref common.ReferenceCallba
 						},
 					},
 					"vars": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-map-keys": []interface{}{
+									"key",
+								},
+								"x-kubernetes-list-type": "map",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "The variables that can be used to render",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -186,8 +195,14 @@ func schema_pkg_apis_peakq_v0alpha1_QueryTemplateSpec(ref common.ReferenceCallba
 						},
 					},
 					"targets": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Output variables",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -239,6 +254,11 @@ func schema_pkg_apis_peakq_v0alpha1_QueryVariable(ref common.ReferenceCallback) 
 						},
 					},
 					"positions": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Positions is a list of where to perform the interpolation within targets during render.",
 							Type:        []string{"array"},
@@ -289,6 +309,11 @@ func schema_pkg_apis_peakq_v0alpha1_RenderedQuery(ref common.ReferenceCallback) 
 						},
 					},
 					"targets": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
