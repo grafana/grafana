@@ -147,6 +147,11 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		return nil, errOAuthUserInfo.Errorf("failed to get user info: %w", err)
 	}
 
+	// Implement in Grafana 11
+	// if userInfo.Id == "" {
+	// 	return nil, errors.New("idP did not return a user id")
+	// }
+
 	if userInfo.Email == "" {
 		return nil, errOAuthMissingRequiredEmail.Errorf("required attribute email was not provided")
 	}
