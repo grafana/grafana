@@ -35,10 +35,15 @@ import { LogRowContextModal } from 'app/features/logs/components/log-context/Log
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 import { SupportingQueryType } from 'app/plugins/datasource/loki/types';
 
-import { createAndCopyShortLink } from '../../../core/utils/shortLinks';
+import { createAndCopyShortLink, getPermalinkRange } from '../../../core/utils/shortLinks';
 import { LogLabels } from '../../../features/logs/components/LogLabels';
 import { LogRows } from '../../../features/logs/components/LogRows';
-import { COMMON_LABELS, dataFrameToLogsModel, dedupLogRows, infiniteScrollRefId } from '../../../features/logs/logsModel';
+import {
+  COMMON_LABELS,
+  dataFrameToLogsModel,
+  dedupLogRows,
+  infiniteScrollRefId,
+} from '../../../features/logs/logsModel';
 
 import { Options } from './types';
 import { useDatasourcesFromTargets } from './useDatasourcesFromTargets';
@@ -109,13 +114,6 @@ export const LogsPanel = ({
     setCloseCallback(onClose);
   }, []);
 
-  const onPermalinkClick = useCallback(
-    async (row: LogRowModel) => {
-      return await copyDashboardUrl(row, timeRange);
-    },
-    [timeRange]
-  );
-
   const showContextToggle = useCallback(
     (row: LogRowModel): boolean => {
       if (
@@ -167,17 +165,29 @@ export const LogsPanel = ({
   // Important to memoize stuff here, as panel rerenders a lot for example when resizing.
   const [logRows, deduplicatedRows, commonLabels] = useMemo(() => {
     const logs = panelData
-      ? dataFrameToLogsModel(panelData.series, data.request?.intervalMs, undefined, data.request?.targets.map(query => ({
-        ...query,
-        // Needed to trigger de-duplication. Will be stripped by dataFrameToLogsModel()
-        refId: `${infiniteScrollRefId}${query.refId}`,
-      })))
+      ? dataFrameToLogsModel(
+          panelData.series,
+          data.request?.intervalMs,
+          undefined,
+          data.request?.targets.map((query) => ({
+            ...query,
+            // Needed to trigger de-duplication. Will be stripped by dataFrameToLogsModel()
+            refId: `${infiniteScrollRefId}${query.refId}`,
+          }))
+        )
       : null;
     const logRows = logs?.rows || [];
     const commonLabels = logs?.meta?.find((m) => m.label === COMMON_LABELS);
     const deduplicatedRows = dedupLogRows(logRows, dedupStrategy);
     return [logRows, deduplicatedRows, commonLabels];
   }, [data.request?.intervalMs, data.request?.targets, dedupStrategy, panelData]);
+
+  const onPermalinkClick = useCallback(
+    async (row: LogRowModel) => {
+      return await copyDashboardUrl(row, logRows, timeRange);
+    },
+    [logRows, timeRange]
+  );
 
   useEffect(() => {
     setPanelData(data);
@@ -343,7 +353,7 @@ function getLogsPanelState(): LogsPermalinkUrlState | undefined {
   return undefined;
 }
 
-async function copyDashboardUrl(row: LogRowModel, timeRange: TimeRange) {
+async function copyDashboardUrl(row: LogRowModel, rows: LogRowModel[], timeRange: TimeRange) {
   // this is an extra check, to be sure that we are not
   // creating permalinks for logs without an id-field.
   // normally it should never happen, because we do not
@@ -362,8 +372,12 @@ async function copyDashboardUrl(row: LogRowModel, timeRange: TimeRange) {
 
   // Add panel state containing the rowId, and absolute time range from the current query, but leave everything else the same, if the user is in edit mode when grabbing the link, that's what will be linked to, etc.
   currentURL.searchParams.set('panelState', JSON.stringify(panelState));
-  currentURL.searchParams.set('from', toUtc(timeRange.from).valueOf().toString(10));
-  currentURL.searchParams.set('to', toUtc(timeRange.to).valueOf().toString(10));
+  const range = getPermalinkRange(row, rows, {
+    from: toUtc(timeRange.from).valueOf(),
+    to: toUtc(timeRange.to).valueOf(),
+  });
+  currentURL.searchParams.set('from', range.from.toString(10));
+  currentURL.searchParams.set('to', range.to.toString(10));
 
   await createAndCopyShortLink(currentURL.toString());
 
@@ -392,7 +406,7 @@ async function requestMoreLogs(panelData: PanelData, timeRange: AbsoluteTimeRang
       dataSource.query({
         ...panelData.request,
         range,
-        targets: targetGroups[uid].map(query => ({
+        targets: targetGroups[uid].map((query) => ({
           ...query,
           supportingQueryType: SupportingQueryType.InfiniteScroll,
         })),
