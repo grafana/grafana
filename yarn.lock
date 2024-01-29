@@ -2988,7 +2988,7 @@ __metadata:
     "@kusto/monaco-kusto": "npm:^7.4.0"
     "@testing-library/react": "npm:14.1.2"
     "@testing-library/user-event": "npm:14.5.2"
-    "@types/debounce-promise": "npm:3.1.6"
+    "@types/debounce-promise": "npm:3.1.9"
     "@types/jest": "npm:29.5.11"
     "@types/lodash": "npm:4.14.202"
     "@types/node": "npm:20.11.7"
@@ -8436,13 +8436,6 @@ __metadata:
     "@types/d3-transition": "npm:*"
     "@types/d3-zoom": "npm:*"
   checksum: 12234aa093c8661546168becdd8956e892b276f525d96f65a7b32fed886fc6a569fe5a1171bff26fef2a5663960635f460c9504a6f2d242ba281a2b6c8c6465c
-  languageName: node
-  linkType: hard
-
-"@types/debounce-promise@npm:3.1.6":
-  version: 3.1.6
-  resolution: "@types/debounce-promise@npm:3.1.6"
-  checksum: db1e5bf86215dfcdd0b0f94497269b0be5b27e0b9622bbad53c7a24de078229b97927f848549bb661795575d80615fd935f8357d8f23928c0526b158b51fa122
   languageName: node
   linkType: hard
 
