@@ -142,7 +142,7 @@ func (l *LibraryElementService) deleteHandler(c *contextmodel.ReqContext) respon
 func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.Response {
 	element, err := l.getLibraryElementByUid(c.Req.Context(), c.SignedInUser,
 		model.GetLibraryElementCommand{
-			FolderUID:  web.Params(c.Req)[":uid"],
+			UID:        web.Params(c.Req)[":uid"],
 			FolderName: dashboards.RootFolderName,
 		},
 	)

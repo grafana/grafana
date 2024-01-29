@@ -333,7 +333,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			require.NoError(t, err)
 
 			_, err = sc.elementService.GetElement(sc.ctx, sc.user,
-				model.GetLibraryElementCommand{FolderUID: sc.initialResult.Result.UID, FolderName: sc.folder.Title})
+				model.GetLibraryElementCommand{UID: sc.initialResult.Result.UID, FolderName: sc.folder.Title})
 			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
 		})
 }
@@ -385,7 +385,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 			}
 
 			_, err := sc.elementService.GetElement(sc.ctx, sc.user,
-				model.GetLibraryElementCommand{FolderUID: missingUID, FolderName: dashboards.RootFolderName})
+				model.GetLibraryElementCommand{UID: missingUID, FolderName: dashboards.RootFolderName})
 
 			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
 
@@ -393,7 +393,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 			require.NoError(t, err)
 
 			element, err := sc.elementService.GetElement(sc.ctx, sc.user,
-				model.GetLibraryElementCommand{FolderUID: missingUID, FolderName: dashboards.RootFolderName})
+				model.GetLibraryElementCommand{UID: missingUID, FolderName: dashboards.RootFolderName})
 			require.NoError(t, err)
 			var expected = getExpected(t, element, missingUID, missingName, missingModel)
 			var result = toLibraryElement(t, element)
@@ -426,7 +426,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 			}
 
 			_, err := sc.elementService.GetElement(sc.ctx, sc.user,
-				model.GetLibraryElementCommand{FolderUID: existingUID, FolderName: dashboards.RootFolderName})
+				model.GetLibraryElementCommand{UID: existingUID, FolderName: dashboards.RootFolderName})
 			require.NoError(t, err)
 
 			// nolint:staticcheck
@@ -434,7 +434,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 			require.NoError(t, err)
 
 			element, err := sc.elementService.GetElement(sc.ctx, sc.user,
-				model.GetLibraryElementCommand{FolderUID: existingUID, FolderName: dashboards.RootFolderName})
+				model.GetLibraryElementCommand{UID: existingUID, FolderName: dashboards.RootFolderName})
 			require.NoError(t, err)
 			var expected = getExpected(t, element, existingUID, existingName, sc.initialResult.Result.Model)
 			expected.FolderUID = sc.initialResult.Result.FolderUID
@@ -541,15 +541,15 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 					},
 				},
 			}
-			_, err := sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{FolderUID: outsideUID, FolderName: dashboards.RootFolderName})
+			_, err := sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{UID: outsideUID, FolderName: dashboards.RootFolderName})
 			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
-			_, err = sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{FolderUID: insideUID, FolderName: dashboards.RootFolderName})
+			_, err = sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{UID: insideUID, FolderName: dashboards.RootFolderName})
 			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
 
 			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.NewFromAny(libraryElements), panels, 0, "")
 			require.NoError(t, err)
 
-			element, err := sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{FolderUID: outsideUID, FolderName: dashboards.RootFolderName})
+			element, err := sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{UID: outsideUID, FolderName: dashboards.RootFolderName})
 			require.NoError(t, err)
 			expected := getExpected(t, element, outsideUID, outsideName, outsideModel)
 			result := toLibraryElement(t, element)
@@ -557,7 +557,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			element, err = sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{FolderUID: insideUID, FolderName: dashboards.RootFolderName})
+			element, err = sc.elementService.GetElement(sc.ctx, sc.user, model.GetLibraryElementCommand{UID: insideUID, FolderName: dashboards.RootFolderName})
 			require.NoError(t, err)
 			expected = getExpected(t, element, insideUID, insideName, insideModel)
 			result = toLibraryElement(t, element)

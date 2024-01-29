@@ -212,8 +212,8 @@ type PatchLibraryElementCommand struct {
 type GetLibraryElementCommand struct {
 	FolderName string
 	// Deprecated: use FolderUID instead
-	FolderID  int64
-	FolderUID string
+	FolderID int64
+	UID      string
 }
 
 // SearchLibraryElementsQuery is the query used for searching for Elements
