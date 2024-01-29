@@ -28,7 +28,7 @@ Administrators can also [configure the data source via YAML](#provision-the-data
 
 This video explains how to add data sources, including Loki, Tempo, and Mimir, to Grafana and Grafana Cloud. Tempo data source set up starts at 4:58 in the video.
 
-{{< youtube id="cqHO0oYW6Ic" >}}
+{{< youtube id="cqHO0oYW6Ic" start="298" >}}
 
 Once you've added the data source, you can [configure it]({{< relref "./configure-tempo-data-source/" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards][build-dashboards] and use [Explore][explore].
 
