@@ -27,25 +27,36 @@ const timeoutMap = {
   ['warning']: AlertTimeout.Warning,
 };
 
-export const TemporaryAlert = (props: { severity: AlertVariant; text: string }) => {
+type AlertProps = {
+  // Severity of the alert. Controls the style of the alert (e.g., background color)
+  severity: AlertVariant;
+  // Displayed message. If set to empty string, the alert is not displayed
+  text: string;
+};
+
+export const TemporaryAlert = (props: AlertProps) => {
   const style = getStyle(useTheme2());
   const [visible, setVisible] = useState(false);
+  const [timer, setTimer] = useState<NodeJS.Timeout>();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setVisible(false);
-    }, timeoutMap[props.severity]);
-
     return () => {
-      clearTimeout(timer);
+      if (timer) {
+        clearTimeout(timer);
+      }
     };
-  }, [props.severity, visible]);
+  }, [timer]);
 
   useEffect(() => {
     if (props.text !== '') {
       setVisible(true);
-    }
-  }, [props.text]);
 
-  return <Alert className={style} elevated={true} title={props.text} severity={props.severity} />;
+      const timer = setTimeout(() => {
+        setVisible(false);
+      }, timeoutMap[props.severity]);
+      setTimer(timer);
+    }
+  }, [props.severity, props.text]);
+
+  return <>{visible && <Alert className={style} elevated={true} title={props.text} severity={props.severity} />}</>;
 };

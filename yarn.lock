@@ -2816,39 +2816,39 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@floating-ui/dom@npm:^1.0.1, @floating-ui/dom@npm:^1.6.0":
-  version: 1.6.0
-  resolution: "@floating-ui/dom@npm:1.6.0"
+"@floating-ui/dom@npm:^1.0.1, @floating-ui/dom@npm:^1.6.1":
+  version: 1.6.1
+  resolution: "@floating-ui/dom@npm:1.6.1"
   dependencies:
     "@floating-ui/core": "npm:^1.6.0"
     "@floating-ui/utils": "npm:^0.2.1"
-  checksum: fc559385a27feddff31bdb9f4c8bc05e12bda5aac4e44e7b5850a2af3d2960bf58d72034ccc3fc6c1bf5e69a97d6b5958ee73a885b5e7e7594dc4fa2c22ba47d
+  checksum: c010feb55be37662eb4cc8d0a22e21359c25247bbdcd9557617fd305cf08c8f020435b17e4b4f410201ba9abe3a0dd96b5c42d56e85f7a5e11e7d30b85afc116
   languageName: node
   linkType: hard
 
-"@floating-ui/react-dom@npm:^2.0.0, @floating-ui/react-dom@npm:^2.0.7":
-  version: 2.0.7
-  resolution: "@floating-ui/react-dom@npm:2.0.7"
+"@floating-ui/react-dom@npm:^2.0.0, @floating-ui/react-dom@npm:^2.0.8":
+  version: 2.0.8
+  resolution: "@floating-ui/react-dom@npm:2.0.8"
   dependencies:
-    "@floating-ui/dom": "npm:^1.6.0"
+    "@floating-ui/dom": "npm:^1.6.1"
   peerDependencies:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
-  checksum: 15eb9ec493781253077e7e26c65c56586a1c92c414879c55d779cba5479d46b8897de06d61c831d03d24c24894257817fed9a515a4f2dc955666df5156dd757b
+  checksum: e57b2a498aecf8de0ec28adf434257fca7893bd9bd7e78b63ac98c63b29b9fc086fc175630154352f3610f5c4a0d329823837f4f6c235cc0459fde6417065590
   languageName: node
   linkType: hard
 
-"@floating-ui/react@npm:0.26.7":
-  version: 0.26.7
-  resolution: "@floating-ui/react@npm:0.26.7"
+"@floating-ui/react@npm:0.26.8":
+  version: 0.26.8
+  resolution: "@floating-ui/react@npm:0.26.8"
   dependencies:
-    "@floating-ui/react-dom": "npm:^2.0.7"
+    "@floating-ui/react-dom": "npm:^2.0.8"
     "@floating-ui/utils": "npm:^0.2.1"
     tabbable: "npm:^6.0.1"
   peerDependencies:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
-  checksum: 85af7118b0dcd852cfe6e3299a5e467f9224fe240d95b8de7d754d1be4a103e27fbc889fbbc3bd6bee9c3b9799e54bc2640f60dd5aa5bbb4a355cb906512ec13
+  checksum: 809af37e13baf67426be5542a8d608b7d9b904b5a386e7e5147da584dc154c3e977c67daefa4a3df1980dee07152a44f4997b8269132b732b62eb5e64b0a9809
   languageName: node
   linkType: hard
 
@@ -3146,7 +3146,7 @@ __metadata:
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/experimental": "npm:1.7.8"
     "@grafana/lezer-logql": "npm:0.2.2"
-    "@grafana/lezer-traceql": "npm:0.0.12"
+    "@grafana/lezer-traceql": "npm:0.0.13"
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-configs": "npm:10.4.0-pre"
@@ -3175,7 +3175,7 @@ __metadata:
     glob: "npm:10.3.10"
     i18next: "npm:^22.0.0"
     lodash: "npm:4.17.21"
-    lru-cache: "npm:10.1.0"
+    lru-cache: "npm:10.2.0"
     monaco-editor: "npm:0.34.0"
     prismjs: "npm:1.29.0"
     react: "npm:18.2.0"
@@ -3273,7 +3273,7 @@ __metadata:
     tinycolor2: "npm:1.6.0"
     tslib: "npm:2.6.2"
     typescript: "npm:5.3.3"
-    uplot: "npm:1.6.28"
+    uplot: "npm:1.6.29"
     xss: "npm:^1.0.14"
   peerDependencies:
     react: ^17.0.0 || ^18.0.0
@@ -3521,12 +3521,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/lezer-traceql@npm:0.0.12":
-  version: 0.0.12
-  resolution: "@grafana/lezer-traceql@npm:0.0.12"
+"@grafana/lezer-traceql@npm:0.0.13":
+  version: 0.0.13
+  resolution: "@grafana/lezer-traceql@npm:0.0.13"
   peerDependencies:
     "@lezer/lr": ^1.3.0
-  checksum: 615c215a7c2a72b38138a322feed3de8ff85a5828bdd6933adcf54a41e078365d3bd7db2f046cb17ad21b77a59b100b24a8946369c7dc41c15cac1826dde845b
+  checksum: e87bebbe62e1b4b9a61576c8be3248f16d7f2739acbe339718f9797bb74a94adf9c42e34f9e8df09d3c592d591858fede2bb1867dcaffc86b9d968ea7c85d8f6
   languageName: node
   linkType: hard
 
@@ -3732,7 +3732,7 @@ __metadata:
     "@babel/core": "npm:7.23.9"
     "@emotion/css": "npm:11.11.2"
     "@emotion/react": "npm:11.11.3"
-    "@floating-ui/react": "npm:0.26.7"
+    "@floating-ui/react": "npm:0.26.8"
     "@grafana/data": "npm:10.4.0-pre"
     "@grafana/e2e-selectors": "npm:10.4.0-pre"
     "@grafana/faro-web-sdk": "npm:^1.3.6"
@@ -3861,7 +3861,7 @@ __metadata:
     tinycolor2: "npm:1.6.0"
     tslib: "npm:2.6.2"
     typescript: "npm:5.3.3"
-    uplot: "npm:1.6.28"
+    uplot: "npm:1.6.29"
     uuid: "npm:9.0.1"
     webpack: "npm:5.90.0"
   peerDependencies:
@@ -6407,13 +6407,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@remix-run/router@npm:1.5.0":
-  version: 1.5.0
-  resolution: "@remix-run/router@npm:1.5.0"
-  checksum: 3da27d64519df94919020f4b42aaa016f26891331be98468cbc807bc4d2cfb401d7e47d4f88a4a3d777fc3af23d162c668357a8e5d2c5947acdbca7b691bc325
-  languageName: node
-  linkType: hard
-
 "@rollup/plugin-commonjs@npm:25.0.7":
   version: 25.0.7
   resolution: "@rollup/plugin-commonjs@npm:25.0.7"
@@ -7699,90 +7692,90 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@swc/core-darwin-arm64@npm:1.3.106":
-  version: 1.3.106
-  resolution: "@swc/core-darwin-arm64@npm:1.3.106"
+"@swc/core-darwin-arm64@npm:1.3.107":
+  version: 1.3.107
+  resolution: "@swc/core-darwin-arm64@npm:1.3.107"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@swc/core-darwin-x64@npm:1.3.106":
-  version: 1.3.106
-  resolution: "@swc/core-darwin-x64@npm:1.3.106"
+"@swc/core-darwin-x64@npm:1.3.107":
+  version: 1.3.107
+  resolution: "@swc/core-darwin-x64@npm:1.3.107"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@swc/core-linux-arm-gnueabihf@npm:1.3.106":
-  version: 1.3.106
-  resolution: "@swc/core-linux-arm-gnueabihf@npm:1.3.106"
+"@swc/core-linux-arm-gnueabihf@npm:1.3.107":
+  version: 1.3.107
+  resolution: "@swc/core-linux-arm-gnueabihf@npm:1.3.107"
   conditions: os=linux & cpu=arm
   languageName: node
   linkType: hard
 
-"@swc/core-linux-arm64-gnu@npm:1.3.106":
-  version: 1.3.106
-  resolution: "@swc/core-linux-arm64-gnu@npm:1.3.106"
+"@swc/core-linux-arm64-gnu@npm:1.3.107":
+  version: 1.3.107
+  resolution: "@swc/core-linux-arm64-gnu@npm:1.3.107"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@swc/core-linux-arm64-musl@npm:1.3.106":
-  version: 1.3.106
-  resolution: "@swc/core-linux-arm64-musl@npm:1.3.106"
+"@swc/core-linux-arm64-musl@npm:1.3.107":
+  version: 1.3.107
+  resolution: "@swc/core-linux-arm64-musl@npm:1.3.107"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@swc/core-linux-x64-gnu@npm:1.3.106":
-  version: 1.3.106
-  resolution: "@swc/core-linux-x64-gnu@npm:1.3.106"
+"@swc/core-linux-x64-gnu@npm:1.3.107":
+  version: 1.3.107
+  resolution: "@swc/core-linux-x64-gnu@npm:1.3.107"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@swc/core-linux-x64-musl@npm:1.3.106":
-  version: 1.3.106
-  resolution: "@swc/core-linux-x64-musl@npm:1.3.106"
+"@swc/core-linux-x64-musl@npm:1.3.107":
+  version: 1.3.107
+  resolution: "@swc/core-linux-x64-musl@npm:1.3.107"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@swc/core-win32-arm64-msvc@npm:1.3.106":
-  version: 1.3.106
-  resolution: "@swc/core-win32-arm64-msvc@npm:1.3.106"
+"@swc/core-win32-arm64-msvc@npm:1.3.107":
+  version: 1.3.107
+  resolution: "@swc/core-win32-arm64-msvc@npm:1.3.107"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@swc/core-win32-ia32-msvc@npm:1.3.106":
-  version: 1.3.106
-  resolution: "@swc/core-win32-ia32-msvc@npm:1.3.106"
+"@swc/core-win32-ia32-msvc@npm:1.3.107":
+  version: 1.3.107
+  resolution: "@swc/core-win32-ia32-msvc@npm:1.3.107"
   conditions: os=win32 & cpu=ia32
   languageName: node
   linkType: hard
 
-"@swc/core-win32-x64-msvc@npm:1.3.106":
-  version: 1.3.106
-  resolution: "@swc/core-win32-x64-msvc@npm:1.3.106"
+"@swc/core-win32-x64-msvc@npm:1.3.107":
+  version: 1.3.107
+  resolution: "@swc/core-win32-x64-msvc@npm:1.3.107"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
-"@swc/core@npm:1.3.106, @swc/core@npm:^1.3.49":
-  version: 1.3.106
-  resolution: "@swc/core@npm:1.3.106"
+"@swc/core@npm:1.3.107, @swc/core@npm:^1.3.49":
+  version: 1.3.107
+  resolution: "@swc/core@npm:1.3.107"
   dependencies:
-    "@swc/core-darwin-arm64": "npm:1.3.106"
-    "@swc/core-darwin-x64": "npm:1.3.106"
-    "@swc/core-linux-arm-gnueabihf": "npm:1.3.106"
-    "@swc/core-linux-arm64-gnu": "npm:1.3.106"
-    "@swc/core-linux-arm64-musl": "npm:1.3.106"
-    "@swc/core-linux-x64-gnu": "npm:1.3.106"
-    "@swc/core-linux-x64-musl": "npm:1.3.106"
-    "@swc/core-win32-arm64-msvc": "npm:1.3.106"
-    "@swc/core-win32-ia32-msvc": "npm:1.3.106"
-    "@swc/core-win32-x64-msvc": "npm:1.3.106"
+    "@swc/core-darwin-arm64": "npm:1.3.107"
+    "@swc/core-darwin-x64": "npm:1.3.107"
+    "@swc/core-linux-arm-gnueabihf": "npm:1.3.107"
+    "@swc/core-linux-arm64-gnu": "npm:1.3.107"
+    "@swc/core-linux-arm64-musl": "npm:1.3.107"
+    "@swc/core-linux-x64-gnu": "npm:1.3.107"
+    "@swc/core-linux-x64-musl": "npm:1.3.107"
+    "@swc/core-win32-arm64-msvc": "npm:1.3.107"
+    "@swc/core-win32-ia32-msvc": "npm:1.3.107"
+    "@swc/core-win32-x64-msvc": "npm:1.3.107"
     "@swc/counter": "npm:^0.1.1"
     "@swc/types": "npm:^0.1.5"
   peerDependencies:
@@ -7811,7 +7804,7 @@ __metadata:
   peerDependenciesMeta:
     "@swc/helpers":
       optional: true
-  checksum: dec4f621e0d93bb714699f20c4cb4b608dd5bd93d578e7ec29c9acbe582b1d1565caa6752348c3367a4ea0447cc871330ff4d245c25e58e8eeeb7c791aeab386
+  checksum: 9f679f79cd4f89f20035a8f25945942f6d39a068ccec4a1c3b72d4266dddec8c4de38b89d65affd24768609f44da7217fe28e6498d2c95449ecbc76099e61bce
   languageName: node
   linkType: hard
 
@@ -8827,11 +8820,11 @@ __metadata:
   linkType: hard
 
 "@types/logfmt@npm:^1.2.3":
-  version: 1.2.3
-  resolution: "@types/logfmt@npm:1.2.3"
+  version: 1.2.6
+  resolution: "@types/logfmt@npm:1.2.6"
   dependencies:
     "@types/node": "npm:*"
-  checksum: d5872ab0432c687dc95a4c3a1c21c8eca24553415ef6a34f6cbbe0eefc4b7b8fb8b2af80df4a53fcf7cc7b212569df568bed1b17f7c2a976c4416f4a67b285de
+  checksum: ac69ee5c99e074bf3ad31d27f877402b84be59e2c200fc4ecfbf295244505a2b6408db1c377c96f90d0444a18fd253d34f0f0810c162e73f6e82c327022c3008
   languageName: node
   linkType: hard
 
@@ -17359,7 +17352,7 @@ __metadata:
     "@emotion/eslint-plugin": "npm:11.11.0"
     "@emotion/react": "npm:11.11.3"
     "@fingerprintjs/fingerprintjs": "npm:^3.4.2"
-    "@floating-ui/react": "npm:0.26.7"
+    "@floating-ui/react": "npm:0.26.8"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana-plugins/grafana-azure-monitor-datasource": "workspace:*"
     "@grafana-plugins/grafana-pyroscope-datasource": "workspace:*"
@@ -17413,7 +17406,7 @@ __metadata:
     "@reduxjs/toolkit": "npm:1.9.5"
     "@remix-run/router": "npm:^1.5.0"
     "@rtsao/plugin-proposal-class-properties": "npm:7.0.1-patch.1"
-    "@swc/core": "npm:1.3.106"
+    "@swc/core": "npm:1.3.107"
     "@swc/helpers": "npm:0.5.3"
     "@testing-library/dom": "npm:9.3.4"
     "@testing-library/jest-dom": "npm:6.3.0"
@@ -17568,7 +17561,7 @@ __metadata:
     leven: "npm:^4.0.0"
     lodash: "npm:4.17.21"
     logfmt: "npm:^1.3.2"
-    lru-cache: "npm:10.1.0"
+    lru-cache: "npm:10.2.0"
     lru-memoize: "npm:^1.1.0"
     lucene: "npm:^2.1.1"
     marked: "npm:5.1.1"
@@ -17672,7 +17665,7 @@ __metadata:
     tslib: "npm:2.6.2"
     tween-functions: "npm:^1.2.0"
     typescript: "npm:5.3.3"
-    uplot: "npm:1.6.28"
+    uplot: "npm:1.6.29"
     uuid: "npm:9.0.1"
     vendor: "link:./public/vendor"
     visjs-network: "npm:4.25.0"
@@ -21097,14 +21090,14 @@ __metadata:
   linkType: hard
 
 "logfmt@npm:^1.3.2":
-  version: 1.3.2
-  resolution: "logfmt@npm:1.3.2"
+  version: 1.4.0
+  resolution: "logfmt@npm:1.4.0"
   dependencies:
     split: "npm:0.2.x"
     through: "npm:2.3.x"
   bin:
-    logfmt: ./bin/logfmt
-  checksum: 08a4d4467cc8e066f05394a966ea103fa8785da3e22fb82a502e62cc0edc3c8679405bb8bbdd93c859da7defffe1d7feeeb47a59da11cdd76e48bf9374430cdd
+    logfmt: bin/logfmt
+  checksum: 4576cc77faa5596c62bdbb4aec9efeba8e6758495b395a48ab2c7ee49e0673c85c2498ed792740b21607e011c4d94e4fc7449034ba7ba67f8a9ae14a2fb1e801
   languageName: node
   linkType: hard
 
@@ -21145,10 +21138,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lru-cache@npm:10.1.0, lru-cache@npm:^9.1.1 || ^10.0.0":
-  version: 10.1.0
-  resolution: "lru-cache@npm:10.1.0"
-  checksum: 207278d6fa711fb1f94a0835d4d4737441d2475302482a14785b10515e4c906a57ebf9f35bf060740c9560e91c7c1ad5a04fd7ed030972a9ba18bce2a228e95b
+"lru-cache@npm:10.2.0, lru-cache@npm:^9.1.1 || ^10.0.0":
+  version: 10.2.0
+  resolution: "lru-cache@npm:10.2.0"
+  checksum: 502ec42c3309c0eae1ce41afca471f831c278566d45a5273a0c51102dee31e0e250a62fa9029c3370988df33a14188a38e682c16143b794de78668de3643e302
   languageName: node
   linkType: hard
 
@@ -25459,16 +25452,16 @@ __metadata:
   linkType: hard
 
 "react-router-dom-v5-compat@npm:^6.10.0":
-  version: 6.10.0
-  resolution: "react-router-dom-v5-compat@npm:6.10.0"
+  version: 6.21.3
+  resolution: "react-router-dom-v5-compat@npm:6.21.3"
   dependencies:
     history: "npm:^5.3.0"
-    react-router: "npm:6.10.0"
+    react-router: "npm:6.21.3"
   peerDependencies:
     react: ">=16.8"
     react-dom: ">=16.8"
     react-router-dom: 4 || 5
-  checksum: b86edb22640e25687a843fd46c22b58e147316ee957653e684d9f46a7e71da113a761a2f74c60d42f5d4222e497f825e541a1f4d8872b26edb4b623fb7c87928
+  checksum: ed40e3e241a8c2a85aa0a95b52b77b9b9667e3f1a48a8a60e0b33e3c615c3b490b6c3a645ea92efc5783251111d039a5c809b779e1a93b9da23de6e97e4e1bd0
   languageName: node
   linkType: hard
 
@@ -25506,17 +25499,6 @@ __metadata:
   peerDependencies:
     react: ">=15"
   checksum: 4631eed91020c73950804c7c7454e74b2eb495f803c5ca60c8b5572ca72cc06e336f3b08d9ee3fa730128a52c4d9e16d1aa7e8b7f85560629117e16d99a01cef
-  languageName: node
-  linkType: hard
-
-"react-router@npm:6.10.0":
-  version: 6.10.0
-  resolution: "react-router@npm:6.10.0"
-  dependencies:
-    "@remix-run/router": "npm:1.5.0"
-  peerDependencies:
-    react: ">=16.8"
-  checksum: 3c78db213d2c67c7ae06125b296889ebf3407963268ef23319312b4d7bf455ecfaa59164be73d6b4e19fb2ef6c2771d7dfe764d5a91cbdbb7c8e84c95aca99cc
   languageName: node
   linkType: hard
 
@@ -29645,10 +29627,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uplot@npm:1.6.28":
-  version: 1.6.28
-  resolution: "uplot@npm:1.6.28"
-  checksum: 6771289c45f2b8e8ad5d56abd8c92e7f5687244d75265f80957af857c2034b7b5e3128122262e5a546da2fc4437b600e56a058523eff1435b5bf6728ddc19612
+"uplot@npm:1.6.29":
+  version: 1.6.29
+  resolution: "uplot@npm:1.6.29"
+  checksum: 0cda54a89cbe7f1ff5eb4a3e75bafa145a6af79e534cef6e8e4a1ace042b18a63ea56b25407d87fc7f073711ebb947a59de8068aa3576bc86b2514f1d058c187
   languageName: node
   linkType: hard
 
