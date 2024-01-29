@@ -90,6 +90,7 @@ func CreateDashboard(t *testing.T, sql *sqlstore.SQLStore, features featuremgmt.
 
 	dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 	require.NoError(t, err)
+	require.NotNil(t, dash)
 
 	return dash
 }
