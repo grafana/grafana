@@ -41,6 +41,7 @@ import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
 import { infiniteScrollRefId } from 'app/features/logs/logsModel';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
+import { SupportingQueryType } from 'app/plugins/datasource/loki/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
   createAsyncThunk,
@@ -732,6 +733,7 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
         ...query,
         datasource: query.datasource || datasourceInstance?.getRef(),
         refId: `${infiniteScrollRefId}${query.refId}`,
+        supportingQueryType: SupportingQueryType.InfiniteScroll,
       }));
 
     if (!hasNonEmptyQuery(logQueries) || !datasourceInstance) {
