@@ -113,6 +113,12 @@ var (
 
 	// MPublicDashboardDatasourceQuerySuccess is a metric counter for successful queries labelled by datasource
 	MPublicDashboardDatasourceQuerySuccess *prometheus.CounterVec
+
+	// MFolderIDsAPICount is a metric counter for folder ids count in the api package
+	MFolderIDsAPICount *prometheus.CounterVec
+
+	// MFolderIDsServicesCount is a metric counter for folder ids count in the services package
+	MFolderIDsServiceCount *prometheus.CounterVec
 )
 
 // Timers
@@ -216,9 +222,39 @@ var (
 	MStatTotalCorrelations prometheus.Gauge
 )
 
+const (
+	// FolderID API
+	GetAlerts                 string = "GetAlerts"
+	GetDashboard              string = "GetDashboard"
+	RestoreDashboardVersion   string = "RestoreDashboardVersion"
+	GetFolderByID             string = "GetFolderByID"
+	GetFolderDescendantCounts string = "GetFolderDescendantCounts"
+	SearchFolders             string = "searchFolders"
+	GetFolderPermissionList   string = "GetFolderPermissionList"
+	UpdateFolderPermissions   string = "UpdateFolderPermissions"
+	GetFolderACL              string = "getFolderACL"
+	Search                    string = "Search"
+	GetDashboardACL           string = "getDashboardACL"
+	NewToFolderDTO            string = "newToFolderDto"
+	GetFolders                string = "GetFolders"
+	// FolderID services
+	Folder           string = "folder"
+	Dashboard        string = "dashboards"
+	LibraryElements  string = "libraryelements"
+	LibraryPanels    string = "librarypanels"
+	NGAlerts         string = "ngalert"
+	Provisioning     string = "provisioning"
+	PublicDashboards string = "publicdashboards"
+	AccessControl    string = "accesscontrol"
+	Guardian         string = "guardian"
+	DashboardImport  string = "dashboardimport"
+)
+
 func init() {
 	httpStatusCodes := []string{"200", "404", "500", "unknown"}
 	objectiveMap := map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001}
+	apiFolderIDMethods := []string{GetAlerts, GetDashboard, RestoreDashboardVersion, GetFolderByID, GetFolderDescendantCounts, SearchFolders, GetFolderPermissionList, UpdateFolderPermissions, GetFolderACL, Search, GetDashboardACL, NewToFolderDTO, GetFolders}
+	folderIDServices := []string{Folder, Dashboard, LibraryElements, LibraryPanels, NGAlerts, Provisioning, PublicDashboards, AccessControl, Guardian, Search, DashboardImport}
 
 	MInstanceStart = prometheus.NewCounter(prometheus.CounterOpts{
 		Name:      "instance_start_total",
@@ -455,6 +491,18 @@ func init() {
 		Help:      "counter for queries to public dashboard datasources labelled by datasource type and success status success/failed",
 		Namespace: ExporterName,
 	}, []string{"datasource", "status"}, map[string][]string{"status": pubdash.QueryResultStatuses})
+
+	MFolderIDsAPICount = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
+		Name:      "folder_id_api_count",
+		Help:      "counter for folder id usage in api package",
+		Namespace: ExporterName,
+	}, []string{"method"}, map[string][]string{"method": apiFolderIDMethods})
+
+	MFolderIDsServiceCount = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
+		Name:      "folder_id_service_count",
+		Help:      "counter for folder id usage in service package",
+		Namespace: ExporterName,
+	}, []string{"service"}, map[string][]string{"service": folderIDServices})
 
 	MStatTotalDashboards = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard",
@@ -747,5 +795,7 @@ func initMetricVars(reg prometheus.Registerer) {
 		MPublicDashboardRequestCount,
 		MPublicDashboardDatasourceQuerySuccess,
 		MStatTotalCorrelations,
+		MFolderIDsAPICount,
+		MFolderIDsServiceCount,
 	)
 }

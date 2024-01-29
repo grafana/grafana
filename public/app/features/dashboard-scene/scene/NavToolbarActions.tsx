@@ -120,6 +120,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
           variant="primary"
           icon="pen"
           fill="text"
+          size="sm"
         >
           Edit
         </Button>
@@ -130,8 +131,9 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
       toolbarActions.push(
         <Button
           onClick={() => {
-            dashboard.onSave();
+            dashboard.openSaveDrawer({ saveAsCopy: true });
           }}
+          size="sm"
           tooltip="Save as copy"
           fill="text"
           key="save-as"
@@ -146,6 +148,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
           }}
           tooltip="Discard changes"
           fill="text"
+          size="sm"
           key="discard"
           variant="destructive"
         >
@@ -156,11 +159,12 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
         <Button
           onClick={() => {
             DashboardInteractions.toolbarSaveClick();
-            dashboard.onSave();
+            dashboard.openSaveDrawer({});
           }}
           tooltip="Save changes"
           key="save"
-          disabled={!isDirty}
+          size="sm"
+          variant={isDirty ? 'primary' : 'secondary'}
         >
           Save
         </Button>

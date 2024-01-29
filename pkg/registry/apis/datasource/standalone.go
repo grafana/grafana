@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
@@ -19,6 +20,7 @@ import (
 // This currently builds its dependencies manually and only works for testdata.
 func NewTestDataAPIServer(group string) (*DataSourceAPIBuilder, error) {
 	pluginID := "grafana-testdata-datasource"
+	features := featuremgmt.WithFeatures() // None for now!
 
 	if group != "testdata.datasource.grafana.app" {
 		return nil, fmt.Errorf("only %s is currently supported", pluginID)
@@ -31,10 +33,10 @@ func NewTestDataAPIServer(group string) (*DataSourceAPIBuilder, error) {
 				ID: pluginID,
 			},
 			testdatasource.ProvideService(), // the client
-			&testdataPluginConfigProvider{
+			&pluginDatasourceImpl{
 				startup: v1.Now(),
 			},
-			&testdataPluginConfigProvider{}, // stub
+			&pluginDatasourceImpl{}, // stub
 			&actest.FakeAccessControl{ExpectedEvaluate: true},
 		)
 	}
@@ -47,7 +49,7 @@ func NewTestDataAPIServer(group string) (*DataSourceAPIBuilder, error) {
 		return nil, err
 	}
 
-	accessControl, pluginStore, dsService, dsCache, err := apiBuilderServices(cfg, pluginID)
+	accessControl, pluginStore, dsService, dsCache, err := apiBuilderServices(cfg, features, pluginID)
 	if err != nil {
 		return nil, err
 	}
@@ -56,30 +58,31 @@ func NewTestDataAPIServer(group string) (*DataSourceAPIBuilder, error) {
 	if !exists {
 		return nil, fmt.Errorf("plugin %s not found", pluginID)
 	}
+
 	return NewDataSourceAPIBuilder(
 		td.JSONData,
 		testdatasource.ProvideService(), // the client
-		&defaultPluginConfigProvider{
+		&defaultPluginDatasourceProvider{
 			dsService: dsService,
 			dsCache:   dsCache,
 		},
-		&testdataPluginConfigProvider{}, // stub
+		&pluginDatasourceImpl{}, // stub
 		accessControl,
 	)
 }
 
 // Simple stub for standalone testing
-type testdataPluginConfigProvider struct {
+type pluginDatasourceImpl struct {
 	startup v1.Time
 }
 
 var (
-	_ PluginConfigProvider = (*testdataPluginConfigProvider)(nil)
+	_ PluginDatasourceProvider = (*pluginDatasourceImpl)(nil)
 )
 
-// GetDataSource implements PluginConfigProvider.
-func (p *testdataPluginConfigProvider) GetDataSource(ctx context.Context, pluginID string, uid string) (*v0alpha1.DataSourceConnection, error) {
-	all, err := p.ListDatasources(ctx, pluginID)
+// Get implements PluginDatasourceProvider.
+func (p *pluginDatasourceImpl) Get(ctx context.Context, pluginID string, uid string) (*v0alpha1.DataSourceConnection, error) {
+	all, err := p.List(ctx, pluginID)
 	if err != nil {
 		return nil, err
 	}
@@ -91,8 +94,8 @@ func (p *testdataPluginConfigProvider) GetDataSource(ctx context.Context, plugin
 	return nil, fmt.Errorf("not found")
 }
 
-// ListDatasources implements PluginConfigProvider.
-func (p *testdataPluginConfigProvider) ListDatasources(ctx context.Context, pluginID string) (*v0alpha1.DataSourceConnectionList, error) {
+// List implements PluginConfigProvider.
+func (p *pluginDatasourceImpl) List(ctx context.Context, pluginID string) (*v0alpha1.DataSourceConnectionList, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -114,11 +117,11 @@ func (p *testdataPluginConfigProvider) ListDatasources(ctx context.Context, plug
 }
 
 // PluginContextForDataSource implements PluginConfigProvider.
-func (*testdataPluginConfigProvider) GetDataSourceInstanceSettings(ctx context.Context, pluginID, uid string) (*backend.DataSourceInstanceSettings, error) {
+func (*pluginDatasourceImpl) GetInstanceSettings(ctx context.Context, pluginID, uid string) (*backend.DataSourceInstanceSettings, error) {
 	return &backend.DataSourceInstanceSettings{}, nil
 }
 
 // PluginContextWrapper
-func (*testdataPluginConfigProvider) PluginContextForDataSource(ctx context.Context, datasourceSettings *backend.DataSourceInstanceSettings) (backend.PluginContext, error) {
+func (*pluginDatasourceImpl) PluginContextForDataSource(ctx context.Context, datasourceSettings *backend.DataSourceInstanceSettings) (backend.PluginContext, error) {
 	return backend.PluginContext{DataSourceInstanceSettings: datasourceSettings}, nil
 }

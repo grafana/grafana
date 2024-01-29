@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/andybalholm/brotli"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 )
 
@@ -199,14 +200,14 @@ func decode(encoding string, original io.ReadCloser) ([]byte, error) {
 		}
 		defer func() {
 			if err := reader.(io.ReadCloser).Close(); err != nil {
-				slog.Warn("Failed to close reader body", "err", err)
+				backend.Logger.Warn("Failed to close reader body", "err", err)
 			}
 		}()
 	case "deflate":
 		reader = flate.NewReader(original)
 		defer func() {
 			if err := reader.(io.ReadCloser).Close(); err != nil {
-				slog.Warn("Failed to close reader body", "err", err)
+				backend.Logger.Warn("Failed to close reader body", "err", err)
 			}
 		}()
 	case "br":
@@ -246,7 +247,7 @@ func encode(encoding string, body []byte) ([]byte, error) {
 	_, err = writer.Write(body)
 	if writeCloser, ok := writer.(io.WriteCloser); ok {
 		if err := writeCloser.Close(); err != nil {
-			slog.Warn("Failed to close writer body", "err", err)
+			backend.Logger.Warn("Failed to close writer body", "err", err)
 		}
 	}
 	if err != nil {
@@ -284,7 +285,7 @@ func doRequest(req *http.Request, cli *http.Client, responseFn processResponse) 
 	}
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			slog.Warn("Failed to close response body", "err", err)
+			backend.Logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 	encoding := res.Header.Get("Content-Encoding")
@@ -346,7 +347,7 @@ func buildResponse(responses []json.RawMessage, encoding string) ([]byte, error)
 }
 
 func (s *Service) setRequestVariables(req *http.Request, subDataSource string) (*http.Client, int, error) {
-	slog.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
+	s.logger.Debug("Received resource call", "url", req.URL.String(), "method", req.Method)
 
 	newPath, err := getTarget(req.URL.Path)
 	if err != nil {
@@ -386,7 +387,7 @@ func writeResponseBytes(rw http.ResponseWriter, code int, msg []byte) {
 	rw.WriteHeader(code)
 	_, err := rw.Write(msg)
 	if err != nil {
-		slog.Error("Unable to write HTTP response", "error", err)
+		backend.Logger.Error("Unable to write HTTP response", "error", err)
 	}
 }
 

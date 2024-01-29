@@ -26,6 +26,12 @@ interface DashboardCacheEntry {
   dashboard: DashboardDTO;
   ts: number;
 }
+
+export interface LoadDashboardOptions {
+  uid: string;
+  isEmbedded?: boolean;
+}
+
 export class DashboardScenePageStateManager extends StateManagerBase<DashboardScenePageState> {
   private cache: Record<string, DashboardScene> = {};
   // This is a simplistic, short-term cache for DashboardDTOs to avoid fetching the same dashboard multiple times across a short time span.
@@ -33,7 +39,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
   // To eventualy replace the fetchDashboard function from Dashboard redux state management.
   // For now it's a simplistic version to support Home and Normal dashboard routes.
-  public async fetchDashboard(uid: string) {
+  public async fetchDashboard({ uid, isEmbedded }: LoadDashboardOptions) {
     const cachedDashboard = this.getFromCache(uid);
 
     if (cachedDashboard) {
@@ -63,7 +69,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       }
 
       if (rsp) {
-        if (rsp.meta.url) {
+        if (rsp.meta.url && !isEmbedded) {
           const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.meta.url);
           const currentPath = locationService.getLocation().pathname;
           if (dashboardUrl !== currentPath) {
@@ -94,10 +100,13 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     return rsp;
   }
 
-  public async loadDashboard(uid: string) {
+  public async loadDashboard(options: LoadDashboardOptions) {
     try {
-      const dashboard = await this.loadScene(uid);
-      dashboard.startUrlSync();
+      const dashboard = await this.loadScene(options);
+
+      if (!options.isEmbedded) {
+        dashboard.startUrlSync();
+      }
 
       this.setState({ dashboard: dashboard, isLoading: false });
     } catch (err) {
@@ -105,20 +114,26 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     }
   }
 
-  private async loadScene(uid: string): Promise<DashboardScene> {
-    const fromCache = this.cache[uid];
+  private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene> {
+    const fromCache = this.cache[options.uid];
     if (fromCache) {
+      // Need to update this in case we cached an embedded but now opening it standard mode
+      fromCache.state.meta.isEmbedded = options.isEmbedded;
       return fromCache;
     }
 
     this.setState({ isLoading: true });
 
-    const rsp = await this.fetchDashboard(uid);
+    const rsp = await this.fetchDashboard(options);
 
     if (rsp?.dashboard) {
+      if (options.isEmbedded) {
+        rsp.meta.isEmbedded = true;
+      }
+
       const scene = transformSaveModelToScene(rsp);
 
-      this.cache[uid] = scene;
+      this.cache[options.uid] = scene;
       return scene;
     }
 
