@@ -30,11 +30,11 @@ There are two ways to configure the trace to profiles feature:
 
 To use trace to profiles, navigate to **Explore** and query a trace. Each span now links to your queries. Clicking a link runs the query in a split panel. If tags are configured, Grafana dynamically inserts the span attribute values into the query. The query runs over the time range of the (span start time - 60) to (span end time + 60 seconds).
 
-![Selecting a link in the span queries the profile data source](/media/docs/tempo/profiles/tempo-profiles-Span-link-profile-data-source.png)
+![Selecting a link in the span queries the profile data source](/media/docs/tempo/profiles/tempo-trace-to-profile.png)
 
-To use trace to profiles, you must have a configured Grafana Pyroscope data source. For more information, refer to the [Grafana Pyroscope data source documentation](/docs/grafana/latest/datasources/grafana-pyroscope/).
+To use trace to profiles, you must have a configured Grafana Pyroscope data source. For more information, refer to the [Grafana Pyroscope data source](/docs/grafana/latest/datasources/grafana-pyroscope/) documentation.
 
-## Use a simple configuration
+## Use a basic configuration
 
 To use a simple configuration, follow these steps:
 
@@ -65,7 +65,7 @@ To use a custom query with the configuration, follow these steps:
 1. Specify a custom query to be used to query profile data. You can use various variables to make that query relevant for current span. The link is shown only if all the variables are interpolated with non-empty values to prevent creating an invalid query. You can interpolate the configured tags using the `$__tags` keyword.
 1. Select **Save and Test**.
 
-## Variables in a custom query
+## Custom query variables
 
 To use a variable you need to wrap it in `${}`. For example, `${__span.name}`.
 
