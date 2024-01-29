@@ -263,7 +263,7 @@ func readResult(resultType string, rsp backend.DataResponse, iter *jsonitere.Ite
 			return rsp
 		}
 	case "scalar":
-		rsp = readScalar(iter)
+		rsp = readScalar(iter, opt.Dataplane)
 		if rsp.Error != nil {
 			return rsp
 		}
@@ -541,7 +541,7 @@ func readString(iter *jsonitere.Iterator) backend.DataResponse {
 	}
 }
 
-func readScalar(iter *jsonitere.Iterator) backend.DataResponse {
+func readScalar(iter *jsonitere.Iterator, dataPlane bool) backend.DataResponse {
 	rsp := backend.DataResponse{}
 
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
@@ -562,6 +562,10 @@ func readScalar(iter *jsonitere.Iterator) backend.DataResponse {
 	frame.Meta = &data.FrameMeta{
 		Type:   data.FrameTypeNumericMulti,
 		Custom: resultTypeToCustomMeta("scalar"),
+	}
+
+	if dataPlane {
+		frame.Meta.TypeVersion = data.FrameTypeVersion{0, 1}
 	}
 
 	return backend.DataResponse{
@@ -662,7 +666,7 @@ func readMatrixOrVectorMulti(iter *jsonitere.Iterator, resultType string, opt Op
 				Type:   data.FrameTypeTimeSeriesMulti,
 				Custom: resultTypeToCustomMeta(resultType),
 			}
-			if opt.Dataplane && resultType == "vector" {
+			if opt.Dataplane && resultType == "vector" || resultType == "scalar" {
 				frame.Meta.Type = data.FrameTypeNumericMulti
 			}
 			if opt.Dataplane {
