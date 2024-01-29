@@ -85,7 +85,7 @@ type Scope struct {
 	Matchers []*labels.Matcher
 }
 
-func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool) (*Query, error) {
+func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool, enableScope bool) (*Query, error) {
 	model := &QueryModel{}
 	if err := json.Unmarshal(query.JSON, model); err != nil {
 		return nil, err
@@ -108,12 +108,12 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 		timeRange,
 	)
 	var matchers []*labels.Matcher
-	if model.Scope != nil && model.Scope.Matchers != "" {
+	if enableScope && model.Scope != nil && model.Scope.Matchers != "" {
 		matchers, err = parser.ParseMetricSelector(model.Scope.Matchers)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse metric selector %v in scope", model.Scope.Matchers)
 		}
-		expr, err = applyScope(expr, matchers)
+		expr, err = ApplyQueryScope(expr, matchers)
 		if err != nil {
 			return nil, err
 		}

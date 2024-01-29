@@ -5,7 +5,7 @@ import (
 	"github.com/prometheus/prometheus/promql/parser"
 )
 
-func applyScope(rawExpr string, matchers []*labels.Matcher) (string, error) {
+func ApplyQueryScope(rawExpr string, matchers []*labels.Matcher) (string, error) {
 	expr, err := parser.ParseExpr(rawExpr)
 	if err != nil {
 		return "", err
