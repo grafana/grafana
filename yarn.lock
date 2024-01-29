@@ -12153,13 +12153,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"centrifuge@npm:4.0.1":
-  version: 4.0.1
-  resolution: "centrifuge@npm:4.0.1"
+"centrifuge@npm:5.0.1":
+  version: 5.0.1
+  resolution: "centrifuge@npm:5.0.1"
   dependencies:
     events: "npm:^3.3.0"
-    protobufjs: "npm:^7.2.4"
-  checksum: 5e13b077cbabdf08a7a5a036eeb51a6941e244af743dfd69684dfea495769b8f4edd6b01acbe037aa1f2514b03b91689afddd1fee97bbe7af153820754f5bb6d
+    protobufjs: "npm:^7.2.5"
+  checksum: 19457b9184208c889c5e30669d33ec60157063f35d4338576d8c1d68b0dddd9873bb12b571174503c547d7d6187c11a83b084261a97edee35a2e2e0f881e6bb0
   languageName: node
   linkType: hard
 
@@ -17545,7 +17545,7 @@ __metadata:
     brace: "npm:0.11.1"
     browserslist: "npm:^4.21.4"
     calculate-size: "npm:1.1.1"
-    centrifuge: "npm:4.0.1"
+    centrifuge: "npm:5.0.1"
     chance: "npm:^1.0.10"
     chrome-remote-interface: "npm:0.33.0"
     classnames: "npm:2.5.1"
@@ -24395,9 +24395,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"protobufjs@npm:^7.2.4":
-  version: 7.2.4
-  resolution: "protobufjs@npm:7.2.4"
+"protobufjs@npm:^7.2.5":
+  version: 7.2.6
+  resolution: "protobufjs@npm:7.2.6"
   dependencies:
     "@protobufjs/aspromise": "npm:^1.1.2"
     "@protobufjs/base64": "npm:^1.1.2"
@@ -24411,7 +24411,7 @@ __metadata:
     "@protobufjs/utf8": "npm:^1.1.0"
     "@types/node": "npm:>=13.7.0"
     long: "npm:^5.0.0"
-  checksum: 6972bd0a372abdbd43e20e14e9692695b92adcd0b746e73e8deb8880ce78abe4a30303a05160f5d0a5fc3dd0b7b6157cc8a06418da364fc7091f965724ca0443
+  checksum: 81ab853d28c71998d056d6b34f83c4bc5be40cb0b416585f99ed618aed833d64b2cf89359bad7474d345302f2b5e236c4519165f8483d7ece7fd5b0d9ac13f8b
   languageName: node
   linkType: hard
 
