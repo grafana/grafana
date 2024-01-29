@@ -2,10 +2,9 @@ import { css } from '@emotion/css';
 import { capitalize } from 'lodash';
 import React, { useMemo, useState } from 'react';
 
-import { CoreApp, DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, DataQuery, GrafanaTheme2, getNextRefId } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Collapse, Modal, useStyles2 } from '@grafana/ui';
-import { getNextRefIdChar } from 'app/core/utils/query';
 
 import { LokiQuery } from '../../types';
 import { lokiQueryModeller } from '../LokiQueryModeller';
@@ -52,7 +51,7 @@ export const QueryPatternsModal = (props: Props) => {
     if (hasNewQueryOption && selectAsNewQuery) {
       onAddQuery({
         ...query,
-        refId: getNextRefIdChar(queries ?? [query]),
+        refId: getNextRefId(queries ?? [query]),
         expr: lokiQueryModeller.renderQuery(visualQuery.query),
       });
     } else {

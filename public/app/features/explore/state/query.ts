@@ -22,6 +22,7 @@ import {
   SupplementaryQueryType,
   toLegacyResponseData,
 } from '@grafana/data';
+import { combinePanelData } from '@grafana/o11y-ds-frontend';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import store from 'app/core/store';
@@ -39,7 +40,6 @@ import {
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { getCorrelationsBySourceUIDs } from 'app/features/correlations/utils';
 import { infiniteScrollRefId } from 'app/features/logs/logsModel';
-import { combinePanelData } from 'app/features/logs/response';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import {
@@ -764,6 +764,7 @@ export const runLoadMoreLogsQueries = createAsyncThunk<void, RunLoadMoreLogsQuer
           return of({ ...queryResponse, state: LoadingState.Loading });
         }
         return decorateData(
+          // This shouldn't be needed after https://github.com/grafana/grafana/issues/57327 is fixed
           combinePanelData(queryResponse, data),
           queryResponse,
           absoluteRange,
