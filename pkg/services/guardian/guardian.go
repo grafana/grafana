@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -117,6 +118,7 @@ func MockDashboardGuardian(mock *FakeDashboardGuardian) {
 	NewByFolder = func(_ context.Context, f *folder.Folder, orgId int64, user identity.Requester) (DashboardGuardian, error) {
 		mock.OrgID = orgId
 		mock.DashUID = f.UID
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Guardian).Inc()
 		// nolint:staticcheck
 		mock.DashID = f.ID
 		mock.User = user

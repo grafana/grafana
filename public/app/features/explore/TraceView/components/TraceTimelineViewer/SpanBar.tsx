@@ -215,7 +215,7 @@ function SpanBar({
             placement="top"
             content={
               <div>
-                A segment on the <em>critical path</em> of the overall trace/request/workflow.
+                A segment on the <em>critical path</em> of the overall trace / request / workflow.
               </div>
             }
           >

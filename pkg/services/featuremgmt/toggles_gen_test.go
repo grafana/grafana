@@ -218,7 +218,6 @@ func generateCSV() string {
 		"Owner", //string(flag.Owner),
 		"Created",
 		"requiresDevMode", //strconv.FormatBool(flag.RequiresDevMode),
-		"RequiresLicense", //strconv.FormatBool(flag.RequiresLicense),
 		"RequiresRestart", //strconv.FormatBool(flag.RequiresRestart),
 		"FrontendOnly",    //strconv.FormatBool(flag.FrontendOnly),
 	}); err != nil {
@@ -239,7 +238,6 @@ func generateCSV() string {
 			string(flag.Owner),
 			dateFormatter(flag.Created),
 			strconv.FormatBool(flag.RequiresDevMode),
-			strconv.FormatBool(flag.RequiresLicense),
 			strconv.FormatBool(flag.RequiresRestart),
 			strconv.FormatBool(flag.FrontendOnly),
 		}); err != nil {
