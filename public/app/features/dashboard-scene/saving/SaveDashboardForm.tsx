@@ -24,8 +24,7 @@ export interface Props {
 }
 
 export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
-  const { saveVariables = false, saveTimeRange = false } = drawer.useState();
-  const { changedSaveModel, hasChanges, hasTimeChanges, hasVariableValueChanges } = changeInfo;
+  const { changedSaveModel, hasChanges } = changeInfo;
 
   const { state, onSaveDashboard } = useDashboardSave(false);
   const [options, setOptions] = useState<SaveDashboardOptions>({
@@ -102,29 +101,9 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
 
   return (
     <Stack gap={0} direction="column">
-      {hasTimeChanges && (
-        <Field label="Save current time range" description="Will make current time range the new default">
-          <Checkbox
-            id="save-timerange"
-            checked={saveTimeRange}
-            onChange={drawer.onToggleSaveTimeRange}
-            aria-label={selectors.pages.SaveDashboardModal.saveTimerange}
-          />
-        </Field>
-      )}
-      {hasVariableValueChanges && (
-        <Field label="Save current variable values" description="Will make the current values the new default">
-          <Checkbox
-            id="save-variables"
-            checked={saveVariables}
-            onChange={drawer.onToggleSaveVariables}
-            aria-label={selectors.pages.SaveDashboardModal.saveVariables}
-          />
-        </Field>
-      )}
+      <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />
       <Field label="Message">
         {/* config.featureToggles.dashgpt * TOOD GenAIDashboardChangesButton */}
-
         <TextArea
           aria-label="message"
           value={options.message ?? ''}
@@ -141,5 +120,40 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
       </Field>
       <Box paddingTop={2}>{renderFooter(state.error)}</Box>
     </Stack>
+  );
+}
+
+export interface SaveDashboardFormCommonOptionsProps {
+  drawer: SaveDashboardDrawer;
+  changeInfo: DashboardChangeInfo;
+}
+
+export function SaveDashboardFormCommonOptions({ drawer, changeInfo }: SaveDashboardFormCommonOptionsProps) {
+  const { saveVariables = false, saveTimeRange = false } = drawer.useState();
+  const { hasTimeChanges, hasVariableValueChanges } = changeInfo;
+
+  return (
+    <>
+      {hasTimeChanges && (
+        <Field label="Update default time range" description="Will make current time range the new default">
+          <Checkbox
+            id="save-timerange"
+            checked={saveTimeRange}
+            onChange={drawer.onToggleSaveTimeRange}
+            aria-label={selectors.pages.SaveDashboardModal.saveTimerange}
+          />
+        </Field>
+      )}
+      {hasVariableValueChanges && (
+        <Field label="Update default variable values" description="Will make the current values the new default">
+          <Checkbox
+            id="save-variables"
+            checked={saveVariables}
+            onChange={drawer.onToggleSaveVariables}
+            aria-label={selectors.pages.SaveDashboardModal.saveVariables}
+          />
+        </Field>
+      )}
+    </>
   );
 }
