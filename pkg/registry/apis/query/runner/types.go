@@ -21,7 +21,7 @@ type QueryRunner interface {
 		name string,
 
 		// The raw backend query objects
-		query []backend.DataQuery,
+		query []v0alpha1.GenericDataQuery,
 	) (*backend.QueryDataResponse, error)
 }
 

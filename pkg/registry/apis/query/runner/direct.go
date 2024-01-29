@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 type directRunner struct {
@@ -68,8 +69,18 @@ func (d *directRunner) ExecuteQueryData(ctx context.Context,
 	name string,
 
 	// The raw backend query objects
-	query []backend.DataQuery,
+	query []v0alpha1.GenericDataQuery,
 ) (*backend.QueryDataResponse, error) {
+	queries, dsRef, err := legacydata.ToDataSourceQueries(v0alpha1.GenericQueryRequest{
+		Queries: query,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if dsRef != nil && dsRef.UID != name {
+		return nil, fmt.Errorf("expected query body datasource and request to match")
+	}
+
 	// NOTE: this depends on uid unique across datasources
 	settings, err := d.pCtxProvider.GetDataSourceInstanceSettings(ctx, name)
 	if err != nil {
@@ -83,7 +94,7 @@ func (d *directRunner) ExecuteQueryData(ctx context.Context,
 
 	return d.pluginClient.QueryData(ctx, &backend.QueryDataRequest{
 		PluginContext: pCtx,
-		Queries:       query,
+		Queries:       queries,
 	})
 }
 

@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	testdata "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 type testdataDummy struct{}
@@ -38,13 +39,21 @@ func (d *testdataDummy) ExecuteQueryData(ctx context.Context,
 	name string,
 
 	// The raw backend query objects
-	query []backend.DataQuery,
+	query []v0alpha1.GenericDataQuery,
 ) (*backend.QueryDataResponse, error) {
 	if datasource.Group != "testdata.datasource.grafana.app" {
 		return nil, fmt.Errorf("expecting testdata requests")
 	}
-	return testdata.ProvideService().QueryData(ctx, &backend.QueryDataRequest{
+
+	queries, _, err := legacydata.ToDataSourceQueries(v0alpha1.GenericQueryRequest{
 		Queries: query,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return testdata.ProvideService().QueryData(ctx, &backend.QueryDataRequest{
+		Queries: queries,
 	})
 }
 

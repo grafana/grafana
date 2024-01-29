@@ -3,6 +3,7 @@ package datasource
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/query"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -35,7 +36,7 @@ func (r *subQueryREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
 
-func (r *subQueryREST) readQueries(req *http.Request) ([]backend.DataQuery, error) {
+func (r *subQueryREST) readQueries(req *http.Request) ([]backend.DataQuery, *v0alpha1.DataSourceRef, error) {
 	// Simple URL to JSON mapping
 	if req.Method == http.MethodGet {
 		body := make(map[string]any, 0)
@@ -61,14 +62,15 @@ func (r *subQueryREST) readQueries(req *http.Request) ([]backend.DataQuery, erro
 			Interval:      time.Second * 10,
 		}
 		dq.JSON, err = json.Marshal(body)
-		return []backend.DataQuery{dq}, err
+		return []backend.DataQuery{dq}, nil, err
 	}
 
 	reqDTO := v0alpha1.GenericQueryRequest{}
 	if err := web.Bind(req, &reqDTO); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return query.ParseDataSourceQueries(reqDTO)
+
+	return legacydata.ToDataSourceQueries(reqDTO)
 }
 
 func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
@@ -78,9 +80,13 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		queries, err := r.readQueries(req)
+		queries, dsRef, err := r.readQueries(req)
 		if err != nil {
 			responder.Error(err)
+			return
+		}
+		if dsRef != nil && dsRef.UID != name {
+			responder.Error(fmt.Errorf("expected the datasource in the request url and body to match"))
 			return
 		}
 
