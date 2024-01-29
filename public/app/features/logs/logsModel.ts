@@ -640,7 +640,6 @@ const updateLogsVolumeConfig = (
 };
 
 type LogsVolumeQueryOptions<T extends DataQuery> = {
-  extractLevel?: (dataFrame: DataFrame) => LogLevel;
   targets: T[];
 };
 
@@ -667,7 +666,7 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
 ): Observable<DataQueryResponse> {
   const range = logsVolumeRequest.range;
   const targets = options.targets;
-  const extractLevel = options.extractLevel ? options.extractLevel : defaultExtractLevel;
+  const extractLevel = defaultExtractLevel;
   const timespan = range.to.valueOf() - range.from.valueOf();
   const intervalInfo = getIntervalInfo(logsVolumeRequest.scopedVars, timespan);
 
