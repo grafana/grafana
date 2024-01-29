@@ -63,7 +63,7 @@ export function extractLabelKeysFromDataFrame(frame: DataFrame, type: LabelType 
     return [];
   }
 
-  // If we have label types and we have type filter, we can return only label keys that match type
+  // If we have label types, we can return only label keys that match type
   let labelsSet = new Set<string>();
   for (let i = 0; i < labelsArray.length; i++) {
     const labels = labelsArray[i];
