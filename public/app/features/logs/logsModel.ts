@@ -354,7 +354,7 @@ function parseTime(
     return { ts, timeEpochMs, timeEpochNs: timeNsField.values[index] };
   }
 
-  if (timeField.nanos !== undefined) {
+  if (timeField.nanos !== undefined && timeField.nanos[index]) {
     const ns = timeField.nanos[index].toString().padStart(6, '0');
     const timeEpochNs = `${timeEpochMs}${ns}`;
     return { ts, timeEpochMs, timeEpochNs };
