@@ -1,7 +1,6 @@
 import { render, screen, getAllByRole, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { getSelectParent } from 'test/helpers/selectOptionInTest';
 
 import { dateTime } from '@grafana/data';
 
@@ -136,3 +135,6 @@ describe('LokiQueryBuilder', () => {
     });
   });
 });
+
+const getSelectParent = (input: HTMLElement) =>
+  input.parentElement?.parentElement?.parentElement?.parentElement?.parentElement;

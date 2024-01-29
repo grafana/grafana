@@ -168,11 +168,11 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     for (let index = 0; index < metricsList.length; index++) {
       const metric = metricsList[index];
 
-      if (metric.itemRef && metric.isPanel) {
-        children.push(metric.itemRef.resolve());
-        continue;
-      }
       if (this.state.showPreviews) {
+        if (metric.itemRef && metric.isPanel) {
+          children.push(metric.itemRef.resolve());
+          continue;
+        }
         const panel = getPreviewPanelFor(metric.name, index);
         metric.itemRef = panel.getRef();
         metric.isPanel = true;

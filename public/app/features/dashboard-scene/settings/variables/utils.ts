@@ -123,7 +123,8 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
 }
 
 export function hasVariableOptions(variable: SceneVariable): variable is MultiValueVariable {
-  return 'options' in variable.state;
+  // variable options can be defined by state.options or state.intervals in case of interval variable
+  return 'options' in variable.state || 'intervals' in variable.state;
 }
 
 export function getDefinition(model: SceneVariable): string {
