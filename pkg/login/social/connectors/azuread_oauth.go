@@ -12,6 +12,7 @@ import (
 
 	jose "github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
+	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -195,7 +196,12 @@ func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSett
 		return err
 	}
 
-	// add specific validation rules for AzureAD
+	for _, groupId := range info.AllowedGroups {
+		_, err := uuid.Parse(groupId)
+		if err != nil {
+			return ssosettings.ErrInvalidOAuthConfig("One or more of the Allowed groups are not in the correct format. Allowed groups should be a list of Object Ids.")
+		}
+	}
 
 	return nil
 }

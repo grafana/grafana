@@ -31,7 +31,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
     setValue,
     unregister,
     formState: { errors, dirtyFields, isSubmitted },
-  } = useForm({ defaultValues: dataToDTO(config), mode: 'onChange', reValidateMode: 'onChange' });
+  } = useForm({ defaultValues: dataToDTO(config), mode: 'onSubmit', reValidateMode: 'onChange' });
   const [isSaving, setIsSaving] = useState(false);
   const providerFields = fields[provider];
   const [submitError, setSubmitError] = useState(false);
@@ -44,11 +44,17 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
     setSubmitError(false);
     const requestData = dtoToData(data, provider);
     try {
-      await getBackendSrv().put(`/api/v1/sso-settings/${provider}`, {
-        id: config?.id,
-        provider: config?.provider,
-        settings: { ...requestData },
-      });
+      await getBackendSrv().put(
+        `/api/v1/sso-settings/${provider}`,
+        {
+          id: config?.id,
+          provider: config?.provider,
+          settings: { ...requestData },
+        },
+        {
+          showErrorAlert: false,
+        }
+      );
 
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
@@ -133,6 +139,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
                               register={register}
                               watch={watch}
                               unregister={unregister}
+                              provider={provider}
                               secretConfigured={!!config?.settings.clientSecret}
                             />
                           );
@@ -154,6 +161,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
                     register={register}
                     watch={watch}
                     unregister={unregister}
+                    provider={provider}
                     secretConfigured={!!config?.settings.clientSecret}
                   />
                 );

@@ -90,16 +90,20 @@ describe('ProviderConfigForm', () => {
     await user.click(screen.getByRole('button', { name: /Save/i }));
 
     await waitFor(() => {
-      expect(putMock).toHaveBeenCalledWith('/api/v1/sso-settings/github', {
-        ...testConfig,
-        settings: {
-          allowedOrganizations: 'test-org1,test-org2',
-          clientId: 'test-client-id',
-          clientSecret: 'test-client-secret',
-          teamIds: '12324',
-          enabled: true,
+      expect(putMock).toHaveBeenCalledWith(
+        '/api/v1/sso-settings/github',
+        {
+          ...testConfig,
+          settings: {
+            allowedOrganizations: 'test-org1,test-org2',
+            clientId: 'test-client-id',
+            clientSecret: 'test-client-secret',
+            teamIds: '12324',
+            enabled: true,
+          },
         },
-      });
+        { showErrorAlert: false }
+      );
     });
   });
 

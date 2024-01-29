@@ -78,7 +78,13 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, settings ssoModels.SS
 		return err
 	}
 
-	// add specific validation rules for Generic OAuth
+	if info.Extra[teamIdsKey] != "" && (info.TeamIdsAttributePath == "" || info.TeamsUrl == "") {
+		return ssosettings.ErrInvalidOAuthConfig("If Team Ids are configured then Team Ids attribute path and Teams URL must be configured.")
+	}
+
+	if info.AllowedGroups != nil && len(info.AllowedGroups) > 0 && info.GroupsAttributePath == "" {
+		return ssosettings.ErrInvalidOAuthConfig("If Allowed groups are configured then Groups attribute path must be configured.")
+	}
 
 	return nil
 }
