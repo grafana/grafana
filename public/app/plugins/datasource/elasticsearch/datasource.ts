@@ -534,7 +534,12 @@ export class ElasticDatasource
     }
   };
 
-  getDataProvider(
+  /**
+   * Implemented for DataSourceWithSupplementaryQueriesSupport.
+   * It generates a DataQueryRequest for a specific supplementary query type.
+   * @returns A DataQueryRequest for the supplementary queries or undefined if not supported.
+   */
+  getSupplementaryRequest(
     type: SupplementaryQueryType,
     request: DataQueryRequest<ElasticsearchQuery>
   ): DataQueryRequest<ElasticsearchQuery> | undefined {

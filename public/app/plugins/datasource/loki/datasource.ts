@@ -162,10 +162,10 @@ export class LokiDatasource
 
   /**
    * Implemented for DataSourceWithSupplementaryQueriesSupport.
-   * It retrieves a data provider for a specific supplementary query type.
-   * @returns An Observable of DataQueryResponse or undefined if the specified query type is not supported.
+   * It generates a DataQueryRequest for a specific supplementary query type.
+   * @returns A DataQueryRequest for the supplementary queries or undefined if not supported.
    */
-  getDataProvider(
+  getSupplementaryRequest(
     type: SupplementaryQueryType,
     request: DataQueryRequest<LokiQuery>
   ): DataQueryRequest<LokiQuery> | undefined {
