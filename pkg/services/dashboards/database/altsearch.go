@@ -70,7 +70,7 @@ UNION ALL
 SELECT org_id, 'folder' as kind, uid, 0, parent_uid, title FROM folder WHERE MATCH(title) AGAINST({{ .Arg .Text }})
 {{ end }}
 {{- define "text-search-legacy" -}}
-SELECT org_id, CASE WHEN is_folder THEN 'folder' ELSE 'dashboard' END as kind, uid, id, folder_uid as parent_uid, title FROM dashboard WHERE title {{ .Dialect.LikeStr }} {{ .Arg .Text }} AND NOT is_folder
+SELECT org_id, CASE WHEN is_folder THEN 'folder' ELSE 'dashboard' END as kind, uid, id, folder_uid as parent_uid, title FROM dashboard WHERE title {{ .Dialect.LikeStr }} {{ .Arg .Text }}
 {{ end }}
 
 SELECT org_id, kind, uid, entity.id, title, dashboard_tag.term as term, folder_uid, folder_title FROM (
