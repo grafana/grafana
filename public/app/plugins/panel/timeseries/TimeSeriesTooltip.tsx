@@ -61,21 +61,23 @@ export const TimeSeriesTooltip = ({
 
   const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, theme });
   let xVal = xFieldFmt(xField!.values[dataIdxs[0]!]).text;
-  const dataIdx = dataIdxs[seriesIdx!]!;
 
   let links: Array<LinkModel<Field>> = [];
   let contentLabelValue: LabelValue[] = [];
 
-  const field = seriesFrame.fields[seriesIdx!];
-  if (!field) {
-    return null;
-  }
-
   // Single mode
   if (mode === TooltipDisplayMode.Single) {
+    const field = seriesFrame.fields[seriesIdx!];
+    if (!field) {
+      return null;
+    }
+
+    const dataIdx = dataIdxs[seriesIdx!]!;
     xVal = xFieldFmt(xField!.values[dataIdx]).text;
     const fieldFmt = field.display || getDisplayProcessor({ field, theme });
     const display = fieldFmt(field.values[dataIdx]);
+
+    links = getDataLinks(field, dataIdx);
 
     contentLabelValue = [
       {
@@ -131,9 +133,13 @@ export const TimeSeriesTooltip = ({
         });
       }
     }
-  }
 
-  links = getDataLinks(field, dataIdx);
+    if (seriesIdx) {
+      const field = seriesFrame.fields[seriesIdx];
+      const dataIdx = dataIdxs[seriesIdx]!;
+      links = getDataLinks(field, dataIdx);
+    }
+  }
 
   const getHeaderLabel = (): LabelValue => {
     return {
