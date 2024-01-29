@@ -59,6 +59,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
       <div className={styles.sectionHeader}>
         <div className={styles.headerRow}>
           <h5>Grafana</h5>
+          {loading ? <LoadingPlaceholder className={styles.loader} text="Loading..." /> : <div />}
           {hasGrafanaAlerts && canExportRules && (
             <Button
               aria-label="export all grafana rules"
@@ -72,7 +73,6 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
             </Button>
           )}
         </div>
-        {loading ? <LoadingPlaceholder className={styles.loader} text="Loading..." /> : <div />}
       </div>
 
       {pageItems.map(({ group, namespace }) => (
