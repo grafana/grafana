@@ -54,8 +54,6 @@ func NewTestMigrationStore(t testing.TB, sqlStore *sqlstore.SQLStore, cfg *setti
 	quotaService := &quotatest.FakeQuotaService{}
 	ac := acimpl.ProvideAccessControl(cfg)
 	routeRegister := routing.ProvideRegister()
-	acSvc, err := acimpl.ProvideService(cfg, sqlStore, routing.ProvideRegister(), cache, ac, features)
-	require.NoError(t, err)
 
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
@@ -63,6 +61,9 @@ func NewTestMigrationStore(t testing.TB, sqlStore *sqlstore.SQLStore, cfg *setti
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamSvc, cache, quotaService, bundleregistry.ProvideService())
+	require.NoError(t, err)
+
+	acSvc, err := acimpl.ProvideService(cfg, sqlStore, routing.ProvideRegister(), cache, ac, userSvc, features)
 	require.NoError(t, err)
 
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore), quotaService)

@@ -4,7 +4,7 @@
 PACKAGES=$(ls -d ./packages/*/)
 EXIT_CODE=0
 GITHUB_MESSAGE=""
-SKIP_PACKAGES=("grafana-eslint-rules" "grafana-plugin-configs" "grafana-o11y-ds-frontend")
+SKIP_PACKAGES=("grafana-eslint-rules" "grafana-plugin-configs" "grafana-o11y-ds-frontend" "grafana-sql")
 
 # Loop through the packages
 while IFS=" " read -r -a package; do
