@@ -666,7 +666,7 @@ func readMatrixOrVectorMulti(iter *jsonitere.Iterator, resultType string, opt Op
 				Type:   data.FrameTypeTimeSeriesMulti,
 				Custom: resultTypeToCustomMeta(resultType),
 			}
-			if opt.Dataplane && (resultType == "vector" || resultType == "scalar") {
+			if opt.Dataplane && resultType == "vector" {
 				frame.Meta.Type = data.FrameTypeNumericMulti
 			}
 			if opt.Dataplane {
