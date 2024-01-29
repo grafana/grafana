@@ -2972,6 +2972,51 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana-plugins/grafana-cloud-monitoring-datasource@workspace:*, @grafana-plugins/grafana-cloud-monitoring-datasource@workspace:public/app/plugins/datasource/cloud-monitoring":
+  version: 0.0.0-use.local
+  resolution: "@grafana-plugins/grafana-cloud-monitoring-datasource@workspace:public/app/plugins/datasource/cloud-monitoring"
+  dependencies:
+    "@emotion/css": "npm:11.11.2"
+    "@grafana/data": "npm:10.4.0-pre"
+    "@grafana/e2e-selectors": "npm:10.4.0-pre"
+    "@grafana/experimental": "npm:1.7.4"
+    "@grafana/google-sdk": "npm:0.1.1"
+    "@grafana/plugin-configs": "npm:10.4.0-pre"
+    "@grafana/runtime": "npm:10.4.0-pre"
+    "@grafana/schema": "npm:10.4.0-pre"
+    "@grafana/ui": "npm:10.4.0-pre"
+    "@kusto/monaco-kusto": "npm:^7.4.0"
+    "@testing-library/react": "npm:14.1.2"
+    "@testing-library/user-event": "npm:14.5.2"
+    "@types/debounce-promise": "npm:3.1.6"
+    "@types/jest": "npm:29.5.11"
+    "@types/lodash": "npm:4.14.202"
+    "@types/node": "npm:20.11.7"
+    "@types/prismjs": "npm:1.26.3"
+    "@types/react": "npm:18.2.48"
+    "@types/react-test-renderer": "npm:18.0.0"
+    "@types/testing-library__jest-dom": "npm:5.14.9"
+    debounce-promise: "npm:3.1.2"
+    fast-deep-equal: "npm:^3.1.3"
+    i18next: "npm:^22.0.0"
+    immer: "npm:10.0.2"
+    lodash: "npm:4.17.21"
+    monaco-editor: "npm:0.34.0"
+    prismjs: "npm:1.29.0"
+    react: "npm:18.2.0"
+    react-select-event: "npm:5.5.1"
+    react-test-renderer: "npm:18.2.0"
+    react-use: "npm:17.4.0"
+    rxjs: "npm:7.8.1"
+    ts-node: "npm:10.9.2"
+    tslib: "npm:2.6.0"
+    typescript: "npm:5.3.3"
+    webpack: "npm:5.90.0"
+  peerDependencies:
+    "@grafana/runtime": "*"
+  languageName: unknown
+  linkType: soft
+
 "@grafana-plugins/grafana-pyroscope-datasource@workspace:*, @grafana-plugins/grafana-pyroscope-datasource@workspace:public/app/plugins/datasource/grafana-pyroscope-datasource":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/grafana-pyroscope-datasource@workspace:public/app/plugins/datasource/grafana-pyroscope-datasource"
@@ -3366,6 +3411,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/experimental@npm:1.7.4":
+  version: 1.7.4
+  resolution: "@grafana/experimental@npm:1.7.4"
+  dependencies:
+    "@types/uuid": "npm:^8.3.3"
+    semver: "npm:^7.5.4"
+    uuid: "npm:^8.3.2"
+  peerDependencies:
+    "@emotion/css": 11.1.3
+    "@grafana/data": ^10.0.0
+    "@grafana/runtime": ^10.0.0
+    "@grafana/ui": ^10.0.0
+    react: 17.0.2
+    react-dom: 17.0.2
+    react-select: ^5.2.1
+    rxjs: 7.8.0
+  checksum: e62e6382396d282281e31011c936fe9164650ea8caea7a09c4ef8615a66bb0ab0f74c4946354276457a2f5d1276016fc4225a08b8afb043c81e11b010f52b26d
+  languageName: node
+  linkType: hard
+
 "@grafana/experimental@npm:1.7.8":
   version: 1.7.8
   resolution: "@grafana/experimental@npm:1.7.8"
@@ -3457,6 +3522,18 @@ __metadata:
     react-dom: ^17.0.0 || ^18.0.0
   languageName: unknown
   linkType: soft
+
+"@grafana/google-sdk@npm:0.1.1":
+  version: 0.1.1
+  resolution: "@grafana/google-sdk@npm:0.1.1"
+  peerDependencies:
+    "@grafana/data": 9.4.1
+    "@grafana/ui": 9.4.1
+    react: 17.0.2
+    react-dom: 17.0.2
+  checksum: a21544b624f432e19bad05c5dcb2441581453ab34d5a5709cf63191a59f442f8dcd60a935a39bfa7074e554e1761dfa50b4871729dec6b5f2f0485627208ba16
+  languageName: node
+  linkType: hard
 
 "@grafana/google-sdk@npm:0.1.2":
   version: 0.1.2
@@ -8394,6 +8471,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/debounce-promise@npm:3.1.6":
+  version: 3.1.6
+  resolution: "@types/debounce-promise@npm:3.1.6"
+  checksum: db1e5bf86215dfcdd0b0f94497269b0be5b27e0b9622bbad53c7a24de078229b97927f848549bb661795575d80615fd935f8357d8f23928c0526b158b51fa122
+  languageName: node
+  linkType: hard
+
 "@types/debounce-promise@npm:3.1.9":
   version: 3.1.9
   resolution: "@types/debounce-promise@npm:3.1.9"
@@ -8898,6 +8982,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node@npm:20.11.7":
+  version: 20.11.7
+  resolution: "@types/node@npm:20.11.7"
+  dependencies:
+    undici-types: "npm:~5.26.4"
+  checksum: ff0428c093987f1f6e3400b91450077cf006d7f0e4ff316e20636218562c53761565ceb06bd7a161badf46e6884d78b554c7b1c3a7717cf5cb8c97f461ecd754
+  languageName: node
+  linkType: hard
+
 "@types/node@npm:^14.14.31":
   version: 14.18.36
   resolution: "@types/node@npm:14.18.36"
@@ -9096,6 +9189,15 @@ __metadata:
   dependencies:
     "@types/react": "npm:*"
   checksum: 00ade23df17d1e6b4cd94dbf127268178f7daab9e5c823c9aa915458d99817814dfdbede9d37068c0d913e4706697dc8904e34987db16cb80ce2e41ad8a6cc10
+  languageName: node
+  linkType: hard
+
+"@types/react-test-renderer@npm:18.0.0":
+  version: 18.0.0
+  resolution: "@types/react-test-renderer@npm:18.0.0"
+  dependencies:
+    "@types/react": "npm:*"
+  checksum: 6afc938a1d7618d88ab8793e251f0bd5981bf3f08c1b600f74df3f8800b92589ea534dc6dcb7c8d683893fcc740bf8d7843a42bf2dae59785cfe88f004bd7b0b
   languageName: node
   linkType: hard
 
@@ -17307,6 +17409,7 @@ __metadata:
     "@floating-ui/react": "npm:0.26.8"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana-plugins/grafana-azure-monitor-datasource": "workspace:*"
+    "@grafana-plugins/grafana-cloud-monitoring-datasource": "workspace:*"
     "@grafana-plugins/grafana-pyroscope-datasource": "workspace:*"
     "@grafana-plugins/grafana-testdata-datasource": "workspace:*"
     "@grafana-plugins/parca": "workspace:*"
@@ -18443,6 +18546,13 @@ __metadata:
   version: 5.2.4
   resolution: "ignore@npm:5.2.4"
   checksum: 4f7caf5d2005da21a382d4bd1d2aa741a3bed51de185c8562dd7f899a81a620ac4fd0619b06f7029a38ae79e4e4c134399db3bd0192c703c3ef54bb82df3086c
+  languageName: node
+  linkType: hard
+
+"immer@npm:10.0.2":
+  version: 10.0.2
+  resolution: "immer@npm:10.0.2"
+  checksum: 5fcddbbc036428bb3db1af66d6f6c3aaf9dfb21ab3e476894f45e3b60e35fb64af67ffab9e626770ab0154d5ca83895038a0af7c25513144e19cba1ab19ec4ef
   languageName: node
   linkType: hard
 
