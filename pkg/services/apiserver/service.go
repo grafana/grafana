@@ -277,12 +277,6 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	// support folder selection
-	err = entitystorage.RegisterFieldSelectorSupport(Scheme)
-	if err != nil {
-		return err
-	}
-
 	// Create the server
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegate())
 	if err != nil {

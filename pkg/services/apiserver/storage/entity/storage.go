@@ -230,26 +230,26 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	}
 
 	// translate grafana.app/* label selectors into field requirements
-	fieldRequirements, newSelector, err := ReadFieldRequirements(opts.Predicate.Label)
+	requirements, newSelector, err := ReadLabelSelectors(opts.Predicate.Label)
 	if err != nil {
 		return err
 	}
-	if fieldRequirements.Folder != nil {
-		req.Folder = *fieldRequirements.Folder
+	if requirements.Folder != nil {
+		req.Folder = *requirements.Folder
 	}
-	if len(fieldRequirements.SortBy) > 0 {
-		req.Sort = fieldRequirements.SortBy
+	if len(requirements.SortBy) > 0 {
+		req.Sort = requirements.SortBy
 	}
 	// Update the selector to remove the unneeded requirements
 	opts.Predicate.Label = newSelector
 
 	// translate "equals" label selectors to storage label conditions
-	requirements, selectable := opts.Predicate.Label.Requirements()
+	labelRequirements, selectable := opts.Predicate.Label.Requirements()
 	if !selectable {
 		return apierrors.NewBadRequest("label selector is not selectable")
 	}
 
-	for _, r := range requirements {
+	for _, r := range labelRequirements {
 		if r.Operator() == selection.Equals {
 			req.Labels[r.Key()] = r.Values().List()[0]
 		}

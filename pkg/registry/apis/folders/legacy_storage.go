@@ -68,12 +68,12 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 
 	parentUID := ""
 	// translate grafana.app/* label selectors into field requirements
-	fieldRequirements, newSelector, err := entity.ReadFieldRequirements(options.LabelSelector)
+	requirements, newSelector, err := entity.ReadLabelSelectors(options.LabelSelector)
 	if err != nil {
 		return nil, err
 	}
-	if fieldRequirements.Folder != nil {
-		parentUID = *fieldRequirements.Folder
+	if requirements.Folder != nil {
+		parentUID = *requirements.Folder
 	}
 	// Update the selector to remove the unneeded requirements
 	options.LabelSelector = newSelector

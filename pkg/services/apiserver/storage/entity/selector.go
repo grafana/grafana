@@ -1,27 +1,23 @@
 package entity
 
 import (
-	"fmt"
-	"strings"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 )
 
 const folderAnnoKey = "grafana.app/folder"
 const sortByKey = "grafana.app/sortBy"
 
-type FieldRequirements struct {
+type Requirements struct {
 	// Equals folder
 	Folder *string
 	// SortBy is a list of fields to sort by
 	SortBy []string
 }
 
-func ReadFieldRequirements(selector labels.Selector) (FieldRequirements, labels.Selector, error) {
-	requirements := FieldRequirements{}
+func ReadLabelSelectors(selector labels.Selector) (Requirements, labels.Selector, error) {
+	requirements := Requirements{}
 	newSelector := labels.NewSelector()
 
 	if selector == nil {
@@ -43,38 +39,11 @@ func ReadFieldRequirements(selector labels.Selector) (FieldRequirements, labels.
 				return requirements, newSelector, apierrors.NewBadRequest(sortByKey + " label selector only supports in")
 			}
 			requirements.SortBy = r.Values().List()
+		// add all unregonized label selectors to the new selector list, these will be processed by the entity store
 		default:
 			newSelector = newSelector.Add(r)
 		}
 	}
 
 	return requirements, newSelector, nil
-}
-
-func RegisterFieldSelectorSupport(scheme *runtime.Scheme) error {
-	grafanaFieldSupport := runtime.FieldLabelConversionFunc(
-		func(field, value string) (string, string, error) {
-			if strings.HasPrefix(field, "grafana.app/") {
-				return field, value, nil
-			}
-			return "", "", getBadSelectorError(field)
-		},
-	)
-
-	// Register all the internal types
-	for gvk := range scheme.AllKnownTypes() {
-		if strings.HasSuffix(gvk.Group, ".grafana.app") {
-			err := scheme.AddFieldLabelConversionFunc(gvk, grafanaFieldSupport)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func getBadSelectorError(f string) error {
-	return apierrors.NewBadRequest(
-		fmt.Sprintf("%q is not a known field selector: only %q works", f, folderAnnoKey),
-	)
 }
