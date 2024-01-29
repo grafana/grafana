@@ -227,7 +227,7 @@ export const getCategories = (scalable = true): ValueFormatCategory[] => [
       { name: 'Kilovolt-Ampere (kVA)', id: 'kvoltamp', fn: SIPrefix('VA', 1, scalable) },
       { name: 'Volt-Ampere reactive (VAr)', id: 'voltampreact', fn: SIPrefix('VAr', 0, scalable) },
       { name: 'Kilovolt-Ampere reactive (kVAr)', id: 'kvoltampreact', fn: SIPrefix('VAr', 1, scalable) },
-      { name: 'Watt-hour (Wh)', id: 'watth', fn: SIPrefix('Wh') },
+      { name: 'Watt-hour (Wh)', id: 'watth', fn: SIPrefix('Wh', 0, scalable) },
       { name: 'Watt-hour per Kilogram (Wh/kg)', id: 'watthperkg', fn: SIPrefix('Wh/kg', 0, scalable) },
       { name: 'Kilowatt-hour (kWh)', id: 'kwatth', fn: SIPrefix('Wh', 1, scalable) },
       { name: 'Kilowatt-min (kWm)', id: 'kwattm', fn: SIPrefix('W-Min', 1, scalable) },

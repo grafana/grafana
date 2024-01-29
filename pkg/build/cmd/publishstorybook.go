@@ -39,7 +39,7 @@ func PublishStorybookAction(c *cli.Context) error {
 		return err
 	}
 
-	if latest, err := isLatest(cfg); err != nil && latest {
+	if latest, err := isLatest(cfg); err == nil && latest {
 		log.Printf("Copying storybooks to latest...")
 		if err := gcs.CopyRemoteDir(c.Context, gcs.Bucket(cfg.srcBucket), fmt.Sprintf("artifacts/storybook/v%s", cfg.tag), bucket, "latest"); err != nil {
 			return err

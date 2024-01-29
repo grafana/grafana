@@ -332,6 +332,8 @@ func getSupportingQueryHeaderValue(req *http.Request, supportingQueryType Suppor
 		value = "logsample"
 	case SupportingQueryDataSample:
 		value = "datasample"
+	case SupportingQueryInfiniteScroll:
+		value = "infinitescroll"
 	default: //ignore
 	}
 

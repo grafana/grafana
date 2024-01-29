@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
@@ -19,6 +20,7 @@ import (
 // This currently builds its dependencies manually and only works for testdata.
 func NewTestDataAPIServer(group string) (*DataSourceAPIBuilder, error) {
 	pluginID := "grafana-testdata-datasource"
+	features := featuremgmt.WithFeatures() // None for now!
 
 	if group != "testdata.datasource.grafana.app" {
 		return nil, fmt.Errorf("only %s is currently supported", pluginID)
@@ -47,7 +49,7 @@ func NewTestDataAPIServer(group string) (*DataSourceAPIBuilder, error) {
 		return nil, err
 	}
 
-	accessControl, pluginStore, dsService, dsCache, err := apiBuilderServices(cfg, pluginID)
+	accessControl, pluginStore, dsService, dsCache, err := apiBuilderServices(cfg, features, pluginID)
 	if err != nil {
 		return nil, err
 	}
