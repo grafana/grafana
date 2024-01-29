@@ -412,7 +412,7 @@ var (
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
 			Owner:        grafanaObservabilityMetricsSquad,
-			Created:      time.Date(2024, time.January, 22, 12, 0, 0, 0, time.UTC),
+			Created:      time.Date(2024, time.January, 29, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "clientTokenRotation",
