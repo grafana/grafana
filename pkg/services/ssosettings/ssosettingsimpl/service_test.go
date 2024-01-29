@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -1251,6 +1252,7 @@ func setupTestEnv(t *testing.T) testEnv {
 		ac:           accessControl,
 		fbStrategies: []ssosettings.FallbackStrategy{fallbackStrategy},
 		reloadables:  reloadables,
+		metrics:      newMetrics(prometheus.NewRegistry()),
 		secrets:      secrets,
 	}
 
