@@ -8,7 +8,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
-import { getSaveDashboardChange } from './shared';
+import { getSaveDashboardChange } from './getSaveDashboardChange';
 
 interface SaveDashboardDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -28,12 +28,12 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
   };
 
   public onToggleSaveVariables = () => {
-    this.setState({ saveTimeRange: !this.state.saveTimeRange });
+    this.setState({ saveVariables: !this.state.saveVariables });
   };
 
   static Component = ({ model }: SceneComponentProps<SaveDashboardDrawer>) => {
-    const { showDiff, saveAsCopy, saveTimeRange } = model.useState();
-    const changeInfo = getSaveDashboardChange(model.state.dashboardRef.resolve(), saveTimeRange);
+    const { showDiff, saveAsCopy, saveTimeRange, saveVariables } = model.useState();
+    const changeInfo = getSaveDashboardChange(model.state.dashboardRef.resolve(), saveTimeRange, saveVariables);
     const { changedSaveModel, initialSaveModel, diffs, diffCount } = changeInfo;
     const dashboard = model.state.dashboardRef.resolve();
 
