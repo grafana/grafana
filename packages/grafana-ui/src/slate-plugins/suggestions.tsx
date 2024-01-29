@@ -157,13 +157,22 @@ export function SuggestionsPlugin({
           });
         }
 
-        // Remove the current, incomplete text and replace it with the selected suggestion
-        const backward = suggestion.deleteBackwards || typeaheadPrefix.length;
-        const text = cleanText ? cleanText(typeaheadText) : typeaheadText;
-        const suffixLength = text.length - typeaheadPrefix.length;
-        const offset = typeaheadText.indexOf(typeaheadPrefix);
-        const midWord = typeaheadPrefix && ((suffixLength > 0 && offset > -1) || suggestionText === typeaheadText);
-        const forward = midWord && !preserveSuffix ? suffixLength + offset : 0;
+        // remove the current, incomplete text and replace it with the selected suggestion
+        // const backward = suggestion.deleteBackwards || typeaheadPrefix.length;
+        // const text = cleanText ? cleanText(typeaheadText) : typeaheadText;
+        // const suffixLength = text.length - typeaheadPrefix.length;
+        // const offset = typeaheadText.indexOf(typeaheadPrefix);
+        // const midWord = typeaheadPrefix && ((suffixLength > 0 && offset > -1) || suggestionText === typeaheadText);
+        // const forward = midWord && !preserveSuffix ? suffixLength + offset : 0;
+
+        const { forward, backward } = getNumCharsToDelete(
+          suggestionText,
+          typeaheadPrefix,
+          typeaheadText,
+          preserveSuffix,
+          suggestion.deleteBackwards,
+          cleanText
+        );
 
         // If new-lines, apply suggestion as block
         if (suggestionText.match(/\n/)) {
@@ -337,3 +346,24 @@ const handleTypeahead = async (
   // Bogus edit to force re-render
   editor.blur().focus();
 };
+
+export function getNumCharsToDelete(
+  suggestionText: string,
+  typeaheadPrefix: string,
+  typeaheadText: string,
+  preserveSuffix: boolean,
+  deleteBackwards?: number,
+  cleanText?: (text: string) => string
+) {
+  // remove the current, incomplete text and replace it with the selected suggestion
+  const backward = deleteBackwards || typeaheadPrefix.length;
+  const text = cleanText ? cleanText(typeaheadText) : typeaheadText;
+  const suffixLength = text.length - typeaheadPrefix.length;
+  const offset = typeaheadText.indexOf(typeaheadPrefix);
+  const midWord = typeaheadPrefix && ((suffixLength > 0 && offset > -1) || suggestionText === typeaheadText);
+  const forward = midWord && !preserveSuffix ? suffixLength + offset : 0;
+  return {
+    forward,
+    backward,
+  };
+}
