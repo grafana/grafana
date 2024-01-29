@@ -105,7 +105,7 @@ export function migrateVariableEditorBackToVariableSupport(QueryVariable: PromVa
       }
       return 'label_names()';
     case QueryType.LabelValues:
-      if (QueryVariable.metric) {
+      if (QueryVariable.metric || (QueryVariable.labelFilters && QueryVariable.labelFilters.length !== 0)) {
         const visualQueryQuery = {
           metric: QueryVariable.metric,
           labels: QueryVariable.labelFilters ?? [],

@@ -108,6 +108,27 @@ describe('PromVariableQueryEditor', () => {
     expect(migration).toEqual(expected);
   });
 
+  test('Migrates a query object with no metric and only label filters to an expression correctly', () => {
+    const query: PromVariableQuery = {
+      qryType: PromVariableQueryType.LabelValues,
+      label: 'name',
+      labelFilters: [
+        {
+          label: 'label',
+          op: '=',
+          value: 'value',
+        },
+      ],
+      refId: 'PrometheusDatasource-VariableQuery',
+    };
+
+    const migration: string = migrateVariableEditorBackToVariableSupport(query);
+
+    const expected = 'label_values({label="value"},name)';
+
+    expect(migration).toEqual(expected);
+  });
+
   beforeEach(() => {
     props = {
       datasource: {
