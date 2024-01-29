@@ -217,8 +217,13 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   };
 
   public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
-    const { showHeading, searchQuery, showPreviews } = model.useState();
+    const { showHeading, searchQuery, showPreviews, body } = model.useState();
+    const { children } = body.useState();
     const styles = useStyles2(getStyles);
+
+    const searchTooStrictWarning = children.length === 0 && searchQuery && (
+      <i>There are no results found. Try adjusting your search or filters.</i>
+    );
 
     return (
       <div className={styles.container}>
@@ -231,6 +236,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           <Input placeholder="Search metrics" value={searchQuery} onChange={model.onSearchChange} />
           <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
         </div>
+        {searchTooStrictWarning}
         <model.state.body.Component model={model.state.body} />
       </div>
     );
