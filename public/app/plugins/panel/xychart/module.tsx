@@ -47,7 +47,7 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel)
       .addRadio({
         path: 'show',
         name: 'Show',
-        defaultValue: 'Points',
+        defaultValue: ScatterShow.Points,
         settings: {
           options: [
             { label: 'Points', value: ScatterShow.Points },
