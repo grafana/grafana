@@ -32,6 +32,7 @@ const getMockPlugin = (id: string): CatalogPlugin => {
         small: 'https://grafana.com/api/plugins/test-plugin/versions/0.0.10/logos/small',
         large: 'https://grafana.com/api/plugins/test-plugin/versions/0.0.10/logos/large',
       },
+      keywords: ['test', 'plugin'],
     },
     name: 'Testing Plugin',
     orgName: 'Test',
