@@ -112,6 +112,8 @@ func parseSupportingQueryType(jsonPointerValue *string) (SupportingQueryType, er
 			return SupportingQueryLogsSample, nil
 		case "dataSample":
 			return SupportingQueryDataSample, nil
+		case "infiniteScroll":
+			return SupportingQueryInfiniteScroll, nil
 		default:
 			return SupportingQueryNone, fmt.Errorf("invalid supportingQueryType: %s", jsonValue)
 		}
