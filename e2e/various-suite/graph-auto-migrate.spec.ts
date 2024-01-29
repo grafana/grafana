@@ -1,5 +1,3 @@
-import { config } from '@grafana/runtime';
-
 import { e2e } from '../utils';
 
 const DASHBOARD_ID = 'XMjIZPmik';
@@ -21,20 +19,14 @@ describe('Auto-migrate graph panel', () => {
     cy.get(UPLOT_MAIN_DIV_SELECTOR).should('exist');
   });
 
-  it('Graph panel is migrated with config `angularSupportEnabled` set to (false)', () => {
+  it('Graph panel is migrated with config `disableAngular` feature toggle', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID });
     cy.contains(DASHBOARD_NAME).should('be.visible');
     cy.get(UPLOT_MAIN_DIV_SELECTOR).should('not.exist');
 
-    console.log(config.angularSupportEnabled, 'config.angularSupportEnabled');
-
-    config.angularSupportEnabled = false;
-
-    e2e.flows.openDashboard({ uid: DASHBOARD_ID });
+    e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { '__feature.disableAngular': true } });
 
     cy.get(UPLOT_MAIN_DIV_SELECTOR).should('exist');
-
-    config.angularSupportEnabled = true;
   });
 
   it('Graph panel is migrated with `autoMigrateGraphPanel` feature toggle', () => {
