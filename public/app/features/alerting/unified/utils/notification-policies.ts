@@ -1,4 +1,4 @@
-import { isArray, merge, pick, reduce } from 'lodash';
+import { isArray, pick, reduce } from 'lodash';
 
 import {
   AlertmanagerGroup,
@@ -20,7 +20,7 @@ interface LabelMatchResult {
 
 export const INHERITABLE_KEYS = ['receiver', 'group_by', 'group_wait', 'group_interval', 'repeat_interval'] as const;
 export type InheritableKeys = typeof INHERITABLE_KEYS;
-export type InhertitableProperties = Pick<Route, InheritableKeys[number]>;
+export type InheritableProperties = Pick<Route, InheritableKeys[number]>;
 
 type LabelsMatch = Map<Label, LabelMatchResult>;
 
@@ -158,12 +158,14 @@ function findMatchingAlertGroups(
 function getInheritedProperties(
   parentRoute: Route,
   childRoute: Route,
-  propertiesParentInherited?: Partial<InhertitableProperties>
-) {
-  const propsFromParent: InhertitableProperties = pick(parentRoute, INHERITABLE_KEYS);
-  const inheritableProperties: InhertitableProperties = merge({}, propertiesParentInherited, propsFromParent);
+  propertiesParentInherited?: Partial<InheritableProperties>
+): Partial<InheritableProperties> {
+  const propsFromParent: InheritableProperties = pick(parentRoute, INHERITABLE_KEYS);
+  const inheritableProperties: InheritableProperties = {
+    ...propsFromParent,
+    ...propertiesParentInherited,
+  };
 
-  // TODO how to solve this TypeScript mystery?
   const inherited = reduce(
     inheritableProperties,
     (inheritedProperties: Partial<Route> = {}, parentValue, property) => {
