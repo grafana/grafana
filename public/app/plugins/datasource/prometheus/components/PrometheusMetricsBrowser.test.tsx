@@ -114,7 +114,13 @@ describe('PrometheusMetricsBrowser', () => {
         }
         return [];
       },
-      fetchLabelsWithMatch: (selector: string) => {
+      // This must always call the series endpoint
+      // until we refactor all of the metrics browser
+      // to never use the series endpoint.
+      // The metrics browser expects both label names and label values.
+      // The labels endpoint with match does not supply label values
+      // and so using it breaks the metrics browser.
+      fetchSeriesLabels: (selector: string) => {
         switch (selector) {
           case '{label1="value1-1"}':
             return { label1: ['value1-1'], label2: ['value2-1'], label3: ['value3-1'] };

@@ -5,11 +5,11 @@ import { SceneObjectBase, SceneComponentProps } from '@grafana/scenes';
 
 import { VizPanelManager } from '../VizPanelManager';
 
-import { PanelDataPaneTabState, PanelDataPaneTab } from './types';
+import { PanelDataPaneTabState, PanelDataPaneTab, TabId } from './types';
 
 export class PanelDataAlertingTab extends SceneObjectBase<PanelDataPaneTabState> implements PanelDataPaneTab {
   static Component = PanelDataAlertingTabRendered;
-  tabId = 'alert';
+  tabId = TabId.Alert;
   icon: IconName = 'bell';
   private _panelManager: VizPanelManager;
 
@@ -20,10 +20,6 @@ export class PanelDataAlertingTab extends SceneObjectBase<PanelDataPaneTabState>
   }
   getTabLabel() {
     return 'Alert';
-  }
-
-  getItemsCount() {
-    return 0;
   }
 
   get panelManager() {
