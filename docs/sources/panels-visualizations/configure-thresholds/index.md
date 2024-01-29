@@ -59,24 +59,24 @@ There are two types of thresholds:
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
 
-## Add or delete a threshold
+## Add a threshold
 
 You can add as many thresholds to a panel as you want. Grafana automatically sorts thresholds values from highest to lowest.
 
-Delete a threshold when it is no longer needed. When you delete a threshold, the system removes the threshold from all visualizations that include the threshold.
+To add a threshold:
 
-1. To add a threshold:
+1. Edit the panel to which you want to add a threshold.
 
-   a. Edit the panel to which you want to add a threshold.
+1. In the options side pane, locate the **Thresholds** section and click **+ Add threshold**.
 
-   b. In the options side pane, locate the **Thresholds** section and click **+ Add threshold**.
-
-   c. Select a threshold color, number, and mode.
+1. Select a threshold color, number, and mode.
    Threshold mode applies to all thresholds on this panel.
 
-   d. For a time-series panel, select a **Show thresholds** option.
+1. For a time-series panel, select a **Show thresholds** option.
 
-1. To delete a threshold, navigate to the panel that contains the threshold and click the trash icon next to the threshold you want to remove.
+Delete a threshold when it is no longer needed. When you delete a threshold, the system removes the threshold from all visualizations that include the threshold.
+
+To delete a threshold, navigate to the panel that contains the threshold and click the trash icon next to the threshold you want to remove.
 
 ## Add a threshold to a legacy graph panel
 
