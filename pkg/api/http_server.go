@@ -545,12 +545,7 @@ func (hs *HTTPServer) selfSignedCert() ([]tls.Certificate, error) {
 	return []tls.Certificate{tlsCert}, nil
 }
 
-func (hs *HTTPServer) tlsCertificates() ([]tls.Certificate, error) {
-	// if we don't have either a cert or key specified, generate a self-signed certificate
-	if hs.Cfg.CertFile == "" && hs.Cfg.KeyFile == "" {
-		return hs.selfSignedCert()
-	}
-
+func (hs *HTTPServer) readCertificates() (*tls.Certificate, error) {
 	if hs.Cfg.CertFile == "" {
 		return nil, errors.New("cert_file cannot be empty when using HTTPS")
 	}
@@ -571,8 +566,21 @@ func (hs *HTTPServer) tlsCertificates() ([]tls.Certificate, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not load SSL certificate: %w", err)
 	}
+	return &tlsCert, nil
+}
 
-	return []tls.Certificate{tlsCert}, nil
+func (hs *HTTPServer) tlsCertificates() ([]tls.Certificate, error) {
+	// if we don't have either a cert or key specified, generate a self-signed certificate
+	if hs.Cfg.CertFile == "" && hs.Cfg.KeyFile == "" {
+		return hs.selfSignedCert()
+	}
+
+	tlsCert, err := hs.readCertificates()
+	if err != nil {
+		return nil, err
+	}
+
+	return []tls.Certificate{*tlsCert}, nil
 }
 
 func (hs *HTTPServer) configureHttps() error {
@@ -598,6 +606,10 @@ func (hs *HTTPServer) configureHttps() error {
 		Certificates: tlsCerts,
 		MinVersion:   minTlsVersion,
 		CipherSuites: tlsCiphers,
+	}
+
+	if hs.Cfg.CertFile != "" && hs.Cfg.KeyFile != "" {
+		tlsCfg.GetCertificate = hs.GetCertificate
 	}
 
 	hs.httpSrv.TLSConfig = tlsCfg
@@ -627,6 +639,10 @@ func (hs *HTTPServer) configureHttp2() error {
 		MinVersion:   minTlsVersion,
 		CipherSuites: tlsCiphers,
 		NextProtos:   []string{"h2", "http/1.1"},
+	}
+
+	if hs.Cfg.CertFile != "" && hs.Cfg.KeyFile != "" {
+		tlsCfg.GetCertificate = hs.GetCertificate
 	}
 
 	hs.httpSrv.TLSConfig = tlsCfg
@@ -843,4 +859,12 @@ func (hs *HTTPServer) getDefaultCiphers(tlsVersion uint16, protocol string) []ui
 		}
 	}
 	return nil
+}
+
+func (hs *HTTPServer) GetCertificate(*tls.ClientHelloInfo) (*tls.Certificate, error) {
+	tlsCerts, err := hs.readCertificates()
+	if err != nil {
+		return nil, err
+	}
+	return tlsCerts, err
 }
