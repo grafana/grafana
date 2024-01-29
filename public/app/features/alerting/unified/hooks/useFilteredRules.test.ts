@@ -15,6 +15,7 @@ import {
   mockRulerGrafanaRule,
 } from '../mocks';
 import { RuleHealth } from '../search/rulesSearchParser';
+import { Annotation } from '../utils/constants';
 import { getFilter } from '../utils/search';
 
 import { filterRules } from './useFilteredRules';
@@ -229,5 +230,30 @@ describe('filterRules', function () {
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
+  });
+
+  it('should filter out rules by dashboard UID', () => {
+    const rules = [
+      mockCombinedRule({
+        name: 'Memory too low',
+        annotations: { [Annotation.dashboardUID]: 'dashboard-memory' },
+      }),
+      mockCombinedRule({
+        name: 'CPU too high',
+        annotations: { [Annotation.dashboardUID]: 'dashboard-cpu' },
+      }),
+      mockCombinedRule({
+        name: 'Disk is dead',
+      }),
+    ];
+
+    const ns = mockCombinedRuleNamespace({
+      groups: [mockCombinedRuleGroup('Resources usage group', rules)],
+    });
+
+    const filtered = filterRules([ns], getFilter({ dashboardUid: 'dashboard-cpu' }));
+
+    expect(filtered[0]?.groups[0]?.rules).toHaveLength(1);
+    expect(filtered[0]?.groups[0]?.rules[0]?.name).toBe('CPU too high');
   });
 });
