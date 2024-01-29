@@ -2944,7 +2944,7 @@ __metadata:
     "@grafana/runtime": "npm:10.4.0-pre"
     "@grafana/schema": "npm:10.4.0-pre"
     "@grafana/ui": "npm:10.4.0-pre"
-    "@kusto/monaco-kusto": "npm:^7.4.0"
+    "@kusto/monaco-kusto": "npm:^10.0.0"
     "@testing-library/react": "npm:14.1.2"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/jest": "npm:29.5.11"
@@ -2985,7 +2985,7 @@ __metadata:
     "@grafana/runtime": "npm:10.4.0-pre"
     "@grafana/schema": "npm:10.4.0-pre"
     "@grafana/ui": "npm:10.4.0-pre"
-    "@kusto/monaco-kusto": "npm:^7.4.0"
+    "@kusto/monaco-kusto": "npm:^10.0.0"
     "@testing-library/react": "npm:14.1.2"
     "@testing-library/user-event": "npm:14.5.2"
     "@types/debounce-promise": "npm:3.1.6"
@@ -4330,34 +4330,34 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kusto/language-service-next@npm:0.0.121":
-  version: 0.0.121
-  resolution: "@kusto/language-service-next@npm:0.0.121"
-  checksum: 99ae4fe93e262b8906c571244775594019504bc24812fc349196330409e6eaf91e56ffeae64809c705fee9149f4a7c2af38ab470d699f4d7fe41e18de1f9677f
+"@kusto/language-service-next@npm:11.5.0":
+  version: 11.5.0
+  resolution: "@kusto/language-service-next@npm:11.5.0"
+  checksum: e42b5f223e4692bec5a7acb49c67c8fd1f748f68e0273b64f52b77b2ca6e1d43851e087cf511463b9027e7d769e52d63b7f6b136620f992ce3a3f230108a6f65
   languageName: node
   linkType: hard
 
-"@kusto/language-service@npm:0.0.98":
-  version: 0.0.98
-  resolution: "@kusto/language-service@npm:0.0.98"
-  checksum: 0030f513a80a8a9ea9dde1cb96736df9ea4d6080fd310b01c8d9c8ad151fc364f581e7c501d64d94b184e8e121bedc2939e31e0beee804a073fa8a416fe40456
+"@kusto/language-service@npm:0.0.278":
+  version: 0.0.278
+  resolution: "@kusto/language-service@npm:0.0.278"
+  checksum: 5a84f169e2669feaa1cbc071ec12a154afe2b3a1adb9e3687d95d10a7087fd04d9c2238fb58f783a2cd320fffd6ace4c052caf63be563189f3aee9ad3a241395
   languageName: node
   linkType: hard
 
-"@kusto/monaco-kusto@npm:^7.4.0":
-  version: 7.7.0
-  resolution: "@kusto/monaco-kusto@npm:7.7.0"
+"@kusto/monaco-kusto@npm:^10.0.0":
+  version: 10.0.12
+  resolution: "@kusto/monaco-kusto@npm:10.0.12"
   dependencies:
-    "@kusto/language-service": "npm:0.0.98"
-    "@kusto/language-service-next": "npm:0.0.121"
+    "@kusto/language-service": "npm:0.0.278"
+    "@kusto/language-service-next": "npm:11.5.0"
     lodash-es: "npm:^4.17.21"
-    vscode-languageserver-types: "npm:3.16.0"
+    vscode-languageserver-types: "npm:^3.17.4"
     xregexp: "npm:^5.1.1"
   peerDependencies:
-    monaco-editor: ~0.40.0
+    monaco-editor: ~0.41.0
   bin:
     copyMonacoFilesAMD: copyMonacoFilesAMD.js
-  checksum: 0cca48a9ea32484240c385ba499b3d99a39ef5c2140a14604350b1ef44ff1163e0f3ef49bfbdd2b0c9264dd1ecd58401750cd05e75318cf625d7c31c8796b394
+  checksum: 0eb906ad1d4e2d86fc03ebbba686e80f932d8da097d40d0a790311f9435a5cf8a4e802532e7d042022d3203a188fba2ffc50e3c7db6e4460152b2817bdb48fb2
   languageName: node
   linkType: hard
 
@@ -17433,7 +17433,7 @@ __metadata:
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
     "@grafana/ui": "workspace:*"
-    "@kusto/monaco-kusto": "npm:^7.4.0"
+    "@kusto/monaco-kusto": "npm:^10.0.0"
     "@leeoniya/ufuzzy": "npm:1.0.14"
     "@lezer/common": "npm:1.2.1"
     "@lezer/highlight": "npm:1.2.0"
@@ -30040,10 +30040,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vscode-languageserver-types@npm:3.16.0":
-  version: 3.16.0
-  resolution: "vscode-languageserver-types@npm:3.16.0"
-  checksum: a276ad08bcf6b7eabff50073a927e3053243d558f6d7a9cba7475de2f2623ec42279e4e03544cce4cfdd5a91f3ed517074f688b42395b3e91d21809dbad43019
+"vscode-languageserver-types@npm:^3.17.4":
+  version: 3.17.5
+  resolution: "vscode-languageserver-types@npm:3.17.5"
+  checksum: 900d0b81df5bef8d90933e75be089142f6989cc70fdb2d5a3a5f11fa20feb396aaea23ccffc8fbcc83a2f0e1b13c6ee48ff8151f236cbd6e61a4f856efac1a58
   languageName: node
   linkType: hard
 
