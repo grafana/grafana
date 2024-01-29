@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
 import { ButtonGroup, FilterInput, RadioButtonGroup, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { getFieldOverrideCategories2 } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
+import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
 import { getPanelFrameCategory2 } from 'app/features/dashboard/components/PanelEditor/getPanelFrameOptions';
 import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
@@ -52,7 +52,18 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     }, [panel, options]);
 
     const justOverrides = useMemo(
-      () => getFieldOverrideCategories2(searchQuery, panel, dataWithFieldConfig),
+      () =>
+        getFieldOverrideCategories(
+          fieldConfig,
+          panel.getPlugin()?.fieldConfigRegistry!,
+          dataWithFieldConfig.series,
+          searchQuery,
+          (newConfig) => {
+            panel.setState({
+              fieldConfig: newConfig,
+            });
+          }
+        ),
       // eslint-disable-next-line react-hooks/exhaustive-deps
       [searchQuery, panel, fieldConfig]
     );
