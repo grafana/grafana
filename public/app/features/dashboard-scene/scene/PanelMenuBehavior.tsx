@@ -156,13 +156,11 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     items.push({
       text: t('panel.header-menu.remove', `Remove`),
       iconClassName: 'trash-alt',
-      shortcut: 'p r',
       onClick: () => {
         DashboardInteractions.panelMenuItemClicked('remove');
-
-        console.log('panel - root', panel);
         removePanel(dashboard, panel, true);
       },
+      shortcut: 'p r',
     });
 
     menu.setState({ items });
@@ -324,7 +322,7 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
   };
 }
 
-function removePanel(dashboard: DashboardScene, panel: SceneObject, ask: boolean) {
+export function removePanel(dashboard: DashboardScene, panel: SceneObject, ask: boolean) {
   const dataLayers = sceneGraph.getDataLayers(panel);
   const panelId = getPanelIdForVizPanel(panel);
   let panelHasAlert = false;
