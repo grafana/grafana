@@ -19,11 +19,11 @@ import { VizPanelManager } from '../VizPanelManager';
 import { PanelDataAlertingTab } from './PanelDataAlertingTab';
 import { PanelDataQueriesTab } from './PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataTransformationsTab';
-import { PanelDataPaneTab } from './types';
+import { PanelDataPaneTab, TabId } from './types';
 
 export interface PanelDataPaneState extends SceneObjectState {
   tabs?: PanelDataPaneTab[];
-  tab?: string;
+  tab?: TabId;
 }
 
 export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
@@ -44,13 +44,13 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
       return;
     }
     if (typeof values.tab === 'string') {
-      this.setState({ tab: values.tab });
+      this.setState({ tab: values.tab as TabId });
     }
   }
 
   constructor(panelMgr: VizPanelManager) {
     super({
-      tab: 'queries',
+      tab: TabId.Queries,
     });
 
     this.panelManager = panelMgr;
@@ -135,12 +135,19 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
 function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const { tab, tabs } = model.useState();
   const styles = useStyles2(getStyles);
+  const { queries } = model.panelManager.queryRunner.useState();
 
   if (!tabs) {
     return;
   }
 
   const currentTab = tabs.find((t) => t.tabId === tab);
+
+  const tabCounters = {
+    [TabId.Queries]: queries.length,
+    [TabId.Transformations]: 0, //TODO
+    [TabId.Alert]: 0, //TODO
+  };
 
   return (
     <>
@@ -151,7 +158,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
               key={`${t.getTabLabel()}-${index}`}
               label={t.getTabLabel()}
               icon={t.icon}
-              counter={t.getItemsCount?.()}
+              counter={tabCounters[t.tabId]}
               active={t.tabId === tab}
               onChangeTab={() => model.onChangeTab(t)}
             />
