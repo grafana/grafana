@@ -58,18 +58,15 @@ function determineAlertmanagerConnectionStatus(
     return 'uninterested';
   }
 
-  const activeMatches =
-    externalAlertmanagers?.activeAlertManagers.filter((am) => {
+  const isActive =
+    externalAlertmanagers?.activeAlertManagers.some((am) => {
       return isAlertmanagerMatchByURL(dataSourceSettings.url, am.url);
     }) ?? [];
 
-  const droppedMatches =
-    externalAlertmanagers?.droppedAlertManagers.filter((am) => {
+  const isDropped =
+    externalAlertmanagers?.droppedAlertManagers.some((am) => {
       return isAlertmanagerMatchByURL(dataSourceSettings.url, am.url);
     }) ?? [];
-
-  const isActive = Boolean(activeMatches.length);
-  const isDropped = Boolean(droppedMatches.length);
 
   // the Alertmanager is being adopted (pending) if it is interested in handling alerts but not in either "active" or "dropped"
   const isPending = !isActive && !isDropped;
