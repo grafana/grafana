@@ -46,7 +46,7 @@ export function GrafanaRuleQueryViewer({
   const expressions = queries.filter((q) => isExpressionQuery(q.model));
   const styles = useStyles2(getExpressionViewerStyles);
 
-  const thresholds = getThresholdsForQueries(queries);
+  const thresholds = getThresholdsForQueries(queries, condition);
 
   return (
     <Stack gap={2} direction="column">

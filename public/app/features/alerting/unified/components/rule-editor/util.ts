@@ -144,9 +144,13 @@ export type ThresholdDefinitions = Record<string, ThresholdDefinition>;
 /**
  * This function will retrieve threshold definitions for the given array of data and expression queries.
  */
-export function getThresholdsForQueries(queries: AlertQuery[]) {
+export function getThresholdsForQueries(queries: AlertQuery[], condition: string | null) {
   const thresholds: ThresholdDefinitions = {};
   const SUPPORTED_EXPRESSION_TYPES = [ExpressionQueryType.threshold, ExpressionQueryType.classic];
+
+  if (!condition) {
+    return thresholds;
+  }
 
   for (const query of queries) {
     if (!isExpressionQuery(query.model)) {
@@ -159,6 +163,10 @@ export function getThresholdsForQueries(queries: AlertQuery[]) {
     }
 
     if (!Array.isArray(query.model.conditions)) {
+      continue;
+    }
+
+    if (query.model.refId !== condition) {
       continue;
     }
 

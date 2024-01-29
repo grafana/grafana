@@ -144,8 +144,8 @@ export class QueryRows extends PureComponent<Props> {
   };
 
   render() {
-    const { queries, expressions } = this.props;
-    const thresholdByRefId = getThresholdsForQueries([...queries, ...expressions]);
+    const { queries, expressions, condition } = this.props;
+    const thresholdByRefId = getThresholdsForQueries([...queries, ...expressions], condition);
 
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
