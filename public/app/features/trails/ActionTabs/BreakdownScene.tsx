@@ -135,14 +135,20 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
       <div className={styles.container}>
         {loading && <div>Loading...</div>}
         <div className={styles.controls}>
-          {' '}
-          <Field label="By label">
-            {useHorizontalLabelSelector ? (
-              <RadioButtonGroup options={labels} value={value} onChange={model.onChange} />
-            ) : (
-              <Select options={labels} value={value} onChange={(selected) => model.onChange(selected.value)} />
-            )}
-          </Field>
+          {!loading && (
+            <Field label="By label">
+              {useHorizontalLabelSelector ? (
+                <RadioButtonGroup options={labels} value={value} onChange={model.onChange} />
+              ) : (
+                <Select
+                  options={labels}
+                  value={value}
+                  onChange={(selected) => model.onChange(selected.value)}
+                  className={styles.select}
+                />
+              )}
+            </Field>
+          )}
           {body instanceof LayoutSwitcher && (
             <div className={styles.controlsRight}>
               <body.Selector model={body} />
