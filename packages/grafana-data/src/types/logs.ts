@@ -251,7 +251,7 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
 }
 
 export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
-  datasource: DataSourceApi | DataSourceApi & DataSourceWithSupplementaryQueriesSupport<TQuery>,
+  datasource: DataSourceApi | (DataSourceApi & DataSourceWithSupplementaryQueriesSupport<TQuery>),
   type: SupplementaryQueryType
 ): datasource is DataSourceApi & DataSourceWithSupplementaryQueriesSupport<TQuery> => {
   if (!datasource) {
