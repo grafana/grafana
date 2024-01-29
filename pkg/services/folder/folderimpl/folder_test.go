@@ -1311,6 +1311,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		orgID: {
 			dashboards.ActionFoldersCreate: {},
 			dashboards.ActionFoldersWrite:  {dashboards.ScopeFoldersAll},
+			dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll},
 		},
 	}}
 
@@ -1588,6 +1589,16 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 						FullpathUIDs: strings.Join([]string{tree2[0].UID, tree2[1].UID, tree2[2].UID}, "/"),
 					},
 				},
+			},
+			{
+				name: "Should not get any folders if user has no permissions",
+				cmd: folder.GetFoldersQuery{
+					OrgID: orgID,
+					SignedInUser: &user.SignedInUser{UserID: 999, OrgID: orgID, Permissions: map[int64]map[string][]string{
+						orgID: {},
+					}},
+				},
+				expected: nil,
 			},
 		}
 
