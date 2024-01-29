@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2, isValidGoDuration, SelectableValue, toOption } from '@grafana/data';
+import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { FetchError, getTemplateSrv, isFetchError, TemplateSrv } from '@grafana/runtime';
 import { InlineFieldRow, InlineField, Input, Alert, useStyles2, fuzzyMatch, Select } from '@grafana/ui';
 
@@ -23,7 +24,6 @@ const durationPlaceholder = 'e.g. 1.2s, 100ms';
 
 const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props) => {
   const styles = useStyles2(getStyles);
-  // TODO show alert
   const [alertText, setAlertText] = useState<string>();
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [serviceOptions, setServiceOptions] = useState<Array<SelectableValue<string>>>();
@@ -256,6 +256,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
           configure it in the <a href={`/datasources/edit/${datasource.uid}`}>datasource settings</a>.
         </Alert>
       ) : null}
+      {alertText && <TemporaryAlert severity="error" text={alertText} />}
     </>
   );
 };
