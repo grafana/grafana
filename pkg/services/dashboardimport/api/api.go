@@ -79,7 +79,7 @@ func (api *ImportDashboardAPI) ImportDashboard(c *contextmodel.ReqContext) respo
 	req.User = c.SignedInUser
 	resp, err := api.dashboardImportService.ImportDashboard(c.Req.Context(), &req)
 	if err != nil {
-		if errors.Is(err, utils.DashboardInputMissingError{}) {
+		if errors.Is(err, utils.ErrDashboardInputMissing) {
 			return response.Error(http.StatusBadRequest, err.Error(), err)
 		}
 		return apierrors.ToDashboardErrorResponse(c.Req.Context(), api.pluginStore, err)
