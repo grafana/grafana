@@ -3750,7 +3750,7 @@ __metadata:
     "@types/testing-library__jest-dom": "npm:5.14.9"
     "@types/tinycolor2": "npm:1.4.6"
     "@types/uuid": "npm:9.0.8"
-    ansicolor: "npm:1.1.100"
+    ansicolor: "npm:2.0.1"
     calculate-size: "npm:1.1.1"
     classnames: "npm:2.5.1"
     common-tags: "npm:1.8.2"
@@ -10678,10 +10678,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ansicolor@npm:1.1.100":
-  version: 1.1.100
-  resolution: "ansicolor@npm:1.1.100"
-  checksum: 9420e96f44b578153dfd11e2d829d633ca2699452419aff48314219d66b7b69a9b6d994d2f2350b1d29a9826e33500b87fe85606629a8889cd52ce806908f4a9
+"ansicolor@npm:2.0.1":
+  version: 2.0.1
+  resolution: "ansicolor@npm:2.0.1"
+  checksum: 71a553fde28462985e78e3af091858c2b6d06e9eb51cb88a5440b0fe70f38901156a9b80b345cead744d9dc3e23497a233019d205d248ffaa72226781b88722a
   languageName: node
   linkType: hard
 
@@ -17435,7 +17435,7 @@ __metadata:
     angular-bindonce: "npm:0.3.1"
     angular-route: "npm:1.8.3"
     angular-sanitize: "npm:1.8.3"
-    ansicolor: "npm:1.1.100"
+    ansicolor: "npm:2.0.1"
     autoprefixer: "npm:10.4.17"
     baron: "npm:3.0.3"
     blob-polyfill: "npm:7.0.20220408"
