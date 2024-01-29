@@ -120,7 +120,7 @@ describe('ResourcesAPI', () => {
   });
 
   describe('getRegions', () => {
-    it('should always return regions as an array of options now that the feature toggle has been removed', async () => {
+    it('should always return regions as an array of options', async () => {
       const response = Promise.resolve([
         {
           value: {

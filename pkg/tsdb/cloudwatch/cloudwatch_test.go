@@ -235,7 +235,7 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 		}
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
-		err := executor.CallResource(ContextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), req, sender)
+		err := executor.CallResource(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), req, sender)
 		assert.NoError(t, err)
 
 		assert.JSONEq(t, `[

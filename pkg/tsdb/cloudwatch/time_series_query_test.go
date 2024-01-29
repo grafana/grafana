@@ -597,7 +597,7 @@ func TestTimeSeriesQuery_CrossAccountQuerying(t *testing.T) {
 		api.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatch.GetMetricDataOutput{}, nil)
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 
-		_, err := executor.QueryData(ContextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+		_, err := executor.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			},
@@ -678,7 +678,7 @@ func TestTimeSeriesQuery_CrossAccountQuerying(t *testing.T) {
 		api = mocks.MetricsAPI{}
 		api.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatch.GetMetricDataOutput{}, nil)
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
-		_, err := executor.QueryData(ContextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+		_, err := executor.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			},
@@ -719,7 +719,7 @@ func TestTimeSeriesQuery_CrossAccountQuerying(t *testing.T) {
 		api = mocks.MetricsAPI{}
 		api.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatch.GetMetricDataOutput{}, nil)
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
-		_, err := executor.QueryData(ContextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+		_, err := executor.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
 			},

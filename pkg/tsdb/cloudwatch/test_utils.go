@@ -273,7 +273,7 @@ func (e fakeAWSError) Message() string {
 	return e.message
 }
 
-func ContextWithFeaturesEnabled(enabled ...string) context.Context {
+func contextWithFeaturesEnabled(enabled ...string) context.Context {
 	featureString := strings.Join(enabled, ",")
 	cfg := backend.NewGrafanaCfg(map[string]string{featuretoggles.EnabledFeatures: featureString})
 	return backend.WithGrafanaConfig(context.Background(), cfg)

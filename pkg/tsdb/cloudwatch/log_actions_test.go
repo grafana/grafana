@@ -384,10 +384,9 @@ func Test_executeStartQuery(t *testing.T) {
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
-		// FIXME: this will probably fail
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 
-		_, err := executor.QueryData(ContextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+		_, err := executor.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{
@@ -421,10 +420,9 @@ func Test_executeStartQuery(t *testing.T) {
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
-		// FIXME: this will probably fail
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 
-		_, err := executor.QueryData(ContextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+		_, err := executor.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{
@@ -527,9 +525,8 @@ func Test_executeStartQuery(t *testing.T) {
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
-		// FIXME: this will probably fail
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
-		_, err := executor.QueryData(ContextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
+		_, err := executor.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{
