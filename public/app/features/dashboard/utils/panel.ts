@@ -17,7 +17,6 @@ import { dispatch } from 'app/store/store';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from '../../../types/events';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
-  console.log('panelAlert', panel.alert);
   // confirm deletion
   if (ask !== false) {
     const text2 =

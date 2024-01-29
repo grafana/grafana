@@ -17,18 +17,21 @@ import {
   sceneGraph,
 } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
+import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { PanelModel } from 'app/features/dashboard/state';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { addDataTrailPanelAction } from 'app/features/trails/dashboardIntegration';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
+import { AlertStatesDataLayer } from './AlertStatesDataLayer';
 import { DashboardScene } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
 import { VizPanelLinks } from './PanelLinks';
@@ -156,10 +159,9 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       shortcut: 'p r',
       onClick: () => {
         DashboardInteractions.panelMenuItemClicked('remove');
-        if (!panel.parent?.state.key) {
-          return;
-        }
-        removePanel(dashboard, panel.parent, true);
+
+        console.log('panel - root', panel);
+        removePanel(dashboard, panel, true);
       },
     });
 
@@ -323,25 +325,52 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
 }
 
 function removePanel(dashboard: DashboardScene, panel: SceneObject, ask: boolean) {
-  //TODO: ask for confirmation - modal should pop up
+  const dataLayers = sceneGraph.getDataLayers(panel);
+  const panelId = getPanelIdForVizPanel(panel);
+  let panelHasAlert = false;
+
+  dataLayers.forEach((dataLayer) => {
+    if (dataLayer instanceof AlertStatesDataLayer) {
+      const fields = dataLayer.state.data?.series.find((series) => series.fields);
+      const panelIds = fields?.fields.find((field) => field.name === 'panelId')?.values;
+      if (panelIds?.includes(panelId)) {
+        panelHasAlert = true;
+      }
+    }
+  });
+
   if (ask !== false) {
-    // const text2 =
-    //   panel.alert && !config.unifiedAlertingEnabled
-    //     ? 'Panel includes an alert rule. removing the panel will also remove the alert rule'
-    //     : undefined;
-    // const confirmText = panel.alert ? 'YES' : undefined;
+    const text2 =
+      panelHasAlert && !config.unifiedAlertingEnabled
+        ? 'Panel includes an alert rule. removing the panel will also remove the alert rule'
+        : undefined;
+    const confirmText = panelHasAlert ? 'YES' : undefined;
+
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Remove panel',
+        text: 'Are you sure you want to remove this panel?',
+        text2: text2,
+        icon: 'trash-alt',
+        confirmText: confirmText,
+        yesText: 'Remove',
+        onConfirm: () => removePanel(dashboard, panel, false),
+      })
+    );
+
+    return;
   }
 
   const panels: SceneObject[] = [];
   dashboard.state.body.forEachChild((child: SceneObject) => {
     if (child.state.key !== panel.parent?.state.key) {
-      panels.push(child.clone());
+      panels.push(child);
     }
   });
 
-  dashboard.setState({
-    body: new SceneGridLayout({
-      children: panels,
-    }),
+  const sceneGridLayout = dashboard.state.body as SceneGridLayout;
+
+  sceneGridLayout.setState({
+    children: panels,
   });
 }
