@@ -32,7 +32,6 @@ import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STAT
 import { SpanLinkFunc, TNil } from '../../types';
 import { SpanLinkDef, SpanLinkType } from '../../types/links';
 import { TraceKeyValuePair, TraceLink, TraceLog, TraceSpan, TraceSpanReference } from '../../types/trace';
-import { uAlignIcon, ubM0, ubMb1, ubMy1, ubTxRightAlign } from '../../uberUtilityStyles';
 import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
@@ -54,6 +53,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     listWrapper: css`
       overflow: hidden;
     `,
+    list: css({
+      textAlign: 'right',
+    }),
+    operationName: css({
+      margin: 0,
+    }),
     debugInfo: css`
       label: debugInfo;
       display: block;
@@ -100,6 +105,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: AccordianWarningsLabel;
       color: ${autoColor(theme, '#d36c08')};
     `,
+    AccordianKeyValuesItem: css({
+      marginBottom: theme.spacing(0.5),
+    }),
     Textarea: css`
       word-break: break-all;
       white-space: pre;
@@ -109,6 +117,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
   };
 };
+
+export const alignIcon = css({
+  margin: '-0.2rem 0.25rem 0 0',
+});
 
 export type TraceFlameGraphs = {
   [spanID: string]: DataFrame;
@@ -310,14 +322,14 @@ export default function SpanDetail(props: SpanDetailProps) {
   return (
     <div data-testid="span-detail-component">
       <div className={styles.header}>
-        <h2 className={cx(ubM0)}>{operationName}</h2>
+        <h2 className={styles.operationName}>{operationName}</h2>
         <div className={styles.listWrapper}>
-          <LabeledList className={ubTxRightAlign} divider={true} items={overviewItems} />
+          <LabeledList className={styles.list} divider={true} items={overviewItems} />
         </div>
       </div>
       <span style={{ marginRight: '10px' }}>{logLinkButton}</span>
       {profileLinkButton}
-      <Divider className={ubMy1} type={'horizontal'} />
+      <Divider type={'horizontal'} />
       <div>
         <div>
           <AccordianKeyValues
@@ -329,7 +341,7 @@ export default function SpanDetail(props: SpanDetailProps) {
           />
           {process.tags && (
             <AccordianKeyValues
-              className={ubMb1}
+              className={styles.AccordianKeyValuesItem}
               data={process.tags}
               label="Resource Attributes"
               linksGetter={linksGetter}
@@ -428,7 +440,7 @@ export default function SpanDetail(props: SpanDetailProps) {
               }
             }}
           >
-            <Icon name={'link'} className={cx(uAlignIcon, styles.LinkIcon)}></Icon>
+            <Icon name={'link'} className={cx(alignIcon, styles.LinkIcon)}></Icon>
           </a>
           <span className={styles.debugLabel} data-label="SpanID:" /> {spanID}
         </small>
