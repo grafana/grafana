@@ -1065,7 +1065,7 @@ func TestService_Delete(t *testing.T) {
 		require.ErrorIs(t, err, ssosettings.ErrNotConfigurable)
 	})
 
-	t.Run("store fails to delete the SSO settings for the specified provider", func(t *testing.T) {
+	t.Run("return error when store fails to delete the SSO settings for the specified provider", func(t *testing.T) {
 		env := setupTestEnv(t)
 
 		provider := social.AzureADProviderName
@@ -1074,6 +1074,22 @@ func TestService_Delete(t *testing.T) {
 		err := env.service.Delete(context.Background(), provider)
 		require.Error(t, err)
 		require.NotErrorIs(t, err, ssosettings.ErrNotFound)
+	})
+
+	t.Run("return successfully when the deletion was successful but reloading the settings fail", func(t *testing.T) {
+		env := setupTestEnv(t)
+
+		provider := social.AzureADProviderName
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		env.reloadables[provider] = reloadable
+
+		env.store.GetFn = func(ctx context.Context, provider string) (*models.SSOSettings, error) {
+			return nil, errors.New("failed to get sso settings")
+		}
+
+		err := env.service.Delete(context.Background(), provider)
+
+		require.NoError(t, err)
 	})
 }
 
