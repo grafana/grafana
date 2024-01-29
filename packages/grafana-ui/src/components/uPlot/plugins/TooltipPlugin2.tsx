@@ -150,7 +150,7 @@ export const TooltipPlugin2 = ({
     let _isPinned = isPinned;
     let _style = style;
 
-    const updHovering = () => {
+    const updateHovering = () => {
       _isHovering = closestSeriesIdx != null || (hoverMode === TooltipHoverMode.xAll && _someSeriesIdx);
     };
 
@@ -425,7 +425,7 @@ export const TooltipPlugin2 = ({
     // TODO: we only need this for multi/all mode?
     config.addHook('setSeries', (u, seriesIdx) => {
       closestSeriesIdx = seriesIdx;
-      updHovering();
+      updateHovering();
       scheduleRender();
     });
 
@@ -434,7 +434,7 @@ export const TooltipPlugin2 = ({
       seriesIdxs = _plot?.cursor!.idxs!.slice()!;
       _someSeriesIdx = seriesIdxs.some((v, i) => i > 0 && v != null);
 
-      updHovering();
+      updateHovering();
       scheduleRender();
     });
 
