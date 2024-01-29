@@ -64,7 +64,7 @@ describe('IntervalVariableEditor', () => {
     expect(onRunQuery).toHaveBeenCalledTimes(1);
   });
 
-  it.skip('should handle auto enabled option correctly', async () => {
+  it('should handle auto enabled option correctly', async () => {
     const variable = new IntervalVariable({
       name: 'test',
       type: 'interval',
@@ -82,6 +82,8 @@ describe('IntervalVariableEditor', () => {
       selectors.pages.Dashboard.Settings.Variables.Edit.IntervalVariable.autoEnabledCheckbox
     );
 
+    await user.click(autoEnabledCheckbox);
+
     const minIntervalInput = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.IntervalVariable.minIntervalInput
     );
@@ -90,14 +92,18 @@ describe('IntervalVariableEditor', () => {
       selectors.pages.Dashboard.Settings.Variables.Edit.IntervalVariable.stepCountIntervalSelect
     );
 
-    await user.click(autoEnabledCheckbox);
+    await waitFor(() => {
+      expect(autoEnabledCheckbox).toBeInTheDocument();
+      expect(autoEnabledCheckbox).toBeChecked();
+      expect(minIntervalInput).toBeInTheDocument();
+      expect(stepCountIntervalSelect).toBeInTheDocument();
+      expect(minIntervalInput).toHaveValue('10s');
+    });
 
-    await waitFor(() => expect(minIntervalInput).toBeInTheDocument());
-    await waitFor(() => expect(stepCountIntervalSelect).toBeInTheDocument());
-
-    console.log('autoenabled', variable.state.autoEnabled);
-    expect(autoEnabledCheckbox).toBeInTheDocument();
-    expect(autoEnabledCheckbox).toBeChecked();
+    await user.clear(minIntervalInput);
+    await user.type(minIntervalInput, '10m');
+    await user.tab();
+    expect(minIntervalInput).toHaveValue('10m');
   });
 });
 
