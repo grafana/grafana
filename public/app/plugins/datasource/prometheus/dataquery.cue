@@ -45,6 +45,10 @@ composableKinds: DataQuery: {
 				// See https://github.com/grafana/grafana/issues/48081
 				intervalFactor?: number
 
+				scope?: {
+					matchers: string
+				}
+
 				#QueryEditorMode: "code" | "builder"                  @cuetsy(kind="enum")
 				#PromQueryFormat: "time_series" | "table" | "heatmap" @cuetsy(kind="type")
 			}
