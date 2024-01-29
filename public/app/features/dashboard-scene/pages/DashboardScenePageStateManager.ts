@@ -30,6 +30,7 @@ interface DashboardCacheEntry {
 export interface LoadDashboardOptions {
   uid: string;
   isEmbedded?: boolean;
+  slug?: string;
 }
 
 export class DashboardScenePageStateManager extends StateManagerBase<DashboardScenePageState> {
@@ -100,6 +101,10 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     return rsp;
   }
 
+  public async fetchSnapshot(slug: string) {
+    return await dashboardLoaderSrv.loadDashboard('snapshot', slug, '');
+  }
+
   public async loadDashboard(options: LoadDashboardOptions) {
     try {
       const dashboard = await this.loadScene(options);
@@ -124,7 +129,12 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
     this.setState({ isLoading: true });
 
-    const rsp = await this.fetchDashboard(options);
+    let rsp: DashboardDTO | null | undefined;
+    if (options.slug !== undefined) {
+      rsp = await this.fetchSnapshot(options.slug);
+    } else {
+      rsp = await this.fetchDashboard(options);
+    }
 
     if (rsp?.dashboard) {
       if (options.isEmbedded) {

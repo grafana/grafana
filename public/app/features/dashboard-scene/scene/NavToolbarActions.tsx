@@ -44,27 +44,30 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
         />
       );
     }
-    toolbarActions.push(
-      <DashNavButton
-        key="share-dashboard-button"
-        tooltip={t('dashboard.toolbar.share', 'Share dashboard')}
-        icon="share-alt"
-        iconSize="lg"
-        onClick={() => {
-          DashboardInteractions.toolbarShareClick();
-          dashboard.showModal(new ShareModal({ dashboardRef: dashboard.getRef() }));
-        }}
-      />
-    );
 
-    toolbarActions.push(
-      <DashNavButton
-        key="view-in-old-dashboard-button"
-        tooltip={'View as dashboard'}
-        icon="apps"
-        onClick={() => locationService.push(`/d/${uid}`)}
-      />
-    );
+    if (!meta.isSnapshot) {
+      toolbarActions.push(
+        <DashNavButton
+          key="share-dashboard-button"
+          tooltip={t('dashboard.toolbar.share', 'Share dashboard')}
+          icon="share-alt"
+          iconSize="lg"
+          onClick={() => {
+            DashboardInteractions.toolbarShareClick();
+            dashboard.showModal(new ShareModal({ dashboardRef: dashboard.getRef() }));
+          }}
+        />
+      );
+
+      toolbarActions.push(
+        <DashNavButton
+          key="view-in-old-dashboard-button"
+          tooltip={'View as dashboard'}
+          icon="apps"
+          onClick={() => locationService.push(`/d/${uid}`)}
+        />
+      );
+    }
     if (dynamicDashNavActions.left.length > 0) {
       dynamicDashNavActions.left.map((action, index) => {
         const Component = action.component;

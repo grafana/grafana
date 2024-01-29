@@ -17,7 +17,9 @@ export function DashboardScenePage({ match, route }: Props) {
   const { dashboard, isLoading, loadError } = stateManager.useState();
 
   useEffect(() => {
-    if (route.routeName === DashboardRoutes.Home) {
+    if (route.routeName === DashboardRoutes.Normal && match.params.type === 'snapshot') {
+      stateManager.loadDashboard({ uid: '', slug: match.params.slug! });
+    } else if (route.routeName === DashboardRoutes.Home) {
       stateManager.loadDashboard({ uid: route.routeName });
     } else {
       stateManager.loadDashboard({ uid: match.params.uid! });
@@ -26,7 +28,7 @@ export function DashboardScenePage({ match, route }: Props) {
     return () => {
       stateManager.clearState();
     };
-  }, [stateManager, match.params.uid, route.routeName]);
+  }, [stateManager, match.params.uid, route.routeName, match.params.slug, match.params.type]);
 
   if (!dashboard) {
     return (
