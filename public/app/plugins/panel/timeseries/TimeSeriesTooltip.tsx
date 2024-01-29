@@ -134,7 +134,7 @@ export const TimeSeriesTooltip = ({
       }
     }
 
-    if (seriesIdx) {
+    if (seriesIdx != null) {
       const field = seriesFrame.fields[seriesIdx];
       const dataIdx = dataIdxs[seriesIdx]!;
       links = getDataLinks(field, dataIdx);
