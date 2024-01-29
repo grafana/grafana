@@ -20,7 +20,7 @@ weight: 100
 
 # Configure thresholds
 
-A threshold is a value that you specify for a metric that is visually reflected in a dashboard when the threshold value is met or exceeded.
+A threshold is a value that you specify for a metric that's visually reflected in a dashboard when the threshold value is met or exceeded.
 
 Thresholds provide one method for you to conditionally style and color your visualizations based on query results. You can apply thresholds to most, but not all, visualizations. For more information about visualizations, refer to [Visualization panels][].
 
@@ -42,7 +42,7 @@ On visualizations that support it, Grafana sets default threshold values of:
 - Base = green
 - Mode = Absolute
 
-The **Base** value represents minus infinity. It is generally the “good” color.
+The **Base** value represents minus infinity. It's generally the “good” color.
 
 ## Threshold options
 
@@ -74,7 +74,7 @@ To add a threshold:
 
 1. For a time-series panel, select a **Show thresholds** option.
 
-Delete a threshold when it is no longer needed. When you delete a threshold, the system removes the threshold from all visualizations that include the threshold.
+Delete a threshold when it's no longer needed. When you delete a threshold, the system removes the threshold from all visualizations that include the threshold.
 
 To delete a threshold, navigate to the panel that contains the threshold and click the trash icon next to the threshold you want to remove.
 
