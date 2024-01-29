@@ -2979,7 +2979,7 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:10.4.0-pre"
     "@grafana/e2e-selectors": "npm:10.4.0-pre"
-    "@grafana/experimental": "npm:1.7.4"
+    "@grafana/experimental": "npm:1.7.8"
     "@grafana/google-sdk": "npm:0.1.1"
     "@grafana/plugin-configs": "npm:10.4.0-pre"
     "@grafana/runtime": "npm:10.4.0-pre"
@@ -3408,26 +3408,6 @@ __metadata:
     react-select: ^5.2.1
     rxjs: 7.8.0
   checksum: 1d30e266d3b2b26f66ff8981ebd0f9804574349079e205b70690cff6f5e742a26096dc90fa90e8faa44cf4bc91a2650cae7994b5eb396663f8b7e73beaccda9b
-  languageName: node
-  linkType: hard
-
-"@grafana/experimental@npm:1.7.4":
-  version: 1.7.4
-  resolution: "@grafana/experimental@npm:1.7.4"
-  dependencies:
-    "@types/uuid": "npm:^8.3.3"
-    semver: "npm:^7.5.4"
-    uuid: "npm:^8.3.2"
-  peerDependencies:
-    "@emotion/css": 11.1.3
-    "@grafana/data": ^10.0.0
-    "@grafana/runtime": ^10.0.0
-    "@grafana/ui": ^10.0.0
-    react: 17.0.2
-    react-dom: 17.0.2
-    react-select: ^5.2.1
-    rxjs: 7.8.0
-  checksum: e62e6382396d282281e31011c936fe9164650ea8caea7a09c4ef8615a66bb0ab0f74c4946354276457a2f5d1276016fc4225a08b8afb043c81e11b010f52b26d
   languageName: node
   linkType: hard
 
