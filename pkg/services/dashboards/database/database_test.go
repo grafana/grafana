@@ -475,15 +475,15 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	t.Run("Can count dashboards by parent folder", func(t *testing.T) {
 		setup()
 		// setup() saves one dashboard in the general folder and two in the "savedFolder".
-		count, err := dashboardStore.CountDashboardsInFolder(
+		count, err := dashboardStore.CountDashboardsInFolders(
 			context.Background(),
-			&dashboards.CountDashboardsInFolderRequest{FolderUID: "", OrgID: 1})
+			&dashboards.CountDashboardsInFolderRequest{FolderUIDs: []string{""}, OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, int64(1), count)
 
-		count, err = dashboardStore.CountDashboardsInFolder(
+		count, err = dashboardStore.CountDashboardsInFolders(
 			context.Background(),
-			&dashboards.CountDashboardsInFolderRequest{FolderUID: savedFolder.UID, OrgID: 1})
+			&dashboards.CountDashboardsInFolderRequest{FolderUIDs: []string{savedFolder.UID}, OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, int64(2), count)
 	})
@@ -494,16 +494,16 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		_ = insertTestDashboard(t, dashboardStore, "delete me 1", 1, folder.ID, folder.UID, false, "delete this 1")
 		_ = insertTestDashboard(t, dashboardStore, "delete me 2", 1, folder.ID, folder.UID, false, "delete this 2")
 
-		err := dashboardStore.DeleteDashboardsInFolder(
+		err := dashboardStore.DeleteDashboardsInFolders(
 			context.Background(),
 			&dashboards.DeleteDashboardsInFolderRequest{
-				FolderUID: folder.UID,
-				OrgID:     1,
+				FolderUIDs: []string{folder.UID},
+				OrgID:      1,
 			})
 		require.NoError(t, err)
 
 		// nolint:staticcheck
-		count, err := dashboardStore.CountDashboardsInFolder(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderUID: folder.UID, OrgID: 1})
+		count, err := dashboardStore.CountDashboardsInFolders(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderUIDs: []string{folder.UID}, OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, count, int64(0))
 	})

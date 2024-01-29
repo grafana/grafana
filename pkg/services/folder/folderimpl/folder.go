@@ -775,7 +775,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 				if !ok {
 					return folder.ErrInternal.Errorf("no alert rule service found in registry")
 				}
-				alertRulesInFolder, err := alertRuleSrv.CountInFolder(ctx, dashFolder.OrgID, dashFolder.UID, cmd.SignedInUser)
+				alertRulesInFolder, err := alertRuleSrv.CountInFolders(ctx, dashFolder.OrgID, []string{dashFolder.UID}, cmd.SignedInUser)
 				if err != nil {
 					s.log.Error("failed to count alert rules in folder", "error", err)
 					return err
@@ -797,7 +797,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 
 func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) error {
 	for _, v := range s.registry {
-		if err := v.DeleteInFolder(ctx, orgID, folderUID, user); err != nil {
+		if err := v.DeleteInFolders(ctx, orgID, []string{folderUID}, user); err != nil {
 			return err
 		}
 	}
@@ -972,7 +972,7 @@ func (s *Service) GetDescendantCounts(ctx context.Context, q *folder.GetDescenda
 
 	for _, v := range s.registry {
 		for _, folder := range result {
-			c, err := v.CountInFolder(ctx, q.OrgID, folder, q.SignedInUser)
+			c, err := v.CountInFolders(ctx, q.OrgID, []string{folder}, q.SignedInUser)
 			if err != nil {
 				logger.Error("failed to count folder descendants", "error", err)
 				return nil, err

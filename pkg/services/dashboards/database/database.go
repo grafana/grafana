@@ -1009,19 +1009,24 @@ func (d *dashboardStore) GetDashboardTags(ctx context.Context, query *dashboards
 
 // CountDashboardsInFolder returns a count of all dashboards associated with the
 // given parent folder ID.
-func (d *dashboardStore) CountDashboardsInFolder(
+func (d *dashboardStore) CountDashboardsInFolders(
 	ctx context.Context, req *dashboards.CountDashboardsInFolderRequest) (int64, error) {
+	if len(req.FolderUIDs) == 0 {
+		return 0, nil
+	}
 	var count int64
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 		s := strings.Builder{}
 		args := make([]any, 0, 3)
 		s.WriteString("SELECT COUNT(*) FROM dashboard WHERE ")
-		if req.FolderUID == "" {
+		if len(req.FolderUIDs) == 1 && req.FolderUIDs[0] == "" {
 			s.WriteString("folder_uid IS NULL")
 		} else {
-			s.WriteString("folder_uid = ?")
-			args = append(args, req.FolderUID)
+			s.WriteString(fmt.Sprintf("folder_uid IN (%s)", strings.Repeat("?,", len(req.FolderUIDs)-1)+"?"))
+			for _, folderUID := range req.FolderUIDs {
+				args = append(args, folderUID)
+			}
 		}
 		s.WriteString(" AND org_id = ? AND is_folder = ?")
 		args = append(args, req.OrgID, d.store.GetDialect().BooleanStr(false))
@@ -1032,24 +1037,29 @@ func (d *dashboardStore) CountDashboardsInFolder(
 	return count, err
 }
 
-func (d *dashboardStore) DeleteDashboardsInFolder(
+func (d *dashboardStore) DeleteDashboardsInFolders(
 	ctx context.Context, req *dashboards.DeleteDashboardsInFolderRequest) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		dashboard := dashboards.Dashboard{OrgID: req.OrgID}
-		has, err := sess.Where("uid = ? AND org_id = ?", req.FolderUID, req.OrgID).Get(&dashboard)
-		if err != nil {
-			return err
-		}
-		if !has {
-			return dashboards.ErrFolderNotFound
-		}
+		for _, folderUID := range req.FolderUIDs {
+			dashboard := dashboards.Dashboard{OrgID: req.OrgID}
+			has, err := sess.Where("org_id = ? AND uid = ?", req.OrgID, folderUID).Get(&dashboard)
+			if err != nil {
+				return err
+			}
+			if !has {
+				return dashboards.ErrFolderNotFound
+			}
 
-		if err := d.deleteChildrenDashboardAssociations(sess, &dashboard); err != nil {
-			return err
-		}
+			if err := d.deleteChildrenDashboardAssociations(sess, &dashboard); err != nil {
+				return err
+			}
 
-		_, err = sess.Where("folder_id = ? AND org_id = ? AND is_folder = ?", dashboard.ID, dashboard.OrgID, false).Delete(&dashboards.Dashboard{})
-		return err
+			_, err = sess.Where("folder_id = ? AND org_id = ? AND is_folder = ?", dashboard.ID, dashboard.OrgID, false).Delete(&dashboards.Dashboard{})
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 }
 
