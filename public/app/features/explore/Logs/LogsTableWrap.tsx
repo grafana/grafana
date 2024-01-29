@@ -268,10 +268,7 @@ export function LogsTableWrap(props: Props) {
 
   const [sidebarWidth, setSidebarWidth] = useState(220);
   const totalWidth = props.width;
-  // const [tableWidth, setTableWidth] = useState(totalWidth - sidebarWidth);
   const tableWidth = totalWidth - sidebarWidth;
-  console.log('tableWidth', tableWidth);
-  console.log('sidebarWidth', sidebarWidth);
 
   if (!columnsWithMeta) {
     return null;
