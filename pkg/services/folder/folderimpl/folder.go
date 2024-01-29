@@ -954,31 +954,27 @@ func (s *Service) GetDescendantCounts(ctx context.Context, q *folder.GetDescenda
 		return nil, folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
-	result := []string{*q.UID}
+	folders := []string{*q.UID}
 	countsMap := make(folder.DescendantCounts, len(s.registry)+1)
 	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		descendantFolders, err := s.store.GetDescendants(ctx, q.OrgID, *q.UID)
-		descendantFolderUIDs := make([]string, 0, len(descendantFolders))
 		if err != nil {
 			logger.Error("failed to get descendant folders", "error", err)
 			return nil, err
 		}
 		for _, f := range descendantFolders {
-			result = append(result, f.UID)
-			descendantFolderUIDs = append(descendantFolderUIDs, f.UID)
+			folders = append(folders, f.UID)
 		}
-		countsMap[entity.StandardKindFolder] = int64(len(descendantFolderUIDs))
+		countsMap[entity.StandardKindFolder] = int64(len(descendantFolders))
 	}
 
 	for _, v := range s.registry {
-		for _, folder := range result {
-			c, err := v.CountInFolders(ctx, q.OrgID, []string{folder}, q.SignedInUser)
-			if err != nil {
-				logger.Error("failed to count folder descendants", "error", err)
-				return nil, err
-			}
-			countsMap[v.Kind()] += c
+		c, err := v.CountInFolders(ctx, q.OrgID, folders, q.SignedInUser)
+		if err != nil {
+			logger.Error("failed to count folder descendants", "error", err)
+			return nil, err
 		}
+		countsMap[v.Kind()] = c
 	}
 	return countsMap, nil
 }
