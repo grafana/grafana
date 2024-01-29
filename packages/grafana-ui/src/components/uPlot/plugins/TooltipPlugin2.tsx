@@ -295,6 +295,7 @@ export const TooltipPlugin2 = ({
       });
 
       const haltAncestorId = 'pageContent';
+      const scrollbarWidth = 16;
 
       // if we're in a container that can clip the tooltip, we should try to stay within that rather than window edges
       u.over.addEventListener(
@@ -302,8 +303,8 @@ export const TooltipPlugin2 = ({
         () => {
           // clamp to viewport bounds
           let htmlEl = document.documentElement;
-          let winWid = htmlEl.clientWidth - 16;
-          let winHgt = htmlEl.clientHeight - 16;
+          let winWid = htmlEl.clientWidth - scrollbarWidth;
+          let winHgt = htmlEl.clientHeight - scrollbarWidth;
 
           let lft = 0,
             top = 0,
