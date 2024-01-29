@@ -22,6 +22,7 @@ const (
 	varRangeMs        = "$__range_ms"
 	varRateInterval   = "$__rate_interval"
 	varRateIntervalMs = "$__rate_interval_ms"
+	removeMe          = "removeME"
 )
 
 // Internal interval and range variables with {} syntax
