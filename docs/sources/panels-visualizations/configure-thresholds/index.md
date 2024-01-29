@@ -34,7 +34,19 @@ You can use thresholds to:
 - Color cell text or background in the [Table visualization][]
 - Define regions and region colors in the [State timeline visualization][]
 
+## Default thresholds
+
+On visualizations that support it, Grafana sets default threshold values of:
+
+- 80 = red
+- Base = green
+- Mode = Absolute
+
+The **Base** value represents minus infinity. It is generally the “good” color.
+
 ## Threshold options
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
 
 ### Threshold mode
 
@@ -45,15 +57,7 @@ There are two types of thresholds:
 
 ### Show threshold
 
-## Default thresholds
-
-On visualizations that support it, Grafana sets default threshold values of:
-
-- 80 = red
-- Base = green
-- Mode = Absolute
-
-The **Base** value represents minus infinity. It is generally the “good” color.
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
 
 ## Add or delete a threshold
 
