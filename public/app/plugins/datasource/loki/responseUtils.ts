@@ -54,28 +54,26 @@ export function extractLabelKeysFromDataFrame(frame: DataFrame, type: LabelType 
     return [];
   }
 
-  // If we have label types and we have type filter, we can return only label keys that match type
-  if (labelTypeArray?.length && type) {
-    let labelsSet = new Set<string>();
-    for (let i = 0; i < labelsArray.length; i++) {
-      const labels = labelsArray[i];
-      const labelsType = labelTypeArray[i];
-
-      const allLabelKeys = Object.keys(labels).filter((key) => labelsType[key] === type);
-      labelsSet = new Set([...labelsSet, ...allLabelKeys]);
+  // if there are no label types and type is LabelType.Indexed return all label keys
+  if (!labelTypeArray?.length) {
+    if (type === LabelType.Indexed) {
+      const { keys: labelKeys } = processLabels(labelsArray);
+      return labelKeys;
     }
-
-    return Array.from(labelsSet);
-  }
-
-  // If we don't have label types and we expect non-indexed labels, we return empty array
-  if (!labelTypeArray?.length && type !== LabelType.Indexed) {
     return [];
   }
 
-  // Otherwise return all label keys
-  const { keys: labelKeys } = processLabels(labelsArray);
-  return labelKeys;
+  // If we have label types and we have type filter, we can return only label keys that match type
+  let labelsSet = new Set<string>();
+  for (let i = 0; i < labelsArray.length; i++) {
+    const labels = labelsArray[i];
+    const labelsType = labelTypeArray[i];
+
+    const allLabelKeys = Object.keys(labels).filter((key) => labelsType[key] === type);
+    labelsSet = new Set([...labelsSet, ...allLabelKeys]);
+  }
+
+  return Array.from(labelsSet);
 }
 
 export function extractUnwrapLabelKeysFromDataFrame(frame: DataFrame): string[] {
