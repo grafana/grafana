@@ -188,3 +188,7 @@ func (f fakeCache) Get(ctx context.Context, key string) ([]byte, error) {
 func (f fakeCache) Set(ctx context.Context, key string, value []byte, expire time.Duration) error {
 	return f.expectedErr
 }
+
+func (f fakeCache) Delete(ctx context.Context, key string) error {
+	return f.expectedErr
+}
