@@ -22,7 +22,7 @@ interface Props {
 }
 
 export function TraceQLEditor(props: Props) {
-  const [alertText, setAlertText] = useState('error error');
+  const [alertText, setAlertText] = useState('');
 
   const { onChange, onRunQuery, placeholder } = props;
   const setupAutocompleteFn = useAutocomplete(props.datasource, setAlertText);

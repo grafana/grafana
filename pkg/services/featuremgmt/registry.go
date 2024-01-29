@@ -59,7 +59,6 @@ var (
 			Name:              "publicDashboardsEmailSharing",
 			Description:       "Enables public dashboard sharing to be restricted to only allowed emails",
 			Stage:             FeatureStagePublicPreview,
-			RequiresLicense:   true,
 			Owner:             grafanaSharingSquad,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
