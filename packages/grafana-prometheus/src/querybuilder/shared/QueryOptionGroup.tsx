@@ -3,8 +3,7 @@ import React from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Collapse, useStyles2 } from '@grafana/ui';
+import { Collapse, useStyles2, Stack } from '@grafana/ui';
 
 export interface Props {
   title: string;
@@ -24,7 +23,7 @@ export function QueryOptionGroup({ title, children, collapsedInfo }: Props) {
         isOpen={isOpen}
         onToggle={toggleOpen}
         label={
-          <Stack gap={0} wrap={false}>
+          <Stack gap={0}>
             <h6 className={styles.title}>{title}</h6>
             {!isOpen && (
               <div className={styles.description}>

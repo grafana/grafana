@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import React, { ComponentType } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { AutoSizeInput, Button, Checkbox, Select, useStyles2 } from '@grafana/ui';
+import { AutoSizeInput, Button, Checkbox, Select, useStyles2, Stack } from '@grafana/ui';
 
 import { getOperationParamId } from './operationUtils';
 import { QueryBuilderOperationParamDef, QueryBuilderOperationParamEditorProps } from './types';
