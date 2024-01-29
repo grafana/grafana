@@ -12,6 +12,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
  */
 export type LoadingIndicatorProps = {
   loading?: boolean;
+  onCancel: (newParam: string) => void;
   mandatory: string;
   field?: string;
 };
@@ -19,14 +20,18 @@ export type LoadingIndicatorProps = {
 /**
  * @internal
  */
-export const LoadingIndicator = ({ loading }: LoadingIndicatorProps) => {
+export const LoadingIndicator = ({ onCancel, loading }: LoadingIndicatorProps) => {
   const styles = useStyles2(getStyles);
 
   if (!loading) {
     return null;
   }
 
-  const onCancel = () => {};
+  const onCancelQuery = () => {
+    if (onCancel) {
+      onCancel('');
+    }
+  };
 
   return (
     <Tooltip content="Cancel query">
@@ -34,7 +39,7 @@ export const LoadingIndicator = ({ loading }: LoadingIndicatorProps) => {
         className={cx('spin-clockwise', { [styles.clickable]: !!onCancel })}
         name="sync"
         size="sm"
-        onClick={onCancel}
+        onClick={onCancelQuery}
         data-testid={selectors.components.LoadingIndicator.icon}
       />
     </Tooltip>
