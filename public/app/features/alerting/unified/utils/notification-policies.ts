@@ -169,10 +169,9 @@ function getInheritedProperties(
     (inheritedProperties: Partial<Route> = {}, parentValue, property) => {
       const parentHasValue = parentValue !== undefined;
 
+      const inheritableValues = [undefined, '', null];
       // @ts-ignore
-      const inheritFromParentUndefined = parentHasValue && childRoute[property] === undefined;
-      // @ts-ignore
-      const inheritFromParentEmptyString = parentHasValue && childRoute[property] === '';
+      const inheritFromValue = parentHasValue && inheritableValues.some((value) => childRoute[property] === value);
 
       const inheritEmptyGroupByFromParent =
         property === 'group_by' &&
@@ -180,8 +179,7 @@ function getInheritedProperties(
         isArray(childRoute[property]) &&
         childRoute[property]?.length === 0;
 
-      const inheritFromParent =
-        inheritFromParentUndefined || inheritFromParentEmptyString || inheritEmptyGroupByFromParent;
+      const inheritFromParent = inheritFromValue || inheritEmptyGroupByFromParent;
 
       if (inheritFromParent) {
         // @ts-ignore
