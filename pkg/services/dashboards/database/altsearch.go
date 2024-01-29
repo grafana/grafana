@@ -116,7 +116,7 @@ SELECT org_id, kind, uid, entity.id, title, dashboard_tag.term as term, folder_u
 LEFT JOIN dashboard_tag ON dashboard_tag.dashboard_id = entity.id
 `))
 
-func (d *dashboardStore) findDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+func (d *dashboardStore) altSearch(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	// Only handle non-empty search queries
 	if query.Title == "" {
 		return nil, nil
@@ -185,4 +185,27 @@ func (d *dashboardStore) findDashboards(ctx context.Context, query *dashboards.F
 	}
 
 	return results, err
+}
+
+func (d *dashboardStore) altSearhLogResultDiff(results, expected []dashboards.DashboardSearchProjection) {
+	expectedUIDs, resultUIDs, n, m := map[string]struct{}{}, map[string]struct{}{}, 0, 0
+	for _, hit := range expected {
+		expectedUIDs[hit.UID] = struct{}{}
+	}
+	for _, hit := range results {
+		resultUIDs[hit.UID] = struct{}{}
+		if _, ok := expectedUIDs[hit.UID]; !ok {
+			d.log.Info("Alternative search query mismatch", "unexpected", hit.Title, "uid", hit.UID)
+			n++
+		}
+	}
+	for _, hit := range expected {
+		if _, ok := resultUIDs[hit.UID]; !ok {
+			d.log.Info("Alternative search query mismatch", "missed", hit.Title, "uid", hit.UID)
+			m++
+		}
+	}
+	if n+m > 0 {
+		d.log.Info("Alternative search query got different results", "matched", (len(expected)+len(results)-n-m)/2, "unexpected", n, "missed", m)
+	}
 }

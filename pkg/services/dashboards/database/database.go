@@ -973,62 +973,31 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 
 	sql, params := sb.ToSQL(limit, page)
 
-	// Only use modified search for non-empty search queries, otherwise it's just listing and new query can't help there yet.
-	resc := make(chan []dashboards.DashboardSearchProjection, 1)
-	durc := make(chan time.Duration, 1)
-	if d.features.IsEnabled(ctx, featuremgmt.FlagSearchAlt) && d.features.IsEnabled(ctx, featuremgmt.FlagSplitScopes) &&
-		query.Title != "" && len(query.FolderUIDs) == 0 && len(query.FolderIds) == 0 { //nolint:staticcheck
-		derivedCtx := context.WithoutCancel(ctx)
-		go func() {
-			time.Sleep(500 * time.Millisecond) // add 0.5s delay before running the second query to not interfere with the original one
-			start := time.Now()
-			results, err := d.findDashboards(derivedCtx, query)
-			if err != nil {
-				d.log.Info("Alternative search query failed", "error", err)
-				return
-			}
-			dur := time.Since(start)
-			origDur := time.Since(start)
-			d.log.Info("Alternative search query", "time", dur, "dt", origDur-dur, "results", len(results))
-
-			expected := <-resc
-
-			expectedUIDs, resultUIDs, n, m := map[string]struct{}{}, map[string]struct{}{}, 0, 0
-			for _, hit := range expected {
-				expectedUIDs[hit.UID] = struct{}{}
-			}
-			for _, hit := range results {
-				resultUIDs[hit.UID] = struct{}{}
-				if _, ok := expectedUIDs[hit.UID]; !ok {
-					d.log.Info("Alternative search query mismatch", "unexpected", hit.Title, "uid", hit.UID)
-					n++
-				}
-			}
-			for _, hit := range expected {
-				if _, ok := resultUIDs[hit.UID]; !ok {
-					d.log.Info("Alternative search query mismatch", "missed", hit.Title, "uid", hit.UID)
-					m++
-				}
-			}
-			if n+m > 0 {
-				d.log.Info("Alternative search query got different results", "matched", (len(expected)+len(results)-n-m)/2, "unexpected", n, "missed", m)
-			}
-		}()
-	}
-
 	start := time.Now()
 	err = d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.SQL(sql, params...).Find(&res)
 	})
-	if d.features.IsEnabled(ctx, featuremgmt.FlagSearchAlt) {
-		durc <- time.Since(start)
-		d.log.Info("Original search query", "time", time.Since(start), "results", len(res))
-	}
+	searchV1Duration := time.Since(start)
 	if err != nil {
 		return nil, err
 	}
 
-	resc <- res
+	// Try modified search for non-empty search queries and compare the results
+	if d.features.IsEnabled(ctx, featuremgmt.FlagSearchAlt) && d.features.IsEnabled(ctx, featuremgmt.FlagSplitScopes) &&
+		query.Title != "" && len(query.FolderUIDs) == 0 && len(query.FolderIds) == 0 { //nolint:staticcheck
+		derivedCtx := context.WithoutCancel(ctx)
+		go func() {
+			start := time.Now()
+			results, err := d.altSearch(derivedCtx, query)
+			if err != nil {
+				d.log.Info("Alternative search query failed", "error", err)
+				return
+			}
+			duration := time.Since(start)
+			d.log.Info("Alternative search query", "time", duration, "dt", searchV1Duration-duration, "results", len(results))
+			d.altSearhLogResultDiff(results, res)
+		}()
+	}
 	return res, nil
 }
 
