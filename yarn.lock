@@ -9080,7 +9080,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-router@npm:*":
+"@types/react-router@npm:*, @types/react-router@npm:5.1.20":
   version: 5.1.20
   resolution: "@types/react-router@npm:5.1.20"
   dependencies:
@@ -10701,12 +10701,6 @@ __metadata:
   checksum: d4b1653fc60b6465b982bf5a88b12051ed2d807d70609386a809306e1c636496f53522d61fa30f9f98c71aaae34f34e1651889cf17d81a44e3dafd2859d495ad
   languageName: node
   linkType: hard
-
-"app@link:./public/app::locator=grafana%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "app@link:./public/app::locator=grafana%40workspace%3A."
-  languageName: node
-  linkType: soft
 
 "append-buffer@npm:^1.0.2":
   version: 1.0.2
@@ -15065,16 +15059,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild-plugin-browserslist@npm:^0.10.0":
-  version: 0.10.0
-  resolution: "esbuild-plugin-browserslist@npm:0.10.0"
+"esbuild-plugin-browserslist@npm:^0.11.0":
+  version: 0.11.1
+  resolution: "esbuild-plugin-browserslist@npm:0.11.1"
   dependencies:
     debug: "npm:^4.3.4"
     zod: "npm:^3.21.4"
   peerDependencies:
     browserslist: ^4.21.8
-    esbuild: ~0.19.2
-  checksum: 39c5b237fbd01a4e8aec150426f82593522be82b545dd0f342d342eec0a8a750b27ee04d8aba040b8a36b0f90ab6902eaf4653e4f9b46d2487078972f0760c55
+    esbuild: ~0.20.0
+  checksum: 00862b0bf848c82559be4722a0a37f789b95438271a8047b21ed6590439003ce731e1f0fbc0828b7beae8c21147514c98ad0690470022b1a8477f9f2536cabb2
   languageName: node
   linkType: hard
 
@@ -17407,6 +17401,7 @@ __metadata:
     "@types/react-grid-layout": "npm:1.3.5"
     "@types/react-highlight-words": "npm:0.16.7"
     "@types/react-resizable": "npm:3.0.7"
+    "@types/react-router": "npm:5.1.20"
     "@types/react-router-dom": "npm:5.3.3"
     "@types/react-table": "npm:7.7.19"
     "@types/react-test-renderer": "npm:18.0.7"
@@ -17441,7 +17436,6 @@ __metadata:
     angular-route: "npm:1.8.3"
     angular-sanitize: "npm:1.8.3"
     ansicolor: "npm:1.1.100"
-    app: "link:./public/app"
     autoprefixer: "npm:10.4.17"
     baron: "npm:3.0.3"
     blob-polyfill: "npm:7.0.20220408"
@@ -17472,7 +17466,7 @@ __metadata:
     emotion: "npm:11.0.0"
     esbuild: "npm:0.18.12"
     esbuild-loader: "npm:3.0.1"
-    esbuild-plugin-browserslist: "npm:^0.10.0"
+    esbuild-plugin-browserslist: "npm:^0.11.0"
     eslint: "npm:8.56.0"
     eslint-config-prettier: "npm:8.8.0"
     eslint-plugin-import: "npm:^2.26.0"
@@ -17556,7 +17550,7 @@ __metadata:
     rc-drawer: "npm:6.5.2"
     rc-slider: "npm:10.5.0"
     rc-time-picker: "npm:3.7.3"
-    rc-tree: "npm:5.8.2"
+    rc-tree: "npm:5.8.3"
     re-resizable: "npm:6.9.11"
     react: "npm:18.2.0"
     react-beautiful-dnd: "npm:13.1.1"
@@ -17576,6 +17570,7 @@ __metadata:
     react-refresh: "npm:0.14.0"
     react-resizable: "npm:3.0.5"
     react-responsive-carousel: "npm:^3.2.23"
+    react-router: "npm:5.3.3"
     react-router-dom: "npm:5.3.3"
     react-router-dom-v5-compat: "npm:^6.10.0"
     react-select: "npm:5.8.0"
@@ -17612,7 +17607,6 @@ __metadata:
     stylelint-config-sass-guidelines: "npm:10.0.0"
     symbol-observable: "npm:4.0.0"
     terser-webpack-plugin: "npm:5.3.10"
-    test: "link:./public/test"
     testing-library-selector: "npm:0.3.1"
     tether-drop: "https://github.com/torkelo/drop"
     tinycolor2: "npm:1.6.0"
@@ -17624,7 +17618,6 @@ __metadata:
     typescript: "npm:5.3.3"
     uplot: "npm:1.6.29"
     uuid: "npm:9.0.1"
-    vendor: "link:./public/vendor"
     visjs-network: "npm:4.25.0"
     webpack: "npm:5.90.0"
     webpack-assets-manifest: "npm:^5.1.0"
@@ -24764,9 +24757,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tree@npm:5.8.2, rc-tree@npm:~5.8.1":
-  version: 5.8.2
-  resolution: "rc-tree@npm:5.8.2"
+"rc-tree@npm:5.8.3, rc-tree@npm:~5.8.1":
+  version: 5.8.3
+  resolution: "rc-tree@npm:5.8.3"
   dependencies:
     "@babel/runtime": "npm:^7.10.1"
     classnames: "npm:2.x"
@@ -24776,7 +24769,7 @@ __metadata:
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: fa246c8ed51d06e5ee6eb2835a4c2384dc228f9cb32c258e6fbb83e8de30117df5c156d936e7cb52c51a05cd3cc988b01dbf67eb73389de9b8afaaf36ca80292
+  checksum: c1cdd3024f64cee28886c07825dc5a5ee612fe7b100f940ecf20bb55eb9a39a948a49938bbcbfa029b08dca6525c64ed1de755af351f0e62e1cb4bc5f1887953
   languageName: node
   linkType: hard
 
@@ -28519,12 +28512,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"test@link:./public/test::locator=grafana%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "test@link:./public/test::locator=grafana%40workspace%3A."
-  languageName: node
-  linkType: soft
-
 "testing-library-selector@npm:0.3.1":
   version: 0.3.1
   resolution: "testing-library-selector@npm:0.3.1"
@@ -29843,12 +29830,6 @@ __metadata:
   checksum: 31389debef15a480849b8331b220782230b9815a8e0dbb7b9a8369559aed2e9a7800cd904d4371ea74f4c3527db456dc8e7ac5befce5f0d289014dbdf47b2242
   languageName: node
   linkType: hard
-
-"vendor@link:./public/vendor::locator=grafana%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "vendor@link:./public/vendor::locator=grafana%40workspace%3A."
-  languageName: node
-  linkType: soft
 
 "verror@npm:1.10.0":
   version: 1.10.0

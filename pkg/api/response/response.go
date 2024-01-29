@@ -311,6 +311,8 @@ func Respond(status int, body any) *NormalResponse {
 		b = t
 	case string:
 		b = []byte(t)
+	case nil:
+		break
 	default:
 		var err error
 		if b, err = json.Marshal(body); err != nil {
