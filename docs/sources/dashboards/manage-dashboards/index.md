@@ -42,14 +42,14 @@ On the **Dashboards** page, you can browse and manage folders and dashboards. Th
 - Navigate to a folder.
 - Manage folder permissions. For more information, refer to [Dashboard permissions][].
 
-The list of dashboards on this page is grouped into folders; dashboards without a folder are displayed at the top level alongside folders. The page may also include a **Shared with me** section.
-
-<!--TO DO: Confirm what the Shared with me section looks like and clarify if/when it's displayed -->
+The page lists all of dashboards to which you have access, grouped into folders. Dashboards without a folder are displayed at the top level alongside folders.
 
 ### Shared with me
 
-The **Shared with me** section displays folders and dashboards that are directly shared with you that wouldn't otherwise be visible in the standard dashboards list.
-This is because you don't have access to one or more of the parent folders.
+The **Shared with me** section displays folders and dashboards that are directly shared with you.
+These folders and dashboards aren't shown in the main list because you don't have access to one or more of their parent folders.
+
+If you have permission to view all folders, you won't see a **Shared with me**.
 
 ## Create a dashboard folder
 
