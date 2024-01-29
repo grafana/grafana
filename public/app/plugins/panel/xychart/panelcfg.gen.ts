@@ -40,17 +40,10 @@ export const defaultXYDimensionConfig: Partial<XYDimensionConfig> = {
 export interface FieldConfig extends common.HideableFieldConfig, common.AxisConfig {
   label?: common.VisibilityMode;
   labelValue?: common.TextDimensionConfig;
-  lineColor?: common.ColorDimensionConfig;
-  lineStyle?: common.LineStyle;
-  lineWidth?: number;
-  pointColor?: common.ColorDimensionConfig;
-  pointSize?: common.ScaleDimensionConfig;
-  show?: ScatterShow;
 }
 
 export const defaultFieldConfig: Partial<FieldConfig> = {
   label: common.VisibilityMode.Auto,
-  show: ScatterShow.Points,
 };
 
 export interface ScatterSeriesConfig extends FieldConfig {
@@ -64,13 +57,20 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    * Table Mode (auto)
    */
   dims: XYDimensionConfig;
+  lineColor?: common.ColorDimensionConfig;
+  lineStyle?: common.LineStyle;
+  lineWidth?: number;
+  pointColor?: common.ColorDimensionConfig;
+  pointSize?: common.ScaleDimensionConfig;
   /**
    * Manual Mode
    */
   series: Array<ScatterSeriesConfig>;
   seriesMapping?: SeriesMapping;
+  show?: ScatterShow;
 }
 
 export const defaultOptions: Partial<Options> = {
   series: [],
+  show: ScatterShow.Points,
 };

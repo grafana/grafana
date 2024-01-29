@@ -30,7 +30,8 @@ import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
 import { DEFAULT_POINT_SIZE } from './config';
 import { isGraphable } from './dims';
-import { FieldConfig, defaultFieldConfig, Options, ScatterShow } from './panelcfg.gen';
+// import { FieldConfig, defaultFieldConfig, Options, ScatterShow } from './panelcfg.gen';
+import { Options, ScatterShow } from './panelcfg.gen';
 import { DimensionValues, ScatterHoverCallback, ScatterSeries } from './types';
 
 export interface ScatterPanelInfo {
@@ -90,7 +91,8 @@ function getScatterSeries(
   frameIndex: number,
   xIndex: number,
   yIndex: number,
-  dims: Dims
+  dims: Dims,
+  options: Options
 ): ScatterSeries {
   const frame = frames[frameIndex];
   const y = frame.fields[yIndex];
@@ -104,7 +106,7 @@ function getScatterSeries(
     ? config.theme2.visualization.getColorByName(dims.pointColorFixed)
     : getFieldSeriesColor(y, config.theme2).color;
   let pointColor: DimensionValues<string> = () => seriesColor;
-  const fieldConfig: FieldConfig = { ...defaultFieldConfig, ...y.config.custom };
+  // const fieldConfig: FieldConfig = { ...defaultFieldConfig, ...y.config.custom };
   let pointColorMode = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic);
   if (dims.pointColorIndex) {
     const f = frames[frameIndex].fields[dims.pointColorIndex];
@@ -178,12 +180,12 @@ function getScatterSeries(
       ];
     },
 
-    showLine: fieldConfig.show !== ScatterShow.Points,
-    lineWidth: fieldConfig.lineWidth ?? 2,
-    lineStyle: fieldConfig.lineStyle!,
+    showLine: options.show !== ScatterShow.Points,
+    lineWidth: options.lineWidth ?? 2,
+    lineStyle: options.lineStyle!,
     lineColor: () => seriesColor,
 
-    showPoints: fieldConfig.show !== ScatterShow.Lines ? VisibilityMode.Always : VisibilityMode.Never,
+    showPoints: options.show !== ScatterShow.Lines ? VisibilityMode.Always : VisibilityMode.Never,
     pointSize,
     pointColor,
     pointSymbol: (frame: DataFrame, from?: number) => 'circle', // single field, multiple symbols.... kinda equals multiple series 🤔
@@ -236,12 +238,16 @@ function prepSeries(options: Options, frames: DataFrame[]): ScatterSeries[] {
           }
 
           const dims: Dims = {
-            pointColorFixed: series.pointColor?.fixed,
-            pointColorIndex: findFieldIndex(series.pointColor?.field, frame, frames),
-            pointSizeConfig: series.pointSize,
-            pointSizeIndex: findFieldIndex(series.pointSize?.field, frame, frames),
+            // pointColorFixed: series.pointColor?.fixed,
+            // pointColorIndex: findFieldIndex(series.pointColor?.field, frame, frames),
+            // pointSizeConfig: series.pointSize,
+            // pointSizeIndex: findFieldIndex(series.pointSize?.field, frame, frames),
+            pointColorFixed: options.pointColor?.fixed,
+            pointColorIndex: findFieldIndex(options.pointColor?.field, frame, frames),
+            pointSizeConfig: options.pointSize,
+            pointSizeIndex: findFieldIndex(options.pointSize?.field, frame, frames),
           };
-          scatterSeries.push(getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex, dims));
+          scatterSeries.push(getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex, dims, options));
         }
       }
     }
@@ -277,7 +283,9 @@ function prepSeries(options: Options, frames: DataFrame[]): ScatterSeries[] {
   if (!numericIndices.length) {
     throw 'No Y values';
   }
-  return numericIndices.map((yIndex) => getScatterSeries(seriesIndex++, frames, frameIndex, xIndex!, yIndex, {}));
+  return numericIndices.map((yIndex) =>
+    getScatterSeries(seriesIndex++, frames, frameIndex, xIndex!, yIndex, {}, options)
+  );
 }
 
 interface DrawBubblesOpts {

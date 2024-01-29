@@ -11,7 +11,8 @@ import { Button, IconButton, useStyles2 } from '@grafana/ui';
 import { LayerName } from 'app/core/components/Layers/LayerName';
 
 import { ScatterSeriesEditor } from './ScatterSeriesEditor';
-import { Options, ScatterSeriesConfig, defaultFieldConfig } from './panelcfg.gen';
+// import { Options, ScatterSeriesConfig, defaultFieldConfig } from './panelcfg.gen';
+import { Options, ScatterSeriesConfig } from './panelcfg.gen';
 
 export const ManualEditor = ({
   value,
@@ -36,8 +37,8 @@ export const ManualEditor = ({
     onChange([
       ...value,
       {
-        pointColor: undefined,
-        pointSize: defaultFieldConfig.pointSize,
+        // pointColor: undefined,
+        // pointSize: defaultFieldConfig.pointSize,
       },
     ]);
     setSelected(value.length);

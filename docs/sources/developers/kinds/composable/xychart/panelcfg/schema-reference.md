@@ -45,13 +45,7 @@ It extends [HideableFieldConfig](#hideablefieldconfig) and [AxisConfig](#axiscon
 | `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       |         | *(Inherited from [HideableFieldConfig](#hideablefieldconfig))*<br/>TODO docs                                                            |
 | `labelValue`        | [TextDimensionConfig](#textdimensionconfig)         | No       |         |                                                                                                                                         |
 | `label`             | string                                              | No       |         | TODO docs<br/>Possible values are: `auto`, `never`, `always`.                                                                           |
-| `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       |         |                                                                                                                                         |
-| `lineStyle`         | [LineStyle](#linestyle)                             | No       |         | TODO docs                                                                                                                               |
-| `lineWidth`         | integer                                             | No       |         | Constraint: `>=0 & <=2147483647`.                                                                                                       |
-| `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       |         |                                                                                                                                         |
-| `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       |         |                                                                                                                                         |
 | `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       |         | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs                                                                              |
-| `show`              | string                                              | No       |         | Possible values are: `points`, `lines`, `points+lines`.                                                                                 |
 
 ### AxisConfig
 
@@ -80,21 +74,6 @@ TODO docs
 | `linearThreshold` | number | No       |         |                                                                          |
 | `log`             | number | No       |         |                                                                          |
 
-### ColorDimensionConfig
-
-It extends [BaseDimensionConfig](#basedimensionconfig).
-
-| Property | Type   | Required | Default | Description                                                                                                  |
-|----------|--------|----------|---------|--------------------------------------------------------------------------------------------------------------|
-| `field`  | string | No       |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))*<br/>fixed: T -- will be added by each element |
-| `fixed`  | string | No       |         |                                                                                                              |
-
-### BaseDimensionConfig
-
-| Property | Type   | Required | Default | Description                               |
-|----------|--------|----------|---------|-------------------------------------------|
-| `field`  | string | No       |         | fixed: T -- will be added by each element |
-
 ### HideSeriesConfig
 
 TODO docs
@@ -113,27 +92,6 @@ TODO docs
 |------------|---------------------------------------|----------|---------|-------------|
 | `hideFrom` | [HideSeriesConfig](#hideseriesconfig) | No       |         | TODO docs   |
 
-### LineStyle
-
-TODO docs
-
-| Property | Type     | Required | Default | Description                                            |
-|----------|----------|----------|---------|--------------------------------------------------------|
-| `dash`   | number[] | No       |         |                                                        |
-| `fill`   | string   | No       |         | Possible values are: `solid`, `dash`, `dot`, `square`. |
-
-### ScaleDimensionConfig
-
-It extends [BaseDimensionConfig](#basedimensionconfig).
-
-| Property | Type   | Required | Default | Description                                                                                                  |
-|----------|--------|----------|---------|--------------------------------------------------------------------------------------------------------------|
-| `max`    | number | **Yes**  |         |                                                                                                              |
-| `min`    | number | **Yes**  |         |                                                                                                              |
-| `field`  | string | No       |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))*<br/>fixed: T -- will be added by each element |
-| `fixed`  | number | No       |         |                                                                                                              |
-| `mode`   | string | No       |         | Possible values are: `linear`, `quad`.                                                                       |
-
 ### TextDimensionConfig
 
 It extends [BaseDimensionConfig](#basedimensionconfig).
@@ -143,6 +101,12 @@ It extends [BaseDimensionConfig](#basedimensionconfig).
 | `mode`   | string | **Yes**  |         | Possible values are: `fixed`, `field`, `template`.                                                           |
 | `field`  | string | No       |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))*<br/>fixed: T -- will be added by each element |
 | `fixed`  | string | No       |         |                                                                                                              |
+
+### BaseDimensionConfig
+
+| Property | Type   | Required | Default | Description                               |
+|----------|--------|----------|---------|-------------------------------------------|
+| `field`  | string | No       |         | fixed: T -- will be added by each element |
 
 ### Options
 
@@ -154,7 +118,31 @@ It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#opt
 | `legend`        | [VizLegendOptions](#vizlegendoptions)         | **Yes**  |         | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs   |
 | `series`        | [ScatterSeriesConfig](#scatterseriesconfig)[] | **Yes**  |         | Manual Mode                                                                |
 | `tooltip`       | [VizTooltipOptions](#viztooltipoptions)       | **Yes**  |         | *(Inherited from [OptionsWithTooltip](#optionswithtooltip))*<br/>TODO docs |
+| `lineColor`     | [ColorDimensionConfig](#colordimensionconfig) | No       |         |                                                                            |
+| `lineStyle`     | [LineStyle](#linestyle)                       | No       |         | TODO docs                                                                  |
+| `lineWidth`     | integer                                       | No       |         | Constraint: `>=0 & <=2147483647`.                                          |
+| `pointColor`    | [ColorDimensionConfig](#colordimensionconfig) | No       |         |                                                                            |
+| `pointSize`     | [ScaleDimensionConfig](#scaledimensionconfig) | No       |         |                                                                            |
 | `seriesMapping` | string                                        | No       |         | Auto is "table" in the UI<br/>Possible values are: `auto`, `manual`.       |
+| `show`          | string                                        | No       |         | Possible values are: `points`, `lines`, `points+lines`.                    |
+
+### ColorDimensionConfig
+
+It extends [BaseDimensionConfig](#basedimensionconfig).
+
+| Property | Type   | Required | Default | Description                                                                                                  |
+|----------|--------|----------|---------|--------------------------------------------------------------------------------------------------------------|
+| `field`  | string | No       |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))*<br/>fixed: T -- will be added by each element |
+| `fixed`  | string | No       |         |                                                                                                              |
+
+### LineStyle
+
+TODO docs
+
+| Property | Type     | Required | Default | Description                                            |
+|----------|----------|----------|---------|--------------------------------------------------------|
+| `dash`   | number[] | No       |         |                                                        |
+| `fill`   | string   | No       |         | Possible values are: `solid`, `dash`, `dot`, `square`. |
 
 ### OptionsWithLegend
 
@@ -199,6 +187,18 @@ TODO docs
 | `maxHeight` | number | No       |         |                                                               |
 | `maxWidth`  | number | No       |         |                                                               |
 
+### ScaleDimensionConfig
+
+It extends [BaseDimensionConfig](#basedimensionconfig).
+
+| Property | Type   | Required | Default | Description                                                                                                  |
+|----------|--------|----------|---------|--------------------------------------------------------------------------------------------------------------|
+| `max`    | number | **Yes**  |         |                                                                                                              |
+| `min`    | number | **Yes**  |         |                                                                                                              |
+| `field`  | string | No       |         | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))*<br/>fixed: T -- will be added by each element |
+| `fixed`  | number | No       |         |                                                                                                              |
+| `mode`   | string | No       |         | Possible values are: `linear`, `quad`.                                                                       |
+
 ### ScatterSeriesConfig
 
 It extends [FieldConfig](#fieldconfig).
@@ -217,14 +217,8 @@ It extends [FieldConfig](#fieldconfig).
 | `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>TODO docs                                                                              |
 | `labelValue`        | [TextDimensionConfig](#textdimensionconfig)         | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
 | `label`             | string                                              | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>TODO docs<br/>Possible values are: `auto`, `never`, `always`.                          |
-| `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
-| `lineStyle`         | [LineStyle](#linestyle)                             | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>TODO docs                                                                              |
-| `lineWidth`         | integer                                             | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>Constraint: `>=0 & <=2147483647`.                                                      |
 | `name`              | string                                              | No       |         |                                                                                                                                           |
-| `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
-| `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
 | `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>TODO docs                                                                              |
-| `show`              | string                                              | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>Possible values are: `points`, `lines`, `points+lines`.                                |
 | `x`                 | string                                              | No       |         |                                                                                                                                           |
 | `y`                 | string                                              | No       |         |                                                                                                                                           |
 

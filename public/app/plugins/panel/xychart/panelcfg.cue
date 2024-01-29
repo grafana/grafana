@@ -40,17 +40,6 @@ composableKinds: PanelCfg: {
 					common.HideableFieldConfig
 					common.AxisConfig
 
-					show?: ScatterShow & (*"points" | _)
-
-					pointSize?:  common.ScaleDimensionConfig
-					pointColor?: common.ColorDimensionConfig
-					// pointSymbol?: common.ResourceDimensionConfig
-					// fillOpacity?: number & >=0 & <=1 | *0.5
-
-					lineColor?: common.ColorDimensionConfig
-					lineWidth?: int32 & >=0
-					lineStyle?: common.LineStyle
-
 					label?:      common.VisibilityMode & (*"auto" | _)
 					labelValue?: common.TextDimensionConfig
 				} @cuetsy(kind="interface",TSVeneer="type")
@@ -73,6 +62,17 @@ composableKinds: PanelCfg: {
 
 					// Manual Mode
 					series: [...ScatterSeriesConfig]
+
+					show?: ScatterShow & (*"points" | _)
+
+					pointSize?:  common.ScaleDimensionConfig
+					pointColor?: common.ColorDimensionConfig
+					// pointSymbol?: common.ResourceDimensionConfig
+					// fillOpacity?: number & >=0 & <=1 | *0.5
+
+					lineColor?: common.ColorDimensionConfig
+					lineWidth?: int32 & >=0
+					lineStyle?: common.LineStyle
 				} @cuetsy(kind="interface")
 			}
 		}]

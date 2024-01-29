@@ -3,7 +3,7 @@ import React from 'react';
 import { StandardEditorProps, FieldNamePickerBaseNameMode } from '@grafana/data';
 import { Field } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
-import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
+// import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 
 import { Options, ScatterSeriesConfig } from './panelcfg.gen';
 
@@ -46,7 +46,7 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode }: 
           }}
         />
       </Field>
-      <Field label={'Point color'}>
+      {/* <Field label={'Point color'}>
         <ColorDimensionEditor
           value={value.pointColor!}
           context={context}
@@ -61,8 +61,8 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode }: 
             },
           }}
         />
-      </Field>
-      <Field label={'Point size'}>
+      </Field> */}
+      {/* <Field label={'Point size'}>
         <ScaleDimensionEditor
           value={value.pointSize!}
           context={context}
@@ -76,7 +76,7 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode }: 
             },
           }}
         />
-      </Field>
+      </Field> */}
     </div>
   );
 };
