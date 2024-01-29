@@ -44,18 +44,18 @@ On visualizations that support it, Grafana sets default threshold values of:
 
 The **Base** value represents minus infinity. It is generally the “good” color.
 
-## Threshold options
+## Thresholds options
 
 TBA
 
-### Threshold mode
+### Thresholds mode
 
 There are two types of thresholds:
 
 - **Absolute** thresholds are defined by a number. For example, 80 on a scale of 1 to 150.
 - **Percentage** thresholds are defined relative to minimum or maximum. For example, 80 percent.
 
-### Show threshold
+### Show thresholds
 
 TBA
 
