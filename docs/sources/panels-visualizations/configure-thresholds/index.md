@@ -34,12 +34,18 @@ You can use thresholds to:
 - Color cell text or background in the [Table visualization][]
 - Define regions and region colors in the [State timeline visualization][]
 
+## Threshold options
+
+### Threshold mode
+
 There are two types of thresholds:
 
 - **Absolute** thresholds are defined by a number. For example, 80 on a scale of 1 to 150.
 - **Percentage** thresholds are defined relative to minimum or maximum. For example, 80 percent.
 
-### Default thresholds
+### Show threshold
+
+## Default thresholds
 
 On visualizations that support it, Grafana sets default threshold values of:
 
