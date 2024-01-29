@@ -181,6 +181,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       version: result.version,
     };
 
+    this.stopTrackingChanges();
     this.setState({
       version: result.version,
       isDirty: false,
@@ -194,9 +195,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         folderUid: folderUid,
       },
     });
-
-    this.propagateEditModeChange();
-    this.stopTrackingChanges();
+    this.startTrackingChanges();
   }
 
   private propagateEditModeChange() {
