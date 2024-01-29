@@ -225,6 +225,7 @@ func (s *Service) Delete(ctx context.Context, provider string) error {
 	currentSettings, err := s.GetForProvider(ctx, provider)
 	if err != nil {
 		s.logger.Error("failed to get current settings, skipping reload", "provider", provider, "error", err)
+		s.metrics.reloadFailures.WithLabelValues(provider).Inc()
 		return nil
 	}
 
