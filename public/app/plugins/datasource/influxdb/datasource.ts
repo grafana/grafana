@@ -311,7 +311,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // i.e. /^$myVar$/ or /$myVar/
     const regex = new RegExp(`\\/(?:\\^)?\\$${variable.name}(?:\\$)?\\/`, 'gm');
     if (regex.test(query)) {
-      return escapeRegex(value.toString());
+      if (typeof value === 'string') {
+        return escapeRegex(value);
+      }
+
+      // If the value is a string array first escape them then join them with pipe
+      return value.map((v) => escapeRegex(v)).join('|');
     }
 
     return value;
