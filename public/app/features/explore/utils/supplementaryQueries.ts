@@ -130,13 +130,19 @@ export const getSupplementaryQueryProvider = (
     dsRequest.targets = targets;
 
     if (hasSupplementaryQuerySupport(datasource, type)) {
-      const provider = datasource.getDataProvider(type, dsRequest);
-      if (!provider) {
-        return provider;
+      if (datasource.getDataProvider) {
+        return datasource.getDataProvider(type, dsRequest);
+      } else if (datasource.getSupplementaryRequest) {
+        const provider = datasource.getSupplementaryRequest(type, dsRequest);
+        if (!provider) {
+          return provider;
+        }
+        return type === SupplementaryQueryType.LogsVolume
+          ? queryLogsVolume(datasource, provider, { targets: dsRequest.targets })
+          : queryLogsSample(datasource, provider);
+      } else {
+        return undefined;
       }
-      return type === SupplementaryQueryType.LogsVolume
-        ? queryLogsVolume(datasource, provider, { targets: dsRequest.targets })
-        : queryLogsSample(datasource, provider);
     } else {
       return getSupplementaryQueryFallback(type, explorePanelData, targets, datasource.name);
     }

@@ -47,7 +47,7 @@ class MockDataSourceWithSupplementaryQuerySupport
     return from([{ state: LoadingState.Done, data }]);
   }
 
-  getDataProvider(
+  getSupplementaryRequest(
     type: SupplementaryQueryType,
     request: DataQueryRequest<DataQuery>
   ): DataQueryRequest<DataQuery> | undefined {
