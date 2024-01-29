@@ -106,7 +106,7 @@
     "slate-react": "0.22.10",
     "tinycolor2": "1.6.0",
     "tslib": "2.6.2",
-    "uplot": "1.6.29",
+    "uplot": "1.6.30",
     "uuid": "9.0.1"
   },
   "devDependencies": {
