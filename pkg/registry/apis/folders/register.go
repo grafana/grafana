@@ -62,7 +62,7 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&v0alpha1.Folder{},
 		&v0alpha1.FolderList{},
-		&v0alpha1.FolderResult{},
+		&v0alpha1.FolderInfoList{},
 	)
 }
 

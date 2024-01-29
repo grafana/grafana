@@ -16,11 +16,11 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.Folder":       schema_pkg_apis_folder_v0alpha1_Folder(ref),
-		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.FolderInfo":   schema_pkg_apis_folder_v0alpha1_FolderInfo(ref),
-		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.FolderList":   schema_pkg_apis_folder_v0alpha1_FolderList(ref),
-		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.FolderResult": schema_pkg_apis_folder_v0alpha1_FolderResult(ref),
-		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.Spec":         schema_pkg_apis_folder_v0alpha1_Spec(ref),
+		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.Folder":         schema_pkg_apis_folder_v0alpha1_Folder(ref),
+		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.FolderInfo":     schema_pkg_apis_folder_v0alpha1_FolderInfo(ref),
+		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.FolderInfoList": schema_pkg_apis_folder_v0alpha1_FolderInfoList(ref),
+		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.FolderList":     schema_pkg_apis_folder_v0alpha1_FolderList(ref),
+		"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.Spec":           schema_pkg_apis_folder_v0alpha1_Spec(ref),
 	}
 }
 
@@ -101,58 +101,11 @@ func schema_pkg_apis_folder_v0alpha1_FolderInfo(ref common.ReferenceCallback) co
 	}
 }
 
-func schema_pkg_apis_folder_v0alpha1_FolderList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_folder_v0alpha1_FolderInfoList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
-						},
-					},
-					"items": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/folder/v0alpha1.Folder"),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.Folder", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
-	}
-}
-
-func schema_pkg_apis_folder_v0alpha1_FolderResult(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "FolderInfoList returns a list of folder indentifiers (parents or children)",
+				Description: "FolderInfoList returns a list of folder references (parents or children) Unlike FolderList, each item is not a full k8s object",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
@@ -201,6 +154,53 @@ func schema_pkg_apis_folder_v0alpha1_FolderResult(ref common.ReferenceCallback) 
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.FolderInfo", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_folder_v0alpha1_FolderList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/folder/v0alpha1.Folder"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/folder/v0alpha1.Folder", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 

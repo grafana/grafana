@@ -28,9 +28,10 @@ type FolderList struct {
 	Items []Folder `json:"items,omitempty"`
 }
 
-// FolderInfoList returns a list of folder indentifiers (parents or children)
+// FolderInfoList returns a list of folder references (parents or children)
+// Unlike FolderList, each item is not a full k8s object
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type FolderResult struct {
+type FolderInfoList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 

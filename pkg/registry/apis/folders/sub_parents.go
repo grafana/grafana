@@ -19,7 +19,7 @@ type subParentsREST struct {
 var _ = rest.Connecter(&subParentsREST{})
 
 func (r *subParentsREST) New() runtime.Object {
-	return &v0alpha1.FolderResult{}
+	return &v0alpha1.FolderInfoList{}
 }
 
 func (r *subParentsREST) Destroy() {
@@ -50,7 +50,7 @@ func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		info := &v0alpha1.FolderResult{
+		info := &v0alpha1.FolderInfoList{
 			Items: make([]v0alpha1.FolderInfo, 0),
 		}
 		for _, parent := range parents {

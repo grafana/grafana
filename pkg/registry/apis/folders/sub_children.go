@@ -20,7 +20,7 @@ type subChildrenREST struct {
 var _ = rest.Connecter(&subChildrenREST{})
 
 func (r *subChildrenREST) New() runtime.Object {
-	return &v0alpha1.FolderResult{}
+	return &v0alpha1.FolderInfoList{}
 }
 
 func (r *subChildrenREST) Destroy() {
@@ -58,7 +58,7 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, opts runtime
 			return
 		}
 
-		info := &v0alpha1.FolderResult{
+		info := &v0alpha1.FolderInfoList{
 			Items: make([]v0alpha1.FolderInfo, 0),
 		}
 		for _, parent := range children {
