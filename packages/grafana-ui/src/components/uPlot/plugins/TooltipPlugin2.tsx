@@ -151,7 +151,7 @@ export const TooltipPlugin2 = ({
     let _style = style;
 
     const updHovering = () => {
-      _isHovering = closestSeriesIdx != null || hoverMode === TooltipHoverMode.xAll && _someSeriesIdx;
+      _isHovering = closestSeriesIdx != null || (hoverMode === TooltipHoverMode.xAll && _someSeriesIdx);
     };
 
     let offsetX = 0;
@@ -297,40 +297,46 @@ export const TooltipPlugin2 = ({
       const haltAncestorId = 'pageContent';
 
       // if we're in a container that can clip the tooltip, we should try to stay within that rather than window edges
-      u.over.addEventListener('mouseenter', () => {
+      u.over.addEventListener(
+        'mouseenter',
+        () => {
+          // clamp to viewport bounds
+          let htmlEl = document.documentElement;
+          let winWid = htmlEl.clientWidth - 16;
+          let winHgt = htmlEl.clientHeight - 16;
 
-        // clamp to viewport bounds
-        let htmlEl = document.documentElement;
-        let winWid = htmlEl.clientWidth - 16;
-        let winHgt = htmlEl.clientHeight - 16;
+          let lft = 0,
+            top = 0,
+            rgt = winWid,
+            btm = winHgt;
 
-        let lft = 0, top = 0, rgt = winWid, btm = winHgt;
+          // find nearest scrollable container where overflow is not visible, (stop at #pageContent)
+          let par: HTMLElement | null = u.root;
 
-        // find nearest scrollable container where overflow is not visible, (stop at #pageContent)
-        let par: HTMLElement | null = u.root;
+          while (par != null && par.id !== haltAncestorId) {
+            let style = getComputedStyle(par);
+            let overflowX = style.getPropertyValue('overflow-x');
+            let overflowY = style.getPropertyValue('overflow-y');
 
-        while (par != null && par.id !== haltAncestorId) {
-          let style = getComputedStyle(par);
-          let overflowX = style.getPropertyValue('overflow-x');
-          let overflowY = style.getPropertyValue('overflow-y');
+            if (overflowX !== 'visible' || overflowY !== 'visible') {
+              let rect = par.getBoundingClientRect();
+              lft = Math.max(rect.x, lft);
+              top = Math.max(rect.y, top);
+              rgt = Math.min(lft + rect.width, rgt);
+              btm = Math.min(top + rect.height, btm);
+              break;
+            }
 
-          if (overflowX !== 'visible' || overflowY !== 'visible') {
-            let rect = par.getBoundingClientRect();
-            lft = Math.max(rect.x, lft);
-            top = Math.max(rect.y, top);
-            rgt = Math.min(lft + rect.width, rgt);
-            btm = Math.min(top + rect.height, btm);
-            break;
+            par = par.parentElement;
           }
 
-          par = par.parentElement;
-        }
-
-        containRect.lft = lft;
-        containRect.top = top;
-        containRect.rgt = rgt
-        containRect.btm = btm;
-      }, {capture: true});
+          containRect.lft = lft;
+          containRect.top = top;
+          containRect.rgt = rgt;
+          containRect.btm = btm;
+        },
+        { capture: true }
+      );
     });
 
     config.addHook('setSelect', (u) => {
