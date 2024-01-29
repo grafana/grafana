@@ -6,6 +6,7 @@ import { createErrorNotification, createSuccessNotification } from 'app/core/cop
 import { dispatch } from 'app/store/store';
 
 import { copyStringToClipboard } from './explore';
+import { AbsoluteTimeRange, LogRowModel } from '@grafana/data';
 
 function buildHostUrl() {
   return `${window.location.protocol}//${window.location.host}${config.appSubUrl}`;
@@ -37,3 +38,33 @@ export const createAndCopyShortLink = async (path: string) => {
     dispatch(notifyApp(createErrorNotification('Error generating shortened link')));
   }
 };
+
+export function getPermalinkRange(row: LogRowModel, rows: LogRowModel[], absoluteRange: AbsoluteTimeRange) {
+  const range = {
+    from: absoluteRange.from,
+    to: absoluteRange.to,
+  };
+  if (!config.featureToggles.logsInfiniteScrolling) {
+    return range;
+  }
+
+  // With infinite scrolling, the time range of the log line can be after the absolute range or beyond the request line limit, so we need to adjust
+  // Look for the previous sibling log, and use its timestamp
+  const allLogs = rows.filter((logRow) => logRow.dataFrame.refId === row.dataFrame.refId);
+  const prevLog = allLogs[allLogs.indexOf(row) - 1];
+
+  if (row.timeEpochMs > absoluteRange.to && !prevLog) {
+    // Because there's no sibling and the current `to` is oldest than the log, we have no reference we can use for the interval
+    // This only happens when you scroll into the future and you want to share the first log of the list
+    return {
+      from: absoluteRange.from,
+      // Slide 1ms otherwise it's very likely to be omitted in the results
+      to: row.timeEpochMs + 1,
+    };
+  }
+
+  return {
+    from: absoluteRange.from,
+    to: prevLog ? prevLog.timeEpochMs : absoluteRange.to,
+  };
+}
