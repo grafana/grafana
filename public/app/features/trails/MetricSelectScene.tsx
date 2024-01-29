@@ -222,7 +222,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const styles = useStyles2(getStyles);
 
     const searchTooStrictWarning = children.length === 0 && searchQuery && (
-      <i>There are no results found. Try adjusting your search or filters.</i>
+      <div className={styles.alternateMessage}>There are no results found. Try adjusting your search or filters.</div>
     );
 
     return (
@@ -323,6 +323,11 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       gap: theme.spacing(2),
       marginBottom: theme.spacing(1),
+    }),
+    alternateMessage: css({
+      fontStyle: 'italic',
+      marginTop: theme.spacing(7),
+      textAlign: 'center',
     }),
   };
 }
