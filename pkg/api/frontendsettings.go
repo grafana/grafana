@@ -165,29 +165,29 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	frontendSettings := &dtos.FrontendSettingsDTO{
 		DefaultDatasource:                   defaultDS,
 		Datasources:                         dataSources,
-		MinRefreshInterval:                  setting.MinRefreshInterval,
+		MinRefreshInterval:                  hs.Cfg.MinRefreshInterval,
 		Panels:                              panels,
 		Apps:                                apps,
 		AppUrl:                              hs.Cfg.AppURL,
 		AppSubUrl:                           hs.Cfg.AppSubURL,
-		AllowOrgCreate:                      (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		AllowOrgCreate:                      (hs.Cfg.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		AuthProxyEnabled:                    hs.Cfg.AuthProxyEnabled,
 		LdapEnabled:                         hs.Cfg.LDAPAuthEnabled,
 		JwtHeaderName:                       hs.Cfg.JWTAuthHeaderName,
 		JwtUrlLogin:                         hs.Cfg.JWTAuthURLLogin,
-		AlertingErrorOrTimeout:              setting.AlertingErrorOrTimeout,
-		AlertingNoDataOrNullValues:          setting.AlertingNoDataOrNullValues,
-		AlertingMinInterval:                 setting.AlertingMinInterval,
+		AlertingErrorOrTimeout:              hs.Cfg.AlertingErrorOrTimeout,
+		AlertingNoDataOrNullValues:          hs.Cfg.AlertingNoDataOrNullValues,
+		AlertingMinInterval:                 hs.Cfg.AlertingMinInterval,
 		LiveEnabled:                         hs.Cfg.LiveMaxConnections != 0,
 		AutoAssignOrg:                       hs.Cfg.AutoAssignOrg,
-		VerifyEmailEnabled:                  setting.VerifyEmailEnabled,
-		SigV4AuthEnabled:                    setting.SigV4AuthEnabled,
-		AzureAuthEnabled:                    setting.AzureAuthEnabled,
+		VerifyEmailEnabled:                  hs.Cfg.VerifyEmailEnabled,
+		SigV4AuthEnabled:                    hs.Cfg.SigV4AuthEnabled,
+		AzureAuthEnabled:                    hs.Cfg.AzureAuthEnabled,
 		RbacEnabled:                         true,
-		ExploreEnabled:                      setting.ExploreEnabled,
-		HelpEnabled:                         setting.HelpEnabled,
-		ProfileEnabled:                      setting.ProfileEnabled,
-		NewsFeedEnabled:                     setting.NewsFeedEnabled,
+		ExploreEnabled:                      hs.Cfg.ExploreEnabled,
+		HelpEnabled:                         hs.Cfg.HelpEnabled,
+		ProfileEnabled:                      hs.Cfg.ProfileEnabled,
+		NewsFeedEnabled:                     hs.Cfg.NewsFeedEnabled,
 		QueryHistoryEnabled:                 hs.Cfg.QueryHistoryEnabled,
 		GoogleAnalyticsId:                   hs.Cfg.GoogleAnalyticsID,
 		GoogleAnalytics4Id:                  hs.Cfg.GoogleAnalytics4ID,
@@ -201,12 +201,12 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		ApplicationInsightsConnectionString: hs.Cfg.ApplicationInsightsConnectionString,
 		ApplicationInsightsEndpointUrl:      hs.Cfg.ApplicationInsightsEndpointUrl,
 		DisableLoginForm:                    hs.Cfg.DisableLoginForm,
-		DisableUserSignUp:                   !setting.AllowUserSignUp,
-		LoginHint:                           setting.LoginHint,
-		PasswordHint:                        setting.PasswordHint,
-		ExternalUserMngInfo:                 setting.ExternalUserMngInfo,
-		ExternalUserMngLinkUrl:              setting.ExternalUserMngLinkUrl,
-		ExternalUserMngLinkName:             setting.ExternalUserMngLinkName,
+		DisableUserSignUp:                   !hs.Cfg.AllowUserSignUp,
+		LoginHint:                           hs.Cfg.LoginHint,
+		PasswordHint:                        hs.Cfg.PasswordHint,
+		ExternalUserMngInfo:                 hs.Cfg.ExternalUserMngInfo,
+		ExternalUserMngLinkUrl:              hs.Cfg.ExternalUserMngLinkUrl,
+		ExternalUserMngLinkName:             hs.Cfg.ExternalUserMngLinkName,
 		ViewersCanEdit:                      hs.Cfg.ViewersCanEdit,
 		AngularSupportEnabled:               hs.Cfg.AngularSupportEnabled,
 		EditorsCanAdmin:                     hs.Cfg.EditorsCanAdmin,
@@ -228,7 +228,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			Edition:       hs.License.Edition(),
 			LatestVersion: hs.grafanaUpdateChecker.LatestVersion(),
 			HasUpdate:     hs.grafanaUpdateChecker.UpdateAvailable(),
-			Env:           setting.Env,
+			Env:           hs.Cfg.Env,
 		},
 
 		LicenseInfo: dtos.FrontendSettingsLicenseInfoDTO{
@@ -303,8 +303,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		frontendSettings.UnifiedAlertingEnabled = *hs.Cfg.UnifiedAlerting.Enabled
 	}
 
-	if setting.AlertingEnabled != nil {
-		frontendSettings.AlertingEnabled = *setting.AlertingEnabled
+	if hs.Cfg.AlertingEnabled != nil {
+		frontendSettings.AlertingEnabled = *(hs.Cfg.AlertingEnabled)
 	}
 
 	// It returns false if the provider is not enabled or the skip org role sync is false.

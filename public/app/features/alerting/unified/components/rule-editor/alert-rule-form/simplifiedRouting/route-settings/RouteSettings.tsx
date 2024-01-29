@@ -38,6 +38,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
     control,
     watch,
     register,
+    setValue,
     formState: { errors },
   } = useFormContext<RuleFormValues>();
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues([]));

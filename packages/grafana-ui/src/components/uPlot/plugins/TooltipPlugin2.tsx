@@ -13,6 +13,7 @@ import { CloseButton } from './CloseButton';
 
 export const DEFAULT_TOOLTIP_WIDTH = 300;
 export const DEFAULT_TOOLTIP_HEIGHT = 600;
+export const TOOLTIP_OFFSET = 10;
 
 // todo: barchart? histogram?
 export const enum TooltipHoverMode {
@@ -40,10 +41,11 @@ interface TooltipPlugin2Props {
     isPinned: boolean,
     dismiss: () => void,
     // selected time range (for annotation triggering)
-    timeRange: TimeRange2 | null
+    timeRange: TimeRange2 | null,
+    viaSync: boolean
   ) => React.ReactNode;
 
-  maxWidth?: number;
+  maxWidth?: number | string;
   maxHeight?: number;
 }
 
@@ -113,7 +115,7 @@ export const TooltipPlugin2 = ({
 
   const sizeRef = useRef<TooltipContainerSize>();
 
-  maxWidth ??= DEFAULT_TOOLTIP_WIDTH;
+  maxWidth = isPinned ? 'none' : maxWidth ?? DEFAULT_TOOLTIP_WIDTH;
   maxHeight ??= DEFAULT_TOOLTIP_HEIGHT;
   const styles = useStyles2(getStyles, maxWidth, maxHeight);
 
@@ -144,24 +146,28 @@ export const TooltipPlugin2 = ({
 
     let _plot = plot;
     let _isHovering = isHovering;
+    let _someSeriesIdx = false;
     let _isPinned = isPinned;
     let _style = style;
+
+    const updateHovering = () => {
+      _isHovering = closestSeriesIdx != null || (hoverMode === TooltipHoverMode.xAll && _someSeriesIdx);
+    };
 
     let offsetX = 0;
     let offsetY = 0;
 
-    let htmlEl = document.documentElement;
-    let winWidth = htmlEl.clientWidth - 16;
-    let winHeight = htmlEl.clientHeight - 16;
-
-    window.addEventListener('resize', (e) => {
-      winWidth = htmlEl.clientWidth - 5;
-      winHeight = htmlEl.clientHeight - 5;
-    });
+    let containRect = {
+      lft: 0,
+      top: 0,
+      rgt: screen.width,
+      btm: screen.height,
+    };
 
     let selectedRange: TimeRange2 | null = null;
     let seriesIdxs: Array<number | null> = plot?.cursor.idxs!.slice()!;
     let closestSeriesIdx: number | null = null;
+    let viaSync = false;
 
     let pendingRender = false;
     let pendingPinned = false;
@@ -217,7 +223,7 @@ export const TooltipPlugin2 = ({
         isHovering: _isHovering,
         contents:
           _isHovering || selectedRange != null
-            ? renderRef.current(_plot!, seriesIdxs, closestSeriesIdx, _isPinned, dismiss, selectedRange)
+            ? renderRef.current(_plot!, seriesIdxs, closestSeriesIdx, _isPinned, dismiss, selectedRange, viaSync)
             : null,
         dismiss,
       };
@@ -225,6 +231,7 @@ export const TooltipPlugin2 = ({
       setState(state);
 
       selectedRange = null;
+      viaSync = false;
     };
 
     const dismiss = () => {
@@ -286,6 +293,51 @@ export const TooltipPlugin2 = ({
           }
         }
       });
+
+      const haltAncestorId = 'pageContent';
+      const scrollbarWidth = 16;
+
+      // if we're in a container that can clip the tooltip, we should try to stay within that rather than window edges
+      u.over.addEventListener(
+        'mouseenter',
+        () => {
+          // clamp to viewport bounds
+          let htmlEl = document.documentElement;
+          let winWid = htmlEl.clientWidth - scrollbarWidth;
+          let winHgt = htmlEl.clientHeight - scrollbarWidth;
+
+          let lft = 0,
+            top = 0,
+            rgt = winWid,
+            btm = winHgt;
+
+          // find nearest scrollable container where overflow is not visible, (stop at #pageContent)
+          let par: HTMLElement | null = u.root;
+
+          while (par != null && par.id !== haltAncestorId) {
+            let style = getComputedStyle(par);
+            let overflowX = style.getPropertyValue('overflow-x');
+            let overflowY = style.getPropertyValue('overflow-y');
+
+            if (overflowX !== 'visible' || overflowY !== 'visible') {
+              let rect = par.getBoundingClientRect();
+              lft = Math.max(rect.x, lft);
+              top = Math.max(rect.y, top);
+              rgt = Math.min(lft + rect.width, rgt);
+              btm = Math.min(top + rect.height, btm);
+              break;
+            }
+
+            par = par.parentElement;
+          }
+
+          containRect.lft = lft;
+          containRect.top = top;
+          containRect.rgt = rgt;
+          containRect.btm = btm;
+        },
+        { capture: true }
+      );
     });
 
     config.addHook('setSelect', (u) => {
@@ -368,87 +420,81 @@ export const TooltipPlugin2 = ({
       yDrag = false;
     });
 
-    // fires on data value hovers/unhovers (before setSeries)
-    config.addHook('setLegend', (u) => {
-      seriesIdxs = _plot?.cursor!.idxs!.slice()!;
-
-      let hoveredSeriesIdx = seriesIdxs.findIndex((v, i) => i > 0 && v != null);
-      let _isHoveringNow = hoveredSeriesIdx !== -1;
-
-      // setSeries may not fire if focus.prox is not set, so we set closestSeriesIdx here instead
-      if (hoverMode === TooltipHoverMode.xyOne) {
-        closestSeriesIdx = hoveredSeriesIdx;
-      }
-
-      if (_isHoveringNow) {
-        // create
-        if (!_isHovering) {
-          _isHovering = true;
-        }
-      } else {
-        // destroy...TODO: debounce this
-        if (_isHovering) {
-          _isHovering = false;
-        }
-      }
-
-      scheduleRender();
-    });
-
     // fires on series focus/proximity changes
     // e.g. to highlight the hovered/closest series
     // TODO: we only need this for multi/all mode?
     config.addHook('setSeries', (u, seriesIdx) => {
-      // don't jiggle focused series styling when there's only one series
-      // const isMultiSeries = u.series.length > 2;
-
-      // if (hoverModeRef.current === TooltipHoverMode.xAll && closestSeriesIdx !== seriesIdx) {
       closestSeriesIdx = seriesIdx;
+      updateHovering();
       scheduleRender();
-      // }
+    });
+
+    // fires on data value hovers/unhovers
+    config.addHook('setLegend', (u) => {
+      seriesIdxs = _plot?.cursor!.idxs!.slice()!;
+      _someSeriesIdx = seriesIdxs.some((v, i) => i > 0 && v != null);
+
+      updateHovering();
+      scheduleRender();
     });
 
     // fires on mousemoves
     config.addHook('setCursor', (u) => {
-      let { left = -10, top = -10 } = u.cursor;
+      let { left = -10, top = -10, event } = u.cursor;
 
       if (left >= 0 || top >= 0) {
-        let { width, height } = sizeRef.current!;
+        viaSync = event == null;
 
-        let clientX = u.rect.left + left;
-        let clientY = u.rect.top + top;
+        let transform = '';
 
-        if (offsetY) {
-          if (clientY + height < winHeight || clientY - height < 0) {
-            offsetY = 0;
-          } else if (offsetY !== -height) {
-            offsetY = -height;
-          }
+        // this means it's a synthetic event from uPlot's sync
+        if (viaSync) {
+          // TODO: smarter positioning here to avoid viewport clipping?
+          transform = `translateX(${left}px) translateY(${u.rect.height / 2}px) translateY(-50%)`;
         } else {
-          if (clientY + height > winHeight && clientY - height >= 0) {
-            offsetY = -height;
+          let { width, height } = sizeRef.current!;
+
+          width += TOOLTIP_OFFSET;
+          height += TOOLTIP_OFFSET;
+
+          let clientX = u.rect.left + left;
+          let clientY = u.rect.top + top;
+
+          if (offsetY !== 0) {
+            if (clientY + height < containRect.btm || clientY - height < 0) {
+              offsetY = 0;
+            } else if (offsetY !== -height) {
+              offsetY = -height;
+            }
+          } else {
+            if (clientY + height > containRect.btm && clientY - height >= 0) {
+              offsetY = -height;
+            }
           }
+
+          if (offsetX !== 0) {
+            if (clientX + width < containRect.rgt || clientX - width < 0) {
+              offsetX = 0;
+            } else if (offsetX !== -width) {
+              offsetX = -width;
+            }
+          } else {
+            if (clientX + width > containRect.rgt && clientX - width >= 0) {
+              offsetX = -width;
+            }
+          }
+
+          const shiftX = left + (offsetX === 0 ? TOOLTIP_OFFSET : -TOOLTIP_OFFSET);
+          const shiftY = top + (offsetY === 0 ? TOOLTIP_OFFSET : -TOOLTIP_OFFSET);
+
+          const reflectX = offsetX === 0 ? '' : 'translateX(-100%)';
+          const reflectY = offsetY === 0 ? '' : 'translateY(-100%)';
+
+          // TODO: to a transition only when switching sides
+          // transition: transform 100ms;
+
+          transform = `translateX(${shiftX}px) ${reflectX} translateY(${shiftY}px) ${reflectY}`;
         }
-
-        if (offsetX) {
-          if (clientX + width < winWidth || clientX - width < 0) {
-            offsetX = 0;
-          } else if (offsetX !== -width) {
-            offsetX = -width;
-          }
-        } else {
-          if (clientX + width > winWidth && clientX - width >= 0) {
-            offsetX = -width;
-          }
-        }
-
-        const shiftX = offsetX !== 0 ? 'translateX(-100%)' : '';
-        const shiftY = offsetY !== 0 ? 'translateY(-100%)' : '';
-
-        // TODO: to a transition only when switching sides
-        // transition: transform 100ms;
-
-        const transform = `${shiftX} translateX(${left}px) ${shiftY} translateY(${top}px)`;
 
         if (_isHovering) {
           if (domRef.current != null) {
@@ -483,7 +529,7 @@ export const TooltipPlugin2 = ({
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2, maxWidth: number, maxHeight: number) => ({
+const getStyles = (theme: GrafanaTheme2, maxWidth: number | string, maxHeight: number) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,
@@ -495,8 +541,8 @@ const getStyles = (theme: GrafanaTheme2, maxWidth: number, maxHeight: number) =>
     border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: theme.shadows.z2,
     userSelect: 'text',
-    maxWidth: `${maxWidth}px`,
-    maxHeight: `${maxHeight}px`,
+    maxWidth: maxWidth,
+    maxHeight: maxHeight,
     overflowY: 'auto',
   }),
   pinned: css({

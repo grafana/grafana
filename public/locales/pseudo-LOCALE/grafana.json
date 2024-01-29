@@ -76,6 +76,7 @@
     "folder-picker": {
       "accessible-label": "Ŝęľęčŧ ƒőľđęř: {{ label }} čūřřęŉŧľy şęľęčŧęđ",
       "button-label": "Ŝęľęčŧ ƒőľđęř",
+      "clear-selection": "Cľęäř şęľęčŧįőŉ",
       "empty-message": "Ńő ƒőľđęřş ƒőūŉđ",
       "error-title": "Ēřřőř ľőäđįŉģ ƒőľđęřş",
       "search-placeholder": "Ŝęäřčĥ ƒőľđęřş",
@@ -974,6 +975,7 @@
     "megamenu": {
       "close": "Cľőşę męŉū",
       "dock": "Đőčĸ męŉū",
+      "list-label": "Ńävįģäŧįőŉ",
       "undock": "Ůŉđőčĸ męŉū"
     },
     "toolbar": {
@@ -1223,6 +1225,12 @@
       "interval-selected": "Ŝęŧ äūŧő řęƒřęşĥ įŉŧęřväľ",
       "turned-off": "Åūŧő řęƒřęşĥ őƒƒ"
     }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": "ßäčĸ ŧő {{title}}"
+    },
+    "dismissable-button": "Cľőşę"
   },
   "search": {
     "actions": {
