@@ -397,7 +397,7 @@
     "tinycolor2": "1.6.0",
     "tslib": "2.6.2",
     "tween-functions": "^1.2.0",
-    "uplot": "1.6.28",
+    "uplot": "1.6.29",
     "uuid": "9.0.1",
     "vendor": "link:./public/vendor",
     "visjs-network": "4.25.0",
