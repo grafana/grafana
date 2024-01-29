@@ -256,6 +256,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                     lastUsedLabels={lastUsedLabels || []}
                     storeLastUsedLabels={onLastUsedLabelsSave}
                     deleteLastUsedLabels={onLastUsedLabelsDelete}
+                    timeRange={this.props.range}
                   />
                 </div>
               )}
