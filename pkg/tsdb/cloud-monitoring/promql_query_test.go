@@ -13,6 +13,7 @@ import (
 )
 
 func TestPromqlQuery(t *testing.T) {
+	service := &Service{}
 	t.Run("parseResponse is returned", func(t *testing.T) {
 		fileData, err := os.ReadFile("./test-data/11-prom-response.json")
 		reader := strings.NewReader(string(fileData))
@@ -24,7 +25,7 @@ func TestPromqlQuery(t *testing.T) {
 		dataRes := &backend.DataResponse{}
 		query := &cloudMonitoringProm{}
 		parsedProm := parseProm(&res)
-		err = query.parseResponse(dataRes, parsedProm, "")
+		err = query.parseResponse(dataRes, parsedProm, "", service.logger)
 		require.NoError(t, err)
 		frame := dataRes.Frames[0]
 		experimental.CheckGoldenJSONFrame(t, "test-data", "parse-response-is-returned", frame, false)

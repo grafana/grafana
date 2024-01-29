@@ -13,6 +13,7 @@ import (
 )
 
 func TestTimeSeriesQuery(t *testing.T) {
+	service := &Service{}
 	t.Run("multiple point descriptor is returned", func(t *testing.T) {
 		data, err := loadTestFile("./test-data/8-series-response-mql-multiple-point-descriptors.json")
 		require.NoError(t, err)
@@ -33,7 +34,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 					To:   fromStart.Add(34 * time.Minute),
 				},
 			}
-			err = query.parseResponse(res, data, "")
+			err = query.parseResponse(res, data, "", service.logger)
 			frames := res.Frames
 			assert.Equal(t, "grafana-prod asia-northeast1-c 6724404429462225363 200", frames[0].Fields[1].Name)
 			assert.Equal(t, 843302441.9, frames[0].Fields[1].At(0))
@@ -52,7 +53,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 					To:   fromStart.Add(34 * time.Minute),
 				},
 			}
-			err = query.parseResponse(res, data, "")
+			err = query.parseResponse(res, data, "", service.logger)
 			frames := res.Frames
 			assert.Equal(t, "test-proj - asia-northeast1-c - 6724404429462225363 - 200", frames[0].Fields[1].Name)
 		})
@@ -79,7 +80,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 					To:   fromStart.Add(34 * time.Minute),
 				},
 			}
-			err = query.parseResponse(res, data, "")
+			err = query.parseResponse(res, data, "", service.logger)
 			require.NoError(t, err)
 			frames := res.Frames
 			assert.Equal(t, 1, len(res.Frames))
@@ -103,7 +104,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 				To:   fromStart.Add(34 * time.Minute),
 			},
 		}
-		err = query.parseResponse(res, data, "")
+		err = query.parseResponse(res, data, "", service.logger)
 		require.NoError(t, err)
 		frames := res.Frames
 		custom, ok := frames[0].Meta.Custom.(map[string]any)
@@ -131,7 +132,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 				To:   fromStart.Add(34 * time.Minute),
 			},
 		}
-		err = query.parseResponse(res, data, "")
+		err = query.parseResponse(res, data, "", service.logger)
 		require.NoError(t, err)
 		frames := res.Frames
 		timeField := frames[0].Fields[0]
