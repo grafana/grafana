@@ -6,18 +6,26 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
+	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/frontend"
 	"github.com/grafana/grafana/pkg/registry/apis/playlist"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
 
 var WireSet = wire.NewSet(
 	ProvideRegistryServiceSink, // dummy background service that forces registration
 
+	// read-only datasource abstractions
+	plugincontext.ProvideService,
+	wire.Bind(new(datasource.PluginContextWrapper), new(*plugincontext.Provider)),
+	datasource.ProvideDefaultPluginConfigs,
+
 	// Each must be added here *and* in the ServiceSink above
 	playlist.RegisterAPIService,
 	dashboard.RegisterAPIService,
 	example.RegisterAPIService,
+	featuretoggle.RegisterAPIService,
 	datasource.RegisterAPIService,
 	folders.RegisterAPIService,
 	frontend.RegisterAPIService,

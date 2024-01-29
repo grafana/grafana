@@ -240,10 +240,10 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
                   {type === RuleFormType.cloudRecording && <RecordingRulesNameSpaceAndGroupStep />}
 
                   {/* Step 4 & 5 */}
-                  {/* Annotations only for cloud and Grafana */}
-                  {type !== RuleFormType.cloudRecording && <AnnotationsStep />}
                   {/* Notifications step*/}
                   <NotificationsStep alertUid={uidFromParams} />
+                  {/* Annotations only for cloud and Grafana */}
+                  {type !== RuleFormType.cloudRecording && <AnnotationsStep />}
                 </>
               )}
             </Stack>

@@ -59,7 +59,6 @@ var (
 			Name:              "publicDashboardsEmailSharing",
 			Description:       "Enables public dashboard sharing to be restricted to only allowed emails",
 			Stage:             FeatureStagePublicPreview,
-			RequiresLicense:   true,
 			Owner:             grafanaSharingSquad,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
@@ -95,11 +94,12 @@ var (
 			Created:     time.Date(2022, time.March, 17, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:        "correlations",
-			Description: "Correlations page",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaExploreSquad,
-			Created:     time.Date(2022, time.September, 16, 12, 0, 0, 0, time.UTC),
+			Name:           "correlations",
+			Description:    "Correlations page",
+			Stage:          FeatureStageGeneralAvailability,
+			Owner:          grafanaExploreSquad,
+			AllowSelfServe: true,
+			Created:        time.Date(2022, time.September, 16, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "exploreContentOutline",
@@ -212,6 +212,14 @@ var (
 			Created:      time.Date(2023, time.September, 18, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:         "returnToPrevious",
+			Description:  "Enables the return to previous context functionality",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaFrontendPlatformSquad,
+			Created:      time.Date(2024, time.January, 9, 11, 0, 0, 0, time.UTC),
+		},
+		{
 			Name:              "grpcServer",
 			Description:       "Run the GRPC server",
 			Stage:             FeatureStagePublicPreview,
@@ -303,17 +311,6 @@ var (
 			Expression:     "true", // enabled by default
 			AllowSelfServe: true,
 			Created:        time.Date(2023, time.July, 24, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:              "emptyDashboardPage",
-			Description:       "Enable the redesigned user interface of a dashboard page that includes no panels",
-			Stage:             FeatureStageGeneralAvailability,
-			FrontendOnly:      true,
-			Expression:        "true", // enabled by default
-			Owner:             grafanaDashboardsSquad,
-			AllowSelfServe:    false,
-			HideFromAdminPage: true,
-			Created:           time.Date(2023, time.March, 28, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "disablePrometheusExemplarSampling",
@@ -513,16 +510,6 @@ var (
 			Created:           time.Date(2023, time.June, 6, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:            "useCachingService",
-			Description:     "When active, the new query and resource caching implementation using a wire service inject replaces the previous middleware implementation.",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaOperatorExperienceSquad,
-			RequiresRestart: true,
-			Expression:      "true", // enabled by default
-			AllowSelfServe:  false,
-			Created:         time.Date(2023, time.April, 12, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:           "enableElasticsearchBackendQuerying",
 			Description:    "Enable the processing of queries and responses in the Elasticsearch data source through backend",
 			Stage:          FeatureStageGeneralAvailability,
@@ -716,15 +703,6 @@ var (
 			Created:      time.Date(2023, time.August, 28, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:            "grafanaAPIServer",
-			Description:     "Enable Kubernetes API Server for Grafana resources",
-			Stage:           FeatureStageGeneralAvailability,
-			Expression:      "true", // enabled by default
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Created:         time.Date(2023, time.July, 14, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:            "grafanaAPIServerWithExperimentalAPIs",
 			Description:     "Register experimental APIs with the k8s API server",
 			Stage:           FeatureStageExperimental,
@@ -753,7 +731,7 @@ var (
 		},
 		{
 			Name:        "awsAsyncQueryCaching",
-			Description: "Enable caching for async queries for Redshift and Athena. Requires that the `useCachingService` feature toggle is enabled and the datasource has caching and async query support enabled",
+			Description: "Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled",
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true", // enabled by default
 			Owner:       awsDatasourcesSquad,
@@ -769,22 +747,6 @@ var (
 			RequiresRestart:   true,
 			HideFromAdminPage: true, // This is internal work to speed up dashboard search, and is not ready for wider use
 			Created:           time.Date(2023, time.July, 21, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:         "traceToProfiles",
-			Description:  "Enables linking between traces and profiles",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-			Created:      time.Date(2023, time.November, 1, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:         "tracesEmbeddedFlameGraph",
-			Description:  "Enables embedding a flame graph in traces",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-			Created:      time.Date(2023, time.November, 2, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "permissionsFilterRemoveSubquery",
@@ -860,7 +822,7 @@ var (
 		},
 		{
 			Name:        "sseGroupByDatasource",
-			Description: "Send query to the same datasource in a single request when using server side expressions",
+			Description: "Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
 			Created:     time.Date(2023, time.September, 7, 12, 0, 0, 0, time.UTC),
@@ -1072,7 +1034,7 @@ var (
 		{
 			Name:            "managedPluginsInstall",
 			Description:     "Install managed plugins directly from plugins catalog",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStagePublicPreview,
 			RequiresDevMode: false,
 			Owner:           grafanaPluginsPlatformSquad,
 			Created:         time.Date(2023, time.October, 18, 12, 0, 0, 0, time.UTC),
@@ -1164,13 +1126,12 @@ var (
 			Created:      time.Date(2023, time.November, 6, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:            "ssoSettingsApi",
-			Description:     "Enables the SSO settings API",
-			RequiresDevMode: true,
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           identityAccessTeam,
-			Created:         time.Date(2023, time.November, 8, 12, 0, 0, 0, time.UTC),
+			Name:         "ssoSettingsApi",
+			Description:  "Enables the SSO settings API",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        identityAccessTeam,
+			Created:      time.Date(2023, time.November, 8, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "canvasPanelPanZoom",
@@ -1267,16 +1228,6 @@ var (
 			Expression:     "true", // enabled by default
 		},
 		{
-			Name:              "alertStateHistoryAnnotationsFromLoki",
-			Description:       "Enable using Loki as the source for panel annotations generated by alert rules",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaAlertingSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			RequiresRestart:   true,
-			Created:           time.Date(2023, time.November, 30, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			// this is mainly used a a way to quickly disable query hints as a safe guard for our infrastructure
 			Name:           "lokiQueryHints",
 			Description:    "Enables query hints for Loki",
@@ -1288,12 +1239,21 @@ var (
 			Created:        time.Date(2023, time.December, 18, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:              "kubernetesFeatureToggles",
+			Description:       "Use the kubernetes API for feature toggle management in the frontend",
+			Stage:             FeatureStageExperimental,
+			FrontendOnly:      true,
+			Owner:             grafanaOperatorExperienceSquad,
+			AllowSelfServe:    false,
+			Created:           time.Date(2023, time.December, 22, 3, 43, 0, 0, time.UTC),
+			HideFromAdminPage: true,
+		},
+		{
 			Name:            "alertingPreviewUpgrade",
 			Description:     "Show Unified Alerting preview and upgrade page in legacy alerting",
 			FrontendOnly:    false,
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStagePublicPreview,
 			Owner:           grafanaAlertingSquad,
-			HideFromDocs:    true,
 			RequiresRestart: true,
 			Created:         time.Date(2024, time.January, 3, 12, 0, 0, 0, time.UTC),
 		},
@@ -1322,6 +1282,53 @@ var (
 			Owner:          grafanaAlertingSquad,
 			AllowSelfServe: false,
 			Created:        time.Date(2024, time.January, 10, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "newFolderPicker",
+			Description:  "Enables the nested folder picker without having nested folders enabled",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			FrontendOnly: true,
+			Created:      time.Date(2024, time.January, 12, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:              "jitterAlertRules",
+			Description:       "Distributes alert rule evaluations more evenly over time, by rule group",
+			FrontendOnly:      false,
+			Stage:             FeatureStageGeneralAvailability,
+			Owner:             grafanaAlertingSquad,
+			AllowSelfServe:    false,
+			HideFromDocs:      false,
+			HideFromAdminPage: false,
+			RequiresRestart:   true,
+			Created:           time.Date(2024, time.January, 17, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:              "jitterAlertRulesWithinGroups",
+			Description:       "Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group",
+			FrontendOnly:      false,
+			Stage:             FeatureStagePublicPreview,
+			Owner:             grafanaAlertingSquad,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: false,
+			RequiresRestart:   true,
+			Created:           time.Date(2024, time.January, 17, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:        "onPremToCloudMigrations",
+			Description: "In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Created:     time.Date(2024, time.January, 22, 3, 30, 00, 00, time.UTC),
+		},
+		{
+			Name:         "alertingSaveStatePeriodic",
+			Description:  "Writes the state periodically to the database, asynchronous to rule evaluation",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaAlertingSquad,
+			Created:      time.Date(2024, time.January, 22, 12, 0, 0, 0, time.UTC),
 		},
 	}
 )

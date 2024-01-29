@@ -167,7 +167,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { controls, topScene, history, settings } = model.useState();
+    const { controls, topScene, history } = model.useState();
     const styles = useStyles2(getStyles);
 
     return (
@@ -178,7 +178,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
             {controls.map((control) => (
               <control.Component key={control.state.key} model={control} />
             ))}
-            <settings.Component model={settings} />
           </div>
         )}
         <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
@@ -205,7 +204,7 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         pluginId: metric === LOGS_METRIC ? 'loki' : 'prometheus',
       }),
       AdHocFiltersVariable.create({
-        name: 'filters',
+        name: VAR_FILTERS,
         datasource: trailDS,
         layout: 'vertical',
         filters: initialFilters ?? [],
