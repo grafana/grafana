@@ -406,7 +406,6 @@ export class Scene {
 
       // Setup snappable
       snappable: allowChanges,
-      snapThreshold: 0,
       snapDirections: snapDirections,
       elementSnapDirections: elementSnapDirections,
       elementGuidelines: targetElements,
@@ -445,10 +444,17 @@ export class Scene {
           }
         }
       })
-      .on('dragGroupStart', (event) => {
+      .on('dragGroupStart', (e) => {
         this.ignoreDataUpdate = true;
 
-        // TODO: handling for dragging multiple elements / removing them from elementGuildelines
+        if (this.moveable && this.moveable.elementGuidelines) {
+          for (let event of e.events) {
+            const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
+            if (targetIndex > -1) {
+              this.moveable.elementGuidelines.splice(targetIndex, 1);
+            }
+          }
+        }
       })
       .on('drag', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
@@ -484,7 +490,9 @@ export class Scene {
               targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
             }
 
-            // TODO: handling for dragging multiple elements / adding them back to elementGuildelines
+            if (this.moveable && this.moveable.elementGuidelines) {
+              this.moveable.elementGuidelines.push(event.target);
+            }
           }
         });
 
@@ -509,12 +517,29 @@ export class Scene {
         const targetedElement = this.findElementByTarget(event.target);
 
         if (targetedElement) {
+          if (this.moveable && this.moveable.elementGuidelines) {
+            const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
+            if (targetIndex > -1) {
+              this.moveable.elementGuidelines.splice(targetIndex, 1);
+            }
+          }
+
           targetedElement.tempConstraint = { ...targetedElement.options.constraint };
           targetedElement.options.constraint = {
             vertical: VerticalConstraint.Top,
             horizontal: HorizontalConstraint.Left,
           };
           targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
+        }
+      })
+      .on('resizeGroupStart', (e) => {
+        if (this.moveable && this.moveable.elementGuidelines) {
+          for (let event of e.events) {
+            const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
+            if (targetIndex > -1) {
+              this.moveable.elementGuidelines.splice(targetIndex, 1);
+            }
+          }
         }
       })
       .on('resize', (event) => {
@@ -557,6 +582,17 @@ export class Scene {
           }
 
           targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
+
+          if (this.moveable && this.moveable.elementGuidelines) {
+            this.moveable.elementGuidelines.push(event.target);
+          }
+        }
+      })
+      .on('resizeGroupEnd', (e) => {
+        if (this.moveable && this.moveable.elementGuidelines) {
+          for (let event of e.events) {
+            this.moveable.elementGuidelines.push(event.target);
+          }
         }
       });
 
