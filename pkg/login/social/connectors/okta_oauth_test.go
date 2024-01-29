@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/setting"
@@ -136,9 +137,9 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 
 func TestSocialOkta_Validate(t *testing.T) {
 	testCases := []struct {
-		name        string
-		settings    ssoModels.SSOSettings
-		expectError bool
+		name     string
+		settings ssoModels.SSOSettings
+		wantErr  error
 	}{
 		{
 			name: "SSOSettings is valid",
@@ -147,7 +148,6 @@ func TestSocialOkta_Validate(t *testing.T) {
 					"client_id": "client-id",
 				},
 			},
-			expectError: false,
 		},
 		{
 			name: "fails if settings map contains an invalid field",
@@ -157,7 +157,7 @@ func TestSocialOkta_Validate(t *testing.T) {
 					"invalid_field": []int{1, 2, 3},
 				},
 			},
-			expectError: true,
+			wantErr: ssosettings.ErrInvalidSettings,
 		},
 		{
 			name: "fails if client id is empty",
@@ -166,14 +166,25 @@ func TestSocialOkta_Validate(t *testing.T) {
 					"client_id": "",
 				},
 			},
-			expectError: true,
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
 		{
 			name: "fails if client id does not exist",
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{},
 			},
-			expectError: true,
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if both allow assign grafana admin and skip org role sync are enabled",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
+					"skip_org_role_sync":         "true",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
 	}
 
@@ -182,11 +193,11 @@ func TestSocialOkta_Validate(t *testing.T) {
 			s := NewOktaProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
 			err := s.Validate(context.Background(), tc.settings)
-			if tc.expectError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
+			if tc.wantErr != nil {
+				require.ErrorIs(t, err, tc.wantErr)
+				return
 			}
+			require.NoError(t, err)
 		})
 	}
 }
