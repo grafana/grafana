@@ -116,13 +116,13 @@ export const ManualEditor = ({
           {frameNames.length > 1 && (
             <Field label={'Data'}>
               <Select
-                isClearable={true}
+                isClearable={false}
                 options={frameNames}
                 placeholder={'Change filter'}
                 value={
                   frameNames.find((v) => {
                     return v.value === value[selected].frame;
-                  }) ?? null
+                  }) ?? 0
                 }
                 onChange={(v) => {
                   onChange(
