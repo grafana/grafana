@@ -11,8 +11,10 @@ import { Tooltip } from '../Tooltip/Tooltip';
  * @internal
  */
 export type LoadingIndicatorProps = {
-  loading: boolean;
+  loading?: boolean;
   onCancel: () => void;
+  mandatory: string;
+  field?: string;
 };
 
 /**
