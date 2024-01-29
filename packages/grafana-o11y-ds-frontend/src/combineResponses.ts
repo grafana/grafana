@@ -73,7 +73,7 @@ function combineFrames(dest: DataFrame, source: DataFrame) {
 }
 
 const TOTAL_BYTES_STAT = 'Summary: total bytes processed';
-
+// This is specific for Loki
 function getCombinedMetadataStats(
   destStats: QueryResultMetaStat[],
   sourceStats: QueryResultMetaStat[]
