@@ -302,7 +302,6 @@
     },
     "toolbar": {
       "add": "Add",
-      "add-panel": "Add panel",
       "mark-favorite": "Mark as favorite",
       "open-original": "Open original dashboard",
       "playlist-next": "Go to next dashboard",
@@ -666,6 +665,21 @@
       "invalid-user-or-password": "Invalid username or password",
       "title": "Login failed",
       "unknown": "Unknown error occurred"
+    },
+    "forgot-password": "Forgot your password?",
+    "form": {
+      "password-label": "Password",
+      "password-required": "Password is required",
+      "submit-label": "Log in",
+      "submit-loading-label": "Logging in...",
+      "username-label": "Email or username",
+      "username-required": "Email or username is required"
+    },
+    "services": {
+      "sing-in-with-prefix": "Sign in with"
+    },
+    "signup": {
+      "new-to-question": "New to Grafana?"
     }
   },
   "nav": {
@@ -1378,6 +1392,7 @@
     },
     "title": "Preferences"
   },
+  "Sign up": "Sign up",
   "snapshot": {
     "external-badge": "External",
     "name-column-header": "Name",

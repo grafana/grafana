@@ -307,7 +307,6 @@
     },
     "toolbar": {
       "add": "Ajouter",
-      "add-panel": "Ajouter un panneau",
       "mark-favorite": "Marquer comme favori",
       "open-original": "Ouvrir le tableau de bord d'origine",
       "playlist-next": "Accéder au tableau de bord suivant",
@@ -672,6 +671,21 @@
       "invalid-user-or-password": "Nom d'utilisateur ou mot de passe invalide",
       "title": "Échec de la connexion",
       "unknown": "Une erreur inconnue est survenue"
+    },
+    "forgot-password": "",
+    "form": {
+      "password-label": "",
+      "password-required": "",
+      "submit-label": "",
+      "submit-loading-label": "",
+      "username-label": "",
+      "username-required": ""
+    },
+    "services": {
+      "sing-in-with-prefix": ""
+    },
+    "signup": {
+      "new-to-question": ""
     }
   },
   "nav": {
@@ -1384,6 +1398,7 @@
     },
     "title": "Préférences"
   },
+  "Sign up": "",
   "snapshot": {
     "external-badge": "Externe",
     "name-column-header": "Nom",

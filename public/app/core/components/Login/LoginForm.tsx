@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Input, Field, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { PasswordField } from '../PasswordField/PasswordField';
 
@@ -31,9 +32,13 @@ export const LoginForm = ({ children, onSubmit, isLoggingIn, passwordHint, login
   return (
     <div className={styles.wrapper}>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <Field label="Email or username" invalid={!!errors.user} error={errors.user?.message}>
+        <Field
+          label={t('login.form.username-label', 'Email or username')}
+          invalid={!!errors.user}
+          error={errors.user?.message}
+        >
           <Input
-            {...register('user', { required: 'Email or username is required' })}
+            {...register('user', { required: t('login.form.username-required', 'Email or username is required') })}
             id={usernameId}
             autoFocus
             autoCapitalize="none"
@@ -41,9 +46,13 @@ export const LoginForm = ({ children, onSubmit, isLoggingIn, passwordHint, login
             data-testid={selectors.pages.Login.username}
           />
         </Field>
-        <Field label="Password" invalid={!!errors.password} error={errors.password?.message}>
+        <Field
+          label={t('login.form.password-label', 'Password')}
+          invalid={!!errors.password}
+          error={errors.password?.message}
+        >
           <PasswordField
-            {...register('password', { required: 'Password is required' })}
+            {...register('password', { required: t('login.form.password-required', 'Password is required') })}
             id={passwordId}
             autoComplete="current-password"
             placeholder={passwordHint}
@@ -55,7 +64,7 @@ export const LoginForm = ({ children, onSubmit, isLoggingIn, passwordHint, login
           className={styles.submitButton}
           disabled={isLoggingIn}
         >
-          {isLoggingIn ? 'Logging in...' : 'Log in'}
+          {isLoggingIn ? t('login.form.submit-loading-label', 'Logging in...') : t('login.form.submit-label', 'Log in')}
         </Button>
         {children}
       </form>

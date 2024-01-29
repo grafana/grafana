@@ -302,7 +302,6 @@
     },
     "toolbar": {
       "add": "Åđđ",
-      "add-panel": "Åđđ päŉęľ",
       "mark-favorite": "Mäřĸ äş ƒävőřįŧę",
       "open-original": "Øpęŉ őřįģįŉäľ đäşĥþőäřđ",
       "playlist-next": "Ğő ŧő ŉęχŧ đäşĥþőäřđ",
@@ -666,6 +665,21 @@
       "invalid-user-or-password": "Ĩŉväľįđ ūşęřŉämę őř päşşŵőřđ",
       "title": "Ŀőģįŉ ƒäįľęđ",
       "unknown": "Ůŉĸŉőŵŉ ęřřőř őččūřřęđ"
+    },
+    "forgot-password": "Főřģőŧ yőūř päşşŵőřđ?",
+    "form": {
+      "password-label": "Päşşŵőřđ",
+      "password-required": "Päşşŵőřđ įş řęqūįřęđ",
+      "submit-label": "Ŀőģ įŉ",
+      "submit-loading-label": "Ŀőģģįŉģ įŉ...",
+      "username-label": "Ēmäįľ őř ūşęřŉämę",
+      "username-required": "Ēmäįľ őř ūşęřŉämę įş řęqūįřęđ"
+    },
+    "services": {
+      "sing-in-with-prefix": "Ŝįģŉ įŉ ŵįŧĥ"
+    },
+    "signup": {
+      "new-to-question": "Ńęŵ ŧő Ğřäƒäŉä?"
     }
   },
   "nav": {
@@ -1378,6 +1392,7 @@
     },
     "title": "Přęƒęřęŉčęş"
   },
+  "Sign up": "Ŝįģŉ ūp",
   "snapshot": {
     "external-badge": "Ēχŧęřŉäľ",
     "name-column-header": "Ńämę",

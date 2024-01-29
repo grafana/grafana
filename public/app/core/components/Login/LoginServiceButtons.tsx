@@ -5,6 +5,7 @@ import React from 'react';
 import { GrafanaTheme2, DEFAULT_SAML_NAME } from '@grafana/data';
 import { Icon, IconName, LinkButton, useStyles2, useTheme2, VerticalGroup } from '@grafana/ui';
 import config from 'app/core/config';
+import { Trans } from 'app/core/internationalization';
 
 export interface LoginService {
   bgColor: string;
@@ -159,7 +160,7 @@ export const LoginServiceButtons = () => {
             fullWidth
           >
             <Icon className={styles.buttonIcon} name={service.icon} />
-            Sign in with {service.name}
+            <Trans i18nKey="login.services.sing-in-with-prefix">Sign in with</Trans> {service.name}
           </LinkButton>
         ))}
       </VerticalGroup>
