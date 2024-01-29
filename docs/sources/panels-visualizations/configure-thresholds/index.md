@@ -76,18 +76,20 @@ Set how thresholds are displayed with the following options:
 
 ## Add a threshold
 
-You can add as many thresholds to a panel as you want. Grafana automatically sorts thresholds values from highest to lowest.
+You can add as many thresholds to a visualization as you want. Grafana automatically sorts thresholds values from highest to lowest.
 
-To add a threshold:
+1. Navigate to the panel you want to update.
+1. Hover over any part of the panel you want to work on to display the menu on the top right corner.
+1. Click the menu and select **Edit**.
+1. Scroll to the **Thresholds** section of the panel edit pane.
+1. Click **+ Add threshold**.
 
-1. Edit the panel to which you want to add a threshold.
+   A new threshold 10 units higher than the default threshold is added.
 
-1. In the options side pane, locate the **Thresholds** section and click **+ Add threshold**.
-
-1. Select a threshold color, number, and mode.
-   Threshold mode applies to all thresholds on this panel.
-
-1. For a time-series panel, select a **Show thresholds** option.
+1. Enter a new threshold value or use the up and down arrows at the right side of the field to increase or decrease the value incrementally.
+1. Click the colored circle to the left of the threshold value to open the color picker, where you can update the threshold color.
+1. Under **Thresholds mode**, select either **Absolute** or **Percentage**.
+1. Under **Show thresholds**, set how the threshold is displayed or turn it off.
 
 Delete a threshold when it's no longer needed. When you delete a threshold, the system removes the threshold from all visualizations that include the threshold.
 
