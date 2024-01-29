@@ -1,4 +1,7 @@
-import { SelectableValue } from '@grafana/data';
+import { chain } from 'lodash';
+
+import { DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import {
   ConstantVariable,
   CustomVariable,
@@ -11,6 +14,8 @@ import {
   MultiValueVariable,
 } from '@grafana/scenes';
 import { VariableType } from '@grafana/schema';
+
+import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor } from './editors/ConstantVariableEditor';
@@ -119,4 +124,37 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
 
 export function hasVariableOptions(variable: SceneVariable): variable is MultiValueVariable {
   return 'options' in variable.state;
+}
+
+export function getDefinition(model: SceneVariable): string {
+  let definition = '';
+
+  if (model instanceof QueryVariable) {
+    definition = model.state.definition || (typeof model.state.query === 'string' ? model.state.query : '');
+  } else if (model instanceof DataSourceVariable) {
+    definition = String(model.state.pluginId);
+  } else if (model instanceof CustomVariable) {
+    definition = model.state.query;
+  } else if (model instanceof IntervalVariable) {
+    definition = getIntervalsQueryFromNewIntervalModel(model.state.intervals);
+  } else if (model instanceof TextBoxVariable || model instanceof ConstantVariable) {
+    definition = String(model.state.value);
+  }
+
+  return definition;
+}
+
+export function getOptionDataSourceTypes() {
+  const datasources = getDataSourceSrv().getList({ metrics: true, variables: true });
+
+  const optionTypes = chain(datasources)
+    .uniqBy('meta.id')
+    .map((ds: DataSourceInstanceSettings) => {
+      return { label: ds.meta.name, value: ds.meta.id };
+    })
+    .value();
+
+  optionTypes.unshift({ label: '', value: '' });
+
+  return optionTypes;
 }

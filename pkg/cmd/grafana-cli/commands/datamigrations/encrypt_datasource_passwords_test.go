@@ -38,8 +38,10 @@ func passwordMigration(t *testing.T, session *db.Session, sqlstore db.DB) {
 		ds.Created = time.Now()
 		ds.Updated = time.Now()
 
+		cfg := setting.NewCfg()
+
 		if ds.Name == "elasticsearch" {
-			key, err := util.Encrypt([]byte("value"), setting.SecretKey)
+			key, err := util.Encrypt([]byte("value"), cfg.SecretKey)
 			require.NoError(t, err)
 
 			ds.SecureJsonData = map[string][]byte{"key": key}
@@ -58,7 +60,7 @@ func passwordMigration(t *testing.T, session *db.Session, sqlstore db.DB) {
 	// run migration
 	c, err := commandstest.NewCliContext(map[string]string{})
 	require.Nil(t, err)
-	err = EncryptDatasourcePasswords(c, sqlstore)
+	err = EncryptDatasourcePasswords(c, setting.NewCfg(), sqlstore)
 	require.NoError(t, err)
 
 	// verify that no datasources still have password or basic_auth
@@ -68,7 +70,8 @@ func passwordMigration(t *testing.T, session *db.Session, sqlstore db.DB) {
 	assert.Equal(t, len(dss), 4)
 
 	for _, ds := range dss {
-		sj, err := DecryptSecureJsonData(ds)
+		cfg := setting.NewCfg()
+		sj, err := DecryptSecureJsonData(cfg.SecretKey, ds)
 		require.NoError(t, err)
 
 		if ds.Name == "influxdb" {
@@ -101,10 +104,10 @@ func passwordMigration(t *testing.T, session *db.Session, sqlstore db.DB) {
 	}
 }
 
-func DecryptSecureJsonData(ds *datasources.DataSource) (map[string]string, error) {
+func DecryptSecureJsonData(secretKey string, ds *datasources.DataSource) (map[string]string, error) {
 	decrypted := make(map[string]string)
 	for key, data := range ds.SecureJsonData {
-		decryptedData, err := util.Decrypt(data, setting.SecretKey)
+		decryptedData, err := util.Decrypt(data, secretKey)
 		if err != nil {
 			return nil, err
 		}

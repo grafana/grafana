@@ -70,6 +70,10 @@ func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, ft f
 }
 
 func (r *LokiHistorianStore) Get(ctx context.Context, query *annotations.ItemQuery, accessResources *accesscontrol.AccessResources) ([]*annotations.ItemDTO, error) {
+	if query.Type == "annotation" {
+		return make([]*annotations.ItemDTO, 0), nil
+	}
+
 	rule := &ngmodels.AlertRule{}
 	if query.AlertID != 0 {
 		var err error
@@ -290,5 +294,6 @@ func useStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.Fe
 	}
 
 	// We should only query Loki if annotations do not exist in the database.
-	return backend == historian.BackendTypeLoki
+	// To be doubly sure, ensure that the feature toggle to only use Loki is enabled.
+	return backend == historian.BackendTypeLoki && ft.IsEnabledGlobally(featuremgmt.FlagAlertStateHistoryLokiOnly)
 }

@@ -40,6 +40,8 @@ type Service interface {
 	SaveExternalServiceRole(ctx context.Context, cmd SaveExternalServiceRoleCommand) error
 	// DeleteExternalServiceRole removes an external service's role and its assignment.
 	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
+	// SyncUserRoles adds provided roles to user
+	SyncUserRoles(ctx context.Context, orgID int64, cmd SyncUserRolesCommand) error
 }
 
 type RoleRegistry interface {
@@ -55,7 +57,45 @@ type SearchOptions struct {
 	ActionPrefix string // Needed for the PoC v1, it's probably going to be removed.
 	Action       string
 	Scope        string
-	UserID       int64 // ID for the user for which to return information, if none is specified information is returned for all users.
+	UserLogin    string    // Login for which to return information, if none is specified information is returned for all users.
+	UserID       int64     // ID for the user for which to return information, if none is specified information is returned for all users.
+	wildcards    Wildcards // private field computed based on the Scope
+}
+
+// Wildcards computes the wildcard scopes that include the scope
+func (s *SearchOptions) Wildcards() []string {
+	if s.wildcards != nil {
+		return s.wildcards
+	}
+
+	if s.Scope == "" {
+		s.wildcards = []string{}
+		return s.wildcards
+	}
+
+	s.wildcards = WildcardsFromPrefix(ScopePrefix(s.Scope))
+	return s.wildcards
+}
+
+func (s *SearchOptions) ResolveUserLogin(ctx context.Context, userSvc user.Service) error {
+	if s.UserLogin == "" {
+		return nil
+	}
+	// Resolve userLogin -> userID
+	dbUsr, err := userSvc.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: s.UserLogin})
+	if err != nil {
+		return err
+	}
+	s.UserID = dbUsr.ID
+	return nil
+}
+
+type SyncUserRolesCommand struct {
+	UserID int64
+	// name of roles the user should have
+	RolesToAdd []string
+	// name of roles the user should not have
+	RolesToRemove []string
 }
 
 type TeamPermissionsService interface {

@@ -1,8 +1,8 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, CollapsableSection, Icon, Link, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, CollapsableSection, IconButton, LoadingPlaceholder, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 import { createUrl } from 'app/features/alerting/unified/utils/url';
 
@@ -18,14 +18,31 @@ interface AlertManagerManualRoutingProps {
   alertManager: AlertManagerDataSource;
 }
 
+const LOADING_SPINNER_DURATION = 1000;
+
 export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRoutingProps) {
   const styles = useStyles2(getStyles);
 
   const alertManagerName = alertManager.name;
-  const { isLoading, error: errorInContactPointStatus, contactPoints } = useContactPointsWithStatus();
+  const { isLoading, error: errorInContactPointStatus, contactPoints, refetchReceivers } = useContactPointsWithStatus();
   const [selectedContactPointWithMetadata, setSelectedContactPointWithMetadata] = useState<
     ContactPointWithMetadata | undefined
   >();
+
+  // We need to provide a fake loading state for the contact points, because it might be that the response is so fast that the loading spinner is not shown,
+  // and the user might think that the contact points are not fetched.
+  // We will show the loading spinner for 1 second, and if the fetching takes more than 1 second, we will show the loading spinner until the fetching is done.
+
+  const [loadingContactPoints, setLoadingContactPoints] = useState(false);
+  // we need to keep track if the fetching takes more than 1 second, so we can show the loading spinner until the fetching is done
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const onClickRefresh = () => {
+    setLoadingContactPoints(true);
+    Promise.all([refetchReceivers(), sleep(LOADING_SPINNER_DURATION)]).finally(() => {
+      setLoadingContactPoints(false);
+    });
+  };
 
   if (errorInContactPointStatus) {
     return <Alert title="Failed to fetch contact points" severity="error" />;
@@ -50,7 +67,18 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
           contactPoints={contactPoints}
           onSelectContactPoint={setSelectedContactPointWithMetadata}
         />
-        <LinkToContactPoints />
+        <div className={styles.contactPointsInfo}>
+          <IconButton
+            name="sync"
+            onClick={onClickRefresh}
+            aria-label="Refresh contact points"
+            tooltip="Refresh contact points list"
+            className={cx(styles.refreshButton, {
+              [styles.loading]: loadingContactPoints,
+            })}
+          />
+          <LinkToContactPoints />
+        </div>
       </Stack>
       {selectedContactPointWithMetadata?.grafana_managed_receiver_configs && (
         <ContactPointDetails receivers={selectedContactPointWithMetadata.grafana_managed_receiver_configs} />
@@ -73,13 +101,9 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
 function LinkToContactPoints() {
   const hrefToContactPoints = '/alerting/notifications';
   return (
-    <Link target="_blank" href={createUrl(hrefToContactPoints)} rel="noopener" aria-label="View alert rule">
-      <Stack direction="row" gap={1} alignItems="center" justifyContent="center">
-        <Text color="secondary">To browse contact points and create new ones, go to</Text>
-        <Text color="link">Contact points</Text>
-        <Icon name={'external-link-alt'} size="sm" color="link" />
-      </Stack>
-    </Link>
+    <TextLink external href={createUrl(hrefToContactPoints)} aria-label="View or create contact points">
+      View or create contact points
+    </TextLink>
   );
 }
 
@@ -116,5 +140,31 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
     marginTop: theme.spacing(2),
+  }),
+  contactPointsInfo: css({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing(1),
+    marginTop: theme.spacing(1),
+  }),
+  refreshButton: css({
+    color: theme.colors.text.secondary,
+    cursor: 'pointer',
+    borderRadius: theme.shape.radius.circle,
+    overflow: 'hidden',
+  }),
+  loading: css({
+    pointerEvents: 'none',
+    animation: 'rotation 2s infinite linear',
+    '@keyframes rotation': {
+      from: {
+        transform: 'rotate(720deg)',
+      },
+      to: {
+        transform: 'rotate(0deg)',
+      },
+    },
   }),
 });

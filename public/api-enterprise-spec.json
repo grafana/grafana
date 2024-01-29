@@ -4034,6 +4034,32 @@
         }
       }
     },
+    "DeviceSearchHitDTO": {
+      "type": "object",
+      "properties": {
+        "clientIp": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "deviceId": {
+          "type": "string"
+        },
+        "lastSeenAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userAgent": {
+          "type": "string"
+        }
+      }
+    },
     "DsAccess": {
       "type": "string"
     },
@@ -6553,6 +6579,29 @@
         }
       }
     },
+    "SearchDeviceQueryResult": {
+      "type": "object",
+      "properties": {
+        "devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DeviceSearchHitDTO"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalCount": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "SearchOrgServiceAccountsResult": {
       "description": "swagger: model",
       "type": "object",
@@ -8523,6 +8572,12 @@
         }
       }
     },
+    "devicesSearchResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SearchDeviceQueryResult"
+      }
+    },
     "folderResponse": {
       "description": "",
       "schema": {
@@ -8939,6 +8994,12 @@
         "$ref": "#/definitions/RoleDTO"
       }
     },
+    "getSSOSettingsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SSOSettings"
+      }
+    },
     "getSharingOptionsResponse": {
       "description": "",
       "schema": {
@@ -9114,6 +9175,15 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/RoleDTO"
+        }
+      }
+    },
+    "listSSOSettingsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/SSOSettings"
         }
       }
     },

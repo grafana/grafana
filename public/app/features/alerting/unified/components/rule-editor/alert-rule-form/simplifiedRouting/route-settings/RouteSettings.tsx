@@ -38,6 +38,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
     control,
     watch,
     register,
+    setValue,
     formState: { errors },
   } = useFormContext<RuleFormValues>();
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues([]));
@@ -45,6 +46,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
   const overrideGrouping = watch(`contactPoints.${alertManager}.overrideGrouping`);
   const overrideTimings = watch(`contactPoints.${alertManager}.overrideTimings`);
   const requiredFieldsInGroupBy = ['grafana_folder', 'alertname'];
+  const disableGrouping = '...';
   const styles = useStyles2(getStyles);
   return (
     <Stack direction="column">
@@ -62,7 +64,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
         <Field
           label="Group by"
           description="Group alerts when you receive a notification based on labels. If empty it will be inherited from the default notification policy."
-          {...register(`contactPoints.${alertManager}.groupBy`, { required: true })}
+          {...register(`contactPoints.${alertManager}.groupBy`)}
           invalid={!!errors.contactPoints?.[alertManager]?.groupBy}
           className={styles.optionalContent}
         >
@@ -71,6 +73,10 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
               validate: (value: string[]) => {
                 if (!value || value.length === 0) {
                   return 'At least one group by option is required.';
+                }
+                // if value includes only the allowedSingleFieldInGroupBy, it is valid
+                if (value.length === 1 && value[0] === disableGrouping) {
+                  return true;
                 }
                 // we need to make sure that the required fields are included
                 const requiredFieldsIncluded = requiredFieldsInGroupBy.every((field) => value.includes(field));

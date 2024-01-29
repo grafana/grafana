@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -112,6 +113,10 @@ const (
 	MigratedUseLegacyChannelsLabel = MigratedLabelPrefix + "use_channels__"
 	// MigratedContactLabelPrefix is created during legacy migration to route a migrated alert rule to a specific migrated channel.
 	MigratedContactLabelPrefix = MigratedLabelPrefix + "c_"
+	// MigratedSilenceLabelErrorKeepState is a label that will match a silence rule intended for legacy alerts with error state = keep_state.
+	MigratedSilenceLabelErrorKeepState = MigratedLabelPrefix + "silence_error_keep_state__"
+	// MigratedSilenceLabelNodataKeepState is a label that will match a silence rule intended for legacy alerts with nodata state = keep_state.
+	MigratedSilenceLabelNodataKeepState = MigratedLabelPrefix + "silence_nodata_keep_state__"
 	// MigratedAlertIdAnnotation is created during legacy migration to store the ID of the migrated legacy alert rule.
 	MigratedAlertIdAnnotation = "__alertId__"
 	// MigratedMessageAnnotation is created during legacy migration to store the migrated alert message.
@@ -545,7 +550,8 @@ type GetAlertRulesForSchedulingQuery struct {
 	PopulateFolders bool
 	RuleGroups      []string
 
-	ResultRules         []*AlertRule
+	ResultRules []*AlertRule
+	// A map of folder UID to folder Title in NamespaceKey format (see GetNamespaceKey)
 	ResultFoldersTitles map[string]string
 }
 
@@ -682,4 +688,30 @@ func GroupByAlertRuleGroupKey(rules []*AlertRule) map[AlertRuleGroupKey]RulesGro
 		group.SortByGroupIndex()
 	}
 	return result
+}
+
+// GetNamespaceKey concatenates two strings with / as separator. If the latter string contains '/' it gets escaped with \/
+func GetNamespaceKey(parentUID, title string) string {
+	if parentUID == "" {
+		return title
+	}
+	b, err := json.Marshal([]string{parentUID, title})
+	if err != nil {
+		return title // this should not really happen
+	}
+	return string(b)
+}
+
+// GetNamespaceTitleFromKey extracts the latter part from the string produced by GetNamespaceKey
+func GetNamespaceTitleFromKey(ns string) string {
+	// the expected format of the string is a JSON array ["parentUID","title"]
+	if !strings.HasPrefix(ns, "[") {
+		return ns
+	}
+	var arr []string
+	err := json.Unmarshal([]byte(ns), &arr)
+	if err != nil || len(arr) != 2 {
+		return ns
+	}
+	return arr[1]
 }

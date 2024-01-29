@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestPushoverNotifier(t *testing.T) {
@@ -29,7 +30,7 @@ func TestPushoverNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewPushoverNotifier(model, encryptionService.GetDecryptedValue, nil)
+			_, err := NewPushoverNotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -51,7 +52,7 @@ func TestPushoverNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewPushoverNotifier(model, encryptionService.GetDecryptedValue, nil)
+			not, err := NewPushoverNotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, nil)
 			pushoverNotifier := not.(*PushoverNotifier)
 
 			require.Nil(t, err)

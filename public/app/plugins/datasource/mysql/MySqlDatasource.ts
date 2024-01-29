@@ -1,8 +1,6 @@
 import { DataSourceInstanceSettings, TimeRange } from '@grafana/data';
 import { CompletionItemKind, LanguageDefinition, TableIdentifier } from '@grafana/experimental';
-import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource';
-import { DB, SQLQuery } from 'app/features/plugins/sql/types';
-import { formatSQL } from 'app/features/plugins/sql/utils/formatSQL';
+import { SqlDatasource, DB, SQLQuery, formatSQL } from '@grafana/sql';
 
 import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';
