@@ -634,4 +634,8 @@ const (
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
 	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
+
+	// FlagSlateAutocomplete
+	// Adjusts the behaviour of the slate editor to properly handle autocomplete. Feature toggled for safety.
+	FlagSlateAutocomplete = "slateAutocomplete"
 )
