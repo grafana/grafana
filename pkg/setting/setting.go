@@ -345,6 +345,8 @@ type Cfg struct {
 
 	// Data sources
 	DataSourceLimit int
+	// Number of queries to be executed concurrently. Only for the datasource supports concurrency.
+	ConcurrentQueryCount int
 
 	// SQL Data sources
 	SqlDatasourceMaxOpenConnsDefault    int
@@ -1933,6 +1935,7 @@ func (cfg *Cfg) GetContentDeliveryURL(prefix string) (string, error) {
 func (cfg *Cfg) readDataSourcesSettings() {
 	datasources := cfg.Raw.Section("datasources")
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
+	cfg.ConcurrentQueryCount = datasources.Key("concurrent_query_count").MustInt(10)
 }
 
 func (cfg *Cfg) readSqlDataSourceSettings() {
