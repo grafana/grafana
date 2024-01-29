@@ -21,7 +21,7 @@ weight: 1150
 
 # Grafana Pyroscope data source
 
-Formerly Phlare, now Grafana Pyroscope, a horizontally scalable, highly available, multi-tenant, OSS, continuous profiling aggregation system. Add it as a data source, and you are ready to query your profiles in [Explore][explore].
+Grafana Pyroscope is a horizontally scalable, highly available, multi-tenant, OSS, continuous profiling aggregation system. Add it as a data source, and you are ready to query your profiles in [Explore][explore].
 
 ## Configure the Grafana Pyroscope data source
 
@@ -38,7 +38,7 @@ To configure basic settings for the data source, complete the following steps:
    | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
    | `Name`         | A name to specify the data source in panels, queries, and Explore.                                                                                                                                                                                                                                                        |
    | `Default`      | The default data source will be pre-selected for new panels.                                                                                                                                                                                                                                                              |
-   | `URL`          | The URL of the Grafana Pyroscope or Phlare instance, e.g., `http://localhost:4100`                                                                                                                                                                                                                                        |
+   | `URL`          | The URL of the Grafana Pyroscope instance, for example, `http://localhost:4100`                                                                                                                                                                                                                                        |
    | `Basic Auth`   | Enable basic authentication to the data source.                                                                                                                                                                                                                                                                           |
    | `User`         | User name for basic authentication.                                                                                                                                                                                                                                                                                       |
    | `Password`     | Password for basic authentication.                                                                                                                                                                                                                                                                                        |
