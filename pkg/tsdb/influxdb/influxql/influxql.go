@@ -36,8 +36,13 @@ func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceIn
 
 	// We are testing running of queries in parallel behind feature flag
 	if features.IsEnabled(ctx, featuremgmt.FlagInfluxdbRunQueriesInParallel) {
+		const cqc, err := backend.ConcurrentQueryCount()
+		if err != nil {
+			// fallback to 10
+			cqc = 10
+		}
 		responseLock := sync.Mutex{}
-		err = concurrency.ForEachJob(ctx, len(req.Queries), dsInfo.ConcurrentQuery, func(ctx context.Context, idx int) error {
+		err = concurrency.ForEachJob(ctx, len(req.Queries), cqc, func(ctx context.Context, idx int) error {
 			reqQuery := req.Queries[idx]
 			query, err := models.QueryParse(reqQuery)
 			if err != nil {

@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/flux"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/fsql"
 
@@ -28,14 +27,14 @@ type Service struct {
 	features featuremgmt.FeatureToggles
 }
 
-func ProvideService(cfg *setting.Cfg, httpClient httpclient.Provider, features featuremgmt.FeatureToggles) *Service {
+func ProvideService(httpClient httpclient.Provider, features featuremgmt.FeatureToggles) *Service {
 	return &Service{
-		im:       datasource.NewInstanceManager(newInstanceSettings(httpClient, cfg)),
+		im:       datasource.NewInstanceManager(newInstanceSettings(httpClient)),
 		features: features,
 	}
 }
 
-func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cfg) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		opts, err := settings.HTTPClientOptions(ctx)
 		if err != nil {
@@ -74,19 +73,18 @@ func newInstanceSettings(httpClientProvider httpclient.Provider, cfg *setting.Cf
 		}
 
 		model := &models.DatasourceInfo{
-			HTTPClient:      client,
-			URL:             settings.URL,
-			DbName:          database,
-			Version:         version,
-			HTTPMode:        httpMode,
-			TimeInterval:    jsonData.TimeInterval,
-			DefaultBucket:   jsonData.DefaultBucket,
-			Organization:    jsonData.Organization,
-			MaxSeries:       maxSeries,
-			SecureGrpc:      true,
-			Token:           settings.DecryptedSecureJSONData["token"],
-			Timeout:         opts.Timeouts.Timeout,
-			ConcurrentQuery: cfg.ConcurrentQueryCount,
+			HTTPClient:    client,
+			URL:           settings.URL,
+			DbName:        database,
+			Version:       version,
+			HTTPMode:      httpMode,
+			TimeInterval:  jsonData.TimeInterval,
+			DefaultBucket: jsonData.DefaultBucket,
+			Organization:  jsonData.Organization,
+			MaxSeries:     maxSeries,
+			SecureGrpc:    true,
+			Token:         settings.DecryptedSecureJSONData["token"],
+			Timeout:       opts.Timeouts.Timeout,
 		}
 		return model, nil
 	}
