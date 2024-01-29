@@ -3,8 +3,9 @@ import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
 import { ButtonGroup, FilterInput, RadioButtonGroup, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { getFieldOverrideCategories2 } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
 import { getPanelFrameCategory2 } from 'app/features/dashboard/components/PanelEditor/getPanelFrameOptions';
 import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
@@ -26,9 +27,13 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
   static Component = ({ model }: SceneComponentProps<PanelOptionsPane>) => {
     const { panelManager } = model;
     const { panel } = panelManager.state;
-    const { pluginId, options } = panel.useState();
+    const dataObject = sceneGraph.getData(panel);
+    const rawData = dataObject.useState();
+    const dataWithFieldConfig = panel.applyFieldConfig(rawData.data!);
+    const { pluginId, options, fieldConfig } = panel.useState();
     const styles = useStyles2(getStyles);
     const [isVizPickerOpen, setVizPickerOpen] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
     const panelFrameOptions = useMemo(() => getPanelFrameCategory2(panel), [panel]);
 
     const visualizationOptions = useMemo(() => {
@@ -46,7 +51,17 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [panel, options]);
 
-    const mainBoxElements = [panelFrameOptions.render(), ...(visualizationOptions?.map((v) => v.render()) ?? [])];
+    const justOverrides = useMemo(
+      () => getFieldOverrideCategories2(searchQuery, panel, dataWithFieldConfig),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [searchQuery, panel, fieldConfig]
+    );
+
+    const mainBoxElements = [
+      panelFrameOptions.render(),
+      ...(visualizationOptions?.map((v) => v.render()) ?? []),
+      ...justOverrides.map((v) => v.render()),
+    ];
 
     return (
       <div className={styles.wrapper}>
@@ -67,9 +82,9 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
               <div className={styles.top}>
                 <FilterInput
                   className={styles.searchOptions}
-                  value={''}
+                  value={searchQuery}
                   placeholder="Search options"
-                  onChange={() => {}}
+                  onChange={setSearchQuery}
                 />
                 <RadioButtonGroup
                   options={[
