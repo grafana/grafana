@@ -359,6 +359,21 @@ func (auth *AuthProxy) Remember(reqCtx *contextmodel.ReqContext, id int64) error
 		return nil
 	}
 
+	// User's role would not be updated if the cache hit. If requests arrive in the following order:
+	// 1. Name = x; Role = Admin  		# cache missed, new user created and cached with key Name=x;Role=Admin
+	// 2. Name = x; Role = Editor			# cache missed, the user got updated and cached with key Name=x;Role=Editor
+	// 3. Name = x; Role = Admin			# cache hit with key Name=x;Role=Admin, no update, the user stays with Role=Editor
+	// To avoid such a problem, we need to make sure the there is only one cache for a specific user
+	username := auth.getDecodedHeader(reqCtx, auth.cfg.AuthProxyHeaderName)
+	userKey := fmt.Sprintf("%s:%s", CachePrefix, username)
+
+	// invalidate previously cached user id
+	if prevCacheKey, err := auth.remoteCache.Get(reqCtx.Req.Context(), userKey); err == nil && len(prevCacheKey) > 0 {
+		if err := auth.remoteCache.Delete(reqCtx.Req.Context(), string(prevCacheKey)); err != nil {
+			return err
+		}
+	}
+
 	expiration := time.Duration(auth.cfg.AuthProxySyncTTL) * time.Minute
 
 	userIdPayload := []byte(strconv.FormatInt(id, 10))
@@ -366,7 +381,8 @@ func (auth *AuthProxy) Remember(reqCtx *contextmodel.ReqContext, id int64) error
 		return err
 	}
 
-	return nil
+	// store current cacheKey for the user
+	return auth.remoteCache.Set(reqCtx.Req.Context(), userKey, []byte(key), expiration)
 }
 
 // coerceProxyAddress gets network of the presented CIDR notation
