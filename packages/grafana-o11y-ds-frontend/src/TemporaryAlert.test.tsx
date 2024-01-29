@@ -18,7 +18,7 @@ describe('TemporaryAlert', () => {
     expect(screen.queryByTestId('data-testid Alert error')).not.toBeInTheDocument();
 
     render(<TemporaryAlert severity="error" text="Error message" />);
-    expect(screen.queryByTestId('data-testid Alert error')).toBeInTheDocument();
+    expect(screen.getByTestId('data-testid Alert error')).toBeInTheDocument();
     expect(screen.getByText('Error message')).toBeInTheDocument();
 
     act(() => jest.runAllTimers());
