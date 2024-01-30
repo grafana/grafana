@@ -44,7 +44,7 @@ describe('getPermalinkRange', () => {
       createLogRow({
         timeEpochMs: 3,
       }),
-      row
+      row,
     ];
   });
   afterAll(() => {
