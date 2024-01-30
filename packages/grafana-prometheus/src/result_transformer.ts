@@ -41,7 +41,7 @@ const isCumulativeHeatmapResult = (dataFrame: DataFrame, options: DataQueryReque
   if (dataFrame.meta?.type === DataFrameType.HeatmapCells) {
     return false;
   }
- 
+
   const target = options.targets.find((target) => target.refId === dataFrame.refId);
   return target?.format === 'heatmap';
 };

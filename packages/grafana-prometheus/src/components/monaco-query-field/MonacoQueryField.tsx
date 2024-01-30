@@ -13,10 +13,7 @@ import { Monaco, monacoTypes, ReactMonacoEditor, useTheme2 } from '@grafana/ui';
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
 import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
-import {
-  placeHolderScopedVars,
-  validateQuery,
-} from './monaco-completion-provider/validation';
+import { placeHolderScopedVars, validateQuery } from './monaco-completion-provider/validation';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,

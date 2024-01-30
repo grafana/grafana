@@ -719,7 +719,7 @@ describe('PrometheusDatasource2', () => {
   const instanceSettings = {
     url: 'proxied',
     id: 1,
-    uid: 'ABCDEF',    
+    uid: 'ABCDEF',
     user: 'test',
     password: 'mupp',
     jsonData: { httpMethod: 'GET', cacheLevel: PrometheusCacheLevel.None },

@@ -6,7 +6,7 @@ import { FetchResponse, TemplateSrv } from '@grafana/runtime';
 
 // NEED TO DECOUPLE THIS!!!!
 import { backendSrv } from '../../../public/app/core/services/backend_srv';
- 
+
 import { PrometheusDatasource } from './datasource';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { PromApplication, PromOptions } from './types';
@@ -108,7 +108,6 @@ describe('PrometheusMetricFindQuery', () => {
       });
     });
 
-
     const emptyFilters = ['{}', '{   }', ' {   }  ', '   {}  '];
 
     emptyFilters.forEach((emptyFilter) => {
@@ -132,7 +131,6 @@ describe('PrometheusMetricFindQuery', () => {
         });
       });
     });
-
 
     // <LegacyPrometheus>
     it('label_values(metric, resource) should generate series query with correct time', async () => {
