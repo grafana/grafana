@@ -1,12 +1,12 @@
 import memoizeOne from 'memoize-one';
 
+import { AbsoluteTimeRange, LogRowModel } from '@grafana/data';
 import { getBackendSrv, config } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 
 import { copyStringToClipboard } from './explore';
-import { AbsoluteTimeRange, LogRowModel } from '@grafana/data';
 
 function buildHostUrl() {
   return `${window.location.protocol}//${window.location.host}${config.appSubUrl}`;
