@@ -3,6 +3,7 @@ package clients
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -112,7 +113,7 @@ func TestProxy_Authenticate(t *testing.T) {
 				calledAdditional = additional
 				return nil, nil
 			}}
-			c, err := ProvideProxy(cfg, fakeCache{expectedErr: errors.New("")}, usertest.NewUserServiceFake(), proxyClient)
+			c, err := ProvideProxy(cfg, &fakeCache{expectedErr: errors.New("")}, usertest.NewUserServiceFake(), proxyClient)
 			require.NoError(t, err)
 
 			_, err = c.Authenticate(context.Background(), tt.req)
@@ -177,18 +178,120 @@ func TestProxy_Test(t *testing.T) {
 var _ proxyCache = new(fakeCache)
 
 type fakeCache struct {
-	expectedErr  error
-	expectedItem []byte
+	data        map[string][]byte
+	expectedErr error
 }
 
-func (f fakeCache) Get(ctx context.Context, key string) ([]byte, error) {
-	return f.expectedItem, f.expectedErr
+func (f *fakeCache) Get(ctx context.Context, key string) ([]byte, error) {
+	return f.data[key], f.expectedErr
 }
 
-func (f fakeCache) Set(ctx context.Context, key string, value []byte, expire time.Duration) error {
+func (f *fakeCache) Set(ctx context.Context, key string, value []byte, expire time.Duration) error {
+	f.data[key] = value
 	return f.expectedErr
 }
 
 func (f fakeCache) Delete(ctx context.Context, key string) error {
+	delete(f.data, key)
 	return f.expectedErr
+}
+
+func TestProxy_Hook(t *testing.T) {
+	cache := &fakeCache{data: make(map[string][]byte)}
+	userId := 1
+	userID := fmt.Sprintf("%s:%d", authn.NamespaceUser, userId)
+
+	type testCase struct {
+		desc              string
+		userIdentity      *authn.Identity
+		req               *authn.Request
+		proxyHeader       string
+		proxyHeaders      map[string]string
+		expectedCacheData map[string][]byte
+	}
+
+	tests := []testCase{
+		{
+			desc: "step 1: new user with role Admin",
+			userIdentity: &authn.Identity{
+				ID: userID,
+				ClientParams: authn.ClientParams{
+					CacheAuthProxyKey: "users:username-Admin",
+				},
+			},
+			req: &authn.Request{
+				HTTPRequest: &http.Request{
+					Header: map[string][]string{
+						"X-Username": {"username"},
+						"X-Role":     {"Admin"},
+					},
+				},
+			},
+			proxyHeader: "X-Username",
+			proxyHeaders: map[string]string{
+				proxyFieldRole: "X-Role",
+			},
+			expectedCacheData: map[string][]byte{
+				"users:username-Admin":                             []byte(fmt.Sprintf("%v", userId)),
+				fmt.Sprintf("%s:%s", proxyCachePrefix, "username"): []byte("users:username-Admin"),
+			},
+		},
+		{
+			desc: "step 2: cached user with new Role Viewer",
+			userIdentity: &authn.Identity{
+				ID: userID,
+				ClientParams: authn.ClientParams{
+					CacheAuthProxyKey: "users:username-Viewer",
+				},
+			},
+			req: &authn.Request{
+				HTTPRequest: &http.Request{Header: map[string][]string{
+					"X-Username": {"username"},
+					"X-Role":     {"Viewer"},
+				}},
+			},
+			proxyHeader: "X-Username",
+			proxyHeaders: map[string]string{
+				proxyFieldRole: "X-Role",
+			},
+			expectedCacheData: map[string][]byte{
+				"users:username-Viewer":                            []byte(fmt.Sprintf("%v", userId)),
+				fmt.Sprintf("%s:%s", proxyCachePrefix, "username"): []byte("users:username-Viewer"),
+			},
+		},
+		{
+			desc: "step 3: cached user get changed back to Admin",
+			userIdentity: &authn.Identity{
+				ID: userID,
+				ClientParams: authn.ClientParams{
+					CacheAuthProxyKey: "users:username-Admin",
+				},
+			},
+			req: &authn.Request{
+				HTTPRequest: &http.Request{Header: map[string][]string{
+					"X-Username": {"username"},
+					"X-Role":     {"Admin"},
+				}},
+			},
+			proxyHeader: "X-Username",
+			proxyHeaders: map[string]string{
+				proxyFieldRole: "X-Role",
+			},
+			expectedCacheData: map[string][]byte{
+				"users:username-Admin":                             []byte(fmt.Sprintf("%v", userId)),
+				fmt.Sprintf("%s:%s", proxyCachePrefix, "username"): []byte("users:username-Admin"),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		cfg := setting.NewCfg()
+		cfg.AuthProxyHeaderName = tt.proxyHeader
+		cfg.AuthProxyHeaders = tt.proxyHeaders
+		c, err := ProvideProxy(cfg, cache, usertest.NewUserServiceFake(), authntest.MockProxyClient{})
+		require.NoError(t, err)
+		err = c.Hook(context.Background(), tt.userIdentity, tt.req)
+		require.NoError(t, err)
+		assert.Equal(t, tt.expectedCacheData, cache.data)
+	}
 }
