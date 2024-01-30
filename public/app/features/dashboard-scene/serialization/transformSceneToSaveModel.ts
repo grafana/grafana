@@ -17,6 +17,7 @@ import {
 import {
   AnnotationQuery,
   Dashboard,
+  DashboardLink,
   DataTransformerConfig,
   defaultDashboard,
   defaultTimePickerConfig,
@@ -37,6 +38,7 @@ import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
@@ -222,6 +224,9 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
     panel.maxPerRow = gridItem.state.maxPerRow;
     panel.repeatDirection = gridItem.getRepeatDirection();
   }
+
+  const panelLinks = dashboardSceneGraph.getPanelLinks(vizPanel);
+  panel.links = (panelLinks.state.rawLinks as DashboardLink[]) ?? [];
 
   return panel;
 }
