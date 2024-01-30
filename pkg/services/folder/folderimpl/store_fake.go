@@ -28,7 +28,7 @@ func (f *fakeStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 	return f.ExpectedFolder, f.ExpectedError
 }
 
-func (f *fakeStore) Delete(ctx context.Context, uid string, orgID int64) error {
+func (f *fakeStore) Delete(ctx context.Context, UIDs []string, orgID int64) error {
 	f.DeleteCalled = true
 	return f.ExpectedError
 }
@@ -58,5 +58,9 @@ func (f *fakeStore) GetHeight(ctx context.Context, folderUID string, orgID int64
 }
 
 func (f *fakeStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folder.Folder, error) {
+	return f.ExpectedFolders, f.ExpectedError
+}
+
+func (f *fakeStore) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*folder.Folder, error) {
 	return f.ExpectedFolders, f.ExpectedError
 }

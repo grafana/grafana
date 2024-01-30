@@ -2658,9 +2658,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
     ],
-    "public/app/features/dashboard/components/SaveDashboard/SaveDashboardDiff.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
     "public/app/features/dashboard/components/SaveDashboard/SaveDashboardErrorProxy.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],

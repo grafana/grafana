@@ -113,7 +113,7 @@ describe('ProviderConfigForm', () => {
         { showErrorAlert: false }
       );
 
-      expect(reportInteractionMock).toHaveBeenCalledWith('grafana_authentication_ssosettings_updated', {
+      expect(reportInteractionMock).toHaveBeenCalledWith('grafana_authentication_ssosettings_saved', {
         provider: 'github',
         enabled: true,
       });
