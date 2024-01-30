@@ -31,6 +31,8 @@ const (
 
 const (
 	AnonymousNamespaceID = NamespaceAnonymous + ":0"
+	GlobalOrgID          = int64(0)
+	NoOrgID              = int64(-1)
 )
 
 var _ identity.Requester = (*Identity)(nil)
@@ -157,11 +159,17 @@ func (i *Identity) GetPermissions() map[string][]string {
 		return make(map[string][]string)
 	}
 
-	if i.Permissions[i.GetOrgID()] == nil {
+	// If the identity is not logged in an organization use global permissions.
+	orgID := i.GetOrgID()
+	if orgID == NoOrgID {
+		orgID = GlobalOrgID
+	}
+
+	if i.Permissions[orgID] == nil {
 		return make(map[string][]string)
 	}
 
-	return i.Permissions[i.GetOrgID()]
+	return i.Permissions[orgID]
 }
 
 func (i *Identity) GetTeams() []int64 {
