@@ -35,7 +35,11 @@ To configure basic settings for the Tempo data source, complete the following st
     | **User**       | Sets the user name for basic authentication.                             |
     | **Password**   | Sets the password for basic authentication.                              |
 
-You can also configure settings specific to the Tempo data source. These options are described in the sections below.
+You can also configure settings specific to the Tempo data source.
+
+This video explains how to add data sources, including Loki, Tempo, and Mimir, to Grafana and Grafana Cloud. Tempo data source set up starts at 4:58 in the video.
+
+{{< youtube id="cqHO0oYW6Ic" start="298" >}}
 
 ## Trace to logs
 

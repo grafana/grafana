@@ -11,6 +11,8 @@ import { KioskMode } from 'app/types';
 
 import { RouteDescriptor } from '../../navigation/types';
 
+import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
+
 export interface AppChromeState {
   chromeless?: boolean;
   sectionNav: NavModel;
@@ -21,6 +23,10 @@ export interface AppChromeState {
   megaMenuDocked: boolean;
   kioskMode: KioskMode | null;
   layout: PageLayoutType;
+  returnToPrevious?: {
+    href: ReturnToPreviousProps['href'];
+    title: ReturnToPreviousProps['title'];
+  };
 }
 
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
@@ -40,6 +46,9 @@ export class AppChromeService {
       )
   );
 
+  private sessionStorageData = window.sessionStorage.getItem('returnToPrevious');
+  private returnToPreviousData = this.sessionStorageData ? JSON.parse(this.sessionStorageData) : undefined;
+
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
     sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
@@ -48,6 +57,7 @@ export class AppChromeService {
     megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
     layout: PageLayoutType.Canvas,
+    returnToPrevious: this.returnToPreviousData,
   });
 
   public setMatchedRoute(route: RouteDescriptor) {
@@ -82,6 +92,16 @@ export class AppChromeService {
       this.state.next(newState);
     }
   }
+
+  public setReturnToPrevious = (returnToPrevious: ReturnToPreviousProps) => {
+    this.update({ returnToPrevious });
+    window.sessionStorage.setItem('returnToPrevious', JSON.stringify(returnToPrevious));
+  };
+
+  public clearReturnToPrevious = () => {
+    this.update({ returnToPrevious: undefined });
+    window.sessionStorage.removeItem('returnToPrevious');
+  };
 
   private ignoreStateUpdate(newState: AppChromeState, current: AppChromeState) {
     if (isShallowEqual(newState, current)) {
