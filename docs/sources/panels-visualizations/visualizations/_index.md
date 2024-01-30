@@ -33,6 +33,7 @@ If you are unsure which visualization to pick, Grafana can provide visualization
   - [Heatmap][] visualizes data in two dimensions, used typically for the magnitude of a phenomenon.
   - [Pie chart][] is typically used where proportionality is important.
   - [Candlestick][] is typically for financial data where the focus is price/data movement.
+  - [Xy chart][]
 - Stats & numbers
   - [Stat][] for big stats and optional sparkline.
   - [Bar gauge][] is a horizontal or vertical bar gauge.
@@ -169,4 +170,7 @@ A state timeline shows discrete state changes over time. When used with time ser
 
 [Time series]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
 [Time series]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
+
+[Xy chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/xy-chart"
+[Xy chart]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/xy-chart"
 {{% /docs/reference %}}
