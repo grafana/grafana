@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
@@ -62,10 +61,10 @@ const (
 
 var logger = log.New("tsdb.cloudwatch")
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, features featuremgmt.FeatureToggles) *CloudWatchService {
+func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider) *CloudWatchService {
 	logger.Debug("Initializing")
 
-	executor := newExecutor(datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache(), features)
+	executor := newExecutor(datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache())
 
 	return &CloudWatchService{
 		Cfg:      cfg,
@@ -82,12 +81,11 @@ type SessionCache interface {
 	GetSession(c awsds.SessionConfig) (*session.Session, error)
 }
 
-func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache, features featuremgmt.FeatureToggles) *cloudWatchExecutor {
+func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache) *cloudWatchExecutor {
 	e := &cloudWatchExecutor{
 		im:       im,
 		cfg:      cfg,
 		sessions: sessions,
-		features: features,
 	}
 
 	e.resourceHandler = httpadapter.New(e.newResourceMux())
@@ -124,7 +122,6 @@ type cloudWatchExecutor struct {
 	im          instancemgmt.InstanceManager
 	cfg         *setting.Cfg
 	sessions    SessionCache
-	features    featuremgmt.FeatureToggles
 	regionCache sync.Map
 
 	resourceHandler backend.CallResourceHandler
@@ -156,7 +153,6 @@ func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx ba
 		LogsAPIProvider:       NewLogsAPI(sess),
 		EC2APIProvider:        ec2Client,
 		Settings:              instance.Settings,
-		Features:              e.features,
 		Logger:                logger,
 	}, nil
 }
