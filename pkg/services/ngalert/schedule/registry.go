@@ -134,12 +134,12 @@ type evaluation struct {
 
 type alertRulesRegistry struct {
 	rules        map[models.AlertRuleKey]*models.AlertRule
-	folderTitles map[string]string
+	folderTitles map[models.FolderKey]string
 	mu           sync.Mutex
 }
 
 // all returns all rules in the registry.
-func (r *alertRulesRegistry) all() ([]*models.AlertRule, map[string]string) {
+func (r *alertRulesRegistry) all() ([]*models.AlertRule, map[models.FolderKey]string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	result := make([]*models.AlertRule, 0, len(r.rules))
@@ -156,7 +156,7 @@ func (r *alertRulesRegistry) get(k models.AlertRuleKey) *models.AlertRule {
 }
 
 // set replaces all rules in the registry. Returns difference between previous and the new current version of the registry
-func (r *alertRulesRegistry) set(rules []*models.AlertRule, folders map[string]string) diff {
+func (r *alertRulesRegistry) set(rules []*models.AlertRule, folders map[models.FolderKey]string) diff {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	rulesMap := make(map[models.AlertRuleKey]*models.AlertRule)

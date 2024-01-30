@@ -514,6 +514,7 @@ func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodel
 // GetAlertRulesForScheduling returns a short version of all alert rules except those that belong to an excluded list of organizations
 func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error {
 	var folders []struct {
+		OrgId     int64
 		Uid       string
 		Title     string
 		ParentUid string
@@ -565,7 +566,7 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 		query.ResultRules = rules
 
 		if query.PopulateFolders {
-			foldersSql := sess.Table("folder").Alias("d").Select("d.uid, d.title, d.parent_uid").
+			foldersSql := sess.Table("folder").Alias("d").Select("d.org_id, d.uid, d.title, d.parent_uid").
 				Where(`EXISTS (SELECT 1 FROM alert_rule a WHERE d.uid = a.namespace_uid AND d.org_id = a.org_id)`)
 			if len(disabledOrgs) > 0 {
 				foldersSql.NotIn("org_id", disabledOrgs)
@@ -574,9 +575,13 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 			if err := foldersSql.Find(&folders); err != nil {
 				return fmt.Errorf("failed to fetch a list of folders that contain alert rules: %w", err)
 			}
-			query.ResultFoldersTitles = make(map[string]string, len(folders))
-			for _, folder := range folders {
-				query.ResultFoldersTitles[folder.Uid] = ngmodels.GetNamespaceKey(folder.ParentUid, folder.Title)
+			query.ResultFoldersTitles = make(map[ngmodels.FolderKey]string, len(folders))
+			for _, f := range folders {
+				key := ngmodels.FolderKey{
+					OrgID: f.OrgId,
+					UID:   f.Uid,
+				}
+				query.ResultFoldersTitles[key] = ngmodels.GetNamespaceKey(f.ParentUid, f.Title)
 			}
 		}
 		return nil

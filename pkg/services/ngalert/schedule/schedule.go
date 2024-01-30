@@ -301,7 +301,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 		var folderTitle string
 		if !sch.disableGrafanaFolder {
-			title, ok := folderTitles[item.NamespaceUID]
+			title, ok := folderTitles[item.GetFolderKey()]
 			if ok {
 				folderTitle = title
 			} else {
