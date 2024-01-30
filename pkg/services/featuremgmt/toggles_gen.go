@@ -147,10 +147,6 @@ const (
 	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle
 	FlagNestedFolderPicker = "nestedFolderPicker"
 
-	// FlagDisablePrometheusExemplarSampling
-	// Disable Prometheus exemplar sampling
-	FlagDisablePrometheusExemplarSampling = "disablePrometheusExemplarSampling"
-
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
