@@ -136,8 +136,11 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 		if s.cfg.AWSExternalId != "" {
 			m[awsds.GrafanaAssumeRoleExternalIdKeyName] = s.cfg.AWSExternalId
 		}
+		if s.cfg.AWSSessionDuration != "" {
+			m[awsds.SessionDurationEnvVarKeyName] = s.cfg.AWSSessionDuration
+		}
 		if s.cfg.AWSListMetricsPageLimit != 0 {
-			m[awsds.GrafanaListMetricsPageLimit] = strconv.Itoa(s.cfg.AWSListMetricsPageLimit)
+			m[awsds.ListMetricsPageLimitKeyName] = strconv.Itoa(s.cfg.AWSListMetricsPageLimit)
 		}
 	}
 
@@ -264,8 +267,11 @@ func (s *Service) awsEnvVars() []string {
 	if s.cfg.AWSExternalId != "" {
 		variables = append(variables, awsds.GrafanaAssumeRoleExternalIdKeyName+"="+s.cfg.AWSExternalId)
 	}
+	if s.cfg.AWSSessionDuration != "" {
+		variables = append(variables, awsds.SessionDurationEnvVarKeyName+"="+s.cfg.AWSSessionDuration)
+	}
 	if s.cfg.AWSListMetricsPageLimit != 0 {
-		variables = append(variables, awsds.GrafanaListMetricsPageLimit+"="+strconv.Itoa(s.cfg.AWSListMetricsPageLimit))
+		variables = append(variables, awsds.ListMetricsPageLimitKeyName+"="+strconv.Itoa(s.cfg.AWSListMetricsPageLimit))
 	}
 
 	return variables

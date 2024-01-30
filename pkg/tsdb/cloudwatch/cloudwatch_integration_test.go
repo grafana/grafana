@@ -245,6 +245,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 	})
 
 	t.Run("Should handle region requests and return regions from the api", func(t *testing.T) {
+		im := defaultTestInstanceManager()
 		executor := newExecutor(im, &fakeSessionCache{})
 		req := &backend.CallResourceRequest{
 			Method: "GET",

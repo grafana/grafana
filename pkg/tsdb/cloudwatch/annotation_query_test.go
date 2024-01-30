@@ -30,9 +30,7 @@ func TestQuery_AnnotationQuery(t *testing.T) {
 
 	t.Run("DescribeAlarmsForMetric is called with minimum parameters", func(t *testing.T) {
 		client = fakeCWAnnotationsClient{describeAlarmsForMetricOutput: &cloudwatch.DescribeAlarmsForMetricOutput{}}
-		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}}, nil
-		})
+		im := defaultTestInstanceManager()
 
 		executor := newExecutor(im, &fakeSessionCache{})
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{

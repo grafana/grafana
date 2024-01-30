@@ -61,7 +61,7 @@ require (
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20240123184432-1d58deb6074c // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
-	github.com/grafana/grafana-aws-sdk v0.22.0 // @grafana/aws-datasources
+	github.com/grafana/grafana-aws-sdk v0.23.0 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.11.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-plugin-sdk-go v0.204.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform

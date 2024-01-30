@@ -35,6 +35,7 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, fe
 		allowedAuth,
 		aws.KeyValue("assume_role_enabled").MustBool(grafanaCfg.AWSAssumeRoleEnabled),
 		aws.KeyValue("external_id").Value(),
+		aws.KeyValue("session_duration").Value(),
 		grafanaCfg.AWSListMetricsPageLimit,
 		grafanaCfg.AWSForwardSettingsPlugins,
 		grafanaCfg.Azure,

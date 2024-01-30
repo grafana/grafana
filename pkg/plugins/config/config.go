@@ -24,6 +24,7 @@ type Cfg struct {
 	AWSAllowedAuthProviders   []string
 	AWSAssumeRoleEnabled      bool
 	AWSExternalId             string
+	AWSSessionDuration        string
 	AWSListMetricsPageLimit   int
 	AWSForwardSettingsPlugins []string
 
@@ -53,7 +54,7 @@ type Cfg struct {
 }
 
 func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
-	awsAllowedAuthProviders []string, awsAssumeRoleEnabled bool, awsExternalId string, awsListMetricsPageLimit int, AWSForwardSettingsPlugins []string, azure *azsettings.AzureSettings, secureSocksDSProxy setting.SecureSocksDSProxySettings,
+	awsAllowedAuthProviders []string, awsAssumeRoleEnabled bool, awsExternalId string, awsSessionDuration string, awsListMetricsPageLimit int, AWSForwardSettingsPlugins []string, azure *azsettings.AzureSettings, secureSocksDSProxy setting.SecureSocksDSProxySettings,
 	grafanaVersion string, logDatasourceRequests bool, pluginsCDNURLTemplate string, appURL string, appSubURL string, tracing Tracing, features featuremgmt.FeatureToggles, angularSupportEnabled bool,
 	grafanaComURL string, disablePlugins []string, hideAngularDeprecation []string, forwardHostEnvVars []string) *Cfg {
 	return &Cfg{
@@ -67,6 +68,7 @@ func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSetti
 		AWSAllowedAuthProviders:   awsAllowedAuthProviders,
 		AWSAssumeRoleEnabled:      awsAssumeRoleEnabled,
 		AWSExternalId:             awsExternalId,
+		AWSSessionDuration:        awsSessionDuration,
 		AWSListMetricsPageLimit:   awsListMetricsPageLimit,
 		AWSForwardSettingsPlugins: AWSForwardSettingsPlugins,
 		Azure:                     azure,

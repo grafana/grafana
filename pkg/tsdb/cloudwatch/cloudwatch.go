@@ -274,6 +274,7 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 			SecretKey:     instance.Settings.SecretKey,
 		},
 		UserAgentName: aws.String("Cloudwatch"),
+		AuthSettings:  instance.Settings.GrafanaSettings,
 	})
 	if err != nil {
 		return nil, err
