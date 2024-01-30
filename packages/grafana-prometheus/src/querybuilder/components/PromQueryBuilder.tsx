@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import { css } from '@emotion/css';
+import React, { useEffect, useState } from 'react';
 
 import { DataSourceApi, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EditorRow } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
+import { Drawer } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import promqlGrammar from '../../promql';
@@ -20,6 +23,9 @@ import { PromVisualQuery } from '../types';
 import { MetricsLabelsSection } from './MetricsLabelsSection';
 import { NestedQueryList } from './NestedQueryList';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
+import { PromQail } from './promQail/PromQail';
+import { QueryAssistantButton } from './promQail/QueryAssistantButton';
+import { isLLMPluginEnabled } from './promQail/state/helpers';
 
 export interface Props {
   query: PromVisualQuery;
@@ -30,16 +36,40 @@ export interface Props {
   showExplain: boolean;
 }
 
+// initial commit for hackathon-2023-08-promqail
+// AI/ML + Prometheus
+const prometheusPromQAIL = config.featureToggles.prometheusPromQAIL;
+
 export const PromQueryBuilder = React.memo<Props>((props) => {
   const { datasource, query, onChange, onRunQuery, data, showExplain } = props;
   const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>();
+  const [showDrawer, setShowDrawer] = useState<boolean>(false);
+  const [llmAppEnabled, updateLlmAppEnabled] = useState<boolean>(false);
 
   const lang = { grammar: promqlGrammar, name: 'promql' };
 
   const initHints = datasource.getInitHints();
 
+  useEffect(() => {
+    async function checkLlms() {
+      const check = await isLLMPluginEnabled();
+      updateLlmAppEnabled(check);
+    }
+    checkLlms();
+  }, []);
+
   return (
     <>
+      {prometheusPromQAIL && showDrawer && (
+        <Drawer closeOnMaskClick={false} onClose={() => setShowDrawer(false)}>
+          <PromQail
+            query={query}
+            closeDrawer={() => setShowDrawer(false)}
+            onChange={onChange}
+            datasource={datasource}
+          />
+        </Drawer>
+      )}
       <EditorRow>
         <MetricsLabelsSection query={query} onChange={onChange} datasource={datasource} />
       </EditorRow>
@@ -73,6 +103,15 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
           onRunQuery={onRunQuery}
           highlightedOp={highlightedOp}
         />
+        {prometheusPromQAIL && (
+          <div
+            className={css({
+              padding: '0 0 0 6px',
+            })}
+          >
+            <QueryAssistantButton llmAppEnabled={llmAppEnabled} metric={query.metric} setShowDrawer={setShowDrawer} />
+          </div>
+        )}
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.builder.hints}>
           <QueryBuilderHints<PromVisualQuery>
             datasource={datasource}

@@ -8,8 +8,8 @@ import { PrometheusDatasource } from '../../datasource';
 import PromQlLanguageProvider from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import { PromQuery } from '../../types';
-import { addOperation } from '../shared/OperationList.testUtils';
-import { getOperationParamId } from '../shared/operationUtils';
+import { getOperationParamId } from '../operationUtils';
+import { addOperationInQueryBuilder } from '../testUtils';
 
 import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 
@@ -18,7 +18,7 @@ describe('PromQueryBuilderContainer', () => {
     const { props } = setup({ expr: 'rate(metric_test{job="testjob"}[$__rate_interval])' });
 
     expect(screen.getByText('metric_test')).toBeInTheDocument();
-    await addOperation('Range functions', 'Rate');
+    await addOperationInQueryBuilder('Range functions', 'Rate');
     expect(props.onChange).toBeCalledWith({
       expr: 'rate(metric_test{job="testjob"}[$__rate_interval])',
       refId: 'A',
@@ -30,7 +30,7 @@ describe('PromQueryBuilderContainer', () => {
     await userEvent.click(screen.getByTestId('operations.0.add-rest-param'));
 
     waitFor(() => {
-      expect(container.querySelector(`${getOperationParamId(0, 0)}`)).toBeInTheDocument();
+      expect(container.querySelector(`${getOperationParamId('0', 0)}`)).toBeInTheDocument();
     });
   });
 });

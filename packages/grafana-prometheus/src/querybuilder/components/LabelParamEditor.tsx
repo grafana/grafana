@@ -4,26 +4,26 @@ import { DataSourceApi, SelectableValue, toOption } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
 import { promQueryModeller } from '../PromQueryModeller';
-import { getOperationParamId } from '../shared/operationUtils';
+import { getOperationParamId } from '../operationUtils';
 import { QueryBuilderLabelFilter, QueryBuilderOperationParamEditorProps } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
 export function LabelParamEditor({
   onChange,
   index,
-  operationIndex,
+  operationId,
   value,
   query,
   datasource,
 }: QueryBuilderOperationParamEditorProps) {
   const [state, setState] = useState<{
-    options?: Array<SelectableValue<any>>;
+    options?: SelectableValue[];
     isLoading?: boolean;
   }>({});
 
   return (
     <Select
-      inputId={getOperationParamId(operationIndex, index)}
+      inputId={getOperationParamId(operationId, index)}
       autoFocus={value === '' ? true : undefined}
       openMenuOnFocus
       onOpenMenu={async () => {
@@ -42,10 +42,7 @@ export function LabelParamEditor({
   );
 }
 
-async function loadGroupByLabels(
-  query: PromVisualQuery,
-  datasource: DataSourceApi
-): Promise<Array<SelectableValue<any>>> {
+async function loadGroupByLabels(query: PromVisualQuery, datasource: DataSourceApi): Promise<SelectableValue[]> {
   let labels: QueryBuilderLabelFilter[] = query.labels;
 
   // This function is used by both Prometheus and Loki and this the only difference.
@@ -54,7 +51,7 @@ async function loadGroupByLabels(
   }
 
   const expr = promQueryModeller.renderLabels(labels);
-  const result = await datasource.languageProvider.fetchSeriesLabels(expr);
+  const result = await datasource.languageProvider.fetchLabelsWithMatch(expr);
 
   return Object.keys(result).map((x) => ({
     label: x,

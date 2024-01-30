@@ -1,6 +1,4 @@
 import { chain, map as _map, uniq } from 'lodash';
-import { lastValueFrom } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 import { getDefaultTimeRange, MetricFindValue, TimeRange } from '@grafana/data';
 
@@ -12,7 +10,6 @@ import {
   PrometheusMetricNamesRegex,
   PrometheusQueryResultRegex,
 } from './migrations/variableMigration';
-import { PromQueryRequest } from './types';
 
 export default class PrometheusMetricFindQuery {
   range: TimeRange;
@@ -51,10 +48,13 @@ export default class PrometheusMetricFindQuery {
 
     const labelValuesQuery = this.query.match(labelValuesRegex);
     if (labelValuesQuery) {
-      if (labelValuesQuery[1]) {
-        return this.labelValuesQuery(labelValuesQuery[2], labelValuesQuery[1]);
+      const filter = labelValuesQuery[1];
+      const label = labelValuesQuery[2];
+      if (isFilterDefined(filter)) {
+        return this.labelValuesQuery(label, filter);
       } else {
-        return this.labelValuesQuery(labelValuesQuery[2]);
+        // Exclude the filter part of the expression because it is blank or empty
+        return this.labelValuesQuery(label);
       }
     }
 
@@ -65,7 +65,7 @@ export default class PrometheusMetricFindQuery {
 
     const queryResultQuery = this.query.match(queryResultRegex);
     if (queryResultQuery) {
-      return lastValueFrom(this.queryResultQuery(queryResultQuery[1]));
+      return this.queryResultQuery(queryResultQuery[1]);
     }
 
     // if query contains full metric name, return metric name and label list
@@ -136,41 +136,42 @@ export default class PrometheusMetricFindQuery {
   }
 
   queryResultQuery(query: string) {
-    const end = getPrometheusTime(this.range.to, true);
-    const instantQuery: PromQueryRequest = { expr: query } as PromQueryRequest;
-    return this.datasource.performInstantQuery(instantQuery, end).pipe(
-      map((result) => {
-        switch (result.data.data.resultType) {
-          case 'scalar': // [ <unix_time>, "<scalar_value>" ]
-          case 'string': // [ <unix_time>, "<string_value>" ]
-            return [
-              {
-                text: result.data.data.result[1] || '',
-                expandable: false,
-              },
-            ];
-          case 'vector':
-            return _map(result.data.data.result, (metricData) => {
-              let text = metricData.metric.__name__ || '';
-              delete metricData.metric.__name__;
-              text +=
-                '{' +
-                _map(metricData.metric, (v, k) => {
-                  return k + '="' + v + '"';
-                }).join(',') +
-                '}';
-              text += ' ' + metricData.value[1] + ' ' + metricData.value[0] * 1000;
+    const url = '/api/v1/query';
+    const params = {
+      query,
+      time: getPrometheusTime(this.range.to, true).toString(),
+    };
+    return this.datasource.metadataRequest(url, params).then((result: any) => {
+      switch (result.data.data.resultType) {
+        case 'scalar': // [ <unix_time>, "<scalar_value>" ]
+        case 'string': // [ <unix_time>, "<string_value>" ]
+          return [
+            {
+              text: result.data.data.result[1] || '',
+              expandable: false,
+            },
+          ];
+        case 'vector':
+          return _map(result.data.data.result, (metricData) => {
+            let text = metricData.metric.__name__ || '';
+            delete metricData.metric.__name__;
+            text +=
+              '{' +
+              _map(metricData.metric, (v, k) => {
+                return k + '="' + v + '"';
+              }).join(',') +
+              '}';
+            text += ' ' + metricData.value[1] + ' ' + metricData.value[0] * 1000;
 
-              return {
-                text: text,
-                expandable: true,
-              };
-            });
-          default:
-            throw Error(`Unknown/Unhandled result type: [${result.data.data.resultType}]`);
-        }
-      })
-    );
+            return {
+              text: text,
+              expandable: true,
+            };
+          });
+        default:
+          throw Error(`Unknown/Unhandled result type: [${result.data.data.resultType}]`);
+      }
+    });
   }
 
   metricNameAndLabelsQuery(query: string): Promise<MetricFindValue[]> {
@@ -194,4 +195,9 @@ export default class PrometheusMetricFindQuery {
       });
     });
   }
+}
+
+function isFilterDefined(filter: string) {
+  // We consider blank strings or the empty filter {} as an undefined filter
+  return filter && filter.split(' ').join('') !== '{}';
 }

@@ -51,8 +51,8 @@ interface PromQueryFieldState {
 class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
   declare languageProviderInitializationPromise: CancelablePromise<any>;
 
-  constructor(props: PromQueryFieldProps, context: React.Context<any>) {
-    super(props, context);
+  constructor(props: PromQueryFieldProps) {
+    super(props);
 
     this.state = {
       labelBrowserVisible: false,
@@ -245,6 +245,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                     onRunQuery={this.props.onRunQuery}
                     initialValue={query.expr ?? ''}
                     placeholder="Enter a PromQL query…"
+                    datasource={datasource}
                   />
                 </div>
               </div>
@@ -256,6 +257,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                     lastUsedLabels={lastUsedLabels || []}
                     storeLastUsedLabels={onLastUsedLabelsSave}
                     deleteLastUsedLabels={onLastUsedLabelsDelete}
+                    timeRange={this.props.range}
                   />
                 </div>
               )}

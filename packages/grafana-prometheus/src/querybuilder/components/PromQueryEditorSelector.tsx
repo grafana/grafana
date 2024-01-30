@@ -3,18 +3,18 @@ import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, LoadingState, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { EditorHeader, EditorRows, FlexItem, Space } from '@grafana/experimental';
+import { EditorHeader, EditorRows, FlexItem } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal } from '@grafana/ui';
+import { Button, ConfirmModal, Space } from '@grafana/ui';
 
 import { PromQueryEditorProps } from '../../components/types';
 import { PromQueryFormat } from '../../dataquery.gen';
 import { PromQuery } from '../../types';
 import { QueryPatternsModal } from '../QueryPatternsModal';
+import { promQueryEditorExplainKey, useFlag } from '../hooks/useFlag';
 import { buildVisualQueryFromString } from '../parsing';
 import { QueryEditorModeToggle } from '../shared/QueryEditorModeToggle';
 import { QueryHeaderSwitch } from '../shared/QueryHeaderSwitch';
-import { promQueryEditorExplainKey, useFlag } from '../shared/hooks/useFlag';
 import { QueryEditorMode } from '../shared/types';
 import { changeEditorMode, getQueryWithDefaults } from '../state';
 
@@ -96,8 +96,8 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
     <>
       <ConfirmModal
         isOpen={parseModalOpen}
-        title="Query parsing"
-        body="There were errors while trying to parse the query. Continuing to visual builder may lose some parts of the query."
+        title="Parsing error: Switch to the builder mode?"
+        body="There is a syntax error, or the query structure cannot be visualized when switching to the builder mode. Parts of the query may be lost. "
         confirmText="Continue"
         onConfirm={() => {
           changeEditorMode(query, QueryEditorMode.Builder, onChange);
@@ -132,7 +132,7 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
             variant={dataIsStale ? 'primary' : 'secondary'}
             size="sm"
             onClick={onRunQuery}
-            icon={data?.state === LoadingState.Loading ? 'fa fa-spinner' : undefined}
+            icon={data?.state === LoadingState.Loading ? 'spinner' : undefined}
             disabled={data?.state === LoadingState.Loading}
           >
             Run queries

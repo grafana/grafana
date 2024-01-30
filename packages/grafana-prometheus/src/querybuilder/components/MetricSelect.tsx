@@ -20,12 +20,10 @@ import {
   useTheme2,
 } from '@grafana/ui';
 
-// import {SelectMenuOptions} from '@grafana/ui/src/components/Select/SelectMenu';
-
 import { PrometheusDatasource } from '../../datasource';
 import { SelectMenuOptions } from '../../gcopypaste/packages/grafana-ui/src/components/Select/SelectBase';
 import { truncateResult } from '../../language_utils';
-import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
+import { regexifyLabelValuesQueryString } from '../parsingUtils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
