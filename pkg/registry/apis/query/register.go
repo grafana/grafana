@@ -32,16 +32,21 @@ var _ grafanaapiserver.APIGroupBuilder = (*QueryAPIBuilder)(nil)
 type QueryAPIBuilder struct {
 	log                    log.Logger
 	concurrentQueryLimit   int
-	UserFacingDefaultError string
+	userFacingDefaultError string
+	returnMultiStatus      bool // from feature toggle
 
 	runner   v0alpha1.QueryRunner
 	registry v0alpha1.DataSourceApiServerRegistry
 }
 
-func NewQueryAPIBuilder(runner v0alpha1.QueryRunner, registry v0alpha1.DataSourceApiServerRegistry) *QueryAPIBuilder {
+func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
+	runner v0alpha1.QueryRunner,
+	registry v0alpha1.DataSourceApiServerRegistry,
+) *QueryAPIBuilder {
 	return &QueryAPIBuilder{
 		concurrentQueryLimit: 4, // from config?
 		log:                  log.New("query_apiserver"),
+		returnMultiStatus:    features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryMultiStatus),
 		runner:               runner,
 		registry:             registry,
 	}
@@ -60,6 +65,7 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 	}
 
 	builder := NewQueryAPIBuilder(
+		features,
 		runner.NewDirectQueryRunner(pluginClient, pCtxProvider),
 		runner.NewDirectRegistry(pluginStore, dataSourcesService),
 	)
@@ -67,6 +73,7 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 	// ONLY testdata...
 	if false {
 		builder = NewQueryAPIBuilder(
+			features,
 			runner.NewDummyTestRunner(),
 			runner.NewDummyRegistry(),
 		)

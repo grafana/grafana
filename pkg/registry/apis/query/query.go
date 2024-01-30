@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -27,14 +28,28 @@ func (b *QueryAPIBuilder) handleQuery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rsp, err := b.processRequest(r.Context(), parsed)
+	ctx := r.Context()
+	qdr, err := b.processRequest(ctx, parsed)
 	if err != nil {
 		_, _ = w.Write([]byte("Error executing query: " + err.Error()))
 		return
 	}
 
+	statusCode := http.StatusOK
+	for _, res := range qdr.Responses {
+		if res.Error != nil {
+			statusCode = http.StatusBadRequest
+			if b.returnMultiStatus {
+				statusCode = http.StatusMultiStatus
+			}
+		}
+	}
+	if statusCode != http.StatusOK {
+		requestmeta.WithDownstreamStatusSource(ctx)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(rsp)
+	err = json.NewEncoder(w).Encode(qdr)
 	if err != nil {
 		_, _ = w.Write([]byte("Error executing query: " + err.Error()))
 	}
@@ -95,7 +110,7 @@ func (b *QueryAPIBuilder) executeConcurrentQueries(ctx context.Context, requests
 			} else if theErrString, ok := r.(string); ok {
 				err = fmt.Errorf(theErrString)
 			} else {
-				err = fmt.Errorf("unexpected error - %s", b.UserFacingDefaultError)
+				err = fmt.Errorf("unexpected error - %s", b.userFacingDefaultError)
 			}
 			// Due to the panic, there is no valid response for any query for this datasource. Append an error for each one.
 			rchan <- buildErrorResponse(err, req)
