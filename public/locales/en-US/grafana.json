@@ -234,6 +234,10 @@
       "visualization": "Visualization",
       "widget": "Widget"
     },
+    "alert-rules-drawer": {
+      "redirect-link": "List in Grafana Alerting",
+      "subtitle": "Alert rules related to this dashboard"
+    },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
       "add-library-panel-button": "Add library panel",
@@ -302,6 +306,7 @@
     },
     "toolbar": {
       "add": "Add",
+      "alert-rules": "Alert rules",
       "mark-favorite": "Mark as favorite",
       "open-original": "Open original dashboard",
       "playlist-next": "Go to next dashboard",

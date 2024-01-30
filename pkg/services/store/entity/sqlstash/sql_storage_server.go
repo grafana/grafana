@@ -10,32 +10,23 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/xorm"
-
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 
-	foldersV0 "github.com/grafana/grafana/pkg/apis/folders/v0alpha1"
+	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/store/entity/db"
 )
-
-type EntityDB interface {
-	Init() error
-	GetSession() (*session.SessionDB, error)
-	GetEngine() (*xorm.Engine, error)
-	GetCfg() *setting.Cfg
-}
 
 // Make sure we implement both store + admin
 var _ entity.EntityStoreServer = &sqlEntityServer{}
 
-func ProvideSQLEntityServer(db EntityDB /*, cfg *setting.Cfg */) (entity.EntityStoreServer, error) {
+func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (entity.EntityStoreServer, error) {
 	snode, err := snowflake.NewNode(rand.Int63n(1024))
 	if err != nil {
 		return nil, err
@@ -52,7 +43,7 @@ func ProvideSQLEntityServer(db EntityDB /*, cfg *setting.Cfg */) (entity.EntityS
 
 type sqlEntityServer struct {
 	log       log.Logger
-	db        EntityDB // needed to keep xorm engine in scope
+	db        db.EntityDBInterface // needed to keep xorm engine in scope
 	sess      *session.SessionDB
 	dialect   migrator.Dialect
 	snowflake *snowflake.Node
@@ -455,9 +446,9 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		}
 
 		switch current.Group {
-		case foldersV0.GROUP:
+		case folder.GROUP:
 			switch current.Resource {
-			case foldersV0.RESOURCE:
+			case folder.RESOURCE:
 				err = s.updateFolderTree(ctx, tx, current.Namespace)
 				if err != nil {
 					s.log.Error("error updating folder tree", "msg", err.Error())
@@ -680,9 +671,9 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		}
 
 		switch current.Group {
-		case foldersV0.GROUP:
+		case folder.GROUP:
 			switch current.Resource {
-			case foldersV0.RESOURCE:
+			case folder.RESOURCE:
 				err = s.updateFolderTree(ctx, tx, current.Namespace)
 				if err != nil {
 					s.log.Error("error updating folder tree", "msg", err.Error())
@@ -798,9 +789,9 @@ func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, e
 	}
 
 	switch ent.Group {
-	case foldersV0.GROUP:
+	case folder.GROUP:
 		switch ent.Resource {
-		case foldersV0.RESOURCE:
+		case folder.RESOURCE:
 			err = s.updateFolderTree(ctx, tx, ent.Namespace)
 			if err != nil {
 				s.log.Error("error updating folder tree", "msg", err.Error())
