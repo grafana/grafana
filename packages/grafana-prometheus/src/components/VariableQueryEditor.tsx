@@ -425,6 +425,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
                 }
               }}
               width={100}
+              data-testid={selectors.components.DataSource.Prometheus.variableQueryEditor.classicQuery}
             />
           </InlineField>
         </InlineFieldRow>
