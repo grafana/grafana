@@ -200,21 +200,10 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
 }
 
 function combineFrames(dest: DataFrame, source: DataFrame) {
-  // `dest` and `source` might have more or less fields, we need to go through all of them
-  const totalFields = Math.max(dest.fields.length, source.fields.length);
+  const totalFields = dest.fields.length;
   for (let i = 0; i < totalFields; i++) {
-    // For now, skip undefined fields that exist in the new frame
-    if (!dest.fields[i]) {
-      continue;
-    }
-    // Index is not reliable when frames have disordered fields, or an extra/missing field, so we find them by name.
-    // If the field has no name, we fallback to the old index version.
-    const sourceField = dest.fields[i].name ? (source.fields.find(f => f.name === dest.fields[i].name)) : source.fields[i];
-    if (!sourceField) {
-      continue;
-    }
-    dest.fields[i].values = [].concat.apply(sourceField.values, dest.fields[i].values);
-    if (sourceField.nanos) {
+    dest.fields[i].values = [].concat.apply(source.fields[i].values, dest.fields[i].values);
+    if (source.fields[i].nanos) {
       const nanos: number[] = dest.fields[i].nanos?.slice() || [];
       dest.fields[i].nanos = source.fields[i].nanos?.concat(nanos);
     }
