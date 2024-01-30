@@ -748,72 +748,62 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 		return dashboards.ErrFolderAccessDenied
 	}
 
-	result := []string{cmd.UID}
+	folders := []string{cmd.UID}
 	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
-		subfolders, err := s.nestedFolderDelete(ctx, cmd)
+		descendants, err := s.nestedFolderDelete(ctx, cmd)
 
 		if err != nil {
 			logger.Error("the delete folder on folder table failed with err: ", "error", err)
 			return err
 		}
-		result = append(result, subfolders...)
+		folders = append(folders, descendants...)
 
-		dashFolders, err := s.dashboardFolderStore.GetFolders(ctx, cmd.OrgID, result)
-		if err != nil {
-			return folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
-		}
-
-		for _, foldr := range result {
-			dashFolder, ok := dashFolders[foldr]
-			if !ok {
-				return folder.ErrInternal.Errorf("folder does not exist in dashboard store")
-			}
-
-			if cmd.ForceDeleteRules {
-				if err := s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID, cmd.SignedInUser); err != nil {
-					return err
-				}
-			} else {
-				alertRuleSrv, ok := s.registry[entity.StandardKindAlertRule]
-				if !ok {
-					return folder.ErrInternal.Errorf("no alert rule service found in registry")
-				}
-				alertRulesInFolder, err := alertRuleSrv.CountInFolder(ctx, dashFolder.OrgID, dashFolder.UID, cmd.SignedInUser)
-				if err != nil {
-					s.log.Error("failed to count alert rules in folder", "error", err)
-					return err
-				}
-				if alertRulesInFolder > 0 {
-					return folder.ErrFolderNotEmpty.Errorf("folder contains %d alert rules", alertRulesInFolder)
-				}
-			}
-
-			if err = s.legacyDelete(ctx, cmd, dashFolder); err != nil {
+		if cmd.ForceDeleteRules {
+			if err := s.deleteChildrenInFolder(ctx, cmd.OrgID, folders, cmd.SignedInUser); err != nil {
 				return err
 			}
+		} else {
+			alertRuleSrv, ok := s.registry[entity.StandardKindAlertRule]
+			if !ok {
+				return folder.ErrInternal.Errorf("no alert rule service found in registry")
+			}
+			alertRulesInFolder, err := alertRuleSrv.CountInFolders(ctx, cmd.OrgID, folders, cmd.SignedInUser)
+			if err != nil {
+				s.log.Error("failed to count alert rules in folder", "error", err)
+				return err
+			}
+			if alertRulesInFolder > 0 {
+				return folder.ErrFolderNotEmpty.Errorf("folder contains %d alert rules", alertRulesInFolder)
+			}
 		}
+
+		if err = s.legacyDelete(ctx, cmd, folders); err != nil {
+			return err
+		}
+
 		return nil
 	})
 
 	return err
 }
 
-func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) error {
+func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
 	for _, v := range s.registry {
-		if err := v.DeleteInFolder(ctx, orgID, folderUID, user); err != nil {
+		if err := v.DeleteInFolders(ctx, orgID, folderUIDs, user); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, dashFolder *folder.Folder) error {
-	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-	// nolint:staticcheck
-	deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, ID: dashFolder.ID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
+func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, folderUIDs []string) error {
+	// TODO use bulk delete
+	for _, folderUID := range folderUIDs {
+		deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, UID: folderUID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 
-	if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
-		return toFolderError(err)
+		if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
+			return toFolderError(err)
+		}
 	}
 	return nil
 }
@@ -907,9 +897,9 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 // the folder store and returns the UIDs for all its descendants.
 func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFolderCommand) ([]string, error) {
 	logger := s.log.FromContext(ctx)
-	result := []string{}
+	descendantUIDs := []string{}
 	if cmd.SignedInUser == nil {
-		return result, folder.ErrBadRequest.Errorf("missing signed in user")
+		return descendantUIDs, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
 	_, err := s.Get(ctx, &folder.GetFolderQuery{
@@ -918,31 +908,26 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 		SignedInUser: cmd.SignedInUser,
 	})
 	if err != nil {
-		return result, err
+		return descendantUIDs, err
 	}
 
-	folders, err := s.store.GetChildren(ctx, folder.GetChildrenQuery{UID: cmd.UID, OrgID: cmd.OrgID})
+	descendants, err := s.store.GetDescendants(ctx, cmd.OrgID, cmd.UID)
 	if err != nil {
-		return result, err
-	}
-	for _, f := range folders {
-		result = append(result, f.UID)
-		logger.Info("deleting subfolder", "org_id", f.OrgID, "uid", f.UID)
-		subfolders, err := s.nestedFolderDelete(ctx, &folder.DeleteFolderCommand{UID: f.UID, OrgID: f.OrgID, ForceDeleteRules: cmd.ForceDeleteRules, SignedInUser: cmd.SignedInUser})
-		if err != nil {
-			logger.Error("failed deleting subfolder", "org_id", f.OrgID, "uid", f.UID, "error", err)
-			return result, err
-		}
-		result = append(result, subfolders...)
+		logger.Error("failed to get descendant folders", "error", err)
+		return descendantUIDs, err
 	}
 
-	logger.Info("deleting folder and its contents", "org_id", cmd.OrgID, "uid", cmd.UID)
-	err = s.store.Delete(ctx, cmd.UID, cmd.OrgID)
+	for _, f := range descendants {
+		descendantUIDs = append(descendantUIDs, f.UID)
+	}
+	logger.Info("deleting folder and its descendants", "org_id", cmd.OrgID, "uid", cmd.UID)
+	toDelete := append(descendantUIDs, cmd.UID)
+	err = s.store.Delete(ctx, toDelete, cmd.OrgID)
 	if err != nil {
 		logger.Info("failed deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID, "err", err)
-		return result, err
+		return descendantUIDs, err
 	}
-	return result, nil
+	return descendantUIDs, nil
 }
 
 func (s *Service) GetDescendantCounts(ctx context.Context, q *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {
@@ -950,54 +935,36 @@ func (s *Service) GetDescendantCounts(ctx context.Context, q *folder.GetDescenda
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed-in user")
 	}
-	if *q.UID == "" {
+	if q.UID == nil || *q.UID == "" {
 		return nil, folder.ErrBadRequest.Errorf("missing UID")
 	}
 	if q.OrgID < 1 {
 		return nil, folder.ErrBadRequest.Errorf("invalid orgID")
 	}
 
-	result := []string{*q.UID}
+	folders := []string{*q.UID}
 	countsMap := make(folder.DescendantCounts, len(s.registry)+1)
 	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
-		subfolders, err := s.getNestedFolders(ctx, q.OrgID, *q.UID)
+		descendantFolders, err := s.store.GetDescendants(ctx, q.OrgID, *q.UID)
 		if err != nil {
-			logger.Error("failed to get subfolders", "error", err)
+			logger.Error("failed to get descendant folders", "error", err)
 			return nil, err
 		}
-		result = append(result, subfolders...)
-		countsMap[entity.StandardKindFolder] = int64(len(subfolders))
+		for _, f := range descendantFolders {
+			folders = append(folders, f.UID)
+		}
+		countsMap[entity.StandardKindFolder] = int64(len(descendantFolders))
 	}
 
 	for _, v := range s.registry {
-		for _, folder := range result {
-			c, err := v.CountInFolder(ctx, q.OrgID, folder, q.SignedInUser)
-			if err != nil {
-				logger.Error("failed to count folder descendants", "error", err)
-				return nil, err
-			}
-			countsMap[v.Kind()] += c
-		}
-	}
-	return countsMap, nil
-}
-
-func (s *Service) getNestedFolders(ctx context.Context, orgID int64, uid string) ([]string, error) {
-	result := []string{}
-	folders, err := s.store.GetChildren(ctx, folder.GetChildrenQuery{UID: uid, OrgID: orgID})
-	if err != nil {
-		return nil, err
-	}
-
-	for _, f := range folders {
-		result = append(result, f.UID)
-		subfolders, err := s.getNestedFolders(ctx, f.OrgID, f.UID)
+		c, err := v.CountInFolders(ctx, q.OrgID, folders, q.SignedInUser)
 		if err != nil {
+			logger.Error("failed to count folder descendants", "error", err)
 			return nil, err
 		}
-		result = append(result, subfolders...)
+		countsMap[v.Kind()] = c
 	}
-	return result, nil
+	return countsMap, nil
 }
 
 // buildSaveDashboardCommand is a simplified version on DashboardServiceImpl.buildSaveDashboardCommand

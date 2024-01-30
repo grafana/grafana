@@ -458,8 +458,8 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			count, err := store.CountInFolder(context.Background(),
-				test.query.OrgID, test.query.NamespaceUID, nil)
+			count, err := store.CountInFolders(context.Background(),
+				test.query.OrgID, []string{test.query.NamespaceUID}, nil)
 			if test.expectErr {
 				require.Error(t, err)
 			} else {
@@ -486,7 +486,7 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 
 	t.Run("should not be able to delete folder without permissions to delete rules", func(t *testing.T) {
 		store.AccessControl = acmock.New()
-		err := store.DeleteInFolder(context.Background(), rule.OrgID, rule.NamespaceUID, &user.SignedInUser{})
+		err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
 		require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
 	})
 
@@ -494,10 +494,10 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 		store.AccessControl = acmock.New().WithPermissions([]accesscontrol.Permission{
 			{Action: accesscontrol.ActionAlertingRuleDelete, Scope: dashboards.ScopeFoldersAll},
 		})
-		err := store.DeleteInFolder(context.Background(), rule.OrgID, rule.NamespaceUID, &user.SignedInUser{})
+		err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
 		require.NoError(t, err)
 
-		c, err := store.CountInFolder(context.Background(), rule.OrgID, rule.NamespaceUID, &user.SignedInUser{})
+		c, err := store.CountInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
 		require.NoError(t, err)
 		require.Equal(t, int64(0), c)
 	})

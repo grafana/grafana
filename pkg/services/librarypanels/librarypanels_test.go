@@ -326,14 +326,14 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 
 	scenarioWithLibraryPanel(t, "It should return the correct count of library panels in a folder",
 		func(t *testing.T, sc scenarioContext) {
-			count, err := sc.lps.CountInFolder(context.Background(), sc.user.OrgID, sc.folder.UID, sc.user)
+			count, err := sc.lps.CountInFolders(context.Background(), sc.user.OrgID, []string{sc.folder.UID}, sc.user)
 			require.NoError(t, err)
 			require.Equal(t, int64(1), count)
 		})
 
 	scenarioWithLibraryPanel(t, "It should delete library panels in a folder",
 		func(t *testing.T, sc scenarioContext) {
-			err := sc.lps.DeleteInFolder(context.Background(), sc.user.OrgID, sc.folder.UID, sc.user)
+			err := sc.lps.DeleteInFolders(context.Background(), sc.user.OrgID, []string{sc.folder.UID}, sc.user)
 			require.NoError(t, err)
 
 			_, err = sc.elementService.GetElement(sc.ctx, sc.user,
