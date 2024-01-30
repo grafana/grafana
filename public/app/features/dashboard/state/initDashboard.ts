@@ -10,19 +10,12 @@ import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoa
 import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
+import { buildNewDashboardSaveModel } from 'app/features/dashboard-scene/serialization/buildNewDashboardSaveModel';
 import { getFolderByUid } from 'app/features/folders/state/actions';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { toStateKey } from 'app/features/variables/utils';
-import {
-  DashboardDTO,
-  DashboardInitPhase,
-  DashboardMeta,
-  DashboardRoutes,
-  StoreState,
-  ThunkDispatch,
-  ThunkResult,
-} from 'app/types';
+import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
 
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { initVariablesTransaction } from '../../variables/state/actions';
@@ -124,7 +117,7 @@ async function fetchDashboard(
         if (args.urlFolderUid) {
           await dispatch(getFolderByUid(args.urlFolderUid));
         }
-        return getNewDashboardModelData(args.urlFolderUid);
+        return buildNewDashboardSaveModel(args.urlFolderUid);
       }
       case DashboardRoutes.Path: {
         const path = args.urlSlug ?? '';
@@ -292,28 +285,6 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // yay we are done
     dispatch(dashboardInitCompleted(dashboard));
   };
-}
-
-export function getNewDashboardModelData(urlFolderUid?: string): { dashboard: any; meta: DashboardMeta } {
-  const data = {
-    meta: {
-      canStar: false,
-      canShare: false,
-      canDelete: false,
-      isNew: true,
-      folderUid: '',
-    },
-    dashboard: {
-      title: 'New dashboard',
-      panels: [],
-    },
-  };
-
-  if (urlFolderUid) {
-    data.meta.folderUid = urlFolderUid;
-  }
-
-  return data;
 }
 
 const DASHBOARD_FROM_LS_KEY = 'DASHBOARD_FROM_LS_KEY';
