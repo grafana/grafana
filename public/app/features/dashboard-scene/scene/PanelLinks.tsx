@@ -19,12 +19,16 @@ export class VizPanelLinks extends SceneObjectBase<VizPanelLinksState> {
 function VizPanelLinksRenderer({ model }: SceneComponentProps<VizPanelLinks>) {
   const { menu, rawLinks } = model.useState();
 
+  if (!(model.parent instanceof VizPanel)) {
+    throw new Error('VizPanelLinks must be a child of VizPanel');
+  }
+
   if (!rawLinks || rawLinks.length === 0) {
     return null;
   }
 
   if (rawLinks.length === 1) {
-    const link = getPanelLinks(model.parent as VizPanel)[0];
+    const link = getPanelLinks(model.parent)[0];
     return (
       <PanelChrome.TitleItem href={link.href} onClick={link.onClick} target={link.target} title={link.title}>
         <Icon name="external-link-alt" size="md" />
