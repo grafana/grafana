@@ -21,9 +21,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
@@ -61,7 +61,7 @@ const (
 	timeSeriesQuery = "timeSeriesQuery"
 )
 
-var logger = log.New("tsdb.cloudwatch")
+var logger = log.New().With("logger", "tsdb.cloudwatch")
 
 func ProvideService(httpClientProvider *httpclient.Provider) *CloudWatchService {
 	logger.Debug("Initializing")

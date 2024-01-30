@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 type responseWrapper struct {
@@ -70,7 +71,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 			eg.Go(func() error {
 				defer func() {
 					if err := recover(); err != nil {
-						logger.Error("Execute Get Metric Data Query Panic", "error", err, "stack", log.Stack(1))
+						logger.Error("Execute Get Metric Data Query Panic", "error", err, "stack", utils.Stack(1))
 						if theErr, ok := err.(error); ok {
 							resultChan <- &responseWrapper{
 								DataResponse: &backend.DataResponse{
