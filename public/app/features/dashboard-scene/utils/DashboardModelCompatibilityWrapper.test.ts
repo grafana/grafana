@@ -9,10 +9,13 @@ import {
   VizPanel,
   SceneTimePicker,
   SceneDataTransformer,
+  SceneDataLayers,
 } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
+import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
+import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardLinksControls } from '../scene/DashboardLinksControls';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -37,6 +40,9 @@ describe('DashboardModelCompatibilityWrapper', () => {
     expect(wrapper.timepicker.refresh_intervals).toEqual(['1s']);
     expect(wrapper.timepicker.hidden).toEqual(true);
     expect(wrapper.panels).toHaveLength(5);
+
+    expect(wrapper.annotations.list).toHaveLength(1);
+    expect(wrapper.annotations.list[0].name).toBe('test');
 
     expect(wrapper.panels[0].targets).toHaveLength(1);
     expect(wrapper.panels[0].targets[0]).toEqual({ refId: 'A' });
@@ -104,6 +110,22 @@ describe('DashboardModelCompatibilityWrapper', () => {
 
     expect((scene.state.body as SceneGridLayout).state.children.length).toBe(4);
   });
+
+  it('Checks if annotations are editable', () => {
+    const { wrapper, scene } = setup();
+
+    expect(wrapper.canEditAnnotations()).toBe(true);
+    expect(wrapper.canEditAnnotations(scene.state.uid)).toBe(false);
+
+    scene.setState({
+      meta: {
+        canEdit: false,
+        canMakeEditable: false,
+      },
+    });
+
+    expect(wrapper.canEditAnnotations()).toBe(false);
+  });
 });
 
 function setup() {
@@ -114,9 +136,44 @@ function setup() {
     links: [NEW_LINK],
     uid: 'dash-1',
     editable: false,
+    meta: {
+      canEdit: true,
+      canMakeEditable: true,
+      annotationsPermissions: {
+        organization: {
+          canEdit: true,
+          canAdd: true,
+          canDelete: true,
+        },
+        dashboard: {
+          canEdit: false,
+          canAdd: false,
+          canDelete: false,
+        },
+      },
+    },
     $timeRange: new SceneTimeRange({
       weekStart: 'friday',
       timeZone: 'America/New_York',
+    }),
+    $data: new SceneDataLayers({
+      layers: [
+        new DashboardAnnotationsDataLayer({
+          key: `annotations-test`,
+          query: {
+            enable: true,
+            iconColor: 'red',
+            name: 'test',
+          },
+          name: 'test',
+          isEnabled: true,
+          isHidden: false,
+        }),
+        new AlertStatesDataLayer({
+          key: 'alert-states',
+          name: 'Alert States',
+        }),
+      ],
     }),
     controls: [
       new DashboardControls({
