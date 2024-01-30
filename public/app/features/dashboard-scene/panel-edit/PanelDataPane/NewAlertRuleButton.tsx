@@ -24,7 +24,7 @@ export const ScenesNewRuleFromPanelButton = ({ dashboard, queryRunner, panel, cl
   const variables = panelState.$variables?.useState();
 
   const { loading, value: formValues } = useAsync(
-    () => scenesPanelToRuleFormValues(panel, variables?.variables || [], queryRunner, dashboard),
+    () => scenesPanelToRuleFormValues(panel, queryRunner, dashboard),
     [panel, dashboard, variables]
   );
 

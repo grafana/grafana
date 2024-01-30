@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { SceneQueryRunner, SceneVariable, VizPanel } from '@grafana/scenes';
+import { sceneGraph, SceneQueryRunner, SceneVariable, VizPanel } from '@grafana/scenes';
 import { DataSourceJsonData } from '@grafana/schema';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -505,7 +505,7 @@ const dataQueriesToGrafanaQueries = async (
     };
 
     const interpolatedTarget = datasource.interpolateVariablesInQueries
-      ? await datasource.interpolateVariablesInQueries([target], queryVariables)[0]
+      ? datasource.interpolateVariablesInQueries([target], queryVariables)[0]
       : target;
 
     // expressions
@@ -604,7 +604,6 @@ export const panelToRuleFormValues = async (
 
 export const scenesPanelToRuleFormValues = async (
   vizPanel: VizPanel,
-  variables: SceneVariable[],
   scenesQueries: SceneQueryRunner,
   scenesDashboard: DashboardScene
 ): Promise<Partial<RuleFormValues> | undefined> => {
@@ -612,17 +611,17 @@ export const scenesPanelToRuleFormValues = async (
     return undefined;
   }
 
-  const relativeTimeRange = rangeUtil.timeRangeToRelative(scenesDashboard.state.$timeRange?.state.value!); //TODO: how does $timeRange work, when is $timerange undefined? when is $timeRange.state.value undefined?
+  const timeRange = sceneGraph.getTimeRange(vizPanel);
 
   const sceneq = scenesQueries.state.queries;
 
   const queries = await dataQueriesToGrafanaQueries(
     sceneq,
-    relativeTimeRange,
-    variables || {},
-    scenesQueries.state.datasource ?? undefined,
-    scenesQueries.state.maxDataPoints ?? undefined,
-    scenesQueries.state.minInterval ?? undefined
+    rangeUtil.timeRangeToRelative(timeRange.state.value),
+    { __sceneObject: { value: vizPanel } },
+    scenesQueries.state.datasource,
+    scenesQueries.state.maxDataPoints,
+    scenesQueries.state.minInterval
   );
   // if no alerting capable queries are found, can't create a rule
   if (!queries.length || !queries.find((query) => query.datasourceUid !== ExpressionDatasourceUID)) {
