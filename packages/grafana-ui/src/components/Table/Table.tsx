@@ -236,6 +236,14 @@ export const Table = memo((props: Props) => {
     setPageSize(pageSize);
   }, [pageSize, setPageSize]);
 
+  useEffect(() => {
+    // Reset page index when data changes
+    // This is needed because react-table does not do this automatically
+    // autoResetPage is set to false because setting it to true causes the issue described in
+    // https://github.com/grafana/grafana/pull/67477
+    gotoPage(0);
+  }, [data]);
+
   useResetVariableListSizeCache(extendedState, listRef, data, hasUniqueId);
   useFixScrollbarContainer(variableSizeListScrollbarRef, tableDivRef);
 
