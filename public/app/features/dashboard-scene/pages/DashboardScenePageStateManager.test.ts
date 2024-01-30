@@ -94,12 +94,19 @@ describe('DashboardScenePageStateManager', () => {
       it('Should have new empty model with meta.isNew and should not be cached', async () => {
         const loader = new DashboardScenePageStateManager({});
 
-        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.New });
+        await loader.loadDashboard({ uid: '', route: DashboardRoutes.New });
         const dashboard = loader.state.dashboard!;
 
         expect(dashboard.state.meta.isNew).toBe(true);
         expect(dashboard.state.isEditing).toBe(true);
         expect(dashboard.state.isDirty).toBe(true);
+
+        dashboard.setState({ title: 'Changed' });
+
+        await loader.loadDashboard({ uid: '', route: DashboardRoutes.New });
+        const dashboard2 = loader.state.dashboard!;
+
+        expect(dashboard2.state.title).toBe('New dashboard');
       });
     });
 

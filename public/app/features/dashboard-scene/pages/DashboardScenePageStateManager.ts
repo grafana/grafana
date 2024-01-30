@@ -97,7 +97,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         await this.initNavModel(rsp);
 
         // Do not cache new dashboards
-
         this.dashboardCache.set(uid, { dashboard: rsp, ts: Date.now() });
       }
     } catch (e) {
@@ -125,9 +124,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene> {
-    const cacheKey = `${options.route}${options.uid}${options.urlFolderUid ?? ''}`;
-
-    const fromCache = this.cache[cacheKey];
+    const fromCache = this.cache[options.uid];
     if (fromCache) {
       return fromCache;
     }
@@ -138,7 +135,11 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
     if (rsp?.dashboard) {
       const scene = transformSaveModelToScene(rsp);
-      this.cache[cacheKey] = scene;
+
+      if (options.uid) {
+        this.cache[options.uid] = scene;
+      }
+
       return scene;
     }
 
