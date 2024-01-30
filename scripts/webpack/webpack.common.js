@@ -33,7 +33,7 @@ module.exports = {
         '@locker/near-membrane-dom/custom-devtools-formatter.js'
       ),
     },
-    modules: ['node_modules', path.resolve('public')],
+    modules: ['node_modules', path.resolve('node_modules'), path.resolve('public')],
     fallback: {
       buffer: false,
       fs: false,
