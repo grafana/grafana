@@ -87,23 +87,23 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
   };
 
   const getStageCell = (stage: string) => {
-    switch(stage) {
+    switch (stage) {
       case 'GA':
         return (
-          <Tooltip content={"General availability"}>
+          <Tooltip content={'General availability'}>
             <div>GA</div>
           </Tooltip>
-        )
+        );
       case 'privatePreview':
       case 'preview':
       case 'experimental':
-        return 'Beta'
+        return 'Beta';
       case 'deprecated':
-        return 'Deprecated'
+        return 'Deprecated';
       default:
-        return stage
+        return stage;
     }
-  }
+  };
 
   const columns = [
     {
@@ -136,15 +136,13 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
               transparent={row.original.readOnly}
             />
           </div>
-        )
-        
+        );
+
         return row.original.readOnly ? (
-          <Tooltip content={getToggleTooltipContent(row.original.readOnly)}>
-            {renderStateSwitch}
-          </Tooltip>
+          <Tooltip content={getToggleTooltipContent(row.original.readOnly)}>{renderStateSwitch}</Tooltip>
         ) : (
           renderStateSwitch
-        )
+        );
       },
       sortType: sortByEnabled,
     },
@@ -163,11 +161,10 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
             body={
               <div>
                 <p>
-                Some features are stable (GA) and enabled by default, whereas some are currently in their preliminary Beta phase, available for early adoption.
-                </p> 
-                <p> 
-                We advise understanding the implications of each feature change before making modifications. 
-                </p> 
+                  Some features are stable (GA) and enabled by default, whereas some are currently in their preliminary
+                  Beta phase, available for early adoption.
+                </p>
+                <p>We advise understanding the implications of each feature change before making modifications.</p>
               </div>
             }
             confirmText="Save changes"
