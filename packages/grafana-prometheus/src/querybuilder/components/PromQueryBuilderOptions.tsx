@@ -40,7 +40,10 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
     onRunQuery();
   };
 
-  const queryTypeOptions = getQueryTypeOptions(app === CoreApp.Explore || app === CoreApp.PanelEditor);
+  const queryTypeOptions = getQueryTypeOptions(
+    app === CoreApp.Explore || app === CoreApp.Correlations || app === CoreApp.PanelEditor
+  );
+
   const onQueryTypeChange = getQueryTypeChangeHandler(query, onChange);
 
   const onExemplarChange = (event: SyntheticEvent<HTMLInputElement>) => {
@@ -61,71 +64,67 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
   return (
     <EditorRow>
       <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.options}>
-      <QueryOptionGroup
-        title="Options"
-        collapsedInfo={getCollapsedInfo(query, formatOption.label!, queryTypeLabel, app)}
-      >
-        <PromQueryLegendEditor
-          legendFormat={query.legendFormat}
-          onChange={(legendFormat) => onChange({ ...query, legendFormat })}
-          onRunQuery={onRunQuery}
-        />
-        <EditorField
-          label="Min step"
-          tooltip={
-            <>
-              An additional lower limit for the step parameter of the Prometheus query and for the{' '}
-              <code>$__interval</code> and <code>$__rate_interval</code> variables.
-            </>
-          }
+        <QueryOptionGroup
+          title="Options"
+          collapsedInfo={getCollapsedInfo(query, formatOption.label!, queryTypeLabel, app)}
         >
-          <AutoSizeInput
-            type="text"
-            aria-label="Set lower limit for the step parameter"
-            placeholder={'auto'}
-            minWidth={10}
-            onCommitChange={onChangeStep}
-            defaultValue={query.interval}
-            id={selectors.components.DataSource.Prometheus.queryEditor.step}
+          <PromQueryLegendEditor
+            legendFormat={query.legendFormat}
+            onChange={(legendFormat) => onChange({ ...query, legendFormat })}
+            onRunQuery={onRunQuery}
           />
-        </EditorField>
-        <EditorField label="Format">
-          <Select 
-            data-testid={selectors.components.DataSource.Prometheus.queryEditor.format}
-            value={formatOption} 
-            allowCustomValue 
-            onChange={onChangeFormat} 
-            options={FORMAT_OPTIONS} 
-          />
-        </EditorField>
-        <EditorField label="Type" data-testid={selectors.components.DataSource.Prometheus.queryEditor.type}>
-          <RadioButtonGroup 
-            options={queryTypeOptions} 
-            value={queryTypeValue} 
-            onChange={onQueryTypeChange} 
-          />
-        </EditorField>
-        {shouldShowExemplarSwitch(query, app) && (
-          <EditorField label="Exemplars">
-            <EditorSwitch 
-              value={query.exemplar || false} 
-              onChange={onExemplarChange} 
-              id={selectors.components.DataSource.Prometheus.queryEditor.exemplars}
+          <EditorField
+            label="Min step"
+            tooltip={
+              <>
+                An additional lower limit for the step parameter of the Prometheus query and for the{' '}
+                <code>$__interval</code> and <code>$__rate_interval</code> variables.
+              </>
+            }
+          >
+            <AutoSizeInput
+              type="text"
+              aria-label="Set lower limit for the step parameter"
+              placeholder={'auto'}
+              minWidth={10}
+              onCommitChange={onChangeStep}
+              defaultValue={query.interval}
+              id={selectors.components.DataSource.Prometheus.queryEditor.step}
             />
           </EditorField>
-        )}
-        {query.intervalFactor && query.intervalFactor > 1 && (
-          <EditorField label="Resolution">
+          <EditorField label="Format">
             <Select
-              aria-label="Select resolution"
-              isSearchable={false}
-              options={INTERVAL_FACTOR_OPTIONS}
-              onChange={onIntervalFactorChange}
-              value={INTERVAL_FACTOR_OPTIONS.find((option) => option.value === query.intervalFactor)}
+              data-testid={selectors.components.DataSource.Prometheus.queryEditor.format}
+              value={formatOption}
+              allowCustomValue
+              onChange={onChangeFormat}
+              options={FORMAT_OPTIONS}
             />
           </EditorField>
-        )}
-      </QueryOptionGroup>
+          <EditorField label="Type" data-testid={selectors.components.DataSource.Prometheus.queryEditor.type}>
+            <RadioButtonGroup options={queryTypeOptions} value={queryTypeValue} onChange={onQueryTypeChange} />
+          </EditorField>
+          {shouldShowExemplarSwitch(query, app) && (
+            <EditorField label="Exemplars">
+              <EditorSwitch
+                value={query.exemplar || false}
+                onChange={onExemplarChange}
+                id={selectors.components.DataSource.Prometheus.queryEditor.exemplars}
+              />
+            </EditorField>
+          )}
+          {query.intervalFactor && query.intervalFactor > 1 && (
+            <EditorField label="Resolution">
+              <Select
+                aria-label="Select resolution"
+                isSearchable={false}
+                options={INTERVAL_FACTOR_OPTIONS}
+                onChange={onIntervalFactorChange}
+                value={INTERVAL_FACTOR_OPTIONS.find((option) => option.value === query.intervalFactor)}
+              />
+            </EditorField>
+          )}
+        </QueryOptionGroup>
       </div>
     </EditorRow>
   );

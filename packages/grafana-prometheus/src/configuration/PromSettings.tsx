@@ -223,7 +223,7 @@ export const PromSettings = (props: Props) => {
                   <>
                     {/* , and attempt to detect the version */}
                     Set this to the type of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos. Changing
-                    this field will save your current settings. Certain types of Prometheus support or do not support
+                    this field will save your current settings. Certain types of Prometheus supports or does not support
                     various APIs. For example, some types support regex matching for label queries to improve
                     performance. Some types have an API for metadata. If you set this incorrectly you may experience odd
                     behavior when querying metrics and labels. Please check your Prometheus documentation to ensure you
@@ -458,11 +458,11 @@ export const getValueFromEventItem = (eventItem: SyntheticEvent<HTMLInputElement
     return '';
   }
 
-  if (eventItem.hasOwnProperty('currentTarget')) {
+  if ('currentTarget' in eventItem) {
     return eventItem.currentTarget.value;
   }
 
-  return (eventItem as SelectableValue<string>).value;
+  return eventItem.value;
 };
 
 const onChangeHandler =

@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { parser } from '@prometheus-io/lezer-promql';
 import { debounce } from 'lodash';
 import { promLanguageDefinition } from 'monaco-promql';
 import React, { useEffect, useRef } from 'react';
@@ -12,6 +13,7 @@ import { Monaco, monacoTypes, ReactMonacoEditor, useTheme2 } from '@grafana/ui';
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
 import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
+import { placeHolderScopedVars, validateQuery } from './monaco-completion-provider/validation';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -38,6 +40,7 @@ const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
     verticalScrollbarSize: 8, // used as "padding-right"
     horizontal: 'hidden',
     horizontalScrollbarSize: 0,
+    alwaysConsumeMouseWheel: false,
   },
   scrollBeyondLastLine: false,
   suggest: getSuggestOptions(),
@@ -82,7 +85,7 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
       ::after {
         content: '${placeholder}';
         font-family: ${theme.typography.fontFamilyMonospace};
-        opacity: 0.3;
+        opacity: 0.6;
       }
     `,
   };
@@ -94,7 +97,7 @@ const MonacoQueryField = (props: Props) => {
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
-  const { languageProvider, history, onBlur, onRunQuery, initialValue, placeholder, onChange } = props;
+  const { languageProvider, history, onBlur, onRunQuery, initialValue, placeholder, onChange, datasource } = props;
 
   const lpRef = useLatest(languageProvider);
   const historyRef = useLatest(history);
@@ -116,7 +119,7 @@ const MonacoQueryField = (props: Props) => {
 
   return (
     <div
-      aria-label={selectors.components.QueryField.container}
+      data-testid={selectors.components.QueryField.container}
       className={styles.container}
       // NOTE: we will be setting inline-style-width/height on this element
       ref={containerRef}
@@ -280,6 +283,31 @@ const MonacoQueryField = (props: Props) => {
 
             checkDecorators();
             editor.onDidChangeModelContent(checkDecorators);
+
+            editor.onDidChangeModelContent((e) => {
+              const model = editor.getModel();
+              if (!model) {
+                return;
+              }
+              const query = model.getValue();
+              const errors =
+                validateQuery(
+                  query,
+                  datasource.interpolateString(query, placeHolderScopedVars),
+                  model.getLinesContent(),
+                  parser
+                ) || [];
+
+              const markers = errors.map(({ error, ...boundary }) => ({
+                message: `${
+                  error ? `Error parsing "${error}"` : 'Parse error'
+                }. The query appears to be incorrect and could fail to be executed.`,
+                severity: monaco.MarkerSeverity.Error,
+                ...boundary,
+              }));
+
+              monaco.editor.setModelMarkers(model, 'owner', markers);
+            });
           }
         }}
       />
