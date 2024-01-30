@@ -4,7 +4,7 @@ import React, { Fragment, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, textUtil, urlUtil } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService, useReturnToPrevious } from '@grafana/runtime';
 import {
   Button,
   ClipboardButton,
@@ -54,6 +54,8 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
   const dispatch = useDispatch();
   const location = useLocation();
   const notifyApp = useAppNotification();
+
+  const setReturnToPrevious = useReturnToPrevious();
 
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
   const [redirectToClone, setRedirectToClone] = useState<
@@ -135,16 +137,31 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
     const dashboardUID = rule.annotations[Annotation.dashboardUID];
     if (dashboardUID) {
       buttons.push(
-        <LinkButton
-          size="sm"
-          key="dashboard"
-          variant="primary"
-          icon="apps"
-          target="_blank"
-          href={`d/${encodeURIComponent(dashboardUID)}`}
-        >
-          Go to dashboard
-        </LinkButton>
+        config.featureToggles.returnToPrevious ? (
+          <LinkButton
+            size="sm"
+            key="dashboard"
+            variant="primary"
+            icon="apps"
+            href={`d/${encodeURIComponent(dashboardUID)}`}
+            onClick={() => {
+              setReturnToPrevious({ title: rule.name, href: locationService.getLocation().pathname });
+            }}
+          >
+            Go to dashboard
+          </LinkButton>
+        ) : (
+          <LinkButton
+            size="sm"
+            key="dashboard"
+            variant="primary"
+            icon="apps"
+            target="_blank"
+            href={`d/${encodeURIComponent(dashboardUID)}`}
+          >
+            Go to dashboard
+          </LinkButton>
+        )
       );
       const panelId = rule.annotations[Annotation.panelID];
       if (panelId) {

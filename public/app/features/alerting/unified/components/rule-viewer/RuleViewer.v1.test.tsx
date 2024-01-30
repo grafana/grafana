@@ -52,6 +52,7 @@ const mockRoute = (id?: string): GrafanaRouteComponentProps<{ id?: string; sourc
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getPluginLinkExtensions: jest.fn(),
+  useReturnToPrevious: jest.fn(),
 }));
 jest.mock('../../hooks/useAbilities');
 jest.mock('../../api/buildInfo');
