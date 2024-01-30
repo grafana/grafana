@@ -25,12 +25,15 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		}
 	}()
 
+	cfg := backend.GrafanaConfigFromContext(ctx)
+	enableDataplane := cfg.FeatureToggles().IsEnabled("prometheusDataplane")
+
 	ctx, endSpan := utils.StartTrace(ctx, s.tracer, "datasource.prometheus.parseResponse")
 	defer endSpan()
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
 	r := converter.ReadPrometheusStyleResult(iter, converter.Options{
-		Dataplane: s.enableDataplane,
+		Dataplane: enableDataplane,
 	})
 	r.Status = backend.Status(res.StatusCode)
 
@@ -41,7 +44,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 
 	// The ExecutedQueryString can be viewed in QueryInspector in UI
 	for i, frame := range r.Frames {
-		addMetadataToMultiFrame(q, frame, s.enableDataplane)
+		addMetadataToMultiFrame(q, frame, enableDataplane)
 		if i == 0 {
 			frame.Meta.ExecutedQueryString = executedQueryString(q)
 		}

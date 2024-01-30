@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
@@ -44,14 +43,11 @@ type QueryData struct {
 	ID                 int64
 	URL                string
 	TimeInterval       string
-	enableDataplane    bool
-	enableScope        bool
 	exemplarSampler    func() exemplar.Sampler
 }
 
 func New(
 	httpClient *http.Client,
-	features featuremgmt.FeatureToggles,
 	settings backend.DataSourceInstanceSettings,
 	plog log.Logger,
 ) (*QueryData, error) {
@@ -84,19 +80,18 @@ func New(
 		ID:                 settings.ID,
 		URL:                settings.URL,
 		exemplarSampler:    exemplarSampler,
-		enableDataplane:    features.IsEnabledGlobally(featuremgmt.FlagPrometheusDataplane),
-		enableScope:        features.IsEnabledGlobally(featuremgmt.FlagPromQLScope),
 	}, nil
 }
 
 func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	cfg := backend.GrafanaConfigFromContext(ctx)
 	fromAlert := req.Headers["FromAlert"] == "true"
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
 
 	for _, q := range req.Queries {
-		query, err := models.Parse(q, s.TimeInterval, s.intervalCalculator, fromAlert, s.enableScope)
+		query, err := models.Parse(q, s.TimeInterval, s.intervalCalculator, fromAlert, cfg.FeatureToggles().IsEnabled("promQLScope"))
 		if err != nil {
 			return &result, err
 		}

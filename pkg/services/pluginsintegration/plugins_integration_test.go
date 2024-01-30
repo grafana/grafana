@@ -78,7 +78,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	idb := influxdb.ProvideService(hcp, features)
 	lk := loki.ProvideService(hcp, features, tracer)
 	otsdb := opentsdb.ProvideService(hcp)
-	pr := prometheus.ProvideService(hcp, cfg, features)
+	pr := prometheus.ProvideService(hcp, cfg)
 	tmpo := tempo.ProvideService(hcp)
 	td := testdatasource.ProvideService()
 	pg := postgres.ProvideService(cfg)
