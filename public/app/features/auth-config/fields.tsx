@@ -88,7 +88,7 @@ export const sectionFields: Section = {
     {
       name: 'TLS',
       id: 'tls',
-      fields: ['configureTLS', 'tlsSkipVerifyInsecure', 'tlsClientCert', 'tlsClientKey', 'tlsClientCa'],
+      fields: ['tlsSkipVerifyInsecure', 'tlsClientCert', 'tlsClientKey', 'tlsClientCa'],
     },
   ],
 };
@@ -310,10 +310,6 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       description:
         'If enabled, Grafana will fetch a new access token using the refresh token provided by the OAuth2 provider.',
       type: 'checkbox',
-    },
-    configureTLS: {
-      label: 'Configure TLS',
-      type: 'switch',
     },
     tlsClientCa: {
       label: 'TLS client ca',
