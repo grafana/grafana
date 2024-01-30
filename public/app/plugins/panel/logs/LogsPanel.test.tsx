@@ -7,6 +7,7 @@ import { LoadingState, createDataFrame, FieldType, LogsSortOrder, CoreApp } from
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 
 import { LogsPanel } from './LogsPanel';
+import * as styles from 'app/features/logs/components/getLogRowStyles';
 
 type LogsPanelProps = ComponentProps<typeof LogsPanel>;
 type LogRowContextModalProps = ComponentProps<typeof LogRowContextModal>;
@@ -252,6 +253,64 @@ describe('LogsPanel', () => {
       });
     });
   });
+
+  describe('Performance regressions', () => {
+    const series = [
+      createDataFrame({
+        refId: 'A',
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z'],
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: ['logline text'],
+            labels: {
+              app: 'common_app',
+              job: 'common_job',
+            },
+          },
+        ],
+      }),
+    ];
+
+    beforeEach(() => {
+      jest.spyOn(styles, 'getLogRowStyles');
+    });
+
+    it('does not rerender without changes', async () => {
+      const { rerender, props } = setup({
+        data: {
+          series,
+        },
+      });
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+
+      rerender(<LogsPanel {...props} />)
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(styles.getLogRowStyles).toHaveBeenCalledTimes(3);
+    });
+
+    it('rerenders when prop changes', async () => {
+      const { rerender, props } = setup({
+        data: {
+          series,
+        },
+      });
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+
+      rerender(<LogsPanel {...props} />)
+
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(jest.mocked(styles.getLogRowStyles).mock.calls.length).toBeGreaterThan(3);
+    });
+  });
 });
 
 const setup = (propsOverrides?: {}) => {
@@ -280,5 +339,5 @@ const setup = (propsOverrides?: {}) => {
     ...propsOverrides,
   } as unknown as LogsPanelProps;
 
-  return render(<LogsPanel {...props} />);
+  return { ...render(<LogsPanel {...props} />), props };
 };
