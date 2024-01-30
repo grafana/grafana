@@ -49,7 +49,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
         instanceState: panel.getPanelContext().instanceState!,
       });
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [panel, options]);
+    }, [panel, options, fieldConfig]);
 
     const justOverrides = useMemo(
       () =>
