@@ -77,7 +77,7 @@ describe('SaveDashboardDrawer', () => {
 
       await userEvent.click(await screen.findByLabelText('Tab Changes'));
 
-      expect(await screen.findByText('JSON Model')).toBeInTheDocument();
+      expect(await screen.findByText('Full JSON diff')).toBeInTheDocument();
     });
 
     it('Can save', async () => {
