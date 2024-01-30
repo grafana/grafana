@@ -22,10 +22,9 @@ import (
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
@@ -44,7 +43,7 @@ type DataSourceAPIBuilder struct {
 
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
-	apiRegistrar grafanaapiserver.APIRegistrar,
+	apiRegistrar builder.APIRegistrar,
 	pluginClient plugins.Client, // access to everything
 	datasources PluginDatasourceProvider,
 	contextProvider PluginContextWrapper,

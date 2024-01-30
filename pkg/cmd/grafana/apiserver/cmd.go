@@ -8,12 +8,7 @@ import (
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/component-base/cli"
 
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-)
-
-const (
-	aggregatorDataPath              = "data"
-	defaultAggregatorEtcdPathPrefix = "/registry/grafana.aggregator"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 )
 
 func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}) *cobra.Command {
