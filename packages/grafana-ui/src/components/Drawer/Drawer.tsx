@@ -11,6 +11,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
+import { getDragStyles } from '../DragHandle/DragHandle';
 import { IconButton } from '../IconButton/IconButton';
 import { Text } from '../Text/Text';
 
@@ -65,6 +66,7 @@ export function Drawer({
 
   const styles = useStyles2(getStyles);
   const sizeStyles = useStyles2(getSizeStyles, size, drawerWidth ?? width);
+  const dragStyles = useStyles2(getDragStyles);
 
   const overlayRef = React.useRef(null);
   const { dialogProps, titleProps } = useDialog({}, overlayRef);
@@ -116,7 +118,11 @@ export function Drawer({
           ref={overlayRef}
         >
           {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-          <div className={styles.resizer} onMouseDown={onMouseDown} onTouchStart={onTouchStart} />
+          <div
+            className={cx(dragStyles.dragHandleVertical, styles.resizer)}
+            onMouseDown={onMouseDown}
+            onTouchStart={onTouchStart}
+          />
           {typeof title === 'string' && (
             <div className={cx(styles.header, Boolean(tabs) && styles.headerWithTabs)}>
               <div className={styles.actions}>
@@ -338,46 +344,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: theme.spacing(1, -1, -3, -3),
     }),
     resizer: css({
-      width: 8,
       top: 0,
-      left: -4,
+      left: theme.spacing(-1),
       bottom: 0,
       position: 'absolute',
-      cursor: 'col-resize',
       zIndex: theme.zIndex.modal,
-
-      '&::after': {
-        background: theme.colors.emphasize(theme.colors.background.secondary, 0.15),
-        content: '""',
-        position: 'absolute',
-        left: '50%',
-        top: '50%',
-        transition: '0.2s background ease-in-out',
-        transform: 'translate(-50%, -50%)',
-        borderRadius: theme.shape.radius.default,
-        height: '200px',
-        width: '4px',
-      },
-
-      '&::before': {
-        content: '""',
-        position: 'absolute',
-        transition: '0.2s border-color ease-in-out',
-        borderRight: '2px solid transparent',
-        height: '100%',
-        left: '50%',
-        transform: 'translateX(-50%)',
-      },
-
-      '&:hover': {
-        '&::before': {
-          borderColor: theme.colors.primary.border,
-        },
-
-        '&::after': {
-          background: theme.colors.primary.border,
-        },
-      },
     }),
   };
 };
