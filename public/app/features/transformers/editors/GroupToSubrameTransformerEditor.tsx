@@ -40,8 +40,6 @@ export const GroupToSubframeTransformerEditor = ({
   const showHeaders =
     options.showSubframeHeaders === undefined ? SHOW_SUBFRAME_HEADERS_DEFAULT : options.showSubframeHeaders;
 
-  console.log(options);
-
   const onConfigChange = useCallback(
     (fieldName: string) => (config: GroupByFieldOptions) => {
       onChange({
@@ -126,6 +124,7 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
             allowMultiple
             stats={config.aggregations}
             onChange={(stats) => {
+              // eslint-disable-next-line 
               onConfigChange({ ...config, aggregations: stats as ReducerID[] });
             }}
           />
@@ -136,21 +135,19 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    label: css`
-      label {
-        min-width: ${theme.spacing(32)};
-      }
-    `,
-    operation: css`
-      flex-shrink: 0;
-      height: 100%;
-      width: ${theme.spacing(24)};
-    `,
-    aggregations: css`
-      flex-grow: 1;
-    `,
-  };
+  return css({
+    label: {
+        minWidth: theme.spacing(32),
+    },
+    operation: {
+      flexShrink: 0,
+      height: '100%',
+      width: theme.spacing(24),
+    },
+    aggregations: {
+      flexGrow: 1,
+    },
+  });  
 };
 
 export const groupToSubframeTransformRegistryItem: TransformerRegistryItem<GroupByTransformerOptions> = {
