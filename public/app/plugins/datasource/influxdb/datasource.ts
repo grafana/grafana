@@ -17,6 +17,7 @@ import {
   FieldType,
   MetricFindValue,
   QueryResultMeta,
+  QueryVariableModel,
   RawTimeRange,
   ScopedVars,
   TIME_SERIES_TIME_FIELD_NAME,
@@ -31,7 +32,6 @@ import {
   frameToMetricFindValue,
   getBackendSrv,
 } from '@grafana/runtime';
-import { CustomFormatterVariable } from '@grafana/scenes';
 import { QueryFormat, SQLQuery } from '@grafana/sql';
 import config from 'app/core/config';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
@@ -216,7 +216,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
           query: this.templateSrv.replace(
             query.query ?? '',
             scopedVars,
-            (value: string | string[] = [], variable: Partial<CustomFormatterVariable>) =>
+            (value: string | string[] = [], variable: QueryVariableModel) =>
               this.interpolateQueryExpr(value, variable, query.query)
           ), // The raw query text
         };
@@ -268,13 +268,13 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       query: this.templateSrv.replace(
         query.query ?? '',
         scopedVars,
-        (value: string | string[] = [], variable: Partial<CustomFormatterVariable>) =>
+        (value: string | string[] = [], variable: QueryVariableModel) =>
           this.interpolateQueryExpr(value, variable, query.query)
       ), // The raw sql query text
       rawSql: this.templateSrv.replace(
         query.rawSql ?? '',
         scopedVars,
-        (value: string | string[] = [], variable: Partial<CustomFormatterVariable>) =>
+        (value: string | string[] = [], variable: QueryVariableModel) =>
           this.interpolateQueryExpr(value, variable, query.rawSql)
       ), // The raw sql query text
       alias: this.templateSrv.replace(query.alias ?? '', scopedVars),
@@ -287,7 +287,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   }
 
   // this should only be used for rawQueries.
-  interpolateQueryExpr(value: string | string[] = [], variable: Partial<CustomFormatterVariable>, query?: string) {
+  interpolateQueryExpr(value: string | string[] = [], variable: QueryVariableModel, query?: string) {
     // If there is no query just return the value directly
     if (!query) {
       return value;
@@ -353,8 +353,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     const interpolated = this.templateSrv.replace(
       query,
       options?.scopedVars,
-      (value: string | string[] = [], variable: Partial<CustomFormatterVariable>) =>
-        this.interpolateQueryExpr(value, variable, query)
+      (value: string | string[] = [], variable: QueryVariableModel) => this.interpolateQueryExpr(value, variable, query)
     );
 
     return lastValueFrom(this._seriesQuery(interpolated, options)).then((resp) => {
@@ -704,7 +703,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         query: this.templateSrv.replace(
           annotation.query,
           undefined,
-          (value: string | string[] = [], variable: Partial<CustomFormatterVariable>) =>
+          (value: string | string[] = [], variable: QueryVariableModel) =>
             this.interpolateQueryExpr(value, variable, annotation.query)
         ),
         rawQuery: true,
@@ -734,11 +733,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
     const timeFilter = this.getTimeFilter({ rangeRaw: options.range.raw, timezone: options.timezone });
     let query = annotation.query.replace('$timeFilter', timeFilter);
-    query = this.templateSrv.replace(
-      query,
-      undefined,
-      (value: string | string[] = [], variable: Partial<CustomFormatterVariable>) =>
-        this.interpolateQueryExpr(value, variable, query)
+    query = this.templateSrv.replace(query, undefined, (value: string | string[] = [], variable: QueryVariableModel) =>
+      this.interpolateQueryExpr(value, variable, query)
     );
 
     return lastValueFrom(this._seriesQuery(query, options)).then((data) => {

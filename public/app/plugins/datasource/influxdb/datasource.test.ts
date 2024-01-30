@@ -2,7 +2,6 @@ import { lastValueFrom, of } from 'rxjs';
 
 import { ScopedVars } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime/';
-import { CustomFormatterVariable } from '@grafana/scenes';
 import config from 'app/core/config';
 
 import { TemplateSrv } from '../../../features/templating/template_srv';
@@ -422,72 +421,77 @@ describe('InfluxDataSource Frontend Mode', () => {
       let ds = getMockInfluxDS(getMockDSInstanceSettings(), new TemplateSrv());
       it('should return the value as it is', () => {
         const value = 'normalValue';
-        const variable: Partial<CustomFormatterVariable> = {
-          name: 'tempVar',
-          type: 'query',
-          multi: false,
-        };
-        const result = ds.interpolateQueryExpr(value, variable, 'my query $tempVar');
+        const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti(false).build();
+        const result = ds.interpolateQueryExpr(value, variableMock, 'my query $tempVar');
         const expectation = 'normalValue';
         expect(result).toBe(expectation);
       });
 
       it('should return the escaped value if the value wrapped in regex', () => {
         const value = '/special/path';
-        const variable: Partial<CustomFormatterVariable> = {
-          name: 'tempVar',
-          type: 'query',
-          multi: false,
-        };
-        const result = ds.interpolateQueryExpr(value, variable, 'select that where path = /$tempVar/');
+        const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti(false).build();
+        const result = ds.interpolateQueryExpr(value, variableMock, 'select that where path = /$tempVar/');
         const expectation = `\\/special\\/path`;
         expect(result).toBe(expectation);
       });
 
       it('should return the escaped value if the value wrapped in regex 2', () => {
         const value = '/special/path';
-        const variable: Partial<CustomFormatterVariable> = {
-          name: 'tempVar',
-          type: 'query',
-          multi: false,
-        };
-        const result = ds.interpolateQueryExpr(value, variable, 'select that where path = /^$tempVar$/');
+        const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti(false).build();
+        const result = ds.interpolateQueryExpr(value, variableMock, 'select that where path = /^$tempVar$/');
         const expectation = `\\/special\\/path`;
         expect(result).toBe(expectation);
       });
 
       it('should **not** return the escaped value if the value **is not** wrapped in regex', () => {
         const value = '/special/path';
-        const variable: Partial<CustomFormatterVariable> = {
-          name: 'tempVar',
-          type: 'query',
-          multi: false,
-        };
-        const result = ds.interpolateQueryExpr(value, variable, `select that where path = '$tempVar'`);
+        const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti(false).build();
+        const result = ds.interpolateQueryExpr(value, variableMock, `select that where path = '$tempVar'`);
         const expectation = `/special/path`;
         expect(result).toBe(expectation);
       });
 
       it('should **not** return the escaped value if the value **is not** wrapped in regex 2', () => {
         const value = '12.2';
-        const variable: Partial<CustomFormatterVariable> = {
-          name: 'tempVar',
-          type: 'query',
-          multi: false,
-        };
-        const result = ds.interpolateQueryExpr(value, variable, `select that where path = '$tempVar'`);
+        const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti(false).build();
+        const result = ds.interpolateQueryExpr(value, variableMock, `select that where path = '$tempVar'`);
         const expectation = `12.2`;
         expect(result).toBe(expectation);
       });
 
       it('should escape the value **always** if the variable is a multi-value variable', () => {
         const value = [`/special/path`, `/some/other/path`];
-        const variable: Partial<CustomFormatterVariable> = {
-          name: 'tempVar',
-          type: 'query',
-          multi: true,
-        };
-        const result = ds.interpolateQueryExpr(value, variable, `select that where path = '$tempVar'`);
+        const variableMock = queryBuilder().withId('tempVar').withName('tempVar').withMulti().build();
+        const result = ds.interpolateQueryExpr(value, variableMock, `select that where path = '$tempVar'`);
+        const expectation = `\\/special\\/path|\\/some\\/other\\/path`;
+        expect(result).toBe(expectation);
+      });
+
+      it('should escape and join with the pipe even the variable is not multi-value', () => {
+        const variableMock = queryBuilder()
+          .withId('tempVar')
+          .withName('tempVar')
+          .withCurrent('All', '$__all')
+          .withMulti(false)
+          .withAllValue('')
+          .withIncludeAll()
+          .withOptions(
+            {
+              text: 'All',
+              value: '$__all',
+            },
+            {
+              text: `/special/path`,
+              value: `/special/path`,
+            },
+            {
+              text: `/some/other/path`,
+              value: `/some/other/path`,
+            }
+          )
+          .build();
+        const value = [`/special/path`, `/some/other/path`];
+        const result = ds.interpolateQueryExpr(value, variableMock, `select that where path = /$tempVar/`);
         const expectation = `\\/special\\/path|\\/some\\/other\\/path`;
         expect(result).toBe(expectation);
       });
