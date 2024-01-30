@@ -173,6 +173,9 @@ export const Pages = {
           },
           IntervalVariable: {
             intervalsValueInput: 'data-testid interval variable intervals input',
+            autoEnabledCheckbox: 'data-testid interval variable auto value checkbox',
+            stepCountIntervalSelect: 'data-testid interval variable step count input',
+            minIntervalInput: 'data-testid interval variable mininum interval input',
           },
         },
       },

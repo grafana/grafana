@@ -59,7 +59,6 @@ var (
 			Name:              "publicDashboardsEmailSharing",
 			Description:       "Enables public dashboard sharing to be restricted to only allowed emails",
 			Stage:             FeatureStagePublicPreview,
-			RequiresLicense:   true,
 			Owner:             grafanaSharingSquad,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
@@ -1330,6 +1329,13 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
 			Created:      time.Date(2024, time.January, 22, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:        "promQLScope",
+			Description: "In-development feature that will allow injection of labels into prometheus queries.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityMetricsSquad,
+			Created:     time.Date(2024, time.January, 29, 0, 0, 0, 0, time.UTC),
 		},
 	}
 )
