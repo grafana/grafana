@@ -8,6 +8,7 @@ import { FetchResponse, TemplateSrv } from '@grafana/runtime';
 import { backendSrv } from '../../../public/app/core/services/backend_srv';
 
 import { PrometheusDatasource } from './datasource';
+import { getPrometheusTime } from './language_utils';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { PromApplication, PromOptions } from './types';
 
@@ -253,8 +254,38 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        // this will be fixed in a future PR
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=metric`,
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=metric&time=${raw.to.unix()}`,
+        headers: {},
+        hideFromInspector: true,
+        showErrorAlert: false,
+      });
+    });
+
+    it('query_result(metric) should pass time parameter to datasource.metric_find_query', async () => {
+      const query = setupMetricFindQuery({
+        query: 'query_result(metric)',
+        response: {
+          data: {
+            resultType: 'vector',
+            result: [
+              {
+                metric: { __name__: 'metric', job: 'testjob' },
+                value: [1443454528.0, '3846'],
+              },
+            ],
+          },
+        },
+      });
+      const results = await query.process(raw);
+
+      const expectedTime = getPrometheusTime(raw.to, true);
+
+      expect(results).toHaveLength(1);
+      expect(results[0].text).toBe('metric{job="testjob"} 3846 1443454528000');
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock).toHaveBeenCalledWith({
+        method: 'GET',
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=metric&time=${expectedTime}`,
         headers: {},
         hideFromInspector: true,
         showErrorAlert: false,
@@ -277,8 +308,7 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        // this will be fixed in a future PR
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=1%2B1`,
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=1%2B1&time=${raw.to.unix()}`,
         headers: {},
         hideFromInspector: true,
         showErrorAlert: false,
