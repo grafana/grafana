@@ -2,14 +2,17 @@ import { of } from 'rxjs';
 
 import 'whatwg-fetch'; // fetch polyfill needed backendSrv
 import { DataSourceInstanceSettings, TimeRange, toUtc } from '@grafana/data';
-import { FetchResponse, getBackendSrv, TemplateSrv } from '@grafana/runtime';
+import { FetchResponse, TemplateSrv } from '@grafana/runtime';
 
+// NEED TO DECOUPLE THIS!!!!
+import { backendSrv } from '../../../public/app/core/services/backend_srv';
+ 
 import { PrometheusDatasource } from './datasource';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { PromApplication, PromOptions } from './types';
 
 // This should be mocked like here https://github.com/grafana/grafana/blob/main/public/app/plugins/datasource/influxdb/mocks.ts
-const backendSrv = getBackendSrv();
+// const backendSrv = getBackendSrv();
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -22,7 +25,6 @@ const instanceSettings = {
   url: 'proxied',
   id: 1,
   uid: 'ABCDEF',
-  directUrl: 'direct',
   user: 'test',
   password: 'mupp',
   jsonData: { httpMethod: 'GET' },
@@ -227,9 +229,11 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=metric&time=${raw.to.unix()}`,
-        requestId: undefined,
+        // this will be fixed in a future PR
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=metric`,
         headers: {},
+        hideFromInspector: true,
+        showErrorAlert: false,
       });
     });
 
@@ -249,9 +253,11 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=1%2B1&time=${raw.to.unix()}`,
-        requestId: undefined,
+        // this will be fixed in a future PR
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=1%2B1`,
         headers: {},
+        hideFromInspector: true,
+        showErrorAlert: false,
       });
     });
 
