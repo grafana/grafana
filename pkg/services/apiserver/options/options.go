@@ -2,6 +2,7 @@ package options
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/discovery/aggregated"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
 
@@ -69,6 +70,7 @@ func (o *Options) Validate() []error {
 }
 
 func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) error {
+	serverConfig.AggregatedDiscoveryGroupManager = aggregated.NewResourceManager("apis")
 	if o.ExtraOptions.DevMode {
 		// SecureServingOptions is used when the apiserver needs it's own listener.
 		// this is not needed in production, but it's useful for development kubectl access.
