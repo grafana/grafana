@@ -18,7 +18,7 @@ export function DashboardScenePage({ match, route }: Props) {
 
   useEffect(() => {
     if (route.routeName === DashboardRoutes.Normal && match.params.type === 'snapshot') {
-      stateManager.loadDashboard({ uid: '', slug: match.params.slug! });
+      stateManager.loadSnapshot(match.params.slug!);
     } else if (route.routeName === DashboardRoutes.Home) {
       stateManager.loadDashboard({ uid: route.routeName });
     } else {

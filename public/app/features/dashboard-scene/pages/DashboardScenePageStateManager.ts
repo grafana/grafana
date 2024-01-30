@@ -101,8 +101,25 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     return rsp;
   }
 
-  public async fetchSnapshot(slug: string) {
-    return await dashboardLoaderSrv.loadDashboard('snapshot', slug, '');
+  public async loadSnapshot(slug: string) {
+    try {
+      const dashboard = await this.loadSnapshotScene(slug);
+
+      this.setState({ dashboard: dashboard, isLoading: false });
+    } catch (err) {
+      this.setState({ isLoading: false, loadError: String(err) });
+    }
+  }
+
+  private async loadSnapshotScene(slug: string): Promise<DashboardScene> {
+    const rsp = await dashboardLoaderSrv.loadDashboard('snapshot', slug, '');
+
+    if (rsp?.dashboard) {
+      const scene = transformSaveModelToScene(rsp);
+      return scene;
+    }
+
+    throw new Error('Snapshot not found');
   }
 
   public async loadDashboard(options: LoadDashboardOptions) {
@@ -129,12 +146,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
     this.setState({ isLoading: true });
 
-    let rsp: DashboardDTO | null | undefined;
-    if (options.slug !== undefined) {
-      rsp = await this.fetchSnapshot(options.slug);
-    } else {
-      rsp = await this.fetchDashboard(options);
-    }
+    const rsp = await this.fetchDashboard(options);
 
     if (rsp?.dashboard) {
       if (options.isEmbedded) {
