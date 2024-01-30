@@ -9,7 +9,6 @@ type Folder struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	// TODO, structure so the name is not in spec
 	Spec Spec `json:"spec,omitempty"`
 }
 
@@ -24,21 +23,32 @@ type Spec struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type FolderList struct {
 	metav1.TypeMeta `json:",inline"`
-	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []Folder `json:"items,omitempty"`
 }
 
-// FolderInfo returns a list of folder indentifiers (parents or children)
+// FolderInfoList returns a list of folder references (parents or children)
+// Unlike FolderList, each item is not a full k8s object
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type FolderInfo struct {
+type FolderInfoList struct {
 	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []FolderItem `json:"items"`
+	// +listType=map
+	// +listMapKey=uid
+	Items []FolderInfo `json:"items,omitempty"`
 }
 
-type FolderItem struct {
-	Name  string `json:"name"`
+// FolderInfo briefly describes a folder -- unlike a folder resource,
+// this is a partial record of the folder metadata used for navigating parents and children
+type FolderInfo struct {
+	// UID is the unique identifier for a folder (and the k8s name)
+	UID string `json:"uid"`
+
+	// Title is the display value
 	Title string `json:"title"`
+
+	// The parent folder UID
+	Parent string `json:"parent,omitempty"`
 }

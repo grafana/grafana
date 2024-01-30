@@ -9,17 +9,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
-	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
-	"github.com/grafana/grafana/pkg/apis/folders/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	grafanaregistry "github.com/grafana/grafana/pkg/services/grafana-apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/setting"
@@ -64,7 +62,7 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&v0alpha1.Folder{},
 		&v0alpha1.FolderList{},
-		&v0alpha1.FolderInfo{},
+		&v0alpha1.FolderInfoList{},
 	)
 }
 
@@ -94,40 +92,28 @@ func (b *FolderAPIBuilder) GetAPIGroupInfo(
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
-	strategy := grafanaregistry.NewStrategy(scheme)
-	store := &genericregistry.Store{
-		NewFunc:                   resourceInfo.NewFunc,
-		NewListFunc:               resourceInfo.NewListFunc,
-		PredicateFunc:             grafanaregistry.Matcher,
-		DefaultQualifiedResource:  resourceInfo.GroupResource(),
-		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
-		CreateStrategy:            strategy,
-		UpdateStrategy:            strategy,
-		DeleteStrategy:            strategy,
-	}
-	store.TableConvertor = utils.NewTableConverter(
-		store.DefaultQualifiedResource,
-		[]metav1.TableColumnDefinition{
-			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Title", Type: "string", Format: "string", Description: "The display name"},
-			{Name: "Parent", Type: "string", Format: "string", Description: "Parent folder UID"},
-		},
-		func(obj any) ([]interface{}, error) {
-			r, ok := obj.(*v0alpha1.Folder)
-			if ok {
-				accessor, _ := utils.MetaAccessor(r)
-				return []interface{}{
-					r.Name,
-					r.Spec.Title,
-					accessor.GetFolder(),
-				}, nil
-			}
-			return nil, fmt.Errorf("expected resource or info")
-		})
 	legacyStore := &legacyStorage{
-		service:        b.folderSvc,
-		namespacer:     b.namespacer,
-		tableConverter: store.TableConvertor,
+		service:    b.folderSvc,
+		namespacer: b.namespacer,
+		tableConverter: utils.NewTableConverter(
+			resourceInfo.GroupResource(),
+			[]metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+				{Name: "Title", Type: "string", Format: "string", Description: "The display name"},
+				{Name: "Parent", Type: "string", Format: "string", Description: "Parent folder UID"},
+			},
+			func(obj any) ([]interface{}, error) {
+				r, ok := obj.(*v0alpha1.Folder)
+				if ok {
+					accessor, _ := utils.MetaAccessor(r)
+					return []interface{}{
+						r.Name,
+						r.Spec.Title,
+						accessor.GetFolder(),
+					}, nil
+				}
+				return nil, fmt.Errorf("expected resource or info")
+			}),
 	}
 
 	storage := map[string]rest.Storage{}
