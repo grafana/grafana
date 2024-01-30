@@ -257,9 +257,9 @@ function legacyCreateSpanLinkFactory(
     // Get metrics links
     if (metricsDataSourceSettings && traceToMetricsOptions?.queries) {
       for (const query of traceToMetricsOptions.queries) {
-        const expr = !query.query
-          ? `histogram_quantile(0.5, sum(rate(traces_spanmetrics_latency_bucket{service="${span.process.serviceName}"}[5m])) by (le))`
-          : query.query;
+        const expr =
+          query.query ||
+          `histogram_quantile(0.5, sum(rate(traces_spanmetrics_latency_bucket{service="${span.process.serviceName}"}[5m])) by (le))`;
         const dataLink: DataLink<PromQuery> = {
           title: metricsDataSourceSettings.name,
           url: '',
