@@ -175,6 +175,13 @@ func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDat
 		if err != nil {
 			return nil, fmt.Errorf("error unmarshal query json: %w", err)
 		}
+
+		// the fill-params are only stored inside this function, during query-interpolation. we do not support
+		// sending them in "from the outside"
+		if queryjson.Fill || queryjson.FillInterval != 0.0 || queryjson.FillMode != "" || queryjson.FillValue != 0.0 {
+			return nil, fmt.Errorf("query fill-parameters not supported")
+		}
+
 		if queryjson.RawSql == "" {
 			continue
 		}
