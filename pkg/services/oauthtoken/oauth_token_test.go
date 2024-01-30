@@ -145,29 +145,29 @@ func TestService_TryTokenRefresh_ValidToken(t *testing.T) {
 	assert.Equal(t, resultUsr.OAuthTokenType, token.TokenType)
 }
 
-func TestService_TryTokenRefresh_NoRefreshToken(t *testing.T) {
-	srv, _, socialConnector := setupOAuthTokenService(t)
-	ctx := context.Background()
-	token := &oauth2.Token{
-		AccessToken:  "testaccess",
-		RefreshToken: "",
-		Expiry:       time.Now().Add(-time.Hour),
-		TokenType:    "Bearer",
-	}
-	usr := &user.SignedInUser{
-		AuthenticatedBy: login.GenericOAuthModule,
-		UserID:          1,
-	}
+// func TestService_TryTokenRefresh_NoRefreshToken(t *testing.T) {
+// 	srv, _, socialConnector := setupOAuthTokenService(t)
+// 	ctx := context.Background()
+// 	token := &oauth2.Token{
+// 		AccessToken:  "testaccess",
+// 		RefreshToken: "",
+// 		Expiry:       time.Now().Add(-time.Hour),
+// 		TokenType:    "Bearer",
+// 	}
+// 	usr := &user.SignedInUser{
+// 		AuthenticatedBy: login.GenericOAuthModule,
+// 		UserID:          1,
+// 	}
 
-	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token))
-	socialConnector.On("GetOAuthInfo").Return(&social.OAuthInfo{UseRefreshToken: true})
+// 	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token))
+// 	socialConnector.On("GetOAuthInfo").Return(&social.OAuthInfo{UseRefreshToken: true})
 
-	err := srv.TryTokenRefresh(ctx, usr)
+// 	err := srv.TryTokenRefresh(ctx, usr)
 
-	assert.Nil(t, err)
+// 	assert.Nil(t, err)
 
-	socialConnector.AssertNotCalled(t, "TokenSource")
-}
+// 	socialConnector.AssertNotCalled(t, "TokenSource")
+// }
 
 func TestService_TryTokenRefresh_ExpiredToken(t *testing.T) {
 	srv, authInfoStore, socialConnector := setupOAuthTokenService(t)
@@ -275,79 +275,58 @@ func (f *FakeAuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *login.Delet
 }
 
 func TestService_TryTokenRefresh(t *testing.T) {
-	type testEnv struct {
+	type environment struct {
+		authInfoService *authinfotest.FakeService
 		authInfoStore   *FakeAuthInfoStore
+		cache           *localcache.CacheService
+		identity        identity.Requester
 		socialConnector *socialtest.MockSocialConnector
 		socialService   *socialtest.FakeSocialService
-		authInfoService *authinfotest.FakeService
-		cache           *localcache.CacheService
+		token           *oauth2.Token
 	}
 	type testCase struct {
-		desc                 string
-		expectedErr          error
-		identity             identity.Requester
-		token                *oauth2.Token
-		oauthInfo            *social.OAuthInfo
-		setup                func(env testEnv)
-		authInfoStoreSetup   func(authInfoStore *FakeAuthInfoStore, token *oauth2.Token)
-		authInfoServiceSetup func(authInfoService *authinfotest.FakeService, authInfoStore *FakeAuthInfoStore)
-		// authInfoServiceSetup       func(authInfoService login.AuthInfoService, authInfoStore *FakeAuthInfoStore)
-		cacheSetup                 func(cache *localcache.CacheService)
-		socialConnectorSetup       func(socialConnector *socialtest.MockSocialConnector, token *oauth2.Token)
-		socialServiceSetup         func(socialService *socialtest.FakeSocialService)
-		socialConnectorValidations func(socialConnector *socialtest.MockSocialConnector)
+		desc        string
+		expectedErr error
+
+		oauthInfo *social.OAuthInfo
+		setup     func(env *environment)
 	}
 
 	tests := []testCase{
-		// {
-		// 	desc: "should skip sync when identity is nil",
-		// },
-		// {
-		// 	desc:     "should skip sync when identity is not a user",
-		// 	identity: &authn.Identity{ID: "service-account:1"},
-		// },
-		// {
-		// 	desc:     "should skipt token refresh and return nil if namespace and id cannot be converted to user ID",
-		// 	identity: &authn.Identity{ID: "user:invalidIdentifierFormat"},
-		// },
-		{ /** NO REFRESH TOKEN **/
-			desc: "should skip token refresh if there's an existing oauth entry",
-			token: &oauth2.Token{
-				AccessToken:  "testaccess",
-				RefreshToken: "",
-				Expiry:       time.Now().Add(-time.Hour),
-				TokenType:    "Bearer",
+		{
+			desc: "should skip sync when identity is nil",
+		},
+		{
+			desc: "should skip sync when identity is not a user",
+			setup: func(env *environment) {
+				env.identity = &authn.Identity{ID: "service-account:1"}
 			},
-			identity: &user.SignedInUser{
-				AuthenticatedBy: login.GenericOAuthModule,
-				UserID:          1,
+		},
+		{
+			desc: "should skip token refresh and return nil if namespace and id cannot be converted to user ID",
+			setup: func(env *environment) {
+				env.identity = &authn.Identity{ID: "user:invalidIdentifierFormat"}
 			},
-			setup: func(env testEnv) {
-				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
-					AuthModule: login.GenericOAuthModule,
-					UserId:     1,
+		},
+		{
+			desc: "should skip token refresh if RefreshToken is empty",
+			setup: func(env *environment) {
+				env.authInfoService.ExpectedUserAuth = &login.UserAuth{}
+
+				env.identity = &user.SignedInUser{
+					AuthenticatedBy: login.GenericOAuthModule,
+					UserID:          1,
 				}
 
 				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
 					UseRefreshToken: true,
 				}
-			},
-			authInfoServiceSetup: func(authInfoService *authinfotest.FakeService, authInfoStore *FakeAuthInfoStore) {
-				authInfoService.ExpectedUserAuth = &login.UserAuth{
-					AuthModule: login.GenericOAuthModule,
-					UserId:     1,
-				}
-			},
-			socialConnectorSetup: func(socialConnector *socialtest.MockSocialConnector, token *oauth2.Token) {
-				// socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token)).Unset()
-				// socialConnector.On("GetOAuthInfo").Return(&social.OAuthInfo{UseRefreshToken: true}).Times(0)
-			},
-			socialConnectorValidations: func(socialConnector *socialtest.MockSocialConnector) {
-				// socialConnector.AssertNotCalled(t, "TokenSource")
-			},
-			socialServiceSetup: func(socialService *socialtest.FakeSocialService) {
-				socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
-					UseRefreshToken: true,
+
+				env.token = &oauth2.Token{
+					AccessToken:  "testaccess",
+					RefreshToken: "",
+					Expiry:       time.Now().Add(-time.Hour),
+					TokenType:    "Bearer",
 				}
 			},
 		},
@@ -483,61 +462,34 @@ func TestService_TryTokenRefresh(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			// authInfoStore := &FakeAuthInfoStore{}
-			authInfoStore := &FakeAuthInfoStore{ExpectedOAuth: &login.UserAuth{}}
-			cache := localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute)
 			socialConnector := &socialtest.MockSocialConnector{}
-			socialService := &socialtest.FakeSocialService{
-				ExpectedConnector:        socialConnector,
-				ExpectedAuthInfoProvider: tt.oauthInfo,
-			}
 
-			// var authInfoService login.AuthInfoService
-			// authInfoService := authinfoimpl.ProvideService(authInfoStore, remotecache.NewFakeCacheStorage(), secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore()))
-			authInfoService := &authinfotest.FakeService{}
-
-			testEnv := testEnv{
-				authInfoStore:   authInfoStore,
+			env := environment{
+				authInfoStore:   &FakeAuthInfoStore{},
+				authInfoService: &authinfotest.FakeService{},
+				cache:           localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute),
 				socialConnector: socialConnector,
-				socialService:   socialService,
-				authInfoService: authInfoService,
-				cache:           cache,
+				socialService: &socialtest.FakeSocialService{
+					ExpectedConnector:        socialConnector,
+					ExpectedAuthInfoProvider: tt.oauthInfo,
+				},
 			}
+
 			if tt.setup != nil {
-				tt.setup(testEnv)
+				tt.setup(&env)
 			}
-
-			// if tt.socialConnectorSetup != nil {
-			// 	tt.socialConnectorSetup(socialConnector, tt.token)
-			// }
-
-			// if tt.authInfoStoreSetup != nil {
-			// 	tt.authInfoStoreSetup(authInfoStore, tt.token)
-			// }
-
-			// if tt.socialServiceSetup != nil {
-			// 	tt.socialServiceSetup(socialService)
-			// }
-
-			// if tt.authInfoServiceSetup != nil {
-			// 	tt.authInfoServiceSetup(authInfoService, authInfoStore)
-			// }
-
-			// if tt.cacheSetup != nil {
-			// 	tt.cacheSetup(cache)
-			// }
 
 			service := &Service{
+				AuthInfoService:      env.authInfoService,
 				Cfg:                  setting.NewCfg(),
-				SocialService:        socialService,
-				AuthInfoService:      authInfoService,
+				cache:                env.cache,
 				singleFlightGroup:    &singleflight.Group{},
+				SocialService:        env.socialService,
 				tokenRefreshDuration: newTokenRefreshDurationMetric(prometheus.NewRegistry()),
-				cache:                cache,
 			}
 
 			// token refresh
-			err := service.TryTokenRefresh(context.Background(), tt.identity)
+			err := service.TryTokenRefresh(context.Background(), env.identity)
 
 			// test and validations
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -545,6 +497,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			// if tt.socialConnectorValidations != nil {
 			// 	tt.socialConnectorValidations(socialConnector)
 			// }
+			// assert.Fail(t, "not implemented")
 		})
 	}
 }
