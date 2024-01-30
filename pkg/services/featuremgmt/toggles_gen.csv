@@ -105,7 +105,7 @@ pluginsAPIMetrics,experimental,@grafana/plugins-platform-backend,2023-09-21,fals
 httpSLOLevels,experimental,@grafana/hosted-grafana-team,2023-09-22,false,true,false
 idForwarding,experimental,@grafana/identity-access-team,2023-09-25,false,false,false
 cloudWatchWildCardDimensionValues,GA,@grafana/aws-datasources,2023-09-27,false,false,false
-externalServiceAccounts,privatePreview,@grafana/identity-access-team,2023-09-28,false,false,false
+externalServiceAccounts,preview,@grafana/identity-access-team,2023-09-28,false,false,false
 panelMonitoring,experimental,@grafana/dataviz-squad,2023-10-08,false,false,true
 enableNativeHTTPHistogram,experimental,@grafana/hosted-grafana-team,2023-10-03,false,false,false
 formatString,preview,@grafana/grafana-bi-squad,2023-10-13,false,false,true
