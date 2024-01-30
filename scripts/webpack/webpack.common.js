@@ -33,7 +33,16 @@ module.exports = {
         '@locker/near-membrane-dom/custom-devtools-formatter.js'
       ),
     },
-    modules: ['node_modules', path.resolve('node_modules'), path.resolve('public')],
+    modules: [
+      // default value
+      'node_modules',
+
+      // required for grafana enterprise resolution
+      path.resolve('node_modules'),
+
+      // required to for 'bare' imports (like 'app/core/utils' etc)
+      path.resolve('public'),
+    ],
     fallback: {
       buffer: false,
       fs: false,
