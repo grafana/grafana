@@ -19,7 +19,7 @@ import {
 import {
   GroupToSubframeTransformerOptions,
   SHOW_SUBFRAME_HEADERS_DEFAULT,
-} from '@grafana/data/src/transformations/transformers/groupToSubrame';
+} from '@grafana/data/src/transformations/transformers/groupToSubframe';
 import { Stack } from '@grafana/experimental';
 import { useTheme2, Select, StatsPicker, InlineField, Field, Switch } from '@grafana/ui';
 

@@ -5,7 +5,7 @@ import { ReducerID } from '../fieldReducer';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { GroupByOperationID, GroupByTransformerOptions } from './groupBy';
-import { groupToSubframeTransformer, GroupToSubframeTransformerOptions } from './groupToSubrame';
+import { groupToSubframeTransformer, GroupToSubframeTransformerOptions } from './groupToSubframe';
 import { DataTransformerID } from './ids';
 
 describe('GroupToSubframe transformer', () => {
