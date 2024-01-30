@@ -1,11 +1,10 @@
-import React, { useCallback, useContext } from 'react';
+import React, { useContext } from 'react';
 
 import { GrafanaConfig } from '@grafana/data';
 import { LocationService } from '@grafana/runtime/src/services/LocationService';
 import { BackendSrv } from '@grafana/runtime/src/services/backendSrv';
 
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
-import { ReturnToPreviousProps } from '../components/AppChrome/ReturnToPrevious/ReturnToPrevious';
 import { NewFrontendAssetsChecker } from '../services/NewFrontendAssetsChecker';
 import { KeybindingSrv } from '../services/keybindingSrv';
 
@@ -32,13 +31,5 @@ export function useGrafana(): GrafanaContextType {
 // @grafana/runtime
 export function useReturnToPreviousInternal() {
   const { chrome } = useGrafana();
-
-  const setReturnToPrevious = useCallback(
-    (rtp: ReturnToPreviousProps) => {
-      chrome.setReturnToPrevious(rtp);
-    },
-    [chrome]
-  );
-
-  return setReturnToPrevious;
+  return chrome.setReturnToPrevious;
 }
