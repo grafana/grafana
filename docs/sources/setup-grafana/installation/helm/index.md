@@ -13,9 +13,8 @@ weight: 500
 
 # Deploy Grafana using Helm Charts
 
-On this page, you will find instructions for installing and running Grafana on Kubernetes using Helm Charts.
+This topic includes instructions for installing and running Grafana on Kubernetes using Helm Charts.
 
-## Introduction
 
 [Helm](https://helm.sh/) is an open-source command line tool used for managing Kubernetes applications. It is a graduate project in the [CNCF Landscape](https://www.cncf.io/projects/helm/).
 
@@ -23,7 +22,7 @@ On this page, you will find instructions for installing and running Grafana on K
 The Grafana open-source community offers Helm Charts for running it on Kubernetes. Please be aware that the code is provided without any warranties. If you encounter any problems, you can report them to the [Official GitHub repository](https://github.com/grafana/helm-charts/).
 {{% /admonition %}}
 
-### Before you begin
+## Before you begin
 
 To install Grafana using Helm, ensure you have completed the following:
 
