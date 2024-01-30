@@ -190,11 +190,13 @@ func (s *service) start(ctx context.Context) error {
 
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
 	// Install schemas
-	for _, b := range builders {
+	for i, b := range builders {
 		groupVersions = append(groupVersions, b.GetGroupVersion())
 		if err := b.InstallSchema(Scheme); err != nil {
 			return err
 		}
+
+		aggregator.APIVersionPriorities[b.GetGroupVersion()] = aggregator.Priority{Group: 15000, Version: int32(i + 1)}
 
 		// Optionally register a custom authorizer
 		auth := b.GetAuthorizer()
@@ -268,13 +270,13 @@ func (s *service) start(ctx context.Context) error {
 		// do nothing?
 	}
 
-	aggregatorConfig, aggregatorInformers, err := aggregator.CreateAggregatorConfig(o, *serverConfig)
+	// Add OpenAPI specs for each group+version
+	err := builder.SetupConfig(Scheme, serverConfig, builders)
 	if err != nil {
 		return err
 	}
 
-	// Add OpenAPI specs for each group+version
-	err = builder.SetupConfig(Scheme, serverConfig, builders)
+	aggregatorConfig, aggregatorInformers, err := aggregator.CreateAggregatorConfig(o, *serverConfig)
 	if err != nil {
 		return err
 	}
@@ -291,13 +293,13 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	aggregatorServer, err := aggregator.CreateAggregatorServer(aggregatorConfig, aggregatorInformers, server)
+	// Install the API Group+version
+	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders)
 	if err != nil {
 		return err
 	}
 
-	// Install the API Group+version
-	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders)
+	aggregatorServer, err := aggregator.CreateAggregatorServer(aggregatorConfig, aggregatorInformers, server)
 	if err != nil {
 		return err
 	}
