@@ -14,6 +14,24 @@ export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransf
   const onZoom = (zoomPanPinchRef: ReactZoomPanPinchRef) => {
     const scale = zoomPanPinchRef.state.scale;
     scene.scale = scale;
+  };
+
+  const onZoomStop = (zoomPanPinchRef: ReactZoomPanPinchRef) => {
+    const scale = zoomPanPinchRef.state.scale;
+    scene.scale = scale;
+    updateMoveable(scale);
+  };
+
+  const onTransformed = (
+    _: ReactZoomPanPinchRef,
+    state: {
+      scale: number;
+      positionX: number;
+      positionY: number;
+    }
+  ) => {
+    const scale = state.scale;
+    scene.scale = scale;
     updateMoveable(scale);
   };
 
@@ -47,11 +65,8 @@ export const SceneTransformWrapper = ({ scene, children: sceneDiv }: SceneTransf
       doubleClick={{ mode: 'reset' }}
       ref={scene.transformComponentRef}
       onZoom={onZoom}
-      onTransformed={(_, state) => {
-        const scale = state.scale;
-        scene.scale = scale;
-        updateMoveable(scale);
-      }}
+      onZoomStop={onZoomStop}
+      onTransformed={onTransformed}
       limitToBounds={true}
       disabled={!config.featureToggles.canvasPanelPanZoom || !scene.shouldPanZoom}
       panning={{ allowLeftClickPan: false }}
