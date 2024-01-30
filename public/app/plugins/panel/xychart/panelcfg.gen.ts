@@ -54,6 +54,7 @@ export const defaultFieldConfig: Partial<FieldConfig> = {
 };
 
 export interface ScatterSeriesConfig extends FieldConfig {
+  frame?: number;
   name?: string;
   x?: string;
   y?: string;
