@@ -31,7 +31,6 @@ import {
   SupplementaryQueryOptions,
   toUtc,
   AnnotationEvent,
-  FieldType,
   DataSourceWithToggleableQueryFiltersSupport,
   QueryFilterOptions,
   ToggleFilterAction,
@@ -47,9 +46,6 @@ import {
   TemplateSrv,
   getTemplateSrv,
 } from '@grafana/runtime';
-
-import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
-import { getLogLevelFromKey } from '../../../features/logs/utils';
 
 import { IndexPattern, intervalMap } from './IndexPattern';
 import LanguageProvider from './LanguageProvider';
@@ -538,13 +534,15 @@ export class ElasticDatasource
     }
   };
 
-  getDataProvider(
+  /**
+   * Implemented for DataSourceWithSupplementaryQueriesSupport.
+   * It generates a DataQueryRequest for a specific supplementary query type.
+   * @returns A DataQueryRequest for the supplementary queries or undefined if not supported.
+   */
+  getSupplementaryRequest(
     type: SupplementaryQueryType,
     request: DataQueryRequest<ElasticsearchQuery>
-  ): Observable<DataQueryResponse> | undefined {
-    if (!this.getSupportedSupplementaryQueryTypes().includes(type)) {
-      return undefined;
-    }
+  ): DataQueryRequest<ElasticsearchQuery> | undefined {
     switch (type) {
       case SupplementaryQueryType.LogsVolume:
         return this.getLogsVolumeDataProvider(request);
@@ -560,10 +558,6 @@ export class ElasticDatasource
   }
 
   getSupplementaryQuery(options: SupplementaryQueryOptions, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
-    if (!this.getSupportedSupplementaryQueryTypes().includes(options.type)) {
-      return undefined;
-    }
-
     let isQuerySuitable = false;
 
     switch (options.type) {
@@ -635,7 +629,9 @@ export class ElasticDatasource
     }
   }
 
-  getLogsVolumeDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
+  private getLogsVolumeDataProvider(
+    request: DataQueryRequest<ElasticsearchQuery>
+  ): DataQueryRequest<ElasticsearchQuery> | undefined {
     const logsVolumeRequest = cloneDeep(request);
     const targets = logsVolumeRequest.targets
       .map((target) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsVolume }, target))
@@ -645,18 +641,12 @@ export class ElasticDatasource
       return undefined;
     }
 
-    return queryLogsVolume(
-      this,
-      { ...logsVolumeRequest, targets },
-      {
-        range: request.range,
-        targets: request.targets,
-        extractLevel,
-      }
-    );
+    return { ...logsVolumeRequest, targets };
   }
 
-  getLogsSampleDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
+  private getLogsSampleDataProvider(
+    request: DataQueryRequest<ElasticsearchQuery>
+  ): DataQueryRequest<ElasticsearchQuery> | undefined {
     const logsSampleRequest = cloneDeep(request);
     const targets = logsSampleRequest.targets;
     const queries = targets.map((query) => {
@@ -667,7 +657,7 @@ export class ElasticDatasource
     if (!elasticQueries.length) {
       return undefined;
     }
-    return queryLogsSample(this, { ...logsSampleRequest, targets: elasticQueries });
+    return { ...logsSampleRequest, targets: elasticQueries };
   }
 
   query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
@@ -1177,10 +1167,4 @@ function createContextTimeRange(rowTimeEpochMs: number, direction: string, inter
       };
     }
   }
-}
-
-function extractLevel(dataFrame: DataFrame): LogLevel {
-  const valueField = dataFrame.fields.find((f) => f.type === FieldType.number);
-  const name = valueField?.labels?.['level'] ?? '';
-  return getLogLevelFromKey(name);
 }

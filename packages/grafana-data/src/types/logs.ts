@@ -4,7 +4,7 @@ import { DataQuery } from '@grafana/schema';
 
 import { KeyValue, Labels } from './data';
 import { DataFrame } from './dataFrame';
-import { DataQueryRequest, DataQueryResponse, QueryFixAction, QueryFixType } from './datasource';
+import { DataQueryRequest, DataQueryResponse, DataSourceApi, QueryFixAction, QueryFixType } from './datasource';
 import { AbsoluteTimeRange } from './time';
 export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
 
@@ -225,36 +225,44 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
   /**
    * Returns an observable that will be used to fetch supplementary data based on the provided
    * supplementary query type and original request.
+   * @deprecated Use getSupplementaryQueryRequest() instead
    */
-  getDataProvider(
+  getDataProvider?(
     type: SupplementaryQueryType,
     request: DataQueryRequest<TQuery>
   ): Observable<DataQueryResponse> | undefined;
+  /**
+   * Receives a SupplementaryQueryType and a DataQueryRequest and returns a new DataQueryRequest to fetch supplementary data.
+   * If provided type or request is not suitable for a supplementary data request, returns undefined.
+   */
+  getSupplementaryRequest?(
+    type: SupplementaryQueryType,
+    request: DataQueryRequest<TQuery>
+  ): DataQueryRequest<TQuery> | undefined;
   /**
    * Returns supplementary query types that data source supports.
    */
   getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[];
   /**
    * Returns a supplementary query to be used to fetch supplementary data based on the provided type and original query.
-   * If provided query is not suitable for provided supplementary query type, undefined should be returned.
+   * If the provided query is not suitable for the provided supplementary query type, undefined should be returned.
    */
   getSupplementaryQuery(options: SupplementaryQueryOptions, originalQuery: TQuery): TQuery | undefined;
 }
 
 export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
-  datasource: unknown,
+  datasource: DataSourceApi | (DataSourceApi & DataSourceWithSupplementaryQueriesSupport<TQuery>),
   type: SupplementaryQueryType
-): datasource is DataSourceWithSupplementaryQueriesSupport<TQuery> => {
+): datasource is DataSourceApi & DataSourceWithSupplementaryQueriesSupport<TQuery> => {
   if (!datasource) {
     return false;
   }
 
-  const withSupplementaryQueriesSupport = datasource as DataSourceWithSupplementaryQueriesSupport<TQuery>;
-
   return (
-    withSupplementaryQueriesSupport.getDataProvider !== undefined &&
-    withSupplementaryQueriesSupport.getSupplementaryQuery !== undefined &&
-    withSupplementaryQueriesSupport.getSupportedSupplementaryQueryTypes().includes(type)
+    ('getDataProvider' in datasource || 'getSupplementaryRequest' in datasource) &&
+    'getSupplementaryQuery' in datasource &&
+    'getSupportedSupplementaryQueryTypes' in datasource &&
+    datasource.getSupportedSupplementaryQueryTypes().includes(type)
   );
 };
 
