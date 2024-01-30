@@ -129,7 +129,7 @@ describe('PromQueryBuilder', () => {
     await openLabelNameSelect(1);
     expect(languageProvider.fetchLabelsWithMatch).toBeCalledWith(
       '{label_name="label_value", __name__="random_metric"}'
-    )
+    );
   });
   //</LegacyPrometheus>
 
