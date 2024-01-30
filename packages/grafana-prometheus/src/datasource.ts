@@ -1134,8 +1134,10 @@ export class PrometheusDatasource
    * and then a little extra padding to round up/down to the nearest nth minute,
    * defined by the result of the getCacheDurationInMinutes.
    *
-   * For longer cache durations, and shorter query durations, the window we're calculating might be much bigger then the user's current window,
-   * resulting in us returning labels/values that might not be applicable for the given window, this is a necessary trade off if we want to cache larger durations
+   * For longer cache durations, and shorter query durations,
+   * the window we're calculating might be much bigger then the user's current window,
+   * resulting in us returning labels/values that might not be applicable for the given window,
+   * this is a necessary trade-off if we want to cache larger durations
    */
   getTimeRangeParams(timeRange: TimeRange): { start: string; end: string } {
     return {
