@@ -45,6 +45,7 @@ type QueryData struct {
 	URL                string
 	TimeInterval       string
 	enableDataplane    bool
+	enableScope        bool
 	exemplarSampler    func() exemplar.Sampler
 }
 
@@ -74,10 +75,6 @@ func New(
 	// standard deviation sampler is the default for backwards compatibility
 	exemplarSampler := exemplar.NewStandardDeviationSampler
 
-	if features.IsEnabledGlobally(featuremgmt.FlagDisablePrometheusExemplarSampling) {
-		exemplarSampler = exemplar.NewNoOpSampler
-	}
-
 	return &QueryData{
 		intervalCalculator: intervalv2.NewCalculator(),
 		tracer:             tracing.DefaultTracer(),
@@ -86,8 +83,9 @@ func New(
 		TimeInterval:       timeInterval,
 		ID:                 settings.ID,
 		URL:                settings.URL,
-		enableDataplane:    features.IsEnabledGlobally(featuremgmt.FlagPrometheusDataplane),
 		exemplarSampler:    exemplarSampler,
+		enableDataplane:    features.IsEnabledGlobally(featuremgmt.FlagPrometheusDataplane),
+		enableScope:        features.IsEnabledGlobally(featuremgmt.FlagPromQLScope),
 	}, nil
 }
 
@@ -98,7 +96,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	for _, q := range req.Queries {
-		query, err := models.Parse(q, s.TimeInterval, s.intervalCalculator, fromAlert)
+		query, err := models.Parse(q, s.TimeInterval, s.intervalCalculator, fromAlert, s.enableScope)
 		if err != nil {
 			return &result, err
 		}
