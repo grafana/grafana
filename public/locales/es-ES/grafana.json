@@ -239,6 +239,10 @@
       "visualization": "Visualización",
       "widget": "«Widget»"
     },
+    "alert-rules-drawer": {
+      "redirect-link": "",
+      "subtitle": ""
+    },
     "empty": {
       "add-library-panel-body": "Añadir las visualizaciones que se comparten con otros tableros.",
       "add-library-panel-button": "Añadir panel de biblioteca",
@@ -307,6 +311,7 @@
     },
     "toolbar": {
       "add": "Añadir",
+      "alert-rules": "",
       "mark-favorite": "Marcar como favorito",
       "open-original": "Abrir el panel de control original",
       "playlist-next": "Ir al siguiente panel de control",
