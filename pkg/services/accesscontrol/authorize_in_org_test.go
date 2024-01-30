@@ -202,6 +202,24 @@ func TestAuthorizeInOrgMiddleware(t *testing.T) {
 			teamService:     &teamtest.FakeService{},
 			expectedStatus:  http.StatusForbidden,
 		},
+		{
+			name: "should fetch global user permissions when user is not a member of the target org",
+			orgIDGetter: func(c *contextmodel.ReqContext) (int64, error) {
+				return 2, nil
+			},
+			evaluator:     accesscontrol.EvalPermission("users:read", "users:*"),
+			accessControl: ac,
+			acService: &actest.FakeService{
+				ExpectedPermissions: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
+			},
+			userCache: &usertest.FakeUserService{
+				GetSignedInUserFn: func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+					return &user.SignedInUser{UserID: 1, OrgID: -1, Permissions: map[int64]map[string][]string{}}, nil
+				},
+			},
+			ctxSignedInUser: &user.SignedInUser{UserID: 1, OrgID: 1, Permissions: map[int64]map[string][]string{1: {"users:write": {"users:*"}}}},
+			expectedStatus:  http.StatusOK,
+		},
 	}
 
 	// Run test cases
