@@ -652,7 +652,7 @@
     },
     "latestVersion": "",
     "hasUpdate": false,
-    "defaultNavUrl": "/plugins/stackdriver/",
+    "defaultNavUrl": "/plugins/grafana-cloud-monitoring-datasource/",
     "category": "cloud",
     "state": "",
     "signature": "internal",
