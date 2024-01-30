@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	GROUP      = "folders.grafana.app"
+	GROUP      = "folder.grafana.app"
 	VERSION    = "v0alpha1"
 	RESOURCE   = "folders"
 	APIVERSION = GROUP + "/" + VERSION

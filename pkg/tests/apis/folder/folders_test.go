@@ -17,7 +17,6 @@ func TestFoldersApp(t *testing.T) {
 	}
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false, // required for experimental APIs
-		DisableAnonymous:  true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
 		},
@@ -25,7 +24,7 @@ func TestFoldersApp(t *testing.T) {
 
 	t.Run("Check discovery client", func(t *testing.T) {
 		disco := helper.NewDiscoveryClient()
-		resources, err := disco.ServerResourcesForGroupVersion("folders.grafana.app/v0alpha1")
+		resources, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/v0alpha1")
 		require.NoError(t, err)
 
 		v1Disco, err := json.MarshalIndent(resources, "", "  ")
@@ -35,7 +34,7 @@ func TestFoldersApp(t *testing.T) {
 		require.JSONEq(t, `{
 			"kind": "APIResourceList",
 			"apiVersion": "v1",
-			"groupVersion": "folders.grafana.app/v0alpha1",
+			"groupVersion": "folder.grafana.app/v0alpha1",
 			"resources": [
 			  {
 				"name": "folders",
@@ -55,7 +54,7 @@ func TestFoldersApp(t *testing.T) {
 				"name": "folders/children",
 				"singularName": "",
 				"namespaced": true,
-				"kind": "FolderInfo",
+				"kind": "FolderInfoList",
 				"verbs": [
 				  "get"
 				]
@@ -64,7 +63,7 @@ func TestFoldersApp(t *testing.T) {
 				"name": "folders/parents",
 				"singularName": "",
 				"namespaced": true,
-				"kind": "FolderInfo",
+				"kind": "FolderInfoList",
 				"verbs": [
 				  "get"
 				]
