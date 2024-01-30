@@ -5,9 +5,10 @@ import { Draggable } from 'react-beautiful-dnd';
 import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Button, Icon, Tooltip, useStyles2, Stack } from '@grafana/ui';
 
+import { getOperationParamId } from '../operationUtils';
+
 import { OperationHeader } from './OperationHeader';
 import { getOperationParamEditor } from './OperationParamEditor';
-import { getOperationParamId } from './operationUtils';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,

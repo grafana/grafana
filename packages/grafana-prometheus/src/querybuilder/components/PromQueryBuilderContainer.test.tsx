@@ -8,8 +8,8 @@ import { PrometheusDatasource } from '../../datasource';
 import PromQlLanguageProvider from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import { PromQuery } from '../../types';
+import { getOperationParamId } from '../operationUtils';
 import { addOperation } from '../shared/OperationList.testUtils';
-import { getOperationParamId } from '../shared/operationUtils';
 
 import { PromQueryBuilderContainer } from './PromQueryBuilderContainer';
 
