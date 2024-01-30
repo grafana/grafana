@@ -136,12 +136,14 @@ To use custom querys with the configuration, follow these steps:
 
 ### Configure trace to metrics
 
-| Setting name    | Description                                                                                                                                                                                                                                                     |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Data source** | Defines the target data source.                                                                                                                                                                                                                                 |
-| **Tags**        | Defines the tags used in linked queries. The key sets the span attribute name, and the optional value sets the corresponding metric label name. For example, you can map `k8s.pod` to `pod`. To interpolate these tags into queries, use the `$__tags` keyword. |
-| **Link Label**  | _(Optional)_ Descriptive label for the linked query.                                                                                                                                                                                                            |
-| **Query**       | Input to write a custom query. Use variable interpolation to customize it with variables from span.                                                                                                                                                             |
+| Setting name              | Description                                                                                                                                                                                                                                                     |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Data source**           | Defines the target data source.                                                                                                                                                                                                                                 |
+| **Span start time shift** | Shifts the start time for the metrics query, based on the span's start time. You can use time units, such as `5s`, `1m`, `3h`. To extend the time to the past, use a negative value. Default: `0`.                                                              |
+| **Span end time shift**   | Shifts the end time for the metrics query, based on the span's end time. You can use time units. Default: `0`.                                                                                                                                                  |
+| **Tags**                  | Defines the tags used in linked queries. The key sets the span attribute name, and the optional value sets the corresponding metric label name. For example, you can map `k8s.pod` to `pod`. To interpolate these tags into queries, use the `$__tags` keyword. |
+| **Link Label**            | _(Optional)_ Descriptive label for the linked query.                                                                                                                                                                                                            |
+| **Query**                 | Input to write a custom query. Use variable interpolation to customize it with variables from span.                                                                                                                                                             |
 
 ## Trace to profiles
 
