@@ -32,7 +32,7 @@ var ErrConnectionFailed = errutil.Internal("sqleng.connectionError")
 // SQLMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
 // timeRange to be able to generate queries that use from and to.
 type SQLMacroEngine interface {
-	Interpolate(query *backend.DataQuery, timeRange backend.TimeRange, sql string) (string, error)
+	Interpolate(fillConf *FillModeConfig, timeRange backend.TimeRange, sql string) (string, error)
 }
 
 // SqlQueryResultTransformer transforms a query result row to RowValues with proper types.
@@ -95,13 +95,16 @@ type DataSourceHandler struct {
 	userError              string
 }
 
-type QueryJson struct {
-	RawSql       string  `json:"rawSql"`
+type FillModeConfig struct {
 	Fill         bool    `json:"fill"`
 	FillInterval float64 `json:"fillInterval"`
 	FillMode     string  `json:"fillMode"`
 	FillValue    float64 `json:"fillValue"`
-	Format       string  `json:"format"`
+}
+
+type QueryJson struct {
+	RawSql string `json:"rawSql"`
+	Format string `json:"format"`
 }
 
 func (e *DataSourceHandler) TransformQueryError(logger log.Logger, err error) error {
@@ -168,7 +171,6 @@ func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDat
 	// Execute each query in a goroutine and wait for them to finish afterwards
 	for _, query := range req.Queries {
 		queryjson := QueryJson{
-			Fill:   false,
 			Format: "time_series",
 		}
 		err := json.Unmarshal(query.JSON, &queryjson)
@@ -241,6 +243,8 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		ch <- queryResult
 	}
 
+	fillConf := FillModeConfig{Fill: false}
+
 	// global substitutions
 	interpolatedQuery, err := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJson.RawSql)
 	if err != nil {
@@ -249,7 +253,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 	}
 
 	// data source specific substitutions
-	interpolatedQuery, err = e.macroEngine.Interpolate(&query, timeRange, interpolatedQuery)
+	interpolatedQuery, err = e.macroEngine.Interpolate(&fillConf, timeRange, interpolatedQuery)
 	if err != nil {
 		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery)
 		return
@@ -266,7 +270,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		}
 	}()
 
-	qm, err := e.newProcessCfg(query, queryContext, rows, interpolatedQuery)
+	qm, err := e.newProcessCfg(query, fillConf, queryContext, rows, interpolatedQuery)
 	if err != nil {
 		errAppendDebug("failed to get configurations", err, interpolatedQuery)
 		return
@@ -379,7 +383,7 @@ var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, tim
 	return sql, nil
 }
 
-func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext context.Context,
+func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, fillConf FillModeConfig, queryContext context.Context,
 	rows *sql.Rows, interpolatedQuery string) (*dataQueryModel, error) {
 	columnNames, err := rows.Columns()
 	if err != nil {
@@ -406,17 +410,17 @@ func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext 
 		return nil, err
 	}
 
-	if queryJson.Fill {
+	if fillConf.Fill {
 		qm.FillMissing = &data.FillMissing{}
-		qm.Interval = time.Duration(queryJson.FillInterval * float64(time.Second))
-		switch strings.ToLower(queryJson.FillMode) {
+		qm.Interval = time.Duration(fillConf.FillInterval * float64(time.Second))
+		switch strings.ToLower(fillConf.FillMode) {
 		case "null":
 			qm.FillMissing.Mode = data.FillModeNull
 		case "previous":
 			qm.FillMissing.Mode = data.FillModePrevious
 		case "value":
 			qm.FillMissing.Mode = data.FillModeValue
-			qm.FillMissing.Value = queryJson.FillValue
+			qm.FillMissing.Value = fillConf.FillValue
 		default:
 		}
 	}
@@ -711,35 +715,22 @@ func convertSQLValueColumnToFloat(frame *data.Frame, Index int) (*data.Frame, er
 	return frame, nil
 }
 
-func SetupFillmode(query *backend.DataQuery, interval time.Duration, fillmode string) error {
-	rawQueryProp := make(map[string]any)
-	queryBytes, err := query.JSON.MarshalJSON()
-	if err != nil {
-		return err
-	}
-	err = json.Unmarshal(queryBytes, &rawQueryProp)
-	if err != nil {
-		return err
-	}
-	rawQueryProp["fill"] = true
-	rawQueryProp["fillInterval"] = interval.Seconds()
+func SetupFillmode(fillConf *FillModeConfig, interval time.Duration, fillmode string) error {
+	fillConf.Fill = true
+	fillConf.FillInterval = interval.Seconds()
 
 	switch fillmode {
 	case "NULL":
-		rawQueryProp["fillMode"] = "null"
+		fillConf.FillMode = "null"
 	case "previous":
-		rawQueryProp["fillMode"] = "previous"
+		fillConf.FillMode = "previous"
 	default:
-		rawQueryProp["fillMode"] = "value"
+		fillConf.FillMode = "value"
 		floatVal, err := strconv.ParseFloat(fillmode, 64)
 		if err != nil {
 			return fmt.Errorf("error parsing fill value %v", fillmode)
 		}
-		rawQueryProp["fillValue"] = floatVal
-	}
-	query.JSON, err = json.Marshal(rawQueryProp)
-	if err != nil {
-		return err
+		fillConf.FillValue = floatVal
 	}
 	return nil
 }

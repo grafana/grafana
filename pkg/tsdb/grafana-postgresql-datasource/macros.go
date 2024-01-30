@@ -27,7 +27,7 @@ func newPostgresMacroEngine(timescaledb bool) sqleng.SQLMacroEngine {
 	}
 }
 
-func (m *postgresMacroEngine) Interpolate(query *backend.DataQuery, timeRange backend.TimeRange, sql string) (string, error) {
+func (m *postgresMacroEngine) Interpolate(fillConf *sqleng.FillModeConfig, timeRange backend.TimeRange, sql string) (string, error) {
 	// TODO: Handle error
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
@@ -51,7 +51,7 @@ func (m *postgresMacroEngine) Interpolate(query *backend.DataQuery, timeRange ba
 		for i, arg := range args {
 			args[i] = strings.Trim(arg, " ")
 		}
-		res, err := m.evaluateMacro(timeRange, query, groups[1], args)
+		res, err := m.evaluateMacro(timeRange, fillConf, groups[1], args)
 		if err != nil && macroError == nil {
 			macroError = err
 			return "macro_error()"
@@ -67,7 +67,7 @@ func (m *postgresMacroEngine) Interpolate(query *backend.DataQuery, timeRange ba
 }
 
 //nolint:gocyclo
-func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *backend.DataQuery, name string, args []string) (string, error) {
+func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, fillConf *sqleng.FillModeConfig, name string, args []string) (string, error) {
 	switch name {
 	case "__time":
 		if len(args) == 0 {
@@ -98,7 +98,7 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			err := sqleng.SetupFillmode(query, interval, args[2])
+			err := sqleng.SetupFillmode(fillConf, interval, args[2])
 			if err != nil {
 				return "", err
 			}
@@ -114,7 +114,7 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 			interval.Seconds(),
 		), nil
 	case "__timeGroupAlias":
-		tg, err := m.evaluateMacro(timeRange, query, "__timeGroup", args)
+		tg, err := m.evaluateMacro(timeRange, fillConf, "__timeGroup", args)
 		if err == nil {
 			return tg + " AS \"time\"", nil
 		}
@@ -142,14 +142,14 @@ func (m *postgresMacroEngine) evaluateMacro(timeRange backend.TimeRange, query *
 			return "", fmt.Errorf("error parsing interval %v", args[1])
 		}
 		if len(args) == 3 {
-			err := sqleng.SetupFillmode(query, interval, args[2])
+			err := sqleng.SetupFillmode(fillConf, interval, args[2])
 			if err != nil {
 				return "", err
 			}
 		}
 		return fmt.Sprintf("floor((%s)/%v)*%v", args[0], interval.Seconds(), interval.Seconds()), nil
 	case "__unixEpochGroupAlias":
-		tg, err := m.evaluateMacro(timeRange, query, "__unixEpochGroup", args)
+		tg, err := m.evaluateMacro(timeRange, fillConf, "__unixEpochGroup", args)
 		if err == nil {
 			return tg + " AS \"time\"", nil
 		}
