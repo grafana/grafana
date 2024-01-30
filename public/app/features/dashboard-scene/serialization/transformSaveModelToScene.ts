@@ -50,7 +50,7 @@ import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { DashboardInteractions } from '../utils/interactions';
 import {
   getCurrentValueForOldIntervalModel,
-  getIntervalsFromOldIntervalModel,
+  getIntervalsFromQueryString,
   getVizPanelKeyForPanelId,
 } from '../utils/utils';
 
@@ -62,13 +62,21 @@ export interface DashboardLoaderState {
   loadError?: string;
 }
 
+export interface SaveModelToSceneOptions {
+  isEmbedded?: boolean;
+}
+
 export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   // Just to have migrations run
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
     autoMigrateOldPanels: false,
   });
 
-  return createDashboardSceneFromDashboardModel(oldModel);
+  const scene = createDashboardSceneFromDashboardModel(oldModel);
+  // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
+  scene.setInitialSaveModel(rsp.dashboard);
+
+  return scene;
 }
 
 export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
@@ -342,7 +350,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
     });
   } else if (variable.type === 'interval') {
-    const intervals = getIntervalsFromOldIntervalModel(variable);
+    const intervals = getIntervalsFromQueryString(variable.query);
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
     return new IntervalVariable({
       ...commonProperties,

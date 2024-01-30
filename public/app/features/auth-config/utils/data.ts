@@ -58,7 +58,7 @@ export function dataToDTO(data?: SSOProvider): SSOProviderDTO {
   if (!data) {
     return emptySettings;
   }
-  const arrayFields = getArrayFields(fieldMap);
+  const arrayFields = getArrayFields(fieldMap(data.provider));
   const settings = { ...data.settings };
   for (const field of arrayFields) {
     //@ts-expect-error
@@ -89,12 +89,16 @@ const includeRequiredKeysOnly = (
 
 // Convert the DTO to the data format used by the API
 export function dtoToData(dto: SSOProviderDTO, provider: string) {
-  const arrayFields = getArrayFields(fieldMap);
-  const dtoWithRequiredFields = includeRequiredKeysOnly(dto, [...fields[provider], 'enabled']);
-  const settings = { ...dtoWithRequiredFields };
+  const arrayFields = getArrayFields(fieldMap(provider));
+  let current: Partial<SSOProviderDTO> = dto;
+
+  if (fields[provider]) {
+    current = includeRequiredKeysOnly(dto, [...fields[provider], 'enabled']);
+  }
+  const settings = { ...current };
 
   for (const field of arrayFields) {
-    const value = dtoWithRequiredFields[field];
+    const value = current[field];
     if (value) {
       if (isSelectableValue(value)) {
         //@ts-expect-error

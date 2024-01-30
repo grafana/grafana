@@ -81,6 +81,7 @@
     "folder-picker": {
       "accessible-label": "Sélectionnez un dossier : {{ label }} est sélectionné actuellement",
       "button-label": "Sélectionner un dossier",
+      "clear-selection": "",
       "empty-message": "Aucun dossier trouvé",
       "error-title": "Impossible de charger les dossiers",
       "search-placeholder": "Rechercher dans les dossiers",
@@ -306,7 +307,6 @@
     },
     "toolbar": {
       "add": "Ajouter",
-      "add-panel": "Ajouter un panneau",
       "mark-favorite": "Marquer comme favori",
       "open-original": "Ouvrir le tableau de bord d'origine",
       "playlist-next": "Accéder au tableau de bord suivant",

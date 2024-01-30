@@ -45,6 +45,7 @@ type QueryData struct {
 	URL                string
 	TimeInterval       string
 	enableDataplane    bool
+	enableScope        bool
 	exemplarSampler    func() exemplar.Sampler
 }
 
@@ -88,6 +89,7 @@ func New(
 		URL:                settings.URL,
 		enableDataplane:    features.IsEnabledGlobally(featuremgmt.FlagPrometheusDataplane),
 		exemplarSampler:    exemplarSampler,
+		enableScope:        features.IsEnabledGlobally(featuremgmt.FlagPromQLScope),
 	}, nil
 }
 
@@ -98,7 +100,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	for _, q := range req.Queries {
-		query, err := models.Parse(q, s.TimeInterval, s.intervalCalculator, fromAlert)
+		query, err := models.Parse(q, s.TimeInterval, s.intervalCalculator, fromAlert, s.enableScope)
 		if err != nil {
 			return &result, err
 		}

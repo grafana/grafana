@@ -48,7 +48,6 @@ Use full URLs for links. When linking to versioned docs, replace the version wit
 ## Navigation updates\*
 
 <!--Laura Benz-->
-<!--internal_enablement_video-->
 
 _Available in public preview in Grafana Open Source and Enterprise_
 
@@ -59,8 +58,6 @@ The improved navigation menu gives you a better overview by showing all levels o
 ## Table data in PDF reports
 
 <!--Agnès Toulet-->
-
-<!--internal_enablement_video-->
 
 _Available in public preview in Grafana Enterprise and Grafana Cloud_
 
@@ -80,7 +77,6 @@ To try out this feature, enable the `pdfTables` [feature toggle](https://grafana
 ### Moving average and trend lines using transformations
 
 <!--Oscar Kilhed-->
-<!--internal_enablement_video for either moving average or trend lines or both-->
 
 _Available in public preview in all editions of Grafana_
 
@@ -109,7 +105,6 @@ The transformation currently supports linear regression and polynomial regressio
 ### Canvas visualization supports pan and zoom
 
 <!--Nathan Marrs-->
-<!--internal_enablement_video-->
 
 _Available in public preview in all editions of Grafana_
 
@@ -191,7 +186,6 @@ By default, Grafana automatically scales the unit based on the magnitude of the 
 ### New Transformations UI experience and documentation upgrades
 
 <!--Jev Forsberg-->
-<!--internal_enablement_video-->
 
 _Generally available in all editions of Grafana_
 
@@ -209,12 +203,19 @@ We've also streamlined the user experience by integrating documentation directly
 
 {{< figure src="/media/docs/grafana/transformations/transformations_internal_documentation.png" caption="Transformation documentation is now internally available inside the Grafana app itself." alt="Transformation documentation internally available" >}}
 
+### Copy and paste time range
+
+<!--Haris Rozajac-->
+
+_Generally available in all editions of Grafana_
+
+Copying and pasting time range in the time range picker is now available. For example, you can copy a time range in **Explore** and paste it into **Dashboards** and vice versa. You can also copy and paste a time range using the new keyboard shortcuts `t+c` and `t+v`, respectively.
+
 ## Profiles
 
 ### Trace to Profiles\*
 
 <!--Joey Tawadrous-->
-<!--internal_enablement_video-->
 
 _Experimental in all editions of Grafana_
 
@@ -379,7 +380,6 @@ The following example would add the derived field `traceID regex` based on a reg
 ### InfluxDB native SQL support
 
 <!--Ismail Simsek-->
-<!--internal_enablement_video-->
 
 _Generally available in all editions of Grafana_
 
@@ -394,7 +394,6 @@ All you need to do is set up your InfluxDB Cloud Account and create your InfluxD
 ### Grafana Anonymous Access\*
 
 <!--Eric Leijonmarck-->
-<!--internal_enablement_video-->
 
 _Generally available in Grafana Open Source and Enterprise_
 

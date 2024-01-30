@@ -1,4 +1,4 @@
-import { QueryEditorMode } from '../../prometheus/querybuilder/shared/types';
+import { QueryEditorMode } from '@grafana/experimental';
 
 import { changeEditorMode, getQueryWithDefaults } from './state';
 

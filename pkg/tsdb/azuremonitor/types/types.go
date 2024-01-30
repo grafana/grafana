@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 )
 
@@ -44,6 +45,7 @@ type AzureMonitorCustomizedCloudSettings struct {
 type DatasourceService struct {
 	URL        string
 	HTTPClient *http.Client
+	Logger     log.Logger
 }
 
 type DatasourceInfo struct {

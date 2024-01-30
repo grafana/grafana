@@ -86,6 +86,6 @@ export const onDashboardLoadedHandler = ({
   }
 };
 
-const hasTemplateVariables = (val?: string): boolean => {
-  return getTemplateSrv().containsTemplate(val);
+const hasTemplateVariables = (val?: string | string[]): boolean => {
+  return (Array.isArray(val) ? val : [val]).some((v) => getTemplateSrv().containsTemplate(v));
 };

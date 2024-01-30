@@ -40,6 +40,7 @@ Hover over a particular block in the flame graph to see more details about the r
 
 ## Use a basic configuration
 
+
 To use a simple configuration, follow these steps:
 
 1. Select a Pyroscope data source from the **Data source** drop-down.
@@ -88,3 +89,15 @@ To use a variable you need to wrap it in `${}`. For example, `${__span.name}`.
 | **\_\_trace.traceId**  | The ID of the trace.                                                                                                                                                                                                                                                                                                                     |
 | **\_\_trace.duration** | The duration of the trace.                                                                                                                                                                                                                                                                                                               |
 | **\_\_trace.name**     | The name of the trace.                                                                                                                                                                                                                                                                                                                   |
+
+## Configure trace to profiles
+
+The following table describes options for configuring your trace to profiles settings:
+
+| Setting name         | Description                                                                                                                                                                                                                                                                                                     |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Data source**      | Defines the target data source. You can currently select a Pyroscope \[profiling\] data source.                                                                                                                                                                                                                 |
+| **Tags**             | Defines the tags to use in the profile query. Default: `cluster`, `hostname`, `namespace`, `pod`, `service.name`, `service.namespace`. You can change the tag name for example to remove dots from the name if they are not allowed in the target data source. For example, map `http.status` to `http_status`. |
+| **Profile type**     | Defines the profile type that will be used in the query.                                                                                                                                                                                                                                                        |
+| **Use custom query** | Toggles use of custom query with interpolation.                                                                                                                                                                                                                                                                 |
+| **Query**            | Input to write custom query. Use variable interpolation to customize it with variables from span.                                                                                                                                                                                                               |

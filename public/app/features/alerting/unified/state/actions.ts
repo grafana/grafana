@@ -189,7 +189,7 @@ export function fetchPromAndRulerRulesAction({
   limitAlerts?: number;
   matcher?: Matcher[];
   state?: string[];
-}): ThunkResult<void> {
+}): ThunkResult<Promise<void>> {
   return async (dispatch, getState) => {
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
     const dsConfig = getDataSourceConfig(getState, rulesSourceName);

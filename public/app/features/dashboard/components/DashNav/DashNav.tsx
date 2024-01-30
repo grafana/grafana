@@ -59,7 +59,6 @@ export interface OwnProps {
   hideTimePicker: boolean;
   folderTitle?: string;
   title: string;
-  onAddPanel: () => void;
 }
 
 export function addCustomLeftAction(content: DynamicDashNavButtonModel) {
@@ -251,7 +250,7 @@ export const DashNav = React.memo<Props>((props) => {
   };
 
   const renderRightActions = () => {
-    const { dashboard, onAddPanel, isFullscreen, kioskMode, hideTimePicker } = props;
+    const { dashboard, isFullscreen, kioskMode, hideTimePicker } = props;
     const { canSave, canEdit, showSettings, canShare } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
@@ -310,25 +309,13 @@ export const DashNav = React.memo<Props>((props) => {
     }
 
     if (canEdit && !isFullscreen) {
-      if (config.featureToggles.emptyDashboardPage) {
-        buttons.push(
-          <AddPanelButton
-            dashboard={dashboard}
-            onToolbarAddMenuOpen={DashboardInteractions.toolbarAddClick}
-            key="panel-add-dropdown"
-          />
-        );
-      } else {
-        buttons.push(
-          <ToolbarButton
-            tooltip={t('dashboard.toolbar.add-panel', 'Add panel')}
-            icon="panel-add"
-            iconSize="xl"
-            onClick={onAddPanel}
-            key="button-panel-add"
-          />
-        );
-      }
+      buttons.push(
+        <AddPanelButton
+          dashboard={dashboard}
+          onToolbarAddMenuOpen={DashboardInteractions.toolbarAddClick}
+          key="panel-add-dropdown"
+        />
+      );
     }
 
     if (canShare) {
