@@ -43,7 +43,6 @@ export const DiffGroup = ({ diffs, title }: DiffGroupProps) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
-    //backgroundColor: theme.colors.background.secondary,
   }),
   list: css({
     marginLeft: theme.spacing(4),
