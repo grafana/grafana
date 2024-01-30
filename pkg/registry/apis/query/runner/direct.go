@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -29,7 +28,7 @@ type directRunner struct {
 
 type directRegistry struct {
 	pluginsMu     sync.Mutex
-	plugins       *v0alpha1.DataSourcePluginList
+	plugins       *v0alpha1.DataSourceAPIList
 	apis          map[string]schema.GroupVersion
 	groupToPlugin map[string]string
 	pluginStore   pluginstore.Store
@@ -38,13 +37,13 @@ type directRegistry struct {
 	dataSourcesService datasources.DataSourceService
 }
 
-var _ QueryRunner = (*directRunner)(nil)
-var _ DataSourceRegistry = (*directRegistry)(nil)
+var _ v0alpha1.QueryRunner = (*directRunner)(nil)
+var _ v0alpha1.DataSourceAPIRegistry = (*directRegistry)(nil)
 
 // NewDummyTestRunner creates a runner that only works with testdata
 func NewDirectQueryRunner(
 	pluginClient plugins.Client,
-	pCtxProvider *plugincontext.Provider) QueryRunner {
+	pCtxProvider *plugincontext.Provider) v0alpha1.QueryRunner {
 	return &directRunner{
 		pluginClient: pluginClient,
 		pCtxProvider: pCtxProvider,
@@ -53,7 +52,7 @@ func NewDirectQueryRunner(
 
 func NewDirectRegistry(pluginStore pluginstore.Store,
 	dataSourcesService datasources.DataSourceService,
-) DataSourceRegistry {
+) v0alpha1.DataSourceAPIRegistry {
 	return &directRegistry{
 		pluginStore:        pluginStore,
 		dataSourcesService: dataSourcesService,
@@ -99,7 +98,7 @@ func (d *directRunner) ExecuteQueryData(ctx context.Context,
 }
 
 // GetDatasourceAPI implements DataSourceRegistry.
-func (d *directRegistry) GetDatasourceAPI(pluginId string) (schema.GroupVersion, error) {
+func (d *directRegistry) GetDatasourceGroupVersion(pluginId string) (schema.GroupVersion, error) {
 	d.pluginsMu.Lock()
 	defer d.pluginsMu.Unlock()
 
@@ -118,48 +117,8 @@ func (d *directRegistry) GetDatasourceAPI(pluginId string) (schema.GroupVersion,
 	return gv, err
 }
 
-// GetDataSources implements QueryHelper.
-func (d *directRegistry) GetDataSources(ctx context.Context, namespace string, options *internalversion.ListOptions) (*v0alpha1.DataSourceList, error) {
-	info, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, err
-	}
-	datasources, err := d.dataSourcesService.GetDataSources(ctx, &datasources.GetDataSourcesQuery{
-		OrgID: info.OrgID,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	results := &v0alpha1.DataSourceList{
-		ListMeta: metav1.ListMeta{
-			ResourceVersion: fmt.Sprintf("%d", time.Now().UnixMilli()),
-		},
-	}
-	for _, real := range datasources {
-		gv := d.apis[real.Type]
-
-		ds := v0alpha1.DataSource{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:              real.UID,
-				CreationTimestamp: metav1.NewTime(real.Created),
-			},
-			Title: real.Name,
-			Group: gv.Group,
-			// Health: &v0alpha1.HealthCheck{
-			// 	Status:  "OK",
-			// 	Checked: time.Now().UnixMilli(),
-			// },
-		}
-
-		results.Items = append(results.Items, ds)
-	}
-
-	return results, nil
-}
-
 // GetDatasourcePlugins no namespace? everything that is available
-func (d *directRegistry) GetDatasourcePlugins(ctx context.Context, options *internalversion.ListOptions) (*v0alpha1.DataSourcePluginList, error) {
+func (d *directRegistry) GetDatasourceAPIs(ctx context.Context, options *internalversion.ListOptions) (*v0alpha1.DataSourceAPIList, error) {
 	d.pluginsMu.Lock()
 	defer d.pluginsMu.Unlock()
 
@@ -177,7 +136,7 @@ func (d *directRegistry) GetDatasourcePlugins(ctx context.Context, options *inte
 func (d *directRegistry) updatePlugins() error {
 	groupToPlugin := map[string]string{}
 	apis := map[string]schema.GroupVersion{}
-	result := &v0alpha1.DataSourcePluginList{
+	result := &v0alpha1.DataSourceAPIList{
 		ListMeta: metav1.ListMeta{
 			ResourceVersion: fmt.Sprintf("%d", time.Now().UnixMilli()),
 		},
@@ -190,7 +149,7 @@ func (d *directRegistry) updatePlugins() error {
 			ts = dsp.Info.Build.Time
 		}
 
-		group, err := pluginstore.GetDatasourceGroupNameFromPluginID(dsp.ID)
+		group, err := plugins.GetDatasourceGroupNameFromPluginID(dsp.ID)
 		if err != nil {
 			return err
 		}
@@ -201,7 +160,7 @@ func (d *directRegistry) updatePlugins() error {
 		}
 		groupToPlugin[group] = dsp.ID
 
-		ds := v0alpha1.DataSourcePlugin{
+		ds := v0alpha1.DataSourceAPI{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              dsp.ID,
 				CreationTimestamp: metav1.NewTime(time.UnixMilli(ts)),
@@ -210,7 +169,6 @@ func (d *directRegistry) updatePlugins() error {
 			AliasIDs:     dsp.AliasIDs,
 			GroupVersion: gv.String(),
 			Description:  dsp.Info.Description,
-			Capabilities: []string{"query"}, // stream?
 		}
 		result.Items = append(result.Items, ds)
 	}

@@ -14,7 +14,7 @@ import (
 type QueryDataResponse struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// Backend wrapper
+	// Backend wrapper (external dependency)
 	backend.QueryDataResponse
 }
 

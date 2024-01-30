@@ -23,7 +23,7 @@ type subQueryREST struct {
 var _ = rest.Connecter(&subQueryREST{})
 
 func (r *subQueryREST) New() runtime.Object {
-	return &v0alpha1.QueryResults{}
+	return &v0alpha1.QueryDataResponse{}
 }
 
 func (r *subQueryREST) Destroy() {}

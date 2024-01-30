@@ -1,43 +1,36 @@
 package v0alpha1
 
 import (
+	"context"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// The data source resource is a reflection of the individual datasource instances
-// that are exposed in the groups: {datasource}.datasource.grafana.app
-// The status is updated periodically.
-//
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type DataSource struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+// The query runner interface
+type QueryRunner interface {
+	// Runs the query as the user in context
+	ExecuteQueryData(ctx context.Context,
+		// The k8s group for the datasource (pluginId)
+		datasource schema.GroupVersion,
 
-	// The display name
-	Title string `json:"title"`
+		// The datasource name/uid
+		name string,
 
-	// API Group
-	Group string `json:"group"`
-
-	// Health check (run periodically after requests?)
-	Health *HealthCheck `json:"health,omitempty"`
+		// The raw backend query objects
+		query []GenericDataQuery,
+	) (*backend.QueryDataResponse, error)
 }
 
-type HealthCheck struct {
-	// The display name
-	Status string `json:"status"`
+type DataSourceAPIRegistry interface {
+	// Get the group and preferred version for a plugin
+	GetDatasourceGroupVersion(pluginId string) (schema.GroupVersion, error)
 
-	// Timestamp when the health was last checked
-	Checked int64 `json:"checked"`
-}
-
-// List of datasource and their status
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type DataSourceList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-
-	Items []DataSource `json:"items,omitempty"`
+	// Get the list of available datasource plugins
+	// The values will be managed though API discovery/reconciliation
+	GetDatasourceAPIs(ctx context.Context, options *internalversion.ListOptions) (*DataSourceAPIList, error)
 }
 
 // The data source resource is a reflection of the individual datasource instances
@@ -46,7 +39,7 @@ type DataSourceList struct {
 // The name is the plugin id
 //
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type DataSourcePlugin struct {
+type DataSourceAPI struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
@@ -61,16 +54,13 @@ type DataSourcePlugin struct {
 
 	// Possible alternative plugin IDs
 	AliasIDs []string `json:"aliasIDs,omitempty"`
-
-	// Supported operations of this plugin type
-	Capabilities []string `json:"capabilities,omitempty"`
 }
 
 // List of datasource plugins
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type DataSourcePluginList struct {
+type DataSourceAPIList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []DataSourcePlugin `json:"items,omitempty"`
+	Items []DataSourceAPI `json:"items,omitempty"`
 }

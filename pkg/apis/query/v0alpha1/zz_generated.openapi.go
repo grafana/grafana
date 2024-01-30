@@ -16,126 +16,17 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSource":           schema_pkg_apis_query_v0alpha1_DataSource(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceList":       schema_pkg_apis_query_v0alpha1_DataSourceList(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourcePlugin":     schema_pkg_apis_query_v0alpha1_DataSourcePlugin(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourcePluginList": schema_pkg_apis_query_v0alpha1_DataSourcePluginList(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef":        schema_pkg_apis_query_v0alpha1_DataSourceRef(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery":     schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericQueryRequest":  schema_pkg_apis_query_v0alpha1_GenericQueryRequest(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.HealthCheck":          schema_pkg_apis_query_v0alpha1_HealthCheck(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataResponse":    QueryDataResponse{}.OpenAPIDefinition(),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange":            schema_pkg_apis_query_v0alpha1_TimeRange(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceAPI":       schema_pkg_apis_query_v0alpha1_DataSourceAPI(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceAPIList":   schema_pkg_apis_query_v0alpha1_DataSourceAPIList(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef":       schema_pkg_apis_query_v0alpha1_DataSourceRef(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery":    schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericQueryRequest": schema_pkg_apis_query_v0alpha1_GenericQueryRequest(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataResponse":   QueryDataResponse{}.OpenAPIDefinition(),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange":           schema_pkg_apis_query_v0alpha1_TimeRange(ref),
 	}
 }
 
-func schema_pkg_apis_query_v0alpha1_DataSource(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "The data source resource is a reflection of the individual datasource instances that are exposed in the groups: {datasource}.datasource.grafana.app The status is updated periodically.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
-						},
-					},
-					"title": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The display name",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"group": {
-						SchemaProps: spec.SchemaProps{
-							Description: "API Group",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"health": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Health check (run periodically after requests?)",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.HealthCheck"),
-						},
-					},
-				},
-				Required: []string{"title", "group"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.HealthCheck", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
-	}
-}
-
-func schema_pkg_apis_query_v0alpha1_DataSourceList(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "List of datasource and their status",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
-						},
-					},
-					"items": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSource"),
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSource", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
-	}
-}
-
-func schema_pkg_apis_query_v0alpha1_DataSourcePlugin(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_query_v0alpha1_DataSourceAPI(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -200,21 +91,6 @@ func schema_pkg_apis_query_v0alpha1_DataSourcePlugin(ref common.ReferenceCallbac
 							},
 						},
 					},
-					"capabilities": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Supported operations of this plugin type",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
 				},
 				Required: []string{"title", "groupVersion"},
 			},
@@ -224,7 +100,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourcePlugin(ref common.ReferenceCallbac
 	}
 }
 
-func schema_pkg_apis_query_v0alpha1_DataSourcePluginList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_query_v0alpha1_DataSourceAPIList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -258,7 +134,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourcePluginList(ref common.ReferenceCal
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourcePlugin"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceAPI"),
 									},
 								},
 							},
@@ -268,7 +144,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourcePluginList(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourcePlugin", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceAPI", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
@@ -433,35 +309,6 @@ func schema_pkg_apis_query_v0alpha1_GenericQueryRequest(ref common.ReferenceCall
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery"},
-	}
-}
-
-func schema_pkg_apis_query_v0alpha1_HealthCheck(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"status": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The display name",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"checked": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Timestamp when the health was last checked",
-							Default:     0,
-							Type:        []string{"integer"},
-							Format:      "int64",
-						},
-					},
-				},
-				Required: []string{"status", "checked"},
-			},
-		},
 	}
 }
 

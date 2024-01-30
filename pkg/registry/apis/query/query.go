@@ -61,7 +61,7 @@ func (b *QueryAPIBuilder) processRequest(ctx context.Context, req parsedQueryReq
 // Process a single request
 // See: https://github.com/grafana/grafana/blob/v10.2.3/pkg/services/query/query.go#L242
 func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req groupedQueries) (*backend.QueryDataResponse, error) {
-	gv, err := b.registry.GetDatasourceAPI(req.pluginId)
+	gv, err := b.registry.GetDatasourceGroupVersion(req.pluginId)
 	if err != nil {
 		return nil, err
 	}

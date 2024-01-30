@@ -34,11 +34,11 @@ type QueryAPIBuilder struct {
 	concurrentQueryLimit   int
 	UserFacingDefaultError string
 
-	runner   runner.QueryRunner
-	registry runner.DataSourceRegistry
+	runner   v0alpha1.QueryRunner
+	registry v0alpha1.DataSourceAPIRegistry
 }
 
-func NewQueryAPIBuilder(runner runner.QueryRunner, registry runner.DataSourceRegistry) *QueryAPIBuilder {
+func NewQueryAPIBuilder(runner v0alpha1.QueryRunner, registry v0alpha1.DataSourceAPIRegistry) *QueryAPIBuilder {
 	return &QueryAPIBuilder{
 		concurrentQueryLimit: 4, // from config?
 		log:                  log.New("query_apiserver"),
@@ -82,10 +82,8 @@ func (b *QueryAPIBuilder) GetGroupVersion() schema.GroupVersion {
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
-		&v0alpha1.DataSource{},
-		&v0alpha1.DataSourceList{},
-		&v0alpha1.DataSourcePlugin{},
-		&v0alpha1.DataSourcePluginList{},
+		&v0alpha1.DataSourceAPI{},
+		&v0alpha1.DataSourceAPIList{},
 		&v0alpha1.QueryDataResponse{},
 	)
 }
@@ -104,11 +102,9 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 	gv := v0alpha1.SchemeGroupVersion
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(gv.Group, scheme, metav1.ParameterCodec, codecs)
 
-	ds := newDataSourceStorage(b.registry)
 	plugins := newPluginsStorage(b.registry)
 
 	storage := map[string]rest.Storage{}
-	storage[ds.resourceInfo.StoragePath()] = ds
 	storage[plugins.resourceInfo.StoragePath()] = plugins
 
 	apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage

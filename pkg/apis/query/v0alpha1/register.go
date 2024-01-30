@@ -13,16 +13,10 @@ const (
 	APIVERSION = GROUP + "/" + VERSION
 )
 
-var DataSourceResourceInfo = common.NewResourceInfo(GROUP, VERSION,
-	"datasources", "datasource", "DataSource",
-	func() runtime.Object { return &DataSource{} },
-	func() runtime.Object { return &DataSourceList{} },
-)
-
-var DataSourcePluginResourceInfo = common.NewResourceInfo(GROUP, VERSION,
-	"plugins", "plugin", "DataSourcePlugin",
-	func() runtime.Object { return &DataSourcePlugin{} },
-	func() runtime.Object { return &DataSourcePluginList{} },
+var DataSourceAPIResourceInfo = common.NewResourceInfo(GROUP, VERSION,
+	"datasourceapis", "datasourceapi", "DataSourceAPI",
+	func() runtime.Object { return &DataSourceAPI{} },
+	func() runtime.Object { return &DataSourceAPIList{} },
 )
 
 var (

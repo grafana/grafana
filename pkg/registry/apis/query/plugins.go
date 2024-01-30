@@ -10,8 +10,7 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
-	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 
 var (
@@ -24,11 +23,11 @@ var (
 type pluginsStorage struct {
 	resourceInfo   *common.ResourceInfo
 	tableConverter rest.TableConvertor
-	registry       runner.DataSourceRegistry
+	registry       query.DataSourceAPIRegistry
 }
 
-func newPluginsStorage(reg runner.DataSourceRegistry) *pluginsStorage {
-	var resourceInfo = v0alpha1.DataSourcePluginResourceInfo
+func newPluginsStorage(reg query.DataSourceAPIRegistry) *pluginsStorage {
+	var resourceInfo = query.DataSourceAPIResourceInfo
 	return &pluginsStorage{
 		resourceInfo:   &resourceInfo,
 		tableConverter: rest.NewDefaultTableConvertor(resourceInfo.GroupResource()),
@@ -59,5 +58,5 @@ func (s *pluginsStorage) ConvertToTable(ctx context.Context, object runtime.Obje
 }
 
 func (s *pluginsStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return s.registry.GetDatasourcePlugins(ctx, options)
+	return s.registry.GetDatasourceAPIs(ctx, options)
 }

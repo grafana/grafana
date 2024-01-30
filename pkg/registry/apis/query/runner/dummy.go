@@ -18,15 +18,15 @@ import (
 
 type testdataDummy struct{}
 
-var _ QueryRunner = (*testdataDummy)(nil)
-var _ DataSourceRegistry = (*testdataDummy)(nil)
+var _ v0alpha1.QueryRunner = (*testdataDummy)(nil)
+var _ v0alpha1.DataSourceAPIRegistry = (*testdataDummy)(nil)
 
 // NewDummyTestRunner creates a runner that only works with testdata
-func NewDummyTestRunner() QueryRunner {
+func NewDummyTestRunner() v0alpha1.QueryRunner {
 	return &testdataDummy{}
 }
 
-func NewDummyRegistry() DataSourceRegistry {
+func NewDummyRegistry() v0alpha1.DataSourceAPIRegistry {
 	return &testdataDummy{}
 }
 
@@ -58,7 +58,7 @@ func (d *testdataDummy) ExecuteQueryData(ctx context.Context,
 }
 
 // GetDatasourceAPI implements DataSourceRegistry.
-func (*testdataDummy) GetDatasourceAPI(pluginId string) (schema.GroupVersion, error) {
+func (*testdataDummy) GetDatasourceGroupVersion(pluginId string) (schema.GroupVersion, error) {
 	if pluginId == "testdata" || pluginId == "grafana-testdata-datasource" {
 		return schema.GroupVersion{
 			Group:   "testdata.datasource.grafana.app",
@@ -68,36 +68,13 @@ func (*testdataDummy) GetDatasourceAPI(pluginId string) (schema.GroupVersion, er
 	return schema.GroupVersion{}, fmt.Errorf("unsupported plugin (only testdata for now)")
 }
 
-// GetDataSources implements QueryHelper.
-func (d *testdataDummy) GetDataSources(ctx context.Context, namespace string, options *internalversion.ListOptions) (*v0alpha1.DataSourceList, error) {
-	return &v0alpha1.DataSourceList{
-		ListMeta: metav1.ListMeta{
-			ResourceVersion: fmt.Sprintf("%d", time.Now().UnixMilli()),
-		},
-		Items: []v0alpha1.DataSource{
-			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:              "PD8C576611E62080A",
-					CreationTimestamp: metav1.Now(),
-				},
-				Title: "gdev-testdata",
-				Group: "testdata.datasource.grafana.app",
-				Health: &v0alpha1.HealthCheck{
-					Status:  "OK",
-					Checked: time.Now().UnixMilli(),
-				},
-			},
-		},
-	}, nil
-}
-
 // GetDatasourcePlugins implements QueryHelper.
-func (d *testdataDummy) GetDatasourcePlugins(ctx context.Context, options *internalversion.ListOptions) (*v0alpha1.DataSourcePluginList, error) {
-	return &v0alpha1.DataSourcePluginList{
+func (d *testdataDummy) GetDatasourceAPIs(ctx context.Context, options *internalversion.ListOptions) (*v0alpha1.DataSourceAPIList, error) {
+	return &v0alpha1.DataSourceAPIList{
 		ListMeta: metav1.ListMeta{
 			ResourceVersion: fmt.Sprintf("%d", time.Now().UnixMilli()),
 		},
-		Items: []v0alpha1.DataSourcePlugin{
+		Items: []v0alpha1.DataSourceAPI{
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "grafana-testdata-datasource",
@@ -106,7 +83,6 @@ func (d *testdataDummy) GetDatasourcePlugins(ctx context.Context, options *inter
 				Title:        "Test Data",
 				GroupVersion: "testdata.datasource.grafana.app/v0alpha1",
 				AliasIDs:     []string{"testdata"},
-				Capabilities: []string{"???"},
 			},
 		},
 	}, nil
