@@ -5,6 +5,7 @@ import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { EmbeddedDashboardProps } from '@grafana/runtime';
 import { SceneObjectStateChangedEvent, sceneUtils } from '@grafana/scenes';
 import { Spinner, Alert, useStyles2 } from '@grafana/ui';
+import { DashboardRoutes } from 'app/types';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -14,7 +15,7 @@ export function EmbeddedDashboard(props: EmbeddedDashboardProps) {
   const { dashboard, loadError } = stateManager.useState();
 
   useEffect(() => {
-    stateManager.loadDashboard({ uid: props.uid!, isEmbedded: true });
+    stateManager.loadDashboard({ uid: props.uid!, route: DashboardRoutes.Embedded });
     return () => {
       stateManager.clearState();
     };

@@ -153,7 +153,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public startUrlSync() {
-    getUrlSyncManager().initSync(this);
+    if (!this.state.meta.isEmbedded) {
+      getUrlSyncManager().initSync(this);
+    }
   }
 
   public stopUrlSync() {
