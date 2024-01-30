@@ -19,7 +19,7 @@ export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
   const { chrome } = useGrafana();
   const cleanSessionStorage = () => window.sessionStorage.removeItem('returnToPrevious');
   const handleOnClick = () => {
-    href && locationService.push(href);
+    locationService.push(href);
     cleanSessionStorage();
   };
   const handleOnDismiss = () => {

@@ -56,7 +56,8 @@ export function AppChrome({ children }: Props) {
   };
 
   const path = locationService.getLocation().pathname;
-  const shouldShowReturnToPrevious = state.returnToPrevious && path !== state.returnToPrevious.href;
+  const shouldShowReturnToPrevious =
+    config.featureToggles.returnToPrevious && state.returnToPrevious && path !== state.returnToPrevious.href;
 
   useEffect(() => {
     if (state.returnToPrevious && path === state.returnToPrevious.href) {
@@ -119,7 +120,7 @@ export function AppChrome({ children }: Props) {
         </>
       )}
       {!state.chromeless && <CommandPalette />}
-      {config.featureToggles.returnToPrevious && state.returnToPrevious && shouldShowReturnToPrevious && (
+      {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}
     </div>
