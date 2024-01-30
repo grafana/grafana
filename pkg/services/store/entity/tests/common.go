@@ -14,7 +14,7 @@ import (
 	saAPI "github.com/grafana/grafana/pkg/services/serviceaccounts/api"
 	saTests "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	entityDB "github.com/grafana/grafana/pkg/services/store/entity/db"
+	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -74,7 +74,7 @@ func createTestContext(t *testing.T) testContext {
 
 	authToken, serviceAccountUser := createServiceAccountAdminToken(t, env)
 
-	eDB, err := entityDB.ProvideEntityDB(env.SQLStore, env.SQLStore.Cfg, env.FeatureToggles)
+	eDB, err := dbimpl.ProvideEntityDB(env.SQLStore, env.SQLStore.Cfg, env.FeatureToggles)
 	require.NoError(t, err)
 
 	err = eDB.Init()
