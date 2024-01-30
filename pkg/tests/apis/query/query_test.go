@@ -24,7 +24,6 @@ func TestSimpleQuery(t *testing.T) {
 	}
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false, // dev mode required for datasource connections
-		DisableAnonymous:  true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
 		},

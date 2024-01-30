@@ -58,7 +58,7 @@ func (r *QueryDataResponse) DeepCopy() *QueryDataResponse {
 	return out
 }
 
-func (u *QueryDataResponse) DeepCopyInto(out *QueryDataResponse) {
-	clone := u.DeepCopy()
+func (r *QueryDataResponse) DeepCopyInto(out *QueryDataResponse) {
+	clone := r.DeepCopy()
 	*out = *clone
 }
