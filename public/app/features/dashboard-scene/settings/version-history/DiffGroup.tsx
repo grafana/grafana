@@ -42,8 +42,7 @@ export const DiffGroup = ({ diffs, title }: DiffGroupProps) => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-  }),
+  container: css({}),
   list: css({
     marginLeft: theme.spacing(4),
   }),
