@@ -145,30 +145,6 @@ func TestService_TryTokenRefresh_ValidToken(t *testing.T) {
 	assert.Equal(t, resultUsr.OAuthTokenType, token.TokenType)
 }
 
-// func TestService_TryTokenRefresh_NoRefreshToken(t *testing.T) {
-// 	srv, _, socialConnector := setupOAuthTokenService(t)
-// 	ctx := context.Background()
-// 	token := &oauth2.Token{
-// 		AccessToken:  "testaccess",
-// 		RefreshToken: "",
-// 		Expiry:       time.Now().Add(-time.Hour),
-// 		TokenType:    "Bearer",
-// 	}
-// 	usr := &user.SignedInUser{
-// 		AuthenticatedBy: login.GenericOAuthModule,
-// 		UserID:          1,
-// 	}
-
-// 	socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token))
-// 	socialConnector.On("GetOAuthInfo").Return(&social.OAuthInfo{UseRefreshToken: true})
-
-// 	err := srv.TryTokenRefresh(ctx, usr)
-
-// 	assert.Nil(t, err)
-
-// 	socialConnector.AssertNotCalled(t, "TokenSource")
-// }
-
 func TestService_TryTokenRefresh_ExpiredToken(t *testing.T) {
 	srv, authInfoStore, socialConnector := setupOAuthTokenService(t)
 	ctx := context.Background()
@@ -287,9 +263,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 	type testCase struct {
 		desc        string
 		expectedErr error
-
-		oauthInfo *social.OAuthInfo
-		setup     func(env *environment)
+		setup       func(env *environment)
 	}
 
 	tests := []testCase{
@@ -330,76 +304,75 @@ func TestService_TryTokenRefresh(t *testing.T) {
 				}
 			},
 		},
-		// {
-		// 	desc:     "should skip token refresh if the expiration check has already been cached",
-		// 	identity: &authn.Identity{ID: "user:1234"},
-		// 	cacheSetup: func(cache *localcache.CacheService) {
-		// 		cache.Set("oauth-refresh-token-1234", true, 1*time.Minute)
-		// 	},
-		// },
-		// {
-		// 	desc:     "should skip token refresh if there's an unexpected error while looking up the user oauth entry, additionally, no error should be returned",
-		// 	identity: &authn.Identity{ID: "user:1234"},
-		// 	authInfoServiceSetup: func(authInfoService *authinfotest.FakeService) {
-		// 		authInfoService.ExpectedError = errors.New("some error")
-		// 	},
-		// },
-		// {
-		// 	desc:     "should skip token refresh if the user doens't has an oauth entry",
-		// 	identity: &authn.Identity{ID: "user:1234"},
-		// 	authInfoServiceSetup: func(authInfoService *authinfotest.FakeService) {
-		// 		authInfoService.ExpectedUserAuth = &login.UserAuth{
-		// 			AuthModule: login.SAMLAuthModule,
-		// 		}
-		// 	},
-		// },
-		// {
-		// 	desc:     "should do token refresh if access token or id token have not expired yet",
-		// 	identity: &authn.Identity{ID: "user:1234"},
-		// 	authInfoServiceSetup: func(authInfoService *authinfotest.FakeService) {
-		// 		authInfoService.ExpectedUserAuth = &login.UserAuth{
-		// 			AuthModule: login.GenericOAuthModule,
-		// 		}
-		// 	},
-		// },
-		// {
-		// 	desc:     "should skip token refresh when no oauth provider was found",
-		// 	identity: &authn.Identity{ID: "user:1234"},
-		// 	authInfoServiceSetup: func(authInfoService *authinfotest.FakeService) {
-		// 		authInfoService.ExpectedUserAuth = &login.UserAuth{
-		// 			AuthModule:   login.GenericOAuthModule,
-		// 			OAuthIdToken: EXPIRED_JWT,
-		// 		}
-		// 	},
-		// },
-		// {
-		// 	desc:     "should skip token refresh when oauth provider token handling is disabled (UseRefreshToken is false)",
-		// 	identity: &authn.Identity{ID: "user:1234"},
-		// 	authInfoServiceSetup: func(authInfoService *authinfotest.FakeService) {
-		// 		authInfoService.ExpectedUserAuth = &login.UserAuth{
-		// 			AuthModule:   login.GenericOAuthModule,
-		// 			OAuthIdToken: EXPIRED_JWT,
-		// 		}
-		// 	},
-		// 	oauthInfo: &social.OAuthInfo{
-		// 		UseRefreshToken: false,
-		// 	},
-		// },
-		// {
-		// 	desc:     "should skip token refresh when oauth provider token handling is disabled and the refresh token is empty",
-		// 	identity: &authn.Identity{ID: "user:1234"},
-		// 	authInfoServiceSetup: func(authInfoService *authinfotest.FakeService) {
-		// 		authInfoService.ExpectedUserAuth = &login.UserAuth{
-		// 			AuthModule:        login.GenericOAuthModule,
-		// 			OAuthIdToken:      EXPIRED_JWT,
-		// 			OAuthRefreshToken: "",
-		// 		}
-		// 	},
-		// 	expectedErr: nil,
-		// 	oauthInfo: &social.OAuthInfo{
-		// 		UseRefreshToken: true,
-		// 	},
-		// },
+		{
+			desc: "should skip token refresh if the expiration check has already been cached",
+			setup: func(env *environment) {
+				env.identity = &authn.Identity{ID: "user:1234"}
+				env.cache.Set("oauth-refresh-token-1234", true, 1*time.Minute)
+			},
+		},
+		{
+			desc: "should skip token refresh if there's an unexpected error while looking up the user oauth entry, additionally, no error should be returned",
+			setup: func(env *environment) {
+				env.identity = &authn.Identity{ID: "user:1234"}
+				env.authInfoService.ExpectedError = errors.New("some error")
+			},
+		},
+		{
+			desc: "should skip token refresh if the user doesn't has an oauth entry",
+			setup: func(env *environment) {
+				env.identity = &authn.Identity{ID: "user:1234"}
+				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
+					AuthModule: login.SAMLAuthModule,
+				}
+			},
+		},
+		{
+			desc: "should do token refresh if access token or id token have not expired yet",
+			setup: func(env *environment) {
+				env.identity = &authn.Identity{ID: "user:1234"}
+				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
+					AuthModule: login.GenericOAuthModule,
+				}
+			},
+		},
+		{
+			desc: "should skip token refresh when no oauth provider was found",
+			setup: func(env *environment) {
+				env.identity = &authn.Identity{ID: "user:1234"}
+				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
+					AuthModule:   login.GenericOAuthModule,
+					OAuthIdToken: EXPIRED_JWT,
+				}
+			},
+		},
+		{
+			desc: "should skip token refresh when oauth provider token handling is disabled (UseRefreshToken is false)",
+			setup: func(env *environment) {
+				env.identity = &authn.Identity{ID: "user:1234"}
+				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
+					AuthModule:   login.GenericOAuthModule,
+					OAuthIdToken: EXPIRED_JWT,
+				}
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
+					UseRefreshToken: false,
+				}
+			},
+		},
+		{
+			desc: "should skip token refresh when oauth provider token handling is disabled and the refresh token is empty",
+			setup: func(env *environment) {
+				env.identity = &authn.Identity{ID: "user:1234"}
+				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
+					AuthModule:        login.GenericOAuthModule,
+					OAuthIdToken:      EXPIRED_JWT,
+					OAuthRefreshToken: "",
+				}
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
+					UseRefreshToken: true,
+				}
+			},
+		},
 
 		/**
 		  * MOVE THIS TEST OUT OF TryTokenRefresh
@@ -470,8 +443,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 				cache:           localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute),
 				socialConnector: socialConnector,
 				socialService: &socialtest.FakeSocialService{
-					ExpectedConnector:        socialConnector,
-					ExpectedAuthInfoProvider: tt.oauthInfo,
+					ExpectedConnector: socialConnector,
 				},
 			}
 
