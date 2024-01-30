@@ -1,10 +1,11 @@
 import React from 'react';
 
-import { LinkModel } from '@grafana/data';
+import { DataLink, LinkModel } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 
 interface VizPanelLinksState extends SceneObjectState {
+  rawLinks?: DataLink[];
   links?: LinkModel[];
   menu: VizPanelLinksMenu;
 }
@@ -14,7 +15,11 @@ export class VizPanelLinks extends SceneObjectBase<VizPanelLinksState> {
 }
 
 function VizPanelLinksRenderer({ model }: SceneComponentProps<VizPanelLinks>) {
-  const { menu } = model.useState();
+  const { menu, rawLinks } = model.useState();
+
+  if (!rawLinks || rawLinks.length === 0) {
+    return null;
+  }
 
   return (
     <Dropdown
@@ -27,7 +32,7 @@ function VizPanelLinksRenderer({ model }: SceneComponentProps<VizPanelLinks>) {
   );
 }
 
-export class VizPanelLinksMenu extends SceneObjectBase<Omit<VizPanelLinksState, 'menu'>> {
+export class VizPanelLinksMenu extends SceneObjectBase<Omit<VizPanelLinksState, 'menu' | 'rawLinks'>> {
   static Component = VizPanelLinksMenuRenderer;
 }
 
