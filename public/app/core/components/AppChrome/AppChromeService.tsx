@@ -46,6 +46,9 @@ export class AppChromeService {
       )
   );
 
+  private sessionStorageData = window.sessionStorage.getItem('returnToPrevious');
+  private returnToPreviousData = this.sessionStorageData ? JSON.parse(this.sessionStorageData) : undefined;
+
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
     sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
@@ -54,6 +57,7 @@ export class AppChromeService {
     megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
     layout: PageLayoutType.Canvas,
+    returnToPrevious: this.returnToPreviousData,
   });
 
   public setMatchedRoute(route: RouteDescriptor) {
@@ -65,12 +69,8 @@ export class AppChromeService {
 
   public update(update: Partial<AppChromeState>) {
     const current = this.state.getValue();
-    const sessionStorageReturnToPrevious = window.sessionStorage.getItem('returnToPrevious');
     const newState: AppChromeState = {
       ...current,
-      returnToPrevious: sessionStorageReturnToPrevious
-        ? JSON.parse(sessionStorageReturnToPrevious)
-        : current.returnToPrevious,
     };
 
     // when route change update props from route and clear fields
@@ -93,10 +93,15 @@ export class AppChromeService {
     }
   }
 
-  public setReturnToPrevious(returnToPrevious: ReturnToPreviousProps) {
+  public setReturnToPrevious = (returnToPrevious: ReturnToPreviousProps) => {
     this.update({ returnToPrevious });
     window.sessionStorage.setItem('returnToPrevious', JSON.stringify(returnToPrevious));
-  }
+  };
+
+  public clearReturnToPrevious = () => {
+    this.update({ returnToPrevious: undefined });
+    window.sessionStorage.removeItem('returnToPrevious');
+  };
 
   private ignoreStateUpdate(newState: AppChromeState, current: AppChromeState) {
     if (isShallowEqual(newState, current)) {

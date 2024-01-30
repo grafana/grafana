@@ -17,14 +17,12 @@ export interface ReturnToPreviousProps {
 export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
-  const cleanSessionStorage = () => window.sessionStorage.removeItem('returnToPrevious');
   const handleOnClick = () => {
     locationService.push(href);
-    cleanSessionStorage();
+    chrome.clearReturnToPrevious();
   };
   const handleOnDismiss = () => {
-    chrome.update({ returnToPrevious: undefined });
-    cleanSessionStorage();
+    chrome.clearReturnToPrevious();
   };
 
   return (
