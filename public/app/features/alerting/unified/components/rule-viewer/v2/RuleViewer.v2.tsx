@@ -2,7 +2,7 @@ import { isEmpty, truncate } from 'lodash';
 import React, { useState } from 'react';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
-import { Alert, Button, LinkButton, Stack, TabContent, Text, TextLink } from '@grafana/ui';
+import { Alert, LinkButton, Stack, TabContent, Text, TextLink } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-alerting';
@@ -20,6 +20,7 @@ import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
 import { WithReturnButton } from '../../WithReturnButton';
 import { decodeGrafanaNamespace } from '../../expressions/util';
 import { RedirectToCloneRule } from '../../rules/CloneRule';
+import { FederatedRuleWarning } from '../FederatedRuleWarning';
 import { Details } from '../tabs/Details';
 import { History } from '../tabs/History';
 import { InstancesList } from '../tabs/Instances';
@@ -77,23 +78,7 @@ const RuleViewer = () => {
         <Stack direction="column">
           {summary}
           {/* alerts and notifications and stuff */}
-          {isFederatedRule && (
-            <Alert
-              severity="info"
-              title="This rule is part of a federated rule group."
-              bottomSpacing={0}
-              topSpacing={2}
-            >
-              <Stack direction="column">
-                Federated rule groups are currently an experimental feature.
-                <Button fill="text" icon="book">
-                  <a href="https://grafana.com/docs/metrics-enterprise/latest/tenant-management/tenant-federation/#cross-tenant-alerting-and-recording-rule-federation">
-                    Read documentation
-                  </a>
-                </Button>
-              </Stack>
-            </Alert>
-          )}
+          {isFederatedRule && <FederatedRuleWarning />}
           {/* indicator for rules in a provisioned group */}
           {isProvisioned && (
             <ProvisioningAlert resource={ProvisionedResource.AlertRule} bottomSpacing={0} topSpacing={2} />
