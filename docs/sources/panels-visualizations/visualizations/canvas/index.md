@@ -109,7 +109,7 @@ When right clicking an element, you are able to edit, delete, duplicate, and mod
 
 ### Element snapping and alignment
 
-When moving elements around the canvas, snapping and alignment guides to help you create more precise layouts.
+When you're moving elements around the canvas, snapping and alignment guides help you create more precise layouts.
 
 // TODO: Add demo video
 
