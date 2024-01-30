@@ -21,6 +21,8 @@ Using Trace to profiles, you can use Grafana’s ability to correlate different 
 **Trace to profiles** lets you link your Grafana Pyroscope data source to tracing data.
 When configured, this connection lets you run queries from a trace span into the profile data.
 
+{{< youtube id="AG8VzfFMLxo" >}}
+
 There are two ways to configure the trace to profiles feature:
 
 - Use a simplified configuration with default query, or
@@ -28,39 +30,43 @@ There are two ways to configure the trace to profiles feature:
 
 To use trace to profiles, navigate to **Explore** and query a trace. Each span now links to your queries. Clicking a link runs the query in a split panel. If tags are configured, Grafana dynamically inserts the span attribute values into the query. The query runs over the time range of the (span start time - 60) to (span end time + 60 seconds).
 
-{{< figure src="/static/img/docs/tempo/profiles/tempo-trace-to-profile.png" max-width="900px" class="docs-image--no-shadow" alt="Selecting a link in the span queries the profile data source" >}}
+![Selecting a link in the span queries the profile data source](/media/docs/tempo/profiles/tempo-trace-to-profile.png)
 
-To use trace to profiles, you must have a configured Grafana Pyroscope data source. For more information, refer to the [Grafana Pyroscope data source documentation](/docs/grafana/latest/datasources/grafana-pyroscope/).
+To use trace to profiles, you must have a configured Grafana Pyroscope data source. For more information, refer to the [Grafana Pyroscope data source](/docs/grafana/latest/datasources/grafana-pyroscope/) documentation.
 
-**Embedded flame graphs** are also inserted into each span details section that has a linked profile (requires a configured Grafana Pyroscope data source). This lets you see resource consumption in a flame graph visualization for each span without having to navigate away from the current view. Hover over a particular block in the flame graph to see more details about the resources being consumed.
+**Embedded flame graphs** are also inserted into each span details section that has a linked profile (requires a configured Grafana Pyroscope data source).
+This lets you see resource consumption in a flame graph visualization for each span without having to navigate away from the current view.
+Hover over a particular block in the flame graph to see more details about the resources being consumed.
 
-If you have configured a Pyroscope data source and no profile data is available or the Profiles for this span button & embedded flame graph is not visible, verify that the pyroscope.profile.id key-value pair exists in your span tags.
-
-## Simple configuration
+## Use a basic configuration
 
 To use a simple configuration, follow these steps:
 
 1. Select a Pyroscope data source from the **Data source** drop-down.
 1. Optional: Choose any tags to use in the query. If left blank, the default values of `service.name` and `service.namespace` are used.
 
-   The tags you configure must be present in the spans attributes or resources for a trace to profiles span link to appear. You can optionally configure a new name for the tag. This is useful for example if the tag has dots in the name and the target data source doesn't allow using dots in labels. In that case you can for example remap `service.name` to `service_name`.
+   The tags you configure must be present in the spans attributes or resources for a trace-to-profiles span link to appear.
+
+   You can optionally configure a new name for the tag. This is useful if the tag has dots in the name and the target data source doesn't allow dots in labels. In that case, you can remap `service.name` to `service_name`.
 
 1. Select one or more profile types to use in the query. Select the drop-down and choose options from the menu.
 
    The profile type or app must be selected for the query to be valid. Grafana doesn't show any data if the profile type or app isn’t selected when a query runs.
-   ![Traces to profile configuration options in the Tempo data source](/static/img/docs/tempo/profiles/Tempo-data-source-profiles-Settings.png)
+   ![Traces to profile configuration options in the Tempo data source](/media/docs/tempo/profiles/Tempo-data-source-profiles-Settings.png)
 
 1. Do not select **Use custom query**.
 1. Select **Save and Test**.
 
-## Custom query
+If you have configured a Pyroscope data source and no profile data is available or the **Profiles for this span** button and the embedded flame graph is not visible, verify that the `pyroscope.profile.id` key-value pair exists in your span tags.
+
+## Configure a custom query
 
 To use a custom query with the configuration, follow these steps:
 
 1. Select a Pyroscope data source from the **Data source** drop-down.
-1. Optional: Choose any tags that will be used in the query. If left blank, the default values of `service.name` and `service.namespace` are used.
+1. Optional: Choose any tags to use in the query. If left blank, the default values of `service.name` and `service.namespace` are used.
 
-   These tags can be used in the custom query with `${__tags}` variable. This variable interpolates the mapped tags as list in an appropriate syntax for the data source and will only include the tags that were present in the span omitting those that weren’t present. You can optionally configure a new name for the tag. This is useful in cases where the tag has dots in the name and the target data source doesn't allow using dots in labels. For example, you can remap `service.name` to `service_name` in such a case. If you don’t map any tags here, you can still use any tag in the query like this `method="${__span.tags.method}"`.
+   These tags can be used in the custom query with `${__tags}` variable. This variable interpolates the mapped tags as list in an appropriate syntax for the data source. Only the tags that were present in the span are included; tags that aren't present are omitted. You can also configure a new name for the tag. This is useful in cases where the tag has dots in the name and the target data source doesn't allow using dots in labels. For example, you can remap `service.name` to `service_name`. If you don’t map any tags here, you can still use any tag in the query, for example: `method="${__span.tags.method}"`.
 
 1. Select one or more profile types to use in the query. Select the drop-down and choose options from the menu.
 1. Switch on **Use custom query** to enter a custom query.
