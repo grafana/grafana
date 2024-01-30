@@ -263,7 +263,7 @@ func readResult(resultType string, rsp backend.DataResponse, iter *jsonitere.Ite
 			return rsp
 		}
 	case "scalar":
-		rsp = readScalar(iter)
+		rsp = readScalar(iter, opt.Dataplane)
 		if rsp.Error != nil {
 			return rsp
 		}
@@ -541,7 +541,7 @@ func readString(iter *jsonitere.Iterator) backend.DataResponse {
 	}
 }
 
-func readScalar(iter *jsonitere.Iterator) backend.DataResponse {
+func readScalar(iter *jsonitere.Iterator, dataPlane bool) backend.DataResponse {
 	rsp := backend.DataResponse{}
 
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
@@ -562,6 +562,10 @@ func readScalar(iter *jsonitere.Iterator) backend.DataResponse {
 	frame.Meta = &data.FrameMeta{
 		Type:   data.FrameTypeNumericMulti,
 		Custom: resultTypeToCustomMeta("scalar"),
+	}
+
+	if dataPlane {
+		frame.Meta.TypeVersion = data.FrameTypeVersion{0, 1}
 	}
 
 	return backend.DataResponse{
@@ -965,7 +969,7 @@ func readCategorizedStream(iter *jsonitere.Iterator) backend.DataResponse {
 	tsField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
 	tsField.Name = "TS"
 
-	labels := data.Labels{}
+	indexedLabels := data.Labels{}
 
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
 		if err != nil {
@@ -981,8 +985,8 @@ func readCategorizedStream(iter *jsonitere.Iterator) backend.DataResponse {
 			case "stream":
 				// we need to clear `labels`, because `iter.ReadVal`
 				// only appends to it
-				labels = data.Labels{}
-				if err = iter.ReadVal(&labels); err != nil {
+				indexedLabels = data.Labels{}
+				if err = iter.ReadVal(&indexedLabels); err != nil {
 					return rspErr(err)
 				}
 
@@ -1030,23 +1034,25 @@ func readCategorizedStream(iter *jsonitere.Iterator) backend.DataResponse {
 					}
 
 					typeMap := data.Labels{}
+					clonedLabels := data.Labels{}
 
-					for k := range labels {
+					for k := range indexedLabels {
 						typeMap[k] = "I"
+						clonedLabels[k] = indexedLabels[k]
 					}
 
 					// merge all labels (indexed, parsed, structuredMetadata) into one dataframe field
 					for k, v := range structuredMetadataMap {
-						labels[k] = fmt.Sprintf("%s", v)
+						clonedLabels[k] = fmt.Sprintf("%s", v)
 						typeMap[k] = "S"
 					}
 
 					for k, v := range parsedLabelsMap {
-						labels[k] = fmt.Sprintf("%s", v)
+						clonedLabels[k] = fmt.Sprintf("%s", v)
 						typeMap[k] = "P"
 					}
 
-					labelJson, err := labelsToRawJson(labels)
+					labelJson, err := labelsToRawJson(clonedLabels)
 					if err != nil {
 						return rspErr(err)
 					}

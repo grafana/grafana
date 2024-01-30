@@ -2,8 +2,8 @@ import React from 'react';
 
 import { EditorField, EditorRow } from '@grafana/experimental';
 import { AutoSizeInput, RadioButtonGroup } from '@grafana/ui';
-import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
+import { QueryOptionGroup } from '../_importedDependencies/datasources/prometheus/QueryOptionGroup';
 import { SearchTableType } from '../dataquery.gen';
 import { DEFAULT_LIMIT, DEFAULT_SPSS } from '../datasource';
 import { TempoQuery } from '../types';
@@ -12,6 +12,19 @@ interface Props {
   onChange: (value: TempoQuery) => void;
   query: Partial<TempoQuery> & TempoQuery;
 }
+
+/**
+ * Parse a string value to integer. If the conversion fails, for example because we are prosessing an empty value for
+ * a field, return a fallback (default) value.
+ *
+ * @param val the value to be parsed to an integer
+ * @param fallback the fallback value
+ * @returns the converted value or the fallback value if the conversion fails
+ */
+const parseIntWithFallback = (val: string, fallback: number) => {
+  const parsed = parseInt(val, 10);
+  return isNaN(parsed) ? fallback : parsed;
+};
 
 export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) => {
   if (!query.hasOwnProperty('limit')) {
@@ -23,10 +36,10 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
   }
 
   const onLimitChange = (e: React.FormEvent<HTMLInputElement>) => {
-    onChange({ ...query, limit: parseInt(e.currentTarget.value, 10) });
+    onChange({ ...query, limit: parseIntWithFallback(e.currentTarget.value, DEFAULT_LIMIT) });
   };
   const onSpssChange = (e: React.FormEvent<HTMLInputElement>) => {
-    onChange({ ...query, spss: parseInt(e.currentTarget.value, 10) });
+    onChange({ ...query, spss: parseIntWithFallback(e.currentTarget.value, DEFAULT_SPSS) });
   };
   const onTableTypeChange = (val: SearchTableType) => {
     onChange({ ...query, tableType: val });

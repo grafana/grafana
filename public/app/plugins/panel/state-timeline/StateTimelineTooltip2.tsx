@@ -19,7 +19,6 @@ import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTool
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
 import { ColorIndicator, ColorPlacement, LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
-import { DEFAULT_TOOLTIP_WIDTH } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineChart/utils';
 
 import { getDataLinks } from '../status-history/utils';
@@ -34,6 +33,7 @@ interface StateTimelineTooltip2Props {
   timeRange: TimeRange;
   mode?: TooltipDisplayMode;
   sortOrder?: SortOrder;
+  annotate?: () => void;
 }
 
 export const StateTimelineTooltip2 = ({
@@ -46,6 +46,7 @@ export const StateTimelineTooltip2 = ({
   mode = TooltipDisplayMode.Single,
   sortOrder = SortOrder.None,
   isPinned,
+  annotate,
 }: StateTimelineTooltip2Props) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
@@ -180,9 +181,9 @@ export const StateTimelineTooltip2 = ({
 
   return (
     <div className={styles.wrapper}>
-      <VizTooltipHeader headerLabel={getHeaderLabel()} />
-      <VizTooltipContent contentLabelValue={getContentLabelValue()} />
-      {isPinned && <VizTooltipFooter dataLinks={links} canAnnotate={false} />}
+      <VizTooltipHeader headerLabel={getHeaderLabel()} isPinned={isPinned} />
+      <VizTooltipContent contentLabelValue={getContentLabelValue()} isPinned={isPinned} />
+      {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
     </div>
   );
 };
@@ -191,6 +192,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     display: 'flex',
     flexDirection: 'column',
-    width: DEFAULT_TOOLTIP_WIDTH,
   }),
 });

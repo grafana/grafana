@@ -1,5 +1,5 @@
 import { DataFrame, ExplorePanelsState } from '@grafana/data';
-import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { Dashboard, DataQuery, DataSourceRef } from '@grafana/schema';
 import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
@@ -19,15 +19,7 @@ interface AddPanelToDashboardOptions {
   datasource?: DataSourceRef;
   dashboardUid?: string;
   panelState?: ExplorePanelsState;
-}
-
-function createDashboard(): DashboardDTO {
-  const dto = getNewDashboardModelData();
-
-  // getNewDashboardModelData adds by default the "add-panel" panel. We don't want that.
-  dto.dashboard.panels = [];
-
-  return dto;
+  time: Dashboard['time'];
 }
 
 /**
@@ -54,6 +46,13 @@ function getLogsTableTransformations(panelType: string, options: AddPanelToDashb
     transformations.push({
       id: 'organize',
       options: {
+        indexByName: Object.values(options.panelState.logs.columns).reduce(
+          (acc: Record<string, number>, value: string, idx) => ({
+            ...acc,
+            [value]: idx,
+          }),
+          {}
+        ),
         includeByName: Object.values(options.panelState.logs.columns).reduce(
           (acc: Record<string, boolean>, value: string) => ({
             ...acc,
@@ -88,10 +87,12 @@ export async function setDashboardInLocalStorage(options: AddPanelToDashboardOpt
       throw AddToDashboardError.FETCH_DASHBOARD;
     }
   } else {
-    dto = createDashboard();
+    dto = getNewDashboardModelData();
   }
 
   dto.dashboard.panels = [panel, ...(dto.dashboard.panels ?? [])];
+
+  dto.dashboard.time = options.time;
 
   try {
     setDashboardToFetchFromLocalStorage(dto);

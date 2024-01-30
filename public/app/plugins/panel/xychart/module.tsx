@@ -3,11 +3,11 @@ import { commonOptionsBuilder } from '@grafana/ui';
 
 import { AutoEditor } from './AutoEditor';
 import { ManualEditor } from './ManualEditor';
-import { XYChartPanel2 } from './XYChartPanel2';
+import { XYChartPanel } from './XYChartPanel';
 import { getScatterFieldConfig } from './config';
 import { Options, FieldConfig, defaultFieldConfig } from './panelcfg.gen';
 
-export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
+export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel)
   .useFieldConfig(getScatterFieldConfig(defaultFieldConfig))
   .setPanelOptions((builder) => {
     builder
@@ -38,6 +38,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
         showIf: (cfg) => cfg.seriesMapping === 'manual',
       });
 
-    commonOptionsBuilder.addTooltipOptions(builder);
+    commonOptionsBuilder.addTooltipOptions(builder, true);
     commonOptionsBuilder.addLegendOptions(builder);
   });

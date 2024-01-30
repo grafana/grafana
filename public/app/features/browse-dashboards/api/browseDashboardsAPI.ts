@@ -57,6 +57,7 @@ export const browseDashboardsAPI = createApi({
       providesTags: (_result, _error, folderUID) => [{ type: 'getFolder', id: folderUID }],
       query: (folderUID) => ({ url: `/folders/${folderUID}`, params: { accesscontrol: true } }),
     }),
+
     // create a new folder
     newFolder: builder.mutation<FolderDTO, { title: string; parentUid?: string }>({
       query: ({ title, parentUid }) => ({
@@ -81,6 +82,7 @@ export const browseDashboardsAPI = createApi({
         });
       },
     }),
+
     // save an existing folder (e.g. rename)
     saveFolder: builder.mutation<FolderDTO, FolderDTO>({
       // because the getFolder calls contain the parents, renaming a parent/grandparent/etc needs to invalidate all child folders
@@ -273,9 +275,10 @@ export const browseDashboardsAPI = createApi({
     }),
     // save an existing dashboard
     saveDashboard: builder.mutation<SaveDashboardResponseDTO, SaveDashboardCommand>({
-      query: ({ dashboard, folderUid, message, overwrite }) => ({
+      query: ({ dashboard, folderUid, message, overwrite, showErrorAlert }) => ({
         url: `/dashboards/db`,
         method: 'POST',
+        showErrorAlert,
         data: {
           dashboard,
           folderUid,

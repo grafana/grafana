@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
+	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -48,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/cleanup"
+	cloudmigrations "github.com/grafana/grafana/pkg/services/cloudmigrations/service"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
@@ -378,9 +380,11 @@ var wireBasicSet = wire.NewSet(
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,
 	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
 	ssoSettingsImpl.ProvideService,
-	wire.Bind(new(ssosettings.Service), new(*ssoSettingsImpl.SSOSettingsService)),
+	wire.Bind(new(ssosettings.Service), new(*ssoSettingsImpl.Service)),
 	idimpl.ProvideService,
 	wire.Bind(new(auth.IDService), new(*idimpl.Service)),
+	cloudmigrations.ProvideService,
+	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
 )
@@ -458,4 +462,9 @@ func InitializeForCLITarget(cfg *setting.Cfg) (ModuleRunner, error) {
 func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*ModuleServer, error) {
 	wire.Build(wireExtsModuleServerSet)
 	return &ModuleServer{}, nil
+}
+
+func InitializeDataSourceAPIServer(group string) (*datasource.DataSourceAPIBuilder, error) {
+	wire.Build(wireExtsDataSourceApiServerSet)
+	return &datasource.DataSourceAPIBuilder{}, nil
 }

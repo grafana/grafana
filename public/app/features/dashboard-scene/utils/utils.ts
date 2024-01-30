@@ -9,7 +9,6 @@ import {
 } from '@grafana/scenes';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
-import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 
 export function getVizPanelKeyForPanelId(panelId: number) {
@@ -95,10 +94,10 @@ export function getMultiVariableValues(variable: MultiValueVariable) {
   };
 }
 
-// Transform old interval model to new interval model from scenes
-export function getIntervalsFromOldIntervalModel(variable: IntervalVariableModel): string[] {
+// used to transform old interval model to new interval model from scenes
+export function getIntervalsFromQueryString(query: string): string[] {
   // separate intervals by quotes either single or double
-  const matchIntervals = variable.query.match(/(["'])(.*?)\1|\w+/g);
+  const matchIntervals = query.match(/(["'])(.*?)\1|\w+/g);
 
   // If no intervals are found in query, return the initial state of the interval reducer.
   if (!matchIntervals) {
@@ -165,10 +164,6 @@ export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQu
 
 export function getDashboardSceneFor(sceneObject: SceneObject): DashboardScene {
   const root = sceneObject.getRoot();
-
-  if (root instanceof PanelEditor) {
-    return root.state.dashboardRef.resolve();
-  }
 
   if (root instanceof DashboardScene) {
     return root;

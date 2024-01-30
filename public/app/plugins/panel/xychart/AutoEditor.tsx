@@ -45,7 +45,7 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
     };
     const frame = context.data ? context.data[value?.frame ?? 0] : undefined;
     if (frame) {
-      const xName = dims.x ? getFieldDisplayName(dims.x, dims.frame, context.data) : undefined;
+      const xName = 'x' in dims ? getFieldDisplayName(dims.x, dims.frame, context.data) : undefined;
       for (let field of frame.fields) {
         if (isGraphable(field)) {
           const name = getFieldDisplayName(field, frame, context.data);
@@ -64,6 +64,9 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
             });
           }
         }
+      }
+      if (!v.xAxis) {
+        v.xAxis = { label: xName, value: xName };
       }
     }
 
@@ -88,6 +91,7 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYD
             onChange({
               ...value,
               frame: v?.value!,
+              x: undefined,
             });
           }}
         />

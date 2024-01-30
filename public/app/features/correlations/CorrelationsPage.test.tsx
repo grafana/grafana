@@ -538,7 +538,7 @@ describe('CorrelationsPage', () => {
 
       // select Regex, be sure expression field is not disabled and contains the former expression
       openMenu(typeFilterSelect[0]);
-      await userEvent.click(screen.getByText('Regular expression', { selector: 'span' }));
+      await userEvent.click(screen.getByText('Regular expression'));
       expressionInput = screen.queryByLabelText(/expression/i);
       expect(expressionInput).toBeInTheDocument();
       expect(expressionInput).toBeEnabled();
@@ -554,7 +554,8 @@ describe('CorrelationsPage', () => {
       await userEvent.click(screen.getByRole('button', { name: /add transformation/i }));
       typeFilterSelect = screen.getAllByLabelText('Type');
       openMenu(typeFilterSelect[0]);
-      await userEvent.click(screen.getByText('Regular expression'));
+      const menu = await screen.findByLabelText('Select options menu');
+      await userEvent.click(within(menu).getByText('Regular expression'));
       expressionInput = screen.queryByLabelText(/expression/i);
       expect(expressionInput).toBeInTheDocument();
       expect(expressionInput).toBeEnabled();

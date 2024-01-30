@@ -6,7 +6,8 @@ import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
 import { useStyles2, Stack, Tooltip, Button } from '@grafana/ui';
 
 import { DataTrail } from './DataTrail';
-import { LOGS_METRIC, VAR_DATASOURCE_EXPR, VAR_FILTERS } from './shared';
+import { LOGS_METRIC, VAR_FILTERS } from './shared';
+import { getDataSource, getDataSourceName } from './utils';
 
 export interface Props {
   trail: DataTrail;
@@ -40,7 +41,7 @@ export function DataTrailCard({ trail, onSelect, onDelete }: Props) {
         {dsValue && (
           <Stack direction="column" gap={0.5}>
             <div className={styles.label}>Datasource</div>
-            <div className={styles.value}>{getDataSource(trail)}</div>
+            <div className={styles.value}>{getDataSourceName(dsValue)}</div>
           </Stack>
         )}
         {filters.map((filter, index) => (
@@ -64,10 +65,6 @@ function getMetricName(metric?: string) {
   }
 
   return metric;
-}
-
-function getDataSource(trail: DataTrail) {
-  return sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
 }
 
 function getStyles(theme: GrafanaTheme2) {

@@ -37,8 +37,8 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
 
   return (
     <RuleEditorSection
-      stepNo={type === RuleFormType.cloudRecording ? 4 : 5}
-      title={type === RuleFormType.cloudRecording ? 'Add labels' : 'Labels and notifications'}
+      stepNo={4}
+      title={type === RuleFormType.cloudRecording ? 'Add labels' : 'Configure labels and notifications'}
       description={
         <Stack direction="row" gap={0.5} alignItems="baseline">
           {type === RuleFormType.cloudRecording ? (
@@ -59,7 +59,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       <LabelsField dataSourceName={dataSourceName} />
       {shouldAllowSimplifiedRouting && (
         <div className={styles.configureNotifications}>
-          <Text element="h5">Configure notifications</Text>
+          <Text element="h5">Notifications</Text>
           <Text variant="bodySmall" color="secondary">
             Select who should receive a notification when an alert rule fires.
           </Text>
@@ -80,9 +80,9 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
  * - simplified routing is enabled
  * - the alert rule is a grafana rule
  *
- * This component will render the switch between the manual routing and the notification policy routing.
+ * This component will render the switch between the select contact point routing and the notification policy routing.
  * It also renders the section body of the NotificationsStep, depending on the routing option selected.
- * If manual routing is selected, it will render the SimplifiedRouting component.
+ * If select contact point routing is selected, it will render the SimplifiedRouting component.
  * If notification policy routing is selected, it will render the AutomaticRouting component.
  *
  */
@@ -93,8 +93,8 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
   const [manualRouting] = watch(['manualRouting']);
 
   const routingOptions = [
-    { label: 'Manually select contact point', value: RoutingOptions.ContactPoint },
-    { label: 'Auto-select contact point', value: RoutingOptions.NotificationPolicy },
+    { label: 'Select contact point', value: RoutingOptions.ContactPoint },
+    { label: 'Use notification policy', value: RoutingOptions.NotificationPolicy },
   ];
 
   const onRoutingOptionChange = (option: RoutingOptions) => {
@@ -229,7 +229,7 @@ export const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDes
       <Text variant="bodySmall" color="secondary">
         {manualRouting
           ? 'Notifications for firing alerts are routed to a selected contact point.'
-          : 'Notifications for firing alerts are routed to contact points based on matching labels.'}
+          : 'Notifications for firing alerts are routed to contact points based on matching labels and the notification policy tree.'}
       </Text>
       {manualRouting ? <NeedHelpInfoForContactpoint /> : <NeedHelpInfoForNotificationPolicy />}
     </div>

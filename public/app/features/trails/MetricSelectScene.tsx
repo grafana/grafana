@@ -13,7 +13,6 @@ import {
   QueryVariable,
   sceneGraph,
   VariableDependencyConfig,
-  SceneVariable,
   SceneCSSGridLayout,
   SceneCSSGridItem,
   SceneObjectRef,
@@ -50,6 +49,7 @@ const ROW_CARD_HEIGHT = '64px';
 
 export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   private previewCache: Record<string, MetricPanel> = {};
+  private ignoreNextUpdate = false;
 
   constructor(state: Partial<MetricSelectSceneState>) {
     super({
@@ -71,17 +71,14 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_METRIC_NAMES],
-    onVariableUpdatesCompleted: this._onVariableChanged.bind(this),
+    onVariableUpdateCompleted: this.onVariableUpdateCompleted.bind(this),
   });
 
-  private _onVariableChanged(changedVariables: Set<SceneVariable>, dependencyChanged: boolean): void {
-    if (dependencyChanged) {
-      this.updateMetrics();
-      this.buildLayout();
-    }
+  private onVariableUpdateCompleted(): void {
+    this.updateMetrics();
+    this.buildLayout();
   }
 
-  private ignoreNextUpdate = false;
   private _onActivate() {
     if (this.state.body.state.children.length === 0) {
       this.buildLayout();
@@ -118,7 +115,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       return;
     }
 
-    const searchRegex = new RegExp(this.state.searchQuery ?? '.*');
+    const searchRegex = createSearchRegExp(this.state.searchQuery);
     const metricNames = variable.state.options;
     const sortedMetricNames =
       trail.state.metric !== undefined ? sortRelatedMetrics(metricNames, trail.state.metric) : metricNames;
@@ -129,7 +126,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       const metric = sortedMetricNames[index];
 
       const metricName = String(metric.value);
-      if (!metricName.match(searchRegex)) {
+
+      if (searchRegex && !searchRegex.test(metricName)) {
         continue;
       }
 
@@ -170,18 +168,20 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     for (let index = 0; index < metricsList.length; index++) {
       const metric = metricsList[index];
 
-      if (metric.itemRef && metric.isPanel) {
-        children.push(metric.itemRef.resolve());
-        continue;
-      }
       if (this.state.showPreviews) {
+        if (metric.itemRef && metric.isPanel) {
+          children.push(metric.itemRef.resolve());
+          continue;
+        }
         const panel = getPreviewPanelFor(metric.name, index);
         metric.itemRef = panel.getRef();
         metric.isPanel = true;
         children.push(panel);
       } else {
         const panel = new SceneCSSGridItem({
-          $variables: getVariablesWithMetricConstant(metric.name),
+          $variables: new SceneVariableSet({
+            variables: getVariablesWithMetricConstant(metric.name),
+          }),
           body: getCardPanelFor(metric.name),
         });
         metric.itemRef = panel.getRef();
@@ -217,8 +217,13 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   };
 
   public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
-    const { showHeading, searchQuery, showPreviews } = model.useState();
+    const { showHeading, searchQuery, showPreviews, body } = model.useState();
+    const { children } = body.useState();
     const styles = useStyles2(getStyles);
+
+    const searchTooStrictWarning = children.length === 0 && searchQuery && (
+      <div className={styles.alternateMessage}>There are no results found. Try adjusting your search or filters.</div>
+    );
 
     return (
       <div className={styles.container}>
@@ -231,6 +236,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           <Input placeholder="Search metrics" value={searchQuery} onChange={model.onSearchChange} />
           <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
         </div>
+        {searchTooStrictWarning}
         <model.state.body.Component model={model.state.body} />
       </div>
     );
@@ -257,13 +263,15 @@ function getPreviewPanelFor(metric: string, index: number) {
   const autoQuery = getAutoQueriesForMetric(metric);
 
   const vizPanel = autoQuery.preview
-    .vizBuilder(autoQuery.preview)
+    .vizBuilder()
     .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
     .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
     .build();
 
   return new SceneCSSGridItem({
-    $variables: getVariablesWithMetricConstant(metric),
+    $variables: new SceneVariableSet({
+      variables: getVariablesWithMetricConstant(metric),
+    }),
     $behaviors: [hideEmptyPreviews(metric)],
     $data: new SceneQueryRunner({
       datasource: trailDS,
@@ -316,5 +324,33 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(2),
       marginBottom: theme.spacing(1),
     }),
+    alternateMessage: css({
+      fontStyle: 'italic',
+      marginTop: theme.spacing(7),
+      textAlign: 'center',
+    }),
   };
+}
+
+// Consider any sequence of characters not permitted for metric names as a sepratator
+const splitSeparator = /[^a-z0-9_:]+/;
+
+function createSearchRegExp(spaceSeparatedMetricNames?: string) {
+  if (!spaceSeparatedMetricNames) {
+    return null;
+  }
+  const searchParts = spaceSeparatedMetricNames
+    ?.toLowerCase()
+    .split(splitSeparator)
+    .filter((part) => part.length > 0)
+    .map((part) => `(?=(.*${part}.*))`);
+
+  if (searchParts.length === 0) {
+    return null;
+  }
+
+  const regex = searchParts.join('');
+  //  (?=(.*expr1.*))(?=().*expr2.*))...
+  // The ?=(...) lookahead allows us to match these in any order.
+  return new RegExp(regex, 'igy');
 }

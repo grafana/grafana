@@ -34,6 +34,7 @@ jest.mock('app/core/components/FormPrompt/FormPrompt', () => ({
 }));
 
 const testConfig: SSOProvider = {
+  id: '300f9b7c-0488-40db-9763-a22ce8bf6b3e',
   provider: 'github',
   settings: {
     ...emptySettings,
@@ -89,20 +90,20 @@ describe('ProviderConfigForm', () => {
     await user.click(screen.getByRole('button', { name: /Save/i }));
 
     await waitFor(() => {
-      expect(putMock).toHaveBeenCalledWith('/api/v1/sso-settings/github', {
-        ...testConfig,
-        settings: {
-          ...testConfig.settings,
-          allowedOrganizations: 'test-org1,test-org2',
-          clientId: 'test-client-id',
-          clientSecret: 'test-client-secret',
-          teamIds: '12324',
-          enabled: true,
-          allowedDomains: '',
-          allowedGroups: '',
-          scopes: '',
+      expect(putMock).toHaveBeenCalledWith(
+        '/api/v1/sso-settings/github',
+        {
+          ...testConfig,
+          settings: {
+            allowedOrganizations: 'test-org1,test-org2',
+            clientId: 'test-client-id',
+            clientSecret: 'test-client-secret',
+            teamIds: '12324',
+            enabled: true,
+          },
         },
-      });
+        { showErrorAlert: false }
+      );
     });
   });
 

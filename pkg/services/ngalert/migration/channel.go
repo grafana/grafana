@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	alertingNotify "github.com/grafana/alerting/notify"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 
@@ -25,69 +23,45 @@ const (
 	DisabledRepeatInterval = model.Duration(time.Duration(8736) * time.Hour) // 1y
 )
 
+// ErrDiscontinued is used for channels that are no longer supported after migration.
+var ErrDiscontinued = errors.New("discontinued")
+
 // migrateChannels creates Alertmanager configs with migrated receivers and routes.
-func (om *OrgMigration) migrateChannels(channels []*legacymodels.AlertNotification) (*migmodels.Alertmanager, error) {
-	amConfig := migmodels.NewAlertmanager()
-	empty := true
+func (om *OrgMigration) migrateChannels(channels []*legacymodels.AlertNotification) ([]*migmodels.ContactPair, error) {
 	// Create all newly migrated receivers from legacy notification channels.
+	pairs := make([]*migmodels.ContactPair, 0, len(channels))
 	for _, c := range channels {
+		pair := &migmodels.ContactPair{
+			Channel: c,
+		}
 		receiver, err := om.createReceiver(c)
 		if err != nil {
-			if errors.Is(err, ErrDiscontinued) {
-				om.log.Error("Alert migration error: discontinued notification channel found", "type", c.Type, "name", c.Name, "uid", c.UID)
-				continue
-			}
-			return nil, fmt.Errorf("channel '%s': %w", c.Name, err)
+			om.log.Warn("Failed to create receiver", "type", c.Type, "name", c.Name, "uid", c.UID, "error", err)
+			pair.Error = err
+			pairs = append(pairs, pair)
+			continue
 		}
+		pair.ContactPoint = receiver
 
-		empty = false
 		route, err := createRoute(c, receiver.Name)
 		if err != nil {
-			return nil, fmt.Errorf("channel '%s': %w", c.Name, err)
+			om.log.Warn("Failed to create route", "type", c.Type, "name", c.Name, "uid", c.UID, "error", err)
+			pair.Error = err
+			pairs = append(pairs, pair)
+			continue
 		}
-		amConfig.AddRoute(route)
-		amConfig.AddReceiver(receiver)
-	}
-	if empty {
-		return nil, nil
+		pair.Route = route
+		pairs = append(pairs, pair)
 	}
 
-	return amConfig, nil
-}
-
-// validateAlertmanagerConfig validates the alertmanager configuration produced by the migration against the receivers.
-func (om *OrgMigration) validateAlertmanagerConfig(config *apimodels.PostableUserConfig) error {
-	for _, r := range config.AlertmanagerConfig.Receivers {
-		for _, gr := range r.GrafanaManagedReceivers {
-			data, err := gr.Settings.MarshalJSON()
-			if err != nil {
-				return err
-			}
-			var (
-				cfg = &alertingNotify.GrafanaIntegrationConfig{
-					UID:                   gr.UID,
-					Name:                  gr.Name,
-					Type:                  gr.Type,
-					DisableResolveMessage: gr.DisableResolveMessage,
-					Settings:              data,
-					SecureSettings:        gr.SecureSettings,
-				}
-			)
-
-			_, err = alertingNotify.BuildReceiverConfiguration(context.Background(), &alertingNotify.APIReceiver{
-				GrafanaIntegrations: alertingNotify.GrafanaIntegrations{Integrations: []*alertingNotify.GrafanaIntegrationConfig{cfg}},
-			}, om.encryptionService.GetDecryptedValue)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+	return pairs, nil
 }
 
 // createNotifier creates a PostableGrafanaReceiver from a legacy notification channel.
-func (om *OrgMigration) createNotifier(c *legacymodels.AlertNotification) (*apimodels.PostableGrafanaReceiver, error) {
+func (om *OrgMigration) createReceiver(c *legacymodels.AlertNotification) (*apimodels.PostableGrafanaReceiver, error) {
+	if c.Type == "hipchat" || c.Type == "sensu" {
+		return nil, fmt.Errorf("'%s': %w", c.Type, ErrDiscontinued)
+	}
 	settings, secureSettings, err := om.migrateSettingsToSecureSettings(c.Type, c.Settings, c.SecureSettings)
 	if err != nil {
 		return nil, err
@@ -105,29 +79,6 @@ func (om *OrgMigration) createNotifier(c *legacymodels.AlertNotification) (*apim
 		DisableResolveMessage: c.DisableResolveMessage,
 		Settings:              data,
 		SecureSettings:        secureSettings,
-	}, nil
-}
-
-var ErrDiscontinued = errors.New("discontinued")
-
-// createReceiver creates a receiver from a legacy notification channel.
-func (om *OrgMigration) createReceiver(channel *legacymodels.AlertNotification) (*apimodels.PostableApiReceiver, error) {
-	if channel.Type == "hipchat" || channel.Type == "sensu" {
-		return nil, fmt.Errorf("'%s': %w", channel.Type, ErrDiscontinued)
-	}
-
-	notifier, err := om.createNotifier(channel)
-	if err != nil {
-		return nil, err
-	}
-
-	return &apimodels.PostableApiReceiver{
-		Receiver: config.Receiver{
-			Name: channel.Name, // Channel name is unique within an Org.
-		},
-		PostableGrafanaReceivers: apimodels.PostableGrafanaReceivers{
-			GrafanaManagedReceivers: []*apimodels.PostableGrafanaReceiver{notifier},
-		},
 	}, nil
 }
 
@@ -195,7 +146,7 @@ var secureKeysToMigrate = map[string][]string{
 // migrateSettingsToSecureSettings takes care of that.
 func (om *OrgMigration) migrateSettingsToSecureSettings(chanType string, settings *simplejson.Json, secureSettings SecureJsonData) (*simplejson.Json, map[string]string, error) {
 	keys := secureKeysToMigrate[chanType]
-	newSecureSettings := secureSettings.Decrypt()
+	newSecureSettings := secureSettings.Decrypt(om.cfg.SecretKey)
 	cloneSettings := simplejson.New()
 	settingsMap, err := settings.Map()
 	if err != nil {

@@ -168,7 +168,12 @@ export class UnifiedAlertStatesWorker implements DashboardQueryRunnerWorker {
         // we only care about the first rule linked to a panel and do not merge thresholds
         .mapValues((rules) => {
           const firstRule = rules.at(0);
-          return firstRule ? getThresholdsForQueries(firstRule.grafana_alert.data) : {};
+          if (!firstRule) {
+            return {};
+          }
+
+          const condition = firstRule.grafana_alert.condition;
+          return getThresholdsForQueries(firstRule.grafana_alert.data, condition);
         })
         .value()
     );

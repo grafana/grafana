@@ -1,6 +1,6 @@
 import { map } from 'rxjs/operators';
 
-import { guessFieldTypeForField } from '../../dataframe/processDataFrame';
+import { guessFieldTypeForField, guessFieldTypeFromValue } from '../../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../../field';
 import { KeyValue } from '../../types/data';
 import { DataFrame, Field, FieldType } from '../../types/dataFrame';
@@ -46,8 +46,8 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
         const matcher = options.fields
           ? getFieldMatcher(options.fields)
           : options.includeTimeField && options.mode === ReduceTransformerMode.ReduceFields
-          ? alwaysFieldMatcher
-          : notTimeFieldMatcher;
+            ? alwaysFieldMatcher
+            : notTimeFieldMatcher;
 
         // Collapse all matching fields into a single row
         if (options.mode === ReduceTransformerMode.ReduceFields) {
@@ -224,6 +224,7 @@ export function reduceFields(data: DataFrame[], matcher: FieldMatcher, reducerId
           const value = results[reducer];
           const copy = {
             ...field,
+            type: guessFieldTypeFromValue(value),
             values: [value],
           };
           copy.state = undefined;
