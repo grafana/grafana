@@ -304,14 +304,6 @@ var (
 			Created:        time.Date(2023, time.July, 24, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:           "disablePrometheusExemplarSampling",
-			Description:    "Disable Prometheus exemplar sampling",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: true,
-			Created:        time.Date(2022, time.December, 19, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			Stage:       FeatureStageExperimental,
