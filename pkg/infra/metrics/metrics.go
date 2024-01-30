@@ -108,6 +108,9 @@ var (
 	// MAccessPermissionsCacheUsage is a metric counter for cache usage
 	MAccessPermissionsCacheUsage *prometheus.CounterVec
 
+	// MAccessSearchUserPermissionsCacheUsage is a metric counter for cache usage
+	MAccessSearchUserPermissionsCacheUsage *prometheus.CounterVec
+
 	// MPublicDashboardRequestCount is a metric counter for public dashboards requests
 	MPublicDashboardRequestCount prometheus.Counter
 
@@ -648,6 +651,12 @@ func init() {
 		Namespace: ExporterName,
 	}, []string{"status"}, map[string][]string{"status": accesscontrol.CacheUsageStatuses})
 
+	MAccessSearchUserPermissionsCacheUsage = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
+		Name:      "access_search_user_permissions_cache_usage",
+		Help:      "access control search user permissions cache hit/miss",
+		Namespace: ExporterName,
+	}, []string{"status"}, map[string][]string{"status": accesscontrol.CacheUsageStatuses})
+
 	StatsTotalLibraryPanels = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_library_panels",
 		Help:      "total amount of library panels in the database",
@@ -768,6 +777,7 @@ func initMetricVars(reg prometheus.Registerer) {
 		MAccessSearchPermissionsSummary,
 		MAccessEvaluationCount,
 		MAccessPermissionsCacheUsage,
+		MAccessSearchUserPermissionsCacheUsage,
 		MAlertingActiveAlerts,
 		MStatTotalDashboards,
 		MStatTotalFolders,

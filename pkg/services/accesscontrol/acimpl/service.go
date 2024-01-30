@@ -407,8 +407,11 @@ func (s *Service) searchUserPermissionsFromCache(orgID int64, searchOptions acce
 	key := permissionCacheKey(tempUser)
 	permissions, ok := s.cache.Get((key))
 	if !ok {
+		metrics.MAccessSearchUserPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()
 		return nil, false
 	}
+
+	metrics.MAccessSearchUserPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheHit).Inc()
 
 	s.log.Debug("Using cached permissions", "key", key)
 	filteredPermissions := make([]accesscontrol.Permission, 0)

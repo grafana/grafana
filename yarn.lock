@@ -2972,6 +2972,51 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana-plugins/grafana-cloud-monitoring-datasource@workspace:*, @grafana-plugins/grafana-cloud-monitoring-datasource@workspace:public/app/plugins/datasource/cloud-monitoring":
+  version: 0.0.0-use.local
+  resolution: "@grafana-plugins/grafana-cloud-monitoring-datasource@workspace:public/app/plugins/datasource/cloud-monitoring"
+  dependencies:
+    "@emotion/css": "npm:11.11.2"
+    "@grafana/data": "npm:10.4.0-pre"
+    "@grafana/e2e-selectors": "npm:10.4.0-pre"
+    "@grafana/experimental": "npm:1.7.8"
+    "@grafana/google-sdk": "npm:0.1.2"
+    "@grafana/plugin-configs": "npm:10.4.0-pre"
+    "@grafana/runtime": "npm:10.4.0-pre"
+    "@grafana/schema": "npm:10.4.0-pre"
+    "@grafana/ui": "npm:10.4.0-pre"
+    "@kusto/monaco-kusto": "npm:^7.4.0"
+    "@testing-library/react": "npm:14.1.2"
+    "@testing-library/user-event": "npm:14.5.2"
+    "@types/debounce-promise": "npm:3.1.9"
+    "@types/jest": "npm:29.5.11"
+    "@types/lodash": "npm:4.14.202"
+    "@types/node": "npm:20.11.10"
+    "@types/prismjs": "npm:1.26.3"
+    "@types/react": "npm:18.2.48"
+    "@types/react-test-renderer": "npm:18.0.7"
+    "@types/testing-library__jest-dom": "npm:5.14.9"
+    debounce-promise: "npm:3.1.2"
+    fast-deep-equal: "npm:^3.1.3"
+    i18next: "npm:^22.0.0"
+    immer: "npm:10.0.3"
+    lodash: "npm:4.17.21"
+    monaco-editor: "npm:0.34.0"
+    prismjs: "npm:1.29.0"
+    react: "npm:18.2.0"
+    react-select-event: "npm:5.5.1"
+    react-test-renderer: "npm:18.2.0"
+    react-use: "npm:17.4.0"
+    rxjs: "npm:7.8.1"
+    ts-node: "npm:10.9.2"
+    tslib: "npm:2.6.2"
+    typescript: "npm:5.3.3"
+    webpack: "npm:5.90.0"
+  peerDependencies:
+    "@grafana/runtime": "*"
+  languageName: unknown
+  linkType: soft
+
 "@grafana-plugins/grafana-pyroscope-datasource@workspace:*, @grafana-plugins/grafana-pyroscope-datasource@workspace:public/app/plugins/datasource/grafana-pyroscope-datasource":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/grafana-pyroscope-datasource@workspace:public/app/plugins/datasource/grafana-pyroscope-datasource"
@@ -3231,7 +3276,7 @@ __metadata:
     tinycolor2: "npm:1.6.0"
     tslib: "npm:2.6.2"
     typescript: "npm:5.3.3"
-    uplot: "npm:1.6.29"
+    uplot: "npm:1.6.30"
     xss: "npm:^1.0.14"
   peerDependencies:
     react: ^17.0.0 || ^18.0.0
@@ -3391,25 +3436,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-core@npm:^1.3.6":
-  version: 1.3.6
-  resolution: "@grafana/faro-core@npm:1.3.6"
+"@grafana/faro-core@npm:^1.3.6, @grafana/faro-core@npm:^1.3.7":
+  version: 1.3.7
+  resolution: "@grafana/faro-core@npm:1.3.7"
   dependencies:
     "@opentelemetry/api": "npm:^1.7.0"
     "@opentelemetry/otlp-transformer": "npm:^0.45.1"
-    murmurhash-js: "npm:^1.0.0"
-  checksum: 133dd0fa4a11effc0bc41d89ebcf341e1541866bfb7e692225365f556e62ee6de4b6793acf2622e0cad2971c59b0a3e20144606d3f75151597d4ef3f52d4b51f
+  checksum: fa3ff8dce1e6fe5ad91a4d42bb9bdb13f36d594074566a100645ffb4bc509265d18c78c5cda1ef8f39a3f043c1901baee620d3e044b3a0a6e9d1c516bf71f74f
   languageName: node
   linkType: hard
 
 "@grafana/faro-web-sdk@npm:^1.3.6":
-  version: 1.3.6
-  resolution: "@grafana/faro-web-sdk@npm:1.3.6"
+  version: 1.3.7
+  resolution: "@grafana/faro-web-sdk@npm:1.3.7"
   dependencies:
-    "@grafana/faro-core": "npm:^1.3.6"
+    "@grafana/faro-core": "npm:^1.3.7"
     ua-parser-js: "npm:^1.0.32"
     web-vitals: "npm:^3.1.1"
-  checksum: 08a80e5b0b527a4955e803984d53f53fac6dd090b17a219853222090445e15601971f4b469648c59d0075106f6e8f4ddcabae1b0d3010f80a6d900d825656998
+  checksum: 5dc5f38a4bcd31f5ee9ece7e2dd4253020ecc872b23c8294e2b84639d8f82c8a895b15743f24092c5b6ea99438e98b1c396ab9368df4ffc472109e005c7451d6
   languageName: node
   linkType: hard
 
@@ -3591,9 +3635,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^2.1.0":
-  version: 2.1.0
-  resolution: "@grafana/scenes@npm:2.1.0"
+"@grafana/scenes@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "@grafana/scenes@npm:2.2.0"
   dependencies:
     "@grafana/e2e-selectors": "npm:10.0.2"
     react-grid-layout: "npm:1.3.4"
@@ -3605,7 +3649,7 @@ __metadata:
     "@grafana/runtime": 10.0.3
     "@grafana/schema": 10.0.3
     "@grafana/ui": 10.0.3
-  checksum: c036793fd172e25a5d2a27ef633401831339a1936967101663602109f292be8205c8bf1fd3482c34445a377633c573110845e3fda0f583067d8bc1dbab106240
+  checksum: eb21724accc1f3cae883bc9bdfa1786e8f62f9482436bf46225ea32b7bbb389b28c497d1766771cb4406ad4b9802fbe6233b34c8800fa264c39b45fea4e8125b
   languageName: node
   linkType: hard
 
@@ -3750,7 +3794,7 @@ __metadata:
     "@types/testing-library__jest-dom": "npm:5.14.9"
     "@types/tinycolor2": "npm:1.4.6"
     "@types/uuid": "npm:9.0.8"
-    ansicolor: "npm:1.1.100"
+    ansicolor: "npm:2.0.1"
     calculate-size: "npm:1.1.1"
     classnames: "npm:2.5.1"
     common-tags: "npm:1.8.2"
@@ -3819,7 +3863,7 @@ __metadata:
     tinycolor2: "npm:1.6.0"
     tslib: "npm:2.6.2"
     typescript: "npm:5.3.3"
-    uplot: "npm:1.6.29"
+    uplot: "npm:1.6.30"
     uuid: "npm:9.0.1"
     webpack: "npm:5.90.0"
   peerDependencies:
@@ -10678,10 +10722,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ansicolor@npm:1.1.100":
-  version: 1.1.100
-  resolution: "ansicolor@npm:1.1.100"
-  checksum: 9420e96f44b578153dfd11e2d829d633ca2699452419aff48314219d66b7b69a9b6d994d2f2350b1d29a9826e33500b87fe85606629a8889cd52ce806908f4a9
+"ansicolor@npm:2.0.1":
+  version: 2.0.1
+  resolution: "ansicolor@npm:2.0.1"
+  checksum: 71a553fde28462985e78e3af091858c2b6d06e9eb51cb88a5440b0fe70f38901156a9b80b345cead744d9dc3e23497a233019d205d248ffaa72226781b88722a
   languageName: node
   linkType: hard
 
@@ -12051,13 +12095,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"centrifuge@npm:4.0.1":
-  version: 4.0.1
-  resolution: "centrifuge@npm:4.0.1"
+"centrifuge@npm:5.0.1":
+  version: 5.0.1
+  resolution: "centrifuge@npm:5.0.1"
   dependencies:
     events: "npm:^3.3.0"
-    protobufjs: "npm:^7.2.4"
-  checksum: 5e13b077cbabdf08a7a5a036eeb51a6941e244af743dfd69684dfea495769b8f4edd6b01acbe037aa1f2514b03b91689afddd1fee97bbe7af153820754f5bb6d
+    protobufjs: "npm:^7.2.5"
+  checksum: 19457b9184208c889c5e30669d33ec60157063f35d4338576d8c1d68b0dddd9873bb12b571174503c547d7d6187c11a83b084261a97edee35a2e2e0f881e6bb0
   languageName: node
   linkType: hard
 
@@ -17307,6 +17351,7 @@ __metadata:
     "@floating-ui/react": "npm:0.26.8"
     "@glideapps/glide-data-grid": "npm:^6.0.0"
     "@grafana-plugins/grafana-azure-monitor-datasource": "workspace:*"
+    "@grafana-plugins/grafana-cloud-monitoring-datasource": "workspace:*"
     "@grafana-plugins/grafana-pyroscope-datasource": "workspace:*"
     "@grafana-plugins/grafana-testdata-datasource": "workspace:*"
     "@grafana-plugins/parca": "workspace:*"
@@ -17325,7 +17370,7 @@ __metadata:
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:^2.1.0"
+    "@grafana/scenes": "npm:^2.2.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
@@ -17435,14 +17480,14 @@ __metadata:
     angular-bindonce: "npm:0.3.1"
     angular-route: "npm:1.8.3"
     angular-sanitize: "npm:1.8.3"
-    ansicolor: "npm:1.1.100"
+    ansicolor: "npm:2.0.1"
     autoprefixer: "npm:10.4.17"
     baron: "npm:3.0.3"
     blob-polyfill: "npm:7.0.20220408"
     brace: "npm:0.11.1"
     browserslist: "npm:^4.21.4"
     calculate-size: "npm:1.1.1"
-    centrifuge: "npm:4.0.1"
+    centrifuge: "npm:5.0.1"
     chance: "npm:^1.0.10"
     chrome-remote-interface: "npm:0.33.0"
     classnames: "npm:2.5.1"
@@ -17550,7 +17595,7 @@ __metadata:
     rc-drawer: "npm:6.5.2"
     rc-slider: "npm:10.5.0"
     rc-time-picker: "npm:3.7.3"
-    rc-tree: "npm:5.8.3"
+    rc-tree: "npm:5.8.5"
     re-resizable: "npm:6.9.11"
     react: "npm:18.2.0"
     react-beautiful-dnd: "npm:13.1.1"
@@ -17616,7 +17661,7 @@ __metadata:
     tslib: "npm:2.6.2"
     tween-functions: "npm:^1.2.0"
     typescript: "npm:5.3.3"
-    uplot: "npm:1.6.29"
+    uplot: "npm:1.6.30"
     uuid: "npm:9.0.1"
     visjs-network: "npm:4.25.0"
     webpack: "npm:5.90.0"
@@ -22110,13 +22155,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"murmurhash-js@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "murmurhash-js@npm:1.0.0"
-  checksum: 875a24e0dd7870e51a7f73906e158fb06de50478669629746a35955cb0a00b6bb797f6b5a2884ee4ec4feefb9c5c27b74190f561eb72530ffc1c5d7c5429f49a
-  languageName: node
-  linkType: hard
-
 "mutationobserver-shim@npm:0.3.7":
   version: 0.3.7
   resolution: "mutationobserver-shim@npm:0.3.7"
@@ -24285,9 +24323,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"protobufjs@npm:^7.2.4":
-  version: 7.2.4
-  resolution: "protobufjs@npm:7.2.4"
+"protobufjs@npm:^7.2.5":
+  version: 7.2.6
+  resolution: "protobufjs@npm:7.2.6"
   dependencies:
     "@protobufjs/aspromise": "npm:^1.1.2"
     "@protobufjs/base64": "npm:^1.1.2"
@@ -24301,7 +24339,7 @@ __metadata:
     "@protobufjs/utf8": "npm:^1.1.0"
     "@types/node": "npm:>=13.7.0"
     long: "npm:^5.0.0"
-  checksum: 6972bd0a372abdbd43e20e14e9692695b92adcd0b746e73e8deb8880ce78abe4a30303a05160f5d0a5fc3dd0b7b6157cc8a06418da364fc7091f965724ca0443
+  checksum: 81ab853d28c71998d056d6b34f83c4bc5be40cb0b416585f99ed618aed833d64b2cf89359bad7474d345302f2b5e236c4519165f8483d7ece7fd5b0d9ac13f8b
   languageName: node
   linkType: hard
 
@@ -24757,9 +24795,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tree@npm:5.8.3, rc-tree@npm:~5.8.1":
-  version: 5.8.3
-  resolution: "rc-tree@npm:5.8.3"
+"rc-tree@npm:5.8.5, rc-tree@npm:~5.8.1":
+  version: 5.8.5
+  resolution: "rc-tree@npm:5.8.5"
   dependencies:
     "@babel/runtime": "npm:^7.10.1"
     classnames: "npm:2.x"
@@ -24769,7 +24807,7 @@ __metadata:
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: c1cdd3024f64cee28886c07825dc5a5ee612fe7b100f940ecf20bb55eb9a39a948a49938bbcbfa029b08dca6525c64ed1de755af351f0e62e1cb4bc5f1887953
+  checksum: 4115fe6efaf25dc5f7e51eb1ddcd93d37b74358bfd1730d5146bc9187330c9fc01c6e1492f64a79f250aae14051a23fa49fcae494376f451064e199e351b0d84
   languageName: node
   linkType: hard
 
@@ -29562,10 +29600,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uplot@npm:1.6.29":
-  version: 1.6.29
-  resolution: "uplot@npm:1.6.29"
-  checksum: 0cda54a89cbe7f1ff5eb4a3e75bafa145a6af79e534cef6e8e4a1ace042b18a63ea56b25407d87fc7f073711ebb947a59de8068aa3576bc86b2514f1d058c187
+"uplot@npm:1.6.30":
+  version: 1.6.30
+  resolution: "uplot@npm:1.6.30"
+  checksum: 08ad2f9441b8cfa26d9219362cdbb6f2dc6e5ec9403382df71798ed3e9d3666e7712c8a245e652ebb4a25c5d911cbdc614b52dfd891c0f7ce8705320d2eff81f
   languageName: node
   linkType: hard
 

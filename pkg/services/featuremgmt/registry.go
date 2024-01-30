@@ -265,15 +265,6 @@ var (
 			Created:        time.Date(2022, time.August, 27, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:           "cloudwatchNewRegionsHandler",
-			Description:    "Refactor of /regions endpoint, no user-facing changes",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // enabled by default
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: true,
-			Created:        time.Date(2023, time.September, 25, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:        "showDashboardValidationWarnings",
 			Description: "Show warnings when dashboards do not validate against the schema",
 			Stage:       FeatureStageExperimental,
@@ -1002,7 +993,7 @@ var (
 		{
 			Name:         "awsDatasourcesNewFormStyling",
 			Description:  "Applies new form styling for configuration and query editors in AWS plugins",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        awsDatasourcesSquad,
 			Created:      time.Date(2023, time.October, 12, 12, 0, 0, 0, time.UTC),
@@ -1329,6 +1320,13 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
 			Created:      time.Date(2024, time.January, 22, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:        "promQLScope",
+			Description: "In-development feature that will allow injection of labels into prometheus queries.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityMetricsSquad,
+			Created:     time.Date(2024, time.January, 29, 0, 0, 0, 0, time.UTC),
 		},
 	}
 )
