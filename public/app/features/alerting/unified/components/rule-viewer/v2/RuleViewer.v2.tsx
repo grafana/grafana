@@ -17,6 +17,7 @@ import { AlertLabels } from '../../AlertLabels';
 import { AlertStateDot } from '../../AlertStateDot';
 import { AlertingPageWrapper } from '../../AlertingPageWrapper';
 import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
+import { WithReturnButton } from '../../WithReturnButton';
 import { decodeGrafanaNamespace } from '../../expressions/util';
 import { RedirectToCloneRule } from '../../rules/CloneRule';
 import { Details } from '../tabs/Details';
@@ -162,18 +163,28 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
     metadata.push({
       label: 'Dashboard and panel',
       value: (
-        <TextLink variant="bodySmall" href={makePanelLink(dashboardUID, panelID)} external>
-          View panel
-        </TextLink>
+        <WithReturnButton
+          title={rule.name}
+          component={
+            <TextLink variant="bodySmall" href={makePanelLink(dashboardUID, panelID)}>
+              View panel
+            </TextLink>
+          }
+        />
       ),
     });
   } else if (hasDashboardWithoutPanel) {
     metadata.push({
       label: 'Dashboard',
       value: (
-        <TextLink variant="bodySmall" href={makeDashboardLink(dashboardUID)} external>
-          View dashboard
-        </TextLink>
+        <WithReturnButton
+          title={rule.name}
+          component={
+            <TextLink title={rule.name} variant="bodySmall" href={makeDashboardLink(dashboardUID)}>
+              View dashboard
+            </TextLink>
+          }
+        />
       ),
     });
   }
