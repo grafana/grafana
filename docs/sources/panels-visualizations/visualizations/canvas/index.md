@@ -111,7 +111,7 @@ When right clicking an element, you are able to edit, delete, duplicate, and mod
 
 When you're moving elements around the canvas, snapping and alignment guides help you create more precise layouts.
 
-// TODO: Add demo video
+<!-- TODO: Add gif showcasing feature (when creating what's new entry for 10.4) -->
 
 ## Canvas options
 
