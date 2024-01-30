@@ -1,5 +1,6 @@
 import { customAlphabet } from 'nanoid';
 import { Unsubscribable } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 
 import {
   AdHocVariableFilter,
@@ -26,7 +27,6 @@ import { RefreshPicker } from '@grafana/ui';
 import store from 'app/core/store';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { QueryOptions, QueryTransaction } from 'app/types/explore';
-import { v4 as uuidv4 } from 'uuid';
 
 import { getNextRefIdChar } from './query';
 

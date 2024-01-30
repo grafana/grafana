@@ -1,5 +1,6 @@
 import { groupBy, partition } from 'lodash';
 import { Observable, Subscriber, Subscription, tap } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 
 import {
   arrayToDataFrame,
@@ -14,7 +15,6 @@ import {
   LoadingState,
 } from '@grafana/data';
 import { combineResponses } from '@grafana/o11y-ds-frontend';
-import { v4 as uuidv4 } from 'uuid';
 
 import { LokiDatasource } from './datasource';
 import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';
