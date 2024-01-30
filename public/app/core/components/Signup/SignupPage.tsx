@@ -66,7 +66,7 @@ export const SignupPage = ({ queryParams }: Props) => {
   return (
     <LoginLayout>
       <InnerBox>
-        <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: '600px', width: '100%' }}>
+        <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
           <Field label="Your name">
             <Input id="user-name" {...register('name')} placeholder="(optional)" />
           </Field>
