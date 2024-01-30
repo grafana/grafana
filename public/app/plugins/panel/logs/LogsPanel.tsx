@@ -63,6 +63,7 @@ export const LogsPanel = ({
   const [closeCallback, setCloseCallback] = useState<(() => void) | null>(null);
   const timeRange = data.timeRange;
   const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
+  const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
 
   const { eventBus } = usePanelContext();
   const onLogRowHover = useCallback(
@@ -178,9 +179,15 @@ export const LogsPanel = ({
   /**
    * Scrolls the given row into view.
    */
-  const scrollIntoView = useCallback((row: HTMLElement) => {
-    row.scrollIntoView(true);
-  }, []);
+  const scrollIntoView = useCallback(
+    (row: HTMLElement) => {
+      scrollElement?.scrollTo({
+        top: row.offsetTop,
+        behavior: 'smooth',
+      });
+    },
+    [scrollElement]
+  );
 
   if (!data || logRows.length === 0) {
     return <PanelDataErrorView fieldConfig={fieldConfig} panelId={id} data={data} needsStringField />;
@@ -205,7 +212,11 @@ export const LogsPanel = ({
           timeZone={timeZone}
         />
       )}
-      <CustomScrollbar autoHide scrollTop={scrollTop}>
+      <CustomScrollbar
+        autoHide
+        scrollTop={scrollTop}
+        scrollRefCallback={(scrollElement) => setScrollElement(scrollElement)}
+      >
         <div className={style.container} ref={logsContainerRef}>
           {showCommonLabels && !isAscending && renderCommonLabels()}
           <LogRows
