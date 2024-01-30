@@ -165,7 +165,7 @@ func (i *Identity) GetPermissions() map[string][]string {
 	return i.Permissions[i.GetOrgID()]
 }
 
-// GetGlobalPermissions returns the permissions of the active entity that are available accross all organizations
+// GetGlobalPermissions returns the permissions of the active entity that are available across all organizations
 func (i *Identity) GetGlobalPermissions() map[string][]string {
 	if i.Permissions == nil {
 		return make(map[string][]string)
