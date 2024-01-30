@@ -144,7 +144,7 @@ func TestGetFeatureToggles(t *testing.T) {
 
 			t4, ok := findResult(t, result, "toggle4")
 			assert.True(t, ok)
-			assert.True(t, t4.ReadOnly)
+			assert.False(t, t4.ReadOnly)
 			t5, ok := findResult(t, result, "toggle5")
 			assert.True(t, ok)
 			assert.False(t, t5.ReadOnly)

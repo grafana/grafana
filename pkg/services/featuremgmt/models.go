@@ -119,7 +119,7 @@ type FeatureFlag struct {
 	Owner       codeowner        `json:"-"`                 // Owner person or team that owns this feature flag
 
 	// Recommended properties - control behavior of the feature toggle management page in the UI
-	AllowSelfServe    bool `json:"allowSelfServe,omitempty"`    // allow users with the right privileges to toggle this from the UI (GeneralAvailability and Deprecated toggles only)
+	AllowSelfServe    bool `json:"allowSelfServe,omitempty"`    // allow users with the right privileges to toggle this from the UI (GeneralAvailability, PublicPreview and Deprecated toggles only)
 	HideFromAdminPage bool `json:"hideFromAdminPage,omitempty"` // GA, Deprecated, and PublicPreview toggles only: don't display this feature in the UI; if this is a GA toggle, add a comment with the reasoning
 
 	// CEL-GO expression.  Using the value "true" will mean this is on by default
@@ -142,6 +142,7 @@ type UpdateFeatureTogglesCommand struct {
 
 type FeatureToggleDTO struct {
 	Name        string `json:"name" binding:"Required"`
+	Stage       string `json:"stage"`
 	Description string `json:"description"`
 	Enabled     bool   `json:"enabled"`
 	ReadOnly    bool   `json:"readOnly,omitempty"`

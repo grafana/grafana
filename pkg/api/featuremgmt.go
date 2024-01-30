@@ -30,6 +30,7 @@ func (hs *HTTPServer) GetFeatureToggles(ctx *contextmodel.ReqContext) response.R
 		dto := featuremgmt.FeatureToggleDTO{
 			Name:        flag,
 			Description: ft.Description,
+			Stage:       ft.Stage.String(),
 			Enabled:     hs.featureManager.IsEnabled(ctx.Req.Context(), flag),
 			ReadOnly:    !hs.featureManager.IsEditableFromAdminPage(flag),
 		}
