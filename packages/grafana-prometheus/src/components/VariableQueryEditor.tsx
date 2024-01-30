@@ -64,7 +64,7 @@ export const PromVariableQueryEditor = ({ onChange, query, datasource, range }: 
     datasource.languageProvider.start(range);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  
+
   useEffect(() => {
     if (!query) {
       return;

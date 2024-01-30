@@ -130,7 +130,7 @@ export function OperationEditor({
     }
   }
 
-// We need to extract this into a component to prevent InlineField passing invalid to div which produces console error
+  // We need to extract this into a component to prevent InlineField passing invalid to div which produces console error
   const StyledOperationHeader = ({ provided }: { provided: DraggableProvided }) => (
     <div
       className={cx(styles.card, (shouldFlash || highlight) && styles.cardHighlight)}
@@ -160,9 +160,7 @@ export function OperationEditor({
 
   return (
     <Draggable draggableId={`operation-${index}`} index={index}>
-      {(provided) => (
-        <StyledOperationHeader provided={provided} />
-      )}
+      {(provided) => <StyledOperationHeader provided={provided} />}
     </Draggable>
   );
 }
