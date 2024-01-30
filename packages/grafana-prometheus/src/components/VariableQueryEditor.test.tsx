@@ -2,6 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { dateTime, TimeRange } from '@grafana/data';
+
 import { PrometheusDatasource } from '../datasource';
 import { selectOptionInTest } from '../gcopypaste/test/helpers/selectOptionInTest';
 import PrometheusLanguageProvider from '../language_provider';
@@ -9,7 +11,6 @@ import { migrateVariableEditorBackToVariableSupport } from '../migrations/variab
 import { PromVariableQuery, PromVariableQueryType, StandardPromVariableQuery } from '../types';
 
 import { PromVariableQueryEditor, Props, variableMigration } from './VariableQueryEditor';
-
 const refId = 'PrometheusVariableQueryEditor-VariableQuery';
 
 describe('PromVariableQueryEditor', () => {
@@ -367,5 +368,25 @@ describe('PromVariableQueryEditor', () => {
       refId,
       qryType: 5,
     });
+  });
+
+  test('Calls language provider with the time range received in props', async () => {
+    const now = dateTime('2023-09-16T21:26:00Z');
+    const range: TimeRange = {
+      from: dateTime(now).subtract(2, 'days'),
+      to: now,
+      raw: {
+        from: 'now-2d',
+        to: 'now',
+      },
+    };
+    props.range = range;
+
+    const languageProviderStartMock = jest.fn();
+    props.datasource.languageProvider.start = languageProviderStartMock;
+
+    render(<PromVariableQueryEditor {...props} />);
+
+    expect(languageProviderStartMock).toHaveBeenCalledWith(range);
   });
 });
