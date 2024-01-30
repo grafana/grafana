@@ -96,6 +96,8 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         // Populate nav model in global store according to the folder
         await this.initNavModel(rsp);
 
+        // Do not cache new dashboards
+
         this.dashboardCache.set(uid, { dashboard: rsp, ts: Date.now() });
       }
     } catch (e) {
@@ -123,10 +125,10 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   }
 
   private async loadScene(options: LoadDashboardOptions): Promise<DashboardScene> {
-    const fromCache = this.cache[options.uid];
+    const cacheKey = `${options.route}${options.uid}${options.urlFolderUid ?? ''}`;
+
+    const fromCache = this.cache[cacheKey];
     if (fromCache) {
-      // Need to update this in case we cached an embedded but now opening it standard mode
-      fromCache.state.meta.isEmbedded = options.route === DashboardRoutes.Embedded;
       return fromCache;
     }
 
@@ -136,7 +138,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
     if (rsp?.dashboard) {
       const scene = transformSaveModelToScene(rsp);
-      this.cache[options.uid] = scene;
+      this.cache[cacheKey] = scene;
       return scene;
     }
 

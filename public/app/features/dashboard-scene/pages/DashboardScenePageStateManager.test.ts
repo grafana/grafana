@@ -90,6 +90,19 @@ describe('DashboardScenePageStateManager', () => {
       expect(dash!.state.$timeRange?.state.from).toEqual('now-6h');
     });
 
+    describe('New dashboards', () => {
+      it('Should have new empty model with meta.isNew and should not be cached', async () => {
+        const loader = new DashboardScenePageStateManager({});
+
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.New });
+        const dashboard = loader.state.dashboard!;
+
+        expect(dashboard.state.meta.isNew).toBe(true);
+        expect(dashboard.state.isEditing).toBe(true);
+        expect(dashboard.state.isDirty).toBe(true);
+      });
+    });
+
     describe('caching', () => {
       it('should cache the dashboard DTO', async () => {
         setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });

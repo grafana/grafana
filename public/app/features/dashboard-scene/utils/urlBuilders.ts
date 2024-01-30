@@ -27,6 +27,10 @@ export interface DashboardUrlOptions {
 export function getDashboardUrl(options: DashboardUrlOptions) {
   let path = `/d/${options.uid}`;
 
+  if (!options.uid) {
+    path = '/dashboard/new';
+  }
+
   if (options.soloRoute) {
     path = `/d-solo/${options.uid}`;
   }
@@ -34,6 +38,7 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
   if (options.slug) {
     path += `/${options.slug}`;
   }
+
   if (options.subPath) {
     path += options.subPath;
   }

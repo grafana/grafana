@@ -48,6 +48,7 @@ import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { NEW_LINK } from '../settings/links/utils';
 import { getQueryRunnerFor } from '../utils/utils';
 
+import { buildNewDashboardSaveModel } from './buildNewDashboardSaveModel';
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
 import repeatingRowsAndPanelsDashboardJson from './testfiles/repeating_rows_and_panels.json';
 import {
@@ -164,6 +165,16 @@ describe('transformSaveModelToScene', () => {
 
       const scene = createDashboardSceneFromDashboardModel(oldModel);
       expect(scene.state.$variables?.state.variables).toBeDefined();
+    });
+  });
+
+  describe('When creating a new dashboard', () => {
+    it('should initialize the DashboardScene in edit mode and dirty', () => {
+      const rsp = buildNewDashboardSaveModel();
+      const scene = transformSaveModelToScene(rsp);
+
+      expect(scene.state.isEditing).toBe(true);
+      expect(scene.state.isDirty).toBe(true);
     });
   });
 
