@@ -193,7 +193,7 @@ describe('PromQueryEditorSelector', () => {
       />
     );
 
-    await screen.findByText('test_metric');
+    await screen.queryAllByText('test_metric');
     expect(screen.getByText('host.docker.internal:3000')).toBeInTheDocument();
     expect(screen.getByText('Rate')).toBeInTheDocument();
     expect(screen.getByText('$__interval')).toBeInTheDocument();

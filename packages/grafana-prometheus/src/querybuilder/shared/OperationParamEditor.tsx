@@ -95,7 +95,7 @@ function SelectInputParamEditor({
   }
 
   return (
-    <Stack gap={0.5} direction="row" alignItems="center" wrap={false}>
+    <Stack gap={0.5} direction="row" alignItems="center">
       <Select
         id={getOperationParamId(operationId, index)}
         value={valueOption}

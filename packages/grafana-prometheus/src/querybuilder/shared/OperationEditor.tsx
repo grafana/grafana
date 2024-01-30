@@ -88,7 +88,7 @@ export function OperationEditor({
           </div>
         )}
         <div className={styles.paramValue}>
-          <Stack gap={0.5} direction="row" alignItems="center" wrap={false}>
+          <Stack gap={0.5} direction="row" alignItems="center">
             <Editor
               index={paramIndex}
               paramDef={paramDef}
