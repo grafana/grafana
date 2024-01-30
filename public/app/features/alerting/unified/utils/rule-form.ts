@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneQueryRunner, SceneVariable, VizPanel } from '@grafana/scenes';
 import { DataSourceJsonData } from '@grafana/schema';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -592,6 +592,7 @@ export const panelToRuleFormValues = async (
 
 export const scenesPanelToRuleFormValues = async (
   vizPanel: VizPanel,
+  variables: SceneVariable[],
   scenesQueries: SceneQueryRunner,
   scenesDashboard: DashboardScene
 ): Promise<Partial<RuleFormValues> | undefined> => {
@@ -606,7 +607,7 @@ export const scenesPanelToRuleFormValues = async (
   const queries = await dataQueriesToGrafanaQueries(
     sceneq,
     relativeTimeRange,
-    vizPanel.state.$variables || {},
+    variables || {},
     scenesQueries.state.datasource ?? undefined,
     scenesQueries.state.maxDataPoints ?? undefined,
     scenesQueries.state.minInterval ?? undefined

@@ -1,32 +1,31 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAsync } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
+import { logInfo } from '@grafana/runtime';
+import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { Alert, Button, LinkButton } from '@grafana/ui';
-import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { useSelector } from 'app/types';
+import { LogMessages } from 'app/features/alerting/unified/Analytics';
+import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 
-import { logInfo, LogMessages } from '../../Analytics';
-import { panelToRuleFormValues } from '../../utils/rule-form';
+import { DashboardScene } from '../../scene/DashboardScene';
 
-interface Props {
-  panel: PanelModel;
-  dashboard: DashboardModel;
+interface ScenesProps {
+  panel: VizPanel;
+  queryRunner: SceneQueryRunner;
+  dashboard: DashboardScene;
   className?: string;
 }
-
-export const NewRuleFromPanelButton = ({ dashboard, panel, className }: Props) => {
-  const templating = useSelector((state) => {
-    return state.templating;
-  });
-
+export const ScenesNewRuleFromPanelButton = ({ dashboard, queryRunner, panel, className }: ScenesProps) => {
   const location = useLocation();
 
+  const panelState = panel.useState();
+  const variables = panelState.$variables?.useState();
+
   const { loading, value: formValues } = useAsync(
-    () => panelToRuleFormValues(panel, dashboard),
-    // Templating variables are required to update formValues on each variable's change. It's used implicitly by the templating engine
-    [panel, dashboard, templating]
+    () => scenesPanelToRuleFormValues(panel, variables?.variables || [], queryRunner, dashboard),
+    [panel, dashboard, variables]
   );
 
   if (loading) {

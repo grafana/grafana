@@ -5,14 +5,12 @@ import { SceneObjectBase, SceneComponentProps, SceneQueryRunner } from '@grafana
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { RulesTable } from 'app/features/alerting/unified/components/rules/RulesTable';
 import { usePanelCombinedRules } from 'app/features/alerting/unified/hooks/usePanelCombinedRules';
-import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../utils/utils';
 import { VizPanelManager } from '../VizPanelManager';
 
+import { ScenesNewRuleFromPanelButton } from './NewAlertRuleButton';
 import { PanelDataPaneTabState, PanelDataPaneTab } from './types';
-import { useAsync } from 'react-use';
-import { ScenesNewRuleFromPanelButton } from 'app/features/alerting/unified/components/panel-alerts-tab/NewRuleFromPanelButton';
 
 export class PanelDataAlertingTab extends SceneObjectBase<PanelDataPaneTabState> implements PanelDataPaneTab {
   static Component = PanelDataAlertingTabRendered;
@@ -22,15 +20,11 @@ export class PanelDataAlertingTab extends SceneObjectBase<PanelDataPaneTabState>
 
   constructor(panelManager: VizPanelManager) {
     super({});
-
     this._panelManager = panelManager;
   }
+
   getTabLabel() {
     return 'Alert';
-  }
-
-  getItemsCount() {
-    return 0;
   }
 
   getDashboardUID() {
@@ -65,14 +59,8 @@ function PanelDataAlertingTabRendered(props: SceneComponentProps<PanelDataAlerti
   const { errors, loading, rules } = usePanelCombinedRules({
     dashboardUID: model.getDashboardUID(),
     panelId: model.getPanelId(),
-    poll: true,
+    poll: false,
   });
-
-  const { loading: loadingButton, value: formValues } = useAsync(
-    () => scenesPanelToRuleFormValues(model.getPanel(), model.getQueryRunner(), model.getDashboard()),
-    // Templating variables are required to update formValues on each variable's change. It's used implicitly by the templating engine
-    [model]
-  );
 
   const alert = errors.length ? (
     <Alert title="Errors loading rules" severity="error">
@@ -95,7 +83,6 @@ function PanelDataAlertingTabRendered(props: SceneComponentProps<PanelDataAlerti
     return <RulesTable rules={rules} />;
   }
 
-  // TODO: this is the tricky part, converting queries and such to pre populate the new alert form when clicking the button
   return (
     <div>
       <p>There are no alert rules linked to this panel.</p>
@@ -104,7 +91,6 @@ function PanelDataAlertingTabRendered(props: SceneComponentProps<PanelDataAlerti
         panel={model.getPanel()}
         queryRunner={model.getQueryRunner()}
       ></ScenesNewRuleFromPanelButton>
-      <button>{String(formValues)}</button>
     </div>
   );
 }
