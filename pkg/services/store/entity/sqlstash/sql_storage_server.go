@@ -10,8 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/xorm"
-
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 
@@ -22,20 +20,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/store/entity/db"
 )
-
-type EntityDB interface {
-	Init() error
-	GetSession() (*session.SessionDB, error)
-	GetEngine() (*xorm.Engine, error)
-	GetCfg() *setting.Cfg
-}
 
 // Make sure we implement both store + admin
 var _ entity.EntityStoreServer = &sqlEntityServer{}
 
-func ProvideSQLEntityServer(db EntityDB /*, cfg *setting.Cfg */) (entity.EntityStoreServer, error) {
+func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (entity.EntityStoreServer, error) {
 	snode, err := snowflake.NewNode(rand.Int63n(1024))
 	if err != nil {
 		return nil, err
@@ -52,7 +43,7 @@ func ProvideSQLEntityServer(db EntityDB /*, cfg *setting.Cfg */) (entity.EntityS
 
 type sqlEntityServer struct {
 	log       log.Logger
-	db        EntityDB // needed to keep xorm engine in scope
+	db        db.EntityDBInterface // needed to keep xorm engine in scope
 	sess      *session.SessionDB
 	dialect   migrator.Dialect
 	snowflake *snowflake.Node
