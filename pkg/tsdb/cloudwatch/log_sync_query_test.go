@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	"github.com/stretchr/testify/assert"
@@ -41,7 +40,7 @@ func Test_executeSyncLogQuery(t *testing.T) {
 			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 		sess := fakeSessionCache{}
-		executor := newExecutor(im, newTestConfig(), &sess, featuremgmt.WithFeatures())
+		executor := newExecutor(im, newTestConfig(), &sess)
 
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			Headers:       map[string]string{headerFromAlert: "some value"},
@@ -68,7 +67,7 @@ func Test_executeSyncLogQuery(t *testing.T) {
 		})
 		sess := fakeSessionCache{}
 
-		executor := newExecutor(im, newTestConfig(), &sess, featuremgmt.WithFeatures())
+		executor := newExecutor(im, newTestConfig(), &sess)
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			Headers:       map[string]string{headerFromAlert: "some value"},
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
@@ -125,7 +124,7 @@ func Test_executeSyncLogQuery(t *testing.T) {
 				})
 				sess := fakeSessionCache{}
 
-				executor := newExecutor(im, newTestConfig(), &sess, featuremgmt.WithFeatures())
+				executor := newExecutor(im, newTestConfig(), &sess)
 				_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 					Headers:       tc.headers,
 					PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
@@ -168,7 +167,7 @@ func Test_executeSyncLogQuery(t *testing.T) {
 		})
 		sess := fakeSessionCache{}
 
-		executor := newExecutor(im, newTestConfig(), &sess, featuremgmt.WithFeatures())
+		executor := newExecutor(im, newTestConfig(), &sess)
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
@@ -207,7 +206,7 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 
 		res, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			Headers:       map[string]string{headerFromAlert: "some value"},
@@ -236,7 +235,7 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 
 		res, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			Headers:       map[string]string{headerFromAlert: "some value"},
@@ -305,7 +304,7 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 
 		res, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			Headers:       map[string]string{headerFromAlert: "some value"},
@@ -351,7 +350,7 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 			return DataSource{Settings: models.CloudWatchSettings{LogsTimeout: models.Duration{Duration: time.Millisecond}}}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			Headers:       map[string]string{headerFromAlert: "some value"},
@@ -383,7 +382,7 @@ func Test_executeSyncLogQuery_handles_RefId_from_input_queries(t *testing.T) {
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 
 		res, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			Headers:       map[string]string{headerFromAlert: "some value"},

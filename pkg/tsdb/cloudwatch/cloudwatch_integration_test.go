@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
@@ -55,13 +54,13 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		return &api
 	}
 
-	im := datasource.NewInstanceManager((func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		return DataSource{Settings: models.CloudWatchSettings{
 			AWSDatasourceSettings: awsds.AWSDatasourceSettings{
 				Region: "us-east-1",
 			},
 		}}, nil
-	}))
+	})
 
 	t.Run("Should handle dimension value request and return values from the api", func(t *testing.T) {
 		pageLimit := 100
@@ -77,7 +76,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 			{MetricName: aws.String("Test_MetricName8"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4"), Value: aws.String("Value1")}}},
 			{MetricName: aws.String("Test_MetricName9"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1"), Value: aws.String("Value2")}}},
 		}, MetricsPerPage: 100}
-		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: pageLimit}, &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: pageLimit}, &fakeSessionCache{})
 
 		req := &backend.CallResourceRequest{
 			Method: "GET",
@@ -113,7 +112,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 			{MetricName: aws.String("Test_MetricName8"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4")}}},
 			{MetricName: aws.String("Test_MetricName9"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}}},
 		}, MetricsPerPage: 2}
-		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: pageLimit}, &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: pageLimit}, &fakeSessionCache{})
 
 		req := &backend.CallResourceRequest{
 			Method: "GET",
@@ -137,7 +136,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 
 	t.Run("Should handle standard dimension key query and return hard coded keys", func(t *testing.T) {
 		api = mocks.FakeMetricsAPI{}
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 
 		req := &backend.CallResourceRequest{
 			Method: "GET",
@@ -161,7 +160,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 
 	t.Run("Should handle custom namespace dimension key query and return hard coded keys", func(t *testing.T) {
 		api = mocks.FakeMetricsAPI{}
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 
 		req := &backend.CallResourceRequest{
 			Method: "GET",
@@ -197,7 +196,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 			{MetricName: aws.String("Test_MetricName8"), Namespace: aws.String("AWS/EC2"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName4")}}},
 			{MetricName: aws.String("Test_MetricName9"), Namespace: aws.String("AWS/EC2"), Dimensions: []*cloudwatch.Dimension{{Name: aws.String("Test_DimensionName1")}}},
 		}, MetricsPerPage: 2}
-		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: pageLimit}, &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, &setting.Cfg{AWSListMetricsPageLimit: pageLimit}, &fakeSessionCache{})
 
 		req := &backend.CallResourceRequest{
 			Method: "GET",
@@ -233,7 +232,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 				},
 			},
 		}, nil)
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 
 		req := &backend.CallResourceRequest{
 			Method: "GET",
@@ -254,7 +253,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 	})
 
 	t.Run("Should handle region requests and return regions from the api", func(t *testing.T) {
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudwatchNewRegionsHandler, true))
+		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{})
 		req := &backend.CallResourceRequest{
 			Method: "GET",
 			Path:   `/regions`,
@@ -272,25 +271,6 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		assert.Contains(t, string(sent.Body), `"name":"us-east-1"`)
 	})
 
-	t.Run("Should handle legacy region requests and feature toggle is turned off", func(t *testing.T) {
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudwatchNewRegionsHandler, false))
-		req := &backend.CallResourceRequest{
-			Method: "GET",
-			Path:   `/regions`,
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
-				PluginID:                   "cloudwatch",
-			},
-		}
-		err := executor.CallResource(context.Background(), req, sender)
-		require.NoError(t, err)
-		sent := sender.Response
-		require.NotNil(t, sent)
-		require.Equal(t, http.StatusOK, sent.Status)
-		require.Nil(t, err)
-		assert.Contains(t, string(sent.Body), `"text":"us-east-1"`)
-	})
-
 	t.Run("Should error for any request when a default region is not selected", func(t *testing.T) {
 		imWithoutDefaultRegion := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{
@@ -298,7 +278,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 			}}, nil
 		})
 
-		executor := newExecutor(imWithoutDefaultRegion, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures(featuremgmt.FlagCloudwatchNewRegionsHandler, false))
+		executor := newExecutor(imWithoutDefaultRegion, newTestConfig(), &fakeSessionCache{})
 		req := &backend.CallResourceRequest{
 			Method: "GET",
 			Path:   `/regions`,
@@ -313,6 +293,6 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		require.NotNil(t, sent)
 		require.Equal(t, http.StatusBadRequest, sent.Status)
 		require.Nil(t, err)
-		assert.Contains(t, string(sent.Body), "unexpected error missing default region")
+		assert.Contains(t, string(sent.Body), "missing default region")
 	})
 }
