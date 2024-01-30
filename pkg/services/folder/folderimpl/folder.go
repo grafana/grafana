@@ -745,7 +745,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 		return dashboards.ErrFolderAccessDenied
 	}
 
-	result := []string{cmd.UID}
+	folders := []string{cmd.UID}
 	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
 		descendants, err := s.nestedFolderDelete(ctx, cmd)
 
@@ -753,64 +753,56 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 			logger.Error("the delete folder on folder table failed with err: ", "error", err)
 			return err
 		}
-		result = append(result, descendants...)
+		folders = append(folders, descendants...)
 
-		dashFolders, err := s.dashboardFolderStore.GetFolders(ctx, cmd.OrgID, result)
-		if err != nil {
-			return folder.ErrInternal.Errorf("failed to fetch subfolders from dashboard store: %w", err)
-		}
-
-		for _, foldr := range result {
-			dashFolder, ok := dashFolders[foldr]
-			if !ok {
-				return folder.ErrInternal.Errorf("folder does not exist in dashboard store")
-			}
-
-			if cmd.ForceDeleteRules {
-				if err := s.deleteChildrenInFolder(ctx, dashFolder.OrgID, dashFolder.UID, cmd.SignedInUser); err != nil {
-					return err
-				}
-			} else {
-				alertRuleSrv, ok := s.registry[entity.StandardKindAlertRule]
-				if !ok {
-					return folder.ErrInternal.Errorf("no alert rule service found in registry")
-				}
-				alertRulesInFolder, err := alertRuleSrv.CountInFolders(ctx, dashFolder.OrgID, []string{dashFolder.UID}, cmd.SignedInUser)
-				if err != nil {
-					s.log.Error("failed to count alert rules in folder", "error", err)
-					return err
-				}
-				if alertRulesInFolder > 0 {
-					return folder.ErrFolderNotEmpty.Errorf("folder contains %d alert rules", alertRulesInFolder)
-				}
-			}
-
-			if err = s.legacyDelete(ctx, cmd, dashFolder); err != nil {
+		if cmd.ForceDeleteRules {
+			if err := s.deleteChildrenInFolder(ctx, cmd.OrgID, folders, cmd.SignedInUser); err != nil {
 				return err
 			}
+		} else {
+			alertRuleSrv, ok := s.registry[entity.StandardKindAlertRule]
+			if !ok {
+				return folder.ErrInternal.Errorf("no alert rule service found in registry")
+			}
+			alertRulesInFolder, err := alertRuleSrv.CountInFolders(ctx, cmd.OrgID, folders, cmd.SignedInUser)
+			if err != nil {
+				s.log.Error("failed to count alert rules in folder", "error", err)
+				return err
+			}
+			if alertRulesInFolder > 0 {
+				return folder.ErrFolderNotEmpty.Errorf("folder contains %d alert rules", alertRulesInFolder)
+			}
 		}
+
+		if err = s.legacyDelete(ctx, cmd, folders); err != nil {
+			return err
+		}
+
 		return nil
 	})
 
 	return err
 }
 
-func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) error {
+func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
 	for _, v := range s.registry {
-		if err := v.DeleteInFolders(ctx, orgID, []string{folderUID}, user); err != nil {
+		if err := v.DeleteInFolders(ctx, orgID, folderUIDs, user); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, dashFolder *folder.Folder) error {
-	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-	// nolint:staticcheck
-	deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, ID: dashFolder.ID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
+func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, folderUIDs []string) error {
+	// TODO use bulk delete
+	for _, folderUID := range folderUIDs {
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
+		// nolint:staticcheck
+		deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, UID: folderUID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 
-	if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
-		return toFolderError(err)
+		if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
+			return toFolderError(err)
+		}
 	}
 	return nil
 }

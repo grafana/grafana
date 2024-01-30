@@ -220,6 +220,7 @@ type DashboardProvisioning struct {
 
 type DeleteDashboardCommand struct {
 	ID                     int64
+	UID                    string
 	OrgID                  int64
 	ForceDeleteFolderRules bool
 }

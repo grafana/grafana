@@ -658,7 +658,12 @@ func (d *dashboardStore) DeleteDashboard(ctx context.Context, cmd *dashboards.De
 }
 
 func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand, sess *db.Session, emitEntityEvent bool) error {
-	dashboard := dashboards.Dashboard{ID: cmd.ID, OrgID: cmd.OrgID}
+	dashboard := dashboards.Dashboard{OrgID: cmd.OrgID}
+	if cmd.UID != "" {
+		dashboard.UID = cmd.UID
+	} else {
+		dashboard.ID = cmd.ID
+	}
 	has, err := sess.Get(&dashboard)
 	if err != nil {
 		return err

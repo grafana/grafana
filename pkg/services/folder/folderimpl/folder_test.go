@@ -259,7 +259,6 @@ func TestIntegrationFolderService(t *testing.T) {
 			t.Run("When deleting folder by uid should not return access denied error", func(t *testing.T) {
 				f := folder.NewFolder(util.GenerateShortUID(), "")
 				f.UID = util.GenerateShortUID()
-				folderStore.On("GetFolders", mock.Anything, orgID, []string{f.UID}).Return(map[string]*folder.Folder{f.UID: f}, nil)
 				folderStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
 
 				var actualCmd *dashboards.DeleteDashboardCommand
