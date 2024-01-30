@@ -7,6 +7,7 @@ import { CoreApp, LogRowModel, LogsDedupStrategy, LogsSortOrder } from '@grafana
 
 import { LogRows, PREVIEW_LIMIT } from './LogRows';
 import { createLogRow } from './__mocks__/logRow';
+import * as styles from './getLogRowStyles';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -203,6 +204,78 @@ describe('LogRows', () => {
     expect(screen.queryAllByRole('row').at(0)).toHaveTextContent('log message 3');
     expect(screen.queryAllByRole('row').at(1)).toHaveTextContent('log message 2');
     expect(screen.queryAllByRole('row').at(2)).toHaveTextContent('log message 1');
+  });
+
+  describe('Performance regressions', () => {
+    beforeEach(() => {
+      jest.spyOn(styles, 'getLogRowStyles');
+    });
+    it.only('does not rerender without changes', async () => {
+      const rows: LogRowModel[] = [createLogRow({ uid: '1' })];
+      const { rerender } = render(
+        <LogRows
+          logRows={rows}
+          dedupStrategy={LogsDedupStrategy.none}
+          showLabels={false}
+          showTime={false}
+          wrapLogMessage={true}
+          prettifyLogMessage={true}
+          timeZone={'utc'}
+          enableLogDetails={true}
+        />
+      );
+  
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+      
+      rerender(<LogRows
+        logRows={rows}
+        dedupStrategy={LogsDedupStrategy.none}
+        showLabels={false}
+        showTime={false}
+        wrapLogMessage={true}
+        prettifyLogMessage={true}
+        timeZone={'utc'}
+        enableLogDetails={true}
+      />);
+  
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(styles.getLogRowStyles).toHaveBeenCalledTimes(2);
+    });
+
+    it('rerenders when prop changes', async () => {
+      const rows: LogRowModel[] = [createLogRow({ uid: '1' })];
+      const { rerender } = render(
+        <LogRows
+          logRows={rows}
+          dedupStrategy={LogsDedupStrategy.none}
+          showLabels={false}
+          showTime={false}
+          wrapLogMessage={true}
+          prettifyLogMessage={true}
+          timeZone={'utc'}
+          enableLogDetails={true}
+          // new array every render
+          displayedFields={[]}
+        />
+      );
+  
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+      
+      rerender(<LogRows
+        logRows={rows}
+        dedupStrategy={LogsDedupStrategy.none}
+        showLabels={false}
+        showTime={false}
+        wrapLogMessage={true}
+        prettifyLogMessage={true}
+        timeZone={'utc'}
+        enableLogDetails={true}
+        displayedFields={[]}
+      />);
+  
+      expect(await screen.findByRole('row')).toBeInTheDocument();
+      expect(jest.mocked(styles.getLogRowStyles).mock.calls.length).toBeGreaterThan(2);
+    });
   });
 });
 
