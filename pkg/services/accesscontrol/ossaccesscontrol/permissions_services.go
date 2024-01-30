@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -117,6 +118,27 @@ var DashboardViewActions = []string{dashboards.ActionDashboardsRead}
 var DashboardEditActions = append(DashboardViewActions, []string{dashboards.ActionDashboardsWrite, dashboards.ActionDashboardsDelete}...)
 var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.ActionDashboardsPermissionsRead, dashboards.ActionDashboardsPermissionsWrite}...)
 
+func getDashboardViewActions(features featuremgmt.FeatureToggles) []string {
+	if features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
+		return append(DashboardViewActions, accesscontrol.ActionAnnotationsRead)
+	}
+	return DashboardViewActions
+}
+
+func getDashboardEditActions(features featuremgmt.FeatureToggles) []string {
+	if features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
+		return append(DashboardEditActions, []string{accesscontrol.ActionAnnotationsRead, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
+	}
+	return DashboardEditActions
+}
+
+func getDashboardAdminActions(features featuremgmt.FeatureToggles) []string {
+	if features.IsEnabled(context.Background(), featuremgmt.FlagAnnotationPermissionUpdate) {
+		return append(DashboardAdminActions, []string{accesscontrol.ActionAnnotationsRead, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
+	}
+	return DashboardAdminActions
+}
+
 func ProvideDashboardPermissions(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
 	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, service accesscontrol.Service,
@@ -151,6 +173,7 @@ func ProvideDashboardPermissions(
 			if err != nil {
 				return nil, err
 			}
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.AccessControl).Inc()
 			// nolint:staticcheck
 			if dashboard.FolderID > 0 {
 				query := &dashboards.GetDashboardQuery{ID: dashboard.FolderID, OrgID: orgID}
@@ -175,9 +198,9 @@ func ProvideDashboardPermissions(
 			ServiceAccounts: true,
 		},
 		PermissionsToActions: map[string][]string{
-			"View":  DashboardViewActions,
-			"Edit":  DashboardEditActions,
-			"Admin": DashboardAdminActions,
+			"View":  getDashboardViewActions(features),
+			"Edit":  getDashboardEditActions(features),
+			"Admin": getDashboardAdminActions(features),
 		},
 		ReaderRoleName: "Dashboard permission reader",
 		WriterRoleName: "Dashboard permission writer",
@@ -240,9 +263,9 @@ func ProvideFolderPermissions(
 			ServiceAccounts: true,
 		},
 		PermissionsToActions: map[string][]string{
-			"View":  append(DashboardViewActions, FolderViewActions...),
-			"Edit":  append(DashboardEditActions, FolderEditActions...),
-			"Admin": append(DashboardAdminActions, FolderAdminActions...),
+			"View":  append(getDashboardViewActions(features), FolderViewActions...),
+			"Edit":  append(getDashboardEditActions(features), FolderEditActions...),
+			"Admin": append(getDashboardAdminActions(features), FolderAdminActions...),
 		},
 		ReaderRoleName: "Folder permission reader",
 		WriterRoleName: "Folder permission writer",

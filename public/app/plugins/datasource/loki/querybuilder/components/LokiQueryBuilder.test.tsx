@@ -1,17 +1,16 @@
 import { render, screen, getAllByRole, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { getSelectParent } from 'test/helpers/selectOptionInTest';
 
 import { dateTime } from '@grafana/data';
 
-import { MISSING_LABEL_FILTER_ERROR_MESSAGE } from '../../../prometheus/querybuilder/shared/LabelFilters';
 import { createLokiDatasource } from '../../__mocks__/datasource';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
 import { LokiQueryBuilder } from './LokiQueryBuilder';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 
+const MISSING_LABEL_FILTER_ERROR_MESSAGE = 'Select at least 1 label filter (label and value)';
 const defaultQuery: LokiVisualQuery = {
   labels: [{ op: '=', label: 'baz', value: 'bar' }],
   operations: [],
@@ -136,3 +135,6 @@ describe('LokiQueryBuilder', () => {
     });
   });
 });
+
+const getSelectParent = (input: HTMLElement) =>
+  input.parentElement?.parentElement?.parentElement?.parentElement?.parentElement;

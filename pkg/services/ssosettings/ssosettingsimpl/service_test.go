@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -24,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestSSOSettingsService_GetForProvider(t *testing.T) {
+func TestService_GetForProvider(t *testing.T) {
 	testCases := []struct {
 		name    string
 		setup   func(env testEnv)
@@ -205,7 +206,7 @@ func TestSSOSettingsService_GetForProvider(t *testing.T) {
 	}
 }
 
-func TestSSOSettingsService_GetForProviderWithRedactedSecrets(t *testing.T) {
+func TestService_GetForProviderWithRedactedSecrets(t *testing.T) {
 	testCases := []struct {
 		name    string
 		setup   func(env testEnv)
@@ -304,7 +305,7 @@ func TestSSOSettingsService_GetForProviderWithRedactedSecrets(t *testing.T) {
 	}
 }
 
-func TestSSOSettingsService_List(t *testing.T) {
+func TestService_List(t *testing.T) {
 	testCases := []struct {
 		name    string
 		setup   func(env testEnv)
@@ -447,7 +448,7 @@ func TestSSOSettingsService_List(t *testing.T) {
 	}
 }
 
-func TestSSOSettingsService_ListWithRedactedSecrets(t *testing.T) {
+func TestService_ListWithRedactedSecrets(t *testing.T) {
 	testCases := []struct {
 		name    string
 		setup   func(env testEnv)
@@ -741,7 +742,7 @@ func TestSSOSettingsService_ListWithRedactedSecrets(t *testing.T) {
 	}
 }
 
-func TestSSOSettingsService_Upsert(t *testing.T) {
+func TestService_Upsert(t *testing.T) {
 	t.Run("successfully upsert SSO settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
@@ -1003,21 +1004,49 @@ func TestSSOSettingsService_Upsert(t *testing.T) {
 	})
 }
 
-func TestSSOSettingsService_Delete(t *testing.T) {
+func TestService_Delete(t *testing.T) {
 	t.Run("successfully delete SSO settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
+		var wg sync.WaitGroup
+		wg.Add(1)
+
 		provider := social.AzureADProviderName
-		env.store.ExpectedError = nil
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		env.reloadables[provider] = reloadable
+
+		env.fallbackStrategy.ExpectedConfigs = map[string]map[string]any{
+			provider: {
+				"client_id":     "client-id",
+				"client_secret": "client-secret",
+				"enabled":       true,
+			},
+		}
+
+		reloadable.On("Reload", mock.Anything, mock.MatchedBy(func(settings models.SSOSettings) bool {
+			wg.Done()
+			return settings.Provider == provider &&
+				settings.ID == "" &&
+				maps.Equal(settings.Settings, map[string]any{
+					"client_id":     "client-id",
+					"client_secret": "client-secret",
+					"enabled":       true,
+				})
+		})).Return(nil).Once()
 
 		err := env.service.Delete(context.Background(), provider)
 		require.NoError(t, err)
+
+		// wait for the goroutine first to assert the Reload call
+		wg.Wait()
 	})
 
-	t.Run("SSO settings not found for the specified provider", func(t *testing.T) {
+	t.Run("return error if SSO setting was not found for the specified provider", func(t *testing.T) {
 		env := setupTestEnv(t)
 
 		provider := social.AzureADProviderName
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		env.reloadables[provider] = reloadable
 		env.store.ExpectedError = ssosettings.ErrNotFound
 
 		err := env.service.Delete(context.Background(), provider)
@@ -1036,7 +1065,7 @@ func TestSSOSettingsService_Delete(t *testing.T) {
 		require.ErrorIs(t, err, ssosettings.ErrNotConfigurable)
 	})
 
-	t.Run("store fails to delete the SSO settings for the specified provider", func(t *testing.T) {
+	t.Run("return error when store fails to delete the SSO settings for the specified provider", func(t *testing.T) {
 		env := setupTestEnv(t)
 
 		provider := social.AzureADProviderName
@@ -1046,9 +1075,25 @@ func TestSSOSettingsService_Delete(t *testing.T) {
 		require.Error(t, err)
 		require.NotErrorIs(t, err, ssosettings.ErrNotFound)
 	})
+
+	t.Run("return successfully when the deletion was successful but reloading the settings fail", func(t *testing.T) {
+		env := setupTestEnv(t)
+
+		provider := social.AzureADProviderName
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		env.reloadables[provider] = reloadable
+
+		env.store.GetFn = func(ctx context.Context, provider string) (*models.SSOSettings, error) {
+			return nil, errors.New("failed to get sso settings")
+		}
+
+		err := env.service.Delete(context.Background(), provider)
+
+		require.NoError(t, err)
+	})
 }
 
-func TestSSOSettingsService_DoReload(t *testing.T) {
+func TestService_DoReload(t *testing.T) {
 	t.Run("successfully reload settings", func(t *testing.T) {
 		env := setupTestEnv(t)
 
@@ -1101,7 +1146,7 @@ func TestSSOSettingsService_DoReload(t *testing.T) {
 	})
 }
 
-func TestSSOSettingsService_decryptSecrets(t *testing.T) {
+func TestService_decryptSecrets(t *testing.T) {
 	testCases := []struct {
 		name     string
 		setup    func(env testEnv)
@@ -1216,13 +1261,14 @@ func setupTestEnv(t *testing.T) testEnv {
 		},
 	}
 
-	svc := &SSOSettingsService{
+	svc := &Service{
 		logger:       log.NewNopLogger(),
 		cfg:          cfg,
 		store:        store,
 		ac:           accessControl,
 		fbStrategies: []ssosettings.FallbackStrategy{fallbackStrategy},
 		reloadables:  reloadables,
+		metrics:      newMetrics(prometheus.NewRegistry()),
 		secrets:      secrets,
 	}
 
@@ -1239,7 +1285,7 @@ func setupTestEnv(t *testing.T) testEnv {
 
 type testEnv struct {
 	cfg              *setting.Cfg
-	service          *SSOSettingsService
+	service          *Service
 	store            *ssosettingstests.FakeStore
 	ac               accesscontrol.AccessControl
 	fallbackStrategy *ssosettingstests.FakeFallbackStrategy

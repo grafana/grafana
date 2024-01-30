@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { dateTime, GrafanaTheme2, LogRowModel, renderMarkdown, SelectableValue } from '@grafana/data';
+import { RawQuery } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
 import {
   Alert,
@@ -20,7 +21,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
 import {
   LogContextProvider,
   LOKI_LOG_CONTEXT_PRESERVED_LABELS,
@@ -312,7 +312,11 @@ export function LokiContextUi(props: LokiContextUiProps) {
           <div className={styles.rawQueryContainer}>
             {initialized ? (
               <>
-                <RawQuery lang={{ grammar: lokiGrammar, name: 'loki' }} query={queryExpr} className={styles.rawQuery} />
+                <RawQuery
+                  language={{ grammar: lokiGrammar, name: 'loki' }}
+                  query={queryExpr}
+                  className={styles.rawQuery}
+                />
                 <Tooltip content="The initial log context query is created from all labels defining the stream for the selected log line. Use the editor below to customize the log context query.">
                   <Icon name="info-circle" size="sm" className={styles.queryDescription} />
                 </Tooltip>

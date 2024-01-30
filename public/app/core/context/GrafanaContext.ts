@@ -26,3 +26,10 @@ export function useGrafana(): GrafanaContextType {
   }
   return context;
 }
+
+// Implementation of useReturnToPrevious that's made available through
+// @grafana/runtime
+export function useReturnToPreviousInternal() {
+  const { chrome } = useGrafana();
+  return chrome.setReturnToPrevious;
+}
