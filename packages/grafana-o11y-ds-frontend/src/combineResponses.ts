@@ -66,7 +66,9 @@ function combineFrames(dest: DataFrame, source: DataFrame) {
     }
     // Index is not reliable when frames have disordered fields, or an extra/missing field, so we find them by name.
     // If the field has no name, we fallback to the old index version.
-    const sourceField = dest.fields[i].name ? (source.fields.find(f => f.name === dest.fields[i].name)) : source.fields[i];
+    const sourceField = dest.fields[i].name
+      ? source.fields.find((f) => f.name === dest.fields[i].name)
+      : source.fields[i];
     if (!sourceField) {
       continue;
     }

@@ -102,7 +102,7 @@ describe('combineResponses', () => {
     const { logFrameB: originalLogFrameB } = getMockFrames();
 
     // Pseudo shuffle fields
-    logFrameB.fields.sort((a: Field, b: Field) => a.name < b.name ? -1 : 1);
+    logFrameB.fields.sort((a: Field, b: Field) => (a.name < b.name ? -1 : 1));
     expect(logFrameB.fields).not.toEqual(originalLogFrameB.fields);
 
     const responseA: DataQueryResponse = {
