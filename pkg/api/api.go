@@ -30,6 +30,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -51,6 +52,7 @@ import (
 	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 )
 
 var plog = log.New("api")
@@ -527,7 +529,7 @@ func (hs *HTTPServer) registerRoutes() {
 			dsQueryHandler = func(w http.ResponseWriter, r *http.Request) {
 				user, err := appcontext.User(r.Context())
 				if err != nil || user == nil {
-					w.Write([]byte("no user... ???"))
+					errhttp.Write(r.Context(), fmt.Errorf("no user"), w)
 					return
 				}
 				r.URL.Path = "/apis/query.grafana.app/v0alpha1/namespaces/" + namespaceMapper(user.OrgID) + "/query"

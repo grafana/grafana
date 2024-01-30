@@ -2,6 +2,7 @@ package query
 
 import (
 	"encoding/json"
+	"net/http"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -126,6 +127,7 @@ func (b *QueryAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 func (b *QueryAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	defs := v0alpha1.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
 	querySchema := defs["github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryRequest"].Schema
+	responseSchema := defs["github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataResponse"].Schema
 
 	var randomWalkQuery any
 	var randomWalkTable any
@@ -217,13 +219,25 @@ func (b *QueryAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 							Responses: &spec3.Responses{
 								ResponsesProps: spec3.ResponsesProps{
 									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
+										http.StatusOK: {
 											ResponseProps: spec3.ResponseProps{
-												Description: "the query results",
+												Description: "Query results",
 												Content: map[string]*spec3.MediaType{
 													"application/json": {
 														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: spec.MapProperty(spec.StringProperty()),
+															Schema: &responseSchema,
+														},
+													},
+												},
+											},
+										},
+										http.StatusMultiStatus: {
+											ResponseProps: spec3.ResponseProps{
+												Description: "Errors exist in the downstream results",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &responseSchema,
 														},
 													},
 												},

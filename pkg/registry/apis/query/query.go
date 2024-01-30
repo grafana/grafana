@@ -12,26 +12,27 @@ import (
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
+	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func (b *QueryAPIBuilder) handleQuery(w http.ResponseWriter, r *http.Request) {
 	reqDTO := v0alpha1.GenericQueryRequest{}
 	if err := web.Bind(r, &reqDTO); err != nil {
-		_, _ = w.Write([]byte("unable to bind query: " + err.Error()))
+		errhttp.Write(r.Context(), err, w)
 		return
 	}
 
 	parsed, err := parseQueryRequest(reqDTO)
 	if err != nil {
-		_, _ = w.Write([]byte("invalid query: " + err.Error()))
+		errhttp.Write(r.Context(), err, w)
 		return
 	}
 
 	ctx := r.Context()
 	qdr, err := b.processRequest(ctx, parsed)
 	if err != nil {
-		_, _ = w.Write([]byte("Error executing query: " + err.Error()))
+		errhttp.Write(r.Context(), err, w)
 		return
 	}
 
@@ -51,7 +52,7 @@ func (b *QueryAPIBuilder) handleQuery(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(qdr)
 	if err != nil {
-		_, _ = w.Write([]byte("Error executing query: " + err.Error()))
+		errhttp.Write(r.Context(), err, w)
 	}
 }
 
