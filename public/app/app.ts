@@ -35,6 +35,7 @@ import {
   setPluginExtensionGetter,
   setEmbeddedDashboard,
   setAppEvents,
+  setReturnToPreviousHook,
   type GetPluginExtensions,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
@@ -52,7 +53,7 @@ import appEvents from './core/app_events';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from './core/components/OptionsUI/registry';
 import { PluginPage } from './core/components/Page/PluginPage';
-import { GrafanaContextType } from './core/context/GrafanaContext';
+import { GrafanaContextType, useReturnToPreviousInternal } from './core/context/GrafanaContext';
 import { initIconCache } from './core/icons/iconBundle';
 import { initializeI18n } from './core/internationalization';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
@@ -246,6 +247,8 @@ export class GrafanaApp {
         newAssetsChecker,
         config,
       };
+
+      setReturnToPreviousHook(useReturnToPreviousInternal);
 
       const root = createRoot(document.getElementById('reactRoot')!);
       root.render(

@@ -58,7 +58,7 @@
     "string-hash": "^1.1.3",
     "tinycolor2": "1.6.0",
     "tslib": "2.6.2",
-    "uplot": "1.6.29",
+    "uplot": "1.6.30",
     "xss": "^1.0.14"
   },
   "devDependencies": {

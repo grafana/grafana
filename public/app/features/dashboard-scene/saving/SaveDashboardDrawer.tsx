@@ -8,6 +8,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
+import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 import { getSaveDashboardChange } from './getSaveDashboardChange';
 
 interface SaveDashboardDrawerState extends SceneObjectState {
@@ -36,6 +37,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     const changeInfo = getSaveDashboardChange(model.state.dashboardRef.resolve(), saveTimeRange, saveVariables);
     const { changedSaveModel, initialSaveModel, diffs, diffCount } = changeInfo;
     const dashboard = model.state.dashboardRef.resolve();
+    const isProvisioned = dashboard.state.meta.provisioned;
 
     const tabs = (
       <TabsBar>
@@ -54,11 +56,9 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     let title = 'Save dashboard';
     if (saveAsCopy) {
       title = 'Save dashboard copy';
+    } else if (isProvisioned) {
+      title = 'Provisioned dashboard';
     }
-
-    // else if (isProvisioned) {
-    //   title = 'Provisioned dashboard';
-    // }
 
     const renderBody = () => {
       if (showDiff) {
@@ -67,6 +67,10 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
 
       if (saveAsCopy || changeInfo.isNew) {
         return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
+      }
+
+      if (isProvisioned) {
+        return <SaveProvisionedDashboardForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
       }
 
       return <SaveDashboardForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;

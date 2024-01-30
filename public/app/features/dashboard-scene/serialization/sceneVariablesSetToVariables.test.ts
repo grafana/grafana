@@ -336,7 +336,6 @@ describe('sceneVariablesSetToVariables', () => {
         "value": "text value",
       },
       "description": "test-desc",
-      "hide": 2,
       "label": "test-label",
       "name": "test",
       "query": "text value",

@@ -229,6 +229,10 @@
       "visualization": "可视化",
       "widget": "小部件"
     },
+    "alert-rules-drawer": {
+      "redirect-link": "",
+      "subtitle": ""
+    },
     "empty": {
       "add-library-panel-body": "添加与其他仪表板共享的可视化。",
       "add-library-panel-button": "添加库面板",
@@ -297,6 +301,7 @@
     },
     "toolbar": {
       "add": "添加",
+      "alert-rules": "",
       "mark-favorite": "标记为收藏",
       "open-original": "打开原始仪表板",
       "playlist-next": "前往下一个仪表板",
