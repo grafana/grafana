@@ -131,6 +131,7 @@ interface State {
   tableFrame?: DataFrame;
   visualisationType?: LogsVisualisationType;
   logsContainer?: HTMLDivElement;
+  label: string | undefined;
 }
 
 // we need to define the order of these explicitly
@@ -171,6 +172,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     tableFrame: undefined,
     visualisationType: this.props.panelState?.logs?.visualisationType ?? getDefaultVisualisationType(),
     logsContainer: undefined,
+    label: this.props.panelState?.logs?.label,
   };
 
   constructor(props: Props) {
@@ -215,6 +217,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           visualisationType: logsPanelState.visualisationType ?? this.state.visualisationType,
           labelFieldName: logsPanelState.labelFieldName,
           refId: logsPanelState.refId ?? this.props.panelState?.logs?.refId,
+          label: logsPanelState.label ?? this.props.panelState?.logs?.label,
         })
       );
     }
@@ -591,6 +594,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
       loadMoreLogs,
     } = this.props;
 
+    console.log('this.props.panelState?.logs', this.props.panelState?.logs);
+    console.log('this.state.label', this.state.label);
+
     const {
       showLabels,
       showTime,
@@ -639,6 +645,15 @@ class UnthemedLogs extends PureComponent<Props, State> {
         >
           {logsVolumeEnabled && (
             <LogsVolumePanelList
+              selectedLabel={this.props.panelState?.logs?.label}
+              onChangeLabel={(newLabel: string) => {
+                console.log('newLabel', newLabel);
+                this.updatePanelState({
+                  ...this.props.panelState?.logs,
+                  label: newLabel,
+                });
+              }}
+              labels={['level', 'cluster', 'container']}
               absoluteRange={absoluteRange}
               width={width}
               logsVolumeData={logsVolumeData}

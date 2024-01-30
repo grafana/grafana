@@ -122,7 +122,8 @@ export const getSupplementaryQueryProvider = (
   groupedQueries: Array<{ datasource: DataSourceApi; targets: DataQuery[] }>,
   type: SupplementaryQueryType,
   request: DataQueryRequest,
-  explorePanelData: Observable<ExplorePanelData>
+  explorePanelData: Observable<ExplorePanelData>,
+  metadata?: { label: string }
 ): Observable<DataQueryResponse> | undefined => {
   const providers = groupedQueries.map(({ datasource, targets }, i) => {
     const dsRequest = cloneDeep(request);
@@ -130,7 +131,7 @@ export const getSupplementaryQueryProvider = (
     dsRequest.targets = targets;
 
     if (hasSupplementaryQuerySupport(datasource, type)) {
-      return datasource.getDataProvider(type, dsRequest);
+      return datasource.getDataProvider(type, dsRequest, metadata);
     } else {
       return getSupplementaryQueryFallback(type, explorePanelData, targets, datasource.name);
     }

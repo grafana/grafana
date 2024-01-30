@@ -173,14 +173,15 @@ export class LokiDatasource
    */
   getDataProvider(
     type: SupplementaryQueryType,
-    request: DataQueryRequest<LokiQuery>
+    request: DataQueryRequest<LokiQuery>,
+    metadata?: { label: string }
   ): Observable<DataQueryResponse> | undefined {
     if (!this.getSupportedSupplementaryQueryTypes().includes(type)) {
       return undefined;
     }
     switch (type) {
       case SupplementaryQueryType.LogsVolume:
-        return this.getLogsVolumeDataProvider(request);
+        return this.getLogsVolumeDataProvider(request, metadata?.label ?? 'level');
       case SupplementaryQueryType.LogsSample:
         return this.getLogsSampleDataProvider(request);
       default:
@@ -229,7 +230,7 @@ export class LokiDatasource
           refId: `${REF_ID_STARTER_LOG_VOLUME}${normalizedQuery.refId}`,
           queryType: LokiQueryType.Range,
           supportingQueryType: SupportingQueryType.LogsVolume,
-          expr: `sum by (level) (count_over_time(${expr}[$__auto]))`,
+          expr: `sum by (${options.label ?? 'level'}) (count_over_time(${expr}[$__auto]))`,
         };
 
       case SupplementaryQueryType.LogsSample:
@@ -255,10 +256,13 @@ export class LokiDatasource
    * Private method used in the `getDataProvider` for DataSourceWithSupplementaryQueriesSupport, specifically for Logs volume queries.
    * @returns An Observable of DataQueryResponse or undefined if no suitable queries are found.
    */
-  private getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
+  private getLogsVolumeDataProvider(
+    request: DataQueryRequest<LokiQuery>,
+    label: string
+  ): Observable<DataQueryResponse> | undefined {
     const logsVolumeRequest = cloneDeep(request);
     const targets = logsVolumeRequest.targets
-      .map((query) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsVolume }, query))
+      .map((query) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsVolume, label }, query))
       .filter((query): query is LokiQuery => !!query);
 
     if (!targets.length) {
@@ -269,7 +273,7 @@ export class LokiDatasource
       this,
       { ...logsVolumeRequest, targets },
       {
-        extractLevel,
+        extractLevel: label === 'level' ? extractLevel : undefined,
         range: request.range,
         targets: request.targets,
       }
@@ -1125,6 +1129,7 @@ export class LokiDatasource
   getVariables(): string[] {
     return this.templateSrv.getVariables().map((v) => `$${v.name}`);
   }
+
   /**
    * Retrieves query hints for query improvements based on a Loki query and its result data.
    * Used in Query builder to provide hints for query improvements, such as adding a parser, etc.

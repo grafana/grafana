@@ -32,6 +32,9 @@ type Props = {
   onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
   eventBus: EventBus;
   onClose?(): void;
+  onChangeLabel: (label: string) => void;
+  labels: string[];
+  selectedLabel?: string;
 };
 
 export const LogsVolumePanelList = ({
@@ -45,6 +48,9 @@ export const LogsVolumePanelList = ({
   splitOpen,
   timeZone,
   onClose,
+  onChangeLabel,
+  labels,
+  selectedLabel,
 }: Props) => {
   const {
     logVolumes,
@@ -121,6 +127,9 @@ export const LogsVolumePanelList = ({
         const logsVolumeData = { data: logVolumes[name] };
         return (
           <LogsVolumePanel
+            selectedLabel={selectedLabel}
+            labels={labels}
+            onChangeLabel={onChangeLabel}
             key={index}
             absoluteRange={visibleRange}
             allLogsVolumeMaximum={allLogsVolumeMaximumValue}
