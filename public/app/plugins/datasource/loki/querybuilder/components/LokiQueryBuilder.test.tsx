@@ -8,7 +8,7 @@ import { config } from '@grafana/runtime';
 import { createLokiDatasource } from '../../__mocks__/datasource';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
-import { LokiQueryBuilder } from './LokiQueryBuilder';
+import { LokiQueryBuilder, TIME_SPAN_TO_TRIGGER_SAMPLES } from './LokiQueryBuilder';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 
 const MISSING_LABEL_FILTER_ERROR_MESSAGE = 'Select at least 1 label filter (label and value)';
@@ -187,8 +187,8 @@ describe('LokiQueryBuilder', () => {
       operations: [{ id: LokiOperationId.LineContains, params: ['error'] }],
     };
     const props = createDefaultProps();
-    const updatedFrom = dateTime(props.timeRange.from.valueOf() + 10 * 60 * 1000);
-    const updatedTo = dateTime(props.timeRange.to.valueOf() + 10 * 60 * 1000);
+    const updatedFrom = dateTime(props.timeRange.from.valueOf() + TIME_SPAN_TO_TRIGGER_SAMPLES + 1000);
+    const updatedTo = dateTime(props.timeRange.to.valueOf() + TIME_SPAN_TO_TRIGGER_SAMPLES + 1000);
     const updatedTimeRange = {
       from: updatedFrom,
       to: updatedTo,
@@ -213,8 +213,8 @@ describe('LokiQueryBuilder', () => {
       operations: [{ id: LokiOperationId.LineContains, params: ['error'] }],
     };
     const props = createDefaultProps();
-    const updatedFrom = dateTime(props.timeRange.from.valueOf() + 2 * 60 * 1000);
-    const updatedTo = dateTime(props.timeRange.to.valueOf() + 2 * 60 * 1000);
+    const updatedFrom = dateTime(props.timeRange.from.valueOf() + TIME_SPAN_TO_TRIGGER_SAMPLES - 1000);
+    const updatedTo = dateTime(props.timeRange.to.valueOf() + TIME_SPAN_TO_TRIGGER_SAMPLES - 1000);
     const updatedTimeRange = {
       from: updatedFrom,
       to: updatedTo,

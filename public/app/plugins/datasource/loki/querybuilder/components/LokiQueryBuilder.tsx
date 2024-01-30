@@ -31,6 +31,7 @@ import { LokiOperationId, LokiVisualQuery } from '../types';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 import { NestedQueryList } from './NestedQueryList';
 
+export const TIME_SPAN_TO_TRIGGER_SAMPLES = 5 * 60 * 1000;
 export interface Props {
   query: LokiVisualQuery;
   datasource: LokiDatasource;
@@ -113,15 +114,13 @@ export const LokiQueryBuilder = React.memo<Props>(
         setSampleData(sampleData);
       };
 
-      // TIME_SPAN should be changed by at least 5 minutes to trigger a new sample data request
-      const TIME_SPAN = 5 * 60 * 1000;
-      const shouldUpdateChangedTimeRange =
+      const updateBasedOnChangedTimeRange =
         prevTimeRange &&
         timeRange &&
-        (Math.abs(timeRange.to.valueOf() - prevTimeRange.to.valueOf()) > TIME_SPAN ||
-          Math.abs(timeRange.from.valueOf() - prevTimeRange.from.valueOf()) > TIME_SPAN);
-      const shouldUpdateChangedQuery = !isEqual(prevQuery, query);
-      if (config.featureToggles.lokiQueryHints && (shouldUpdateChangedQuery || shouldUpdateChangedTimeRange)) {
+        (Math.abs(timeRange.to.valueOf() - prevTimeRange.to.valueOf()) > TIME_SPAN_TO_TRIGGER_SAMPLES ||
+          Math.abs(timeRange.from.valueOf() - prevTimeRange.from.valueOf()) > TIME_SPAN_TO_TRIGGER_SAMPLES);
+      const updateBasedOnChangedQuery = !isEqual(prevQuery, query);
+      if (config.featureToggles.lokiQueryHints && (updateBasedOnChangedTimeRange || updateBasedOnChangedQuery)) {
         onGetSampleData().catch(console.error);
       }
     }, [datasource, query, timeRange, prevQuery, prevTimeRange]);
