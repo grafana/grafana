@@ -1,7 +1,8 @@
-import { SceneTimePicker, SceneRefreshPicker } from '@grafana/scenes';
+import { SceneTimePicker, SceneRefreshPicker, VizPanel } from '@grafana/scenes';
 
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
+import { VizPanelLinks } from '../scene/PanelLinks';
 
 function getTimePicker(scene: DashboardScene) {
   const dashboardControls = getDashboardControls(scene);
@@ -36,8 +37,21 @@ function getDashboardControls(scene: DashboardScene) {
   return null;
 }
 
+function getPanelLinks(panel: VizPanel) {
+  if (
+    panel.state.titleItems &&
+    Array.isArray(panel.state.titleItems) &&
+    panel.state.titleItems[0] instanceof VizPanelLinks
+  ) {
+    return panel.state.titleItems[0];
+  }
+
+  throw new Error('VizPanelLinks links not found');
+}
+
 export const dashboardSceneGraph = {
   getTimePicker,
   getRefreshPicker,
   getDashboardControls,
+  getPanelLinks,
 };

@@ -28,7 +28,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     const { panel } = panelManager.state;
     const { pluginId, options } = panel.useState();
     const styles = useStyles2(getStyles);
-    const [isVizPickerOpen, setVizPickerOpen] = useState(true);
+    const [isVizPickerOpen, setVizPickerOpen] = useState(false);
     const panelFrameOptions = useMemo(() => getPanelFrameCategory2(panel), [panel]);
 
     const visualizationOptions = useMemo(() => {
