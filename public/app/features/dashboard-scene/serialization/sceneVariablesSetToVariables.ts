@@ -34,7 +34,6 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
         includeAll: variable.state.includeAll,
         multi: variable.state.isMulti,
         skipUrlSync: variable.state.skipUrlSync,
-        hide: variable.state.hide || VariableHide.dontHide,
       });
     } else if (sceneUtils.isCustomVariable(variable)) {
       variables.push({
@@ -90,7 +89,6 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
           value: variable.state.value,
         },
         query: intervals,
-        hide: VariableHide.hideVariable,
         refresh: variable.state.refresh,
         // @ts-expect-error ?? how to fix this without adding the ts-expect-error
         auto: variable.state.autoEnabled,
@@ -105,7 +103,6 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
           value: variable.state.value,
         },
         query: variable.state.value,
-        hide: VariableHide.hideVariable,
       });
     } else {
       throw new Error('Unsupported variable type');
