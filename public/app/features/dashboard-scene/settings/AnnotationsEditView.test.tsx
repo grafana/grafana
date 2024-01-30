@@ -1,16 +1,16 @@
 import { map, of } from 'rxjs';
 
-import { DataQueryRequest, DataSourceApi, LoadingState, PanelData } from '@grafana/data';
-import { SceneDataLayers, SceneGridItem, SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
+import { AnnotationQuery, DataQueryRequest, DataSourceApi, LoadingState, PanelData } from '@grafana/data';
+import { SceneDataLayers, SceneGridItem, SceneGridLayout, SceneTimeRange, dataLayers } from '@grafana/scenes';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { AnnotationsEditView } from './AnnotationsEditView';
+import { AnnotationsEditView, MoveDirection } from './AnnotationsEditView';
+import { newAnnotationName } from './annotations/AnnotationSettingsEdit';
 
-const getDataSourceSrvSpy = jest.fn();
 const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
   const result: PanelData = {
     state: LoadingState.Loading,
@@ -31,7 +31,9 @@ const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request:
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => {
-    getDataSourceSrvSpy();
+    return {
+      getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+    };
   },
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
     return runRequestMock(ds, request);
@@ -44,10 +46,12 @@ jest.mock('@grafana/runtime', () => ({
 describe('AnnotationsEditView', () => {
   describe('Dashboard annotations state', () => {
     let annotationsView: AnnotationsEditView;
+    let dashboardScene: DashboardScene;
 
     beforeEach(async () => {
       const result = await buildTestScene();
       annotationsView = result.annotationsView;
+      dashboardScene = result.dashboard;
     });
 
     it('should return the correct urlKey', () => {
@@ -61,8 +65,91 @@ describe('AnnotationsEditView', () => {
       expect(dataLayers?.state.layers.length).toBe(2);
     });
 
+    it('should throw if there are no scene data layers', () => {
+      dashboardScene.setState({
+        $data: undefined,
+      });
+
+      expect(annotationsView.getSceneDataLayers).toThrow('SceneDataLayers not found');
+    });
+
     it('should return the annotations length', () => {
       expect(annotationsView.getAnnotationsLength()).toBe(1);
+    });
+
+    it('should return 0 if no annotations', () => {
+      dashboardScene.setState({
+        $data: new SceneDataLayers({ layers: [] }),
+      });
+
+      expect(annotationsView.getAnnotationsLength()).toBe(0);
+    });
+
+    it('should add a new annotation and group it with the other annotations', () => {
+      const dataLayers = annotationsView.getSceneDataLayers();
+
+      expect(dataLayers?.state.layers.length).toBe(2);
+
+      annotationsView.onNew();
+
+      expect(dataLayers?.state.layers.length).toBe(3);
+      expect(dataLayers?.state.layers[1].state.name).toBe(newAnnotationName);
+      expect(dataLayers?.state.layers[1].isActive).toBe(true);
+    });
+
+    it('should move an annotation up one position', () => {
+      const dataLayers = annotationsView.getSceneDataLayers();
+
+      annotationsView.onNew();
+
+      expect(dataLayers?.state.layers.length).toBe(3);
+      expect(dataLayers?.state.layers[0].state.name).toBe('test');
+
+      annotationsView.onMove(1, MoveDirection.UP);
+
+      expect(dataLayers?.state.layers.length).toBe(3);
+      expect(dataLayers?.state.layers[0].state.name).toBe(newAnnotationName);
+    });
+
+    it('should move an annotation down one position', () => {
+      const dataLayers = annotationsView.getSceneDataLayers();
+
+      annotationsView.onNew();
+
+      expect(dataLayers?.state.layers.length).toBe(3);
+      expect(dataLayers?.state.layers[0].state.name).toBe('test');
+
+      annotationsView.onMove(0, MoveDirection.DOWN);
+
+      expect(dataLayers?.state.layers.length).toBe(3);
+      expect(dataLayers?.state.layers[0].state.name).toBe(newAnnotationName);
+    });
+
+    it('should delete annotation at index', () => {
+      const dataLayers = annotationsView.getSceneDataLayers();
+
+      expect(dataLayers?.state.layers.length).toBe(2);
+
+      annotationsView.onDelete(0);
+
+      expect(dataLayers?.state.layers.length).toBe(1);
+      expect(dataLayers?.state.layers[0].state.name).toBe('Alert States');
+    });
+
+    it('should update an annotation at index', () => {
+      const dataLayers = annotationsView.getSceneDataLayers();
+
+      expect(dataLayers?.state.layers[0].state.name).toBe('test');
+
+      const annotation: AnnotationQuery = {
+        ...(dataLayers?.state.layers[0] as dataLayers.AnnotationsDataLayer).state.query,
+      };
+
+      annotation.name = 'new name';
+      annotationsView.onUpdate(annotation, 0);
+
+      expect(dataLayers?.state.layers.length).toBe(2);
+      expect(dataLayers?.state.layers[0].state.name).toBe('new name');
     });
   });
 });

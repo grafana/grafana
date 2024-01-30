@@ -2,14 +2,7 @@ import React from 'react';
 
 import { AnnotationQuery, DataTopic, PageLayoutType, getDataSourceRef } from '@grafana/data';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
-import {
-  SceneComponentProps,
-  SceneDataLayerProvider,
-  SceneDataLayers,
-  SceneObjectBase,
-  dataLayers,
-  sceneGraph,
-} from '@grafana/scenes';
+import { SceneComponentProps, SceneDataLayers, SceneObjectBase, dataLayers, sceneGraph } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -21,6 +14,11 @@ import { getDashboardSceneFor } from '../utils/utils';
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
 import { AnnotationSettingsEdit, AnnotationSettingsList, newAnnotationName } from './annotations';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
+
+export enum MoveDirection {
+  UP = -1,
+  DOWN = 1,
+}
 
 export interface AnnotationsEditViewState extends DashboardEditViewState {
   editIndex?: number | undefined;
@@ -39,22 +37,18 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     return getDashboardSceneFor(this);
   }
 
-  private get _dataLayers(): SceneDataLayerProvider[] {
-    return sceneGraph.getDataLayers(this._dashboard);
-  }
-
-  public getSceneDataLayers(): SceneDataLayers | undefined {
+  public getSceneDataLayers(): SceneDataLayers {
     const data = sceneGraph.getData(this);
 
     if (!(data instanceof SceneDataLayers)) {
-      return undefined;
+      throw new Error('SceneDataLayers not found');
     }
 
     return data;
   }
 
   public getAnnotationsLength(): number {
-    return this._dataLayers.filter((layer) => layer.topic === DataTopic.Annotations).length;
+    return this.getSceneDataLayers().state.layers.filter((layer) => layer.topic === DataTopic.Annotations).length;
   }
 
   public getDashboard(): DashboardScene {
@@ -81,6 +75,8 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
 
     if (data) {
       const layers = [...data.state.layers];
+      newAnnotation.activate();
+
       //keep annotation layers together
       layers.splice(this.getAnnotationsLength(), 0, newAnnotation);
 
@@ -110,7 +106,7 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     this._dashboard.startUrlSync();
   };
 
-  public onMove = (idx: number, direction: number) => {
+  public onMove = (idx: number, direction: MoveDirection) => {
     const data = this.getSceneDataLayers();
 
     if (data) {
@@ -153,6 +149,8 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
           query: annotation,
         });
 
+        layer.runLayer();
+
         data.setState({
           layers,
         });
@@ -163,18 +161,12 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
 
 function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditView>) {
   const dashboard = model.getDashboard();
-  const sceneDataLayers = model.getSceneDataLayers();
+  const { layers } = model.getSceneDataLayers().useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   const { editIndex } = model.useState();
   const panels = dashboard.getVizPanels();
 
-  let annotations: AnnotationQuery[] = [];
-
-  if (sceneDataLayers) {
-    const { layers } = sceneDataLayers.useState();
-    annotations = dataLayersToAnnotations(layers);
-  }
-
+  const annotations: AnnotationQuery[] = dataLayersToAnnotations(layers);
   const isEditing = editIndex != null && editIndex < model.getAnnotationsLength();
 
   return (

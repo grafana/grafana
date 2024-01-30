@@ -7,11 +7,13 @@ import { Button, DeleteButton, IconButton, useStyles2, VerticalGroup } from '@gr
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { ListNewButton } from 'app/features/dashboard/components/DashboardSettings/ListNewButton';
 
+import { MoveDirection } from '../AnnotationsEditView';
+
 type Props = {
   annotations: AnnotationQuery[];
   onNew: () => void;
   onEdit: (idx: number) => void;
-  onMove: (idx: number, dir: number) => void;
+  onMove: (idx: number, dir: MoveDirection) => void;
   onDelete: (idx: number) => void;
 };
 
@@ -65,11 +67,17 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
                     {dataSourceSrv.getInstanceSettings(annotation.datasource)?.name || annotation.datasource?.uid}
                   </td>
                   <td role="gridcell" style={{ width: '1%' }}>
-                    {idx !== 0 && <IconButton name="arrow-up" onClick={() => onMove(idx, -1)} tooltip="Move up" />}
+                    {idx !== 0 && (
+                      <IconButton name="arrow-up" onClick={() => onMove(idx, MoveDirection.UP)} tooltip="Move up" />
+                    )}
                   </td>
                   <td role="gridcell" style={{ width: '1%' }}>
                     {annotations.length > 1 && idx !== annotations.length - 1 ? (
-                      <IconButton name="arrow-down" onClick={() => onMove(idx, 1)} tooltip="Move down" />
+                      <IconButton
+                        name="arrow-down"
+                        onClick={() => onMove(idx, MoveDirection.DOWN)}
+                        tooltip="Move down"
+                      />
                     ) : null}
                   </td>
                   <td role="gridcell" style={{ width: '1%' }}>
