@@ -52,7 +52,7 @@ Tooltip options control the information overlay that appears when you hover over
 
 ### Hover proximity
 
-This option controls how close your cursor must be to a data point before the tooltip appears.
+This option controls how close your cursor must be to a data point before the tooltip appears. Values are in pixels.
 
 ## Legend options
 
