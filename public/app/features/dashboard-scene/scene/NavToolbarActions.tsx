@@ -136,6 +136,19 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
         </Button>
       );
     }
+
+    if (meta.isSnapshot) {
+      toolbarActions.push(
+        <DashNavButton
+          key="button-snapshot"
+          tooltip={t('dashboard.toolbar.open-original', 'Open original dashboard')}
+          icon="link"
+          onClick={() => {
+            dashboard.onOpenSnapshotOriginalDashboard();
+          }}
+        />
+      );
+    }
   } else {
     if (dashboard.canEditDashboard()) {
       toolbarActions.push(

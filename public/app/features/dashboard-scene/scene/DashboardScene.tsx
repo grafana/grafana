@@ -388,6 +388,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
   }
 
+  onOpenSnapshotOriginalDashboard = () => {
+    try {
+      // @ts-ignore
+      const originalUrl = this.getInitialSaveModel()?.snapshot?.originalUrl ?? '';
+      locationService.push(originalUrl);
+    } catch (err) {
+      console.error('Failed to open original dashboard', err);
+    }
+  };
+
   public onOpenSettings = () => {
     locationService.partial({ editview: 'settings' });
   };
