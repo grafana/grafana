@@ -10,11 +10,12 @@ import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../utils/utils';
 import { VizPanelManager } from '../VizPanelManager';
 
 import { ScenesNewRuleFromPanelButton } from './NewAlertRuleButton';
-import { PanelDataPaneTabState, PanelDataPaneTab } from './types';
+import { PanelDataPaneTabState, PanelDataPaneTab, TabId } from './types';
 
 export class PanelDataAlertingTab extends SceneObjectBase<PanelDataPaneTabState> implements PanelDataPaneTab {
   static Component = PanelDataAlertingTabRendered;
-  tabId = 'alert';
+
+  tabId = TabId.Alert;
   icon: IconName = 'bell';
   private _panelManager: VizPanelManager;
 

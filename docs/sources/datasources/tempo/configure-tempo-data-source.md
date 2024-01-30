@@ -35,7 +35,11 @@ To configure basic settings for the Tempo data source, complete the following st
     | **User**       | Sets the user name for basic authentication.                             |
     | **Password**   | Sets the password for basic authentication.                              |
 
-You can also configure settings specific to the Tempo data source. These options are described in the sections below.
+You can also configure settings specific to the Tempo data source.
+
+This video explains how to add data sources, including Loki, Tempo, and Mimir, to Grafana and Grafana Cloud. Tempo data source set up starts at 4:58 in the video.
+
+{{< youtube id="cqHO0oYW6Ic" start="298" >}}
 
 ## Trace to logs
 
@@ -85,6 +89,8 @@ To use a variable you need to wrap it in `${}`. For example `${__span.name}`.
 | **\_\_trace.traceId**  | The ID of the trace.                                                                                                                                                                                                                                                                                                                     |
 | **\_\_trace.duration** | The duration of the trace.                                                                                                                                                                                                                                                                                                               |
 | **\_\_trace.name**     | The name of the trace.                                                                                                                                                                                                                                                                                                                   |
+
+### Configure trace to logs
 
 The following table describes the ways in which you can configure your trace to logs settings:
 
@@ -224,6 +230,12 @@ datasources:
         queries:
           - name: 'Sample query'
             query: 'sum(rate(traces_spanmetrics_latency_bucket{$$__tags}[5m]))'
+      traceToProfiles:
+        datasourceUid: 'grafana-pyroscope-datasource'
+        tags: ['job', 'instance', 'pod', 'namespace']
+        profileTypeId: 'process_cpu:cpu:nanoseconds:cpu:nanoseconds'
+        customQuery: true
+        query: 'method="${__span.tags.method}"'
       serviceMap:
         datasourceUid: 'prometheus'
       nodeGraph:
