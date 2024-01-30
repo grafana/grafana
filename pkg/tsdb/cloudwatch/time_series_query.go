@@ -9,7 +9,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
@@ -38,7 +38,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 	}
 
 	requestQueries, err := models.ParseMetricDataQueries(req.Queries, startTime, endTime, instance.Settings.Region, logger,
-		e.features.IsEnabled(ctx, featuremgmt.FlagCloudWatchCrossAccountQuerying))
+		features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying))
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 		region := r
 
 		batches := [][]*models.CloudWatchQuery{regionQueries}
-		if e.features.IsEnabled(ctx, featuremgmt.FlagCloudWatchBatchQueries) {
+		if features.IsEnabled(ctx, features.FlagCloudWatchBatchQueries) {
 			batches = getMetricQueryBatches(regionQueries, logger)
 		}
 
@@ -96,7 +96,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 					return err
 				}
 
-				if e.features.IsEnabled(ctx, featuremgmt.FlagCloudWatchWildCardDimensionValues) {
+				if features.IsEnabled(ctx, features.FlagCloudWatchWildCardDimensionValues) {
 					requestQueries, err = e.getDimensionValuesForWildcards(ctx, req.PluginContext, region, client, requestQueries, instance.tagValueCache, logger)
 					if err != nil {
 						return err
