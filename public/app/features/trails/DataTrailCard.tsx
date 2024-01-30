@@ -78,7 +78,7 @@ function getMetricName(metric?: string) {
 function getStyles(theme: GrafanaTheme2) {
   return {
     tag: css({
-      maxWidth: '225px',
+      maxWidth: '260px',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
     }),
