@@ -318,11 +318,18 @@ func newTitlesOverlapExisting(rules []ngmodels.UpdateRule) bool {
 
 // CountInFolder is a handler for retrieving the number of alert rules of
 // specific organisation associated with a given namespace (parent folder).
-func (st DBstore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u identity.Requester) (int64, error) {
+func (st DBstore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) (int64, error) {
+	if len(folderUIDs) == 0 {
+		return 0, nil
+	}
 	var count int64
 	var err error
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		q := sess.Table("alert_rule").Where("org_id = ?", orgID).Where("namespace_uid = ?", folderUID)
+		args := make([]any, 0, len(folderUIDs))
+		for _, folderUID := range folderUIDs {
+			args = append(args, folderUID)
+		}
+		q := sess.Table("alert_rule").Where("org_id = ?", orgID).Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Repeat("?,", len(folderUIDs)-1)+"?"), args...)
 		count, err = q.Count()
 		return err
 	})
@@ -577,35 +584,37 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 }
 
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
-func (st DBstore) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) error {
-	evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
-	canSave, err := st.AccessControl.Evaluate(ctx, user, evaluator)
-	if err != nil {
-		st.Logger.Error("Failed to evaluate access control", "error", err)
-		return err
-	}
-	if !canSave {
-		st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user")
-		return dashboards.ErrFolderAccessDenied
-	}
-
-	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
-		OrgID:         orgID,
-		NamespaceUIDs: []string{folderUID},
-	})
-	if err != nil {
-		return err
-	}
-
-	uids := make([]string, 0, len(rules))
-	for _, tgt := range rules {
-		if tgt != nil {
-			uids = append(uids, tgt.UID)
+func (st DBstore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
+	for _, folderUID := range folderUIDs {
+		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
+		canSave, err := st.AccessControl.Evaluate(ctx, user, evaluator)
+		if err != nil {
+			st.Logger.Error("Failed to evaluate access control", "error", err)
+			return err
 		}
-	}
+		if !canSave {
+			st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user")
+			return dashboards.ErrFolderAccessDenied
+		}
 
-	if err := st.DeleteAlertRulesByUID(ctx, orgID, uids...); err != nil {
-		return err
+		rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
+			OrgID:         orgID,
+			NamespaceUIDs: []string{folderUID},
+		})
+		if err != nil {
+			return err
+		}
+
+		uids := make([]string, 0, len(rules))
+		for _, tgt := range rules {
+			if tgt != nil {
+				uids = append(uids, tgt.UID)
+			}
+		}
+
+		if err := st.DeleteAlertRulesByUID(ctx, orgID, uids...); err != nil {
+			return err
+		}
 	}
 	return nil
 }

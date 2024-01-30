@@ -259,7 +259,6 @@ func TestIntegrationFolderService(t *testing.T) {
 			t.Run("When deleting folder by uid should not return access denied error", func(t *testing.T) {
 				f := folder.NewFolder(util.GenerateShortUID(), "")
 				f.UID = util.GenerateShortUID()
-				folderStore.On("GetFolders", mock.Anything, orgID, []string{f.UID}).Return(map[string]*folder.Folder{f.UID: f}, nil)
 				folderStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
 
 				var actualCmd *dashboards.DeleteDashboardCommand
@@ -458,7 +457,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			t.Cleanup(func() {
 				guardian.New = origNewGuardian
 				for _, ancestor := range ancestors {
-					err := serviceWithFlagOn.store.Delete(context.Background(), ancestor.UID, orgID)
+					err := serviceWithFlagOn.store.Delete(context.Background(), []string{ancestor.UID}, orgID)
 					assert.NoError(t, err)
 				}
 			})
@@ -538,7 +537,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			t.Cleanup(func() {
 				guardian.New = origNewGuardian
 				for _, ancestor := range ancestors {
-					err := serviceWithFlagOn.store.Delete(context.Background(), ancestor.UID, orgID)
+					err := serviceWithFlagOn.store.Delete(context.Background(), []string{ancestor.UID}, orgID)
 					assert.NoError(t, err)
 				}
 			})
@@ -1392,17 +1391,12 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 
 		t.Cleanup(func() {
 			guardian.New = origNewGuardian
-			for _, ancestor := range ancestorFoldersWithPermissions {
-				err := serviceWithFlagOn.store.Delete(context.Background(), ancestor.UID, orgID)
-				assert.NoError(t, err)
+			toDelete := make([]string, 0, len(ancestorFoldersWithPermissions)+len(ancestorFoldersWithoutPermissions))
+			for _, ancestor := range append(ancestorFoldersWithPermissions, ancestorFoldersWithoutPermissions...) {
+				toDelete = append(toDelete, ancestor.UID)
 			}
-		})
-		t.Cleanup(func() {
-			guardian.New = origNewGuardian
-			for _, ancestor := range ancestorFoldersWithoutPermissions {
-				err := serviceWithFlagOn.store.Delete(context.Background(), ancestor.UID, orgID)
-				assert.NoError(t, err)
-			}
+			err := serviceWithFlagOn.store.Delete(context.Background(), toDelete, orgID)
+			assert.NoError(t, err)
 		})
 	})
 
@@ -1435,14 +1429,12 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 
 		t.Cleanup(func() {
 			guardian.New = origNewGuardian
-			for _, f := range tree1 {
-				err := serviceWithFlagOn.store.Delete(context.Background(), f.UID, orgID)
-				assert.NoError(t, err)
+			toDelete := make([]string, 0, len(tree1)+len(tree2))
+			for _, f := range append(tree1, tree2...) {
+				toDelete = append(toDelete, f.UID)
 			}
-			for _, f := range tree2 {
-				err := serviceWithFlagOn.store.Delete(context.Background(), f.UID, orgID)
-				assert.NoError(t, err)
-			}
+			err := serviceWithFlagOn.store.Delete(context.Background(), toDelete, orgID)
+			assert.NoError(t, err)
 		})
 
 		testCases := []struct {

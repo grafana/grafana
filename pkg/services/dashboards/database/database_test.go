@@ -47,6 +47,11 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		var err error
 		dashboardStore, err = ProvideDashboardStore(sqlStore, cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore), quotaService)
 		require.NoError(t, err)
+		// insertTestDashboard creates the following hierarchy:
+		// 1 test dash folder
+		//   test dash 23
+		//   test dash 45
+		// test dash 67
 		savedFolder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, "", true, "prod", "webapp")
 		savedDash = insertTestDashboard(t, dashboardStore, "test dash 23", 1, savedFolder.ID, savedFolder.UID, false, "prod", "webapp")
 		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.ID, savedFolder.UID, false, "prod")
@@ -470,17 +475,15 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	t.Run("Can count dashboards by parent folder", func(t *testing.T) {
 		setup()
 		// setup() saves one dashboard in the general folder and two in the "savedFolder".
-		count, err := dashboardStore.CountDashboardsInFolder(
+		count, err := dashboardStore.CountDashboardsInFolders(
 			context.Background(),
-			// nolint:staticcheck
-			&dashboards.CountDashboardsInFolderRequest{FolderID: 0, OrgID: 1})
+			&dashboards.CountDashboardsInFolderRequest{FolderUIDs: []string{""}, OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, int64(1), count)
 
-		count, err = dashboardStore.CountDashboardsInFolder(
+		count, err = dashboardStore.CountDashboardsInFolders(
 			context.Background(),
-			// nolint:staticcheck
-			&dashboards.CountDashboardsInFolderRequest{FolderID: savedFolder.ID, OrgID: 1})
+			&dashboards.CountDashboardsInFolderRequest{FolderUIDs: []string{savedFolder.UID}, OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, int64(2), count)
 	})
@@ -491,16 +494,16 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		_ = insertTestDashboard(t, dashboardStore, "delete me 1", 1, folder.ID, folder.UID, false, "delete this 1")
 		_ = insertTestDashboard(t, dashboardStore, "delete me 2", 1, folder.ID, folder.UID, false, "delete this 2")
 
-		err := dashboardStore.DeleteDashboardsInFolder(
+		err := dashboardStore.DeleteDashboardsInFolders(
 			context.Background(),
 			&dashboards.DeleteDashboardsInFolderRequest{
-				FolderUID: folder.UID,
-				OrgID:     1,
+				FolderUIDs: []string{folder.UID},
+				OrgID:      1,
 			})
 		require.NoError(t, err)
 
 		// nolint:staticcheck
-		count, err := dashboardStore.CountDashboardsInFolder(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderID: 2, OrgID: 1})
+		count, err := dashboardStore.CountDashboardsInFolders(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderUIDs: []string{folder.UID}, OrgID: 1})
 		require.NoError(t, err)
 		require.Equal(t, count, int64(0))
 	})

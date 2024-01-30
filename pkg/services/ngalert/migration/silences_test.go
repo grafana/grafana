@@ -33,7 +33,7 @@ func TestSilences(t *testing.T) {
 
 		o := createOrg(t, 1)
 		folder1 := createFolder(t, 1, o.ID, "folder-1")
-		dash1 := createDashboard(t, 3, o.ID, "dash1", "", folder1.ID, nil)
+		dash1 := createDashboard(t, 3, o.ID, "dash1", folder1.UID, folder1.ID, nil)
 
 		silenceTests := []struct {
 			name             string
