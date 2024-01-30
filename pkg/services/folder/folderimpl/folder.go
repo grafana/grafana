@@ -799,8 +799,6 @@ func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, folde
 func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, folderUIDs []string) error {
 	// TODO use bulk delete
 	for _, folderUID := range folderUIDs {
-		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-		// nolint:staticcheck
 		deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, UID: folderUID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 
 		if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
@@ -899,9 +897,9 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 // the folder store and returns the UIDs for all its descendants.
 func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFolderCommand) ([]string, error) {
 	logger := s.log.FromContext(ctx)
-	result := []string{}
+	descendantUIDs := []string{}
 	if cmd.SignedInUser == nil {
-		return result, folder.ErrBadRequest.Errorf("missing signed in user")
+		return descendantUIDs, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
 	_, err := s.Get(ctx, &folder.GetFolderQuery{
@@ -910,31 +908,26 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 		SignedInUser: cmd.SignedInUser,
 	})
 	if err != nil {
-		return result, err
+		return descendantUIDs, err
 	}
 
 	descendants, err := s.store.GetDescendants(ctx, cmd.OrgID, cmd.UID)
 	if err != nil {
 		logger.Error("failed to get descendant folders", "error", err)
-		return result, err
+		return descendantUIDs, err
 	}
 
-	// TODO use bulk delete query to delete all descendants in one query
 	for _, f := range descendants {
-		result = append(result, f.UID)
-		logger.Info("deleting descendant", "org_id", f.OrgID, "uid", f.UID)
-		if err := s.store.Delete(ctx, f.UID, f.OrgID); err != nil {
-			logger.Error("failed deleting descendant folder", "org_id", f.OrgID, "uid", f.UID, "error", err)
-			return result, err
-		}
+		descendantUIDs = append(descendantUIDs, f.UID)
 	}
 	logger.Info("deleting folder and its descendants", "org_id", cmd.OrgID, "uid", cmd.UID)
-	err = s.store.Delete(ctx, cmd.UID, cmd.OrgID)
+	toDelete := append(descendantUIDs, cmd.UID)
+	err = s.store.Delete(ctx, toDelete, cmd.OrgID)
 	if err != nil {
 		logger.Info("failed deleting folder", "org_id", cmd.OrgID, "uid", cmd.UID, "err", err)
-		return result, err
+		return descendantUIDs, err
 	}
-	return result, nil
+	return descendantUIDs, nil
 }
 
 func (s *Service) GetDescendantCounts(ctx context.Context, q *folder.GetDescendantCountsQuery) (folder.DescendantCounts, error) {

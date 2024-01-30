@@ -23,8 +23,8 @@ type store interface {
 	// Create creates a folder and returns the newly-created folder.
 	Create(ctx context.Context, cmd folder.CreateFolderCommand) (*folder.Folder, error)
 
-	// Delete deletes a folder from the folder store.
-	Delete(ctx context.Context, uid string, orgID int64) error
+	// Delete folders with the specified UIDs and orgID from the folder store.
+	Delete(ctx context.Context, UIDs []string, orgID int64) error
 
 	// Update updates the given folder's UID, Title, and Description (update mode).
 	// If the NewParentUID field is not nil, it updates also the parent UID (move mode).

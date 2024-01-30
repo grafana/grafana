@@ -28,7 +28,7 @@ func (f *fakeStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 	return f.ExpectedFolder, f.ExpectedError
 }
 
-func (f *fakeStore) Delete(ctx context.Context, uid string, orgID int64) error {
+func (f *fakeStore) Delete(ctx context.Context, UIDs []string, orgID int64) error {
 	f.DeleteCalled = true
 	return f.ExpectedError
 }

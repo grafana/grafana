@@ -83,11 +83,20 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 	return foldr.WithURL(), err
 }
 
-func (ss *sqlStore) Delete(ctx context.Context, uid string, orgID int64) error {
+func (ss *sqlStore) Delete(ctx context.Context, UIDs []string, orgID int64) error {
+	if len(UIDs) == 0 {
+		return nil
+	}
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Exec("DELETE FROM folder WHERE uid=? AND org_id=?", uid, orgID)
+		s := fmt.Sprintf("DELETE FROM folder WHERE org_id=? AND uid IN (%s)", strings.Repeat("?, ", len(UIDs)-1)+"?")
+		sqlArgs := make([]any, 0, len(UIDs)+2)
+		sqlArgs = append(sqlArgs, s, orgID)
+		for _, uid := range UIDs {
+			sqlArgs = append(sqlArgs, uid)
+		}
+		_, err := sess.Exec(sqlArgs...)
 		if err != nil {
-			return folder.ErrDatabaseError.Errorf("failed to delete folder: %w", err)
+			return folder.ErrDatabaseError.Errorf("failed to delete folders: %w", err)
 		}
 		return nil
 	})
