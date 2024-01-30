@@ -2,6 +2,7 @@ import {
   DataFrame,
   DataFrameType,
   DataQueryResponse,
+  Field,
   FieldType,
   LoadingState,
   PanelData,
@@ -26,6 +27,84 @@ describe('cloneQueryResponse', () => {
 describe('combineResponses', () => {
   it('combines logs frames', () => {
     const { logFrameA, logFrameB } = getMockFrames();
+    const responseA: DataQueryResponse = {
+      data: [logFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [logFrameB],
+    };
+    expect(combineResponses(responseA, responseB)).toEqual({
+      data: [
+        {
+          fields: [
+            {
+              config: {},
+              name: 'Time',
+              type: 'time',
+              values: [1, 2, 3, 4],
+            },
+            {
+              config: {},
+              name: 'Line',
+              type: 'string',
+              values: ['line3', 'line4', 'line1', 'line2'],
+            },
+            {
+              config: {},
+              name: 'labels',
+              type: 'other',
+              values: [
+                {
+                  otherLabel: 'other value',
+                },
+                {
+                  label: 'value',
+                },
+                {
+                  otherLabel: 'other value',
+                },
+              ],
+            },
+            {
+              config: {},
+              name: 'tsNs',
+              type: 'string',
+              values: ['1000000', '2000000', '3000000', '4000000'],
+            },
+            {
+              config: {},
+              name: 'id',
+              type: 'string',
+              values: ['id3', 'id4', 'id1', 'id2'],
+            },
+          ],
+          length: 4,
+          meta: {
+            custom: {
+              frameType: 'LabeledTimeValues',
+            },
+            stats: [
+              {
+                displayName: 'Summary: total bytes processed',
+                unit: 'decbytes',
+                value: 33,
+              },
+            ],
+          },
+          refId: 'A',
+        },
+      ],
+    });
+  });
+
+  it('combines logs frames with transformed fields', () => {
+    const { logFrameA, logFrameB } = getMockFrames();
+    const { logFrameB: originalLogFrameB } = getMockFrames();
+
+    // Pseudo shuffle fields
+    logFrameB.fields.sort((a: Field, b: Field) => (a.name < b.name ? -1 : 1));
+    expect(logFrameB.fields).not.toEqual(originalLogFrameB.fields);
+
     const responseA: DataQueryResponse = {
       data: [logFrameA],
     };
