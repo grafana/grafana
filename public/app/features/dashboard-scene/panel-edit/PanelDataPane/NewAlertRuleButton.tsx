@@ -3,9 +3,9 @@ import { useLocation } from 'react-router-dom';
 import { useAsync } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
-import { logInfo } from '@grafana/runtime';
+import { locationService, logInfo } from '@grafana/runtime';
 import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
-import { Alert, Button, LinkButton } from '@grafana/ui';
+import { Alert, Button } from '@grafana/ui';
 import { LogMessages } from 'app/features/alerting/unified/Analytics';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 
@@ -20,12 +20,9 @@ interface ScenesProps {
 export const ScenesNewRuleFromPanelButton = ({ dashboard, queryRunner, panel, className }: ScenesProps) => {
   const location = useLocation();
 
-  const panelState = panel.useState();
-  const variables = panelState.$variables?.useState();
-
   const { loading, value: formValues } = useAsync(
     () => scenesPanelToRuleFormValues(panel, queryRunner, dashboard),
-    [panel, dashboard, variables]
+    [panel, dashboard]
   );
 
   if (loading) {
@@ -40,20 +37,22 @@ export const ScenesNewRuleFromPanelButton = ({ dashboard, queryRunner, panel, cl
     );
   }
 
-  const ruleFormUrl = urlUtil.renderUrl('alerting/new', {
-    defaults: JSON.stringify(formValues),
-    returnTo: location.pathname + location.search,
-  });
+  const onClick = async () => {
+    logInfo(LogMessages.alertRuleFromPanel);
+
+    const updateToDateFormValues = await scenesPanelToRuleFormValues(panel, queryRunner, dashboard);
+
+    const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
+      defaults: JSON.stringify(updateToDateFormValues),
+      returnTo: location.pathname + location.search,
+    });
+
+    locationService.push(ruleFormUrl);
+  };
 
   return (
-    <LinkButton
-      icon="bell"
-      onClick={() => logInfo(LogMessages.alertRuleFromPanel)}
-      href={ruleFormUrl}
-      className={className}
-      data-testid="create-alert-rule-button"
-    >
+    <Button icon="bell" onClick={onClick} className={className} data-testid="create-alert-rule-button">
       New alert rule
-    </LinkButton>
+    </Button>
   );
 };
