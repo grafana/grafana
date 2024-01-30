@@ -124,7 +124,7 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
             allowMultiple
             stats={config.aggregations}
             onChange={(stats) => {
-              // eslint-disable-next-line 
+              // eslint-disable-next-line
               onConfigChange({ ...config, aggregations: stats as ReducerID[] });
             }}
           />
@@ -137,7 +137,7 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     label: css({
-        minWidth: theme.spacing(32),
+      minWidth: theme.spacing(32),
     }),
     operation: css({
       flexShrink: 0,
@@ -147,7 +147,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     aggregations: css({
       flexGrow: 1,
     }),
-  };  
+  };
 };
 
 export const groupToSubframeTransformRegistryItem: TransformerRegistryItem<GroupByTransformerOptions> = {
