@@ -6,7 +6,7 @@ import { Alert, LinkButton, Stack, TabContent, Text, TextLink } from '@grafana/u
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-alerting';
-import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { defaultPageNav } from '../../../RuleViewer';
 import { Annotation } from '../../../utils/constants';
@@ -14,7 +14,6 @@ import { makeDashboardLink, makePanelLink } from '../../../utils/misc';
 import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule, isRecordingRule } from '../../../utils/rules';
 import { createUrl } from '../../../utils/url';
 import { AlertLabels } from '../../AlertLabels';
-import { AlertStateDot } from '../../AlertStateDot';
 import { AlertingPageWrapper } from '../../AlertingPageWrapper';
 import { ProvisionedResource, ProvisioningAlert } from '../../Provisioning';
 import { WithReturnButton } from '../../WithReturnButton';
@@ -30,6 +29,7 @@ import { Routing } from '../tabs/Routing';
 import { useAlertRulePageActions } from './Actions';
 import { useDeleteModal } from './DeleteModal';
 import { useAlertRule } from './RuleContext';
+import { RecordingBadge, StateBadge } from './StateBadges';
 
 enum ActiveTab {
   Query = 'query',
@@ -55,7 +55,7 @@ const RuleViewer = () => {
   });
 
   const { annotations, promRule } = rule;
-  const hasError = rule.promRule?.health === 'error';
+  const hasError = isErrorHealth(rule.promRule?.health);
 
   const isAlertType = isAlertingRule(promRule);
 
@@ -69,9 +69,14 @@ const RuleViewer = () => {
       pageNav={pageNav}
       navId="alert-list"
       isLoading={false}
-      renderTitle={(title) => {
-        return <Title name={title} state={isAlertType ? promRule.state : undefined} health={rule.promRule?.health} />;
-      }}
+      renderTitle={(title) => (
+        <Title
+          name={title}
+          state={isAlertType ? promRule.state : undefined}
+          health={rule.promRule?.health}
+          ruleType={rule.promRule?.type}
+        />
+      )}
       actions={actions}
       info={createMetadata(rule)}
       subTitle={
@@ -126,8 +131,8 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
   const dashboardUID = annotations[Annotation.dashboardUID];
   const panelID = annotations[Annotation.panelID];
 
-  const hasPanel = dashboardUID && panelID;
-  const hasDashboardWithoutPanel = dashboardUID && !panelID;
+  const hasDashboardAndPanel = dashboardUID && panelID;
+  const hasDashboard = dashboardUID;
   const hasLabels = !isEmpty(labels);
 
   const interval = group.interval;
@@ -144,7 +149,7 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
     });
   }
 
-  if (hasPanel) {
+  if (hasDashboardAndPanel) {
     metadata.push({
       label: 'Dashboard and panel',
       value: (
@@ -158,7 +163,7 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
         />
       ),
     });
-  } else if (hasDashboardWithoutPanel) {
+  } else if (hasDashboard) {
     metadata.push({
       label: 'Dashboard',
       value: (
@@ -203,62 +208,26 @@ interface TitleProps {
   // recording rules don't have a state
   state?: PromAlertingRuleState;
   health?: RuleHealth;
+  ruleType?: PromRuleType;
 }
 
-export const Title = ({ name, state, health }: TitleProps) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: '100%' }}>
-    <LinkButton variant="secondary" icon="angle-left" href="/alerting/list" />
-    <Text element="h1" truncate>
-      {name}
-    </Text>
-    {/* recording rules won't have a state */}
-    {state && <StateBadge state={state} health={health} />}
-  </div>
-);
-
-// we're making a distinction here between the "state" of the rule and its "health".
-interface StateBadgeProps {
-  state: PromAlertingRuleState;
-  health?: RuleHealth;
-}
-
-// TODO move to separate component
-const StateBadge = ({ state, health }: StateBadgeProps) => {
-  let stateLabel: string;
-  let textColor: 'success' | 'error' | 'warning' | 'info';
-
-  switch (state) {
-    case PromAlertingRuleState.Inactive:
-      textColor = 'success';
-      stateLabel = 'Normal';
-      break;
-    case PromAlertingRuleState.Firing:
-      textColor = 'error';
-      stateLabel = 'Firing';
-      break;
-    case PromAlertingRuleState.Pending:
-      textColor = 'warning';
-      stateLabel = 'Pending';
-      break;
-  }
-
-  // if the rule is in "error" health we don't really care about it's state
-  switch (health) {
-    case 'error':
-      textColor = 'error';
-      stateLabel = 'Error';
-      break;
-  }
+export const Title = ({ name, state, health, ruleType }: TitleProps) => {
+  const isRecordingRule = ruleType === PromRuleType.Recording;
 
   return (
-    <Stack direction="row" gap={0.5}>
-      <AlertStateDot size="md" state={state} health={health} />
-      <Text variant="bodySmall" color={textColor}>
-        {stateLabel}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: '100%' }}>
+      <LinkButton variant="secondary" icon="angle-left" href="/alerting/list" />
+      <Text element="h1" truncate>
+        {name}
       </Text>
-    </Stack>
+      {/* recording rules won't have a state */}
+      {state && <StateBadge state={state} health={health} />}
+      {isRecordingRule && <RecordingBadge health={health} />}
+    </div>
   );
 };
+
+export const isErrorHealth = (health?: RuleHealth) => health === 'error' || health === 'err';
 
 function useActiveTab(): [ActiveTab, (tab: ActiveTab) => void] {
   const [queryParams, setQueryParams] = useQueryParams();
