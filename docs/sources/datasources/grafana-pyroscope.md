@@ -34,14 +34,14 @@ To configure basic settings for the data source, complete the following steps:
 
 1. Set the data source's basic configuration options:
 
-   | Name           | Description                                                                                                                                                                                                                                                                                                               |
-   | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-   | `Name`         | A name to specify the data source in panels, queries, and Explore.                                                                                                                                                                                                                                                        |
-   | `Default`      | The default data source will be pre-selected for new panels.                                                                                                                                                                                                                                                              |
-   | `URL`          | The URL of the Grafana Pyroscope instance, for example, `http://localhost:4100`.                                                                                                                                                                                                                                       |
-   | `Basic Auth`   | Enable basic authentication to the data source.                                                                                                                                                                                                                                                                           |
-   | `User`         | User name for basic authentication.                                                                                                                                                                                                                                                                                       |
-   | `Password`     | Password for basic authentication.                                                                                                                                                                                                                                                                                        |
+   | Name           | Description                                                                                                                                                                                                                                                                                                  |
+   | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+   | `Name`         | A name to specify the data source in panels, queries, and Explore.                                                                                                                                                                                                                                           |
+   | `Default`      | The default data source will be pre-selected for new panels.                                                                                                                                                                                                                                                 |
+   | `URL`          | The URL of the Grafana Pyroscope instance, for example, `http://localhost:4100`.                                                                                                                                                                                                                             |
+   | `Basic Auth`   | Enable basic authentication to the data source.                                                                                                                                                                                                                                                              |
+   | `User`         | User name for basic authentication.                                                                                                                                                                                                                                                                          |
+   | `Password`     | Password for basic authentication.                                                                                                                                                                                                                                                                           |
    | `Minimal step` | Used for queries returning timeseries data. The Pyroscope backend, similar to Prometheus, scrapes profiles at certain intervals. To prevent querying at smaller interval, use Minimal step same or higher than your Pyroscope scrape interval. This prevents returning too many data points to the frontend. |
 
 ### Traces to profiles
@@ -69,23 +69,23 @@ To access the query editor:
 
 1. Select a profile type from the drop-down menu.
 
-    {{< figure src="/media/docs/pyroscope/query-editor/select-profile.png" class="docs-image--no-shadow" max-width="450px" caption="Profile selector" >}}
+   {{< figure src="/media/docs/pyroscope/query-editor/select-profile.png" class="docs-image--no-shadow" max-width="450px" caption="Profile selector" >}}
 
 1. Use the labels selector input to filter by labels. Pyroscope uses similar syntax to Prometheus to filter labels.
-    Refer to [Pyroscope documentation](https://grafana.com/docs/pyroscope/latest/) for available operators and syntax.
+   Refer to [Pyroscope documentation](https://grafana.com/docs/pyroscope/latest/) for available operators and syntax.
 
-    While the label selector can be left empty to query all profiles without filtering by labels, the profile type or app must be selected for the query to be valid.
+   While the label selector can be left empty to query all profiles without filtering by labels, the profile type or app must be selected for the query to be valid.
 
-    Grafana doesn't show any data if the profile type or app isn’t selected when a query runs.
+   Grafana doesn't show any data if the profile type or app isn’t selected when a query runs.
 
-    ![Labels selector](/media/docs/pyroscope/query-editor/labels-selector.png 'Labels selector')
+   ![Labels selector](/media/docs/pyroscope/query-editor/labels-selector.png 'Labels selector')
 
 1. Expand the **Options** section to view **Query Type** and **Group by**.
-    ![Options section](/media/docs/pyroscope/query-editor/options-section.png 'Options section')
+   ![Options section](/media/docs/pyroscope/query-editor/options-section.png 'Options section')
 
 1. Select a query type to return the profile data which can be shown in the [Flame Graph][flame-graph], metric data visualized in a graph, or both. You can only select both options in a dashboard, because panels allow only one visualization.
 
- **Group by** allows you to group metric data by a specified label. Without any **Group by** label, metric data is aggregated over all the labels into single time series. You can use multiple labels to group by. Group by has only an effect on the metric data and doesn't change the profile data results.
+**Group by** allows you to group metric data by a specified label. Without any **Group by** label, metric data is aggregated over all the labels into single time series. You can use multiple labels to group by. Group by has only an effect on the metric data and doesn't change the profile data results.
 
 ### Profiles query results
 

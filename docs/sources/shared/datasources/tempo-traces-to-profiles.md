@@ -40,7 +40,6 @@ Hover over a particular block in the flame graph to see more details about the r
 
 ## Use a basic configuration
 
-
 To use a simple configuration, follow these steps:
 
 1. Select a Pyroscope data source from the **Data source** drop-down.
