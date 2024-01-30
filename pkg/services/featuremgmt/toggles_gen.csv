@@ -117,7 +117,7 @@ cloudWatchBatchQueries,preview,@grafana/aws-datasources,2023-10-20,false,false,f
 recoveryThreshold,GA,@grafana/alerting-squad,2023-10-10,false,true,false
 lokiStructuredMetadata,experimental,@grafana/observability-logs,2023-11-16,false,false,false
 teamHttpHeaders,experimental,@grafana/identity-access-team,2023-10-17,false,false,false
-awsDatasourcesNewFormStyling,experimental,@grafana/aws-datasources,2023-10-12,false,false,true
+awsDatasourcesNewFormStyling,preview,@grafana/aws-datasources,2023-10-12,false,false,true
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,2023-10-12,false,false,false
 panelTitleSearchInV1,experimental,@grafana/backend-platform,2023-10-13,true,false,false
 pluginsInstrumentationStatusSource,experimental,@grafana/plugins-platform-backend,2023-10-17,false,false,false
