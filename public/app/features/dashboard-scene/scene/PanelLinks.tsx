@@ -1,8 +1,10 @@
 import React from 'react';
 
 import { DataLink, LinkModel } from '@grafana/data';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { Dropdown, Menu, ToolbarButton } from '@grafana/ui';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { Dropdown, Icon, Menu, PanelChrome, ToolbarButton } from '@grafana/ui';
+
+import { getPanelLinks } from './PanelMenuBehavior';
 
 interface VizPanelLinksState extends SceneObjectState {
   rawLinks?: DataLink[];
@@ -19,6 +21,15 @@ function VizPanelLinksRenderer({ model }: SceneComponentProps<VizPanelLinks>) {
 
   if (!rawLinks || rawLinks.length === 0) {
     return null;
+  }
+
+  if (rawLinks.length === 1) {
+    const link = getPanelLinks(model.parent as VizPanel)[0];
+    return (
+      <PanelChrome.TitleItem href={link.href} onClick={link.onClick} target={link.target} title={link.title}>
+        <Icon name="external-link-alt" size="md" />
+      </PanelChrome.TitleItem>
+    );
   }
 
   return (

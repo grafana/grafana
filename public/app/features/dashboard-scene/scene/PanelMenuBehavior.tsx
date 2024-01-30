@@ -226,27 +226,29 @@ export function panelLinksBehavior(panelLinksMenu: VizPanelLinksMenu) {
     throw new Error('parent of VizPanelLinks must be VizPanel');
   }
 
+  panelLinksMenu.setState({ links: getPanelLinks(panel) });
+}
+
+export function getPanelLinks(panel: VizPanel) {
   const interpolate: InterpolateFunction = (v, scopedVars) => {
-    return sceneGraph.interpolate(panelLinksMenu, v, scopedVars);
+    return sceneGraph.interpolate(panel, v, scopedVars);
   };
 
   const linkSupplier = getScenePanelLinksSupplier(panel, interpolate);
 
   if (!linkSupplier) {
-    return;
+    return [];
   }
 
-  const panelLinks = linkSupplier && linkSupplier.getLinks(interpolate);
+  const panelLinks = linkSupplier.getLinks(interpolate);
 
-  const links = panelLinks.map((panelLink) => ({
+  return panelLinks.map((panelLink) => ({
     ...panelLink,
     onClick: (e: any, origin: any) => {
       DashboardInteractions.panelLinkClicked({ has_multiple_links: panelLinks.length > 1 });
       panelLink.onClick?.(e, origin);
     },
   }));
-
-  panelLinksMenu.setState({ links });
 }
 
 function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): PluginExtensionPanelContext {
