@@ -273,7 +273,8 @@ func makeTmpUser(ctx context.Context, service Service, cache userCache,
 		}
 	}
 
-	// If the user is not a member of the organization, evaluation must happen based on global permissions.
+	// If the user is not a member of the organization
+	// evaluation must happen based on global permissions.
 	evaluationOrg := targetOrgID
 	if tmpUser.OrgID == NoOrgID {
 		evaluationOrg = GlobalOrgID

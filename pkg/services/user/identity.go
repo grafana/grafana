@@ -10,7 +10,6 @@ import (
 
 const (
 	GlobalOrgID = int64(0)
-	NoOrgID     = int64(-1)
 )
 
 type SignedInUser struct {
@@ -157,17 +156,24 @@ func (u *SignedInUser) GetPermissions() map[string][]string {
 		return make(map[string][]string)
 	}
 
-	// If the identity is not logged in an organization use global permissions.
-	orgID := u.OrgID
-	if orgID == NoOrgID {
-		orgID = GlobalOrgID
-	}
-
-	if u.Permissions[orgID] == nil {
+	if u.Permissions[u.GetOrgID()] == nil {
 		return make(map[string][]string)
 	}
 
-	return u.Permissions[orgID]
+	return u.Permissions[u.GetOrgID()]
+}
+
+// GetGlobalPermissions returns the permissions of the active entity that are available accross all organizations
+func (u *SignedInUser) GetGlobalPermissions() map[string][]string {
+	if u.Permissions == nil {
+		return make(map[string][]string)
+	}
+
+	if u.Permissions[GlobalOrgID] == nil {
+		return make(map[string][]string)
+	}
+
+	return u.Permissions[GlobalOrgID]
 }
 
 // DEPRECATED: GetTeams returns the teams the entity is a member of
