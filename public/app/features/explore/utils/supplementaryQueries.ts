@@ -134,7 +134,7 @@ export const getSupplementaryQueryProvider = (
         return datasource.getDataProvider(type, dsRequest);
       } else if (datasource.getSupplementaryRequest) {
         const request = datasource.getSupplementaryRequest(type, dsRequest);
-        if (!provider) {
+        if (!request) {
           return undefined;
         }
         return type === SupplementaryQueryType.LogsVolume
