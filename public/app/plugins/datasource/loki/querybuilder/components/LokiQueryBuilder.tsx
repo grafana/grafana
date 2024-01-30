@@ -1,4 +1,6 @@
+import { isEqual } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
+import { usePrevious } from 'react-use';
 
 import { DataSourceApi, getDefaultTimeRange, LoadingState, PanelData, SelectableValue, TimeRange } from '@grafana/data';
 import {
@@ -41,6 +43,8 @@ export const LokiQueryBuilder = React.memo<Props>(
   ({ datasource, query, onChange, onRunQuery, showExplain, timeRange }) => {
     const [sampleData, setSampleData] = useState<PanelData>();
     const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>(undefined);
+    const prevQuery = usePrevious(query);
+    const prevTimeRange = usePrevious(timeRange);
 
     const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
       onChange({ ...query, labels });
@@ -109,10 +113,18 @@ export const LokiQueryBuilder = React.memo<Props>(
         setSampleData(sampleData);
       };
 
-      if (config.featureToggles.lokiQueryHints) {
+      // TIME_SPAN should be changed by at least 5 minutes to trigger a new sample data request
+      const TIME_SPAN = 5 * 60 * 1000;
+      const shouldUpdateChangedTimeRange =
+        prevTimeRange &&
+        timeRange &&
+        (Math.abs(timeRange.to.valueOf() - prevTimeRange.to.valueOf()) > TIME_SPAN ||
+          Math.abs(timeRange.from.valueOf() - prevTimeRange.from.valueOf()) > TIME_SPAN);
+      const shouldUpdateChangedQuery = !isEqual(prevQuery, query);
+      if (config.featureToggles.lokiQueryHints && (shouldUpdateChangedQuery || shouldUpdateChangedTimeRange)) {
         onGetSampleData().catch(console.error);
       }
-    }, [datasource, query, timeRange]);
+    }, [datasource, query, timeRange, prevQuery, prevTimeRange]);
 
     const lang = { grammar: logqlGrammar, name: 'logql' };
     return (
