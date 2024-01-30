@@ -103,6 +103,7 @@ function getTestData(
       scopedVars: {},
       targets: [],
       timezone: 'utc',
+      panelPluginType: 'timeseries',
       ...overrides,
     },
     series: series || [],
@@ -134,6 +135,7 @@ describe('emitDataRequestEvent', () => {
           duration: 1,
           totalQueries: 0,
           cachedQueries: 0,
+          panelPluginType: 'timeseries',
         })
       );
     });
@@ -161,6 +163,7 @@ describe('emitDataRequestEvent', () => {
           duration: 1,
           totalQueries: 2,
           cachedQueries: 1,
+          panelPluginType: 'timeseries',
         })
       );
     });
@@ -188,6 +191,7 @@ describe('emitDataRequestEvent', () => {
           duration: 1,
           totalQueries: 1,
           cachedQueries: 1,
+          panelPluginType: 'timeseries',
         })
       );
     });
@@ -234,6 +238,7 @@ describe('emitDataRequestEvent', () => {
           dataSize: 0,
           duration: 1,
           totalQueries: 0,
+          panelPluginType: 'timeseries',
         })
       );
     });
@@ -270,6 +275,7 @@ describe('emitDataRequestEvent', () => {
           dataSize: 0,
           duration: 1,
           totalQueries: 0,
+          panelPluginType: 'timeseries',
         })
       );
     });

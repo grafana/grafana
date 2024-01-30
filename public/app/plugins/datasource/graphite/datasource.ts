@@ -246,7 +246,10 @@ export class GraphiteDatasource
     return this.doGraphiteRequest(httpOptions).pipe(map(this.convertResponseToDataFrames));
   }
 
-  addTracingHeaders(httpOptions: { headers: any }, options: { dashboardId?: number; panelId?: number }) {
+  addTracingHeaders(
+    httpOptions: { headers: any },
+    options: { dashboardId?: number; panelId?: number; panelPluginType?: string }
+  ) {
     const proxyMode = !this.url.match(/^http/);
     if (proxyMode) {
       if (options.dashboardId) {
@@ -254,6 +257,9 @@ export class GraphiteDatasource
       }
       if (options.panelId) {
         httpOptions.headers['X-Panel-Id'] = options.panelId;
+      }
+      if (options.panelPluginType) {
+        httpOptions.headers['X-Panel-Plugin-Id'] = options.panelPluginType;
       }
     }
   }
