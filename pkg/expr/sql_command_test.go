@@ -6,15 +6,14 @@ import (
 )
 
 func TestNewCommand(t *testing.T) {
-	sql := "select a,b,c from foo"
-	cmd, err := NewSQLCommand("a", "select a,b,c from foo", nil)
+	cmd, err := NewSQLCommand("a", "select a from foo, bar", nil)
 	if err != nil {
 		t.Fail()
 		return
 	}
 
 	for _, v := range cmd.varsToQuery {
-		if strings.Contains(sql, v) {
+		if strings.Contains("foo bar", v) {
 			continue
 		}
 		t.Fail()
