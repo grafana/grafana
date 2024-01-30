@@ -7,10 +7,12 @@ import {
 } from '@grafana/data';
 import { LineStyle } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
+import { MediaType, ResourceFolderName } from 'app/features/dimensions';
 
 import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 
-import { FieldConfig, ScatterShow } from './panelcfg.gen';
+import { SymbolEditor } from './SymbolEditor';
+import { defaultFieldConfig, FieldConfig, ScatterShow } from './panelcfg.gen';
 
 export const DEFAULT_POINT_SIZE = 5;
 
@@ -71,25 +73,25 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
             ],
           },
         })
-        // .addGenericEditor(
-        //   {
-        //     path: 'pointSymbol',
-        //     name: 'Point symbol',
-        //     defaultValue: defaultFieldConfig.pointSymbol ?? {
-        //       mode: 'fixed',
-        //       fixed: 'img/icons/marker/circle.svg',
-        //     },
-        //     settings: {
-        //       resourceType: MediaType.Icon,
-        //       folderName: ResourceFolderName.Marker,
-        //       placeholderText: 'Select a symbol',
-        //       placeholderValue: 'img/icons/marker/circle.svg',
-        //       showSourceRadio: false,
-        //     },
-        //     showIf: (c) => c.show !== ScatterShow.Lines,
-        //   },
-        //   SymbolEditor // ResourceDimensionEditor
-        // )
+        .addGenericEditor(
+          {
+            path: 'pointSymbol',
+            name: 'Point symbol',
+            defaultValue: defaultFieldConfig.pointSymbol ?? {
+              mode: 'fixed',
+              fixed: 'img/icons/marker/circle.svg',
+            },
+            settings: {
+              resourceType: MediaType.Icon,
+              folderName: ResourceFolderName.Marker,
+              placeholderText: 'Select a symbol',
+              placeholderValue: 'img/icons/marker/circle.svg',
+              showSourceRadio: false,
+            },
+            showIf: (c) => c.show !== ScatterShow.Lines,
+          },
+          SymbolEditor // ResourceDimensionEditor
+        )
         .addSliderInput({
           path: 'pointSize.fixed',
           name: 'Point size',
