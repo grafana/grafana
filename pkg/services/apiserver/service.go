@@ -312,6 +312,7 @@ func (s *service) start(ctx context.Context) error {
 	// Used by the proxy wrapper registered in ProvideService
 	s.handler = aggregatorServer.GenericAPIServer.Handler
 	s.restConfig = aggregatorServer.GenericAPIServer.LoopbackClientConfig
+	s.options = o
 
 	prepared, err := aggregatorServer.PrepareRun()
 	if err != nil {

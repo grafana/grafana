@@ -20,6 +20,7 @@ import (
 	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	filestorage "github.com/grafana/grafana/pkg/services/apiserver/storage/file"
 )
 
 // AggregatorServerOptions contains the state for the aggregator apiserver
@@ -81,7 +82,7 @@ func (o *AggregatorServerOptions) Validate() []error {
 	return nil
 }
 
-func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.Config, etcdOpts *options.EtcdOptions) error {
+func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.Config, etcdOpts *options.EtcdOptions, dataPath string) error {
 	genericConfig := aggregatorConfig.GenericConfig
 
 	genericConfig.PostStartHooks = map[string]genericapiserver.PostStartHookConfigEntry{}
@@ -109,6 +110,8 @@ func (o *AggregatorServerOptions) ApplyTo(aggregatorConfig *aggregatorapiserver.
 	if err := etcdOptions.ApplyTo(&genericConfig.Config); err != nil {
 		return err
 	}
+	// override the RESTOptionsGetter to use the file storage options getter
+	aggregatorConfig.GenericConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(dataPath, etcdOptions.StorageConfig)
 
 	// prevent generic API server from installing the OpenAPI handler. Aggregator server has its own customized OpenAPI handler.
 	genericConfig.SkipOpenAPIInstallation = true
