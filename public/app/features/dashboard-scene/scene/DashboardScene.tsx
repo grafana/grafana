@@ -208,7 +208,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public onDiscard = () => {
-    if (!this._initialState) {
+    if (!this.canDiscard()) {
       console.error('Trying to discard back to a state that does not exist, initialState undefined');
       return;
     }
