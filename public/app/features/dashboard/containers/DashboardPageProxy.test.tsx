@@ -87,7 +87,7 @@ describe('DashboardPageProxy', () => {
     });
 
     it('home dashboard', async () => {
-      getDashboardScenePageStateManager().setDashboardCache(DashboardRoutes.Home, dashMock);
+      getDashboardScenePageStateManager().setDashboardCache('', dashMock);
       act(() => {
         setup({
           route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
@@ -105,7 +105,7 @@ describe('DashboardPageProxy', () => {
 
       act(() => {
         setup({
-          route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
+          route: { routeName: DashboardRoutes.Normal, component: () => null, path: '/' },
           match: { params: {}, isExact: true, path: '/', url: '/' },
         });
       });
@@ -123,7 +123,7 @@ describe('DashboardPageProxy', () => {
 
     describe('when user can edit a dashboard ', () => {
       it('should not render DashboardScenePage if route is Home', async () => {
-        getDashboardScenePageStateManager().setDashboardCache(DashboardRoutes.Home, dashMockEditable);
+        getDashboardScenePageStateManager().setDashboardCache('', dashMockEditable);
         act(() => {
           setup({
             route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },
@@ -152,7 +152,7 @@ describe('DashboardPageProxy', () => {
 
     describe('when user can only view a dashboard ', () => {
       it('should render DashboardScenePage if route is Home', async () => {
-        getDashboardScenePageStateManager().setDashboardCache(DashboardRoutes.Home, dashMock);
+        getDashboardScenePageStateManager().setDashboardCache('', dashMock);
         act(() => {
           setup({
             route: { routeName: DashboardRoutes.Home, component: () => null, path: '/' },

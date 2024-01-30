@@ -97,7 +97,9 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         await this.initNavModel(rsp);
 
         // Do not cache new dashboards
-        this.dashboardCache.set(uid, { dashboard: rsp, ts: Date.now() });
+        if (uid) {
+          this.dashboardCache.set(uid, { dashboard: rsp, ts: Date.now() });
+        }
       }
     } catch (e) {
       // Ignore cancelled errors

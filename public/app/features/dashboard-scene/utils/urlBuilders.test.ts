@@ -44,6 +44,6 @@ describe('dashboard utils', () => {
       currentQueryParams: '?orgId=1&filter=A',
     });
 
-    expect(url).toBe('/dashboard/new?orgId=1&new=A');
+    expect(url).toBe('/dashboard/new?orgId=1&filter=A');
   });
 });
