@@ -3,7 +3,7 @@
  */
 import { ComponentType } from 'react';
 
-import { DataSourceApi, RegistryItem, SelectableValue } from '@grafana/data';
+import { DataSourceApi, RegistryItem, SelectableValue, TimeRange } from '@grafana/data';
 
 export interface QueryBuilderLabelFilter {
   label: string;
@@ -91,6 +91,7 @@ export interface QueryBuilderOperationParamEditorProps {
   operationId: string;
   query: any;
   datasource: DataSourceApi;
+  timeRange?: TimeRange;
   onChange: (index: number, value: QueryBuilderOperationParamValue) => void;
   onRunQuery: () => void;
 }

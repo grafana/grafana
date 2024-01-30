@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useEffect, useId, useState } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 
-import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Button, Icon, Tooltip, useStyles2, Stack } from '@grafana/ui';
 
 import { OperationHeader } from './OperationHeader';
@@ -27,6 +27,7 @@ export interface Props {
   onRunQuery: () => void;
   flash?: boolean;
   highlight?: boolean;
+  timeRange?: TimeRange;
 }
 
 export function OperationEditor({
@@ -40,6 +41,7 @@ export function OperationEditor({
   datasource,
   flash,
   highlight,
+  timeRange,
 }: Props) {
   const styles = useStyles2(getStyles);
   const def = queryModeller.getOperationDef(operation.id);
@@ -99,6 +101,7 @@ export function OperationEditor({
               onRunQuery={onRunQuery}
               query={query}
               datasource={datasource}
+              timeRange={timeRange}
             />
             {paramDef.restParam && (operation.params.length > def.params.length || paramDef.optional) && (
               <Button
