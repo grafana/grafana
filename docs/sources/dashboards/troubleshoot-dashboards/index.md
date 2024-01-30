@@ -2,6 +2,7 @@
 aliases:
   - ../troubleshooting/troubleshoot-dashboards/
   - ../reference/timerange/
+canonical: https://grafana.com/docs/grafana/latest/dashboards/troubleshoot-dashboards/
 keywords:
   - grafana
   - dashboard

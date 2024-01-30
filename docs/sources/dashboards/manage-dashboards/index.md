@@ -5,6 +5,7 @@ aliases:
   - ../reference/dashboard_folders/
   - dashboard-folders/
   - dashboard-manage/
+canonical: https://grafana.com/docs/grafana/latest/dashboards/manage-dashboards/
 keywords:
   - grafana
   - dashboard
