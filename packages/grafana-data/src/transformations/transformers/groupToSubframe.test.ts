@@ -13,7 +13,6 @@ describe('GroupToSubframe transformer', () => {
     mockTransformationsRegistry([groupToSubframeTransformer]);
   });
 
-
   it('should group values by message and place values in subframe', async () => {
     const testSeries = toDataFrame({
       name: 'A',
@@ -40,30 +39,73 @@ describe('GroupToSubframe transformer', () => {
       const result = received[0];
       const expected: Field[] = [
         {
-          name: 'Nested Frames',
+          name: 'message',
+          type: FieldType.string,
+          config: {},
+          values: ['one', 'two', 'three'],
+        },
+        {
+          name: 'Nested frames',
           type: FieldType.nestedFrames,
+          config: {},
           values: [
             [
               {
-                fields: {
-                  config: {},
-                  name: "time",
-                  type: FieldType.time,
-                  values: [3000]
-                }
-              }
-            ]
+                meta: { custom: { noHeader: false } },
+                length: 1,
+                fields: [
+                  { name: 'time', type: 'time', config: {}, values: [3000] },
+                  { name: 'values', type: 'string', config: {}, values: [1] },
+                ],
+              },
+            ],
+            [
+              {
+                meta: { custom: { noHeader: false } },
+                length: 2,
+                fields: [
+                  {
+                    name: 'time',
+                    type: 'time',
+                    config: {},
+                    values: [4000, 5000],
+                  },
+                  {
+                    name: 'values',
+                    type: 'string',
+                    config: {},
+                    values: [2, 2],
+                  },
+                ],
+              },
+            ],
+            [
+              {
+                meta: { custom: { noHeader: false } },
+                length: 3,
+                fields: [
+                  {
+                    name: 'time',
+                    type: 'time',
+                    config: {},
+                    values: [6000, 7000, 8000],
+                  },
+                  {
+                    name: 'values',
+                    type: 'string',
+                    config: {},
+                    values: [3, 3, 3],
+                  },
+                ],
+              },
+            ],
           ],
-          config: {},
         },
       ];
 
-      // console.log(result[0].fields);
-      // expect(result[0].fields).toEqual("nestedFrames");
       expect(result[0].fields).toEqual(expected);
     });
   });
-
 
   it('should group by message, compute a few calculations for each group of values, and place other values in a subframe', async () => {
     const testSeries = toDataFrame({
@@ -72,7 +114,8 @@ describe('GroupToSubframe transformer', () => {
         { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000, 7000, 8000] },
         { name: 'message', type: FieldType.string, values: ['one', 'two', 'two', 'three', 'three', 'three'] },
         { name: 'values', type: FieldType.number, values: [1, 2, 2, 3, 3, 3] },
-        { name: 'intVal', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] }
+        { name: 'intVal', type: FieldType.number, values: [1, 2, 3, 4, 5, 6] },
+        { name: 'floatVal', type: FieldType.number, values: [1.1, 2.3, 3.6, 4.8, 5.7, 6.9] },
       ],
     });
 
@@ -83,10 +126,6 @@ describe('GroupToSubframe transformer', () => {
           message: {
             operation: GroupByOperationID.groupBy,
             aggregations: [],
-          },
-          time: {
-            operation: GroupByOperationID.aggregate,
-            aggregations: [ReducerID.count, ReducerID.last],
           },
           values: {
             operation: GroupByOperationID.aggregate,
@@ -102,37 +141,103 @@ describe('GroupToSubframe transformer', () => {
         {
           name: 'message',
           type: FieldType.string,
+          config: {},
           values: ['one', 'two', 'three'],
-          config: {},
-        },
-        {
-          name: 'time (count)',
-          type: FieldType.number,
-          values: [1, 2, 3],
-          config: {},
-        },
-        {
-          name: 'time (last)',
-          type: FieldType.time,
-          values: [3000, 5000, 8000],
-          config: {},
         },
         {
           name: 'values (sum)',
-          type: FieldType.number,
           values: [1, 4, 9],
+          type: FieldType.number,
           config: {},
+        },
+        {
+          config: {},
+          name: 'Nested frames',
+          type: FieldType.nestedFrames,
+          values: [
+            [
+              {
+                meta: { custom: { noHeader: false } },
+                length: 1,
+                fields: [
+                  {
+                    name: 'time',
+                    type: 'time',
+                    config: {},
+                    values: [3000],
+                  },
+                  {
+                    name: 'intVal',
+                    type: 'number',
+                    config: {},
+                    values: [1],
+                  },
+                  {
+                    name: 'floatVal',
+                    type: 'number',
+                    config: {},
+                    values: [1.1],
+                  },
+                ],
+              },
+            ],
+            [
+              {
+                meta: { custom: { noHeader: false } },
+                length: 2,
+                fields: [
+                  {
+                    name: 'time',
+                    type: 'time',
+                    config: {},
+                    values: [4000, 5000],
+                  },
+                  {
+                    name: 'intVal',
+                    type: 'number',
+                    config: {},
+                    values: [2, 3],
+                  },
+                  {
+                    name: 'floatVal',
+                    type: 'number',
+                    config: {},
+                    values: [2.3, 3.6],
+                  },
+                ],
+              },
+            ],
+            [
+              {
+                meta: { custom: { noHeader: false } },
+                length: 3,
+                fields: [
+                  {
+                    name: 'time',
+                    type: 'time',
+                    config: {},
+                    values: [6000, 7000, 8000],
+                  },
+                  {
+                    name: 'intVal',
+                    type: 'number',
+                    config: {},
+                    values: [4, 5, 6],
+                  },
+                  {
+                    name: 'floatVal',
+                    type: 'number',
+                    config: {},
+                    values: [4.8, 5.7, 6.9],
+                  },
+                ],
+              },
+            ],
+          ],
         },
       ];
 
       expect(result[0].fields).toEqual(expected);
     });
   });
-
-  it('should not show subframe headers if subframe headers are disabled', async () => {
-
-  })
-
-
-
 });
