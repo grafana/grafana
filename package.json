@@ -97,7 +97,7 @@
     "@types/eslint": "8.56.2",
     "@types/file-saver": "2.0.7",
     "@types/glob": "^8.0.0",
-    "@types/google.analytics": "^0.0.45",
+    "@types/google.analytics": "^0.0.46",
     "@types/gtag.js": "^0.0.18",
     "@types/history": "4.7.11",
     "@types/hoist-non-react-statics": "3.3.5",
