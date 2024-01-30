@@ -112,7 +112,7 @@ When right clicking an element, you are able to edit, delete, duplicate, and mod
 When you're moving elements around the canvas, snapping and alignment guides help you create more precise layouts.
 
 {{% admonition type="note" %}}
-For the time being, element snapping and alignment only works when the canvas is not zoomed in.
+Currently, element snapping and alignment only works when the canvas is not zoomed in.
 {{% /admonition %}}
 
 <!-- TODO: Add gif showcasing feature (when creating what's new entry for 10.4) -->
