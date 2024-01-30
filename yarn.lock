@@ -2994,7 +2994,7 @@ __metadata:
     "@types/node": "npm:20.11.10"
     "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.48"
-    "@types/react-test-renderer": "npm:18.0.0"
+    "@types/react-test-renderer": "npm:18.0.7"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     debounce-promise: "npm:3.1.2"
     fast-deep-equal: "npm:^3.1.3"
@@ -9141,15 +9141,6 @@ __metadata:
   dependencies:
     "@types/react": "npm:*"
   checksum: 00ade23df17d1e6b4cd94dbf127268178f7daab9e5c823c9aa915458d99817814dfdbede9d37068c0d913e4706697dc8904e34987db16cb80ce2e41ad8a6cc10
-  languageName: node
-  linkType: hard
-
-"@types/react-test-renderer@npm:18.0.0":
-  version: 18.0.0
-  resolution: "@types/react-test-renderer@npm:18.0.0"
-  dependencies:
-    "@types/react": "npm:*"
-  checksum: 6afc938a1d7618d88ab8793e251f0bd5981bf3f08c1b600f74df3f8800b92589ea534dc6dcb7c8d683893fcc740bf8d7843a42bf2dae59785cfe88f004bd7b0b
   languageName: node
   linkType: hard
 
