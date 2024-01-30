@@ -2,7 +2,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 
 import { getBackendSrv } from '@grafana/runtime';
-import { Field, Input, Button, HorizontalGroup, LinkButton } from '@grafana/ui';
+import { Field, Input, Button, LinkButton, Stack } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -66,7 +66,7 @@ export const SignupPage = ({ queryParams }: Props) => {
   return (
     <LoginLayout>
       <InnerBox>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: '600px', width: '100%' }}>
           <Field label="Your name">
             <Input id="user-name" {...register('name')} placeholder="(optional)" />
           </Field>
@@ -113,12 +113,12 @@ export const SignupPage = ({ queryParams }: Props) => {
             />
           </Field>
 
-          <HorizontalGroup>
+          <Stack>
             <Button type="submit">Submit</Button>
             <LinkButton fill="text" href={getConfig().appSubUrl + '/login'}>
               Back to login
             </LinkButton>
-          </HorizontalGroup>
+          </Stack>
         </form>
       </InnerBox>
     </LoginLayout>
