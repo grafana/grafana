@@ -232,8 +232,8 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
     request: DataQueryRequest<TQuery>
   ): Observable<DataQueryResponse> | undefined;
   /**
-   * Given a DataQueryRequest returns a new DataQueryRequest to be used to fetch supplementary data.
-   * If provided reqeust is not suitable for a supplementary data request, undefined should be returned.
+   * Receives a SupplementaryQueryType and a DataQueryRequest and returns a new DataQueryRequest to fetch supplementary data.
+   * If provided type or request is not suitable for a supplementary data request, returns undefined.
    */
   getSupplementaryRequest?(
     type: SupplementaryQueryType,
