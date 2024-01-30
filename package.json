@@ -82,7 +82,7 @@
     "@swc/core": "1.3.107",
     "@swc/helpers": "0.5.3",
     "@testing-library/dom": "9.3.4",
-    "@testing-library/jest-dom": "6.3.0",
+    "@testing-library/jest-dom": "6.4.0",
     "@testing-library/react": "14.1.2",
     "@testing-library/user-event": "14.5.2",
     "@types/angular": "1.8.9",
@@ -140,8 +140,8 @@
     "@types/uuid": "9.0.8",
     "@types/webpack-assets-manifest": "^5",
     "@types/yargs": "17.0.32",
-    "@typescript-eslint/eslint-plugin": "6.19.1",
-    "@typescript-eslint/parser": "6.19.1",
+    "@typescript-eslint/eslint-plugin": "6.20.0",
+    "@typescript-eslint/parser": "6.20.0",
     "autoprefixer": "10.4.17",
     "blob-polyfill": "7.0.20220408",
     "browserslist": "^4.21.4",
@@ -245,7 +245,7 @@
     "@grafana/monaco-logql": "^0.0.7",
     "@grafana/o11y-ds-frontend": "workspace:*",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "^2.1.0",
+    "@grafana/scenes": "^2.2.0",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -350,7 +350,7 @@
     "rc-drawer": "6.5.2",
     "rc-slider": "10.5.0",
     "rc-time-picker": "3.7.3",
-    "rc-tree": "5.8.3",
+    "rc-tree": "5.8.5",
     "re-resizable": "6.9.11",
     "react": "18.2.0",
     "react-beautiful-dnd": "13.1.1",
@@ -426,7 +426,7 @@
   "engines": {
     "node": ">= 20"
   },
-  "packageManager": "yarn@4.0.2",
+  "packageManager": "yarn@4.1.0",
   "dependenciesMeta": {
     "prettier@3.2.4": {
       "unplugged": true
