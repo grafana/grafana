@@ -681,13 +681,7 @@ export class PrometheusDatasource
     }));
     const expr = promQueryModeller.renderLabels(labelFilters);
 
-    let labelsIndex: Record<string, string[]>;
-
-    if (this.hasLabelsMatchAPISupport()) {
-      labelsIndex = await this.languageProvider.fetchSeriesLabelsMatch(expr);
-    } else {
-      labelsIndex = await this.languageProvider.fetchSeriesLabels(expr);
-    }
+    let labelsIndex: Record<string, string[]> = await this.languageProvider.fetchLabelsWithMatch(expr);
 
     // filter out already used labels
     return Object.keys(labelsIndex)
