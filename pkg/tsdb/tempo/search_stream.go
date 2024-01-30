@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	connect_go "github.com/bufbuild/connect-go"
 	"io"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
-	"github.com/grafana/tempo/pkg/tempopb"
+	"github.com/grafana/grafana/pkg/tsdb/tempo/proto/gen"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )
@@ -60,7 +61,11 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 	sr.Start = uint32(backendQuery.TimeRange.From.Unix())
 	sr.End = uint32(backendQuery.TimeRange.To.Unix())
 
-	stream, err := datasource.StreamingClient.Search(ctx, sr)
+	connectReq := &connect_go.Request[tempopb.SearchRequest]{
+		Msg: sr,
+	}
+
+	stream, err := datasource.StreamingClient.Search(ctx, connectReq)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
@@ -71,56 +76,63 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 	return s.processStream(ctx, stream, sender)
 }
 
-func (s *Service) processStream(ctx context.Context, stream tempopb.StreamingQuerier_SearchClient, sender StreamSender) error {
+func (s *Service) processStream(ctx context.Context, stream *connect_go.ServerStreamForClient[tempopb.SearchResponse], sender StreamSender) error {
 	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.processStream")
 	defer span.End()
 	var traceList []*tempopb.TraceSearchMetadata
 	var metrics *tempopb.SearchMetrics
 	messageCount := 0
-	for {
-		msg, err := stream.Recv()
+	for stream.Receive() {
+		msg := stream.Msg()
 		messageCount++
 		span.SetAttributes(attribute.Int("message_count", messageCount))
-		if errors.Is(err, io.EOF) {
-			if err := s.sendResponse(ctx, &ExtendedResponse{
-				State: dataquery.SearchStreamingStateDone,
-				SearchResponse: &tempopb.SearchResponse{
-					Metrics: metrics,
-					Traces:  traceList,
-				},
-			}, sender); err != nil {
-				span.RecordError(err)
-				span.SetStatus(codes.Error, err.Error())
-				return err
-			}
-			break
-		}
-		if err != nil {
-			s.logger.Error("Error receiving message", "err", err)
-			span.RecordError(err)
-			span.SetStatus(codes.Error, err.Error())
-			return err
-		}
 
 		metrics = msg.Metrics
 		traceList = append(traceList, msg.Traces...)
 		traceList = removeDuplicates(traceList)
 		span.SetAttributes(attribute.Int("traces_count", len(traceList)))
 
-		if err := s.sendResponse(ctx, &ExtendedResponse{
+		resp := &ExtendedResponse{
 			State: dataquery.SearchStreamingStateStreaming,
 			SearchResponse: &tempopb.SearchResponse{
 				Metrics: metrics,
 				Traces:  traceList,
 			},
-		}, sender); err != nil {
+		}
+		err := s.sendResponse(ctx, resp, sender)
+
+		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())
 			return err
 		}
 	}
 
-	return nil
+	err := stream.Err()
+	if err != nil {
+		if errors.Is(err, io.EOF) {
+			resp := &ExtendedResponse{
+				State: dataquery.SearchStreamingStateDone,
+				SearchResponse: &tempopb.SearchResponse{
+					Metrics: metrics,
+					Traces:  traceList,
+				},
+			}
+			err = s.sendResponse(ctx, resp, sender)
+			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+				return err
+			}
+		} else {
+			s.logger.Error("Error receiving message", "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+			return err
+		}
+	}
+
+	return stream.Close()
 }
 
 func (s *Service) sendResponse(ctx context.Context, response *ExtendedResponse, sender StreamSender) error {

@@ -2,10 +2,10 @@ package coreplugin
 
 import (
 	"context"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdklog "github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	sdktracing "github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+	"github.com/grafana/grafana/pkg/tsdb/tempo"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
-	"github.com/grafana/grafana/pkg/tsdb/tempo"
 )
 
 const (

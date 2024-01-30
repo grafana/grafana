@@ -3,6 +3,7 @@ package pluginsintegration
 import (
 	"context"
 	"encoding/json"
+	"github.com/grafana/grafana/pkg/tsdb/tempo"
 	"path/filepath"
 	"testing"
 	"time"
@@ -38,7 +39,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
-	"github.com/grafana/grafana/pkg/tsdb/tempo"
 )
 
 func TestIntegrationPluginManager(t *testing.T) {

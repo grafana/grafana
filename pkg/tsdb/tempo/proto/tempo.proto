@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package tempo;
+option go_package = "github.com/grafana/grafana/tempopb";
+
+message KeyValue {
+  string key = 1;
+  AnyValue value = 2;
+}
+
+message AnyValue {
+  // The value is one of the listed fields. It is valid for all values to be unspecified
+  // in which case this AnyValue is considered to be "empty".
+  oneof value {
+    string string_value = 1;
+    bool bool_value = 2;
+    int64 int_value = 3;
+    double double_value = 4;
+    ArrayValue array_value = 5;
+    KeyValueList kvlist_value = 6;
+    bytes bytes_value = 7;
+  }
+}
+
+message ArrayValue {
+  // Array of values. The array may be empty (contain 0 elements).
+  repeated AnyValue values = 1;
+}
+
+message KeyValueList {
+  // A collection of key/value pairs of key-value pairs. The list may be empty (may
+  // contain 0 elements).
+  // The keys MUST be unique (it is not allowed to have more than one
+  // value with the same key).
+  repeated KeyValue values = 1;
+}
+
+// SearchRequest takes no block parameters and implies a "recent traces" search
+message SearchRequest {
+  // case insensitive partial match
+  map<string, string> Tags = 1;
+  uint32 MinDurationMs = 2;
+  uint32 MaxDurationMs = 3;
+  uint32 Limit = 4;
+  uint32 start = 5;
+  uint32 end = 6;
+  // TraceQL query
+  string Query = 8;
+  uint32 SpansPerSpanSet = 9;
+}
+
+message SearchResponse {
+  repeated TraceSearchMetadata traces = 1;
+  SearchMetrics metrics = 2;
+}
+
+message TraceSearchMetadata {
+  string traceID = 1;
+  string rootServiceName = 2;
+  string rootTraceName = 3;
+  uint64 startTimeUnixNano = 4;
+  uint32 durationMs = 5;
+  SpanSet spanSet = 6; // deprecated. use SpanSets field below
+  repeated SpanSet spanSets = 7;
+}
+
+message SpanSet {
+  repeated Span spans = 1;
+  uint32 matched = 2;
+  repeated KeyValue attributes = 3;
+}
+
+message Span {
+  string spanID = 1;
+  string name = 2;
+  uint64 startTimeUnixNano = 3;
+  uint64 durationNanos = 4;
+  repeated KeyValue attributes = 5;
+}
+
+message SearchMetrics {
+  uint32 inspectedTraces = 1;
+  uint64 inspectedBytes = 2;
+  uint32 totalBlocks = 3;
+  uint32 completedJobs = 4;
+  uint32 totalJobs = 5;
+  uint64 totalBlockBytes = 6;
+}

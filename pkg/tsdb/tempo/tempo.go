@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
-	"github.com/grafana/tempo/pkg/tempopb"
 )
 
 type Service struct {
@@ -47,7 +46,7 @@ func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 
 type Datasource struct {
 	HTTPClient      *http.Client
-	StreamingClient tempopb.StreamingQuerierClient
+	StreamingClient TempoServiceClient
 	URL             string
 }
 
@@ -66,7 +65,7 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			return nil, err
 		}
 
-		streamingClient, err := newGrpcClient(settings, opts)
+		streamingClient, err := newGrpcClient(client, settings)
 		if err != nil {
 			ctxLogger.Error("Failed to get gRPC client", "error", err, "function", logEntrypoint())
 			return nil, err
