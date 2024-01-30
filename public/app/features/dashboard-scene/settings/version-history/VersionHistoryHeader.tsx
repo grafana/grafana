@@ -36,6 +36,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: theme.typography.h3.fontSize,
     display: 'flex',
     gap: theme.spacing(2),
-    marginBottom: theme.spacing(3),
+    marginBottom: theme.spacing(2),
   }),
 });

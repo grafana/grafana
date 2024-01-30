@@ -7,10 +7,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
+	"github.com/grafana/grafana/pkg/services/store/entity/db"
 )
 
-func MigrateEntityStore(db sqlstash.EntityDB, features featuremgmt.FeatureToggles) error {
+func MigrateEntityStore(db db.EntityDBInterface, features featuremgmt.FeatureToggles) error {
 	// Skip if feature flag is not enabled
 	if !features.IsEnabledGlobally(featuremgmt.FlagUnifiedStorage) {
 		return nil
