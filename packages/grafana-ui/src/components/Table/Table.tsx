@@ -242,6 +242,7 @@ export const Table = memo((props: Props) => {
     // autoResetPage is set to false because setting it to true causes the issue described in
     // https://github.com/grafana/grafana/pull/67477
     gotoPage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   useResetVariableListSizeCache(extendedState, listRef, data, hasUniqueId);
