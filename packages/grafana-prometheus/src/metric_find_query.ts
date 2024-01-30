@@ -48,10 +48,13 @@ export default class PrometheusMetricFindQuery {
 
     const labelValuesQuery = this.query.match(labelValuesRegex);
     if (labelValuesQuery) {
-      if (labelValuesQuery[1]) {
-        return this.labelValuesQuery(labelValuesQuery[2], labelValuesQuery[1]);
+      const filter = labelValuesQuery[1];
+      const label = labelValuesQuery[2];
+      if (isFilterDefined(filter)) {
+        return this.labelValuesQuery(label, filter);
       } else {
-        return this.labelValuesQuery(labelValuesQuery[2]);
+        // Exclude the filter part of the expression because it is blank or empty
+        return this.labelValuesQuery(label);
       }
     }
 
@@ -191,4 +194,9 @@ export default class PrometheusMetricFindQuery {
       });
     });
   }
+}
+
+function isFilterDefined(filter: string) {
+  // We consider blank strings or the empty filter {} as an undefined filter
+  return filter && filter.split(' ').join('') !== '{}';
 }
