@@ -36,7 +36,7 @@ interface StateBadgeProps {
 
 export const StateBadge = ({ state, health }: StateBadgeProps) => {
   let stateLabel: string;
-  let color: 'success' | 'error' | 'warning' | 'info';
+  let color: 'success' | 'error' | 'warning';
 
   switch (state) {
     case PromAlertingRuleState.Inactive:
@@ -57,6 +57,11 @@ export const StateBadge = ({ state, health }: StateBadgeProps) => {
   if (isErrorHealth(health)) {
     color = 'error';
     stateLabel = 'Error';
+  }
+
+  if (health === 'nodata') {
+    color = 'warning';
+    stateLabel = 'No data';
   }
 
   return (

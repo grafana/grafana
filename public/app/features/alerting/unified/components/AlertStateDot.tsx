@@ -26,7 +26,7 @@ const getDotStyles = (theme: GrafanaTheme2, props: DotStylesProps) => {
 
   const errorStyle = props.color === 'error';
   const successStyle = props.color === 'success';
-  const pendingStyle = props.color === 'warning';
+  const warningStyle = props.color === 'warning';
 
   return {
     dot: css`
@@ -45,7 +45,7 @@ const getDotStyles = (theme: GrafanaTheme2, props: DotStylesProps) => {
         outlineColor: theme.colors.success.transparent,
       })}
 
-      ${pendingStyle &&
+      ${warningStyle &&
       css({
         backgroundColor: theme.colors.warning.main,
         outlineColor: theme.colors.warning.transparent,
