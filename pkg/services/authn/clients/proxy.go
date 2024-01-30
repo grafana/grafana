@@ -149,7 +149,7 @@ func (c *Proxy) Hook(ctx context.Context, identity *authn.Identity, r *authn.Req
 	}
 
 	// User's role would not be updated if the cache hit. If requests arrive in the following order:
-	// 1. Name = x; Role = Admin  		# cache missed, new user created and cached with key Name=x;Role=Admin
+	// 1. Name = x; Role = Admin			# cache missed, new user created and cached with key Name=x;Role=Admin
 	// 2. Name = x; Role = Editor			# cache missed, the user got updated and cached with key Name=x;Role=Editor
 	// 3. Name = x; Role = Admin			# cache hit with key Name=x;Role=Admin, no update, the user stays with Role=Editor
 	// To avoid such a problem, we need to make sure the there is only one cache for a specific user
