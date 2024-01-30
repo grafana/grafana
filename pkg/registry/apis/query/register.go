@@ -35,10 +35,10 @@ type QueryAPIBuilder struct {
 	UserFacingDefaultError string
 
 	runner   v0alpha1.QueryRunner
-	registry v0alpha1.DataSourceAPIRegistry
+	registry v0alpha1.DataSourceApiServerRegistry
 }
 
-func NewQueryAPIBuilder(runner v0alpha1.QueryRunner, registry v0alpha1.DataSourceAPIRegistry) *QueryAPIBuilder {
+func NewQueryAPIBuilder(runner v0alpha1.QueryRunner, registry v0alpha1.DataSourceApiServerRegistry) *QueryAPIBuilder {
 	return &QueryAPIBuilder{
 		concurrentQueryLimit: 4, // from config?
 		log:                  log.New("query_apiserver"),
@@ -82,8 +82,8 @@ func (b *QueryAPIBuilder) GetGroupVersion() schema.GroupVersion {
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
-		&v0alpha1.DataSourceAPI{},
-		&v0alpha1.DataSourceAPIList{},
+		&v0alpha1.DataSourceApiServer{},
+		&v0alpha1.DataSourceApiServerList{},
 		&v0alpha1.QueryDataResponse{},
 	)
 }

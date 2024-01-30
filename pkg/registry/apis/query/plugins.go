@@ -23,11 +23,11 @@ var (
 type pluginsStorage struct {
 	resourceInfo   *common.ResourceInfo
 	tableConverter rest.TableConvertor
-	registry       query.DataSourceAPIRegistry
+	registry       query.DataSourceApiServerRegistry
 }
 
-func newPluginsStorage(reg query.DataSourceAPIRegistry) *pluginsStorage {
-	var resourceInfo = query.DataSourceAPIResourceInfo
+func newPluginsStorage(reg query.DataSourceApiServerRegistry) *pluginsStorage {
+	var resourceInfo = query.DataSourceApiServerResourceInfo
 	return &pluginsStorage{
 		resourceInfo:   &resourceInfo,
 		tableConverter: rest.NewDefaultTableConvertor(resourceInfo.GroupResource()),
@@ -58,5 +58,5 @@ func (s *pluginsStorage) ConvertToTable(ctx context.Context, object runtime.Obje
 }
 
 func (s *pluginsStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return s.registry.GetDatasourceAPIs(ctx, options)
+	return s.registry.GetDatasourceApiServers(ctx)
 }

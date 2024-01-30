@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -28,7 +27,7 @@ type directRunner struct {
 
 type directRegistry struct {
 	pluginsMu     sync.Mutex
-	plugins       *v0alpha1.DataSourceAPIList
+	plugins       *v0alpha1.DataSourceApiServerList
 	apis          map[string]schema.GroupVersion
 	groupToPlugin map[string]string
 	pluginStore   pluginstore.Store
@@ -38,7 +37,7 @@ type directRegistry struct {
 }
 
 var _ v0alpha1.QueryRunner = (*directRunner)(nil)
-var _ v0alpha1.DataSourceAPIRegistry = (*directRegistry)(nil)
+var _ v0alpha1.DataSourceApiServerRegistry = (*directRegistry)(nil)
 
 // NewDummyTestRunner creates a runner that only works with testdata
 func NewDirectQueryRunner(
@@ -52,7 +51,7 @@ func NewDirectQueryRunner(
 
 func NewDirectRegistry(pluginStore pluginstore.Store,
 	dataSourcesService datasources.DataSourceService,
-) v0alpha1.DataSourceAPIRegistry {
+) v0alpha1.DataSourceApiServerRegistry {
 	return &directRegistry{
 		pluginStore:        pluginStore,
 		dataSourcesService: dataSourcesService,
@@ -118,7 +117,7 @@ func (d *directRegistry) GetDatasourceGroupVersion(pluginId string) (schema.Grou
 }
 
 // GetDatasourcePlugins no namespace? everything that is available
-func (d *directRegistry) GetDatasourceAPIs(ctx context.Context, options *internalversion.ListOptions) (*v0alpha1.DataSourceAPIList, error) {
+func (d *directRegistry) GetDatasourceApiServers(ctx context.Context) (*v0alpha1.DataSourceApiServerList, error) {
 	d.pluginsMu.Lock()
 	defer d.pluginsMu.Unlock()
 
@@ -136,7 +135,7 @@ func (d *directRegistry) GetDatasourceAPIs(ctx context.Context, options *interna
 func (d *directRegistry) updatePlugins() error {
 	groupToPlugin := map[string]string{}
 	apis := map[string]schema.GroupVersion{}
-	result := &v0alpha1.DataSourceAPIList{
+	result := &v0alpha1.DataSourceApiServerList{
 		ListMeta: metav1.ListMeta{
 			ResourceVersion: fmt.Sprintf("%d", time.Now().UnixMilli()),
 		},
@@ -160,7 +159,7 @@ func (d *directRegistry) updatePlugins() error {
 		}
 		groupToPlugin[group] = dsp.ID
 
-		ds := v0alpha1.DataSourceAPI{
+		ds := v0alpha1.DataSourceApiServer{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              dsp.ID,
 				CreationTimestamp: metav1.NewTime(time.UnixMilli(ts)),

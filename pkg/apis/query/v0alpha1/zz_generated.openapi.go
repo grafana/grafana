@@ -16,17 +16,17 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceAPI":       schema_pkg_apis_query_v0alpha1_DataSourceAPI(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceAPIList":   schema_pkg_apis_query_v0alpha1_DataSourceAPIList(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef":       schema_pkg_apis_query_v0alpha1_DataSourceRef(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery":    schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericQueryRequest": schema_pkg_apis_query_v0alpha1_GenericQueryRequest(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataResponse":   QueryDataResponse{}.OpenAPIDefinition(),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange":           schema_pkg_apis_query_v0alpha1_TimeRange(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServer":     schema_pkg_apis_query_v0alpha1_DataSourceApiServer(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServerList": schema_pkg_apis_query_v0alpha1_DataSourceApiServerList(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef":           schema_pkg_apis_query_v0alpha1_DataSourceRef(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery":        schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericQueryRequest":     schema_pkg_apis_query_v0alpha1_GenericQueryRequest(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataResponse":       QueryDataResponse{}.OpenAPIDefinition(),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange":               schema_pkg_apis_query_v0alpha1_TimeRange(ref),
 	}
 }
 
-func schema_pkg_apis_query_v0alpha1_DataSourceAPI(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_query_v0alpha1_DataSourceApiServer(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -100,7 +100,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourceAPI(ref common.ReferenceCallback) 
 	}
 }
 
-func schema_pkg_apis_query_v0alpha1_DataSourceAPIList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_query_v0alpha1_DataSourceApiServerList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -134,7 +134,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourceAPIList(ref common.ReferenceCallba
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceAPI"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServer"),
 									},
 								},
 							},
@@ -144,7 +144,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourceAPIList(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceAPI", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServer", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 

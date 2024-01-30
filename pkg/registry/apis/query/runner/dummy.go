@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -19,14 +18,14 @@ import (
 type testdataDummy struct{}
 
 var _ v0alpha1.QueryRunner = (*testdataDummy)(nil)
-var _ v0alpha1.DataSourceAPIRegistry = (*testdataDummy)(nil)
+var _ v0alpha1.DataSourceApiServerRegistry = (*testdataDummy)(nil)
 
 // NewDummyTestRunner creates a runner that only works with testdata
 func NewDummyTestRunner() v0alpha1.QueryRunner {
 	return &testdataDummy{}
 }
 
-func NewDummyRegistry() v0alpha1.DataSourceAPIRegistry {
+func NewDummyRegistry() v0alpha1.DataSourceApiServerRegistry {
 	return &testdataDummy{}
 }
 
@@ -69,12 +68,12 @@ func (*testdataDummy) GetDatasourceGroupVersion(pluginId string) (schema.GroupVe
 }
 
 // GetDatasourcePlugins implements QueryHelper.
-func (d *testdataDummy) GetDatasourceAPIs(ctx context.Context, options *internalversion.ListOptions) (*v0alpha1.DataSourceAPIList, error) {
-	return &v0alpha1.DataSourceAPIList{
+func (d *testdataDummy) GetDatasourceApiServers(ctx context.Context) (*v0alpha1.DataSourceApiServerList, error) {
+	return &v0alpha1.DataSourceApiServerList{
 		ListMeta: metav1.ListMeta{
 			ResourceVersion: fmt.Sprintf("%d", time.Now().UnixMilli()),
 		},
-		Items: []v0alpha1.DataSourceAPI{
+		Items: []v0alpha1.DataSourceApiServer{
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "grafana-testdata-datasource",

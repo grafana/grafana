@@ -1,4 +1,4 @@
-API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/query/v0alpha1,DataSourceAPI,AliasIDs
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/query/v0alpha1,DataSourceApiServer,AliasIDs
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/query/v0alpha1,GenericQueryRequest,Queries
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/query/v0alpha1,GenericDataQuery,IntervalMS
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/query/v0alpha1,GenericDataQuery,RefID

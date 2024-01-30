@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -24,13 +23,13 @@ type QueryRunner interface {
 	) (*backend.QueryDataResponse, error)
 }
 
-type DataSourceAPIRegistry interface {
+type DataSourceApiServerRegistry interface {
 	// Get the group and preferred version for a plugin
 	GetDatasourceGroupVersion(pluginId string) (schema.GroupVersion, error)
 
-	// Get the list of available datasource plugins
+	// Get the list of available datasource api servers
 	// The values will be managed though API discovery/reconciliation
-	GetDatasourceAPIs(ctx context.Context, options *internalversion.ListOptions) (*DataSourceAPIList, error)
+	GetDatasourceApiServers(ctx context.Context) (*DataSourceApiServerList, error)
 }
 
 // The data source resource is a reflection of the individual datasource instances
@@ -39,7 +38,7 @@ type DataSourceAPIRegistry interface {
 // The name is the plugin id
 //
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type DataSourceAPI struct {
+type DataSourceApiServer struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
@@ -58,9 +57,9 @@ type DataSourceAPI struct {
 
 // List of datasource plugins
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type DataSourceAPIList struct {
+type DataSourceApiServerList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 
-	Items []DataSourceAPI `json:"items,omitempty"`
+	Items []DataSourceApiServer `json:"items,omitempty"`
 }
