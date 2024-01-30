@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -27,7 +26,7 @@ func (r *renderREST) Destroy() {
 }
 
 func (r *renderREST) ConnectMethods() []string {
-	return []string{"POST", "GET"}
+	return []string{"GET"}
 }
 
 func (r *renderREST) NewConnectOptions() (runtime.Object, bool, string) {
@@ -35,46 +34,42 @@ func (r *renderREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *renderREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	obj, err := r.getter.Get(ctx, name, nil)
+	if err != nil {
+		return nil, err
+	}
+	template, ok := obj.(*peakq.QueryTemplate)
+	if !ok {
+		return nil, fmt.Errorf("expected template")
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		var template *peakq.QueryTemplate
-		if req.Method == http.MethodGet {
-			obj, err := r.getter.Get(ctx, name, &v1.GetOptions{})
-			if err != nil {
-				responder.Error(err)
-				return
-			}
-			var ok bool
-			template, ok = obj.(*peakq.QueryTemplate)
-			if !ok {
-				responder.Error(fmt.Errorf("expected query template"))
-				return
+		input := map[string]string{}
+		for key, vals := range req.URL.Query() {
+			if len(vals) > 0 {
+				input[key] = vals[0] // ignore second values?
 			}
 		}
 
-		if req.Method == http.MethodPost {
-			// Somehow my template?
-			responder.Error(fmt.Errorf("no post yet"))
-			return
-		}
-
-		rT, err := Render(template.Spec, nil)
+		rq, err := Render(template.Spec, nil)
 		if err != nil {
 			responder.Error(fmt.Errorf("failed to render: %w", err))
 			return
 		}
-
-		out := &peakq.RenderedQuery{
-			Targets: rT,
-		}
-		responder.Object(http.StatusOK, out)
+		responder.Object(http.StatusOK, rq)
 	}), nil
 }
 
-func Render(qt peakq.QueryTemplateSpec, selectedValues map[string]string) ([]peakq.Target, error) {
+func Render(qt peakq.QueryTemplateSpec, selectedValues map[string]string) (*peakq.RenderedQuery, error) {
 	// Note: The following is super stupid, will only work with one var, no sanity checking etc
 	// selectedValues is for GET
 	targets := qt.DeepCopy().Targets
 	for _, qVar := range qt.Variables {
+		value, ok := selectedValues[qVar.Key]
+		if !ok {
+			continue // or use default?
+		}
+
 		var offSet int64
 		for _, pos := range qVar.Positions {
 			// TODO: track offset after replacement
@@ -87,8 +82,8 @@ func Render(qt peakq.QueryTemplateSpec, selectedValues map[string]string) ([]pea
 			}
 
 			// I think breaks with utf...something...?
-			s = s[:pos.Start+offSet] + qVar.SelectedValue + s[pos.End+offSet:]
-			offSet = int64(len(qVar.SelectedValue)) - pos.End - pos.Start
+			s = s[:pos.Start+offSet] + value + s[pos.End+offSet:]
+			offSet = int64(len(value)) - pos.End - pos.Start
 
 			err = unstructured.SetNestedField(targets[pos.TargetIdx].Properties.Object, s, pos.TargetKey)
 			if err != nil {
@@ -96,5 +91,7 @@ func Render(qt peakq.QueryTemplateSpec, selectedValues map[string]string) ([]pea
 			}
 		}
 	}
-	return targets, nil
+	return &peakq.RenderedQuery{
+		Targets: targets,
+	}, nil
 }

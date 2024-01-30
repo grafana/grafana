@@ -94,18 +94,19 @@ func (b *PeakQAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 // NOT A GREAT APPROACH... BUT will make a UI for statically defined
 func (b *PeakQAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	defs := peakq.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
-	renderedQuery := defs["github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.RenderedQuery"].Schema
+	renderedQuerySchema := defs["github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.RenderedQuery"].Schema
+	queryTemplateSpecSchema := defs["github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.QueryTemplateSpec"].Schema
 	playgroundExample := basicTemplateWithSelectedValue
 
-	params := []*spec3.Parameter{}
-	for _, v := range playgroundExample.Variables {
-		params = append(params, &spec3.Parameter{
+	params := []*spec3.Parameter{
+		{
 			ParameterProps: spec3.ParameterProps{
-				Name:    v.Key,
+				Name:    "metricName",
+				In:      "query",
 				Schema:  spec.StringProperty(),
-				Example: v.SelectedValue,
+				Example: "up",
 			},
-		})
+		},
 	}
 
 	return &grafanaapiserver.APIRoutes{
@@ -115,9 +116,35 @@ func (b *PeakQAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 				Spec: &spec3.PathProps{
 					Summary:     "an example at the root level",
 					Description: "longer description here?",
-					Get: &spec3.Operation{
+					Post: &spec3.Operation{
 						OperationProps: spec3.OperationProps{
 							Parameters: params,
+							RequestBody: &spec3.RequestBody{
+								RequestBodyProps: spec3.RequestBodyProps{
+									Content: map[string]*spec3.MediaType{
+										"application/json": {
+											MediaTypeProps: spec3.MediaTypeProps{
+												Schema:  &queryTemplateSpecSchema,
+												Example: basicTemplateWithSelectedValue,
+												Examples: map[string]*spec3.Example{
+													"test": {
+														ExampleProps: spec3.ExampleProps{
+															Summary: "hello",
+															Value:   basicTemplateWithSelectedValue,
+														},
+													},
+													"test2": {
+														ExampleProps: spec3.ExampleProps{
+															Summary: "hello2",
+															Value:   basicTemplateWithSelectedValue,
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
 							Responses: &spec3.Responses{
 								ResponsesProps: spec3.ResponsesProps{
 									StatusCodeResponses: map[int]*spec3.Response{
@@ -127,7 +154,7 @@ func (b *PeakQAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 												Content: map[string]*spec3.MediaType{
 													"application/json": {
 														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &renderedQuery,
+															Schema: &renderedQuerySchema,
 														},
 													},
 												},

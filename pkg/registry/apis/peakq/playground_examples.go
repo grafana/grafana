@@ -11,9 +11,9 @@ var basicTemplateWithSelectedValue = peakq.QueryTemplateSpec{
 	Title: "Test",
 	Variables: []peakq.QueryVariable{
 		{
-			Key:           "metricName",
-			SelectedValue: `up`, // TODO: Pointer or opt to "Replace on Empty"
-			DefaultValue:  `down`,
+			Key: "metricName",
+			//	SelectedValue: `up`, // TODO: Pointer or opt to "Replace on Empty"
+			DefaultValue: `down`,
 			Positions: []peakq.Position{
 				{
 					TargetIdx: 0,
