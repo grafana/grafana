@@ -24,21 +24,27 @@ A threshold is a value that you specify for a metric that's visually reflected i
 
 <!--this definition needs to be clearer-->
 
-Thresholds are one way you can conditionally style and color your visualizations based on query results. You can use thresholds to:
+Thresholds are one way you can conditionally style and color your visualizations based on query results.
 
-- Color grid lines or grid areas in the [Time-series visualization][]
-- Color lines in the [Time-series visualization][]
-- Color the background or value text in the [Stat visualization][]
-- Color the gauge and threshold markers in the [Gauge visualization][]
-- Color markers in the [Geomap visualization][]
-- Color cell text or background in the [Table visualization][]
-- Define regions and region colors in the [State timeline visualization][]
+You can color grid lines and grid areas or regions in a time series visualization:
+![Time series visualization with green, blue, and purple threshold lines and regions](screenshot-thresholds-lines-regions-v10.4.png)
 
-<!--Maybe have fewer of these examples but actually show what these examples would look like visually -->
+You can color the background or value text in a stat visualization:
+![Stat visualization with three values in green and orange](screenshot-thresholds-value-v10.4.png)
+
+You can define regions and region colors in a state timeline:
+![State timeline with green, blue, and pink region thresholds](screenshot-thresholds-state-timeline-v10.4.png)
+
+You can also use thresholds to:
+
+- Color lines in a time series visualization
+- Color the gauge and threshold markers in a gauge
+- Color markers in a geomap
+- Color cell text or background in a table
 
 ## Supported visualizations
 
-Thresholds are supported for the following visualizations:
+You can set thresholds in the following visualizations:
 
 - [Bar chart][bar chart]
 - [Bar gauge][bar gauge]
@@ -185,22 +191,4 @@ In the Graph panel visualization, thresholds enable you to add lines or sections
 
 [trend]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/trend"
 [trend]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/trend"
-
-[Time-series visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series#from-thresholds"
-[Time-series visualization]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series#from-thresholds"
-
-[Stat visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/stat"
-[Stat visualization]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/stat"
-
-[Gauge visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/gauge"
-[Gauge visualization]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/gauge"
-
-[Geomap visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/gauge"
-[Geomap visualization]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/gauge"
-
-[Table visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
-[Table visualization]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/table"
-
-[State timeline visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/state-timeline"
-[State timeline visualization]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/state-timeline"
 {{% /docs/reference %}}
