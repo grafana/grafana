@@ -58,16 +58,23 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
           }}
         />
       );
-
-      toolbarActions.push(
-        <DashNavButton
-          key="view-in-old-dashboard-button"
-          tooltip={'View as dashboard'}
-          icon="apps"
-          onClick={() => locationService.push(`/d/${uid}`)}
-        />
-      );
     }
+
+    toolbarActions.push(
+      <DashNavButton
+        key="view-in-old-dashboard-button"
+        tooltip={'View as dashboard'}
+        icon="apps"
+        onClick={() => {
+          if (meta.isSnapshot) {
+            locationService.partial({ scenes: null });
+          } else {
+            locationService.push(`/d/${uid}`);
+          }
+        }}
+      />
+    );
+
     if (dynamicDashNavActions.left.length > 0) {
       dynamicDashNavActions.left.map((action, index) => {
         const Component = action.component;

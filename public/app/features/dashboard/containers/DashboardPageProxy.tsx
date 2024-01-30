@@ -25,8 +25,7 @@ function DashboardPageProxy(props: DashboardPageProxyProps) {
   const stateManager = getDashboardScenePageStateManager();
   const isScenesSupportedRoute = Boolean(
     props.route.routeName === DashboardRoutes.Home ||
-      (props.route.routeName === DashboardRoutes.Normal && props.match.params.uid) ||
-      (props.route.routeName === DashboardRoutes.Normal && props.match.params.type === 'snapshot')
+      (props.route.routeName === DashboardRoutes.Normal && props.match.params.uid)
   );
 
   // We pre-fetch dashboard to render dashboard page component depending on dashboard permissions.
