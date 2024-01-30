@@ -1,8 +1,8 @@
 module.exports = {
   // Default namespace used in your i18next config
   defaultNamespace: 'grafana',
-
-  locales: ['en-US', 'fr-FR', 'es-ES', "de-DE", "zh-Hans", 'pseudo-LOCALE'],
+  // Adds changes only to en-US and pseudo-LOCALE when extracting keys, every other language is provided by Crowdin
+  locales: ['en-US', 'pseudo-LOCALE'],
 
   output: './public/locales/$LOCALE/$NAMESPACE.json',
 
