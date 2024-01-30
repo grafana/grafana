@@ -80,7 +80,7 @@ export function LabelFilterItem({
         {/* Label name select, loads all values at once */}
         <Select
           placeholder="Select label"
-          aria-label={selectors.components.QueryBuilder.labelSelect}
+          data-testid={selectors.components.QueryBuilder.labelSelect}
           inputId="prometheus-dimensions-filter-item-key"
           width="auto"
           value={item.label ? toOption(item.label) : null}
@@ -112,7 +112,7 @@ export function LabelFilterItem({
 
         {/* Operator select i.e.   = =~ != !~   */}
         <Select
-          aria-label={selectors.components.QueryBuilder.matchOperatorSelect}
+          data-testid={selectors.components.QueryBuilder.matchOperatorSelect}
           className="query-segment-operator"
           value={toOption(item.op ?? defaultOp)}
           options={operators}
@@ -132,7 +132,7 @@ export function LabelFilterItem({
         {/* Label value async select: autocomplete calls prometheus API */}
         <AsyncSelect
           placeholder="Select value"
-          aria-label={selectors.components.QueryBuilder.valueSelect}
+          data-testid={selectors.components.QueryBuilder.valueSelect}
           inputId="prometheus-dimensions-filter-item-value"
           width="auto"
           value={
