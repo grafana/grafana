@@ -151,7 +151,6 @@ export function useAllAlertRuleAbilities(rule: CombinedRule): Abilities<AlertRul
   // if a rule is either provisioned or a federated rule, we don't allow it to be removed or edited
   const immutableRule = isProvisioned || isFederated;
 
-  // TODO refactor this hook maybe
   const {
     isEditable,
     isRemovable,
