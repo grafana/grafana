@@ -3006,7 +3006,7 @@ __metadata:
     react: "npm:18.2.0"
     react-select-event: "npm:5.5.1"
     react-test-renderer: "npm:18.2.0"
-    react-use: "npm:17.4.0"
+    react-use: "npm:17.5.0"
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.2"
