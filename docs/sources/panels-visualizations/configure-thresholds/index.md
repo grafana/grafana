@@ -22,7 +22,7 @@ weight: 100
 
 A threshold is a value that you specify for a metric that's visually reflected in a dashboard when the threshold value is met or exceeded.
 
-<!--this definition is bad-->
+<!--this definition needs to be clearer-->
 
 Thresholds are one way you can conditionally style and color your visualizations based on query results. You can use thresholds to:
 
