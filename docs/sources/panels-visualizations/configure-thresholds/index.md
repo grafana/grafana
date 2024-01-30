@@ -20,13 +20,9 @@ weight: 100
 
 # Configure thresholds
 
-A threshold is a value that you specify for a metric that's visually reflected in a dashboard when the threshold value is met or exceeded.
+In Grafana, a threshold is a value or limit you set for a metric that's reflected visually when it's met or exceeded. Thresholds are one way you can conditionally style and color your visualizations based on query results.
 
-<!--this definition needs to be clearer-->
-
-Thresholds are one way you can conditionally style and color your visualizations based on query results.
-
-You can color grid lines and grid areas or regions in a time series visualization:
+Using thresholds, you can color grid lines and regions in a time series visualization:
 ![Time series visualization with green, blue, and purple threshold lines and regions](screenshot-thresholds-lines-regions-v10.4.png)
 
 You can color the background or value text in a stat visualization:
