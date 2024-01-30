@@ -21,9 +21,9 @@ export const ManualEditor = ({
 }: StandardEditorProps<ScatterSeriesConfig[], unknown, Options>) => {
   const frameNames = useMemo(() => {
     if (context?.data?.length) {
-      return context.data.map((f, idx) => ({
-        value: idx,
-        label: `${getFrameDisplayName(f, idx)} (index: ${idx}, rows: ${f.length})`,
+      return context.data.map((frame, index) => ({
+        value: index,
+        label: `${getFrameDisplayName(frame, index)} (index: ${index}, rows: ${frame.length})`,
       }));
     }
     return [{ value: 0, label: 'First result' }];
@@ -124,14 +124,14 @@ export const ManualEditor = ({
                     return v.value === value[selected].frame;
                   }) ?? 0
                 }
-                onChange={(v) => {
+                onChange={(val) => {
                   onChange(
                     value.map((obj, i) => {
                       if (i === selected) {
-                        if (v === null) {
+                        if (val === null) {
                           return { ...value[i], frame: undefined };
                         }
-                        return { ...value[i], frame: v?.value!, x: undefined, y: undefined };
+                        return { ...value[i], frame: val?.value!, x: undefined, y: undefined };
                       }
                       return obj;
                     })
@@ -146,11 +146,11 @@ export const ManualEditor = ({
             item={{} as StandardEditorsRegistryItem}
             context={context}
             value={value[selected]}
-            onChange={(v) => {
+            onChange={(val) => {
               onChange(
                 value.map((obj, i) => {
                   if (i === selected) {
-                    return v!;
+                    return val!;
                   }
                   return obj;
                 })
