@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"math/rand"
 	"os"
@@ -194,6 +193,7 @@ func TestIntegrationPostgres(t *testing.T) {
 
 	cfg := setting.NewCfg()
 	cfg.DataPath = t.TempDir()
+	cfg.DataProxyRowLimit = 10000
 
 	jsonData := sqleng.JsonData{
 		MaxOpenConns:        0,
@@ -208,20 +208,11 @@ func TestIntegrationPostgres(t *testing.T) {
 		DecryptedSecureJSONData: map[string]string{},
 	}
 
-	config := sqleng.DataPluginConfiguration{
-		DSInfo:            dsInfo,
-		MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
-		RowLimit:          1000000,
-	}
-
-	queryResultTransformer := postgresQueryResultTransformer{}
-
 	logger := backend.NewLoggerWith("logger", "postgres.test")
 
-	db := InitPostgresTestDB(t, jsonData)
+	cnnstr := postgresTestDBConnString()
 
-	exe, err := sqleng.NewQueryDataHandler(cfg, db, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
-		logger)
+	db, exe, err := newPostgres(cfg, dsInfo, cnnstr, logger)
 
 	require.NoError(t, err)
 
@@ -1275,15 +1266,10 @@ func TestIntegrationPostgres(t *testing.T) {
 
 		t.Run("When row limit set to 1", func(t *testing.T) {
 			dsInfo := sqleng.DataSourceInfo{}
-			config := sqleng.DataPluginConfiguration{
-				DSInfo:            dsInfo,
-				MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
-				RowLimit:          1,
-			}
+			conf := setting.NewCfg()
+			conf.DataProxyRowLimit = 1
+			_, handler, err := newPostgres(conf, dsInfo, cnnstr, logger)
 
-			queryResultTransformer := postgresQueryResultTransformer{}
-
-			handler, err := sqleng.NewQueryDataHandler(setting.NewCfg(), db, config, &queryResultTransformer, newPostgresMacroEngine(false), logger)
 			require.NoError(t, err)
 
 			t.Run("When doing a table query that returns 2 rows should limit the result to 1 row", func(t *testing.T) {
@@ -1382,17 +1368,6 @@ func TestIntegrationPostgres(t *testing.T) {
 			require.Empty(t, frames[0].Fields)
 		})
 	})
-}
-
-func InitPostgresTestDB(t *testing.T, jsonData sqleng.JsonData) *sql.DB {
-	connStr := postgresTestDBConnString()
-	db, err := sql.Open("postgres", connStr)
-	require.NoError(t, err, "Failed to init postgres DB")
-
-	db.SetMaxOpenConns(jsonData.MaxOpenConns)
-	db.SetMaxIdleConns(jsonData.MaxIdleConns)
-	db.SetConnMaxLifetime(time.Duration(jsonData.ConnMaxLifetime) * time.Second)
-	return db
 }
 
 func genTimeRangeByInterval(from time.Time, duration time.Duration, interval time.Duration) []time.Time {

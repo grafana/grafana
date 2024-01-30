@@ -1,10 +1,9 @@
 import { DataQueryRequest, DataSourceInstanceSettings, toUtc } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime'; // will use the version in __mocks__
 
-import { CustomVariableModel } from '../../../../features/variables/types';
 import CloudMonitoringDataSource from '../datasource';
 import { CloudMonitoringQuery } from '../types/query';
-import { CloudMonitoringOptions } from '../types/types';
+import { CloudMonitoringOptions, CustomVariableModel } from '../types/types';
 
 let getTempVars = () => [] as CustomVariableModel[];
 let replace = () => '';
