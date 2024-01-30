@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
 // Generic query request with shared time across all values
@@ -31,20 +31,6 @@ type GenericQueryRequest struct {
 
 	// required: false
 	Debug bool `json:"debug,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type QueryResults struct {
-	metav1.TypeMeta `json:",inline"`
-
-	// The response data
-	Results map[string]QueryResult `json:"results"`
-}
-
-// Result for a single query
-type QueryResult struct {
-	Frames []string `json:"frames"` // TODO... actually DataFrame!!!
-	Status int64    `json:"status,omitempty"`
 }
 
 type DataSourceRef struct {

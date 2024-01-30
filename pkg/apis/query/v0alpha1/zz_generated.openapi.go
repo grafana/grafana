@@ -24,8 +24,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery":     schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericQueryRequest":  schema_pkg_apis_query_v0alpha1_GenericQueryRequest(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.HealthCheck":          schema_pkg_apis_query_v0alpha1_HealthCheck(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryResult":          schema_pkg_apis_query_v0alpha1_QueryResult(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryResults":         schema_pkg_apis_query_v0alpha1_QueryResults(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataResponse":    QueryDataResponse{}.OpenAPIDefinition(),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange":            schema_pkg_apis_query_v0alpha1_TimeRange(ref),
 	}
 }
@@ -140,7 +139,7 @@ func schema_pkg_apis_query_v0alpha1_DataSourcePlugin(ref common.ReferenceCallbac
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "The data source resource is a reflection of the individual datasource instances that are exposed in the groups: {datasource}.datasource.grafana.app The status is updated periodically.",
+				Description: "The data source resource is a reflection of the individual datasource instances that are exposed in the groups: {datasource}.datasource.grafana.app The status is updated periodically. The name is the plugin id",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
@@ -174,15 +173,6 @@ func schema_pkg_apis_query_v0alpha1_DataSourcePlugin(ref common.ReferenceCallbac
 					"description": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Describe the plugin",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"string": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The plugin type ID",
-							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -225,16 +215,8 @@ func schema_pkg_apis_query_v0alpha1_DataSourcePlugin(ref common.ReferenceCallbac
 							},
 						},
 					},
-					"icon": {
-						SchemaProps: spec.SchemaProps{
-							Description: "SVG icon for this plugin",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 				},
-				Required: []string{"title", "description", "string", "groupVersion", "icon"},
+				Required: []string{"title", "groupVersion"},
 			},
 		},
 		Dependencies: []string{
@@ -323,7 +305,8 @@ func schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref common.ReferenceCallbac
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "GenericDataQuery is a replacement for `dtos.MetricRequest` that provides more explicit types",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"refId": {
 						SchemaProps: spec.SchemaProps{
@@ -479,84 +462,6 @@ func schema_pkg_apis_query_v0alpha1_HealthCheck(ref common.ReferenceCallback) co
 				Required: []string{"status", "checked"},
 			},
 		},
-	}
-}
-
-func schema_pkg_apis_query_v0alpha1_QueryResult(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Result for a single query",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"frames": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-					"status": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
-						},
-					},
-				},
-				Required: []string{"frames"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_query_v0alpha1_QueryResults(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"apiVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"results": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The response data",
-							Type:        []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryResult"),
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"results"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryResult"},
 	}
 }
 

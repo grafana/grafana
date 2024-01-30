@@ -86,7 +86,7 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&v0alpha1.DataSourceList{},
 		&v0alpha1.DataSourcePlugin{},
 		&v0alpha1.DataSourcePluginList{},
-		&v0alpha1.QueryResults{},
+		&v0alpha1.QueryDataResponse{},
 	)
 }
 
