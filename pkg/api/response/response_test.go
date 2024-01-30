@@ -125,3 +125,49 @@ func TestErrors(t *testing.T) {
 		)
 	}
 }
+
+func TestRespond(t *testing.T) {
+	testCases := []struct {
+		name     string
+		status   int
+		body     any
+		expected []byte
+	}{
+		{
+			name:     "with body of type []byte",
+			status:   200,
+			body:     []byte("message body"),
+			expected: []byte("message body"),
+		},
+		{
+			name:     "with body of type string",
+			status:   400,
+			body:     "message body",
+			expected: []byte("message body"),
+		},
+		{
+			name:     "with nil body",
+			status:   204,
+			body:     nil,
+			expected: nil,
+		},
+		{
+			name:   "with body of type struct",
+			status: 200,
+			body: struct {
+				Name  string
+				Value int
+			}{"name", 1},
+			expected: []byte(`{"Name":"name","Value":1}`),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			resp := Respond(tc.status, tc.body)
+
+			require.Equal(t, tc.status, resp.status)
+			require.Equal(t, tc.expected, resp.body.Bytes())
+		})
+	}
+}

@@ -127,7 +127,6 @@ type FeatureFlag struct {
 
 	// Special behavior properties
 	RequiresDevMode bool `json:"requiresDevMode,omitempty"` // can not be enabled in production
-	RequiresLicense bool `json:"requiresLicense,omitempty"` // Must be enabled in the license
 	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
 	HideFromDocs    bool `json:"hideFromDocs,omitempty"`    // don't add the values to docs
 

@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
-	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -52,10 +51,7 @@ func (o *APIServerOptions) loadAPIGroupBuilders(args []string) error {
 		case "example.grafana.app":
 			o.builders = append(o.builders, example.NewTestingAPIBuilder())
 		case "featuretoggle.grafana.app":
-			features, err := featuremgmt.ProvideManagerService(&setting.Cfg{}, &licensing.OSSLicensingService{})
-			if err != nil {
-				return err
-			}
+			features := featuremgmt.WithFeatureManager(setting.FeatureMgmtSettings{}, nil) // none... for now
 			o.builders = append(o.builders, featuretoggle.NewFeatureFlagAPIBuilder(features))
 		case "testdata.datasource.grafana.app":
 			ds, err := server.InitializeDataSourceAPIServer(g)
