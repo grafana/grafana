@@ -30,7 +30,6 @@ interface DashboardCacheEntry {
 export interface LoadDashboardOptions {
   uid: string;
   isEmbedded?: boolean;
-  slug?: string;
 }
 
 export class DashboardScenePageStateManager extends StateManagerBase<DashboardScenePageState> {
