@@ -437,6 +437,7 @@ export class Scene {
         this.ignoreDataUpdate = true;
         this.setNonTargetPointerEvents(event.target, true);
 
+        // Remove the selected element from the snappable guidelines
         if (this.moveable && this.moveable.elementGuidelines) {
           const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
           if (targetIndex > -1) {
@@ -447,6 +448,7 @@ export class Scene {
       .on('dragGroupStart', (e) => {
         this.ignoreDataUpdate = true;
 
+        // Remove the selected elements from the snappable guidelines
         if (this.moveable && this.moveable.elementGuidelines) {
           for (let event of e.events) {
             const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
@@ -490,6 +492,7 @@ export class Scene {
               targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
             }
 
+            // re-add the selected elements to the snappable guidelines
             if (this.moveable && this.moveable.elementGuidelines) {
               this.moveable.elementGuidelines.push(event.target);
             }
@@ -509,6 +512,7 @@ export class Scene {
         this.ignoreDataUpdate = false;
         this.setNonTargetPointerEvents(event.target, false);
 
+        // re-add the selected element to the snappable guidelines
         if (this.moveable && this.moveable.elementGuidelines) {
           this.moveable.elementGuidelines.push(event.target);
         }
@@ -517,6 +521,7 @@ export class Scene {
         const targetedElement = this.findElementByTarget(event.target);
 
         if (targetedElement) {
+          // Remove the selected element from the snappable guidelines
           if (this.moveable && this.moveable.elementGuidelines) {
             const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
             if (targetIndex > -1) {
@@ -533,6 +538,7 @@ export class Scene {
         }
       })
       .on('resizeGroupStart', (e) => {
+        // Remove the selected elements from the snappable guidelines
         if (this.moveable && this.moveable.elementGuidelines) {
           for (let event of e.events) {
             const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
@@ -583,12 +589,14 @@ export class Scene {
 
           targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
 
+          // re-add the selected element to the snappable guidelines
           if (this.moveable && this.moveable.elementGuidelines) {
             this.moveable.elementGuidelines.push(event.target);
           }
         }
       })
       .on('resizeGroupEnd', (e) => {
+        // re-add the selected elements to the snappable guidelines
         if (this.moveable && this.moveable.elementGuidelines) {
           for (let event of e.events) {
             this.moveable.elementGuidelines.push(event.target);
