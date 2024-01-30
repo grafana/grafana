@@ -153,7 +153,7 @@ function getVersions() {
 }
 
 async function buildTestScene() {
-  const versionsView = new VersionsEditView({ versions: [] });
+  const versionsView = new VersionsEditView({});
   const dashboard = new DashboardScene({
     $timeRange: new SceneTimeRange({}),
     title: 'hello',
