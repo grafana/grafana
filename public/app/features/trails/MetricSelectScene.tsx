@@ -23,6 +23,7 @@ import { Input, Text, useStyles2, InlineSwitch, Field, LoadingPlaceholder } from
 
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { MetricCategoryCascader } from './MetricCategory/MetricCategoryCascader';
+import { MetricScene } from './MetricScene';
 import { SelectMetricAction } from './SelectMetricAction';
 import { hideEmptyPreviews } from './hideEmptyPreviews';
 import { getVariablesWithMetricConstant, trailDS, VAR_FILTERS_EXPR, VAR_METRIC_NAMES } from './shared';
@@ -177,6 +178,14 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       }
 
       metricsMap[metricName] = { name: metricName, index, loaded: false };
+    }
+
+    try {
+      // If there is a current metric, do not present it
+      const currentMetric = sceneGraph.getAncestor(this, MetricScene).state.metric;
+      delete metricsMap[currentMetric];
+    } catch (err) {
+      // There is no current metric
     }
 
     this.previewCache = metricsMap;
