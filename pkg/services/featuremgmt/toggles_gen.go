@@ -127,10 +127,6 @@ const (
 	// Enable async query data support for Athena
 	FlagAthenaAsyncQueryDataSupport = "athenaAsyncQueryDataSupport"
 
-	// FlagCloudwatchNewRegionsHandler
-	// Refactor of /regions endpoint, no user-facing changes
-	FlagCloudwatchNewRegionsHandler = "cloudwatchNewRegionsHandler"
-
 	// FlagShowDashboardValidationWarnings
 	// Show warnings when dashboards do not validate against the schema
 	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
@@ -634,4 +630,8 @@ const (
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
 	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
+
+	// FlagPromQLScope
+	// In-development feature that will allow injection of labels into prometheus queries.
+	FlagPromQLScope = "promQLScope"
 )

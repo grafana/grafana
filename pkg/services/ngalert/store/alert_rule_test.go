@@ -577,10 +577,12 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 	}
 }
 
+// createAlertRule creates an alert rule in the database and returns it.
+// If a generator is not specified, uniqueness of primary key is not guaranteed.
 func createRule(t *testing.T, store *DBstore, generate func() *models.AlertRule) *models.AlertRule {
 	t.Helper()
 	if generate == nil {
-		generate = models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID())
+		generate = models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval))
 	}
 	rule := generate()
 	err := store.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
