@@ -133,13 +133,13 @@ export const getSupplementaryQueryProvider = (
       if (datasource.getDataProvider) {
         return datasource.getDataProvider(type, dsRequest);
       } else if (datasource.getSupplementaryRequest) {
-        const provider = datasource.getSupplementaryRequest(type, dsRequest);
+        const request = datasource.getSupplementaryRequest(type, dsRequest);
         if (!provider) {
-          return provider;
+          return undefined;
         }
         return type === SupplementaryQueryType.LogsVolume
-          ? queryLogsVolume(datasource, provider, { targets: dsRequest.targets })
-          : queryLogsSample(datasource, provider);
+          ? queryLogsVolume(datasource, request, { targets: dsRequest.targets })
+          : queryLogsSample(datasource, request);
       } else {
         return undefined;
       }
