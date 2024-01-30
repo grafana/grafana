@@ -49,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/cleanup"
+	cloudmigrations "github.com/grafana/grafana/pkg/services/cloudmigrations/service"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
@@ -137,6 +138,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
 	entityDB "github.com/grafana/grafana/pkg/services/store/entity/db"
+	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
@@ -343,8 +345,8 @@ var wireBasicSet = wire.NewSet(
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
 	interceptors.ProvideAuthenticator,
-	entityDB.ProvideEntityDB,
-	wire.Bind(new(sqlstash.EntityDB), new(*entityDB.EntityDB)),
+	dbimpl.ProvideEntityDB,
+	wire.Bind(new(entityDB.EntityDBInterface), new(*dbimpl.EntityDB)),
 	sqlstash.ProvideSQLEntityServer,
 	resolver.ProvideEntityReferenceResolver,
 	teamimpl.ProvideService,
@@ -379,9 +381,11 @@ var wireBasicSet = wire.NewSet(
 	signingkeysimpl.ProvideEmbeddedSigningKeysService,
 	wire.Bind(new(signingkeys.Service), new(*signingkeysimpl.Service)),
 	ssoSettingsImpl.ProvideService,
-	wire.Bind(new(ssosettings.Service), new(*ssoSettingsImpl.SSOSettingsService)),
+	wire.Bind(new(ssosettings.Service), new(*ssoSettingsImpl.Service)),
 	idimpl.ProvideService,
 	wire.Bind(new(auth.IDService), new(*idimpl.Service)),
+	cloudmigrations.ProvideService,
+	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
 )

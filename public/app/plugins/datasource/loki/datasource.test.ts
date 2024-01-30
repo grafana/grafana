@@ -35,7 +35,6 @@ import { createLokiDatasource } from './__mocks__/datasource';
 import { createMetadataRequest } from './__mocks__/metadataRequest';
 import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
 import { runSplitQuery } from './querySplitting';
-import { parseToNodeNamesArray } from './queryUtils';
 import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType, SupportingQueryType } from './types';
 
 jest.mock('@grafana/runtime', () => {
@@ -209,7 +208,7 @@ describe('LokiDatasource', () => {
         expect.objectContaining({
           query_type: 'logs',
           line_limit: 80,
-          parsed_query: parseToNodeNamesArray('{a="b"}').join(','),
+          obfuscated_query: '{Identifier=String}',
         })
       );
     });
@@ -226,7 +225,7 @@ describe('LokiDatasource', () => {
         expect.objectContaining({
           query_type: 'logs',
           line_limit: 80,
-          parsed_query: parseToNodeNamesArray('{a="b"}').join(','),
+          obfuscated_query: '{Identifier=String}',
         })
       );
     });
@@ -1256,7 +1255,7 @@ describe('LokiDatasource', () => {
         targets: [{ expr: '{label="value"}', refId: 'A', queryType: LokiQueryType.Range }],
       };
 
-      expect(ds.getDataProvider(SupplementaryQueryType.LogsVolume, options)).toBeDefined();
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsVolume, options)).toBeDefined();
     });
 
     it('does not create provider for metrics query', () => {
@@ -1265,7 +1264,7 @@ describe('LokiDatasource', () => {
         targets: [{ expr: 'rate({label="value"}[1m])', refId: 'A' }],
       };
 
-      expect(ds.getDataProvider(SupplementaryQueryType.LogsVolume, options)).not.toBeDefined();
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsVolume, options)).not.toBeDefined();
     });
 
     it('creates provider if at least one query is a logs query', () => {
@@ -1277,7 +1276,7 @@ describe('LokiDatasource', () => {
         ],
       };
 
-      expect(ds.getDataProvider(SupplementaryQueryType.LogsVolume, options)).toBeDefined();
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsVolume, options)).toBeDefined();
     });
 
     it('does not create provider if there is only an instant logs query', () => {
@@ -1286,7 +1285,7 @@ describe('LokiDatasource', () => {
         targets: [{ expr: '{label="value"', refId: 'A', queryType: LokiQueryType.Instant }],
       };
 
-      expect(ds.getDataProvider(SupplementaryQueryType.LogsVolume, options)).not.toBeDefined();
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsVolume, options)).not.toBeDefined();
     });
   });
 
@@ -1302,7 +1301,7 @@ describe('LokiDatasource', () => {
         targets: [{ expr: 'rate({label="value"}[5m])', refId: 'A' }],
       };
 
-      expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).toBeDefined();
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsSample, options)).toBeDefined();
     });
 
     it('does not create provider for log query', () => {
@@ -1311,7 +1310,7 @@ describe('LokiDatasource', () => {
         targets: [{ expr: '{label="value"}', refId: 'A' }],
       };
 
-      expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).not.toBeDefined();
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsSample, options)).not.toBeDefined();
     });
 
     it('creates provider if at least one query is a metric query', () => {
@@ -1323,7 +1322,7 @@ describe('LokiDatasource', () => {
         ],
       };
 
-      expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).toBeDefined();
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsSample, options)).toBeDefined();
     });
   });
 

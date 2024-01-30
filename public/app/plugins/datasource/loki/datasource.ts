@@ -17,11 +17,8 @@ import {
   SupplementaryQueryType,
   DataSourceWithQueryExportSupport,
   DataSourceWithQueryImportSupport,
-  FieldCache,
-  FieldType,
   Labels,
   LoadingState,
-  LogLevel,
   LogRowModel,
   QueryFixAction,
   QueryHint,
@@ -45,9 +42,6 @@ import {
 import { Duration } from '@grafana/lezer-logql';
 import { BackendSrvRequest, config, DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-
-import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
-import { getLogLevelFromKey } from '../../../features/logs/utils';
 
 import LanguageProvider from './LanguageProvider';
 import { LiveStreams, LokiLiveTarget } from './LiveStreams';
@@ -168,16 +162,13 @@ export class LokiDatasource
 
   /**
    * Implemented for DataSourceWithSupplementaryQueriesSupport.
-   * It retrieves a data provider for a specific supplementary query type.
-   * @returns An Observable of DataQueryResponse or undefined if the specified query type is not supported.
+   * It generates a DataQueryRequest for a specific supplementary query type.
+   * @returns A DataQueryRequest for the supplementary queries or undefined if not supported.
    */
-  getDataProvider(
+  getSupplementaryRequest(
     type: SupplementaryQueryType,
     request: DataQueryRequest<LokiQuery>
-  ): Observable<DataQueryResponse> | undefined {
-    if (!this.getSupportedSupplementaryQueryTypes().includes(type)) {
-      return undefined;
-    }
+  ): DataQueryRequest<LokiQuery> | undefined {
     switch (type) {
       case SupplementaryQueryType.LogsVolume:
         return this.getLogsVolumeDataProvider(request);
@@ -203,10 +194,6 @@ export class LokiDatasource
    * @returns A supplemented Loki query or undefined if unsupported.
    */
   getSupplementaryQuery(options: SupplementaryQueryOptions, query: LokiQuery): LokiQuery | undefined {
-    if (!this.getSupportedSupplementaryQueryTypes().includes(options.type)) {
-      return undefined;
-    }
-
     const normalizedQuery = getNormalizedLokiQuery(query);
     let expr = removeCommentsFromQuery(normalizedQuery.expr);
     let isQuerySuitable = false;
@@ -255,7 +242,7 @@ export class LokiDatasource
    * Private method used in the `getDataProvider` for DataSourceWithSupplementaryQueriesSupport, specifically for Logs volume queries.
    * @returns An Observable of DataQueryResponse or undefined if no suitable queries are found.
    */
-  private getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
+  private getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): DataQueryRequest<LokiQuery> | undefined {
     const logsVolumeRequest = cloneDeep(request);
     const targets = logsVolumeRequest.targets
       .map((query) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsVolume }, query))
@@ -265,22 +252,14 @@ export class LokiDatasource
       return undefined;
     }
 
-    return queryLogsVolume(
-      this,
-      { ...logsVolumeRequest, targets },
-      {
-        extractLevel,
-        range: request.range,
-        targets: request.targets,
-      }
-    );
+    return { ...logsVolumeRequest, targets };
   }
 
   /**
    * Private method used in the `getDataProvider` for DataSourceWithSupplementaryQueriesSupport, specifically for Logs sample queries.
    * @returns An Observable of DataQueryResponse or undefined if no suitable queries are found.
    */
-  private getLogsSampleDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
+  private getLogsSampleDataProvider(request: DataQueryRequest<LokiQuery>): DataQueryRequest<LokiQuery> | undefined {
     const logsSampleRequest = cloneDeep(request);
     const targets = logsSampleRequest.targets
       .map((query) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsSample, limit: 100 }, query))
@@ -289,7 +268,7 @@ export class LokiDatasource
     if (!targets.length) {
       return undefined;
     }
-    return queryLogsSample(this, { ...logsSampleRequest, targets });
+    return { ...logsSampleRequest, targets };
   }
 
   /**
@@ -753,7 +732,7 @@ export class LokiDatasource
    * Implemented as part of the DataSourceAPI. Retrieves tag keys that can be used for ad-hoc filtering.
    * @returns A Promise that resolves to an array of label names represented as MetricFindValue objects.
    */
-  async getTagKeys(options?: DataSourceGetTagKeysOptions): Promise<MetricFindValue[]> {
+  async getTagKeys(options?: DataSourceGetTagKeysOptions<LokiQuery>): Promise<MetricFindValue[]> {
     const result = await this.languageProvider.fetchLabels({ timeRange: options?.timeRange });
     return result.map((value: string) => ({ text: value }));
   }
@@ -1170,24 +1149,4 @@ export function lokiSpecialRegexEscape(value: any) {
     return lokiRegularEscape(value.replace(/\\/g, '\\\\\\\\').replace(/[$^*{}\[\]+?.()|]/g, '\\\\$&'));
   }
   return value;
-}
-
-function extractLevel(dataFrame: DataFrame): LogLevel {
-  let valueField;
-  try {
-    valueField = new FieldCache(dataFrame).getFirstFieldOfType(FieldType.number);
-  } catch {}
-  return valueField?.labels ? getLogLevelFromLabels(valueField.labels) : LogLevel.unknown;
-}
-
-function getLogLevelFromLabels(labels: Labels): LogLevel {
-  const labelNames = ['level', 'lvl', 'loglevel'];
-  let levelLabel;
-  for (let labelName of labelNames) {
-    if (labelName in labels) {
-      levelLabel = labelName;
-      break;
-    }
-  }
-  return levelLabel ? getLogLevelFromKey(labels[levelLabel]) : LogLevel.unknown;
 }

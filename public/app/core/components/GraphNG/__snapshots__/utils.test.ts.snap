@@ -61,12 +61,17 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
     },
   ],
   "cursor": {
-    "dataIdx": [Function],
     "drag": {
       "setScale": false,
     },
     "focus": {
       "prox": 30,
+    },
+    "hover": {
+      "prox": [Function],
+      "skip": [
+        null,
+      ],
     },
     "points": {
       "fill": [Function],
@@ -81,7 +86,7 @@ exports[`GraphNG utils preparePlotConfigBuilder 1`] = `
       "key": "__global_",
       "scales": [
         "x",
-        "__fixed/na-na/na-na/auto/linear/na/number",
+        null,
       ],
     },
   },
