@@ -43,9 +43,6 @@ func (fm *FeatureManager) registerFlags(flags ...FeatureFlag) {
 		if add.Description != "" {
 			flag.Description = add.Description
 		}
-		if add.DocsURL != "" {
-			flag.DocsURL = add.DocsURL
-		}
 		if add.Expression != "" {
 			flag.Expression = add.Expression
 		}
