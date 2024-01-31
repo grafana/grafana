@@ -78,7 +78,6 @@ export const LogsPanel = ({
   const logsContainerRef = useRef<HTMLDivElement>(null);
   const [contextRow, setContextRow] = useState<LogRowModel | null>(null);
   const [closeCallback, setCloseCallback] = useState<(() => void) | null>(null);
-  const timeRange = data.timeRange;
   const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | undefined>(undefined);
   const [infiniteScrolling, setInfiniteScrolling] = useState(false);
@@ -184,9 +183,9 @@ export const LogsPanel = ({
 
   const onPermalinkClick = useCallback(
     async (row: LogRowModel) => {
-      return await copyDashboardUrl(row, logRows, timeRange);
+      return await copyDashboardUrl(row, logRows, data.timeRange);
     },
-    [logRows, timeRange]
+    [data.timeRange, logRows]
   );
 
   useEffect(() => {
@@ -279,7 +278,7 @@ export const LogsPanel = ({
           <InfiniteScroll
             loading={infiniteScrolling}
             loadMoreLogs={loadMoreLogs}
-            range={timeRange}
+            range={data.timeRange}
             timeZone={timeZone}
             rows={logRows}
             scrollElement={scrollElement}
