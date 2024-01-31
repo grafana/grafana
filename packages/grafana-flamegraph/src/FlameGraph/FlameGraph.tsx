@@ -25,6 +25,7 @@ import { PIXELS_PER_LEVEL } from '../constants';
 import { ClickedItemData, ColorScheme, ColorSchemeDiff, TextAlign } from '../types';
 
 import FlameGraphCanvas from './FlameGraphCanvas';
+import { ExtraContextMenuButton } from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
 import { CollapsedMap, FlameGraphDataContainer, LevelItem } from './dataTransform';
 
@@ -45,6 +46,7 @@ type Props = {
   onSandwichPillClick: () => void;
   colorScheme: ColorScheme | ColorSchemeDiff;
   showFlameGraphOnly?: boolean;
+  extraContextMenuButtons?: ExtraContextMenuButton[];
   collapsing?: boolean;
 };
 
@@ -64,6 +66,7 @@ const FlameGraph = ({
   onSandwichPillClick,
   colorScheme,
   showFlameGraphOnly,
+  extraContextMenuButtons,
   collapsing,
 }: Props) => {
   const styles = getStyles();
@@ -122,6 +125,7 @@ const FlameGraph = ({
     showFlameGraphOnly,
     collapsedMap,
     setCollapsedMap,
+    extraContextMenuButtons,
     collapsing,
   };
   const canvas = levelsCallers ? (

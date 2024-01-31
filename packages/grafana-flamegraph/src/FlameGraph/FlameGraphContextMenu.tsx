@@ -1,10 +1,16 @@
 import React from 'react';
 
-import { MenuItem, MenuGroup, ContextMenu } from '@grafana/ui';
+import { MenuItem, MenuGroup, ContextMenu, IconName } from '@grafana/ui';
 
 import { ClickedItemData } from '../types';
 
 import { CollapseConfig } from './dataTransform';
+
+export type ExtraContextMenuButton = {
+  label: string;
+  icon: IconName;
+  onClick: (clickedItemData: ClickedItemData) => void;
+};
 
 type Props = {
   itemData: ClickedItemData;
@@ -15,6 +21,7 @@ type Props = {
   onCollapseGroup: () => void;
   onExpandAllGroups: () => void;
   onCollapseAllGroups: () => void;
+  extraContextMenuButtons?: ExtraContextMenuButton[];
   collapseConfig?: CollapseConfig;
   collapsing?: boolean;
   allGroupsCollapsed?: boolean;
@@ -31,11 +38,13 @@ const FlameGraphContextMenu = ({
   onCollapseGroup,
   onExpandAllGroups,
   onCollapseAllGroups,
+  extraContextMenuButtons,
   collapsing,
   allGroupsExpanded,
   allGroupsCollapsed,
 }: Props) => {
   function renderItems() {
+    console.log('extraContextMenuButtons', extraContextMenuButtons)
     return (
       <>
         <MenuItem
@@ -63,7 +72,6 @@ const FlameGraphContextMenu = ({
             onMenuItemClick();
           }}
         />
-
         {collapsing && (
           <MenuGroup label={'Grouping'}>
             {collapseConfig ? (
@@ -109,6 +117,16 @@ const FlameGraphContextMenu = ({
             )}
           </MenuGroup>
         )}
+        {
+          (extraContextMenuButtons || []).map(({ label, icon, onClick }) => {
+            return <MenuItem
+              label={label}
+              icon={icon}
+              onClick={() => onClick(itemData)}
+              key={label}
+            />
+          })
+        }
       </>
     );
   }

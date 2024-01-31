@@ -9,6 +9,7 @@ import { ThemeContext } from '@grafana/ui';
 import FlameGraph from './FlameGraph/FlameGraph';
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
+import { ExtraContextMenuButton } from './FlameGraph/FlameGraphContextMenu';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from './types';
@@ -53,6 +54,11 @@ export type Props = {
   extraHeaderElements?: React.ReactNode;
 
   /**
+   * Elements that will be shown in the context menu when user clicks on a Node.
+   */
+  extraContextMenuButtons?: ExtraContextMenuButton[];
+
+  /**
    * If true the flamegraph will be rendered on top of the table.
    */
   vertical?: boolean;
@@ -80,6 +86,7 @@ const FlameGraphContainer = ({
   vertical,
   showFlameGraphOnly,
   disableCollapsing,
+  extraContextMenuButtons,
 }: Props) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
 
@@ -169,6 +176,7 @@ const FlameGraphContainer = ({
       colorScheme={colorScheme}
       showFlameGraphOnly={showFlameGraphOnly}
       collapsing={!disableCollapsing}
+      extraContextMenuButtons={extraContextMenuButtons}
     />
   );
 
