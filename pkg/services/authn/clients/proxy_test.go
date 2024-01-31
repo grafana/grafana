@@ -197,101 +197,45 @@ func (f fakeCache) Delete(ctx context.Context, key string) error {
 }
 
 func TestProxy_Hook(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.AuthProxyHeaderName = "X-Username"
+	cfg.AuthProxyHeaders = map[string]string{
+		proxyFieldRole: "X-Role",
+	}
 	cache := &fakeCache{data: make(map[string][]byte)}
 	userId := 1
 	userID := fmt.Sprintf("%s:%d", authn.NamespaceUser, userId)
 
-	type testCase struct {
-		desc              string
-		userIdentity      *authn.Identity
-		req               *authn.Request
-		proxyHeader       string
-		proxyHeaders      map[string]string
-		expectedCacheData map[string][]byte
-	}
-
-	tests := []testCase{
-		{
-			desc: "step 1: new user with role Admin",
-			userIdentity: &authn.Identity{
+	// withRole creates a test case for a user with a specific role.
+	withRole := func(role string) func(t *testing.T) {
+		cacheKey := fmt.Sprintf("users:johndoe-%s", role)
+		return func(t *testing.T) {
+			c, err := ProvideProxy(cfg, cache, usertest.NewUserServiceFake(), authntest.MockProxyClient{})
+			require.NoError(t, err)
+			userIdentity := &authn.Identity{
 				ID: userID,
 				ClientParams: authn.ClientParams{
-					CacheAuthProxyKey: "users:username-Admin",
+					CacheAuthProxyKey: cacheKey,
 				},
-			},
-			req: &authn.Request{
+			}
+			userReq := &authn.Request{
 				HTTPRequest: &http.Request{
 					Header: map[string][]string{
-						"X-Username": {"username"},
-						"X-Role":     {"Admin"},
+						"X-Username": {"johndoe"},
+						"X-Role":     {role},
 					},
 				},
-			},
-			proxyHeader: "X-Username",
-			proxyHeaders: map[string]string{
-				proxyFieldRole: "X-Role",
-			},
-			expectedCacheData: map[string][]byte{
-				"users:username-Admin":                             []byte(fmt.Sprintf("%v", userId)),
-				fmt.Sprintf("%s:%s", proxyCachePrefix, "username"): []byte("users:username-Admin"),
-			},
-		},
-		{
-			desc: "step 2: cached user with new Role Viewer",
-			userIdentity: &authn.Identity{
-				ID: userID,
-				ClientParams: authn.ClientParams{
-					CacheAuthProxyKey: "users:username-Viewer",
-				},
-			},
-			req: &authn.Request{
-				HTTPRequest: &http.Request{Header: map[string][]string{
-					"X-Username": {"username"},
-					"X-Role":     {"Viewer"},
-				}},
-			},
-			proxyHeader: "X-Username",
-			proxyHeaders: map[string]string{
-				proxyFieldRole: "X-Role",
-			},
-			expectedCacheData: map[string][]byte{
-				"users:username-Viewer":                            []byte(fmt.Sprintf("%v", userId)),
-				fmt.Sprintf("%s:%s", proxyCachePrefix, "username"): []byte("users:username-Viewer"),
-			},
-		},
-		{
-			desc: "step 3: cached user get changed back to Admin",
-			userIdentity: &authn.Identity{
-				ID: userID,
-				ClientParams: authn.ClientParams{
-					CacheAuthProxyKey: "users:username-Admin",
-				},
-			},
-			req: &authn.Request{
-				HTTPRequest: &http.Request{Header: map[string][]string{
-					"X-Username": {"username"},
-					"X-Role":     {"Admin"},
-				}},
-			},
-			proxyHeader: "X-Username",
-			proxyHeaders: map[string]string{
-				proxyFieldRole: "X-Role",
-			},
-			expectedCacheData: map[string][]byte{
-				"users:username-Admin":                             []byte(fmt.Sprintf("%v", userId)),
-				fmt.Sprintf("%s:%s", proxyCachePrefix, "username"): []byte("users:username-Admin"),
-			},
-		},
+			}
+			err = c.Hook(context.Background(), userIdentity, userReq)
+			expectedCache := map[string][]byte{
+				cacheKey: []byte(fmt.Sprintf("%d", userId)),
+				fmt.Sprintf("%s:%s", proxyCachePrefix, "johndoe"): []byte(fmt.Sprintf("users:johndoe-%s", role)),
+			}
+			assert.Equal(t, expectedCache, cache.data)
+		}
 	}
 
-	for _, tt := range tests {
-		cfg := setting.NewCfg()
-		cfg.AuthProxyHeaderName = tt.proxyHeader
-		cfg.AuthProxyHeaders = tt.proxyHeaders
-		c, err := ProvideProxy(cfg, cache, usertest.NewUserServiceFake(), authntest.MockProxyClient{})
-		require.NoError(t, err)
-		err = c.Hook(context.Background(), tt.userIdentity, tt.req)
-		require.NoError(t, err)
-		assert.Equal(t, tt.expectedCacheData, cache.data)
-	}
+	t.Run("step 1: new user with role Admin", withRole("Admin"))
+	t.Run("step 2: cached user with new Role Viewer", withRole("Viewer"))
+	t.Run("step 3: cached user get changed back to Admin", withRole("Admin"))
 }
