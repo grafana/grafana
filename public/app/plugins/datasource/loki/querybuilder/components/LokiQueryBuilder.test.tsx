@@ -3,11 +3,12 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { dateTime } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { createLokiDatasource } from '../../__mocks__/datasource';
 import { LokiOperationId, LokiVisualQuery } from '../types';
 
-import { LokiQueryBuilder } from './LokiQueryBuilder';
+import { LokiQueryBuilder, TIME_SPAN_TO_TRIGGER_SAMPLES } from './LokiQueryBuilder';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 
 const MISSING_LABEL_FILTER_ERROR_MESSAGE = 'Select at least 1 label filter (label and value)';
@@ -40,6 +41,14 @@ const createDefaultProps = () => {
 };
 
 describe('LokiQueryBuilder', () => {
+  const originalLokiQueryHints = config.featureToggles.lokiQueryHints;
+  beforeEach(() => {
+    config.featureToggles.lokiQueryHints = true;
+  });
+
+  afterEach(() => {
+    config.featureToggles.lokiQueryHints = originalLokiQueryHints;
+  });
   it('tries to load labels when no labels are selected', async () => {
     const props = createDefaultProps();
     props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
@@ -132,6 +141,95 @@ describe('LokiQueryBuilder', () => {
     render(<LokiQueryBuilder {...props} query={query} />);
     await waitFor(() => {
       expect(screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
+    });
+  });
+
+  it('re-runs sample query when query changes', async () => {
+    const query = {
+      labels: [{ label: 'foo', op: '=', value: 'bar' }],
+      operations: [{ id: LokiOperationId.LineContains, params: ['error'] }],
+    };
+    const props = createDefaultProps();
+    props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
+
+    const { rerender } = render(<LokiQueryBuilder {...props} query={query} />);
+    rerender(
+      <LokiQueryBuilder
+        {...props}
+        query={{ ...query, labels: [...query.labels, { label: 'xyz', op: '=', value: 'abc' }] }}
+      />
+    );
+
+    await waitFor(() => {
+      expect(props.datasource.getDataSamples).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('does not re-run sample query when query does not change', async () => {
+    const query = {
+      labels: [{ label: 'foo', op: '=', value: 'bar' }],
+      operations: [{ id: LokiOperationId.LineContains, params: ['error'] }],
+    };
+    const props = createDefaultProps();
+    props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
+
+    const { rerender } = render(<LokiQueryBuilder {...props} query={query} />);
+    rerender(<LokiQueryBuilder {...props} query={query} />);
+
+    await waitFor(() => {
+      expect(props.datasource.getDataSamples).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('re-run sample query when time range changes over 5 minutes', async () => {
+    const query = {
+      labels: [{ label: 'foo', op: '=', value: 'bar' }],
+      operations: [{ id: LokiOperationId.LineContains, params: ['error'] }],
+    };
+    const props = createDefaultProps();
+    const updatedFrom = dateTime(props.timeRange.from.valueOf() + TIME_SPAN_TO_TRIGGER_SAMPLES + 1000);
+    const updatedTo = dateTime(props.timeRange.to.valueOf() + TIME_SPAN_TO_TRIGGER_SAMPLES + 1000);
+    const updatedTimeRange = {
+      from: updatedFrom,
+      to: updatedTo,
+      raw: {
+        from: updatedFrom,
+        to: updatedTo,
+      },
+    };
+    props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
+
+    const { rerender } = render(<LokiQueryBuilder {...props} query={query} />);
+    rerender(<LokiQueryBuilder {...props} query={query} timeRange={updatedTimeRange} />);
+
+    await waitFor(() => {
+      expect(props.datasource.getDataSamples).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('does not re-run sample query when time range changes less than 5 minutes', async () => {
+    const query = {
+      labels: [{ label: 'foo', op: '=', value: 'bar' }],
+      operations: [{ id: LokiOperationId.LineContains, params: ['error'] }],
+    };
+    const props = createDefaultProps();
+    const updatedFrom = dateTime(props.timeRange.from.valueOf() + TIME_SPAN_TO_TRIGGER_SAMPLES - 1000);
+    const updatedTo = dateTime(props.timeRange.to.valueOf() + TIME_SPAN_TO_TRIGGER_SAMPLES - 1000);
+    const updatedTimeRange = {
+      from: updatedFrom,
+      to: updatedTo,
+      raw: {
+        from: updatedFrom,
+        to: updatedTo,
+      },
+    };
+    props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
+
+    const { rerender } = render(<LokiQueryBuilder {...props} query={query} />);
+    rerender(<LokiQueryBuilder {...props} query={query} timeRange={updatedTimeRange} />);
+
+    await waitFor(() => {
+      expect(props.datasource.getDataSamples).toHaveBeenCalledTimes(1);
     });
   });
 });
