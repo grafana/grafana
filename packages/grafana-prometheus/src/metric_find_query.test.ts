@@ -1,14 +1,19 @@
-import 'whatwg-fetch'; // fetch polyfill needed backendSrv
 import { of } from 'rxjs';
 
+import 'whatwg-fetch'; // fetch polyfill needed backendSrv
 import { DataSourceInstanceSettings, TimeRange, toUtc } from '@grafana/data';
 import { FetchResponse, TemplateSrv } from '@grafana/runtime';
-import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+
+// NEED TO DECOUPLE THIS!!!!
+import { backendSrv } from '../../../public/app/core/services/backend_srv';
 
 import { PrometheusDatasource } from './datasource';
 import { getPrometheusTime } from './language_utils';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { PromApplication, PromOptions } from './types';
+
+// This should be mocked like here https://github.com/grafana/grafana/blob/main/public/app/plugins/datasource/influxdb/mocks.ts
+// const backendSrv = getBackendSrv();
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -25,7 +30,6 @@ const instanceSettings = {
   password: 'mupp',
   jsonData: { httpMethod: 'GET' },
 } as Partial<DataSourceInstanceSettings<PromOptions>> as DataSourceInstanceSettings<PromOptions>;
-
 const raw: TimeRange = {
   from: toUtc('2018-04-25 10:00'),
   to: toUtc('2018-04-25 11:00'),
