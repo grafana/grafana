@@ -1,13 +1,14 @@
 {
-  "name": "Google Cloud Monitoring",
   "type": "datasource",
-  "id": "stackdriver",
+  "name": "Google Cloud Monitoring",
+  "id": "grafana-cloud-monitoring-datasource",
   "category": "cloud",
 
   "metrics": true,
   "alerting": true,
   "annotations": true,
   "backend": true,
+  "logs": true,
   "includes": [
     {
       "type": "dashboard",
@@ -79,7 +80,7 @@
     "maxDataPoints": true,
     "cacheTimeout": true
   },
-
+  "executable": "gpx_cloudmonitoring",
   "info": {
     "description": "Data source for Google's monitoring service (formerly named Stackdriver)",
     "version": "%VERSION%",

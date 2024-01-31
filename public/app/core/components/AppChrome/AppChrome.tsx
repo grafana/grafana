@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
 import classNames from 'classnames';
-import React, { PropsWithChildren } from 'react';
+import React, { PropsWithChildren, useEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { useStyles2, LinkButton, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -16,6 +17,7 @@ import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './
 import { MegaMenu as DockedMegaMenu } from './DockedMegaMenu/MegaMenu';
 import { MegaMenu } from './MegaMenu/MegaMenu';
 import { NavToolbar } from './NavToolbar/NavToolbar';
+import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { SectionNav } from './SectionNav/SectionNav';
 import { TopSearchBar } from './TopBar/TopSearchBar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
@@ -52,6 +54,18 @@ export function AppChrome({ children }: Props) {
   const handleMegaMenu = () => {
     chrome.setMegaMenuOpen(!state.megaMenuOpen);
   };
+
+  const path = locationService.getLocation().pathname;
+  const shouldShowReturnToPrevious =
+    config.featureToggles.returnToPrevious && state.returnToPrevious && path !== state.returnToPrevious.href;
+
+  useEffect(() => {
+    if (state.returnToPrevious && path === state.returnToPrevious.href) {
+      chrome.clearReturnToPrevious();
+    }
+    // We only want to pay attention when the location changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chrome, path]);
 
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
@@ -105,6 +119,9 @@ export function AppChrome({ children }: Props) {
         </>
       )}
       {!state.chromeless && <CommandPalette />}
+      {shouldShowReturnToPrevious && state.returnToPrevious && (
+        <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
+      )}
     </div>
   );
 }
