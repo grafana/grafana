@@ -9,7 +9,10 @@ import store from 'app/core/store';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
+import {
+  HOME_DASHBOARD_CACHE_KEY,
+  getDashboardScenePageStateManager,
+} from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { buildNewDashboardSaveModel } from 'app/features/dashboard-scene/serialization/buildNewDashboardSaveModel';
 import { getFolderByUid } from 'app/features/folders/state/actions';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -55,7 +58,7 @@ async function fetchDashboard(
     switch (args.routeName) {
       case DashboardRoutes.Home: {
         const stateManager = getDashboardScenePageStateManager();
-        const cachedDashboard = stateManager.getFromCache(DashboardRoutes.Home);
+        const cachedDashboard = stateManager.getFromCache(HOME_DASHBOARD_CACHE_KEY);
 
         if (cachedDashboard) {
           return cachedDashboard;

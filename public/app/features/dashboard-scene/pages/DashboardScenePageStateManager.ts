@@ -23,6 +23,9 @@ export interface DashboardScenePageState {
 
 export const DASHBOARD_CACHE_TTL = 2000;
 
+/** Only used by cache in loading home in DashboardPageProxy and initDashboard (Old arch), can remove this after old dashboard arch is gone */
+export const HOME_DASHBOARD_CACHE_KEY = '__grafana_home_uid__';
+
 interface DashboardCacheEntry {
   dashboard: DashboardDTO;
   ts: number;
@@ -42,7 +45,8 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
   // To eventualy replace the fetchDashboard function from Dashboard redux state management.
   // For now it's a simplistic version to support Home and Normal dashboard routes.
   public async fetchDashboard({ uid, route, urlFolderUid }: LoadDashboardOptions) {
-    const cachedDashboard = this.getFromCache(uid);
+    const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
+    const cachedDashboard = this.getFromCache(cacheKey);
 
     if (cachedDashboard) {
       return cachedDashboard;
@@ -70,6 +74,7 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
             rsp.meta.canShare = false;
             rsp.meta.canStar = false;
           }
+
           break;
         default:
           rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
@@ -99,6 +104,8 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
         // Do not cache new dashboards
         if (uid) {
           this.dashboardCache.set(uid, { dashboard: rsp, ts: Date.now() });
+        } else if (route === DashboardRoutes.Home) {
+          this.dashboardCache.set(HOME_DASHBOARD_CACHE_KEY, { dashboard: rsp, ts: Date.now() });
         }
       }
     } catch (e) {
