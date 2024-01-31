@@ -180,7 +180,7 @@ func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 
 func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 	// set a relative time to be 10 days back from today
-	twentydaysback := time.Now().Add(-thirtyActiveDays).Add(10 * -24 * time.Hour) // Use fixed time
+	twentydaysback := time.Now().Add(-thirtyActiveDays).Add(10 * 24 * time.Hour) // Use fixed time
 
 	testCases := []struct {
 		name           string
