@@ -32,34 +32,15 @@ Value mappings bypass unit formatting set in the **Standard options** section of
 
 ## Supported visualizations
 
-Value mappings are supported for the following visualizations:
+You can configure value mappings for the following visualizations:
 
-<!--
-
-- [Bar chart][bar chart]
-- [Bar gauge][bar gauge]
-- [Candlestick][candlestick]
-- [Canvas][canvas]
-- [Gauge][gauge]
-- [Geomap][geomap]
-- [Histogram][histogram]
-- [Pie chart][pie chart]
-- [Stat][stat]
-- [State timeline][state timeline]
-- [Status history][status history]
-- [Table][table]
-- [Time series][time series]
-- [Trend][trend] -->
-
-|                            |                                  |
-| -------------------------- | -------------------------------- |
-| [Bar chart][bar chart]     | [Pie chart][pie chart]           |
-| [Bar gauge][bar gauge]     | [Stat][stat]                     |
-| [Candlestick][candlestick] | [State timeline][state timeline] |
-| [Canvas][canvas]           | [Status history][status history] |
-| [Gauge][gauge]             | [Table][table]                   |
-| [Geomap][geomap]           | [Time series][time series]       |
-| [Histogram][histogram]     | [Trend][trend]                   |
+|                            |                                  |                                  |
+| -------------------------- | -------------------------------- | -------------------------------- |
+| [Bar chart][bar chart]     | [Geomap][geomap]                 | [Status history][status history] |
+| [Bar gauge][bar gauge]     | [Histogram][histogram]           | [Table][table]                   |
+| [Candlestick][candlestick] | [Pie chart][pie chart]           | [Time series][time series]       |
+| [Canvas][canvas]           | [Stat][stat]                     | [Trend][trend]                   |
+| [Gauge][gauge]             | [State timeline][state timeline] |                                  |
 
 ## Types of value mappings
 
@@ -133,6 +114,8 @@ The following image shows a table visualization with value mappings. If you want
 1. Click **Update** to save the value mapping.
 
 After you've added a mapping, the **Edit value mappings** button replaces the **Add value mappings** button. Click the edit button to add or update mappings.
+
+## Docs refs
 
 {{% docs/reference %}}
 [bar chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/bar-chart"
