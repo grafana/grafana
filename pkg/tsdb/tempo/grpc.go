@@ -1,6 +1,7 @@
 package tempo
 
 import (
+	connect_go "github.com/bufbuild/connect-go"
 	"net/http"
 	"net/url"
 	"strings"
@@ -31,6 +32,6 @@ func newGrpcClient(client *http.Client, settings backend.DataSourceInstanceSetti
 
 	final := parsedUrl.Scheme + "://" + strings.Split(parsedUrl.Host, ":")[0] + ":" + port
 	logger.Warn("client url", "settings.URL", settings.URL, "final", final)
-	tempoClient := NewQuerierServiceClient(client, settings.URL)
+	tempoClient := NewQuerierServiceClient(client, settings.URL, connect_go.WithGRPC())
 	return tempoClient, nil
 }
