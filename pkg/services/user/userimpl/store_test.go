@@ -156,9 +156,9 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		id, err := userStore.Insert(ctx,
 			&user.User{
 				UID:     "abcd",
-				Email:   "test@email.com",
-				Name:    "test1",
-				Login:   "test1",
+				Email:   "next-test@email.com",
+				Name:    "next-test1",
+				Login:   "next-test1",
 				Created: time.Now(),
 				Updated: time.Now(),
 			},

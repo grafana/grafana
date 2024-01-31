@@ -7973,6 +7973,9 @@
         "theme": {
           "type": "string"
         },
+        "uid": {
+          "type": "string"
+        },
         "updatedAt": {
           "type": "string",
           "format": "date-time"
@@ -8015,6 +8018,9 @@
           "type": "string"
         },
         "name": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         }
       }
