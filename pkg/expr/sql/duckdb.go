@@ -12,7 +12,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+	"github.com/grafana/grafana/pkg/infra/log"
 	duckdb "github.com/marcboeker/go-duckdb"
+)
+
+var (
+	logger = log.New("expr")
 )
 
 // DuckDB stores dataframes from previous datasource queries
@@ -77,13 +82,13 @@ func (d *DuckDB) Query(ctx context.Context, query string) (*data.Frame, error) {
 }
 
 func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
-	err := d.createTables(ctx, frames)
+	unknown, err := d.createTables(ctx, frames)
 	if err != nil {
 		return err
 	}
 
 	for _, f := range frames {
-		err := d.appendFrame(ctx, f)
+		err := d.appendFrame(ctx, f, unknown)
 		if err != nil {
 			return err
 		}
@@ -92,85 +97,90 @@ func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 	return nil
 }
 
-func (d *DuckDB) createTables(ctx context.Context, frames data.Frames) error {
+func (d *DuckDB) createTables(ctx context.Context, frames data.Frames) (Unknown, error) {
+	unknown := Unknown{}
+
 	for _, f := range frames {
 		name := tableName(f)
-		fmt.Println("creating table " + name)
-		createTable := "create or replace table " + name + " ("
-		sep := ""
+		stmt := []string{}
+		stmt = append(stmt, fmt.Sprintf("create or replace table %s (", name))
+		var fields []string
 		for _, fld := range f.Fields {
-			createTable += sep
+			var field []string
+
 			n := fld.Name
-			if strings.ContainsAny(n, "- :,#@") {
+			if strings.ContainsAny(n, "- :,#@") || (n[0] >= '0' && n[0] <= '9') {
 				n = fmt.Sprintf(`"%s"`, n) // escape the string
 			}
-			createTable += n
+			field = append(field, n)
+
 			found := false
 			if fld.Type() == data.FieldTypeBool || fld.Type() == data.FieldTypeNullableBool {
-				createTable += " " + "BOOLEAN"
+				field = append(field, " BOOLEAN")
 				found = true
 			}
 			if fld.Type() == data.FieldTypeFloat32 || fld.Type() == data.FieldTypeFloat64 || fld.Type() == data.FieldTypeNullableFloat32 || fld.Type() == data.FieldTypeNullableFloat64 {
-				createTable += " " + "DOUBLE"
+				field = append(field, " DOUBLE")
 				found = true
 			}
 			if fld.Type() == data.FieldTypeInt8 || fld.Type() == data.FieldTypeInt16 || fld.Type() == data.FieldTypeInt32 || fld.Type() == data.FieldTypeNullableInt8 || fld.Type() == data.FieldTypeNullableInt16 || fld.Type() == data.FieldTypeNullableInt32 {
-				createTable += " " + "INTEGER"
+				field = append(field, " INTEGER")
 				found = true
 			}
 			if fld.Type() == data.FieldTypeInt64 || fld.Type() == data.FieldTypeNullableInt64 {
-				createTable += " " + "BIGINT"
+				field = append(field, " BIGINT")
 				found = true
 			}
 			if fld.Type() == data.FieldTypeUint8 || fld.Type() == data.FieldTypeUint16 || fld.Type() == data.FieldTypeUint32 || fld.Type() == data.FieldTypeNullableUint8 || fld.Type() == data.FieldTypeNullableUint16 || fld.Type() == data.FieldTypeNullableUint32 {
-				createTable += " " + "UINTEGER"
+				field = append(field, " UINTEGER")
 				found = true
 			}
 			if fld.Type() == data.FieldTypeUint64 || fld.Type() == data.FieldTypeNullableUint64 {
-				createTable += " " + "UBIGINT"
+				field = append(field, " UBIGINT")
 				found = true
 			}
 			if fld.Type() == data.FieldTypeString || fld.Type() == data.FieldTypeNullableString {
-				createTable += " " + "VARCHAR"
+				field = append(field, " VARCHAR")
 				found = true
 			}
 			if fld.Type() == data.FieldTypeTime || fld.Type() == data.FieldTypeNullableTime {
-				createTable += " " + "TIMESTAMP"
+				field = append(field, " TIMESTAMP")
 				found = true
 			}
 			if fld.Type() == data.FieldTypeUnknown {
-				createTable += " " + "VARCHAR"
+				field = append(field, " VARCHAR")
 				found = true
 			}
 			if fld.Type() == data.FieldTypeNullableJSON || fld.Type() == data.FieldTypeJSON {
-				createTable += " " + "VARCHAR"
+				field = append(field, " VARCHAR")
 				found = true
 			}
-			if !found {
-				// TODO - surely this will cause a problem.
-				// Throw an error here?  Or track this and don't insert here. Then log a warning?
-				createTable += " " + "VARCHAR"
+			if found {
+				fields = append(fields, strings.Join(field, ""))
+			} else {
+				// could not determine field type
+				unknown[fld.Name] = true
+				logger.Warn("could not determine datatype for %s: %s", fld.Name, fld.Type().String())
 			}
-			sep = " ,"
 
 			// Keep a map of the input field names
 			if len(fld.Labels) > 0 || fld.Config != nil {
 				d.lookup[fld.Name] = fld
 			}
 		}
-		createTable += ")"
+		stmt = append(stmt, strings.Join(fields, " ,"))
+		stmt = append(stmt, ")")
 
-		res, err := d.db.Query(createTable)
+		res, err := d.db.Query(strings.Join(stmt, ""))
 		if err != nil {
-			fmt.Println(err)
-			return err
+			return nil, err
 		}
 		defer res.Close()
 	}
-	return nil
+	return unknown, nil
 }
 
-func (d *DuckDB) appendFrame(ctx context.Context, f *data.Frame) error {
+func (d *DuckDB) appendFrame(ctx context.Context, f *data.Frame, u Unknown) error {
 	conn, err := d.db.Conn(ctx)
 	if err != nil {
 		return err
@@ -180,7 +190,7 @@ func (d *DuckDB) appendFrame(ctx context.Context, f *data.Frame) error {
 		if !ok {
 			return errors.New("bad connection")
 		}
-		return d.doAppend(c, f)
+		return d.doAppend(c, f, u)
 	})
 	if err != nil {
 		return err
@@ -209,7 +219,7 @@ func connector(ctx context.Context, name string) (driver.Connector, error) {
 	return connector, err
 }
 
-func (d *DuckDB) doAppend(c driver.Conn, f *data.Frame) error {
+func (d *DuckDB) doAppend(c driver.Conn, f *data.Frame, u Unknown) error {
 	appender, err := duckdb.NewAppenderFromConn(c, "", tableName(f))
 	if err != nil {
 		return err
@@ -217,6 +227,9 @@ func (d *DuckDB) doAppend(c driver.Conn, f *data.Frame) error {
 	for i := 0; i < f.Rows(); i++ {
 		var row []driver.Value
 		for _, ff := range f.Fields {
+			if u[ff.Name] {
+				continue
+			}
 			val := ff.At(i)
 			switch v := val.(type) {
 			case *float64:
@@ -277,3 +290,5 @@ func tableName(f *data.Frame) string {
 	}
 	return f.Name
 }
+
+type Unknown map[string]bool
