@@ -75,10 +75,6 @@ func New(
 	// standard deviation sampler is the default for backwards compatibility
 	exemplarSampler := exemplar.NewStandardDeviationSampler
 
-	if features.IsEnabledGlobally(featuremgmt.FlagDisablePrometheusExemplarSampling) {
-		exemplarSampler = exemplar.NewNoOpSampler
-	}
-
 	return &QueryData{
 		intervalCalculator: intervalv2.NewCalculator(),
 		tracer:             tracing.DefaultTracer(),
@@ -87,8 +83,8 @@ func New(
 		TimeInterval:       timeInterval,
 		ID:                 settings.ID,
 		URL:                settings.URL,
-		enableDataplane:    features.IsEnabledGlobally(featuremgmt.FlagPrometheusDataplane),
 		exemplarSampler:    exemplarSampler,
+		enableDataplane:    features.IsEnabledGlobally(featuremgmt.FlagPrometheusDataplane),
 		enableScope:        features.IsEnabledGlobally(featuremgmt.FlagPromQLScope),
 	}, nil
 }
