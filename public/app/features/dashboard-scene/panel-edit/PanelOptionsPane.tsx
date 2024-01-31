@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
 import { ButtonGroup, FilterInput, RadioButtonGroup, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
+import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
 import { getPanelFrameCategory2 } from 'app/features/dashboard/components/PanelEditor/getPanelFrameOptions';
 import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
@@ -70,25 +70,33 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
       [searchQuery, panel, fieldConfig]
     );
 
+    const isSearching = searchQuery.length > 0;
     const mainBoxElements: React.ReactNode[] = [];
-    switch (listMode) {
-      case OptionFilter.All:
-        mainBoxElements.push(panelFrameOptions.render());
 
-        for (const item of visualizationOptions ?? []) {
-          mainBoxElements.push(item.render());
-        }
+    if (isSearching) {
+      mainBoxElements.push(
+        renderSearchHits([panelFrameOptions, ...(visualizationOptions ?? [])], justOverrides, searchQuery)
+      );
+    } else {
+      switch (listMode) {
+        case OptionFilter.All:
+          mainBoxElements.push(panelFrameOptions.render());
 
-        for (const item of justOverrides) {
-          mainBoxElements.push(item.render());
-        }
-        break;
-      case OptionFilter.Overrides:
-        for (const item of justOverrides) {
-          mainBoxElements.push(item.render());
-        }
-      default:
-        break;
+          for (const item of visualizationOptions ?? []) {
+            mainBoxElements.push(item.render());
+          }
+
+          for (const item of justOverrides) {
+            mainBoxElements.push(item.render());
+          }
+          break;
+        case OptionFilter.Overrides:
+          for (const item of justOverrides) {
+            mainBoxElements.push(item.render());
+          }
+        default:
+          break;
+      }
     }
 
     return (
