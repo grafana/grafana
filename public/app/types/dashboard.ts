@@ -51,6 +51,7 @@ export interface DashboardMeta {
   publicDashboardEnabled?: boolean;
   dashboardNotFound?: boolean;
   isEmbedded?: boolean;
+  isNew?: boolean;
 }
 
 export interface AnnotationActions {
