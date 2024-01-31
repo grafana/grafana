@@ -7,8 +7,6 @@ import (
 	"errors"
 	"slices"
 
-	"github.com/grafana/alerting/notify"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -18,16 +16,17 @@ import (
 )
 
 var (
-	// TODO: convert to errutil
-	ErrPermissionDenied = errors.New("permission denied")
+	// ErrPermissionDenied is returned when the user does not have permission to perform the requested action.
+	ErrPermissionDenied = errors.New("permission denied") // TODO: convert to errutil
 )
 
+// ReceiverService is the service for managing alertmanager receivers.
 type ReceiverService struct {
 	ac                accesscontrol.AccessControl
 	provisioningStore provisoningStore
 	cfgStore          configStore
 	encryptionService secrets.Service
-	xact              TransactionManager
+	xact              transactionManager
 	log               log.Logger
 }
 
@@ -40,7 +39,7 @@ type provisoningStore interface {
 	GetProvenances(ctx context.Context, org int64, resourceType string) (map[string]models.Provenance, error)
 }
 
-type TransactionManager interface {
+type transactionManager interface {
 	InTransaction(ctx context.Context, work func(ctx context.Context) error) error
 }
 
@@ -49,7 +48,7 @@ func NewReceiverService(
 	cfgStore configStore,
 	provisioningStore provisoningStore,
 	encryptionService secrets.Service,
-	xact TransactionManager,
+	xact transactionManager,
 	log log.Logger,
 ) *ReceiverService {
 	return &ReceiverService{
@@ -72,6 +71,8 @@ func (rs *ReceiverService) canDecrypt(ctx context.Context, user identity.Request
 	return receiverAccess || provisioningAccess, nil
 }
 
+// GetReceivers returns a list of receivers a user has access to.
+// Receivers can be filtered by name, and secure settings are decrypted if requested and the user has access to do so.
 func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceiversQuery, user identity.Requester) ([]definitions.GettableApiReceiver, error) {
 	baseCfg, err := rs.cfgStore.GetLatestAlertmanagerConfiguration(ctx, q.OrgID)
 	if err != nil {
@@ -145,29 +146,4 @@ func (rs *ReceiverService) decryptOrRedact(ctx context.Context, decrypt bool, na
 		}
 		return string(decrypted)
 	}
-}
-
-func ValidateReceiver(ctx context.Context, r definitions.PostableGrafanaReceiver, decryptFn notify.GetDecryptedValueFn) error {
-	if r.Type == "" {
-		return errors.New("type is required")
-	}
-	if r.Settings == nil {
-		return errors.New("settings are required")
-	}
-
-	integrationConfig := &notify.GrafanaIntegrationConfig{
-		UID:                   r.UID,
-		Name:                  r.Name,
-		Type:                  r.Type,
-		DisableResolveMessage: r.DisableResolveMessage,
-		Settings:              json.RawMessage(r.Settings),
-		SecureSettings:        r.SecureSettings,
-	}
-
-	_, err := notify.BuildReceiverConfiguration(ctx, &notify.APIReceiver{
-		GrafanaIntegrations: notify.GrafanaIntegrations{
-			Integrations: []*notify.GrafanaIntegrationConfig{integrationConfig},
-		},
-	}, decryptFn)
-	return err
 }
