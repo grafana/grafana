@@ -40,34 +40,15 @@ If there's only one data link in the visualization, clicking anywhere on the vis
 
 ## Supported visualizations
 
-<!--
+You can configure data links for the following visualizations:
 
-- [Bar chart][bar chart]
-- [Bar gauge][bar gauge]
-- [Candlestick][candlestick]
-- [Canvas][canvas]
-- [Gauge][gauge]
-- [Geomap][geomap]
-- [Heatmap][]
-- [Histogram][histogram]
-- [Pie chart][pie chart]
-- [Stat][stat]
-- [State timeline][state timeline]
-- [Status history][status history]
-- [Table][table]
-- [Time series][time series]
-- [Trend][trend] -->
-
-|                            |                                  |
-| -------------------------- | -------------------------------- |
-| [Bar chart][bar chart]     | [Pie chart][pie chart]           |
-| [Bar gauge][bar gauge]     | [Stat][stat]                     |
-| [Candlestick][candlestick] | [State timeline][state timeline] |
-| [Canvas][canvas]           | [Status history][status history] |
-| [Gauge][gauge]             | [Table][table]                   |
-| [Geomap][geomap]           | [Time series][time series]       |
-| [Heatmap][]                | [Trend][trend]                   |
-| [Histogram][histogram]     |                                  |
+|                            |                        |                                  |
+| -------------------------- | ---------------------- | -------------------------------- |
+| [Bar chart][bar chart]     | [Geomap][geomap]       | [State timeline][state timeline] |
+| [Bar gauge][bar gauge]     | [Heatmap][heatmap]     | [Status history][status history] |
+| [Candlestick][candlestick] | [Histogram][histogram] | [Table][table]                   |
+| [Canvas][canvas]           | [Pie chart][pie chart] | [Time series][time series]       |
+| [Gauge][gauge]             | [Stat][stat]           | [Trend][trend]                   |
 
 ## Data link variables
 
@@ -166,7 +147,127 @@ If you want to add all of the current dashboard's variables to the URL, then use
 1. Click **Apply** to see your changes in the dashboard.
 1. Click the **Save dashboard** icon to save your changes to the dashboard.
 
+## Types of value mappings
+
+Grafana supports the following value mapping types:
+
+### Value
+
+A **Value** mapping maps specific values to text and a color. For example, you can configure a mapping so that all instances of the value `10` appear as **Perfection!** rather than the number. Use **Value** mapping when you want to format a single value.
+![The value 10 mapped to the text Perfection!](/media/docs/grafana/panels-visualizations/screenshot-map-value-v10.4.png)
+
+### Range
+
+A **Range** mapping maps numerical ranges to text and a color. For example, if a value is within a certain range, you can configure a range value mapping to display **Low** or **High** rather than the number. Use **Range** mapping when you want to format multiple, continuous values.
+![Ranges of numbers mapped to the text Low and High with colors yellow and red](/media/docs/grafana/panels-visualizations/screenshot-map-range-v10.4.png)
+
+### Regex
+
+A **Regex** mapping maps regular expressions to text and a color. For example, if a value is `www.example.com`, you can configure a regular expression value mapping so that Grafana displays **www** and truncates the domain. Use the **Regex** mapping when you want to format the text and color of a regular expression value.
+![A regular expression used to truncate full URLs to the text wwww](/media/docs/grafana/panels-visualizations/screenshot-map-regex-v10.4.png)
+
+### Special
+
+A **Special** mapping maps special values like `Null`, `NaN` (not a number), and boolean values like `true` and `false` to text and color. For example, you can configure a special value mapping so that `null` values appear as **N/A**. Use the **Special** mapping when you want to format uncommon, boolean, or empty values.
+![The value null mapped to the text N/A](/media/docs/grafana/panels-visualizations/screenshot-map-special-v10.4.png)
+
+## Examples
+
+Refer to the following examples to learn more about value mapping.
+
+### Time series example
+
+The following image shows a time series visualization with value mappings. Value mapping colors aren't applied to this visualization, but the display text is shown on the axis.
+
+![Value mappings time series example](/static/img/docs/value-mappings/value-mappings-summary-example-8-0.png)
+
+### Stat example
+
+The following image shows a stat visualization with value mappings and text colors applied. You can hide the sparkline so it doesn't interfere with the values.
+
+![Value mappings stat example](/static/img/docs/value-mappings/value-mappings-stat-example-8-0.png)
+
+### Bar gauge example
+
+The following image shows a bar gauge visualization with value mappings. Note that the value mapping colors are applied to the text, but not to the gauges.
+
+![Value mappings bar gauge example](/static/img/docs/value-mappings/value-mappings-bar-gauge-example-8-0.png)
+
+### Table example
+
+The following image shows a table visualization with value mappings. If you want value mapping colors displayed on the table, then set the cell display mode to **Color text** or **Color background**.
+
+![Value mappings table example](/static/img/docs/value-mappings/value-mappings-table-example-8-0.png)
+
+## Add a value mapping
+
+1. Navigate to the panel you want to update.
+1. Hover over any part of the panel you want to work on to display the menu on the top right corner.
+1. Click the menu and select **Edit**.
+1. Scroll to the **Value mappings** section and expand it.
+1. Click **Add value mappings**.
+1. Click **Add a new mapping** and then select one of the following:
+
+   - **Value** - Enter a single value to match.
+   - **Range** - Enter the beginning and ending values of a range to match.
+   - **Regex** - Enter a regular expression pattern to match.
+   - **Special** - Select a special value to match.
+
+1. (Optional) Enter display text.
+1. (Optional) Set the color.
+1. (Optional) Set an icon (canvas visualizations only).
+1. Click **Update** to save the value mapping.
+
+After you've added a mapping, the **Edit value mappings** button replaces the **Add value mappings** button. Click the edit button to add or update mappings.
+
+## Docs refs
+
 {{% docs/reference %}}
+[bar chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/bar-chart"
+[bar chart]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/bar-chart"
+
+[bar gauge]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/bar-gauge"
+[bar gauge]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/bar-gauge"
+
+[candlestick]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/candlestick"
+[candlestick]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/candlestick"
+
+[canvas]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/canvas"
+[canvas]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/canvas"
+
+[gauge]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/gauge"
+[gauge]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/gauge"
+
+[geomap]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/geomap"
+[geomap]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/geomap"
+
+[heatmap]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/heatmap"
+[heatmap]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/heatmap"
+
+[histogram]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/histogram"
+[histogram]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/histogram"
+
+[pie chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/pie-chart"
+[pie chart]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/pie-chart"
+
+[stat]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/stat"
+[stat]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/stat"
+
+[state timeline]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/state-timeline"
+[state timeline]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/state-timeline"
+
+[status history]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/status-history"
+[status history]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/status-history"
+
+[table]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/table"
+[table]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/table"
+
+[time series]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/time-series"
+[time series]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/time-series"
+
+[trend]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/trend"
+[trend]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/trend"
+
 [Cloudwatch]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/aws-cloudwatch/query-editor#deep-link-grafana-panels-to-the-cloudwatch-console-1"
 [Cloudwatch]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/aws-cloudwatch/query-editor#deep-link-grafana-panels-to-the-cloudwatch-console-1"
 
