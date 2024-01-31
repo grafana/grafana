@@ -19,7 +19,7 @@ import {
   SceneQueryRunner,
   VariableDependencyConfig,
 } from '@grafana/scenes';
-import { Button, Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, Field, Select, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
@@ -109,7 +109,11 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
     this.setState(stateUpdate);
   }
 
-  public onChange = (value: string) => {
+  public onChange = (value?: string) => {
+    if (!value) {
+      return;
+    }
+
     const variable = this.getVariable();
 
     if (value === ALL_VARIABLE_VALUE) {
@@ -125,13 +129,26 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
     const { labels, body, loading, value } = model.useState();
     const styles = useStyles2(getStyles);
 
+    const useHorizontalLabelSelector = labels.length <= 6;
+
     return (
       <div className={styles.container}>
         {loading && <div>Loading...</div>}
         <div className={styles.controls}>
-          <Field label="By label">
-            <RadioButtonGroup options={labels} value={value} onChange={model.onChange} />
-          </Field>
+          {!loading && (
+            <Field label="By label">
+              {useHorizontalLabelSelector ? (
+                <RadioButtonGroup options={labels} value={value} onChange={model.onChange} />
+              ) : (
+                <Select
+                  options={labels}
+                  value={value}
+                  onChange={(selected) => model.onChange(selected.value)}
+                  className={styles.select}
+                />
+              )}
+            </Field>
+          )}
           {body instanceof LayoutSwitcher && (
             <div className={styles.controlsRight}>
               <body.Selector model={body} />
@@ -171,6 +188,9 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       display: 'flex',
       justifyContent: 'flex-end',
+    }),
+    select: css({
+      minWidth: theme.spacing(16),
     }),
   };
 }

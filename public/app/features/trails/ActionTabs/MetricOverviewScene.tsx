@@ -92,7 +92,9 @@ export class MetricOverviewScene extends SceneObjectBase<MetricOverviewSceneStat
           <>
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>Description</Text>
-              {metadata?.help ? <div>{metadata?.help}</div> : <i>No description available</i>}
+              <div style={{ maxWidth: 360 }}>
+                {metadata?.help ? <div>{metadata?.help}</div> : <i>No description available</i>}
+              </div>
             </Stack>
             <Stack direction="column" gap={0.5}>
               <Text weight={'medium'}>Type</Text>

@@ -162,7 +162,7 @@ export class MetricActionBar extends SceneObjectBase<MetricActionBarState> {
     return (
       <Box paddingY={1}>
         <div className={styles.actions}>
-          <Stack gap={2}>
+          <Stack gap={1}>
             <ToolbarButton
               variant={'canvas'}
               icon="compass"
