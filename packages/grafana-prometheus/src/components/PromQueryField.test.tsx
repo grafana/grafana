@@ -3,7 +3,7 @@ import { getByTestId, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { PanelData, LoadingState, DataFrame, CoreApp } from '@grafana/data';
+import { CoreApp, DataFrame, LoadingState, PanelData } from '@grafana/data';
 
 import { PrometheusDatasource } from '../datasource';
 import PromQlLanguageProvider from '../language_provider';

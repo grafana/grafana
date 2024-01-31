@@ -7,11 +7,11 @@ import { createTheme } from '@grafana/data';
 import PromQlLanguageProvider from '../language_provider';
 
 import {
+  BrowserProps,
   buildSelector,
   facetLabels,
   SelectableLabel,
   UnthemedPrometheusMetricsBrowser,
-  BrowserProps,
 } from './PrometheusMetricsBrowser';
 
 describe('buildSelector()', () => {

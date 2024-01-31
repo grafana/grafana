@@ -4,15 +4,15 @@ import React, { ReactNode } from 'react';
 import { isDataFrame, QueryEditorProps, QueryHint, TimeRange, toLegacyResponseData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { Icon, Themeable2, withTheme2, clearButtonStyles } from '@grafana/ui';
-import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
+import { clearButtonStyles, Icon, Themeable2, withTheme2 } from '@grafana/ui';
+
+import { PrometheusDatasource } from '../datasource';
+import { LocalStorageValueProvider } from '../gcopypaste/app/core/components/LocalStorageValueProvider';
 import {
   CancelablePromise,
   isCancelablePromiseRejection,
   makePromiseCancelable,
-} from 'app/core/utils/CancelablePromise';
-
-import { PrometheusDatasource } from '../datasource';
+} from '../gcopypaste/app/core/utils/CancelablePromise';
 import { roundMsToMin } from '../language_utils';
 import { PromOptions, PromQuery } from '../types';
 

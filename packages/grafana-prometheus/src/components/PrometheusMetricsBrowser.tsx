@@ -5,13 +5,13 @@ import { FixedSizeList } from 'react-window';
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
+  BrowserLabel as PromLabel,
   Button,
   HorizontalGroup,
   Input,
   Label,
   LoadingPlaceholder,
   stylesFactory,
-  BrowserLabel as PromLabel,
   withTheme2,
 } from '@grafana/ui';
 

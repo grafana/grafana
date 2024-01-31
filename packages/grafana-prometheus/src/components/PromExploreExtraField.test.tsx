@@ -4,7 +4,7 @@ import React from 'react';
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
 
-import { PromExploreExtraFieldProps, PromExploreExtraField, testIds } from './PromExploreExtraField';
+import { PromExploreExtraField, PromExploreExtraFieldProps, testIds } from './PromExploreExtraField';
 
 const setup = (propOverrides?: PromExploreExtraFieldProps) => {
   const query = { exemplar: false } as PromQuery;
