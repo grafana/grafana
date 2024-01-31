@@ -153,7 +153,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public startUrlSync() {
-    getUrlSyncManager().initSync(this);
+    if (!this.state.meta.isEmbedded) {
+      getUrlSyncManager().initSync(this);
+    }
   }
 
   public stopUrlSync() {
@@ -206,6 +208,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public onDiscard = () => {
+    if (!this.canDiscard()) {
+      console.error('Trying to discard back to a state that does not exist, initialState undefined');
+      return;
+    }
+
     // No need to listen to changes anymore
     this.stopTrackingChanges();
     // Stop url sync before updating url
@@ -232,6 +239,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // Disable grid dragging
     this.propagateEditModeChange();
   };
+
+  public canDiscard() {
+    return this._initialState !== undefined;
+  }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
     const versionRsp = await historySrv.restoreDashboard(version.uid, version.version);
