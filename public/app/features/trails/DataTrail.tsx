@@ -21,7 +21,7 @@ import {
   SceneVariableSet,
   VariableValueSelectors,
 } from '@grafana/scenes';
-import { useStyles2 } from '@grafana/ui';
+import {Stack, Text, useStyles2} from '@grafana/ui';
 
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
@@ -171,9 +171,14 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
     const { controls, topScene, history } = model.useState();
     const styles = useStyles2(getStyles);
+    const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
     return (
       <div className={styles.container}>
+        { showHeaderForFirstTimeUsers && <Stack direction="column" gap={1}>
+          <Text variant="h1">Metrics</Text>
+          <Text color="secondary">Navigate through your Prometheus-compatible metrics without writing a query</Text>
+        </Stack>}
         <history.Component model={history} />
         {controls && (
           <div className={styles.controls}>

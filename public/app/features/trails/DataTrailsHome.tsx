@@ -47,7 +47,6 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     // If there are no recent trails, don't show home page and create a new trail
     if (!getTrailStore().recent.length) {
       const trail = newMetricsTrail(getDatasourceForNewTrail());
-      getTrailStore().setRecentTrail(trail);
       return <Redirect to={getUrlForTrail(trail)} />;
     }
 
