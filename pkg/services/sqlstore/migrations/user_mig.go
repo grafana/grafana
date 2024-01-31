@@ -146,12 +146,12 @@ func addUserMigrations(mg *Migrator) {
 	}))
 
 	mg.AddMigration("Update uid column values for users", NewRawSQLMigration("").
-		SQLite("UPDATE user SET uid=printf('i%09d',id) WHERE uid IS NULL;").
-		Postgres("UPDATE `user` SET uid='i' || lpad('' || id::text,9,'0') WHERE uid IS NULL;").
-		Mysql("UPDATE user SET uid=concat('i',lpad(id,9,'0')) WHERE uid IS NULL;"))
+		SQLite("UPDATE user SET uid=printf('u%09d',id) WHERE uid IS NULL;").
+		Postgres("UPDATE `user` SET uid='u' || lpad('' || id::text,9,'0') WHERE uid IS NULL;").
+		Mysql("UPDATE user SET uid=concat('u',lpad(id,9,'0')) WHERE uid IS NULL;"))
 
-	mg.AddMigration("Add unique index user_org_id_uid", NewAddIndexMigration(userV2, &Index{
-		Cols: []string{"org_id", "uid"}, Type: UniqueIndex,
+	mg.AddMigration("Add unique index user_uid", NewAddIndexMigration(userV2, &Index{
+		Cols: []string{"uid"}, Type: UniqueIndex,
 	}))
 }
 
