@@ -15,6 +15,7 @@ import * as common from '@grafana/schema';
  */
 export enum SeriesMapping {
   Auto = 'auto',
+  Dynamic = 'dynamic',
   Manual = 'manual',
 }
 

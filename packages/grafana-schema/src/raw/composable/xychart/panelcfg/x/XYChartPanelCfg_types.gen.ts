@@ -18,6 +18,7 @@ export const pluginVersion = "10.4.0-pre";
  */
 export enum SeriesMapping {
   Auto = 'auto',
+  Dynamic = 'dynamic',
   Manual = 'manual',
 }
 

@@ -2,6 +2,7 @@ import { PanelPlugin } from '@grafana/data';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { AutoEditor } from './AutoEditor';
+import { DynamicEditor } from './DynamicEditor';
 import { ManualEditor } from './ManualEditor';
 import { XYChartPanel } from './XYChartPanel';
 import { getScatterFieldConfig } from './config';
@@ -17,10 +18,18 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel)
         defaultValue: 'auto',
         settings: {
           options: [
+            { value: 'dynamic', label: 'Dynamic', description: 'Automatically plot values across multiple tables' },
             { value: 'auto', label: 'Table', description: 'Plot values within a single table result' },
-            { value: 'manual', label: 'Manual', description: 'Construct values from any result' },
+            { value: 'manual', label: 'Manual', description: 'Plot values explicitly from any result' },
           ],
         },
+      })
+      .addCustomEditor({
+        id: 'series',
+        path: 'series',
+        name: '',
+        editor: DynamicEditor,
+        showIf: (cfg) => cfg.seriesMapping === 'dynamic',
       })
       .addCustomEditor({
         id: 'xyPlotConfig',
