@@ -93,7 +93,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
     for (const option of options) {
       const cpy = [...optionPath];
       cpy.push(option);
-      if (!option.items) {
+      if (!option.items || option.items.length === 0) {
         selectOptions.push({
           singleLabel: cpy[cpy.length - 1].label,
           label: cpy.map((o) => o.label).join(this.props.separator || DEFAULT_SEPARATOR),
@@ -135,23 +135,27 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
       : this.props.displayAllSelectedLevels
         ? selectedOptions.map((option) => option.label).join(this.props.separator || DEFAULT_SEPARATOR)
         : selectedOptions[selectedOptions.length - 1].label;
-    this.setState({
-      rcValue: value,
+    const state: CascaderState = {
+      rcValue: { value, label: activeLabel },
       focusCascade: true,
       activeLabel,
-    });
-
+      isSearching: false,
+    };
+    this.setState(state);
     this.props.onSelect(selectedOptions[selectedOptions.length - 1].value);
   };
 
   //For select
   onSelect = (obj: SelectableValue<string[]>) => {
     const valueArray = obj.value || [];
-    this.setState({
-      activeLabel: this.props.displayAllSelectedLevels ? obj.label : obj.singleLabel || '',
-      rcValue: valueArray,
+    const activeLabel = this.props.displayAllSelectedLevels ? obj.label : obj.singleLabel || '';
+    const state: CascaderState = {
+      activeLabel: activeLabel,
+      rcValue: { value: valueArray, label: activeLabel },
       isSearching: false,
-    });
+      focusCascade: false,
+    };
+    this.setState(state);
     this.props.onSelect(valueArray[valueArray.length - 1]);
   };
 
