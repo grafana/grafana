@@ -2,6 +2,7 @@ import { advanceBy } from 'jest-date-mock';
 
 import { locationService } from '@grafana/runtime';
 import { getUrlSyncManager } from '@grafana/scenes';
+import { DashboardRoutes } from 'app/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { setupLoadDashboardMock } from '../utils/test-utils';
@@ -14,12 +15,12 @@ describe('DashboardScenePageStateManager', () => {
       const loadDashboardMock = setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', editable: true }, meta: {} });
 
       const loader = new DashboardScenePageStateManager({});
-      await loader.loadDashboard({ uid: 'fake-dash' });
+      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
       expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
 
       // should use cache second time
-      await loader.loadDashboard({ uid: 'fake-dash' });
+      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
       expect(loadDashboardMock.mock.calls.length).toBe(1);
     });
 
@@ -27,7 +28,7 @@ describe('DashboardScenePageStateManager', () => {
       setupLoadDashboardMock({ dashboard: undefined, meta: {} });
 
       const loader = new DashboardScenePageStateManager({});
-      await loader.loadDashboard({ uid: 'fake-dash' });
+      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
       expect(loader.state.dashboard).toBeUndefined();
       expect(loader.state.isLoading).toBe(false);
@@ -38,7 +39,7 @@ describe('DashboardScenePageStateManager', () => {
       setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
 
       const loader = new DashboardScenePageStateManager({});
-      await loader.loadDashboard({ uid: 'fake-dash' });
+      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
       expect(loader.state.dashboard?.state.uid).toBe('fake-dash');
       expect(loader.state.loadError).toBe(undefined);
@@ -49,7 +50,7 @@ describe('DashboardScenePageStateManager', () => {
       setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
 
       const loader = new DashboardScenePageStateManager({});
-      await loader.loadDashboard({ uid: 'fake-dash' });
+      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
       expect(loader.state.dashboard).toBeInstanceOf(DashboardScene);
       expect(loader.state.isLoading).toBe(false);
@@ -61,7 +62,7 @@ describe('DashboardScenePageStateManager', () => {
       locationService.partial({ from: 'now-5m', to: 'now' });
 
       const loader = new DashboardScenePageStateManager({});
-      await loader.loadDashboard({ uid: 'fake-dash' });
+      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
       const dash = loader.state.dashboard;
 
       expect(dash!.state.$timeRange?.state.from).toEqual('now-5m');
@@ -71,7 +72,7 @@ describe('DashboardScenePageStateManager', () => {
       // try loading again (and hitting cache)
       locationService.partial({ from: 'now-10m', to: 'now' });
 
-      await loader.loadDashboard({ uid: 'fake-dash' });
+      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
       const dash2 = loader.state.dashboard;
 
       expect(dash2!.state.$timeRange?.state.from).toEqual('now-10m');
@@ -83,10 +84,30 @@ describe('DashboardScenePageStateManager', () => {
       locationService.partial({ from: 'now-5m', to: 'now' });
 
       const loader = new DashboardScenePageStateManager({});
-      await loader.loadDashboard({ uid: 'fake-dash', isEmbedded: true });
+      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Embedded });
       const dash = loader.state.dashboard;
 
       expect(dash!.state.$timeRange?.state.from).toEqual('now-6h');
+    });
+
+    describe('New dashboards', () => {
+      it('Should have new empty model with meta.isNew and should not be cached', async () => {
+        const loader = new DashboardScenePageStateManager({});
+
+        await loader.loadDashboard({ uid: '', route: DashboardRoutes.New });
+        const dashboard = loader.state.dashboard!;
+
+        expect(dashboard.state.meta.isNew).toBe(true);
+        expect(dashboard.state.isEditing).toBe(true);
+        expect(dashboard.state.isDirty).toBe(true);
+
+        dashboard.setState({ title: 'Changed' });
+
+        await loader.loadDashboard({ uid: '', route: DashboardRoutes.New });
+        const dashboard2 = loader.state.dashboard!;
+
+        expect(dashboard2.state.title).toBe('New dashboard');
+      });
     });
 
     describe('caching', () => {
@@ -97,7 +118,7 @@ describe('DashboardScenePageStateManager', () => {
 
         expect(loader.getFromCache('fake-dash')).toBeNull();
 
-        await loader.loadDashboard({ uid: 'fake-dash' });
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
         expect(loader.getFromCache('fake-dash')).toBeDefined();
       });
@@ -110,15 +131,15 @@ describe('DashboardScenePageStateManager', () => {
 
         expect(loader.getFromCache('fake-dash')).toBeNull();
 
-        await loader.fetchDashboard({ uid: 'fake-dash' });
+        await loader.fetchDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
         expect(loadDashSpy).toHaveBeenCalledTimes(1);
 
         advanceBy(DASHBOARD_CACHE_TTL / 2);
-        await loader.fetchDashboard({ uid: 'fake-dash' });
+        await loader.fetchDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
         expect(loadDashSpy).toHaveBeenCalledTimes(1);
 
         advanceBy(DASHBOARD_CACHE_TTL / 2 + 1);
-        await loader.fetchDashboard({ uid: 'fake-dash' });
+        await loader.fetchDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
         expect(loadDashSpy).toHaveBeenCalledTimes(2);
       });
     });

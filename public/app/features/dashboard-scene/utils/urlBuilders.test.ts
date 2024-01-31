@@ -37,4 +37,13 @@ describe('dashboard utils', () => {
 
     expect(url).toBe('/d/dash-1?orgId=1&new=A');
   });
+
+  it('Empty uid should be treated as a new dashboard', () => {
+    const url = getDashboardUrl({
+      uid: '',
+      currentQueryParams: '?orgId=1&filter=A',
+    });
+
+    expect(url).toBe('/dashboard/new?orgId=1&filter=A');
+  });
 });

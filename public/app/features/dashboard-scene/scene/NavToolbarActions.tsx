@@ -128,33 +128,37 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
     }
   } else {
     if (dashboard.canEditDashboard()) {
-      toolbarActions.push(
-        <Button
-          onClick={() => {
-            dashboard.openSaveDrawer({ saveAsCopy: true });
-          }}
-          size="sm"
-          tooltip="Save as copy"
-          fill="text"
-          key="save-as"
-        >
-          Save as
-        </Button>
-      );
-      toolbarActions.push(
-        <Button
-          onClick={() => {
-            dashboard.onDiscard();
-          }}
-          tooltip="Discard changes"
-          fill="text"
-          size="sm"
-          key="discard"
-          variant="destructive"
-        >
-          Discard
-        </Button>
-      );
+      if (!dashboard.state.meta.isNew) {
+        toolbarActions.push(
+          <Button
+            onClick={() => {
+              dashboard.openSaveDrawer({ saveAsCopy: true });
+            }}
+            size="sm"
+            tooltip="Save as copy"
+            fill="text"
+            key="save-as"
+          >
+            Save as
+          </Button>
+        );
+      }
+      if (dashboard.canDiscard()) {
+        toolbarActions.push(
+          <Button
+            onClick={() => {
+              dashboard.onDiscard();
+            }}
+            tooltip="Discard changes"
+            fill="text"
+            size="sm"
+            key="discard"
+            variant="destructive"
+          >
+            Discard
+          </Button>
+        );
+      }
       toolbarActions.push(
         <Button
           onClick={() => {
