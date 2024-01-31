@@ -49,8 +49,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     flexGrow: 1,
+    padding: theme.spacing(1),
     height: '100%',
     gap: theme.spacing(1),
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRight: 'none',
+    borderBottom: 'none',
+    borderTopLeftRadius: theme.shape.radius.default,
   }),
   filter: css({
     minHeight: theme.spacing(4),

@@ -71,6 +71,7 @@
     "folder-picker": {
       "accessible-label": "选择文件夹：{{ label }} 当前已选择",
       "button-label": "选择文件夹",
+      "clear-selection": "",
       "empty-message": "未找到文件夹",
       "error-title": "加载文件夹时出错",
       "search-placeholder": "搜索文件夹",
@@ -228,6 +229,10 @@
       "visualization": "可视化",
       "widget": "小部件"
     },
+    "alert-rules-drawer": {
+      "redirect-link": "",
+      "subtitle": ""
+    },
     "empty": {
       "add-library-panel-body": "添加与其他仪表板共享的可视化。",
       "add-library-panel-button": "添加库面板",
@@ -296,7 +301,7 @@
     },
     "toolbar": {
       "add": "添加",
-      "add-panel": "添加面板",
+      "alert-rules": "",
       "mark-favorite": "标记为收藏",
       "open-original": "打开原始仪表板",
       "playlist-next": "前往下一个仪表板",
@@ -356,6 +361,7 @@
       "title-label": "标题"
     },
     "json-editor": {
+      "apply-button": "",
       "save-button": "保存更改",
       "subtitle": "下面的 JSON 模型是定义仪表板的数据结构。这包括仪表板设置、面板设置、布局和查询等等。",
       "title": "JSON 模型"
@@ -967,6 +973,7 @@
     "megamenu": {
       "close": "关闭菜单",
       "dock": "停靠菜单",
+      "list-label": "",
       "undock": ""
     },
     "toolbar": {
@@ -1216,6 +1223,12 @@
       "interval-selected": "设置自动刷新间隔",
       "turned-off": "自动刷新关闭"
     }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": ""
+    },
+    "dismissable-button": ""
   },
   "search": {
     "actions": {

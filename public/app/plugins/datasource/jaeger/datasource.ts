@@ -15,10 +15,9 @@ import {
   ScopedVars,
   urlUtil,
 } from '@grafana/data';
+import { NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
 import { BackendSrvRequest, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { SpanBarOptions } from 'app/features/explore/TraceView/components';
 
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { TraceIdTimeParamsOptions } from './configuration/TraceIdTimeParams';

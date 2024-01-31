@@ -3,14 +3,12 @@ import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 
 import { DataFrame, DataSourceApi, FieldType, toDataFrame } from '@grafana/data';
+import { QueryBuilderOperation, QueryBuilderOperationParamDef } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import {
-  QueryBuilderOperation,
-  QueryBuilderOperationParamDef,
-} from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
 import { createLokiDatasource } from '../../__mocks__/datasource';
 import { LokiDatasource } from '../../datasource';
+import { LokiQueryModeller } from '../LokiQueryModeller';
 import { LokiOperationId } from '../types';
 
 import { UnwrapParamEditor } from './UnwrapParamEditor';
@@ -96,6 +94,9 @@ const createProps = (
     paramDef: {} as QueryBuilderOperationParamDef,
     operation: {} as QueryBuilderOperation,
     datasource: createLokiDatasource() as DataSourceApi,
+    queryModeller: {
+      renderQuery: jest.fn().mockReturnValue('sum_over_time({foo="bar"} | logfmt | unwrap [5m])'),
+    } as unknown as LokiQueryModeller,
   };
   const props = { ...propsDefault, ...propsOverrides };
 

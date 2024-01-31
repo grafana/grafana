@@ -1433,6 +1433,19 @@
         },
         "description": "(empty)"
       },
+      "listSSOSettingsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/SSOSettings"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "listSortOptionsResponse": {
         "content": {
           "application/json": {
@@ -5553,6 +5566,15 @@
           },
           "typeVersion": {
             "$ref": "#/components/schemas/FrameTypeVersion"
+          },
+          "uniqueRowIdFields": {
+            "description": "Array of field indices which values create a unique id for each row. Ideally this should be globally unique ID\nbut that isn't guarantied. Should help with keeping track and deduplicating rows in visualizations, especially\nwith streaming data with frequent updates.",
+            "example": "TraceID in Tempo, table name + primary key in SQL",
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
           }
         },
         "title": "FrameMeta matches:",
@@ -7275,8 +7297,18 @@
         "title": "An ObjectIdentifier represents an ASN.1 OBJECT IDENTIFIER.",
         "type": "array"
       },
+      "ObjectMatcher": {
+        "items": {
+          "type": "string"
+        },
+        "title": "ObjectMatcher is a matcher that can be used to filter alerts.",
+        "type": "array"
+      },
       "ObjectMatchers": {
-        "$ref": "#/components/schemas/Matchers"
+        "items": {
+          "$ref": "#/components/schemas/ObjectMatcher"
+        },
+        "type": "array"
       },
       "OpsGenieConfig": {
         "properties": {
@@ -11976,6 +12008,7 @@
         "type": "object"
       },
       "alertGroup": {
+        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -12132,7 +12165,6 @@
         "type": "object"
       },
       "gettableAlert": {
-        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -12242,13 +12274,13 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
         "type": "array"
       },
       "integration": {
-        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -13469,6 +13501,9 @@
           "403": {
             "$ref": "#/components/responses/forbiddenError"
           },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
           "500": {
             "$ref": "#/components/responses/internalServerError"
           }
@@ -13519,6 +13554,9 @@
           },
           "403": {
             "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
           },
           "500": {
             "$ref": "#/components/responses/internalServerError"
@@ -13580,6 +13618,9 @@
           },
           "403": {
             "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
           },
           "500": {
             "$ref": "#/components/responses/internalServerError"
@@ -13643,6 +13684,9 @@
           "403": {
             "$ref": "#/components/responses/forbiddenError"
           },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
+          },
           "500": {
             "$ref": "#/components/responses/internalServerError"
           }
@@ -13704,6 +13748,9 @@
           },
           "403": {
             "$ref": "#/components/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/components/responses/notFoundError"
           },
           "500": {
             "$ref": "#/components/responses/internalServerError"
@@ -25040,6 +25087,30 @@
         "summary": "Updates an existing notification template.",
         "tags": [
           "provisioning"
+        ]
+      }
+    },
+    "/v1/sso-settings": {
+      "get": {
+        "description": "You need to have a permission with action `settings:read` with scope `settings:auth.\u003cprovider\u003e:*`.",
+        "operationId": "listAllProvidersSettings",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/listSSOSettingsResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          }
+        },
+        "summary": "List all SSO Settings entries",
+        "tags": [
+          "sso_settings"
         ]
       }
     },

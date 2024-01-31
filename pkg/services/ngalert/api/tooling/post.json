@@ -2270,9 +2270,18 @@
    "title": "OAuth2 is the oauth2 client configuration.",
    "type": "object"
   },
+  "ObjectMatcher": {
+   "items": {
+    "type": "string"
+   },
+   "title": "ObjectMatcher is a matcher that can be used to filter alerts.",
+   "type": "array"
+  },
   "ObjectMatchers": {
-   "$ref": "#/definitions/Matchers",
-   "description": "ObjectMatchers is Matchers with a different Unmarshal and Marshal methods that accept matchers as objects\nthat have already been parsed."
+   "items": {
+    "$ref": "#/definitions/ObjectMatcher"
+   },
+   "type": "array"
   },
   "OpsGenieConfig": {
    "properties": {
@@ -4603,7 +4612,6 @@
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4652,6 +4660,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },

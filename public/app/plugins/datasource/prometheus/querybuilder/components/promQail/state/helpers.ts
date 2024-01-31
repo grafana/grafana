@@ -346,7 +346,7 @@ export async function promQailSuggest(
     };
 
     // get all available labels
-    const metricLabels = await datasource.languageProvider.fetchSeriesLabelsMatch(query.metric);
+    const metricLabels = await datasource.languageProvider.fetchLabelsWithMatch(query.metric);
 
     let feedTheAI: SuggestionBody = {
       metric: query.metric,

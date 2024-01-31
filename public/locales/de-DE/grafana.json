@@ -76,6 +76,7 @@
     "folder-picker": {
       "accessible-label": "Ordner auswählen: {{ label }} aktuell ausgewählt",
       "button-label": "Ordner auswählen",
+      "clear-selection": "",
       "empty-message": "Keine Ordner gefunden",
       "error-title": "Fehler beim Laden der Ordner",
       "search-placeholder": "Ordner suchen",
@@ -233,6 +234,10 @@
       "visualization": "Visualisierung",
       "widget": "Widget"
     },
+    "alert-rules-drawer": {
+      "redirect-link": "",
+      "subtitle": ""
+    },
     "empty": {
       "add-library-panel-body": "Visualisierungen hinzufügen, die mit anderen Dashboards geteilt werden.",
       "add-library-panel-button": "Bibliotheksfenster hinzufügen",
@@ -301,7 +306,7 @@
     },
     "toolbar": {
       "add": "Hinzufügen",
-      "add-panel": "Panel hinzufügen",
+      "alert-rules": "",
       "mark-favorite": "Als Favorit markieren",
       "open-original": "Original-Dashboard öffnen",
       "playlist-next": "Zum nächsten Dashboard",
@@ -361,6 +366,7 @@
       "title-label": "Titel"
     },
     "json-editor": {
+      "apply-button": "",
       "save-button": "Änderungen speichern",
       "subtitle": "Das JSON-Modell unten ist die Datenstruktur, die das Dashboard definiert. Dazu gehören Dashboard-Einstellungen, Fenster-Einstellungen, Layout, Abfragen und so weiter.",
       "title": "JSON-Modell"
@@ -973,6 +979,7 @@
     "megamenu": {
       "close": "Menü schließen",
       "dock": "Menü andocken",
+      "list-label": "",
       "undock": ""
     },
     "toolbar": {
@@ -1222,6 +1229,12 @@
       "interval-selected": "Automatisches Aktualisierungsintervall festlegen",
       "turned-off": "Automatische Aktualisierung aus"
     }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": ""
+    },
+    "dismissable-button": ""
   },
   "search": {
     "actions": {

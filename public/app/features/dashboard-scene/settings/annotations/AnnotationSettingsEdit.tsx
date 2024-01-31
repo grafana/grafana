@@ -27,6 +27,7 @@ import {
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
+import { AngularEditorLoader } from 'app/features/dashboard/components/AnnotationSettings/AngularEditorLoader';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { getPanelIdForVizPanel } from '../../utils/utils';
@@ -250,7 +251,13 @@ export const AnnotationSettingsEdit = ({
             onChange={(annotation) => onUpdate(annotation, editIndex)}
           />
         )}
-        {/* do we need this?? {ds && !ds.annotations && <AngularEditorLoader datasource={ds} annotation={annotation} onChange={onUpdate} />} */}
+        {ds && !ds.annotations && (
+          <AngularEditorLoader
+            datasource={ds}
+            annotation={annotation}
+            onChange={(annotation) => onUpdate(annotation, editIndex)}
+          />
+        )}
       </FieldSet>
       <Stack>
         {!annotation.builtIn && (

@@ -71,7 +71,7 @@ func (r *subQueryREST) readQueries(req *http.Request) ([]backend.DataQuery, erro
 }
 
 func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	pluginCtx, err := r.builder.getDataSourcePluginContext(ctx, name)
+	pluginCtx, err := r.builder.getPluginContext(ctx, name)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		}
 
 		queryResponse, err := r.builder.client.QueryData(ctx, &backend.QueryDataRequest{
-			PluginContext: *pluginCtx,
+			PluginContext: pluginCtx,
 			Queries:       queries,
 			//  Headers: // from context
 		})

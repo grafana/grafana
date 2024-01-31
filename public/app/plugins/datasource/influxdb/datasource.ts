@@ -32,10 +32,9 @@ import {
   getBackendSrv,
 } from '@grafana/runtime';
 import { CustomFormatterVariable } from '@grafana/scenes';
+import { QueryFormat, SQLQuery } from '@grafana/sql';
 import config from 'app/core/config';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-
-import { QueryFormat, SQLQuery } from '../../../features/plugins/sql';
 
 import { AnnotationEditor } from './components/editor/annotation/AnnotationEditor';
 import { FluxQueryEditor } from './components/editor/query/flux/FluxQueryEditor';
@@ -340,7 +339,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   // Used in public/app/features/variables/adhoc/picker/AdHocFilterKey.tsx::fetchFilterKeys
-  getTagKeys(options?: DataSourceGetTagKeysOptions) {
+  getTagKeys(options?: DataSourceGetTagKeysOptions<InfluxQuery>) {
     const query = buildMetadataQuery({
       type: 'TAG_KEYS',
       templateService: this.templateSrv,
