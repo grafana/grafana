@@ -174,7 +174,7 @@ const getQueriesByDatasource = (
  */
 export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const initStart = performance?.now();
+    const initStart = performance.now();
 
     // set fetching state
     dispatch(dashboardInitFetching());
@@ -285,7 +285,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
       })
     );
 
-    const duration = performance?.now() - initStart;
+    const duration = performance.now() - initStart;
     trackDashboardLoaded(dashboard, duration, versionBeforeMigration);
 
     // yay we are done
