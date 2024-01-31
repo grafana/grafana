@@ -83,6 +83,7 @@ describe('QueryVariableEditor', () => {
         return render(<QueryVariableEditor variable={variable} onRunQuery={onRunQueryMock} />);
       }),
       variable,
+      user: userEvent.setup(),
     };
   }
 
@@ -138,12 +139,13 @@ describe('QueryVariableEditor', () => {
     const {
       variable,
       renderer: { getByTestId },
+      user,
     } = await setup();
     const dataSourcePicker = getByTestId(selectors.components.DataSourcePicker.container).getElementsByTagName('input');
 
     await waitFor(async () => {
-      await userEvent.type(dataSourcePicker[0], 'm');
-      await userEvent.tab();
+      await user.type(dataSourcePicker[0], 'm');
+      await user.tab();
       await lastValueFrom(variable.validateAndUpdate());
     });
 
@@ -154,14 +156,15 @@ describe('QueryVariableEditor', () => {
     const {
       variable,
       renderer: { getByTestId },
+      user,
     } = await setup();
     const queryEditor = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput
     );
 
     await waitFor(async () => {
-      await userEvent.type(queryEditor, '-new');
-      await userEvent.tab();
+      await user.type(queryEditor, '-new');
+      await user.tab();
       await lastValueFrom(variable.validateAndUpdate());
     });
 
@@ -173,14 +176,15 @@ describe('QueryVariableEditor', () => {
     const {
       variable,
       renderer: { getByTestId },
+      user,
     } = await setup();
     const regexInput = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2
     );
 
     await waitFor(async () => {
-      await userEvent.type(regexInput, '{backspace}?');
-      await userEvent.tab();
+      await user.type(regexInput, '{backspace}?');
+      await user.tab();
       await lastValueFrom(variable.validateAndUpdate());
     });
 
@@ -191,15 +195,16 @@ describe('QueryVariableEditor', () => {
     const {
       variable,
       renderer: { getByTestId },
+      user,
     } = await setup();
     const sortSelect = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelectV2
     );
 
     await waitFor(async () => {
-      await userEvent.click(sortSelect);
+      await user.click(sortSelect);
       const anotherOption = await screen.getByText('Alphabetical (desc)');
-      await userEvent.click(anotherOption);
+      await user.click(anotherOption);
       await lastValueFrom(variable.validateAndUpdate());
     });
 
@@ -210,15 +215,16 @@ describe('QueryVariableEditor', () => {
     const {
       variable,
       renderer: { getByTestId },
+      user,
     } = await setup();
     const refreshSelect = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelectV2
     );
 
     await waitFor(async () => {
-      await userEvent.click(refreshSelect);
+      await user.click(refreshSelect);
       const anotherOption = await screen.getByText('On time range change');
-      await userEvent.click(anotherOption);
+      await user.click(anotherOption);
       await lastValueFrom(variable.validateAndUpdate());
     });
 
@@ -229,13 +235,14 @@ describe('QueryVariableEditor', () => {
     const {
       variable,
       renderer: { getByTestId },
+      user,
     } = await setup();
     const multiSwitch = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch
     );
 
     await waitFor(async () => {
-      await userEvent.click(multiSwitch);
+      await user.click(multiSwitch);
       await lastValueFrom(variable.validateAndUpdate());
     });
 
@@ -246,13 +253,14 @@ describe('QueryVariableEditor', () => {
     const {
       variable,
       renderer: { getByTestId },
+      user,
     } = await setup();
     const includeAllSwitch = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch
     );
 
     await waitFor(async () => {
-      await userEvent.click(includeAllSwitch);
+      await user.click(includeAllSwitch);
       await lastValueFrom(variable.validateAndUpdate());
     });
 
@@ -263,14 +271,15 @@ describe('QueryVariableEditor', () => {
     const {
       variable,
       renderer: { getByTestId },
+      user,
     } = await setup();
     const allValueInput = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput
     );
 
     await waitFor(async () => {
-      await userEvent.type(allValueInput, ' and another value');
-      await userEvent.tab();
+      await user.type(allValueInput, ' and another value');
+      await user.tab();
       await lastValueFrom(variable.validateAndUpdate());
     });
 
