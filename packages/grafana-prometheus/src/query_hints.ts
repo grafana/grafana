@@ -1,8 +1,8 @@
-import { size } from 'lodash';
+import {size} from 'lodash';
 
-import { QueryHint, QueryFix } from '@grafana/data';
+import {QueryFix, QueryHint} from '@grafana/data';
 
-import { PrometheusDatasource } from './datasource';
+import {PrometheusDatasource} from './datasource';
 
 /**
  * Number of time series results needed before starting to suggest sum aggregation hints

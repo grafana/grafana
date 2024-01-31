@@ -1,5 +1,5 @@
 import { CoreApp, DataQueryRequest, DataQueryResponse } from '@grafana/data';
-import { reportInteraction, config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 
 import { PromQuery } from './types';
 
