@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem } from '@grafana/data';
 import { featureEnabled } from '@grafana/runtime';
-import { Alert, Button, Field, Form, HorizontalGroup, Input } from '@grafana/ui';
+import { Alert, Button, Field, Form, Input, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -97,7 +97,7 @@ export class LdapPage extends PureComponent<Props, State> {
     return (
       <Page navId="authentication" pageNav={pageNav}>
         <Page.Contents isLoading={isLoading}>
-          <>
+          <Stack direction="column" gap={4}>
             {ldapError && ldapError.title && (
               <Alert title={ldapError.title} severity={AppNotificationSeverity.Error}>
                 {ldapError.body}
@@ -109,23 +109,24 @@ export class LdapPage extends PureComponent<Props, State> {
             {featureEnabled('ldapsync') && ldapSyncInfo && <LdapSyncInfo ldapSyncInfo={ldapSyncInfo} />}
 
             {canReadLDAPUser && (
-              <>
+              <section>
                 <h3>Test user mapping</h3>
                 <Form onSubmit={(data: FormModel) => this.search(data.username)}>
                   {({ register }) => (
-                    <HorizontalGroup>
-                      <Field label="Username">
-                        <Input
-                          {...register('username', { required: true })}
-                          id="username"
-                          type="text"
-                          defaultValue={queryParams.username}
-                        />
-                      </Field>
-                      <Button variant="primary" type="submit">
-                        Run
-                      </Button>
-                    </HorizontalGroup>
+                    <Field label="Username">
+                      <Input
+                        {...register('username', { required: true })}
+                        width={34}
+                        id="username"
+                        type="text"
+                        defaultValue={queryParams.username}
+                        addonAfter={
+                          <Button variant="primary" type="submit">
+                            Run
+                          </Button>
+                        }
+                      />
+                    </Field>
                   )}
                 </Form>
                 {userError && userError.title && (
@@ -137,10 +138,10 @@ export class LdapPage extends PureComponent<Props, State> {
                     {userError.body}
                   </Alert>
                 )}
-                {ldapUser && <LdapUserInfo ldapUser={ldapUser} showAttributeMapping={true} />}
-              </>
+                {ldapUser && <LdapUserInfo ldapUser={ldapUser} />}
+              </section>
             )}
-          </>
+          </Stack>
         </Page.Contents>
       </Page>
     );

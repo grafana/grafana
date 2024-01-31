@@ -133,8 +133,8 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
     const activeLabel = this.props.hideActiveLevelLabel
       ? ''
       : this.props.displayAllSelectedLevels
-      ? selectedOptions.map((option) => option.label).join(this.props.separator || DEFAULT_SEPARATOR)
-      : selectedOptions[selectedOptions.length - 1].label;
+        ? selectedOptions.map((option) => option.label).join(this.props.separator || DEFAULT_SEPARATOR)
+        : selectedOptions[selectedOptions.length - 1].label;
     this.setState({
       rcValue: value,
       focusCascade: true,

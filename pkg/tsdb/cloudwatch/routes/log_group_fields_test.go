@@ -11,16 +11,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 )
 
 func TestLogGroupFieldsRoute(t *testing.T) {
-	mockFeatures := featuremgmt.WithFeatures()
 	reqCtxFunc := func(_ context.Context, pluginCtx backend.PluginContext, region string) (reqCtx models.RequestContext, err error) {
-		return models.RequestContext{Features: mockFeatures}, err
+		return models.RequestContext{}, err
 	}
 	t.Run("returns 400 if an invalid LogGroupFieldsRequest is used", func(t *testing.T) {
 		rr := httptest.NewRecorder()

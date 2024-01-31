@@ -22,15 +22,6 @@ interface AddPanelToDashboardOptions {
   time: Dashboard['time'];
 }
 
-function createDashboard(): DashboardDTO {
-  const dto = getNewDashboardModelData();
-
-  // getNewDashboardModelData adds by default the "add-panel" panel. We don't want that.
-  dto.dashboard.panels = [];
-
-  return dto;
-}
-
 /**
  * Returns transformations for the logs table visualisation in explore.
  * If the logs table supports a labels column, we need to extract the fields.
@@ -96,7 +87,7 @@ export async function setDashboardInLocalStorage(options: AddPanelToDashboardOpt
       throw AddToDashboardError.FETCH_DASHBOARD;
     }
   } else {
-    dto = createDashboard();
+    dto = getNewDashboardModelData();
   }
 
   dto.dashboard.panels = [panel, ...(dto.dashboard.panels ?? [])];
