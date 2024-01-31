@@ -1317,16 +1317,22 @@ describe('logs volume', () => {
         { refId: 'B', target: 'volume query 2' },
       ],
       scopedVars: {},
-    } as unknown as DataQueryRequest<TestDataQuery>;
-    volumeProvider = queryLogsVolume(datasource, request, {
-      extractLevel: (dataFrame: DataFrame) => {
-        return dataFrame.fields[1]!.labels!.level === 'error' ? LogLevel.error : LogLevel.unknown;
-      },
+      requestId: '',
+      interval: '',
+      intervalMs: 0,
       range: {
         from: FROM,
         to: TO,
-        raw: { from: '0', to: '1' },
+        raw: {
+          from: FROM,
+          to: TO,
+        },
       },
+      timezone: '',
+      app: '',
+      startTime: 0,
+    };
+    volumeProvider = queryLogsVolume(datasource, request, {
       targets: request.targets,
     });
   }

@@ -16,6 +16,7 @@ export interface SerializedTrail {
     parentIndex: number;
   }>;
   currentStep: number;
+  createdAt?: number;
 }
 
 export class TrailStore {
@@ -53,7 +54,7 @@ export class TrailStore {
 
   private _deserializeTrail(t: SerializedTrail): DataTrail {
     // reconstruct the trail based on the the serialized history
-    const trail = new DataTrail({});
+    const trail = new DataTrail({ createdAt: t.createdAt });
 
     t.history.map((step) => {
       this._loadFromUrl(trail, step.urlValues);
@@ -82,6 +83,7 @@ export class TrailStore {
     return {
       history,
       currentStep: trail.state.history.state.currentStep,
+      createdAt: trail.state.createdAt,
     };
   }
 
