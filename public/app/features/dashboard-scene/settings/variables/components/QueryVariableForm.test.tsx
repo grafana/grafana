@@ -1,4 +1,4 @@
-import { getByRole, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { FormEvent } from 'react';
 import { of } from 'rxjs';
@@ -107,7 +107,6 @@ describe('QueryVariableEditorForm', () => {
   it('should render the component with initializing the components correctly', () => {
     const {
       renderer: { getByTestId, getByRole },
-      user,
     } = setup();
     const dataSourcePicker = getByTestId(selectors.components.DataSourcePicker.container);
     //const queryEditor = getByTestId('query-editor');
