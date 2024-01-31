@@ -13,7 +13,6 @@ import {
   tap,
   throwIfEmpty,
 } from 'rxjs/operators';
-import { v4 as uuidv4 } from 'uuid';
 
 import { AppEvents, DataQueryErrorType } from '@grafana/data';
 import { BackendSrv as BackendService, BackendSrvRequest, config, FetchError, FetchResponse } from '@grafana/runtime';
@@ -25,6 +24,7 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { DashboardDTO, FolderDTO } from 'app/types';
+import { v4 as uuidv4 } from 'uuid';
 
 import { ShowModalReactEvent } from '../../types/events';
 import {

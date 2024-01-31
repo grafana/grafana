@@ -1,7 +1,6 @@
 import { reject } from 'lodash';
 import { Observable, of, OperatorFunction, ReplaySubject, Unsubscribable } from 'rxjs';
 import { catchError, map, share } from 'rxjs/operators';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   dataFrameFromJSON,
@@ -20,6 +19,7 @@ import { isExpressionQuery } from 'app/features/expressions/guards';
 import { cancelNetworkRequestsOnUnsubscribe } from 'app/features/query/state/processing/canceler';
 import { setStructureRevision } from 'app/features/query/state/processing/revision';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { v4 as uuidv4 } from 'uuid';
 
 import { getTimeRangeForExpression } from '../utils/timeRange';
 

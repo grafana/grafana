@@ -1,5 +1,4 @@
 import { Unsubscribable } from 'rxjs';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   AppEvents,
@@ -12,6 +11,7 @@ import {
 } from '@grafana/data';
 import { getGrafanaLiveSrv, locationService } from '@grafana/runtime';
 import { appEvents, contextSrv } from 'app/core/core';
+import { v4 as uuidv4 } from 'uuid';
 
 import { ShowModalReactEvent } from '../../../types/events';
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';

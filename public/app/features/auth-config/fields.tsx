@@ -1,7 +1,7 @@
 import React from 'react';
-import { validate as uuidValidate } from 'uuid';
 
 import { TextLink } from '@grafana/ui';
+import { validate as uuidValidate } from 'uuid';
 
 import { FieldData, SSOProvider, SSOSettingsField } from './types';
 import { isSelectableValue } from './utils/guards';

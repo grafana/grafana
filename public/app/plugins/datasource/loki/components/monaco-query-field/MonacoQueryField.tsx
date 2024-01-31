@@ -2,13 +2,13 @@ import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import React, { useRef, useEffect } from 'react';
 import { useLatest } from 'react-use';
-import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { parser } from '@grafana/lezer-logql';
 import { languageConfiguration, monarchlanguage } from '@grafana/monaco-logql';
 import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor } from '@grafana/ui';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';

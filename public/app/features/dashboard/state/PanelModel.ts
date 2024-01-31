@@ -1,5 +1,4 @@
 import { cloneDeep, defaultsDeep, isArray, isEqual } from 'lodash';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   DataConfigSource,
@@ -32,6 +31,7 @@ import {
   PanelTransformationsChangedEvent,
   RenderEvent,
 } from 'app/types/events';
+import { v4 as uuidv4 } from 'uuid';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { TimeOverrideResult } from '../utils/panel';

@@ -1,6 +1,5 @@
 import { merge, Observable, of, Subject, throwError, Unsubscribable } from 'rxjs';
 import { catchError, filter, finalize, mergeMap, take, takeUntil } from 'rxjs/operators';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   CoreApp,
@@ -11,6 +10,7 @@ import {
   PanelData,
   ScopedVars,
 } from '@grafana/data';
+import { v4 as uuidv4 } from 'uuid';
 
 import { dispatch, getState } from '../../../store/store';
 import { StoreState, ThunkDispatch } from '../../../types';

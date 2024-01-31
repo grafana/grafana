@@ -1,6 +1,5 @@
-import { v5 as uuidv5 } from 'uuid';
-
 import { MutableDataFrame } from '@grafana/data';
+import { v5 as uuidv5 } from 'uuid';
 
 import { LokiStreamResult, LokiTailResponse } from './types';
 

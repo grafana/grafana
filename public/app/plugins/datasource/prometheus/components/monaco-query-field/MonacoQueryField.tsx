@@ -4,7 +4,6 @@ import { debounce } from 'lodash';
 import { promLanguageDefinition } from 'monaco-promql';
 import React, { useRef, useEffect } from 'react';
 import { useLatest } from 'react-use';
-import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -13,6 +12,7 @@ import {
   placeHolderScopedVars,
   validateQuery,
 } from 'app/plugins/datasource/loki/components/monaco-query-field/monaco-completion-provider/validation';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
