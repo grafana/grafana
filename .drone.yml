@@ -123,7 +123,9 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apk add --update python
+  - apk add --update apt-get
+  - apt-get update -y
+  - apt-get install -yq python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -225,7 +227,9 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apk add --update python
+  - apk add --update apt-get
+  - apt-get update -y
+  - apt-get install -yq python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -537,7 +541,9 @@ steps:
   image: golang:1.21.6-alpine
   name: wire-install
 - commands:
-  - apk add --update python
+  - apk add --update apt-get
+  - apt-get update -y
+  - apt-get install -yq python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1047,7 +1053,9 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apk add --update python
+  - apk add --update apt-get
+  - apt-get update -y
+  - apt-get install -yq python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1407,7 +1415,9 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apk add --update python
+  - apk add --update apt-get
+  - apt-get update -y
+  - apt-get install -yq python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1484,7 +1494,9 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apk add --update python
+  - apk add --update apt-get
+  - apt-get update -y
+  - apt-get install -yq python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1543,7 +1555,9 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apk add --update python
+  - apk add --update apt-get
+  - apt-get update -y
+  - apt-get install -yq python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1806,7 +1820,9 @@ steps:
   image: golang:1.21.6-alpine
   name: wire-install
 - commands:
-  - apk add --update python
+  - apk add --update apt-get
+  - apt-get update -y
+  - apt-get install -yq python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -2722,7 +2738,9 @@ steps:
   image: golang:1.21.6-alpine
   name: compile-build-cmd
 - commands:
-  - apk add --update python
+  - apk add --update apt-get
+  - apt-get update -y
+  - apt-get install -yq python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -2996,7 +3014,9 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apk add --update python
+  - apk add --update apt-get
+  - apt-get update -y
+  - apt-get install -yq python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -3420,7 +3440,9 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apk add --update python
+  - apk add --update apt-get
+  - apt-get update -y
+  - apt-get install -yq python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -4788,6 +4810,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: f1a293d47dd2d291cecf5d4174b7ca8296195992512f25fabbd31244817c0c55
+hmac: fa9ec954927e81a0739b1b8798f88d0969271739a7f74a8f9b9a88ae2f78ac1b
 
 ...
