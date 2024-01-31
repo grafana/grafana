@@ -1949,12 +1949,7 @@ func (cfg *Cfg) readDataSourceSecuritySettings() {
 	cfg.IPRangeACEnabled = datasources.Key("enabled").MustBool(false)
 	cfg.IPRangeACSecretKey = datasources.Key("secret_key").MustString("")
 	allowedURLString := datasources.Key("allow_list").MustString("")
-	for _, url := range strings.Split(allowedURLString, ",") {
-		url = strings.TrimSpace(url)
-		if url != "" {
-			cfg.IPRangeACAllowedURLs = append(cfg.IPRangeACAllowedURLs, url)
-		}
-	}
+	cfg.IPRangeACAllowedURLs = util.SplitString(allowedURLString)
 }
 
 func (cfg *Cfg) readSqlDataSourceSettings() {
