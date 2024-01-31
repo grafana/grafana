@@ -62,7 +62,6 @@ export function LabelFilterItem({
       if (item.indexOf('|') > 0) {
         return item.split('|');
       }
-
       return [item];
     }
     return [];

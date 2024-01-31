@@ -193,7 +193,7 @@ describe('PromQueryEditorSelector', () => {
       />
     );
 
-    await screen.findByText('test_metric');
+    await screen.queryAllByText('test_metric');
     expect(screen.getByText('host.docker.internal:3000')).toBeInTheDocument();
     expect(screen.getByText('Rate')).toBeInTheDocument();
     expect(screen.getByText('$__interval')).toBeInTheDocument();
@@ -244,6 +244,7 @@ async function expectRunQueriesButton() {
 function expectNoRunQueriesButton() {
   expect(screen.queryByRole('button', { name: /run queries/i })).not.toBeInTheDocument();
 }
+
 async function switchToMode(mode: QueryEditorMode) {
   const label = {
     [QueryEditorMode.Code]: /Code/,

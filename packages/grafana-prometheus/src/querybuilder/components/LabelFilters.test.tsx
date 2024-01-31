@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
+import { selectOptionInTest } from '../../gcopypaste/test/helpers/selectOptionInTest';
 import { getLabelSelects } from '../testUtils';
 
 import { LabelFilters, MISSING_LABEL_FILTER_ERROR_MESSAGE, Props } from './LabelFilters';
@@ -112,6 +112,7 @@ describe('LabelFilters', () => {
     expect(screen.getByText('boop')).toBeInTheDocument();
     expect(screen.getByText('par')).toBeInTheDocument();
   });
+
   it('does not split regex in between parentheses inside of a label value that contains the char |', () => {
     setup({ labelsFilters: [{ label: 'foo', op: '=~', value: '(b|p)ar' }] });
 

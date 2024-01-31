@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { CoreApp } from '@grafana/data';
 
+import { selectOptionInTest } from '../../gcopypaste/test/helpers/selectOptionInTest';
 import { PromQuery } from '../../types';
 import { getQueryWithDefaults } from '../state';
 

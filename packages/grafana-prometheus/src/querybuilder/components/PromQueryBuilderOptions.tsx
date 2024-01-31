@@ -43,6 +43,7 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
   const queryTypeOptions = getQueryTypeOptions(
     app === CoreApp.Explore || app === CoreApp.Correlations || app === CoreApp.PanelEditor
   );
+
   const onQueryTypeChange = getQueryTypeChangeHandler(query, onChange);
 
   const onExemplarChange = (event: SyntheticEvent<HTMLInputElement>) => {
@@ -82,13 +83,13 @@ export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange
             }
           >
             <AutoSizeInput
-              id={selectors.components.DataSource.Prometheus.queryEditor.step}
               type="text"
               aria-label="Set lower limit for the step parameter"
               placeholder={'auto'}
               minWidth={10}
               onCommitChange={onChangeStep}
               defaultValue={query.interval}
+              id={selectors.components.DataSource.Prometheus.queryEditor.step}
             />
           </EditorField>
           <EditorField label="Format">
