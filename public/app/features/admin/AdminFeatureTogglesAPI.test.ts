@@ -80,47 +80,17 @@ describe('AdminFeatureTogglesApi', () => {
     config.featureToggles = originalToggles;
   });
 
-  it('uses the legacy api when the k8s toggles are off', async () => {
-    config.featureToggles.kubernetesFeatureToggles = false;
-    config.featureToggles.grafanaAPIServerWithExperimentalAPIs = false;
-
-    const togglesApi = getTogglesAPI();
-    await togglesApi.getFeatureToggles();
-    await togglesApi.getManagerState();
-    await togglesApi.updateFeatureToggles([]);
-    const expected = [
-      {
-        method: 'get',
-        url: '/api/featuremgmt',
-      },
-      {
-        method: 'get',
-        url: '/api/featuremgmt/state',
-      },
-      {
-        method: 'post',
-        url: '/api/featuremgmt',
-      },
-    ];
-    expect(testBackendSrv.apiCalls).toEqual(expect.arrayContaining(expected));
-  });
-
   it('uses the k8s api when the k8s toggles are on', async () => {
     config.featureToggles.kubernetesFeatureToggles = true;
     config.featureToggles.grafanaAPIServerWithExperimentalAPIs = true;
 
     const togglesApi = getTogglesAPI();
     await togglesApi.getFeatureToggles();
-    await togglesApi.getManagerState();
     await togglesApi.updateFeatureToggles([]);
     const expected = [
       {
         method: 'get',
         url: '/apis/featuretoggle.grafana.app/v0alpha1/current',
-      },
-      {
-        method: 'get',
-        url: '/apis/featuretoggle.grafana.app/v0alpha1/state',
       },
       {
         method: 'patch',

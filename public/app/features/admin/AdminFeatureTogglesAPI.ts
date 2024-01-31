@@ -1,6 +1,6 @@
-import { getBackendSrv, config } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
 
-type FeatureToggle = {
+export type FeatureToggle = {
   name: string;
   description?: string;
   enabled: boolean;
@@ -8,13 +8,16 @@ type FeatureToggle = {
   hidden?: boolean;
 };
 
-type FeatureMgmtState = {
+export type CurrentTogglesState = {
   restartRequired: boolean;
   allowEditing: boolean;
+  toggles: FeatureToggle[];
 };
 
 interface ResolvedToggleState {
   kind: 'ResolvedToggleState';
+  restartRequired?: boolean;
+  allowEditing?: boolean;
   toggles?: K8sToggleSpec[]; // not used in patch
   enabled: { [key: string]: boolean };
 }
@@ -33,38 +36,26 @@ interface K8sToggleSource {
 }
 
 interface FeatureTogglesAPI {
-  getManagerState(): Promise<FeatureMgmtState>;
-  getFeatureToggles(): Promise<FeatureToggle[]>;
+  getFeatureToggles(): Promise<CurrentTogglesState>;
   updateFeatureToggles(toggles: FeatureToggle[]): Promise<void>;
-}
-
-class LegacyAPI implements FeatureTogglesAPI {
-  getManagerState(): Promise<FeatureMgmtState> {
-    return getBackendSrv().get<FeatureMgmtState>('/api/featuremgmt/state');
-  }
-  getFeatureToggles(): Promise<FeatureToggle[]> {
-    return getBackendSrv().get<FeatureToggle[]>('/api/featuremgmt');
-  }
-  updateFeatureToggles(toggles: FeatureToggle[]): Promise<void> {
-    return getBackendSrv().post('/api/featuremgmt', { featureToggles: toggles });
-  }
 }
 
 class K8sAPI implements FeatureTogglesAPI {
   baseURL = '/apis/featuretoggle.grafana.app/v0alpha1';
 
-  getManagerState(): Promise<FeatureMgmtState> {
-    return getBackendSrv().get<FeatureMgmtState>(this.baseURL + '/state');
-  }
-  async getFeatureToggles(): Promise<FeatureToggle[]> {
+  async getFeatureToggles(): Promise<CurrentTogglesState> {
     const current = await getBackendSrv().get<ResolvedToggleState>(this.baseURL + '/current');
-    return current.toggles!.map((t) => ({
-      name: t.name,
-      description: t.description!,
-      enabled: t.enabled,
-      readOnly: !Boolean(t.writeable),
-      hidden: false, // only return visible things
-    }));
+    return {
+      restartRequired: Boolean(current.restartRequired),
+      allowEditing: Boolean(current.allowEditing),
+      toggles: current.toggles!.map((t) => ({
+        name: t.name,
+        description: t.description!,
+        enabled: t.enabled,
+        readOnly: !Boolean(t.writeable),
+        hidden: false, // only return visible things
+      })),
+    };
   }
   updateFeatureToggles(toggles: FeatureToggle[]): Promise<void> {
     const patchBody: ResolvedToggleState = {
@@ -78,11 +69,6 @@ class K8sAPI implements FeatureTogglesAPI {
   }
 }
 
-const getTogglesAPI = (): FeatureTogglesAPI => {
-  return config.featureToggles.kubernetesFeatureToggles && config.featureToggles.grafanaAPIServerWithExperimentalAPIs
-    ? new K8sAPI()
-    : new LegacyAPI();
+export const getTogglesAPI = (): FeatureTogglesAPI => {
+  return new K8sAPI();
 };
-
-export { getTogglesAPI };
-export type { FeatureToggle, FeatureMgmtState };

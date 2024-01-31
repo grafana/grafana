@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
@@ -51,8 +52,12 @@ func (o *APIServerOptions) loadAPIGroupBuilders(args []string) error {
 		case "example.grafana.app":
 			o.builders = append(o.builders, example.NewTestingAPIBuilder())
 		case "featuretoggle.grafana.app":
-			features := featuremgmt.WithFeatureManager(setting.FeatureMgmtSettings{}, nil) // none... for now
-			o.builders = append(o.builders, featuretoggle.NewFeatureFlagAPIBuilder(features))
+			o.builders = append(o.builders,
+				featuretoggle.NewFeatureFlagAPIBuilder(
+					featuremgmt.WithFeatureManager(setting.FeatureMgmtSettings{}, nil), // none... for now
+					&actest.FakeAccessControl{ExpectedEvaluate: false},
+				),
+			)
 		case "testdata.datasource.grafana.app":
 			ds, err := server.InitializeDataSourceAPIServer(g)
 			if err != nil {

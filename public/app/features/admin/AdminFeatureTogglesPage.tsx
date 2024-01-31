@@ -12,8 +12,7 @@ import { AdminFeatureTogglesTable } from './AdminFeatureTogglesTable';
 export default function AdminFeatureTogglesPage() {
   const [reload] = useState(1);
   const togglesApi = getTogglesAPI();
-  const featureMgmtState = useAsync(() => togglesApi.getManagerState(), [reload]);
-  const featureToggles = useAsync(() => togglesApi.getFeatureToggles(), [reload]);
+  const featureState = useAsync(() => togglesApi.getFeatureToggles(), [reload]);
   const [updateSuccessful, setUpdateSuccessful] = useState(false);
   const styles = useStyles2(getStyles);
 
@@ -29,7 +28,7 @@ export default function AdminFeatureTogglesPage() {
           <Icon name="exclamation-triangle" />
         </div>
         <span className={styles.message}>
-          {featureMgmtState.value?.restartRequired || updateSuccessful
+          {featureState.value?.restartRequired || updateSuccessful
             ? 'A restart is pending for your Grafana instance to apply the latest feature toggle changes'
             : 'Saving feature toggle changes will prompt a restart of the instance, which may take a few minutes'}
         </span>
@@ -53,16 +52,16 @@ export default function AdminFeatureTogglesPage() {
 
   return (
     <Page navId="feature-toggles" subTitle={subTitle}>
-      <Page.Contents isLoading={featureToggles.loading}>
+      <Page.Contents isLoading={featureState.loading}>
         <>
-          {featureToggles.error}
-          {featureToggles.loading && 'Fetching feature toggles'}
+          {featureState.error}
+          {featureState.loading && 'Fetching feature toggles'}
 
-          {featureMgmtState.value && <EditingAlert />}
-          {featureToggles.value && (
+          {featureState.value?.restartRequired && <EditingAlert />}
+          {featureState.value && (
             <AdminFeatureTogglesTable
-              featureToggles={featureToggles.value}
-              allowEditing={featureMgmtState.value?.allowEditing || false}
+              featureToggles={featureState.value.toggles}
+              allowEditing={featureState.value.allowEditing || false}
               onUpdateSuccess={handleUpdateSuccess}
             />
           )}
