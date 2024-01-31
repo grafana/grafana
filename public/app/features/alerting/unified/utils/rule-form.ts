@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { sceneGraph, SceneQueryRunner, SceneVariable, VizPanel } from '@grafana/scenes';
+import { sceneGraph, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { DataSourceJsonData } from '@grafana/schema';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
