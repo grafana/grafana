@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useId, useState } from 'react';
-import { Draggable, DraggableProvided } from 'react-beautiful-dnd';
+import { Draggable } from 'react-beautiful-dnd';
 
 import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Button, Icon, InlineField, Tooltip, useTheme2, Stack } from '@grafana/ui';
