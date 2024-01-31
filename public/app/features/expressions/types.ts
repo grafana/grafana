@@ -1,6 +1,7 @@
 import { DataQuery, ReducerID, SelectableValue } from '@grafana/data';
 
 import { EvalFunction } from '../alerting/state/alertDef';
+import { config } from '@grafana/runtime';
 
 /**
  * MATCHES a constant in DataSourceWithBackend
@@ -68,7 +69,13 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
     description:
       'Transform data using SQL. Supports Aggregate/Analytics functions from DuckDB',
   },
-];
+].filter(expr => {
+  if (expr.value === ExpressionQueryType.sql) {
+    return config.featureToggles.sqlExpressions;
+  }
+  return true;
+});
+
 
 export const reducerTypes: Array<SelectableValue<string>> = [
   { value: ReducerID.min, label: 'Min', description: 'Get the minimum value' },

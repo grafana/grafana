@@ -634,4 +634,8 @@ const (
 	// FlagSlateAutocomplete
 	// Adjusts the behaviour of the slate editor to properly handle autocomplete. Feature toggled for safety.
 	FlagSlateAutocomplete = "slateAutocomplete"
+
+	// FlagSqlExpressions
+	// Enables using SQL and DuckDB functions as Expressions.
+	FlagSqlExpressions = "sqlExpressions"
 )
