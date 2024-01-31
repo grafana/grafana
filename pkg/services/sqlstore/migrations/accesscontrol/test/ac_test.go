@@ -86,7 +86,7 @@ var (
 		},
 		{
 			ID:      5,
-			UID:     "u4",
+			UID:     "u5",
 			Email:   "editor2@example.org",
 			Name:    "editor2",
 			Login:   "editor2",
