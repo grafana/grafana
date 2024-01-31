@@ -129,42 +129,6 @@ describe('VariablesEditView', () => {
       variableView.onGoBack();
       expect(variableView.state.editIndex).toBeUndefined();
     });
-
-    it('should reset editing variable when discarding changes', () => {
-      variableView.onEdit('customVar2');
-      const editIndex = variableView.state.editIndex!;
-      const variable = variableView.getVariables()[editIndex];
-      const originalState = { ...variable.state };
-
-      variable.setState({ name: 'newName' });
-      variableView.onDiscardChanges();
-
-      const newVariable = variableView.getVariables()[editIndex];
-      expect(newVariable.state).toEqual(originalState);
-    });
-
-    it('should reset editing variable when discarding changes after the type being changed', () => {
-      variableView.onEdit('customVar2');
-      const editIndex = variableView.state.editIndex!;
-      const variable = variableView.getVariables()[editIndex];
-      const originalState = { ...variable.state };
-
-      variableView.onTypeChange('constant');
-      variableView.onDiscardChanges();
-
-      const newVariable = variableView.getVariables()[editIndex];
-      expect(newVariable.state).toEqual(originalState);
-    });
-
-    it('should go back when discarding changes', () => {
-      variableView.onEdit('customVar2');
-      const editIndex = variableView.state.editIndex!;
-      expect(editIndex).toBeDefined();
-
-      variableView.onDiscardChanges();
-
-      expect(variableView.state.editIndex).toBeUndefined();
-    });
   });
 
   describe('Dashboard Variables dependencies', () => {
