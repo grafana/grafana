@@ -18,6 +18,7 @@ import {
   LoadingState,
   rangeUtil,
   ScopedVars,
+  SelectableValue,
   TestDataSourceResponse,
   urlUtil,
 } from '@grafana/data';
@@ -204,21 +205,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       options = await this.languageProvider.getOptionsV1(labelName);
     }
 
-    // Transform and filter options.
-    // We do not use `filter` and `map`, e.g.,
-    // ```
-    // options.filter((option) => option.value !== undefined).map((option) => ({ text: option.value }))
-    // ```
-    // because TypeScript cannot properly infer types with them and a type error would be raised.
-    const parsedOptions: Array<{ text: string }> = [];
-    options.forEach((option) => {
-      if (option.value === undefined) {
-        return;
-      }
-      parsedOptions.push({ text: option.value });
-    });
-
-    return parsedOptions;
+    return options.flatMap((option: SelectableValue<string>) =>
+      option.value !== undefined ? [{ text: option.value }] : []
+    );
   }
 
   init = async () => {
