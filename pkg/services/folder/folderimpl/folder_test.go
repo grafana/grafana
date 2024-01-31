@@ -1294,7 +1294,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		acmock.NewMockedPermissionsService(),
 		dashboardPermissions,
 		actest.FakeAccessControl{},
-		foldertest.NewFakeService(),
+		serviceWithFlagOn,
 		nil,
 	)
 	require.NoError(t, err)
