@@ -126,7 +126,7 @@ To use custom querys with the configuration, follow these steps:
 
    These tags can be used in the custom query with `${__tags}` variable. This variable interpolates the mapped tags as list in an appropriate syntax for the data source and will only include the tags that were present in the span omitting those that weren’t present. You can optionally configure a new name for the tag. This is useful in cases where the tag has dots in the name and the target data source doesn't allow using dots in labels. For example, you can remap `service.name` to `service_name` in such a case. If you don’t map any tags here, you can still use any tag in the query like this `method="${__span.tags.method}"`. You can learn more about custom query variables [here](/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/#custom-query-variables).
 
-1. Click the **Add query** button to add a custom query.
+1. Click **Add query** to add a custom query.
 1. Specify a custom query to be used to query metrics data.
 
    Each linked query consists of:
