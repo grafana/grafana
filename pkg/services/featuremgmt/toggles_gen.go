@@ -455,6 +455,10 @@ const (
 	// Use the kubernetes API in the frontend to support playlists
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
 
+	// FlagKubernetesQueryServiceRewrite
+	// Rewrite requests targeting /ds/query to the query service
+	FlagKubernetesQueryServiceRewrite = "kubernetesQueryServiceRewrite"
+
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"

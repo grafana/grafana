@@ -186,4 +186,5 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `externalServiceAuth`                  | Starts an OAuth2 authentication provider for external services |
 | `grafanaAPIServerWithExperimentalAPIs` | Register experimental APIs with the k8s API server             |
 | `grafanaAPIServerEnsureKubectlAccess`  | Start an additional https handler and write kubectl options    |
+| `kubernetesQueryServiceRewrite`        | Rewrite requests targeting /ds/query to the query service      |
 | `panelTitleSearchInV1`                 | Enable searching for dashboards using panel title in search v1 |
