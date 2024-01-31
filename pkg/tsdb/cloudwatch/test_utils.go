@@ -222,9 +222,7 @@ func testInstanceManager(pageLimit int) instancemgmt.InstanceManager {
 			AWSDatasourceSettings: awsds.AWSDatasourceSettings{
 				Region: "us-east-1",
 			},
-			GrafanaSettings: &awsds.AuthSettings{
-				ListMetricsPageLimit: pageLimit,
-			},
+			GrafanaSettings: awsds.AuthSettings{ListMetricsPageLimit: pageLimit},
 		}}, nil
 	}))
 }

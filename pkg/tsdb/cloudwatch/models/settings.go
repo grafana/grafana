@@ -20,7 +20,7 @@ type CloudWatchSettings struct {
 	LogsTimeout             Duration `json:"logsTimeout"`
 
 	// GrafanaSettings are fetched from the GrafanaCfg in the context
-	GrafanaSettings *awsds.AuthSettings `json:"-"`
+	GrafanaSettings awsds.AuthSettings `json:"-"`
 }
 
 func LoadCloudWatchSettings(ctx context.Context, config backend.DataSourceInstanceSettings) (CloudWatchSettings, error) {
@@ -47,7 +47,7 @@ func LoadCloudWatchSettings(ctx context.Context, config backend.DataSourceInstan
 
 	instance.AccessKey = config.DecryptedSecureJSONData["accessKey"]
 	instance.SecretKey = config.DecryptedSecureJSONData["secretKey"]
-	instance.GrafanaSettings = awsds.ReadAuthSettings(ctx)
+	instance.GrafanaSettings = *awsds.ReadAuthSettings(ctx)
 
 	return instance, nil
 }

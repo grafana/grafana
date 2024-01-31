@@ -268,7 +268,7 @@ func Test_CloudWatch_CallResource_Integration_Test(t *testing.T) {
 		imWithoutDefaultRegion := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{
 				AWSDatasourceSettings: awsds.AWSDatasourceSettings{},
-				GrafanaSettings:       &awsds.AuthSettings{ListMetricsPageLimit: 1000},
+				GrafanaSettings:       awsds.AuthSettings{ListMetricsPageLimit: 1000},
 			}}, nil
 		})
 

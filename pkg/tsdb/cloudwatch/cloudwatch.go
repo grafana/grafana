@@ -274,14 +274,14 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 			SecretKey:     instance.Settings.SecretKey,
 		},
 		UserAgentName: aws.String("Cloudwatch"),
-		AuthSettings:  instance.Settings.GrafanaSettings,
+		AuthSettings:  &instance.Settings.GrafanaSettings,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	// work around until https://github.com/grafana/grafana/issues/39089 is implemented
-	if (instance.Settings.GrafanaSettings != nil && instance.Settings.GrafanaSettings.SecureSocksDSProxyEnabled) && instance.Settings.SecureSocksProxyEnabled {
+	if instance.Settings.GrafanaSettings.SecureSocksDSProxyEnabled && instance.Settings.SecureSocksProxyEnabled {
 		// only update the transport to try to avoid the issue mentioned here https://github.com/grafana/grafana/issues/46365
 		sess.Config.HTTPClient.Transport = instance.HTTPClient.Transport
 	}

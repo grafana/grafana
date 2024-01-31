@@ -49,7 +49,7 @@ func TestQuery_Regions(t *testing.T) {
 		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{
 				AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "us-east-2"},
-				GrafanaSettings:       &awsds.AuthSettings{ListMetricsPageLimit: 1000},
+				GrafanaSettings:       awsds.AuthSettings{ListMetricsPageLimit: 1000},
 			}}, nil
 		})
 
@@ -109,7 +109,7 @@ func Test_handleGetRegions_regionCache(t *testing.T) {
 	im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		return DataSource{Settings: models.CloudWatchSettings{
 			AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "us-east-2"},
-			GrafanaSettings:       &awsds.AuthSettings{ListMetricsPageLimit: 1000},
+			GrafanaSettings:       awsds.AuthSettings{ListMetricsPageLimit: 1000},
 		}}, nil
 	})
 
