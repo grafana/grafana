@@ -188,7 +188,13 @@ export const DashNav = React.memo<Props>((props) => {
     if (dashboard.meta.publicDashboardEnabled) {
       // TODO: This will be replaced with the new badge component. Color is required but gets override by css
       buttons.push(
-        <Badge color="blue" text="Public" className={publicBadgeStyle} data-testid={selectors.publicDashboardTag} />
+        <Badge
+          color="blue"
+          text="Public"
+          key="public-dashboard-button-badge"
+          className={publicBadgeStyle}
+          data-testid={selectors.publicDashboardTag}
+        />
       );
     }
 
