@@ -305,18 +305,22 @@
 # Backend code docs
 /contribute/backend/ @grafana/backend-platform
 
-
 /crowdin.yml @grafana/grafana-frontend-platform
 /public/locales/ @grafana/grafana-frontend-platform
 /public/app/core/internationalization/ @grafana/grafana-frontend-platform
 /e2e/ @grafana/grafana-frontend-platform
 /e2e/cloud-plugins-suite/ @grafana/partner-datasources
-/packages/ @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend
-/packages/grafana-e2e-selectors/ @grafana/grafana-frontend-platform
-/packages/grafana-e2e/ @grafana/grafana-frontend-platform
-/packages/grafana-ui/.storybook/ @grafana/plugins-platform-frontend
-/packages/grafana-ui/src/components/ @grafana/grafana-frontend-platform
-/packages/grafana-ui/src/components/DateTimePickers/ @grafana/grafana-frontend-platform
+
+# Frontend packages. Assign ownership of packages individually
+/packages/grafana-data/ @grafana/plugins-platform-frontend
+/packages/grafana-data/src/transformations/ @grafana/dataviz-squad
+/packages/grafana-data/src/**/*logs* @grafana/observability-logs
+
+/packages/grafana-runtime/ @grafana/plugins-platform-frontend
+/packages/grafana-runtime/src/services/ @grafana/grafana-frontend-platform
+/packages/grafana-runtime/src/services/pluginExtensions @grafana/plugins-platform-frontend
+
+/packages/grafana-ui/ @grafana/grafana-frontend-platform
 /packages/grafana-ui/src/components/Table/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/Table/SparklineCell.tsx @grafana/dataviz-squad @grafana/app-o11y-visualizations
 /packages/grafana-ui/src/components/Gauge/ @grafana/dataviz-squad
@@ -328,22 +332,29 @@
 /packages/grafana-ui/src/components/VizLegend/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/VizRepeater/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/VizTooltip/ @grafana/dataviz-squad
-/packages/grafana-ui/src/components/Sparkline/ @grafana/grafana-frontend-platform @grafana/app-o11y-visualizations
+/packages/grafana-ui/src/components/Sparkline/ @grafana/app-o11y-visualizations
 /packages/grafana-ui/src/graveyard/Graph/ @grafana/dataviz-squad
 /packages/grafana-ui/src/graveyard/GraphNG/ @grafana/dataviz-squad
 /packages/grafana-ui/src/graveyard/TimeSeries/ @grafana/dataviz-squad
-/packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
-/packages/grafana-data/src/transformations/ @grafana/dataviz-squad
-/packages/grafana-data/src/**/*logs* @grafana/observability-logs
+
+/packages/grafana-eslint-rules/ @grafana/grafana-frontend-platform
+/packages/grafana-e2e-selectors/ @grafana/grafana-frontend-platform
+/packages/grafana-e2e/ @grafana/grafana-frontend-platform
+
+/packages/grafana-schema/ @grafana/grafana-frontend-platform
 /packages/grafana-schema/src/**/*tempo* @grafana/observability-traces-and-profiling
 /packages/grafana-schema/src/**/*canvas* @grafana/dataviz-squad
+/packages/grafana-schema/src/**/*.gen.ts @grafanabot
+
 /packages/grafana-flamegraph/ @grafana/observability-traces-and-profiling
-/plugins-bundled/ @grafana/plugins-platform-frontend
-/packages/grafana-plugin-configs/ @grafana/plugins-platform-frontend
 /packages/grafana-o11y-ds-frontend/ @grafana/observability-logs @grafana/observability-traces-and-profiling
 /packages/grafana-sql/ @grafana/partner-datasources @grafana/oss-big-tent
 
-# root files, mostly frontend 
+/packages/grafana-plugin-configs/ @grafana/plugins-platform-frontend
+
+/plugins-bundled/ @grafana/plugins-platform-frontend
+
+# root files, mostly frontend
 .browserslistrc @grafana/frontend-ops
 package.json @grafana/frontend-ops
 tsconfig.json @grafana/frontend-ops
