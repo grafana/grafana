@@ -172,6 +172,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"graphite":                         {},
 		"influxdb":                         {},
 		"loki":                             {},
+		"opentsdb":                         {},
 		"prometheus":                       {},
 		"tempo":                            {},
 		"grafana-testdata-datasource":      {},
