@@ -10,9 +10,8 @@ import { config, getPluginLinkExtensions, locationService } from '@grafana/runti
 import { LocalValueVariable, SceneGridRow, VizPanel, VizPanelMenu, sceneGraph } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
 import { t } from 'app/core/internationalization';
-import { PanelModel } from 'app/features/dashboard/state';
 import { InspectTab } from 'app/features/inspector/types';
-import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { addDataTrailPanelAction } from 'app/features/trails/dashboardIntegration';
 
@@ -23,7 +22,7 @@ import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '
 
 import { DashboardScene } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
-import { VizPanelLinks } from './PanelLinks';
+import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
@@ -217,29 +216,39 @@ function getInspectMenuItem(
 /**
  * Behavior is called when VizPanelLinksMenu is activated (when it's opened).
  */
-export function getPanelLinksBehavior(panel: PanelModel) {
-  return (panelLinksMenu: VizPanelLinks) => {
-    const interpolate: InterpolateFunction = (v, scopedVars) => {
-      return sceneGraph.interpolate(panelLinksMenu, v, scopedVars);
-    };
+export function panelLinksBehavior(panelLinksMenu: VizPanelLinksMenu) {
+  if (!(panelLinksMenu.parent instanceof VizPanelLinks)) {
+    throw new Error('parent of VizPanelLinksMenu must be VizPanelLinks');
+  }
+  const panel = panelLinksMenu.parent.parent;
 
-    const linkSupplier = getPanelLinksSupplier(panel, interpolate);
+  if (!(panel instanceof VizPanel)) {
+    throw new Error('parent of VizPanelLinks must be VizPanel');
+  }
 
-    if (!linkSupplier) {
-      return;
-    }
+  panelLinksMenu.setState({ links: getPanelLinks(panel) });
+}
 
-    const panelLinks = linkSupplier && linkSupplier.getLinks(interpolate);
-
-    const links = panelLinks.map((panelLink) => ({
-      ...panelLink,
-      onClick: (e: any, origin: any) => {
-        DashboardInteractions.panelLinkClicked({ has_multiple_links: panelLinks.length > 1 });
-        panelLink.onClick?.(e, origin);
-      },
-    }));
-    panelLinksMenu.setState({ links });
+export function getPanelLinks(panel: VizPanel) {
+  const interpolate: InterpolateFunction = (v, scopedVars) => {
+    return sceneGraph.interpolate(panel, v, scopedVars);
   };
+
+  const linkSupplier = getScenePanelLinksSupplier(panel, interpolate);
+
+  if (!linkSupplier) {
+    return [];
+  }
+
+  const panelLinks = linkSupplier.getLinks(interpolate);
+
+  return panelLinks.map((panelLink) => ({
+    ...panelLink,
+    onClick: (e: any, origin: any) => {
+      DashboardInteractions.panelLinkClicked({ has_multiple_links: panelLinks.length > 1 });
+      panelLink.onClick?.(e, origin);
+    },
+  }));
 }
 
 function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): PluginExtensionPanelContext {
