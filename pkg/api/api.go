@@ -30,11 +30,7 @@
 package api
 
 import (
-	"fmt"
-	"net/http"
-
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
@@ -46,13 +42,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 )
 
 var plog = log.New("api")
@@ -521,22 +515,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// metrics
 		// DataSource w/ expressions
-		dsQueryHandler := routing.Wrap(hs.QueryMetricsV2)
-		if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesQueryServiceRewrite) {
-			// DEV ONLY FEATURE FLAG!
-			// rewrite requests from /ds/query to the new query service
-			namespaceMapper := request.GetNamespaceMapper(hs.Cfg)
-			dsQueryHandler = func(w http.ResponseWriter, r *http.Request) {
-				user, err := appcontext.User(r.Context())
-				if err != nil || user == nil {
-					errhttp.Write(r.Context(), fmt.Errorf("no user"), w)
-					return
-				}
-				r.URL.Path = "/apis/query.grafana.app/v0alpha1/namespaces/" + namespaceMapper(user.OrgID) + "/query"
-				hs.clientConfigProvider.DirectlyServeHTTP(w, r)
-			}
-		}
-		apiRoute.Post("/ds/query", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), dsQueryHandler)
+		apiRoute.Post("/ds/query", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.getDSQueryEndpoint())
 
 		apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
 			alertsRoute.Post("/test", routing.Wrap(hs.AlertTest))
