@@ -123,8 +123,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apt-get update -y
-  - apt-get install -yq python
+  - apk add --update python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -226,8 +225,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apt-get update -y
-  - apt-get install -yq python
+  - apk add --update python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -539,8 +537,7 @@ steps:
   image: golang:1.21.6-alpine
   name: wire-install
 - commands:
-  - apt-get update -y
-  - apt-get install -yq python
+  - apk add --update python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1050,8 +1047,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apt-get update -y
-  - apt-get install -yq python
+  - apk add --update python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1411,8 +1407,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apt-get update -y
-  - apt-get install -yq python
+  - apk add --update python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1489,8 +1484,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apt-get update -y
-  - apt-get install -yq python
+  - apk add --update python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1549,8 +1543,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apt-get update -y
-  - apt-get install -yq python
+  - apk add --update python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1813,8 +1806,7 @@ steps:
   image: golang:1.21.6-alpine
   name: wire-install
 - commands:
-  - apt-get update -y
-  - apt-get install -yq python
+  - apk add --update python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -2730,8 +2722,7 @@ steps:
   image: golang:1.21.6-alpine
   name: compile-build-cmd
 - commands:
-  - apt-get update -y
-  - apt-get install -yq python
+  - apk add --update python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -3005,8 +2996,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apt-get update -y
-  - apt-get install -yq python
+  - apk add --update python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -3430,8 +3420,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apt-get update -y
-  - apt-get install -yq python
+  - apk add --update python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -4799,6 +4788,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d7caa66ced3bab7d71ff90ed625847f1c287618d12860d70a5611a48f8670b54
+hmac: f1a293d47dd2d291cecf5d4174b7ca8296195992512f25fabbd31244817c0c55
 
 ...
