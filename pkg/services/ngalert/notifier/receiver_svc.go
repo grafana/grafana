@@ -9,9 +9,6 @@ import (
 
 	"github.com/grafana/alerting/notify"
 
-	"github.com/prometheus/alertmanager/config"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -111,11 +108,9 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 			return nil, ErrPermissionDenied
 		}
 
-		decryptFn := func(uid string) func(v string) string {
-			return rs.decryptOrRedact(ctx, uid, decryptAccess && q.Decrypt)
-		}
+		decryptFn := rs.decryptOrRedact(ctx, decryptAccess && q.Decrypt, r.Name, "")
 
-		res, err := rs.postableToGettableApiReceiver(r, provenances, decryptFn)
+		res, err := PostableToGettableApiReceiver(r, provenances, decryptFn)
 		if err != nil {
 			return nil, err
 		}
@@ -132,81 +127,21 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	return output, nil
 }
 
-func (rs *ReceiverService) postableToGettableApiReceiver(r *definitions.PostableApiReceiver, provenances map[string]models.Provenance, decryptFn func(uid string) func(v string) string) (definitions.GettableApiReceiver, error) {
-	out := definitions.GettableApiReceiver{
-		Receiver: config.Receiver{
-			Name: r.Receiver.Name,
-		},
-	}
-
-	for _, gr := range r.GrafanaManagedReceivers {
-		var prov *models.Provenance
-		if p, ok := provenances[gr.UID]; ok {
-			prov = &p
-		}
-
-		gettable, err := rs.postableToGettableGrafanaReceiver(gr, prov, decryptFn(gr.UID))
-		if err != nil {
-			return definitions.GettableApiReceiver{}, err
-		}
-		out.GrafanaManagedReceivers = append(out.GrafanaManagedReceivers, &gettable)
-	}
-
-	return out, nil
-}
-
-func (rs *ReceiverService) postableToGettableGrafanaReceiver(r *definitions.PostableGrafanaReceiver, provenance *models.Provenance, decryptFn func(v string) string) (definitions.GettableGrafanaReceiver, error) {
-	out := definitions.GettableGrafanaReceiver{
-		UID:                   r.UID,
-		Name:                  r.Name,
-		Type:                  r.Type,
-		DisableResolveMessage: r.DisableResolveMessage,
-		SecureFields:          make(map[string]bool, len(r.SecureSettings)),
-	}
-
-	if provenance != nil {
-		out.Provenance = definitions.Provenance(*provenance)
-	}
-
-	settings, err := simplejson.NewJson([]byte(r.Settings))
-	if err != nil {
-		return definitions.GettableGrafanaReceiver{}, err
-	}
-
-	for k, v := range r.SecureSettings {
-		decryptedValue := decryptFn(v)
-		if decryptedValue == "" {
-			continue
-		} else {
-			settings.Set(k, decryptedValue)
-		}
-		out.SecureFields[k] = true
-	}
-
-	jsonBytes, err := settings.MarshalJSON()
-	if err != nil {
-		return definitions.GettableGrafanaReceiver{}, err
-	}
-	out.Settings = jsonBytes
-
-	return out, nil
-}
-
-func (rs *ReceiverService) decryptOrRedact(ctx context.Context, uid string, decrypt bool) func(string) string {
-	return func(val string) string {
+func (rs *ReceiverService) decryptOrRedact(ctx context.Context, decrypt bool, name, fallback string) func(value string) string {
+	return func(value string) string {
 		if !decrypt {
 			return definitions.RedactedValue
 		}
 
-		decoded, err := base64.StdEncoding.DecodeString(val)
+		decoded, err := base64.StdEncoding.DecodeString(value)
 		if err != nil {
-			rs.log.Warn("failed to decode secure setting", "uid", uid, "error", err)
-			return ""
+			rs.log.Warn("failed to decode secure setting", "name", name, "error", err)
+			return fallback
 		}
 		decrypted, err := rs.encryptionService.Decrypt(ctx, decoded)
 		if err != nil {
-			rs.log.Warn("failed to decrypt secure setting", "uid", uid, "error", err)
-			return ""
+			rs.log.Warn("failed to decrypt secure setting", "name", name, "error", err)
+			return fallback
 		}
 		return string(decrypted)
 	}
