@@ -1,7 +1,7 @@
 import * as H from 'history';
 import { Unsubscribable } from 'rxjs';
 
-import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
+import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
@@ -22,7 +22,9 @@ import {
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
+import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
+import store from 'app/core/store';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { VariablesChanged } from 'app/features/variables/types';
@@ -32,6 +34,7 @@ import { PanelEditor } from '../panel-edit/PanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
 import { historySrv } from '../settings/version-history';
@@ -410,6 +413,19 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     sceneGridLayout.setState({
       children: [...sceneGridLayout.state.children, newGridItem],
     });
+  }
+
+  public copyPanel(vizPanel: VizPanel) {
+    if (!vizPanel.parent) {
+      return;
+    }
+
+    const gridItem = vizPanel.parent;
+
+    const jsonData = gridItemToPanel(gridItem);
+
+    store.set(LS_PANEL_COPY_KEY, JSON.stringify(jsonData));
+    appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Click **Add panel** icon to paste.']);
   }
 
   public showModal(modal: SceneObject) {
