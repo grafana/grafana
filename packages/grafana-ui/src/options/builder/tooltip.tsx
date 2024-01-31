@@ -3,7 +3,8 @@ import { OptionsWithTooltip, TooltipDisplayMode, SortOrder } from '@grafana/sche
 
 export function addTooltipOptions<T extends OptionsWithTooltip>(
   builder: PanelOptionsEditorBuilder<T>,
-  singleOnly = false
+  singleOnly = false,
+  defaultOptions?: Partial<OptionsWithTooltip>
 ) {
   const category = ['Tooltip'];
   const modeOptions = singleOnly
@@ -28,7 +29,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       path: 'tooltip.mode',
       name: 'Tooltip mode',
       category,
-      defaultValue: 'single',
+      defaultValue: defaultOptions?.tooltip?.mode ?? TooltipDisplayMode.Single,
       settings: {
         options: modeOptions,
       },
@@ -37,7 +38,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       path: 'tooltip.sort',
       name: 'Values sort order',
       category,
-      defaultValue: SortOrder.None,
+      defaultValue: defaultOptions?.tooltip?.sort ?? SortOrder.None,
       showIf: (options: T) => options.tooltip?.mode === TooltipDisplayMode.Multi,
       settings: {
         options: sortOptions,
