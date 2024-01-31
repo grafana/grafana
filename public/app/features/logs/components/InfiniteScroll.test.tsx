@@ -17,7 +17,7 @@ jest.mock('lodash', () => ({
     }
     debounced.cancel = jest.fn();
     return debounced;
-  }
+  },
 }));
 
 const defaultTz = 'browser';
@@ -240,7 +240,7 @@ describe('InfiniteScroll', () => {
             const { simulateScrollTo } = setup(loadMoreMock, rows, order, startPosition);
 
             expect(await screen.findByTestId('contents')).toBeInTheDocument();
-            
+
             simulateScrollTo(endPosition);
 
             expect(loadMoreMock).not.toHaveBeenCalled();
@@ -263,7 +263,7 @@ describe('InfiniteScroll', () => {
             const { simulateScrollTo } = setup(loadMoreMock, rows, order, startPosition);
 
             expect(await screen.findByTestId('contents')).toBeInTheDocument();
-            
+
             simulateScrollTo(endPosition);
 
             expect(loadMoreMock).not.toHaveBeenCalled();
