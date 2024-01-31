@@ -1347,13 +1347,6 @@
           {
             "type": "integer",
             "format": "int64",
-            "name": "DashboardID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "integer",
-            "format": "int64",
             "name": "dashboardID",
             "in": "path",
             "required": true
@@ -1387,6 +1380,13 @@
             "type": "string",
             "name": "layout",
             "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "DashboardID",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -5570,16 +5570,6 @@
       "type": "integer",
       "format": "int64"
     },
-    "PermissionsByAction": {
-      "description": "PermissionsByAction are permissions with scopes grouped by action\nexample: { \"teams.read\": [ \"teams:id:1\", \"teams:id:2\" ] }",
-      "type": "object",
-      "additionalProperties": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
-      }
-    },
     "Playlist": {
       "description": "Playlist model",
       "type": "object",
@@ -7890,10 +7880,6 @@
         }
       }
     },
-    "UserID": {
-      "description": "UserID\nexample: 12\npattern: \\d+",
-      "type": "string"
-    },
     "UserLookupDTO": {
       "type": "object",
       "properties": {
@@ -8088,13 +8074,6 @@
     "Userinfo": {
       "description": "The Userinfo type is an immutable encapsulation of username and\npassword details for a URL. An existing Userinfo value is guaranteed\nto have a username set (potentially empty, as allowed by RFC 2396),\nand optionally a password.",
       "type": "object"
-    },
-    "UsersPermissions": {
-      "description": "UsersPermissions are permissions grouped by userID\nexample: { \"1\": { \"teams.read\": [ \"teams:id:1\", \"teams:id:2\" ] }, \"3\": { \"teams.read\": [ \"teams:id:3\" ] } }",
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/PermissionsByAction"
-      }
     },
     "ValueMapping": {
       "description": "ValueMapping allows mapping input values to text and color",
@@ -9505,7 +9484,16 @@
     "searchPermissionsResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/UsersPermissions"
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
       }
     },
     "searchPlaylistsResponse": {
