@@ -232,13 +232,16 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
     let frames: DataFrame[];
     switch (type) {
       case 'random':
-        frames = generateRandomNodes(target.nodes?.count);
+        frames = generateRandomNodes(target.nodes?.count, target.nodes?.seed);
         break;
-      case 'response':
-        frames = savedNodesResponse();
+      case 'response_small':
+        frames = savedNodesResponse('small');
+        break;
+      case 'response_medium':
+        frames = savedNodesResponse('medium');
         break;
       case 'random edges':
-        frames = [generateRandomEdges(target.nodes?.count)];
+        frames = [generateRandomEdges(target.nodes?.count, target.nodes?.seed)];
         break;
       default:
         throw new Error(`Unknown node_graph sub type ${type}`);

@@ -123,7 +123,8 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apt-get update -yq && apt-get install python -y
+  - apk add --no-cache --virtual .gyp python3 make g++ && ln -sf /usr/bin/python3
+    /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -225,7 +226,8 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apt-get update -yq && apt-get install python -y
+  - apk add --no-cache --virtual .gyp python3 make g++ && ln -sf /usr/bin/python3
+    /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -537,7 +539,8 @@ steps:
   image: golang:1.21.6-alpine
   name: wire-install
 - commands:
-  - apt-get update -yq && apt-get install python -y
+  - apk add --no-cache --virtual .gyp python3 make g++ && ln -sf /usr/bin/python3
+    /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1047,7 +1050,8 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apt-get update -yq && apt-get install python -y
+  - apk add --no-cache --virtual .gyp python3 make g++ && ln -sf /usr/bin/python3
+    /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1407,7 +1411,8 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apt-get update -yq && apt-get install python -y
+  - apk add --no-cache --virtual .gyp python3 make g++ && ln -sf /usr/bin/python3
+    /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1484,7 +1489,8 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apt-get update -yq && apt-get install python -y
+  - apk add --no-cache --virtual .gyp python3 make g++ && ln -sf /usr/bin/python3
+    /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1543,7 +1549,8 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apt-get update -yq && apt-get install python -y
+  - apk add --no-cache --virtual .gyp python3 make g++ && ln -sf /usr/bin/python3
+    /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1806,7 +1813,8 @@ steps:
   image: golang:1.21.6-alpine
   name: wire-install
 - commands:
-  - apt-get update -yq && apt-get install python -y
+  - apk add --no-cache --virtual .gyp python3 make g++ && ln -sf /usr/bin/python3
+    /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -2722,7 +2730,8 @@ steps:
   image: golang:1.21.6-alpine
   name: compile-build-cmd
 - commands:
-  - apt-get update -yq && apt-get install python -y
+  - apk add --no-cache --virtual .gyp python3 make g++ && ln -sf /usr/bin/python3
+    /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -2996,7 +3005,8 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apt-get update -yq && apt-get install python -y
+  - apk add --no-cache --virtual .gyp python3 make g++ && ln -sf /usr/bin/python3
+    /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -3420,7 +3430,8 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apt-get update -yq && apt-get install python -y
+  - apk add --no-cache --virtual .gyp python3 make g++ && ln -sf /usr/bin/python3
+    /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -4788,6 +4799,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d61ada44fb898f089416a8f2afcea19481065e311a771ce4b08e03f2d13b4853
+hmac: 88526f5c0dd7e3e225914c39c331b827eb7846fd83be24d9e055c0aff72a7e67
 
 ...

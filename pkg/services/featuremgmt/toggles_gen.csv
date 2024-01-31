@@ -156,3 +156,4 @@ onPremToCloudMigrations,experimental,@grafana/grafana-operator-experience-squad,
 alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,2024-01-22,false,false,false
 promQLScope,experimental,@grafana/observability-metrics,2024-01-29,false,false,false
 slateAutocomplete,GA,@grafana/grafana-frontend-platform,2024-01-29,false,false,true
+nodeGraphDotLayout,experimental,@grafana/observability-traces-and-profiling,2024-01-02,false,false,true
