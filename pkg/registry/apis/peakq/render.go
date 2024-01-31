@@ -6,12 +6,14 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 
+	"github.com/spyzhov/ajson"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
 )
 
@@ -113,33 +115,71 @@ func Render(qt peakq.QueryTemplateSpec, selectedValues map[string]string) (*peak
 	// Note: The following is super stupid, will only work with one var, no sanity checking etc
 	// selectedValues is for GET
 	targets := qt.DeepCopy().Targets
+
+	rawTargetObjects := make([]*ajson.Node, len(qt.Targets))
+	for i, t := range qt.Targets {
+		b, err := t.Properties.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		rawTargetObjects[i], err = ajson.Unmarshal(b)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	for _, qVar := range qt.Variables {
 		value, ok := selectedValues[qVar.Key]
 		if !ok {
 			continue // or use default?
 		}
 
-		var offSet int64
-		for _, pos := range qVar.Positions {
-			// TODO: track offset after replacement
-			s, f, err := unstructured.NestedString(targets[pos.TargetIdx].Properties.Object, pos.TargetKey)
-			if err != nil {
-				return nil, err
-			}
-			if !f {
-				return nil, fmt.Errorf("property %q not found targetIdx %v", pos.TargetKey, pos.TargetIdx)
-			}
-
-			// I think breaks with utf...something...?
-			s = s[:pos.Start+offSet] + value + s[pos.End+offSet:]
-			offSet = int64(len(value)) - pos.End - pos.Start
-
-			err = unstructured.SetNestedField(targets[pos.TargetIdx].Properties.Object, s, pos.TargetKey)
-			if err != nil {
-				return nil, err
+		for targetIdx, pathMap := range qVar.Positions {
+			for path, positions := range pathMap {
+				idx, err := strconv.Atoi(targetIdx)
+				if err != nil {
+					return nil, err
+				}
+				o := rawTargetObjects[idx]
+				nodes, err := o.JSONPath(string(path))
+				if err != nil {
+					return nil, err
+				}
+				if len(nodes) != 1 {
+					return nil, fmt.Errorf("expected one lead node at path %v but got %v", path, len(nodes))
+				}
+				n := nodes[0]
+				if !n.IsString() {
+					return nil, fmt.Errorf("only string type leaf notes supported currently, %v is not a string", path)
+				}
+				s := n.String()
+				s = s[1 : len(s)-1]
+				// I think breaks with utf...something...?
+				// TODO: Probably simpler to store the non-template parts and insert the values into that, then don't have to track
+				// offsets
+				var offSet int64
+				for _, pos := range positions {
+					s = s[:pos.Start+offSet] + value + s[pos.End+offSet:]
+					offSet = int64(len(value)) - pos.End - pos.Start
+				}
+				n.SetString(s)
 			}
 		}
 	}
+
+	for i, aT := range rawTargetObjects {
+		raw, err := ajson.Marshal(aT)
+		if err != nil {
+			return nil, err
+		}
+		u := v0alpha1.Unstructured{}
+		err = u.UnmarshalJSON(raw)
+		if err != nil {
+			return nil, err
+		}
+		targets[i].Properties = u
+	}
+
 	return &peakq.RenderedQuery{
 		Targets: targets,
 	}, nil

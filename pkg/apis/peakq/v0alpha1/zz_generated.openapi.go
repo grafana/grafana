@@ -33,22 +33,6 @@ func schema_pkg_apis_peakq_v0alpha1_Position(ref common.ReferenceCallback) commo
 				Description: "Position is where to do replacement in the targets during render.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"targetIdx": {
-						SchemaProps: spec.SchemaProps{
-							Description: "IndexIdx is the index of the target in The QueryTemplateSpec Targets property.",
-							Default:     0,
-							Type:        []string{"integer"},
-							Format:      "int32",
-						},
-					},
-					"targetKey": {
-						SchemaProps: spec.SchemaProps{
-							Description: "TargetKey is the location of the property within the the target properties. The format for this is not figured out yet (Maybe JSONPath?).",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"start": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Start is the byte offset within TargetKey's property of the variable. It is the start location for replacements).",
@@ -66,7 +50,7 @@ func schema_pkg_apis_peakq_v0alpha1_Position(ref common.ReferenceCallback) commo
 						},
 					},
 				},
-				Required: []string{"targetIdx", "targetKey", "start", "end"},
+				Required: []string{"start", "end"},
 			},
 		},
 	}
@@ -237,14 +221,6 @@ func schema_pkg_apis_peakq_v0alpha1_QueryVariable(ref common.ReferenceCallback) 
 							Format:      "",
 						},
 					},
-					"selectedValue": {
-						SchemaProps: spec.SchemaProps{
-							Description: "SelectedValue is the value that will be interpolated for each position during render. This value is not stored and only used during render.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"defaultValue": {
 						SchemaProps: spec.SchemaProps{
 							Description: "DefaultValue is the value to be used when there is no selected value during render.",
@@ -260,13 +236,29 @@ func schema_pkg_apis_peakq_v0alpha1_QueryVariable(ref common.ReferenceCallback) 
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Positions is a list of where to perform the interpolation within targets during render.",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
+							Description: "Positions is a list of where to perform the interpolation within targets during render. The first string is the Idx of the target as a string, since openAPI does not support ints as map keys",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Position"),
+										Type: []string{"object"},
+										AdditionalProperties: &spec.SchemaOrBool{
+											Allows: true,
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"array"},
+													Items: &spec.SchemaOrArray{
+														Schema: &spec.Schema{
+															SchemaProps: spec.SchemaProps{
+																Default: map[string]interface{}{},
+																Ref:     ref("github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Position"),
+															},
+														},
+													},
+												},
+											},
+										},
 									},
 								},
 							},
@@ -279,7 +271,7 @@ func schema_pkg_apis_peakq_v0alpha1_QueryVariable(ref common.ReferenceCallback) 
 						},
 					},
 				},
-				Required: []string{"key", "selectedValue", "defaultValue", "positions", "valueListDefinition"},
+				Required: []string{"key", "defaultValue", "positions", "valueListDefinition"},
 			},
 		},
 		Dependencies: []string{

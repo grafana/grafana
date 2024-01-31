@@ -122,8 +122,28 @@ func (in *QueryVariable) DeepCopyInto(out *QueryVariable) {
 	*out = *in
 	if in.Positions != nil {
 		in, out := &in.Positions, &out.Positions
-		*out = make([]Position, len(*in))
-		copy(*out, *in)
+		*out = make(map[string]map[Path][]Position, len(*in))
+		for key, val := range *in {
+			var outVal map[Path][]Position
+			if val == nil {
+				(*out)[key] = nil
+			} else {
+				in, out := &val, &outVal
+				*out = make(map[Path][]Position, len(*in))
+				for key, val := range *in {
+					var outVal []Position
+					if val == nil {
+						(*out)[key] = nil
+					} else {
+						in, out := &val, &outVal
+						*out = make([]Position, len(*in))
+						copy(*out, *in)
+					}
+					(*out)[key] = outVal
+				}
+			}
+			(*out)[key] = outVal
+		}
 	}
 	in.ValueListDefinition.DeepCopyInto(&out.ValueListDefinition)
 	return
