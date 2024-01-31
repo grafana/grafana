@@ -110,6 +110,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
         "y": 1,
       },
       "id": 15,
+      "links": [],
       "options": {
         "code": {
           "language": "plaintext",
@@ -164,6 +165,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
             "y": 26,
           },
           "id": 30,
+          "links": [],
           "options": {
             "code": {
               "language": "plaintext",
@@ -376,6 +378,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "y": 0,
       },
       "id": 28,
+      "links": [],
       "options": {
         "legend": {
           "calcs": [],
@@ -434,6 +437,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "y": 9,
       },
       "id": 29,
+      "links": [],
       "options": {},
       "targets": [
         {
@@ -464,6 +468,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "y": 9,
       },
       "id": 25,
+      "links": [],
       "options": {
         "code": {
           "language": "plaintext",
@@ -692,6 +697,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "y": 0,
       },
       "id": 28,
+      "links": [],
       "options": {
         "legend": {
           "calcs": [],
@@ -750,6 +756,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "y": 9,
       },
       "id": 29,
+      "links": [],
       "options": {},
       "targets": [
         {
@@ -780,6 +787,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "y": 9,
       },
       "id": 25,
+      "links": [],
       "options": {
         "code": {
           "language": "plaintext",
