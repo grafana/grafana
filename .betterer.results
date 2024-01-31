@@ -4330,9 +4330,6 @@ exports[`better eslint`] = {
     "public/app/features/variables/datasource/actions.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/features/variables/editor/LegacyVariableQueryEditor.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
-    ],
     "public/app/features/variables/editor/VariableEditorContainer.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
