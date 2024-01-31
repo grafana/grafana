@@ -95,7 +95,9 @@ func (d *dashExporter) doExport() {
 		d.status.Error = err.Error()
 		return
 	}
-	defer bucket.Close()
+	defer func() {
+		_ = bucket.Close()
+	}()
 
 	for idx, key := range keys {
 		d.status.Index = idx

@@ -306,8 +306,8 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 		},
 	}
 
-	// Add an experimental exporter
-	if b.exporter != nil {
+	// dev environment to export all snapshots to a blob store
+	if b.exporter != nil && false {
 		routes.Root = append(routes.Root, b.exporter.getAPIRouteHandler())
 	}
 	return routes
