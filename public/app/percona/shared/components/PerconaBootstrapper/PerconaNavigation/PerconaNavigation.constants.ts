@@ -8,26 +8,6 @@ export const WEIGHTS = {
   config: -900,
 };
 
-export const PMM_DBAAS_PAGE: NavModelItem = {
-  id: 'dbaas',
-  text: 'DBaaS',
-  subTitle: 'Percona DBaaS',
-  icon: 'database',
-  url: `${config.appSubUrl}/dbaas`,
-  children: [
-    {
-      id: 'dbclusters',
-      text: 'DB Cluster',
-      url: `${config.appSubUrl}/dbaas/dbclusters`,
-    },
-    {
-      id: 'kubernetes',
-      text: 'Kubernetes Cluster',
-      url: `${config.appSubUrl}/dbaas/kubernetes`,
-    },
-  ],
-};
-
 export const PMM_BACKUP_PAGE: NavModelItem = {
   id: 'backup',
   icon: 'history',

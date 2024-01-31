@@ -35,4 +35,4 @@ export const STT_CHECK_INTERVALS = [
 export const TECHNICAL_PREVIEW_DOC_URL = 'https://per.co.na/pmm-feature-status';
 
 // all feature flags
-export const FEATURE_KEYS: Array<keyof AdvancedFormProps> = ['alerting', 'backup', 'dbaas', 'stt', 'azureDiscover'];
+export const FEATURE_KEYS: Array<keyof AdvancedFormProps> = ['alerting', 'backup', 'stt', 'azureDiscover'];

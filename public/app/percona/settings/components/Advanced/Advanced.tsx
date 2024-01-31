@@ -4,7 +4,6 @@ import { Field, withTypes } from 'react-final-form';
 
 import { Button, Icon, Spinner, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import DbaasDeprecationWarning from 'app/percona/dbaas/components/DeprecationWarning';
 import { Messages } from 'app/percona/settings/Settings.messages';
 import { getSettingsStyles } from 'app/percona/settings/Settings.styles';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
@@ -32,12 +31,7 @@ import {
 } from './Advanced.constants';
 import { getStyles } from './Advanced.styles';
 import { AdvancedFormProps } from './Advanced.types';
-import {
-  convertCheckIntervalsToHours,
-  convertHoursStringToSeconds,
-  convertSecondsToDays,
-  dBaaSToggleOnChange,
-} from './Advanced.utils';
+import { convertCheckIntervalsToHours, convertHoursStringToSeconds, convertSecondsToDays } from './Advanced.utils';
 import { SwitchRow } from './SwitchRow';
 
 const {
@@ -56,7 +50,6 @@ export const Advanced: FC = () => {
     updatesDisabled,
     backupEnabled,
     sttEnabled,
-    dbaasEnabled,
     azureDiscoverEnabled,
     publicAddress,
     alertingEnabled,
@@ -82,9 +75,6 @@ export const Advanced: FC = () => {
       advisorsLabel,
       advisorsLink,
       advisorsTooltip,
-      dbaasLabel,
-      dbaasTooltip,
-      dbaasLink,
       publicAddressLabel,
       publicAddressTooltip,
       publicAddressButton,
@@ -103,7 +93,6 @@ export const Advanced: FC = () => {
       backupLabel,
       backupLink,
       backupTooltip,
-      deprecatedFeatures,
     },
     tooltipLinkText,
   } = Messages;
@@ -114,7 +103,6 @@ export const Advanced: FC = () => {
     updates: !updatesDisabled,
     backup: backupEnabled,
     stt: sttEnabled,
-    dbaas: dbaasEnabled,
     azureDiscover: azureDiscoverEnabled,
     publicAddress,
     alerting: alertingEnabled,
@@ -132,7 +120,6 @@ export const Advanced: FC = () => {
       telemetry,
       stt,
       publicAddress,
-      dbaas,
       alerting,
       backup,
       azureDiscover,
@@ -163,8 +150,6 @@ export const Advanced: FC = () => {
       stt_check_intervals: !!stt ? sttCheckIntervals : undefined,
       enable_backup_management: backup,
       disable_backup_management: !backup,
-      enable_dbaas: dbaas,
-      disable_dbaas: !dbaas,
       enable_updates: updates,
       disable_updates: !updates,
       enable_access_control: accessControl,
@@ -192,10 +177,7 @@ export const Advanced: FC = () => {
               initialValues={initialValues}
               mutators={{
                 setPublicAddress: ([publicAddressValue], state, { changeValue }) => {
-                  if (
-                    !state?.lastFormState?.values['publicAddress'] &&
-                    state?.lastFormState?.values['dbaas'] === true
-                  ) {
+                  if (!state?.lastFormState?.values['publicAddress']) {
                     changeValue(state, 'publicAddress', () => publicAddressValue);
                   }
                 },
@@ -359,24 +341,6 @@ export const Advanced: FC = () => {
                       link={accessControlLink}
                       dataTestId="access-control"
                       component={SwitchRow}
-                    />
-                  </fieldset>
-                  <fieldset className={styles.technicalPreview}>
-                    <legend>{deprecatedFeatures}</legend>
-                    {!!values.dbaas && <DbaasDeprecationWarning />}
-                    <Field
-                      name="dbaas"
-                      type="checkbox"
-                      label={dbaasLabel}
-                      tooltip={dbaasTooltip}
-                      tooltipLinkText={tooltipLinkText}
-                      link={dbaasLink}
-                      dataTestId="advanced-dbaas"
-                      component={SwitchRow}
-                      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>, input: any) => {
-                        dBaaSToggleOnChange(event, input, mutators);
-                      }}
                     />
                   </fieldset>
                   <Button

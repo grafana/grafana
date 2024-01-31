@@ -3,7 +3,6 @@ import React, { FC } from 'react';
 import { Form, FormRenderProps } from 'react-final-form';
 
 import { Button, useStyles2 } from '@grafana/ui';
-import { PMMServerUrlWarning } from 'app/percona/dbaas/components/PMMServerURLWarning/PMMServerUrlWarning';
 import { LoaderButton } from 'app/percona/shared/components/Elements/LoaderButton';
 import { TextInputField } from 'app/percona/shared/components/Form/TextInput';
 import { useShowPMMAddressWarning } from 'app/percona/shared/components/hooks/showPMMAddressWarning';
@@ -16,6 +15,7 @@ import { ConnectRenderProps } from '../types';
 
 import { getStyles } from './Connect.styles';
 import { ConnectProps } from './Connect.types';
+import { PMMServerUrlWarning } from './PMMServerURLWarning/PMMServerUrlWarning';
 
 export const Connect: FC<ConnectProps> = ({ onConnect, connecting, initialValues }) => {
   const styles = useStyles2(getStyles);

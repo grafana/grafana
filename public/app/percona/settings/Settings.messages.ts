@@ -23,13 +23,9 @@ export const Messages = {
     sttCheckIntervalUnit: 'hours',
     advisorsLink: `https://per.co.na/advisors`,
     advisorsTooltip: 'Enable Advisors and get updated checks from Percona.',
-    dbaasLabel: 'Database as a Service (DBaaS)',
     azureDiscoverLabel: 'Microsoft Azure monitoring',
     azureDiscoverTooltip: 'Option to enable/disable Microsoft Azure DB instanced  discovery and monitoring',
     azureDiscoverLink: `https://per.co.na/azure_monitoring`,
-    dbaasTooltip:
-      'Option to enable/disable DBaaS features. Disabling DBaaS does not suspend or remove running clusters.',
-    dbaasLink: `https://per.co.na/dbaas`,
     accessControl: 'Access control',
     accessControlTooltip: 'Option to enable/disable Access control.',
     accessControlLink: 'https://per.co.na/roles_permissions',
@@ -47,7 +43,6 @@ export const Messages = {
       'These are technical preview features, not recommended to be used in production environments. Read more\n' +
       '                  about feature status',
     technicalPreviewLinkText: 'here',
-    deprecatedFeatures: 'Deprecated features',
   },
   diagnostics: {
     action: 'Download server diagnostics',

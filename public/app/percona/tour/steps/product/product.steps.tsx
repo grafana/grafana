@@ -87,25 +87,6 @@ export const getProductTourSteps = (
         },
       ]
     : []),
-  ...(isPmmAdmin && !!settings?.dbaasEnabled
-    ? [
-        {
-          selector: '.dropdown > [aria-label="DBaaS"]',
-          content: (
-            <SidebarStep title={Messages.dbaas.title}>
-              <p>{Messages.dbaas.feature}</p>
-              <p>{Messages.dbaas.techPreview}</p>
-              <p>{Messages.dbaas.benefits}</p>
-              <ul>
-                <li>{Messages.dbaas.singleInterface}</li>
-                <li>{Messages.dbaas.dbManagement}</li>
-                <li>{Messages.dbaas.automation}</li>
-              </ul>
-            </SidebarStep>
-          ),
-        },
-      ]
-    : []),
   ...(isPmmAdmin && !!settings?.backupEnabled
     ? [
         {

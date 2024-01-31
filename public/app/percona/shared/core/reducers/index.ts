@@ -3,8 +3,6 @@ import { combineReducers, createAsyncThunk, createSlice, PayloadAction } from '@
 import { CancelToken } from 'axios';
 
 import { createAsyncSlice, withAppEvents, withSerializedError } from 'app/features/alerting/unified/utils/redux';
-import { KubernetesService } from 'app/percona/dbaas/components/Kubernetes/Kubernetes.service';
-import { ComponentToUpdate, Kubernetes } from 'app/percona/dbaas/components/Kubernetes/Kubernetes.types';
 import { AlertRuleTemplateService } from 'app/percona/integrated-alerting/components/AlertRuleTemplate/AlertRuleTemplate.service';
 import { TemplatesList } from 'app/percona/integrated-alerting/components/AlertRuleTemplate/AlertRuleTemplate.types';
 import { SettingsService } from 'app/percona/settings/Settings.service';
@@ -17,12 +15,6 @@ import { ServerInfo } from '../types';
 
 import advisorsReducers from './advisors/advisors';
 import perconaBackupLocations from './backups/backupLocations';
-import perconaAddDBCluster from './dbaas/addDBCluster/addDBCluster';
-import perconaDBClustersReducer from './dbaas/dbClusters/dbClusters';
-import perconaDBaaSReducer from './dbaas/dbaas';
-import perconaK8SCluster from './dbaas/k8sCluster/k8sCluster';
-import perconaK8SClusterListReducer, { fetchK8sListAction } from './dbaas/k8sClusterList/k8sClusterList';
-import perconaUpdateDBCluster from './dbaas/updateDBCluster/updateDBCluster';
 import navigationReducer from './navigation';
 import nodesReducer from './nodes';
 import pmmDumpsReducers from './pmmDump/pmmDump';
@@ -36,7 +28,6 @@ const initialSettingsState: Settings = {
   updatesDisabled: true,
   telemetryEnabled: false,
   backupEnabled: false,
-  dbaasEnabled: false,
   metricsResolutions: {
     lr: '10s',
     hr: '15s',
@@ -125,27 +116,6 @@ export const updateSettingsAction = createAsyncThunk(
     )
 );
 
-export const deleteKubernetesAction = createAsyncThunk(
-  'percona/deleteKubernetes',
-  async (args: { kubernetesToDelete: Kubernetes; force?: boolean }, thunkAPI): Promise<void> => {
-    await withAppEvents(KubernetesService.deleteKubernetes(args.kubernetesToDelete, args.force), {
-      successMessage: 'Cluster successfully unregistered',
-    });
-    await thunkAPI.dispatch(fetchK8sListAction({}));
-  }
-);
-
-export const instalKuberneteslOperatorAction = createAsyncThunk(
-  'percona/instalKuberneteslOperator',
-  async (
-    args: { kubernetesClusterName: string; operatorType: ComponentToUpdate; availableVersion: string },
-    thunkAPI
-  ): Promise<void> => {
-    await KubernetesService.installOperator(args.kubernetesClusterName, args.operatorType, args.availableVersion);
-    await thunkAPI.dispatch(fetchK8sListAction({}));
-  }
-);
-
 export interface PerconaServerState extends ServerInfo {
   saasHost: string;
 }
@@ -224,11 +194,6 @@ export const fetchTemplatesAction = createAsyncThunk(
     )
 );
 
-const deleteKubernetesReducer = createAsyncSlice('deleteKubernetes', deleteKubernetesAction).reducer;
-const installKubernetesOperatorReducer = createAsyncSlice(
-  'instalKuberneteslOperator',
-  instalKuberneteslOperatorAction
-).reducer;
 const settingsReducer = createAsyncSlice('settings', fetchSettingsAction, initialSettingsState).reducer;
 const updateSettingsReducer = createAsyncSlice('updateSettings', updateSettingsAction).reducer;
 const templatesReducer = createAsyncSlice('templates', fetchTemplatesAction).reducer;
@@ -240,14 +205,6 @@ export default {
     settings: settingsReducer,
     updateSettings: updateSettingsReducer,
     user: perconaUserReducers,
-    dbaas: perconaDBaaSReducer,
-    kubernetes: perconaK8SClusterListReducer,
-    deleteKubernetes: deleteKubernetesReducer,
-    addKubernetes: perconaK8SCluster,
-    addDBCluster: perconaAddDBCluster,
-    updateDBCluster: perconaUpdateDBCluster,
-    installKubernetesOperator: installKubernetesOperatorReducer,
-    dbClusters: perconaDBClustersReducer,
     server: perconaServerReducers,
     templates: templatesReducer,
     services: servicesReducer,

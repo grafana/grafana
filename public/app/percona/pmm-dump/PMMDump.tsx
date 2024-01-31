@@ -8,9 +8,9 @@ import { Page } from 'app/core/components/Page/Page';
 import { DATA_INTERVAL } from 'app/percona/backup/components/BackupInventory/BackupInventory.constants';
 import { DetailedDate } from 'app/percona/backup/components/DetailedDate';
 import { useRecurringCall } from 'app/percona/backup/hooks/recurringCall.hook';
-import { Action } from 'app/percona/dbaas/components/MultipleActions';
 import { DumpStatus, DumpStatusColor, DumpStatusText, PMMDumpServices } from 'app/percona/pmm-dump/PmmDump.types';
 import { DetailsRow } from 'app/percona/shared/components/Elements/DetailsRow/DetailsRow';
+import { Action } from 'app/percona/shared/components/Elements/MultipleActions';
 import { ExtendedColumn, FilterFieldTypes, Table } from 'app/percona/shared/components/Elements/Table';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
 import {

@@ -3,8 +3,8 @@ import { Row } from 'react-table';
 
 import { locationService } from '@grafana/runtime';
 import { Badge, HorizontalGroup, Icon, Link, TagList, useStyles2 } from '@grafana/ui';
-import { Action } from 'app/percona/dbaas/components/MultipleActions';
 import { DetailsRow } from 'app/percona/shared/components/Elements/DetailsRow/DetailsRow';
+import { Action } from 'app/percona/shared/components/Elements/MultipleActions';
 import { ServiceIconWithText } from 'app/percona/shared/components/Elements/ServiceIconWithText/ServiceIconWithText';
 import { ExtendedColumn, FilterFieldTypes, Table } from 'app/percona/shared/components/Elements/Table';
 import { getDashboardLinkForService } from 'app/percona/shared/helpers/getDashboardLinkForService';

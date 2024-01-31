@@ -2,8 +2,8 @@ import React, { FC } from 'react';
 
 import { Tooltip, useStyles2 } from '@grafana/ui';
 import { BackupStatus } from 'app/percona/backup/Backup.types';
-import { Action, MultipleActions } from 'app/percona/dbaas/components/MultipleActions';
 import { ExpandableRowButton } from 'app/percona/shared/components/Elements/ExpandableRowButton/ExpandableRowButton';
+import { Action, MultipleActions } from 'app/percona/shared/components/Elements/MultipleActions';
 
 import { DBIcon } from '../../DBIcon';
 

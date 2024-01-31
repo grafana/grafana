@@ -67,8 +67,6 @@ export interface AdvancedChangePayload extends AdvancedPayload {
   disable_azurediscover?: boolean;
   enable_azurediscover?: boolean;
   stt_check_intervals?: SttCheckIntervalsPayload;
-  enable_dbaas?: boolean;
-  disable_dbaas?: boolean;
   enable_updates?: boolean;
   disable_updates?: boolean;
   enable_access_control?: boolean;
@@ -107,7 +105,6 @@ export interface SettingsPayload
   updates_disabled: boolean;
   telemetry_enabled: boolean;
   stt_enabled: boolean;
-  dbaas_enabled: boolean;
   alerting_enabled: boolean;
   backup_management_enabled: boolean;
   azurediscover_enabled: boolean;
@@ -128,7 +125,6 @@ export type SettingsAPIChangePayload =
 
 export interface Settings {
   sttEnabled: boolean;
-  dbaasEnabled: boolean;
   backupEnabled: boolean;
   alertingEnabled: boolean;
   updatesDisabled: boolean;

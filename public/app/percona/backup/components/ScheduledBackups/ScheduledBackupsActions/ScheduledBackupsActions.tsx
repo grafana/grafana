@@ -1,8 +1,8 @@
 import React, { FC } from 'react';
 
 import { Icon, Spinner, Switch, Tooltip, useStyles2 } from '@grafana/ui';
-import { MultipleActions } from 'app/percona/dbaas/components/MultipleActions';
 import { ExpandableRowButton } from 'app/percona/shared/components/Elements/ExpandableRowButton/ExpandableRowButton';
+import { MultipleActions } from 'app/percona/shared/components/Elements/MultipleActions';
 
 import { Messages } from './ScheduledBackupsActions.messages';
 import { getStyles } from './ScheduledBackupsActions.styles';

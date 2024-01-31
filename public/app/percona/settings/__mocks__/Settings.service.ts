@@ -6,7 +6,6 @@ export const stub: Settings = {
   updatesDisabled: true,
   telemetryEnabled: true,
   backupEnabled: false,
-  dbaasEnabled: false,
   enableAccessControl: false,
   metricsResolutions: {
     lr: '10s',

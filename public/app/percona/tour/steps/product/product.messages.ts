@@ -43,7 +43,7 @@ export const Messages = {
     services:
       "Here you can check Services, Agents and Nodes in your PMM's Inventory, and add new instances for monitoring: PostgreSQL, MySQL, MongoDB, HAProxy, etc.",
     settings:
-      'PMM Settings also live here. From there, you can connect your PMM instance to Percona Platform and change more advanced settings, for example to activate PMM Alerting, private DBaaS feature (currently in technical preview), etc.',
+      'PMM Settings also live here. From there, you can connect your PMM instance to Percona Platform and change more advanced settings, for example to activate PMM Alerting, etc.',
     settingsDocs: 'Documentation for PMM Settings ',
     settingsDocsLink: 'here',
   },
@@ -61,19 +61,6 @@ export const Messages = {
       'PMM includes a set of Advisors that run checks against the databases connected to PMM. The checks identify and alert you of potential security threats, performance degradation, data loss, data corruption, non-compliance issues, etc.',
     findOutMore: 'To find out more, check out the ',
     docs: 'Advisors documentation',
-  },
-  dbaas: {
-    title: 'DBaaS',
-    feature:
-      'Private DBaaS feature allows you to CRUD (Create, Read, Update, Delete) Percona XtraDB Cluster (PXC), and Percona Server for MongoDB (PSMDB) managed databases in Kubernetes clusters.',
-    techPreview:
-      'This is a technical preview feature recommended for test environments only. To use private DBaaS feature, make sure to activate it via Settings, on the sidebar.',
-    benefits: 'The benefits of using private DBaaS feature are manifold such as:',
-    singleInterface:
-      'A single interface to deploy and manage your open source databases on-premises, in the cloud, or across hybrid and multi-cloud environments.',
-    dbManagement: 'Critical database management operations, such as backup, recovery, and patching.',
-    automation:
-      'Enhanced automation and advisory services allow you to find, eliminate, and prevent outages, security issues, and slowdowns.',
   },
   backup: {
     title: 'Backup',

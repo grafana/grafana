@@ -4,7 +4,6 @@ export interface AdvancedFormProps {
   updates: boolean;
   backup: boolean;
   stt: boolean;
-  dbaas?: boolean;
   publicAddress?: string;
   alerting?: boolean;
   azureDiscover?: boolean;

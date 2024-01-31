@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 import { Column, ColumnGroup, Row } from 'react-table';
 
-import { Action } from 'app/percona/dbaas/components/MultipleActions/MultipleActions.types';
+import { Action } from 'app/percona/shared/components/Elements/MultipleActions/MultipleActions.types';
 
 import { ExpandAndActionsCol } from '../components/Elements/ExpandAndActionsCol/ExpandAndActionsCol';
 

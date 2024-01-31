@@ -2,8 +2,8 @@ import { cx } from '@emotion/css';
 import React, { PropsWithChildren, ReactElement } from 'react';
 
 import { Spinner, Tooltip, useStyles2 } from '@grafana/ui';
-import { MultipleActions } from 'app/percona/dbaas/components/MultipleActions';
 import { ExpandableRowButton } from 'app/percona/shared/components/Elements/ExpandableRowButton/ExpandableRowButton';
+import { MultipleActions } from 'app/percona/shared/components/Elements/MultipleActions';
 
 import { Messages } from './ExpandAndActionsCol.messages';
 import { getStyles } from './ExpandAndActionsCol.styles';
