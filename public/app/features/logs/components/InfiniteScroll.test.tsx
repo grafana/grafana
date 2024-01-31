@@ -134,7 +134,7 @@ describe('InfiniteScroll', () => {
 `);
   });
 
-  describe.each([LogsSortOrder.Descending])( //, LogsSortOrder.Ascending])(
+  describe.each([LogsSortOrder.Descending, LogsSortOrder.Ascending])(
     'When the sort order is %s',
     (order: LogsSortOrder) => {
       let rows: LogRowModel[];
