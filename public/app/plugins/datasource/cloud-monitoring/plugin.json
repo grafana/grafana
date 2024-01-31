@@ -1,7 +1,7 @@
 {
   "type": "datasource",
   "name": "Google Cloud Monitoring",
-  "id": "grafana-cloud-monitoring-datasource",
+  "id": "stackdriver",
   "category": "cloud",
 
   "metrics": true,
