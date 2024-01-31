@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem } from '@grafana/data';
@@ -37,10 +37,6 @@ interface OwnProps extends GrafanaRouteComponentProps<{}, { username?: string }>
   userError?: LdapError;
 }
 
-interface State {
-  isLoading: boolean;
-}
-
 interface FormModel {
   username: string;
 }
@@ -52,101 +48,106 @@ const pageNav: NavModelItem = {
   id: 'LDAP',
 };
 
-export class LdapPage extends PureComponent<Props, State> {
-  state = {
-    isLoading: true,
-  };
+export const LdapPage = ({
+  clearUserMappingInfo,
+  queryParams,
+  loadLdapState,
+  loadLdapSyncStatus,
+  loadUserMapping,
+  clearUserError,
+  ldapUser,
+  userError,
+  ldapError,
+  ldapSyncInfo,
+  ldapConnectionInfo,
+}: Props) => {
+  const [isLoading, setIsLoading] = useState(true);
 
-  async componentDidMount() {
-    const { clearUserMappingInfo, queryParams } = this.props;
-    await clearUserMappingInfo();
-    await this.fetchLDAPStatus();
+  const fetchUserMapping = useCallback(
+    async (username: string) => {
+      return loadUserMapping(username);
+    },
+    [loadUserMapping]
+  );
 
-    if (queryParams.username) {
-      await this.fetchUserMapping(queryParams.username);
+  useEffect(() => {
+    const fetchLDAPStatus = async () => {
+      return Promise.all([loadLdapState(), loadLdapSyncStatus()]);
+    };
+
+    async function init() {
+      await clearUserMappingInfo();
+      await fetchLDAPStatus();
+
+      if (queryParams.username) {
+        await fetchUserMapping(queryParams.username);
+      }
+
+      setIsLoading(false);
     }
 
-    this.setState({ isLoading: false });
-  }
+    init();
+  }, [clearUserMappingInfo, fetchUserMapping, loadLdapState, loadLdapSyncStatus, queryParams]);
 
-  async fetchLDAPStatus() {
-    const { loadLdapState, loadLdapSyncStatus } = this.props;
-    return Promise.all([loadLdapState(), loadLdapSyncStatus()]);
-  }
-
-  async fetchUserMapping(username: string) {
-    const { loadUserMapping } = this.props;
-    return await loadUserMapping(username);
-  }
-
-  search = (username: string) => {
+  const search = (username: string) => {
     if (username) {
-      this.fetchUserMapping(username);
+      fetchUserMapping(username);
     }
   };
 
-  onClearUserError = () => {
-    this.props.clearUserError();
+  const onClearUserError = () => {
+    clearUserError();
   };
 
-  render() {
-    const { ldapUser, userError, ldapError, ldapSyncInfo, ldapConnectionInfo, queryParams } = this.props;
-    const { isLoading } = this.state;
-    const canReadLDAPUser = contextSrv.hasPermission(AccessControlAction.LDAPUsersRead);
+  const canReadLDAPUser = contextSrv.hasPermission(AccessControlAction.LDAPUsersRead);
+  return (
+    <Page navId="authentication" pageNav={pageNav}>
+      <Page.Contents isLoading={isLoading}>
+        <Stack direction="column" gap={4}>
+          {ldapError && ldapError.title && (
+            <Alert title={ldapError.title} severity={AppNotificationSeverity.Error}>
+              {ldapError.body}
+            </Alert>
+          )}
 
-    return (
-      <Page navId="authentication" pageNav={pageNav}>
-        <Page.Contents isLoading={isLoading}>
-          <Stack direction="column" gap={4}>
-            {ldapError && ldapError.title && (
-              <Alert title={ldapError.title} severity={AppNotificationSeverity.Error}>
-                {ldapError.body}
-              </Alert>
-            )}
+          <LdapConnectionStatus ldapConnectionInfo={ldapConnectionInfo} />
 
-            <LdapConnectionStatus ldapConnectionInfo={ldapConnectionInfo} />
+          {featureEnabled('ldapsync') && ldapSyncInfo && <LdapSyncInfo ldapSyncInfo={ldapSyncInfo} />}
 
-            {featureEnabled('ldapsync') && ldapSyncInfo && <LdapSyncInfo ldapSyncInfo={ldapSyncInfo} />}
-
-            {canReadLDAPUser && (
-              <section>
-                <h3>Test user mapping</h3>
-                <Form onSubmit={(data: FormModel) => this.search(data.username)}>
-                  {({ register }) => (
-                    <Field label="Username">
-                      <Input
-                        {...register('username', { required: true })}
-                        width={34}
-                        id="username"
-                        type="text"
-                        defaultValue={queryParams.username}
-                        addonAfter={
-                          <Button variant="primary" type="submit">
-                            Run
-                          </Button>
-                        }
-                      />
-                    </Field>
-                  )}
-                </Form>
-                {userError && userError.title && (
-                  <Alert
-                    title={userError.title}
-                    severity={AppNotificationSeverity.Error}
-                    onRemove={this.onClearUserError}
-                  >
-                    {userError.body}
-                  </Alert>
+          {canReadLDAPUser && (
+            <section>
+              <h3>Test user mapping</h3>
+              <Form onSubmit={(data) => search(data.username)}>
+                {({ register }) => (
+                  <Field label="Username">
+                    <Input
+                      {...register('username', { required: true })}
+                      width={34}
+                      id="username"
+                      type="text"
+                      defaultValue={queryParams.username}
+                      addonAfter={
+                        <Button variant="primary" type="submit">
+                          Run
+                        </Button>
+                      }
+                    />
+                  </Field>
                 )}
-                {ldapUser && <LdapUserInfo ldapUser={ldapUser} />}
-              </section>
-            )}
-          </Stack>
-        </Page.Contents>
-      </Page>
-    );
-  }
-}
+              </Form>
+              {userError && userError.title && (
+                <Alert title={userError.title} severity={AppNotificationSeverity.Error} onRemove={onClearUserError}>
+                  {userError.body}
+                </Alert>
+              )}
+              {ldapUser && <LdapUserInfo ldapUser={ldapUser} />}
+            </section>
+          )}
+        </Stack>
+      </Page.Contents>
+    </Page>
+  );
+};
 
 const mapStateToProps = (state: StoreState) => ({
   ldapConnectionInfo: state.ldap.connectionInfo,
