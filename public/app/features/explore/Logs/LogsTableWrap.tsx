@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { Resizable, ResizeCallback } from 're-resizable';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import {
@@ -265,6 +266,9 @@ export function LogsTableWrap(props: Props) {
     // The panel state is updated when the user interacts with the multi-select sidebar
   }, [currentDataFrame, getColumnsFromProps]);
 
+  const [sidebarWidth, setSidebarWidth] = useState(220);
+  const tableWidth = props.width - sidebarWidth;
+
   if (!columnsWithMeta) {
     return null;
   }
@@ -472,10 +476,14 @@ export function LogsTableWrap(props: Props) {
     props.updatePanelState({ refId: value.value, labelFieldName: logsFrame?.getLabelFieldName() ?? undefined });
   };
 
-  const sidebarWidth = 220;
-  const totalWidth = props.width;
-  const tableWidth = totalWidth - sidebarWidth;
   const styles = getStyles(props.theme, height, sidebarWidth);
+
+  const getOnResize: ResizeCallback = (event, direction, ref) => {
+    const newSidebarWidth = Number(ref.style.width.slice(0, -2));
+    if (!isNaN(newSidebarWidth)) {
+      setSidebarWidth(newSidebarWidth);
+    }
+  };
 
   return (
     <>
@@ -505,16 +513,24 @@ export function LogsTableWrap(props: Props) {
         )}
       </div>
       <div className={styles.wrapper}>
-        <section className={styles.sidebar}>
-          <LogsColumnSearch value={searchValue} onChange={onSearchInputChange} />
-          <LogsTableMultiSelect
-            reorderColumn={reorderColumn}
-            toggleColumn={toggleColumn}
-            filteredColumnsWithMeta={filteredColumnsWithMeta}
-            columnsWithMeta={columnsWithMeta}
-            clear={clearSelection}
-          />
-        </section>
+        <Resizable
+          enable={{
+            right: true,
+          }}
+          handleClasses={{ right: styles.rzHandle }}
+          onResize={getOnResize}
+        >
+          <section className={styles.sidebar}>
+            <LogsColumnSearch value={searchValue} onChange={onSearchInputChange} />
+            <LogsTableMultiSelect
+              reorderColumn={reorderColumn}
+              toggleColumn={toggleColumn}
+              filteredColumnsWithMeta={filteredColumnsWithMeta}
+              columnsWithMeta={columnsWithMeta}
+              clear={clearSelection}
+            />
+          </section>
+        </Resizable>
         <LogsTable
           logsFrame={logsFrame}
           onClickFilterLabel={props.onClickFilterLabel}
@@ -547,7 +563,21 @@ function getStyles(theme: GrafanaTheme2, height: number, width: number) {
       fontSize: theme.typography.pxToRem(11),
       overflowY: 'hidden',
       width: width,
-      paddingRight: theme.spacing(1.5),
+      paddingRight: theme.spacing(3),
+    }),
+    rzHandle: css({
+      background: theme.colors.secondary.main,
+      transition: '0.3s background ease-in-out',
+      position: 'relative',
+      height: '50% !important',
+      width: `${theme.spacing(1)} !important`,
+      top: '25% !important',
+      right: `${theme.spacing(1)} !important`,
+      cursor: 'grab',
+      borderRadius: theme.shape.radius.pill,
+      ['&:hover']: {
+        background: theme.colors.secondary.shade,
+      },
     }),
   };
 }
