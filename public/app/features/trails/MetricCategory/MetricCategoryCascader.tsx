@@ -35,7 +35,6 @@ export function MetricCategoryCascader({ metricNames, onSelect, disabled, initia
         separator="_"
         hideActiveLevelLabel={false}
         placeholder={'No filter'}
-        allowCustomValue={true} // Allow the user to enter their own prefix
         onSelect={(prefix) => {
           setDisableClear(!prefix);
           onSelect(prefix);
