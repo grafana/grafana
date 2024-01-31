@@ -1173,7 +1173,22 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/SSOSettings"
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "provider": {
+                  "type": "string"
+                },
+                "settings": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "source": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
             }
           }
         },
@@ -1438,7 +1453,22 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/SSOSettings"
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "settings": {
+                    "additionalProperties": false,
+                    "type": "object"
+                  },
+                  "source": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
               },
               "type": "array"
             }
@@ -25205,7 +25235,19 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SSOSettings"
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "settings": {
+                    "additionalProperties": false,
+                    "type": "object"
+                  }
+                },
+                "type": "object"
               }
             }
           },
