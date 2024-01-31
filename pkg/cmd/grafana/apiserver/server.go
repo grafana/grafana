@@ -191,7 +191,7 @@ func (o *APIServerOptions) RunAPIServer(config *genericapiserver.RecommendedConf
 	}
 
 	// Install the API Group+version
-	err = builder.InstallAPIs(grafanaAPIServer.Scheme, grafanaAPIServer.Codecs, server, config.RESTOptionsGetter, o.builders)
+	err = builder.InstallAPIs(grafanaAPIServer.Scheme, grafanaAPIServer.Codecs, server, config.RESTOptionsGetter, o.builders, true)
 	if err != nil {
 		return err
 	}

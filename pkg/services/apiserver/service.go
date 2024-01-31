@@ -263,11 +263,10 @@ func (s *service) start(ctx context.Context) error {
 
 		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.RecommendedOptions.Etcd.StorageConfig.Codec)
 
+	case grafanaapiserveroptions.StorageTypeLegacy:
+		fallthrough
 	case grafanaapiserveroptions.StorageTypeFile:
 		serverConfig.RESTOptionsGetter = filestorage.NewRESTOptionsGetter(o.StorageOptions.DataPath, o.RecommendedOptions.Etcd.StorageConfig)
-
-	case grafanaapiserveroptions.StorageTypeLegacy:
-		// do nothing?
 	}
 
 	// Add OpenAPI specs for each group+version
@@ -294,7 +293,8 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// Install the API Group+version
-	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders)
+	dualWriteEnabled := o.StorageOptions.StorageType != grafanaapiserveroptions.StorageTypeLegacy
+	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, dualWriteEnabled)
 	if err != nil {
 		return err
 	}

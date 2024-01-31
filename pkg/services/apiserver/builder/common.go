@@ -27,6 +27,7 @@ type APIGroupBuilder interface {
 		scheme *runtime.Scheme,
 		codecs serializer.CodecFactory,
 		optsGetter generic.RESTOptionsGetter,
+		dualWrite bool,
 	) (*genericapiserver.APIGroupInfo, error)
 
 	// Get OpenAPI definitions

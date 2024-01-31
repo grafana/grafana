@@ -64,6 +64,7 @@ func (b *ServiceAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
 	optsGetter generic.RESTOptionsGetter,
+	_ bool,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(service.GROUP, scheme, metav1.ParameterCodec, codecs)
 

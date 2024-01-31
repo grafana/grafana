@@ -149,6 +149,7 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	_ generic.RESTOptionsGetter,
+	_ bool,
 ) (*genericapiserver.APIGroupInfo, error) {
 	storage := map[string]rest.Storage{}
 

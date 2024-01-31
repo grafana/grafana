@@ -113,6 +113,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
+	dualWrite bool,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
@@ -171,7 +172,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	}
 
 	// Dual writes if a RESTOptionsGetter is provided
-	if optsGetter != nil {
+	if dualWrite && optsGetter != nil {
 		options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: grafanaregistry.GetAttrs}
 		if err := store.CompleteWithOptions(options); err != nil {
 			return nil, err

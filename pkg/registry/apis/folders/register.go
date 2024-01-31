@@ -89,6 +89,7 @@ func (b *FolderAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
+	dualWrite bool,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
@@ -122,7 +123,7 @@ func (b *FolderAPIBuilder) GetAPIGroupInfo(
 	storage[resourceInfo.StoragePath("children")] = &subChildrenREST{b.folderSvc}
 
 	// enable dual writes if a RESTOptionsGetter is provided
-	if optsGetter != nil {
+	if dualWrite && optsGetter != nil {
 		store, err := newStorage(scheme, optsGetter, legacyStore)
 		if err != nil {
 			return nil, err

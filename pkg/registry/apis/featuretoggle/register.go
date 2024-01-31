@@ -78,7 +78,8 @@ func (b *FeatureFlagAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 func (b *FeatureFlagAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
-	optsGetter generic.RESTOptionsGetter,
+	_ generic.RESTOptionsGetter,
+	_ bool,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 

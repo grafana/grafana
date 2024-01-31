@@ -96,9 +96,10 @@ func InstallAPIs(
 	server *genericapiserver.GenericAPIServer,
 	optsGetter generic.RESTOptionsGetter,
 	builders []APIGroupBuilder,
+	dualWrite bool,
 ) error {
 	for _, b := range builders {
-		g, err := b.GetAPIGroupInfo(scheme, codecs, optsGetter)
+		g, err := b.GetAPIGroupInfo(scheme, codecs, optsGetter, dualWrite)
 		if err != nil {
 			return err
 		}

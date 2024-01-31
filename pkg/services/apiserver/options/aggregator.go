@@ -18,46 +18,22 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	servicev0alpha1 "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/service"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	filestorage "github.com/grafana/grafana/pkg/services/apiserver/storage/file"
 )
 
 // AggregatorServerOptions contains the state for the aggregator apiserver
 type AggregatorServerOptions struct {
-	Builders            []builder.APIGroupBuilder
 	AlternateDNS        []string
 	ProxyClientCertFile string
 	ProxyClientKeyFile  string
 }
 
 func NewAggregatorServerOptions() *AggregatorServerOptions {
-	return &AggregatorServerOptions{
-		Builders: []builder.APIGroupBuilder{
-			service.NewServiceAPIBuilder(),
-		},
-	}
-}
-
-func (o *AggregatorServerOptions) LoadAPIGroupBuilders() error {
-	// Install schemas
-	for _, b := range o.Builders {
-		if err := b.InstallSchema(aggregatorscheme.Scheme); err != nil {
-			return err
-		}
-	}
-	return nil
+	return &AggregatorServerOptions{}
 }
 
 func (o *AggregatorServerOptions) getMergedOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
-	// Add OpenAPI specs for each group+version
-	prerequisiteAPIs := builder.GetOpenAPIDefinitions(o.Builders)(ref)
 	aggregatorAPIs := aggregatoropenapi.GetOpenAPIDefinitions(ref)
-
-	for k, v := range prerequisiteAPIs {
-		aggregatorAPIs[k] = v
-	}
-
 	return aggregatorAPIs
 }
 

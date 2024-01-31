@@ -84,7 +84,8 @@ func (b *TestingAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 func (b *TestingAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
-	optsGetter generic.RESTOptionsGetter,
+	_ generic.RESTOptionsGetter,
+	_ bool,
 ) (*genericapiserver.APIGroupInfo, error) {
 	b.codecs = codecs
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(b.gv.Group, scheme, metav1.ParameterCodec, codecs)
