@@ -20,7 +20,7 @@ weight: 100
 
 # Configure thresholds
 
-In Grafana, a threshold is a value or limit you set for a metric that's reflected visually when it's met or exceeded. Thresholds are one way you can conditionally style and color your visualizations based on query results.
+In dashboards, a threshold is a value or limit you set for a metric that's reflected visually when it's met or exceeded. Thresholds are one way you can conditionally style and color your visualizations based on query results.
 
 Using thresholds, you can color grid lines and regions in a time series visualization:
 ![Time series visualization with green, blue, and purple threshold lines and regions](screenshot-thresholds-lines-regions-v10.4.png)
@@ -42,6 +42,7 @@ You can also use thresholds to:
 
 You can set thresholds in the following visualizations:
 
+<!--
 - [Bar chart][bar chart]
 - [Bar gauge][bar gauge]
 - [Candlestick][candlestick]
@@ -54,7 +55,17 @@ You can set thresholds in the following visualizations:
 - [Status history][status history]
 - [Table][table]
 - [Time series][time series]
-- [Trend][trend]
+- [Trend][trend] -->
+
+|                            |                                  |
+| -------------------------- | -------------------------------- |
+| [Bar chart][bar chart]     | [Stat][stat]                     |
+| [Bar gauge][bar gauge]     | [State timeline][state timeline] |
+| [Candlestick][candlestick] | [Status history][status history] |
+| [Canvas][canvas]           | [Table][table]                   |
+| [Gauge][gauge]             | [Time series][time series]       |
+| [Geomap][geomap]           | [Trend][trend]                   |
+| [Histogram][histogram]     |
 
 ## Default thresholds
 
@@ -68,10 +79,6 @@ On visualizations that support thresholds, Grafana has the following default thr
 ## Threshold options
 
 You can set the following options to further define how thresholds look.
-
-{{< admonition type="note" >}}
-Not all of the options listed apply to all visualizations with thresholds.
-{{< /admonition >}}
 
 ### Threshold value
 
@@ -97,12 +104,14 @@ Set how thresholds are displayed with the following options:
 - **As filled regions and lines**
 - **As filled regions and lines (dashed)**
 
+{{< admonition type="note" >}}
 This option is supported for the following visualizations:
 
 - Bar chart
 - Candlestick
 - Time series
 - Trend
+  {{< /admonition>}}
 
 ## Add a threshold
 
