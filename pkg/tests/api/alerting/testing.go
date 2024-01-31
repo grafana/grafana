@@ -452,6 +452,39 @@ func (a apiClient) DeleteRulesGroup(t *testing.T, folder string, group string) (
 	return resp.StatusCode, string(b)
 }
 
+func (a apiClient) PostSilence(t *testing.T, s apimodels.PostableSilence) (string, error) {
+	t.Helper()
+
+	b, err := json.Marshal(s)
+	require.NoError(t, err)
+
+	u := fmt.Sprintf("%s/api/alertmanager/grafana/api/v2/silences", a.url)
+	req, err := http.NewRequest(http.MethodPost, u, bytes.NewReader(b))
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err = io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	data := struct {
+		SilenceID string `json:"silenceID"`
+		Message   string `json:"message"`
+	}{}
+	require.NoError(t, json.Unmarshal(b, &data))
+
+	if resp.StatusCode == http.StatusAccepted {
+		return data.SilenceID, nil
+	}
+
+	return "", errors.New(data.Message)
+}
+
 func (a apiClient) GetRulesGroup(t *testing.T, folder string, group string) apimodels.RuleGroupConfigResponse {
 	result, status, _ := a.GetRulesGroupWithStatus(t, folder, group)
 	require.Equal(t, http.StatusAccepted, status)
@@ -797,4 +830,8 @@ func sendRequest[T any](t *testing.T, req *http.Request, successStatusCode int) 
 
 func requireStatusCode(t *testing.T, expected, actual int, response string) {
 	require.Equalf(t, expected, actual, "Unexpected status. Response: %s", response)
+}
+
+func ptr[T any](v T) *T {
+	return &v
 }

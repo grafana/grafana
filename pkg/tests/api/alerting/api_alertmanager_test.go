@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/go-openapi/strfmt"
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"io"
 	"net/http"
 	"regexp"
@@ -1838,6 +1840,156 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 
 			require.Equal(t, http.StatusAccepted, resp.StatusCode)
 			require.JSONEq(t, `{"message":"rules deleted"}`, string(b))
+		})
+	}
+}
+
+func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		AppModeProduction:     true,
+	})
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+	})
+
+	client := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+
+	cases := []struct {
+		name    string
+		silence apimodels.PostableSilence
+		expErr  string
+	}{{
+		name: "can create silence for foo=bar",
+		silence: apimodels.PostableSilence{
+			Silence: amv2.Silence{
+				Comment:   ptr("This is a comment"),
+				CreatedBy: ptr("test"),
+				EndsAt:    ptr(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Matchers: amv2.Matchers{{
+					IsEqual: ptr(true),
+					IsRegex: ptr(false),
+					Name:    ptr("foo"),
+					Value:   ptr("bar"),
+				}},
+				StartsAt: ptr(strfmt.DateTime(time.Now())),
+			},
+		},
+	}, {
+		name: "can create silence for _foo1=bar",
+		silence: apimodels.PostableSilence{
+			Silence: amv2.Silence{
+				Comment:   ptr("This is a comment"),
+				CreatedBy: ptr("test"),
+				EndsAt:    ptr(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Matchers: amv2.Matchers{{
+					IsEqual: ptr(true),
+					IsRegex: ptr(false),
+					Name:    ptr("_foo1"),
+					Value:   ptr("bar"),
+				}},
+				StartsAt: ptr(strfmt.DateTime(time.Now())),
+			},
+		},
+	}, {
+		name: "can create silence for 0foo=bar",
+		silence: apimodels.PostableSilence{
+			Silence: amv2.Silence{
+				Comment:   ptr("This is a comment"),
+				CreatedBy: ptr("test"),
+				EndsAt:    ptr(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Matchers: amv2.Matchers{{
+					IsEqual: ptr(true),
+					IsRegex: ptr(false),
+					Name:    ptr("0foo"),
+					Value:   ptr("bar"),
+				}},
+				StartsAt: ptr(strfmt.DateTime(time.Now())),
+			},
+		},
+	}, {
+		name: "can create silence for foo=🙂bar",
+		silence: apimodels.PostableSilence{
+			Silence: amv2.Silence{
+				Comment:   ptr("This is a comment"),
+				CreatedBy: ptr("test"),
+				EndsAt:    ptr(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Matchers: amv2.Matchers{{
+					IsEqual: ptr(true),
+					IsRegex: ptr(false),
+					Name:    ptr("foo"),
+					Value:   ptr("🙂bar"),
+				}},
+				StartsAt: ptr(strfmt.DateTime(time.Now())),
+			},
+		},
+	}, {
+		name: "can create silence for foo🙂=bar",
+		silence: apimodels.PostableSilence{
+			Silence: amv2.Silence{
+				Comment:   ptr("This is a comment"),
+				CreatedBy: ptr("test"),
+				EndsAt:    ptr(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Matchers: amv2.Matchers{{
+					IsEqual: ptr(true),
+					IsRegex: ptr(false),
+					Name:    ptr("foo🙂"),
+					Value:   ptr("bar"),
+				}},
+				StartsAt: ptr(strfmt.DateTime(time.Now())),
+			},
+		},
+	}, {
+		name: "can't create silence for missing label name",
+		silence: apimodels.PostableSilence{
+			Silence: amv2.Silence{
+				Comment:   ptr("This is a comment"),
+				CreatedBy: ptr("test"),
+				EndsAt:    ptr(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Matchers: amv2.Matchers{{
+					IsEqual: ptr(true),
+					IsRegex: ptr(false),
+					Name:    ptr(""),
+					Value:   ptr("bar"),
+				}},
+				StartsAt: ptr(strfmt.DateTime(time.Now())),
+			},
+		},
+		expErr: "unable to save silence: silence invalid: invalid label matcher 0: invalid label name \"\": unable to create silence",
+	}, {
+		name: "can't create silence for missing label value",
+		silence: apimodels.PostableSilence{
+			Silence: amv2.Silence{
+				Comment:   ptr("This is a comment"),
+				CreatedBy: ptr("test"),
+				EndsAt:    ptr(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Matchers: amv2.Matchers{{
+					IsEqual: ptr(true),
+					IsRegex: ptr(false),
+					Name:    ptr("foo"),
+					Value:   ptr(""),
+				}},
+				StartsAt: ptr(strfmt.DateTime(time.Now())),
+			},
+		},
+		expErr: "unable to save silence: silence invalid: at least one matcher must not match the empty string: unable to create silence",
+	}}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			silenceID, err := client.PostSilence(t, tc.silence)
+			if tc.expErr != "" {
+				require.EqualError(t, err, tc.expErr)
+				require.Empty(t, silenceID)
+			} else {
+				require.NoError(t, err)
+				require.NotEmpty(t, silenceID)
+			}
 		})
 	}
 }
