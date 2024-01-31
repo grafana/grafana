@@ -342,9 +342,9 @@
 /packages/grafana-e2e/ @grafana/grafana-frontend-platform
 
 /packages/grafana-schema/ @grafana/grafana-frontend-platform
+/packages/grafana-schema/src/**/*.gen.ts @grafanabot
 /packages/grafana-schema/src/**/*tempo* @grafana/observability-traces-and-profiling
 /packages/grafana-schema/src/**/*canvas* @grafana/dataviz-squad
-/packages/grafana-schema/src/**/*.gen.ts @grafanabot
 
 /packages/grafana-flamegraph/ @grafana/observability-traces-and-profiling
 /packages/grafana-o11y-ds-frontend/ @grafana/observability-logs @grafana/observability-traces-and-profiling
