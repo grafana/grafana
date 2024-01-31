@@ -49,6 +49,7 @@ func NewDuckDB(ctx context.Context, name string) (*DuckDB, error) {
 	}, nil
 }
 
+// Query runs a query against DuckDB
 func (d *DuckDB) Query(ctx context.Context, query string) (*data.Frame, error) {
 	results, err := d.db.Query(query)
 	if err != nil {
@@ -81,6 +82,7 @@ func (d *DuckDB) Query(ctx context.Context, query string) (*data.Frame, error) {
 	return frame, err
 }
 
+// AppendAll converts all the data frames into DuckDB tables
 func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 	unknown, err := d.createTables(ctx, frames)
 	if err != nil {
@@ -290,57 +292,3 @@ func tableName(f *data.Frame) string {
 }
 
 type Unknown map[string]bool
-
-// var SqlHugeIntConverter = sqlutil.Converter {
-// 	Name: "HUGEINT",
-// 	InputTypeName: "HUGEINT",
-// 	InputScanType: big.Int{},
-// }
-// // HugeIntConverter converts hugeInt to float64
-// var HugeIntConverter = data.FieldConverter{
-// 	OutputFieldType: data.FieldTypeNullableInt64,
-// 	Converter: func(v any) (any, error) {
-// 		return convertBigInt(v.(*big.Int))
-// 	},
-// }
-
-// func convertBigInt(val *big.Int) (*int64, error) {
-// 	convert := func(v *big.Int) (*int64, error) {
-// 		// v, err := client.ToBigInt(val)
-// 		// if err != nil {
-// 		// 	return nil, err
-// 		// }
-// 		if v.IsInt64() {
-// 			return toInt64(v.Int64()), nil
-// 		}
-// 		if v.IsUint64() {
-// 			return toInt64(v.Uint64()), nil
-// 		}
-// 		intVal, err := strconv.Atoi(v.String())
-// 		if err != nil {
-// 			return nil, errors.New("could not convert BigInt")
-// 		}
-// 		return toInt64(intVal), nil
-// 	}
-// 	return toNullable(val, convert)
-// }
-
-// type Int interface {
-// 	int | int64 | uint64
-// }
-
-// func toInt64[V Int](val V) *int64 {
-// 	v := int64(val)
-// 	return &v
-// }
-
-// type Number interface {
-// 	*int | *int64 | *uint64 | *float64 | *time.Time
-// }
-
-// func toNullable[T Number](val *big.Int, f func(val *big.Int) (T, error)) (T, error) {
-// 	if val == nil {
-// 		return nil, nil
-// 	}
-// 	return f(val)
-// }
