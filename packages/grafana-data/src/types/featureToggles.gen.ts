@@ -175,4 +175,5 @@ export interface FeatureToggles {
   alertingSaveStatePeriodic?: boolean;
   promQLScope?: boolean;
   slateAutocomplete?: boolean;
+  nodeGraphDotLayout?: boolean;
 }
