@@ -179,7 +179,8 @@ func TestIntegrationAnonDeviceService_localCacheSafety(t *testing.T) {
 }
 
 func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
-	fixedTime := time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC) // Fixed timestamp for testing
+	// set a relative time to be 10 days back from today
+	twentydaysback := time.Now().Add(-thirtyActiveDays).Add(10 * -24 * time.Hour) // Use fixed time
 
 	testCases := []struct {
 		name           string
@@ -246,8 +247,8 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 		assert.NoError(t, err)
 		t.Run(tc.name, func(t *testing.T) {
 			for _, device := range tc.insertDevices {
-				device.CreatedAt = fixedTime.Add(-10 * time.Hour) // Use fixed time
-				device.UpdatedAt = fixedTime
+				device.CreatedAt = twentydaysback.Add(-10 * time.Hour) // Use fixed time
+				device.UpdatedAt = twentydaysback
 				err := anonService.anonStore.CreateOrUpdateDevice(context.Background(), device)
 				require.NoError(t, err)
 			}

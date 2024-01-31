@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-const thirtyDays = 30 * 24 * time.Hour
+const thirtyActiveDays = 30 * 24 * time.Hour
 const deviceIDHeader = "X-Grafana-Device-Id"
 const keepFor = time.Hour * 24 * 61
 
@@ -69,7 +69,7 @@ func ProvideAnonymousDeviceService(usageStats usagestats.Service, authBroker aut
 func (a *AnonDeviceService) usageStatFn(ctx context.Context) (map[string]any, error) {
 	// Count the number of unique devices that have been updated in the last 30 days.
 	// One minute is added to the end time as mysql has a precision of seconds and it will break tests that write too fast.
-	anonUIDeviceCount, err := a.anonStore.CountDevices(ctx, time.Now().Add(-thirtyDays), time.Now().Add(time.Minute))
+	anonUIDeviceCount, err := a.anonStore.CountDevices(ctx, time.Now().Add(-thirtyActiveDays), time.Now().Add(time.Minute))
 	if err != nil {
 		return nil, err
 	}
