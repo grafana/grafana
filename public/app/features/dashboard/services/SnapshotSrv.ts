@@ -119,7 +119,7 @@ class K8sAPI implements DashboardSnapshotSrv {
     const headers: Record<string, string> = {};
     if (!contextSrv.isSignedIn) {
       alert('TODO... need a barer token for anonymous use case');
-      const token = `??? TODO, get anon token for snapshots ???`;
+      const token = `??? TODO, get anon token for snapshots (${contextSrv.user?.name}) ???`;
       headers['Authorization'] = `Bearer ${token}`;
     }
     return lastValueFrom(

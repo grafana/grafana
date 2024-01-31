@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -232,7 +233,7 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 				Handler: func(w http.ResponseWriter, r *http.Request) {
 					user, err := appcontext.User(r.Context())
 					if err != nil {
-						w.WriteHeader(500)
+						errhttp.Write(r.Context(), err, w)
 						return
 					}
 					wrap := &contextmodel.ReqContext{
@@ -294,8 +295,7 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 
 					err := dashboardsnapshots.DeleteWithKey(ctx, key, b.service)
 					if err != nil {
-						_, _ = w.Write([]byte("Failed to delete external dashboard"))
-						w.WriteHeader(500)
+						errhttp.Write(ctx, fmt.Errorf("failed to delete external dashboard (%w)", err), w)
 						return
 					}
 					_ = json.NewEncoder(w).Encode(&util.DynMap{
