@@ -115,7 +115,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       return;
     }
 
-    const searchRegex = new RegExp(this.state.searchQuery ?? '.*');
+    const searchRegex = createSearchRegExp(this.state.searchQuery);
     const metricNames = variable.state.options;
     const sortedMetricNames =
       trail.state.metric !== undefined ? sortRelatedMetrics(metricNames, trail.state.metric) : metricNames;
@@ -126,7 +126,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       const metric = sortedMetricNames[index];
 
       const metricName = String(metric.value);
-      if (!metricName.match(searchRegex)) {
+
+      if (searchRegex && !searchRegex.test(metricName)) {
         continue;
       }
 
@@ -167,11 +168,11 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     for (let index = 0; index < metricsList.length; index++) {
       const metric = metricsList[index];
 
-      if (metric.itemRef && metric.isPanel) {
-        children.push(metric.itemRef.resolve());
-        continue;
-      }
       if (this.state.showPreviews) {
+        if (metric.itemRef && metric.isPanel) {
+          children.push(metric.itemRef.resolve());
+          continue;
+        }
         const panel = getPreviewPanelFor(metric.name, index);
         metric.itemRef = panel.getRef();
         metric.isPanel = true;
@@ -216,8 +217,13 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   };
 
   public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
-    const { showHeading, searchQuery, showPreviews } = model.useState();
+    const { showHeading, searchQuery, showPreviews, body } = model.useState();
+    const { children } = body.useState();
     const styles = useStyles2(getStyles);
+
+    const searchTooStrictWarning = children.length === 0 && searchQuery && (
+      <div className={styles.alternateMessage}>There are no results found. Try adjusting your search or filters.</div>
+    );
 
     return (
       <div className={styles.container}>
@@ -230,6 +236,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           <Input placeholder="Search metrics" value={searchQuery} onChange={model.onSearchChange} />
           <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
         </div>
+        {searchTooStrictWarning}
         <model.state.body.Component model={model.state.body} />
       </div>
     );
@@ -317,5 +324,33 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(2),
       marginBottom: theme.spacing(1),
     }),
+    alternateMessage: css({
+      fontStyle: 'italic',
+      marginTop: theme.spacing(7),
+      textAlign: 'center',
+    }),
   };
+}
+
+// Consider any sequence of characters not permitted for metric names as a sepratator
+const splitSeparator = /[^a-z0-9_:]+/;
+
+function createSearchRegExp(spaceSeparatedMetricNames?: string) {
+  if (!spaceSeparatedMetricNames) {
+    return null;
+  }
+  const searchParts = spaceSeparatedMetricNames
+    ?.toLowerCase()
+    .split(splitSeparator)
+    .filter((part) => part.length > 0)
+    .map((part) => `(?=(.*${part}.*))`);
+
+  if (searchParts.length === 0) {
+    return null;
+  }
+
+  const regex = searchParts.join('');
+  //  (?=(.*expr1.*))(?=().*expr2.*))...
+  // The ?=(...) lookahead allows us to match these in any order.
+  return new RegExp(regex, 'igy');
 }

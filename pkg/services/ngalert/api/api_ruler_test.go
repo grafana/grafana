@@ -86,7 +86,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			})
 			t.Run("delete only non-provisioned groups that user is authorized", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
-				provisioningStore := provisioning.NewFakeProvisioningStore()
+				provisioningStore := fakes.NewFakeProvisioningStore()
 
 				authorizedRulesInFolder := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup("authz_"+util.GenerateShortUID())))
 
@@ -109,7 +109,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			})
 			t.Run("return 400 if all rules user can access are provisioned", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
-				provisioningStore := provisioning.NewFakeProvisioningStore()
+				provisioningStore := fakes.NewFakeProvisioningStore()
 
 				provisionedRulesInFolder := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(util.GenerateShortUID())))
 				err := provisioningStore.SetProvenance(context.Background(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
@@ -158,7 +158,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 			})
 			t.Run("return 400 if group is provisioned", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
-				provisioningStore := provisioning.NewFakeProvisioningStore()
+				provisioningStore := fakes.NewFakeProvisioningStore()
 
 				provisionedRulesInFolder := models.GenerateAlertRulesSmallNonEmpty(models.AlertRuleGen(withOrgID(orgID), withNamespace(folder), withGroup(groupName)))
 				err := provisioningStore.SetProvenance(context.Background(), provisionedRulesInFolder[0], orgID, models.ProvenanceAPI)
@@ -598,7 +598,7 @@ func createService(store *fakes.RuleStore) *RulerSrv {
 		xactManager:     store,
 		store:           store,
 		QuotaService:    nil,
-		provenanceStore: provisioning.NewFakeProvisioningStore(),
+		provenanceStore: fakes.NewFakeProvisioningStore(),
 		log:             log.New("test"),
 		cfg: &setting.UnifiedAlertingSettings{
 			BaseInterval: 10 * time.Second,

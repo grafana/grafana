@@ -296,7 +296,12 @@ func (ng *AlertNG) init() error {
 		Tracer:                         ng.tracer,
 		Log:                            log.New("ngalert.state.manager"),
 	}
-	statePersister := state.NewSyncStatePersisiter(log.New("ngalert.state.manager.persist"), cfg)
+	logger := log.New("ngalert.state.manager.persist")
+	statePersister := state.NewSyncStatePersisiter(logger, cfg)
+	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
+		ticker := clock.New().Ticker(ng.Cfg.UnifiedAlerting.StatePeriodicSaveInterval)
+		statePersister = state.NewAsyncStatePersister(logger, ticker, cfg)
+	}
 	stateManager := state.NewManager(cfg, statePersister)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)
 
@@ -422,6 +427,9 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 
 		children.Go(func() error {
 			return ng.schedule.Run(subCtx)
+		})
+		children.Go(func() error {
+			return ng.stateManager.Run(subCtx)
 		})
 	}
 	return children.Wait()

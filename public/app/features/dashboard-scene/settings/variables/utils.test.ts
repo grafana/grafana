@@ -1,3 +1,4 @@
+import { DataSourceApi } from '@grafana/data';
 import { setTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import {
   CustomVariable,
@@ -8,7 +9,9 @@ import {
   AdHocFiltersVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
-import { VariableType } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData, VariableType } from '@grafana/schema';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor } from './editors/ConstantVariableEditor';
@@ -27,11 +30,43 @@ import {
   hasVariableOptions,
   EditableVariableType,
   getDefinition,
+  getOptionDataSourceTypes,
 } from './utils';
 
 const templateSrv = {
   getAdhocFilters: jest.fn().mockReturnValue([{ key: 'origKey', operator: '=', value: '' }]),
 } as unknown as TemplateSrv;
+
+const dsMock: DataSourceApi = {
+  meta: {
+    id: DASHBOARD_DATASOURCE_PLUGIN_ID,
+  },
+  name: SHARED_DASHBOARD_QUERY,
+  type: SHARED_DASHBOARD_QUERY,
+  uid: SHARED_DASHBOARD_QUERY,
+  getRef: () => {
+    return { type: SHARED_DASHBOARD_QUERY, uid: SHARED_DASHBOARD_QUERY };
+  },
+} as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: async () => dsMock,
+    getList: () => {
+      return [
+        {
+          name: 'DataSourceInstance1',
+          uid: 'ds1',
+          meta: {
+            name: 'ds1',
+            id: 'dsTestDataSource',
+          },
+        },
+      ];
+    },
+  }),
+}));
 
 describe('isEditableVariableType', () => {
   it('should return true for editable variable types', () => {
@@ -75,6 +110,10 @@ describe('getVariableTypeSelectOptions', () => {
 });
 
 describe('getVariableEditor', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it.each(Object.keys(EDITABLE_VARIABLES) as EditableVariableType[])(
     'should define an editor for every variable type',
     (type) => {
@@ -198,5 +237,15 @@ describe('getDefinition', () => {
       value: 'Constant Value',
     });
     expect(getDefinition(model)).toBe('Constant Value');
+  });
+});
+
+describe('getOptionDataSourceTypes', () => {
+  it('should return all data source types when no data source types are specified', () => {
+    const optionTypes = getOptionDataSourceTypes();
+    expect(optionTypes).toHaveLength(2);
+    // in the old code we always had an empty option
+    expect(optionTypes[0].value).toBe('');
+    expect(optionTypes[1].label).toBe('ds1');
   });
 });

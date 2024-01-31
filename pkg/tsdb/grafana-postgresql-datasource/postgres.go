@@ -57,6 +57,50 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return dsInfo.QueryData(ctx, req)
 }
 
+func newPostgres(cfg *setting.Cfg, dsInfo sqleng.DataSourceInfo, cnnstr string, logger log.Logger) (*sql.DB, *sqleng.DataSourceHandler, error) {
+	connector, err := pq.NewConnector(cnnstr)
+	if err != nil {
+		logger.Error("postgres connector creation failed", "error", err)
+		return nil, nil, fmt.Errorf("postgres connector creation failed")
+	}
+
+	// use the proxy-dialer if the secure socks proxy is enabled
+	proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo)
+	if sdkproxy.New(proxyOpts).SecureSocksProxyEnabled() {
+		dialer, err := newPostgresProxyDialer(proxyOpts)
+		if err != nil {
+			logger.Error("postgres proxy creation failed", "error", err)
+			return nil, nil, fmt.Errorf("postgres proxy creation failed")
+		}
+		// update the postgres dialer with the proxy dialer
+		connector.Dialer(dialer)
+	}
+
+	config := sqleng.DataPluginConfiguration{
+		DSInfo:            dsInfo,
+		MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
+		RowLimit:          cfg.DataProxyRowLimit,
+	}
+
+	queryResultTransformer := postgresQueryResultTransformer{}
+
+	db := sql.OpenDB(connector)
+
+	db.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
+	db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
+	db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
+
+	handler, err := sqleng.NewQueryDataHandler(cfg, db, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
+		logger)
+	if err != nil {
+		logger.Error("Failed connecting to Postgres", "err", err)
+		return nil, nil, err
+	}
+
+	logger.Debug("Successfully connected to Postgres")
+	return db, handler, nil
+}
+
 func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 	logger := s.logger
 	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
@@ -96,44 +140,8 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 			return nil, err
 		}
 
-		if cfg.Env == setting.Dev {
-			logger.Debug("GetEngine", "connection", cnnstr)
-		}
+		_, handler, err := newPostgres(cfg, dsInfo, cnnstr, logger)
 
-		connector, err := pq.NewConnector(cnnstr)
-		if err != nil {
-			logger.Error("postgres connector creation failed", "error", err)
-			return nil, fmt.Errorf("postgres connector creation failed")
-		}
-
-		// use the proxy-dialer if the secure socks proxy is enabled
-		proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo)
-		if sdkproxy.New(proxyOpts).SecureSocksProxyEnabled() {
-			dialer, err := newPostgresProxyDialer(proxyOpts)
-			if err != nil {
-				logger.Error("postgres proxy creation failed", "error", err)
-				return nil, fmt.Errorf("postgres proxy creation failed")
-			}
-			// update the postgres dialer with the proxy dialer
-			connector.Dialer(dialer)
-		}
-
-		config := sqleng.DataPluginConfiguration{
-			DSInfo:            dsInfo,
-			MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
-			RowLimit:          cfg.DataProxyRowLimit,
-		}
-
-		queryResultTransformer := postgresQueryResultTransformer{}
-
-		db := sql.OpenDB(connector)
-
-		db.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
-		db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
-		db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
-
-		handler, err := sqleng.NewQueryDataHandler(cfg, db, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
-			logger)
 		if err != nil {
 			logger.Error("Failed connecting to Postgres", "err", err)
 			return nil, err

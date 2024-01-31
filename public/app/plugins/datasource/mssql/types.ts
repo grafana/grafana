@@ -1,6 +1,6 @@
 import { DataSourceJsonData } from '@grafana/data';
+import { SQLOptions } from '@grafana/sql';
 import { HttpSettingsBaseProps } from '@grafana/ui/src/components/DataSourceSettings/types';
-import { SQLOptions } from 'app/features/plugins/sql/types';
 
 export enum MSSQLAuthenticationType {
   sqlAuth = 'SQL Server Authentication',
