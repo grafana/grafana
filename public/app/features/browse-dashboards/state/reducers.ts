@@ -2,6 +2,7 @@ import { PayloadAction } from '@reduxjs/toolkit';
 
 import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 
+import { isSharedWithMe } from '../components/utils';
 import { BrowseDashboardsState } from '../types';
 
 import { fetchNextChildrenPage, refetchChildren } from './actions';
@@ -86,6 +87,11 @@ export function setItemSelectionState(
 ) {
   const { item, isSelected } = action.payload;
 
+  // UI shouldn't allow it, but also prevent sharedwithme from being selected
+  if (isSharedWithMe(item.uid)) {
+    return;
+  }
+
   // Selecting a folder selects all children, and unselecting a folder deselects all children
   // so propagate the new selection state to all descendants
   function markChildren(kind: DashboardViewItemKind, uid: string) {
@@ -103,26 +109,24 @@ export function setItemSelectionState(
 
   markChildren(item.kind, item.uid);
 
-  // If all children of a folder are selected, then the folder is also selected.
-  // If *any* child of a folder is unselelected, then the folder is alo unselected.
-  // Reconcile all ancestors to make sure they're in the correct state.
-  let nextParentUID = item.parentUID;
+  // If we're unselecting a child, we also need to unselect all ancestors.
+  if (!isSelected) {
+    let nextParentUID = item.parentUID;
 
-  while (nextParentUID) {
-    const parent = findItem(state.rootItems?.items ?? [], state.childrenByParentUID, nextParentUID);
+    while (nextParentUID) {
+      const parent = findItem(state.rootItems?.items ?? [], state.childrenByParentUID, nextParentUID);
 
-    // This case should not happen, but a find can theortically return undefined, and it
-    // helps limit infinite loops
-    if (!parent) {
-      break;
-    }
+      // This case should not happen, but a find can theortically return undefined, and it
+      // helps limit infinite loops
+      if (!parent) {
+        break;
+      }
 
-    if (!isSelected) {
       // A folder cannot be selected if any of it's children are unselected
       state.selectedItems[parent.kind][parent.uid] = false;
-    }
 
-    nextParentUID = parent.parentUID;
+      nextParentUID = parent.parentUID;
+    }
   }
 
   // Check to see if we should mark the header checkbox selected if all root items are selected
@@ -135,6 +139,12 @@ export function setAllSelection(
 ) {
   const { isSelected, folderUID: folderUIDArg } = action.payload;
 
+  // If we're in the folder view for sharedwith me (currently not supported)
+  // bail and don't select anything
+  if (folderUIDArg && isSharedWithMe(folderUIDArg)) {
+    return;
+  }
+
   state.selectedItems.$all = isSelected;
 
   // Search works a bit differently so the state here does different things...
@@ -146,6 +156,11 @@ export function setAllSelection(
   if (isSelected) {
     // Recursively select the children of the folder in view
     function selectChildrenOfFolder(folderUID: string | undefined) {
+      // Don't descend into the sharedwithme folder
+      if (folderUID && isSharedWithMe(folderUID)) {
+        return;
+      }
+
       const collection = folderUID ? state.childrenByParentUID[folderUID] : state.rootItems;
 
       // Bail early if the collection isn't found (not loaded yet)
@@ -154,6 +169,11 @@ export function setAllSelection(
       }
 
       for (const child of collection.items) {
+        // Don't traverse into the sharedwithme folder
+        if (isSharedWithMe(child.uid)) {
+          continue;
+        }
+
         state.selectedItems[child.kind][child.uid] = isSelected;
 
         if (child.kind !== 'folder') {

@@ -461,7 +461,10 @@ type Route struct {
 
 	// For data source plugins. The route path that is replaced by the
 	// route URL field when proxying the call.
-	Path        *string `json:"path,omitempty"`
+	Path *string `json:"path,omitempty"`
+
+	// RBAC action the user must have to access the route. i.e. plugin-id.projects:read
+	ReqAction   *string `json:"reqAction,omitempty"`
 	ReqRole     *string `json:"reqRole,omitempty"`
 	ReqSignedIn *bool   `json:"reqSignedIn,omitempty"`
 

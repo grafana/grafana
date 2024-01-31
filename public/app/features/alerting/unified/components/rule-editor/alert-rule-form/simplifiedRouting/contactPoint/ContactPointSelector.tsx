@@ -16,12 +16,7 @@ export interface ContactPointSelectorProps {
 }
 export function ContactPointSelector({ alertManager, contactPoints, onSelectContactPoint }: ContactPointSelectorProps) {
   const styles = useStyles2(getStyles);
-  const {
-    register,
-    control,
-    formState: { errors },
-    watch,
-  } = useFormContext<RuleFormValues>();
+  const { control, watch } = useFormContext<RuleFormValues>();
 
   const options = contactPoints.map((receiver) => {
     const integrations = receiver?.grafana_managed_receiver_configs;
@@ -39,11 +34,7 @@ export function ContactPointSelector({ alertManager, contactPoints, onSelectCont
 
   return (
     <Stack direction="column">
-      <Field
-        label="Contact point"
-        {...register(`contactPoints.${alertManager}.selectedContactPoint`, { required: true })}
-        invalid={!!errors.contactPoints?.[alertManager]?.selectedContactPoint}
-      >
+      <Field label="Contact point">
         <InputControl
           render={({ field: { onChange, ref, ...field }, fieldState: { error } }) => (
             <>
@@ -65,9 +56,10 @@ export function ContactPointSelector({ alertManager, contactPoints, onSelectCont
                   width={50}
                 />
               </div>
-              {error && <FieldValidationMessage>{'Contact point is required.'}</FieldValidationMessage>}
+              {error && <FieldValidationMessage>{error.message}</FieldValidationMessage>}
             </>
           )}
+          rules={{ required: { value: true, message: 'Contact point is required.' } }}
           control={control}
           name={`contactPoints.${alertManager}.selectedContactPoint`}
         />

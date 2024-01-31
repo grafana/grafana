@@ -105,7 +105,7 @@ export function makeAMLink(path: string, alertManagerName?: string, options?: UR
   const search = new URLSearchParams(options);
 
   if (alertManagerName) {
-    search.append(ALERTMANAGER_NAME_QUERY_KEY, alertManagerName);
+    search.set(ALERTMANAGER_NAME_QUERY_KEY, alertManagerName);
   }
   return `${path}?${search.toString()}`;
 }

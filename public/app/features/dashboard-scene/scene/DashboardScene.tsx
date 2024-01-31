@@ -1,8 +1,8 @@
 import * as H from 'history';
 import { Unsubscribable } from 'rxjs';
 
-import { CoreApp, DataQueryRequest, NavIndex, NavModelItem } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
   SceneFlexLayout,
@@ -18,16 +18,21 @@ import {
   SceneVariable,
   SceneVariableDependencyConfigLike,
 } from '@grafana/scenes';
-import { DashboardLink } from '@grafana/schema';
+import { Dashboard, DashboardLink } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { VariablesChanged } from 'app/features/variables/types';
-import { DashboardMeta } from 'app/types';
+import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
 
+import { PanelEditor } from '../panel-edit/PanelEditor';
+import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
-import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
+import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
+import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/urlBuilders';
@@ -38,7 +43,7 @@ import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
-export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip'];
+export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links'];
 
 export interface DashboardSceneState extends SceneObjectState {
   /** The title */
@@ -48,7 +53,7 @@ export interface DashboardSceneState extends SceneObjectState {
   /** Tags */
   tags?: string[];
   /** Links */
-  links?: DashboardLink[];
+  links: DashboardLink[];
   /** Is editable */
   editable?: boolean;
   /** A uid when saved */
@@ -67,12 +72,16 @@ export interface DashboardSceneState extends SceneObjectState {
   isDirty?: boolean;
   /** meta flags */
   meta: DashboardMeta;
+  /** Version of the dashboard */
+  version?: number;
   /** Panel to inspect */
   inspectPanelKey?: string;
   /** Panel to view in fullscreen */
   viewPanelScene?: ViewPanelScene;
   /** Edit view */
   editview?: DashboardEditView;
+  /** Edit panel */
+  editPanel?: PanelEditor;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
 }
@@ -95,6 +104,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    */
   private _initialState?: DashboardSceneState;
   /**
+   * The save model which the scene was originally created from
+   */
+  private _initialSaveModel?: Dashboard;
+  /**
    * Url state before editing started
    */
   private _initialUrlState?: H.Location;
@@ -109,6 +122,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       meta: {},
       editable: true,
       body: state.body ?? new SceneFlexLayout({ children: [] }),
+      links: state.links ?? [],
       ...state,
     });
 
@@ -155,47 +169,114 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.setState({ isEditing: true });
 
     // Propagate change edit mode change to children
-    if (this.state.body instanceof SceneGridLayout) {
-      this.state.body.setState({ isDraggable: true, isResizable: true });
-      forceRenderChildren(this.state.body, true);
-    }
-
+    this.propagateEditModeChange();
     this.startTrackingChanges();
   };
+
+  public saveCompleted(saveModel: Dashboard, result: SaveDashboardResponseDTO, folderUid?: string) {
+    this._initialSaveModel = {
+      ...saveModel,
+      id: result.id,
+      uid: result.uid,
+      version: result.version,
+    };
+
+    this.stopTrackingChanges();
+    this.setState({
+      version: result.version,
+      isDirty: false,
+      uid: result.uid,
+      id: result.id,
+      meta: {
+        ...this.state.meta,
+        uid: result.uid,
+        url: result.url,
+        slug: result.slug,
+        folderUid: folderUid,
+      },
+    });
+    this.startTrackingChanges();
+  }
+
+  private propagateEditModeChange() {
+    if (this.state.body instanceof SceneGridLayout) {
+      this.state.body.setState({ isDraggable: this.state.isEditing, isResizable: this.state.isEditing });
+      forceRenderChildren(this.state.body, true);
+    }
+  }
 
   public onDiscard = () => {
     // No need to listen to changes anymore
     this.stopTrackingChanges();
     // Stop url sync before updating url
     this.stopUrlSync();
-    // Now we can update url
-    locationService.replace({ pathname: this._initialUrlState?.pathname, search: this._initialUrlState?.search });
+
+    // Now we can update urls
+    // We are updating url and removing editview and editPanel.
+    // The initial url may be including edit view, edit panel or inspect query params if the user pasted the url,
+    // hence we need to cleanup those query params to get back to the dashboard view. Otherwise url sync can trigger overlays.
+    locationService.replace(
+      locationUtil.getUrlForPartial(this._initialUrlState!, {
+        editPanel: null,
+        editview: null,
+        inspect: null,
+        inspectTab: null,
+      })
+    );
+
+    // locationService.replace({ pathname: this._initialUrlState?.pathname, search: this._initialUrlState?.search });
     // Update state and disable editing
     this.setState({ ...this._initialState, isEditing: false });
     // and start url sync again
     this.startUrlSync();
-
     // Disable grid dragging
-    if (this.state.body instanceof SceneGridLayout) {
-      this.state.body.setState({ isDraggable: false, isResizable: false });
-      forceRenderChildren(this.state.body, true);
-    }
+    this.propagateEditModeChange();
   };
 
-  public onSave = () => {
-    this.setState({ overlay: new SaveDashboardDrawer({ dashboardRef: this.getRef() }) });
+  public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
+    const versionRsp = await historySrv.restoreDashboard(version.uid, version.version);
+
+    if (!Number.isInteger(versionRsp.version)) {
+      return false;
+    }
+
+    const dashboardDTO: DashboardDTO = {
+      dashboard: new DashboardModel(version.data),
+      meta: this.state.meta,
+    };
+    const dashScene = transformSaveModelToScene(dashboardDTO);
+    const newState = sceneUtils.cloneSceneObjectState(dashScene.state);
+    newState.version = versionRsp.version;
+
+    this._initialState = newState;
+    this.onDiscard();
+
+    return true;
   };
+
+  public openSaveDrawer({ saveAsCopy }: { saveAsCopy?: boolean }) {
+    if (!this.state.isEditing) {
+      return;
+    }
+
+    this.setState({
+      overlay: new SaveDashboardDrawer({
+        dashboardRef: this.getRef(),
+        saveAsCopy,
+      }),
+    });
+  }
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
-    const { meta, viewPanelScene } = this.state;
+    const { meta, viewPanelScene, editPanel } = this.state;
 
     let pageNav: NavModelItem = {
       text: this.state.title,
       url: getDashboardUrl({
         uid: this.state.uid,
+        slug: meta.slug,
         currentQueryParams: location.search,
-        updateQuery: { viewPanel: null, inspect: null, editview: null },
-        useExperimentalURL: Boolean(config.featureToggles.dashboardSceneForViewers && meta.canEdit),
+        updateQuery: { viewPanel: null, inspect: null, editview: null, editPanel: null, tab: null },
       }),
     };
 
@@ -216,6 +297,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     if (viewPanelScene) {
       pageNav = {
         text: 'View panel',
+        parentItem: pageNav,
+      };
+    }
+
+    if (editPanel) {
+      pageNav = {
+        text: 'Edit panel',
         parentItem: pageNav,
       };
     }
@@ -323,6 +411,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       app: CoreApp.Dashboard,
       dashboardUID: this.state.uid,
       panelId,
+      panelPluginType: panel?.state.pluginId,
     };
   }
 
@@ -330,6 +419,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     const { meta } = this.state;
 
     return Boolean(meta.canEdit || meta.canMakeEditable);
+  }
+
+  public getInitialSaveModel() {
+    return this._initialSaveModel;
+  }
+
+  /** Hacky temp function until we refactor transformSaveModelToScene a bit */
+  public setInitialSaveModel(saveModel: Dashboard) {
+    this._initialSaveModel = saveModel;
   }
 }
 
@@ -344,8 +442,8 @@ export class DashboardVariableDependency implements SceneVariableDependencyConfi
     return false;
   }
 
-  public variableUpdatesCompleted(changedVars: Set<SceneVariable>) {
-    if (changedVars.size > 0) {
+  public variableUpdateCompleted(variable: SceneVariable, hasChanged: boolean) {
+    if (hasChanged) {
       // Temp solution for some core panels (like dashlist) to know that variables have changed
       appEvents.publish(new VariablesChanged({ refreshAll: true, panelIds: [] }));
     }

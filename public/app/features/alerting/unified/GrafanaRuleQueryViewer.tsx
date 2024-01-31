@@ -46,7 +46,7 @@ export function GrafanaRuleQueryViewer({
   const expressions = queries.filter((q) => isExpressionQuery(q.model));
   const styles = useStyles2(getExpressionViewerStyles);
 
-  const thresholds = getThresholdsForQueries(queries);
+  const thresholds = getThresholdsForQueries(queries, condition);
 
   return (
     <Stack gap={2} direction="column">
@@ -377,20 +377,44 @@ function ThresholdExpressionViewer({ model }: { model: ExpressionQuery }) {
 
   const isRange = evaluator ? isRangeEvaluator(evaluator) : false;
 
-  return (
-    <div className={styles.container}>
-      <div className={styles.label}>Input</div>
-      <div className={styles.value}>{expression}</div>
+  const unloadEvaluator = conditions && conditions[0]?.unloadEvaluator;
+  const unloadThresholdFunction = thresholdFunctions.find((tf) => tf.value === unloadEvaluator?.type);
 
-      {evaluator && (
-        <>
-          <div className={styles.blue}>{thresholdFunction?.label}</div>
-          <div className={styles.bold}>
-            {isRange ? `(${evaluator.params[0]}; ${evaluator.params[1]})` : evaluator.params[0]}
-          </div>
-        </>
-      )}
-    </div>
+  const unloadIsRange = unloadEvaluator ? isRangeEvaluator(unloadEvaluator) : false;
+
+  return (
+    <>
+      <div className={styles.container}>
+        <div className={styles.label}>Input</div>
+        <div className={styles.value}>{expression}</div>
+
+        {evaluator && (
+          <>
+            <div className={styles.blue}>{thresholdFunction?.label}</div>
+            <div className={styles.bold}>
+              {isRange ? `(${evaluator.params[0]}; ${evaluator.params[1]})` : evaluator.params[0]}
+            </div>
+          </>
+        )}
+      </div>
+      <div className={styles.container}>
+        {unloadEvaluator && (
+          <>
+            <div className={styles.label}>Stop alerting when </div>
+            <div className={styles.value}>{expression}</div>
+
+            <>
+              <div className={styles.blue}>{unloadThresholdFunction?.label}</div>
+              <div className={styles.bold}>
+                {unloadIsRange
+                  ? `(${unloadEvaluator.params[0]}; ${unloadEvaluator.params[1]})`
+                  : unloadEvaluator.params[0]}
+              </div>
+            </>
+          </>
+        )}
+      </div>
+    </>
   );
 }
 

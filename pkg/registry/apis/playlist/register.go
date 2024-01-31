@@ -2,7 +2,6 @@ package playlist
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -67,28 +66,6 @@ func (b *PlaylistAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		Group:   b.gv.Group,
 		Version: runtime.APIVersionInternal,
 	})
-
-	gvk := playlist.PlaylistResourceInfo.GroupVersionKind()
-
-	// Add playlist thing
-	_ = scheme.AddFieldLabelConversionFunc(gvk,
-		runtime.FieldLabelConversionFunc(
-			func(label, value string) (string, string, error) {
-				if strings.HasPrefix(label, "grafana.app/") {
-					return label, value, nil
-				}
-
-				switch label {
-				case "metadata.name":
-					return label, value, nil
-				case "metadata.namespace":
-					return label, value, nil
-				default:
-					return "", "", fmt.Errorf("%q is not a known field selector: only %q, %q", label, "metadata.name", "metadata.namespace")
-				}
-			},
-		),
-	)
 
 	// If multiple versions exist, then register conversions from zz_generated.conversion.go
 	// if err := playlist.RegisterConversions(scheme); err != nil {

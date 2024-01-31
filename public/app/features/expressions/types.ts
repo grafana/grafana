@@ -130,6 +130,9 @@ export interface ExpressionQuery extends DataQuery {
   settings?: ExpressionQuerySettings;
 }
 
+export interface ThresholdExpressionQuery extends ExpressionQuery {
+  conditions: ClassicCondition[];
+}
 export interface ExpressionQuerySettings {
   mode?: ReducerMode;
   replaceWithValue?: number;
@@ -137,6 +140,10 @@ export interface ExpressionQuerySettings {
 
 export interface ClassicCondition {
   evaluator: {
+    params: number[];
+    type: EvalFunction;
+  };
+  unloadEvaluator?: {
     params: number[];
     type: EvalFunction;
   };

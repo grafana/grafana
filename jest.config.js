@@ -4,6 +4,7 @@
 process.env.TZ = 'Pacific/Easter'; // UTC-06:00 or UTC-05:00 depending on daylight savings
 
 const esModules = [
+  '@glideapps/glide-data-grid',
   'ol',
   'd3',
   'd3-color',
@@ -12,6 +13,7 @@ const esModules = [
   'internmap',
   'robust-predicates',
   'leven',
+  'nanoid',
 ].join('|');
 
 module.exports = {
@@ -23,7 +25,7 @@ module.exports = {
   transformIgnorePatterns: [
     `/node_modules/(?!${esModules})`, // exclude es modules to prevent TS complaining
   ],
-  moduleDirectories: ['public'],
+  moduleDirectories: ['public', 'node_modules'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages'],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],

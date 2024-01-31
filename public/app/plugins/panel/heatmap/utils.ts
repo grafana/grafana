@@ -512,13 +512,13 @@ export function prepConfig(opts: PrepConfigOpts) {
         dataRef.current?.xLayout === HeatmapCellLayout.le
           ? -1
           : dataRef.current?.xLayout === HeatmapCellLayout.ge
-          ? 1
-          : 0,
+            ? 1
+            : 0,
       yAlign: ((dataRef.current?.yLayout === HeatmapCellLayout.le
         ? -1
         : dataRef.current?.yLayout === HeatmapCellLayout.ge
-        ? 1
-        : 0) * (yAxisReverse ? -1 : 1)) as -1 | 0 | 1,
+          ? 1
+          : 0) * (yAxisReverse ? -1 : 1)) as -1 | 0 | 1,
       ySizeDivisor,
       disp: {
         fill: {
@@ -603,7 +603,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   if (sync && sync() !== DashboardCursorSync.Off) {
     cursor.sync = {
       key: eventsScope,
-      scales: [xScaleKey, yScaleKey],
+      scales: [xScaleKey, null],
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
           if (x < 0) {
@@ -975,8 +975,8 @@ export const valuesToFills = (values: number[], palette: string[], minValue: num
       values[i] < minValue
         ? 0
         : values[i] > maxValue
-        ? paletteSize - 1
-        : Math.min(paletteSize - 1, Math.floor((paletteSize * (values[i] - minValue)) / range));
+          ? paletteSize - 1
+          : Math.min(paletteSize - 1, Math.floor((paletteSize * (values[i] - minValue)) / range));
   }
 
   return indexedFills;

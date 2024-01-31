@@ -5,6 +5,7 @@ import (
 
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
 )
@@ -23,7 +24,7 @@ type DashboardService interface {
 	ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*Dashboard, error)
 	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*Dashboard, error)
 	SearchDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) (model.HitList, error)
-	CountInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) (int64, error)
+	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
 	GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*Dashboard, error)
 }
 
@@ -41,7 +42,7 @@ type DashboardProvisioningService interface {
 	GetProvisionedDashboardData(ctx context.Context, name string) ([]*DashboardProvisioning, error)
 	GetProvisionedDashboardDataByDashboardID(ctx context.Context, dashboardID int64) (*DashboardProvisioning, error)
 	GetProvisionedDashboardDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*DashboardProvisioning, error)
-	SaveFolderForProvisionedDashboards(context.Context, *SaveDashboardDTO) (*Dashboard, error)
+	SaveFolderForProvisionedDashboards(context.Context, *folder.CreateFolderCommand) (*folder.Folder, error)
 	SaveProvisionedDashboard(ctx context.Context, dto *SaveDashboardDTO, provisioning *DashboardProvisioning) (*Dashboard, error)
 	UnprovisionDashboard(ctx context.Context, dashboardID int64) error
 }
@@ -73,6 +74,6 @@ type Store interface {
 	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
 	// CountDashboardsInFolder returns the number of dashboards associated with
 	// the given parent folder ID.
-	CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
-	DeleteDashboardsInFolder(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
+	CountDashboardsInFolders(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
+	DeleteDashboardsInFolders(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
 }

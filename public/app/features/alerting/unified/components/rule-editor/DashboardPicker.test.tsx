@@ -1,7 +1,7 @@
 import { render, waitFor } from '@testing-library/react';
 import { noop } from 'lodash';
 import React from 'react';
-import { AutoSizerProps } from 'react-virtualized-auto-sizer';
+import { Props } from 'react-virtualized-auto-sizer';
 import { byRole } from 'testing-library-selector';
 
 import 'core-js/stable/structured-clone';
@@ -14,7 +14,13 @@ import { mockDashboardDto, mockDashboardSearchItem } from '../../mocks';
 import { DashboardPicker } from './DashboardPicker';
 
 jest.mock('react-virtualized-auto-sizer', () => {
-  return ({ children }: AutoSizerProps) => children({ height: 600, width: 1 });
+  return ({ children }: Props) =>
+    children({
+      height: 600,
+      scaledHeight: 600,
+      scaledWidth: 1,
+      width: 1,
+    });
 });
 
 const server = setupMswServer();

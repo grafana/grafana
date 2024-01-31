@@ -25,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, features *featuremgmt.FeatureManager, authnService authn.Service,
+func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureToggles, authnService authn.Service,
 ) *ContextHandler {
 	return &ContextHandler{
 		Cfg:          cfg,
@@ -39,7 +39,7 @@ func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, features *featuremg
 type ContextHandler struct {
 	Cfg          *setting.Cfg
 	tracer       tracing.Tracer
-	features     *featuremgmt.FeatureManager
+	features     featuremgmt.FeatureToggles
 	authnService authn.Service
 }
 

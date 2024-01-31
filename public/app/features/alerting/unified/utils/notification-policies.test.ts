@@ -1,6 +1,7 @@
 import { MatcherOperator, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import {
+  InhertitableProperties,
   computeInheritedTree,
   findMatchingRoutes,
   getInheritedProperties,
@@ -202,6 +203,18 @@ describe('getInheritedProperties()', () => {
 
       const childInherited = getInheritedProperties(parent, child);
       expect(childInherited).toHaveProperty('group_by', ['label']);
+    });
+
+    // This scenario is technically impossible unless we have a bug in our code.
+    // A route cannot both specify a receiver and inherit it from its parent at the same time.
+    it('should inherit from parent instead of grandparent', () => {
+      const parent: Route = { receiver: 'parent' };
+      const parentInherited: InhertitableProperties = { receiver: 'grandparent', group_by: ['foo'] };
+      const child: Route = {};
+
+      const childInherited = getInheritedProperties(parent, child, parentInherited);
+      expect(childInherited).toHaveProperty('receiver', 'parent');
+      expect(childInherited.group_by).toEqual(['foo']);
     });
   });
 

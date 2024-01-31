@@ -1,7 +1,8 @@
 import React, { useCallback } from 'react';
 import { useToggle } from 'react-use';
 
-import { DataFrame, DataTransformerConfig, TransformerRegistryItem, FrameMatcherID } from '@grafana/data';
+import { DataTransformerConfig, TransformerRegistryItem, FrameMatcherID, DataTopic } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 import {
@@ -13,14 +14,15 @@ import config from 'app/core/config';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 import { TransformationEditor } from './TransformationEditor';
-import { TransformationEditorHelperModal } from './TransformationEditorHelperModal';
+import { TransformationEditorHelpDisplay } from './TransformationEditorHelpDisplay';
 import { TransformationFilter } from './TransformationFilter';
+import { TransformationData } from './TransformationsEditor';
 import { TransformationsEditorTransformation } from './types';
 
 interface TransformationOperationRowProps {
   id: string;
   index: number;
-  data: DataFrame[];
+  data: TransformationData;
   uiConfig: TransformerRegistryItem<null>;
   configs: TransformationsEditorTransformation[];
   onRemove: (index: number) => void;
@@ -40,8 +42,9 @@ export const TransformationOperationRow = ({
   const [showDebug, toggleShowDebug] = useToggle(false);
   const [showHelp, toggleShowHelp] = useToggle(false);
   const disabled = !!configs[index].transformation.disabled;
-  const filter = configs[index].transformation.filter != null;
-  const showFilter = filter || data.length > 1;
+  const topic = configs[index].transformation.topic;
+  const showFilterEditor = configs[index].transformation.filter != null || topic != null;
+  const showFilterToggle = showFilterEditor || data.series.length > 1 || (data.annotations?.length ?? 0) > 0;
 
   const onDisableToggle = useCallback(
     (index: number) => {
@@ -99,12 +102,12 @@ export const TransformationOperationRow = ({
           onClick={instrumentToggleCallback(toggleShowHelp, 'help', showHelp)}
           active={showHelp}
         />
-        {showFilter && (
+        {showFilterToggle && (
           <QueryOperationToggleAction
             title="Filter"
             icon="filter"
-            onClick={instrumentToggleCallback(toggleFilter, 'filter', filter)}
-            active={filter}
+            onClick={instrumentToggleCallback(toggleFilter, 'filter', showFilterEditor)}
+            active={showFilterEditor}
           />
         )}
         <QueryOperationToggleAction
@@ -118,6 +121,7 @@ export const TransformationOperationRow = ({
           icon={disabled ? 'eye-slash' : 'eye'}
           onClick={instrumentToggleCallback(() => onDisableToggle(index), 'disabled', disabled)}
           active={disabled}
+          dataTestId={selectors.components.Transforms.disableTransformationButton}
         />
         <QueryOperationAction
           title="Remove"
@@ -156,20 +160,21 @@ export const TransformationOperationRow = ({
           open: 'Expand transformation row',
         }}
       >
-        {filter && (
+        {showFilterEditor && (
           <TransformationFilter index={index} config={configs[index].transformation} data={data} onChange={onChange} />
         )}
+
         <TransformationEditor
           debugMode={showDebug}
           index={index}
-          data={data}
+          data={topic === DataTopic.Annotations ? data.annotations ?? [] : data.series}
           configs={configs}
           uiConfig={uiConfig}
           onChange={onChange}
           toggleShowDebug={toggleShowDebug}
         />
       </QueryOperationRow>
-      <TransformationEditorHelperModal transformer={uiConfig} isOpen={showHelp} onCloseClick={toggleShowHelp} />
+      <TransformationEditorHelpDisplay transformer={uiConfig} isOpen={showHelp} onCloseClick={toggleShowHelp} />
     </>
   );
 };
