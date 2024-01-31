@@ -20,7 +20,7 @@ import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
 import { VariableEditorForm } from './variables/VariableEditorForm';
 import { VariableEditorList } from './variables/VariableEditorList';
-import { EditableVariableType, getVariableScene, isEditableVariableType } from './variables/utils';
+import { EditableVariableType, getVariableDefault, getVariableScene, isEditableVariableType } from './variables/utils';
 export interface VariablesEditViewState extends DashboardEditViewState {
   editIndex?: number | undefined;
   originalVariableState?: SceneVariableState;
@@ -156,6 +156,19 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     this.setState({ editIndex: variableIndex, originalVariableState: { ...this.getVariables()[variableIndex].state } });
   };
 
+  public onAdd = () => {
+    const variables = this.getVariables();
+    const variableIndex = variables.length;
+    //add the new variable to the end of the array
+    const defaultNewVariable = getVariableDefault(variables);
+    if (defaultNewVariable instanceof AdHocFilterSet) {
+      // TODO: Update controls in adding this fiter set to the dashboard
+    } else {
+      this.getVariableSet().setState({ variables: [...this.getVariables(), defaultNewVariable] });
+      this.setState({ editIndex: variableIndex, originalVariableState: defaultNewVariable.state });
+    }
+  };
+
   public onTypeChange = (type: EditableVariableType) => {
     // Find the index of the variable to be deleted
     const variableIndex = this.state.editIndex ?? -1;
@@ -205,7 +218,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const dashboard = model.getDashboard();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   // get variables from dashboard state
-  const { onDelete, onDuplicated, onOrderChanged, onEdit, onTypeChange, onGoBack, onDiscardChanges } = model;
+  const { onDelete, onDuplicated, onOrderChanged, onEdit, onTypeChange, onGoBack, onDiscardChanges, onAdd } = model;
   const { variables } = model.getVariableSet().useState();
   const { editIndex } = model.useState();
 
@@ -234,7 +247,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
         onDelete={onDelete}
         onDuplicate={onDuplicated}
         onChangeOrder={onOrderChanged}
-        onAdd={() => {}}
+        onAdd={onAdd}
         onEdit={onEdit}
       />
     </Page>
