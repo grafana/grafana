@@ -1,0 +1,99 @@
+{
+  "type": "datasource",
+  "name": "Prometheus",
+  "id": "prometheus",
+  "category": "tsdb",
+  "routes": [
+    {
+      "method": "POST",
+      "path": "api/v1/query",
+      "reqRole": "Viewer"
+    },
+    {
+      "method": "POST",
+      "path": "api/v1/query_range",
+      "reqRole": "Viewer"
+    },
+    {
+      "method": "POST",
+      "path": "api/v1/series",
+      "reqRole": "Viewer"
+    },
+    {
+      "method": "POST",
+      "path": "api/v1/labels",
+      "reqRole": "Viewer"
+    },
+    {
+      "method": "POST",
+      "path": "api/v1/query_exemplars",
+      "reqRole": "Viewer"
+    },
+    {
+      "method": "GET",
+      "path": "/rules",
+      "reqRole": "Viewer"
+    },
+    {
+      "method": "POST",
+      "path": "/rules",
+      "reqRole": "Editor"
+    },
+    {
+      "method": "DELETE",
+      "path": "/rules",
+      "reqRole": "Editor"
+    },
+    {
+      "method": "DELETE",
+      "path": "/config/v1/rules",
+      "reqRole": "Editor"
+    },
+    {
+      "method": "POST",
+      "path": "/config/v1/rules",
+      "reqRole": "Editor"
+    }
+  ],
+  "includes": [
+    {
+      "type": "dashboard",
+      "name": "Prometheus Stats",
+      "path": "dashboards/prometheus_stats.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Prometheus 2.0 Stats",
+      "path": "dashboards/prometheus_2_stats.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "Grafana Stats",
+      "path": "dashboards/grafana_stats.json"
+    }
+  ],
+  "metrics": true,
+  "alerting": true,
+  "annotations": true,
+  "backend": true,
+  "queryOptions": {
+    "minInterval": true
+  },
+  "info": {
+    "description": "Open source time series database & alerting",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/prometheus_logo.svg",
+      "large": "img/prometheus_logo.svg"
+    },
+    "links": [
+      {
+        "name": "Learn more",
+        "url": "https://prometheus.io/"
+      }
+    ]
+  }
+}
