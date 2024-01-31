@@ -158,7 +158,8 @@ func ProvideService(
 	}
 
 	s.rr.Group("/apis", proxyHandler)
-	s.rr.Group("/apiserver-metrics", proxyHandler)
+	s.rr.Group("/livez", proxyHandler)
+	s.rr.Group("/readyz", proxyHandler)
 	s.rr.Group("/openapi", proxyHandler)
 
 	return s, nil
@@ -198,7 +199,6 @@ func (s *service) start(ctx context.Context) error {
 
 		aggregator.APIVersionPriorities[b.GetGroupVersion()] = aggregator.Priority{Group: 15000, Version: int32(i + 1)}
 
-		// Optionally register a custom authorizer
 		auth := b.GetAuthorizer()
 		if auth != nil {
 			s.authorizer.Register(b.GetGroupVersion(), auth)
@@ -211,7 +211,6 @@ func (s *service) start(ctx context.Context) error {
 	if errs := o.Validate(); len(errs) != 0 {
 		// TODO: handle multiple errors
 		return errs[0]
-
 	}
 
 	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
@@ -220,6 +219,18 @@ func (s *service) start(ctx context.Context) error {
 	}
 	serverConfig.Authorization.Authorizer = s.authorizer
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
+
+	// setup loopback transport for the aggregator server
+	transport := &roundTripperFunc{ready: make(chan struct{})}
+	if err := serverConfig.SecureServing.Listener.Close(); err != nil {
+		return err
+	}
+	serverConfig.SecureServing.Listener = nil
+	serverConfig.LoopbackClientConfig.Transport = transport
+	serverConfig.LoopbackClientConfig.TLSClientConfig = clientrest.TLSClientConfig{}
+	if serverConfig.ClientConfig != nil {
+		serverConfig.ClientConfig.Transport = transport
+	}
 
 	switch o.StorageOptions.StorageType {
 	case grafanaapiserveroptions.StorageTypeEtcd:
@@ -304,6 +315,14 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	// setup the loopback transport for the aggregator server
+	transport.fn = func(req *http.Request) (*http.Response, error) {
+		w := httptest.NewRecorder()
+		aggregatorServer.GenericAPIServer.Handler.ServeHTTP(w, req)
+		return w.Result(), nil
+	}
+	close(transport.ready)
+
 	// only write kubeconfig in dev mode
 	if o.ExtraOptions.DevMode {
 		if err := ensureKubeConfig(aggregatorServer.GenericAPIServer.LoopbackClientConfig, o.StorageOptions.DataPath); err != nil {
@@ -319,11 +338,6 @@ func (s *service) start(ctx context.Context) error {
 	prepared, err := aggregatorServer.PrepareRun()
 	if err != nil {
 		return err
-	}
-
-	// When running in production, do not start a standalone https server
-	if !o.ExtraOptions.DevMode {
-		return nil
 	}
 
 	go func() {
@@ -371,9 +385,13 @@ func ensureKubeConfig(restConfig *clientrest.Config, dir string) error {
 }
 
 type roundTripperFunc struct {
-	fn func(req *http.Request) (*http.Response, error)
+	ready chan struct{}
+	fn    func(req *http.Request) (*http.Response, error)
 }
 
 func (f *roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	if f.fn == nil {
+		<-f.ready
+	}
 	return f.fn(req)
 }

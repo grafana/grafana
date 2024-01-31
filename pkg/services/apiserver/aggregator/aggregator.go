@@ -53,7 +53,7 @@ func CreateAggregatorConfig(commandOptions *options.Options, sharedConfig generi
 	}
 	sharedInformerFactory := informersv0alpha1.NewSharedInformerFactory(
 		serviceClient,
-		5*time.Minute, // this is effectively used as a refresh interval right now.  Might want to do something nicer later on.
+		5*time.Second, // this is effectively used as a refresh interval right now.  Might want to do something nicer later on.
 	)
 	serviceResolver := NewExternalNameResolver(sharedInformerFactory.Service().V0alpha1().ExternalNames().Lister())
 

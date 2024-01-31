@@ -71,16 +71,13 @@ func (o *Options) Validate() []error {
 
 func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) error {
 	serverConfig.AggregatedDiscoveryGroupManager = aggregated.NewResourceManager("apis")
-	if o.ExtraOptions.DevMode {
-		// SecureServingOptions is used when the apiserver needs it's own listener.
-		// this is not needed in production, but it's useful for development kubectl access.
-		if err := o.RecommendedOptions.SecureServing.ApplyTo(&serverConfig.SecureServing, &serverConfig.LoopbackClientConfig); err != nil {
-			return err
-		}
-		// AuthenticationOptions is needed to authenticate requests from kubectl in dev mode.
-		if err := o.RecommendedOptions.Authentication.ApplyTo(&serverConfig.Authentication, serverConfig.SecureServing, serverConfig.OpenAPIConfig); err != nil {
-			return err
-		}
+
+	if err := o.RecommendedOptions.SecureServing.ApplyTo(&serverConfig.SecureServing, &serverConfig.LoopbackClientConfig); err != nil {
+		return err
+	}
+
+	if err := o.RecommendedOptions.Authentication.ApplyTo(&serverConfig.Authentication, serverConfig.SecureServing, serverConfig.OpenAPIConfig); err != nil {
+		return err
 	}
 
 	if err := o.ExtraOptions.ApplyTo(serverConfig); err != nil {

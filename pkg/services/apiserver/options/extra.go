@@ -42,6 +42,5 @@ func (o *ExtraOptions) ApplyTo(c *genericapiserver.RecommendedConfig) error {
 		logger.Error(err, "failed to set log level")
 	}
 	c.ExternalAddress = o.ExternalAddress
-	c.LoopbackClientConfig.Host = o.APIURL
 	return nil
 }

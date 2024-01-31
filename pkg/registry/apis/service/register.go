@@ -26,9 +26,6 @@ func NewServiceAPIBuilder() *ServiceAPIBuilder {
 }
 
 func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *ServiceAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil // skip registration unless opting into experimental apis
-	}
 	builder := NewServiceAPIBuilder()
 	apiregistration.RegisterAPI(NewServiceAPIBuilder())
 	return builder
