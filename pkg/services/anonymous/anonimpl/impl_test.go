@@ -206,6 +206,8 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 				Query: "",
 				Page:  1,
 				Limit: 1,
+				From:  fixedTime,
+				To:    fixedTime.Add(1 * time.Hour),
 			},
 			expectedCount: 1,
 		},
@@ -227,6 +229,8 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 				Query: "192.1",
 				Page:  1,
 				Limit: 50,
+				From:  fixedTime,
+				To:    fixedTime.Add(1 * time.Hour),
 			},
 			expectedCount: 1,
 			expectedDevice: &anonstore.Device{
