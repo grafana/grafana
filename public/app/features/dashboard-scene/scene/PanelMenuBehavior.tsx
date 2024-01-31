@@ -9,6 +9,7 @@ import {
 import { config, getPluginLinkExtensions, locationService } from '@grafana/runtime';
 import {
   LocalValueVariable,
+  SceneFlexLayout,
   SceneGridLayout,
   SceneGridRow,
   SceneObject,
@@ -31,7 +32,6 @@ import { DashboardInteractions } from '../utils/interactions';
 import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
-import { AlertStatesDataLayer } from './AlertStatesDataLayer';
 import { DashboardScene } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
 import { VizPanelLinks } from './PanelLinks';
@@ -90,6 +90,15 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         dashboard.showModal(new ShareModal({ panelRef: panel.getRef(), dashboardRef: dashboard.getRef() }));
       },
       shortcut: 'p s',
+    });
+
+    moreSubMenu.push({
+      text: t('panel.header-menu.duplicate', `Duplicate`),
+      onClick: () => {
+        DashboardInteractions.panelMenuItemClicked('duplicate');
+        dashboard.duplicatePanel(panel);
+      },
+      shortcut: 'p d',
     });
 
     if (panel.parent instanceof LibraryVizPanel) {
@@ -322,20 +331,13 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
   };
 }
 
-export function removePanel(dashboard: DashboardScene, panel: SceneObject, ask: boolean) {
-  const dataLayers = sceneGraph.getDataLayers(panel);
-  const panelId = getPanelIdForVizPanel(panel);
+export function removePanel(dashboard: DashboardScene, panel: VizPanel, ask: boolean) {
+  const vizPanelData = sceneGraph.getData(panel);
   let panelHasAlert = false;
 
-  dataLayers.forEach((dataLayer) => {
-    if (dataLayer instanceof AlertStatesDataLayer) {
-      const fields = dataLayer.state.data?.series.find((series) => series.fields);
-      const panelIds = fields?.fields.find((field) => field.name === 'panelId')?.values;
-      if (panelIds?.includes(panelId)) {
-        panelHasAlert = true;
-      }
-    }
-  });
+  if (vizPanelData.state.data?.alertState) {
+    panelHasAlert = true;
+  }
 
   if (ask !== false) {
     const text2 =
@@ -366,9 +368,11 @@ export function removePanel(dashboard: DashboardScene, panel: SceneObject, ask: 
     }
   });
 
-  const sceneGridLayout = dashboard.state.body as SceneGridLayout;
+  const layout = dashboard.state.body;
 
-  sceneGridLayout.setState({
-    children: panels,
-  });
+  if (layout instanceof SceneGridLayout || SceneFlexLayout) {
+    layout.setState({
+      children: panels,
+    });
+  }
 }

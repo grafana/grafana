@@ -6,6 +6,7 @@ import { locationService } from '@grafana/runtime';
 import {
   getUrlSyncManager,
   SceneFlexLayout,
+  sceneGraph,
   SceneGridItem,
   SceneGridLayout,
   SceneObject,
@@ -17,6 +18,7 @@ import {
   sceneUtils,
   SceneVariable,
   SceneVariableDependencyConfigLike,
+  VizPanel,
 } from '@grafana/scenes';
 import { DashboardLink } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
@@ -323,6 +325,44 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public getInitialState(): DashboardSceneState | undefined {
     return this._initialState;
+  }
+
+  public duplicatePanel(vizPanel: VizPanel) {
+    if (!vizPanel.parent) {
+      return;
+    }
+
+    const gridItem = vizPanel.parent;
+
+    if (!(gridItem instanceof SceneGridItem)) {
+      console.error('Trying to duplicate a panel in a layout that is not SceneGridItem ');
+      return;
+    }
+
+    const panelData = sceneGraph.getData(vizPanel).clone();
+
+    // when we duplicate a panel we don't want to clone the alert state
+    delete panelData.state.data?.alertState;
+
+    // destructuring to remove key from the state for the panel and grid item
+    const { key, ...panelState } = sceneUtils.cloneSceneObjectState(vizPanel.state);
+    const { key: gridItemKey, ...gridItemToDuplicateState } = sceneUtils.cloneSceneObjectState(gridItem.state);
+
+    const newGridItem = new SceneGridItem({
+      ...gridItemToDuplicateState,
+      body: new VizPanel({ ...panelState, $data: panelData }),
+    });
+
+    if (!(this.state.body instanceof SceneGridLayout)) {
+      console.error('Trying to duplicate a panel in a layout that is not SceneGridLayout ');
+      return;
+    }
+
+    const sceneGridLayout = this.state.body;
+
+    sceneGridLayout.setState({
+      children: [...sceneGridLayout.state.children, newGridItem],
+    });
   }
 
   public showModal(modal: SceneObject) {

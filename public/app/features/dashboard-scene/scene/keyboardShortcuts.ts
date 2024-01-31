@@ -120,6 +120,14 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     }),
   });
 
+  // duplicate panel
+  keybindings.addBinding({
+    key: 'p d',
+    onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+      scene.duplicatePanel(vizPanel);
+    }),
+  });
+
   // toggle all exemplars (TODO)
   // collapse all rows (TODO)
   // expand all rows (TODO)
