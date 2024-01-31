@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { DataSourceApi, getDefaultTimeRange, LoadingState, PanelData, SelectableValue, TimeRange } from '@grafana/data';
 import {
   EditorRow,
-  // LabelFilters, this is broken in @grafana/experimental so we need to use the one from prometheus
+  LabelFilters,
   OperationExplainedBox,
   OperationList,
   OperationListExplained,
@@ -14,7 +14,6 @@ import {
   QueryBuilderOperation,
 } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
 
 import { testIds } from '../../components/LokiQueryEditor';
 import { LokiDatasource } from '../../datasource';
