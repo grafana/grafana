@@ -50,7 +50,7 @@ import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { DashboardInteractions } from '../utils/interactions';
 import {
   getCurrentValueForOldIntervalModel,
-  getIntervalsFromOldIntervalModel,
+  getIntervalsFromQueryString,
   getVizPanelKeyForPanelId,
 } from '../utils/utils';
 
@@ -215,7 +215,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     layers = oldModel.annotations?.list.map((a) => {
       // Each annotation query is an individual data layer
       return new DashboardAnnotationsDataLayer({
-        key: `annnotations-${a.name}`,
+        key: `annotations-${a.name}`,
         query: a,
         name: a.name,
         isEnabled: Boolean(a.enable),
@@ -350,7 +350,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
     });
   } else if (variable.type === 'interval') {
-    const intervals = getIntervalsFromOldIntervalModel(variable);
+    const intervals = getIntervalsFromQueryString(variable.query);
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
     return new IntervalVariable({
       ...commonProperties,
