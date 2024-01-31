@@ -35,7 +35,7 @@ export const InfiniteScroll = ({
   const [upperLoading, setUpperLoading] = useState(false);
   const [lowerLoading, setLowerLoading] = useState(false);
   const lastScroll = useRef<number>(scrollElement?.scrollTop || 0);
-  const [onEdge, setOnEdge] = useState(true);
+  const [onEdge, setOnEdge] = useState(scrollElement?.scrollTop === 0 ? true : false);
   const debouncedOnEdge = useMemo(
     () =>
       debounce(() => {
