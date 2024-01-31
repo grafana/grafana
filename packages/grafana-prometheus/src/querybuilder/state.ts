@@ -1,6 +1,6 @@
 import { CoreApp } from '@grafana/data';
-import store from 'app/core/store';
 
+import store from '../gcopypaste/app/core/store';
 import { LegendFormatMode, PromQuery } from '../types';
 
 import { QueryEditorMode } from './shared/types';
