@@ -127,10 +127,6 @@ const (
 	// Enable async query data support for Athena
 	FlagAthenaAsyncQueryDataSupport = "athenaAsyncQueryDataSupport"
 
-	// FlagCloudwatchNewRegionsHandler
-	// Refactor of /regions endpoint, no user-facing changes
-	FlagCloudwatchNewRegionsHandler = "cloudwatchNewRegionsHandler"
-
 	// FlagShowDashboardValidationWarnings
 	// Show warnings when dashboards do not validate against the schema
 	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
@@ -150,10 +146,6 @@ const (
 	// FlagNestedFolderPicker
 	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle
 	FlagNestedFolderPicker = "nestedFolderPicker"
-
-	// FlagDisablePrometheusExemplarSampling
-	// Disable Prometheus exemplar sampling
-	FlagDisablePrometheusExemplarSampling = "disablePrometheusExemplarSampling"
 
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
@@ -634,4 +626,16 @@ const (
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
 	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
+
+	// FlagPromQLScope
+	// In-development feature that will allow injection of labels into prometheus queries.
+	FlagPromQLScope = "promQLScope"
+
+	// FlagSlateAutocomplete
+	// Adjusts the behaviour of the slate editor to properly handle autocomplete. Feature toggled for safety.
+	FlagSlateAutocomplete = "slateAutocomplete"
+
+	// FlagNodeGraphDotLayout
+	// Changed the layout algorithm for the node graph
+	FlagNodeGraphDotLayout = "nodeGraphDotLayout"
 )
