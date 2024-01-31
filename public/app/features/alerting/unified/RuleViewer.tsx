@@ -19,7 +19,7 @@ type RuleViewerProps = GrafanaRouteComponentProps<{
   sourceName: string;
 }>;
 
-const newAlertDetailView = Boolean(config.featureToggles.alertingDetailsViewV2) === true;
+const newAlertDetailView = Boolean(config.featureToggles?.alertingDetailsViewV2) === true;
 
 const RuleViewer = (props: RuleViewerProps): JSX.Element => {
   return newAlertDetailView ? <RuleViewerV2Wrapper {...props} /> : <RuleViewerV1Wrapper {...props} />;
