@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem } from '@grafana/data';
 import { featureEnabled } from '@grafana/runtime';
-import { Alert, Button, Field, Form, Input, Stack } from '@grafana/ui';
+import { Alert, Button, Field, Input, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
@@ -62,6 +63,7 @@ export const LdapPage = ({
   ldapConnectionInfo,
 }: Props) => {
   const [isLoading, setIsLoading] = useState(true);
+  const { register, handleSubmit } = useForm<FormModel>();
 
   const fetchUserMapping = useCallback(
     async (username: string) => {
@@ -89,7 +91,7 @@ export const LdapPage = ({
     init();
   }, [clearUserMappingInfo, fetchUserMapping, loadLdapState, loadLdapSyncStatus, queryParams]);
 
-  const search = (username: string) => {
+  const search = ({ username }: FormModel) => {
     if (username) {
       fetchUserMapping(username);
     }
@@ -117,24 +119,22 @@ export const LdapPage = ({
           {canReadLDAPUser && (
             <section>
               <h3>Test user mapping</h3>
-              <Form onSubmit={(data) => search(data.username)}>
-                {({ register }) => (
-                  <Field label="Username">
-                    <Input
-                      {...register('username', { required: true })}
-                      width={34}
-                      id="username"
-                      type="text"
-                      defaultValue={queryParams.username}
-                      addonAfter={
-                        <Button variant="primary" type="submit">
-                          Run
-                        </Button>
-                      }
-                    />
-                  </Field>
-                )}
-              </Form>
+              <form onSubmit={handleSubmit(search)}>
+                <Field label="Username">
+                  <Input
+                    {...register('username', { required: true })}
+                    width={34}
+                    id="username"
+                    type="text"
+                    defaultValue={queryParams.username}
+                    addonAfter={
+                      <Button variant="primary" type="submit">
+                        Run
+                      </Button>
+                    }
+                  />
+                </Field>
+              </form>
               {userError && userError.title && (
                 <Alert title={userError.title} severity={AppNotificationSeverity.Error} onRemove={onClearUserError}>
                   {userError.body}
