@@ -84,6 +84,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			MaxSeries:     maxSeries,
 			SecureGrpc:    true,
 			Token:         settings.DecryptedSecureJSONData["token"],
+			Timeout:       opts.Timeouts.Timeout,
 		}
 		return model, nil
 	}

@@ -37,6 +37,7 @@ export interface DataTrailState extends SceneObjectState {
   controls: SceneObject[];
   history: DataTrailHistory;
   settings: DataTrailSettings;
+  createdAt: number;
 
   // just for for the starting data source
   initialDS?: string;
@@ -61,6 +62,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       ],
       history: state.history ?? new DataTrailHistory({}),
       settings: state.settings ?? new DataTrailSettings({}),
+      createdAt: state.createdAt ?? new Date().getTime(),
       ...state,
     });
 
@@ -167,7 +169,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   }
 
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
-    const { controls, topScene, history, settings } = model.useState();
+    const { controls, topScene, history } = model.useState();
     const styles = useStyles2(getStyles);
 
     return (
@@ -178,7 +180,6 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
             {controls.map((control) => (
               <control.Component key={control.state.key} model={control} />
             ))}
-            <settings.Component model={settings} />
           </div>
         )}
         <div className={styles.body}>{topScene && <topScene.Component model={topScene} />}</div>
@@ -232,7 +233,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     controls: css({
       display: 'flex',
-      gap: theme.spacing(2),
+      gap: theme.spacing(1),
       alignItems: 'flex-end',
       flexWrap: 'wrap',
     }),

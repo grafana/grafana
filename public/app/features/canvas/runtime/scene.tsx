@@ -397,9 +397,19 @@ export class Scene {
       hitRate: 0,
     });
 
+    const snapDirections = { top: true, left: true, bottom: true, right: true, center: true, middle: true };
+    const elementSnapDirections = { top: true, left: true, bottom: true, right: true, center: true, middle: true };
+
     this.moveable = new Moveable(this.div!, {
       draggable: allowChanges && !this.editModeEnabled.getValue(),
       resizable: allowChanges,
+
+      // Setup snappable
+      snappable: allowChanges,
+      snapDirections: snapDirections,
+      elementSnapDirections: elementSnapDirections,
+      elementGuidelines: targetElements,
+
       ables: [dimensionViewable, constraintViewable(this), settingsViewable(this)],
       props: {
         dimensionViewable: allowChanges,
@@ -426,9 +436,27 @@ export class Scene {
       .on('dragStart', (event) => {
         this.ignoreDataUpdate = true;
         this.setNonTargetPointerEvents(event.target, true);
+
+        // Remove the selected element from the snappable guidelines
+        if (this.moveable && this.moveable.elementGuidelines) {
+          const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
+          if (targetIndex > -1) {
+            this.moveable.elementGuidelines.splice(targetIndex, 1);
+          }
+        }
       })
-      .on('dragGroupStart', (event) => {
+      .on('dragGroupStart', (e) => {
         this.ignoreDataUpdate = true;
+
+        // Remove the selected elements from the snappable guidelines
+        if (this.moveable && this.moveable.elementGuidelines) {
+          for (let event of e.events) {
+            const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
+            if (targetIndex > -1) {
+              this.moveable.elementGuidelines.splice(targetIndex, 1);
+            }
+          }
+        }
       })
       .on('drag', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
@@ -463,6 +491,11 @@ export class Scene {
             if (targetedElement) {
               targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
             }
+
+            // re-add the selected elements to the snappable guidelines
+            if (this.moveable && this.moveable.elementGuidelines) {
+              this.moveable.elementGuidelines.push(event.target);
+            }
           }
         });
 
@@ -478,17 +511,41 @@ export class Scene {
         this.moved.next(Date.now());
         this.ignoreDataUpdate = false;
         this.setNonTargetPointerEvents(event.target, false);
+
+        // re-add the selected element to the snappable guidelines
+        if (this.moveable && this.moveable.elementGuidelines) {
+          this.moveable.elementGuidelines.push(event.target);
+        }
       })
       .on('resizeStart', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
 
         if (targetedElement) {
+          // Remove the selected element from the snappable guidelines
+          if (this.moveable && this.moveable.elementGuidelines) {
+            const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
+            if (targetIndex > -1) {
+              this.moveable.elementGuidelines.splice(targetIndex, 1);
+            }
+          }
+
           targetedElement.tempConstraint = { ...targetedElement.options.constraint };
           targetedElement.options.constraint = {
             vertical: VerticalConstraint.Top,
             horizontal: HorizontalConstraint.Left,
           };
           targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
+        }
+      })
+      .on('resizeGroupStart', (e) => {
+        // Remove the selected elements from the snappable guidelines
+        if (this.moveable && this.moveable.elementGuidelines) {
+          for (let event of e.events) {
+            const targetIndex = this.moveable.elementGuidelines.indexOf(event.target);
+            if (targetIndex > -1) {
+              this.moveable.elementGuidelines.splice(targetIndex, 1);
+            }
+          }
         }
       })
       .on('resize', (event) => {
@@ -531,6 +588,19 @@ export class Scene {
           }
 
           targetedElement.setPlacementFromConstraint(undefined, undefined, this.scale);
+
+          // re-add the selected element to the snappable guidelines
+          if (this.moveable && this.moveable.elementGuidelines) {
+            this.moveable.elementGuidelines.push(event.target);
+          }
+        }
+      })
+      .on('resizeGroupEnd', (e) => {
+        // re-add the selected elements to the snappable guidelines
+        if (this.moveable && this.moveable.elementGuidelines) {
+          for (let event of e.events) {
+            this.moveable.elementGuidelines.push(event.target);
+          }
         }
       });
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -62,6 +63,7 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 
 	if cmd.FolderUID != nil {
 		if *cmd.FolderUID == "" {
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 			// nolint:staticcheck
 			cmd.FolderID = 0
 			generalFolderUID := ac.GeneralFolderUID
@@ -71,6 +73,7 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 			if err != nil || folder == nil {
 				return response.ErrOrFallback(http.StatusBadRequest, "failed to get folder", err)
 			}
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 			// nolint:staticcheck
 			cmd.FolderID = folder.ID
 		}
@@ -81,8 +84,10 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 		return toLibraryElementError(err, "Failed to create library element")
 	}
 
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 	// nolint:staticcheck
 	if element.FolderID != 0 {
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		// nolint:staticcheck
 		folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), ID: &element.FolderID, SignedInUser: c.SignedInUser})
 		if err != nil {
@@ -210,6 +215,7 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 
 	if cmd.FolderUID != nil {
 		if *cmd.FolderUID == "" {
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 			// nolint:staticcheck
 			cmd.FolderID = 0
 		} else {
@@ -217,6 +223,7 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 			if err != nil || folder == nil {
 				return response.Error(http.StatusBadRequest, "failed to get folder", err)
 			}
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 			// nolint:staticcheck
 			cmd.FolderID = folder.ID
 		}
@@ -227,8 +234,10 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 		return toLibraryElementError(err, "Failed to update library element")
 	}
 
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 	// nolint:staticcheck
 	if element.FolderID != 0 {
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		// nolint:staticcheck
 		folder, err := l.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), ID: &element.FolderID, SignedInUser: c.SignedInUser})
 		if err != nil {

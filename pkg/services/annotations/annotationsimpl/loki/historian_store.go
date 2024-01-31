@@ -294,5 +294,6 @@ func useStore(cfg setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.Fe
 	}
 
 	// We should only query Loki if annotations do not exist in the database.
-	return backend == historian.BackendTypeLoki
+	// To be doubly sure, ensure that the feature toggle to only use Loki is enabled.
+	return backend == historian.BackendTypeLoki && ft.IsEnabledGlobally(featuremgmt.FlagAlertStateHistoryLokiOnly)
 }

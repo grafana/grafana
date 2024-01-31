@@ -1,5 +1,5 @@
 import { urlUtil } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { getUrlSyncManager, sceneGraph, SceneObject, SceneObjectUrlValues, SceneTimeRange } from '@grafana/scenes';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
@@ -48,6 +48,14 @@ export function getMetricSceneFor(model: SceneObject): MetricScene {
   console.error('Unable to find graph view for', model);
 
   throw new Error('Unable to find trail');
+}
+
+export function getDataSource(trail: DataTrail) {
+  return sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
+}
+
+export function getDataSourceName(dataSourceUid: string) {
+  return getDataSourceSrv().getInstanceSettings(dataSourceUid)?.name || dataSourceUid;
 }
 
 export function getDatasourceForNewTrail(): string | undefined {

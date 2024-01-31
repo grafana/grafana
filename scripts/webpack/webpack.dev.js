@@ -40,7 +40,6 @@ module.exports = (env = {}) => {
       rules: [
         {
           test: /\.tsx?$/,
-          exclude: /node_modules/,
           use: {
             loader: 'esbuild-loader',
             options: esbuildOptions,
