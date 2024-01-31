@@ -267,7 +267,7 @@ func validateNotificationSettings(n *apimodels.PostableNotificationSettings) ([]
 	}
 
 	if err := s.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid notificaiton settings: %w", err)
+		return nil, fmt.Errorf("invalid notification settings: %w", err)
 	}
 	return []ngmodels.NotificationSettings{
 		s,
