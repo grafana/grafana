@@ -1,6 +1,6 @@
 import { Moment } from 'moment';
 
-import { AbstractLabelOperator, AbstractQuery, DateTime, dateTime, TimeRange } from '../../grafana-data';
+import { AbstractLabelOperator, AbstractQuery, DateTime, dateTime, TimeRange } from '@grafana/data';
 
 import {
   escapeLabelValueInExactSelector,
@@ -116,7 +116,10 @@ describe('fixSummariesMetadata', () => {
     const expected = {
       foo: { type: 'not_a_summary', help: 'foo help' },
       bar: { type: 'summary', help: 'bar help' },
-      bar_count: { type: 'counter', help: 'Count of events that have been observed for the base metric (bar help)' },
+      bar_count: {
+        type: 'counter',
+        help: 'Count of events that have been observed for the base metric (bar help)',
+      },
       bar_sum: { type: 'counter', help: 'Total sum of all observed values for the base metric (bar help)' },
     };
     expect(fixSummariesMetadata(metadata)).toEqual({ ...expected, ...synthetics });
@@ -164,7 +167,10 @@ describe('expandRecordingRules()', () => {
 
   it('returns query with labels with expanded recording rules', () => {
     expect(
-      expandRecordingRules('metricA{label1="value1"} / metricB{label2="value2"}', { metricA: 'fooA', metricB: 'fooB' })
+      expandRecordingRules('metricA{label1="value1"} / metricB{label2="value2"}', {
+        metricA: 'fooA',
+        metricB: 'fooB',
+      })
     ).toBe('fooA{label1="value1"} / fooB{label2="value2"}');
     expect(
       expandRecordingRules('metricA{label1="value1",label2="value,2"}', {
