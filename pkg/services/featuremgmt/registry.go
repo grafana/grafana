@@ -1338,5 +1338,13 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 			Created:      time.Date(2024, time.January, 29, 12, 0, 0, 0, time.UTC),
 		},
+		{
+			Name:         "nodeGraphDotLayout",
+			Description:  "Changed the layout algorithm for the node graph",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			Created:      time.Date(2024, time.January, 2, 12, 0, 0, 0, time.UTC),
+		},
 	}
 )
