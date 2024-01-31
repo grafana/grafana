@@ -2,6 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/prometheus",
+  "private": true,
   "version": "10.4.0-pre",
   "description": "Grafana Prometheus Library",
   "keywords": [
@@ -15,12 +16,6 @@
   },
   "main": "src/index.ts",
   "types": "src/index.ts",
-  "publishConfig": {
-    "main": "dist/index.js",
-    "module": "dist/esm/index.js",
-    "types": "dist/index.d.ts",
-    "access": "public"
-  },
   "files": [
     "dist",
     "./README.md",
@@ -28,21 +23,11 @@
     "LICENSE_APACHE2"
   ],
   "scripts": {
-    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
-    "clean": "rimraf ./dist ./compiled ./package.tgz",
-    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
-    "postpack": "mv package.json.bak package.json"
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
   },
   "dependencies": {
     "@emotion/css": "11.11.2",
     "@floating-ui/react": "0.26.8",
-    "@grafana/data": "workspace:*",
-    "@grafana/experimental": "1.7.8",
-    "@grafana/faro-web-sdk": "^1.3.6",
-    "@grafana/runtime": "workspace:*",
-    "@grafana/schema": "workspace:*",
-    "@grafana/ui": "workspace:*",
     "@leeoniya/ufuzzy": "1.0.14",
     "@lezer/common": "1.2.1",
     "@lezer/highlight": "1.2.0",
@@ -50,7 +35,7 @@
     "@prometheus-io/lezer-promql": "^0.37.0-rc.1",
     "@reduxjs/toolkit": "1.9.5",
     "d3": "7.8.5",
-    "date-fns": "2.30.0",
+    "date-fns": "3.3.1",
     "debounce-promise": "3.1.2",
     "eventemitter3": "5.0.1",
     "lodash": "4.17.21",
@@ -62,9 +47,7 @@
     "monaco-promql": "1.7.4",
     "pluralize": "8.0.0",
     "prismjs": "1.29.0",
-    "react": "18.2.0",
     "react-beautiful-dnd": "13.1.1",
-    "react-dom": "18.2.0",
     "react-highlight-words": "0.20.0",
     "react-select": "5.8.0",
     "react-use": "17.5.0",
@@ -81,9 +64,6 @@
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/eslint-config": "7.0.0",
     "@grafana/tsconfig": "^1.3.0-rc1",
-    "@rollup/plugin-commonjs": "25.0.2",
-    "@rollup/plugin-json": "6.0.0",
-    "@rollup/plugin-node-resolve": "15.2.3",
     "@swc/core": "1.3.107",
     "@swc/helpers": "0.5.3",
     "@testing-library/dom": "9.3.4",
@@ -129,12 +109,10 @@
     "jest-environment-jsdom": "29.7.0",
     "jest-matcher-utils": "29.7.0",
     "prettier": "3.2.4",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
     "react-select-event": "5.5.1",
     "react-test-renderer": "18.2.0",
-    "rollup": "2.79.1",
-    "rollup-plugin-dts": "^5.0.0",
-    "rollup-plugin-esbuild": "5.0.0",
-    "rollup-plugin-node-externals": "^5.0.0",
     "sass": "1.70.0",
     "sass-loader": "13.3.2",
     "style-loader": "3.3.4",
@@ -145,6 +123,12 @@
     "webpack-cli": "5.1.4"
   },
   "peerDependencies": {
+    "@grafana/data": "workspace:*",
+    "@grafana/experimental": "1.7.8",
+    "@grafana/faro-web-sdk": "^1.3.6",
+    "@grafana/runtime": "workspace:*",
+    "@grafana/schema": "workspace:*",
+    "@grafana/ui": "workspace:*",
     "react": "^17.0.0 || ^18.0.0",
     "react-dom": "^17.0.0 || ^18.0.0"
   }
