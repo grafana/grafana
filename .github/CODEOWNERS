@@ -344,9 +344,9 @@
 /packages/grafana-sql/ @grafana/partner-datasources @grafana/oss-big-tent
 
 # root files, mostly frontend 
-.browserslistrc @grafana/frontend-ops
-package.json @grafana/frontend-ops
-tsconfig.json @grafana/frontend-ops
+/.browserslistrc @grafana/frontend-ops
+/package.json @grafana/frontend-ops
+/tsconfig.json @grafana/frontend-ops
 /.editorconfig @grafana/frontend-ops
 /.eslintignore @grafana/frontend-ops
 /.gitattributes @grafana/frontend-ops
@@ -356,7 +356,7 @@ tsconfig.json @grafana/frontend-ops
 /.yarn @grafana/frontend-ops
 /.yarnrc.yml @grafana/frontend-ops
 /yarn.lock @grafana/frontend-ops
-lerna.json @grafana/frontend-ops
+/lerna.json @grafana/frontend-ops
 /.prettierrc.js @grafana/frontend-ops
 /.eslintrc @grafana/frontend-ops
 /.vim @zoltanbedi
@@ -367,9 +367,9 @@ lerna.json @grafana/frontend-ops
 /tools/ @grafana/frontend-ops
 /lefthook.yml @grafana/frontend-ops
 /lefthook.rc @grafana/frontend-ops
-.husky/pre-commit @grafana/frontend-ops
-cypress.config.js @grafana/grafana-frontend-platform
-.levignore.js @grafana/plugins-platform-frontend
+/.husky/pre-commit @grafana/frontend-ops
+/cypress.config.js @grafana/grafana-frontend-platform
+/.levignore.js @grafana/plugins-platform-frontend
 
 
 # public folder
