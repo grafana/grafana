@@ -35,9 +35,7 @@ def yarn_install_step():
         "name": "yarn-install",
         "image": images["node"],
         "commands": [
-            "apk add --update apt-get",
-            "apt-get update -y",
-            "apt-get install -yq python",
+            "apk add --update --no-cache python3",
             "yarn install --immutable",
         ],
         "depends_on": [],
