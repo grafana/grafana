@@ -149,11 +149,18 @@ export function getNotificationSettingsForDTO(
       receiver: contactPoints?.grafana?.selectedContactPoint,
       mute_timings: contactPoints?.grafana?.muteTimeIntervals,
       group_by: contactPoints?.grafana?.overrideGrouping ? contactPoints?.grafana?.groupBy : undefined,
-      group_wait: contactPoints?.grafana?.overrideTimings ? contactPoints?.grafana?.groupWaitValue : undefined,
-      group_interval: contactPoints?.grafana?.overrideTimings ? contactPoints?.grafana?.groupIntervalValue : undefined,
-      repeat_interval: contactPoints?.grafana?.overrideTimings
-        ? contactPoints?.grafana?.repeatIntervalValue
-        : undefined,
+      group_wait:
+        contactPoints?.grafana?.overrideTimings && contactPoints?.grafana?.groupWaitValue
+          ? contactPoints?.grafana?.groupWaitValue
+          : undefined,
+      group_interval:
+        contactPoints?.grafana?.overrideTimings && contactPoints?.grafana?.groupIntervalValue
+          ? contactPoints?.grafana?.groupIntervalValue
+          : undefined,
+      repeat_interval:
+        contactPoints?.grafana?.overrideTimings && contactPoints?.grafana?.repeatIntervalValue
+          ? contactPoints?.grafana?.repeatIntervalValue
+          : undefined,
     };
   }
   return undefined;
@@ -191,8 +198,13 @@ export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManager
     ? {
         selectedContactPoint: ga.notification_settings.receiver,
         muteTimeIntervals: ga.notification_settings.mute_timings ?? [],
-        overrideGrouping: Boolean(ga.notification_settings?.group_by),
-        overrideTimings: Boolean(ga.notification_settings.group_wait),
+        overrideGrouping:
+          Array.isArray(ga.notification_settings.group_by) && ga.notification_settings.group_by.length > 0,
+        overrideTimings: [
+          ga.notification_settings.group_wait,
+          ga.notification_settings.group_interval,
+          ga.notification_settings.repeat_interval,
+        ].some(Boolean),
         groupBy: ga.notification_settings.group_by || [],
         groupWaitValue: ga.notification_settings.group_wait || '',
         groupIntervalValue: ga.notification_settings.group_interval || '',

@@ -123,6 +123,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apt-get update -yq && apt-get install python -y
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -224,6 +225,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apt-get update -yq && apt-get install python -y
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -535,6 +537,7 @@ steps:
   image: golang:1.21.6-alpine
   name: wire-install
 - commands:
+  - apt-get update -yq && apt-get install python -y
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -710,9 +713,9 @@ steps:
   - /src/grafana-build artifacts -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
     -a docker:grafana:linux/arm/v7:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
-    --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.18.5 --tag-format='{{ .version_base
-    }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD --ubuntu-tag-format='{{ .version_base
-    }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
+    --go-version=1.21.6 --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.18.5 --tag-format='{{
+    .version_base }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD --ubuntu-tag-format='{{
+    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - yarn-install
@@ -1044,6 +1047,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apt-get update -yq && apt-get install python -y
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1403,6 +1407,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apt-get update -yq && apt-get install python -y
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1479,6 +1484,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apt-get update -yq && apt-get install python -y
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1537,6 +1543,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apt-get update -yq && apt-get install python -y
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1799,6 +1806,7 @@ steps:
   image: golang:1.21.6-alpine
   name: wire-install
 - commands:
+  - apt-get update -yq && apt-get install python -y
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -2009,9 +2017,9 @@ steps:
   - /src/grafana-build artifacts -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
     -a docker:grafana:linux/arm/v7:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
-    --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.18.5 --tag-format='{{ .version_base
-    }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD --ubuntu-tag-format='{{ .version_base
-    }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
+    --go-version=1.21.6 --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.18.5 --tag-format='{{
+    .version_base }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD --ubuntu-tag-format='{{
+    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - update-package-json-version
@@ -2714,6 +2722,7 @@ steps:
   image: golang:1.21.6-alpine
   name: compile-build-cmd
 - commands:
+  - apt-get update -yq && apt-get install python -y
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -2987,6 +2996,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apt-get update -yq && apt-get install python -y
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -3410,6 +3420,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apt-get update -yq && apt-get install python -y
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -4777,6 +4788,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 42c4eb79bab004d2916c7ab27b58e654300d2683345ea959bc052d1b3f107cd7
+hmac: d61ada44fb898f089416a8f2afcea19481065e311a771ce4b08e03f2d13b4853
 
 ...
