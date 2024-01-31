@@ -50,7 +50,7 @@ import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { DashboardInteractions } from '../utils/interactions';
 import {
   getCurrentValueForOldIntervalModel,
-  getIntervalsFromOldIntervalModel,
+  getIntervalsFromQueryString,
   getVizPanelKeyForPanelId,
 } from '../utils/utils';
 
@@ -72,7 +72,11 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
     autoMigrateOldPanels: false,
   });
 
-  return createDashboardSceneFromDashboardModel(oldModel);
+  const scene = createDashboardSceneFromDashboardModel(oldModel);
+  // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
+  scene.setInitialSaveModel(rsp.dashboard);
+
+  return scene;
 }
 
 export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
@@ -211,7 +215,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     layers = oldModel.annotations?.list.map((a) => {
       // Each annotation query is an individual data layer
       return new DashboardAnnotationsDataLayer({
-        key: `annnotations-${a.name}`,
+        key: `annotations-${a.name}`,
         query: a,
         name: a.name,
         isEnabled: Boolean(a.enable),
@@ -244,6 +248,8 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     id: oldModel.id,
     description: oldModel.description,
     editable: oldModel.editable,
+    isDirty: oldModel.meta.isNew,
+    isEditing: oldModel.meta.isNew,
     meta: oldModel.meta,
     version: oldModel.version,
     body: new SceneGridLayout({
@@ -346,7 +352,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
     });
   } else if (variable.type === 'interval') {
-    const intervals = getIntervalsFromOldIntervalModel(variable);
+    const intervals = getIntervalsFromQueryString(variable.query);
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
     return new IntervalVariable({
       ...commonProperties,

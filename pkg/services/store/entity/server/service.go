@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	entityDB "github.com/grafana/grafana/pkg/services/store/entity/db"
+	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -147,7 +147,7 @@ func (s *service) start(ctx context.Context) error {
 	// TODO: use wire
 
 	// TODO: support using grafana db connection?
-	eDB, err := entityDB.ProvideEntityDB(nil, s.cfg, s.features)
+	eDB, err := dbimpl.ProvideEntityDB(nil, s.cfg, s.features)
 	if err != nil {
 		return err
 	}
