@@ -352,7 +352,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		rules        []string
 		ruleGroups   []string
 		disabledOrgs []int64
-		folders      map[string]string
+		folders      map[models.FolderKey]string
 	}{
 		{
 			name:  "without a rule group filter, it returns all created rules",
@@ -371,13 +371,13 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		{
 			name:    "with populate folders enabled, it returns them",
 			rules:   []string{rule1.Title, rule2.Title},
-			folders: map[string]string{rule1.NamespaceUID: models.GetNamespaceKey(parentFolderUid, rule1.Title), rule2.NamespaceUID: rule2.Title},
+			folders: map[models.FolderKey]string{rule1.GetFolderKey(): models.GetNamespaceKey(parentFolderUid, rule1.Title), rule2.GetFolderKey(): rule2.Title},
 		},
 		{
 			name:         "with populate folders enabled and a filter on orgs, it only returns selected information",
 			rules:        []string{rule1.Title},
 			disabledOrgs: []int64{rule2.OrgID},
-			folders:      map[string]string{rule1.NamespaceUID: models.GetNamespaceKey(parentFolderUid, rule1.Title)},
+			folders:      map[models.FolderKey]string{rule1.GetFolderKey(): models.GetNamespaceKey(parentFolderUid, rule1.Title)},
 		},
 	}
 
@@ -458,8 +458,8 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			count, err := store.CountInFolder(context.Background(),
-				test.query.OrgID, test.query.NamespaceUID, nil)
+			count, err := store.CountInFolders(context.Background(),
+				test.query.OrgID, []string{test.query.NamespaceUID}, nil)
 			if test.expectErr {
 				require.Error(t, err)
 			} else {
@@ -486,7 +486,7 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 
 	t.Run("should not be able to delete folder without permissions to delete rules", func(t *testing.T) {
 		store.AccessControl = acmock.New()
-		err := store.DeleteInFolder(context.Background(), rule.OrgID, rule.NamespaceUID, &user.SignedInUser{})
+		err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
 		require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
 	})
 
@@ -494,10 +494,10 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 		store.AccessControl = acmock.New().WithPermissions([]accesscontrol.Permission{
 			{Action: accesscontrol.ActionAlertingRuleDelete, Scope: dashboards.ScopeFoldersAll},
 		})
-		err := store.DeleteInFolder(context.Background(), rule.OrgID, rule.NamespaceUID, &user.SignedInUser{})
+		err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
 		require.NoError(t, err)
 
-		c, err := store.CountInFolder(context.Background(), rule.OrgID, rule.NamespaceUID, &user.SignedInUser{})
+		c, err := store.CountInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
 		require.NoError(t, err)
 		require.Equal(t, int64(0), c)
 	})
@@ -577,10 +577,12 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 	}
 }
 
+// createAlertRule creates an alert rule in the database and returns it.
+// If a generator is not specified, uniqueness of primary key is not guaranteed.
 func createRule(t *testing.T, store *DBstore, generate func() *models.AlertRule) *models.AlertRule {
 	t.Helper()
 	if generate == nil {
-		generate = models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID())
+		generate = models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval))
 	}
 	rule := generate()
 	err := store.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {

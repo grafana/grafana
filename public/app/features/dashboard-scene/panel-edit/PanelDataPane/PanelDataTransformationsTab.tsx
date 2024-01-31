@@ -12,7 +12,7 @@ import { VizPanelManager } from '../VizPanelManager';
 
 import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
 import { TransformationsDrawer } from './TransformationsDrawer';
-import { PanelDataPaneTabState, PanelDataPaneTab } from './types';
+import { PanelDataPaneTabState, PanelDataPaneTab, TabId } from './types';
 
 interface PanelDataTransformationsTabState extends PanelDataPaneTabState {}
 
@@ -21,16 +21,12 @@ export class PanelDataTransformationsTab
   implements PanelDataPaneTab
 {
   static Component = PanelDataTransformationsTabRendered;
-  tabId = 'transformations';
+  tabId = TabId.Transformations;
   icon: IconName = 'process';
   private _panelManager: VizPanelManager;
 
   getTabLabel() {
     return 'Transformations';
-  }
-
-  getItemsCount() {
-    return this._panelManager.dataTransformer.state.transformations.length;
   }
 
   constructor(panelManager: VizPanelManager) {
