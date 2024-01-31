@@ -8,13 +8,13 @@ import (
 )
 
 const (
-	GROUP      = "dashsnap.grafana.app"
+	GROUP      = "dashboardsnapshot.grafana.app"
 	VERSION    = "v0alpha1"
 	APIVERSION = GROUP + "/" + VERSION
 )
 
 var DashboardSnapshotResourceInfo = common.NewResourceInfo(GROUP, VERSION,
-	"dashsnaps", "dashsnap", "DashboardSnapshot",
+	"dashboardsnapshots", "dashboardsnapshot", "DashboardSnapshot",
 	func() runtime.Object { return &DashboardSnapshot{} },
 	func() runtime.Object { return &DashboardSnapshotList{} },
 )

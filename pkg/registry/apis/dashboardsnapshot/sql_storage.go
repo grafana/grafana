@@ -1,4 +1,4 @@
-package dashsnap
+package dashboardsnapshot
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	dashsnap "github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1"
+	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
@@ -91,7 +91,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	list := &dashsnap.DashboardSnapshotList{}
+	list := &dashboardsnapshot.DashboardSnapshotList{}
 	for _, v := range res {
 		list.Items = append(list.Items, *convertDTOToSnapshot(v, s.namespacer))
 	}

@@ -1,4 +1,4 @@
-package dashsnap
+package dashboardsnapshot
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
-	dashsnap "github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1"
+	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 )
@@ -21,7 +21,7 @@ type subBodyREST struct {
 var _ = rest.Connecter(&subBodyREST{})
 
 func (r *subBodyREST) New() runtime.Object {
-	return &dashsnap.FullDashboardSnapshot{}
+	return &dashboardsnapshot.FullDashboardSnapshot{}
 }
 
 func (r *subBodyREST) Destroy() {}
@@ -51,7 +51,7 @@ func (r *subBodyREST) Connect(ctx context.Context, name string, opts runtime.Obj
 		}
 
 		r := convertSnapshotToK8sResource(snap, r.namespacer)
-		responder.Object(200, &dashsnap.FullDashboardSnapshot{
+		responder.Object(200, &dashboardsnapshot.FullDashboardSnapshot{
 			ObjectMeta: r.ObjectMeta,
 			Info:       r.Spec,
 			Dashboard:  common.Unstructured{Object: data},

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
-	dashsnap "github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1"
+	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -34,7 +34,7 @@ var client = &http.Client{
 	Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 }
 
-func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashsnap.SnapshotSharingOptions, svc Service) {
+func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashboardsnapshot.SnapshotSharingOptions, svc Service) {
 	if !cfg.SnapshotsEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
 		return
@@ -118,7 +118,7 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg dashsnap.SnapshotSh
 		return
 	}
 
-	c.JSON(http.StatusOK, dashsnap.DashboardCreateResponse{
+	c.JSON(http.StatusOK, dashboardsnapshot.DashboardCreateResponse{
 		Key:       result.Key,
 		DeleteKey: result.DeleteKey,
 		URL:       snapshotUrl,

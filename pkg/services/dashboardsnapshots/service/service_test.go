@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
-	dashsnap "github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1"
+	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashsnapdb "github.com/grafana/grafana/pkg/services/dashboardsnapshots/database"
@@ -43,7 +43,7 @@ func TestDashboardSnapshotsService(t *testing.T) {
 		cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{
 			Key:       dashboardKey,
 			DeleteKey: dashboardKey,
-			DashboardCreateCommand: dashsnap.DashboardCreateCommand{
+			DashboardCreateCommand: dashboardsnapshot.DashboardCreateCommand{
 				Dashboard: dashboard,
 			},
 		}

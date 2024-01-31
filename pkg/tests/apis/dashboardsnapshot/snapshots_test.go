@@ -1,4 +1,4 @@
-package dashsnap
+package dashboardsnapshots
 
 import (
 	"testing"
@@ -18,13 +18,12 @@ func TestDashboardSnapshots(t *testing.T) {
 		AppModeProduction: false, // required for experimental apis
 		DisableAnonymous:  true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServer,
-			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // required to register dashsnap.grafana.app
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // required to register dashboardsnapshot.grafana.app
 		},
 	})
 
 	t.Run("Check discovery client", func(t *testing.T) {
-		disco := helper.GetGroupVersionInfoJSON("dashsnap.grafana.app")
+		disco := helper.GetGroupVersionInfoJSON("dashboardsnapshot.grafana.app")
 
 		// fmt.Printf("%s", disco)
 		require.JSONEq(t, `[
@@ -32,7 +31,7 @@ func TestDashboardSnapshots(t *testing.T) {
 			  "freshness": "Current",
 			  "resources": [
 				{
-				  "resource": "dashsnaps",
+				  "resource": "dashboardsnapshot",
 				  "responseKind": {
 					"group": "",
 					"kind": "DashboardSnapshot",

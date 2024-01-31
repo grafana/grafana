@@ -1,4 +1,4 @@
-package dashsnap
+package dashboardsnapshot
 
 import (
 	"context"
@@ -20,7 +20,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	dashsnap "github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1"
+	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -38,7 +38,7 @@ import (
 
 var _ grafanaapiserver.APIGroupBuilder = (*SnapshotsAPIBuilder)(nil)
 
-var resourceInfo = dashsnap.DashboardSnapshotResourceInfo
+var resourceInfo = dashboardsnapshot.DashboardSnapshotResourceInfo
 
 // This is used just so wire has something unique to return
 type SnapshotsAPIBuilder struct {
@@ -87,12 +87,12 @@ func (b *SnapshotsAPIBuilder) GetGroupVersion() schema.GroupVersion {
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
-		&dashsnap.DashboardSnapshot{},
-		&dashsnap.DashboardSnapshotList{},
-		&dashsnap.SharingOptions{},
-		&dashsnap.SharingOptionsList{},
-		&dashsnap.FullDashboardSnapshot{},
-		&dashsnap.DashboardSnapshotWithDeleteKey{},
+		&dashboardsnapshot.DashboardSnapshot{},
+		&dashboardsnapshot.DashboardSnapshotList{},
+		&dashboardsnapshot.SharingOptions{},
+		&dashboardsnapshot.SharingOptionsList{},
+		&dashboardsnapshot.FullDashboardSnapshot{},
+		&dashboardsnapshot.DashboardSnapshotWithDeleteKey{},
 		&metav1.Status{},
 	)
 }
@@ -122,7 +122,7 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
 ) (*genericapiserver.APIGroupInfo, error) {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(dashsnap.GROUP, scheme, metav1.ParameterCodec, codecs)
+	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(dashboardsnapshot.GROUP, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
 
 	legacyStore := &legacyStorage{
@@ -138,7 +138,7 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 			{Name: "Created At", Type: "date"},
 		},
 		func(obj any) ([]interface{}, error) {
-			m, ok := obj.(*dashsnap.DashboardSnapshot)
+			m, ok := obj.(*dashboardsnapshot.DashboardSnapshot)
 			if ok {
 				return []interface{}{
 					m.Name,
@@ -160,26 +160,27 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 		tableConverter: legacyStore.tableConverter,
 	}
 
-	apiGroupInfo.VersionedResourcesStorageMap[dashsnap.VERSION] = storage
+	apiGroupInfo.VersionedResourcesStorageMap[dashboardsnapshot.VERSION] = storage
 	return &apiGroupInfo, nil
 }
 
 func (b *SnapshotsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	return dashsnap.GetOpenAPIDefinitions
+	return dashboardsnapshot.GetOpenAPIDefinitions
 }
 
 // Register additional routes with the server
 func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
-	defs := dashsnap.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
-	createCmd := defs["github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.DashboardCreateCommand"].Schema
+	prefix := dashboardsnapshot.DashboardSnapshotResourceInfo.GroupResource().Resource
+	defs := dashboardsnapshot.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
+	createCmd := defs["github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.DashboardCreateCommand"].Schema
 	createExample := `{"dashboard":{"annotations":{"list":[{"name":"Annotations & Alerts","enable":true,"iconColor":"rgba(0, 211, 255, 1)","snapshotData":[],"type":"dashboard","builtIn":1,"hide":true}]},"editable":true,"fiscalYearStartMonth":0,"graphTooltip":0,"id":203,"links":[],"liveNow":false,"panels":[{"datasource":null,"fieldConfig":{"defaults":{"color":{"mode":"palette-classic"},"custom":{"axisBorderShow":false,"axisCenteredZero":false,"axisColorMode":"text","axisLabel":"","axisPlacement":"auto","barAlignment":0,"drawStyle":"line","fillOpacity":43,"gradientMode":"opacity","hideFrom":{"legend":false,"tooltip":false,"viz":false},"insertNulls":false,"lineInterpolation":"smooth","lineWidth":1,"pointSize":5,"scaleDistribution":{"type":"linear"},"showPoints":"auto","spanNulls":false,"stacking":{"group":"A","mode":"none"},"thresholdsStyle":{"mode":"off"}},"mappings":[],"thresholds":{"mode":"absolute","steps":[{"color":"green","value":null},{"color":"red","value":80}]},"unitScale":true},"overrides":[]},"gridPos":{"h":8,"w":12,"x":0,"y":0},"id":1,"options":{"legend":{"calcs":[],"displayMode":"list","placement":"bottom","showLegend":true},"tooltip":{"mode":"single","sort":"none"}},"pluginVersion":"10.4.0-pre","snapshotData":[{"fields":[{"config":{"color":{"mode":"palette-classic"},"custom":{"axisBorderShow":false,"axisCenteredZero":false,"axisColorMode":"text","axisPlacement":"auto","barAlignment":0,"drawStyle":"line","fillOpacity":43,"gradientMode":"opacity","hideFrom":{"legend":false,"tooltip":false,"viz":false},"lineInterpolation":"smooth","lineWidth":1,"pointSize":5,"showPoints":"auto","thresholdsStyle":{"mode":"off"}},"thresholds":{"mode":"absolute","steps":[{"color":"green","value":null},{"color":"red","value":80}]},"unitScale":true},"name":"time","type":"time","values":[1706030536378,1706034856378,1706039176378,1706043496378,1706047816378,1706052136378]},{"config":{"color":{"mode":"palette-classic"},"custom":{"axisBorderShow":false,"axisCenteredZero":false,"axisColorMode":"text","axisLabel":"","axisPlacement":"auto","barAlignment":0,"drawStyle":"line","fillOpacity":43,"gradientMode":"opacity","hideFrom":{"legend":false,"tooltip":false,"viz":false},"insertNulls":false,"lineInterpolation":"smooth","lineWidth":1,"pointSize":5,"scaleDistribution":{"type":"linear"},"showPoints":"auto","spanNulls":false,"stacking":{"group":"A","mode":"none"},"thresholdsStyle":{"mode":"off"}},"mappings":[],"thresholds":{"mode":"absolute","steps":[{"color":"green","value":null},{"color":"red","value":80}]},"unitScale":true},"name":"A-series","type":"number","values":[1,20,90,30,50,0]}],"refId":"A"}],"targets":[],"title":"Simple example","type":"timeseries","links":[]}],"refresh":"","schemaVersion":39,"snapshot":{"timestamp":"2024-01-23T23:22:16.377Z"},"tags":[],"templating":{"list":[]},"time":{"from":"2024-01-23T17:22:20.380Z","to":"2024-01-23T23:22:20.380Z","raw":{"from":"now-6h","to":"now"}},"timepicker":{},"timezone":"","title":"simple and small","uid":"b22ec8db-399b-403b-b6c7-b0fb30ccb2a5","version":1,"weekStart":""},"name":"simple and small","expires":86400}`
-	createRsp := defs["github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.DashboardCreateResponse"].Schema
+	createRsp := defs["github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.DashboardCreateResponse"].Schema
 
-	tags := []string{"Create and Delete (custom routes)"}
+	tags := []string{dashboardsnapshot.DashboardSnapshotResourceInfo.GroupVersionKind().Kind}
 	routes := &grafanaapiserver.APIRoutes{
 		Namespace: []grafanaapiserver.APIRouteHandler{
 			{
-				Path: "dashsnaps/create",
+				Path: prefix + "/create",
 				Spec: &spec3.PathProps{
 					Summary:     "an example at the root level",
 					Description: "longer description here?",
@@ -267,7 +268,7 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 				},
 			},
 			{
-				Path: "dashsnaps/delete/{deleteKey}",
+				Path: prefix + "/delete/{deleteKey}",
 				Spec: &spec3.PathProps{
 					Summary:     "an example at the root level",
 					Description: "longer description here?",
@@ -333,7 +334,7 @@ func (b *SnapshotsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 			// Everyone can view dashsnaps
-			if attr.GetVerb() == "get" && attr.GetResource() == dashsnap.DashboardSnapshotResourceInfo.GroupResource().Resource {
+			if attr.GetVerb() == "get" && attr.GetResource() == dashboardsnapshot.DashboardSnapshotResourceInfo.GroupResource().Resource {
 				return authorizer.DecisionAllow, "", err
 			}
 

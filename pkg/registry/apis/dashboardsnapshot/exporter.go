@@ -1,4 +1,4 @@
-package dashsnap
+package dashboardsnapshot
 
 import (
 	"context"

@@ -1,4 +1,4 @@
-package dashsnap
+package dashboardsnapshot
 
 import (
 	"fmt"
@@ -6,18 +6,18 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	dashsnap "github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1"
+	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 )
 
-func convertDTOToSnapshot(v *dashboardsnapshots.DashboardSnapshotDTO, namespacer request.NamespaceMapper) *dashsnap.DashboardSnapshot {
+func convertDTOToSnapshot(v *dashboardsnapshots.DashboardSnapshotDTO, namespacer request.NamespaceMapper) *dashboardsnapshot.DashboardSnapshot {
 	expires := v.Expires.UnixMilli()
 	if v.Expires.After(time.Date(2070, time.January, 0, 0, 0, 0, 0, time.UTC)) {
 		expires = 0 // ignore things expiring long into the future
 	}
-	snap := &dashsnap.DashboardSnapshot{
+	snap := &dashboardsnapshot.DashboardSnapshot{
 		TypeMeta: resourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.Key,
@@ -25,7 +25,7 @@ func convertDTOToSnapshot(v *dashboardsnapshots.DashboardSnapshotDTO, namespacer
 			CreationTimestamp: metav1.NewTime(v.Created),
 			Namespace:         namespacer(v.OrgID),
 		},
-		Spec: dashsnap.SnapshotInfo{
+		Spec: dashboardsnapshot.SnapshotInfo{
 			Title:       v.Name,
 			ExternalURL: v.ExternalURL,
 			Expires:     expires,
@@ -38,13 +38,13 @@ func convertDTOToSnapshot(v *dashboardsnapshots.DashboardSnapshotDTO, namespacer
 	return snap
 }
 
-func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, namespacer request.NamespaceMapper) *dashsnap.DashboardSnapshot {
+func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, namespacer request.NamespaceMapper) *dashboardsnapshot.DashboardSnapshot {
 	expires := v.Expires.UnixMilli()
 	if v.Expires.After(time.Date(2070, time.January, 0, 0, 0, 0, 0, time.UTC)) {
 		expires = 0 // ignore things expiring long into the future
 	}
 
-	info := dashsnap.SnapshotInfo{
+	info := dashboardsnapshot.SnapshotInfo{
 		Title:       v.Name,
 		ExternalURL: v.ExternalURL,
 		Expires:     expires,
@@ -54,7 +54,7 @@ func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, names
 		info.OriginalUrl, _ = s.Get("originalUrl").String()
 		info.Timestamp, _ = s.Get("timestamp").String()
 	}
-	snap := &dashsnap.DashboardSnapshot{
+	snap := &dashboardsnapshot.DashboardSnapshot{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              v.Key,
 			ResourceVersion:   fmt.Sprintf("%d", v.Updated.UnixMilli()),

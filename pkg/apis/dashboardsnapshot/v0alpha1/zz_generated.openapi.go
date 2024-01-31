@@ -16,20 +16,20 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.DashboardCreateCommand":         schema_pkg_apis_dashsnap_v0alpha1_DashboardCreateCommand(ref),
-		"github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.DashboardCreateResponse":        schema_pkg_apis_dashsnap_v0alpha1_DashboardCreateResponse(ref),
-		"github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.DashboardSnapshot":              schema_pkg_apis_dashsnap_v0alpha1_DashboardSnapshot(ref),
-		"github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.DashboardSnapshotList":          schema_pkg_apis_dashsnap_v0alpha1_DashboardSnapshotList(ref),
-		"github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.DashboardSnapshotWithDeleteKey": schema_pkg_apis_dashsnap_v0alpha1_DashboardSnapshotWithDeleteKey(ref),
-		"github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.FullDashboardSnapshot":          schema_pkg_apis_dashsnap_v0alpha1_FullDashboardSnapshot(ref),
-		"github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.SharingOptions":                 schema_pkg_apis_dashsnap_v0alpha1_SharingOptions(ref),
-		"github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.SharingOptionsList":             schema_pkg_apis_dashsnap_v0alpha1_SharingOptionsList(ref),
-		"github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.SnapshotInfo":                   schema_pkg_apis_dashsnap_v0alpha1_SnapshotInfo(ref),
-		"github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.SnapshotSharingOptions":         schema_pkg_apis_dashsnap_v0alpha1_SnapshotSharingOptions(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.DashboardCreateCommand":         schema_pkg_apis_dashboardsnapshot_v0alpha1_DashboardCreateCommand(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.DashboardCreateResponse":        schema_pkg_apis_dashboardsnapshot_v0alpha1_DashboardCreateResponse(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.DashboardSnapshot":              schema_pkg_apis_dashboardsnapshot_v0alpha1_DashboardSnapshot(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.DashboardSnapshotList":          schema_pkg_apis_dashboardsnapshot_v0alpha1_DashboardSnapshotList(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.DashboardSnapshotWithDeleteKey": schema_pkg_apis_dashboardsnapshot_v0alpha1_DashboardSnapshotWithDeleteKey(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.FullDashboardSnapshot":          schema_pkg_apis_dashboardsnapshot_v0alpha1_FullDashboardSnapshot(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.SharingOptions":                 schema_pkg_apis_dashboardsnapshot_v0alpha1_SharingOptions(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.SharingOptionsList":             schema_pkg_apis_dashboardsnapshot_v0alpha1_SharingOptionsList(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.SnapshotInfo":                   schema_pkg_apis_dashboardsnapshot_v0alpha1_SnapshotInfo(ref),
+		"github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.SnapshotSharingOptions":         schema_pkg_apis_dashboardsnapshot_v0alpha1_SnapshotSharingOptions(ref),
 	}
 }
 
-func schema_pkg_apis_dashsnap_v0alpha1_DashboardCreateCommand(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboardsnapshot_v0alpha1_DashboardCreateCommand(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -89,7 +89,7 @@ func schema_pkg_apis_dashsnap_v0alpha1_DashboardCreateCommand(ref common.Referen
 	}
 }
 
-func schema_pkg_apis_dashsnap_v0alpha1_DashboardCreateResponse(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboardsnapshot_v0alpha1_DashboardCreateResponse(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -149,7 +149,7 @@ func schema_pkg_apis_dashsnap_v0alpha1_DashboardCreateResponse(ref common.Refere
 	}
 }
 
-func schema_pkg_apis_dashsnap_v0alpha1_DashboardSnapshot(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboardsnapshot_v0alpha1_DashboardSnapshot(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -179,7 +179,7 @@ func schema_pkg_apis_dashsnap_v0alpha1_DashboardSnapshot(ref common.ReferenceCal
 						SchemaProps: spec.SchemaProps{
 							Description: "Snapshot summary info",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.SnapshotInfo"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.SnapshotInfo"),
 						},
 					},
 				},
@@ -187,11 +187,11 @@ func schema_pkg_apis_dashsnap_v0alpha1_DashboardSnapshot(ref common.ReferenceCal
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.SnapshotInfo", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.SnapshotInfo", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_dashsnap_v0alpha1_DashboardSnapshotList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboardsnapshot_v0alpha1_DashboardSnapshotList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -224,7 +224,7 @@ func schema_pkg_apis_dashsnap_v0alpha1_DashboardSnapshotList(ref common.Referenc
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.DashboardSnapshot"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.DashboardSnapshot"),
 									},
 								},
 							},
@@ -234,11 +234,11 @@ func schema_pkg_apis_dashsnap_v0alpha1_DashboardSnapshotList(ref common.Referenc
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.DashboardSnapshot", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.DashboardSnapshot", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_dashsnap_v0alpha1_DashboardSnapshotWithDeleteKey(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboardsnapshot_v0alpha1_DashboardSnapshotWithDeleteKey(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -269,7 +269,7 @@ func schema_pkg_apis_dashsnap_v0alpha1_DashboardSnapshotWithDeleteKey(ref common
 						SchemaProps: spec.SchemaProps{
 							Description: "Snapshot summary info",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.SnapshotInfo"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.SnapshotInfo"),
 						},
 					},
 					"deleteKey": {
@@ -284,11 +284,11 @@ func schema_pkg_apis_dashsnap_v0alpha1_DashboardSnapshotWithDeleteKey(ref common
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.SnapshotInfo", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.SnapshotInfo", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_dashsnap_v0alpha1_FullDashboardSnapshot(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboardsnapshot_v0alpha1_FullDashboardSnapshot(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -319,7 +319,7 @@ func schema_pkg_apis_dashsnap_v0alpha1_FullDashboardSnapshot(ref common.Referenc
 						SchemaProps: spec.SchemaProps{
 							Description: "Snapshot summary info",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.SnapshotInfo"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.SnapshotInfo"),
 						},
 					},
 					"dashboard": {
@@ -333,11 +333,11 @@ func schema_pkg_apis_dashsnap_v0alpha1_FullDashboardSnapshot(ref common.Referenc
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured", "github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.SnapshotInfo", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured", "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.SnapshotInfo", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_dashsnap_v0alpha1_SharingOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboardsnapshot_v0alpha1_SharingOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -368,7 +368,7 @@ func schema_pkg_apis_dashsnap_v0alpha1_SharingOptions(ref common.ReferenceCallba
 						SchemaProps: spec.SchemaProps{
 							Description: "Show the options inline",
 							Default:     map[string]interface{}{},
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.SnapshotSharingOptions"),
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.SnapshotSharingOptions"),
 						},
 					},
 				},
@@ -376,11 +376,11 @@ func schema_pkg_apis_dashsnap_v0alpha1_SharingOptions(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.SnapshotSharingOptions", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.SnapshotSharingOptions", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_dashsnap_v0alpha1_SharingOptionsList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboardsnapshot_v0alpha1_SharingOptionsList(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -414,7 +414,7 @@ func schema_pkg_apis_dashsnap_v0alpha1_SharingOptionsList(ref common.ReferenceCa
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.SharingOptions"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.SharingOptions"),
 									},
 								},
 							},
@@ -424,11 +424,11 @@ func schema_pkg_apis_dashsnap_v0alpha1_SharingOptionsList(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1.SharingOptions", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+			"github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.SharingOptions", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 	}
 }
 
-func schema_pkg_apis_dashsnap_v0alpha1_SnapshotInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboardsnapshot_v0alpha1_SnapshotInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -481,7 +481,7 @@ func schema_pkg_apis_dashsnap_v0alpha1_SnapshotInfo(ref common.ReferenceCallback
 	}
 }
 
-func schema_pkg_apis_dashsnap_v0alpha1_SnapshotSharingOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_dashboardsnapshot_v0alpha1_SnapshotSharingOptions(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{

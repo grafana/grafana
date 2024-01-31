@@ -1,4 +1,4 @@
-package dashsnap
+package dashboardsnapshot
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	dashsnap "github.com/grafana/grafana/pkg/apis/dashsnap/v0alpha1"
+	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -22,21 +22,21 @@ var (
 	_ rest.Storage              = (*optionsStorage)(nil)
 )
 
-type sharingOptionsGetter = func(namespace string) (*dashsnap.SharingOptions, error)
+type sharingOptionsGetter = func(namespace string) (*dashboardsnapshot.SharingOptions, error)
 
 func newSharingOptionsGetter(cfg *setting.Cfg) sharingOptionsGetter {
-	s := &dashsnap.SharingOptions{
+	s := &dashboardsnapshot.SharingOptions{
 		ObjectMeta: metav1.ObjectMeta{
 			CreationTimestamp: metav1.Now(),
 		},
-		Spec: dashsnap.SnapshotSharingOptions{
+		Spec: dashboardsnapshot.SnapshotSharingOptions{
 			SnapshotsEnabled:     cfg.SnapshotEnabled,
 			ExternalSnapshotURL:  cfg.ExternalSnapshotUrl,
 			ExternalSnapshotName: cfg.ExternalSnapshotName,
 			ExternalEnabled:      cfg.ExternalEnabled,
 		},
 	}
-	return func(namespace string) (*dashsnap.SharingOptions, error) {
+	return func(namespace string) (*dashboardsnapshot.SharingOptions, error) {
 		return s, nil
 	}
 }
@@ -47,7 +47,7 @@ type optionsStorage struct {
 }
 
 func (s *optionsStorage) New() runtime.Object {
-	return &dashsnap.SharingOptions{}
+	return &dashboardsnapshot.SharingOptions{}
 }
 
 func (s *optionsStorage) Destroy() {}
@@ -61,7 +61,7 @@ func (s *optionsStorage) GetSingularName() string {
 }
 
 func (s *optionsStorage) NewList() runtime.Object {
-	return &dashsnap.SharingOptionsList{}
+	return &dashboardsnapshot.SharingOptionsList{}
 }
 
 func (s *optionsStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -80,8 +80,8 @@ func (s *optionsStorage) List(ctx context.Context, options *internalversion.List
 	if err != nil {
 		return nil, err
 	}
-	list := &dashsnap.SharingOptionsList{
-		Items: []dashsnap.SharingOptions{*v},
+	list := &dashboardsnapshot.SharingOptionsList{
+		Items: []dashboardsnapshot.SharingOptions{*v},
 	}
 	return list, nil
 }
