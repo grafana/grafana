@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import leven from 'leven';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
@@ -11,6 +11,7 @@ import {
   SceneCSSGridLayout,
   SceneFlexItem,
   sceneGraph,
+  SceneObject,
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
@@ -19,14 +20,14 @@ import {
   VariableDependencyConfig,
 } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
-import { Field, Icon, InlineSwitch, Input, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Input, useStyles2, InlineSwitch, Field, LoadingPlaceholder, Alert, Icon } from '@grafana/ui';
 
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { MetricCategoryCascader } from './MetricCategory/MetricCategoryCascader';
 import { MetricScene } from './MetricScene';
 import { SelectMetricAction } from './SelectMetricAction';
 import { hideEmptyPreviews } from './hideEmptyPreviews';
-import { getVariablesWithMetricConstant, trailDS, VAR_FILTERS_EXPR, VAR_METRIC_NAMES } from './shared';
+import { getVariablesWithMetricConstant, trailDS, VAR_DATASOURCE, VAR_FILTERS_EXPR, VAR_METRIC_NAMES } from './shared';
 import { getColorByIndex, getTrailFor } from './utils';
 
 interface MetricPanel {
@@ -89,6 +90,11 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       // Temp hack when going back to select metric scene and variable updates
       this.ignoreNextUpdate = true;
     }
+
+    const dataSourceVariable = sceneGraph.lookupVariable(VAR_DATASOURCE, this);
+    dataSourceVariable?.subscribeToState((state) => {
+      this.onDataSourceChange();
+    });
   }
 
   private sortedPreviewMetrics() {
@@ -272,17 +278,30 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     this.buildLayout();
   };
 
+  public onDataSourceChange() {
+    // Clear filtered metrics
+    this.setState({ metricsAfterFilter: undefined, metricsAfterSearch: undefined });
+    // Clear all panels for the previous data source
+    this.state.body.setState({ children: [] });
+
+    // Cancel any ongoing queries for metric names.
+    const variable = sceneGraph.lookupVariable(VAR_METRIC_NAMES, this);
+    if (variable instanceof QueryVariable) {
+      variable.onCancel();
+    }
+    // The `VAR_METRIC_NAMES` will be queried again automatically with the new data source
+  }
+
   public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
     const { searchQuery, showPreviews, body, metricsAfterSearch, metricsAfterFilter, prefixFilter } = model.useState();
     const { children } = body.useState();
     const styles = useStyles2(getStyles);
 
-    const notLoaded = metricsAfterSearch === undefined && metricsAfterFilter === undefined && children.length === 0;
-
+    const metricNamesStatus = useVariableStatus(VAR_METRIC_NAMES, model);
     const tooStrict = children.length === 0 && (searchQuery || prefixFilter);
 
     let status =
-      (notLoaded && <LoadingPlaceholder className={styles.statusMessage} text="Loading..." />) ||
+      (metricNamesStatus.isLoading && <LoadingPlaceholder text="Loading..." />) ||
       (tooStrict && 'There are no results found. Try adjusting your search or filters.');
 
     const showStatus = status && <div className={styles.statusMessage}>{status}</div>;
@@ -291,6 +310,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       prefixFilter && metricsAfterSearch != null && !metricsAfterFilter?.length
         ? 'The current prefix filter is not available with the current search terms.'
         : undefined;
+
+    const disableSearch = metricNamesStatus.error || metricNamesStatus.isLoading;
 
     return (
       <div className={styles.container}>
@@ -301,20 +322,26 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
               prefix={<Icon name={'search'} />}
               value={searchQuery}
               onChange={model.onSearchChange}
-            />
+              disabled={disableSearch}
+              />
           </Field>
-          <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
+          <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} disabled={disableSearch}/>
         </div>
         <div className={styles.header}>
-          <Field label="Filter by prefix" error={prefixError} invalid={true}>
+          <Field label="Filter by prefix" error={prefixError} invalid={!!prefixError}>
             <MetricCategoryCascader
               metricNames={metricsAfterSearch || []}
               onSelect={model.onPrefixFilterChange}
-              disabled={metricsAfterSearch == null}
+              disabled={disableSearch}
               initialValue={prefixFilter}
             />
           </Field>
         </div>
+        {metricNamesStatus.error && (
+          <Alert title="Unable to retrieve metric names" severity="error">
+            {metricNamesStatus.error}
+          </Alert>
+        )}
         {showStatus}
         <model.state.body.Component model={model.state.body} />
       </div>
@@ -435,4 +462,22 @@ function createSearchRegExp(spaceSeparatedMetricNames?: string) {
   //  (?=(.*expr1.*))(?=().*expr2.*))...
   // The ?=(...) lookahead allows us to match these in any order.
   return new RegExp(regex, 'igy');
+}
+
+function useVariableStatus(name: string, sceneObject: SceneObject) {
+  const variable = sceneGraph.lookupVariable(VAR_METRIC_NAMES, sceneObject);
+
+  const useVariableState = useCallback(() => {
+    if (variable) {
+      return variable.useState();
+    }
+    return {
+      error: null,
+      loading: null,
+    };
+  }, [variable]);
+
+  const { error, loading } = useVariableState();
+
+  return { isLoading: loading, error };
 }
