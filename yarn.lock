@@ -3195,6 +3195,7 @@ __metadata:
     tslib: "npm:2.6.2"
     typescript: "npm:5.3.3"
     uuid: "npm:9.0.1"
+    webpack: "npm:5.90.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
