@@ -113,7 +113,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     spanStartTimeShift?: string;
     spanEndTimeShift?: string;
   };
-  uploadedJson?: string | ArrayBuffer | null = null;
+  uploadedJson?: string | null = null;
   spanBar?: SpanBarOptions;
   languageProvider: TempoLanguageProvider;
 
@@ -459,14 +459,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           grafana_version: config.buildInfo.version,
         });
 
-        let uploadedString;
-        if (typeof this.uploadedJson !== 'string') {
-          console.error('Unexpected type for uploadedJson. Expected string, got', typeof this.uploadedJson);
-          uploadedString = this.uploadedJson.toString(); // tentative fallback
-        } else {
-          uploadedString = this.uploadedJson;
-        }
-        const jsonData = JSON.parse(uploadedString);
+        const jsonData = JSON.parse(this.uploadedJson);
         const isTraceData = jsonData.batches;
         const isServiceGraphData =
           Array.isArray(jsonData) && jsonData.some((df) => df?.meta?.preferredVisualisationType === 'nodeGraph');
