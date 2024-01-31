@@ -75,6 +75,8 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 		executeDSNodesGrouped(c, now, vars, s, dsNodes)
 	}
 
+	s.allowLongFrames = hasSqlExpression(*dp)
+
 	for _, node := range *dp {
 		if groupByDSFlag && node.NodeType() == TypeDatasourceNode {
 			continue // already executed via executeDSNodesGrouped
@@ -311,4 +313,17 @@ func GetCommandsFromPipeline[T Command](pipeline DataPipeline) []T {
 		}
 	}
 	return results
+}
+
+func hasSqlExpression(dp DataPipeline) bool {
+	for _, node := range dp {
+		if node.NodeType() == TypeCMDNode {
+			cmdNode := node.(*CMDNode)
+			_, ok := cmdNode.Command.(*SQLCommand)
+			if ok {
+				return true
+			}
+		}
+	}
+	return false
 }

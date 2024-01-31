@@ -201,8 +201,6 @@ func (d *DuckDB) appendFrame(ctx context.Context, f *data.Frame, u Unknown) erro
 
 func connector(ctx context.Context, name string) (driver.Connector, error) {
 	connector, err := duckdb.NewConnector(name, func(execer driver.ExecerContext) error {
-		// If `INSTALL 'json'` here fails, try running duckdb from the command line, and running
-		// `INSTALL 'json'` from there instead.
 		bootQueries := []string{
 			"INSTALL 'json'",
 			"LOAD 'json'",

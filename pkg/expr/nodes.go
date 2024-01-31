@@ -440,10 +440,10 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 			logger.Warn("Ignoring InfluxDB data frame due to missing numeric fields")
 			continue
 		}
-		// TODO - handle this for sql expressions
-		// if schema.Type != data.TimeSeriesTypeWide {
-		// 	return "", mathexp.Results{}, fmt.Errorf("input data must be a wide series but got type %s (input refid)", schema.Type)
-		// }
+
+		if schema.Type != data.TimeSeriesTypeWide && !s.allowLongFrames {
+			return "", mathexp.Results{}, fmt.Errorf("input data must be a wide series but got type %s (input refid)", schema.Type)
+		}
 		filtered = append(filtered, frame)
 		totalLen += len(schema.ValueIndices)
 	}
@@ -470,10 +470,10 @@ func convertDataFramesToResults(ctx context.Context, frames data.Frames, datasou
 			for _, ser := range series {
 				vals = append(vals, ser)
 			}
-		} else { // TODO - added for sql expressions tabular data
+		} else {
 			v := mathexp.Scalar{Frame: frame}
 			vals = append(vals, v)
-			dataType = "single frame" // TODO - does this matter?
+			dataType = "single frame"
 		}
 	}
 
