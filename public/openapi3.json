@@ -7795,6 +7795,7 @@
           },
           "type": "array"
         },
+        "description": "PermissionsByAction are permissions with scopes grouped by action\nexample: { \"teams.read\": [ \"teams:id:1\", \"teams:id:2\" ] }",
         "type": "object"
       },
       "Playlist": {
@@ -11660,6 +11661,7 @@
         "type": "object"
       },
       "UserID": {
+        "description": "UserID\nexample: 12\npattern: \\d+",
         "type": "string"
       },
       "UserLookupDTO": {
@@ -11861,6 +11863,7 @@
         "additionalProperties": {
           "$ref": "#/components/schemas/PermissionsByAction"
         },
+        "description": "UsersPermissions are permissions grouped by userID\nexample: { \"1\": { \"teams.read\": [ \"teams:id:1\", \"teams:id:2\" ] }, \"3\": { \"teams.read\": [ \"teams:id:3\" ] } }",
         "type": "object"
       },
       "ValidationError": {
