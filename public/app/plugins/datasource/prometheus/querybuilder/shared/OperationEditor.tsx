@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useId, useState } from 'react';
-import { Draggable, DraggableProvided } from 'react-beautiful-dnd';
+import { Draggable } from 'react-beautiful-dnd';
 
 import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { Button, Icon, InlineField, Tooltip, useTheme2, Stack } from '@grafana/ui';
@@ -145,34 +145,6 @@ export function OperationEditor({
     return isConflicting ? true : undefined;
   };
 
-  // We need to extract this into a component to prevent InlineField passing invalid to div which produces console error
-  const StyledOperationHeader = ({ provided }: { provided: DraggableProvided }) => (
-    <div
-      className={cx(styles.card, (shouldFlash || highlight) && styles.cardHighlight, isConflicting && styles.cardError)}
-      ref={provided.innerRef}
-      {...provided.draggableProps}
-      data-testid={`operations.${index}.wrapper`}
-    >
-      <OperationHeader
-        operation={operation}
-        dragHandleProps={provided.dragHandleProps}
-        def={def}
-        index={index}
-        onChange={onChange}
-        onRemove={onRemove}
-        queryModeller={queryModeller}
-      />
-      <div className={styles.body}>{operationElements}</div>
-      {restParam}
-      {index < query.operations.length - 1 && (
-        <div className={styles.arrow}>
-          <div className={styles.arrowLine} />
-          <div className={styles.arrowArrow} />
-        </div>
-      )}
-    </div>
-  );
-
   return (
     <Draggable draggableId={`operation-${index}`} index={index}>
       {(provided, snapshot) => (
@@ -181,7 +153,34 @@ export function OperationEditor({
           invalid={isInvalid(snapshot.isDragging)}
           className={cx(styles.error, styles.cardWrapper)}
         >
-          <StyledOperationHeader provided={provided} />
+          <div
+            className={cx(
+              styles.card,
+              (shouldFlash || highlight) && styles.cardHighlight,
+              isConflicting && styles.cardError
+            )}
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            data-testid={`operations.${index}.wrapper`}
+          >
+            <OperationHeader
+              operation={operation}
+              dragHandleProps={provided.dragHandleProps}
+              def={def}
+              index={index}
+              onChange={onChange}
+              onRemove={onRemove}
+              queryModeller={queryModeller}
+            />
+            <div className={styles.body}>{operationElements}</div>
+            {restParam}
+            {index < query.operations.length - 1 && (
+              <div className={styles.arrow}>
+                <div className={styles.arrowLine} />
+                <div className={styles.arrowArrow} />
+              </div>
+            )}
+          </div>
         </InlineField>
       )}
     </Draggable>
