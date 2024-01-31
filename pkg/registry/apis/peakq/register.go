@@ -96,14 +96,22 @@ func (b *PeakQAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	defs := peakq.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
 	renderedQuerySchema := defs["github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.RenderedQuery"].Schema
 	queryTemplateSpecSchema := defs["github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.QueryTemplateSpec"].Schema
-	playgroundExample := basicTemplateWithSelectedValue
 
 	params := []*spec3.Parameter{
 		{
 			ParameterProps: spec3.ParameterProps{
-				Name:    "metricName",
+				Name:    "varName",
 				In:      "query",
 				Schema:  spec.StringProperty(),
+				Example: "metricName",
+			},
+		},
+		{
+			ParameterProps: spec3.ParameterProps{
+				Name:    "varValue",
+				In:      "query",
+				Schema:  spec.StringProperty(),
+				Explode: true,
 				Example: "up",
 			},
 		},
@@ -125,18 +133,18 @@ func (b *PeakQAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 										"application/json": {
 											MediaTypeProps: spec3.MediaTypeProps{
 												Schema:  &queryTemplateSpecSchema,
-												Example: basicTemplateWithSelectedValue,
+												Example: basicTemplateSpec,
 												Examples: map[string]*spec3.Example{
 													"test": {
 														ExampleProps: spec3.ExampleProps{
 															Summary: "hello",
-															Value:   basicTemplateWithSelectedValue,
+															Value:   basicTemplateSpec,
 														},
 													},
 													"test2": {
 														ExampleProps: spec3.ExampleProps{
 															Summary: "hello2",
-															Value:   basicTemplateWithSelectedValue,
+															Value:   basicTemplateSpec,
 														},
 													},
 												},
@@ -166,15 +174,22 @@ func (b *PeakQAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 						},
 					},
 				},
-				Handler: func(w http.ResponseWriter, r *http.Request) {
-					input := map[string]string{}
-					for key, vals := range r.URL.Query() {
-						if len(vals) > 0 {
-							input[key] = vals[0] // ignore second values?
-						}
+				Handler: func(w http.ResponseWriter, req *http.Request) {
+					input, err := makeVarMapFromParams(req.URL.Query())
+					if err != nil {
+						_, _ = w.Write([]byte("ERROR: " + err.Error()))
+						w.WriteHeader(500)
+						return
 					}
 
-					results, err := Render(playgroundExample, input)
+					var qT peakq.QueryTemplate
+					err = json.NewDecoder(req.Body).Decode(&qT.Spec)
+					if err != nil {
+						_, _ = w.Write([]byte("ERROR: " + err.Error()))
+						w.WriteHeader(500)
+						return
+					}
+					results, err := Render(qT.Spec, input)
 					if err != nil {
 						_, _ = w.Write([]byte("ERROR: " + err.Error()))
 						w.WriteHeader(500)

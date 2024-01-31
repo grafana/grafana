@@ -7,7 +7,7 @@ import (
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
 )
 
-var basicTemplateWithSelectedValue = peakq.QueryTemplateSpec{
+var basicTemplateSpec = peakq.QueryTemplateSpec{
 	Title: "Test",
 	Variables: []peakq.QueryVariable{
 		{

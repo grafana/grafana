@@ -9,9 +9,9 @@ import (
 )
 
 func TestRender(t *testing.T) {
-	rT, err := Render(basicTemplateWithSelectedValue, map[string]string{"metricName": "up"})
+	rT, err := Render(basicTemplateSpec, map[string]string{"metricName": "up"})
 	require.NoError(t, err)
-	require.Equal(t, "up + up + 42", rT.Targets[0].Properties.Object["expr"])
-	b, _ := json.MarshalIndent(basicTemplateWithSelectedValue, "", " ")
+	require.Equal(t, basicTemplateRenderedTargets[0].Properties.Object["expr"], rT.Targets[0].Properties.Object["expr"])
+	b, _ := json.MarshalIndent(basicTemplateSpec, "", " ")
 	fmt.Println(string(b))
 }

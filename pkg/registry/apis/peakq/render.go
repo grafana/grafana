@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -44,20 +45,39 @@ func (r *renderREST) Connect(ctx context.Context, name string, opts runtime.Obje
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		input := map[string]string{}
-		for key, vals := range req.URL.Query() {
-			if len(vals) > 0 {
-				input[key] = vals[0] // ignore second values?
-			}
+		input, err := makeVarMapFromParams(req.URL.Query())
+		if err != nil {
+			responder.Error(err)
+			return
 		}
-
-		rq, err := Render(template.Spec, nil)
+		rq, err := Render(template.Spec, input)
 		if err != nil {
 			responder.Error(fmt.Errorf("failed to render: %w", err))
 			return
 		}
 		responder.Object(http.StatusOK, rq)
 	}), nil
+}
+
+func makeVarMapFromParams(v url.Values) (map[string]string, error) {
+	var input map[string]string
+	keys := v["varName"]
+	values := v["varValue"]
+	if len(keys) > 0 || len(values) > 0 {
+		if len(keys) != len(values) {
+			return nil, fmt.Errorf("mismatched parameter lengths for varName and varValue")
+		}
+		input = make(map[string]string, len(keys))
+		for i, key := range keys {
+			// TODO check for dup keys
+			input[key] = values[i]
+		}
+	}
+
+	for i, k := range keys {
+		input[k] = values[i] // ignore second values?
+	}
+	return input, nil
 }
 
 func Render(qt peakq.QueryTemplateSpec, selectedValues map[string]string) (*peakq.RenderedQuery, error) {
