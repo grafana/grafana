@@ -29,13 +29,11 @@ unifiedStorage,experimental,@grafana/grafana-app-platform-squad,2022-12-01,true,
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,2022-11-28,false,false,false
 redshiftAsyncQueryDataSupport,GA,@grafana/aws-datasources,2022-08-27,false,false,false
 athenaAsyncQueryDataSupport,GA,@grafana/aws-datasources,2022-08-27,false,false,true
-cloudwatchNewRegionsHandler,GA,@grafana/aws-datasources,2023-09-25,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,2022-10-14,false,false,false
 mysqlAnsiQuotes,experimental,@grafana/backend-platform,2022-10-12,false,false,false
 accessControlOnCall,preview,@grafana/identity-access-team,2022-10-19,false,false,false
 nestedFolders,preview,@grafana/backend-platform,2022-10-22,false,false,false
 nestedFolderPicker,GA,@grafana/grafana-frontend-platform,2023-07-24,false,false,true
-disablePrometheusExemplarSampling,GA,@grafana/observability-metrics,2022-12-19,false,false,false
 alertingBacktesting,experimental,@grafana/alerting-squad,2022-10-20,false,false,false
 editPanelCSVDragAndDrop,experimental,@grafana/grafana-bi-squad,2022-12-20,false,false,true
 alertingNoNormalState,preview,@grafana/alerting-squad,2023-01-14,false,false,false
@@ -114,11 +112,12 @@ formatString,preview,@grafana/grafana-bi-squad,2023-10-13,false,false,true
 transformationsVariableSupport,preview,@grafana/grafana-bi-squad,2023-10-04,false,false,true
 kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,2023-11-08,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,2023-12-04,false,true,false
+kubernetesQueryServiceRewrite,experimental,@grafana/grafana-app-platform-squad,2024-01-28,true,true,false
 cloudWatchBatchQueries,preview,@grafana/aws-datasources,2023-10-20,false,false,false
 recoveryThreshold,GA,@grafana/alerting-squad,2023-10-10,false,true,false
 lokiStructuredMetadata,experimental,@grafana/observability-logs,2023-11-16,false,false,false
 teamHttpHeaders,experimental,@grafana/identity-access-team,2023-10-17,false,false,false
-awsDatasourcesNewFormStyling,experimental,@grafana/aws-datasources,2023-10-12,false,false,true
+awsDatasourcesNewFormStyling,preview,@grafana/aws-datasources,2023-10-12,false,false,true
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,2023-10-12,false,false,false
 panelTitleSearchInV1,experimental,@grafana/backend-platform,2023-10-13,true,false,false
 pluginsInstrumentationStatusSource,experimental,@grafana/plugins-platform-backend,2023-10-17,false,false,false
@@ -158,3 +157,5 @@ jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,2024-01-17,false,tr
 onPremToCloudMigrations,experimental,@grafana/grafana-operator-experience-squad,2024-01-22,false,false,false
 alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,2024-01-22,false,false,false
 promQLScope,experimental,@grafana/observability-metrics,2024-01-29,false,false,false
+slateAutocomplete,GA,@grafana/grafana-frontend-platform,2024-01-29,false,false,true
+nodeGraphDotLayout,experimental,@grafana/observability-traces-and-profiling,2024-01-02,false,false,true
