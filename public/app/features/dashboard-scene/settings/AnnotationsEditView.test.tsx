@@ -146,10 +146,17 @@ describe('AnnotationsEditView', () => {
       };
 
       annotation.name = 'new name';
+      annotation.hide = true;
+      annotation.enable = false;
+      annotation.iconColor = 'blue';
       annotationsView.onUpdate(annotation, 0);
 
       expect(dataLayers?.state.layers.length).toBe(2);
       expect(dataLayers?.state.layers[0].state.name).toBe('new name');
+      expect((dataLayers?.state.layers[0] as dataLayers.AnnotationsDataLayer).state.query.name).toBe('new name');
+      expect((dataLayers?.state.layers[0] as dataLayers.AnnotationsDataLayer).state.query.hide).toBe(true);
+      expect((dataLayers?.state.layers[0] as dataLayers.AnnotationsDataLayer).state.query.enable).toBe(false);
+      expect((dataLayers?.state.layers[0] as dataLayers.AnnotationsDataLayer).state.query.iconColor).toBe('blue');
     });
   });
 });

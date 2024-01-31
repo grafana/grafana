@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { AnnotationQuery } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, DeleteButton, IconButton, useStyles2, VerticalGroup } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
@@ -16,6 +17,8 @@ type Props = {
   onMove: (idx: number, dir: MoveDirection) => void;
   onDelete: (idx: number) => void;
 };
+
+export const BUTTON_TITLE = 'Add annotation query';
 
 export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onDelete }: Props) => {
   const styles = useStyles2(getStyles);
@@ -47,7 +50,7 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
                 <th colSpan={3}></th>
               </tr>
             </thead>
-            <tbody>
+            <tbody data-testid={selectors.pages.Dashboard.Settings.Annotations.List.annotations}>
               {annotations.map((annotation, idx) => (
                 <tr key={`${annotation.name}-${idx}`}>
                   {annotation.builtIn ? (
@@ -100,7 +103,7 @@ export const AnnotationSettingsList = ({ annotations, onNew, onEdit, onMove, onD
           onClick={onNew}
           title="There are no custom annotation queries added yet"
           buttonIcon="comment-alt"
-          buttonTitle="Add annotation query"
+          buttonTitle={BUTTON_TITLE}
           infoBoxTitle="What are annotation queries?"
           infoBox={{
             __html: `<p>Annotations provide a way to integrate event data into your graphs. They are visualized as vertical lines

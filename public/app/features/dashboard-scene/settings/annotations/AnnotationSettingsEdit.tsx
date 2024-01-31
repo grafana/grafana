@@ -27,10 +27,11 @@ import {
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
-import { AngularEditorLoader } from 'app/features/dashboard/components/AnnotationSettings/AngularEditorLoader';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { getPanelIdForVizPanel } from '../../utils/utils';
+
+import { AngularEditorLoader } from './AngularEditorLoader';
 
 type Props = {
   annotation: AnnotationQuery;
@@ -204,13 +205,25 @@ export const AnnotationSettingsEdit = ({
           <DataSourcePicker annotations variables current={annotation.datasource} onChange={onDataSourceChange} />
         </Field>
         <Field label="Enabled" description="When enabled the annotation query is issued every dashboard refresh">
-          <Checkbox name="enable" id="enable" value={annotation.enable} onChange={onChange} />
+          <Checkbox
+            name="enable"
+            id="enable"
+            value={annotation.enable}
+            onChange={onChange}
+            data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.enable}
+          />
         </Field>
         <Field
           label="Hidden"
           description="Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden."
         >
-          <Checkbox name="hide" id="hide" value={annotation.hide} onChange={onChange} />
+          <Checkbox
+            name="hide"
+            id="hide"
+            value={annotation.hide}
+            onChange={onChange}
+            data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.hide}
+          />
         </Field>
         <Field label="Color" description="Color to use for the annotation event markers">
           <HorizontalGroup>
@@ -261,7 +274,11 @@ export const AnnotationSettingsEdit = ({
       </FieldSet>
       <Stack>
         {!annotation.builtIn && (
-          <Button variant="destructive" onClick={onDeleteAndLeavePage}>
+          <Button
+            variant="destructive"
+            onClick={onDeleteAndLeavePage}
+            data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.delete}
+          >
             Delete
           </Button>
         )}
@@ -272,7 +289,11 @@ export const AnnotationSettingsEdit = ({
         >
           Preview in dashboard
         </Button>
-        <Button variant="primary" onClick={onApply}>
+        <Button
+          variant="primary"
+          onClick={onApply}
+          data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.apply}
+        >
           Apply
         </Button>
       </Stack>
