@@ -180,7 +180,7 @@ func (am *alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 		}
 
 		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			_, err := am.applyConfig(cfg, []byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
+			_, err := am.applyConfig(cfg)
 			return err
 		})
 		if err != nil {
@@ -210,7 +210,7 @@ func (am *alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 		}
 
 		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			_, err := am.applyConfig(cfg, rawConfig)
+			_, err := am.applyConfig(cfg)
 			return err
 		})
 		if err != nil {
@@ -232,7 +232,7 @@ func (am *alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertCo
 
 	var outerErr error
 	am.Base.WithLock(func() {
-		if err := am.applyAndMarkConfig(ctx, dbCfg.ConfigurationHash, cfg, nil); err != nil {
+		if err := am.applyAndMarkConfig(ctx, dbCfg.ConfigurationHash, cfg); err != nil {
 			outerErr = fmt.Errorf("unable to apply configuration: %w", err)
 			return
 		}
@@ -286,16 +286,13 @@ func (am *alertmanager) aggregateInhibitMatchers(rules []config.InhibitRule, amu
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It returns a boolean indicating whether the user config was changed and an error.
 // It is not safe to call concurrently.
-func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig []byte) (bool, error) {
+func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, error) {
 	// First, let's make sure this config is not already loaded
 	var amConfigChanged bool
-	if rawConfig == nil {
-		enc, err := json.Marshal(cfg.AlertmanagerConfig)
-		if err != nil {
-			// In theory, this should never happen.
-			return false, err
-		}
-		rawConfig = enc
+	rawConfig, err := json.Marshal(cfg.AlertmanagerConfig)
+	if err != nil {
+		// In theory, this should never happen.
+		return false, err
 	}
 
 	if am.Base.ConfigHash() != md5.Sum(rawConfig) {
@@ -335,8 +332,8 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 }
 
 // applyAndMarkConfig applies a configuration and marks it as applied if no errors occur.
-func (am *alertmanager) applyAndMarkConfig(ctx context.Context, hash string, cfg *apimodels.PostableUserConfig, rawConfig []byte) error {
-	configChanged, err := am.applyConfig(cfg, rawConfig)
+func (am *alertmanager) applyAndMarkConfig(ctx context.Context, hash string, cfg *apimodels.PostableUserConfig) error {
+	configChanged, err := am.applyConfig(cfg)
 	if err != nil {
 		return err
 	}
