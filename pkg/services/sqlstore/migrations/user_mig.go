@@ -142,7 +142,7 @@ func addUserMigrations(mg *Migrator) {
 			Mysql("ALTER TABLE user MODIFY is_service_account BOOLEAN DEFAULT 0;"))
 
 	mg.AddMigration("Add uid column to user", NewAddColumnMigration(userV2, &Column{
-		Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: false, Default: "",
+		Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true,
 	}))
 
 	mg.AddMigration("Update uid column values for users", NewRawSQLMigration("").
