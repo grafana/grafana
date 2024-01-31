@@ -78,23 +78,20 @@ There are two threshold modes:
 
 ### Show threshold
 
-Set how thresholds are displayed with the following options:
-
-- **Off** - Don't show thresholds.
-- **As lines**
-- **As lines (dashed)**
-- **As filled regions**
-- **As filled regions and lines**
-- **As filled regions and lines (dashed)**
-
 {{< admonition type="note" >}}
-This option is supported for the following visualizations:
+This option is supported for the bar chart, candlestick, time series, and trend visualizations.
+{{< /admonition>}}
 
-- Bar chart
-- Candlestick
-- Time series
-- Trend
-  {{< /admonition>}}
+Set if and how thresholds are shown with the following options.
+
+| Option                               | Example                                                                                                                                                                                          |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Off                                  |                                                                                                                                                                                                  |
+| As lines                             | {{< figure max-width="500px" class="w-100p" link-class="w-fit mx-auto d-flex flex-direction-column" src="screenshot-thresholds-lines-v10.4.png" alt="Visualization with threshold as a line" >}} |
+| As lines (dashed)                    | {{< figure max-width="500px" src="screenshot-thresholds-dashed-lines-v10.4.png" alt="Visualization with threshold as a dashed line" >}}                                                          |
+| As filled regions                    | {{< figure max-width="500px" src="screenshot-thresholds-regions-v10.4.png" alt="Visualization with threshold as a region" >}}                                                                    |
+| As filled regions and lines          | {{< figure max-width="500px" src="screenshot-thresholds-lines-regions-v10.4.png" alt="Visualization with threshold as a region and line" >}}                                                     |
+| As filled regions and lines (dashed) | {{< figure max-width="500px" src="screenshot-thresholds-dashed-lines-regions-v10.4.png" alt="Visualization with threshold as a region and dashed line" >}}                                       |
 
 ## Add a threshold
 
