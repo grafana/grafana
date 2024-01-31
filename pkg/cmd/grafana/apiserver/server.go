@@ -43,29 +43,33 @@ func newAPIServerOptions(out, errOut io.Writer) *APIServerOptions {
 	}
 }
 
-func (o *APIServerOptions) loadAPIGroupBuilders(args []string) error {
+func (o *APIServerOptions) loadAPIGroupBuilders(runtime []apiConfig) error {
 	o.builders = []grafanaAPIServer.APIGroupBuilder{}
-	for _, g := range args {
-		switch g {
-		// No dependencies for testing
+	for _, gv := range runtime {
+		if !gv.enabled {
+			return fmt.Errorf("disabling apis is not yet supported")
+		}
+		switch gv.group {
+		case "all":
+			return fmt.Errorf("managing all APIs is not yet supported")
 		case "example.grafana.app":
 			o.builders = append(o.builders, example.NewTestingAPIBuilder())
 		case "featuretoggle.grafana.app":
 			features := featuremgmt.WithFeatureManager(setting.FeatureMgmtSettings{}, nil) // none... for now
 			o.builders = append(o.builders, featuretoggle.NewFeatureFlagAPIBuilder(features))
 		case "testdata.datasource.grafana.app":
-			ds, err := server.InitializeDataSourceAPIServer(g)
+			ds, err := server.InitializeDataSourceAPIServer(gv.group)
 			if err != nil {
 				return err
 			}
 			o.builders = append(o.builders, ds)
 		default:
-			return fmt.Errorf("unknown group: %s", g)
+			return fmt.Errorf("unsupported runtime-config: %v", gv)
 		}
 	}
 
 	if len(o.builders) < 1 {
-		return fmt.Errorf("expected group name(s) in the command line arguments")
+		return fmt.Errorf("no apis matched ")
 	}
 
 	// Install schemas
