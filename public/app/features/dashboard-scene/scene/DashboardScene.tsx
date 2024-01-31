@@ -20,17 +20,17 @@ import {
   SceneVariableDependencyConfigLike,
   VizPanel,
 } from '@grafana/scenes';
-import { DashboardLink } from '@grafana/schema';
+import { Dashboard, DashboardLink } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { VariablesChanged } from 'app/features/variables/types';
-import { DashboardDTO, DashboardMeta } from 'app/types';
+import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
+import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
-import { SaveDashboardDrawer } from '../serialization/SaveDashboardDrawer';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
@@ -84,7 +84,6 @@ export interface DashboardSceneState extends SceneObjectState {
   editview?: DashboardEditView;
   /** Edit panel */
   editPanel?: PanelEditor;
-
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
 }
@@ -106,6 +105,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    * State before editing started
    */
   private _initialState?: DashboardSceneState;
+  /**
+   * The save model which the scene was originally created from
+   */
+  private _initialSaveModel?: Dashboard;
   /**
    * Url state before editing started
    */
@@ -152,7 +155,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public startUrlSync() {
-    getUrlSyncManager().initSync(this);
+    if (!this.state.meta.isEmbedded) {
+      getUrlSyncManager().initSync(this);
+    }
   }
 
   public stopUrlSync() {
@@ -168,15 +173,48 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.setState({ isEditing: true });
 
     // Propagate change edit mode change to children
-    if (this.state.body instanceof SceneGridLayout) {
-      this.state.body.setState({ isDraggable: true, isResizable: true });
-      forceRenderChildren(this.state.body, true);
-    }
-
+    this.propagateEditModeChange();
     this.startTrackingChanges();
   };
 
+  public saveCompleted(saveModel: Dashboard, result: SaveDashboardResponseDTO, folderUid?: string) {
+    this._initialSaveModel = {
+      ...saveModel,
+      id: result.id,
+      uid: result.uid,
+      version: result.version,
+    };
+
+    this.stopTrackingChanges();
+    this.setState({
+      version: result.version,
+      isDirty: false,
+      uid: result.uid,
+      id: result.id,
+      meta: {
+        ...this.state.meta,
+        uid: result.uid,
+        url: result.url,
+        slug: result.slug,
+        folderUid: folderUid,
+      },
+    });
+    this.startTrackingChanges();
+  }
+
+  private propagateEditModeChange() {
+    if (this.state.body instanceof SceneGridLayout) {
+      this.state.body.setState({ isDraggable: this.state.isEditing, isResizable: this.state.isEditing });
+      forceRenderChildren(this.state.body, true);
+    }
+  }
+
   public onDiscard = () => {
+    if (!this.canDiscard()) {
+      console.error('Trying to discard back to a state that does not exist, initialState undefined');
+      return;
+    }
+
     // No need to listen to changes anymore
     this.stopTrackingChanges();
     // Stop url sync before updating url
@@ -200,13 +238,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.setState({ ...this._initialState, isEditing: false });
     // and start url sync again
     this.startUrlSync();
-
     // Disable grid dragging
-    if (this.state.body instanceof SceneGridLayout) {
-      this.state.body.setState({ isDraggable: false, isResizable: false });
-      forceRenderChildren(this.state.body, true);
-    }
+    this.propagateEditModeChange();
   };
+
+  public canDiscard() {
+    return this._initialState !== undefined;
+  }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
     const versionRsp = await historySrv.restoreDashboard(version.uid, version.version);
@@ -229,9 +267,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return true;
   };
 
-  public onSave = () => {
-    this.setState({ overlay: new SaveDashboardDrawer({ dashboardRef: this.getRef() }) });
-  };
+  public openSaveDrawer({ saveAsCopy }: { saveAsCopy?: boolean }) {
+    if (!this.state.isEditing) {
+      return;
+    }
+
+    this.setState({
+      overlay: new SaveDashboardDrawer({
+        dashboardRef: this.getRef(),
+        saveAsCopy,
+      }),
+    });
+  }
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
     const { meta, viewPanelScene, editPanel } = this.state;
@@ -415,6 +462,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       app: CoreApp.Dashboard,
       dashboardUID: this.state.uid,
       panelId,
+      panelPluginType: panel?.state.pluginId,
     };
   }
 
@@ -422,6 +470,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     const { meta } = this.state;
 
     return Boolean(meta.canEdit || meta.canMakeEditable);
+  }
+
+  public getInitialSaveModel() {
+    return this._initialSaveModel;
+  }
+
+  /** Hacky temp function until we refactor transformSaveModelToScene a bit */
+  public setInitialSaveModel(saveModel: Dashboard) {
+    this._initialSaveModel = saveModel;
   }
 }
 

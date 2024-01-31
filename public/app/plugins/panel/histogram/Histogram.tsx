@@ -118,20 +118,13 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
             wantedMax = xScaleMax;
           }
 
-          let fullRangeMin = u.data[0][0];
           let fullRangeMax = u.data[0][u.data[0].length - 1];
 
-          // snap to bucket divisors...
-
-          if (wantedMax === fullRangeMax) {
-            wantedMax += bucketSize;
-          } else {
-            wantedMax = incrRoundUp(wantedMax, bucketSize);
-          }
-
-          if (wantedMin > fullRangeMin) {
-            wantedMin = incrRoundDn(wantedMin, bucketSize);
-          }
+          // isOrdinalX is when we have classic histograms, which are LE, ordinal X, and already have 0 dummy bucket prepended
+          // else we have calculated histograms which are GE and cardinal+linear X, and have no next dummy bucket appended
+          wantedMin = incrRoundUp(wantedMin, bucketSize);
+          wantedMax =
+            !isOrdinalX && wantedMax === fullRangeMax ? wantedMax + bucketSize : incrRoundDn(wantedMax, bucketSize);
 
           return [wantedMin, wantedMax];
         },
