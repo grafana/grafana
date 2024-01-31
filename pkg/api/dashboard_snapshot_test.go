@@ -395,6 +395,7 @@ func setUpSnapshotTest(t *testing.T, userId int64, deleteUrl string) dashboardsn
 
 	res := &dashboardsnapshots.DashboardSnapshot{
 		ID:        1,
+		OrgID:     1,
 		Key:       "12345",
 		DeleteKey: "54321",
 		Dashboard: jsonModel,
