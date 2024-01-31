@@ -1,6 +1,6 @@
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
-import { getCompletions, DataProvider, CompletionType } from './completions';
+import { CompletionType, DataProvider, getCompletions } from './completions';
 import { getSituation } from './situation';
 import { NeverCaseError } from './util';
 

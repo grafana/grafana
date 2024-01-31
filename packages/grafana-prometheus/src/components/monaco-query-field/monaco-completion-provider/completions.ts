@@ -1,7 +1,7 @@
 import { escapeLabelValueInExactSelector } from '../../../language_utils';
 import { FUNCTIONS } from '../../../promql';
 
-import type { Situation, Label } from './situation';
+import type { Label, Situation } from './situation';
 import { NeverCaseError } from './util';
 // FIXME: we should not load this from the "outside", but we cannot do that while we have the "old" query-field too
 
@@ -137,6 +137,7 @@ async function getLabelNamesForSelectorCompletions(
 ): Promise<Completion[]> {
   return getLabelNamesForCompletions(metric, '=', true, otherLabels, dataProvider);
 }
+
 async function getLabelNamesForByCompletions(
   metric: string | undefined,
   otherLabels: Label[],

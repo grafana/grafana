@@ -533,11 +533,11 @@ export function getSituation(text: string, pos: number): Situation | null {
   }
 
   /*
-	PromQL
-  Expr
-  VectorSelector
-  LabelMatchers
-  */
+      PromQL
+    Expr
+    VectorSelector
+    LabelMatchers
+    */
   const tree = parser.parse(text);
 
   // if the tree contains error, it is very probable that
@@ -545,6 +545,7 @@ export function getSituation(text: string, pos: number): Situation | null {
   // also, if there are errors, the node lezer finds us,
   // might not be the best node.
   // so first we check if there is an error-node at the cursor-position
+  // @ts-ignore
   const maybeErrorNode = getErrorNode(tree, pos);
 
   const cur = maybeErrorNode != null ? maybeErrorNode.cursor() : tree.cursorAt(pos);
@@ -559,6 +560,7 @@ export function getSituation(text: string, pos: number): Situation | null {
     // i do not use a foreach because i want to stop as soon
     // as i find something
     if (isPathMatch(resolver.path, ids)) {
+      // @ts-ignore
       return resolver.fun(currentNode, text, pos);
     }
   }

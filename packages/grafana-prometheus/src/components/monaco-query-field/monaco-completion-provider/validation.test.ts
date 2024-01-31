@@ -1,6 +1,6 @@
 import { parser } from '@prometheus-io/lezer-promql';
 
-import { validateQuery } from 'app/plugins/datasource/loki/components/monaco-query-field/monaco-completion-provider/validation';
+import { validateQuery } from './validation';
 
 describe('Monaco Query Validation', () => {
   test('Identifies empty queries as valid', () => {
