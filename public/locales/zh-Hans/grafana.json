@@ -71,6 +71,7 @@
     "folder-picker": {
       "accessible-label": "选择文件夹：{{ label }} 当前已选择",
       "button-label": "选择文件夹",
+      "clear-selection": "",
       "empty-message": "未找到文件夹",
       "error-title": "加载文件夹时出错",
       "search-placeholder": "搜索文件夹",
@@ -228,6 +229,10 @@
       "visualization": "可视化",
       "widget": "小部件"
     },
+    "alert-rules-drawer": {
+      "redirect-link": "",
+      "subtitle": ""
+    },
     "empty": {
       "add-library-panel-body": "添加与其他仪表板共享的可视化。",
       "add-library-panel-button": "添加库面板",
@@ -296,7 +301,7 @@
     },
     "toolbar": {
       "add": "添加",
-      "add-panel": "添加面板",
+      "alert-rules": "",
       "mark-favorite": "标记为收藏",
       "open-original": "打开原始仪表板",
       "playlist-next": "前往下一个仪表板",
@@ -306,6 +311,7 @@
       "save": "保存仪表板",
       "settings": "仪表板设置",
       "share": "分享仪表板或面板",
+      "share-button": "",
       "unmark-favorite": "取消标记为收藏"
     },
     "validation": {
@@ -355,6 +361,7 @@
       "title-label": "标题"
     },
     "json-editor": {
+      "apply-button": "",
       "save-button": "保存更改",
       "subtitle": "下面的 JSON 模型是定义仪表板的数据结构。这包括仪表板设置、面板设置、布局和查询等等。",
       "title": "JSON 模型"
@@ -406,9 +413,6 @@
     "datasource-add-button": {
       "label": "添加新数据源"
     }
-  },
-  "drawer": {
-    "close": ""
   },
   "explore": {
     "add-to-dashboard": "添加到仪表板",
@@ -549,6 +553,9 @@
     "loading": "正在加载文件夹..."
   },
   "grafana-ui": {
+    "drawer": {
+      "close": ""
+    },
     "modal": {
       "close-tooltip": "关闭"
     },
@@ -580,6 +587,7 @@
     "shortcuts-description": {
       "change-theme": "更改主题",
       "collapse-all-rows": "折叠所有行",
+      "copy-time-range": "",
       "dashboard-settings": "仪表板设置",
       "duplicate-panel": "复制面板",
       "exit-edit/setting-views": "退出编辑/设置视图",
@@ -593,6 +601,7 @@
       "move-time-range-forward": "向前移动时间范围",
       "open-search": "打开搜索",
       "open-shared-modal": "打开面板分享模式",
+      "paste-time-range": "",
       "refresh-all-panels": "刷新所有面板",
       "remove-panel": "删除面板",
       "save-dashboard": "保存仪表板",
@@ -665,6 +674,9 @@
       "subtitle": "管理整个服务器范围的设置，以及对组织、用户和许可证等资源的访问权限",
       "title": "服务器管理员"
     },
+    "alert-list-legacy": {
+      "title": ""
+    },
     "alerting": {
       "subtitle": "在系统发生问题后立即获悉",
       "title": "警报"
@@ -700,6 +712,10 @@
     "alerting-silences": {
       "subtitle": "停止来自一个或多个警报规则的通知",
       "title": "静默"
+    },
+    "alerting-upgrade": {
+      "subtitle": "",
+      "title": ""
     },
     "alerts-and-incidents": {
       "subtitle": "警报和事件管理应用",
@@ -957,6 +973,7 @@
     "megamenu": {
       "close": "关闭菜单",
       "dock": "停靠菜单",
+      "list-label": "",
       "undock": ""
     },
     "toolbar": {
@@ -1058,6 +1075,120 @@
       "passwords-must-match": "密码必须一致"
     }
   },
+  "public-dashboard": {
+    "acknowledgment-checkboxes": {
+      "ack-title": "",
+      "data-src-ack-desc": "",
+      "data-src-ack-tooltip": "",
+      "public-ack-desc": "",
+      "public-ack-tooltip": "",
+      "usage-ack-desc": "",
+      "usage-ack-desc-tooltip": ""
+    },
+    "config": {
+      "can-view-dashboard-radio-button-label": "",
+      "copy-button": "",
+      "dashboard-url-field-label": "",
+      "email-share-type-option-label": "",
+      "pause-sharing-dashboard-label": "",
+      "public-share-type-option-label": "",
+      "revoke-public-URL-button": "",
+      "revoke-public-URL-button-title": "",
+      "settings-title": ""
+    },
+    "create-page": {
+      "generate-public-url-button": "",
+      "unsupported-features-desc": "",
+      "welcome-title": ""
+    },
+    "delete-modal": {
+      "revoke-nonorphaned-body-text": "",
+      "revoke-orphaned-body-text": "",
+      "revoke-title": ""
+    },
+    "email-sharing": {
+      "input-invalid-email-text": "",
+      "input-required-email-text": "",
+      "invite-button": "",
+      "invite-field-desc": "",
+      "invite-field-label": "",
+      "resend-button": "",
+      "resend-button-title": "",
+      "revoke-button": "",
+      "revoke-button-title": ""
+    },
+    "modal-alerts": {
+      "no-upsert-perm-alert-desc": "",
+      "no-upsert-perm-alert-title": "",
+      "save-dashboard-changes-alert-title": "",
+      "unsupport-data-source-alert-readmore-link": "",
+      "unsupported-data-source-alert-desc": "",
+      "unsupported-data-source-alert-title": "",
+      "unsupported-template-variable-alert-desc": "",
+      "unsupported-template-variable-alert-title": ""
+    },
+    "settings-bar-header": {
+      "collapse-settings-tooltip": "",
+      "expand-settings-tooltip": ""
+    },
+    "settings-configuration": {
+      "default-time-range-label": "",
+      "default-time-range-label-desc": "",
+      "show-annotations-label": "",
+      "show-annotations-label-desc": "",
+      "time-range-picker-label": "",
+      "time-range-picker-label-desc": ""
+    },
+    "settings-summary": {
+      "annotations-hide-text": "",
+      "annotations-show-text": "",
+      "time-range-picker-disabled-text": "",
+      "time-range-picker-enabled-text": "",
+      "time-range-text": ""
+    }
+  },
+  "public-dashboard-list": {
+    "button": {
+      "config-button-tooltip": "",
+      "revoke-button-text": "",
+      "revoke-button-tooltip": "",
+      "view-button-tooltip": ""
+    },
+    "dashboard-title": {
+      "orphaned-title": "",
+      "orphaned-tooltip": ""
+    },
+    "toggle": {
+      "pause-sharing-toggle-text": ""
+    }
+  },
+  "public-dashboard-users-access-list": {
+    "dashboard-modal": {
+      "loading-text": "",
+      "open-dashboard-list-text": "",
+      "public-dashboard-link": "",
+      "public-dashboard-setting": ""
+    },
+    "delete-user-modal": {
+      "delete-user-button-text": "",
+      "delete-user-cancel-button": "",
+      "delete-user-revoke-access-button": "",
+      "revoke-access-title": "",
+      "revoke-user-access-modal-desc-line1": "",
+      "revoke-user-access-modal-desc-line2": ""
+    },
+    "modal": {
+      "dashboard-modal-title": ""
+    },
+    "table-header": {
+      "activated-label": "",
+      "activated-tooltip": "",
+      "email-label": "",
+      "last-active-label": "",
+      "origin-label": "",
+      "role-label": ""
+    }
+  },
   "query-operation": {
     "header": {
       "collapse-row": "折叠查询行",
@@ -1092,6 +1223,12 @@
       "interval-selected": "设置自动刷新间隔",
       "turned-off": "自动刷新关闭"
     }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": ""
+    },
+    "dismissable-button": ""
   },
   "search": {
     "actions": {
@@ -1187,6 +1324,7 @@
       "link": "链接",
       "panel-embed": "嵌入",
       "public-dashboard": "公共仪表板",
+      "public-dashboard-title": "",
       "snapshot": "快照"
     },
     "theme-picker": {
@@ -1265,6 +1403,13 @@
       "empty-recent-list-info": "看起来您之前没有使用过这个时间选择器。一旦您输入了某些时间间隔，最近使用的间隔就会出现在此处。",
       "filter-placeholder": "搜索快速范围"
     },
+    "copy-paste": {
+      "copy-success-message": "",
+      "default-error-message": "",
+      "default-error-title": "",
+      "tooltip-copy": "",
+      "tooltip-paste": ""
+    },
     "footer": {
       "change-settings-button": "更改时间设置",
       "fiscal-year-option": "财政年度",
@@ -1334,6 +1479,11 @@
   },
   "user-sessions": {
     "loading": "正在加载会话..."
+  },
+  "users-access-list": {
+    "tabs": {
+      "public-dashboard-users-tab-title": ""
+    }
   },
   "variable": {
     "adhoc": {

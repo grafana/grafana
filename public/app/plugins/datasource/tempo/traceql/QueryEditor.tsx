@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { defaults } from 'lodash';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import { QueryEditorProps } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -27,8 +27,14 @@ export function QueryEditor(props: Props) {
     return genQuery === query.query || genQuery === '{}';
   });
 
+  // The Monaco Editor uses the first version of props.onChange in handleOnMount i.e. always has the initial
+  // value of query because underlying Monaco editor is passed `query` below in the onEditorChange callback.
+  // handleOnMount is called only once when the editor is mounted and does not get updates to query.
+  // So we need useRef to get the latest version of query in the onEditorChange callback.
+  const queryRef = useRef(query);
+  queryRef.current = query;
   const onEditorChange = (value: string) => {
-    props.onChange({ ...query, query: value });
+    props.onChange({ ...queryRef.current, query: value });
   };
 
   return (
@@ -48,9 +54,9 @@ export function QueryEditor(props: Props) {
               size="sm"
               onClick={() => {
                 reportInteraction('grafana_traces_copy_to_traceql_clicked', {
-                  datasourceType: 'tempo',
                   app: props.app ?? '',
                   grafana_version: config.buildInfo.version,
+                  location: 'traceql_tab',
                 });
 
                 props.onClearResults();
@@ -82,7 +88,7 @@ export function QueryEditor(props: Props) {
 }
 
 const getStyles = () => ({
-  optionsContainer: css`
-    margin-top: 10px;
-  `,
+  optionsContainer: css({
+    marginTop: '10px',
+  }),
 });

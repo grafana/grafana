@@ -52,14 +52,6 @@ func TestDashboardService(t *testing.T) {
 				}
 			})
 
-			t.Run("Should return validation error if it's a folder and have a folder id", func(t *testing.T) {
-				dto.Dashboard = dashboards.NewDashboardFolder("Folder")
-				// nolint:staticcheck
-				dto.Dashboard.FolderID = 1
-				_, err := service.SaveDashboard(context.Background(), dto, false)
-				require.Equal(t, err, dashboards.ErrDashboardFolderCannotHaveParent)
-			})
-
 			t.Run("Should return validation error if folder is named General", func(t *testing.T) {
 				dto.Dashboard = dashboards.NewDashboardFolder("General")
 				_, err := service.SaveDashboard(context.Background(), dto, false)
@@ -126,17 +118,17 @@ func TestDashboardService(t *testing.T) {
 			})
 
 			t.Run("Should return validation error if alert data is invalid", func(t *testing.T) {
-				origAlertingEnabledSet := setting.AlertingEnabled != nil
+				origAlertingEnabledSet := service.cfg.AlertingEnabled != nil
 				origAlertingEnabledVal := false
 				if origAlertingEnabledSet {
-					origAlertingEnabledVal = *setting.AlertingEnabled
+					origAlertingEnabledVal = *(service.cfg.AlertingEnabled)
 				}
-				setting.AlertingEnabled = util.Pointer(true)
+				service.cfg.AlertingEnabled = util.Pointer(true)
 				t.Cleanup(func() {
 					if !origAlertingEnabledSet {
-						setting.AlertingEnabled = nil
+						service.cfg.AlertingEnabled = nil
 					} else {
-						setting.AlertingEnabled = &origAlertingEnabledVal
+						service.cfg.AlertingEnabled = &origAlertingEnabledVal
 					}
 				})
 
@@ -171,9 +163,9 @@ func TestDashboardService(t *testing.T) {
 				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
 				fakeStore.On("SaveProvisionedDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand"), mock.AnythingOfType("*dashboards.DashboardProvisioning")).Return(&dashboards.Dashboard{Data: simplejson.New()}, nil).Once()
 
-				oldRefreshInterval := setting.MinRefreshInterval
-				setting.MinRefreshInterval = "5m"
-				defer func() { setting.MinRefreshInterval = oldRefreshInterval }()
+				oldRefreshInterval := service.cfg.MinRefreshInterval
+				service.cfg.MinRefreshInterval = "5m"
+				defer func() { service.cfg.MinRefreshInterval = oldRefreshInterval }()
 
 				dto.Dashboard = dashboards.NewDashboard("Dash")
 				dto.Dashboard.SetID(3)
@@ -233,22 +225,21 @@ func TestDashboardService(t *testing.T) {
 		})
 
 		t.Run("Count dashboards in folder", func(t *testing.T) {
-			fakeStore.On("CountDashboardsInFolder", mock.Anything, mock.AnythingOfType("*dashboards.CountDashboardsInFolderRequest")).Return(int64(3), nil)
-			// nolint:staticcheck
-			folderSvc.ExpectedFolder = &folder.Folder{ID: 1}
+			fakeStore.On("CountDashboardsInFolders", mock.Anything, mock.AnythingOfType("*dashboards.CountDashboardsInFolderRequest")).Return(int64(3), nil)
+			folderSvc.ExpectedFolder = &folder.Folder{UID: "i am a folder"}
 			// set up a ctx with signed in user
 			usr := &user.SignedInUser{UserID: 1}
 			ctx := appcontext.WithUser(context.Background(), usr)
 
-			count, err := service.CountInFolder(ctx, 1, "i am a folder", usr)
+			count, err := service.CountInFolders(ctx, 1, []string{"i am a folder"}, usr)
 			require.NoError(t, err)
 			require.Equal(t, int64(3), count)
 		})
 
 		t.Run("Delete dashboards in folder", func(t *testing.T) {
-			args := &dashboards.DeleteDashboardsInFolderRequest{OrgID: 1, FolderUID: "uid"}
-			fakeStore.On("DeleteDashboardsInFolder", mock.Anything, args).Return(nil).Once()
-			err := service.DeleteInFolder(context.Background(), 1, "uid", nil)
+			args := &dashboards.DeleteDashboardsInFolderRequest{OrgID: 1, FolderUIDs: []string{"uid"}}
+			fakeStore.On("DeleteDashboardsInFolders", mock.Anything, args).Return(nil).Once()
+			err := service.DeleteInFolders(context.Background(), 1, []string{"uid"}, nil)
 			require.NoError(t, err)
 		})
 	})

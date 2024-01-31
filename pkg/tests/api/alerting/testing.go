@@ -12,12 +12,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -259,9 +261,20 @@ func (a apiClient) ReloadCachedPermissions(t *testing.T) {
 }
 
 // CreateFolder creates a folder for storing our alerts, and then refreshes the permission cache to make sure that following requests will be accepted
-func (a apiClient) CreateFolder(t *testing.T, uID string, title string) {
+func (a apiClient) CreateFolder(t *testing.T, uID string, title string, parentUID ...string) {
 	t.Helper()
-	payload := fmt.Sprintf(`{"uid": "%s","title": "%s"}`, uID, title)
+	cmd := folder.CreateFolderCommand{
+		UID:   uID,
+		Title: title,
+	}
+	if len(parentUID) > 0 {
+		cmd.ParentUID = parentUID[0]
+	}
+
+	blob, err := json.Marshal(cmd)
+	require.NoError(t, err)
+
+	payload := string(blob)
 	u := fmt.Sprintf("%s/api/folders", a.url)
 	r := strings.NewReader(payload)
 	// nolint:gosec
@@ -693,6 +706,20 @@ func (a apiClient) UpdateRouteWithStatus(t *testing.T, route apimodels.Route) (i
 	require.NoError(t, err)
 
 	return resp.StatusCode, string(body)
+}
+
+func (a apiClient) GetRuleHistoryWithStatus(t *testing.T, ruleUID string) (data.Frame, int, string) {
+	t.Helper()
+	u, err := url.Parse(fmt.Sprintf("%s/api/v1/rules/history", a.url))
+	require.NoError(t, err)
+	q := url.Values{}
+	q.Set("ruleUID", ruleUID)
+	u.RawQuery = q.Encode()
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	require.NoError(t, err)
+
+	return sendRequest[data.Frame](t, req, http.StatusOK)
 }
 
 func sendRequest[T any](t *testing.T, req *http.Request, successStatusCode int) (T, int, string) {

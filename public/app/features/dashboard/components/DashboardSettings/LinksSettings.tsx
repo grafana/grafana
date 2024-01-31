@@ -3,9 +3,9 @@ import React, { useState } from 'react';
 import { NavModelItem } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
+import { NEW_LINK } from 'app/features/dashboard-scene/settings/links/utils';
 
 import { LinkSettingsEdit, LinkSettingsList } from '../LinksSettings';
-import { newLink } from '../LinksSettings/LinkSettingsEdit';
 
 import { SettingsPageProps } from './types';
 
@@ -20,7 +20,7 @@ export function LinksSettings({ dashboard, sectionNav, editIndex }: SettingsPage
   };
 
   const onNew = () => {
-    dashboard.links = [...dashboard.links, { ...newLink }];
+    dashboard.links = [...dashboard.links, { ...NEW_LINK }];
     setIsNew(true);
     locationService.partial({ editIndex: dashboard.links.length - 1 });
   };

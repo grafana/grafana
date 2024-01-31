@@ -38,6 +38,7 @@ type RenderingService struct {
 	version           string
 	versionMutex      sync.RWMutex
 	capabilities      []Capability
+	pluginAvailable   bool
 
 	perRequestRenderKeyProvider renderKeyProvider
 	Cfg                         *setting.Cfg
@@ -108,6 +109,8 @@ func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, remo
 		}
 	}
 
+	_, exists := rm.Renderer(context.Background())
+
 	s := &RenderingService{
 		perRequestRenderKeyProvider: renderKeyProvider,
 		capabilities: []Capability{
@@ -131,6 +134,7 @@ func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, remo
 		log:                   logger,
 		domain:                domain,
 		sanitizeURL:           sanitizeURL,
+		pluginAvailable:       exists,
 	}
 
 	gob.Register(&RenderUser{})
@@ -200,17 +204,12 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	return nil
 }
 
-func (rs *RenderingService) pluginAvailable(ctx context.Context) bool {
-	_, exists := rs.RendererPluginManager.Renderer(ctx)
-	return exists
-}
-
 func (rs *RenderingService) remoteAvailable() bool {
 	return rs.Cfg.RendererUrl != ""
 }
 
 func (rs *RenderingService) IsAvailable(ctx context.Context) bool {
-	return rs.remoteAvailable() || rs.pluginAvailable(ctx)
+	return rs.remoteAvailable() || rs.pluginAvailable
 }
 
 func (rs *RenderingService) Version() string {
@@ -245,7 +244,7 @@ func (rs *RenderingService) renderUnavailableImage() *RenderResult {
 	imgPath := "public/img/rendering_plugin_not_installed.png"
 
 	return &RenderResult{
-		FilePath: filepath.Join(setting.HomePath, imgPath),
+		FilePath: filepath.Join(rs.Cfg.HomePath, imgPath),
 	}
 }
 

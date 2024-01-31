@@ -9,15 +9,14 @@ import { InspectTab } from 'app/features/inspector/types';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
-import { DashboardScene } from '../scene/DashboardScene';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
-import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { findVizPanelByKey } from '../utils/utils';
 
+import { buildPanelEditScene } from './PanelEditor';
 import { VizPanelManager } from './VizPanelManager';
-import testDashboard from './testfiles/testDashboard.json';
+import { panelWithQueriesOnly, panelWithTransformations, testDashboard } from './testfiles/testDashboard';
 
 const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
   const result: PanelData = {
@@ -96,7 +95,7 @@ const instance2SettingsMock = {
 jest.mock('app/core/store', () => ({
   exists: jest.fn(),
   get: jest.fn(),
-  getObject: jest.fn(),
+  getObject: jest.fn((_a, b) => b),
   setObject: jest.fn(),
 }));
 
@@ -143,14 +142,13 @@ jest.mock('@grafana/runtime', () => ({
 describe('VizPanelManager', () => {
   describe('changePluginType', () => {
     it('Should successfully change from one viz type to another', () => {
-      const vizPanelManager = setupTest('panel-1');
+      const { vizPanelManager } = setupTest('panel-1');
       expect(vizPanelManager.state.panel.state.pluginId).toBe('timeseries');
       vizPanelManager.changePluginType('table');
       expect(vizPanelManager.state.panel.state.pluginId).toBe('table');
     });
 
     it('Should clear custom options', () => {
-      const dashboardSceneMock = new DashboardScene({});
       const overrides = [
         {
           matcher: { id: 'matcherOne' },
@@ -171,7 +169,7 @@ describe('VizPanelManager', () => {
         },
       });
 
-      const vizPanelManager = new VizPanelManager(vizPanel, dashboardSceneMock.getRef());
+      const vizPanelManager = new VizPanelManager(vizPanel);
 
       expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toBe('Custom');
       expect(vizPanelManager.state.panel.state.fieldConfig.overrides).toBe(overrides);
@@ -184,7 +182,6 @@ describe('VizPanelManager', () => {
     });
 
     it('Should restore cached options/fieldConfig if they exist', () => {
-      const dashboardSceneMock = new DashboardScene({});
       const vizPanel = new VizPanel({
         title: 'Panel A',
         key: 'panel-1',
@@ -196,9 +193,9 @@ describe('VizPanelManager', () => {
         fieldConfig: { defaults: { custom: 'Custom' }, overrides: [] },
       });
 
-      const vizPanelManager = new VizPanelManager(vizPanel, dashboardSceneMock.getRef());
+      const vizPanelManager = new VizPanelManager(vizPanel);
 
-      vizPanelManager.changePluginType('timeseties');
+      vizPanelManager.changePluginType('timeseries');
       //@ts-ignore
       expect(vizPanelManager.state.panel.state.options['customOption']).toBeUndefined();
       expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toStrictEqual({});
@@ -218,7 +215,7 @@ describe('VizPanelManager', () => {
 
     describe('activation', () => {
       it('should load data source', async () => {
-        const vizPanelManager = setupTest('panel-1');
+        const { vizPanelManager } = setupTest('panel-1');
         vizPanelManager.activate();
         await Promise.resolve();
 
@@ -227,7 +224,7 @@ describe('VizPanelManager', () => {
       });
 
       it('should store loaded data source in local storage', async () => {
-        const vizPanelManager = setupTest('panel-1');
+        const { vizPanelManager } = setupTest('panel-1');
         vizPanelManager.activate();
         await Promise.resolve();
 
@@ -240,19 +237,16 @@ describe('VizPanelManager', () => {
 
     describe('data source change', () => {
       it('should load new data source', async () => {
-        const vizPanelManager = setupTest('panel-1');
+        const { vizPanelManager } = setupTest('panel-1');
         vizPanelManager.activate();
-        await Promise.resolve();
-
-        const dataObj = vizPanelManager.queryRunner;
-        dataObj.setState({
-          datasource: {
-            type: 'grafana-prometheus-datasource',
-            uid: 'gdev-prometheus',
-          },
-        });
+        vizPanelManager.state.panel.state.$data?.activate();
 
         await Promise.resolve();
+
+        await vizPanelManager.changePanelDataSource(
+          { type: 'grafana-prometheus-datasource', uid: 'gdev-prometheus' } as any,
+          []
+        );
 
         expect(store.setObject).toHaveBeenCalledTimes(2);
         expect(store.setObject).toHaveBeenLastCalledWith('grafana.dashboards.panelEdit.lastUsedDatasource', {
@@ -268,8 +262,9 @@ describe('VizPanelManager', () => {
     describe('query options change', () => {
       describe('time overrides', () => {
         it('should create PanelTimeRange object', async () => {
-          const vizPanelManager = setupTest('panel-1');
+          const { vizPanelManager } = setupTest('panel-1');
           vizPanelManager.activate();
+          vizPanelManager.state.panel.state.$data?.activate();
           await Promise.resolve();
 
           const panel = vizPanelManager.state.panel;
@@ -291,7 +286,7 @@ describe('VizPanelManager', () => {
           expect(panel.state.$timeRange).toBeInstanceOf(PanelTimeRange);
         });
         it('should update PanelTimeRange object on time options update', async () => {
-          const vizPanelManager = setupTest('panel-1');
+          const { vizPanelManager } = setupTest('panel-1');
           vizPanelManager.activate();
           await Promise.resolve();
 
@@ -330,7 +325,7 @@ describe('VizPanelManager', () => {
         });
 
         it('should remove PanelTimeRange object on time options cleared', async () => {
-          const vizPanelManager = setupTest('panel-1');
+          const { vizPanelManager } = setupTest('panel-1');
           vizPanelManager.activate();
           await Promise.resolve();
 
@@ -370,7 +365,7 @@ describe('VizPanelManager', () => {
 
       describe('max data points and interval', () => {
         it('max data points', async () => {
-          const vizPanelManager = setupTest('panel-1');
+          const { vizPanelManager } = setupTest('panel-1');
           vizPanelManager.activate();
           await Promise.resolve();
 
@@ -392,7 +387,7 @@ describe('VizPanelManager', () => {
         });
 
         it('max data points', async () => {
-          const vizPanelManager = setupTest('panel-1');
+          const { vizPanelManager } = setupTest('panel-1');
           vizPanelManager.activate();
           await Promise.resolve();
 
@@ -417,7 +412,7 @@ describe('VizPanelManager', () => {
 
     describe('query inspection', () => {
       it('allows query inspection from the tab', async () => {
-        const vizPanelManager = setupTest('panel-1');
+        const { vizPanelManager } = setupTest('panel-1');
         vizPanelManager.inspectPanel();
 
         expect(locationService.partial).toHaveBeenCalledWith({ inspect: 1, inspectTab: InspectTab.Query });
@@ -426,15 +421,11 @@ describe('VizPanelManager', () => {
 
     describe('data source change', () => {
       it('changing from one plugin to another', async () => {
-        const vizPanelManager = setupTest('panel-1');
+        const { vizPanelManager } = setupTest('panel-1');
         vizPanelManager.activate();
         await Promise.resolve();
 
-        const panel = vizPanelManager.state.panel;
-
-        expect(panel.state.$data).toBeInstanceOf(SceneQueryRunner);
-
-        expect((panel.state.$data as SceneQueryRunner).state.datasource).toEqual({
+        expect(vizPanelManager.queryRunner.state.datasource).toEqual({
           uid: 'gdev-testdata',
           type: 'grafana-testdata-datasource',
         });
@@ -450,22 +441,18 @@ describe('VizPanelManager', () => {
           },
         } as any);
 
-        expect((panel.state.$data as SceneQueryRunner).state.datasource).toEqual({
+        expect(vizPanelManager.queryRunner.state.datasource).toEqual({
           uid: 'gdev-prometheus',
           type: 'grafana-prometheus-datasource',
         });
       });
 
       it('changing from a plugin to a dashboard data source', async () => {
-        const vizPanelManager = setupTest('panel-1');
+        const { vizPanelManager } = setupTest('panel-1');
         vizPanelManager.activate();
         await Promise.resolve();
 
-        const panel = vizPanelManager.state.panel;
-
-        expect(panel.state.$data).toBeInstanceOf(SceneQueryRunner);
-
-        expect((panel.state.$data as SceneQueryRunner).state.datasource).toEqual({
+        expect(vizPanelManager.queryRunner.state.datasource).toEqual({
           uid: 'gdev-testdata',
           type: 'grafana-testdata-datasource',
         });
@@ -481,108 +468,21 @@ describe('VizPanelManager', () => {
           },
         } as any);
 
-        expect(panel.state.$data).toBeInstanceOf(ShareQueryDataProvider);
+        expect(vizPanelManager.queryRunner.state.datasource).toEqual({
+          uid: SHARED_DASHBOARD_QUERY,
+          type: 'datasource',
+        });
       });
 
       it('changing from dashboard data source to a plugin', async () => {
-        const vizPanelManager = setupTest('panel-3');
+        const { vizPanelManager } = setupTest('panel-3');
         vizPanelManager.activate();
         await Promise.resolve();
 
-        const panel = vizPanelManager.state.panel;
-
-        expect(panel.state.$data).toBeInstanceOf(ShareQueryDataProvider);
-
-        await vizPanelManager.changePanelDataSource({
-          name: 'grafana-prometheus',
-          type: 'grafana-prometheus-datasource',
-          uid: 'gdev-prometheus',
-          meta: {
-            name: 'Prometheus',
-            module: 'prometheus',
-            id: 'grafana-prometheus-datasource',
-          },
-        } as any);
-
-        expect(panel.state.$data).toBeInstanceOf(SceneQueryRunner);
-        expect((panel.state.$data as SceneQueryRunner).state.datasource).toEqual({
-          uid: 'gdev-prometheus',
-          type: 'grafana-prometheus-datasource',
-        });
-      });
-
-      describe('with transformations', () => {
-        it('changing from one plugin to another', async () => {
-          const vizPanelManager = setupTest('panel-2');
-          vizPanelManager.activate();
-          await Promise.resolve();
-
-          const panel = vizPanelManager.state.panel;
-
-          expect(panel.state.$data).toBeInstanceOf(SceneDataTransformer);
-
-          expect((panel.state.$data?.state.$data as SceneQueryRunner).state.datasource).toEqual({
-            uid: 'gdev-testdata',
-            type: 'grafana-testdata-datasource',
-          });
-
-          await vizPanelManager.changePanelDataSource({
-            name: 'grafana-prometheus',
-            type: 'grafana-prometheus-datasource',
-            uid: 'gdev-prometheus',
-            meta: {
-              name: 'Prometheus',
-              module: 'prometheus',
-              id: 'grafana-prometheus-datasource',
-            },
-          } as any);
-
-          expect(panel.state.$data).toBeInstanceOf(SceneDataTransformer);
-          expect((panel.state.$data?.state.$data as SceneQueryRunner).state.datasource).toEqual({
-            uid: 'gdev-prometheus',
-            type: 'grafana-prometheus-datasource',
-          });
-        });
-      });
-
-      it('changing from a plugin to dashboard data source', async () => {
-        const vizPanelManager = setupTest('panel-2');
-        vizPanelManager.activate();
-        await Promise.resolve();
-
-        const panel = vizPanelManager.state.panel;
-
-        expect(panel.state.$data).toBeInstanceOf(SceneDataTransformer);
-
-        expect((panel.state.$data?.state.$data as SceneQueryRunner).state.datasource).toEqual({
-          uid: 'gdev-testdata',
-          type: 'grafana-testdata-datasource',
-        });
-
-        await vizPanelManager.changePanelDataSource({
-          name: SHARED_DASHBOARD_QUERY,
-          type: 'datasource',
+        expect(vizPanelManager.queryRunner.state.datasource).toEqual({
           uid: SHARED_DASHBOARD_QUERY,
-          meta: {
-            name: 'Prometheus',
-            module: 'prometheus',
-            id: DASHBOARD_DATASOURCE_PLUGIN_ID,
-          },
-        } as any);
-
-        expect(panel.state.$data).toBeInstanceOf(SceneDataTransformer);
-        expect(panel.state.$data?.state.$data).toBeInstanceOf(ShareQueryDataProvider);
-      });
-
-      it('changing from a dashboard data source to a plugin', async () => {
-        const vizPanelManager = setupTest('panel-4');
-        vizPanelManager.activate();
-        await Promise.resolve();
-
-        const panel = vizPanelManager.state.panel;
-
-        expect(panel.state.$data).toBeInstanceOf(SceneDataTransformer);
-        expect(panel.state.$data?.state.$data).toBeInstanceOf(ShareQueryDataProvider);
+          type: 'datasource',
+        });
 
         await vizPanelManager.changePanelDataSource({
           name: 'grafana-prometheus',
@@ -595,12 +495,105 @@ describe('VizPanelManager', () => {
           },
         } as any);
 
-        expect(panel.state.$data).toBeInstanceOf(SceneDataTransformer);
-        expect(panel.state.$data?.state.$data).toBeInstanceOf(SceneQueryRunner);
-        expect((panel.state.$data?.state.$data as SceneQueryRunner).state.datasource).toEqual({
+        expect(vizPanelManager.queryRunner.state.datasource).toEqual({
           uid: 'gdev-prometheus',
           type: 'grafana-prometheus-datasource',
         });
+      });
+    });
+  });
+
+  describe('change transformations', () => {
+    it('should update and reprocess transformations', () => {
+      const { scene, panel } = setupTest('panel-3');
+      scene.setState({
+        editPanel: buildPanelEditScene(panel),
+      });
+
+      const vizPanelManager = scene.state.editPanel!.state.panelRef.resolve();
+      vizPanelManager.activate();
+      vizPanelManager.state.panel.state.$data?.activate();
+
+      const reprocessMock = jest.fn();
+      vizPanelManager.dataTransformer.reprocessTransformations = reprocessMock;
+      vizPanelManager.changeTransformations([{ id: 'calculateField', options: {} }]);
+
+      expect(reprocessMock).toHaveBeenCalledTimes(1);
+      expect(vizPanelManager.dataTransformer.state.transformations).toEqual([{ id: 'calculateField', options: {} }]);
+    });
+  });
+
+  describe('change queries', () => {
+    describe('plugin queries', () => {
+      it('should update queries', () => {
+        const { vizPanelManager } = setupTest('panel-1');
+
+        vizPanelManager.activate();
+        vizPanelManager.state.panel.state.$data?.activate();
+
+        vizPanelManager.changeQueries([
+          {
+            datasource: {
+              type: 'grafana-testdata-datasource',
+              uid: 'gdev-testdata',
+            },
+            refId: 'A',
+            scenarioId: 'random_walk',
+            seriesCount: 5,
+          },
+        ]);
+
+        expect(vizPanelManager.queryRunner.state.queries).toEqual([
+          {
+            datasource: {
+              type: 'grafana-testdata-datasource',
+              uid: 'gdev-testdata',
+            },
+            refId: 'A',
+            scenarioId: 'random_walk',
+            seriesCount: 5,
+          },
+        ]);
+      });
+    });
+
+    describe('dashboard queries', () => {
+      it('should update queries', () => {
+        const { scene, panel } = setupTest('panel-3');
+        scene.setState({
+          editPanel: buildPanelEditScene(panel),
+        });
+
+        const vizPanelManager = scene.state.editPanel!.state.panelRef.resolve();
+        vizPanelManager.activate();
+        vizPanelManager.state.panel.state.$data?.activate();
+
+        // Changing dashboard query to a panel with transformations
+        vizPanelManager.changeQueries([
+          {
+            refId: 'A',
+            datasource: {
+              type: DASHBOARD_DATASOURCE_PLUGIN_ID,
+            },
+            panelId: panelWithTransformations.id,
+          },
+        ]);
+        expect(vizPanelManager.panelData).toBeInstanceOf(SceneDataTransformer);
+        expect(vizPanelManager.queryRunner.state.queries[0].panelId).toEqual(panelWithTransformations.id);
+
+        // Changing dashboard query to a panel with queries only
+        vizPanelManager.changeQueries([
+          {
+            refId: 'A',
+            datasource: {
+              type: DASHBOARD_DATASOURCE_PLUGIN_ID,
+            },
+            panelId: panelWithQueriesOnly.id,
+          },
+        ]);
+
+        expect(vizPanelManager.panelData).toBeInstanceOf(SceneDataTransformer);
+        expect(vizPanelManager.queryRunner.state.queries[0].panelId).toBe(panelWithQueriesOnly.id);
       });
     });
   });
@@ -608,14 +601,13 @@ describe('VizPanelManager', () => {
 
 const setupTest = (panelId: string) => {
   const scene = transformSaveModelToScene({ dashboard: testDashboard as any, meta: {} });
+  const panel = findVizPanelByKey(scene, panelId)!;
+
+  const vizPanelManager = new VizPanelManager(panel.clone());
 
   // The following happens on DahsboardScene activation. For the needs of this test this activation aint needed hence we hand-call it
   // @ts-expect-error
   getDashboardSrv().setCurrent(new DashboardModelCompatibilityWrapper(scene));
 
-  const panel = findVizPanelByKey(scene, panelId)!;
-
-  const vizPanelManager = new VizPanelManager(panel.clone(), scene.getRef());
-
-  return vizPanelManager;
+  return { vizPanelManager, scene, panel };
 };

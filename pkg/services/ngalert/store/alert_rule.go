@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -317,11 +318,18 @@ func newTitlesOverlapExisting(rules []ngmodels.UpdateRule) bool {
 
 // CountInFolder is a handler for retrieving the number of alert rules of
 // specific organisation associated with a given namespace (parent folder).
-func (st DBstore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u identity.Requester) (int64, error) {
+func (st DBstore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) (int64, error) {
+	if len(folderUIDs) == 0 {
+		return 0, nil
+	}
 	var count int64
 	var err error
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		q := sess.Table("alert_rule").Where("org_id = ?", orgID).Where("namespace_uid = ?", folderUID)
+		args := make([]any, 0, len(folderUIDs))
+		for _, folderUID := range folderUIDs {
+			args = append(args, folderUID)
+		}
+		q := sess.Table("alert_rule").Where("org_id = ?", orgID).Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Repeat("?,", len(folderUIDs)-1)+"?"), args...)
 		count, err = q.Count()
 		return err
 	})
@@ -460,23 +468,14 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 				continue
 			}
 			namespaceMap[hit.UID] = &folder.Folder{
-				UID:   hit.UID,
-				Title: hit.Title,
+				UID:       hit.UID,
+				Title:     hit.Title,
+				ParentUID: hit.FolderUID,
 			}
 		}
 		page += 1
 	}
 	return namespaceMap, nil
-}
-
-// GetNamespaceByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.
-func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, orgID int64, user identity.Requester) (*folder.Folder, error) {
-	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &namespace, SignedInUser: user})
-	if err != nil {
-		return nil, err
-	}
-
-	return folder, nil
 }
 
 // GetNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
@@ -515,8 +514,10 @@ func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodel
 // GetAlertRulesForScheduling returns a short version of all alert rules except those that belong to an excluded list of organizations
 func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error {
 	var folders []struct {
-		Uid   string
-		Title string
+		OrgId     int64
+		Uid       string
+		Title     string
+		ParentUid string
 	}
 	var rules []*ngmodels.AlertRule
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
@@ -552,10 +553,12 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "GetAlertRulesForScheduling", "error", err)
 				continue
 			}
-			if optimizations, err := OptimizeAlertQueries(rule.Data); err != nil {
-				st.Logger.Error("Could not migrate rule from range to instant query", "rule", rule.UID, "err", err)
-			} else if len(optimizations) > 0 {
-				st.Logger.Info("Migrated rule from range to instant query", "rule", rule.UID, "migrated_queries", len(optimizations))
+			if st.FeatureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingQueryOptimization) {
+				if optimizations, err := OptimizeAlertQueries(rule.Data); err != nil {
+					st.Logger.Error("Could not migrate rule from range to instant query", "rule", rule.UID, "err", err)
+				} else if len(optimizations) > 0 {
+					st.Logger.Info("Migrated rule from range to instant query", "rule", rule.UID, "migrated_queries", len(optimizations))
+				}
 			}
 			rules = append(rules, rule)
 		}
@@ -563,9 +566,8 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 		query.ResultRules = rules
 
 		if query.PopulateFolders {
-			foldersSql := sess.Table("dashboard").Alias("d").Select("d.uid, d.title").
-				Where("is_folder = ?", st.SQLStore.GetDialect().BooleanStr(true)).
-				And(`EXISTS (SELECT 1 FROM alert_rule a WHERE d.uid = a.namespace_uid)`)
+			foldersSql := sess.Table("folder").Alias("d").Select("d.org_id, d.uid, d.title, d.parent_uid").
+				Where(`EXISTS (SELECT 1 FROM alert_rule a WHERE d.uid = a.namespace_uid AND d.org_id = a.org_id)`)
 			if len(disabledOrgs) > 0 {
 				foldersSql.NotIn("org_id", disabledOrgs)
 			}
@@ -573,9 +575,13 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 			if err := foldersSql.Find(&folders); err != nil {
 				return fmt.Errorf("failed to fetch a list of folders that contain alert rules: %w", err)
 			}
-			query.ResultFoldersTitles = make(map[string]string, len(folders))
-			for _, folder := range folders {
-				query.ResultFoldersTitles[folder.Uid] = folder.Title
+			query.ResultFoldersTitles = make(map[ngmodels.FolderKey]string, len(folders))
+			for _, f := range folders {
+				key := ngmodels.FolderKey{
+					OrgID: f.OrgId,
+					UID:   f.Uid,
+				}
+				query.ResultFoldersTitles[key] = ngmodels.GetNamespaceKey(f.ParentUid, f.Title)
 			}
 		}
 		return nil
@@ -583,35 +589,37 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 }
 
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
-func (st DBstore) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) error {
-	evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeName(folderUID))
-	canSave, err := st.AccessControl.Evaluate(ctx, user, evaluator)
-	if err != nil {
-		st.Logger.Error("Failed to evaluate access control", "error", err)
-		return err
-	}
-	if !canSave {
-		st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user")
-		return dashboards.ErrFolderAccessDenied
-	}
-
-	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
-		OrgID:         orgID,
-		NamespaceUIDs: []string{folderUID},
-	})
-	if err != nil {
-		return err
-	}
-
-	uids := make([]string, 0, len(rules))
-	for _, tgt := range rules {
-		if tgt != nil {
-			uids = append(uids, tgt.UID)
+func (st DBstore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
+	for _, folderUID := range folderUIDs {
+		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
+		canSave, err := st.AccessControl.Evaluate(ctx, user, evaluator)
+		if err != nil {
+			st.Logger.Error("Failed to evaluate access control", "error", err)
+			return err
 		}
-	}
+		if !canSave {
+			st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user")
+			return dashboards.ErrFolderAccessDenied
+		}
 
-	if err := st.DeleteAlertRulesByUID(ctx, orgID, uids...); err != nil {
-		return err
+		rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
+			OrgID:         orgID,
+			NamespaceUIDs: []string{folderUID},
+		})
+		if err != nil {
+			return err
+		}
+
+		uids := make([]string, 0, len(rules))
+		for _, tgt := range rules {
+			if tgt != nil {
+				uids = append(uids, tgt.UID)
+			}
+		}
+
+		if err := st.DeleteAlertRulesByUID(ctx, orgID, uids...); err != nil {
+			return err
+		}
 	}
 	return nil
 }

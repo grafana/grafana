@@ -28,13 +28,19 @@ type Deduplicator struct {
 // caseInsensitive determines whether the string comparison should be case-insensitive.
 // maxLen determines the maximum length of deduplicated strings. If the deduplicated string would be longer than
 // maxLen, it will be truncated.
-func NewDeduplicator(caseInsensitive bool, maxLen int) *Deduplicator {
-	return &Deduplicator{
-		set:             make(map[string]int),
+func NewDeduplicator(caseInsensitive bool, maxLen int, initial ...string) *Deduplicator {
+	d := &Deduplicator{
+		set:             make(map[string]int, len(initial)),
 		caseInsensitive: caseInsensitive,
 		maxLen:          maxLen,
 		uidGenerator:    util.GenerateShortUID,
 	}
+	if len(initial) > 0 {
+		for _, u := range initial {
+			d.add(u, 0)
+		}
+	}
+	return d
 }
 
 // Deduplicate returns a unique string based on the given base string. If the base string has not already been seen by

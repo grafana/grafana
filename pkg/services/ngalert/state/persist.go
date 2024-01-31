@@ -14,6 +14,7 @@ type InstanceStore interface {
 	SaveAlertInstance(ctx context.Context, instance models.AlertInstance) error
 	DeleteAlertInstances(ctx context.Context, keys ...models.AlertInstanceKey) error
 	DeleteAlertInstancesByRule(ctx context.Context, key models.AlertRuleKey) error
+	FullSync(ctx context.Context, instances []models.AlertInstance) error
 }
 
 // RuleReader represents the ability to fetch alert rules.

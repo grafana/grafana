@@ -22,7 +22,7 @@ import (
 
 func TestSocialService_ProvideService(t *testing.T) {
 	type testEnv struct {
-		features *featuremgmt.FeatureManager
+		features featuremgmt.FeatureToggles
 	}
 	testCases := []struct {
 		name                                string
@@ -73,7 +73,7 @@ func TestSocialService_ProvideService(t *testing.T) {
 	accessControl := acimpl.ProvideAccessControl(cfg)
 	sqlStore := db.InitTestDB(t)
 
-	ssoSettingsSvc := ssosettingsimpl.ProvideService(cfg, sqlStore, accessControl, routing.NewRouteRegister(), featuremgmt.WithFeatures(), secrets)
+	ssoSettingsSvc := ssosettingsimpl.ProvideService(cfg, sqlStore, accessControl, routing.NewRouteRegister(), featuremgmt.WithFeatures(), secrets, &usagestats.UsageStatsMock{}, nil)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

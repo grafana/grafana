@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -16,6 +17,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -145,7 +147,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(data1.DatasourceUID)},
 			})
 
-			srv := createTestingApiSrv(t, nil, ac, eval_mocks.NewEvaluatorFactory(&eval_mocks.ConditionEvaluatorMock{}))
+			srv := createTestingApiSrv(t, nil, ac, eval_mocks.NewEvaluatorFactory(&eval_mocks.ConditionEvaluatorMock{}), &featuremgmt.FeatureManager{})
 
 			rule := validRule()
 			rule.GrafanaManagedAlert.Data = ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2})
@@ -179,7 +181,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 			evalFactory := eval_mocks.NewEvaluatorFactory(evaluator)
 
-			srv := createTestingApiSrv(t, ds, ac, evalFactory)
+			srv := createTestingApiSrv(t, ds, ac, evalFactory, &featuremgmt.FeatureManager{})
 
 			rule := validRule()
 			rule.GrafanaManagedAlert.Data = ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2})
@@ -254,7 +256,7 @@ func TestRouteEvalQueries(t *testing.T) {
 			}
 			evaluator.EXPECT().EvaluateRaw(mock.Anything, mock.Anything).Return(result, nil)
 
-			srv := createTestingApiSrv(t, ds, ac, eval_mocks.NewEvaluatorFactory(evaluator))
+			srv := createTestingApiSrv(t, ds, ac, eval_mocks.NewEvaluatorFactory(evaluator), &featuremgmt.FeatureManager{})
 
 			response := srv.RouteEvalQueries(rc, definitions.EvalQueriesPayload{
 				Data: ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2}),
@@ -266,9 +268,81 @@ func TestRouteEvalQueries(t *testing.T) {
 			evaluator.AssertCalled(t, "EvaluateRaw", mock.Anything, currentTime)
 		})
 	})
+
+	t.Run("when query is optimizable", func(t *testing.T) {
+		rc := &contextmodel.ReqContext{
+			Context: &web.Context{
+				Req: &http.Request{},
+			},
+			SignedInUser: &user.SignedInUser{
+				OrgID: 1,
+			},
+		}
+		t.Run("should return warning notice on optimized queries", func(t *testing.T) {
+			queries := []models.AlertQuery{
+				models.CreatePrometheusQuery("A", "1", 1000, 43200, false, "some-ds"),
+				models.CreatePrometheusQuery("B", "1", 1000, 43200, false, "some-ds"),
+				models.CreatePrometheusQuery("C", "1", 1000, 43200, false, "some-ds"), // Not optimizable.
+				models.CreateReduceExpression("D", "A", "last"),
+				models.CreateReduceExpression("E", "B", "last"),
+			}
+
+			currentTime := time.Now()
+
+			ac := acMock.New().WithPermissions([]ac.Permission{
+				{Action: datasources.ActionQuery, Scope: datasources.ScopeProvider.GetResourceScopeUID(queries[0].DatasourceUID)},
+			})
+
+			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
+				{UID: queries[0].DatasourceUID},
+			}}
+
+			evaluator := &eval_mocks.ConditionEvaluatorMock{}
+			createEmptyFrameResponse := func(refId string) backend.DataResponse {
+				frame := data.NewFrame("")
+				frame.RefID = refId
+				frame.SetMeta(&data.FrameMeta{})
+				return backend.DataResponse{
+					Frames: []*data.Frame{frame},
+					Error:  nil,
+				}
+			}
+			result := &backend.QueryDataResponse{
+				Responses: map[string]backend.DataResponse{
+					"A": createEmptyFrameResponse("A"),
+					"B": createEmptyFrameResponse("B"),
+					"C": createEmptyFrameResponse("C"),
+				},
+			}
+			evaluator.EXPECT().EvaluateRaw(mock.Anything, mock.Anything).Return(result, nil)
+
+			srv := createTestingApiSrv(t, ds, ac, eval_mocks.NewEvaluatorFactory(evaluator), featuremgmt.WithManager(featuremgmt.FlagAlertingQueryOptimization))
+
+			response := srv.RouteEvalQueries(rc, definitions.EvalQueriesPayload{
+				Data: ApiAlertQueriesFromAlertQueries(queries),
+				Now:  currentTime,
+			})
+
+			require.Equal(t, http.StatusOK, response.Status())
+
+			evaluator.AssertCalled(t, "EvaluateRaw", mock.Anything, currentTime)
+
+			require.Equal(t, []data.Notice{{
+				Severity: data.NoticeSeverityWarning,
+				Text:     "Query optimized from Range to Instant type; all uses exclusively require the last datapoint. Consider modifying your query to Instant type to ensure accuracy.",
+			}}, result.Responses["A"].Frames[0].Meta.Notices)
+
+			require.Equal(t, []data.Notice{{
+				Severity: data.NoticeSeverityWarning,
+				Text:     "Query optimized from Range to Instant type; all uses exclusively require the last datapoint. Consider modifying your query to Instant type to ensure accuracy.",
+			}}, result.Responses["B"].Frames[0].Meta.Notices)
+
+			require.Equal(t, 0, len(result.Responses["C"].Frames[0].Meta.Notices))
+		})
+	})
 }
 
-func createTestingApiSrv(t *testing.T, ds *fakes.FakeCacheService, ac *acMock.Mock, evaluator eval.EvaluatorFactory) *TestingApiSrv {
+func createTestingApiSrv(t *testing.T, ds *fakes.FakeCacheService, ac *acMock.Mock, evaluator eval.EvaluatorFactory, featureManager *featuremgmt.FeatureManager) *TestingApiSrv {
 	if ac == nil {
 		ac = acMock.New()
 	}
@@ -279,5 +353,6 @@ func createTestingApiSrv(t *testing.T, ds *fakes.FakeCacheService, ac *acMock.Mo
 		evaluator:       evaluator,
 		cfg:             config(t),
 		tracer:          tracing.InitializeTracerForTest(),
+		featureManager:  featureManager,
 	}
 }

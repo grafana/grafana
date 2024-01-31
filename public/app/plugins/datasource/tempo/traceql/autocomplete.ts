@@ -4,9 +4,9 @@ import { SelectableValue } from '@grafana/data';
 import { isFetchError } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
-import { createErrorNotification } from '../../../../core/copy/appNotification';
-import { notifyApp } from '../../../../core/reducers/appNotification';
-import { dispatch } from '../../../../store/store';
+import { notifyApp } from '../_importedDependencies/actions/appNotification';
+import { createErrorNotification } from '../_importedDependencies/core/appNotification';
+import { dispatch } from '../_importedDependencies/store';
 import TempoLanguageProvider from '../language_provider';
 
 import { getSituation, Situation } from './situation';
@@ -305,8 +305,8 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         return [];
       }
       case 'EMPTY': {
-        return this.getScopesCompletions('{ ')
-          .concat(this.getIntrinsicsCompletions('{ '))
+        return this.getScopesCompletions('{ ', '$0 }')
+          .concat(this.getIntrinsicsCompletions('{ ', '$0 }'))
           .concat(this.getTagsCompletions('{ .'));
       }
       case 'SPANSET_EMPTY':

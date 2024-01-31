@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -64,8 +65,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 		authInfoStore := authinfoimpl.ProvideStore(sqlStore, secretsService)
 		srv := authinfoimpl.ProvideService(
-			authInfoStore,
-		)
+			authInfoStore, remotecache.NewFakeCacheStorage(), secretsService)
 		hs.authInfoService = srv
 		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
 		require.NoError(t, err)
@@ -103,7 +103,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		}
 		err = srv.UpdateAuthInfo(context.Background(), cmd)
 		require.NoError(t, err)
-		avatarUrl := dtos.GetGravatarUrl("@test.com")
+		avatarUrl := dtos.GetGravatarUrl(hs.Cfg, "@test.com")
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"id": fmt.Sprintf("%v", usr.ID)}).exec()
 
 		expected := user.UserProfileDTO{
@@ -160,7 +160,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "/api/users", "/api/users", func(sc *scenarioContext) {
 		userMock.ExpectedSearchUsers = mockResult
 
-		searchUsersService := searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), userMock)
+		searchUsersService := searchusers.ProvideUsersService(sc.cfg, filters.ProvideOSSSearchUserFilter(), userMock)
 		sc.handlerFunc = searchUsersService.SearchUsers
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
@@ -173,7 +173,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET with page and limit querystring parameters on", "/api/users", "/api/users", func(sc *scenarioContext) {
 		userMock.ExpectedSearchUsers = mockResult
 
-		searchUsersService := searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), userMock)
+		searchUsersService := searchusers.ProvideUsersService(sc.cfg, filters.ProvideOSSSearchUserFilter(), userMock)
 		sc.handlerFunc = searchUsersService.SearchUsers
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 
@@ -186,7 +186,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "/api/users/search", "/api/users/search", func(sc *scenarioContext) {
 		userMock.ExpectedSearchUsers = mockResult
 
-		searchUsersService := searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), userMock)
+		searchUsersService := searchusers.ProvideUsersService(sc.cfg, filters.ProvideOSSSearchUserFilter(), userMock)
 		sc.handlerFunc = searchUsersService.SearchUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
@@ -202,7 +202,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET with page and perpage querystring parameters on", "/api/users/search", "/api/users/search", func(sc *scenarioContext) {
 		userMock.ExpectedSearchUsers = mockResult
 
-		searchUsersService := searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), userMock)
+		searchUsersService := searchusers.ProvideUsersService(sc.cfg, filters.ProvideOSSSearchUserFilter(), userMock)
 		sc.handlerFunc = searchUsersService.SearchUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 

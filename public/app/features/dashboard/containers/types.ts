@@ -18,4 +18,5 @@ export type DashboardPageRouteSearchParams = {
   to?: string;
   refresh?: string;
   kiosk?: string | true;
+  scenes?: boolean;
 };

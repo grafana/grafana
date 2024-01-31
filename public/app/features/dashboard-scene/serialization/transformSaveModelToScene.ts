@@ -29,6 +29,7 @@ import {
   UserActionEvent,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
 import { DashboardDTO } from 'app/types';
 
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
@@ -49,7 +50,7 @@ import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { DashboardInteractions } from '../utils/interactions';
 import {
   getCurrentValueForOldIntervalModel,
-  getIntervalsFromOldIntervalModel,
+  getIntervalsFromQueryString,
   getVizPanelKeyForPanelId,
 } from '../utils/utils';
 
@@ -61,13 +62,21 @@ export interface DashboardLoaderState {
   loadError?: string;
 }
 
+export interface SaveModelToSceneOptions {
+  isEmbedded?: boolean;
+}
+
 export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   // Just to have migrations run
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
     autoMigrateOldPanels: false,
   });
 
-  return createDashboardSceneFromDashboardModel(oldModel);
+  const scene = createDashboardSceneFromDashboardModel(oldModel);
+  // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
+  scene.setInitialSaveModel(rsp.dashboard);
+
+  return scene;
 }
 
 export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
@@ -206,7 +215,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     layers = oldModel.annotations?.list.map((a) => {
       // Each annotation query is an individual data layer
       return new DashboardAnnotationsDataLayer({
-        key: `annnotations-${a.name}`,
+        key: `annotations-${a.name}`,
         query: a,
         name: a.name,
         isEnabled: Boolean(a.enable),
@@ -240,6 +249,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     description: oldModel.description,
     editable: oldModel.editable,
     meta: oldModel.meta,
+    version: oldModel.version,
     body: new SceneGridLayout({
       isLazy: true,
       children: createSceneObjectsForPanels(oldModel.panels),
@@ -250,6 +260,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       fiscalYearStartMonth: oldModel.fiscalYearStartMonth,
       timeZone: oldModel.timezone,
       weekStart: oldModel.weekStart,
+      UNSAFE_nowDelay: oldModel.timepicker?.nowDelay,
     }),
     $variables: variables,
     $behaviors: [
@@ -257,6 +268,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       new behaviors.CursorSync({
         sync: oldModel.graphTooltip,
       }),
+      registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
     ],
     $data:
@@ -338,7 +350,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
     });
   } else if (variable.type === 'interval') {
-    const intervals = getIntervalsFromOldIntervalModel(variable);
+    const intervals = getIntervalsFromQueryString(variable.query);
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
     return new IntervalVariable({
       ...commonProperties,
@@ -479,6 +491,18 @@ const getLimitedDescriptionReporter = () => {
     DashboardInteractions.panelDescriptionShown();
   };
 };
+
+function registerDashboardSceneTracking(model: DashboardModel) {
+  return () => {
+    const unsetDashboardInteractionsScenesContext = DashboardInteractions.setScenesContext();
+
+    trackDashboardLoaded(model, model.version);
+
+    return () => {
+      unsetDashboardInteractionsScenesContext();
+    };
+  };
+}
 
 function registerPanelInteractionsReporter(scene: DashboardScene) {
   const descriptionReporter = getLimitedDescriptionReporter();

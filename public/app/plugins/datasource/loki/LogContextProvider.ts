@@ -17,10 +17,6 @@ import {
 } from '@grafana/data';
 import { LabelParser, LabelFilter, LineFilters, PipelineStage, Logfmt, Json } from '@grafana/lezer-logql';
 import { Labels } from '@grafana/schema';
-import { notifyApp } from 'app/core/actions';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
-import store from 'app/core/store';
-import { dispatch } from 'app/store/store';
 
 import { LokiContextUi } from './components/LokiContextUi';
 import { LokiDatasource, makeRequest, REF_ID_STARTER_LOG_ROW_CONTEXT } from './datasource';
@@ -65,17 +61,13 @@ export class LogContextProvider {
     // to use the cached filters, we need to reinitialize them.
     if (this.cachedContextFilters.length === 0 || !cacheFilters) {
       const filters = (
-        await this.getInitContextFilters(
-          row.labels,
-          origQuery,
-          {
-            from: dateTime(row.timeEpochMs),
-            to: dateTime(row.timeEpochMs),
-            raw: { from: dateTime(row.timeEpochMs), to: dateTime(row.timeEpochMs) },
-          },
-          cacheFilters
-        )
-      ).filter((filter) => filter.enabled);
+        await this.getInitContextFilters(row.labels, origQuery, {
+          from: dateTime(row.timeEpochMs),
+          to: dateTime(row.timeEpochMs),
+          raw: { from: dateTime(row.timeEpochMs), to: dateTime(row.timeEpochMs) },
+        })
+      ).contextFilters.filter((filter) => filter.enabled);
+
       this.cachedContextFilters = filters;
     }
 
@@ -222,7 +214,7 @@ export class LogContextProvider {
 
   prepareExpression(contextFilters: ContextFilter[], query: LokiQuery | undefined): string {
     let preparedExpression = this.processContextFiltersToExpr(contextFilters, query);
-    if (store.getBool(SHOULD_INCLUDE_PIPELINE_OPERATIONS, false)) {
+    if (window.localStorage.getItem(SHOULD_INCLUDE_PIPELINE_OPERATIONS) === 'true') {
       preparedExpression = this.processPipelineStagesToExpr(preparedExpression, query);
     }
     return preparedExpression;
@@ -308,9 +300,14 @@ export class LogContextProvider {
     );
   };
 
-  getInitContextFilters = async (labels: Labels, query?: LokiQuery, timeRange?: TimeRange, cacheFilters?: boolean) => {
+  getInitContextFilters = async (
+    labels: Labels,
+    query?: LokiQuery,
+    timeRange?: TimeRange
+  ): Promise<{ contextFilters: ContextFilter[]; preservedFiltersApplied: boolean }> => {
+    let preservedFiltersApplied = false;
     if (!query || isEmpty(labels)) {
-      return [];
+      return { contextFilters: [], preservedFiltersApplied };
     }
 
     // 1. First we need to get all labels from the log row's label
@@ -343,14 +340,17 @@ export class LogContextProvider {
 
     // Secondly we check for preserved labels and update enabled state of filters based on that
     let preservedLabels: undefined | PreservedLabels = undefined;
-    try {
-      preservedLabels = JSON.parse(store.get(LOKI_LOG_CONTEXT_PRESERVED_LABELS));
-      // Do nothing when error occurs
-    } catch (e) {}
+    const preservedLabelsString = window.localStorage.getItem(LOKI_LOG_CONTEXT_PRESERVED_LABELS);
+    if (preservedLabelsString) {
+      try {
+        preservedLabels = JSON.parse(preservedLabelsString);
+        // Do nothing when error occurs
+      } catch (e) {}
+    }
 
     if (!preservedLabels) {
       // If we don't have preservedLabels, we return contextFilters as they are
-      return contextFilters;
+      return { contextFilters, preservedFiltersApplied };
     } else {
       // Otherwise, we need to update filters based on preserved labels
       let arePreservedLabelsUsed = false;
@@ -371,15 +371,12 @@ export class LogContextProvider {
       const isAtLeastOneRealLabelEnabled = newContextFilters.some(({ enabled, fromParser }) => enabled && !fromParser);
       if (!isAtLeastOneRealLabelEnabled) {
         // If we end up with no real labels enabled, we need to reset the init filters
-        return contextFilters;
+        return { contextFilters, preservedFiltersApplied };
       } else {
-        // Otherwise use new filters; also only show the notification if filters
-        // are supposed to be cached, which is currently used in the UI, not
-        // when tab-opened
-        if (arePreservedLabelsUsed && cacheFilters) {
-          dispatch(notifyApp(createSuccessNotification('Previously used log context filters have been applied.')));
+        if (arePreservedLabelsUsed) {
+          preservedFiltersApplied = true;
         }
-        return newContextFilters;
+        return { contextFilters: newContextFilters, preservedFiltersApplied };
       }
     }
   };
