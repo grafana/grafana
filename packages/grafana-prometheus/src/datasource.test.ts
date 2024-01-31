@@ -27,13 +27,11 @@ import { PrometheusCacheLevel, PromOptions, PromQuery, PromQueryRequest } from '
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
 jest.mock('./metric_find_query');
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     fetch: fetchMock,
   }),
-  getTemplateSrv: () => templateSrvStub,
 }));
 
 const replaceMock = jest.fn().mockImplementation((a: string, ...rest: unknown[]) => a);
@@ -73,9 +71,9 @@ describe('PrometheusDatasource', () => {
     url: 'proxied',
     id: 1,
     uid: 'ABCDEF',
+    access: 'proxy',
     user: 'test',
     password: 'mupp',
-    access: 'proxy',
     jsonData: {
       customQueryParameters: '',
       cacheLevel: PrometheusCacheLevel.Low,
@@ -958,7 +956,15 @@ describe('PrometheusDatasource2', () => {
       expect(replaceMock.mock.calls[1][1]['__rate_interval'].value).toBe('60s');
     });
     it('should be interval + scrape interval if 4 times the scrape interval is lower', () => {
-      ds.createQuery(target, { interval: '5m', range: getMockTimeRange() } as DataQueryRequest<PromQuery>, 0, 10080);
+      ds.createQuery(
+        target,
+        {
+          interval: '5m',
+          range: getMockTimeRange(),
+        } as DataQueryRequest<PromQuery>,
+        0,
+        10080
+      );
       expect(replaceMock.mock.calls[1][1]['__rate_interval'].value).toBe('315s');
     });
     it('should fall back to a scrape interval of 15s if min step is set to 0, resulting in 4*15s = 60s', () => {
