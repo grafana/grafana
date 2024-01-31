@@ -352,6 +352,7 @@ func (a apiClient) PostConfiguration(t *testing.T, c apimodels.PostableUserConfi
 	req, err := http.NewRequest(http.MethodPost, u, bytes.NewReader(b))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
+
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	require.NoError(t, err)
@@ -460,7 +461,9 @@ func (a apiClient) PostSilence(t *testing.T, s apimodels.PostableSilence) (strin
 
 	u := fmt.Sprintf("%s/api/alertmanager/grafana/api/v2/silences", a.url)
 	req, err := http.NewRequest(http.MethodPost, u, bytes.NewReader(b))
+	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
+
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	require.NoError(t, err)

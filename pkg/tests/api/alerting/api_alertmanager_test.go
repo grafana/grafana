@@ -5,8 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/go-openapi/strfmt"
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"io"
 	"net/http"
 	"regexp"
@@ -14,13 +12,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-openapi/strfmt"
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/util/errutil"
-
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -33,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type Response struct {
@@ -1857,7 +1856,6 @@ func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
 		Password:       "admin",
 		Login:          "admin",
 	})
-
 	client := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
 	cases := []struct {
