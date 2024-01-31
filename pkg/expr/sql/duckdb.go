@@ -203,17 +203,20 @@ func (d *DuckDB) appendFrame(ctx context.Context, f *data.Frame, u Unknown) erro
 
 func connector(ctx context.Context, name string) (driver.Connector, error) {
 	connector, err := duckdb.NewConnector(name, func(execer driver.ExecerContext) error {
-		bootQueries := []string{
-			"INSTALL 'json'",
-			"LOAD 'json'",
-		}
+		// TODO - extensions - slows down the initialization of DuckDB a bit installing these
+		// should we add a setting in the ini file. comma separated list?
 
-		for _, qry := range bootQueries {
-			_, err := execer.ExecContext(ctx, qry, nil)
-			if err != nil {
-				return err
-			}
-		}
+		// bootQueries := []string{
+		// 	"INSTALL 'json'",
+		// 	"LOAD 'json'",
+		// }
+
+		// for _, qry := range bootQueries {
+		// 	_, err := execer.ExecContext(ctx, qry, nil)
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// }
 		return nil
 	})
 	return connector, err
