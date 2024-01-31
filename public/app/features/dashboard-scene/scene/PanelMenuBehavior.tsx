@@ -19,7 +19,7 @@ import {
   VizPanelMenu,
   sceneGraph,
 } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, OptionsWithLegend } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { panelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
@@ -139,6 +139,19 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       text: t('panel.header-menu.new-alert-rule', `New alert rule`),
       onClick: (e) => onCreateAlert(e, panelModel, dashboardModel),
     });
+
+    if (hasLegendOptions(panel.state.options)) {
+      moreSubMenu.push({
+        text: panel.state.options.legend.showLegend
+          ? t('panel.header-menu.hide-legend', 'Hide legend')
+          : t('panel.header-menu.show-legend', 'Show legend'),
+        onClick: (e) => {
+          e.preventDefault();
+          toggleVizPanelLegend(panel);
+        },
+        shortcut: 'p l',
+      });
+    }
 
     if (config.featureToggles.datatrails) {
       addDataTrailPanelAction(dashboard, panel, items);
@@ -423,3 +436,20 @@ const createAlert = async (panel: PanelModel, dashboard: DashboardModel) => {
 
   locationService.push(ruleFormUrl);
 };
+
+export function toggleVizPanelLegend(vizPanel: VizPanel): void {
+  const options = vizPanel.state.options;
+  if (hasLegendOptions(options) && typeof options.legend.showLegend === 'boolean') {
+    vizPanel.onOptionsChange({
+      legend: {
+        showLegend: options.legend.showLegend ? false : true,
+      },
+    });
+  }
+
+  DashboardInteractions.panelMenuItemClicked('toggleLegend');
+}
+
+function hasLegendOptions(optionsWithLegend: unknown): optionsWithLegend is OptionsWithLegend {
+  return optionsWithLegend != null && typeof optionsWithLegend === 'object' && 'legend' in optionsWithLegend;
+}

@@ -1,6 +1,5 @@
 import { locationService } from '@grafana/runtime';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
-import { OptionsWithLegend } from '@grafana/schema';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 
 import { ShareModal } from '../sharing/ShareModal';
@@ -9,7 +8,7 @@ import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPan
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
-import { removePanel } from './PanelMenuBehavior';
+import { removePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
 
 export function setupKeyboardShortcuts(scene: DashboardScene) {
   const keybindings = new KeybindingSet();
@@ -158,21 +157,6 @@ export function withFocusedPanel(scene: DashboardScene, fn: (vizPanel: VizPanel)
       }
     }
   };
-}
-
-export function toggleVizPanelLegend(vizPanel: VizPanel) {
-  const options = vizPanel.state.options;
-  if (hasLegendOptions(options) && typeof options.legend.showLegend === 'boolean') {
-    vizPanel.onOptionsChange({
-      legend: {
-        showLegend: options.legend.showLegend ? false : true,
-      },
-    });
-  }
-}
-
-function hasLegendOptions(optionsWithLegend: unknown): optionsWithLegend is OptionsWithLegend {
-  return optionsWithLegend != null && typeof optionsWithLegend === 'object' && 'legend' in optionsWithLegend;
 }
 
 function handleZoomOut(scene: DashboardScene) {
