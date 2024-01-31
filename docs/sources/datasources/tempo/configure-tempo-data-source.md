@@ -35,7 +35,11 @@ To configure basic settings for the Tempo data source, complete the following st
     | **User**       | Sets the user name for basic authentication.                             |
     | **Password**   | Sets the password for basic authentication.                              |
 
-You can also configure settings specific to the Tempo data source. These options are described in the sections below.
+You can also configure settings specific to the Tempo data source.
+
+This video explains how to add data sources, including Loki, Tempo, and Mimir, to Grafana and Grafana Cloud. Tempo data source set up starts at 4:58 in the video.
+
+{{< youtube id="cqHO0oYW6Ic" start="298" >}}
 
 ## Trace to logs
 
@@ -55,7 +59,7 @@ There are two ways to configure the trace to logs feature:
    You can also click **Open advanced data source picker** to see more options, including adding a data source.
 
 1. Set start and end time shift. As the logs timestamps may not exactly match the timestamps of the spans in trace it may be necessary to search in larger or shifted time range to find the desired logs.
-1. Select which tags to use in the logs query. The tags you configure must be present in the spans attributes or resources for a trace to logs span link to appear. You can optionally configure a new name for the tag. This is useful for example if the tag has dots in the name and the target data source does not allow using dots in labels. In that case you can for example remap `http.status` to `http_status`.
+1. Select which tags to use in the logs query. The tags you configure must be present in the span's attributes or resources for a trace to logs span link to appear. You can optionally configure a new name for the tag. This is useful, for example, if the tag has dots in the name and the target data source does not allow using dots in labels. In that case, you can for example remap `http.status` (the span attribute) to `http_status` (the data source field). "Data source" in this context can refer to Loki, or another log data source.
 1. Optionally switch on the **Filter by trace ID** and/or **Filter by span ID** setting to further filter the logs if your logs consistently contain trace or span IDs.
 
 ### Configure a custom query
