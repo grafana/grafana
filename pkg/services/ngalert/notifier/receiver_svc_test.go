@@ -22,43 +22,43 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestReceiverGroupService_GetReceiverGroups(t *testing.T) {
+func TestReceiverService_GetReceivers(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
 	t.Run("service gets receiver groups from AM config", func(t *testing.T) {
-		sut := createReceiverGroupServiceSut(t, secretsService)
+		sut := createReceiverServiceSut(t, secretsService)
 
-		receiverGroups, err := sut.GetReceiverGroups(context.Background(), rQuery(1), nil)
+		Receivers, err := sut.GetReceivers(context.Background(), rQuery(1), nil)
 		require.NoError(t, err)
-		require.Len(t, receiverGroups, 2)
-		require.Equal(t, "grafana-default-email", receiverGroups[0].Name)
-		require.Equal(t, "slack receiver", receiverGroups[1].Name)
+		require.Len(t, Receivers, 2)
+		require.Equal(t, "grafana-default-email", Receivers[0].Name)
+		require.Equal(t, "slack receiver", Receivers[1].Name)
 	})
 
 	t.Run("service filters receiver groups by name", func(t *testing.T) {
-		sut := createReceiverGroupServiceSut(t, secretsService)
+		sut := createReceiverServiceSut(t, secretsService)
 
-		receiverGroups, err := sut.GetReceiverGroups(context.Background(), rQuery(1, "slack receiver"), nil)
+		Receivers, err := sut.GetReceivers(context.Background(), rQuery(1, "slack receiver"), nil)
 		require.NoError(t, err)
-		require.Len(t, receiverGroups, 1)
-		require.Equal(t, "slack receiver", receiverGroups[0].Name)
+		require.Len(t, Receivers, 1)
+		require.Equal(t, "slack receiver", Receivers[0].Name)
 	})
 }
 
-func TestReceiverGroupService_DecryptRedact(t *testing.T) {
+func TestReceiverService_DecryptRedact(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 	ac := acimpl.ProvideAccessControl(setting.NewCfg())
 
 	t.Run("service redacts receiver groups by default", func(t *testing.T) {
-		sut := createReceiverGroupServiceSut(t, secretsService)
-		receiverGroups, err := sut.GetReceiverGroups(context.Background(), rQuery(1, "slack receiver"), nil)
+		sut := createReceiverServiceSut(t, secretsService)
+		Receivers, err := sut.GetReceivers(context.Background(), rQuery(1, "slack receiver"), nil)
 		require.NoError(t, err)
 
-		require.Len(t, receiverGroups, 1)
+		require.Len(t, Receivers, 1)
 
-		rGroup := receiverGroups[0]
+		rGroup := Receivers[0]
 		require.Equal(t, "slack receiver", rGroup.Name)
 		require.Len(t, rGroup.GrafanaManagedReceivers, 1)
 
@@ -71,32 +71,32 @@ func TestReceiverGroupService_DecryptRedact(t *testing.T) {
 	})
 
 	t.Run("service returns error when trying to decrypt with nil user", func(t *testing.T) {
-		sut := createReceiverGroupServiceSut(t, secretsService)
+		sut := createReceiverServiceSut(t, secretsService)
 		sut.ac = ac
 
 		q := rQuery(1)
 		q.Decrypt = true
-		_, err := sut.GetReceiverGroups(context.Background(), q, nil)
+		_, err := sut.GetReceivers(context.Background(), q, nil)
 		require.ErrorIs(t, err, ErrPermissionDenied)
 	})
 
 	t.Run("service returns error when trying to decrypt without permission", func(t *testing.T) {
-		sut := createReceiverGroupServiceSut(t, secretsService)
+		sut := createReceiverServiceSut(t, secretsService)
 		sut.ac = ac
 
 		q := rQuery(1)
 		q.Decrypt = true
-		_, err := sut.GetReceiverGroups(context.Background(), q, &user.SignedInUser{})
+		_, err := sut.GetReceivers(context.Background(), q, &user.SignedInUser{})
 		require.ErrorIs(t, err, ErrPermissionDenied)
 	})
 
 	t.Run("service decrypts receiver groups with permission", func(t *testing.T) {
-		sut := createReceiverGroupServiceSut(t, secretsService)
+		sut := createReceiverServiceSut(t, secretsService)
 		sut.ac = ac
 
 		q := rQuery(1, "slack receiver")
 		q.Decrypt = true
-		receiverGroups, err := sut.GetReceiverGroups(context.Background(), q, &user.SignedInUser{
+		Receivers, err := sut.GetReceivers(context.Background(), q, &user.SignedInUser{
 			OrgID: 1,
 			Permissions: map[int64]map[string][]string{
 				1: {accesscontrol.ActionAlertingProvisioningReadSecrets: nil},
@@ -104,9 +104,9 @@ func TestReceiverGroupService_DecryptRedact(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		require.Len(t, receiverGroups, 1)
+		require.Len(t, Receivers, 1)
 
-		rGroup := receiverGroups[0]
+		rGroup := Receivers[0]
 		require.Equal(t, "slack receiver", rGroup.Name)
 		require.Len(t, rGroup.GrafanaManagedReceivers, 1)
 
@@ -119,13 +119,13 @@ func TestReceiverGroupService_DecryptRedact(t *testing.T) {
 	})
 }
 
-func createReceiverGroupServiceSut(t *testing.T, encryptSvc secrets.Service) *ReceiverGroupService {
+func createReceiverServiceSut(t *testing.T, encryptSvc secrets.Service) *ReceiverService {
 	cfg := createEncryptedConfig(t, encryptSvc)
 	store := fakes.NewFakeAlertmanagerConfigStore(cfg)
 	xact := newNopTransactionManager()
 	provisioningStore := fakes.NewFakeProvisioningStore()
 
-	return &ReceiverGroupService{
+	return &ReceiverService{
 		actest.FakeAccessControl{},
 		provisioningStore,
 		&LockingConfigStore{Store: store},
@@ -148,8 +148,8 @@ func createEncryptedConfig(t *testing.T, secretService secrets.Service) string {
 	return string(bytes)
 }
 
-func rQuery(orgID int64, names ...string) models.ReceiverGroupQuery {
-	return models.ReceiverGroupQuery{
+func rQuery(orgID int64, names ...string) models.GetReceiversQuery {
+	return models.GetReceiversQuery{
 		OrgID: orgID,
 		Names: names,
 	}

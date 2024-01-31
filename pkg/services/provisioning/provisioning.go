@@ -281,7 +281,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		int64(ps.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ps.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
 		ps.log)
-	receiverSvc := alertingNotifier.NewReceiverGroupService(ps.ac, &st, st, ps.secretService, ps.SQLStore, ps.log)
+	receiverSvc := alertingNotifier.NewReceiverService(ps.ac, &st, st, ps.secretService, ps.SQLStore, ps.log)
 	contactPointService := provisioning.NewContactPointService(&st, ps.secretService,
 		st, ps.SQLStore, receiverSvc, ps.log)
 	notificationPolicyService := provisioning.NewNotificationPolicyService(&st,

@@ -1614,7 +1614,7 @@ func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
 func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) ProvisioningSrv {
 	t.Helper()
 
-	receiverSvc := notifier.NewReceiverGroupService(env.ac, env.configs, env.prov, env.secrets, env.xact, env.log)
+	receiverSvc := notifier.NewReceiverService(env.ac, env.configs, env.prov, env.secrets, env.xact, env.log)
 	return ProvisioningSrv{
 		log:                 env.log,
 		policies:            newFakeNotificationPolicyService(),

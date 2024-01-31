@@ -313,7 +313,7 @@ func (ng *AlertNG) init() error {
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
 
-	receiverService := notifier.NewReceiverGroupService(ng.accesscontrol, ng.store, ng.store, ng.SecretsService, ng.store, ng.Log)
+	receiverService := notifier.NewReceiverService(ng.accesscontrol, ng.store, ng.store, ng.SecretsService, ng.store, ng.Log)
 
 	// Provisioning
 	policyService := provisioning.NewNotificationPolicyService(ng.store, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)

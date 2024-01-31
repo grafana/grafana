@@ -249,8 +249,8 @@ func TestContactPointService(t *testing.T) {
 
 func TestContactPointServiceDecryptRedact(t *testing.T) {
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
-	receiverServiceWithAC := func(ecp *ContactPointService) *notifier.ReceiverGroupService {
-		return notifier.NewReceiverGroupService(
+	receiverServiceWithAC := func(ecp *ContactPointService) *notifier.ReceiverService {
+		return notifier.NewReceiverService(
 			acimpl.ProvideAccessControl(setting.NewCfg()),
 			// Get won't use the sut's config store, so we can use a different one here.
 			fakes.NewFakeAlertmanagerConfigStore(createEncryptedConfig(t, secretsService)),
@@ -349,7 +349,7 @@ func createContactPointServiceSut(t *testing.T, secretService secrets.Service) *
 	xact := newNopTransactionManager()
 	provisioningStore := fakes.NewFakeProvisioningStore()
 
-	receiverService := notifier.NewReceiverGroupService(
+	receiverService := notifier.NewReceiverService(
 		actest.FakeAccessControl{},
 		store,
 		provisioningStore,

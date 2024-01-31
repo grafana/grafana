@@ -25,7 +25,7 @@ var (
 	ErrPermissionDenied = errors.New("permission denied")
 )
 
-type ReceiverGroupService struct {
+type ReceiverService struct {
 	ac                 accesscontrol.AccessControl
 	provisioningStore  provisoningStore
 	versionedConfStore *LockingConfigStore
@@ -42,15 +42,15 @@ type TransactionManager interface {
 	InTransaction(ctx context.Context, work func(ctx context.Context) error) error
 }
 
-func NewReceiverGroupService(
+func NewReceiverService(
 	ac accesscontrol.AccessControl,
 	configStore configStore,
 	provisioningStore provisoningStore,
 	encryptionService secrets.Service,
 	xact TransactionManager,
 	log log.Logger,
-) *ReceiverGroupService {
-	return &ReceiverGroupService{
+) *ReceiverService {
+	return &ReceiverService{
 		ac:                 ac,
 		provisioningStore:  provisioningStore,
 		versionedConfStore: &LockingConfigStore{Store: configStore},
@@ -60,7 +60,7 @@ func NewReceiverGroupService(
 	}
 }
 
-func (rs *ReceiverGroupService) canDecrypt(ctx context.Context, user identity.Requester, name string) (bool, error) {
+func (rs *ReceiverService) canDecrypt(ctx context.Context, user identity.Requester, name string) (bool, error) {
 	receiverAccess := false // TODO: stub, check for read secrets access
 	eval := accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningReadSecrets)
 	provisioningAccess, err := rs.ac.Evaluate(ctx, user, eval)
@@ -70,7 +70,7 @@ func (rs *ReceiverGroupService) canDecrypt(ctx context.Context, user identity.Re
 	return receiverAccess || provisioningAccess, nil
 }
 
-func (rs *ReceiverGroupService) GetReceiverGroups(ctx context.Context, q models.ReceiverGroupQuery, user identity.Requester) ([]definitions.GettableApiReceiver, error) {
+func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceiversQuery, user identity.Requester) ([]definitions.GettableApiReceiver, error) {
 	rev, err := rs.versionedConfStore.GetLockingConfig(ctx, q.OrgID)
 	if err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ func (rs *ReceiverGroupService) GetReceiverGroups(ctx context.Context, q models.
 	return output, nil
 }
 
-func (rs *ReceiverGroupService) postableToGettableApiReceiver(r *definitions.PostableApiReceiver, provenances map[string]models.Provenance, decryptFn func(uid string) func(v string) string) (definitions.GettableApiReceiver, error) {
+func (rs *ReceiverService) postableToGettableApiReceiver(r *definitions.PostableApiReceiver, provenances map[string]models.Provenance, decryptFn func(uid string) func(v string) string) (definitions.GettableApiReceiver, error) {
 	out := definitions.GettableApiReceiver{
 		Receiver: config.Receiver{
 			Name: r.Receiver.Name,
@@ -144,7 +144,7 @@ func (rs *ReceiverGroupService) postableToGettableApiReceiver(r *definitions.Pos
 	return out, nil
 }
 
-func (rs *ReceiverGroupService) postableToGettableGrafanaReceiver(r *definitions.PostableGrafanaReceiver, provenance *models.Provenance, decryptFn func(v string) string) (definitions.GettableGrafanaReceiver, error) {
+func (rs *ReceiverService) postableToGettableGrafanaReceiver(r *definitions.PostableGrafanaReceiver, provenance *models.Provenance, decryptFn func(v string) string) (definitions.GettableGrafanaReceiver, error) {
 	out := definitions.GettableGrafanaReceiver{
 		UID:                   r.UID,
 		Name:                  r.Name,
@@ -181,7 +181,7 @@ func (rs *ReceiverGroupService) postableToGettableGrafanaReceiver(r *definitions
 	return out, nil
 }
 
-func (rs *ReceiverGroupService) decryptOrRedact(ctx context.Context, uid string, decrypt bool) func(string) string {
+func (rs *ReceiverService) decryptOrRedact(ctx context.Context, uid string, decrypt bool) func(string) string {
 	return func(val string) string {
 		if !decrypt {
 			return definitions.RedactedValue
