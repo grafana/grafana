@@ -16,7 +16,6 @@ import {
 } from '@grafana/data';
 import {
   TraceToProfilesOptions,
-  TraceToMetricQuery,
   TraceToMetricsOptions,
   TraceToLogsOptionsV2,
   TraceToLogsTag,
@@ -258,7 +257,9 @@ function legacyCreateSpanLinkFactory(
     // Get metrics links
     if (metricsDataSourceSettings && traceToMetricsOptions?.queries) {
       for (const query of traceToMetricsOptions.queries) {
-        const expr = buildMetricsQuery(query, traceToMetricsOptions?.tags || [], span);
+        const expr =
+          query.query ||
+          `histogram_quantile(0.5, sum(rate(traces_spanmetrics_latency_bucket{service="${span.process.serviceName}"}[5m])) by (le))`;
         const dataLink: DataLink<PromQuery> = {
           title: metricsDataSourceSettings.name,
           url: '',
@@ -272,10 +273,23 @@ function legacyCreateSpanLinkFactory(
           },
         };
 
+        const tagsToUse =
+          traceToMetricsOptions.tags && traceToMetricsOptions.tags.length > 0
+            ? traceToMetricsOptions.tags
+            : defaultKeys;
+
+        scopedVars = {
+          ...scopedVars,
+          __tags: {
+            text: 'Tags',
+            value: getFormattedTags(span, tagsToUse),
+          },
+        };
+
         const link = mapInternalLinkToExplore({
           link: dataLink,
           internalLink: dataLink.internal!,
-          scopedVars: {},
+          scopedVars,
           range: getTimeRangeFromSpan(span, {
             startMs: traceToMetricsOptions.spanStartTimeShift
               ? rangeUtil.intervalToMs(traceToMetricsOptions.spanStartTimeShift)
@@ -566,34 +580,6 @@ function getTimeRangeFromSpan(
       to,
     },
   };
-}
-
-// Interpolates span attributes into trace to metric query, or returns default query
-function buildMetricsQuery(
-  query: TraceToMetricQuery,
-  tags: Array<{ key: string; value?: string }> = [],
-  span: TraceSpan
-): string {
-  if (!query.query) {
-    return `histogram_quantile(0.5, sum(rate(traces_spanmetrics_latency_bucket{service="${span.process.serviceName}"}[5m])) by (le))`;
-  }
-
-  let expr = query.query;
-  if (tags.length && expr.indexOf('$__tags') !== -1) {
-    const spanTags = [...span.process.tags, ...span.tags];
-    const labels = tags.reduce<string[]>((acc, tag) => {
-      const tagValue = spanTags.find((t) => t.key === tag.key)?.value;
-      if (tagValue) {
-        acc.push(`${tag.value ? tag.value : tag.key}="${tagValue}"`);
-      }
-      return acc;
-    }, []);
-
-    const labelsQuery = labels?.join(', ');
-    expr = expr.replace(/\$__tags/g, labelsQuery);
-  }
-
-  return expr;
 }
 
 /**
