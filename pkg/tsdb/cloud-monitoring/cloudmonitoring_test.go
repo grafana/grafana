@@ -12,8 +12,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/kinds/dataquery"
 
 	"github.com/stretchr/testify/assert"
@@ -23,7 +23,7 @@ import (
 func TestNewInstanceSettings(t *testing.T) {
 	t.Run("should create a new instance with empty settings", func(t *testing.T) {
 		cli := httpclient.NewProvider()
-		f := newInstanceSettings(cli)
+		f := newInstanceSettings(*cli)
 		dsInfo, err := f(context.Background(), backend.DataSourceInstanceSettings{
 			JSONData: json.RawMessage(`{}`),
 		})
@@ -34,7 +34,7 @@ func TestNewInstanceSettings(t *testing.T) {
 
 	t.Run("should create a new instance parsing settings", func(t *testing.T) {
 		cli := httpclient.NewProvider()
-		f := newInstanceSettings(cli)
+		f := newInstanceSettings(*cli)
 		dsInfo, err := f(context.Background(), backend.DataSourceInstanceSettings{
 			JSONData: json.RawMessage(`{"authenticationType": "test", "defaultProject": "test", "clientEmail": "test", "tokenUri": "test"}`),
 		})
@@ -53,7 +53,7 @@ func TestCloudMonitoring(t *testing.T) {
 
 	t.Run("parses a time series list query", func(t *testing.T) {
 		req := baseTimeSeriesList()
-		qes, err := service.buildQueryExecutors(slog, req)
+		qes, err := service.buildQueryExecutors(service.logger, req)
 		require.NoError(t, err)
 		queries := getCloudMonitoringListFromInterface(t, qes)
 
@@ -71,7 +71,7 @@ func TestCloudMonitoring(t *testing.T) {
 
 	t.Run("parses a time series query", func(t *testing.T) {
 		req := baseTimeSeriesQuery()
-		qes, err := service.buildQueryExecutors(slog, req)
+		qes, err := service.buildQueryExecutors(service.logger, req)
 		require.NoError(t, err)
 		queries := getCloudMonitoringQueryFromInterface(t, qes)
 
@@ -95,7 +95,7 @@ func TestCloudMonitoring(t *testing.T) {
 			"aliasBy":    "testalias"
 		}`)
 
-		qes, err := service.buildQueryExecutors(slog, req)
+		qes, err := service.buildQueryExecutors(service.logger, req)
 		require.NoError(t, err)
 		queries := getCloudMonitoringListFromInterface(t, qes)
 
@@ -114,7 +114,7 @@ func TestCloudMonitoring(t *testing.T) {
 			req := deprecatedReq()
 			err := migrateRequest(req)
 			require.NoError(t, err)
-			qes, err := service.buildQueryExecutors(slog, req)
+			qes, err := service.buildQueryExecutors(service.logger, req)
 			require.NoError(t, err)
 			queries := getCloudMonitoringListFromInterface(t, qes)
 
@@ -157,7 +157,7 @@ func TestCloudMonitoring(t *testing.T) {
 			err := migrateRequest(query)
 			require.NoError(t, err)
 
-			qes, err := service.buildQueryExecutors(slog, query)
+			qes, err := service.buildQueryExecutors(service.logger, query)
 			require.NoError(t, err)
 			queries := getCloudMonitoringListFromInterface(t, qes)
 			assert.Equal(t, 1, len(queries))
@@ -191,7 +191,7 @@ func TestCloudMonitoring(t *testing.T) {
 				err := migrateRequest(req)
 				require.NoError(t, err)
 
-				qes, err := service.buildQueryExecutors(slog, req)
+				qes, err := service.buildQueryExecutors(service.logger, req)
 				require.NoError(t, err)
 				queries := getCloudMonitoringListFromInterface(t, qes)
 				assert.Equal(t, `+1000s`, queries[0].params["aggregation.alignmentPeriod"][0])
@@ -221,7 +221,7 @@ func TestCloudMonitoring(t *testing.T) {
 				err := migrateRequest(req)
 				require.NoError(t, err)
 
-				qes, err := service.buildQueryExecutors(slog, req)
+				qes, err := service.buildQueryExecutors(service.logger, req)
 				require.NoError(t, err)
 				queries := getCloudMonitoringListFromInterface(t, qes)
 				assert.Equal(t, `+60s`, queries[0].params["aggregation.alignmentPeriod"][0])
@@ -257,7 +257,7 @@ func TestCloudMonitoring(t *testing.T) {
 				err := migrateRequest(req)
 				require.NoError(t, err)
 
-				qes, err := service.buildQueryExecutors(slog, req)
+				qes, err := service.buildQueryExecutors(service.logger, req)
 				require.NoError(t, err)
 				queries := getCloudMonitoringListFromInterface(t, qes)
 				assert.Equal(t, `+60s`, queries[0].params["aggregation.alignmentPeriod"][0])
@@ -274,7 +274,7 @@ func TestCloudMonitoring(t *testing.T) {
 				err := migrateRequest(req)
 				require.NoError(t, err)
 
-				qes, err := service.buildQueryExecutors(slog, req)
+				qes, err := service.buildQueryExecutors(service.logger, req)
 				require.NoError(t, err)
 				queries := getCloudMonitoringListFromInterface(t, qes)
 				assert.Equal(t, `+60s`, queries[0].params["aggregation.alignmentPeriod"][0])
@@ -291,7 +291,7 @@ func TestCloudMonitoring(t *testing.T) {
 				err := migrateRequest(req)
 				require.NoError(t, err)
 
-				qes, err := service.buildQueryExecutors(slog, req)
+				qes, err := service.buildQueryExecutors(service.logger, req)
 				require.NoError(t, err)
 				queries := getCloudMonitoringListFromInterface(t, qes)
 				assert.Equal(t, `+300s`, queries[0].params["aggregation.alignmentPeriod"][0])
@@ -308,7 +308,7 @@ func TestCloudMonitoring(t *testing.T) {
 				err := migrateRequest(req)
 				require.NoError(t, err)
 
-				qes, err := service.buildQueryExecutors(slog, req)
+				qes, err := service.buildQueryExecutors(service.logger, req)
 				require.NoError(t, err)
 				queries := getCloudMonitoringListFromInterface(t, qes)
 				assert.Equal(t, `+3600s`, queries[0].params["aggregation.alignmentPeriod"][0])
@@ -329,7 +329,7 @@ func TestCloudMonitoring(t *testing.T) {
 				err := migrateRequest(req)
 				require.NoError(t, err)
 
-				qes, err := service.buildQueryExecutors(slog, req)
+				qes, err := service.buildQueryExecutors(service.logger, req)
 				require.NoError(t, err)
 				queries := getCloudMonitoringListFromInterface(t, qes)
 				assert.Equal(t, `+60s`, queries[0].params["aggregation.alignmentPeriod"][0])
@@ -361,7 +361,7 @@ func TestCloudMonitoring(t *testing.T) {
 				err := migrateRequest(req)
 				require.NoError(t, err)
 
-				qes, err := service.buildQueryExecutors(slog, req)
+				qes, err := service.buildQueryExecutors(service.logger, req)
 				require.NoError(t, err)
 				queries := getCloudMonitoringListFromInterface(t, qes)
 				assert.Equal(t, `+60s`, queries[0].params["aggregation.alignmentPeriod"][0])
@@ -393,7 +393,7 @@ func TestCloudMonitoring(t *testing.T) {
 				err := migrateRequest(req)
 				require.NoError(t, err)
 
-				qes, err := service.buildQueryExecutors(slog, req)
+				qes, err := service.buildQueryExecutors(service.logger, req)
 				require.NoError(t, err)
 				queries := getCloudMonitoringListFromInterface(t, qes)
 				assert.Equal(t, `+300s`, queries[0].params["aggregation.alignmentPeriod"][0])
@@ -425,7 +425,7 @@ func TestCloudMonitoring(t *testing.T) {
 				err := migrateRequest(req)
 				require.NoError(t, err)
 
-				qes, err := service.buildQueryExecutors(slog, req)
+				qes, err := service.buildQueryExecutors(service.logger, req)
 				require.NoError(t, err)
 				queries := getCloudMonitoringListFromInterface(t, qes)
 				assert.Equal(t, `+3600s`, queries[0].params["aggregation.alignmentPeriod"][0])
@@ -457,7 +457,7 @@ func TestCloudMonitoring(t *testing.T) {
 				err := migrateRequest(req)
 				require.NoError(t, err)
 
-				qes, err := service.buildQueryExecutors(slog, req)
+				qes, err := service.buildQueryExecutors(service.logger, req)
 				require.NoError(t, err)
 				queries := getCloudMonitoringListFromInterface(t, qes)
 				assert.Equal(t, `+600s`, queries[0].params["aggregation.alignmentPeriod"][0])
@@ -489,7 +489,7 @@ func TestCloudMonitoring(t *testing.T) {
 			err := migrateRequest(req)
 			require.NoError(t, err)
 
-			qes, err := service.buildQueryExecutors(slog, req)
+			qes, err := service.buildQueryExecutors(service.logger, req)
 			require.NoError(t, err)
 			queries := getCloudMonitoringListFromInterface(t, qes)
 
@@ -535,7 +535,7 @@ func TestCloudMonitoring(t *testing.T) {
 			err := migrateRequest(req)
 			require.NoError(t, err)
 
-			qes, err := service.buildQueryExecutors(slog, req)
+			qes, err := service.buildQueryExecutors(service.logger, req)
 			require.NoError(t, err)
 			queries := getCloudMonitoringListFromInterface(t, qes)
 
@@ -598,7 +598,7 @@ func TestCloudMonitoring(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Run("and query type is metrics", func(t *testing.T) {
-			qes, err := service.buildQueryExecutors(slog, req)
+			qes, err := service.buildQueryExecutors(service.logger, req)
 			require.NoError(t, err)
 			queries := getCloudMonitoringListFromInterface(t, qes)
 
@@ -647,7 +647,7 @@ func TestCloudMonitoring(t *testing.T) {
 			err = migrateRequest(req)
 			require.NoError(t, err)
 
-			qes, err = service.buildQueryExecutors(slog, req)
+			qes, err = service.buildQueryExecutors(service.logger, req)
 			require.NoError(t, err)
 
 			tqueries := getCloudMonitoringQueryFromInterface(t, qes)
@@ -675,7 +675,7 @@ func TestCloudMonitoring(t *testing.T) {
 			err := migrateRequest(req)
 			require.NoError(t, err)
 
-			qes, err := service.buildQueryExecutors(slog, req)
+			qes, err := service.buildQueryExecutors(service.logger, req)
 			require.NoError(t, err)
 			queries := getCloudMonitoringSLOFromInterface(t, qes)
 
@@ -705,7 +705,7 @@ func TestCloudMonitoring(t *testing.T) {
 			err = migrateRequest(req)
 			require.NoError(t, err)
 
-			qes, err = service.buildQueryExecutors(slog, req)
+			qes, err = service.buildQueryExecutors(service.logger, req)
 			require.NoError(t, err)
 			qqueries := getCloudMonitoringSLOFromInterface(t, qes)
 			assert.Equal(t, "ALIGN_NEXT_OLDER", qqueries[0].params["aggregation.perSeriesAligner"][0])
@@ -730,7 +730,7 @@ func TestCloudMonitoring(t *testing.T) {
 			err = migrateRequest(req)
 			require.NoError(t, err)
 
-			qes, err = service.buildQueryExecutors(slog, req)
+			qes, err = service.buildQueryExecutors(service.logger, req)
 			require.NoError(t, err)
 			qqqueries := getCloudMonitoringSLOFromInterface(t, qes)
 			assert.Equal(t, `aggregation.alignmentPeriod=%2B60s&aggregation.perSeriesAligner=ALIGN_NEXT_OLDER&filter=select_slo_burn_rate%28%22projects%2Ftest-proj%2Fservices%2Ftest-service%2FserviceLevelObjectives%2Ftest-slo%22%2C+%221h%22%29&interval.endTime=2018-03-15T13%3A34%3A00Z&interval.startTime=2018-03-15T13%3A00%3A00Z`, qqqueries[0].params.Encode())
@@ -812,7 +812,7 @@ func TestCloudMonitoring(t *testing.T) {
 		err := migrateRequest(req)
 		require.NoError(t, err)
 
-		qes, err := service.buildQueryExecutors(slog, req)
+		qes, err := service.buildQueryExecutors(service.logger, req)
 		require.NoError(t, err)
 		queries := getCloudMonitoringListFromInterface(t, qes)
 
@@ -842,7 +842,7 @@ func TestCloudMonitoring(t *testing.T) {
 		err := migrateRequest(req)
 		require.NoError(t, err)
 
-		qes, err := service.buildQueryExecutors(slog, req)
+		qes, err := service.buildQueryExecutors(service.logger, req)
 		require.NoError(t, err)
 		queries := getCloudMonitoringListFromInterface(t, qes)
 
@@ -872,7 +872,7 @@ func TestCloudMonitoring(t *testing.T) {
 		err := migrateRequest(req)
 		require.NoError(t, err)
 
-		qes, err := service.buildQueryExecutors(slog, req)
+		qes, err := service.buildQueryExecutors(service.logger, req)
 		require.NoError(t, err)
 		queries := getCloudMonitoringListFromInterface(t, qes)
 
@@ -900,7 +900,7 @@ func TestCloudMonitoring(t *testing.T) {
 		err := migrateRequest(req)
 		require.NoError(t, err)
 
-		qes, err := service.buildQueryExecutors(slog, req)
+		qes, err := service.buildQueryExecutors(service.logger, req)
 		require.NoError(t, err)
 		queries := getCloudMonitoringListFromInterface(t, qes)
 
@@ -930,7 +930,7 @@ func TestCloudMonitoring(t *testing.T) {
 		err := migrateRequest(req)
 		require.NoError(t, err)
 
-		qes, err := service.buildQueryExecutors(slog, req)
+		qes, err := service.buildQueryExecutors(service.logger, req)
 		require.NoError(t, err)
 		queries := getCloudMonitoringListFromInterface(t, qes)
 
@@ -958,7 +958,7 @@ func TestCloudMonitoring(t *testing.T) {
 		err := migrateRequest(req)
 		require.NoError(t, err)
 
-		qes, err := service.buildQueryExecutors(slog, req)
+		qes, err := service.buildQueryExecutors(service.logger, req)
 		require.NoError(t, err)
 		queries := getCloudMonitoringListFromInterface(t, qes)
 
