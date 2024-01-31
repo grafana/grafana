@@ -19,7 +19,7 @@ import {
   SceneQueryRunner,
 } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
-import { Input, Text, useStyles2, InlineSwitch, Field, LoadingPlaceholder } from '@grafana/ui';
+import {Input, Text, useStyles2, InlineSwitch, Field, LoadingPlaceholder, Icon} from '@grafana/ui';
 
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { MetricCategoryCascader } from './MetricCategory/MetricCategoryCascader';
@@ -298,11 +298,11 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       <div className={styles.container}>
         {showHeading && (
           <div className={styles.headingWrapper}>
-            <Text variant="h4">Select a metric</Text>
+            <Text variant="bodySmall" weight={'bold'}>Search metrics</Text>
           </div>
         )}
         <div className={styles.header}>
-          <Input placeholder="Search metrics" value={searchQuery} onChange={model.onSearchChange} />
+          <Input placeholder="Search metrics" prefix={<Icon name={'search'} />} value={searchQuery} onChange={model.onSearchChange} />
           <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
         </div>
         <div className={styles.header}>
@@ -394,6 +394,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     headingWrapper: css({
       marginTop: theme.spacing(1),
+      marginBottom: theme.spacing(0.5),
     }),
     header: css({
       flexGrow: 0,
