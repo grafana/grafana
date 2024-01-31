@@ -3,6 +3,7 @@ package notifier
 import (
 	"context"
 	"crypto/md5"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -83,7 +84,7 @@ func (m maintenanceOptions) MaintenanceFunc(state alertingNotify.State) (int64, 
 	return m.maintenanceFunc(state)
 }
 
-func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, kvStore kvstore.KVStore,
+func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, kvStore kvstore.KVStore,
 	peer alertingNotify.ClusterPeer, decryptFn alertingNotify.GetDecryptedValueFn, ns notifications.Service,
 	m *metrics.Alertmanager) (*alertmanager, error) {
 	workingPath := filepath.Join(cfg.DataPath, workingDir, strconv.Itoa(int(orgID)))
@@ -127,7 +128,7 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		Nflog:              nflogOptions,
 	}
 
-	l := log.New("ngalert.notifier.alertmanager", orgID)
+	l := log.New("ngalert.notifier.alertmanager", "org", orgID)
 	gam, err := alertingNotify.NewGrafanaAlertmanager("orgID", orgID, amcfg, peer, l, alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer))
 	if err != nil {
 		return nil, err
@@ -255,6 +256,10 @@ func (am *alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig) {
 	am.ConfigMetrics.MatchRE.Set(float64(amu.MatchRE))
 	am.ConfigMetrics.Match.Set(float64(amu.Match))
 	am.ConfigMetrics.ObjectMatchers.Set(float64(amu.ObjectMatchers))
+
+	am.ConfigMetrics.ConfigHash.
+		WithLabelValues(strconv.FormatInt(am.orgID, 10)).
+		Set(hashAsMetricValue(am.Base.ConfigHash()))
 }
 
 func (am *alertmanager) aggregateRouteMatchers(r *apimodels.Route, amu *AggregateMatchersUsage) {
@@ -315,8 +320,6 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		return false, nil
 	}
 
-	am.updateConfigMetrics(cfg)
-
 	err = am.Base.ApplyConfig(AlertingConfiguration{
 		rawAlertmanagerConfig:    rawConfig,
 		alertmanagerConfig:       cfg.AlertmanagerConfig,
@@ -327,6 +330,7 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		return false, err
 	}
 
+	am.updateConfigMetrics(cfg)
 	return true, nil
 }
 
@@ -421,3 +425,13 @@ func (e AlertValidationError) Error() string {
 type nilLimits struct{}
 
 func (n nilLimits) MaxNumberOfAggregationGroups() int { return 0 }
+
+// This function is taken from upstream, modified to take a [16]byte instead of a []byte.
+// https://github.com/prometheus/alertmanager/blob/30fa9cd44bc91c0d6adcc9985609bb08a09a127b/config/coordinator.go#L149-L156
+func hashAsMetricValue(data [16]byte) float64 {
+	// We only want 48 bits as a float64 only has a 53 bit mantissa.
+	smallSum := data[0:6]
+	bytes := make([]byte, 8)
+	copy(bytes, smallSum)
+	return float64(binary.LittleEndian.Uint64(bytes))
+}

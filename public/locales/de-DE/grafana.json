@@ -76,6 +76,7 @@
     "folder-picker": {
       "accessible-label": "Ordner auswählen: {{ label }} aktuell ausgewählt",
       "button-label": "Ordner auswählen",
+      "clear-selection": "",
       "empty-message": "Keine Ordner gefunden",
       "error-title": "Fehler beim Laden der Ordner",
       "search-placeholder": "Ordner suchen",
@@ -233,6 +234,10 @@
       "visualization": "Visualisierung",
       "widget": "Widget"
     },
+    "alert-rules-drawer": {
+      "redirect-link": "",
+      "subtitle": ""
+    },
     "empty": {
       "add-library-panel-body": "Visualisierungen hinzufügen, die mit anderen Dashboards geteilt werden.",
       "add-library-panel-button": "Bibliotheksfenster hinzufügen",
@@ -301,7 +306,7 @@
     },
     "toolbar": {
       "add": "Hinzufügen",
-      "add-panel": "Panel hinzufügen",
+      "alert-rules": "",
       "mark-favorite": "Als Favorit markieren",
       "open-original": "Original-Dashboard öffnen",
       "playlist-next": "Zum nächsten Dashboard",
@@ -311,6 +316,7 @@
       "save": "Dashboard speichern",
       "settings": "Dashboard-Einstellungen",
       "share": "Dashboard oder Panel teilen",
+      "share-button": "",
       "unmark-favorite": "Markierung als Favorit entfernen"
     },
     "validation": {
@@ -360,6 +366,7 @@
       "title-label": "Titel"
     },
     "json-editor": {
+      "apply-button": "",
       "save-button": "Änderungen speichern",
       "subtitle": "Das JSON-Modell unten ist die Datenstruktur, die das Dashboard definiert. Dazu gehören Dashboard-Einstellungen, Fenster-Einstellungen, Layout, Abfragen und so weiter.",
       "title": "JSON-Modell"
@@ -551,6 +558,9 @@
     "loading": "Ordner werden geladen …"
   },
   "grafana-ui": {
+    "drawer": {
+      "close": ""
+    },
     "modal": {
       "close-tooltip": "Schließen"
     },
@@ -582,6 +592,7 @@
     "shortcuts-description": {
       "change-theme": "Thema ändern",
       "collapse-all-rows": "Alle Zeilen einklappen",
+      "copy-time-range": "",
       "dashboard-settings": "Dashboard-Einstellungen",
       "duplicate-panel": "Fenster duplizieren",
       "exit-edit/setting-views": "Ansicht beenden/einstellen",
@@ -595,6 +606,7 @@
       "move-time-range-forward": "Zeitbereich nach vorne verschieben",
       "open-search": "Suche öffnen",
       "open-shared-modal": "Geteilter Fenstermodus öffnen",
+      "paste-time-range": "",
       "refresh-all-panels": "Alle Fenster aktualisieren",
       "remove-panel": "Fenster entfernen",
       "save-dashboard": "Dashboard speichern",
@@ -668,6 +680,9 @@
       "subtitle": "Serverweite Einstellungen und Zugriff auf Ressourcen wie Organisationen, Benutzer und Lizenzen verwalten",
       "title": "Server-Administrator"
     },
+    "alert-list-legacy": {
+      "title": ""
+    },
     "alerting": {
       "subtitle": "Informiere dich über Probleme in deinen Systemen kurz nach deren Auftreten",
       "title": "Meldungen"
@@ -703,6 +718,10 @@
     "alerting-silences": {
       "subtitle": "Schalte Benachrichtigungen von einer oder mehrerer Warnregeln aus",
       "title": "Stummschalten"
+    },
+    "alerting-upgrade": {
+      "subtitle": "",
+      "title": ""
     },
     "alerts-and-incidents": {
       "subtitle": "Warn- und Vorfallmanagement-Apps",
@@ -960,6 +979,7 @@
     "megamenu": {
       "close": "Menü schließen",
       "dock": "Menü andocken",
+      "list-label": "",
       "undock": ""
     },
     "toolbar": {
@@ -970,6 +990,9 @@
     }
   },
   "news": {
+    "drawer": {
+      "close": ""
+    },
     "title": "Das Neueste aus dem Blog"
   },
   "notifications": {
@@ -1058,6 +1081,120 @@
       "passwords-must-match": "Passwörter müssen übereinstimmen"
     }
   },
+  "public-dashboard": {
+    "acknowledgment-checkboxes": {
+      "ack-title": "",
+      "data-src-ack-desc": "",
+      "data-src-ack-tooltip": "",
+      "public-ack-desc": "",
+      "public-ack-tooltip": "",
+      "usage-ack-desc": "",
+      "usage-ack-desc-tooltip": ""
+    },
+    "config": {
+      "can-view-dashboard-radio-button-label": "",
+      "copy-button": "",
+      "dashboard-url-field-label": "",
+      "email-share-type-option-label": "",
+      "pause-sharing-dashboard-label": "",
+      "public-share-type-option-label": "",
+      "revoke-public-URL-button": "",
+      "revoke-public-URL-button-title": "",
+      "settings-title": ""
+    },
+    "create-page": {
+      "generate-public-url-button": "",
+      "unsupported-features-desc": "",
+      "welcome-title": ""
+    },
+    "delete-modal": {
+      "revoke-nonorphaned-body-text": "",
+      "revoke-orphaned-body-text": "",
+      "revoke-title": ""
+    },
+    "email-sharing": {
+      "input-invalid-email-text": "",
+      "input-required-email-text": "",
+      "invite-button": "",
+      "invite-field-desc": "",
+      "invite-field-label": "",
+      "resend-button": "",
+      "resend-button-title": "",
+      "revoke-button": "",
+      "revoke-button-title": ""
+    },
+    "modal-alerts": {
+      "no-upsert-perm-alert-desc": "",
+      "no-upsert-perm-alert-title": "",
+      "save-dashboard-changes-alert-title": "",
+      "unsupport-data-source-alert-readmore-link": "",
+      "unsupported-data-source-alert-desc": "",
+      "unsupported-data-source-alert-title": "",
+      "unsupported-template-variable-alert-desc": "",
+      "unsupported-template-variable-alert-title": ""
+    },
+    "settings-bar-header": {
+      "collapse-settings-tooltip": "",
+      "expand-settings-tooltip": ""
+    },
+    "settings-configuration": {
+      "default-time-range-label": "",
+      "default-time-range-label-desc": "",
+      "show-annotations-label": "",
+      "show-annotations-label-desc": "",
+      "time-range-picker-label": "",
+      "time-range-picker-label-desc": ""
+    },
+    "settings-summary": {
+      "annotations-hide-text": "",
+      "annotations-show-text": "",
+      "time-range-picker-disabled-text": "",
+      "time-range-picker-enabled-text": "",
+      "time-range-text": ""
+    }
+  },
+  "public-dashboard-list": {
+    "button": {
+      "config-button-tooltip": "",
+      "revoke-button-text": "",
+      "revoke-button-tooltip": "",
+      "view-button-tooltip": ""
+    },
+    "dashboard-title": {
+      "orphaned-title": "",
+      "orphaned-tooltip": ""
+    },
+    "toggle": {
+      "pause-sharing-toggle-text": ""
+    }
+  },
+  "public-dashboard-users-access-list": {
+    "dashboard-modal": {
+      "loading-text": "",
+      "open-dashboard-list-text": "",
+      "public-dashboard-link": "",
+      "public-dashboard-setting": ""
+    },
+    "delete-user-modal": {
+      "delete-user-button-text": "",
+      "delete-user-cancel-button": "",
+      "delete-user-revoke-access-button": "",
+      "revoke-access-title": "",
+      "revoke-user-access-modal-desc-line1": "",
+      "revoke-user-access-modal-desc-line2": ""
+    },
+    "modal": {
+      "dashboard-modal-title": ""
+    },
+    "table-header": {
+      "activated-label": "",
+      "activated-tooltip": "",
+      "email-label": "",
+      "last-active-label": "",
+      "origin-label": "",
+      "role-label": ""
+    }
+  },
   "query-operation": {
     "header": {
       "collapse-row": "Abfragezeile einklappen",
@@ -1092,6 +1229,12 @@
       "interval-selected": "Automatisches Aktualisierungsintervall festlegen",
       "turned-off": "Automatische Aktualisierung aus"
     }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": ""
+    },
+    "dismissable-button": ""
   },
   "search": {
     "actions": {
@@ -1187,6 +1330,7 @@
       "link": "Link",
       "panel-embed": "Einbetten",
       "public-dashboard": "Öffentliches Dashboard",
+      "public-dashboard-title": "",
       "snapshot": "Schnappschuss"
     },
     "theme-picker": {
@@ -1265,6 +1409,13 @@
       "empty-recent-list-info": "Es sieht so aus, als hätten Sie diesen Zeit-Auswähler noch nie benutzt. Sobald Sie einige Zeitintervalle eingeben, werden hier die zuletzt verwendeten Intervalle angezeigt.",
       "filter-placeholder": "Schnellbereiche suchen"
     },
+    "copy-paste": {
+      "copy-success-message": "",
+      "default-error-message": "",
+      "default-error-title": "",
+      "tooltip-copy": "",
+      "tooltip-paste": ""
+    },
     "footer": {
       "change-settings-button": "Zeiteinstellungen ändern",
       "fiscal-year-option": "Geschäftsjahr",
@@ -1334,6 +1485,11 @@
   },
   "user-sessions": {
     "loading": "Sitzungen werden geladen …"
+  },
+  "users-access-list": {
+    "tabs": {
+      "public-dashboard-users-tab-title": ""
+    }
   },
   "variable": {
     "adhoc": {

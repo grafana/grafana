@@ -28,7 +28,7 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
   });
 
   const formErrors = formState.errors.time_intervals?.[intervalIndex];
-  const timeRangeInvalid = formErrors?.times?.some((value) => value?.start_time || value?.end_time) ?? false;
+  const timeRangeInvalid = formErrors?.times?.some?.((value) => value?.start_time || value?.end_time) ?? false;
 
   return (
     <div>

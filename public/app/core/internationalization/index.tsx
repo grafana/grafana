@@ -56,7 +56,7 @@ export function changeLanguage(locale: string) {
 }
 
 export const Trans: typeof I18NextTrans = (props) => {
-  return <I18NextTrans {...props} />;
+  return <I18NextTrans shouldUnescape {...props} />;
 };
 
 // Reassign t() so i18next-parser doesn't warn on dynamic key, and we can have 'failOnWarnings' enabled

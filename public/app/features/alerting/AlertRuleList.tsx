@@ -95,7 +95,7 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
     const { alertRules, search, isLoading } = this.props;
 
     return (
-      <Page navId="alert-list">
+      <Page navId="alert-list-legacy">
         <Page.Contents isLoading={isLoading}>
           <div className="page-action-bar">
             <div className="gf-form gf-form--grow">
@@ -117,7 +117,7 @@ export class AlertRuleListUnconnected extends PureComponent<Props> {
             </div>
             <div className="page-action-bar__spacer" />
             {config.unifiedAlertingEnabled && (
-              <LinkButton variant="primary" href="alerting/ng/new">
+              <LinkButton variant="primary" href="alerting-legacy/ng/new">
                 Add NG Alert
               </LinkButton>
             )}

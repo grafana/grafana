@@ -17,7 +17,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 
 const ContactPoints = (_props: GrafanaRouteComponentProps): JSX.Element => (
-  <AlertmanagerPageWrapper pageId="receivers" accessType="notification">
+  <AlertmanagerPageWrapper navId="receivers" accessType="notification">
     <Switch>
       <Route exact={true} path="/alerting/notifications" component={ContactPointsV2} />
       <Route exact={true} path="/alerting/notifications/receivers/new" component={NewContactPoint} />

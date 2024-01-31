@@ -54,7 +54,7 @@ describe('panelMenuBehavior', () => {
   });
 
   beforeAll(() => {
-    locationService.push('/scenes/dashboard/dash-1?from=now-5m&to=now');
+    locationService.push('/d/dash-1?from=now-5m&to=now');
   });
 
   it('Given standard panel', async () => {
@@ -71,9 +71,9 @@ describe('panelMenuBehavior', () => {
 
     expect(menu.state.items?.length).toBe(6);
     // verify view panel url keeps url params and adds viewPanel=<panel-key>
-    expect(menu.state.items?.[0].href).toBe('/scenes/dashboard/dash-1?from=now-5m&to=now&viewPanel=panel-12');
+    expect(menu.state.items?.[0].href).toBe('/d/dash-1?from=now-5m&to=now&viewPanel=panel-12');
     // verify edit url keeps url time range
-    expect(menu.state.items?.[1].href).toBe('/scenes/dashboard/dash-1/panel-edit/12?from=now-5m&to=now');
+    expect(menu.state.items?.[1].href).toBe('/d/dash-1?from=now-5m&to=now&editPanel=12');
     // verify share
     expect(menu.state.items?.[2].text).toBe('Share');
     // verify explore url
@@ -86,7 +86,7 @@ describe('panelMenuBehavior', () => {
     expect(getExploreArgs.scopedVars?.__sceneObject?.value).toBe(panel);
 
     // verify inspect url keeps url params and adds inspect=<panel-key>
-    expect(menu.state.items?.[4].href).toBe('/scenes/dashboard/dash-1?from=now-5m&to=now&inspect=panel-12');
+    expect(menu.state.items?.[4].href).toBe('/d/dash-1?from=now-5m&to=now&inspect=panel-12');
     expect(menu.state.items?.[4].subMenu).toBeDefined();
 
     expect(menu.state.items?.[4].subMenu?.length).toBe(3);
@@ -468,10 +468,28 @@ describe('panelMenuBehavior', () => {
         ])
       );
     });
+
+    it('should only contain explore when embedded', async () => {
+      const { menu, panel } = await buildTestScene({ isEmbedded: true });
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+      menu.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.length).toBe(1);
+      expect(menu.state.items?.[0].text).toBe('Explore');
+    });
   });
 });
 
-interface SceneOptions {}
+interface SceneOptions {
+  isEmbedded?: boolean;
+}
 
 async function buildTestScene(options: SceneOptions) {
   const menu = new VizPanelMenu({
@@ -503,6 +521,7 @@ async function buildTestScene(options: SceneOptions) {
     }),
     meta: {
       canEdit: true,
+      isEmbedded: options.isEmbedded ?? false,
     },
     body: new SceneGridLayout({
       children: [

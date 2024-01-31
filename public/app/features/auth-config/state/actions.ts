@@ -31,13 +31,13 @@ export function loadSettings(): ThunkResult<Promise<Settings>> {
   };
 }
 
-export function loadProviders(): ThunkResult<Promise<SSOProvider[]>> {
+export function loadProviders(provider = ''): ThunkResult<Promise<SSOProvider[]>> {
   return async (dispatch) => {
     if (!config.featureToggles.ssoSettingsApi) {
       return [];
     }
-    const result = await getBackendSrv().get('/api/v1/sso-settings');
-    dispatch(providersLoaded(result));
+    const result = await getBackendSrv().get(`/api/v1/sso-settings${provider ? `/${provider}` : ''}`);
+    dispatch(providersLoaded(provider ? [result] : result));
     return result;
   };
 }

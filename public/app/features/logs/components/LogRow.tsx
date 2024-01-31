@@ -16,7 +16,6 @@ import {
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
-import { LokiQuery } from 'app/plugins/datasource/loki/types';
 
 import { checkLogsError, escapeUnescapedString } from '../utils';
 
@@ -52,7 +51,7 @@ interface Props extends Themeable2 {
   getRowContextQuery?: (
     row: LogRowModel,
     options?: LogRowContextOptions,
-    origQuery?: LokiQuery
+    cacheFilters?: boolean
   ) => Promise<DataQuery | null>;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   styles: LogRowStyles;

@@ -30,7 +30,16 @@ jest.mock('react-virtualized-auto-sizer', () => {
   return {
     __esModule: true,
     default(props: ComponentProps<typeof AutoSizer>) {
-      return <div>{props.children({ width: 800, height: 600 })}</div>;
+      return (
+        <div>
+          {props.children({
+            width: 800,
+            scaledWidth: 800,
+            scaledHeight: 600,
+            height: 600,
+          })}
+        </div>
+      );
     },
   };
 });

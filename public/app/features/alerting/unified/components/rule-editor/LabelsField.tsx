@@ -1,9 +1,19 @@
 import { css, cx } from '@emotion/css';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { FieldArrayMethodProps, useFieldArray, useFormContext } from 'react-hook-form';
+import { useFieldArray, UseFieldArrayAppend, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Field, InlineLabel, Input, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  Field,
+  InlineLabel,
+  Input,
+  InputControl,
+  LoadingPlaceholder,
+  Stack,
+  Text,
+  useStyles2,
+} from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -85,10 +95,7 @@ const RemoveButton: FC<{
 );
 
 const AddButton: FC<{
-  append: (
-    value: Partial<{ key: string; value: string }> | Array<Partial<{ key: string; value: string }>>,
-    options?: FieldArrayMethodProps | undefined
-  ) => void;
+  append: UseFieldArrayAppend<RuleFormValues, 'labels'>;
   className: string;
 }> = ({ append, className }) => (
   <Button
@@ -107,11 +114,9 @@ const AddButton: FC<{
 const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName }) => {
   const styles = useStyles2(getStyles);
   const {
-    register,
     control,
     watch,
     formState: { errors },
-    setValue,
   } = useFormContext<RuleFormValues>();
 
   const labels = watch('labels');
@@ -151,17 +156,24 @@ const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName 
                     error={errors.labels?.[index]?.key?.message}
                     data-testid={`label-key-${index}`}
                   >
-                    <AlertLabelDropdown
-                      {...register(`labels.${index}.key`, {
-                        required: { value: Boolean(labels[index]?.value), message: 'Required.' },
-                      })}
-                      defaultValue={field.key ? { label: field.key, value: field.key } : undefined}
-                      options={keys}
-                      onChange={(newValue: SelectableValue) => {
-                        setValue(`labels.${index}.key`, newValue.value);
-                        setSelectedKey(newValue.value);
+                    <InputControl
+                      name={`labels.${index}.key`}
+                      control={control}
+                      rules={{ required: Boolean(labels[index]?.value) ? 'Required.' : false }}
+                      render={({ field: { onChange, ref, ...rest } }) => {
+                        return (
+                          <AlertLabelDropdown
+                            {...rest}
+                            defaultValue={field.key ? { label: field.key, value: field.key } : undefined}
+                            options={keys}
+                            onChange={(newValue: SelectableValue) => {
+                              onChange(newValue.value);
+                              setSelectedKey(newValue.value);
+                            }}
+                            type="key"
+                          />
+                        );
                       }}
-                      type="key"
                     />
                   </Field>
                   <InlineLabel className={styles.equalSign}>=</InlineLabel>
@@ -171,19 +183,26 @@ const LabelsWithSuggestions: FC<{ dataSourceName: string }> = ({ dataSourceName 
                     error={errors.labels?.[index]?.value?.message}
                     data-testid={`label-value-${index}`}
                   >
-                    <AlertLabelDropdown
-                      {...register(`labels.${index}.value`, {
-                        required: { value: Boolean(labels[index]?.key), message: 'Required.' },
-                      })}
-                      defaultValue={field.value ? { label: field.value, value: field.value } : undefined}
-                      options={values}
-                      onChange={(newValue: SelectableValue) => {
-                        setValue(`labels.${index}.value`, newValue.value);
+                    <InputControl
+                      control={control}
+                      name={`labels.${index}.value`}
+                      rules={{ required: Boolean(labels[index]?.value) ? 'Required.' : false }}
+                      render={({ field: { onChange, ref, ...rest } }) => {
+                        return (
+                          <AlertLabelDropdown
+                            {...rest}
+                            defaultValue={field.value ? { label: field.value, value: field.value } : undefined}
+                            options={values}
+                            onChange={(newValue: SelectableValue) => {
+                              onChange(newValue.value);
+                            }}
+                            onOpenMenu={() => {
+                              setSelectedKey(labels[index].key);
+                            }}
+                            type="value"
+                          />
+                        );
                       }}
-                      onOpenMenu={() => {
-                        setSelectedKey(labels[index].key);
-                      }}
-                      type="value"
                     />
                   </Field>
 
@@ -268,7 +287,7 @@ const LabelsField: FC<Props> = ({ dataSourceName }) => {
             Add labels to your rule to annotate your rules, ease searching, or route to a notification policy.
           </Text>
           <NeedHelpInfo
-            contentText="The dropdown only displays labels that you have previously used for alerts. 
+            contentText="The dropdown only displays labels that you have previously used for alerts.
             Select a label from the options below or type in a new one."
             title="Labels"
           />

@@ -39,7 +39,7 @@ import { checkForPathSeparator } from './util';
 
 export const MAX_GROUP_RESULTS = 1000;
 
-export const useFolderGroupOptions = (folderTitle: string, enableProvisionedGroups: boolean) => {
+export const useFolderGroupOptions = (folderUid: string, enableProvisionedGroups: boolean) => {
   const dispatch = useDispatch();
 
   // fetch the ruler rules from the database so we can figure out what other "groups" are already defined
@@ -52,7 +52,7 @@ export const useFolderGroupOptions = (folderTitle: string, enableProvisionedGrou
   const groupfoldersForGrafana = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
 
   const grafanaFolders = useCombinedRuleNamespaces(GRAFANA_RULES_SOURCE_NAME);
-  const folderGroups = grafanaFolders.find((f) => f.name === folderTitle)?.groups ?? [];
+  const folderGroups = grafanaFolders.find((f) => f.uid === folderUid)?.groups ?? [];
 
   const groupOptions = folderGroups
     .map<SelectableValue<string>>((group) => {
@@ -105,7 +105,7 @@ export function FolderAndGroup({
   const folder = watch('folder');
   const group = watch('group');
 
-  const { groupOptions, loading } = useFolderGroupOptions(folder?.title ?? '', enableProvisionedGroups);
+  const { groupOptions, loading } = useFolderGroupOptions(folder?.uid ?? '', enableProvisionedGroups);
 
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
@@ -146,55 +146,62 @@ export function FolderAndGroup({
   return (
     <div className={styles.container}>
       <Stack alignItems="center">
-        <Field
-          label={
-            <Label htmlFor="folder" description={'Select a folder to store your rule.'}>
-              Folder
-            </Label>
-          }
-          className={styles.formInput}
-          error={errors.folder?.message}
-          invalid={!!errors.folder?.message}
-          data-testid="folder-picker"
-        >
-          {(!isCreatingFolder && (
-            <InputControl
-              render={({ field: { ref, ...field } }) => (
-                <div style={{ width: 420 }}>
-                  <RuleFolderPicker
-                    inputId="folder"
-                    {...field}
-                    enableReset={true}
-                    onChange={({ title, uid }) => {
-                      field.onChange({ title, uid });
-                      resetGroup();
+        {
+          <Field
+            label={
+              <Label htmlFor="folder" description={'Select a folder to store your rule.'}>
+                Folder
+              </Label>
+            }
+            className={styles.formInput}
+            error={errors.folder?.message}
+            data-testid="folder-picker"
+          >
+            <Stack direction="row" alignItems="center">
+              {(!isCreatingFolder && (
+                <>
+                  <InputControl
+                    render={({ field: { ref, ...field } }) => (
+                      <div style={{ width: 420 }}>
+                        <RuleFolderPicker
+                          inputId="folder"
+                          invalid={!!errors.folder?.message}
+                          {...field}
+                          enableReset={true}
+                          onChange={({ title, uid }) => {
+                            field.onChange({ title, uid });
+                            resetGroup();
+                          }}
+                        />
+                      </div>
+                    )}
+                    name="folder"
+                    rules={{
+                      required: { value: true, message: 'Select a folder' },
+                      validate: {
+                        pathSeparator: (folder: Folder) => checkForPathSeparator(folder.uid),
+                      },
                     }}
                   />
-                </div>
-              )}
-              name="folder"
-              rules={{
-                required: { value: true, message: 'Select a folder' },
-                validate: {
-                  pathSeparator: (folder: Folder) => checkForPathSeparator(folder.title),
-                },
-              }}
-            />
-          )) || <div>Creating new folder...</div>}
-        </Field>
-        <Box marginTop={2.5} gap={1} display={'flex'} alignItems={'center'}>
-          <Text color="secondary">or</Text>
-          <Button
-            onClick={onOpenFolderCreationModal}
-            type="button"
-            icon="plus"
-            fill="outline"
-            variant="secondary"
-            disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
-          >
-            New folder
-          </Button>
-        </Box>
+                  <Text color="secondary">or</Text>
+                  <Button
+                    onClick={onOpenFolderCreationModal}
+                    type="button"
+                    icon="plus"
+                    fill="outline"
+                    variant="secondary"
+                    disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
+                  >
+                    New folder
+                  </Button>
+                </>
+              )) || <div>Creating new folder...</div>}
+            </Stack>
+          </Field>
+        }
+        {isCreatingFolder && (
+          <FolderCreationModal onCreate={handleFolderCreation} onClose={() => setIsCreatingFolder(false)} />
+        )}
       </Stack>
 
       {isCreatingFolder && (

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestEmailNotifier(t *testing.T) {
@@ -24,7 +25,7 @@ func TestEmailNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewEmailNotifier(model, encryptionService.GetDecryptedValue, nil)
+			_, err := NewEmailNotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -41,7 +42,7 @@ func TestEmailNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewEmailNotifier(model, encryptionService.GetDecryptedValue, nil)
+			not, err := NewEmailNotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, nil)
 			emailNotifier := not.(*EmailNotifier)
 
 			require.Nil(t, err)
@@ -65,7 +66,7 @@ func TestEmailNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewEmailNotifier(model, encryptionService.GetDecryptedValue, nil)
+			not, err := NewEmailNotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, nil)
 			emailNotifier := not.(*EmailNotifier)
 
 			require.Nil(t, err)

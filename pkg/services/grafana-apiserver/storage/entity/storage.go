@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/storage"
@@ -218,14 +219,40 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return err
 	}
 
-	rsp, err := s.store.List(ctx, &entityStore.EntityListRequest{
+	req := &entityStore.EntityListRequest{
 		Key:           []string{key},
 		WithBody:      true,
 		WithStatus:    true,
 		NextPageToken: opts.Predicate.Continue,
 		Limit:         opts.Predicate.Limit,
+		Labels:        map[string]string{},
 		// TODO push label/field matching down to storage
-	})
+	}
+
+	// translate "equals" label selectors to storage label conditions
+	requirements, selectable := opts.Predicate.Label.Requirements()
+	if !selectable {
+		return apierrors.NewBadRequest("label selector is not selectable")
+	}
+
+	for _, r := range requirements {
+		if r.Operator() == selection.Equals {
+			req.Labels[r.Key()] = r.Values().List()[0]
+		}
+	}
+
+	// translate grafana.app/folder field selector to the folder condition
+	fieldRequirements, fieldSelector, err := ReadFieldRequirements(opts.Predicate.Field)
+	if err != nil {
+		return err
+	}
+	if fieldRequirements.Folder != nil {
+		req.Folder = *fieldRequirements.Folder
+	}
+	// Update the field selector to remove the unneeded selectors
+	opts.Predicate.Field = fieldSelector
+
+	rsp, err := s.store.List(ctx, req)
 	if err != nil {
 		return apierrors.NewInternalError(err)
 	}
@@ -314,6 +341,15 @@ func (s *Storage) guaranteedUpdate(
 		return err
 	}
 
+	accessor, err := meta.Accessor(destination)
+	if err != nil {
+		return err
+	}
+	previousVersion, _ := strconv.ParseInt(accessor.GetResourceVersion(), 10, 64)
+	if preconditions != nil && preconditions.ResourceVersion != nil {
+		previousVersion, _ = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
+	}
+
 	res := &storage.ResponseMeta{}
 	updatedObj, _, err := tryUpdate(destination, *res)
 	if err != nil {
@@ -331,11 +367,6 @@ func (s *Storage) guaranteedUpdate(
 	e, err := resourceToEntity(key, updatedObj, requestInfo, s.codec)
 	if err != nil {
 		return err
-	}
-
-	previousVersion := int64(0)
-	if preconditions != nil && preconditions.ResourceVersion != nil {
-		previousVersion, _ = strconv.ParseInt(*preconditions.ResourceVersion, 10, 64)
 	}
 
 	req := &entityStore.UpdateEntityRequest{
