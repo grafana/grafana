@@ -12,6 +12,7 @@ import { Select, HorizontalGroup, useStyles2 } from '@grafana/ui';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import { operators as allOperators, stringOperators, numberOperators, keywordOperators } from '../traceql/traceql';
+import { useTemporaryState } from '../useTemporaryState';
 
 import { filterScopedTag, operatorSelectableValue } from './utils';
 
@@ -50,7 +51,7 @@ const SearchField = ({
   query,
 }: Props) => {
   const styles = useStyles2(getStyles);
-  const [alertText, setAlertText] = useState<string>();
+  const [alertText, setAlertText] = useTemporaryState<string>();
   const scopedTag = useMemo(() => filterScopedTag(filter), [filter]);
   // We automatically change the operator to the regex op when users select 2 or more values
   // However, they expect this to be automatically rolled back to the previous operator once

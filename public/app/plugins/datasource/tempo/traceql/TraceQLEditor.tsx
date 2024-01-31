@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
@@ -7,6 +7,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 
 import { TempoDatasource } from '../datasource';
+import { useTemporaryState } from '../useTemporaryState';
 
 import { CompletionProvider, CompletionType } from './autocomplete';
 import { getErrorNodes, setMarkers } from './highlighting';
@@ -22,7 +23,7 @@ interface Props {
 }
 
 export function TraceQLEditor(props: Props) {
-  const [alertText, setAlertText] = useState<string>();
+  const [alertText, setAlertText] = useTemporaryState<string>();
 
   const { onChange, onRunQuery, placeholder } = props;
   const setupAutocompleteFn = useAutocomplete(props.datasource, setAlertText);

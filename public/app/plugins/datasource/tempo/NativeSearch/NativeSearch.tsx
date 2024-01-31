@@ -9,6 +9,7 @@ import { InlineFieldRow, InlineField, Input, Alert, useStyles2, fuzzyMatch, Sele
 import { DEFAULT_LIMIT, TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { TempoQuery } from '../types';
+import { useTemporaryState } from '../useTemporaryState';
 
 import { TagsField } from './TagsField/TagsField';
 
@@ -24,7 +25,7 @@ const durationPlaceholder = 'e.g. 1.2s, 100ms';
 
 const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props) => {
   const styles = useStyles2(getStyles);
-  const [alertText, setAlertText] = useState<string>();
+  const [alertText, setAlertText] = useTemporaryState<string>();
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [serviceOptions, setServiceOptions] = useState<Array<SelectableValue<string>>>();
   const [spanOptions, setSpanOptions] = useState<Array<SelectableValue<string>>>();
@@ -58,7 +59,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         setIsLoading((prevValue) => ({ ...prevValue, [name]: false }));
       }
     },
-    [languageProvider]
+    [languageProvider, setAlertText]
   );
 
   useEffect(() => {
@@ -83,7 +84,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
       }
     };
     fetchOptions();
-  }, [languageProvider, loadOptions, query.serviceName, query.spanName]);
+  }, [languageProvider, loadOptions, query.serviceName, query.spanName, setAlertText]);
 
   const onKeyDown = (keyEvent: React.KeyboardEvent) => {
     if (keyEvent.key === 'Enter' && (keyEvent.shiftKey || keyEvent.ctrlKey)) {

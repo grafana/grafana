@@ -12,6 +12,7 @@ import { TempoDatasource } from '../datasource';
 import { TempoQueryBuilderOptions } from '../traceql/TempoQueryBuilderOptions';
 import { traceqlGrammar } from '../traceql/traceql';
 import { TempoQuery } from '../types';
+import { useTemporaryState } from '../useTemporaryState';
 
 import DurationInput from './DurationInput';
 import { GroupByField } from './GroupByField';
@@ -33,7 +34,7 @@ const hardCodedFilterIds = ['min-duration', 'max-duration', 'status'];
 
 const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Props) => {
   const styles = useStyles2(getStyles);
-  const [alertText, setAlertText] = useState<string>();
+  const [alertText, setAlertText] = useTemporaryState<string>();
   const [error, setError] = useState<Error | FetchError | null>(null);
 
   const [isTagsLoading, setIsTagsLoading] = useState(true);
@@ -79,7 +80,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
       }
     };
     fetchTags();
-  }, [datasource]);
+  }, [datasource, setAlertText]);
 
   useEffect(() => {
     // Initialize state with configured static filters that already have a value from the config

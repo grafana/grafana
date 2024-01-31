@@ -1,11 +1,12 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 
 import { TempoDatasource } from '../../datasource';
+import { useTemporaryState } from '../../useTemporaryState';
 
 import { CompletionProvider } from './autocomplete';
 import { languageDefinition } from './syntax';
@@ -19,7 +20,7 @@ interface Props {
 }
 
 export function TagsField(props: Props) {
-  const [alertText, setAlertText] = useState('');
+  const [alertText, setAlertText] = useTemporaryState<string>();
   const { onChange, onBlur, placeholder } = props;
   const setupAutocompleteFn = useAutocomplete(props.datasource, setAlertText);
   const theme = useTheme2();
