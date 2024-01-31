@@ -12,11 +12,11 @@ import {
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { activateFullSceneTree } from '../utils/test-utils';
 import { findVizPanelByKey } from '../utils/utils';
 
 import { InspectJsonTab } from './InspectJsonTab';
-import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 
 standardTransformersRegistry.setInit(getStandardTransformers);
 
