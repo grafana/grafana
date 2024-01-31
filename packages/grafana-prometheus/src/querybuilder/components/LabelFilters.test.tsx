@@ -66,7 +66,7 @@ describe('LabelFilters', () => {
 
   it('removes label', async () => {
     const { onChange } = setup({ labelsFilters: [{ label: 'foo', op: '=', value: 'bar' }] });
-    await userEvent.click(screen.getByLabelText(/remove/));
+    await userEvent.click(screen.getByLabelText(/remove-foo/));
     expect(onChange).toBeCalledWith([]);
   });
 
