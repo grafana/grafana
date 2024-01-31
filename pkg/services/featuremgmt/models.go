@@ -130,8 +130,8 @@ type FeatureFlag struct {
 	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
 	HideFromDocs    bool `json:"hideFromDocs,omitempty"`    // don't add the values to docs
 
-	// These are currently unused
-	RequiresRestart bool `json:"requiresRestart,omitempty"` // The server must be initialized with the value
+	// The server must be initialized with the value
+	RequiresRestart bool `json:"requiresRestart,omitempty"`
 }
 
 type UpdateFeatureTogglesCommand struct {
