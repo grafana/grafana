@@ -598,9 +598,19 @@ func (dr *DashboardServiceImpl) filterUserSharedDashboards(ctx context.Context, 
 		folderUIDs = append(folderUIDs, dashboard.FolderUID)
 	}
 
-	dashFolders, err := dr.folderStore.GetFolders(ctx, user.GetOrgID(), folderUIDs)
+	// GetFolders return only folders available to user. So we can use is to check access.
+	userDashFolders, err := dr.folderService.GetFolders(ctx, folder.GetFoldersQuery{
+		UIDs:         folderUIDs,
+		OrgID:        user.GetOrgID(),
+		SignedInUser: user,
+	})
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch parent folders from store: %w", err)
+	}
+
+	dashFoldersMap := make(map[string]*folder.Folder, 0)
+	for _, f := range userDashFolders {
+		dashFoldersMap[f.UID] = f
 	}
 
 	for _, dashboard := range userDashboards {
@@ -609,24 +619,8 @@ func (dr *DashboardServiceImpl) filterUserSharedDashboards(ctx context.Context, 
 			continue
 		}
 
-		dashFolder, ok := dashFolders[dashboard.FolderUID]
-		if !ok {
-			dr.log.Error("failed to fetch folder by UID from store", "uid", dashboard.FolderUID)
-			continue
-		}
-
-		g, err := guardian.NewByFolder(ctx, dashFolder, user.GetOrgID(), user)
-		if err != nil {
-			dr.log.Error("failed to check folder permissions", "folder uid", dashboard.FolderUID, "error", err)
-			continue
-		}
-
-		canView, err := g.CanView()
-		if err != nil {
-			dr.log.Error("failed to fetch dashboard", "uid", dashboard.UID, "error", err)
-			continue
-		}
-		if !canView {
+		_, hasAccess := dashFoldersMap[dashboard.FolderUID]
+		if !hasAccess {
 			filteredDashboards = append(filteredDashboards, dashboard)
 		}
 	}
@@ -733,19 +727,12 @@ func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *das
 	return dr.dashboardStore.GetDashboardTags(ctx, query)
 }
 
-func (dr DashboardServiceImpl) CountInFolder(ctx context.Context, orgID int64, folderUID string, u identity.Requester) (int64, error) {
-	folder, err := dr.folderService.Get(ctx, &folder.GetFolderQuery{UID: &folderUID, OrgID: orgID, SignedInUser: u})
-	if err != nil {
-		return 0, err
-	}
-
-	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
-	// nolint:staticcheck
-	return dr.dashboardStore.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderRequest{FolderID: folder.ID, OrgID: orgID})
+func (dr DashboardServiceImpl) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) (int64, error) {
+	return dr.dashboardStore.CountDashboardsInFolders(ctx, &dashboards.CountDashboardsInFolderRequest{FolderUIDs: folderUIDs, OrgID: orgID})
 }
 
-func (dr *DashboardServiceImpl) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, u identity.Requester) error {
-	return dr.dashboardStore.DeleteDashboardsInFolder(ctx, &dashboards.DeleteDashboardsInFolderRequest{FolderUID: folderUID, OrgID: orgID})
+func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) error {
+	return dr.dashboardStore.DeleteDashboardsInFolders(ctx, &dashboards.DeleteDashboardsInFolderRequest{FolderUIDs: folderUIDs, OrgID: orgID})
 }
 
 func (dr *DashboardServiceImpl) Kind() string { return entity.StandardKindDashboard }

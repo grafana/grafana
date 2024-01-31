@@ -17,6 +17,7 @@ import {
 import {
   AnnotationQuery,
   Dashboard,
+  DashboardLink,
   DataTransformerConfig,
   defaultDashboard,
   defaultTimePickerConfig,
@@ -28,6 +29,7 @@ import {
 } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
+import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { DashboardControls } from '../scene/DashboardControls';
@@ -36,6 +38,7 @@ import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
@@ -141,6 +144,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     tags: state.tags,
     links: state.links,
     graphTooltip,
+    schemaVersion: DASHBOARD_SCHEMA_VERSION,
   };
 
   return sortedDeepCloneWithoutNulls(dashboard);
@@ -220,6 +224,9 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
     panel.maxPerRow = gridItem.state.maxPerRow;
     panel.repeatDirection = gridItem.getRepeatDirection();
   }
+
+  const panelLinks = dashboardSceneGraph.getPanelLinks(vizPanel);
+  panel.links = (panelLinks.state.rawLinks as DashboardLink[]) ?? [];
 
   return panel;
 }
