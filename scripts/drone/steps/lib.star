@@ -35,7 +35,7 @@ def yarn_install_step():
         "name": "yarn-install",
         "image": images["node"],
         "commands": [
-            "apk add --update --no-cache python3 && ln -sf python3 /usr/bin/python",
+            "apk add --no-cache --virtual .gyp python3 make g++ && ln -sf /usr/bin/python3 /usr/bin/python",
             "yarn install --immutable",
         ],
         "depends_on": [],
