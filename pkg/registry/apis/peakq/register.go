@@ -1,9 +1,6 @@
 package peakq
 
 import (
-	"encoding/json"
-	"net/http"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -174,32 +171,7 @@ func (b *PeakQAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 						},
 					},
 				},
-				Handler: func(w http.ResponseWriter, req *http.Request) {
-					input, err := makeVarMapFromParams(req.URL.Query())
-					if err != nil {
-						_, _ = w.Write([]byte("ERROR: " + err.Error()))
-						w.WriteHeader(500)
-						return
-					}
-
-					var qT peakq.QueryTemplate
-					err = json.NewDecoder(req.Body).Decode(&qT.Spec)
-					if err != nil {
-						_, _ = w.Write([]byte("ERROR: " + err.Error()))
-						w.WriteHeader(500)
-						return
-					}
-					results, err := Render(qT.Spec, input)
-					if err != nil {
-						_, _ = w.Write([]byte("ERROR: " + err.Error()))
-						w.WriteHeader(500)
-						return
-					}
-
-					w.Header().Set("Content-Type", "application/json")
-					w.WriteHeader(http.StatusOK)
-					_ = json.NewEncoder(w).Encode(results)
-				},
+				Handler: renderPOSTHandler,
 			},
 		},
 	}
