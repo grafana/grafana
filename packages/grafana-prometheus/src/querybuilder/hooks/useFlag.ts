@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import store from '../../../../../core/store';
+import store from '../../gcopypaste/app/core/store';
 
 export const promQueryEditorExplainKey = 'PrometheusQueryEditorExplainDefault';
 
