@@ -34,6 +34,7 @@ type Target struct {
 	DataType data.FrameType `json:"dataType,omitempty"`
 
 	// DataTypeVersion is the version for the Dataplane type.
+	// TODO 2[uint] seems to panic, maybe implement DeepCopy on data.FrameTypeVersion?
 	// DataTypeVersion data.FrameTypeVersion `json:"dataTypeVersion,omitempty"`
 
 	Properties common.Unstructured `json:"properties"`
@@ -44,11 +45,6 @@ type Target struct {
 type QueryVariable struct {
 	// Key is the name of the variable.
 	Key string `json:"key"`
-
-	// SelectedValue is the value that will be interpolated
-	// for each position during render. This value is not stored and
-	// only used during render.
-	SelectedValue string `json:"selectedValue"`
 
 	// DefaultValue is the value to be used when there is no selected value
 	// during render.

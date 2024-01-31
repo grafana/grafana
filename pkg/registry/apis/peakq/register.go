@@ -120,7 +120,7 @@ func (b *PeakQAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	return &grafanaapiserver.APIRoutes{
 		Root: []grafanaapiserver.APIRouteHandler{
 			{
-				Path: "playground",
+				Path: "render",
 				Spec: &spec3.PathProps{
 					Summary:     "an example at the root level",
 					Description: "longer description here?",

@@ -11,8 +11,7 @@ var basicTemplateSpec = peakq.QueryTemplateSpec{
 	Title: "Test",
 	Variables: []peakq.QueryVariable{
 		{
-			Key: "metricName",
-			//	SelectedValue: `up`, // TODO: Pointer or opt to "Replace on Empty"
+			Key:          "metricName",
 			DefaultValue: `down`,
 			Positions: []peakq.Position{
 				{
@@ -64,7 +63,7 @@ var basicTemplateRenderedTargets = []peakq.Target{
 					"uid":  "foo", // TODO: Probably a default templating thing to set this.
 				},
 				"editorMode": "builder",
-				"expr":       "up",
+				"expr":       "up + up + 42",
 				"instant":    true,
 				"range":      false,
 				"exemplar":   false,
