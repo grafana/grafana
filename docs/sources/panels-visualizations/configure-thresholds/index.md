@@ -42,30 +42,13 @@ You can also use thresholds to:
 
 You can set thresholds in the following visualizations:
 
-<!--
-- [Bar chart][bar chart]
-- [Bar gauge][bar gauge]
-- [Candlestick][candlestick]
-- [Canvas][canvas]
-- [Gauge][gauge]
-- [Geomap][geomap]
-- [Histogram][histogram]
-- [Stat][stat]
-- [State timeline][state timeline]
-- [Status history][status history]
-- [Table][table]
-- [Time series][time series]
-- [Trend][trend] -->
-
-|                            |                                  |
-| -------------------------- | -------------------------------- |
-| [Bar chart][bar chart]     | [Stat][stat]                     |
-| [Bar gauge][bar gauge]     | [State timeline][state timeline] |
-| [Candlestick][candlestick] | [Status history][status history] |
-| [Canvas][canvas]           | [Table][table]                   |
-| [Gauge][gauge]             | [Time series][time series]       |
-| [Geomap][geomap]           | [Trend][trend]                   |
-| [Histogram][histogram]     |
+|                            |                                  |                                  |
+| -------------------------- | -------------------------------- | -------------------------------- |
+| [Bar chart][bar chart]     | [Geomap][geomap]                 | [Status history][status history] |
+| [Bar gauge][bar gauge]     | [Histogram][histogram]           | [Table][table]                   |
+| [Candlestick][candlestick] | [Stat][stat]                     | [Time series][time series]       |
+| [Canvas][canvas]           | [State timeline][state timeline] | [Trend][trend]                   |
+| [Gauge][gauge]             |
 
 ## Default thresholds
 
