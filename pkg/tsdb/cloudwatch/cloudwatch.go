@@ -143,7 +143,7 @@ func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx ba
 
 	return models.RequestContext{
 		OAMAPIProvider:        NewOAMAPI(sess),
-		MetricsClientProvider: clients.NewMetricsClient(NewMetricsAPI(sess), instance.Settings.GrafanaSettings),
+		MetricsClientProvider: clients.NewMetricsClient(NewMetricsAPI(sess), instance.Settings.GrafanaSettings.ListMetricsPageLimit),
 		LogsAPIProvider:       NewLogsAPI(sess),
 		EC2APIProvider:        ec2Client,
 		Settings:              instance.Settings,
@@ -231,7 +231,7 @@ func (e *cloudWatchExecutor) checkHealthMetrics(ctx context.Context, pluginCtx b
 		return err
 	}
 
-	metricClient := clients.NewMetricsClient(NewMetricsAPI(session), instance.Settings.GrafanaSettings)
+	metricClient := clients.NewMetricsClient(NewMetricsAPI(session), instance.Settings.GrafanaSettings.ListMetricsPageLimit)
 	_, err = metricClient.ListMetricsWithPageLimit(ctx, params)
 	return err
 }
@@ -281,7 +281,7 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 	}
 
 	// work around until https://github.com/grafana/grafana/issues/39089 is implemented
-	if instance.Settings.GrafanaSettings.SecureSocksDSProxyEnabled && instance.Settings.SecureSocksProxyEnabled {
+	if (instance.Settings.GrafanaSettings != nil && instance.Settings.GrafanaSettings.SecureSocksDSProxyEnabled) && instance.Settings.SecureSocksProxyEnabled {
 		// only update the transport to try to avoid the issue mentioned here https://github.com/grafana/grafana/issues/46365
 		sess.Config.HTTPClient.Transport = instance.HTTPClient.Transport
 	}

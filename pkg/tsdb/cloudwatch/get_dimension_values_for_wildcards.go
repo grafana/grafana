@@ -21,7 +21,7 @@ func (e *cloudWatchExecutor) getDimensionValuesForWildcards(ctx context.Context,
 		return nil, err
 	}
 
-	metricsClient := clients.NewMetricsClient(client, instance.Settings.GrafanaSettings)
+	metricsClient := clients.NewMetricsClient(client, instance.Settings.GrafanaSettings.ListMetricsPageLimit)
 	service := services.NewListMetricsService(metricsClient)
 	// create copies of the original query. All the fields besides Dimensions are primitives
 	queries := copyQueries(origQueries)

@@ -19,6 +19,7 @@ type CloudWatchSettings struct {
 	SecureSocksProxyEnabled bool     `json:"enableSecureSocksProxy"` // this can be removed when https://github.com/grafana/grafana/issues/39089 is implemented
 	LogsTimeout             Duration `json:"logsTimeout"`
 
+	// GrafanaSettings are fetched from the GrafanaCfg in the context
 	GrafanaSettings *awsds.AuthSettings `json:"-"`
 }
 
