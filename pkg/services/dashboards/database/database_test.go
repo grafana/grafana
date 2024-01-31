@@ -518,9 +518,10 @@ func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *test
 	require.NoError(t, err)
 	pluginId := "test-app"
 
-	insertTestDashboardForPlugin(t, dashboardStore, "app-test", 1, true, pluginId)
-	insertTestDashboardForPlugin(t, dashboardStore, "app-dash1", 1, false, pluginId)
-	insertTestDashboardForPlugin(t, dashboardStore, "app-dash2", 1, false, pluginId)
+	insertTestDashboardForPlugin(t, dashboardStore, "app-test", 1, "", true, pluginId)
+	insertTestDashboardForPlugin(t, dashboardStore, "app-test", 1, "", true, pluginId)
+	insertTestDashboardForPlugin(t, dashboardStore, "app-dash1", 1, "", false, pluginId)
+	insertTestDashboardForPlugin(t, dashboardStore, "app-dash2", 1, "", false, pluginId)
 
 	query := dashboards.GetDashboardsByPluginIDQuery{
 		PluginID: pluginId,
@@ -1063,11 +1064,12 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 }
 
 func insertTestDashboardForPlugin(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64,
-	isFolder bool, pluginId string) *dashboards.Dashboard {
+	folderUID string, isFolder bool, pluginId string) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
-		OrgID:    orgId,
-		IsFolder: isFolder,
+		OrgID:     orgId,
+		IsFolder:  isFolder,
+		FolderUID: folderUID,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"id":    nil,
 			"title": title,
