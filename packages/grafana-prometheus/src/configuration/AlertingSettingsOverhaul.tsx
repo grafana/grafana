@@ -4,15 +4,14 @@ import React from 'react';
 import { DataSourceJsonData, DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { ConfigSubSection } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
 import { InlineField, Switch, useTheme2 } from '@grafana/ui';
 
 import { docsTip, overhaulStyles } from './ConfigEditor';
 
-export interface Props<T extends DataSourceJsonData>
+interface Props<T extends DataSourceJsonData>
   extends Pick<DataSourcePluginOptionsEditorProps<T>, 'options' | 'onOptionsChange'> {}
 
-export interface AlertingConfig extends DataSourceJsonData {
+interface AlertingConfig extends DataSourceJsonData {
   manageAlerts?: boolean;
 }
 
@@ -21,15 +20,12 @@ export function AlertingSettingsOverhaul<T extends AlertingConfig>({
   onOptionsChange,
 }: Props<T>): JSX.Element {
   const theme = useTheme2();
+  // imported GrafanaTheme2 from @grafana/data does not match type of same from @grafana/ui
+  // @ts-ignore
   const styles = overhaulStyles(theme);
 
-  const prometheusConfigOverhaulAuth = config.featureToggles.prometheusConfigOverhaulAuth;
-
   return (
-    <ConfigSubSection
-      title="Alerting"
-      className={cx(styles.container, { [styles.alertingTop]: prometheusConfigOverhaulAuth })}
-    >
+    <ConfigSubSection title="Alerting" className={cx(styles.container, styles.alertingTop)}>
       <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form">
