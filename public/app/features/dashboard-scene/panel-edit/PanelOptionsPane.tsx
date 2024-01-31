@@ -122,15 +122,17 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                   placeholder="Search options"
                   onChange={setSearchQuery}
                 />
-                <RadioButtonGroup
-                  options={[
-                    { label: 'All', value: OptionFilter.All },
-                    { label: 'Overrides', value: OptionFilter.Overrides },
-                  ]}
-                  value={listMode}
-                  onChange={setListMode}
-                  fullWidth
-                ></RadioButtonGroup>
+                {!isSearching && (
+                  <RadioButtonGroup
+                    options={[
+                      { label: 'All', value: OptionFilter.All },
+                      { label: 'Overrides', value: OptionFilter.Overrides },
+                    ]}
+                    value={listMode}
+                    onChange={setListMode}
+                    fullWidth
+                  ></RadioButtonGroup>
+                )}
               </div>
               <div className={styles.mainBox}>{mainBoxElements}</div>
             </>
