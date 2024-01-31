@@ -21,6 +21,7 @@ const (
 	StreamingQueryTypeFetch  StreamingQueryType = "fetch"
 	StreamingQueryTypeLogs   StreamingQueryType = "logs"
 	StreamingQueryTypeSignal StreamingQueryType = "signal"
+	StreamingQueryTypeTraces StreamingQueryType = "traces"
 )
 
 // Defines values for ErrorType.

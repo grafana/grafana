@@ -138,6 +138,17 @@ describe('Language completion provider', () => {
         start: 1546372800000,
       });
     });
+
+    it('should work if request returns undefined', async () => {
+      const datasource = setup({});
+      datasource.getTimeRangeParams = jest
+        .fn()
+        .mockImplementation((range: TimeRange) => ({ start: range.from.valueOf(), end: range.to.valueOf() }));
+      const languageProvider = new LanguageProvider(datasource);
+      languageProvider.request = jest.fn().mockResolvedValue(undefined);
+      const series = await languageProvider.fetchSeriesLabels('stream', { timeRange: mockTimeRange });
+      expect(series).toEqual({});
+    });
   });
 
   describe('label values', () => {

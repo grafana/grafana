@@ -17,10 +17,10 @@ import cx from 'classnames';
 import * as React from 'react';
 
 import { GrafanaTheme2, TraceKeyValuePair } from '@grafana/data';
+import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
 import { Icon, stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
-import { DURATION, NONE, TAG } from '../settings/SpanBarSettings';
 import { SpanBarOptions, SpanLinkFunc, TraceSpan, TNil, CriticalPathSection } from '../types';
 
 import SpanBar from './SpanBar';

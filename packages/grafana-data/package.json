@@ -35,7 +35,7 @@
     "postpack": "mv package.json.bak package.json"
   },
   "dependencies": {
-    "@braintree/sanitize-url": "6.0.2",
+    "@braintree/sanitize-url": "7.0.0",
     "@grafana/schema": "10.4.0-pre",
     "@types/d3-interpolate": "^3.0.0",
     "@types/string-hash": "1.1.3",
@@ -48,17 +48,17 @@
     "lodash": "4.17.21",
     "marked": "5.1.1",
     "marked-mangle": "1.1.6",
-    "moment": "2.29.4",
+    "moment": "2.30.1",
     "moment-timezone": "0.5.44",
     "ol": "7.4.0",
     "papaparse": "5.4.1",
-    "react-use": "17.4.3",
+    "react-use": "17.5.0",
     "regenerator-runtime": "0.14.1",
     "rxjs": "7.8.1",
     "string-hash": "^1.1.3",
     "tinycolor2": "1.6.0",
     "tslib": "2.6.2",
-    "uplot": "1.6.28",
+    "uplot": "1.6.30",
     "xss": "^1.0.14"
   },
   "devDependencies": {
@@ -67,8 +67,8 @@
     "@rollup/plugin-json": "6.1.0",
     "@rollup/plugin-node-resolve": "15.2.3",
     "@testing-library/dom": "9.3.4",
-    "@testing-library/jest-dom": "6.2.0",
-    "@testing-library/react": "14.1.2",
+    "@testing-library/jest-dom": "6.4.0",
+    "@testing-library/react": "14.2.0",
     "@testing-library/user-event": "14.5.2",
     "@types/dompurify": "^2",
     "@types/history": "4.7.11",
@@ -76,7 +76,7 @@
     "@types/jquery": "3.5.29",
     "@types/lodash": "4.14.202",
     "@types/marked": "5.0.2",
-    "@types/node": "20.11.5",
+    "@types/node": "20.11.13",
     "@types/papaparse": "5.3.14",
     "@types/react": "18.2.48",
     "@types/react-dom": "18.2.18",
@@ -91,7 +91,7 @@
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "5.0.0",
     "rollup-plugin-node-externals": "^5.0.0",
-    "typescript": "5.2.2"
+    "typescript": "5.3.3"
   },
   "peerDependencies": {
     "react": "^17.0.0 || ^18.0.0",

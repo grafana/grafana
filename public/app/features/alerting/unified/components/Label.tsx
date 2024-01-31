@@ -18,9 +18,10 @@ interface Props {
 // TODO allow customization with color prop
 const Label = ({ label, value, icon, color, size = 'md' }: Props) => {
   const styles = useStyles2(getStyles, color, size);
+  const ariaLabel = `${label}: ${value}`;
 
   return (
-    <div className={styles.wrapper} role="listitem">
+    <div className={styles.wrapper} role="listitem" aria-label={ariaLabel}>
       <Stack direction="row" gap={0} alignItems="stretch">
         <div className={styles.label}>
           <Stack direction="row" gap={0.5} alignItems="center">

@@ -20,9 +20,10 @@ var (
 )
 
 type connectionAccess struct {
+	pluginID       string
 	resourceInfo   common.ResourceInfo
 	tableConverter rest.TableConvertor
-	builder        Querier
+	datasources    PluginDatasourceProvider
 }
 
 func (s *connectionAccess) New() runtime.Object {
@@ -52,9 +53,9 @@ func (s *connectionAccess) ConvertToTable(ctx context.Context, object runtime.Ob
 }
 
 func (s *connectionAccess) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	return s.builder.Datasource(ctx, name)
+	return s.datasources.Get(ctx, s.pluginID, name)
 }
 
 func (s *connectionAccess) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return s.builder.Datasources(ctx)
+	return s.datasources.List(ctx, s.pluginID)
 }

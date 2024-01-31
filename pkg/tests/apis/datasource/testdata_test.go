@@ -22,7 +22,6 @@ func TestTestDatasource(t *testing.T) {
 		AppModeProduction: false, // dev mode required for datasource connections
 		DisableAnonymous:  true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagGrafanaAPIServer,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // Required to start the example service
 		},
 	})

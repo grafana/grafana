@@ -23,6 +23,7 @@ export enum LokiQueryType {
 
 export enum SupportingQueryType {
   DataSample = 'dataSample',
+  InfiniteScroll = 'infiniteScroll',
   LogsSample = 'logsSample',
   LogsVolume = 'logsVolume',
 }

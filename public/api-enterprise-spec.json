@@ -4489,6 +4489,15 @@
         },
         "typeVersion": {
           "$ref": "#/definitions/FrameTypeVersion"
+        },
+        "uniqueRowIdFields": {
+          "description": "Array of field indices which values create a unique id for each row. Ideally this should be globally unique ID\nbut that isn't guarantied. Should help with keeping track and deduplicating rows in visualizations, especially\nwith streaming data with frequent updates.",
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "example": "TraceID in Tempo, table name + primary key in SQL"
         }
       }
     },
@@ -8994,6 +9003,12 @@
         "$ref": "#/definitions/RoleDTO"
       }
     },
+    "getSSOSettingsResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SSOSettings"
+      }
+    },
     "getSharingOptionsResponse": {
       "description": "",
       "schema": {
@@ -9169,6 +9184,15 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/RoleDTO"
+        }
+      }
+    },
+    "listSSOSettingsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/SSOSettings"
         }
       }
     },

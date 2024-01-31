@@ -15,10 +15,10 @@ import (
 var WireSet = wire.NewSet(
 	ProvideRegistryServiceSink, // dummy background service that forces registration
 
-	wire.Bind(new(datasource.QuerierProvider), new(*datasource.DefaultQuerierProvider)),
-	datasource.ProvideDefaultQuerierProvider,
+	// read-only datasource abstractions
 	plugincontext.ProvideService,
-	wire.Bind(new(datasource.PluginContextProvider), new(*plugincontext.Provider)),
+	wire.Bind(new(datasource.PluginContextWrapper), new(*plugincontext.Provider)),
+	datasource.ProvideDefaultPluginConfigs,
 
 	// Each must be added here *and* in the ServiceSink above
 	playlist.RegisterAPIService,

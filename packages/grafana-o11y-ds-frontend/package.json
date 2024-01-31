@@ -20,19 +20,19 @@
     "@emotion/css": "11.11.2",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
-    "@grafana/experimental": "1.7.6",
+    "@grafana/experimental": "1.7.8",
     "@grafana/runtime": "workspace:*",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
     "react": "18.2.0",
-    "react-use": "17.4.0",
+    "react-use": "17.5.0",
     "rxjs": "7.8.1",
     "tslib": "2.6.2"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@testing-library/jest-dom": "^6.1.2",
-    "@testing-library/react": "14.1.2",
+    "@testing-library/react": "14.2.0",
     "@testing-library/user-event": "14.5.2",
     "@types/jest": "^29.5.4",
     "@types/react": "18.2.48",
@@ -42,7 +42,7 @@
     "react": "18.2.0",
     "ts-jest": "29.1.2",
     "ts-node": "10.9.2",
-    "typescript": "5.2.2"
+    "typescript": "5.3.3"
   },
   "peerDependencies": {
     "react": "^17.0.0 || ^18.0.0",

@@ -244,7 +244,7 @@ func (rs *RenderingService) renderUnavailableImage() *RenderResult {
 	imgPath := "public/img/rendering_plugin_not_installed.png"
 
 	return &RenderResult{
-		FilePath: filepath.Join(setting.HomePath, imgPath),
+		FilePath: filepath.Join(rs.Cfg.HomePath, imgPath),
 	}
 }
 
