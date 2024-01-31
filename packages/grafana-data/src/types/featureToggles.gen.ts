@@ -174,5 +174,6 @@ export interface FeatureToggles {
   onPremToCloudMigrations?: boolean;
   alertingSaveStatePeriodic?: boolean;
   promQLScope?: boolean;
+  slateAutocomplete?: boolean;
   nodeGraphDotLayout?: boolean;
 }
