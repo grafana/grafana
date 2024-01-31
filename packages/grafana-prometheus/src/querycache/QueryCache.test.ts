@@ -1,6 +1,6 @@
 import moment from 'moment';
 
-import { DataFrame, DataQueryRequest, DateTime, dateTime, TimeRange } from '@grafana/data/src';
+import { DataFrame, DataQueryRequest, DateTime, dateTime, TimeRange } from '@grafana/data';
 
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { PromQuery } from '../types';
