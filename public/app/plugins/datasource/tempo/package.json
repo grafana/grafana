@@ -9,7 +9,7 @@
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/experimental": "1.7.8",
     "@grafana/lezer-logql": "0.2.2",
-    "@grafana/lezer-traceql": "0.0.12",
+    "@grafana/lezer-traceql": "0.0.13",
     "@grafana/monaco-logql": "^0.0.7",
     "@grafana/o11y-ds-frontend": "workspace:*",
     "@grafana/runtime": "workspace:*",
@@ -42,12 +42,12 @@
   },
   "devDependencies": {
     "@grafana/plugin-configs": "10.4.0-pre",
-    "@testing-library/jest-dom": "6.3.0",
-    "@testing-library/react": "14.1.2",
+    "@testing-library/jest-dom": "6.4.0",
+    "@testing-library/react": "14.2.0",
     "@testing-library/user-event": "14.5.2",
     "@types/jest": "29.5.11",
     "@types/lodash": "4.14.202",
-    "@types/node": "20.11.7",
+    "@types/node": "20.11.13",
     "@types/prismjs": "1.26.3",
     "@types/react": "18.2.48",
     "@types/react-dom": "18.2.18",
@@ -66,5 +66,5 @@
     "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
     "dev": "webpack -w -c ./webpack.config.ts --env development"
   },
-  "packageManager": "yarn@4.0.2"
+  "packageManager": "yarn@4.1.0"
 }
