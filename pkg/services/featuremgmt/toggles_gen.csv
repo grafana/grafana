@@ -111,6 +111,7 @@ formatString,preview,@grafana/grafana-bi-squad,2023-10-13,false,false,true
 transformationsVariableSupport,preview,@grafana/grafana-bi-squad,2023-10-04,false,false,true
 kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,2023-11-08,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,2023-12-04,false,true,false
+kubernetesQueryServiceRewrite,experimental,@grafana/grafana-app-platform-squad,2024-01-28,true,true,false
 cloudWatchBatchQueries,preview,@grafana/aws-datasources,2023-10-20,false,false,false
 recoveryThreshold,GA,@grafana/alerting-squad,2023-10-10,false,true,false
 lokiStructuredMetadata,experimental,@grafana/observability-logs,2023-11-16,false,false,false

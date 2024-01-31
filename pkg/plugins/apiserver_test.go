@@ -1,4 +1,4 @@
-package datasource
+package plugins
 
 import (
 	"testing"
@@ -22,11 +22,11 @@ func TestUtils(t *testing.T) {
 }
 
 func getIDIgnoreError(id string) string {
-	v, _ := getDatasourceGroupNameFromPluginID(id)
+	v, _ := GetDatasourceGroupNameFromPluginID(id)
 	return v
 }
 
 func getErrorIgnoreValue(id string) error {
-	_, err := getDatasourceGroupNameFromPluginID(id)
+	_, err := GetDatasourceGroupNameFromPluginID(id)
 	return err
 }
