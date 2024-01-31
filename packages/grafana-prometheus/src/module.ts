@@ -1,4 +1,4 @@
-import { DataSourcePlugin } from '@grafana/data';
+import { DataSourcePlugin } from '../../grafana-data';
 
 import PromCheatSheet from './components/PromCheatSheet';
 import PromQueryEditorByApp from './components/PromQueryEditorByApp';
