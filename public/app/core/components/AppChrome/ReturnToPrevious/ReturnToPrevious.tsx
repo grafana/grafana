@@ -45,6 +45,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     zIndex: theme.zIndex.portal,
     position: 'fixed',
     bottom: theme.spacing.x4,
+    boxShadow: theme.shadows.z3,
   }),
 });
 

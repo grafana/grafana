@@ -65,7 +65,7 @@
     "calculate-size": "1.1.1",
     "classnames": "2.5.1",
     "d3": "7.8.5",
-    "date-fns": "2.30.0",
+    "date-fns": "3.3.1",
     "hoist-non-react-statics": "3.3.2",
     "i18next": "^22.0.0",
     "i18next-browser-languagedetector": "^7.0.2",

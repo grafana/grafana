@@ -57,6 +57,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `lokiQueryHints`                     | Enables query hints for Loki                                                                                                                                                                                                 | Yes                |
 | `alertingQueryOptimization`          | Optimizes eligible queries in order to reduce load on datasources                                                                                                                                                            |                    |
 | `jitterAlertRules`                   | Distributes alert rule evaluations more evenly over time, by rule group                                                                                                                                                      |                    |
+| `slateAutocomplete`                  | Adjusts the behaviour of the slate editor to properly handle autocomplete. Feature toggled for safety.                                                                                                                       | Yes                |
 
 ## Preview feature toggles
 
@@ -173,6 +174,7 @@ Experimental features might be changed or removed without prior notice.
 | `newFolderPicker`                           | Enables the nested folder picker without having nested folders enabled                                                                                                                                                                                                            |
 | `onPremToCloudMigrations`                   | In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.                                                                                                                                                                  |
 | `promQLScope`                               | In-development feature that will allow injection of labels into prometheus queries.                                                                                                                                                                                               |
+| `nodeGraphDotLayout`                        | Changed the layout algorithm for the node graph                                                                                                                                                                                                                                   |
 
 ## Development feature toggles
 
