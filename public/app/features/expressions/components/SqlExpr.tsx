@@ -1,10 +1,9 @@
 import React, { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-
-// import { PRQLEditor } from '../../dashboard/components/TransformationsEditor/PRQLEditor';
-import { ExpressionQuery } from '../types';
 import { SQLEditor } from '@grafana/experimental';
+
+import { ExpressionQuery } from '../types';
 
 interface Props {
   refIds: Array<SelectableValue<string>>;
@@ -23,8 +22,6 @@ export const SqlExpr = ({ onChange, refIds, query }: Props) => {
       expression,
     });
   };
-
-  // return <PRQLEditor onEditorChange={onEditorChange} queryString={initialQuery} metricNames={vars}></PRQLEditor>;
 
   return <SQLEditor query={query.expression || initialQuery} onChange={onEditorChange}></SQLEditor>
 };
