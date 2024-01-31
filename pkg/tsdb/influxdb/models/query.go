@@ -13,8 +13,11 @@ import (
 )
 
 var (
-	regexpOperatorPattern    = regexp.MustCompile(`^\/.*\/$`)
-	regexpMeasurementPattern = regexp.MustCompile(`^\/.*\/$`)
+	regexpOperatorPattern           = regexp.MustCompile(`^\/.*\/$`)
+	regexpMeasurementPattern        = regexp.MustCompile(`^\/.*\/$`)
+	regexMatcherSimple              = regexp.MustCompile(`^/(.*)/$`)
+	regexMatcherWithStartEndPattern = regexp.MustCompile(`^/\^(.*)\$/$`)
+	mustEscapeCharsMatcher          = regexp.MustCompile(`[\\^$*+?.()|[\]{}\/]`)
 )
 
 func (query *Query) Build(queryContext *backend.QueryDataRequest) (string, error) {
@@ -103,20 +106,20 @@ func (query *Query) renderTags() []string {
 				textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
 			}
 
-			return textValue, operator
+			return removeRegexWrappers(textValue, `'`), operator
 		}
 
 		// quote value unless regex or number
 		var textValue string
 		switch tag.Operator {
-		case "=~", "!~":
-			textValue = tag.Value
+		case "=~", "!~", "":
+			textValue = escape(tag.Value)
 		case "<", ">", ">=", "<=":
-			textValue = tag.Value
+			textValue = removeRegexWrappers(tag.Value, `'`)
 		case "Is", "Is Not":
 			textValue, tag.Operator = isOperatorTypeHandler(tag)
 		default:
-			textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
+			textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(removeRegexWrappers(tag.Value, ""), `\`, `\\`))
 		}
 
 		escapedKey := fmt.Sprintf(`"%s"`, tag.Key)
@@ -243,4 +246,57 @@ func epochMStoInfluxTime(tr *backend.TimeRange) (string, string) {
 	to := tr.To.UnixNano() / int64(time.Millisecond)
 
 	return fmt.Sprintf("%dms", from), fmt.Sprintf("%dms", to)
+}
+
+func removeRegexWrappers(wrappedValue string, wrapper string) string {
+	value := wrappedValue
+	// get the value only in between /^...$/
+	matches := regexMatcherWithStartEndPattern.FindStringSubmatch(wrappedValue)
+	if len(matches) > 1 {
+		// full match. the value is like /^value$/
+		value = wrapper + matches[1] + wrapper
+	}
+
+	return value
+}
+
+func escape(unescapedValue string) string {
+	pipe := `|`
+	beginning := `/^`
+	ending := `$/`
+	value := unescapedValue
+	substitute := `\$0`
+	fullMatch := false
+
+	// get the value only in between /^...$/
+	matches := regexMatcherWithStartEndPattern.FindStringSubmatch(unescapedValue)
+	if len(matches) > 1 {
+		// full match. the value is like /^value$/
+		value = matches[1]
+		fullMatch = true
+	}
+
+	if !fullMatch {
+		// get the value only in between /.../
+		matches = regexMatcherSimple.FindStringSubmatch(unescapedValue)
+		if len(matches) > 1 {
+			value = matches[1]
+			beginning = `/`
+			ending = `/`
+		}
+	}
+
+	// split them with pipe |
+	parts := strings.Split(value, pipe)
+	for i, v := range parts {
+		// escape each item
+		parts[i] = mustEscapeCharsMatcher.ReplaceAllString(v, substitute)
+	}
+
+	// stitch them to each other
+	escaped := make([]byte, 0, 64)
+	escaped = append(escaped, beginning...)
+	escaped = append(escaped, strings.Join(parts, pipe)...)
+	escaped = append(escaped, ending...)
+	return string(escaped)
 }

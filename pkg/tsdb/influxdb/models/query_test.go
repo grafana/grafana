@@ -303,5 +303,53 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			require.Equal(t, query.renderMeasurement(), ` FROM "policy"./apa/`)
 		})
+
+		t.Run("can render regexp tags", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "=~", Value: `/etc/hosts|/etc/hostname`, Key: "key"}}}
+
+			require.Equal(t, `"key" =~ /^\/etc\/hosts|\/etc\/hostname$/`, strings.Join(query.renderTags(), ""))
+		})
+
+		t.Run("can render regexp tags 2", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "=~", Value: `/^/etc/hosts$/`, Key: "key"}}}
+
+			require.Equal(t, `"key" =~ /^\/etc\/hosts$/`, strings.Join(query.renderTags(), ""))
+		})
+
+		t.Run("can render regexp tags 3", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "=~", Value: `/etc/hosts`, Key: "key"}}}
+
+			require.Equal(t, `"key" =~ /^\/etc\/hosts$/`, strings.Join(query.renderTags(), ""))
+		})
+
+		t.Run("can render regexp tags with dots in values", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: "=~", Value: `/etc/resolv.conf`, Key: "key"}}}
+
+			require.Equal(t, `"key" =~ /^\/etc\/resolv\.conf$/`, strings.Join(query.renderTags(), ""))
+		})
+
+		t.Run("can render single quoted tag value when regexed value has been sent", func(t *testing.T) {
+			query := &Query{Tags: []*Tag{{Operator: ">", Value: `/^12.2$/`, Key: "key"}}}
+
+			require.Equal(t, `"key" > '12.2'`, strings.Join(query.renderTags(), ""))
+		})
+	})
+}
+
+func TestRemoveRegexWrappers(t *testing.T) {
+	t.Run("remove regex wrappers", func(t *testing.T) {
+		wrappedText := `/^someValue$/`
+		expected := `'someValue'`
+		result := removeRegexWrappers(wrappedText, `'`)
+
+		require.Equal(t, expected, result)
+	})
+
+	t.Run("return same value if the value is not wrapped by regex wrappers", func(t *testing.T) {
+		wrappedText := `someValue`
+		expected := `someValue`
+		result := removeRegexWrappers(wrappedText, "")
+
+		require.Equal(t, expected, result)
 	})
 }
