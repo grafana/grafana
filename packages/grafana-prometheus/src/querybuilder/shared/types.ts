@@ -1,7 +1,6 @@
 /**
  * Shared types that can be reused by Loki and other data sources
  */
-
 import { ComponentType } from 'react';
 
 import { DataSourceApi, RegistryItem, SelectableValue, TimeRange } from '@grafana/data';
@@ -104,7 +103,10 @@ export enum QueryEditorMode {
 
 export interface VisualQueryModeller {
   getOperationsForCategory(category: string): QueryBuilderOperationDef[];
+
   getAlternativeOperations(key: string): QueryBuilderOperationDef[];
+
   getCategories(): string[];
+
   getOperationDef(id: string): QueryBuilderOperationDef | undefined;
 }

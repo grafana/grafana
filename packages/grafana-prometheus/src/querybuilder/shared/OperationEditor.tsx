@@ -3,9 +3,7 @@ import React, { useEffect, useId, useState } from 'react';
 import { Draggable, DraggableProvided } from 'react-beautiful-dnd';
 
 import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
-import { Button, Icon, InlineField, Tooltip, useTheme2, Stack } from '@grafana/ui';
-import { isConflictingFilter } from 'app/plugins/datasource/loki/querybuilder/operationUtils';
-import { LokiOperationId } from 'app/plugins/datasource/loki/querybuilder/types';
+import { Button, Icon, Tooltip, useStyles2, Stack } from '@grafana/ui';
 
 import { getOperationParamId } from '../operationUtils';
 
@@ -46,15 +44,10 @@ export function OperationEditor({
   highlight,
   timeRange,
 }: Props) {
+  const styles = useStyles2(getStyles);
   const def = queryModeller.getOperationDef(operation.id);
   const shouldFlash = useFlash(flash);
   const id = useId();
-
-  const isConflicting =
-    operation.id === LokiOperationId.LabelFilter && isConflictingFilter(operation, query.operations);
-
-  const theme = useTheme2();
-  const styles = getStyles(theme, isConflicting);
 
   if (!def) {
     return <span>Operation {operation.id} not found</span>;
@@ -137,18 +130,10 @@ export function OperationEditor({
     }
   }
 
-  const isInvalid = (isDragging: boolean) => {
-    if (isDragging) {
-      return undefined;
-    }
-
-    return isConflicting ? true : undefined;
-  };
-
   // We need to extract this into a component to prevent InlineField passing invalid to div which produces console error
   const StyledOperationHeader = ({ provided }: { provided: DraggableProvided }) => (
     <div
-      className={cx(styles.card, (shouldFlash || highlight) && styles.cardHighlight, isConflicting && styles.cardError)}
+      className={cx(styles.card, (shouldFlash || highlight) && styles.cardHighlight)}
       ref={provided.innerRef}
       {...provided.draggableProps}
       data-testid={`operations.${index}.wrapper`}
@@ -175,15 +160,7 @@ export function OperationEditor({
 
   return (
     <Draggable draggableId={`operation-${index}`} index={index}>
-      {(provided, snapshot) => (
-        <InlineField
-          error={'You have conflicting label filters'}
-          invalid={isInvalid(snapshot.isDragging)}
-          className={cx(styles.error, styles.cardWrapper)}
-        >
-          <StyledOperationHeader provided={provided} />
-        </InlineField>
-      )}
+      {(provided) => <StyledOperationHeader provided={provided} />}
     </Draggable>
   );
 }
@@ -248,7 +225,7 @@ function callParamChangedThenOnChange(
   }
 }
 
-const getStyles = (theme: GrafanaTheme2, isConflicting: boolean) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     cardWrapper: css({
       alignItems: 'stretch',
@@ -261,9 +238,10 @@ const getStyles = (theme: GrafanaTheme2, isConflicting: boolean) => {
       border: `1px solid ${theme.colors.border.medium}`,
       cursor: 'grab',
       borderRadius: theme.shape.radius.default,
+      marginBottom: theme.spacing(1),
       position: 'relative',
       transition: 'all 0.5s ease-in 0s',
-      height: isConflicting ? 'auto' : '100%',
+      height: '100%',
     }),
     cardError: css({
       boxShadow: `0px 0px 4px 0px ${theme.colors.warning.main}`,

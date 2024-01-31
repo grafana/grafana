@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 import Prism, { Grammar } from 'prismjs';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
-import { useTheme2 } from '@grafana/ui/src';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useTheme2 } from '@grafana/ui';
 
 export interface Props {
   query: string;
@@ -13,6 +13,7 @@ export interface Props {
   };
   className?: string;
 }
+
 export function RawQuery({ query, lang, className }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);

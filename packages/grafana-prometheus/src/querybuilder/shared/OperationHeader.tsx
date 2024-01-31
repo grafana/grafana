@@ -7,7 +7,7 @@ import { FlexItem } from '@grafana/experimental';
 import { Button, Select, useStyles2 } from '@grafana/ui';
 
 import { OperationInfoButton } from './OperationInfoButton';
-import { VisualQueryModeller, QueryBuilderOperation, QueryBuilderOperationDef } from './types';
+import { QueryBuilderOperation, QueryBuilderOperationDef, VisualQueryModeller } from './types';
 
 export interface Props {
   operation: QueryBuilderOperation;
