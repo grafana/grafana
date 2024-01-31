@@ -733,23 +733,17 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   getQueryDisplayText(query: TempoQuery) {
-    const validKeys = ['serviceName', 'spanName', 'search', 'minDuration', 'maxDuration', 'limit'];
-
-    // Used to later enforce the type of the key and avoid the error:
-    // "Element implicitly has an 'any' type because expression of type 'string' can't be used to index type 'TempoQuery'."
-    const isKeyOfTempoQuery = (key: string): key is keyof TempoQuery => validKeys.includes(key);
-
     if (query.queryType !== 'nativeSearch') {
       return query.query ?? '';
     }
 
-    let result: string[] = [];
-    validKeys.forEach((key) => {
-      if (isKeyOfTempoQuery(key) && query[key]) {
-        result.push(`${startCase(key)}: ${query[key]}`);
-      }
-    });
-    return result.join(', ');
+    const keys: Array<
+      keyof Pick<TempoQuery, 'serviceName' | 'spanName' | 'search' | 'minDuration' | 'maxDuration' | 'limit'>
+    > = ['serviceName', 'spanName', 'search', 'minDuration', 'maxDuration', 'limit'];
+    return keys
+      .filter((key) => query[key])
+      .map((key) => `${startCase(key)}: ${query[key]}`)
+      .join(', ');
   }
 
   buildSearchQuery(query: TempoQuery, timeRange?: { startTime: number; endTime?: number }): SearchQueryParams {
