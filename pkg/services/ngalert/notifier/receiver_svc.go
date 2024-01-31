@@ -26,12 +26,17 @@ var (
 )
 
 type ReceiverService struct {
-	ac                 accesscontrol.AccessControl
-	provisioningStore  provisoningStore
-	versionedConfStore *LockingConfigStore
-	encryptionService  secrets.Service
-	xact               TransactionManager
-	log                log.Logger
+	ac                accesscontrol.AccessControl
+	provisioningStore provisoningStore
+	cfgStore          configStore
+	encryptionService secrets.Service
+	xact              TransactionManager
+	log               log.Logger
+}
+
+type configStore interface {
+	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
+	UpdateAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error
 }
 
 type provisoningStore interface {
@@ -44,19 +49,19 @@ type TransactionManager interface {
 
 func NewReceiverService(
 	ac accesscontrol.AccessControl,
-	configStore configStore,
+	cfgStore configStore,
 	provisioningStore provisoningStore,
 	encryptionService secrets.Service,
 	xact TransactionManager,
 	log log.Logger,
 ) *ReceiverService {
 	return &ReceiverService{
-		ac:                 ac,
-		provisioningStore:  provisioningStore,
-		versionedConfStore: &LockingConfigStore{Store: configStore},
-		encryptionService:  encryptionService,
-		xact:               xact,
-		log:                log,
+		ac:                ac,
+		provisioningStore: provisioningStore,
+		cfgStore:          cfgStore,
+		encryptionService: encryptionService,
+		xact:              xact,
+		log:               log,
 	}
 }
 
@@ -71,7 +76,13 @@ func (rs *ReceiverService) canDecrypt(ctx context.Context, user identity.Request
 }
 
 func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceiversQuery, user identity.Requester) ([]definitions.GettableApiReceiver, error) {
-	rev, err := rs.versionedConfStore.GetLockingConfig(ctx, q.OrgID)
+	baseCfg, err := rs.cfgStore.GetLatestAlertmanagerConfiguration(ctx, q.OrgID)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg := definitions.PostableUserConfig{}
+	err = json.Unmarshal([]byte(baseCfg.AlertmanagerConfiguration), &cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -84,8 +95,8 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 	// TODO: check for list access
 
 	var output []definitions.GettableApiReceiver
-	for i := q.Offset; i < len(rev.Config.AlertmanagerConfig.Receivers); i++ {
-		r := rev.Config.AlertmanagerConfig.Receivers[i]
+	for i := q.Offset; i < len(cfg.AlertmanagerConfig.Receivers); i++ {
+		r := cfg.AlertmanagerConfig.Receivers[i]
 		if len(q.Names) > 0 && !slices.Contains(q.Names, r.Name) {
 			continue
 		}

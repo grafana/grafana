@@ -128,7 +128,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secrets.Service) *Receive
 	return &ReceiverService{
 		actest.FakeAccessControl{},
 		provisioningStore,
-		&LockingConfigStore{Store: store},
+		store,
 		encryptSvc,
 		xact,
 		log.NewNopLogger(),

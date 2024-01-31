@@ -518,9 +518,6 @@ func convertRecSvcErr(err error) error {
 	if errors.Is(err, notifier.ErrPermissionDenied) {
 		return handleWrappedError(err, ErrPermissionDenied)
 	}
-	if errors.Is(err, notifier.ErrBadAlertmanagerConfiguration) {
-		return makeErrBadAlertmanagerConfiguration(handleWrappedError(err, ErrBadAlertmanagerConfiguration))
-	}
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return ErrNoAlertmanagerConfiguration.Errorf("")
 	}
