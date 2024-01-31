@@ -21,6 +21,8 @@ export function addRootReducer(reducers: any) {
 
 const listenerMiddleware = createListenerMiddleware();
 
+console.log('here');
+
 export function configureStore(initialState?: Partial<StoreState>) {
   const store = reduxConfigureStore({
     reducer: createRootReducer(),
