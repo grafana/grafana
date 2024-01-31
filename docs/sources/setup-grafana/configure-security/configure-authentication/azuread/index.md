@@ -13,15 +13,15 @@ labels:
     - enterprise
     - oss
 menuTitle: Azure AD OAuth2
-title: Configure Azure AD OAuth2 authentication
+title: Configure Azure AD/Entra ID OAuth2 authentication
 weight: 800
 ---
 
-# Configure Azure AD OAuth2 authentication
+# Configure Azure AD/Entra ID OAuth2 authentication
 
 The Azure AD authentication allows you to use an Azure Active Directory tenant as an identity provider for Grafana. You can use Azure AD application roles to assign users and groups to Grafana roles from the Azure Portal.
 
-## Create the Azure AD application
+## Create the Azure AD/Entra ID application
 
 To enable the Azure AD OAuth2, register your application with Azure AD.
 
@@ -58,7 +58,7 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 1. Click **Users and Groups**.
 1. Click **Add user/group** to add a user or group to the Grafana roles.
 
-#### Configure application roles for Grafana in the Azure Portal
+### Configure application roles for Grafana in the Azure Portal
 
 This section describes setting up basic application roles for Grafana within the Azure Portal. For more information, see [Add app roles to your application and receive them in the token](https://learn.microsoft.com/en-us/entra/identity-platform/howto-add-app-roles-in-apps).
 
@@ -78,7 +78,7 @@ This section describes setting up basic application roles for Grafana within the
 
    1. Click **Apply**.
 
-#### Configure application roles for Grafana in the manifest file
+### Configure application roles for Grafana in the manifest file
 
 If you prefer to configure the application roles for Grafana in the manifest file, complete the following steps:
 
@@ -161,7 +161,41 @@ If the setting is set to `false`, the user is assigned the role of `Admin` of th
 }
 ```
 
-## Enable Azure AD OAuth in Grafana
+## Before you begin
+
+Ensure that you have followed the steps in [Create the Azure AD/Entra ID application](#create-the-azure-adentra-id-application) before you begin.
+
+## Configure Azure AD/Entra ID authentication client using the Grafana UI
+
+{{% admonition type="note" %}}
+Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle.
+{{% /admonition %}}
+
+As a Grafana Admin, you can configure generic OAuth2 client from within Grafana using the GitLab UI. To do this, navigate to **Administration > Authentication > AzureAD** page and fill in the form. If you have a current configuration in the Grafana configuration file then the form will be pre-populated with those values otherwise the form will contain default values.
+
+After you have filled in the form, click **Save** to save the configuration. If the save was successful, Grafana will apply the new configurations.
+
+In case you would like to reset your changes you made on the UI back to the default values, click **Reset**. After you have reset the changes, Grafana will apply the configuration from the Grafana configuration file (if there is any configuration) or the default values.
+
+{{% admonition type="note" %}}
+If you run Grafana in high availability mode, it can happen that the configuration is not applied to all Grafana instances immediately. In this case you need to wait a minute to let the configuration propagate to all Grafana instances.
+{{% /admonition %}}
+
+Refer to [configuration options]({{< relref "#configuration-options" >}}) for more information.
+
+## Configure Azure AD/Entra ID authentication client using the Terraform provider
+
+{{% admonition type="note" %}}
+Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle. Supported in the Terraform provider since v<TODO:TF provider version>
+{{% /admonition %}}
+
+## Configure Azure AD/Entra ID authentication client using the Grafana configuration file
+
+### Before you begin
+
+Ensure that you have access to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}).
+
+### Enable Azure AD/Entra ID OAuth in Grafana
 
 Add the following to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}):
 
@@ -340,7 +374,7 @@ Admin consent might be required for this permission.
 Admin consent may be required for this permission.
 {{% /admonition %}}
 
-### Force fetching groups from Microsoft graph API
+### Force fetching groups from Microsoft Graph API
 
 To force fetching groups from Microsoft Graph API instead of the `id_token`. You can use the `force_use_graph_api` config option.
 
@@ -371,3 +405,9 @@ See [Configure Grafana]({{< relref "../../../configure-grafana#authazuread" >}})
 # prevents the sync of org roles from AzureAD
 skip_org_role_sync = true
 ```
+
+## Configuration options
+
+The table below describes all GitLab OAuth configuration options. Like any other Grafana configuration, you can apply these options as environment variables.
+
+TODO: Add table with all configuration options

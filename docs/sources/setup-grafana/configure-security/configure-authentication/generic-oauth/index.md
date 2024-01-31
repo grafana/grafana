@@ -38,14 +38,15 @@ This topic describes how to configure generic OAuth2 authentication using differ
 ## Before you begin
 
 To follow this guide:
+
 - Ensure you know how to create an OAuth2 application with your OAuth2 provider. Consult the documentation of your OAuth2 provider for more information.
 - Ensure your identity provider returns OpenID UserInfo compatible information such as the `sub` claim.
 - If you are using refresh tokens, ensure you know how to set them up with your OAuth2 provider. Consult the documentation of your OAuth2 provider for more information.
 
-## Configure generic OAuth using the Grafana UI
+## Configure generic OAuth authentication client using the Grafana UI
 
 {{% admonition type="note" %}}
-Available in Public Preview on Grafana Cloud behind the `ssoSettingsApi` feature toggle. Will be available in Public Preview in Grafana 10.4.
+Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle.
 {{% /admonition %}}
 
 As a Grafana Admin, you can configure generic OAuth2 client from within Grafana using the Generic OAuth UI. To do this, navigate to **Administration > Authentication > Generic OAuth** page and fill in the form. If you have a current configuration in the Grafana configuration file then the form will be pre-populated with those values otherwise the form will contain default values.
@@ -55,18 +56,18 @@ After you have filled in the form, click **Save** to save the configuration. If 
 In case you would like to reset your changes you made on the UI back to the default values, click **Reset**. After you have reset the changes, Grafana will apply the configuration from the Grafana configuration file (if there is any configuration) or the default values.
 
 {{% admonition type="note" %}}
-If you run Grafana in high availability mode, it can happen that the configuration is not applied to all Grafana instances immediately. In this case you need to wait a minute to let the configuration propagate to all Grafana instances. 
+If you run Grafana in high availability mode, it can happen that the configuration is not applied to all Grafana instances immediately. In this case you need to wait a minute to let the configuration propagate to all Grafana instances.
 {{% /admonition %}}
 
 Refer to [configuration options]({{< relref "#configuration-options" >}}) for more information.
 
-## Configure generic OAuth using the Terraform provider
+## Configure generic OAuth authentication client using the Terraform provider
 
 {{% admonition type="note" %}}
-Available in Public Preview on Grafana Cloud behind the `ssoSettingsApi` feature toggle. Will be available in Public Preview in Grafana 10.4.
+Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle. Supported in the Terraform provider since v<TODO:TF provider version>
 {{% /admonition %}}
 
-## Configure generic OAuth using the Grafana configuration file
+## Configure generic OAuth authentication client using the Grafana configuration file
 
 ### Before you begin
 
@@ -350,7 +351,6 @@ The following table outlines the various generic OAuth2 configuration options. Y
 | `tls_client_ca`              | No       | The path to the trusted certificate authority list.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |                 |
 | `use_pkce`                   | No       | Set to `true` to use [Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636). Grafana uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.                                                                                                                                                                                                                                                                                                                                                                                         | `false`         |
 | `use_refresh_token`          | No       | Set to `true` to use refresh token and check access token expiration.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `false`         |
-
 
 ## Examples of setting up generic OAuth2
 
