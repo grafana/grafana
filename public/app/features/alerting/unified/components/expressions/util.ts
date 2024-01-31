@@ -42,6 +42,11 @@ const formatLabels = (labels: Labels): string => {
     .join(', ');
 };
 
+interface DecodedNamespace {
+  name: string;
+  parents: string[];
+}
+
 /**
  * After https://github.com/grafana/grafana/pull/74600,
  * Grafana folder names will be returned from the API as a combination of the folder name and parent UID in a format of JSON array,
@@ -49,7 +54,7 @@ const formatLabels = (labels: Labels): string => {
  *
  * Here we parse this to return the name of the last folder and the array of parent folders
  */
-const decodeGrafanaNamespace = (namespace: CombinedRuleNamespace): { name: string; parents: string[] } => {
+const decodeGrafanaNamespace = (namespace: CombinedRuleNamespace): DecodedNamespace => {
   const namespaceName = namespace.name;
 
   if (isCloudRulesSource(namespace.rulesSource)) {
