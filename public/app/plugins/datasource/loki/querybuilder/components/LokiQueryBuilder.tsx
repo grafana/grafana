@@ -1,4 +1,6 @@
+import { isEqual } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
+import { usePrevious } from 'react-use';
 
 import { DataSourceApi, getDefaultTimeRange, LoadingState, PanelData, SelectableValue, TimeRange } from '@grafana/data';
 import {
@@ -29,6 +31,7 @@ import { LokiOperationId, LokiVisualQuery } from '../types';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 import { NestedQueryList } from './NestedQueryList';
 
+export const TIME_SPAN_TO_TRIGGER_SAMPLES = 5 * 60 * 1000;
 export interface Props {
   query: LokiVisualQuery;
   datasource: LokiDatasource;
@@ -41,6 +44,8 @@ export const LokiQueryBuilder = React.memo<Props>(
   ({ datasource, query, onChange, onRunQuery, showExplain, timeRange }) => {
     const [sampleData, setSampleData] = useState<PanelData>();
     const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>(undefined);
+    const prevQuery = usePrevious(query);
+    const prevTimeRange = usePrevious(timeRange);
 
     const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
       onChange({ ...query, labels });
@@ -109,10 +114,16 @@ export const LokiQueryBuilder = React.memo<Props>(
         setSampleData(sampleData);
       };
 
-      if (config.featureToggles.lokiQueryHints) {
+      const updateBasedOnChangedTimeRange =
+        prevTimeRange &&
+        timeRange &&
+        (Math.abs(timeRange.to.valueOf() - prevTimeRange.to.valueOf()) > TIME_SPAN_TO_TRIGGER_SAMPLES ||
+          Math.abs(timeRange.from.valueOf() - prevTimeRange.from.valueOf()) > TIME_SPAN_TO_TRIGGER_SAMPLES);
+      const updateBasedOnChangedQuery = !isEqual(prevQuery, query);
+      if (config.featureToggles.lokiQueryHints && (updateBasedOnChangedTimeRange || updateBasedOnChangedQuery)) {
         onGetSampleData().catch(console.error);
       }
-    }, [datasource, query, timeRange]);
+    }, [datasource, query, timeRange, prevQuery, prevTimeRange]);
 
     const lang = { grammar: logqlGrammar, name: 'logql' };
     return (
