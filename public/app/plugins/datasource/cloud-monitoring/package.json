@@ -20,19 +20,19 @@
     "monaco-editor": "0.34.0",
     "prismjs": "1.29.0",
     "react": "18.2.0",
-    "react-use": "17.4.0",
+    "react-use": "17.5.0",
     "rxjs": "7.8.1",
-    "tslib": "2.6.0"
+    "tslib": "2.6.2"
   },
   "devDependencies": {
     "@grafana/e2e-selectors": "10.4.0-pre",
     "@grafana/plugin-configs": "10.4.0-pre",
-    "@testing-library/react": "14.1.2",
+    "@testing-library/react": "14.2.0",
     "@testing-library/user-event": "14.5.2",
     "@types/debounce-promise": "3.1.9",
     "@types/jest": "29.5.11",
     "@types/lodash": "4.14.202",
-    "@types/node": "20.11.10",
+    "@types/node": "20.11.13",
     "@types/prismjs": "1.26.3",
     "@types/react": "18.2.48",
     "@types/react-test-renderer": "18.0.7",
@@ -51,5 +51,5 @@
     "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
     "dev": "webpack -w -c ./webpack.config.ts --env development"
   },
-  "packageManager": "yarn@3.6.0"
+  "packageManager": "yarn@4.1.0"
 }

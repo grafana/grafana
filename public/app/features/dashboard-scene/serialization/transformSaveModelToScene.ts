@@ -215,7 +215,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     layers = oldModel.annotations?.list.map((a) => {
       // Each annotation query is an individual data layer
       return new DashboardAnnotationsDataLayer({
-        key: `annnotations-${a.name}`,
+        key: `annotations-${a.name}`,
         query: a,
         name: a.name,
         isEnabled: Boolean(a.enable),
@@ -248,6 +248,8 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     id: oldModel.id,
     description: oldModel.description,
     editable: oldModel.editable,
+    isDirty: oldModel.meta.isNew,
+    isEditing: oldModel.meta.isNew,
     meta: oldModel.meta,
     version: oldModel.version,
     body: new SceneGridLayout({

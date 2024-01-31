@@ -56,7 +56,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
         }
       );
 
-      reportInteraction('grafana_authentication_ssosettings_updated', {
+      reportInteraction('grafana_authentication_ssosettings_saved', {
         provider,
         enabled: requestData.enabled,
       });
