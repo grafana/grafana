@@ -1347,13 +1347,6 @@
           {
             "type": "integer",
             "format": "int64",
-            "name": "DashboardID",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "integer",
-            "format": "int64",
             "name": "dashboardID",
             "in": "path",
             "required": true
@@ -1387,6 +1380,13 @@
             "type": "string",
             "name": "layout",
             "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "DashboardID",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
@@ -9478,6 +9478,21 @@
         "type": "array",
         "items": {
           "$ref": "#/definitions/OrgDTO"
+        }
+      }
+    },
+    "searchPermissionsResponse": {
+      "description": "",
+      "schema": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
         }
       }
     },
