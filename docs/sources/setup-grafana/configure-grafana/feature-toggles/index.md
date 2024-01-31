@@ -57,6 +57,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `lokiQueryHints`                     | Enables query hints for Loki                                                                                                                                                                                                 | Yes                |
 | `alertingQueryOptimization`          | Optimizes eligible queries in order to reduce load on datasources                                                                                                                                                            |                    |
 | `jitterAlertRules`                   | Distributes alert rule evaluations more evenly over time, by rule group                                                                                                                                                      |                    |
+| `slateAutocomplete`                  | Adjusts the behaviour of the slate editor to properly handle autocomplete. Feature toggled for safety.                                                                                                                       | Yes                |
 
 ## Preview feature toggles
 

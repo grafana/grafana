@@ -239,7 +239,7 @@ func TestSchedulableAlertRulesRegistry(t *testing.T) {
 	assert.Len(t, rules, 0)
 	assert.Len(t, folders, 0)
 
-	expectedFolders := map[models.FolderKey]string{models.FolderKey{OrgID: 1, UID: "test-uid"}: "test-title"}
+	expectedFolders := map[models.FolderKey]string{{OrgID: 1, UID: "test-uid"}: "test-title"}
 	// replace all rules in the registry with foo
 	r.set([]*models.AlertRule{{OrgID: 1, UID: "foo", Version: 1}}, expectedFolders)
 	rules, folders = r.all()

@@ -630,4 +630,8 @@ const (
 	// FlagPromQLScope
 	// In-development feature that will allow injection of labels into prometheus queries.
 	FlagPromQLScope = "promQLScope"
+
+	// FlagSlateAutocomplete
+	// Adjusts the behaviour of the slate editor to properly handle autocomplete. Feature toggled for safety.
+	FlagSlateAutocomplete = "slateAutocomplete"
 )
