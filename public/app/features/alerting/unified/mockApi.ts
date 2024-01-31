@@ -377,9 +377,9 @@ export function mockExportApi(server: SetupServer) {
         })
       );
     },
-    modifiedExport: (namespace: string, response: Record<string, string>) => {
+    modifiedExport: (namespaceUID: string, response: Record<string, string>) => {
       server.use(
-        rest.post(`/api/ruler/grafana/api/v1/rules/${namespace}/export`, (req, res, ctx) => {
+        rest.post(`/api/ruler/grafana/api/v1/rules/${namespaceUID}/export`, (req, res, ctx) => {
           return res(ctx.status(200), ctx.text(response[req.url.searchParams.get('format') ?? 'yaml']));
         })
       );

@@ -92,16 +92,16 @@ function FolderGroupAndEvaluationInterval({
   const { watch, setValue, getValues } = useFormContext<RuleFormValues>();
   const [isEditingGroup, setIsEditingGroup] = useState(false);
 
-  const [groupName, folderName] = watch(['group', 'folder.title']);
+  const [groupName, folderUid, folderName] = watch(['group', 'folder.uid', 'folder.title']);
 
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const groupfoldersForGrafana = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
 
   const grafanaNamespaces = useCombinedRuleNamespaces(GRAFANA_RULES_SOURCE_NAME);
-  const existingNamespace = grafanaNamespaces.find((ns) => ns.name === folderName);
+  const existingNamespace = grafanaNamespaces.find((ns) => ns.uid === folderUid);
   const existingGroup = existingNamespace?.groups.find((g) => g.name === groupName);
 
-  const isNewGroup = useIsNewGroup(folderName ?? '', groupName);
+  const isNewGroup = useIsNewGroup(folderUid ?? '', groupName);
 
   useEffect(() => {
     if (!isNewGroup && existingGroup?.interval) {
@@ -118,7 +118,7 @@ function FolderGroupAndEvaluationInterval({
 
   const onOpenEditGroupModal = () => setIsEditingGroup(true);
 
-  const editGroupDisabled = groupfoldersForGrafana?.loading || isNewGroup || !folderName || !groupName;
+  const editGroupDisabled = groupfoldersForGrafana?.loading || isNewGroup || !folderUid || !groupName;
 
   const emptyNamespace: CombinedRuleNamespace = {
     name: folderName,

@@ -81,7 +81,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
       .sort(panelSort) ?? [];
 
   const currentPanel: PanelDTO | undefined = allDashboardPanels.find(
-    (panel: PanelDTO) => isValidPanelIdentifier(panel) && panel.id?.toString() === selectedPanelId
+    (panel: PanelDTO) => isValidPanel(panel) && panel.id?.toString() === selectedPanelId
   );
 
   const selectedDashboardIndex = useMemo(() => {
@@ -135,7 +135,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
     const panelTitle = panel.title || '<No title>';
     const isSelected = Boolean(panel.id) && selectedPanelId === panel.id;
     const isAlertingCompatible = panel.type === 'graph' || panel.type === 'timeseries';
-    const disabled = !isValidPanelIdentifier(panel);
+    const disabled = !isValidPanel(panel);
 
     return (
       <button
@@ -152,7 +152,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
           {panelTitle}
         </div>
         {!isAlertingCompatible && !disabled && (
-          <Tooltip content="Alert tab will be disabled for this panel. It is only supported on graph and timeseries panels">
+          <Tooltip content="The alert tab and alert annotations are only supported on graph and timeseries panels.">
             <Icon name="exclamation-triangle" className={styles.warnIcon} data-testid="warning-icon" />
           </Tooltip>
         )}
@@ -276,8 +276,12 @@ export function getVisualPanels(dashboardModel: DashboardModel | undefined) {
   return allDashboardPanels;
 }
 
-const isValidPanelIdentifier = (panel: PanelDTO): boolean => {
-  return typeof panel.id === 'number' && typeof panel.type === 'string';
+const isValidPanel = (panel: PanelDTO): boolean => {
+  const hasValidID = typeof panel.id === 'number';
+  const isValidPanelType = typeof panel.type === 'string';
+  const isLibraryPanel = 'libraryPanel' in panel;
+
+  return hasValidID && (isValidPanelType || isLibraryPanel);
 };
 
 const getPickerStyles = (theme: GrafanaTheme2) => {

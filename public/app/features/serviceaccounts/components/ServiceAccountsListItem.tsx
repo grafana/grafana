@@ -83,7 +83,7 @@ const ServiceAccountListItemComponent = memo(
                 onBasicRoleChange={(newRole) => onRoleChange(newRole, serviceAccount)}
                 roleOptions={roleOptions}
                 basicRoleDisabled={!canUpdateRole}
-                disabled={serviceAccount.isDisabled}
+                disabled={serviceAccount.isExternal || serviceAccount.isDisabled}
                 width={40}
               />
             )}

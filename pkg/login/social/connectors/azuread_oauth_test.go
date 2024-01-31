@@ -19,6 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
+	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -793,13 +795,11 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 					Name:                    "azuread",
 					ClientId:                "client-id-example",
 					AllowAssignGrafanaAdmin: true,
-					// TODO: use this setting when SkipOrgRoleSync has moved to OAuthInfo
-					//SkipOrgRoleSync:         false,
+					SkipOrgRoleSync:         false,
 				},
 				cfg: &setting.Cfg{
 					AutoAssignOrgRole:          "",
 					OAuthSkipOrgRoleUpdateSync: false,
-					AzureADSkipOrgRoleSync:     false,
 				},
 			},
 			claims: &azureClaims{
@@ -826,13 +826,11 @@ func TestSocialAzureAD_SkipOrgRole(t *testing.T) {
 					Name:                    "azuread",
 					ClientId:                "client-id-example",
 					AllowAssignGrafanaAdmin: true,
-					// TODO: use this setting when SkipOrgRoleSync has moved to OAuthInfo
-					// SkipOrgRoleSync:         false,
+					SkipOrgRoleSync:         false,
 				},
 				cfg: &setting.Cfg{
 					AutoAssignOrgRole:          "",
 					OAuthSkipOrgRoleUpdateSync: false,
-					AzureADSkipOrgRoleSync:     false,
 				},
 			},
 			claims: &azureClaims{
@@ -988,6 +986,217 @@ func TestSocialAzureAD_InitializeExtraFields(t *testing.T) {
 
 			require.Equal(t, tc.want.forceUseGraphAPI, s.forceUseGraphAPI)
 			require.Equal(t, tc.want.allowedOrganizations, s.allowedOrganizations)
+		})
+	}
+}
+
+func TestSocialAzureAD_Validate(t *testing.T) {
+	testCases := []struct {
+		name     string
+		settings ssoModels.SSOSettings
+		wantErr  error
+	}{
+		{
+			name: "SSOSettings is valid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":      "client-id",
+					"allowed_groups": "0bb9c9cc-4945-418f-9b6a-c1d3b81141b0, 6034d328-0e6a-4240-8d03-cb9f2c1f16e4",
+				},
+			},
+		},
+		{
+			name: "fails if settings map contains an invalid field",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":     "client-id",
+					"invalid_field": []int{1, 2, 3},
+				},
+			},
+			wantErr: ssosettings.ErrInvalidSettings,
+		},
+		{
+			name: "fails if client id is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if client id does not exist",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if allowed groups are not uuids",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":      "client-id",
+					"allowed_groups": "abc, def",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if both allow assign grafana admin and skip org role sync are enabled",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
+					"skip_org_role_sync":         "true",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewAzureADProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), nil)
+
+			err := s.Validate(context.Background(), tc.settings)
+			if tc.wantErr != nil {
+				require.ErrorIs(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestSocialAzureAD_Reload(t *testing.T) {
+	testCases := []struct {
+		name           string
+		info           *social.OAuthInfo
+		settings       ssoModels.SSOSettings
+		expectError    bool
+		expectedInfo   *social.OAuthInfo
+		expectedConfig *oauth2.Config
+	}{
+		{
+			name: "SSO provider successfully updated",
+			info: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":     "new-client-id",
+					"client_secret": "new-client-secret",
+					"auth_url":      "some-new-url",
+				},
+			},
+			expectError: false,
+			expectedInfo: &social.OAuthInfo{
+				ClientId:     "new-client-id",
+				ClientSecret: "new-client-secret",
+				AuthUrl:      "some-new-url",
+			},
+			expectedConfig: &oauth2.Config{
+				ClientID:     "new-client-id",
+				ClientSecret: "new-client-secret",
+				Endpoint: oauth2.Endpoint{
+					AuthURL: "some-new-url",
+				},
+				RedirectURL: "/login/azuread",
+			},
+		},
+		{
+			name: "fails if settings contain invalid values",
+			info: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":     "new-client-id",
+					"client_secret": "new-client-secret",
+					"auth_url":      []string{"first", "second"},
+				},
+			},
+			expectError: true,
+			expectedInfo: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+			},
+			expectedConfig: &oauth2.Config{
+				ClientID:     "client-id",
+				ClientSecret: "client-secret",
+				RedirectURL:  "/login/azuread",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewAzureADProvider(tc.info, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), nil)
+
+			err := s.Reload(context.Background(), tc.settings)
+			if tc.expectError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+
+			require.EqualValues(t, tc.expectedInfo, s.info)
+			require.EqualValues(t, tc.expectedConfig, s.Config)
+		})
+	}
+}
+
+func TestSocialAzureAD_Reload_ExtraFields(t *testing.T) {
+	testCases := []struct {
+		name                         string
+		settings                     ssoModels.SSOSettings
+		info                         *social.OAuthInfo
+		expectError                  bool
+		expectedInfo                 *social.OAuthInfo
+		expectedAllowedOrganizations []string
+		expectedForceUseGraphApi     bool
+	}{
+		{
+			name: "successfully reloads the settings",
+			info: &social.OAuthInfo{
+				ClientId:     "client-id",
+				ClientSecret: "client-secret",
+				Extra: map[string]string{
+					"allowed_organizations": "previous",
+					"force_use_graph_api":   "true",
+				},
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"allowed_organizations": "uuid-1234,uuid-5678",
+					"force_use_graph_api":   "false",
+				},
+			},
+			expectedInfo: &social.OAuthInfo{
+				ClientId:     "new-client-id",
+				ClientSecret: "new-client-secret",
+				Name:         "a-new-name",
+				Extra: map[string]string{
+					"allowed_organizations": "uuid-1234,uuid-5678",
+					"force_use_graph_api":   "false",
+				},
+			},
+			expectedAllowedOrganizations: []string{"uuid-1234", "uuid-5678"},
+			expectedForceUseGraphApi:     false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewAzureADProvider(tc.info, setting.NewCfg(), &ssosettingstests.MockService{}, featuremgmt.WithFeatures(), remotecache.FakeCacheStorage{})
+
+			err := s.Reload(context.Background(), tc.settings)
+			require.NoError(t, err)
+
+			require.EqualValues(t, tc.expectedAllowedOrganizations, s.allowedOrganizations)
+			require.EqualValues(t, tc.expectedForceUseGraphApi, s.forceUseGraphAPI)
 		})
 	}
 }

@@ -28,9 +28,6 @@ var _ ssosettings.Reloadable = (*SocialGoogle)(nil)
 
 type SocialGoogle struct {
 	*SocialBase
-	hostedDomain    string
-	apiUrl          string
-	skipOrgRoleSync bool
 }
 
 type googleUserData struct {
@@ -41,15 +38,9 @@ type googleUserData struct {
 	rawJSON       []byte `json:"-"`
 }
 
-func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features *featuremgmt.FeatureManager) *SocialGoogle {
-	config := createOAuthConfig(info, cfg, social.GoogleProviderName)
+func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGoogle {
 	provider := &SocialGoogle{
-		SocialBase:      newSocialBase(social.GoogleProviderName, config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-		hostedDomain:    info.HostedDomain,
-		apiUrl:          info.ApiUrl,
-		skipOrgRoleSync: cfg.GoogleSkipOrgRoleSync,
-		// FIXME: Move skipOrgRoleSync to OAuthInfo
-		// skipOrgRoleSync: info.SkipOrgRoleSync
+		SocialBase: newSocialBase(social.GoogleProviderName, info, features, cfg),
 	}
 
 	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
@@ -64,14 +55,42 @@ func NewGoogleProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings sso
 }
 
 func (s *SocialGoogle) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	err = validateInfo(info)
+	if err != nil {
+		return err
+	}
+
+	// add specific validation rules for Google
+
 	return nil
 }
 
 func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	if strings.HasPrefix(newInfo.ApiUrl, legacyAPIURL) {
+		s.log.Warn("Using legacy Google API URL, please update your configuration")
+	}
+
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
+
+	s.SocialBase = newSocialBase(social.GoogleProviderName, newInfo, s.features, s.cfg)
+
 	return nil
 }
 
 func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token *oauth2.Token) (*social.BasicUserInfo, error) {
+	info := s.GetOAuthInfo()
+
 	data, errToken := s.extractFromToken(ctx, client, token)
 	if errToken != nil {
 		return nil, errToken
@@ -112,13 +131,13 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 		Groups:         groups,
 	}
 
-	if !s.skipOrgRoleSync {
+	if !info.SkipOrgRoleSync {
 		role, grafanaAdmin, errRole := s.extractRoleAndAdmin(data.rawJSON, groups)
 		if errRole != nil {
 			return nil, errRole
 		}
 
-		if s.allowAssignGrafanaAdmin {
+		if info.AllowAssignGrafanaAdmin {
 			userInfo.IsGrafanaAdmin = &grafanaAdmin
 		}
 
@@ -130,10 +149,6 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 	return userInfo, nil
 }
 
-func (s *SocialGoogle) GetOAuthInfo() *social.OAuthInfo {
-	return s.info
-}
-
 type googleAPIData struct {
 	ID            string `json:"id"`
 	Name          string `json:"name"`
@@ -142,9 +157,11 @@ type googleAPIData struct {
 }
 
 func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) (*googleUserData, error) {
-	if strings.HasPrefix(s.apiUrl, legacyAPIURL) {
+	info := s.GetOAuthInfo()
+
+	if strings.HasPrefix(info.ApiUrl, legacyAPIURL) {
 		data := googleAPIData{}
-		response, err := s.httpGet(ctx, client, s.apiUrl)
+		response, err := s.httpGet(ctx, client, info.ApiUrl)
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving legacy user info: %s", err)
 		}
@@ -163,7 +180,7 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 	}
 
 	data := googleUserData{}
-	response, err := s.httpGet(ctx, client, s.apiUrl)
+	response, err := s.httpGet(ctx, client, info.ApiUrl)
 	if err != nil {
 		return nil, fmt.Errorf("error getting user info: %s", err)
 	}
@@ -176,7 +193,9 @@ func (s *SocialGoogle) extractFromAPI(ctx context.Context, client *http.Client) 
 }
 
 func (s *SocialGoogle) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
-	if s.features.IsEnabledGlobally(featuremgmt.FlagAccessTokenExpirationCheck) && s.useRefreshToken {
+	info := s.GetOAuthInfo()
+
+	if info.UseRefreshToken {
 		opts = append(opts, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	}
 	return s.SocialBase.AuthCodeURL(state, opts...)
@@ -197,7 +216,7 @@ func (s *SocialGoogle) extractFromToken(ctx context.Context, client *http.Client
 		return nil, nil
 	}
 
-	if setting.Env == setting.Dev {
+	if s.cfg.Env == setting.Dev {
 		s.log.Debug("Received id_token", "raw_json", string(rawJSON))
 	}
 
@@ -223,7 +242,7 @@ type googleGroupResp struct {
 }
 
 func (s *SocialGoogle) retrieveGroups(ctx context.Context, client *http.Client, userData *googleUserData) ([]string, error) {
-	s.log.Debug("Retrieving groups", "scopes", s.SocialBase.Config.Scopes)
+	s.log.Debug("Retrieving groups", "scopes", s.Config.Scopes)
 	if !slices.Contains(s.Scopes, googleIAMScope) {
 		return nil, nil
 	}

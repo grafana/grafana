@@ -73,10 +73,10 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
 
     let shareUrl = getDashboardUrl({
       uid: dashboard.state.uid,
+      slug: dashboard.state.meta.slug,
       currentQueryParams: location.search,
       updateQuery: urlParamsUpdate,
       absolute: true,
-      useExperimentalURL: Boolean(config.featureToggles.dashboardSceneForViewers && dashboard.state.meta.canEdit),
     });
 
     if (useShortUrl) {

@@ -78,7 +78,7 @@ const MuteTimingsPage = () => {
   const pageNav = useMuteTimingNavData();
 
   return (
-    <AlertmanagerPageWrapper pageId="am-routes" pageNav={pageNav} accessType="notification">
+    <AlertmanagerPageWrapper navId="am-routes" pageNav={pageNav} accessType="notification">
       <MuteTimings />
     </AlertmanagerPageWrapper>
   );

@@ -11,6 +11,7 @@ interface DashboardControlsState extends SceneObjectState {
   variableControls: SceneObject[];
   timeControls: SceneObject[];
   linkControls: DashboardLinksControls;
+  hideTimeControls?: boolean;
 }
 export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
   static Component = DashboardControlsRenderer;
@@ -18,7 +19,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
 
 function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardControls>) {
   const dashboard = getDashboardSceneFor(model);
-  const { variableControls, linkControls, timeControls } = model.useState();
+  const { variableControls, linkControls, timeControls, hideTimeControls } = model.useState();
   const { isEditing } = dashboard.useState();
 
   return (
@@ -40,9 +41,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         {isEditing && (
           <ToolbarButton variant="canvas" icon="cog" tooltip="Dashboard settings" onClick={dashboard.onOpenSettings} />
         )}
-        {timeControls.map((c) => (
-          <c.Component model={c} key={c.state.key} />
-        ))}
+        {!hideTimeControls && timeControls.map((c) => <c.Component model={c} key={c.state.key} />)}
       </Stack>
     </Stack>
   );

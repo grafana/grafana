@@ -18,6 +18,10 @@ interface LabelMatchResult {
   matcher: ObjectMatcher | null;
 }
 
+export const INHERITABLE_KEYS = ['receiver', 'group_by', 'group_wait', 'group_interval', 'repeat_interval'] as const;
+export type InheritableKeys = typeof INHERITABLE_KEYS;
+export type InhertitableProperties = Pick<Route, InheritableKeys[number]>;
+
 type LabelsMatch = Map<Label, LabelMatchResult>;
 
 interface MatchingResult {
@@ -150,26 +154,14 @@ function findMatchingAlertGroups(
   }, matchingGroups);
 }
 
-export type InhertitableProperties = Pick<
-  Route,
-  'receiver' | 'group_by' | 'group_wait' | 'group_interval' | 'repeat_interval' | 'mute_time_intervals'
->;
-
 // inherited properties are config properties that exist on the parent route (or its inherited properties) but not on the child route
 function getInheritedProperties(
   parentRoute: Route,
   childRoute: Route,
   propertiesParentInherited?: Partial<InhertitableProperties>
 ) {
-  const fullParentProperties = merge({}, parentRoute, propertiesParentInherited);
-
-  const inheritableProperties: InhertitableProperties = pick(fullParentProperties, [
-    'receiver',
-    'group_by',
-    'group_wait',
-    'group_interval',
-    'repeat_interval',
-  ]);
+  const propsFromParent: InhertitableProperties = pick(parentRoute, INHERITABLE_KEYS);
+  const inheritableProperties: InhertitableProperties = merge({}, propertiesParentInherited, propsFromParent);
 
   // TODO how to solve this TypeScript mystery?
   const inherited = reduce(

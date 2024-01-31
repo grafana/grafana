@@ -1,15 +1,15 @@
 import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings, DataSourceRef, getDataSourceRef, ScopedVars } from '@grafana/data';
-import { BackendDataSourceResponse, FetchResponse, getBackendSrv } from '@grafana/runtime';
+import { BackendDataSourceResponse, FetchResponse, getBackendSrv, TemplateSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { store } from 'app/store/store';
 import { AppNotificationTimeout } from 'app/types';
 
 import memoizedDebounce from '../memoizedDebounce';
 import { CloudWatchJsonData, Dimensions, MetricRequest, MultiFilters } from '../types';
+import { getVariableName } from '../utils/templateVariableUtils';
 
 export abstract class CloudWatchRequest {
   templateSrv: TemplateSrv;
@@ -62,7 +62,7 @@ export abstract class CloudWatchRequest {
 
   // get the value for a given template variable
   expandVariableToArray(value: string, scopedVars: ScopedVars): string[] {
-    const variableName = this.templateSrv.getVariableName(value);
+    const variableName = getVariableName(value);
     const valueVar = this.templateSrv.getVariables().find(({ name }) => {
       return name === variableName;
     });
@@ -101,7 +101,7 @@ export abstract class CloudWatchRequest {
   ) {
     if (displayErrorIfIsMultiTemplateVariable && !!target) {
       const variables = this.templateSrv.getVariables();
-      const variable = variables.find(({ name }) => name === this.templateSrv.getVariableName(target));
+      const variable = variables.find(({ name }) => name === getVariableName(target));
       const isMultiVariable =
         variable?.type === 'custom' || variable?.type === 'query' || variable?.type === 'datasource';
       if (isMultiVariable && variable.multi) {

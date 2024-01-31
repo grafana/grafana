@@ -1,5 +1,6 @@
 import { SyntaxNode } from '@lezer/common';
 
+import { QueryBuilderLabelFilter, QueryBuilderOperation, QueryBuilderOperationParamValue } from '@grafana/experimental';
 import {
   And,
   BinOpExpr,
@@ -54,6 +55,8 @@ import {
   OrFilter,
 } from '@grafana/lezer-logql';
 
+import { binaryScalarDefs } from './binaryScalarOperations';
+import { checkParamsAreValid, getDefinitionById } from './operations';
 import {
   ErrorId,
   getAllByType,
@@ -62,15 +65,7 @@ import {
   makeBinOp,
   makeError,
   replaceVariables,
-} from '../../prometheus/querybuilder/shared/parsingUtils';
-import {
-  QueryBuilderLabelFilter,
-  QueryBuilderOperation,
-  QueryBuilderOperationParamValue,
-} from '../../prometheus/querybuilder/shared/types';
-
-import { binaryScalarDefs } from './binaryScalarOperations';
-import { checkParamsAreValid, getDefinitionById } from './operations';
+} from './parsingUtils';
 import { LokiOperationId, LokiVisualQuery, LokiVisualQueryBinary } from './types';
 
 interface Context {
@@ -501,9 +496,14 @@ function handleRangeAggregation(expr: string, node: SyntaxNode, context: Context
   const params = number !== null && number !== undefined ? [getString(expr, number)] : [];
   const range = logExpr?.getChild(Range);
   const rangeValue = range ? getString(expr, range) : null;
+  const grouping = node.getChild(Grouping);
 
   if (rangeValue) {
     params.unshift(rangeValue.substring(1, rangeValue.length - 1));
+  }
+
+  if (grouping) {
+    params.push(...getAllByType(expr, grouping, Identifier));
   }
 
   const op = {

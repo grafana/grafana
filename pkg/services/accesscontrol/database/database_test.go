@@ -527,6 +527,20 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 			}},
 		},
 		{
+			name:  "user assignment by scope",
+			users: []testUser{{orgRole: org.RoleAdmin, isAdmin: false}},
+			permCmds: []rs.SetResourcePermissionsCommand{
+				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("*")}, // hack to have a global permission
+				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: writeTeamPerm("1")},
+			},
+			options: accesscontrol.SearchOptions{Scope: "teams:id:1"},
+			wantPerm: map[int64][]accesscontrol.Permission{1: {
+				{Action: "teams:read", Scope: "teams:id:*"},
+				{Action: "teams:read", Scope: "teams:id:1"},
+				{Action: "teams:write", Scope: "teams:id:1"},
+			}},
+		},
+		{
 			name:  "user assignment by action and scope",
 			users: []testUser{{orgRole: org.RoleAdmin, isAdmin: false}},
 			permCmds: []rs.SetResourcePermissionsCommand{

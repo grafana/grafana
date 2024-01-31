@@ -90,3 +90,9 @@ func (s *Service) Delete(ctx context.Context, cmd *playlist.DeletePlaylistComman
 	defer span.End()
 	return s.store.Delete(ctx, cmd)
 }
+
+func (s *Service) List(ctx context.Context, orgId int64) ([]playlist.PlaylistDTO, error) {
+	ctx, span := s.tracer.Start(ctx, "playlists.List")
+	defer span.End()
+	return s.store.ListAll(ctx, orgId)
+}

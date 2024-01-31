@@ -292,6 +292,117 @@ describe('LogRowContextModal', () => {
     });
   });
 
+  it('should highlight the same `foo123` searchwords', async () => {
+    const dfBeforeNs = createDataFrame({
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [1, 1],
+        },
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: ['this contains foo123', 'this contains foo123'],
+        },
+        {
+          name: 'tsNs',
+          type: FieldType.string,
+          values: ['1', '2'],
+        },
+      ],
+    });
+    const dfNowNs = createDataFrame({
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [1],
+        },
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: ['this contains foo123'],
+        },
+        {
+          name: 'tsNs',
+          type: FieldType.string,
+          values: ['2'],
+        },
+      ],
+    });
+    const dfAfterNs = createDataFrame({
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: [1, 1],
+        },
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: ['this contains foo123', 'this contains foo123'],
+        },
+        {
+          name: 'tsNs',
+          type: FieldType.string,
+          values: ['2', '3'],
+        },
+      ],
+    });
+
+    let uniqueRefIdCounter = 1;
+    const logs = dataFrameToLogsModel([dfNowNs]);
+    const row = logs.rows[0];
+    row.searchWords = ['foo123'];
+    const getRowContext = jest.fn().mockImplementation(async (_, options) => {
+      uniqueRefIdCounter += 1;
+      const refId = `refid_${uniqueRefIdCounter}`;
+      if (uniqueRefIdCounter === 2) {
+        return {
+          data: [
+            {
+              refId,
+              ...dfBeforeNs,
+            },
+          ],
+        };
+      } else if (uniqueRefIdCounter === 3) {
+        return {
+          data: [
+            {
+              refId,
+              ...dfAfterNs,
+            },
+          ],
+        };
+      }
+      return { data: [] };
+    });
+
+    render(
+      <LogRowContextModal
+        row={row}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        logsSortOrder={LogsSortOrder.Descending}
+      />
+    );
+
+    // there need to be 3 lines with that message, all `foo123` should be highlighted
+    await waitFor(() => {
+      expect(screen.getAllByText('foo123').length).toBe(3);
+      for (const el of screen.getAllByText('foo123')) {
+        // highlights are done in `<mark>` tags
+        expect(el.tagName).toBe('MARK');
+      }
+      // test that the rest is not in a MARK
+      expect(screen.getAllByText('this contains')[0].tagName).not.toBe('MARK');
+    });
+  });
+
   it('should show a split view button', async () => {
     const getRowContextQuery = jest.fn().mockResolvedValue({ datasource: { uid: 'test-uid' } });
 

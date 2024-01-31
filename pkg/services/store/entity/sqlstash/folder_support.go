@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
+	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 type folderInfo struct {
@@ -34,17 +34,17 @@ type folderInfo struct {
 // This will replace all entries in `entity_folder`
 // This is pretty heavy weight, but it does give us a sorted folder list
 // NOTE: this could be done async with a mutex/lock?  reconciler pattern
-func updateFolderTree(ctx context.Context, tx *session.SessionTx, namespace string) error {
+func (s *sqlEntityServer) updateFolderTree(ctx context.Context, tx *session.SessionTx, namespace string) error {
 	_, err := tx.Exec(ctx, "DELETE FROM entity_folder WHERE namespace=?", namespace)
 	if err != nil {
 		return err
 	}
 
-	query := "SELECT guid,uid,folder,name,slug" +
+	query := "SELECT guid,name,folder,name,slug" +
 		" FROM entity" +
-		" WHERE group=? AND resource=? AND namespace=?" +
+		" WHERE " + s.dialect.Quote("group") + "=? AND resource=? AND namespace=?" +
 		" ORDER BY slug asc"
-	args := []interface{}{entity.FolderGroupName, entity.FolderResourceName, namespace}
+	args := []interface{}{folder.GROUP, folder.RESOURCE, namespace}
 
 	all := []*folderInfo{}
 	rows, err := tx.Query(ctx, query, args...)
@@ -141,7 +141,7 @@ func insertFolderInfo(ctx context.Context, tx *session.SessionTx, namespace stri
 	js, _ := json.Marshal(folder.stack)
 	_, err := tx.Exec(ctx,
 		`INSERT INTO entity_folder `+
-			"(guid, namespace, uid, slug_path, tree, depth, lft, rgt, detached) "+
+			"(guid, namespace, name, slug_path, tree, depth, lft, rgt, detached) "+
 			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		folder.Guid,
 		namespace,
