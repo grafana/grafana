@@ -167,10 +167,10 @@ func (am *alertmanager) StopAndWait() {
 }
 
 // ApplyConfig applies the configuration to the Alertmanager.
-func (am *alertmanager) ApplyConfig(ctx context.Context, cfg *ngmodels.AlertConfiguration) error {
+func (am *alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertConfiguration) error {
 	var outerErr error
 	am.Base.WithLock(func() {
-		if err := am.applyAndMarkConfig(ctx, cfg); err != nil {
+		if err := am.applyAndMarkConfig(ctx, dbCfg); err != nil {
 			outerErr = fmt.Errorf("unable to apply configuration: %w", err)
 			return
 		}
@@ -233,6 +233,7 @@ func (am *alertmanager) applyConfig(config *ngmodels.AlertConfiguration) (bool, 
 
 	rawConfig, err := json.Marshal(cfg.AlertmanagerConfig)
 	if err != nil {
+		// In theory, this should never happen.
 		return false, err
 	}
 
