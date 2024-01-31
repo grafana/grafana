@@ -35,6 +35,7 @@ def yarn_install_step():
         "name": "yarn-install",
         "image": images["node"],
         "commands": [
+            # Python is needed to build `esfx`, which is needed by `msagl`
             "apk add --no-cache --virtual .gyp python3 make g++ && ln -sf /usr/bin/python3 /usr/bin/python",
             "yarn install --immutable",
         ],
