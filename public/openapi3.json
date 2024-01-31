@@ -1848,10 +1848,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "additionalProperties": {
-                "$ref": "#/components/schemas/PermissionsByAction"
-              },
-              "type": "object"
+              "$ref": "#/components/schemas/UsersPermissions"
             }
           }
         },

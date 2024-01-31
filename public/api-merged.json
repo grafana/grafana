@@ -23548,10 +23548,7 @@
     "searchPermissionsResponse": {
       "description": "(empty)",
       "schema": {
-        "type": "object",
-        "additionalProperties": {
-          "$ref": "#/definitions/PermissionsByAction"
-        }
+        "$ref": "#/definitions/UsersPermissions"
       }
     },
     "searchPlaylistsResponse": {

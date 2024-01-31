@@ -45,5 +45,5 @@ type UsersPermissions map[UserID]PermissionsByAction
 // swagger:response searchPermissionsResponse
 type SearchPermissionsResponse struct {
 	// in: body
-	Body map[UserID]PermissionsByAction `json:"body"`
+	Body UsersPermissions `json:"body"`
 }
