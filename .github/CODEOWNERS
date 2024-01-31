@@ -312,6 +312,7 @@
 /e2e/cloud-plugins-suite/ @grafana/partner-datasources
 
 # Frontend packages. Assign ownership of packages individually
+/packages/README.md @grafana/grafana-frontend-platform
 /packages/grafana-data/ @grafana/plugins-platform-frontend
 /packages/grafana-data/src/transformations/ @grafana/dataviz-squad
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
