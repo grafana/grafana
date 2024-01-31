@@ -20,6 +20,7 @@ import { RuleDetailsMatchingInstances } from './RuleDetailsMatchingInstances';
 
 interface Props {
   rule: CombinedRule;
+  scenes?: boolean;
 }
 
 // The limit is set to 15 in order to upkeep the good performance
@@ -27,7 +28,7 @@ interface Props {
 // We don't want to paginate the instances list on the alert list page
 export const INSTANCES_DISPLAY_LIMIT = 15;
 
-export const RuleDetails = ({ rule }: Props) => {
+export const RuleDetails = ({ rule, scenes }: Props) => {
   const styles = useStyles2(getStyles);
   const {
     namespace: { rulesSource },
@@ -37,7 +38,7 @@ export const RuleDetails = ({ rule }: Props) => {
 
   return (
     <div>
-      <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} isViewMode={false} />
+      <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} isViewMode={false} scenes={scenes} />
       <div className={styles.wrapper}>
         <div className={styles.leftSide}>
           {<EvaluationBehaviorSummary rule={rule} />}
@@ -47,7 +48,7 @@ export const RuleDetails = ({ rule }: Props) => {
             </DetailsField>
           )}
           <RuleDetailsExpression rulesSource={rulesSource} rule={rule} annotations={annotations} />
-          <RuleDetailsAnnotations annotations={annotations} />
+          <RuleDetailsAnnotations annotations={annotations} scenes={scenes} />
         </div>
         <div className={styles.rightSide}>
           <RuleDetailsDataSources rulesSource={rulesSource} rule={rule} />

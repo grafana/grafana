@@ -41,6 +41,7 @@ interface Props {
   showNextEvaluationColumn?: boolean;
   emptyMessage?: string;
   className?: string;
+  scenes?: boolean;
 }
 
 export const RulesTable = ({
@@ -51,6 +52,7 @@ export const RulesTable = ({
   showGroupColumn = false,
   showSummaryColumn = false,
   showNextEvaluationColumn = false,
+  scenes = false,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -79,7 +81,7 @@ export const RulesTable = ({
         cols={columns}
         isExpandable={true}
         items={items}
-        renderExpandedContent={({ data: rule }) => <RuleDetails rule={rule} />}
+        renderExpandedContent={({ data: rule }) => <RuleDetails rule={rule} scenes={scenes} />}
         pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }}
         paginationStyles={styles.pagination}
       />

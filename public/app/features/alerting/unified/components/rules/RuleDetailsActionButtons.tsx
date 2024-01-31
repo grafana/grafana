@@ -45,9 +45,10 @@ interface Props {
   rule: CombinedRule;
   rulesSource: RulesSource;
   isViewMode: boolean;
+  scenes?: boolean;
 }
 
-export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Props) => {
+export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode, scenes = false }: Props) => {
   const style = useStyles2(getStyles);
   const { namespace, group, rulerRule } = rule;
   const { StateHistoryModal, showStateHistoryModal } = useStateHistoryModal();
@@ -136,6 +137,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
   if (rule.annotations[Annotation.dashboardUID]) {
     const dashboardUID = rule.annotations[Annotation.dashboardUID];
     if (dashboardUID) {
+      const dashboardHref = `d/${encodeURIComponent(dashboardUID)}${scenes ? '?&scenes' : ''}`;
       buttons.push(
         config.featureToggles.returnToPrevious ? (
           <LinkButton
@@ -143,7 +145,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
             key="dashboard"
             variant="primary"
             icon="apps"
-            href={`d/${encodeURIComponent(dashboardUID)}`}
+            href={dashboardHref}
             onClick={() => {
               setReturnToPrevious({ title: rule.name, href: locationService.getLocation().pathname });
             }}
@@ -151,14 +153,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
             Go to dashboard
           </LinkButton>
         ) : (
-          <LinkButton
-            size="sm"
-            key="dashboard"
-            variant="primary"
-            icon="apps"
-            target="_blank"
-            href={`d/${encodeURIComponent(dashboardUID)}`}
-          >
+          <LinkButton size="sm" key="dashboard" variant="primary" icon="apps" target="_blank" href={dashboardHref}>
             Go to dashboard
           </LinkButton>
         )
@@ -172,7 +167,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
             variant="primary"
             icon="apps"
             target="_blank"
-            href={`d/${encodeURIComponent(dashboardUID)}?viewPanel=${encodeURIComponent(panelId)}`}
+            href={`d/${encodeURIComponent(dashboardUID)}?viewPanel=${encodeURIComponent(panelId)}${scenes ? '&scenes' : ''}`}
           >
             Go to panel
           </LinkButton>

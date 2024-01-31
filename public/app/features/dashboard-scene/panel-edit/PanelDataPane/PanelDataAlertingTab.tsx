@@ -1,10 +1,13 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
-import { IconName } from '@grafana/data';
+import { GrafanaTheme2, IconName } from '@grafana/data';
 import { SceneObjectBase, SceneComponentProps, SceneQueryRunner } from '@grafana/scenes';
-import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { RulesTable } from 'app/features/alerting/unified/components/rules/RulesTable';
 import { usePanelCombinedRules } from 'app/features/alerting/unified/hooks/usePanelCombinedRules';
+import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
 
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../utils/utils';
 import { VizPanelManager } from '../VizPanelManager';
@@ -37,29 +40,36 @@ export class PanelDataAlertingTab extends SceneObjectBase<PanelDataPaneTabState>
     return getDashboardSceneFor(this._panelManager);
   }
 
-  getPanel() {
-    return this._panelManager.state.panel;
-  }
-
-  public getQueryRunner(): SceneQueryRunner {
-    return this._panelManager.queryRunner;
-  }
-
-  getPanelId() {
+  getLegacyPanelId() {
     return getPanelIdForVizPanel(this._panelManager.state.panel);
+  }
+
+  getCanCreateRules() {
+    const permissions = getRulesPermissions('grafana');
+    return contextSrv.hasPermission(permissions.create);
   }
 
   get panelManager() {
     return this._panelManager;
+  }
+
+  get panel() {
+    return this._panelManager.state.panel;
+  }
+
+  get queryRunner(): SceneQueryRunner {
+    return this._panelManager.queryRunner;
   }
 }
 
 function PanelDataAlertingTabRendered(props: SceneComponentProps<PanelDataAlertingTab>) {
   const { model } = props;
 
+  const styles = useStyles2(getStyles);
+
   const { errors, loading, rules } = usePanelCombinedRules({
     dashboardUID: model.getDashboardUID(),
-    panelId: model.getPanelId(),
+    panelId: model.getLegacyPanelId(),
   });
 
   const alert = errors.length ? (
@@ -79,18 +89,44 @@ function PanelDataAlertingTabRendered(props: SceneComponentProps<PanelDataAlerti
     );
   }
 
+  const dashboard = model.getDashboard();
+  const { queryRunner, panel } = model;
+
   if (rules.length) {
-    return <RulesTable rules={rules} />;
+    return (
+      <>
+        <RulesTable rules={rules} scenes={true} />
+        {dashboard.state.meta.canSave && model.getCanCreateRules() && (
+          <ScenesNewRuleFromPanelButton
+            className={styles.newButton}
+            panel={panel}
+            dashboard={dashboard}
+            queryRunner={queryRunner}
+          />
+        )}
+      </>
+    );
   }
 
   return (
-    <div>
+    <div className={styles.noRulesWrapper}>
       <p>There are no alert rules linked to this panel.</p>
       <ScenesNewRuleFromPanelButton
-        dashboard={model.getDashboard()}
-        panel={model.getPanel()}
-        queryRunner={model.getQueryRunner()}
+        dashboard={dashboard}
+        panel={panel}
+        queryRunner={queryRunner}
       ></ScenesNewRuleFromPanelButton>
     </div>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  newButton: css({
+    marginTop: theme.spacing(3),
+  }),
+  noRulesWrapper: css({
+    margin: theme.spacing(2),
+    backgroundColor: theme.colors.background.secondary,
+    padding: theme.spacing(3),
+  }),
+});
