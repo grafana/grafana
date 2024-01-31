@@ -336,6 +336,6 @@ func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, org
 	return result, nil
 }
 
-func (f *RuleStore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u identity.Requester) (int64, error) {
+func (f *RuleStore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) (int64, error) {
 	return 0, nil
 }
