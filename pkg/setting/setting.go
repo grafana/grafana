@@ -348,6 +348,11 @@ type Cfg struct {
 	// Number of queries to be executed concurrently. Only for the datasource supports concurrency.
 	ConcurrentQueryCount int
 
+	// IP range access control
+	IPRangeACEnabled     bool
+	IPRangeACAllowedURLs []string
+	IPRangeACSecretKey   string
+
 	// SQL Data sources
 	SqlDatasourceMaxOpenConnsDefault    int
 	SqlDatasourceMaxIdleConnsDefault    int
@@ -1200,6 +1205,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	}
 
 	cfg.readDataSourcesSettings()
+	cfg.readDataSourceSecuritySettings()
 	cfg.readSqlDataSourceSettings()
 
 	cfg.Storage = readStorageSettings(iniFile)
@@ -1936,6 +1942,14 @@ func (cfg *Cfg) readDataSourcesSettings() {
 	datasources := cfg.Raw.Section("datasources")
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
 	cfg.ConcurrentQueryCount = datasources.Key("concurrent_query_count").MustInt(10)
+}
+
+func (cfg *Cfg) readDataSourceSecuritySettings() {
+	datasources := cfg.Raw.Section("datasources.ip_range_security")
+	cfg.IPRangeACEnabled = datasources.Key("enabled").MustBool(false)
+	cfg.IPRangeACSecretKey = datasources.Key("secret_key").MustString("")
+	allowedURLString := datasources.Key("allow_list").MustString("")
+	cfg.IPRangeACAllowedURLs = util.SplitString(allowedURLString)
 }
 
 func (cfg *Cfg) readSqlDataSourceSettings() {
