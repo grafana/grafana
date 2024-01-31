@@ -16,6 +16,7 @@ import { activateFullSceneTree } from '../utils/test-utils';
 import { findVizPanelByKey } from '../utils/utils';
 
 import { InspectJsonTab } from './InspectJsonTab';
+import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 
 standardTransformersRegistry.setInit(getStandardTransformers);
 
@@ -90,6 +91,7 @@ async function buildTestScene() {
     title: 'Panel A',
     pluginId: 'table',
     key: 'panel-12',
+    titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     $data: new SceneDataTransformer({
       transformations: [
         {
