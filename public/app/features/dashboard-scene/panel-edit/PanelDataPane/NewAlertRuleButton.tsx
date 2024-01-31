@@ -22,7 +22,7 @@ export const ScenesNewRuleFromPanelButton = ({ dashboard, queryRunner, panel, cl
 
   const { loading, value: formValues } = useAsync(
     () => scenesPanelToRuleFormValues(panel, queryRunner, dashboard),
-    [panel, dashboard]
+    [panel, dashboard, queryRunner]
   );
 
   if (loading) {

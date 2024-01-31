@@ -60,7 +60,6 @@ function PanelDataAlertingTabRendered(props: SceneComponentProps<PanelDataAlerti
   const { errors, loading, rules } = usePanelCombinedRules({
     dashboardUID: model.getDashboardUID(),
     panelId: model.getPanelId(),
-    poll: false,
   });
 
   const alert = errors.length ? (

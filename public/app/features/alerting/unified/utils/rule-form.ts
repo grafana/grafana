@@ -613,30 +613,31 @@ export const scenesPanelToRuleFormValues = async (
 
   const timeRange = sceneGraph.getTimeRange(vizPanel);
 
-  const sceneq = scenesQueries.state.queries;
+  const { queries, datasource, maxDataPoints, minInterval } = scenesQueries.state;
 
-  const queries = await dataQueriesToGrafanaQueries(
-    sceneq,
+  const grafanaQueries = await dataQueriesToGrafanaQueries(
+    queries,
     rangeUtil.timeRangeToRelative(timeRange.state.value),
     { __sceneObject: { value: vizPanel } },
-    scenesQueries.state.datasource,
-    scenesQueries.state.maxDataPoints,
-    scenesQueries.state.minInterval
+    datasource,
+    maxDataPoints,
+    minInterval
   );
+
   // if no alerting capable queries are found, can't create a rule
-  if (!queries.length || !queries.find((query) => query.datasourceUid !== ExpressionDatasourceUID)) {
+  if (!grafanaQueries.length || !grafanaQueries.find((query) => query.datasourceUid !== ExpressionDatasourceUID)) {
     return undefined;
   }
 
-  if (!queries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
-    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefIdChar(queries), '-');
-    queries.push(reduceExpression);
+  if (!grafanaQueries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
+    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefIdChar(grafanaQueries), '-');
+    grafanaQueries.push(reduceExpression);
 
     const [_reduceExpression, thresholdExpression] = getDefaultExpressions(
       reduceExpression.refId,
-      getNextRefIdChar(queries)
+      getNextRefIdChar(grafanaQueries)
     );
-    queries.push(thresholdExpression);
+    grafanaQueries.push(thresholdExpression);
   }
 
   const { folderTitle, folderUid } = scenesDashboard.state.meta;
@@ -650,9 +651,9 @@ export const scenesPanelToRuleFormValues = async (
             title: folderTitle,
           }
         : undefined,
-    queries,
+    queries: grafanaQueries,
     name: vizPanel.state.title,
-    condition: queries[queries.length - 1].refId,
+    condition: grafanaQueries[grafanaQueries.length - 1].refId,
     annotations: [
       {
         key: Annotation.dashboardUID,
