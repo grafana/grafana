@@ -1,4 +1,4 @@
-import formatDuration from 'date-fns/formatDuration';
+import { formatDuration } from 'date-fns';
 import React, { PureComponent } from 'react';
 
 import { SelectableValue, parseDuration } from '@grafana/data';
