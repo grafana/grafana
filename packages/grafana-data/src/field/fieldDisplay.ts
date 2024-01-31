@@ -204,6 +204,25 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             }
           }
 
+          // If there is only one row in the data frame, then set the
+          // valueRowIndex to that one row. This allows the data macros in
+          // things like links to access other fields from the data frame.
+          //
+          // If there were more rows, it still may be sane to set the row
+          // index, but it may be confusing; the calculation may have
+          // selected a value from a different row or it may have aggregated
+          // the values from multiple rows, so to make just the first row
+          // available would be arbitrary. For now, the users will have to
+          // ensure that the data frame has just one row if they want data
+          // link referencing other fields to work.
+          //
+          // TODO: A more complete solution here would be to allow the
+          // calculation to report a relevant row and use that value. For
+          // example, a common calculation is 'lastNotNull'. It'd be nifty to
+          // know which row the display value corresponds to in that case if
+          // there were potentially many
+          const valueRowIndex = dataFrame.length === 1 ? 0 : undefined;
+
           values.push({
             name: calc,
             field: config,
@@ -215,6 +234,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               ? () =>
                   fieldLinksSupplier({
                     calculatedValue: displayValue,
+                    valueRowIndex,
                   })
               : () => [],
             hasLinks: hasLinks(field),
