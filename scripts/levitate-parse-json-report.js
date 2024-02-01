@@ -12,7 +12,7 @@ const printSection = (title, items) => {
 
     output += `<b>${item.name}</b><br>\n`;
     output += `<sub>${item.location}</sub><br>\n`;
-    output += `<pre lang="${language}">\n${code}\n</pre><br>\n`;
+    output += `<pre lang="${language}">\n${code}</pre><br>\n`;
   });
   return output;
 };
