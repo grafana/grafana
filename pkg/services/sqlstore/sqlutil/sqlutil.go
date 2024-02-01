@@ -60,7 +60,15 @@ func SQLite3TestDB(t ITestDB) (*TestDB, error) {
 			return nil, err
 		}
 
-		err = os.MkdirAll(filepath.Join(dir, "grafana-test"), 0750)
+		// if cache dir doesn't exist, fall back to temp dir
+		if _, err := os.Stat(dir); os.IsNotExist(err) {
+			dir = os.TempDir()
+			if _, err := os.Stat(dir); os.IsNotExist(err) {
+				return nil, err
+			}
+		}
+
+		err = os.Mkdir(filepath.Join(dir, "grafana-test"), 0750)
 		if err != nil {
 			return nil, err
 		}
