@@ -281,7 +281,10 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'connections-datasources':
       return t('nav.data-sources.subtitle', 'View and manage your connected data source connections');
     case 'connections-private-data-source-connections':
-      return t('nav.private-data-source-connections.subtitle', 'Query data that lives within a secured network without opening the network to inbound traffic from Grafana Cloud. Learn more in our docs.');
+      return t(
+        'nav.private-data-source-connections.subtitle',
+        'Query data that lives within a secured network without opening the network to inbound traffic from Grafana Cloud. Learn more in our docs.'
+      );
     default:
       return undefined;
   }
