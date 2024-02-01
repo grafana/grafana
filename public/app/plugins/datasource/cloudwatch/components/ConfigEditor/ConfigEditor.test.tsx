@@ -171,11 +171,24 @@ describe('Render', () => {
       );
     });
 
-    it('should not show a warning if `credentials` auth type is used with a profile or database configured', async () => {
+    it('should not show a warning if `credentials` auth type is used and a profile is configured', async () => {
       setup({
         jsonData: {
           authType: AwsAuthType.Credentials,
           profile: 'profile',
+          database: undefined,
+        },
+      });
+      await waitFor(async () =>
+        expect(screen.queryByText(CREDENTIALS_AUTHENTICATION_WARNING_MESSAGE)).not.toBeInTheDocument()
+      );
+    });
+
+    it('should not show a warning if `credentials` auth type is used and a database is configured', async () => {
+      setup({
+        jsonData: {
+          authType: AwsAuthType.Credentials,
+          profile: undefined,
           database: 'database',
         },
       });
