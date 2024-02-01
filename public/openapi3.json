@@ -1,6 +1,29 @@
 {
   "components": {
     "responses": {
+      "GetAllIntervalsResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/GettableTimeIntervals"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "GetIntervalsByNameResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GettableTimeIntervals"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "GettableHistoricUserConfigs": {
         "content": {
           "application/json": {
@@ -6049,6 +6072,23 @@
         ],
         "type": "object"
       },
+      "GettableTimeIntervals": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "time_intervals": {
+            "items": {
+              "$ref": "#/components/schemas/TimeIntervalItem"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
       "GettableUserConfig": {
         "properties": {
           "alertmanager_config": {
@@ -8291,6 +8331,20 @@
           "rules": {
             "items": {
               "$ref": "#/components/schemas/PostableExtendedRuleNode"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "PostableTimeIntervals": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "time_intervals": {
+            "items": {
+              "$ref": "#/components/schemas/TimeIntervalItem"
             },
             "type": "array"
           }
@@ -10963,6 +11017,55 @@
         },
         "type": "object"
       },
+      "TimeIntervalItem": {
+        "properties": {
+          "days_of_month": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "location": {
+            "type": "string"
+          },
+          "months": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "times": {
+            "items": {
+              "$ref": "#/components/schemas/TimeIntervalTimeRange"
+            },
+            "type": "array"
+          },
+          "weekdays": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "years": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "TimeIntervalTimeRange": {
+        "properties": {
+          "end_time": {
+            "type": "string"
+          },
+          "start_time": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "TimeRange": {
         "description": "Redefining this to avoid an import cycle",
         "properties": {
@@ -12234,6 +12337,7 @@
         "type": "array"
       },
       "gettableSilence": {
+        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12282,13 +12386,13 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
         "type": "array"
       },
       "integration": {
+        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -12498,7 +12602,6 @@
         "type": "object"
       },
       "receiver": {
-        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -23801,6 +23904,75 @@
         "summary": "Get teams for user.",
         "tags": [
           "users"
+        ]
+      }
+    },
+    "/v1/notifications/time-intervals": {
+      "get": {
+        "description": "Get all the time intervals",
+        "operationId": "RouteNotificationsGetTimeIntervals",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/GetAllIntervalsResponse"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          }
+        },
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/v1/notifications/time-intervals/{name}": {
+      "get": {
+        "operationId": "RouteNotificationsGetTimeInterval",
+        "parameters": [
+          {
+            "description": "Time interval name",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/GetIntervalsByNameResponse"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenError"
+                }
+              }
+            },
+            "description": "ForbiddenError"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFound"
+                }
+              }
+            },
+            "description": "NotFound"
+          }
+        },
+        "summary": "Get a time interval by name.",
+        "tags": [
+          "notifications"
         ]
       }
     },
