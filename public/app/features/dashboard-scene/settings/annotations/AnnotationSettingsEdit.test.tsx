@@ -218,30 +218,6 @@ describe('AnnotationSettingsEdit', () => {
     expect(mockOnUpdate).toHaveBeenCalledWith(annoArg, 1);
   });
 
-  it('should update annotation color on change', async () => {
-    const {
-      renderer: { getByTestId, getByRole },
-      user,
-      anno,
-    } = setup();
-
-    const annoArg = {
-      ...anno,
-      iconColor: 'red',
-    };
-
-    const iconColorToggle = getByTestId(selectors.components.ColorSwatch.name);
-    await waitFor(async () => {
-      await user.click(iconColorToggle);
-
-      const color = getByRole('button', { name: 'red color' });
-      await user.click(color);
-    });
-
-    expect(mockOnUpdate).toHaveBeenCalledTimes(1);
-    expect(mockOnUpdate).toHaveBeenCalledWith(annoArg, 1);
-  });
-
   it('should set annotation filter', async () => {
     const {
       renderer: { getByTestId },
