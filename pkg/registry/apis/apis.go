@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/peakq"
 	"github.com/grafana/grafana/pkg/registry/apis/playlist"
+	"github.com/grafana/grafana/pkg/registry/apis/query"
 )
 
 var (
@@ -29,6 +30,7 @@ func ProvideRegistryServiceSink(
 	_ *datasource.DataSourceAPIBuilder,
 	_ *folders.FolderAPIBuilder,
 	_ *peakq.PeakQAPIBuilder,
+	_ *query.QueryAPIBuilder,
 ) *Service {
 	return &Service{}
 }

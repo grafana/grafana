@@ -31,6 +31,7 @@ const (
 
 const (
 	AnonymousNamespaceID = NamespaceAnonymous + ":0"
+	GlobalOrgID          = int64(0)
 )
 
 var _ identity.Requester = (*Identity)(nil)
@@ -162,6 +163,19 @@ func (i *Identity) GetPermissions() map[string][]string {
 	}
 
 	return i.Permissions[i.GetOrgID()]
+}
+
+// GetGlobalPermissions returns the permissions of the active entity that are available across all organizations
+func (i *Identity) GetGlobalPermissions() map[string][]string {
+	if i.Permissions == nil {
+		return make(map[string][]string)
+	}
+
+	if i.Permissions[GlobalOrgID] == nil {
+		return make(map[string][]string)
+	}
+
+	return i.Permissions[GlobalOrgID]
 }
 
 func (i *Identity) GetTeams() []int64 {
