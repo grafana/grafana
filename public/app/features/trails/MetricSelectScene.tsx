@@ -16,6 +16,7 @@ import {
   SceneObjectRef,
   SceneObjectState,
   SceneQueryRunner,
+  SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
 } from '@grafana/scenes';
@@ -74,14 +75,22 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   }
 
   protected _variableDependency = new VariableDependencyConfig(this, {
-    variableNames: [VAR_METRIC_NAMES],
-    onVariableUpdateCompleted: this.onVariableUpdateCompleted.bind(this),
-  });
+    variableNames: [VAR_METRIC_NAMES, VAR_DATASOURCE],
+    onReferencedVariableValueChanged: (variable: SceneVariable) => {
+      const { name } = variable.state;
 
-  private onVariableUpdateCompleted(): void {
-    this.updateMetrics(); // Entire pipeline must be performed
-    this.buildLayout();
-  }
+      if (name === VAR_DATASOURCE) {
+        // Clear filtered metrics
+        this.setState({ metricsAfterFilter: undefined, metricsAfterSearch: undefined });
+        // Clear all panels for the previous data source
+        this.state.body.setState({ children: [] });
+      } else if (name === VAR_METRIC_NAMES) {
+        // Entire pipeline must be performed
+        this.updateMetrics();
+        this.buildLayout();
+      }
+    },
+  });
 
   private _onActivate() {
     if (this.state.body.state.children.length === 0) {
@@ -90,11 +99,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       // Temp hack when going back to select metric scene and variable updates
       this.ignoreNextUpdate = true;
     }
-
-    const dataSourceVariable = sceneGraph.lookupVariable(VAR_DATASOURCE, this);
-    dataSourceVariable?.subscribeToState((state) => {
-      this.onDataSourceChange();
-    });
   }
 
   private sortedPreviewMetrics() {
@@ -145,6 +149,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   }
 
   private applyMetricPrefixFilter() {
+    // This should occur after an `applyMetricSearch`, or if the prefix filter has changed
     const { metricsAfterSearch, prefixFilter } = this.state;
 
     if (!prefixFilter || !metricsAfterSearch) {
@@ -278,14 +283,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     this.buildLayout();
   };
 
-  public onDataSourceChange() {
-    // Clear filtered metrics
-    this.setState({ metricsAfterFilter: undefined, metricsAfterSearch: undefined });
-    // Clear all panels for the previous data source
-    this.state.body.setState({ children: [] });
-    // The `VAR_METRIC_NAMES` will be queried again automatically with the new data source
-  }
-
   public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
     const { searchQuery, showPreviews, body, metricsAfterSearch, metricsAfterFilter, prefixFilter } = model.useState();
     const { children } = body.useState();
@@ -317,9 +314,15 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
               value={searchQuery}
               onChange={model.onSearchChange}
               disabled={disableSearch}
-              />
+            />
           </Field>
-          <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} disabled={disableSearch}/>
+          <InlineSwitch
+            showLabel={true}
+            label="Show previews"
+            value={showPreviews}
+            onChange={model.onTogglePreviews}
+            disabled={disableSearch}
+          />
         </div>
         <div className={styles.header}>
           <Field label="Filter by prefix" error={prefixError} invalid={!!prefixError}>
