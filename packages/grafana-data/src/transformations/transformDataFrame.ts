@@ -60,12 +60,6 @@ const postProcessTransform =
           if (!series.meta) {
             series.meta = {};
           }
-
-          if (!series.meta.transformations) {
-            series.meta.transformations = [info.id];
-          } else {
-            series.meta.transformations = [...series.meta.transformations, info.id];
-          }
         }
 
         // Add back the filtered out frames
