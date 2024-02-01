@@ -141,7 +141,7 @@ export function PartitionByValuesEditor({
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField tooltip={'Keeps the partitioned fields in the frames.'} label={'Keep fields'} labelWidth={16}>
+        <InlineField tooltip={'Keeps the partition fields in the frames.'} label={'Keep fields'} labelWidth={16}>
           <RadioButtonGroup
             options={KeepFieldsOptions}
             value={options.keepFields}
