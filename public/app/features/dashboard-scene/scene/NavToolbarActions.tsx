@@ -20,7 +20,7 @@ interface Props {
 }
 
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
-  const { actions = [], isEditing, viewPanelScene, uid, meta, editview } = dashboard.useState();
+  const { actions = [], isEditing, viewPanelScene, isDirty, uid, meta, editview } = dashboard.useState();
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
   const rightToolbarActions: JSX.Element[] = [];
   const _legacyDashboardModel = getDashboardSrv().getCurrent();
@@ -82,7 +82,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
   }
 
   // Line between icon actions above and text actions below
-  if (toolbarActions.length > 0) {
+  if (toolbarActions.length > 1) {
     toolbarActions.push(<NavToolbarSeparator key="dynamicActionsSeperator" />);
   }
 
@@ -172,11 +172,26 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
     }
 
     if (dashboard.canDiscard()) {
-      toolbarActions.push(
-        <Button onClick={dashboard.onDiscard} tooltip="Will discard all changes" fill="text" size="sm" key="discard">
-          Switch to view mode
-        </Button>
-      );
+      if (isDirty) {
+        toolbarActions.push(
+          <Button
+            onClick={dashboard.onDiscard}
+            tooltip="Discard changes and return to view mode"
+            fill="outline"
+            size="sm"
+            key="discard"
+            variant="destructive"
+          >
+            Discard changes
+          </Button>
+        );
+      } else {
+        toolbarActions.push(
+          <Button onClick={dashboard.onDiscard} tooltip="Will discard all changes" fill="text" size="sm" key="discard">
+            Switch to view mode
+          </Button>
+        );
+      }
     }
 
     toolbarActions.push(

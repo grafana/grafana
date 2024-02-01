@@ -219,15 +219,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       return;
     }
 
-    appEvents.publish(
-      new ShowConfirmModalEvent({
-        title: 'Discard changes to dashboard?',
-        text: `You have unsaved changes to this dashboard. Are you sure you want to discard them?`,
-        icon: 'trash-alt',
-        yesText: 'Discard',
-        onConfirm: this.onConfirmDiscard,
-      })
-    );
+    // appEvents.publish(
+    //   new ShowConfirmModalEvent({
+    //     title: 'Discard changes to dashboard?',
+    //     text: `You have unsaved changes to this dashboard. Are you sure you want to discard them?`,
+    //     icon: 'trash-alt',
+    //     yesText: 'Discard',
+    //     onConfirm: this.onConfirmDiscard,
+    //   })
+    // );
+    this.onConfirmDiscard();
   };
 
   private onConfirmDiscard = () => {
