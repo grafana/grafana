@@ -10,7 +10,7 @@ import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { getMessageFromError } from '../../../../../../core/utils/errors';
-import { logAlertingError } from '../../../Analytics';
+import { logError } from '../../../Analytics';
 import { isOnCallFetchError } from '../../../api/onCallApi';
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
 import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
@@ -103,7 +103,7 @@ export function ReceiverForm<R extends ChannelValues>({
 
         const error = new Error('Failed to save the contact point');
         error.cause = e;
-        logAlertingError(error);
+        logError(error);
       }
       throw e;
     }

@@ -1,12 +1,10 @@
 import * as comlink from 'comlink';
 import { useCallback, useEffect } from 'react';
 
-import { logError } from '@grafana/runtime';
-
 import { AlertmanagerGroup, RouteWithID } from '../../../plugins/datasource/alertmanager/types';
 import { Labels } from '../../../types/unified-alerting-dto';
 
-import { logInfo } from './Analytics';
+import { logError, logInfo } from './Analytics';
 import { createWorker } from './createRouteGroupsMatcherWorker';
 import type { RouteGroupsMatcher } from './routeGroupsMatcher';
 
