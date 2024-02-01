@@ -384,10 +384,6 @@ export const cloudNotifierTypes: Array<NotifierDTO<CloudNotifierType>> = [
         required: true,
         setValueAs: (value) => (typeof value === 'string' ? parseInt(value, 10) : 0),
       }),
-      option("message_thread_id", "Message thread ID", "ID of the message thread where to send the messages", {
-        required: false,
-        setValueAs: (value) => (typeof value === 'string' ? parseInt(value, 10) : 0),
-      }),
       option('message', 'Message', 'Message template', {
         placeholder: '{{ template "webex.default.message" .}}',
       }),
