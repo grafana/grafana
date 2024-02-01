@@ -72,6 +72,16 @@ const FlameGraphContextMenu = ({
             onMenuItemClick();
           }}
         />
+        {
+          (extraContextMenuButtons || []).map(({ label, icon, onClick }) => {
+            return <MenuItem
+              label={label}
+              icon={icon}
+              onClick={() => onClick(itemData)}
+              key={label}
+            />
+          })
+        }
         {collapsing && (
           <MenuGroup label={'Grouping'}>
             {collapseConfig ? (
@@ -117,16 +127,6 @@ const FlameGraphContextMenu = ({
             )}
           </MenuGroup>
         )}
-        {
-          (extraContextMenuButtons || []).map(({ label, icon, onClick }) => {
-            return <MenuItem
-              label={label}
-              icon={icon}
-              onClick={() => onClick(itemData)}
-              key={label}
-            />
-          })
-        }
       </>
     );
   }
