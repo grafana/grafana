@@ -360,6 +360,7 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 // Create / Update dashboard
 //
 // Creates a new dashboard or updates an existing dashboard.
+// Note: This endpoint is not intended for creating folders, use `POST /api/folders` for that.
 //
 // Responses:
 // 200: postDashboardResponse
