@@ -705,7 +705,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 	apiClient := newAlertingApiClient(grafanaListedAddr, "editor", "editor")
 
 	// Create the namespace we'll save our alerts to.
-	namespaceUID := "default"
+	namespaceUID := "default" //nolint:goconst
 	apiClient.CreateFolder(t, namespaceUID, namespaceUID)
 
 	createRule(t, apiClient, "default")
