@@ -14,13 +14,13 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Create and manage alerting resources using file provisioning
+title: Use file provisioning to manage alerting resources
 weight: 100
 ---
 
-## Create and manage alerting resources using file provisioning
+## Use file provisioning to manage alerting resources
 
-Provision your alerting resources using files from disk. When you start Grafana, the data from these files is created in your Grafana system. Grafana adds any new resources you created, updates any that you changed, and deletes old ones.
+Manage your alerting resources using files from disk. When you start Grafana, the data from these files is created in your Grafana system. Grafana adds any new resources you created, updates any that you changed, and deletes old ones.
 
 Arrange your files in a directory in a way that best suits your use case. For example, you can choose a team-based layout where every team has its own file, you can have one big file for all your teams; or you can have one file per resource type.
 
@@ -28,9 +28,9 @@ Details on how to set up the files and which fields are required for each object
 
 **Note:**
 
-Provisioning takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Admin API][reload-provisioning-configurations].
+Importing takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Admin API][reload-provisioning-configurations].
 
-### Provision alert rules
+### Import alert rules
 
 Create or delete alert rules in your Grafana instance(s).
 
@@ -41,11 +41,11 @@ Create or delete alert rules in your Grafana instance(s).
    Example configuration files can be found below.
 
 1. Ensure that your files are in the right directory on the node running the Grafana server, so that they deploy alongside your Grafana instance(s).
-1. Delete the alert rules in Grafana that will be provisioned.
+1. Delete the alert rules in Grafana that are going to be imported.
 
    **Note:**
 
-   If you do not delete the alert rule, it will clash with the provisioned alert rule once uploaded.
+   If you do not delete the alert rule, it will clash with the imported alert rule once uploaded.
 
 Here is an example of a configuration file for creating alert rules.
 
@@ -134,7 +134,7 @@ deleteRules:
     uid: my_id_1
 ```
 
-### Provision contact points
+### Import contact points
 
 Create or delete contact points in your Grafana instance(s).
 
@@ -495,7 +495,7 @@ settings:
     {{ template "default.title" . }}
 ```
 
-### Provision notification policies
+### Import notification policies
 
 Create or reset the notification policy tree in your Grafana instance(s).
 
@@ -587,7 +587,7 @@ In Grafana, the entire notification policy tree is considered a single, large re
 
 Since the policy tree is a single resource, applying it will overwrite a policy tree created through any other means.
 
-### Provision templates
+### Import templates
 
 Create or delete templates in your Grafana instance(s).
 
@@ -627,7 +627,7 @@ deleteTemplates:
     name: my_first_template
 ```
 
-### Provision mute timings
+### Import mute timings
 
 Create or delete mute timings in your Grafana instance(s).
 
