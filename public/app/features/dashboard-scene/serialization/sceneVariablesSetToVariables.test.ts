@@ -13,6 +13,8 @@ import {
 } from '@grafana/data';
 import { setRunRequest } from '@grafana/runtime';
 import {
+  AdHocFilterSet,
+  AdHocFiltersVariable,
   ConstantVariable,
   CustomVariable,
   DataSourceVariable,
@@ -84,7 +86,7 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-describe('sceneVariablesSetToVariables', () => {
+describe.only('sceneVariablesSetToVariables', () => {
   it('should handle QueryVariable', () => {
     const variable = new QueryVariable({
       name: 'test',
@@ -341,6 +343,66 @@ describe('sceneVariablesSetToVariables', () => {
       "query": "text value",
       "skipUrlSync": true,
       "type": "textbox",
+    }
+    `);
+  });
+
+  it('should handle AdHocFiltersVariable', () => {
+    const variable = new AdHocFiltersVariable({
+      name: 'test',
+      label: 'test-label',
+      description: 'test-desc',
+      type: 'adhoc',
+      set: new AdHocFilterSet({
+        datasource: { uid: 'fake-std', type: 'fake-std' },
+        name: 'test',
+        filters: [
+          {
+            key: 'filterTest',
+            operator: '=',
+            value: 'test',
+          },
+        ],
+        baseFilters: [
+          {
+            key: 'baseFilterTest',
+            operator: '=',
+            value: 'test',
+          },
+        ],
+      }),
+    });
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    const result = sceneVariablesSetToVariables(set);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchInlineSnapshot(`
+    {
+      "baseFilters": [
+        {
+          "key": "baseFilterTest",
+          "operator": "=",
+          "value": "test",
+        },
+      ],
+      "datasource": {
+        "type": "fake-std",
+        "uid": "fake-std",
+      },
+      "description": "test-desc",
+      "filters": [
+        {
+          "key": "filterTest",
+          "operator": "=",
+          "value": "test",
+        },
+      ],
+      "label": "test-label",
+      "name": "test",
+      "type": "adhoc",
     }
     `);
   });
