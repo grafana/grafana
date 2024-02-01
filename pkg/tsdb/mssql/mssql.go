@@ -100,9 +100,14 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 			UID:                     settings.UID,
 			DecryptedSecureJSONData: settings.DecryptedSecureJSONData,
 		}
+
 		cnnstr, err := generateConnectionString(dsInfo, cfg, azureCredentials, logger)
 		if err != nil {
 			return nil, err
+		}
+
+		if dsInfo.JsonData.Timezone != "" {
+			cnnstr += fmt.Sprintf("&time_zone='%s'", url.QueryEscape(dsInfo.JsonData.Timezone))
 		}
 
 		if cfg.Env == setting.Dev {
