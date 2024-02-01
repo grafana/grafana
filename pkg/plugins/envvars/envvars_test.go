@@ -585,7 +585,7 @@ func TestInitalizer_awsEnvVars(t *testing.T) {
 			AWSAllowedAuthProviders: []string{"grafana_assume_role", "keys"},
 			AWSExternalId:           "mock_external_id",
 			AWSSessionDuration:      "10m",
-			AWSListMetricsPageLimit: 100,
+			AWSListMetricsPageLimit: "100",
 		}, nil)
 		envVars := envVarsProvider.Get(context.Background(), p)
 		assert.ElementsMatch(t, []string{"GF_VERSION=", "AWS_AUTH_AssumeRoleEnabled=true", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id", "AWS_AUTH_SESSION_DURATION=10m", "AWS_CW_LIST_METRICS_PAGE_LIMIT=100"}, envVars)
@@ -907,7 +907,7 @@ func TestService_GetConfigMap_aws(t *testing.T) {
 		AWSAllowedAuthProviders:   []string{"grafana_assume_role", "keys"},
 		AWSExternalId:             "mock_external_id",
 		AWSSessionDuration:        "10m",
-		AWSListMetricsPageLimit:   100,
+		AWSListMetricsPageLimit:   "100",
 		AWSForwardSettingsPlugins: []string{"cloudwatch", "prometheus", "elasticsearch"},
 	}
 

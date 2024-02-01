@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
@@ -1220,6 +1221,10 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		// if the proxy is misconfigured, disable it rather than crashing
 		cfg.SecureSocksDSProxy.Enabled = false
 		cfg.Logger.Error("secure_socks_datasource_proxy unable to start up", "err", err.Error())
+	}
+	err = os.Setenv(proxy.PluginSecureSocksProxyEnabled, strconv.FormatBool(cfg.SecureSocksDSProxy.Enabled))
+	if err != nil {
+		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", proxy.PluginSecureSocksProxyEnabled), err)
 	}
 
 	if cfg.VerifyEmailEnabled && !cfg.Smtp.Enabled {
