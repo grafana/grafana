@@ -16,8 +16,11 @@ import (
 	openapi "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/utils/strings/slices"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -32,17 +35,19 @@ var _ grafanaapiserver.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 type DataSourceAPIBuilder struct {
 	connectionResourceInfo common.ResourceInfo
 
-	pluginJSON    plugins.JSONData
-	querier       Querier
-	pluginContext PluginContextProvider
-	accessControl accesscontrol.AccessControl
+	pluginJSON      plugins.JSONData
+	client          plugins.Client // will only ever be called with the same pluginid!
+	datasources     PluginDatasourceProvider
+	contextProvider PluginContextWrapper
+	accessControl   accesscontrol.AccessControl
 }
 
 func RegisterAPIService(
-	querierProvider QuerierProvider,
 	features featuremgmt.FeatureToggles,
 	apiRegistrar grafanaapiserver.APIRegistrar,
-	pluginContext PluginContextProvider,
+	pluginClient plugins.Client, // access to everything
+	datasources PluginDatasourceProvider,
+	contextProvider PluginContextWrapper,
 	pluginStore pluginstore.Store,
 	accessControl accesscontrol.AccessControl,
 ) (*DataSourceAPIBuilder, error) {
@@ -63,7 +68,12 @@ func RegisterAPIService(
 			continue // skip this one
 		}
 
-		builder, err = NewDataSourceAPIBuilder(ds.JSONData, querierProvider, pluginContext, accessControl)
+		builder, err = NewDataSourceAPIBuilder(ds.JSONData,
+			pluginClient,
+			datasources,
+			contextProvider,
+			accessControl,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -74,15 +84,11 @@ func RegisterAPIService(
 
 func NewDataSourceAPIBuilder(
 	plugin plugins.JSONData,
-	querierProvider QuerierProvider,
-	pluginContext PluginContextProvider,
+	client plugins.Client,
+	datasources PluginDatasourceProvider,
+	contextProvider PluginContextWrapper,
 	accessControl accesscontrol.AccessControl) (*DataSourceAPIBuilder, error) {
 	ri, err := resourceFromPluginID(plugin.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	querier, err := querierProvider.Querier(context.Background(), ri, plugin)
 	if err != nil {
 		return nil, err
 	}
@@ -90,8 +96,9 @@ func NewDataSourceAPIBuilder(
 	return &DataSourceAPIBuilder{
 		connectionResourceInfo: ri,
 		pluginJSON:             plugin,
-		querier:                querier,
-		pluginContext:          pluginContext,
+		client:                 client,
+		datasources:            datasources,
+		contextProvider:        contextProvider,
 		accessControl:          accessControl,
 	}, nil
 }
@@ -106,7 +113,8 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&v0alpha1.DataSourceConnectionList{},
 		&v0alpha1.HealthCheckResult{},
 		&unstructured.Unstructured{},
-		// Added for subresource stubs
+		// Query handler
+		&query.QueryDataResponse{},
 		&metav1.Status{},
 	)
 }
@@ -132,7 +140,7 @@ func (b *DataSourceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 }
 
 func resourceFromPluginID(pluginID string) (common.ResourceInfo, error) {
-	group, err := getDatasourceGroupNameFromPluginID(pluginID)
+	group, err := plugins.GetDatasourceGroupNameFromPluginID(pluginID)
 	if err != nil {
 		return common.ResourceInfo{}, err
 	}
@@ -148,7 +156,8 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 
 	conn := b.connectionResourceInfo
 	storage[conn.StoragePath()] = &connectionAccess{
-		builder:      b.querier,
+		pluginID:     b.pluginJSON.ID,
+		datasources:  b.datasources,
 		resourceInfo: conn,
 		tableConverter: utils.NewTableConverter(
 			conn.GroupResource(),
@@ -189,6 +198,14 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 
 	apiGroupInfo.VersionedResourcesStorageMap[conn.GroupVersion().Version] = storage
 	return &apiGroupInfo, nil
+}
+
+func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string) (backend.PluginContext, error) {
+	instance, err := b.datasources.GetInstanceSettings(ctx, b.pluginJSON.ID, uid)
+	if err != nil {
+		return backend.PluginContext{}, err
+	}
+	return b.contextProvider.PluginContextForDataSource(ctx, instance)
 }
 
 func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {

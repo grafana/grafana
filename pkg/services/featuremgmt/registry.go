@@ -59,7 +59,6 @@ var (
 			Name:              "publicDashboardsEmailSharing",
 			Description:       "Enables public dashboard sharing to be restricted to only allowed emails",
 			Stage:             FeatureStagePublicPreview,
-			RequiresLicense:   true,
 			Owner:             grafanaSharingSquad,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
@@ -95,11 +94,12 @@ var (
 			Created:     time.Date(2022, time.March, 17, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:        "correlations",
-			Description: "Correlations page",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaExploreSquad,
-			Created:     time.Date(2022, time.September, 16, 12, 0, 0, 0, time.UTC),
+			Name:           "correlations",
+			Description:    "Correlations page",
+			Stage:          FeatureStageGeneralAvailability,
+			Owner:          grafanaExploreSquad,
+			AllowSelfServe: true,
+			Created:        time.Date(2022, time.September, 16, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "exploreContentOutline",
@@ -265,15 +265,6 @@ var (
 			Created:        time.Date(2022, time.August, 27, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:           "cloudwatchNewRegionsHandler",
-			Description:    "Refactor of /regions endpoint, no user-facing changes",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // enabled by default
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: true,
-			Created:        time.Date(2023, time.September, 25, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:        "showDashboardValidationWarnings",
 			Description: "Show warnings when dashboards do not validate against the schema",
 			Stage:       FeatureStageExperimental,
@@ -311,25 +302,6 @@ var (
 			Expression:     "true", // enabled by default
 			AllowSelfServe: true,
 			Created:        time.Date(2023, time.July, 24, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:              "emptyDashboardPage",
-			Description:       "Enable the redesigned user interface of a dashboard page that includes no panels",
-			Stage:             FeatureStageGeneralAvailability,
-			FrontendOnly:      true,
-			Expression:        "true", // enabled by default
-			Owner:             grafanaDashboardsSquad,
-			AllowSelfServe:    false,
-			HideFromAdminPage: true,
-			Created:           time.Date(2023, time.March, 28, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:           "disablePrometheusExemplarSampling",
-			Description:    "Disable Prometheus exemplar sampling",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: true,
-			Created:        time.Date(2022, time.December, 19, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "alertingBacktesting",
@@ -416,6 +388,14 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
 			Created:     time.Date(2023, time.November, 29, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "influxdbRunQueriesInParallel",
+			Description:  "Enables running InfluxDB Influxql queries in parallel",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaObservabilityMetricsSquad,
+			Created:      time.Date(2024, time.January, 29, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "clientTokenRotation",
@@ -714,15 +694,6 @@ var (
 			Created:      time.Date(2023, time.August, 28, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:            "grafanaAPIServer",
-			Description:     "Enable Kubernetes API Server for Grafana resources",
-			Stage:           FeatureStageGeneralAvailability,
-			Expression:      "true", // enabled by default
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Created:         time.Date(2023, time.July, 14, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:            "grafanaAPIServerWithExperimentalAPIs",
 			Description:     "Register experimental APIs with the k8s API server",
 			Stage:           FeatureStageExperimental,
@@ -767,22 +738,6 @@ var (
 			RequiresRestart:   true,
 			HideFromAdminPage: true, // This is internal work to speed up dashboard search, and is not ready for wider use
 			Created:           time.Date(2023, time.July, 21, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:         "traceToProfiles",
-			Description:  "Enables linking between traces and profiles",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-			Created:      time.Date(2023, time.November, 1, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:         "tracesEmbeddedFlameGraph",
-			Description:  "Enables embedding a flame graph in traces",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-			Created:      time.Date(2023, time.November, 2, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "permissionsFilterRemoveSubquery",
@@ -1003,6 +958,15 @@ var (
 			Created:         time.Date(2023, time.December, 4, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:            "kubernetesQueryServiceRewrite",
+			Description:     "Rewrite requests targeting /ds/query to the query service",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+			RequiresDevMode: true,
+			Created:         time.Date(2024, time.January, 28, 12, 0, 0, 0, time.UTC),
+		},
+		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStagePublicPreview,
@@ -1038,7 +1002,7 @@ var (
 		{
 			Name:         "awsDatasourcesNewFormStyling",
 			Description:  "Applies new form styling for configuration and query editors in AWS plugins",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        awsDatasourcesSquad,
 			Created:      time.Date(2023, time.October, 12, 12, 0, 0, 0, time.UTC),
@@ -1070,7 +1034,7 @@ var (
 		{
 			Name:            "managedPluginsInstall",
 			Description:     "Install managed plugins directly from plugins catalog",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStagePublicPreview,
 			RequiresDevMode: false,
 			Owner:           grafanaPluginsPlatformSquad,
 			Created:         time.Date(2023, time.October, 18, 12, 0, 0, 0, time.UTC),
@@ -1162,13 +1126,12 @@ var (
 			Created:      time.Date(2023, time.November, 6, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:            "ssoSettingsApi",
-			Description:     "Enables the SSO settings API",
-			RequiresDevMode: true,
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           identityAccessTeam,
-			Created:         time.Date(2023, time.November, 8, 12, 0, 0, 0, time.UTC),
+			Name:         "ssoSettingsApi",
+			Description:  "Enables the SSO settings API",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        identityAccessTeam,
+			Created:      time.Date(2023, time.November, 8, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "canvasPanelPanZoom",
@@ -1265,16 +1228,6 @@ var (
 			Expression:     "true", // enabled by default
 		},
 		{
-			Name:              "alertStateHistoryAnnotationsFromLoki",
-			Description:       "Enable using Loki as the source for panel annotations generated by alert rules",
-			Stage:             FeatureStageExperimental,
-			Owner:             grafanaAlertingSquad,
-			HideFromAdminPage: true,
-			HideFromDocs:      true,
-			RequiresRestart:   true,
-			Created:           time.Date(2023, time.November, 30, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			// this is mainly used a a way to quickly disable query hints as a safe guard for our infrastructure
 			Name:           "lokiQueryHints",
 			Description:    "Enables query hints for Loki",
@@ -1299,9 +1252,8 @@ var (
 			Name:            "alertingPreviewUpgrade",
 			Description:     "Show Unified Alerting preview and upgrade page in legacy alerting",
 			FrontendOnly:    false,
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStagePublicPreview,
 			Owner:           grafanaAlertingSquad,
-			HideFromDocs:    true,
 			RequiresRestart: true,
 			Created:         time.Date(2024, time.January, 3, 12, 0, 0, 0, time.UTC),
 		},
@@ -1343,7 +1295,7 @@ var (
 			Name:              "jitterAlertRules",
 			Description:       "Distributes alert rule evaluations more evenly over time, by rule group",
 			FrontendOnly:      false,
-			Stage:             FeatureStageExperimental,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             grafanaAlertingSquad,
 			AllowSelfServe:    false,
 			HideFromDocs:      false,
@@ -1355,13 +1307,43 @@ var (
 			Name:              "jitterAlertRulesWithinGroups",
 			Description:       "Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group",
 			FrontendOnly:      false,
-			Stage:             FeatureStageExperimental,
+			Stage:             FeatureStagePublicPreview,
 			Owner:             grafanaAlertingSquad,
 			AllowSelfServe:    false,
 			HideFromDocs:      true,
 			HideFromAdminPage: false,
 			RequiresRestart:   true,
 			Created:           time.Date(2024, time.January, 17, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:        "onPremToCloudMigrations",
+			Description: "In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Created:     time.Date(2024, time.January, 22, 3, 30, 00, 00, time.UTC),
+		},
+		{
+			Name:         "alertingSaveStatePeriodic",
+			Description:  "Writes the state periodically to the database, asynchronous to rule evaluation",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaAlertingSquad,
+			Created:      time.Date(2024, time.January, 22, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:        "promQLScope",
+			Description: "In-development feature that will allow injection of labels into prometheus queries.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityMetricsSquad,
+			Created:     time.Date(2024, time.January, 29, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "nodeGraphDotLayout",
+			Description:  "Changed the layout algorithm for the node graph",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			Created:      time.Date(2024, time.January, 2, 12, 0, 0, 0, time.UTC),
 		},
 	}
 )

@@ -9,16 +9,17 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/playlist"
+	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
 
 var WireSet = wire.NewSet(
 	ProvideRegistryServiceSink, // dummy background service that forces registration
 
-	wire.Bind(new(datasource.QuerierProvider), new(*datasource.DefaultQuerierProvider)),
-	datasource.ProvideDefaultQuerierProvider,
+	// read-only datasource abstractions
 	plugincontext.ProvideService,
-	wire.Bind(new(datasource.PluginContextProvider), new(*plugincontext.Provider)),
+	wire.Bind(new(datasource.PluginContextWrapper), new(*plugincontext.Provider)),
+	datasource.ProvideDefaultPluginConfigs,
 
 	// Each must be added here *and* in the ServiceSink above
 	playlist.RegisterAPIService,
@@ -27,4 +28,5 @@ var WireSet = wire.NewSet(
 	featuretoggle.RegisterAPIService,
 	datasource.RegisterAPIService,
 	folders.RegisterAPIService,
+	query.RegisterAPIService,
 )

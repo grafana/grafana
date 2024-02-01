@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -136,6 +137,7 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.OrgID = cmd.OrgID
 	dash.PluginID = cmd.PluginID
 	dash.IsFolder = cmd.IsFolder
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 	// nolint:staticcheck
 	dash.FolderID = cmd.FolderID
 	dash.FolderUID = cmd.FolderUID
@@ -218,6 +220,7 @@ type DashboardProvisioning struct {
 
 type DeleteDashboardCommand struct {
 	ID                     int64
+	UID                    string
 	OrgID                  int64
 	ForceDeleteFolderRules bool
 }
@@ -320,12 +323,12 @@ type CountDashboardsInFolderQuery struct {
 // to the store layer. The FolderID will be replaced with FolderUID when
 // dashboards are updated with parent folder UIDs.
 type CountDashboardsInFolderRequest struct {
-	// Deprecated: use FolderUID instead
-	FolderID int64
-	OrgID    int64
+	FolderUIDs []string
+	OrgID      int64
 }
 
 func FromDashboard(dash *Dashboard) *folder.Folder {
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 	return &folder.Folder{
 		ID:        dash.ID, // nolint:staticcheck
 		UID:       dash.UID,
@@ -342,8 +345,8 @@ func FromDashboard(dash *Dashboard) *folder.Folder {
 }
 
 type DeleteDashboardsInFolderRequest struct {
-	FolderUID string
-	OrgID     int64
+	FolderUIDs []string
+	OrgID      int64
 }
 
 //

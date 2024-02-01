@@ -111,7 +111,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
 }
 
 const getStyles = () => ({
-  container: css`
-    width: 100%;
-  `,
+  container: css({
+    width: '100%',
+  }),
 });

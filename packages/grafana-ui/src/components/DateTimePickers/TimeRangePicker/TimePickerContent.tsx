@@ -83,7 +83,6 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
             <div className={styles.timeRangeFilter}>
               <FilterInput
                 width={0}
-                autoFocus={true}
                 value={searchTerm}
                 onChange={setSearchQuery}
                 placeholder={t('time-picker.content.filter-placeholder', 'Search quick ranges')}

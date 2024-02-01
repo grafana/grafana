@@ -12,13 +12,14 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	netutils "k8s.io/utils/net"
 
-	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
+	"github.com/grafana/grafana/pkg/registry/apis/query"
+	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
+	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
-	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -51,14 +52,18 @@ func (o *APIServerOptions) loadAPIGroupBuilders(args []string) error {
 		// No dependencies for testing
 		case "example.grafana.app":
 			o.builders = append(o.builders, example.NewTestingAPIBuilder())
+		// Only works with testdata
+		case "query.grafana.app":
+			o.builders = append(o.builders, query.NewQueryAPIBuilder(
+				featuremgmt.WithFeatures(),
+				runner.NewDummyTestRunner(),
+				runner.NewDummyRegistry(),
+			))
 		case "featuretoggle.grafana.app":
-			features, err := featuremgmt.ProvideManagerService(&setting.Cfg{}, &licensing.OSSLicensingService{})
-			if err != nil {
-				return err
-			}
+			features := featuremgmt.WithFeatureManager(setting.FeatureMgmtSettings{}, nil) // none... for now
 			o.builders = append(o.builders, featuretoggle.NewFeatureFlagAPIBuilder(features))
 		case "testdata.datasource.grafana.app":
-			ds, err := datasource.NewStandaloneDatasource(g)
+			ds, err := server.InitializeDataSourceAPIServer(g)
 			if err != nil {
 				return err
 			}

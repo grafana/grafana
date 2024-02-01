@@ -1,5 +1,5 @@
 import { urlUtil } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { getUrlSyncManager, sceneGraph, SceneObject, SceneObjectUrlValues, SceneTimeRange } from '@grafana/scenes';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
@@ -8,7 +8,7 @@ import { DataTrail } from './DataTrail';
 import { DataTrailSettings } from './DataTrailSettings';
 import { MetricScene } from './MetricScene';
 import { getTrailStore } from './TrailStore/TrailStore';
-import { TRAILS_ROUTE, VAR_DATASOURCE_EXPR } from './shared';
+import { LOGS_METRIC, TRAILS_ROUTE, VAR_DATASOURCE_EXPR } from './shared';
 
 export function getTrailFor(model: SceneObject): DataTrail {
   return sceneGraph.getAncestor(model, DataTrail);
@@ -48,6 +48,26 @@ export function getMetricSceneFor(model: SceneObject): MetricScene {
   console.error('Unable to find graph view for', model);
 
   throw new Error('Unable to find trail');
+}
+
+export function getDataSource(trail: DataTrail) {
+  return sceneGraph.interpolate(trail, VAR_DATASOURCE_EXPR);
+}
+
+export function getDataSourceName(dataSourceUid: string) {
+  return getDataSourceSrv().getInstanceSettings(dataSourceUid)?.name || dataSourceUid;
+}
+
+export function getMetricName(metric?: string) {
+  if (!metric) {
+    return 'Select metric';
+  }
+
+  if (metric === LOGS_METRIC) {
+    return 'Logs';
+  }
+
+  return metric;
 }
 
 export function getDatasourceForNewTrail(): string | undefined {

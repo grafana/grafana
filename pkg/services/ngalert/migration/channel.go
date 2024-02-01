@@ -146,7 +146,7 @@ var secureKeysToMigrate = map[string][]string{
 // migrateSettingsToSecureSettings takes care of that.
 func (om *OrgMigration) migrateSettingsToSecureSettings(chanType string, settings *simplejson.Json, secureSettings SecureJsonData) (*simplejson.Json, map[string]string, error) {
 	keys := secureKeysToMigrate[chanType]
-	newSecureSettings := secureSettings.Decrypt()
+	newSecureSettings := secureSettings.Decrypt(om.cfg.SecretKey)
 	cloneSettings := simplejson.New()
 	settingsMap, err := settings.Map()
 	if err != nil {
