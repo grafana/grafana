@@ -256,7 +256,7 @@ func validateRuleGroup(
 	return result, nil
 }
 
-func validateNotificationSettings(n *apimodels.PostableNotificationSettings) ([]ngmodels.NotificationSettings, error) {
+func validateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) ([]ngmodels.NotificationSettings, error) {
 	s := ngmodels.NotificationSettings{
 		Receiver:          n.Receiver,
 		GroupBy:           n.GroupBy,

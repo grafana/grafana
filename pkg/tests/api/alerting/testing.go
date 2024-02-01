@@ -233,21 +233,7 @@ func convertGettableGrafanaRuleToPostable(gettable *apimodels.GettableGrafanaRul
 		NoDataState:          gettable.NoDataState,
 		ExecErrState:         gettable.ExecErrState,
 		IsPaused:             &gettable.IsPaused,
-		NotificationSettings: convertGettableNotificationSettingsToPostable(gettable.NotificationSettings),
-	}
-}
-
-func convertGettableNotificationSettingsToPostable(gettable *apimodels.GettableNotificationSettings) *apimodels.PostableNotificationSettings {
-	if gettable == nil {
-		return nil
-	}
-	return &apimodels.PostableNotificationSettings{
-		Receiver:          gettable.Receiver,
-		GroupBy:           gettable.GroupBy,
-		GroupWait:         gettable.GroupWait,
-		GroupInterval:     gettable.GroupInterval,
-		RepeatInterval:    gettable.RepeatInterval,
-		MuteTimeIntervals: gettable.MuteTimeIntervals,
+		NotificationSettings: gettable.NotificationSettings,
 	}
 }
 

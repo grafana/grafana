@@ -456,18 +456,6 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[stri
 	if prov, exists := provenanceRecords[r.ResourceID()]; exists {
 		provenance = prov
 	}
-	var notificationSetting *apimodels.GettableNotificationSettings
-	if len(r.NotificationSettings) > 0 {
-		settings := r.NotificationSettings[0]
-		notificationSetting = &apimodels.GettableNotificationSettings{
-			Receiver:          settings.Receiver,
-			GroupBy:           settings.GroupBy,
-			GroupWait:         settings.GroupWait,
-			GroupInterval:     settings.GroupInterval,
-			RepeatInterval:    settings.RepeatInterval,
-			MuteTimeIntervals: settings.MuteTimeIntervals,
-		}
-	}
 
 	gettableExtendedRuleNode := apimodels.GettableExtendedRuleNode{
 		GrafanaManagedAlert: &apimodels.GettableGrafanaRule{
@@ -486,7 +474,7 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, provenanceRecords map[stri
 			ExecErrState:         apimodels.ExecutionErrorState(r.ExecErrState),
 			Provenance:           apimodels.Provenance(provenance),
 			IsPaused:             r.IsPaused,
-			NotificationSettings: notificationSetting,
+			NotificationSettings: AlertRuleNotificationSettingsFromNotificationSettings(r.NotificationSettings),
 		},
 	}
 	forDuration := model.Duration(r.For)
