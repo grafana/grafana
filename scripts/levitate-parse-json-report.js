@@ -3,7 +3,7 @@ const fs = require('fs');
 const data = JSON.parse(fs.readFileSync('data.json', 'utf8'));
 
 function clearAnsi(str) {
-  return str.replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry]/g, '');
+  return str.replace(/\x1b\[[0-9;]*m/g, '');
 }
 
 const printSection = (title, items) => {
