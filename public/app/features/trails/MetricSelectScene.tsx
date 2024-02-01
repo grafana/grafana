@@ -4,22 +4,22 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
-  SceneObjectState,
-  SceneObjectBase,
-  SceneComponentProps,
   PanelBuilders,
-  SceneFlexItem,
-  SceneVariableSet,
   QueryVariable,
-  sceneGraph,
-  VariableDependencyConfig,
-  SceneCSSGridLayout,
+  SceneComponentProps,
   SceneCSSGridItem,
+  SceneCSSGridLayout,
+  SceneFlexItem,
+  sceneGraph,
+  SceneObjectBase,
   SceneObjectRef,
+  SceneObjectState,
   SceneQueryRunner,
+  SceneVariableSet,
+  VariableDependencyConfig,
 } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
-import { Input, Text, useStyles2, InlineSwitch, Field, LoadingPlaceholder } from '@grafana/ui';
+import { Field, Icon, InlineSwitch, Input, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { MetricCategoryCascader } from './MetricCategory/MetricCategoryCascader';
@@ -40,7 +40,6 @@ interface MetricPanel {
 
 export interface MetricSelectSceneState extends SceneObjectState {
   body: SceneCSSGridLayout;
-  showHeading?: boolean;
   searchQuery?: string;
   showPreviews?: boolean;
   prefixFilter?: string;
@@ -274,8 +273,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   };
 
   public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
-    const { showHeading, searchQuery, showPreviews, body, metricsAfterSearch, metricsAfterFilter, prefixFilter } =
-      model.useState();
+    const { searchQuery, showPreviews, body, metricsAfterSearch, metricsAfterFilter, prefixFilter } = model.useState();
     const { children } = body.useState();
     const styles = useStyles2(getStyles);
 
@@ -296,13 +294,15 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     return (
       <div className={styles.container}>
-        {showHeading && (
-          <div className={styles.headingWrapper}>
-            <Text variant="h4">Select a metric</Text>
-          </div>
-        )}
         <div className={styles.header}>
-          <Input placeholder="Search metrics" value={searchQuery} onChange={model.onSearchChange} />
+          <Field label={'Search metrics'} className={styles.searchField}>
+            <Input
+              placeholder="Search metrics"
+              prefix={<Icon name={'search'} />}
+              value={searchQuery}
+              onChange={model.onSearchChange}
+            />
+          </Field>
           <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
         </div>
         <div className={styles.header}>
@@ -393,18 +393,23 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
     }),
     headingWrapper: css({
-      marginTop: theme.spacing(1),
+      marginBottom: theme.spacing(0.5),
     }),
     header: css({
       flexGrow: 0,
       display: 'flex',
       gap: theme.spacing(2),
       marginBottom: theme.spacing(1),
+      alignItems: 'flex-end',
     }),
     statusMessage: css({
       fontStyle: 'italic',
       marginTop: theme.spacing(7),
       textAlign: 'center',
+    }),
+    searchField: css({
+      flexGrow: 1,
+      marginBottom: 0,
     }),
   };
 }

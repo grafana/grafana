@@ -139,7 +139,7 @@ export class DataTrailHistory extends SceneObjectBase<DataTrailsHistoryState> {
 
     return (
       <div className={styles.container}>
-        <div className={styles.heading}>Trail</div>
+        <div className={styles.heading}>History</div>
         {steps.map((step, index) => (
           <Tooltip content={() => model.renderStepTooltip(step)} key={index}>
             <button
