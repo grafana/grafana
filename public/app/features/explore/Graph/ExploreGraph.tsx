@@ -168,7 +168,8 @@ export function ExploreGraph({
   const panelContext: PanelContext = {
     eventsScope: 'explore',
     eventBus,
-    sync: () => DashboardCursorSync.Crosshair,
+    // TODO: Re-enable DashboardCursorSync.Crosshair when #81505 is fixed
+    sync: () => DashboardCursorSync.Off,
     onToggleSeriesVisibility(label: string, mode: SeriesVisibilityChangeMode) {
       setFieldConfig(seriesVisibilityConfigFactory(label, mode, fieldConfig, data));
     },
