@@ -560,7 +560,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
 
   /** Filters to dynamically apply to all queries */
   filters?: AdHocVariableFilter[];
-  groupByDimensions?: string[];
+  groupByKeys?: string[];
 
   // Request Timing
   startTime: number;

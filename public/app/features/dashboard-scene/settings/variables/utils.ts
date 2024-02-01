@@ -10,6 +10,7 @@ import {
   TextBoxVariable,
   QueryVariable,
   AdHocFilterSet,
+  GroupByVariable,
   SceneVariable,
   MultiValueVariable,
 } from '@grafana/scenes';
@@ -21,6 +22,7 @@ import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor
 import { ConstantVariableEditor } from './editors/ConstantVariableEditor';
 import { CustomVariableEditor } from './editors/CustomVariableEditor';
 import { DataSourceVariableEditor } from './editors/DataSourceVariableEditor';
+import { GroupByVariableEditor } from './editors/GroupByVariableEditor';
 import { IntervalVariableEditor } from './editors/IntervalVariableEditor';
 import { QueryVariableEditor } from './editors/QueryVariableEditor';
 import { TextBoxVariableEditor } from './editors/TextBoxVariableEditor';
@@ -67,6 +69,11 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     name: 'Ad hoc filters',
     description: 'Add key/value filters on the fly',
     editor: AdHocFiltersVariableEditor,
+  },
+  groupby: {
+    name: 'Group by',
+    description: 'Add keys to group by on the fly',
+    editor: GroupByVariableEditor,
   },
   textbox: {
     name: 'Textbox',
@@ -117,6 +124,8 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
     case 'adhoc':
       // TODO: Initialize properly AdHocFilterSet with initialState
       return new AdHocFilterSet({ name: initialState.name });
+    case 'groupby':
+      return new GroupByVariable(initialState);
     case 'textbox':
       return new TextBoxVariable(initialState);
   }

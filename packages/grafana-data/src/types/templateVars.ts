@@ -13,6 +13,7 @@ export interface VariableModel {
 export type TypedVariableModel =
   | QueryVariableModel
   | AdHocVariableModel
+  | GroupByVariableModel
   | ConstantVariableModel
   | DataSourceVariableModel
   | IntervalVariableModel
@@ -58,6 +59,16 @@ export interface AdHocVariableModel extends BaseVariableModel {
   type: 'adhoc';
   datasource: DataSourceRef | null;
   filters: AdHocVariableFilter[];
+  /**
+   * Filters that are always applied to the lookup of keys. Not shown in the AdhocFilterBuilder UI.
+   */
+  baseFilters?: AdHocVariableFilter[];
+}
+
+export interface GroupByVariableModel extends BaseVariableModel {
+  type: 'groupby';
+  datasource: DataSourceRef | null;
+  groupByKeys: string[];
   /**
    * Filters that are always applied to the lookup of keys. Not shown in the AdhocFilterBuilder UI.
    */
