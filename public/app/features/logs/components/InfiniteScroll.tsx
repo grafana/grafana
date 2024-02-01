@@ -33,13 +33,16 @@ export const InfiniteScroll = ({
   const [lowerOutOfRange, setLowerOutOfRange] = useState(false);
   const [upperLoading, setUpperLoading] = useState(false);
   const [lowerLoading, setLowerLoading] = useState(false);
+  const rowsRef = useRef<LogRowModel[]>(rows);
   const lastScroll = useRef<number>(scrollElement?.scrollTop || 0);
 
+  // Reset messages when range/order/rows change
   useEffect(() => {
     setUpperOutOfRange(false);
     setLowerOutOfRange(false);
   }, [range, rows, sortOrder]);
 
+  // Reset loading messages when loading stops
   useEffect(() => {
     if (!loading) {
       setUpperLoading(false);
@@ -47,12 +50,24 @@ export const InfiniteScroll = ({
     }
   }, [loading]);
 
+  // Ensure bottom loader visibility
   useEffect(() => {
     if (lowerLoading && scrollElement) {
-      // Ensure bottom loader visibility
       scrollElement.scrollTo(0, scrollElement.scrollHeight - scrollElement.clientHeight);
     }
   }, [lowerLoading, scrollElement]);
+
+  // Request came back with no new past rows
+  useEffect(() => {
+    if (rows !== rowsRef.current && rows.length === rowsRef.current.length && (upperLoading || lowerLoading)) {
+      if (sortOrder === LogsSortOrder.Descending && lowerLoading) {
+        setLowerOutOfRange(true);
+      } else if (sortOrder === LogsSortOrder.Ascending && upperLoading) {
+        setUpperOutOfRange(true);
+      }
+    }
+    rowsRef.current = rows;
+  }, [lowerLoading, rows, sortOrder, upperLoading]);
 
   useEffect(() => {
     if (!scrollElement || !loadMoreLogs) {
