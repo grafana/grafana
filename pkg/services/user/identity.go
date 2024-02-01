@@ -8,6 +8,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 )
 
+const (
+	GlobalOrgID = int64(0)
+)
+
 type SignedInUser struct {
 	UserID           int64 `xorm:"user_id"`
 	OrgID            int64 `xorm:"org_id"`
@@ -157,6 +161,19 @@ func (u *SignedInUser) GetPermissions() map[string][]string {
 	}
 
 	return u.Permissions[u.GetOrgID()]
+}
+
+// GetGlobalPermissions returns the permissions of the active entity that are available across all organizations
+func (u *SignedInUser) GetGlobalPermissions() map[string][]string {
+	if u.Permissions == nil {
+		return make(map[string][]string)
+	}
+
+	if u.Permissions[GlobalOrgID] == nil {
+		return make(map[string][]string)
+	}
+
+	return u.Permissions[GlobalOrgID]
 }
 
 // DEPRECATED: GetTeams returns the teams the entity is a member of
