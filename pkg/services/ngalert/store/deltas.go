@@ -2,9 +2,11 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
@@ -169,4 +171,58 @@ func UpdateCalculatedRuleFields(ch *GroupDelta) *GroupDelta {
 		Update:         append(ch.Update, toUpdate...),
 		Delete:         ch.Delete,
 	}
+}
+
+type NotificationSettingsValidatorProvider interface {
+	Validator(ctx context.Context, orgID int64) (models.NotificationSettingsValidator, error)
+}
+
+// validateNotifications validates notification settings for all new or updated rules in the GroupDelta.
+// Validation is performed for all rules using a single instance from NotificationSettingsValidatorProvider.
+func ValidateNotificationsInGroupDelta(ctx context.Context, groupChanges *GroupDelta, provider NotificationSettingsValidatorProvider) (bool, error) {
+	var validator models.NotificationSettingsValidator
+	var err error
+	var changed bool
+	for _, rule := range groupChanges.New {
+		if rule.NotificationSettings == nil {
+			continue
+		}
+		if validator == nil {
+			validator, err = provider.Validator(ctx, groupChanges.GroupKey.OrgID)
+			if err != nil {
+				return false, err
+			}
+		}
+		for _, s := range rule.NotificationSettings {
+			err = validator.Validate(s)
+			if err != nil {
+				return false, errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
+			}
+			changed = true
+		}
+	}
+	for _, delta := range groupChanges.Update {
+		if len(delta.New.NotificationSettings) == 0 {
+			continue
+		}
+		// validate only if changed
+		d := delta.Diff.GetDiffsForField("NotificationSettings")
+		if len(d) == 0 {
+			continue
+		}
+		changed = true
+		if validator == nil {
+			validator, err = provider.Validator(ctx, groupChanges.GroupKey.OrgID)
+			if err != nil {
+				return false, err
+			}
+		}
+		for _, s := range delta.New.NotificationSettings {
+			err = validator.Validate(s)
+			if err != nil {
+				return false, errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
+			}
+		}
+	}
+	return changed, nil
 }

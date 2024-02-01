@@ -311,7 +311,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			return err
 		}
 
-		notificationSettingsChanged, err = validateNotifications(c.Req.Context(), groupChanges, srv.notificationSettingsValidatorFactory)
+		notificationSettingsChanged, err = store.ValidateNotificationsInGroupDelta(c.Req.Context(), groupChanges, srv.notificationSettingsValidatorFactory)
 		if err != nil {
 			return err
 		}
@@ -537,56 +537,6 @@ func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, valida
 		}
 	}
 	return nil
-}
-
-// validateNotifications validates notification settings for all new or updated rules in the GroupDelta.
-// Validation is performed for all rules using a single instance from NotificationSettingsValidatorProvider.
-func validateNotifications(ctx context.Context, groupChanges *store.GroupDelta, provider NotificationSettingsValidatorProvider) (bool, error) {
-	var validator ngmodels.NotificationSettingsValidator
-	var err error
-	var changed bool
-	for _, rule := range groupChanges.New {
-		if rule.NotificationSettings == nil {
-			continue
-		}
-		if validator == nil {
-			validator, err = provider.Validator(ctx, groupChanges.GroupKey.OrgID)
-			if err != nil {
-				return false, err
-			}
-		}
-		for _, s := range rule.NotificationSettings {
-			err = validator.Validate(s)
-			if err != nil {
-				return false, errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
-			}
-			changed = true
-		}
-	}
-	for _, delta := range groupChanges.Update {
-		if len(delta.New.NotificationSettings) == 0 {
-			continue
-		}
-		// validate only if changed
-		d := delta.Diff.GetDiffsForField("NotificationSettings")
-		if len(d) == 0 {
-			continue
-		}
-		changed = true
-		if validator == nil {
-			validator, err = provider.Validator(ctx, groupChanges.GroupKey.OrgID)
-			if err != nil {
-				return false, err
-			}
-		}
-		for _, s := range delta.New.NotificationSettings {
-			err = validator.Validate(s)
-			if err != nil {
-				return false, errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
-			}
-		}
-	}
-	return changed, nil
 }
 
 // getAuthorizedRuleByUid fetches all rules in group to which the specified rule belongs, and checks whether the user is authorized to access the group.
