@@ -32,7 +32,7 @@ export class PanelDataAlertingTab extends SceneObjectBase<PanelDataPaneTabState>
   }
 
   getDashboardUID() {
-    const dashboard = getDashboardSceneFor(this._panelManager);
+    const dashboard = this.getDashboard();
     return dashboard.state.uid!;
   }
 
@@ -45,8 +45,8 @@ export class PanelDataAlertingTab extends SceneObjectBase<PanelDataPaneTabState>
   }
 
   getCanCreateRules() {
-    const permissions = getRulesPermissions('grafana');
-    return contextSrv.hasPermission(permissions.create);
+    const rulesPermissions = getRulesPermissions('grafana');
+    return this.getDashboard().state.meta.canSave && contextSrv.hasPermission(rulesPermissions.create);
   }
 
   get panelManager() {
@@ -62,7 +62,7 @@ export class PanelDataAlertingTab extends SceneObjectBase<PanelDataPaneTabState>
   }
 }
 
-function PanelDataAlertingTabRendered(props: SceneComponentProps<PanelDataAlertingTab>) {
+export function PanelDataAlertingTabRendered(props: SceneComponentProps<PanelDataAlertingTab>) {
   const { model } = props;
 
   const styles = useStyles2(getStyles);
@@ -91,12 +91,13 @@ function PanelDataAlertingTabRendered(props: SceneComponentProps<PanelDataAlerti
 
   const dashboard = model.getDashboard();
   const { queryRunner, panel } = model;
+  const canCreateRules = model.getCanCreateRules();
 
   if (rules.length) {
     return (
       <>
         <RulesTable rules={rules} scenes={true} />
-        {dashboard.state.meta.canSave && model.getCanCreateRules() && (
+        {canCreateRules && (
           <ScenesNewRuleFromPanelButton
             className={styles.newButton}
             panel={panel}
@@ -111,11 +112,13 @@ function PanelDataAlertingTabRendered(props: SceneComponentProps<PanelDataAlerti
   return (
     <div className={styles.noRulesWrapper}>
       <p>There are no alert rules linked to this panel.</p>
-      <ScenesNewRuleFromPanelButton
-        dashboard={dashboard}
-        panel={panel}
-        queryRunner={queryRunner}
-      ></ScenesNewRuleFromPanelButton>
+      {canCreateRules && (
+        <ScenesNewRuleFromPanelButton
+          dashboard={dashboard}
+          panel={panel}
+          queryRunner={queryRunner}
+        ></ScenesNewRuleFromPanelButton>
+      )}
     </div>
   );
 }
