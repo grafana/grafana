@@ -14,6 +14,7 @@ import { DataTransformerID } from './ids';
 export enum ReduceTransformerMode {
   SeriesToRows = 'seriesToRows', // default
   ReduceFields = 'reduceFields', // same structure, add additional row for each type
+  SampleValues = 'sampleValues', // sample values from each series
 }
 
 export interface ReduceTransformerOptions {
@@ -43,6 +44,8 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
           return data; // nothing selected
         }
 
+        console.log('options', options);
+
         const matcher = options.fields
           ? getFieldMatcher(options.fields)
           : options.includeTimeField && options.mode === ReduceTransformerMode.ReduceFields
@@ -52,6 +55,17 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
         // Collapse all matching fields into a single row
         if (options.mode === ReduceTransformerMode.ReduceFields) {
           return reduceFields(data, matcher, options.reducers);
+        }
+
+        if (options.mode === ReduceTransformerMode.SampleValues) {
+          data.map((frame) => {
+            // @todo how to do other reducers
+            frame.fields.map((field) => {
+              field.values = field.values.slice(0, 1);
+            });
+            frame.length = 1;
+          });
+          return data;
         }
 
         // Add a row for each series

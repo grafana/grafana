@@ -62,11 +62,6 @@ export function PartitionByValuesEditor({
     frameName,
   }
 
-  enum sampleModes {
-    noSampling,
-    sampling,
-  }
-
   enum keepFieldsModes {
     dropFields,
     keepFields,
@@ -75,11 +70,6 @@ export function PartitionByValuesEditor({
   const namingModesOptions = [
     { label: 'As label', value: namingModes.asLabels },
     { label: 'As frame name', value: namingModes.frameName },
-  ];
-
-  const sampleModesOptions = [
-    { label: 'Yes', value: sampleModes.sampling },
-    { label: 'No', value: sampleModes.noSampling },
   ];
 
   const KeepFieldsOptions = [
@@ -161,19 +151,6 @@ export function PartitionByValuesEditor({
             options={KeepFieldsOptions}
             value={options.keepFields ? keepFieldsModes.keepFields : keepFieldsModes.dropFields}
             onChange={(v) => onChange({ ...options, keepFields: v === keepFieldsModes.keepFields })}
-          />
-        </InlineField>
-      </InlineFieldRow>
-      <InlineFieldRow>
-        <InlineField
-          tooltip={'Sets if the field should be sampled into a single frame.'}
-          label={'Sample'}
-          labelWidth={10}
-        >
-          <RadioButtonGroup
-            options={sampleModesOptions}
-            value={options.sample ? sampleModes.sampling : sampleModes.noSampling}
-            onChange={(v) => onChange({ ...options, sample: v === sampleModes.sampling })}
           />
         </InlineField>
       </InlineFieldRow>
