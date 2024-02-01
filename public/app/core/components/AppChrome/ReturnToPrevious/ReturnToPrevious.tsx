@@ -11,14 +11,14 @@ import { DismissableButton } from './DismissableButton';
 
 export interface ReturnToPreviousProps {
   title: string;
-  href?: string;
+  href: string;
 }
 
 export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
   const handleOnClick = () => {
-    href && locationService.push(href);
+    locationService.push(href);
     chrome.clearReturnToPrevious();
   };
   const handleOnDismiss = () => {
