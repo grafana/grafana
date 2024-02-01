@@ -14,6 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type NotificationSettingsValidatorProvider interface {
+	Validator(ctx context.Context, orgID int64) (models.NotificationSettingsValidator, error)
+}
+
 type AlertRuleService struct {
 	defaultIntervalSeconds int64
 	baseIntervalSeconds    int64
@@ -23,6 +27,7 @@ type AlertRuleService struct {
 	quotas                 QuotaChecker
 	xact                   TransactionManager
 	log                    log.Logger
+	nsValidatorProvider    NotificationSettingsValidatorProvider
 }
 
 func NewAlertRuleService(ruleStore RuleStore,
@@ -32,7 +37,8 @@ func NewAlertRuleService(ruleStore RuleStore,
 	xact TransactionManager,
 	defaultIntervalSeconds int64,
 	baseIntervalSeconds int64,
-	log log.Logger) *AlertRuleService {
+	log log.Logger,
+	ns NotificationSettingsValidatorProvider) *AlertRuleService {
 	return &AlertRuleService{
 		defaultIntervalSeconds: defaultIntervalSeconds,
 		baseIntervalSeconds:    baseIntervalSeconds,
@@ -42,6 +48,7 @@ func NewAlertRuleService(ruleStore RuleStore,
 		quotas:                 quotas,
 		xact:                   xact,
 		log:                    log,
+		nsValidatorProvider:    ns,
 	}
 }
 
@@ -134,6 +141,17 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 		return models.AlertRule{}, err
 	}
 	rule.Updated = time.Now()
+	if len(rule.NotificationSettings) > 0 {
+		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
+		if err != nil {
+			return models.AlertRule{}, err
+		}
+		for _, setting := range rule.NotificationSettings {
+			if err := validator.Validate(setting); err != nil {
+				return models.AlertRule{}, err
+			}
+		}
+	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		ids, err := service.ruleStore.InsertAlertRules(ctx, []models.AlertRule{
 			rule,
@@ -273,6 +291,11 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 		return nil
 	}
 
+	_, err = store.ValidateNotificationsInGroupDelta(ctx, delta, service.nsValidatorProvider)
+	if err != nil {
+		return err
+	}
+
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		// Delete first as this could prevent future unique constraint violations.
 		if len(delta.Delete) > 0 {
@@ -345,6 +368,17 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 	}
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
 		return models.AlertRule{}, fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
+	}
+	if len(rule.NotificationSettings) > 0 {
+		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
+		if err != nil {
+			return models.AlertRule{}, err
+		}
+		for _, setting := range rule.NotificationSettings {
+			if err := validator.Validate(setting); err != nil {
+				return models.AlertRule{}, err
+			}
+		}
 	}
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID
