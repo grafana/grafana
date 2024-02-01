@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
@@ -89,6 +90,39 @@ func TestTimeInterval(t *testing.T) {
 								},
 							},
 						},
+						DaysOfMonth: []timeinterval.DayOfMonthRange{
+							{
+								InclusiveRange: timeinterval.InclusiveRange{
+									Begin: 1,
+									End:   7,
+								},
+							},
+							{
+								InclusiveRange: timeinterval.InclusiveRange{
+									Begin: 14,
+									End:   28,
+								},
+							},
+						},
+						Months: []timeinterval.MonthRange{
+							{
+								InclusiveRange: timeinterval.InclusiveRange{
+									Begin: 1,
+									End:   5,
+								},
+							},
+						},
+						Years: []timeinterval.YearRange{
+							{
+								InclusiveRange: timeinterval.InclusiveRange{
+									Begin: 2024,
+									End:   2025,
+								},
+							},
+						},
+						Location: &timeinterval.Location{
+							time.Local,
+						},
 					},
 				},
 			},
@@ -116,6 +150,17 @@ func TestTimeInterval(t *testing.T) {
 					"sunday:tuesday",
 					"thursday:friday",
 				}),
+				DaysOfMonth: util.Pointer([]string{
+					"1:7",
+					"14:28",
+				}),
+				Months: util.Pointer([]string{
+					"1:5",
+				}),
+				Years: util.Pointer([]string{
+					"2024:2025",
+				}),
+				Location: util.Pointer("Local"),
 			},
 		},
 	}
