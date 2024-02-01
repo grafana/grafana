@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2, isValidGoDuration, SelectableValue, toOption } from '@grafana/data';
-import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
+import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
+import { FetchError, getTemplateSrv, isFetchError, TemplateSrv } from '@grafana/runtime';
 import { InlineFieldRow, InlineField, Input, Alert, useStyles2, fuzzyMatch, Select } from '@grafana/ui';
 
 import { DEFAULT_LIMIT, TempoDatasource } from '../datasource';
@@ -23,10 +24,11 @@ const durationPlaceholder = 'e.g. 1.2s, 100ms';
 
 const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props) => {
   const styles = useStyles2(getStyles);
+  const [alertText, setAlertText] = useState<string>();
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [serviceOptions, setServiceOptions] = useState<Array<SelectableValue<string>>>();
   const [spanOptions, setSpanOptions] = useState<Array<SelectableValue<string>>>();
-  const [error, setError] = useState<Error>();
+  const [error, setError] = useState<Error | FetchError | null>(null);
   const [inputErrors, setInputErrors] = useState<{ [key: string]: boolean }>({});
   const [isLoading, setIsLoading] = useState<{
     serviceName: boolean;
@@ -46,17 +48,17 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         const filteredOptions = options.filter((item) => (item.value ? fuzzyMatch(item.value, query).found : false));
         return filteredOptions;
       } catch (error) {
-        if (error instanceof Error) {
+        if (isFetchError(error) && error?.status === 404) {
           setError(error);
-        } else {
-          setError(Error('Unknown error'));
+        } else if (error instanceof Error) {
+          setAlertText(`Error: ${error.message}`);
         }
         return [];
       } finally {
         setIsLoading((prevValue) => ({ ...prevValue, [name]: false }));
       }
     },
-    [languageProvider]
+    [languageProvider, setAlertText]
   );
 
   useEffect(() => {
@@ -72,15 +74,16 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         }
         setSpanOptions(spans);
       } catch (error) {
-        if (error instanceof Error) {
+        // Display message if Tempo is connected but search 404's
+        if (isFetchError(error) && error?.status === 404) {
           setError(error);
-        } else {
-          setError(Error('Unknown error'));
+        } else if (error instanceof Error) {
+          setAlertText(`Error: ${error.message}`);
         }
       }
     };
     fetchOptions();
-  }, [languageProvider, loadOptions, query.serviceName, query.spanName]);
+  }, [languageProvider, loadOptions, query.serviceName, query.spanName, setAlertText]);
 
   const onKeyDown = (keyEvent: React.KeyboardEvent) => {
     if (keyEvent.key === 'Enter' && (keyEvent.shiftKey || keyEvent.ctrlKey)) {
@@ -163,7 +166,6 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
               onChange={handleOnChange}
               onBlur={onBlur}
               datasource={datasource}
-              setError={setError}
             />
           </InlineField>
         </InlineFieldRow>
@@ -246,11 +248,13 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
           </InlineField>
         </InlineFieldRow>
       </div>
-      {error && (
-        <Alert title={'Native search error'} severity={'error'} topSpacing={1}>
-          {error.message}
+      {error ? (
+        <Alert title="Unable to connect to Tempo search" severity="info" className={styles.alert}>
+          Please ensure that Tempo is configured with search enabled. If you would like to hide this tab, you can
+          configure it in the <a href={`/datasources/edit/${datasource.uid}`}>datasource settings</a>.
         </Alert>
-      )}
+      ) : null}
+      {alertText && <TemporaryAlert severity="error" text={alertText} />}
     </>
   );
 };

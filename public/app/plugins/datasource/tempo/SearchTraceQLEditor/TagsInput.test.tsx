@@ -2,6 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
+import { FetchError } from '@grafana/runtime';
+
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
@@ -122,7 +124,9 @@ describe('TagsInput', () => {
         updateFilter={jest.fn}
         deleteFilter={jest.fn}
         filters={[filter]}
-        setError={() => {}}
+        setError={function (error: FetchError): void {
+          throw error;
+        }}
         staticTags={[]}
         isTagsLoading={false}
         query={''}

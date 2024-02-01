@@ -5,7 +5,8 @@ import useAsync from 'react-use/lib/useAsync';
 
 import { SelectableValue } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
-import { getTemplateSrv } from '@grafana/runtime';
+import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
+import { FetchError, getTemplateSrv, isFetchError } from '@grafana/runtime';
 import { Select, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
@@ -25,7 +26,7 @@ interface Props {
   datasource: TempoDatasource;
   updateFilter: (f: TraceqlFilter) => void;
   deleteFilter?: (f: TraceqlFilter) => void;
-  setError: (error: Error) => void;
+  setError: (error: FetchError) => void;
   isTagsLoading?: boolean;
   tags: string[];
   hideScope?: boolean;
@@ -49,6 +50,7 @@ const SearchField = ({
   query,
 }: Props) => {
   const styles = useStyles2(getStyles);
+  const [alertText, setAlertText] = useState<string>();
   const scopedTag = useMemo(() => filterScopedTag(filter), [filter]);
   // We automatically change the operator to the regex op when users select 2 or more values
   // However, they expect this to be automatically rolled back to the previous operator once
@@ -60,10 +62,11 @@ const SearchField = ({
     try {
       return filter.tag ? await datasource.languageProvider.getOptionsV2(scopedTag, query) : [];
     } catch (error) {
-      if (error instanceof Error) {
+      // Display message if Tempo is connected but search 404's
+      if (isFetchError(error) && error?.status === 404) {
         setError(error);
-      } else {
-        setError(Error('Unknown error'));
+      } else if (error instanceof Error) {
+        setAlertText(`Error: ${error.message}`);
       }
     }
     return [];
@@ -218,6 +221,7 @@ const SearchField = ({
           />
         )}
       </HorizontalGroup>
+      {alertText && <TemporaryAlert severity="error" text={alertText} />}
     </>
   );
 };

@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, GrafanaTheme2 } from '@grafana/data';
-import { config, getTemplateSrv, reportInteraction } from '@grafana/runtime';
+import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
+import { config, FetchError, getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, HorizontalGroup, Select, useStyles2 } from '@grafana/ui';
 
 import { RawQuery } from '../_importedDependencies/datasources/prometheus/RawQuery';
@@ -32,7 +33,8 @@ const hardCodedFilterIds = ['min-duration', 'max-duration', 'status'];
 
 const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Props) => {
   const styles = useStyles2(getStyles);
-  const [error, setError] = useState<Error>();
+  const [alertText, setAlertText] = useState<string>();
+  const [error, setError] = useState<Error | FetchError | null>(null);
 
   const [isTagsLoading, setIsTagsLoading] = useState(true);
   const [traceQlQuery, setTraceQlQuery] = useState<string>('');
@@ -72,14 +74,12 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
         setIsTagsLoading(false);
       } catch (error) {
         if (error instanceof Error) {
-          setError(error);
-        } else {
-          setError(Error('Unknown error'));
+          setAlertText(`Error: ${error.message}`);
         }
       }
     };
     fetchTags();
-  }, [datasource]);
+  }, [datasource, setAlertText]);
 
   useEffect(() => {
     // Initialize state with configured static filters that already have a value from the config
@@ -240,11 +240,13 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
         </div>
         <TempoQueryBuilderOptions onChange={onChange} query={query} />
       </div>
-      {error && (
-        <Alert title={'Search error'} severity={'error'} topSpacing={1}>
-          {error.message}
+      {error ? (
+        <Alert title="Unable to connect to Tempo search" severity="info" className={styles.alert}>
+          Please ensure that Tempo is configured with search enabled. If you would like to hide this tab, you can
+          configure it in the <a href={`/datasources/edit/${datasource.uid}`}>datasource settings</a>.
         </Alert>
-      )}
+      ) : null}
+      {alertText && <TemporaryAlert severity={'error'} text={alertText} />}
     </>
   );
 };

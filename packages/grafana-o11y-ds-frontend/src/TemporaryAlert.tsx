@@ -58,5 +58,17 @@ export const TemporaryAlert = (props: AlertProps) => {
     }
   }, [props.severity, props.text]);
 
-  return <>{visible && <Alert className={style} elevated={true} title={props.text} severity={props.severity} />}</>;
+  return (
+    <>
+      {visible && (
+        <Alert
+          className={style}
+          elevated={true}
+          onRemove={() => setVisible(false)}
+          severity={props.severity}
+          title={props.text}
+        />
+      )}
+    </>
+  );
 };

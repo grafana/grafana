@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { reportInteraction } from '@grafana/runtime';
-import { Alert, CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
+import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 
 import { TempoDatasource } from '../datasource';
 
@@ -21,9 +22,10 @@ interface Props {
 }
 
 export function TraceQLEditor(props: Props) {
-  const [error, setError] = useState<Error>();
+  const [alertText, setAlertText] = useState<string>();
+
   const { onChange, onRunQuery, placeholder } = props;
-  const setupAutocompleteFn = useAutocomplete(props.datasource, setError);
+  const setupAutocompleteFn = useAutocomplete(props.datasource, setAlertText);
   const theme = useTheme2();
   const styles = getStyles(theme, placeholder);
   // work around the problem that `onEditorDidMount` is called once
@@ -102,11 +104,7 @@ export function TraceQLEditor(props: Props) {
           });
         }}
       />
-      {error && (
-        <Alert title={'TraceQL error'} severity={'error'} topSpacing={1}>
-          {error.message}
-        </Alert>
-      )}
+      {alertText && <TemporaryAlert severity="error" text={alertText} />}
     </>
   );
 }
@@ -181,15 +179,15 @@ function setupAutoSize(editor: monacoTypes.editor.IStandaloneCodeEditor) {
 /**
  * Hook that returns function that will set up monaco autocomplete for the label selector
  * @param datasource the Tempo datasource instance
- * @param setError error setter
+ * @param setAlertText setter for alert's text
  */
-function useAutocomplete(datasource: TempoDatasource, setError: (error: Error) => void) {
+function useAutocomplete(datasource: TempoDatasource, setAlertText: (text: string) => void) {
   // We need the provider ref so we can pass it the label/values data later. This is because we run the call for the
   // values here but there is additional setup needed for the provider later on. We could run the getSeries() in the
   // returned function but that is run after the monaco is mounted so would delay the request a bit when it does not
   // need to.
   const providerRef = useRef<CompletionProvider>(
-    new CompletionProvider({ languageProvider: datasource.languageProvider, setError })
+    new CompletionProvider({ languageProvider: datasource.languageProvider, setAlertText })
   );
 
   useEffect(() => {
@@ -198,14 +196,12 @@ function useAutocomplete(datasource: TempoDatasource, setError: (error: Error) =
         await datasource.languageProvider.start();
       } catch (error) {
         if (error instanceof Error) {
-          setError(error);
-        } else {
-          setError(Error('Unknown error'));
+          setAlertText(`Error: ${error.message}`);
         }
       }
     };
     fetchTags();
-  }, [datasource, setError]);
+  }, [datasource, setAlertText]);
 
   const autocompleteDisposeFun = useRef<(() => void) | null>(null);
   useEffect(() => {
