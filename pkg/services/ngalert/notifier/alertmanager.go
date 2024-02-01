@@ -181,7 +181,7 @@ func (am *alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 		}
 
 		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, false)
+			err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, true)
 			if err != nil {
 				return err
 			}
