@@ -1358,7 +1358,9 @@ var (
 			Name:           "newCloudHomeRedesign",
 			Description:    "Enable new Cloud Home redesign",
 			Stage:          FeatureStageGeneralAvailability,
-			FrontendOnly: 	true
+			FrontendOnly: 	true,
+			Owner:        	grafanaGrowthDevexEngSquad,
+			Created:      	time.Date(2024, time.February, 1, 13, 15, 0, 0, time.UTC),
 		},
 	}
 )
