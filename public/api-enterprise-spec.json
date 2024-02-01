@@ -6580,24 +6580,6 @@
         }
       }
     },
-    "SSOSettings": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "provider": {
-          "type": "string"
-        },
-        "settings": {
-          "type": "object",
-          "additionalProperties": {}
-        },
-        "source": {
-          "$ref": "#/definitions/SettingsSource"
-        }
-      }
-    },
     "SaveDashboardCommand": {
       "type": "object",
       "properties": {
@@ -6987,10 +6969,6 @@
           "type": "string"
         }
       }
-    },
-    "SettingsSource": {
-      "type": "integer",
-      "format": "int64"
     },
     "ShareType": {
       "type": "string"
@@ -9075,7 +9053,22 @@
     "getSSOSettingsResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/SSOSettings"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "settings": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "source": {
+            "type": "string"
+          }
+        }
       }
     },
     "getSharingOptionsResponse": {
@@ -9261,7 +9254,22 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/SSOSettings"
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "provider": {
+              "type": "string"
+            },
+            "settings": {
+              "type": "object",
+              "additionalProperties": {}
+            },
+            "source": {
+              "type": "string"
+            }
+          }
         }
       }
     },

@@ -589,6 +589,7 @@ func RedactedValue(key, value string) string {
 		"ENCRYPTION_KEY",
 		"VAULT_TOKEN",
 		"CLIENT_SECRET",
+		"ENTERPRISE_LICENSE",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
