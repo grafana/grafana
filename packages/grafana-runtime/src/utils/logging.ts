@@ -80,9 +80,32 @@ export function createMonitoringLogger(source: string, defaultContext?: LogConte
   });
 
   return {
+    /**
+     * Logs a debug message with optional additional context.
+     * @param {string} message - The debug message to be logged.
+     * @param {LogContext} [contexts] - Optional additional context to be included.
+     */
     logDebug: (message: string, contexts?: LogContext) => logDebug(message, createFullContext(contexts)),
+
+    /**
+     * Logs an informational message with optional additional context.
+     * @param {string} message - The informational message to be logged.
+     * @param {LogContext} [contexts] - Optional additional context to be included.
+     */
     logInfo: (message: string, contexts?: LogContext) => logInfo(message, createFullContext(contexts)),
+
+    /**
+     * Logs a warning message with optional additional context.
+     * @param {string} message - The warning message to be logged.
+     * @param {LogContext} [contexts] - Optional additional context to be included.
+     */
     logWarning: (message: string, contexts?: LogContext) => logWarning(message, createFullContext(contexts)),
+
+    /**
+     * Logs an error with optional additional context.
+     * @param {Error} error - The error object to be logged.
+     * @param {LogContext} [contexts] - Optional additional context to be included.
+     */
     logError: (error: Error, contexts?: LogContext) => logError(error, createFullContext(contexts)),
   };
 }
