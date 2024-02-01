@@ -1,26 +1,26 @@
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
 import 'whatwg-fetch'; // fetch polyfill needed backendSrv
 import { DataSourceInstanceSettings, TimeRange, toUtc } from '@grafana/data';
-import { FetchResponse, TemplateSrv } from '@grafana/runtime';
-
-// NEED TO DECOUPLE THIS!!!!
-import { backendSrv } from '../../../public/app/core/services/backend_srv';
+import { BackendDataSourceResponse, BackendSrvRequest, FetchResponse, TemplateSrv } from '@grafana/runtime';
 
 import { PrometheusDatasource } from './datasource';
 import { getPrometheusTime } from './language_utils';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { PromApplication, PromOptions } from './types';
 
-// This should be mocked like here https://github.com/grafana/grafana/blob/main/public/app/plugins/datasource/influxdb/mocks.ts
-// const backendSrv = getBackendSrv();
+const fetchMock = jest.fn((options: BackendSrvRequest): Observable<FetchResponse<BackendDataSourceResponse>> =>{
+  return of({} as unknown as FetchResponse)
+});
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => backendSrv,
+  getBackendSrv: () => {
+    return {
+      fetch: fetchMock,
+    }
+  },
 }));
-
-const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
 const instanceSettings = {
   url: 'proxied',
