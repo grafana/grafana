@@ -313,8 +313,9 @@ func (s *service) start(ctx context.Context) error {
 
 	// setup the loopback transport for the aggregator server
 	transport.fn = func(req *http.Request) (*http.Response, error) {
-		w := httptest.NewRecorder()
-		aggregatorServer.GenericAPIServer.Handler.ServeHTTP(w, req)
+		w := newWrappedResponseWriter()
+		resp := responsewriter.WrapForHTTP1Or2(w)
+		aggregatorServer.GenericAPIServer.Handler.ServeHTTP(resp, req)
 		return w.Result(), nil
 	}
 	close(transport.ready)
@@ -394,4 +395,25 @@ func (f *roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) 
 		<-f.ready
 	}
 	return f.fn(req)
+}
+
+var _ http.ResponseWriter = (*wrappedResponseWriter)(nil)
+var _ responsewriter.UserProvidedDecorator = (*wrappedResponseWriter)(nil)
+
+type wrappedResponseWriter struct {
+	*httptest.ResponseRecorder
+}
+
+func newWrappedResponseWriter() *wrappedResponseWriter {
+	w := httptest.NewRecorder()
+	return &wrappedResponseWriter{w}
+}
+
+func (w *wrappedResponseWriter) Unwrap() http.ResponseWriter {
+	return w.ResponseRecorder
+}
+
+func (w *wrappedResponseWriter) CloseNotify() <-chan bool {
+	// TODO: this is probably not the right thing to do here
+	return make(<-chan bool)
 }

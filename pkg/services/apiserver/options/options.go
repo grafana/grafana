@@ -51,14 +51,12 @@ func (o *Options) Validate() []error {
 		return errs
 	}
 
-	if o.ExtraOptions.DevMode {
-		if errs := o.RecommendedOptions.SecureServing.Validate(); len(errs) != 0 {
-			return errs
-		}
+	if errs := o.RecommendedOptions.SecureServing.Validate(); len(errs) != 0 {
+		return errs
+	}
 
-		if errs := o.RecommendedOptions.Authentication.Validate(); len(errs) != 0 {
-			return errs
-		}
+	if errs := o.RecommendedOptions.Authentication.Validate(); len(errs) != 0 {
+		return errs
 	}
 
 	if o.StorageOptions.StorageType == StorageTypeEtcd {
