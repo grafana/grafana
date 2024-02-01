@@ -124,17 +124,26 @@ describe('InfiniteScroll', () => {
       test.each([
         ['top', 10, 0],
         ['bottom', 50, 60],
-      ])('Requests more logs when scrolling %s', async (_: string, startPosition: number, endPosition: number) => {
-        const loadMoreMock = jest.fn();
-        const { scrollTo } = setup(loadMoreMock, startPosition, rows, order);
+      ])(
+        'Requests more logs when scrolling %s',
+        async (direction: string, startPosition: number, endPosition: number) => {
+          const loadMoreMock = jest.fn();
+          const { scrollTo, element } = setup(loadMoreMock, startPosition, rows, order);
 
-        expect(await screen.findByTestId('contents')).toBeInTheDocument();
+          expect(await screen.findByTestId('contents')).toBeInTheDocument();
 
-        scrollTo(endPosition);
+          scrollTo(endPosition);
 
-        expect(loadMoreMock).toHaveBeenCalled();
-        expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
-      });
+          expect(loadMoreMock).toHaveBeenCalled();
+          expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
+          if (direction === 'bottom') {
+            // Bottom loader visibility trick
+            expect(element.scrollTo).toHaveBeenCalled();
+          } else {
+            expect(element.scrollTo).not.toHaveBeenCalled();
+          }
+        }
+      );
 
       test.each([
         ['up', -5, 0],
@@ -273,6 +282,7 @@ function getMockElement(scrollTop: number) {
     scrollHeight: 100,
     clientHeight: 40,
     scrollTop,
+    scrollTo: jest.fn(),
   };
 
   return { element, events };

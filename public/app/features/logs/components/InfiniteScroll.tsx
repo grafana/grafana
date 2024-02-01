@@ -49,6 +49,7 @@ export const InfiniteScroll = ({
 
   useEffect(() => {
     if (lowerLoading && scrollElement) {
+      // Ensure bottom loader visibility
       scrollElement.scrollTo(0, scrollElement.scrollHeight - scrollElement.clientHeight);
     }
   }, [lowerLoading, scrollElement]);
