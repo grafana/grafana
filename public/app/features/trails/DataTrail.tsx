@@ -21,15 +21,15 @@ import {
   SceneVariableSet,
   VariableValueSelectors,
 } from '@grafana/scenes';
-import { useStyles2} from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelectScene';
-import {MetricsHeader} from "./MetricsHeader";
+import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
-import { MetricSelectedEvent, trailDS, LOGS_METRIC, VAR_DATASOURCE, VAR_FILTERS } from './shared';
+import { LOGS_METRIC, MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS } from './shared';
 import { getUrlForTrail } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
@@ -163,7 +163,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       }
     } else if (values.metric === null) {
       stateUpdate.metric = undefined;
-      stateUpdate.topScene = new MetricSelectScene({ });
+      stateUpdate.topScene = new MetricSelectScene({});
     }
 
     this.setState(stateUpdate);
@@ -176,7 +176,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
 
     return (
       <div className={styles.container}>
-        { showHeaderForFirstTimeUsers && <MetricsHeader/>}
+        {showHeaderForFirstTimeUsers && <MetricsHeader />}
         <history.Component model={history} />
         {controls && (
           <div className={styles.controls}>
@@ -195,7 +195,7 @@ function getTopSceneFor(metric?: string) {
   if (metric) {
     return new MetricScene({ metric: metric });
   } else {
-    return new MetricSelectScene({ });
+    return new MetricSelectScene({});
   }
 }
 

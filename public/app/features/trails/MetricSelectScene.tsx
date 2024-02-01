@@ -4,22 +4,22 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
-  SceneObjectState,
-  SceneObjectBase,
-  SceneComponentProps,
   PanelBuilders,
-  SceneFlexItem,
-  SceneVariableSet,
   QueryVariable,
-  sceneGraph,
-  VariableDependencyConfig,
-  SceneCSSGridLayout,
+  SceneComponentProps,
   SceneCSSGridItem,
+  SceneCSSGridLayout,
+  SceneFlexItem,
+  sceneGraph,
+  SceneObjectBase,
   SceneObjectRef,
+  SceneObjectState,
   SceneQueryRunner,
+  SceneVariableSet,
+  VariableDependencyConfig,
 } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
-import {Input, useStyles2, InlineSwitch, Field, LoadingPlaceholder, Icon} from '@grafana/ui';
+import { Field, Icon, InlineSwitch, Input, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { MetricCategoryCascader } from './MetricCategory/MetricCategoryCascader';
@@ -273,8 +273,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   };
 
   public static Component = ({ model }: SceneComponentProps<MetricSelectScene>) => {
-    const { searchQuery, showPreviews, body, metricsAfterSearch, metricsAfterFilter, prefixFilter } =
-      model.useState();
+    const { searchQuery, showPreviews, body, metricsAfterSearch, metricsAfterFilter, prefixFilter } = model.useState();
     const { children } = body.useState();
     const styles = useStyles2(getStyles);
 
@@ -296,8 +295,13 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     return (
       <div className={styles.container}>
         <div className={styles.header}>
-          <Field label={'Search metrics'} className={styles.searchField} >
-            <Input placeholder="Search metrics" prefix={<Icon name={'search'} />} value={searchQuery} onChange={model.onSearchChange} />
+          <Field label={'Search metrics'} className={styles.searchField}>
+            <Input
+              placeholder="Search metrics"
+              prefix={<Icon name={'search'} />}
+              value={searchQuery}
+              onChange={model.onSearchChange}
+            />
           </Field>
           <InlineSwitch showLabel={true} label="Show previews" value={showPreviews} onChange={model.onTogglePreviews} />
         </div>
@@ -396,7 +400,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       gap: theme.spacing(2),
       marginBottom: theme.spacing(1),
-      alignItems: 'flex-end'
+      alignItems: 'flex-end',
     }),
     statusMessage: css({
       fontStyle: 'italic',
@@ -406,7 +410,7 @@ function getStyles(theme: GrafanaTheme2) {
     searchField: css({
       flexGrow: 1,
       marginBottom: 0,
-    })
+    }),
   };
 }
 

@@ -3,11 +3,11 @@ import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
-import { useStyles2, Stack, Card, IconButton, Badge } from '@grafana/ui';
+import { Badge, Card, IconButton, Stack, useStyles2 } from '@grafana/ui';
 
 import { DataTrail } from './DataTrail';
 import { VAR_FILTERS } from './shared';
-import {getDataSource, getDataSourceName, getMetricName} from './utils';
+import { getDataSource, getDataSourceName, getMetricName } from './utils';
 
 export interface Props {
   trail: DataTrail;
