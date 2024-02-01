@@ -8,5 +8,5 @@
   },
   "exclude": ["dist/**/*"],
   "extends": "@grafana/tsconfig",
-  "include": ["src/**/*.ts*", "typings/jest", "../../public/app/types/jquery/*.ts", "../../public/app/types/*.d.ts"]
+  "include": ["src/**/*.ts*", "../../public/app/types/*.d.ts", "../grafana-ui/src/types/*.d.ts"]
 }
