@@ -1,6 +1,6 @@
 interface ReturnToPreviousData {
   title: string;
-  href: string;
+  href?: string;
 }
 
 type ReturnToPreviousHook = () => (rtp: ReturnToPreviousData) => void;

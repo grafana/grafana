@@ -10,15 +10,15 @@ import { t } from 'app/core/internationalization';
 import { DismissableButton } from './DismissableButton';
 
 export interface ReturnToPreviousProps {
-  href: string;
   title: string;
+  href?: string;
 }
 
 export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
   const handleOnClick = () => {
-    locationService.push(href);
+    href && locationService.push(href);
     chrome.clearReturnToPrevious();
   };
   const handleOnDismiss = () => {

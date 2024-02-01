@@ -24,8 +24,8 @@ export interface AppChromeState {
   kioskMode: KioskMode | null;
   layout: PageLayoutType;
   returnToPrevious?: {
-    href: ReturnToPreviousProps['href'];
     title: ReturnToPreviousProps['title'];
+    href?: ReturnToPreviousProps['href'];
   };
 }
 
@@ -94,6 +94,9 @@ export class AppChromeService {
   }
 
   public setReturnToPrevious = (returnToPrevious: ReturnToPreviousProps) => {
+    if (!returnToPrevious.href) {
+      returnToPrevious.href = locationService.getLocation().pathname;
+    }
     this.update({ returnToPrevious });
     window.sessionStorage.setItem('returnToPrevious', JSON.stringify(returnToPrevious));
   };
