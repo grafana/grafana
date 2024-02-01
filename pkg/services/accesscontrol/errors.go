@@ -24,7 +24,7 @@ func (e *ErrorInvalidRole) Error() string {
 type ErrorRoleNameMissing struct{}
 
 func (e *ErrorRoleNameMissing) Error() string {
-	return fmt.Sprintf("role has been defined without a name")
+	return "role has been defined without a name"
 }
 
 func (e *ErrorRoleNameMissing) Unwrap() error {
