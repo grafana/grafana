@@ -78,11 +78,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(2),
       flexWrap: 'wrap',
     }),
-    stats: css({
-      margin: '0px',
-      color: theme.colors.text.secondary,
-      fontSize: theme.typography.bodySmall.fontSize,
-    }),
     tooltip: css({
       marginRight: theme.spacing(0.25),
     }),
