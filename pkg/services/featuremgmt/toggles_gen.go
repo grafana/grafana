@@ -127,10 +127,6 @@ const (
 	// Enable async query data support for Athena
 	FlagAthenaAsyncQueryDataSupport = "athenaAsyncQueryDataSupport"
 
-	// FlagCloudwatchNewRegionsHandler
-	// Refactor of /regions endpoint, no user-facing changes
-	FlagCloudwatchNewRegionsHandler = "cloudwatchNewRegionsHandler"
-
 	// FlagShowDashboardValidationWarnings
 	// Show warnings when dashboards do not validate against the schema
 	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
@@ -150,10 +146,6 @@ const (
 	// FlagNestedFolderPicker
 	// Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle
 	FlagNestedFolderPicker = "nestedFolderPicker"
-
-	// FlagDisablePrometheusExemplarSampling
-	// Disable Prometheus exemplar sampling
-	FlagDisablePrometheusExemplarSampling = "disablePrometheusExemplarSampling"
 
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
@@ -194,6 +186,10 @@ const (
 	// FlagInfluxqlStreamingParser
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
 	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
+
+	// FlagInfluxdbRunQueriesInParallel
+	// Enables running InfluxDB Influxql queries in parallel
+	FlagInfluxdbRunQueriesInParallel = "influxdbRunQueriesInParallel"
 
 	// FlagClientTokenRotation
 	// Replaces the current in-request token rotation so that the client initiates the rotation
@@ -463,6 +459,10 @@ const (
 	// Use the kubernetes API in the frontend to support playlists
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
 
+	// FlagKubernetesQueryServiceRewrite
+	// Rewrite requests targeting /ds/query to the query service
+	FlagKubernetesQueryServiceRewrite = "kubernetesQueryServiceRewrite"
+
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
@@ -634,4 +634,16 @@ const (
 	// FlagAlertingSaveStatePeriodic
 	// Writes the state periodically to the database, asynchronous to rule evaluation
 	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
+
+	// FlagPromQLScope
+	// In-development feature that will allow injection of labels into prometheus queries.
+	FlagPromQLScope = "promQLScope"
+
+	// FlagSlateAutocomplete
+	// Adjusts the behaviour of the slate editor to properly handle autocomplete. Feature toggled for safety.
+	FlagSlateAutocomplete = "slateAutocomplete"
+
+	// FlagNodeGraphDotLayout
+	// Changed the layout algorithm for the node graph
+	FlagNodeGraphDotLayout = "nodeGraphDotLayout"
 )
