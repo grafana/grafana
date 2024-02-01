@@ -29,7 +29,6 @@ import {
   VizLegend,
   VizTooltipContainer,
   TooltipPlugin2,
-  LayoutItemContext,
 } from '@grafana/ui';
 import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
 import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
@@ -38,8 +37,7 @@ import { GraphNG, GraphNGProps, PropDiffFn } from 'app/core/components/GraphNG/G
 import { getFieldLegendItem } from 'app/core/components/TimelineChart/utils';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
-import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
-
+import { BarChartTooltip } from './BarChartTooltip';
 import { Options } from './panelcfg.gen';
 import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 
@@ -332,10 +330,12 @@ export const BarChartPanel = ({ data, options, fieldConfig, width, height, timeZ
           return (
             <TooltipPlugin2
               config={config}
-              hoverMode={options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll}
+              hoverMode={
+                options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
+              }
               render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2) => {
                 return (
-                  <TimeSeriesTooltip
+                  <BarChartTooltip
                     frames={info.viz}
                     seriesFrame={info.viz[0]}
                     dataIdxs={dataIdxs}
