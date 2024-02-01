@@ -1300,7 +1300,6 @@ github.com/go-openapi/errors v0.19.9/go.mod h1:cM//ZKUKyO06HSwqAelJ5NsEMMcpa6VpX
 github.com/go-openapi/errors v0.20.0/go.mod h1:cM//ZKUKyO06HSwqAelJ5NsEMMcpa6VpXe8DOa1Mi1M=
 github.com/go-openapi/errors v0.20.2/go.mod h1:cM//ZKUKyO06HSwqAelJ5NsEMMcpa6VpXe8DOa1Mi1M=
 github.com/go-openapi/errors v0.20.3/go.mod h1:Z3FlZ4I8jEGxjUK+bugx3on2mIAk4txuAOhlsB1FSgk=
-github.com/go-openapi/errors v0.20.4/go.mod h1:Z3FlZ4I8jEGxjUK+bugx3on2mIAk4txuAOhlsB1FSgk=
 github.com/go-openapi/errors v0.21.0 h1:FhChC/duCnfoLj1gZ0BgaBmzhJC2SL/sJr8a2vAobSY=
 github.com/go-openapi/errors v0.21.0/go.mod h1:jxNTMUxRCKj65yb/okJGEtahVd7uvWnuWfj53bse4ho=
 github.com/go-openapi/jsonpointer v0.17.0/go.mod h1:cOnomiV+CVVwFLk0A/MExoFMjwdsUdVpsRhURCKh+3M=
@@ -1935,8 +1934,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.206.0 h1:DQK2M07/q0t7wqcJBSw6O/FQJZC
 github.com/grafana/grafana-plugin-sdk-go v0.206.0/go.mod h1:MetVbF3bGwmUvxulWsl0SskJFUq3+ZGnyjDH0dQ4sSg=
 github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 h1:1YNoeIhii4UIIQpCPU+EXidnqf449d0C3ZntAEt4KSo=
 github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482/go.mod h1:GNcfpy5+SY6RVbNGQW264gC0r336Dm+0zgQ5vt6+M8Y=
-github.com/grafana/prometheus-alertmanager v0.25.1-0.20240129191426-9fd5301e7b6f h1:7virlPW063YdKr1FBy4jOjAdG23bLifpX09SDHRedZU=
-github.com/grafana/prometheus-alertmanager v0.25.1-0.20240129191426-9fd5301e7b6f/go.mod h1:pT85bjw8Hkt/ZfVpa/b0gLWQc015Yjbi02eCYD0yRl4=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20240130111410-65bdab09d3ed h1:v9c4hYR0OFhrdq/MAqFsnakrZ5V3r30T0ffZ1ekbuqw=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20240130111410-65bdab09d3ed/go.mod h1:EJB4aYZDMD4k+VgwJCZc9jJJgjDV1T6B0CuYwiKEixY=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.6 h1:nEdZ8louGAplSvIJi1HVp7kWvFvdiiYg3COLlTwJiFo=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.6/go.mod h1:Tk376Nbldo4Cha9RgiU7ik8WKFkNpfds98aUzS8omLE=
 github.com/grafana/pyroscope/api v0.3.0 h1:WcVKNZ8JlriJnD28wTkZray0wGo8dGkizSJXnbG7Gd8=
