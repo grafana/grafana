@@ -66,6 +66,34 @@ const frameWithTypes: DataFrame = {
   ],
 };
 
+const frameWithMultipleLabels: DataFrame = {
+  length: 1,
+  fields: [
+    {
+      name: 'Time',
+      config: {},
+      type: FieldType.time,
+      values: [1, 2, 3],
+    },
+    {
+      name: 'labels',
+      config: {},
+      type: FieldType.other,
+      values: [
+        { level: 'info', foo: 'bar' },
+        { level: 'info', foo: 'baz', new: 'yes' },
+        { level: 'error', foo: 'baz' },
+      ],
+    },
+    {
+      name: 'Line',
+      config: {},
+      type: FieldType.string,
+      values: ['line1', 'line2', 'line3'],
+    },
+  ],
+};
+
 describe('dataFrameHasParsingError', () => {
   it('handles frame with parsing error', () => {
     const input = cloneDeep(frame);
@@ -136,6 +164,11 @@ describe('extractLabelKeysFromDataFrame', () => {
   it('extracts label keys', () => {
     const input = cloneDeep(frame);
     expect(extractLabelKeysFromDataFrame(input)).toEqual(['level']);
+  });
+
+  it('extracts label keys from all logs', () => {
+    const input = cloneDeep(frameWithMultipleLabels);
+    expect(extractLabelKeysFromDataFrame(input)).toEqual(['level', 'foo', 'new']);
   });
 
   it('extracts indexed label keys', () => {

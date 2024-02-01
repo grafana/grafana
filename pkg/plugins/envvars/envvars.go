@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -105,14 +106,17 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 	if s.cfg.GrafanaAppURL != "" {
 		m[backend.AppURL] = s.cfg.GrafanaAppURL
 	}
+	if s.cfg.ConcurrentQueryCount != 0 {
+		m[backend.ConcurrentQueryCount] = strconv.Itoa(s.cfg.ConcurrentQueryCount)
+	}
 
 	// TODO add support via plugin SDK
-	//if externalService != nil {
+	// if externalService != nil {
 	//	m[oauthtokenretriever.AppURL] = s.cfg.GrafanaAppURL
 	//	m[oauthtokenretriever.AppClientID] = externalService.ClientID
 	//	m[oauthtokenretriever.AppClientSecret] = externalService.ClientSecret
 	//	m[oauthtokenretriever.AppPrivateKey] = externalService.PrivateKey
-	//}
+	// }
 
 	if s.cfg.Features != nil {
 		enabledFeatures := s.cfg.Features.GetEnabled(ctx)
@@ -206,10 +210,10 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 	}
 
 	// TODO add support via plugin SDK
-	//ps := getPluginSettings(pluginID, s.cfg)
-	//for k, v := range ps {
+	// ps := getPluginSettings(pluginID, s.cfg)
+	// for k, v := range ps {
 	//	m[fmt.Sprintf("%s_%s", customConfigPrefix, strings.ToUpper(k))] = v
-	//}
+	// }
 
 	return m
 }

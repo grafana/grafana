@@ -150,7 +150,7 @@ export enum OptionFilter {
   Recent = 'Recent',
 }
 
-function renderSearchHits(
+export function renderSearchHits(
   allOptions: OptionsPaneCategoryDescriptor[],
   overrides: OptionsPaneCategoryDescriptor[],
   searchQuery: string
