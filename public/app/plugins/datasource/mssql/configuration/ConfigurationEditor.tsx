@@ -24,6 +24,10 @@ import {
   Divider,
   Field,
   Switch,
+  Label,
+  Tooltip,
+  Icon,
+  Stack,
 } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 import { config } from 'app/core/config';
@@ -295,6 +299,36 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         isCollapsible={true}
         isInitiallyOpen={true}
       >
+        <Field
+          label={
+            <Label>
+              <Stack gap={0.5}>
+                <span>Session timezone</span>
+                <Tooltip
+                  content={
+                    <span>
+                      Specify the timezone used in the database session, such as <code>Europe/Berlin</code> or
+                      <code>+02:00</code>. Required if the timezone of the database (or the host of the database) is set
+                      to something other than UTC. Set this to <code>+00:00</code> so Grafana can handle times properly.
+                      Set the value used in the session with <code>SET time_zone=&apos;...&apos;</code>. If you leave
+                      this field empty, the timezone will not be updated. You can find more information in the MySQL
+                      documentation.
+                    </span>
+                  }
+                >
+                  <Icon name="info-circle" size="sm" />
+                </Tooltip>
+              </Stack>
+            </Label>
+          }
+        >
+          <Input
+            width={40}
+            value={jsonData.timezone || ''}
+            onChange={onUpdateDatasourceJsonDataOption(props, 'timezone')}
+            placeholder="Europe/Berlin or +02:00"
+          />
+        </Field>
         <ConnectionLimits options={dsSettings} onOptionsChange={onOptionsChange} />
 
         <ConfigSubSection title="Connection details">
