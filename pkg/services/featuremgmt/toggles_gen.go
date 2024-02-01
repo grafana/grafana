@@ -646,4 +646,8 @@ const (
 	// FlagNodeGraphDotLayout
 	// Changed the layout algorithm for the node graph
 	FlagNodeGraphDotLayout = "nodeGraphDotLayout"
+
+	// FlagNewCloudHomeRedesign
+	// Enable new Cloud Home redesign
+	FlagNewCloudHomeRedesign = "newCloudHomeRedesign"
 )

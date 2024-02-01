@@ -58,6 +58,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `alertingQueryOptimization`          | Optimizes eligible queries in order to reduce load on datasources                                                                                                                                                            |                    |
 | `jitterAlertRules`                   | Distributes alert rule evaluations more evenly over time, by rule group                                                                                                                                                      |                    |
 | `slateAutocomplete`                  | Adjusts the behaviour of the slate editor to properly handle autocomplete. Feature toggled for safety.                                                                                                                       | Yes                |
+| `newCloudHomeRedesign`               | Enable new Cloud Home redesign                                                                                                                                                                                               |                    |
 
 ## Preview feature toggles
 

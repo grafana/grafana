@@ -178,4 +178,5 @@ export interface FeatureToggles {
   promQLScope?: boolean;
   slateAutocomplete?: boolean;
   nodeGraphDotLayout?: boolean;
+  newCloudHomeRedesign?: boolean;
 }
