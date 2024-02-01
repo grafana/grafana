@@ -347,8 +347,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
         </div>
         {metricNamesStatus.error && (
           <Alert title="Unable to retrieve metric names" severity="error">
-            <div>{metricNamesStatus.error}</div>
             <div>We are unable to connect to your data source. Double check your data source URL and credentials.</div>
+            <div>({metricNamesStatus.error})</div>
           </Alert>
         )}
         {showStatus}
