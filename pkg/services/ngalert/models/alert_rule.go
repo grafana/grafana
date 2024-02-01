@@ -555,10 +555,11 @@ type AlertRuleVersion struct {
 	ExecErrState    ExecutionErrorState
 	// ideally this field should have been apimodels.ApiDuration
 	// but this is currently not possible because of circular dependencies
-	For         time.Duration
-	Annotations map[string]string
-	Labels      map[string]string
-	IsPaused    bool
+	For                  time.Duration
+	Annotations          map[string]string
+	Labels               map[string]string
+	IsPaused             bool
+	NotificationSettings []NotificationSettings `xorm:"notification_settings"` // we use slice to workaround xorm mapping that does not serialize a struct to JSON unless it's a slice
 }
 
 // GetAlertRuleByUIDQuery is the query for retrieving/deleting an alert rule by UID and organisation ID.

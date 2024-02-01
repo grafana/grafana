@@ -142,23 +142,23 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 			}
 			newRules = append(newRules, r)
 			ruleVersions = append(ruleVersions, ngmodels.AlertRuleVersion{
-				RuleUID:          r.UID,
-				RuleOrgID:        r.OrgID,
-				RuleNamespaceUID: r.NamespaceUID,
-				RuleGroup:        r.RuleGroup,
-				ParentVersion:    0,
-				Version:          r.Version,
-				Created:          r.Updated,
-				Condition:        r.Condition,
-				Title:            r.Title,
-				Data:             r.Data,
-				IntervalSeconds:  r.IntervalSeconds,
-				NoDataState:      r.NoDataState,
-				ExecErrState:     r.ExecErrState,
-				For:              r.For,
-				Annotations:      r.Annotations,
-				Labels:           r.Labels,
-				// TODO add notification settings here
+				RuleUID:              r.UID,
+				RuleOrgID:            r.OrgID,
+				RuleNamespaceUID:     r.NamespaceUID,
+				RuleGroup:            r.RuleGroup,
+				ParentVersion:        0,
+				Version:              r.Version,
+				Created:              r.Updated,
+				Condition:            r.Condition,
+				Title:                r.Title,
+				Data:                 r.Data,
+				IntervalSeconds:      r.IntervalSeconds,
+				NoDataState:          r.NoDataState,
+				ExecErrState:         r.ExecErrState,
+				For:                  r.For,
+				Annotations:          r.Annotations,
+				Labels:               r.Labels,
+				NotificationSettings: r.NotificationSettings,
 			})
 		}
 		if len(newRules) > 0 {
@@ -218,24 +218,24 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 			}
 			parentVersion = r.Existing.Version
 			ruleVersions = append(ruleVersions, ngmodels.AlertRuleVersion{
-				RuleOrgID:        r.New.OrgID,
-				RuleUID:          r.New.UID,
-				RuleNamespaceUID: r.New.NamespaceUID,
-				RuleGroup:        r.New.RuleGroup,
-				RuleGroupIndex:   r.New.RuleGroupIndex,
-				ParentVersion:    parentVersion,
-				Version:          r.New.Version + 1,
-				Created:          r.New.Updated,
-				Condition:        r.New.Condition,
-				Title:            r.New.Title,
-				Data:             r.New.Data,
-				IntervalSeconds:  r.New.IntervalSeconds,
-				NoDataState:      r.New.NoDataState,
-				ExecErrState:     r.New.ExecErrState,
-				For:              r.New.For,
-				Annotations:      r.New.Annotations,
-				Labels:           r.New.Labels,
-				// TODO add settings here
+				RuleOrgID:            r.New.OrgID,
+				RuleUID:              r.New.UID,
+				RuleNamespaceUID:     r.New.NamespaceUID,
+				RuleGroup:            r.New.RuleGroup,
+				RuleGroupIndex:       r.New.RuleGroupIndex,
+				ParentVersion:        parentVersion,
+				Version:              r.New.Version + 1,
+				Created:              r.New.Updated,
+				Condition:            r.New.Condition,
+				Title:                r.New.Title,
+				Data:                 r.New.Data,
+				IntervalSeconds:      r.New.IntervalSeconds,
+				NoDataState:          r.New.NoDataState,
+				ExecErrState:         r.New.ExecErrState,
+				For:                  r.New.For,
+				Annotations:          r.New.Annotations,
+				Labels:               r.New.Labels,
+				NotificationSettings: r.New.NotificationSettings,
 			})
 		}
 		if len(ruleVersions) > 0 {
