@@ -101,7 +101,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 			return &result, err
 		}
 
-		r := s.fetch(ctx, s.client, query, req.Headers)
+		r := s.fetch(ctx, s.client, query)
 		if r == nil {
 			s.log.FromContext(ctx).Debug("Received nil response from runQuery", "query", query.Expr)
 			continue
@@ -112,7 +112,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 	return &result, nil
 }
 
-func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.Query, headers map[string]string) *backend.DataResponse {
+func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.Query) *backend.DataResponse {
 	traceCtx, end := s.trace(ctx, q)
 	defer end()
 
@@ -125,14 +125,14 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 	}
 
 	if q.InstantQuery {
-		res := s.instantQuery(traceCtx, client, q, headers)
+		res := s.instantQuery(traceCtx, client, q)
 		dr.Error = res.Error
 		dr.Frames = res.Frames
 		dr.Status = res.Status
 	}
 
 	if q.RangeQuery {
-		res := s.rangeQuery(traceCtx, client, q, headers)
+		res := s.rangeQuery(traceCtx, client, q)
 		if res.Error != nil {
 			if dr.Error == nil {
 				dr.Error = res.Error
@@ -147,7 +147,7 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 	}
 
 	if q.ExemplarQuery {
-		res := s.exemplarQuery(traceCtx, client, q, headers)
+		res := s.exemplarQuery(traceCtx, client, q)
 		if res.Error != nil {
 			// If exemplar query returns error, we want to only log it and
 			// continue with other results processing
@@ -159,7 +159,7 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 	return dr
 }
 
-func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) backend.DataResponse {
+func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query) backend.DataResponse {
 	res, err := c.QueryRange(ctx, q)
 	if err != nil {
 		return backend.DataResponse{
@@ -178,7 +178,7 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 	return s.parseResponse(ctx, q, res)
 }
 
-func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) backend.DataResponse {
+func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query) backend.DataResponse {
 	res, err := c.QueryInstant(ctx, q)
 	if err != nil {
 		return backend.DataResponse{
@@ -204,7 +204,7 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 	return s.parseResponse(ctx, q, res)
 }
 
-func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) backend.DataResponse {
+func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query) backend.DataResponse {
 	res, err := c.QueryExemplars(ctx, q)
 	if err != nil {
 		return backend.DataResponse{
