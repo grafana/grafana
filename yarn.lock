@@ -3506,6 +3506,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/experimental@npm:1.7.8":
+  version: 1.7.8
+  resolution: "@grafana/experimental@npm:1.7.8"
+  dependencies:
+    "@types/uuid": "npm:^8.3.3"
+    lodash: "npm:^4.17.21"
+    prismjs: "npm:^1.29.0"
+    react-beautiful-dnd: "npm:^13.1.1"
+    react-popper-tooltip: "npm:^4.4.2"
+    react-use: "npm:^17.4.2"
+    semver: "npm:^7.5.4"
+    uuid: "npm:^8.3.2"
+  peerDependencies:
+    "@emotion/css": 11.11.2
+    "@grafana/data": ^10.0.0
+    "@grafana/runtime": ^10.0.0
+    "@grafana/ui": ^10.0.0
+    react: 17.0.2
+    react-dom: 17.0.2
+    react-select: ^5.2.1
+    rxjs: 7.8.0
+  checksum: 10/6bcf4a04b07fb1a34f7fa5332c0ab10760675e153d6d855b49f3cfe9fdc1b63223162aa82bac569b30f10ad4b2c434058bc03d50c650f50f86ddad01de1f4cce
+  languageName: node
+  linkType: hard
+
 "@grafana/experimental@npm:1.7.9":
   version: 1.7.9
   resolution: "@grafana/experimental@npm:1.7.9"
@@ -3693,11 +3718,16 @@ __metadata:
     "@emotion/css": "npm:11.11.2"
     "@emotion/eslint-plugin": "npm:11.11.0"
     "@floating-ui/react": "npm:0.26.8"
+    "@grafana/data": "workspace:*"
     "@grafana/e2e": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
     "@grafana/eslint-config": "npm:7.0.0"
+    "@grafana/experimental": "npm:1.7.8"
+    "@grafana/faro-web-sdk": "npm:^1.3.6"
+    "@grafana/runtime": "workspace:*"
+    "@grafana/schema": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
-    "@grafana/ui": "npm:10.4.0-pre"
+    "@grafana/ui": "workspace:*"
     "@leeoniya/ufuzzy": "npm:1.0.14"
     "@lezer/common": "npm:1.2.1"
     "@lezer/highlight": "npm:1.2.0"
@@ -3785,12 +3815,6 @@ __metadata:
     webpack-cli: "npm:5.1.4"
     whatwg-fetch: "npm:3.6.20"
   peerDependencies:
-    "@grafana/data": "workspace:*"
-    "@grafana/experimental": 1.7.8
-    "@grafana/faro-web-sdk": ^1.3.6
-    "@grafana/runtime": "workspace:*"
-    "@grafana/schema": "workspace:*"
-    "@grafana/ui": "*"
     react: ^17.0.0 || ^18.0.0
     react-dom: ^17.0.0 || ^18.0.0
   languageName: unknown
