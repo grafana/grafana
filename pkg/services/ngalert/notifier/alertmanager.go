@@ -189,7 +189,7 @@ func (am *alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 			return err
 		})
 		if err != nil {
-			outerErr = nil
+			outerErr = err
 			return
 		}
 	})
