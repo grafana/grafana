@@ -45,6 +45,9 @@ export class HistoryWrapper implements LocationService {
     this.getSearch = this.getSearch.bind(this);
     this.getHistory = this.getHistory.bind(this);
     this.getLocation = this.getLocation.bind(this);
+    this.history.listen((args) => {
+      console.log('history.listen', args);
+    });
   }
 
   getHistory() {
