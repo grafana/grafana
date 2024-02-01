@@ -72,6 +72,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
       try {
         await datasource.languageProvider.start();
         setIsTagsLoading(false);
+        setAlertText(undefined);
       } catch (error) {
         if (error instanceof Error) {
           setAlertText(`Error: ${error.message}`);

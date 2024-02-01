@@ -11,7 +11,7 @@ import { intrinsics, scopes } from './traceql';
 
 interface Props {
   languageProvider: TempoLanguageProvider;
-  setAlertText: (text: string) => void;
+  setAlertText: (text?: string) => void;
 }
 
 type MinimalCompletionItem = {
@@ -31,7 +31,7 @@ type MinimalCompletionItem = {
 export class CompletionProvider implements monacoTypes.languages.CompletionItemProvider {
   languageProvider: TempoLanguageProvider;
   registerInteractionCommandId: string | null;
-  setAlertText: (text: string) => void;
+  setAlertText: (text?: string) => void;
 
   constructor(props: Props) {
     this.languageProvider = props.languageProvider;
@@ -298,7 +298,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
    * @param situation
    * @private
    */
-  private async getCompletions(situation: Situation, setErrorText: (text: string) => void): Promise<Completion[]> {
+  private async getCompletions(situation: Situation, setAlertText: (text?: string) => void): Promise<Completion[]> {
     switch (situation.type) {
       // This should only happen for cases that we do not support yet
       case 'UNKNOWN': {
@@ -370,11 +370,12 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         let tagValues;
         try {
           tagValues = await this.getTagValues(situation.tagName, situation.query);
+          setAlertText(undefined);
         } catch (error) {
           if (isFetchError(error)) {
-            setErrorText(error.data.error);
+            setAlertText(error.data.error);
           } else if (error instanceof Error) {
-            setErrorText(`Error: ${error.message}`);
+            setAlertText(`Error: ${error.message}`);
           }
         }
 

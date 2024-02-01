@@ -46,6 +46,8 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
       try {
         const options = await languageProvider.getOptionsV1(lpName);
         const filteredOptions = options.filter((item) => (item.value ? fuzzyMatch(item.value, query).found : false));
+        setAlertText(undefined);
+        setError(null);
         return filteredOptions;
       } catch (error) {
         if (isFetchError(error) && error?.status === 404) {
@@ -73,6 +75,8 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
           spans.push(toOption(query.spanName));
         }
         setSpanOptions(spans);
+        setAlertText(undefined);
+        setError(null);
       } catch (error) {
         // Display message if Tempo is connected but search 404's
         if (isFetchError(error) && error?.status === 404) {

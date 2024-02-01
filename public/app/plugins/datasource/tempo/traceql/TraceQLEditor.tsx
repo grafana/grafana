@@ -181,7 +181,7 @@ function setupAutoSize(editor: monacoTypes.editor.IStandaloneCodeEditor) {
  * @param datasource the Tempo datasource instance
  * @param setAlertText setter for alert's text
  */
-function useAutocomplete(datasource: TempoDatasource, setAlertText: (text: string) => void) {
+function useAutocomplete(datasource: TempoDatasource, setAlertText: (text?: string) => void) {
   // We need the provider ref so we can pass it the label/values data later. This is because we run the call for the
   // values here but there is additional setup needed for the provider later on. We could run the getSeries() in the
   // returned function but that is run after the monaco is mounted so would delay the request a bit when it does not
@@ -194,6 +194,7 @@ function useAutocomplete(datasource: TempoDatasource, setAlertText: (text: strin
     const fetchTags = async () => {
       try {
         await datasource.languageProvider.start();
+        setAlertText(undefined);
       } catch (error) {
         if (error instanceof Error) {
           setAlertText(`Error: ${error.message}`);

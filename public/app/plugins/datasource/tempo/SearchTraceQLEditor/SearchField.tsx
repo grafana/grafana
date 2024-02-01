@@ -26,7 +26,7 @@ interface Props {
   datasource: TempoDatasource;
   updateFilter: (f: TraceqlFilter) => void;
   deleteFilter?: (f: TraceqlFilter) => void;
-  setError: (error: FetchError) => void;
+  setError: (error: FetchError | null) => void;
   isTagsLoading?: boolean;
   tags: string[];
   hideScope?: boolean;
@@ -60,6 +60,8 @@ const SearchField = ({
 
   const updateOptions = async () => {
     try {
+      setAlertText(undefined);
+      setError(null);
       return filter.tag ? await datasource.languageProvider.getOptionsV2(scopedTag, query) : [];
     } catch (error) {
       // Display message if Tempo is connected but search 404's
