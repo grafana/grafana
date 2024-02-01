@@ -16,20 +16,18 @@ type NotificationSettingsValidator struct {
 	availableMuteTimings map[string]struct{}
 }
 
-// NewNotificationSettingsValidator creates a new NotificationSettingsValidator from the given Alertmanager configuration.
-// It uses the available receivers and mute timings to validate that NotificationSettings only refers to existing ones.
-func NewNotificationSettingsValidator(am definitions.PostableApiAlertingConfig) NotificationSettingsValidator {
-	availableReceivers := make(map[string]struct{}, len(am.Receivers))
-	for _, receiver := range am.Receivers {
-		availableReceivers[receiver.Name] = struct{}{}
-	}
-	availableMuteTimings := make(map[string]struct{}, len(am.MuteTimeIntervals))
-	for _, interval := range am.MuteTimeIntervals {
-		availableReceivers[interval.Name] = struct{}{}
-	}
+// apiAlertingConfig contains the methods required to validate NotificationSettings and create autogen routes.
+type apiAlertingConfig interface {
+	ReceiverNames() map[string]struct{}
+	MuteTimeIntervalNames() map[string]struct{}
+	GetRoute() *definitions.Route
+}
+
+// NewNotificationSettingsValidator creates a new NotificationSettingsValidator from the given apiAlertingConfig.
+func NewNotificationSettingsValidator(am apiAlertingConfig) NotificationSettingsValidator {
 	return NotificationSettingsValidator{
-		availableReceivers:   availableReceivers,
-		availableMuteTimings: availableMuteTimings,
+		availableReceivers:   am.ReceiverNames(),
+		availableMuteTimings: am.MuteTimeIntervalNames(),
 	}
 }
 
@@ -78,7 +76,7 @@ func (v *NotificationSettingsValidationService) Validator(ctx context.Context, o
 		return NotificationSettingsValidator{}, err
 	}
 	log.New("ngalert.notifier.validator").FromContext(ctx).Debug("Create validator from Alertmanager configuration", "hash", rawCfg.ConfigurationHash)
-	return NewNotificationSettingsValidator(cfg.AlertmanagerConfig), nil
+	return NewNotificationSettingsValidator(&cfg.AlertmanagerConfig), nil
 }
 
 // Validate checks that the given NotificationSettings are valid for the given orgID.

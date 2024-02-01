@@ -735,6 +735,26 @@ type GettableApiAlertingConfig struct {
 	Receivers []*GettableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
 
+func (c *GettableApiAlertingConfig) ReceiverNames() map[string]struct{} {
+	receivers := make(map[string]struct{}, len(c.Receivers))
+	for _, r := range c.Receivers {
+		receivers[r.Name] = struct{}{}
+	}
+	return receivers
+}
+
+func (c *GettableApiAlertingConfig) MuteTimeIntervalNames() map[string]struct{} {
+	muteTimeIntervals := make(map[string]struct{}, len(c.MuteTimeIntervals))
+	for _, interval := range c.MuteTimeIntervals {
+		muteTimeIntervals[interval.Name] = struct{}{}
+	}
+	return muteTimeIntervals
+}
+
+func (c *GettableApiAlertingConfig) GetRoute() *Route {
+	return c.Route
+}
+
 func (c *GettableApiAlertingConfig) UnmarshalJSON(b []byte) error {
 	type plain GettableApiAlertingConfig
 	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
@@ -958,6 +978,26 @@ type PostableApiAlertingConfig struct {
 
 	// Override with our superset receiver type
 	Receivers []*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
+}
+
+func (c *PostableApiAlertingConfig) ReceiverNames() map[string]struct{} {
+	receivers := make(map[string]struct{}, len(c.Receivers))
+	for _, r := range c.Receivers {
+		receivers[r.Name] = struct{}{}
+	}
+	return receivers
+}
+
+func (c *PostableApiAlertingConfig) MuteTimeIntervalNames() map[string]struct{} {
+	muteTimeIntervals := make(map[string]struct{}, len(c.MuteTimeIntervals))
+	for _, interval := range c.MuteTimeIntervals {
+		muteTimeIntervals[interval.Name] = struct{}{}
+	}
+	return muteTimeIntervals
+}
+
+func (c *PostableApiAlertingConfig) GetRoute() *Route {
+	return c.Route
 }
 
 func (c *PostableApiAlertingConfig) UnmarshalJSON(b []byte) error {
