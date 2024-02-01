@@ -10,9 +10,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type fakeSender struct{}
@@ -69,7 +69,7 @@ func TestService(t *testing.T) {
 				f := &fakeHTTPClientProvider{}
 				httpProvider := getMockPromTestSDKProvider(f)
 				service := &Service{
-					im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, backend.NewLoggerWith("logger", "test"))),
+					im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, backend.NewLoggerWith("logger", "test"))),
 				}
 
 				req := &backend.CallResourceRequest{
