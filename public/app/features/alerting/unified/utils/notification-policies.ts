@@ -158,8 +158,8 @@ function findMatchingAlertGroups(
 function getInheritedProperties(
   parentRoute: Route,
   childRoute: Route,
-  propertiesParentInherited?: Partial<InheritableProperties>
-): Partial<InheritableProperties> {
+  propertiesParentInherited?: InheritableProperties
+): InheritableProperties {
   const propsFromParent: InheritableProperties = pick(parentRoute, INHERITABLE_KEYS);
   const inheritableProperties: InheritableProperties = {
     ...propsFromParent,
@@ -168,7 +168,7 @@ function getInheritedProperties(
 
   const inherited = reduce(
     inheritableProperties,
-    (inheritedProperties: Partial<Route> = {}, parentValue, property) => {
+    (inheritedProperties: InheritableProperties, parentValue, property) => {
       const parentHasValue = parentValue != null;
 
       const inheritableValues = [undefined, '', null];
