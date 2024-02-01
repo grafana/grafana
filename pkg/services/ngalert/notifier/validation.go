@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -92,4 +93,35 @@ func (v *NotificationSettingsValidationService) Validate(ctx context.Context, or
 		}
 	}
 	return errors.Join(errs...)
+}
+
+type CachedNotificationSettingsValidationService struct {
+	srv        *NotificationSettingsValidationService
+	mtx        sync.Mutex
+	validators map[int64]models.NotificationSettingsValidator
+}
+
+func NewCachedNotificationSettingsValidationService(store store.AlertingStore) *CachedNotificationSettingsValidationService {
+	return &CachedNotificationSettingsValidationService{
+		srv:        NewNotificationSettingsValidationService(store),
+		mtx:        sync.Mutex{},
+		validators: map[int64]models.NotificationSettingsValidator{},
+	}
+}
+
+// Validator returns a NotificationSettingsValidator using the alertmanager configuration from the given orgID.
+func (v *CachedNotificationSettingsValidationService) Validator(ctx context.Context, orgID int64) (models.NotificationSettingsValidator, error) {
+	v.mtx.Lock()
+	defer v.mtx.Unlock()
+
+	result, ok := v.validators[orgID]
+	if !ok {
+		vd, err := v.srv.Validator(ctx, orgID)
+		if err != nil {
+			return nil, err
+		}
+		v.validators[orgID] = vd
+		result = vd
+	}
+	return result, nil
 }
