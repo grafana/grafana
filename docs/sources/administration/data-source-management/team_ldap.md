@@ -17,7 +17,7 @@ weight: 100
 
 # Team LBAC
 
-Grafana's new Team LBAC (Label-Based Access Control) feature for Loki is a significant enhancement that simplifies and streamlines data source access management based on team memberships. Users wanting fine grained access to data sources such as Loki with X amount of teams with different levels of access can make use of Team LBAC.
+Grafana's new Team LBAC (Label-Based Access Control) feature for Loki is a significant enhancement that simplifies and streamlines data source access management based on team memberships. Users wanting fine grained access to data sources such as Loki with `X` amount of teams with different levels of access can make use of Team LBAC.
 
 This feature addresses a common challenge faced by Grafana users: managing Loki data source access for different teams. Previously, this led to the creation of numerous connections and duplicate dashboards, hampering scalability and user experience. With Team LBAC, users can now configure access to specific labels based solely on team memberships.
 
@@ -29,64 +29,84 @@ Team LBAC rules are added to the http request to Loki data source. Setting up Te
 
 **Note:** Any teams within Grafana without a rule will be able to query all logs if there are role based queriying setup. See <> for more information.
 
-Configuring multiple rules for a team acts the same way as CAP rules, each rule is evaluated separately. If a team has two rules configured for it, both rules will be applied to the request and the result will be the [logical disjunction](https://en.wikipedia.org/wiki/Logical_disjunction), a "OR" operation of the two rules.
+Configuring multiple rules for a team, each rule is evaluated separately. If a team has `X` number of rules configured for it, all rules will be applied to the request and the result will be the an "OR" operation of the `X` number of rules.
 
 Only a data source administrator with permission access can edit LBAC rules at the data source permissions tab. Changing LBAC rules requires the same access level as editing data source permissions (admin permission for data source).
 
 > "Can I use CAPs (cloud access policies) together with TeamLBAC rules?"
-No, CAP always have precedence. If there are any CAP configured for the same datasource and there are TeamLBAC rules configured, then only the CAP access will be applied.
+No, CAP (cloud access policies) always have precedence. If there are any CAP LBAC configured for the same datasource and there are TeamLBAC rules configured, then only the CAP LBAC will be applied.
+
+Cloud access policies are the access controls from Grafana Cloud, the CAP configured for loki should only to be used to gain read access to the logs.
 
 > "If administrator forget to add rule for a team, what happens?"
 The teams that does not have a rule applied to it, would be able to query the logs if `query` permissions are setup for their role within Grafana.
 
 #### Best practices
-For configuring new rules, or viewing the rules for the teams we recommend testing the rules in the Loki Explore view. This will allow you to see the logs that would be returned for the rule.
+We recommend you only add team lbac permissions for teams that should use the data source and remove default `Viewer` and `Editor` query permissions.
 
+For validating the rules, we recommend testing the rules in the Loki Explore view. This will allow you to see the logs that would be returned for the rule.
 
 #### Scenarios
 **Scenario 1: One rule setup for a Team**
 We have two teams, Team A and Team B. Loki access is setup with `Editor`, `Viewer` roles to have `Query` permission.
 
-Team A has a rule `namespace="auth"` configured. 
+Team A has a rule `namespace="dev"` configured. 
 
 Team B does not have a rule configured for it. 
 
-**Log Access**
-Team A will have access to logs that match `namespace="auth"`.
+**Logs Access**
+A user that is part of Team A will have access to logs that match `namespace="dev"`.
 
-Team B will have access to all logs (due to the query permission for the user).
+A user that is part of Team B, ths is `Editor` or `Viewer` will have access to all logs (due to the query permission for the user).
 
 **Scenario 2: Multiple rules setup for two teams**
 We have two teams, Team A and Team B. Loki access is setup with `Admin` roles having `Query` permission.
 
-Team A has rule `namespace="auth", namespace="security"` configured. 
+Team A has rule `namespace="dev", namespace="prod"` configured. 
 
-Team B has rule `namespace!="auth", namespace="security"` configured. 
+Team B has rule `namespace!="dev", namespace="prod"` configured. 
 
-**Log Access**
-Team A will have access to logs that match `namespace="auth"` `OR` `namespace=security`.
+**Logs Access**
+A user that is part of Team A will have access to logs that match `namespace="dev"` `OR` `namespace=prod`.
 
-Team B will have access to logs that match `namespace!="auth"` `OR` `namespace=security`.
+A user that is part of Team B will have access to logs that match `namespace!="bi"` `OR` `namespace=prod`.
+
+A user that is part of Team A and Team B will have access to logs that match `namespace="dev"` `OR` `namespace=prod` `OR` `namespace!="bi"`.
 
 Any admin still have access to query all logs (due to the query permission for the user).
 
 **Scenario 3: Two or more rules configured for a team**
 We have three teams, Team A, Team B and Team C. Team C is a new team and has no rules configured for it. Loki access is setup with `Editor` role having `Query` permission.
 
-Team A has a rule `namespace="auth"` configured.
+Team A has a rule `namespace="dev"` configured. Team A has a user with `Editor` role.
 
-Team B have two rules `namespace="auth"` and another rule `namespace="security"`. 
+Team B have two rules `namespace="dev"` and `namespace="prod"`. 
 
-Team C have no rules. Team C has a viewer and a editor.
+Team C have no rules. Team C has a user with an `Viewer`.
 
 **Log Access**
-Team A will have access to logs that match `namespace="auth"`.
+Team A will have access to logs that match `namespace="dev"`.
 
-Team B, would be able to query all logs that match either `namespace="auth"` OR `namespace="security"`.
+Team B, would be able to query all logs that match either `namespace="dev"` OR `namespace="prod"`.
 
 Team C's `Editors`, will have access to query all logs.
 
-> **NOTE:** There will be a warning for all of the roles that have access to query all logs, if there are any TeamLBAC rules configured for the data source.
+
+**Scenario 4: Rules that overlap**
+We have two teams, Team A and Team B.
+
+Team A has a rule `namespace="dev"`.
+
+Team B has a rule `namespace!="dev"`. 
+
+**Log Access**
+A user in Team A will have access to logs that match `namespace="dev"`.
+
+A user in Team b will have access to logs that match `namespace!="dev"`.
+
+A user that is part of Team A and Team B will have access to logs that match `namespace="dev"` `OR` `namespace!="dev"`.
+
+> *NOTE:* If a user is part of Team A and Team B, the user will have access to all logs. This is because the rules are evaluated separately and the result is an "OR" oepration of the two rules.
 
 ## Setting up Team LBAC rules
 
