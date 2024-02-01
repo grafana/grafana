@@ -779,6 +779,66 @@ describe('transformSaveModelToScene', () => {
       });
     });
 
+    it('should migrate adhoc variable', () => {
+      const variable: TypedVariableModel = {
+        id: 'adhoc',
+        global: false,
+        index: 0,
+        state: LoadingState.Done,
+        error: null,
+        name: 'adhoc',
+        label: 'Adhoc Label',
+        description: 'Adhoc Description',
+        type: 'adhoc',
+        rootStateKey: 'N4XLmH5Vz',
+        datasource: {
+          uid: 'gdev-prometheus',
+          type: 'prometheus',
+        },
+        filters: [
+          {
+            key: 'filterTest',
+            operator: '=',
+            value: 'test',
+          },
+        ],
+        baseFilters: [
+          {
+            key: 'baseFilterTest',
+            operator: '=',
+            value: 'test',
+          },
+        ],
+        hide: 0,
+        skipUrlSync: false,
+      };
+
+      const migrated = createSceneVariableFromVariableModel(variable) as AdHocFiltersVariable;
+      const { set, ...variableState } = migrated.state;
+      const filterSetState = set.state;
+
+      expect(migrated).toBeInstanceOf(AdHocFiltersVariable);
+      expect(variableState).toEqual({
+        key: expect.any(String),
+        description: 'Adhoc Description',
+        hide: 0,
+        label: 'Adhoc Label',
+        name: 'adhoc',
+        skipUrlSync: false,
+        type: 'adhoc',
+        filterExpression: 'filterTest="test"',
+      });
+      expect(filterSetState).toEqual({
+        key: expect.any(String),
+        name: 'adhoc',
+        filters: [{ key: 'filterTest', operator: '=', value: 'test' }],
+        baseFilters: [{ key: 'baseFilterTest', operator: '=', value: 'test' }],
+        datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
+        applyMode: 'same-datasource',
+        layout: 'horizontal',
+      });
+    });
+
     it.each(['system'])('should throw for unsupported (yet) variables', (type) => {
       const variable = {
         name: 'query0',

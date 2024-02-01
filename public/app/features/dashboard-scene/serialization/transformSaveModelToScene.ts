@@ -290,7 +290,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     label: variable.label,
   };
   if (variable.type === 'adhoc') {
-    // TODO: Use AdHocFiltersVariable.create and make it accept 'applyMode' as parameter
     return new AdHocFiltersVariable({
       type: 'adhoc',
       name: variable.name ?? 'filters',
@@ -303,7 +302,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
         datasource: variable.datasource,
         filters: variable.filters ?? [],
         baseFilters: variable.baseFilters ?? [],
-        // The AdHocFiltersVariable.create sets the applyMode to 'manual' and it is not configurable
         applyMode: 'same-datasource',
       }),
     });
