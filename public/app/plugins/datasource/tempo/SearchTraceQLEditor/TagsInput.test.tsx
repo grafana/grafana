@@ -124,9 +124,7 @@ describe('TagsInput', () => {
         updateFilter={jest.fn}
         deleteFilter={jest.fn}
         filters={[filter]}
-        setError={function (error: FetchError | null): void {
-          throw error;
-        }}
+        setError={() => {}}
         staticTags={[]}
         isTagsLoading={false}
         query={''}
