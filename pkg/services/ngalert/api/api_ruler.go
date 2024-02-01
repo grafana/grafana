@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -37,6 +38,10 @@ type ConditionValidator interface {
 	Validate(ctx eval.EvaluationContext, condition ngmodels.Condition) error
 }
 
+type AMRefresher interface {
+	RefreshConfig(ctx context.Context, orgId int64) error
+}
+
 type RulerSrv struct {
 	xactManager        provisioning.TransactionManager
 	provenanceStore    provisioning.ProvisioningStore
@@ -48,6 +53,8 @@ type RulerSrv struct {
 	authz              RuleAccessControlService
 
 	notificationSettingsValidatorFactory NotificationSettingsValidatorProvider
+	amRefresher                          AMRefresher
+	featureManager                       featuremgmt.FeatureToggles
 }
 
 var (
@@ -279,6 +286,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 // All operations are performed in a single transaction
 func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRuleWithOptionals) response.Response {
 	var finalChanges *store.GroupDelta
+	var notificationSettingsChanged bool
 	err := srv.xactManager.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
 		userNamespace, id := c.SignedInUser.GetNamespacedID()
 		logger := srv.log.New("namespace_uid", groupKey.NamespaceUID, "group",
@@ -303,7 +311,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			return err
 		}
 
-		err = validateNotifications(c.Req.Context(), groupChanges, srv.notificationSettingsValidatorFactory)
+		notificationSettingsChanged, err = validateNotifications(c.Req.Context(), groupChanges, srv.notificationSettingsValidatorFactory)
 		if err != nil {
 			return err
 		}
@@ -391,6 +399,15 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
+
+	if srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingSimplifiedRouting) && notificationSettingsChanged {
+		// This isn't strictly necessary since the alertmanager config is periodically synced.
+		err := srv.amRefresher.RefreshConfig(c.Req.Context(), c.SignedInUser.GetOrgID())
+		if err != nil {
+			srv.log.Warn("Failed to refresh Alertmanager config for org after change in notification settings", "org", c.SignedInUser.GetOrgID(), "error", err)
+		}
+	}
+
 	return changesToResponse(finalChanges)
 }
 
@@ -536,9 +553,10 @@ func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, valida
 
 // validateNotifications validates notification settings for all new or updated rules in the GroupDelta.
 // Validation is performed for all rules using a single instance from NotificationSettingsValidatorProvider.
-func validateNotifications(ctx context.Context, groupChanges *store.GroupDelta, provider NotificationSettingsValidatorProvider) error {
+func validateNotifications(ctx context.Context, groupChanges *store.GroupDelta, provider NotificationSettingsValidatorProvider) (bool, error) {
 	var validator ngmodels.NotificationSettingsValidator
 	var err error
+	var changed bool
 	for _, rule := range groupChanges.New {
 		if rule.NotificationSettings == nil {
 			continue
@@ -546,14 +564,15 @@ func validateNotifications(ctx context.Context, groupChanges *store.GroupDelta, 
 		if validator == nil {
 			validator, err = provider.Validator(ctx, groupChanges.GroupKey.OrgID)
 			if err != nil {
-				return err
+				return false, err
 			}
 		}
 		for _, s := range rule.NotificationSettings {
 			err = validator.Validate(s)
 			if err != nil {
-				return errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
+				return false, errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
 			}
+			changed = true
 		}
 	}
 	for _, delta := range groupChanges.Update {
@@ -565,20 +584,21 @@ func validateNotifications(ctx context.Context, groupChanges *store.GroupDelta, 
 		if len(d) == 0 {
 			continue
 		}
+		changed = true
 		if validator == nil {
 			validator, err = provider.Validator(ctx, groupChanges.GroupKey.OrgID)
 			if err != nil {
-				return err
+				return false, err
 			}
 		}
 		for _, s := range delta.New.NotificationSettings {
 			err = validator.Validate(s)
 			if err != nil {
-				return errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
+				return false, errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
 			}
 		}
 	}
-	return nil
+	return changed, nil
 }
 
 // getAuthorizedRuleByUid fetches all rules in group to which the specified rule belongs, and checks whether the user is authorized to access the group.
