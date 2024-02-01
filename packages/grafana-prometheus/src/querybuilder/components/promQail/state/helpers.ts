@@ -3,6 +3,8 @@ import { AnyAction } from 'redux';
 import { llms } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
 
+import { PrometheusDatasource } from '../../../../datasource';
+import { getMetadataHelp, getMetadataType } from '../../../../language_provider';
 import { promQueryModeller } from '../../../PromQueryModeller';
 import { buildVisualQueryFromString } from '../../../parsing';
 import { PromVisualQuery } from '../../../types';
@@ -17,8 +19,6 @@ import { Interaction, QuerySuggestion, SuggestionType } from '../types';
 
 import { createInteraction, stateSlice } from './state';
 import { getTemplateSuggestions } from './templates';
-import { getMetadataHelp, getMetadataType } from '../../../../language_provider';
-import { PrometheusDatasource } from '../../../../datasource';
 
 const OPENAI_MODEL_NAME = 'gpt-3.5-turbo-1106';
 const promQLTemplatesCollection = 'grafana.promql.templates';

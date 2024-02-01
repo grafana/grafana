@@ -6,6 +6,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Checkbox, Input, Spinner, useTheme2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../../datasource';
+import store from '../../../gcopypaste/app/core/store';
 import { PromVisualQuery } from '../../types';
 
 import { QuerySuggestionContainer } from './QuerySuggestionContainer';
@@ -14,7 +15,7 @@ import AI_Logo_color from './resources/AI_Logo_color.svg';
 import { promQailExplain, promQailSuggest } from './state/helpers';
 import { initialState, stateSlice } from './state/state';
 import { Interaction, SuggestionType } from './types';
-import store from '../../../gcopypaste/app/core/store';
+
 
 // actions to update the state
 const { showStartingMessage, indicateCheckbox, addInteraction, updateInteraction } = stateSlice.actions;
