@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"testing"
@@ -10,7 +11,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
 
@@ -44,7 +44,7 @@ func TestClient(t *testing.T) {
 			defer func() {
 				if res != nil && res.Body != nil {
 					if err := res.Body.Close(); err != nil {
-						logger.Warn("Error", "err", err)
+						fmt.Println("Error", "err", err)
 					}
 				}
 			}()
@@ -68,7 +68,7 @@ func TestClient(t *testing.T) {
 			defer func() {
 				if res != nil && res.Body != nil {
 					if err := res.Body.Close(); err != nil {
-						logger.Warn("Error", "err", err)
+						fmt.Println("Error", "err", err)
 					}
 				}
 			}()
@@ -98,7 +98,7 @@ func TestClient(t *testing.T) {
 			defer func() {
 				if res != nil && res.Body != nil {
 					if err := res.Body.Close(); err != nil {
-						logger.Warn("Error", "err", err)
+						fmt.Println("Error", "err", err)
 					}
 				}
 			}()
@@ -125,7 +125,7 @@ func TestClient(t *testing.T) {
 			defer func() {
 				if res != nil && res.Body != nil {
 					if err := res.Body.Close(); err != nil {
-						logger.Warn("Error", "err", err)
+						fmt.Println("Error", "err", err)
 					}
 				}
 			}()
