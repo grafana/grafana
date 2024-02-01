@@ -1354,5 +1354,11 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			Created:      time.Date(2024, time.January, 2, 12, 0, 0, 0, time.UTC),
 		},
+		{
+			Name:           "newCloudHomeRedesign",
+			Description:    "Enable new Cloud Home redesign",
+			Stage:          FeatureStageGeneralAvailability,
+			FrontendOnly: 	true
+		},
 	}
 )
