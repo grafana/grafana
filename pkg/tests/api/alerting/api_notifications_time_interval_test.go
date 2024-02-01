@@ -121,7 +121,7 @@ func TestTimeInterval(t *testing.T) {
 							},
 						},
 						Location: &timeinterval.Location{
-							time.UTC,
+							Location: time.UTC,
 						},
 					},
 				},
