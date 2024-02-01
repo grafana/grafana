@@ -18,6 +18,8 @@ import (
 var (
 	// ErrPermissionDenied is returned when the user does not have permission to perform the requested action.
 	ErrPermissionDenied = errors.New("permission denied") // TODO: convert to errutil
+	// ErrNotFound is returned when the requested resource does not exist.
+	ErrNotFound = errors.New("not found") // TODO: convert to errutil
 )
 
 // ReceiverService is the service for managing alertmanager receivers.
@@ -69,6 +71,41 @@ func (rs *ReceiverService) canDecrypt(ctx context.Context, user identity.Request
 		return false, err
 	}
 	return receiverAccess || provisioningAccess, nil
+}
+
+// GetReceiver returns a receiver by name.
+// The receiver's secure settings are decrypted if requested and the user has access to do so.
+func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiverQuery, user identity.Requester) (definitions.GettableApiReceiver, error) {
+
+	baseCfg, err := rs.cfgStore.GetLatestAlertmanagerConfiguration(ctx, q.OrgID)
+	if err != nil {
+		return definitions.GettableApiReceiver{}, err
+	}
+
+	cfg := definitions.PostableUserConfig{}
+	err = json.Unmarshal([]byte(baseCfg.AlertmanagerConfiguration), &cfg)
+	if err != nil {
+		return definitions.GettableApiReceiver{}, err
+	}
+
+	provenances, err := rs.provisioningStore.GetProvenances(ctx, q.OrgID, "contactPoint")
+	if err != nil {
+		return definitions.GettableApiReceiver{}, err
+	}
+
+	receivers := cfg.AlertmanagerConfig.Receivers
+	for i := range receivers {
+		if receivers[i].Name == q.Name {
+			decryptAccess, err := rs.canDecrypt(ctx, user, q.Name)
+			if err != nil {
+				return definitions.GettableApiReceiver{}, err
+			}
+			decryptFn := rs.decryptOrRedact(ctx, decryptAccess && q.Decrypt, q.Name, "")
+			return PostableToGettableApiReceiver(receivers[i], provenances, decryptFn)
+		}
+	}
+
+	return definitions.GettableApiReceiver{}, ErrNotFound
 }
 
 // GetReceivers returns a list of receivers a user has access to.
