@@ -184,7 +184,7 @@ func Render(qt peakq.QueryTemplateSpec, selectedValues map[string]string) (*peak
 				// offsets
 				value := selectedValues[r.Key]
 				s = s[:r.Start+offSet] + value + s[r.End+offSet:]
-				offSet = int64(len(value)) - r.End - r.Start
+				offSet = int64(len(value)+int(offSet)) - (r.End - r.Start)
 			}
 			n.SetString(s)
 		}
