@@ -19280,24 +19280,6 @@
         }
       }
     },
-    "SSOSettings": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "provider": {
-          "type": "string"
-        },
-        "settings": {
-          "type": "object",
-          "additionalProperties": false
-        },
-        "source": {
-          "$ref": "#/definitions/SettingsSource"
-        }
-      }
-    },
     "Sample": {
       "type": "object",
       "title": "Sample is a single sample belonging to a metric.",
@@ -19715,10 +19697,6 @@
           "type": "string"
         }
       }
-    },
-    "SettingsSource": {
-      "type": "integer",
-      "format": "int64"
     },
     "ShareType": {
       "type": "string"

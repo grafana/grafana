@@ -9796,24 +9796,6 @@
         },
         "type": "object"
       },
-      "SSOSettings": {
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "provider": {
-            "type": "string"
-          },
-          "settings": {
-            "additionalProperties": false,
-            "type": "object"
-          },
-          "source": {
-            "$ref": "#/components/schemas/SettingsSource"
-          }
-        },
-        "type": "object"
-      },
       "Sample": {
         "properties": {
           "H": {
@@ -10230,10 +10212,6 @@
           "type": "object"
         },
         "type": "object"
-      },
-      "SettingsSource": {
-        "format": "int64",
-        "type": "integer"
       },
       "ShareType": {
         "type": "string"
