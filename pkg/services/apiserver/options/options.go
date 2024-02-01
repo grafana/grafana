@@ -89,7 +89,13 @@ func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) erro
 		return err
 	}
 
-	serverConfig.SecureServing = nil
+	if !o.ExtraOptions.DevMode {
+		if err := serverConfig.SecureServing.Listener.Close(); err != nil {
+			return err
+		}
+		serverConfig.SecureServing = nil
+	}
+
 	return nil
 }
 
