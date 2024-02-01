@@ -24,7 +24,9 @@ export interface Props {
   allSeries: ScatterSeries[];
 }
 
-export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, options, isPinned }: Props) => {
+export const XYChartTooltip = (props: Props) => {
+  const { dataIdxs, seriesIdx, data, allSeries, options, isPinned } = props;
+  // console.log(props, 'props');
   const styles = useStyles2(getStyles);
 
   const rowIndex = dataIdxs.find((idx) => idx !== null);
