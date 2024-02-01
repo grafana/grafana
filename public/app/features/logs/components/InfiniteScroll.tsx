@@ -48,6 +48,12 @@ export const InfiniteScroll = ({
   }, [loading]);
 
   useEffect(() => {
+    if (lowerLoading && scrollElement) {
+      scrollElement.scrollTo(0, scrollElement.scrollHeight - scrollElement.clientHeight);
+    }
+  }, [lowerLoading, scrollElement]);
+
+  useEffect(() => {
     if (!scrollElement || !loadMoreLogs) {
       return;
     }
