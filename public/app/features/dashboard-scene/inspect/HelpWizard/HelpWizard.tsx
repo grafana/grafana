@@ -204,25 +204,26 @@ export function HelpWizard({ panel, onClose }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  code: css`
-    flex-grow: 1;
-    height: 100%;
-    overflow: scroll;
-  `,
-  field: css`
-    width: 100%;
-  `,
-  opts: css`
-    display: flex;
-    display: flex;
-    width: 100%;
-    flex-grow: 0;
-    align-items: center;
-    justify-content: flex-end;
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    code: css({
+      flexGrow: 1,
+      height: '100%',
+      overflow: 'scroll',
+    }),
+    field: css({
+      width: '100%',
+    }),
+    opts: css({
+      display: 'flex',
+      width: '100%',
+      flexGrow: 0,
+      alignItems: 'center',
+      justifyContent: 'flex-end',
 
-    button {
-      margin-left: 8px;
-    }
-  `,
-});
+      '& button': {
+        marginLeft: theme.spacing(1),
+      },
+    }),
+  };
+};
