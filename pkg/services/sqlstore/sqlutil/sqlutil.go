@@ -52,19 +52,24 @@ func SQLite3TestDB(t ITestDB) (*TestDB, error) {
 		}, nil
 	}
 
-	// try to create a database file in the user's cache directory
-	dir, err := os.UserCacheDir()
-	if err != nil {
-		return nil, err
-	}
+	sqliteDb := os.Getenv("SQLITE_TEST_DB")
+	if sqliteDb == "" {
+		// try to create a database file in the user's cache directory
+		dir, err := os.UserCacheDir()
+		if err != nil {
+			return nil, err
+		}
 
-	err = os.Mkdir(filepath.Join(dir, "grafana-test"), 0750)
-	if err != nil && !os.IsExist(err) {
-		return nil, err
+		err = os.MkdirAll(filepath.Join(dir, "grafana-test"), 0750)
+		if err != nil {
+			return nil, err
+		}
+
+		sqliteDb = filepath.Join(dir, "grafana-test", "grafana-test.db")
 	}
 
 	//#nosec G304 - this is a test db
-	f, err := os.Create(filepath.Join(dir, "grafana-test", "grafana-test.db"))
+	f, err := os.Create(sqliteDb)
 	if err != nil && !os.IsExist(err) {
 		return nil, err
 	}
