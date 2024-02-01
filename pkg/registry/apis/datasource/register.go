@@ -20,6 +20,7 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -112,7 +113,8 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&v0alpha1.DataSourceConnectionList{},
 		&v0alpha1.HealthCheckResult{},
 		&unstructured.Unstructured{},
-		// Added for subresource stubs
+		// Query handler
+		&query.QueryDataResponse{},
 		&metav1.Status{},
 	)
 }
@@ -138,7 +140,7 @@ func (b *DataSourceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 }
 
 func resourceFromPluginID(pluginID string) (common.ResourceInfo, error) {
-	group, err := getDatasourceGroupNameFromPluginID(pluginID)
+	group, err := plugins.GetDatasourceGroupNameFromPluginID(pluginID)
 	if err != nil {
 		return common.ResourceInfo{}, err
 	}

@@ -11475,7 +11475,19 @@
             "in": "body",
             "required": true,
             "schema": {
-              "$ref": "#/definitions/SSOSettings"
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "provider": {
+                  "type": "string"
+                },
+                "settings": {
+                  "type": "object",
+                  "additionalProperties": false
+                }
+              }
             }
           }
         ],
@@ -22991,7 +23003,22 @@
     "getSSOSettingsResponse": {
       "description": "(empty)",
       "schema": {
-        "$ref": "#/definitions/SSOSettings"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "settings": {
+            "type": "object",
+            "additionalProperties": false
+          },
+          "source": {
+            "type": "string"
+          }
+        }
       }
     },
     "getSharingOptionsResponse": {
@@ -23177,7 +23204,22 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/SSOSettings"
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "provider": {
+              "type": "string"
+            },
+            "settings": {
+              "type": "object",
+              "additionalProperties": false
+            },
+            "source": {
+              "type": "string"
+            }
+          }
         }
       }
     },
