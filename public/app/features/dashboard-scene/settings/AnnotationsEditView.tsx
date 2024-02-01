@@ -73,19 +73,17 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
 
     const data = this.getSceneDataLayers();
 
-    if (data) {
-      const layers = [...data.state.layers];
-      newAnnotation.activate();
+    const layers = [...data.state.layers];
+    newAnnotation.activate();
 
-      //keep annotation layers together
-      layers.splice(this.getAnnotationsLength(), 0, newAnnotation);
+    //keep annotation layers together
+    layers.splice(this.getAnnotationsLength(), 0, newAnnotation);
 
-      data.setState({
-        layers,
-      });
+    data.setState({
+      layers,
+    });
 
-      this.setState({ editIndex: this.getAnnotationsLength() - 1 });
-    }
+    this.setState({ editIndex: this.getAnnotationsLength() - 1 });
   };
 
   public onEdit = (idx: number) => {
@@ -109,52 +107,48 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
   public onMove = (idx: number, direction: MoveDirection) => {
     const data = this.getSceneDataLayers();
 
-    if (data) {
-      const layers = [...data.state.layers];
-      const [layer] = layers.splice(idx, 1);
-      layers.splice(idx + direction, 0, layer);
+    const layers = [...data.state.layers];
+    const [layer] = layers.splice(idx, 1);
+    layers.splice(idx + direction, 0, layer);
 
-      data.setState({
-        layers,
-      });
-    }
+    data.setState({
+      layers,
+    });
   };
 
   public onDelete = (idx: number) => {
     const data = this.getSceneDataLayers();
 
-    if (data) {
-      const layers = [...data.state.layers];
-      layers.splice(idx, 1);
+    const layers = [...data.state.layers];
+    layers.splice(idx, 1);
 
-      data.setState({
-        layers,
-      });
-    }
+    data.setState({
+      layers,
+    });
   };
 
   public onUpdate = (annotation: AnnotationQuery, editIndex: number) => {
     const data = this.getSceneDataLayers();
 
-    if (data) {
-      const layers = [...data.state.layers];
-      const layer = layers[editIndex];
+    const layers = [...data.state.layers];
+    const layer = layers[editIndex];
 
-      if (layer instanceof dataLayers.AnnotationsDataLayer) {
-        layer.setState({
-          key: `annotations-${annotation.name}`,
-          name: annotation.name,
-          isEnabled: Boolean(annotation.enable),
-          isHidden: Boolean(annotation.hide),
-          query: annotation,
-        });
+    if (layer instanceof dataLayers.AnnotationsDataLayer) {
+      layer.setState({
+        key: `annotations-${annotation.name}`,
+        name: annotation.name,
+        isEnabled: Boolean(annotation.enable),
+        isHidden: Boolean(annotation.hide),
+        query: annotation,
+      });
 
-        layer.runLayer();
+      //need to rerun the layer to update the query and
+      //see the annotation on the panel
+      layer.runLayer();
 
-        data.setState({
-          layers,
-        });
-      }
+      data.setState({
+        layers,
+      });
     }
   };
 }
