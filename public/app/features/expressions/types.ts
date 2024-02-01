@@ -1,7 +1,7 @@
 import { DataQuery, ReducerID, SelectableValue } from '@grafana/data';
 
 import { EvalFunction } from '../alerting/state/alertDef';
-import { config } from '@grafana/runtime';
+import { config } from 'app/core/config';
 
 /**
  * MATCHES a constant in DataSourceWithBackend
@@ -71,7 +71,7 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
   },
 ].filter(expr => {
   if (expr.value === ExpressionQueryType.sql) {
-    return config.featureToggles.sqlExpressions;
+    return config.featureToggles?.sqlExpressions;
   }
   return true;
 });
