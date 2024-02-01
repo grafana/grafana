@@ -28,11 +28,6 @@ export const ReduceTransformerEditor = ({ options, onChange }: TransformerUIProp
       value: ReduceTransformerMode.ReduceFields,
       description: 'Collapse each field into a single value',
     },
-    {
-      label: 'Sample values',
-      value: ReduceTransformerMode.SampleValues,
-      description: 'Limit the number of values for each series',
-    },
   ];
 
   const onSelectMode = useCallback(
