@@ -169,5 +169,14 @@ describe('hooks', () => {
       const { result } = renderHook(() => useEnsureVariableHasSingleSelection(datasource, variable));
       expect(result.current).toEqual('');
     });
+
+    it('should not return an error if a variable is not a multi-variable', () => {
+      const { datasource } = setupMockedDataSource();
+      datasource.resources.isMultiVariable = jest.fn().mockReturnValue(false);
+
+      const variable = '$variable';
+      const { result } = renderHook(() => useEnsureVariableHasSingleSelection(datasource, variable));
+      expect(result.current).toEqual('');
+    });
   });
 });
