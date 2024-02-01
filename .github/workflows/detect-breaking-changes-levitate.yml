@@ -30,7 +30,7 @@ jobs:
         run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
 
       - name: Restore yarn cache
-        uses: actions/cache@v3.3.1
+        uses: actions/cache@v4
         id: yarn-cache
         with:
           path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
@@ -51,7 +51,7 @@ jobs:
         run: zip -r ./pr_built_packages.zip ./packages/**/*.tgz
 
       - name: Upload build output as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: buildPr
           path: './pr/pr_built_packages.zip'
@@ -78,7 +78,7 @@ jobs:
         run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
 
       - name: Restore yarn cache
-        uses: actions/cache@v3.3.1
+        uses: actions/cache@v4
         id: yarn-cache
         with:
           path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
@@ -99,7 +99,7 @@ jobs:
         run: zip -r ./base_built_packages.zip ./packages/**/*.tgz
 
       - name: Upload build output as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: buildBase
           path: './base/base_built_packages.zip'
@@ -118,12 +118,12 @@ jobs:
           node-version: 20.9.0
 
       - name: Get built packages from pr
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: buildPr
 
       - name: Get built packages from base
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: buildBase
 
@@ -155,7 +155,7 @@ jobs:
             echo "{ \"exit_code\": ${{ steps.breaking-changes.outputs.is_breaking }}, \"message\": \"${{ steps.breaking-changes.outputs.message }}\", \"job_link\": \"${{ steps.job.outputs.link }}#step:${GITHUB_STEP_NUMBER}:1\", \"pr_number\": \"${{ github.event.pull_request.number }}\" }" > ./levitate/result.json
 
       - name: Upload check output as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: levitate
           path: levitate/
@@ -177,7 +177,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: 'Download artifact'
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: levitate
 
