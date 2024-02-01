@@ -330,6 +330,7 @@ func (cmd *SaveExternalServiceRoleCommand) Validate() error {
 
 const (
 	GlobalOrgID      = 0
+	NoOrgID          = int64(-1)
 	GeneralFolderUID = "general"
 	RoleGrafanaAdmin = "Grafana Admin"
 

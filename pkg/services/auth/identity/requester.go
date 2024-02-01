@@ -40,6 +40,8 @@ type Requester interface {
 	GetOrgRole() roletype.RoleType
 	// GetPermissions returns the permissions of the active entity.
 	GetPermissions() map[string][]string
+	// GetGlobalPermissions returns the permissions of the active entity that are available across all organizations.
+	GetGlobalPermissions() map[string][]string
 	// DEPRECATED: GetTeams returns the teams the entity is a member of.
 	// Retrieve the teams from the team service instead of using this method.
 	GetTeams() []int64

@@ -260,23 +260,32 @@ func makeTmpUser(ctx context.Context, service Service, cache userCache,
 			tmpUser.OrgName = queryResult.OrgName
 			tmpUser.OrgRole = queryResult.OrgRole
 
-			if teamService != nil {
-				teamIDs, err := teamService.GetTeamIDsByUser(ctx, &team.GetTeamIDsByUserQuery{OrgID: targetOrgID, UserID: tmpUser.UserID})
-				if err != nil {
-					return nil, err
+			// Only fetch the team membership is the user is a member of the organization
+			if queryResult.OrgID == targetOrgID {
+				if teamService != nil {
+					teamIDs, err := teamService.GetTeamIDsByUser(ctx, &team.GetTeamIDsByUserQuery{OrgID: targetOrgID, UserID: tmpUser.UserID})
+					if err != nil {
+						return nil, err
+					}
+					tmpUser.Teams = teamIDs
 				}
-				tmpUser.Teams = teamIDs
 			}
 		}
 	}
 
-	if tmpUser.Permissions[targetOrgID] == nil || len(tmpUser.Permissions[targetOrgID]) == 0 {
+	// If the user is not a member of the organization
+	// evaluation must happen based on global permissions.
+	evaluationOrg := targetOrgID
+	if tmpUser.OrgID == NoOrgID {
+		evaluationOrg = GlobalOrgID
+	}
+	if tmpUser.Permissions[evaluationOrg] == nil || len(tmpUser.Permissions[evaluationOrg]) == 0 {
 		permissions, err := service.GetUserPermissions(ctx, tmpUser, Options{})
 		if err != nil {
 			return nil, err
 		}
 
-		tmpUser.Permissions[targetOrgID] = GroupScopesByAction(permissions)
+		tmpUser.Permissions[evaluationOrg] = GroupScopesByAction(permissions)
 	}
 
 	return tmpUser, nil
