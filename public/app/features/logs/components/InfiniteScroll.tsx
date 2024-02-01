@@ -258,8 +258,8 @@ function isOnEdge(
   const scrollHeight = scrollElement.scrollHeight - scrollElement.clientHeight;
   // Sometimes, when the scroll reaches the end, it can be 1 less the scroll height, hence `Math.abs(scrollHeight - scrollElement.scrollTop) <= 1`
   if (
-    lastScroll === scrollElement.scrollTop &&
-    (scrollElement.scrollTop === 0 || Math.abs(scrollHeight - scrollElement.scrollTop) <= 1)
+    scrollElement.scrollTop === 0 ||
+    (lastScroll === scrollElement.scrollTop && Math.abs(scrollHeight - scrollElement.scrollTop) <= 1)
   ) {
     if (currentlyOnEdge) {
       return true;
