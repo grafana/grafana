@@ -40,7 +40,7 @@ import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
-import { getPanelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
@@ -409,16 +409,14 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
 }
 
 export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
-  const hasPanelLinks = panel.links && panel.links.length > 0;
   const titleItems: SceneObject[] = [];
-  let panelLinks;
 
-  if (hasPanelLinks) {
-    panelLinks = new VizPanelLinks({
-      menu: new VizPanelLinksMenu({ $behaviors: [getPanelLinksBehavior(panel)] }),
-    });
-    titleItems.push(panelLinks);
-  }
+  titleItems.push(
+    new VizPanelLinks({
+      rawLinks: panel.links,
+      menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
+    })
+  );
 
   titleItems.push(new PanelNotices());
 
