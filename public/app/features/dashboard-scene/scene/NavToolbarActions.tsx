@@ -173,15 +173,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
 
     if (dashboard.canDiscard()) {
       toolbarActions.push(
-        <Button
-          onClick={() => {
-            dashboard.onDiscard();
-          }}
-          tooltip="Discard changes"
-          fill="text"
-          size="sm"
-          key="discard"
-        >
+        <Button onClick={dashboard.onDiscard} tooltip="Will discard all changes" fill="text" size="sm" key="discard">
           Switch to view mode
         </Button>
       );
