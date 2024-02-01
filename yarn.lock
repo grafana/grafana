@@ -3592,7 +3592,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/prometheus@workspace:packages/grafana-prometheus":
+"@grafana/prometheus@workspace:*, @grafana/prometheus@workspace:packages/grafana-prometheus":
   version: 0.0.0-use.local
   resolution: "@grafana/prometheus@workspace:packages/grafana-prometheus"
   dependencies:
@@ -17521,6 +17521,7 @@ __metadata:
     "@grafana/lezer-logql": "npm:0.2.2"
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/o11y-ds-frontend": "workspace:*"
+    "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": "npm:^2.2.0"
     "@grafana/schema": "workspace:*"
