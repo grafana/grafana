@@ -557,7 +557,6 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   panelId?: number;
   panelPluginType?: string;
   dashboardUID?: string;
-  thisWillError?: boolean;
 
   /** Filters to dynamically apply to all queries */
   filters?: AdHocVariableFilter[];
