@@ -48,14 +48,6 @@ func init() {
 				PropertyName: "chatid",
 				Required:     true,
 			},
-			{
-				Label:        "Message Thread ID",
-				Element:      alerting.ElementTypeInput,
-				InputType:    alerting.InputTypeText,
-				Description:  "Integer Telegram Message Thread Identifier",
-				PropertyName: "messagethreadid",
-				Required:     false,
-			},
 		},
 	})
 }
@@ -64,11 +56,10 @@ func init() {
 // alert notifications to Telegram.
 type TelegramNotifier struct {
 	NotifierBase
-	BotToken        string
-	ChatID          string
-	MessageThreadId string
-	UploadImage     bool
-	log             log.Logger
+	BotToken    string
+	ChatID      string
+	UploadImage bool
+	log         log.Logger
 }
 
 // NewTelegramNotifier is the constructor for the Telegram notifier
@@ -79,7 +70,6 @@ func NewTelegramNotifier(cfg *setting.Cfg, model *models.AlertNotification, fn a
 
 	botToken := fn(context.Background(), model.SecureSettings, "bottoken", model.Settings.Get("bottoken").MustString(), cfg.SecretKey)
 	chatID := model.Settings.Get("chatid").MustString()
-	messageThreadId := model.Settings.Get("messagethreadid").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool()
 
 	if botToken == "" {
@@ -91,12 +81,11 @@ func NewTelegramNotifier(cfg *setting.Cfg, model *models.AlertNotification, fn a
 	}
 
 	return &TelegramNotifier{
-		NotifierBase:    NewNotifierBase(model, ns),
-		BotToken:        botToken,
-		ChatID:          chatID,
-		MessageThreadId: messageThreadId,
-		UploadImage:     uploadImage,
-		log:             log.New("alerting.notifier.telegram"),
+		NotifierBase: NewNotifierBase(model, ns),
+		BotToken:     botToken,
+		ChatID:       chatID,
+		UploadImage:  uploadImage,
+		log:          log.New("alerting.notifier.telegram"),
 	}, nil
 }
 
@@ -194,14 +183,6 @@ func (tn *TelegramNotifier) generateTelegramCmd(message string, messageField str
 		return nil, err
 	}
 	if _, err := fw.Write([]byte(tn.ChatID)); err != nil {
-		return nil, err
-	}
-
-	fw, err = w.CreateFormField("message_thread_id")
-	if err != nil {
-		return nil, err
-	}
-	if _, err := fw.Write([]byte(tn.MessageThreadId)); err != nil {
 		return nil, err
 	}
 
