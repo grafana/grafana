@@ -55,13 +55,6 @@ const postProcessTransform =
           return after;
         }
 
-        // Add a key to the metadata if the data changed
-        for (const series of after) {
-          if (!series.meta) {
-            series.meta = {};
-          }
-        }
-
         // Add back the filtered out frames
         if (matcher) {
           // keep the frame order the same
