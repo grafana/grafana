@@ -8,7 +8,7 @@ import { DataTrail } from './DataTrail';
 import { DataTrailSettings } from './DataTrailSettings';
 import { MetricScene } from './MetricScene';
 import { getTrailStore } from './TrailStore/TrailStore';
-import { TRAILS_ROUTE, VAR_DATASOURCE_EXPR } from './shared';
+import { LOGS_METRIC, TRAILS_ROUTE, VAR_DATASOURCE_EXPR } from './shared';
 
 export function getTrailFor(model: SceneObject): DataTrail {
   return sceneGraph.getAncestor(model, DataTrail);
@@ -56,6 +56,18 @@ export function getDataSource(trail: DataTrail) {
 
 export function getDataSourceName(dataSourceUid: string) {
   return getDataSourceSrv().getInstanceSettings(dataSourceUid)?.name || dataSourceUid;
+}
+
+export function getMetricName(metric?: string) {
+  if (!metric) {
+    return 'Select metric';
+  }
+
+  if (metric === LOGS_METRIC) {
+    return 'Logs';
+  }
+
+  return metric;
 }
 
 export function getDatasourceForNewTrail(): string | undefined {
