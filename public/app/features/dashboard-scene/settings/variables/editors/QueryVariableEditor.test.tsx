@@ -91,9 +91,9 @@ describe('QueryVariableEditor', () => {
     jest.clearAllMocks();
   });
 
-  it('should render the component with initializing the components correctly', async () => {
+  it.only('should render the component with initializing the components correctly', async () => {
     const { renderer } = await setup();
-    const dataSourcePicker = renderer.getByTestId(selectors.components.DataSourcePicker.container);
+    const dataSourcePicker = renderer.getByTestId(selectors.components.DataSourcePicker.inputV2);
     const queryEditor = renderer.getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput
     );
@@ -118,7 +118,7 @@ describe('QueryVariableEditor', () => {
     );
 
     expect(dataSourcePicker).toBeInTheDocument();
-    expect(dataSourcePicker).toHaveTextContent('Default Test Data Source');
+    expect(dataSourcePicker.getAttribute('placeholder')).toBe('Default Test Data Source');
     expect(queryEditor).toBeInTheDocument();
     expect(queryEditor).toHaveValue('my-query');
     expect(regexInput).toBeInTheDocument();
