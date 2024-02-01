@@ -58,6 +58,8 @@ type alertmanager struct {
 
 	decryptFn alertingNotify.GetDecryptedValueFn
 	orgID     int64
+
+	withAutogen bool
 }
 
 // maintenanceOptions represent the options for components that need maintenance on a frequency within the Alertmanager.
@@ -87,7 +89,7 @@ func (m maintenanceOptions) MaintenanceFunc(state alertingNotify.State) (int64, 
 
 func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, kvStore kvstore.KVStore,
 	peer alertingNotify.ClusterPeer, decryptFn alertingNotify.GetDecryptedValueFn, ns notifications.Service,
-	m *metrics.Alertmanager) (*alertmanager, error) {
+	m *metrics.Alertmanager, withAutogen bool) (*alertmanager, error) {
 	workingPath := filepath.Join(cfg.DataPath, workingDir, strconv.Itoa(int(orgID)))
 	fileStore := NewFileStore(orgID, kvStore, workingPath)
 
@@ -145,6 +147,9 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		decryptFn:           decryptFn,
 		fileStore:           fileStore,
 		logger:              l,
+
+		// TODO: Preferably, logic around autogen would be outside of the specific alertmanager implementation so that remote alertmanager will get it for free.
+		withAutogen: withAutogen,
 	}
 
 	return am, nil
@@ -181,9 +186,11 @@ func (am *alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 		}
 
 		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, true)
-			if err != nil {
-				return err
+			if am.withAutogen {
+				err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, true)
+				if err != nil {
+					return err
+				}
 			}
 			_, err = am.applyConfig(cfg)
 			return err
@@ -218,9 +225,11 @@ func (am *alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 		}
 
 		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, false)
-			if err != nil {
-				return err
+			if am.withAutogen {
+				err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, false)
+				if err != nil {
+					return err
+				}
 			}
 
 			_, err = am.applyConfig(cfg)
@@ -245,10 +254,12 @@ func (am *alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertCo
 
 	var outerErr error
 	am.Base.WithLock(func() {
-		err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, true)
-		if err != nil {
-			outerErr = err
-			return
+		if am.withAutogen {
+			err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, true)
+			if err != nil {
+				outerErr = err
+				return
+			}
 		}
 		// Note: Adding the autogen config here causes alert_configuration_history to update last_applied more often.
 		// Since we will now update last_applied when autogen changes even if the user-created config remains the same.
