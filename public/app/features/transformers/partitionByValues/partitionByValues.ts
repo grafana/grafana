@@ -45,6 +45,7 @@ export interface PartitionByValuesTransformerOptions {
   naming?: FrameNamingOptions;
   /** should the discriminator fields be kept in the output */
   keepFields?: boolean;
+  sample?: boolean;
 }
 
 function buildFrameName(opts: FrameNamingOptions, names: string[], values: unknown[]): string {
@@ -85,8 +86,17 @@ export const partitionByValuesTransformer: SynchronousDataTransformerInfo<Partit
       if (!data.length) {
         return data;
       }
+      const result = partitionByValues(data[0], matcher, options);
+      if (options.sample) {
+        result.map((frame) => {
+          frame.fields.map((field) => {
+            field.values = field.values.slice(0, 1);
+          });
+          frame.length = 1;
+        });
+      }
       // error if > 1 frame?
-      return partitionByValues(data[0], matcher, options);
+      return result;
     };
   },
 };
