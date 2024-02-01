@@ -127,8 +127,8 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 	}
 
 	if slices.Contains[[]string, string](s.cfg.AWSForwardSettingsPlugins, pluginID) {
-		if s.cfg.AWSAssumeRoleEnabled {
-			m[awsds.AssumeRoleEnabledEnvVarKeyName] = "true"
+		if !s.cfg.AWSAssumeRoleEnabled {
+			m[awsds.AssumeRoleEnabledEnvVarKeyName] = "false"
 		}
 		if len(s.cfg.AWSAllowedAuthProviders) > 0 {
 			m[awsds.AllowedAuthProvidersEnvVarKeyName] = strings.Join(s.cfg.AWSAllowedAuthProviders, ",")
@@ -258,8 +258,8 @@ func (s *Service) featureToggleEnableVar(ctx context.Context) []string {
 
 func (s *Service) awsEnvVars() []string {
 	var variables []string
-	if s.cfg.AWSAssumeRoleEnabled {
-		variables = append(variables, awsds.AssumeRoleEnabledEnvVarKeyName+"=true")
+	if !s.cfg.AWSAssumeRoleEnabled {
+		variables = append(variables, awsds.AssumeRoleEnabledEnvVarKeyName+"=false")
 	}
 	if len(s.cfg.AWSAllowedAuthProviders) > 0 {
 		variables = append(variables, awsds.AllowedAuthProvidersEnvVarKeyName+"="+strings.Join(s.cfg.AWSAllowedAuthProviders, ","))
