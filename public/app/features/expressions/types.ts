@@ -1,7 +1,8 @@
 import { DataQuery, ReducerID, SelectableValue } from '@grafana/data';
 
-import { EvalFunction } from '../alerting/state/alertDef';
 import { config } from 'app/core/config';
+
+import { EvalFunction } from '../alerting/state/alertDef';
 
 /**
  * MATCHES a constant in DataSourceWithBackend
