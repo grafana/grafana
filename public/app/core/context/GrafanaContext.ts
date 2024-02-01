@@ -30,12 +30,12 @@ export function useGrafana(): GrafanaContextType {
 // @grafana/runtime
 export function useReturnToPreviousInternal() {
   const { chrome } = useGrafana();
-  const { pathname, search } = locationService.getLocation();
   return useCallback(
     (title: string, href?: string) => {
+      const { pathname, search } = locationService.getLocation();
       chrome.setReturnToPrevious({
         title: title,
-        href: href ?? (pathname + search),
+        href: href ?? pathname + search,
       });
     },
     [chrome]
