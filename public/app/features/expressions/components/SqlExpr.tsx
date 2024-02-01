@@ -23,5 +23,5 @@ export const SqlExpr = ({ onChange, refIds, query }: Props) => {
     });
   };
 
-  return <SQLEditor query={query.expression || initialQuery} onChange={onEditorChange}></SQLEditor>
+  return <SQLEditor query={query.expression || initialQuery} onChange={onEditorChange}></SQLEditor>;
 };

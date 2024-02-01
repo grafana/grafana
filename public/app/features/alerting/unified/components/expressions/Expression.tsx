@@ -110,7 +110,7 @@ export const Expression: FC<ExpressionProps> = ({
               useHysteresis={true}
             />
           );
-        
+
         case ExpressionQueryType.sql:
           return <SqlExpr onChange={onChangeQuery} query={query} refIds={availableRefIds} />;
 

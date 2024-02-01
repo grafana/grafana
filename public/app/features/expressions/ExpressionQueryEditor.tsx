@@ -93,7 +93,7 @@ export function ExpressionQueryEditor(props: Props) {
 
       case ExpressionQueryType.threshold:
         return <Threshold onChange={onChange} query={query} labelWidth={labelWidth} refIds={refIds} />;
-      
+
       case ExpressionQueryType.sql:
         return <SqlExpr onChange={onChange} query={query} refIds={refIds} />;
     }

@@ -14,7 +14,7 @@ export enum ExpressionQueryType {
   resample = 'resample',
   classic = 'classic_conditions',
   threshold = 'threshold',
-  sql = 'sql'
+  sql = 'sql',
 }
 
 export const getExpressionLabel = (type: ExpressionQueryType) => {
@@ -29,8 +29,8 @@ export const getExpressionLabel = (type: ExpressionQueryType) => {
       return 'Classic condition';
     case ExpressionQueryType.threshold:
       return 'Threshold';
-      case ExpressionQueryType.sql:
-        return 'SQL';
+    case ExpressionQueryType.sql:
+      return 'SQL';
   }
 };
 
@@ -66,16 +66,14 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
   {
     value: ExpressionQueryType.sql,
     label: 'SQL',
-    description:
-      'Transform data using SQL. Supports Aggregate/Analytics functions from DuckDB',
+    description: 'Transform data using SQL. Supports Aggregate/Analytics functions from DuckDB',
   },
-].filter(expr => {
+].filter((expr) => {
   if (expr.value === ExpressionQueryType.sql) {
     return config.featureToggles?.sqlExpressions;
   }
   return true;
 });
-
 
 export const reducerTypes: Array<SelectableValue<string>> = [
   { value: ReducerID.min, label: 'Min', description: 'Get the minimum value' },
