@@ -390,6 +390,14 @@ var (
 			Created:     time.Date(2023, time.November, 29, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:         "influxdbRunQueriesInParallel",
+			Description:  "Enables running InfluxDB Influxql queries in parallel",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaObservabilityMetricsSquad,
+			Created:      time.Date(2024, time.January, 29, 12, 0, 0, 0, time.UTC),
+		},
+		{
 			Name:           "clientTokenRotation",
 			Description:    "Replaces the current in-request token rotation so that the client initiates the rotation",
 			Stage:          FeatureStageGeneralAvailability,
@@ -950,6 +958,15 @@ var (
 			Created:         time.Date(2023, time.December, 4, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:            "kubernetesQueryServiceRewrite",
+			Description:     "Rewrite requests targeting /ds/query to the query service",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+			RequiresDevMode: true,
+			Created:         time.Date(2024, time.January, 28, 12, 0, 0, 0, time.UTC),
+		},
+		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStagePublicPreview,
@@ -1337,6 +1354,14 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaBiSquad,
 			Created:      time.Date(2024, time.January, 31, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "nodeGraphDotLayout",
+			Description:  "Changed the layout algorithm for the node graph",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			Created:      time.Date(2024, time.January, 2, 12, 0, 0, 0, time.UTC),
 		},
 	}
 )
