@@ -626,7 +626,7 @@
   {
     "name": "Google Cloud Monitoring",
     "type": "datasource",
-    "id": "grafana-cloud-monitoring-datasource",
+    "id": "stackdriver",
     "enabled": true,
     "pinned": false,
     "info": {
@@ -652,7 +652,7 @@
     },
     "latestVersion": "",
     "hasUpdate": false,
-    "defaultNavUrl": "/plugins/grafana-cloud-monitoring-datasource/",
+    "defaultNavUrl": "/plugins/stackdriver/",
     "category": "cloud",
     "state": "",
     "signature": "internal",
