@@ -347,12 +347,6 @@ func (s *service) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *service) running(ctx context.Context) error {
-	// skip waiting for the server in prod mode
-	if !s.options.ExtraOptions.DevMode {
-		<-ctx.Done()
-		return nil
-	}
-
 	select {
 	case err := <-s.stoppedCh:
 		if err != nil {
