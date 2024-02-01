@@ -28,6 +28,7 @@
   "dependencies": {
     "@emotion/css": "11.11.2",
     "@floating-ui/react": "0.26.8",
+    "@grafana/ui": "workspace:*",
     "@leeoniya/ufuzzy": "1.0.14",
     "@lezer/common": "1.2.1",
     "@lezer/highlight": "1.2.0",
