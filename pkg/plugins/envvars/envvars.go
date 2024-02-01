@@ -106,7 +106,9 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 	if s.cfg.GrafanaAppURL != "" {
 		m[backend.AppURL] = s.cfg.GrafanaAppURL
 	}
-	m[backend.ConcurrentQueryCount] = strconv.Itoa(s.cfg.ConcurrentQueryCount)
+	if s.cfg.ConcurrentQueryCount != 0 {
+		m[backend.ConcurrentQueryCount] = strconv.Itoa(s.cfg.ConcurrentQueryCount)
+	}
 
 	// TODO add support via plugin SDK
 	// if externalService != nil {
