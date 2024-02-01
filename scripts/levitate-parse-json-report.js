@@ -2,7 +2,7 @@ const fs = require('fs');
 
 const data = JSON.parse(fs.readFileSync('data.json', 'utf8'));
 
-function clearAnsi(str) {
+function stripAnsi(str) {
   return str.replace(/\x1b\[[0-9;]*m/g, '');
 }
 
@@ -10,7 +10,7 @@ const printSection = (title, items) => {
   let output = `<h4>${title}</h4>`;
   items.forEach((item) => {
     const language = item.declaration ? 'typescript' : 'diff';
-    const code = item.declaration ? item.declaration : clearAnsi(item.diff);
+    const code = item.declaration ? item.declaration : stripAnsi(item.diff);
 
     output += `<b>${item.name}</b><br>\n`;
     output += `<sub>${item.location}</sub><br>\n`;
