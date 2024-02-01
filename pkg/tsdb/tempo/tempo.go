@@ -3,6 +3,7 @@ package tempo
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"net/http"
 	"runtime"
 	"strings"
@@ -38,10 +39,10 @@ func logEntrypoint() string {
 	return fmt.Sprintf("%s:%d[%s]", file, line, functionName)
 }
 
-func ProvideService(httpClientProvider *httpclient.Provider) *Service {
+func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider) *Service {
 	return &Service{
 		logger: backend.NewLoggerWith("logger", "tsdb.tempo"),
-		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
+		im:     datasource.NewInstanceManager(newInstanceSettings(cfg, httpClientProvider)),
 	}
 }
 
@@ -51,7 +52,7 @@ type Datasource struct {
 	URL             string
 }
 
-func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
+func newInstanceSettings(cfg *setting.Cfg, httpClientProvider *httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		ctxLogger := backend.NewLoggerWith("logger", "tsdb.tempo").FromContext(ctx)
 		opts, err := settings.HTTPClientOptions(ctx)
@@ -66,7 +67,7 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			return nil, err
 		}
 
-		streamingClient, err := newGrpcClient(settings, opts)
+		streamingClient, err := newGrpcClient(cfg, settings, opts)
 		if err != nil {
 			ctxLogger.Error("Failed to get gRPC client", "error", err, "function", logEntrypoint())
 			return nil, err

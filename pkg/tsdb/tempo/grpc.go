@@ -5,6 +5,8 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
+	"github.com/grafana/grafana/pkg/setting"
+	"google.golang.org/grpc/metadata"
 	"net/url"
 	"strings"
 
@@ -18,18 +20,20 @@ import (
 
 var logger = backend.NewLoggerWith("logger", "tsdb.tempo")
 
-// This function creates a new gRPC client to connect to a streaming query service.
-// It starts by parsing the URL from the data source settings and extracting the host, since that's what the gRPC connection expects.
-// If the URL does not contain a port number, it adds a default port based on the scheme (80 for HTTP and 443 for HTTPS).
-// If basic authentication is enabled, it uses TLS transport credentials and sets the basic authentication header for each RPC call.
-// Otherwise, it uses insecure credentials.
-func newGrpcClient(settings backend.DataSourceInstanceSettings, opts httpclient.Options) (tempopb.StreamingQuerierClient, error) {
+// newGrpcClient creates a new gRPC client to connect to a streaming query service.
+// This uses the default google.golang.org/grpc library. One caveat to that is that it does not allow passing the
+// default httpClient to the gRPC client. This means that we cannot use the same middleware that we use for
+// standard HTTP requests.
+// Using other library like connect-go isn't possible right now because Tempo uses non-standard proto compiler which
+// makes generating different client difficult.
+func newGrpcClient(cfg *setting.Cfg, settings backend.DataSourceInstanceSettings, opts httpclient.Options) (tempopb.StreamingQuerierClient, error) {
 	parsedUrl, err := url.Parse(settings.URL)
 	if err != nil {
 		logger.Error("Error parsing URL for gRPC client", "error", err, "URL", settings.URL, "function", logEntrypoint())
 		return nil, err
 	}
 
+	// Make sure we have some default port if none is set. This is required for gRPC to work.
 	onlyHost := parsedUrl.Host
 	if !strings.Contains(onlyHost, ":") {
 		if parsedUrl.Scheme == "http" {
@@ -39,13 +43,22 @@ func newGrpcClient(settings backend.DataSourceInstanceSettings, opts httpclient.
 		}
 	}
 
+	// Add options and interceptors (middleware) this should roughly match what we do in http_client_provider.go for
+	// standard http requests.
+	// TODO: Missing middleware TracingMiddleware, DataSourceMetricsMiddleware, ContextualMiddleware,
+	// 	ResponseLimitMiddleware RedirectLimitMiddleware.
 	var dialOps []grpc.DialOption
+	dialOps = append(dialOps, grpc.WithUserAgent(cfg.DataProxyUserAgent))
+	dialOps = append(dialOps, grpc.WithChainStreamInterceptor(CustomHeadersStreamInterceptor(opts)))
+
 	if settings.BasicAuthEnabled {
+		// If basic authentication is enabled, it uses TLS transport credentials and sets the basic authentication header for each RPC call.
 		dialOps = append(dialOps, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{})))
 		dialOps = append(dialOps, grpc.WithPerRPCCredentials(&basicAuth{
 			Header: basicHeaderForAuth(opts.BasicAuth.User, opts.BasicAuth.Password),
 		}))
 	} else {
+		// Otherwise, it uses insecure credentials.
 		dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
@@ -56,6 +69,20 @@ func newGrpcClient(settings backend.DataSourceInstanceSettings, opts httpclient.
 	}
 
 	return tempopb.NewStreamingQuerierClient(clientConn), nil
+}
+
+// CustomHeadersStreamInterceptor adds custom headers to the outgoing context for each RPC call. Should work similar
+// to the CustomHeadersMiddleware in the HTTP client provider.
+func CustomHeadersStreamInterceptor(httpOpts httpclient.Options) grpc.StreamClientInterceptor {
+	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+		if len(httpOpts.Headers) != 0 {
+			for key, value := range httpOpts.Headers {
+				ctx = metadata.AppendToOutgoingContext(ctx, key, value)
+			}
+		}
+
+		return streamer(ctx, desc, cc, method, opts...)
+	}
 }
 
 type basicAuth struct {
