@@ -1676,6 +1676,23 @@
    ],
    "type": "object"
   },
+  "GettableTimeIntervals": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeIntervalItem"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "GettableUserConfig": {
    "properties": {
     "alertmanager_config": {
@@ -2098,43 +2115,6 @@
     "$ref": "#/definitions/MuteTimeInterval"
    },
    "type": "array"
-  },
-  "NamedTimeIntervals": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "time_intervals": {
-     "items": {
-      "$ref": "#/definitions/TimeIntervalItem"
-     },
-     "type": "array"
-    }
-   },
-   "type": "object"
-  },
-  "NamedTimeIntervalsListWithProvenance": {
-   "items": {
-    "$ref": "#/definitions/NamedTimeIntervalsWithProvenance"
-   },
-   "type": "array"
-  },
-  "NamedTimeIntervalsWithProvenance": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "provenance": {
-     "$ref": "#/definitions/Provenance"
-    },
-    "time_intervals": {
-     "items": {
-      "$ref": "#/definitions/TimeIntervalItem"
-     },
-     "type": "array"
-    }
-   },
-   "type": "object"
   },
   "NamespaceConfigResponse": {
    "additionalProperties": {
@@ -2856,6 +2836,20 @@
     "rules": {
      "items": {
       "$ref": "#/definitions/PostableExtendedRuleNode"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "PostableTimeIntervals": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeIntervalItem"
      },
      "type": "array"
     }
@@ -4517,6 +4511,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -4540,6 +4535,7 @@
    "type": "object"
   },
   "alertGroups": {
+   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -4705,6 +4701,7 @@
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4759,6 +4756,7 @@
    "type": "array"
   },
   "integration": {
+   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -4902,6 +4900,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4939,7 +4938,6 @@
    "type": "object"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -5065,10 +5063,7 @@
     "operationId": "RouteNotificationsGetTimeIntervals",
     "responses": {
      "200": {
-      "description": "NamedTimeIntervalsListWithProvenance",
-      "schema": {
-       "$ref": "#/definitions/NamedTimeIntervalsListWithProvenance"
-      }
+      "$ref": "#/responses/GetAllIntervalsResponse"
      },
      "403": {
       "description": "ForbiddenError",
@@ -5096,10 +5091,7 @@
     ],
     "responses": {
      "200": {
-      "description": "NamedTimeIntervalsWithProvenance",
-      "schema": {
-       "$ref": "#/definitions/NamedTimeIntervalsWithProvenance"
-      }
+      "$ref": "#/responses/GetIntervalsByNameResponse"
      },
      "403": {
       "description": "ForbiddenError",
@@ -6161,6 +6153,21 @@
   "application/json"
  ],
  "responses": {
+  "GetAllIntervalsResponse": {
+   "description": "",
+   "schema": {
+    "items": {
+     "$ref": "#/definitions/GettableTimeIntervals"
+    },
+    "type": "array"
+   }
+  },
+  "GetIntervalsByNameResponse": {
+   "description": "",
+   "schema": {
+    "$ref": "#/definitions/GettableTimeIntervals"
+   }
+  },
   "GettableHistoricUserConfigs": {
    "description": "",
    "schema": {

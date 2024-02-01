@@ -2017,10 +2017,7 @@
         "operationId": "RouteNotificationsGetTimeIntervals",
         "responses": {
           "200": {
-            "description": "NamedTimeIntervalsListWithProvenance",
-            "schema": {
-              "$ref": "#/definitions/NamedTimeIntervalsListWithProvenance"
-            }
+            "$ref": "#/responses/GetAllIntervalsResponse"
           },
           "403": {
             "description": "ForbiddenError",
@@ -2050,10 +2047,7 @@
         ],
         "responses": {
           "200": {
-            "description": "NamedTimeIntervalsWithProvenance",
-            "schema": {
-              "$ref": "#/definitions/NamedTimeIntervalsWithProvenance"
-            }
+            "$ref": "#/responses/GetIntervalsByNameResponse"
           },
           "403": {
             "description": "ForbiddenError",
@@ -5163,6 +5157,23 @@
         }
       }
     },
+    "GettableTimeIntervals": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeIntervalItem"
+          }
+        }
+      }
+    },
     "GettableUserConfig": {
       "type": "object",
       "properties": {
@@ -5585,43 +5596,6 @@
       "type": "array",
       "items": {
         "$ref": "#/definitions/MuteTimeInterval"
-      }
-    },
-    "NamedTimeIntervals": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "time_intervals": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/TimeIntervalItem"
-          }
-        }
-      }
-    },
-    "NamedTimeIntervalsListWithProvenance": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/NamedTimeIntervalsWithProvenance"
-      }
-    },
-    "NamedTimeIntervalsWithProvenance": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "provenance": {
-          "$ref": "#/definitions/Provenance"
-        },
-        "time_intervals": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/TimeIntervalItem"
-          }
-        }
       }
     },
     "NamespaceConfigResponse": {
@@ -6346,6 +6320,20 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/PostableExtendedRuleNode"
+          }
+        }
+      }
+    },
+    "PostableTimeIntervals": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "time_intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeIntervalItem"
           }
         }
       }
@@ -8136,7 +8124,6 @@
       }
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -8401,7 +8388,6 @@
       }
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
@@ -8440,6 +8426,7 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",
@@ -8555,6 +8542,21 @@
     }
   },
   "responses": {
+    "GetAllIntervalsResponse": {
+      "description": "",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/GettableTimeIntervals"
+        }
+      }
+    },
+    "GetIntervalsByNameResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/GettableTimeIntervals"
+      }
+    },
     "GettableHistoricUserConfigs": {
       "description": "",
       "schema": {

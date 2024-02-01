@@ -43,7 +43,7 @@ func TestTimeInterval(t *testing.T) {
 		require.Empty(t, mt)
 	})
 
-	emptyTimeInterval := definitions.NamedTimeIntervals{
+	emptyTimeInterval := definitions.PostableTimeIntervals{
 		Name:          "Empty Mute Timing",
 		TimeIntervals: []definitions.TimeIntervalItem{},
 	}
@@ -136,7 +136,7 @@ func TestTimeInterval(t *testing.T) {
 		// })
 	}()
 
-	anotherTimeInterval := definitions.NamedTimeIntervals{
+	anotherTimeInterval := definitions.PostableTimeIntervals{
 		Name: "Not Empty Mute Timing",
 		TimeIntervals: []definitions.TimeIntervalItem{
 			{
@@ -168,12 +168,14 @@ func TestTimeInterval(t *testing.T) {
 	t.Run("should return time interval by name", func(t *testing.T) {
 		ti, status, body := apiClient.GetTimeIntervalByNameWithStatus(t, emptyTimeInterval.Name)
 		requireStatusCode(t, http.StatusOK, status, body)
-		require.Equal(t, emptyTimeInterval, ti.NamedTimeIntervals)
+		require.Equal(t, emptyTimeInterval.TimeIntervals, ti.TimeIntervals)
+		require.Equal(t, emptyTimeInterval.Name, ti.Name)
 		require.EqualValues(t, models.ProvenanceAPI, ti.Provenance)
 
 		ti, status, body = apiClient.GetTimeIntervalByNameWithStatus(t, anotherTimeInterval.Name)
 		requireStatusCode(t, http.StatusOK, status, body)
-		require.Equal(t, anotherTimeInterval, ti.NamedTimeIntervals)
+		require.Equal(t, anotherTimeInterval.TimeIntervals, ti.TimeIntervals)
+		require.Equal(t, anotherTimeInterval.Name, ti.Name)
 		require.EqualValues(t, models.ProvenanceAPI, ti.Provenance)
 	})
 
@@ -187,14 +189,16 @@ func TestTimeInterval(t *testing.T) {
 		requireStatusCode(t, http.StatusOK, status, body)
 		require.Len(t, mt, 2)
 
-		slices.SortFunc(mt, func(a, b definitions.NamedTimeIntervalsWithProvenance) int {
+		slices.SortFunc(mt, func(a, b definitions.GettableTimeIntervals) int {
 			return strings.Compare(a.Name, b.Name)
 		})
 
-		require.Equal(t, emptyTimeInterval, mt[0].NamedTimeIntervals)
+		require.Equal(t, emptyTimeInterval.TimeIntervals, mt[0].TimeIntervals)
+		require.Equal(t, emptyTimeInterval.Name, mt[0].Name)
 		require.EqualValues(t, models.ProvenanceAPI, mt[0].Provenance)
 
-		require.Equal(t, anotherTimeInterval, mt[1].NamedTimeIntervals)
+		require.Equal(t, anotherTimeInterval.TimeIntervals, mt[1].TimeIntervals)
+		require.Equal(t, anotherTimeInterval.Name, mt[1].Name)
 		require.EqualValues(t, models.ProvenanceAPI, mt[1].Provenance)
 	})
 }

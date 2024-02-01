@@ -5,7 +5,7 @@ package definitions
 // Get all the time intervals
 //
 //     Responses:
-//       200: NamedTimeIntervalsListWithProvenance
+//       200: GetAllIntervalsResponse
 //       403: ForbiddenError
 
 // swagger:route GET /v1/notifications/time-intervals/{name} notifications stable RouteNotificationsGetTimeInterval
@@ -13,7 +13,7 @@ package definitions
 // Get a time interval by name.
 //
 //     Responses:
-//       200: NamedTimeIntervalsWithProvenance
+//       200: GetIntervalsByNameResponse
 //       404: NotFound
 //       403: ForbiddenError
 
@@ -24,8 +24,20 @@ type RouteTimeIntervalNameParam struct {
 	Name string `json:"name"`
 }
 
+// swagger:response GetAllIntervalsResponse
+type GetAllIntervalsResponse struct {
+	// in:body
+	Body []GettableTimeIntervals
+}
+
+// swagger:response GetIntervalsByNameResponse
+type GetIntervalsByNameResponse struct {
+	// in:body
+	Body GettableTimeIntervals
+}
+
 // swagger:model
-type NamedTimeIntervals struct {
+type PostableTimeIntervals struct {
 	Name          string             `json:"name" hcl:"name"`
 	TimeIntervals []TimeIntervalItem `json:"time_intervals" hcl:"intervals,block"`
 }
@@ -45,10 +57,8 @@ type TimeIntervalTimeRange struct {
 }
 
 // swagger:model
-type NamedTimeIntervalsWithProvenance struct {
-	NamedTimeIntervals `json:",inline" yaml:",inline"`
-	Provenance         Provenance `json:"provenance,omitempty"`
+type GettableTimeIntervals struct {
+	Name          string             `json:"name" hcl:"name"`
+	TimeIntervals []TimeIntervalItem `json:"time_intervals" hcl:"intervals,block"`
+	Provenance    Provenance         `json:"provenance,omitempty"`
 }
-
-// swagger:model
-type NamedTimeIntervalsListWithProvenance []NamedTimeIntervalsWithProvenance
