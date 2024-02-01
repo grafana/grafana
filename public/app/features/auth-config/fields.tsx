@@ -313,17 +313,17 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     },
     tlsClientCa: {
       label: 'TLS client ca',
-      description: 'The path to the trusted certificate authority list. Does not applicable on Grafana Cloud.',
+      description: 'The path to the trusted certificate authority list. Is not applicable on Grafana Cloud.',
       type: 'text',
     },
     tlsClientCert: {
       label: 'TLS client cert',
-      description: 'The path to the certificate. Does not applicable on Grafana Cloud.',
+      description: 'The path to the certificate. Is not applicable on Grafana Cloud.',
       type: 'text',
     },
     tlsClientKey: {
       label: 'TLS client key',
-      description: 'The path to the key. Does not applicable on Grafana Cloud.',
+      description: 'The path to the key. Is not applicable on Grafana Cloud.',
       type: 'text',
     },
     tlsSkipVerifyInsecure: {
@@ -338,7 +338,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       label: 'Groups attribute path',
       description:
         'JMESPath expression to use for user group lookup. If you configure allowed_groups, \n' +
-        'you must also configure groupsƒ_attribute_path.',
+        'you must also configure groups_attribute_path.',
       type: 'text',
     },
     teamsUrl: {
