@@ -1,0 +1,3 @@
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/reporting/v0alpha1,ReportSpec,Dashboards
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/reporting/v0alpha1,ReportSpec,Formats
+API rule violation: names_match,github.com/grafana/grafana/pkg/apis/reporting/v0alpha1,ReportSpec,EnableDashboardURL
