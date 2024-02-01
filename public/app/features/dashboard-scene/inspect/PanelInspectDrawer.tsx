@@ -10,19 +10,16 @@ import {
   sceneGraph,
   VizPanel,
   SceneObjectRef,
-  SceneGridItem,
 } from '@grafana/scenes';
 import { Alert, Drawer, Tab, TabsBar } from '@grafana/ui';
-import { HelpWizard } from 'app/features/dashboard/components/HelpWizard/HelpWizard';
 import { getDataSourceWithInspector } from 'app/features/dashboard/components/Inspector/hooks';
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
-import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { InspectTab } from 'app/features/inspector/types';
 
-import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { HelpWizard } from './HelpWizard/HelpWizard';
 import { InspectDataTab } from './InspectDataTab';
 import { InspectJsonTab } from './InspectJsonTab';
 import { InspectMetaDataTab } from './InspectMetaDataTab';
@@ -111,7 +108,7 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
 }
 
 function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>) {
-  const { tabs, pluginNotLoaded } = model.useState();
+  const { tabs, pluginNotLoaded, panelRef } = model.useState();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
 
@@ -122,13 +119,10 @@ function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>
   const urlTab = queryParams.get('inspectTab');
   const currentTab = tabs.find((tab) => tab.getTabValue() === urlTab) ?? tabs[0];
 
-  const vizPanel = model.state.panelRef?.resolve();
-  const plugin = vizPanel?.getPlugin();
-  const panelJson = gridItemToPanel(vizPanel?.parent as SceneGridItem);
-  const panelModel = new PanelModel(panelJson);
+  const vizPanel = panelRef!.resolve();
 
   if (urlTab === InspectTab.Help) {
-    return <HelpWizard panel={panelModel} plugin={plugin} onClose={model.onClose} />;
+    return <HelpWizard panel={vizPanel} onClose={model.onClose} />;
   }
 
   return (

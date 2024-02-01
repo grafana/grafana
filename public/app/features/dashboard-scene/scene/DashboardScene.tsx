@@ -135,6 +135,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   private _activationHandler() {
+    let prevSceneContext = window.__grafanaSceneContext;
+
     window.__grafanaSceneContext = this;
 
     if (this.state.isEditing) {
@@ -149,7 +151,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     // Deactivation logic
     return () => {
-      window.__grafanaSceneContext = undefined;
+      window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this.stopTrackingChanges();
       this.stopUrlSync();
