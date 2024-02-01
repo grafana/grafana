@@ -187,6 +187,10 @@ const (
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
 	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
 
+	// FlagInfluxdbRunQueriesInParallel
+	// Enables running InfluxDB Influxql queries in parallel
+	FlagInfluxdbRunQueriesInParallel = "influxdbRunQueriesInParallel"
+
 	// FlagClientTokenRotation
 	// Replaces the current in-request token rotation so that the client initiates the rotation
 	FlagClientTokenRotation = "clientTokenRotation"
