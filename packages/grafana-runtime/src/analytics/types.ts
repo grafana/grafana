@@ -30,6 +30,7 @@ export interface DataRequestInfo extends Partial<DashboardInfo> {
   datasourceType: string;
   panelId?: number;
   panelPluginType?: string;
+  isThisReality?: boolean;
   panelName?: string;
   duration: number;
   error?: string;
