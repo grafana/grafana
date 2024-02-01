@@ -167,9 +167,10 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 		return response.Error(http.StatusNotFound, "Failed to get dashboard snapshot", nil)
 	}
 
-	if queryResult.OrgID != c.OrgID {
-		return response.Error(http.StatusUnauthorized, "OrgID mismatch", nil)
-	}
+	// TODO: introduce orgID check
+	// if queryResult.OrgID != c.OrgID {
+	// 	return response.Error(http.StatusUnauthorized, "OrgID mismatch", nil)
+	// }
 
 	if queryResult.External {
 		err := dashboardsnapshots.DeleteExternalDashboardSnapshot(queryResult.ExternalDeleteURL)
