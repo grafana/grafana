@@ -111,7 +111,9 @@
         "public/app/plugins/datasource/parca/*.{ts,tsx}",
         "public/app/plugins/datasource/parca/**/*.{ts,tsx}",
         "public/app/plugins/datasource/tempo/*.{ts,tsx}",
-        "public/app/plugins/datasource/tempo/**/*.{ts,tsx}"
+        "public/app/plugins/datasource/tempo/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/loki/*.{ts,tsx}",
+        "public/app/plugins/datasource/loki/**/*.{ts,tsx}"
       ],
       "settings": {
         "import/resolver": {

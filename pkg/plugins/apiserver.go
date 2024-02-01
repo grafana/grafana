@@ -1,11 +1,13 @@
-package datasource
+package plugins
 
 import (
 	"fmt"
 	"strings"
 )
 
-func getDatasourceGroupNameFromPluginID(pluginId string) (string, error) {
+// Get the default API group name for from a plugin ID
+// NOTE: this is a work in progress, and may change without notice
+func GetDatasourceGroupNameFromPluginID(pluginId string) (string, error) {
 	if pluginId == "" {
 		return "", fmt.Errorf("bad pluginID (empty)")
 	}
