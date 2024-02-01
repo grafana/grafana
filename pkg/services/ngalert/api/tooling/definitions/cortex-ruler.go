@@ -408,14 +408,46 @@ const (
 
 // swagger: model
 type PostableNotificationSettings struct {
+	// Name of the receiver to send notifications to.
+	// required: true
+	// example: grafana-default-email
 	Receiver string `json:"receiver"`
 
 	// Optional settings
-	GroupBy           []string        `json:"group_by,omitempty"`
-	GroupWait         *model.Duration `json:"group_wait,omitempty"`
-	GroupInterval     *model.Duration `json:"group_interval,omitempty"`
-	RepeatInterval    *model.Duration `json:"repeat_interval,omitempty"`
-	MuteTimeIntervals []string        `json:"mute_time_intervals,omitempty"`
+
+	// Override the labels by which incoming alerts are grouped together. For example, multiple alerts coming in for
+	// cluster=A and alertname=LatencyHigh would be batched into a single group. To aggregate by all possible labels
+	// use the special value '...' as the sole label name.
+	// This effectively disables aggregation entirely, passing through all alerts as-is. This is unlikely to be what
+	// you want, unless you have a very low alert volume or your upstream notification system performs its own grouping.
+	// Must include 'alertname' and 'grafana_folder' if not using '...'.
+	// default: ["alertname", "grafana_folder"]
+	// example: ["alertname", "grafana_folder", "cluster"]
+	GroupBy []string `json:"group_by,omitempty"`
+
+	// Override how long to initially wait to send a notification for a group of alerts. Allows to wait for an
+	// inhibiting alert to arrive or collect more initial alerts for the same group. (Usually ~0s to few minutes.)
+	// example: 30s
+	GroupWait *model.Duration `json:"group_wait,omitempty"`
+
+	// Override how long to wait before sending a notification about new alerts that are added to a group of alerts for
+	// which an initial notification has already been sent. (Usually ~5m or more.)
+	// example: 5m
+	GroupInterval *model.Duration `json:"group_interval,omitempty"`
+
+	// Override how long to wait before sending a notification again if it has already been sent successfully for an
+	// alert. (Usually ~3h or more).
+	// Note that this parameter is implicitly bound by Alertmanager's `--data.retention` configuration flag.
+	// Notifications will be resent after either repeat_interval or the data retention period have passed, whichever
+	// occurs first. `repeat_interval` should not be less than `group_interval`.
+	// example: 4h
+	RepeatInterval *model.Duration `json:"repeat_interval,omitempty"`
+
+	// Override the times when notifications should be muted. These must match the name of a mute time interval defined
+	// in the alertmanager configuration mute_time_intervals section. When muted it will not send any notifications, but
+	// otherwise acts normally.
+	// example: ["maintenance"]
+	MuteTimeIntervals []string `json:"mute_time_intervals,omitempty"`
 }
 
 // swagger:model
