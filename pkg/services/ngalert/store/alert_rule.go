@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -547,26 +546,18 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 				om[r.NamespaceUID] = struct{}{}
 			}
 			for orgID, uids := range uids {
-				fakeUser := &user.SignedInUser{
-					UserID:           -1,
-					IsServiceAccount: true,
-					Login:            "grafana_scheduler",
-					OrgID:            orgID,
-					OrgRole:          org.RoleAdmin,
-					Permissions: map[int64]map[string][]string{
-						orgID: {
-							dashboards.ActionFoldersRead: []string{
-								dashboards.ScopeFoldersAll,
-							},
+				schedulerUser := accesscontrol.BackgroundUser("grafana_scheduler", orgID, org.RoleAdmin,
+					[]accesscontrol.Permission{
+						{
+							Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll,
 						},
-					},
-				}
+					})
 
 				folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
 					OrgID:        orgID,
 					UIDs:         maps.Keys(uids),
 					WithFullpath: true,
-					SignedInUser: fakeUser,
+					SignedInUser: schedulerUser,
 				})
 				if err != nil {
 					return fmt.Errorf("failed to fetch a list of folders that contain alert rules: %w", err)
