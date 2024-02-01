@@ -1256,6 +1256,15 @@
     },
     "typeVersion": {
      "$ref": "#/definitions/FrameTypeVersion"
+    },
+    "uniqueRowIdFields": {
+     "description": "Array of field indices which values create a unique id for each row. Ideally this should be globally unique ID\nbut that isn't guarantied. Should help with keeping track and deduplicating rows in visualizations, especially\nwith streaming data with frequent updates.",
+     "example": "TraceID in Tempo, table name + primary key in SQL",
+     "items": {
+      "format": "int64",
+      "type": "integer"
+     },
+     "type": "array"
     }
    },
    "title": "FrameMeta matches:",
@@ -4445,7 +4454,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -4612,6 +4620,7 @@
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4660,14 +4669,12 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
    "type": "array"
   },
   "integration": {
-   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -4811,7 +4818,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -6958,6 +6964,86 @@
     ]
    }
   },
+  "/v1/notifications/receivers": {
+   "get": {
+    "operationId": "RouteGetReceivers",
+    "parameters": [
+     {
+      "in": "query",
+      "items": {
+       "type": "string"
+      },
+      "name": "names",
+      "type": "array"
+     },
+     {
+      "format": "int64",
+      "in": "query",
+      "name": "limit",
+      "type": "integer"
+     },
+     {
+      "format": "int64",
+      "in": "query",
+      "name": "offset",
+      "type": "integer"
+     },
+     {
+      "in": "query",
+      "name": "decrypt",
+      "type": "boolean"
+     }
+    ],
+    "responses": {
+     "200": {
+      "$ref": "#/responses/GetReceiversResponse"
+     },
+     "403": {
+      "description": "PermissionDenied",
+      "schema": {
+       "$ref": "#/definitions/PermissionDenied"
+      }
+     }
+    },
+    "summary": "Get all receivers.",
+    "tags": [
+     "receivers"
+    ]
+   }
+  },
+  "/v1/notifications/receivers/{Name}": {
+   "get": {
+    "operationId": "RouteGetReceiver",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "name",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "query",
+      "name": "decrypt",
+      "type": "boolean"
+     }
+    ],
+    "responses": {
+     "200": {
+      "$ref": "#/responses/GetReceiverResponse"
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "summary": "Get a receiver by name.",
+    "tags": [
+     "receivers"
+    ]
+   }
+  },
   "/v1/provisioning/alert-rules": {
    "get": {
     "operationId": "RouteGetAlertRules",
@@ -8349,6 +8435,21 @@
   "application/json"
  ],
  "responses": {
+  "GetReceiverResponse": {
+   "description": "",
+   "schema": {
+    "$ref": "#/definitions/GettableApiReceiver"
+   }
+  },
+  "GetReceiversResponse": {
+   "description": "",
+   "schema": {
+    "items": {
+     "$ref": "#/definitions/GettableApiReceiver"
+    },
+    "type": "array"
+   }
+  },
   "GettableHistoricUserConfigs": {
    "description": "",
    "schema": {
