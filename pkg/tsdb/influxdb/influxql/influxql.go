@@ -3,11 +3,14 @@ package influxql
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
+	"sync"
 
+	"github.com/grafana/dskit/concurrency"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"go.opentelemetry.io/otel/trace"
 
@@ -30,40 +33,91 @@ var (
 func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceInfo, req *backend.QueryDataRequest, features featuremgmt.FeatureToggles) (*backend.QueryDataResponse, error) {
 	logger := glog.FromContext(ctx)
 	response := backend.NewQueryDataResponse()
+	var err error
 
-	for _, reqQuery := range req.Queries {
-		query, err := models.QueryParse(reqQuery)
+	// We are testing running of queries in parallel behind feature flag
+	if features.IsEnabled(ctx, featuremgmt.FlagInfluxdbRunQueriesInParallel) {
+		concurrentQueryCount, err := req.PluginContext.GrafanaConfig.ConcurrentQueryCount()
 		if err != nil {
-			return &backend.QueryDataResponse{}, err
+			logger.Debug(fmt.Sprintf("Concurrent Query Count read/parse error: %v", err), featuremgmt.FlagInfluxdbRunQueriesInParallel)
+			concurrentQueryCount = 10
 		}
 
-		rawQuery, err := query.Build(req)
+		responseLock := sync.Mutex{}
+		err = concurrency.ForEachJob(ctx, len(req.Queries), concurrentQueryCount, func(ctx context.Context, idx int) error {
+			reqQuery := req.Queries[idx]
+			query, err := models.QueryParse(reqQuery)
+			if err != nil {
+				return err
+			}
+
+			rawQuery, err := query.Build(req)
+			if err != nil {
+				return err
+			}
+
+			query.RefID = reqQuery.RefID
+			query.RawQuery = rawQuery
+
+			if setting.Env == setting.Dev {
+				logger.Debug("Influxdb query", "raw query", rawQuery)
+			}
+
+			request, err := createRequest(ctx, logger, dsInfo, rawQuery, query.Policy)
+			if err != nil {
+				return err
+			}
+
+			resp, err := execute(ctx, tracer, dsInfo, logger, query, request, features.IsEnabled(ctx, featuremgmt.FlagInfluxqlStreamingParser))
+
+			responseLock.Lock()
+			defer responseLock.Unlock()
+			if err != nil {
+				response.Responses[query.RefID] = backend.DataResponse{Error: err}
+			} else {
+				response.Responses[query.RefID] = resp
+			}
+			return nil // errors are saved per-query,always return nil
+		})
+
 		if err != nil {
-			return &backend.QueryDataResponse{}, err
+			logger.Debug("Influxdb concurrent query error", "concurrent query", err)
 		}
+	} else {
+		for _, reqQuery := range req.Queries {
+			query, err := models.QueryParse(reqQuery)
+			if err != nil {
+				return &backend.QueryDataResponse{}, err
+			}
 
-		query.RefID = reqQuery.RefID
-		query.RawQuery = rawQuery
+			rawQuery, err := query.Build(req)
+			if err != nil {
+				return &backend.QueryDataResponse{}, err
+			}
 
-		if setting.Env == setting.Dev {
-			logger.Debug("Influxdb query", "raw query", rawQuery)
-		}
+			query.RefID = reqQuery.RefID
+			query.RawQuery = rawQuery
 
-		request, err := createRequest(ctx, logger, dsInfo, rawQuery, query.Policy)
-		if err != nil {
-			return &backend.QueryDataResponse{}, err
-		}
+			if setting.Env == setting.Dev {
+				logger.Debug("Influxdb query", "raw query", rawQuery)
+			}
 
-		resp, err := execute(ctx, tracer, dsInfo, logger, query, request, features.IsEnabled(ctx, featuremgmt.FlagInfluxqlStreamingParser))
+			request, err := createRequest(ctx, logger, dsInfo, rawQuery, query.Policy)
+			if err != nil {
+				return &backend.QueryDataResponse{}, err
+			}
 
-		if err != nil {
-			response.Responses[query.RefID] = backend.DataResponse{Error: err}
-		} else {
-			response.Responses[query.RefID] = resp
+			resp, err := execute(ctx, tracer, dsInfo, logger, query, request, features.IsEnabled(ctx, featuremgmt.FlagInfluxqlStreamingParser))
+
+			if err != nil {
+				response.Responses[query.RefID] = backend.DataResponse{Error: err}
+			} else {
+				response.Responses[query.RefID] = resp
+			}
 		}
 	}
 
-	return response, nil
+	return response, err
 }
 
 func createRequest(ctx context.Context, logger log.Logger, dsInfo *models.DatasourceInfo, queryStr string, retentionPolicy string) (*http.Request, error) {

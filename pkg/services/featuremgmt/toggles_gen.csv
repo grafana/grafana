@@ -44,6 +44,7 @@ individualCookiePreferences,experimental,@grafana/backend-platform,2023-02-23,fa
 prometheusMetricEncyclopedia,GA,@grafana/observability-metrics,2023-03-07,false,false,true
 influxdbBackendMigration,GA,@grafana/observability-metrics,2023-03-15,false,false,true
 influxqlStreamingParser,experimental,@grafana/observability-metrics,2023-11-29,false,false,false
+influxdbRunQueriesInParallel,privatePreview,@grafana/observability-metrics,2024-01-29,false,false,false
 clientTokenRotation,GA,@grafana/identity-access-team,2023-03-23,false,false,false
 prometheusDataplane,GA,@grafana/observability-metrics,2023-03-29,false,false,false
 lokiMetricDataplane,GA,@grafana/observability-logs,2023-04-13,false,false,false
