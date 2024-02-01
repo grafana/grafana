@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/apiserver/aggregator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
@@ -163,6 +162,7 @@ func ProvideService(
 	s.rr.Group("/apis", proxyHandler)
 	s.rr.Group("/livez", proxyHandler)
 	s.rr.Group("/readyz", proxyHandler)
+	s.rr.Group("/healthz", proxyHandler)
 	s.rr.Group("/openapi", proxyHandler)
 
 	return s, nil
@@ -194,13 +194,11 @@ func (s *service) start(ctx context.Context) error {
 
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
 	// Install schemas
-	for i, b := range builders {
+	for _, b := range builders {
 		groupVersions = append(groupVersions, b.GetGroupVersion())
 		if err := b.InstallSchema(Scheme); err != nil {
 			return err
 		}
-
-		aggregator.APIVersionPriorities[b.GetGroupVersion()] = aggregator.Priority{Group: 15000, Version: int32(i + 1)}
 
 		auth := b.GetAuthorizer()
 		if auth != nil {
@@ -223,7 +221,7 @@ func (s *service) start(ctx context.Context) error {
 	serverConfig.Authorization.Authorizer = s.authorizer
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 
-	// setup loopback transport for the aggregator server
+	// setup loopback transport
 	transport := &roundTripperFunc{ready: make(chan struct{})}
 	serverConfig.LoopbackClientConfig.Transport = transport
 	serverConfig.LoopbackClientConfig.TLSClientConfig = clientrest.TLSClientConfig{}
@@ -282,11 +280,6 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	aggregatorConfig, aggregatorInformers, err := aggregator.CreateAggregatorConfig(o, *serverConfig)
-	if err != nil {
-		return err
-	}
-
 	// support folder selection
 	err = entitystorage.RegisterFieldSelectorSupport(Scheme)
 	if err != nil {
@@ -299,43 +292,36 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	// Install the API Group+version
 	dualWriteEnabled := o.StorageOptions.StorageType != grafanaapiserveroptions.StorageTypeLegacy
+
+	// Install the API Group+version
 	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, dualWriteEnabled)
 	if err != nil {
 		return err
 	}
 
-	aggregatorServer, err := aggregator.CreateAggregatorServer(aggregatorConfig, aggregatorInformers, server)
-	if err != nil {
-		return err
-	}
-
-	// setup the loopback transport for the aggregator server
+	// set the transport function and signal that it's ready
 	transport.fn = func(req *http.Request) (*http.Response, error) {
 		w := newWrappedResponseWriter()
 		resp := responsewriter.WrapForHTTP1Or2(w)
-		aggregatorServer.GenericAPIServer.Handler.ServeHTTP(resp, req)
+		server.Handler.ServeHTTP(resp, req)
 		return w.Result(), nil
 	}
 	close(transport.ready)
 
 	// only write kubeconfig in dev mode
 	if o.ExtraOptions.DevMode {
-		if err := ensureKubeConfig(aggregatorServer.GenericAPIServer.LoopbackClientConfig, o.StorageOptions.DataPath); err != nil {
+		if err := ensureKubeConfig(server.LoopbackClientConfig, o.StorageOptions.DataPath); err != nil {
 			return err
 		}
 	}
 
 	// Used by the proxy wrapper registered in ProvideService
-	s.handler = aggregatorServer.GenericAPIServer.Handler
-	s.restConfig = aggregatorServer.GenericAPIServer.LoopbackClientConfig
+	s.handler = server.Handler
+	s.restConfig = server.LoopbackClientConfig
 	s.options = o
 
-	prepared, err := aggregatorServer.PrepareRun()
-	if err != nil {
-		return err
-	}
+	prepared := server.PrepareRun()
 
 	go func() {
 		s.stoppedCh <- prepared.Run(s.stopCh)
