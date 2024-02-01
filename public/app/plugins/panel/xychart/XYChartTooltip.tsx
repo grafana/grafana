@@ -26,30 +26,36 @@ export interface Props {
 
 export const XYChartTooltip = (props: Props) => {
   const { dataIdxs, seriesIdx, data, allSeries, options, isPinned } = props;
-  // console.log(props, 'props');
+  console.log(props, 'props');
   const styles = useStyles2(getStyles);
 
   const rowIndex = dataIdxs.find((idx) => idx !== null);
   // @todo: remove -1 when uPlot v2 arrive
   // context: first value in dataIdxs always null and represent X series
   const hoveredPointIndex = seriesIdx! - 1;
+  console.log(hoveredPointIndex, 'hoveredPointIndex');
 
   if (!allSeries || rowIndex == null) {
     return null;
   }
 
   const series = allSeries[hoveredPointIndex];
+  console.log(series, 'series');
   const frame = series.frame(data);
+  // console.log(frame, 'frame');
+  // console.log(data, 'data');
   const xField = series.x(frame);
   const yField = series.y(frame);
 
   const getHeaderLabel = (): LabelValue => {
     let label = series.name;
+    // console.log(label, 'label');
     if (options.seriesMapping === 'manual') {
       label = options.series?.[hoveredPointIndex]?.name ?? `Series ${hoveredPointIndex + 1}`;
     }
 
     let colorThing = series.pointColor(frame);
+    console.log(colorThing, 'colorThing');
 
     if (Array.isArray(colorThing)) {
       colorThing = colorThing[rowIndex];
@@ -71,6 +77,8 @@ export const XYChartTooltip = (props: Props) => {
       colorThing = colorThing[rowIndex];
     }
 
+    console.log(frame, 'frame');
+    console.log(yField, 'yField');
     const yValue: YValue = {
       name: getFieldDisplayName(yField, frame),
       val: yField.values[rowIndex],
