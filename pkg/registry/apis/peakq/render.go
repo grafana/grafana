@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
+	"sort"
 
 	"github.com/spyzhov/ajson"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -111,6 +111,38 @@ func makeVarMapFromParams(v url.Values) (map[string]string, error) {
 	return input, nil
 }
 
+type replacement struct {
+	*peakq.Position
+	*peakq.QueryVariable
+}
+
+func getReplacementMap(qt peakq.QueryTemplateSpec) map[int]map[string][]replacement {
+	// int = targetIdx, string = Path
+	byTargetPath := make(map[int]map[string][]replacement)
+	for _, qVar := range qt.Variables {
+		for _, pos := range qVar.Positions {
+			if byTargetPath[pos.TargetIdx] == nil {
+				byTargetPath[pos.TargetIdx] = make(map[string][]replacement)
+			}
+			qVar, pos := qVar, pos
+			byTargetPath[pos.TargetIdx][pos.Path] = append(byTargetPath[pos.TargetIdx][pos.Path],
+				replacement{
+					Position:      &pos,
+					QueryVariable: &qVar,
+				},
+			)
+		}
+	}
+	for idx, byTargetIdx := range byTargetPath {
+		for path := range byTargetIdx {
+			sort.Slice(byTargetPath[idx][path], func(i, j int) bool {
+				return byTargetPath[idx][path][i].Start < byTargetPath[idx][path][j].Start
+			})
+		}
+	}
+	return byTargetPath
+}
+
 func Render(qt peakq.QueryTemplateSpec, selectedValues map[string]string) (*peakq.RenderedQuery, error) {
 	// Note: The following is super stupid, will only work with one var, no sanity checking etc
 	// selectedValues is for GET
@@ -128,42 +160,33 @@ func Render(qt peakq.QueryTemplateSpec, selectedValues map[string]string) (*peak
 		}
 	}
 
-	for _, qVar := range qt.Variables {
-		value, ok := selectedValues[qVar.Key]
-		if !ok {
-			continue // or use default?
-		}
-
-		for targetIdx, pathMap := range qVar.Positions {
-			for path, positions := range pathMap {
-				idx, err := strconv.Atoi(targetIdx)
-				if err != nil {
-					return nil, err
-				}
-				o := rawTargetObjects[idx]
-				nodes, err := o.JSONPath(string(path))
-				if err != nil {
-					return nil, err
-				}
-				if len(nodes) != 1 {
-					return nil, fmt.Errorf("expected one lead node at path %v but got %v", path, len(nodes))
-				}
-				n := nodes[0]
-				if !n.IsString() {
-					return nil, fmt.Errorf("only string type leaf notes supported currently, %v is not a string", path)
-				}
-				s := n.String()
-				s = s[1 : len(s)-1]
+	rm := getReplacementMap(qt)
+	for targetIdx, byTargetIdx := range rm {
+		for path, reps := range byTargetIdx {
+			o := rawTargetObjects[targetIdx]
+			nodes, err := o.JSONPath(string(path))
+			if err != nil {
+				return nil, err
+			}
+			if len(nodes) != 1 {
+				return nil, fmt.Errorf("expected one lead node at path %v but got %v", path, len(nodes))
+			}
+			n := nodes[0]
+			if !n.IsString() {
+				return nil, fmt.Errorf("only string type leaf notes supported currently, %v is not a string", path)
+			}
+			s := n.String()
+			s = s[1 : len(s)-1]
+			var offSet int64
+			for _, r := range reps {
 				// I think breaks with utf...something...?
 				// TODO: Probably simpler to store the non-template parts and insert the values into that, then don't have to track
 				// offsets
-				var offSet int64
-				for _, pos := range positions {
-					s = s[:pos.Start+offSet] + value + s[pos.End+offSet:]
-					offSet = int64(len(value)) - pos.End - pos.Start
-				}
-				n.SetString(s)
+				value := selectedValues[r.Key]
+				s = s[:r.Start+offSet] + value + s[r.End+offSet:]
+				offSet = int64(len(value)) - r.End - r.Start
 			}
+			n.SetString(s)
 		}
 	}
 

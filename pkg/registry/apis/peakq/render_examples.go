@@ -13,18 +13,18 @@ var basicTemplateSpec = peakq.QueryTemplateSpec{
 		{
 			Key:          "metricName",
 			DefaultValue: `down`,
-			Positions: map[string]map[peakq.Path][]peakq.Position{
-				"0": {
-					"$.expr": []peakq.Position{
-						{
-							Start: 0,
-							End:   10,
-						},
-						{
-							Start: 13,
-							End:   23,
-						},
-					},
+			Positions: []peakq.Position{
+				{
+					TargetIdx: 0,
+					Path:      "$.expr",
+					Start:     0,
+					End:       10,
+				},
+				{
+					TargetIdx: 0,
+					Path:      "$.expr",
+					Start:     13,
+					End:       23,
 				},
 			},
 		},

@@ -55,7 +55,8 @@ type QueryVariable struct {
 	// The first string is the Idx of the target as a string, since openAPI
 	// does not support ints as map keys
 	// +listType=atomic
-	Positions map[string]map[Path][]Position `json:"positions"`
+	//Positions map[string]map[Path][]Position `json:"positions"`
+	Positions []Position `json:"positions"`
 
 	// ValueListDefinition is the object definition used by the FE
 	// to get a list of possible values to select for render.
@@ -66,12 +67,12 @@ type QueryVariable struct {
 // during render.
 type Position struct {
 	// IndexIdx is the index of the target in The QueryTemplateSpec Targets property.
-	// TargetIdx int `json:"targetIdx"`
+	TargetIdx int `json:"targetIdx"`
 
 	// TargetKey is the location of the property within the the target properties.
 	// The format for this is not figured out yet (Maybe JSONPath?).
 	// Idea: ["string", int, "string"] where int indicates array offset
-	//TargetKey TargetKey `json:"targetKey"`
+	Path string `json:"path"`
 
 	// Start is the byte offset within TargetKey's property of the variable.
 	// It is the start location for replacements).
@@ -80,8 +81,6 @@ type Position struct {
 	// End is the byte offset of the end of the variable.
 	End int64 `json:"end"`
 }
-
-type Path string
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type QueryTemplateList struct {

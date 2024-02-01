@@ -14,14 +14,11 @@ var nestedFieldRender = peakq.QueryTemplateSpec{
 	Variables: []peakq.QueryVariable{
 		{
 			Key: "metricName",
-			Positions: map[string]map[peakq.Path][]peakq.Position{
-				"0": {
-					"$.nestedObject.anArray[0]": []peakq.Position{
-						{
-							Start: 0,
-							End:   3,
-						},
-					},
+			Positions: []peakq.Position{
+				{
+					Path:  "$.nestedObject.anArray[0]",
+					Start: 0,
+					End:   3,
 				},
 			},
 		},
