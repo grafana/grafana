@@ -66,6 +66,5 @@ func addLibraryElementsMigrations(mg *migrator.Migrator) {
 		Name: "folder_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false, Default: "''",
 	}))
 
-	mg.AddMigration("populate library_element folder_uid", migrator.NewRawSQLMigration("").
-		Default("UPDATE library_element SET folder_uid = (SELECT uid FROM dashboard WHERE id = library_element.folder_id)"))
+	mg.AddMigration("populate library_element folder_uid", migrator.NewRawSQLMigration("UPDATE library_element SET folder_uid = (SELECT uid FROM dashboard WHERE id = library_element.folder_id)"))
 }
