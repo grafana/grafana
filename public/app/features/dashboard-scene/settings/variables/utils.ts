@@ -90,6 +90,7 @@ export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
   'datasource',
   'interval',
   'adhoc',
+  'groupby',
 ];
 
 export function getVariableTypeSelectOptions(): Array<SelectableValue<EditableVariableType>> {

@@ -107,7 +107,7 @@ describe('getVariableTypeSelectOptions', () => {
 
   it('should return an array of selectable values for editable variable types', () => {
     const options = getVariableTypeSelectOptions();
-    expect(options).toHaveLength(7);
+    expect(options).toHaveLength(8);
 
     options.forEach((option, index) => {
       const editableType = EDITABLE_VARIABLES_SELECT_ORDER[index];
