@@ -62,6 +62,7 @@ export interface CatalogPlugin extends WithAccessControlMetadata {
   // instance plugins may not be fully installed, which means a new instance
   // running the plugin didn't started yet
   isFullyInstalled?: boolean;
+  isUpdating?: boolean;
   iam?: IdentityAccessManagement;
 }
 
@@ -315,4 +316,5 @@ export type PluginVersion = {
 
 export type InstancePlugin = {
   pluginSlug: string;
+  version: string;
 };

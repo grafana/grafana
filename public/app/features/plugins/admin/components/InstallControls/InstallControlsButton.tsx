@@ -139,10 +139,15 @@ export function InstallControlsButton({
     return null;
   }
 
+  const isUpdatingInCloud =
+    config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
+      ? plugin.isUpdating
+      : isInstalling;
+
   if (pluginStatus === PluginStatus.UPDATE) {
     return (
       <HorizontalGroup align="flex-start" width="auto" height="auto">
-        <Button disabled={isInstalling} onClick={onUpdate}>
+        <Button disabled={isInstalling || isUpdatingInCloud} onClick={onUpdate}>
           {isInstalling ? 'Updating' : 'Update'}
         </Button>
         <Button variant="destructive" disabled={isUninstalling} onClick={onUninstall}>
