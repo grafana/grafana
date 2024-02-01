@@ -1,6 +1,6 @@
 import { DataFrame, FieldType, isValidGoDuration, Labels } from '@grafana/data';
 
-import { isBytesString } from './languageUtils';
+import { isBytesString, processLabels } from './languageUtils';
 import { isLogLineJSON, isLogLineLogfmt, isLogLinePacked } from './lineParser';
 import { LabelType } from './types';
 
@@ -54,19 +54,26 @@ export function extractLabelKeysFromDataFrame(frame: DataFrame, type: LabelType 
     return [];
   }
 
-  // if there are no label types, only return indexed labels if requested
+  // if there are no label types and type is LabelType.Indexed return all label keys
   if (!labelTypeArray?.length) {
     if (type === LabelType.Indexed) {
-      return Object.keys(labelsArray[0]);
+      const { keys: labelKeys } = processLabels(labelsArray);
+      return labelKeys;
     }
     return [];
   }
 
-  const labelTypes = labelTypeArray[0];
+  // If we have label types, we can return only label keys that match type
+  let labelsSet = new Set<string>();
+  for (let i = 0; i < labelsArray.length; i++) {
+    const labels = labelsArray[i];
+    const labelsType = labelTypeArray[i];
 
-  const allLabelKeys = Object.keys(labelsArray[0]).filter((k) => labelTypes[k] === type);
+    const allLabelKeys = Object.keys(labels).filter((key) => labelsType[key] === type);
+    labelsSet = new Set([...labelsSet, ...allLabelKeys]);
+  }
 
-  return allLabelKeys;
+  return Array.from(labelsSet);
 }
 
 export function extractUnwrapLabelKeysFromDataFrame(frame: DataFrame): string[] {
