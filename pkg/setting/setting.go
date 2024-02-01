@@ -1402,6 +1402,14 @@ func (s *DynamicSection) Key(k string) *ini.Key {
 		return key
 	}
 
+	envValue, err := ExpandVar(envValue)
+	if err != nil {
+		s.Logger.Error("got error while expanding %s.%s: %w",
+			s.section.Name(),
+			key.Name(),
+			err)
+	}
+
 	key.SetValue(envValue)
 	s.Logger.Info("Config overridden from Environment variable", "var", fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
 

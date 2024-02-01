@@ -946,3 +946,35 @@ func TestNewCfgFromINIFile(t *testing.T) {
 	require.Equal(t, Prod, cfg.Env)
 	require.Equal(t, "test.com", cfg.Domain)
 }
+
+func TestDynamicSection_SectionWithEnvOverrides(t *testing.T) {
+	t.Run("Should be able to override via environment variables", func(t *testing.T) {
+		t.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.NoError(t, err)
+
+		actual := cfg.SectionWithEnvOverrides("security")
+
+		require.Equal(t, "superduper", cfg.AdminUser)
+		require.Equal(t, "superduper", actual.Key("admin_user").Value())
+		require.Equal(t, filepath.Join(cfg.HomePath, "data"), cfg.DataPath)
+		require.Equal(t, filepath.Join(cfg.DataPath, "log"), cfg.LogsPath)
+	})
+
+	t.Run("Should be able to expand parameter from environment variables", func(t *testing.T) {
+		t.Setenv("DEFAULT_IDP_URL", "grafana.com")
+		t.Setenv("GF_AUTH_GENERIC_OAUTH_AUTH_URL", "${DEFAULT_IDP_URL}/auth")
+
+		cfg := NewCfg()
+
+		actual := cfg.SectionWithEnvOverrides("auth.generic_oauth")
+
+		genericOAuthSection, err := cfg.Raw.GetSection("auth.generic_oauth")
+		require.NoError(t, err)
+
+		require.Equal(t, "grafana.com/auth", actual.Key("auth_url").Value())
+		require.Equal(t, "grafana.com/auth", genericOAuthSection.Key("auth_url").Value())
+	})
+}
