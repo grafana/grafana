@@ -91,8 +91,8 @@ func ProvideService(cfg *setting.Cfg,
 	return s, nil
 }
 
-func ProvideServiceForTests(cfg *setting.Cfg, features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator) (*SQLStore, error) {
-	return initTestDB(cfg, features, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
+func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator) (*SQLStore, error) {
+	return initTestDB(t, cfg, features, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
 }
 
 func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine,
@@ -388,14 +388,6 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 	return *ss.recursiveQueriesAreSupported, nil
 }
 
-// ITestDB is an interface of arguments for testing db
-type ITestDB interface {
-	Helper()
-	Fatalf(format string, args ...any)
-	Logf(format string, args ...any)
-	Log(args ...any)
-}
-
 var testSQLStore *SQLStore
 var testSQLStoreMutex sync.Mutex
 
@@ -407,10 +399,10 @@ type InitTestDBOpt struct {
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
-func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
+func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
-	store, err := initTestDB(setting.NewCfg(), features, migration, opts...)
+	store, err := initTestDB(t, setting.NewCfg(), features, migration, opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -418,18 +410,18 @@ func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opt
 }
 
 // InitTestDB initializes the test DB.
-func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
+func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
 
-	store, err := initTestDB(setting.NewCfg(), features, migrations.ProvideOSSMigrations(features), opts...)
+	store, err := initTestDB(t, setting.NewCfg(), features, migrations.ProvideOSSMigrations(features), opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
 	return store
 }
 
-func InitTestDBWithCfg(t ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
+func InitTestDBWithCfg(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
 	store := InitTestDB(t, opts...)
 	return store, store.Cfg
 }
@@ -450,7 +442,7 @@ func getFeaturesForTesting(opts ...InitTestDBOpt) featuremgmt.FeatureToggles {
 }
 
 //nolint:gocyclo
-func initTestDB(testCfg *setting.Cfg,
+func initTestDB(t sqlutil.ITestDB, testCfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	migration registry.DatabaseMigrator,
 	opts ...InitTestDBOpt) (*SQLStore, error) {
@@ -462,12 +454,7 @@ func initTestDB(testCfg *setting.Cfg,
 	}
 
 	if testSQLStore == nil {
-		dbType := migrator.SQLite
-
-		// environment variable present for test db?
-		if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-			dbType = db
-		}
+		dbType := sqlutil.GetTestDBType()
 
 		// set test db config
 		cfg := setting.NewCfg()
@@ -482,19 +469,17 @@ func initTestDB(testCfg *setting.Cfg,
 		if _, err := sec.NewKey("type", dbType); err != nil {
 			return nil, err
 		}
-		switch dbType {
-		case "mysql":
-			if _, err := sec.NewKey("connection_string", sqlutil.MySQLTestDB().ConnStr); err != nil {
-				return nil, err
-			}
-		case "postgres":
-			if _, err := sec.NewKey("connection_string", sqlutil.PostgresTestDB().ConnStr); err != nil {
-				return nil, err
-			}
-		default:
-			if _, err := sec.NewKey("connection_string", sqlutil.SQLite3TestDB().ConnStr); err != nil {
-				return nil, err
-			}
+
+		testDB, err := sqlutil.GetTestDB(t, dbType)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, err := sec.NewKey("connection_string", testDB.ConnStr); err != nil {
+			return nil, err
+		}
+		if _, err := sec.NewKey("path", testDB.Path); err != nil {
+			return nil, err
 		}
 
 		// useful if you already have a database that you want to use for tests.
