@@ -32,7 +32,7 @@ In the Contact points tab, you can see a list of your contact points.
 
    For more information on how to write and execute templates, refer to [Using Go's templating language][using-go-templating-language] and [Create notification templates][create-notification-templates].
 
-3. Click Save template.
+3. Click **Save contact point**.
 
 {{% docs/reference %}}
 [create-notification-templates]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/manage-notifications/template-notifications/create-notification-templates"
