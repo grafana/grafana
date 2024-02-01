@@ -198,10 +198,10 @@ export const stringToSelectableValue = (str: string): SelectableValue<string> =>
 export const stringsToSelectableValues = (arr: string[] | undefined): Array<SelectableValue<string>> =>
   (arr ?? []).map(stringToSelectableValue);
 
-export const mapSelectValueToString = (selectableValue: SelectableValue<string>): string | undefined => {
+export const mapSelectValueToString = (selectableValue: SelectableValue<string>): string | null => {
   // this allows us to deal with cleared values
   if (selectableValue === null) {
-    return undefined;
+    return null;
   }
 
   if (!selectableValue) {
