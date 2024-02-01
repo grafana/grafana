@@ -17,6 +17,7 @@ import {
   transformDataFrame,
   ValueLinkConfig,
 } from '@grafana/data';
+import { ReduceTransformerMode } from '@grafana/data/src/transformations/transformers/reduce';
 import { config } from '@grafana/runtime';
 import { AdHocFilterItem, Table } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
@@ -134,6 +135,13 @@ export function LogsTable(props: Props) {
         ]);
         if (uniqueFieldsTransform) {
           transformations.push(uniqueFieldsTransform);
+          transformations.push({
+            id: DataTransformerID.reduce,
+            options: {
+              mode: ReduceTransformerMode.ReduceFields,
+              reducers: ['first'],
+            },
+          });
           transformations.push({
             id: DataTransformerID.merge,
             options: {},
@@ -264,7 +272,6 @@ function getUniqueValuesTransform(labelFilters: Record<string, number>, excludeF
       id: DataTransformerID.partitionByValues,
       options: {
         keepFields: true,
-        sample: true,
         fields: labelFiltersInclude,
       },
     };
