@@ -445,6 +445,10 @@ const (
 	ActionAlertingNotificationsRead  = "alert.notifications:read"
 	ActionAlertingNotificationsWrite = "alert.notifications:write"
 
+	// Alerting notifications time interval actions
+	ActionAlertingNotificationsTimeIntervalsRead  = "alert.notifications.time-intervals:read"
+	ActionAlertingNotificationsTimeIntervalsWrite = "alert.notifications.time-intervals:write"
+
 	// Alerting receiver actions
 	ActionAlertingReceiversList        = "alert.notifications.receivers:list"
 	ActionAlertingReceiversCreate      = "alert.notifications.receivers:create"

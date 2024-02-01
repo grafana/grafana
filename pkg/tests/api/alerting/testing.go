@@ -756,6 +756,24 @@ func (a apiClient) GetRuleHistoryWithStatus(t *testing.T, ruleUID string) (data.
 	return sendRequest[data.Frame](t, req, http.StatusOK)
 }
 
+func (a apiClient) GetAllTimeIntervalsWithStatus(t *testing.T) ([]apimodels.GettableTimeIntervals, int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/notifications/time-intervals", a.url), nil)
+	require.NoError(t, err)
+
+	return sendRequest[[]apimodels.GettableTimeIntervals](t, req, http.StatusOK)
+}
+
+func (a apiClient) GetTimeIntervalByNameWithStatus(t *testing.T, name string) (apimodels.GettableTimeIntervals, int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/notifications/time-intervals/%s", a.url, name), nil)
+	require.NoError(t, err)
+
+	return sendRequest[apimodels.GettableTimeIntervals](t, req, http.StatusOK)
+}
+
 func sendRequest[T any](t *testing.T, req *http.Request, successStatusCode int) (T, int, string) {
 	client := &http.Client{}
 	resp, err := client.Do(req)

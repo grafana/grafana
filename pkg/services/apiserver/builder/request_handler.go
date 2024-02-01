@@ -1,4 +1,4 @@
-package grafanaapiserver
+package builder
 
 import (
 	"fmt"
@@ -125,9 +125,9 @@ func getOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*
 		if s.Paths == nil {
 			return s, nil
 		}
-		for _, builder := range builders {
-			routes := builder.GetAPIRoutes()
-			gv := builder.GetGroupVersion()
+		for _, b := range builders {
+			routes := b.GetAPIRoutes()
+			gv := b.GetGroupVersion()
 			prefix := "/apis/" + gv.String() + "/"
 			if s.Paths.Paths[prefix] != nil {
 				copy := spec3.OpenAPI{

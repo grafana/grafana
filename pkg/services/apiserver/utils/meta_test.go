@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
 type TestResource struct {
