@@ -11,10 +11,8 @@ import { Tooltip } from '../Tooltip/Tooltip';
  * @internal
  */
 export type LoadingIndicatorProps = {
-  loading?: boolean;
-  onCancel: (newParam: string) => void;
-  mandatory: string;
-  field?: string;
+  loading: boolean;
+  onCancel: () => void;
 };
 
 /**
@@ -27,19 +25,13 @@ export const LoadingIndicator = ({ onCancel, loading }: LoadingIndicatorProps) =
     return null;
   }
 
-  const onCancelQuery = () => {
-    if (onCancel) {
-      onCancel('');
-    }
-  };
-
   return (
     <Tooltip content="Cancel query">
       <Icon
         className={cx('spin-clockwise', { [styles.clickable]: !!onCancel })}
         name="sync"
         size="sm"
-        onClick={onCancelQuery}
+        onClick={onCancel}
         data-testid={selectors.components.LoadingIndicator.icon}
       />
     </Tooltip>
