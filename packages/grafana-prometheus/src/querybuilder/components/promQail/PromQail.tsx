@@ -16,7 +16,6 @@ import { promQailExplain, promQailSuggest } from './state/helpers';
 import { initialState, stateSlice } from './state/state';
 import { Interaction, SuggestionType } from './types';
 
-
 // actions to update the state
 const { showStartingMessage, indicateCheckbox, addInteraction, updateInteraction } = stateSlice.actions;
 
