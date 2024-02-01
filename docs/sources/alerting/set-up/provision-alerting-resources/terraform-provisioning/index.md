@@ -13,11 +13,11 @@ labels:
   products:
     - enterprise
     - oss
-title: Create and manage alerting resources using Terraform
+title: Use Terraform to manage alerting resources
 weight: 200
 ---
 
-# Create and manage alerting resources using Terraform
+# Use Terraform to manage alerting resources
 
 Use Terraform’s Grafana Provider to manage your alerting resources and provision them into your Grafana system. Terraform provider support for Grafana Alerting makes it easy to create, manage, and maintain your entire Grafana Alerting stack as code.
 
