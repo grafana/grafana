@@ -13,12 +13,12 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Manage provisioned resources in Grafana
-title: Manage provisioned alerting resources in Grafana
+menuTitle: Manage provisioned alerting resources
+title: Manage provisioned alerting resources
 weight: 300
 ---
 
-# Manage provisioned alerting resources in Grafana
+# Manage provisioned alerting resources
 
 Verify that your alerting resources were created in Grafana, as well as edit or export your provisioned alerting resources.
 
