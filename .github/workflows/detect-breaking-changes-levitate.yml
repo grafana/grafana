@@ -1,5 +1,5 @@
 # Only runs if anything under the packages/ directory changes.
-
+---
 name: Levitate / Detect breaking changes in PR
 
 on:
@@ -24,7 +24,6 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: 20.9.0
-
 
     - name: Get yarn cache directory path
       id: yarn-cache-dir-path
@@ -301,7 +300,7 @@ jobs:
         # This is very weird, the actual request goes through (comes back with a 201), but does not assign the team.
         # Related issue: https://github.com/renovatebot/renovate/issues/1908
         - name: Add "grafana/plugins-platform-frontend" as a reviewer
-          if: steps.levitate-run.outputs.exit_code
+          if: steps.levitate-run.outputs.exit_code == 1
           uses: actions/github-script@v6
           env:
             PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
