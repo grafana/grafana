@@ -1180,7 +1180,7 @@ steps:
   name: clone-enterprise
 - commands:
   - apk add --update git make
-  - ls -l
+  - ls ..
   - make swagger-clean && make openapi3-gen
   - for f in public/api-merged.json public/openapi3.json; do git add $f; done
   - if [ -z "$(git diff --name-only --cached)" ]; then echo "Everything seems up to
@@ -4789,6 +4789,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 4ddd94a01c3582d0ab7ec2d25db07eabe97def7295838358cceeb60d829fdbab
+hmac: dfe3a3281f187775019ed632897c0afad39d828403ca5bfe66d7088411eb3ea5
 
 ...
