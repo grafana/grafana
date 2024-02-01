@@ -235,7 +235,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         type: RuleFormType.grafana,
         group: group.name,
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
-        evaluateFor: rule.for || '0',
+        evaluateFor: rule.for ?? '0',
         noDataState: ga.no_data_state,
         execErrState: ga.exec_err_state,
         queries: ga.data,
@@ -330,9 +330,7 @@ export function alertingRulerRuleToRuleForm(
 > {
   const defaultFormValues = getDefaultFormValues();
 
-  const [forTime, forTimeUnit] = rule.for
-    ? parseInterval(rule.for)
-    : [defaultFormValues.forTime, defaultFormValues.forTimeUnit];
+  const [forTime, forTimeUnit] = rule.for ? parseInterval(rule.for) : [0, 's'];
 
   const [keepFiringForTime, keepFiringForTimeUnit] = rule.keep_firing_for
     ? parseInterval(rule.keep_firing_for)
