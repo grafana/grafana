@@ -45,3 +45,25 @@ func PostableGrafanaReceiverToEmbeddedContactPoint(contactPoint *definitions.Pos
 	}
 	return embeddedContactPoint, nil
 }
+
+func GettableGrafanaReceiverToEmbeddedContactPoint(r *definitions.GettableGrafanaReceiver) (definitions.EmbeddedContactPoint, error) {
+	settingJson, err := simplejson.NewJson(r.Settings)
+	if err != nil {
+		return definitions.EmbeddedContactPoint{}, err
+	}
+
+	for k := range r.SecureFields {
+		if settingJson.Get(k).MustString() == "" {
+			settingJson.Set(k, definitions.RedactedValue)
+		}
+	}
+
+	return definitions.EmbeddedContactPoint{
+		UID:                   r.UID,
+		Name:                  r.Name,
+		Type:                  r.Type,
+		DisableResolveMessage: r.DisableResolveMessage,
+		Settings:              settingJson,
+		Provenance:            string(r.Provenance),
+	}, nil
+}

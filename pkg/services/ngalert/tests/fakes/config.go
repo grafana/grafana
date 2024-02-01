@@ -9,7 +9,12 @@ import (
 )
 
 type FakeAlertmanagerConfigStore struct {
-	Config          models.AlertConfiguration
+	Config models.AlertConfiguration
+	// GetFn is an optional function that can be set to mock the GetLatestAlertmanagerConfiguration method
+	GetFn func(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
+	// UpdateFn is an optional function that can be set to mock the UpdateAlertmanagerConfiguration method
+	UpdateFn func(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error
+	// LastSaveCommand is the last command that was passed to UpdateAlertmanagerConfiguration
 	LastSaveCommand *models.SaveAlertmanagerConfigurationCmd
 }
 
@@ -26,13 +31,22 @@ func NewFakeAlertmanagerConfigStore(config string) *FakeAlertmanagerConfigStore 
 }
 
 func (f *FakeAlertmanagerConfigStore) GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error) {
+	if f.GetFn != nil {
+		return f.GetFn(ctx, orgID)
+	}
+
 	result := &f.Config
 	result.OrgID = orgID
 	result.ConfigurationHash = fmt.Sprintf("%x", md5.Sum([]byte(f.Config.AlertmanagerConfiguration)))
+	result.ConfigurationVersion = f.Config.ConfigurationVersion
 	return result, nil
 }
 
 func (f *FakeAlertmanagerConfigStore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
+	if f.UpdateFn != nil {
+		return f.UpdateFn(ctx, cmd)
+	}
+
 	f.Config = models.AlertConfiguration{
 		AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
 		ConfigurationVersion:      cmd.ConfigurationVersion,
