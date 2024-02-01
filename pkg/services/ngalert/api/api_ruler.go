@@ -534,6 +534,8 @@ func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, valida
 	return nil
 }
 
+// validateNotifications validates notification settings for all new or updated rules in the GroupDelta.
+// Validation is performed for all rules using a single instance from NotificationSettingsValidatorProvider.
 func validateNotifications(ctx context.Context, groupChanges *store.GroupDelta, provider NotificationSettingsValidatorProvider) error {
 	var validator ngmodels.NotificationSettingsValidator
 	var err error

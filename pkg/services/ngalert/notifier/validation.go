@@ -16,6 +16,8 @@ type NotificationSettingsValidator struct {
 	availableMuteTimings map[string]struct{}
 }
 
+// NewNotificationSettingsValidator creates a new NotificationSettingsValidator from the given Alertmanager configuration.
+// It uses the available receivers and mute timings to validate that NotificationSettings only refers to existing ones.
 func NewNotificationSettingsValidator(am definitions.PostableApiAlertingConfig) NotificationSettingsValidator {
 	availableReceivers := make(map[string]struct{}, len(am.Receivers))
 	for _, receiver := range am.Receivers {
@@ -65,6 +67,7 @@ func NewNotificationSettingsValidationService(store store.AlertingStore) *Notifi
 	}
 }
 
+// Validator returns a NotificationSettingsValidator using the alertmanager configuration from the given orgID.
 func (v *NotificationSettingsValidationService) Validator(ctx context.Context, orgID int64) (models.NotificationSettingsValidator, error) {
 	rawCfg, err := v.store.GetLatestAlertmanagerConfiguration(ctx, orgID)
 	if err != nil {
@@ -78,6 +81,7 @@ func (v *NotificationSettingsValidationService) Validator(ctx context.Context, o
 	return NewNotificationSettingsValidator(cfg.AlertmanagerConfig), nil
 }
 
+// Validate checks that the given NotificationSettings are valid for the given orgID.
 func (v *NotificationSettingsValidationService) Validate(ctx context.Context, orgID int64, settings []models.NotificationSettings) error {
 	validator, err := v.Validator(ctx, orgID)
 	if err != nil {
