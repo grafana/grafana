@@ -7,6 +7,7 @@ import {
   DataFrame,
   DataFrameType,
   DataTransformerConfig,
+  DataTransformerID,
   Field,
   FieldType,
   LogsSortOrder,
@@ -37,6 +38,7 @@ interface Props {
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   logsFrame: LogsFrame | null;
+  sample: boolean;
 }
 
 export function LogsTable(props: Props) {
@@ -123,6 +125,20 @@ export function LogsTable(props: Props) {
             },
           },
         });
+      }
+
+      if (props.sample) {
+        const uniqueFieldsTransform = getUniqueValuesTransform(labelFilters, [
+          logsFrame.bodyField.name,
+          logsFrame.timeField.name,
+        ]);
+        if (uniqueFieldsTransform) {
+          transformations.push(uniqueFieldsTransform);
+          transformations.push({
+            id: DataTransformerID.merge,
+            options: {},
+          });
+        }
       }
 
       if (transformations.length > 0) {
@@ -232,6 +248,28 @@ function buildLabelFilters(columnsWithMeta: Record<string, FieldNameMeta>) {
     });
 
   return labelFilters;
+}
+
+function getUniqueValuesTransform(labelFilters: Record<string, number>, excludeFields: string[]) {
+  let labelFiltersInclude: string[] = [];
+
+  for (const key in labelFilters) {
+    if (!excludeFields.includes(key)) {
+      labelFiltersInclude.push(key);
+    }
+  }
+
+  if (labelFiltersInclude.length > 0) {
+    return {
+      id: DataTransformerID.partitionByValues,
+      options: {
+        keepFields: true,
+        sample: true,
+        fields: labelFiltersInclude,
+      },
+    };
+  }
+  return null;
 }
 
 function getLabelFiltersTransform(labelFilters: Record<string, number>) {
