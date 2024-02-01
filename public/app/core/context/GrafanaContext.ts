@@ -1,8 +1,7 @@
 import React, { useCallback, useContext } from 'react';
 
 import { GrafanaConfig } from '@grafana/data';
-import { LocationService, locationService } from '@grafana/runtime/src/services/LocationService';
-import { BackendSrv } from '@grafana/runtime/src/services/backendSrv';
+import { LocationService, locationService, BackendSrv } from '@grafana/runtime';
 
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
 import { NewFrontendAssetsChecker } from '../services/NewFrontendAssetsChecker';
