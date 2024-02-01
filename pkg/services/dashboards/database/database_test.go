@@ -104,12 +104,24 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.ErrorIs(t, err, dashboards.ErrDashboardIdentifierNotSet)
 	})
 
-	t.Run("Should  be able to get root dashboard by title", func(t *testing.T) {
+	t.Run("Should be able to get root dashboard by title", func(t *testing.T) {
 		setup()
 		query := dashboards.GetDashboardQuery{
 			Title:     util.Pointer("test dash 67"),
 			FolderUID: util.Pointer(""),
 			OrgID:     1,
+		}
+
+		_, err := dashboardStore.GetDashboard(context.Background(), &query)
+		require.Error(t, err)
+	})
+
+	t.Run("Should be able to get dashboard by title and folderID", func(t *testing.T) {
+		setup()
+		query := dashboards.GetDashboardQuery{
+			Title:    util.Pointer("test dash 23"),
+			FolderID: &savedDash.ID,
+			OrgID:    1,
 		}
 
 		_, err := dashboardStore.GetDashboard(context.Background(), &query)
