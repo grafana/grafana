@@ -9,8 +9,8 @@ import { getPrometheusTime } from './language_utils';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { PromApplication, PromOptions } from './types';
 
-const fetchMock = jest.fn((options: BackendSrvRequest): Observable<FetchResponse<BackendDataSourceResponse>> =>{
-  return of({} as unknown as FetchResponse)
+const fetchMock = jest.fn((options: BackendSrvRequest): Observable<FetchResponse<BackendDataSourceResponse>> => {
+  return of({} as unknown as FetchResponse);
 });
 
 jest.mock('@grafana/runtime', () => ({
@@ -18,7 +18,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => {
     return {
       fetch: fetchMock,
-    }
+    };
   },
 }));
 
