@@ -121,7 +121,7 @@ func TestTimeInterval(t *testing.T) {
 							},
 						},
 						Location: &timeinterval.Location{
-							time.Local,
+							time.UTC,
 						},
 					},
 				},
@@ -160,7 +160,7 @@ func TestTimeInterval(t *testing.T) {
 				Years: util.Pointer([]string{
 					"2024:2025",
 				}),
-				Location: util.Pointer("Local"),
+				Location: util.Pointer("UTC"),
 			},
 		},
 	}
