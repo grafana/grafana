@@ -29,15 +29,6 @@ func Provision(ctx context.Context, cfg ProvisionerConfig) error {
 	}
 	logger.Info("starting to provision alerting")
 	logger.Debug("read all alerting files", "file_count", len(files))
-	ruleProvisioner := NewAlertRuleProvisioner(
-		logger,
-		cfg.DashboardService,
-		cfg.DashboardProvService,
-		cfg.RuleService)
-	err = ruleProvisioner.Provision(ctx, files)
-	if err != nil {
-		return fmt.Errorf("alert rules: %w", err)
-	}
 	cpProvisioner := NewContactPointProvisoner(logger, cfg.ContactPointService)
 	err = cpProvisioner.Provision(ctx, files)
 	if err != nil {
@@ -73,6 +64,15 @@ func Provision(ctx context.Context, cfg ProvisionerConfig) error {
 	err = ttProvsioner.Unprovision(ctx, files)
 	if err != nil {
 		return fmt.Errorf("text templates: %w", err)
+	}
+	ruleProvisioner := NewAlertRuleProvisioner(
+		logger,
+		cfg.DashboardService,
+		cfg.DashboardProvService,
+		cfg.RuleService)
+	err = ruleProvisioner.Provision(ctx, files)
+	if err != nil {
+		return fmt.Errorf("alert rules: %w", err)
 	}
 	logger.Info("finished to provision alerting")
 	return nil
