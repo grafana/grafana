@@ -10,7 +10,7 @@ import (
 
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
 type dummySubresourceREST struct{}

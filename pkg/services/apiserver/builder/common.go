@@ -1,4 +1,4 @@
-package grafanaapiserver
+package builder
 
 import (
 	"net/http"
@@ -27,6 +27,7 @@ type APIGroupBuilder interface {
 		scheme *runtime.Scheme,
 		codecs serializer.CodecFactory,
 		optsGetter generic.RESTOptionsGetter,
+		dualWrite bool,
 	) (*genericapiserver.APIGroupInfo, error)
 
 	// Get OpenAPI definitions
@@ -56,4 +57,8 @@ type APIRoutes struct {
 
 	// Namespace handlers are mounted under the namespace
 	Namespace []APIRouteHandler
+}
+
+type APIRegistrar interface {
+	RegisterAPI(builder APIGroupBuilder)
 }

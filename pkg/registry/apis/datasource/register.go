@@ -23,13 +23,13 @@ import (
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
@@ -44,7 +44,7 @@ type DataSourceAPIBuilder struct {
 
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
-	apiRegistrar grafanaapiserver.APIRegistrar,
+	apiRegistrar builder.APIRegistrar,
 	pluginClient plugins.Client, // access to everything
 	datasources PluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
@@ -151,6 +151,7 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	_ generic.RESTOptionsGetter,
+	_ bool,
 ) (*genericapiserver.APIGroupInfo, error) {
 	storage := map[string]rest.Storage{}
 
@@ -213,6 +214,6 @@ func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinit
 }
 
 // Register additional routes with the server
-func (b *DataSourceAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *DataSourceAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil
 }

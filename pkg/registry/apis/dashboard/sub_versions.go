@@ -13,8 +13,8 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 )
 
 type VersionsREST struct {

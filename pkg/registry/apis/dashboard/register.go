@@ -19,19 +19,19 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/access"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	grafanaregistry "github.com/grafana/grafana/pkg/services/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/services/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	grafanaregistry "github.com/grafana/grafana/pkg/services/grafana-apiserver/registry/generic"
-	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*DashboardsAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*DashboardsAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
@@ -47,7 +47,7 @@ type DashboardsAPIBuilder struct {
 }
 
 func RegisterAPIService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
-	apiregistration grafanaapiserver.APIRegistrar,
+	apiregistration builder.APIRegistrar,
 	dashboardService dashboards.DashboardService,
 	dashboardVersionService dashver.Service,
 	accessControl accesscontrol.AccessControl,
@@ -113,6 +113,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
+	dualWrite bool,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
@@ -171,7 +172,7 @@ func (b *DashboardsAPIBuilder) GetAPIGroupInfo(
 	}
 
 	// Dual writes if a RESTOptionsGetter is provided
-	if optsGetter != nil {
+	if dualWrite && optsGetter != nil {
 		options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: grafanaregistry.GetAttrs}
 		if err := store.CompleteWithOptions(options); err != nil {
 			return nil, err
@@ -195,6 +196,6 @@ func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefiniti
 	return v0alpha1.GetOpenAPIDefinitions
 }
 
-func (b *DashboardsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *DashboardsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil // no custom API routes
 }

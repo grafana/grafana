@@ -1,4 +1,4 @@
-package grafanaapiserver
+package options
 
 import (
 	"strings"

@@ -13,8 +13,8 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
-	grafanarequest "github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	grafanaregistry "github.com/grafana/grafana/pkg/services/grafana-apiserver/registry/generic"
+	grafanarequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	grafanaregistry "github.com/grafana/grafana/pkg/services/apiserver/registry/generic"
 )
 
 var (

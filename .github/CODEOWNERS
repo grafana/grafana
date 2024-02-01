@@ -108,7 +108,7 @@
 /pkg/services/dashboardversion/ @grafana/backend-platform
 /pkg/services/encryption/ @grafana/backend-platform
 /pkg/services/folder/ @grafana/backend-platform
-/pkg/services/grafana-apiserver @grafana/grafana-app-platform-squad
+/pkg/services/apiserver @grafana/grafana-app-platform-squad
 /pkg/services/hooks/ @grafana/backend-platform
 /pkg/services/kmsproviders/ @grafana/backend-platform
 /pkg/services/licensing/ @grafana/backend-platform
@@ -275,7 +275,6 @@
 /pkg/modules/ @grafana/grafana-app-platform-squad
 /pkg/kindsysreport/ @grafana/grafana-app-platform-squad
 /pkg/services/grpcserver/ @grafana/grafana-app-platform-squad
-/pkg/aggregator @grafana/grafana-app-platform-squad
 /pkg/generated @grafana/grafana-app-platform-squad
 
 # Alerting

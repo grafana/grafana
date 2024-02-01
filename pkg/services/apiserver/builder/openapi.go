@@ -1,4 +1,4 @@
-package grafanaapiserver
+package builder
 
 import (
 	"maps"
@@ -15,8 +15,8 @@ func GetOpenAPIDefinitions(builders []APIGroupBuilder) common.GetOpenAPIDefiniti
 	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 		defs := getStandardOpenAPIDefinitions(ref)
 		maps.Copy(defs, v0alpha1.GetOpenAPIDefinitions(ref)) // common grafana apis
-		for _, builder := range builders {
-			g := builder.GetOpenAPIDefinitions()
+		for _, b := range builders {
+			g := b.GetOpenAPIDefinitions()
 			if g != nil {
 				out := g(ref)
 				maps.Copy(defs, out)

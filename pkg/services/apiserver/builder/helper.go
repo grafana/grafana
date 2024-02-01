@@ -1,34 +1,45 @@
-package grafanaapiserver
+package builder
 
 import (
 	"fmt"
 	"net/http"
 	goruntime "runtime"
+	"runtime/debug"
+	"strconv"
 	"strings"
 	"time"
 
+	"golang.org/x/mod/semver"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/version"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/util/openapi"
-	"k8s.io/client-go/kubernetes/scheme"
+	k8sscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func SetupConfig(serverConfig *genericapiserver.RecommendedConfig, builders []APIGroupBuilder) error {
+func SetupConfig(
+	scheme *runtime.Scheme,
+	serverConfig *genericapiserver.RecommendedConfig,
+	builders []APIGroupBuilder,
+) error {
 	defsGetter := GetOpenAPIDefinitions(builders)
 	serverConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
-		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
+		openapinamer.NewDefinitionNamer(scheme, k8sscheme.Scheme))
 
 	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(
 		openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(defsGetter),
-		openapinamer.NewDefinitionNamer(Scheme, scheme.Scheme))
+		openapinamer.NewDefinitionNamer(scheme, k8sscheme.Scheme))
 
+	// Add the custom routes to service discovery
+	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(builders)
 	serverConfig.OpenAPIV3Config.GetOperationIDAndTagsFromRoute = func(r common.Route) (string, []string, error) {
 		tags := []string{}
 		prop, ok := r.Metadata()["x-kubernetes-group-version-kind"]
@@ -40,9 +51,6 @@ func SetupConfig(serverConfig *genericapiserver.RecommendedConfig, builders []AP
 		}
 		return r.OperationName(), tags, nil
 	}
-
-	// Add the custom routes to service discovery
-	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(builders)
 
 	// Set the swagger build versions
 	serverConfig.OpenAPIConfig.Info.Version = setting.BuildVersion
@@ -82,12 +90,16 @@ func SetupConfig(serverConfig *genericapiserver.RecommendedConfig, builders []AP
 	return nil
 }
 
-func InstallAPIs(server *genericapiserver.GenericAPIServer,
+func InstallAPIs(
+	scheme *runtime.Scheme,
+	codecs serializer.CodecFactory,
+	server *genericapiserver.GenericAPIServer,
 	optsGetter generic.RESTOptionsGetter,
 	builders []APIGroupBuilder,
+	dualWrite bool,
 ) error {
 	for _, b := range builders {
-		g, err := b.GetAPIGroupInfo(Scheme, Codecs, optsGetter)
+		g, err := b.GetAPIGroupInfo(scheme, codecs, optsGetter, dualWrite)
 		if err != nil {
 			return err
 		}
@@ -100,4 +112,34 @@ func InstallAPIs(server *genericapiserver.GenericAPIServer,
 		}
 	}
 	return nil
+}
+
+// find the k8s version according to build info
+func getK8sApiserverVersion() (string, error) {
+	bi, ok := debug.ReadBuildInfo()
+	if !ok {
+		return "", fmt.Errorf("debug.ReadBuildInfo() failed")
+	}
+
+	if len(bi.Deps) == 0 {
+		return "v?.?", nil // this is normal while debugging
+	}
+
+	for _, dep := range bi.Deps {
+		if dep.Path == "k8s.io/apiserver" {
+			if !semver.IsValid(dep.Version) {
+				return "", fmt.Errorf("invalid semantic version for k8s.io/apiserver")
+			}
+			// v0 => v1
+			majorVersion := strings.TrimPrefix(semver.Major(dep.Version), "v")
+			majorInt, err := strconv.Atoi(majorVersion)
+			if err != nil {
+				return "", fmt.Errorf("could not convert majorVersion to int. majorVersion: %s", majorVersion)
+			}
+			newMajor := fmt.Sprintf("v%d", majorInt+1)
+			return strings.Replace(dep.Version, semver.Major(dep.Version), newMajor, 1), nil
+		}
+	}
+
+	return "", fmt.Errorf("could not find k8s.io/apiserver in build info")
 }
