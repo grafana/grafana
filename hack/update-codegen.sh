@@ -29,6 +29,9 @@ if [[ "${UPDATE_API_KNOWN_VIOLATIONS:-}" == "true" ]]; then
 fi
 
 for api_pkg in $(ls ./pkg/apis); do
+  if [[ "${1-}" != "" && ${api_pkg} != $1 ]]; then
+    continue
+  fi
   for pkg_version in $(ls ./pkg/apis/${api_pkg}); do
     echo "Generating openapi package for ${api_pkg}, version=${pkg_version} ..."
     grafana::codegen::gen_openapi \
