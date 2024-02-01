@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
@@ -16,6 +16,8 @@ interface Props extends DataSourcePluginOptionsEditorProps<TempoJsonData> {
 }
 
 export function TraceQLSearchTags({ options, onOptionsChange, datasource }: Props) {
+  const [error, setError] = useState<Error>();
+
   const fetchTags = async () => {
     if (!datasource) {
       throw new Error('Unable to retrieve datasource');
@@ -29,7 +31,7 @@ export function TraceQLSearchTags({ options, onOptionsChange, datasource }: Prop
     }
   };
 
-  const { error, loading } = useAsync(fetchTags, [datasource, options]);
+  const { error: loadingError, loading } = useAsync(fetchTags, [datasource, options]);
 
   const updateFilter = useCallback(
     (s: TraceqlFilter) => {
@@ -87,7 +89,7 @@ export function TraceQLSearchTags({ options, onOptionsChange, datasource }: Prop
           deleteFilter={deleteFilter}
           filters={options.jsonData.search?.filters || []}
           datasource={datasource}
-          setError={() => {}}
+          setError={setError}
           staticTags={staticTags}
           isTagsLoading={loading}
           hideValues={true}
@@ -97,8 +99,13 @@ export function TraceQLSearchTags({ options, onOptionsChange, datasource }: Prop
         <div>Invalid data source, please create a valid data source and try again</div>
       )}
       {error && (
-        <Alert title={'Unable to fetch TraceQL tags'} severity={'error'} topSpacing={1}>
+        <Alert title={'Error'} severity={'error'} topSpacing={1}>
           {error.message}
+        </Alert>
+      )}
+      {loadingError && (
+        <Alert title={'Loading error'} severity={'error'} topSpacing={1}>
+          {loadingError.message}
         </Alert>
       )}
       {missingTag && (

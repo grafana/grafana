@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { CoreApp, GrafanaTheme2 } from '@grafana/data';
-import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
-import { config, FetchError, getTemplateSrv, reportInteraction } from '@grafana/runtime';
+import { config, getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, HorizontalGroup, Select, useStyles2 } from '@grafana/ui';
 
 import { RawQuery } from '../_importedDependencies/datasources/prometheus/RawQuery';
@@ -12,7 +11,6 @@ import { TempoDatasource } from '../datasource';
 import { TempoQueryBuilderOptions } from '../traceql/TempoQueryBuilderOptions';
 import { traceqlGrammar } from '../traceql/traceql';
 import { TempoQuery } from '../types';
-import { useTemporaryState } from '../useTemporaryState';
 
 import DurationInput from './DurationInput';
 import { GroupByField } from './GroupByField';
@@ -34,8 +32,7 @@ const hardCodedFilterIds = ['min-duration', 'max-duration', 'status'];
 
 const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Props) => {
   const styles = useStyles2(getStyles);
-  const [alertText, setAlertText] = useTemporaryState<string>();
-  const [error, setError] = useState<Error | FetchError | null>(null);
+  const [error, setError] = useState<Error>();
 
   const [isTagsLoading, setIsTagsLoading] = useState(true);
   const [traceQlQuery, setTraceQlQuery] = useState<string>('');
@@ -75,12 +72,14 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
         setIsTagsLoading(false);
       } catch (error) {
         if (error instanceof Error) {
-          setAlertText(`Error: ${error.message}`);
+          setError(error);
+        } else {
+          setError(Error('Unknown error'));
         }
       }
     };
     fetchTags();
-  }, [datasource, setAlertText]);
+  }, [datasource]);
 
   useEffect(() => {
     // Initialize state with configured static filters that already have a value from the config
@@ -241,13 +240,11 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
         </div>
         <TempoQueryBuilderOptions onChange={onChange} query={query} />
       </div>
-      {error ? (
-        <Alert title="Unable to connect to Tempo search" severity="info" className={styles.alert}>
-          Please ensure that Tempo is configured with search enabled. If you would like to hide this tab, you can
-          configure it in the <a href={`/datasources/edit/${datasource.uid}`}>datasource settings</a>.
+      {error && (
+        <Alert title={'Search error'} severity={'error'} topSpacing={1}>
+          {error.message}
         </Alert>
-      ) : null}
-      {alertText && <TemporaryAlert severity="error" text={alertText} />}
+      )}
     </>
   );
 };

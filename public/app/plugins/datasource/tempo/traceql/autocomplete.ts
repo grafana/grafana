@@ -1,7 +1,6 @@
 import { IMarkdownString } from 'monaco-editor';
 
 import { SelectableValue } from '@grafana/data';
-import { isFetchError } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
 import TempoLanguageProvider from '../language_provider';
@@ -11,7 +10,7 @@ import { intrinsics, scopes } from './traceql';
 
 interface Props {
   languageProvider: TempoLanguageProvider;
-  setAlertText: (text: string) => void;
+  setError: (error: Error) => void;
 }
 
 type MinimalCompletionItem = {
@@ -31,11 +30,11 @@ type MinimalCompletionItem = {
 export class CompletionProvider implements monacoTypes.languages.CompletionItemProvider {
   languageProvider: TempoLanguageProvider;
   registerInteractionCommandId: string | null;
-  setAlertText: (text: string) => void;
+  setError: (error: Error) => void;
 
   constructor(props: Props) {
     this.languageProvider = props.languageProvider;
-    this.setAlertText = props.setAlertText;
+    this.setError = props.setError;
     this.registerInteractionCommandId = null;
   }
 
@@ -243,7 +242,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
 
     const { range, offset } = getRangeAndOffset(this.monaco, model, position);
     const situation = getSituation(model.getValue(), offset);
-    const completionItems = situation != null ? this.getCompletions(situation, this.setAlertText) : Promise.resolve([]);
+    const completionItems = situation != null ? this.getCompletions(situation, this.setError) : Promise.resolve([]);
 
     return completionItems.then((items) => {
       // monaco by-default alphabetically orders the items.
@@ -298,7 +297,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
    * @param situation
    * @private
    */
-  private async getCompletions(situation: Situation, setErrorText: (text: string) => void): Promise<Completion[]> {
+  private async getCompletions(situation: Situation, setError: (error: Error) => void): Promise<Completion[]> {
     switch (situation.type) {
       // This should only happen for cases that we do not support yet
       case 'UNKNOWN': {
@@ -371,10 +370,10 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         try {
           tagValues = await this.getTagValues(situation.tagName, situation.query);
         } catch (error) {
-          if (isFetchError(error)) {
-            setErrorText(error.data.error);
-          } else if (error instanceof Error) {
-            setErrorText(`Error: ${error.message}`);
+          if (error instanceof Error) {
+            setError(error);
+          } else {
+            setError(Error('Unknown error'));
           }
         }
 

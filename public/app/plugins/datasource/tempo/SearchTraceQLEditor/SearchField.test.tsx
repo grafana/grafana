@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { LanguageProvider } from '@grafana/data';
-import { FetchError } from '@grafana/runtime';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
@@ -290,9 +289,7 @@ const renderSearchField = (
       datasource={datasource}
       updateFilter={updateFilter}
       filter={filter}
-      setError={function (error: FetchError): void {
-        throw error;
-      }}
+      setError={() => {}}
       tags={tags || []}
       hideTag={hideTag}
       query={'{}'}

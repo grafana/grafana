@@ -3,7 +3,6 @@ import React, { useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { AccessoryButton } from '@grafana/experimental';
-import { FetchError } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
@@ -30,7 +29,7 @@ interface Props {
   deleteFilter: (f: TraceqlFilter) => void;
   filters: TraceqlFilter[];
   datasource: TempoDatasource;
-  setError: (error: FetchError) => void;
+  setError: (error: Error) => void;
   staticTags: Array<string | undefined>;
   isTagsLoading: boolean;
   hideValues?: boolean;
