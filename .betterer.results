@@ -2373,11 +2373,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
+    "public/app/features/dashboard-scene/inspect/HelpWizard/utils.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/features/dashboard-scene/inspect/InspectJsonTab.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
-    ],
-    "public/app/features/dashboard-scene/inspect/PanelInspectDrawer.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/dashboard-scene/pages/DashboardScenePage.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
