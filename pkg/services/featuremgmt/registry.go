@@ -304,14 +304,6 @@ var (
 			Created:        time.Date(2023, time.July, 24, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:           "disablePrometheusExemplarSampling",
-			Description:    "Disable Prometheus exemplar sampling",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: true,
-			Created:        time.Date(2022, time.December, 19, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			Stage:       FeatureStageExperimental,
@@ -958,6 +950,15 @@ var (
 			Created:         time.Date(2023, time.December, 4, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:            "kubernetesQueryServiceRewrite",
+			Description:     "Rewrite requests targeting /ds/query to the query service",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+			RequiresDevMode: true,
+			Created:         time.Date(2024, time.January, 28, 12, 0, 0, 0, time.UTC),
+		},
+		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStagePublicPreview,
@@ -1327,6 +1328,23 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
 			Created:     time.Date(2024, time.January, 29, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "slateAutocomplete",
+			Description:  "Adjusts the behaviour of the slate editor to properly handle autocomplete. Feature toggled for safety.",
+			Stage:        FeatureStageGeneralAvailability,
+			Expression:   "true", // enabled by default
+			FrontendOnly: true,
+			Owner:        grafanaFrontendPlatformSquad,
+			Created:      time.Date(2024, time.January, 29, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "nodeGraphDotLayout",
+			Description:  "Changed the layout algorithm for the node graph",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			Created:      time.Date(2024, time.January, 2, 12, 0, 0, 0, time.UTC),
 		},
 	}
 )
