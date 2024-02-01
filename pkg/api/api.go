@@ -229,10 +229,10 @@ func (hs *HTTPServer) registerRoutes() {
 		return authnSettingsEval
 	}
 
-	r.Get("/admin/authentication/", authorize(adminAuthPageEvaluator()), hs.Index)
+	r.Get("/admin/authentication", authorize(adminAuthPageEvaluator()), hs.Index)
 	r.Get("/admin/authentication/ldap", authorize(ac.EvalPermission(ac.ActionLDAPStatusRead)), hs.Index)
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		providerParam := ac.Parameter("provider")
+		providerParam := ac.Parameter(":provider")
 		r.Get("/admin/authentication/:provider", authorize(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsOAuth(providerParam))), hs.Index)
 	}
 
