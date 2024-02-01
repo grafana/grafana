@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import leven from 'leven';
 import React, { useCallback } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, VariableRefresh } from '@grafana/data';
 import {
   PanelBuilders,
   QueryVariable,
@@ -15,7 +15,9 @@ import {
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
+  SceneObjectStateChangedEvent,
   SceneQueryRunner,
+  SceneTimeRange,
   SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
@@ -80,10 +82,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       const { name } = variable.state;
 
       if (name === VAR_DATASOURCE) {
-        // Clear filtered metrics
-        this.setState({ metricsAfterFilter: undefined, metricsAfterSearch: undefined });
         // Clear all panels for the previous data source
-        this.state.body.setState({ children: [] });
+        this.clearPanels();
       } else if (name === VAR_METRIC_NAMES) {
         // Entire pipeline must be performed
         this.updateMetrics();
@@ -99,6 +99,17 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       // Temp hack when going back to select metric scene and variable updates
       this.ignoreNextUpdate = true;
     }
+
+    const trail = getTrailFor(this);
+    trail.subscribeToEvent(SceneObjectStateChangedEvent, (evt) => {
+      if (evt.payload.changedObject instanceof SceneTimeRange) {
+        this.clearPanels();
+      }
+    });
+  }
+
+  private clearPanels() {
+    this.state.body.setState({ children: [] });
   }
 
   private sortedPreviewMetrics() {
@@ -356,6 +367,7 @@ function getMetricNamesVariableSet() {
         includeAll: true,
         defaultToAll: true,
         skipUrlSync: true,
+        refresh: VariableRefresh.onTimeRangeChanged,
         query: { query: `label_values(${VAR_FILTERS_EXPR},__name__)`, refId: 'A' },
       }),
     ],
