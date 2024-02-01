@@ -220,6 +220,7 @@ type DashboardProvisioning struct {
 
 type DeleteDashboardCommand struct {
 	ID                     int64
+	UID                    string
 	OrgID                  int64
 	ForceDeleteFolderRules bool
 }
@@ -322,9 +323,8 @@ type CountDashboardsInFolderQuery struct {
 // to the store layer. The FolderID will be replaced with FolderUID when
 // dashboards are updated with parent folder UIDs.
 type CountDashboardsInFolderRequest struct {
-	// Deprecated: use FolderUID instead
-	FolderID int64
-	OrgID    int64
+	FolderUIDs []string
+	OrgID      int64
 }
 
 func FromDashboard(dash *Dashboard) *folder.Folder {
@@ -345,8 +345,8 @@ func FromDashboard(dash *Dashboard) *folder.Folder {
 }
 
 type DeleteDashboardsInFolderRequest struct {
-	FolderUID string
-	OrgID     int64
+	FolderUIDs []string
+	OrgID      int64
 }
 
 //
