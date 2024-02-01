@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { defaults } from 'lodash';
 import React, { useRef, useState } from 'react';
 
-import { QueryEditorProps } from '@grafana/data';
+import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, InlineLabel, useStyles2 } from '@grafana/ui';
 
@@ -46,32 +46,30 @@ export function QueryEditor(props: Props) {
         </a>
       </InlineLabel>
       {!showCopyFromSearchButton && (
-        <InlineLabel>
-          <div>
-            Continue editing the query from the Search tab?
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                reportInteraction('grafana_traces_copy_to_traceql_clicked', {
-                  app: props.app ?? '',
-                  grafana_version: config.buildInfo.version,
-                  location: 'traceql_tab',
-                });
+        <div className={styles.copyContainer}>
+          <span>Continue editing the query from the Search tab?</span>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              reportInteraction('grafana_traces_copy_to_traceql_clicked', {
+                app: props.app ?? '',
+                grafana_version: config.buildInfo.version,
+                location: 'traceql_tab',
+              });
 
-                props.onClearResults();
-                props.onChange({
-                  ...query,
-                  query: generateQueryFromFilters(query.filters || []),
-                });
-                setShowCopyFromSearchButton(true);
-              }}
-              style={{ marginLeft: '10px' }}
-            >
-              Copy query from Search
-            </Button>
-          </div>
-        </InlineLabel>
+              props.onClearResults();
+              props.onChange({
+                ...query,
+                query: generateQueryFromFilters(query.filters || []),
+              });
+              setShowCopyFromSearchButton(true);
+            }}
+            style={{ marginLeft: '10px' }}
+          >
+            Copy query from Search
+          </Button>
+        </div>
       )}
       <TraceQLEditor
         placeholder="Enter a TraceQL query or trace ID (run with Shift+Enter)"
@@ -87,8 +85,13 @@ export function QueryEditor(props: Props) {
   );
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   optionsContainer: css({
     marginTop: '10px',
+  }),
+  copyContainer: css({
+    backgroundColor: theme.colors.background.secondary,
+    padding: theme.spacing(0.5, 1),
+    fontSize: theme.typography.body.fontSize,
   }),
 });
