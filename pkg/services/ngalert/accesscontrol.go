@@ -55,6 +55,9 @@ var (
 					Action: accesscontrol.ActionAlertingRuleExternalWrite,
 					Scope:  datasources.ScopeAll,
 				},
+				{
+					Action: accesscontrol.ActionAlertingReceiversList,
+				},
 			}),
 		},
 	}
@@ -114,6 +117,9 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingNotificationsTimeIntervalsRead,
+				},
+				{
+					Action: accesscontrol.ActionAlertingReceiversRead,
 				},
 			},
 		},

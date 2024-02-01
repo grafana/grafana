@@ -350,7 +350,9 @@ func createContactPointServiceSut(t *testing.T, secretService secrets.Service) *
 	provisioningStore := fakes.NewFakeProvisioningStore()
 
 	receiverService := notifier.NewReceiverService(
-		actest.FakeAccessControl{},
+		actest.FakeAccessControl{
+			ExpectedEvaluate: true,
+		},
 		store,
 		provisioningStore,
 		secretService,

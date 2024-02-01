@@ -46,7 +46,7 @@ func PostableApiAlertingConfigToApiReceivers(c apimodels.PostableApiAlertingConf
 
 type DecryptFn = func(value string) string
 
-func PostableToGettableGrafanaReceiver(r *apimodels.PostableGrafanaReceiver, provenance *models.Provenance, decryptFn DecryptFn) (apimodels.GettableGrafanaReceiver, error) {
+func PostableToGettableGrafanaReceiver(r *apimodels.PostableGrafanaReceiver, provenance *models.Provenance, decryptFn DecryptFn, listOnly bool) (apimodels.GettableGrafanaReceiver, error) {
 	out := apimodels.GettableGrafanaReceiver{
 		UID:                   r.UID,
 		Name:                  r.Name,
@@ -83,10 +83,17 @@ func PostableToGettableGrafanaReceiver(r *apimodels.PostableGrafanaReceiver, pro
 	}
 	out.Settings = jsonBytes
 
+	if listOnly {
+		out.Settings = nil
+		out.DisableResolveMessage = false
+		out.SecureFields = nil
+		out.Provenance = apimodels.Provenance(models.ProvenanceNone)
+	}
+
 	return out, nil
 }
 
-func PostableToGettableApiReceiver(r *apimodels.PostableApiReceiver, provenances map[string]models.Provenance, decryptFn DecryptFn) (apimodels.GettableApiReceiver, error) {
+func PostableToGettableApiReceiver(r *apimodels.PostableApiReceiver, provenances map[string]models.Provenance, decryptFn DecryptFn, listOnly bool) (apimodels.GettableApiReceiver, error) {
 	out := apimodels.GettableApiReceiver{
 		Receiver: config.Receiver{
 			Name: r.Receiver.Name,
@@ -99,7 +106,7 @@ func PostableToGettableApiReceiver(r *apimodels.PostableApiReceiver, provenances
 			prov = &p
 		}
 
-		gettable, err := PostableToGettableGrafanaReceiver(gr, prov, decryptFn)
+		gettable, err := PostableToGettableGrafanaReceiver(gr, prov, decryptFn, listOnly)
 		if err != nil {
 			return apimodels.GettableApiReceiver{}, err
 		}

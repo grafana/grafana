@@ -63,20 +63,37 @@ func NewReceiverService(
 	}
 }
 
-func (rs *ReceiverService) canDecrypt(ctx context.Context, user identity.Requester, name string) (bool, error) {
-	receiverAccess := false // TODO: stub, check for read secrets access
-	eval := accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningReadSecrets)
-	provisioningAccess, err := rs.ac.Evaluate(ctx, user, eval)
+func (rs *ReceiverService) canRead(ctx context.Context, user identity.Requester, name string) (bool, error) {
+	// TODO: migrate to new permission
+	eval := accesscontrol.EvalAny(
+		accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversRead),
+		accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningRead),
+	)
+	return rs.ac.Evaluate(ctx, user, eval)
+}
+
+func (rs *ReceiverService) shouldDecrypt(ctx context.Context, user identity.Requester, name string, reqDecrypt bool) (bool, error) {
+	// TODO: migrate to new permission
+	eval := accesscontrol.EvalAny(
+		accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversReadSecrets),
+		accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningReadSecrets),
+	)
+
+	decryptAccess, err := rs.ac.Evaluate(ctx, user, eval)
 	if err != nil {
 		return false, err
 	}
-	return receiverAccess || provisioningAccess, nil
+
+	if reqDecrypt && !decryptAccess {
+		return false, ErrPermissionDenied
+	}
+
+	return decryptAccess && reqDecrypt, nil
 }
 
 // GetReceiver returns a receiver by name.
 // The receiver's secure settings are decrypted if requested and the user has access to do so.
 func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiverQuery, user identity.Requester) (definitions.GettableApiReceiver, error) {
-
 	baseCfg, err := rs.cfgStore.GetLatestAlertmanagerConfiguration(ctx, q.OrgID)
 	if err != nil {
 		return definitions.GettableApiReceiver{}, err
@@ -94,14 +111,15 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 	}
 
 	receivers := cfg.AlertmanagerConfig.Receivers
-	for i := range receivers {
-		if receivers[i].Name == q.Name {
-			decryptAccess, err := rs.canDecrypt(ctx, user, q.Name)
+	for _, r := range receivers {
+		if r.Name == q.Name {
+			decrypt, err := rs.shouldDecrypt(ctx, user, q.Name, q.Decrypt)
 			if err != nil {
 				return definitions.GettableApiReceiver{}, err
 			}
-			decryptFn := rs.decryptOrRedact(ctx, decryptAccess && q.Decrypt, q.Name, "")
-			return PostableToGettableApiReceiver(receivers[i], provenances, decryptFn)
+			decryptFn := rs.decryptOrRedact(ctx, decrypt, q.Name, "")
+
+			return PostableToGettableApiReceiver(r, provenances, decryptFn, false)
 		}
 	}
 
@@ -127,7 +145,11 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 		return nil, err
 	}
 
-	// TODO: check for list access
+	eval := accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversList)
+	listAccess, err := rs.ac.Evaluate(ctx, user, eval)
+	if err != nil {
+		return nil, err
+	}
 
 	var output []definitions.GettableApiReceiver
 	for i := q.Offset; i < len(cfg.AlertmanagerConfig.Receivers); i++ {
@@ -136,24 +158,27 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 			continue
 		}
 
-		// TODO: check for scoped read access and continue if not allowed
-
-		decryptAccess, err := rs.canDecrypt(ctx, user, r.Name)
-		if err != nil {
-			return nil, err
-		}
-		if q.Decrypt && !decryptAccess {
-			return nil, ErrPermissionDenied
-		}
-
-		decryptFn := rs.decryptOrRedact(ctx, decryptAccess && q.Decrypt, r.Name, "")
-
-		res, err := PostableToGettableApiReceiver(r, provenances, decryptFn)
+		readAccess, err := rs.canRead(ctx, user, r.Name)
 		if err != nil {
 			return nil, err
 		}
 
-		// TODO: redact settings if the user only has list access
+		if !readAccess && !listAccess {
+			continue
+		}
+
+		decrypt, err := rs.shouldDecrypt(ctx, user, r.Name, q.Decrypt)
+		if err != nil {
+			return nil, err
+		}
+
+		decryptFn := rs.decryptOrRedact(ctx, decrypt, r.Name, "")
+		listOnly := !readAccess && listAccess
+
+		res, err := PostableToGettableApiReceiver(r, provenances, decryptFn, listOnly)
+		if err != nil {
+			return nil, err
+		}
 
 		output = append(output, res)
 		// stop if we have reached the limit or we have found all the requested receivers
