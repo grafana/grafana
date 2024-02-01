@@ -89,8 +89,7 @@ func (s *SocialGithub) Validate(ctx context.Context, settings ssoModels.SSOSetti
 	teamIds := mustInts(teamIdsSplitted)
 
 	if len(teamIdsSplitted) != len(teamIds) {
-		s.log.Warn("Failed to parse team ids. Team ids must be a list of numbers.", "teamIds", teamIdsSplitted)
-		return ssosettings.ErrInvalidSettings.Errorf("Failed to parse team ids. Team ids must be a list of numbers.")
+		return ssosettings.ErrInvalidOAuthConfig("Failed to parse Team Ids. Team Ids must be a list of numbers.")
 	}
 
 	return nil

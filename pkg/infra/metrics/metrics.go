@@ -108,6 +108,9 @@ var (
 	// MAccessPermissionsCacheUsage is a metric counter for cache usage
 	MAccessPermissionsCacheUsage *prometheus.CounterVec
 
+	// MAccessSearchUserPermissionsCacheUsage is a metric counter for cache usage
+	MAccessSearchUserPermissionsCacheUsage *prometheus.CounterVec
+
 	// MPublicDashboardRequestCount is a metric counter for public dashboards requests
 	MPublicDashboardRequestCount prometheus.Counter
 
@@ -254,7 +257,7 @@ func init() {
 	httpStatusCodes := []string{"200", "404", "500", "unknown"}
 	objectiveMap := map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001}
 	apiFolderIDMethods := []string{GetAlerts, GetDashboard, RestoreDashboardVersion, GetFolderByID, GetFolderDescendantCounts, SearchFolders, GetFolderPermissionList, UpdateFolderPermissions, GetFolderACL, Search, GetDashboardACL, NewToFolderDTO, GetFolders}
-	serviceFolderIDMethods := []string{Folder, Dashboard, LibraryElements, LibraryPanels, NGAlerts, Provisioning, PublicDashboards, AccessControl, Guardian, Search, DashboardImport}
+	folderIDServices := []string{Folder, Dashboard, LibraryElements, LibraryPanels, NGAlerts, Provisioning, PublicDashboards, AccessControl, Guardian, Search, DashboardImport}
 
 	MInstanceStart = prometheus.NewCounter(prometheus.CounterOpts{
 		Name:      "instance_start_total",
@@ -502,7 +505,7 @@ func init() {
 		Name:      "folder_id_service_count",
 		Help:      "counter for folder id usage in service package",
 		Namespace: ExporterName,
-	}, []string{"method"}, map[string][]string{"method": serviceFolderIDMethods})
+	}, []string{"service"}, map[string][]string{"service": folderIDServices})
 
 	MStatTotalDashboards = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard",
@@ -648,6 +651,12 @@ func init() {
 		Namespace: ExporterName,
 	}, []string{"status"}, map[string][]string{"status": accesscontrol.CacheUsageStatuses})
 
+	MAccessSearchUserPermissionsCacheUsage = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
+		Name:      "access_search_user_permissions_cache_usage",
+		Help:      "access control search user permissions cache hit/miss",
+		Namespace: ExporterName,
+	}, []string{"status"}, map[string][]string{"status": accesscontrol.CacheUsageStatuses})
+
 	StatsTotalLibraryPanels = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_library_panels",
 		Help:      "total amount of library panels in the database",
@@ -768,6 +777,7 @@ func initMetricVars(reg prometheus.Registerer) {
 		MAccessSearchPermissionsSummary,
 		MAccessEvaluationCount,
 		MAccessPermissionsCacheUsage,
+		MAccessSearchUserPermissionsCacheUsage,
 		MAlertingActiveAlerts,
 		MStatTotalDashboards,
 		MStatTotalFolders,

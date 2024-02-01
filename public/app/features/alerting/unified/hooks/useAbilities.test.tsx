@@ -7,7 +7,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { AlertManagerDataSourceJsonData, AlertManagerImplementation } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
-import { getGrafanaRule, grantUserPermissions, mockDataSource } from '../mocks';
+import { getCloudRule, getGrafanaRule, grantUserPermissions, mockDataSource } from '../mocks';
 import { AlertmanagerProvider } from '../state/AlertmanagerContext';
 import { setupDataSources } from '../testSetup/datasources';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
@@ -136,7 +136,7 @@ describe('alertmanager abilities', () => {
   });
 });
 
-describe('rule permissions', () => {
+describe('AlertRule abilities', () => {
   it('should report that all actions are supported for a Grafana Managed alert rule', async () => {
     const rule = getGrafanaRule();
 
@@ -149,9 +149,21 @@ describe('rule permissions', () => {
         expect(supported).toBe(true);
       }
     });
+
+    expect(abilities.result.current).toMatchSnapshot();
   });
 
-  it('should report the correct set of supported actions for an external rule with ruler API', async () => {});
+  it('should report no permissions while we are loading data for cloud rule', async () => {
+    const rule = getCloudRule();
+
+    const abilities = renderHook(() => useAllAlertRuleAbilities(rule), { wrapper: TestProvider });
+
+    await waitFor(() => {
+      expect(abilities.result.current).not.toBeUndefined();
+    });
+
+    expect(abilities.result.current).toMatchSnapshot();
+  });
 
   it('should not allow certain actions for provisioned rules', () => {});
 
