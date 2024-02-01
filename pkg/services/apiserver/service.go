@@ -222,15 +222,8 @@ func (s *service) start(ctx context.Context) error {
 
 	// setup loopback transport for the aggregator server
 	transport := &roundTripperFunc{ready: make(chan struct{})}
-	if err := serverConfig.SecureServing.Listener.Close(); err != nil {
-		return err
-	}
-	serverConfig.SecureServing.Listener = nil
 	serverConfig.LoopbackClientConfig.Transport = transport
 	serverConfig.LoopbackClientConfig.TLSClientConfig = clientrest.TLSClientConfig{}
-	if serverConfig.ClientConfig != nil {
-		serverConfig.ClientConfig.Transport = transport
-	}
 
 	switch o.StorageOptions.StorageType {
 	case grafanaapiserveroptions.StorageTypeEtcd:

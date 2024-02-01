@@ -1,12 +1,13 @@
 package options
 
 import (
+	"net"
+
+	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/discovery/aggregated"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
-
-	"github.com/spf13/pflag"
 )
 
 const defaultEtcdPathPrefix = "/registry/grafana.app"
@@ -72,6 +73,14 @@ func (o *Options) Validate() []error {
 func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) error {
 	serverConfig.AggregatedDiscoveryGroupManager = aggregated.NewResourceManager("apis")
 
+	if err := o.ExtraOptions.ApplyTo(serverConfig); err != nil {
+		return err
+	}
+
+	if !o.ExtraOptions.DevMode {
+		o.RecommendedOptions.SecureServing.Listener = newFakeListener()
+	}
+
 	if err := o.RecommendedOptions.SecureServing.ApplyTo(&serverConfig.SecureServing, &serverConfig.LoopbackClientConfig); err != nil {
 		return err
 	}
@@ -80,9 +89,34 @@ func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) erro
 		return err
 	}
 
-	if err := o.ExtraOptions.ApplyTo(serverConfig); err != nil {
+	serverConfig.SecureServing = nil
+	return nil
+}
+
+type fakeListener struct {
+	server net.Conn
+	client net.Conn
+}
+
+func newFakeListener() *fakeListener {
+	server, client := net.Pipe()
+	return &fakeListener{
+		server: server,
+		client: client,
+	}
+}
+
+func (f *fakeListener) Accept() (net.Conn, error) {
+	return f.server, nil
+}
+
+func (f *fakeListener) Close() error {
+	if err := f.client.Close(); err != nil {
 		return err
 	}
+	return f.server.Close()
+}
 
-	return nil
+func (f *fakeListener) Addr() net.Addr {
+	return &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1), Port: 3000, Zone: ""}
 }
