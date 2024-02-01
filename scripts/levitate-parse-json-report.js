@@ -2,11 +2,13 @@ const fs = require('fs');
 
 const data = JSON.parse(fs.readFileSync('data.json', 'utf8'));
 
+const stripAnsi = (string) => string.replace(/\u001b\[.*?m/g, '');
+
 const printSection = (title, items) => {
   let output = `<h4>${title}</h4>`;
   items.forEach((item) => {
     const language = item.declaration ? 'typescript' : 'diff';
-    const code = item.declaration ? item.declaration : item.diff;
+    const code = item.declaration ? item.declaration : stripAnsi(item.code);
 
     output += `<b>${item.name}</b><br>\n`;
     output += `<sub>${item.location}</sub><br>\n`;
