@@ -1173,7 +1173,22 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/SSOSettings"
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "provider": {
+                  "type": "string"
+                },
+                "settings": {
+                  "additionalProperties": false,
+                  "type": "object"
+                },
+                "source": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
             }
           }
         },
@@ -1438,7 +1453,22 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/SSOSettings"
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "settings": {
+                    "additionalProperties": false,
+                    "type": "object"
+                  },
+                  "source": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
               },
               "type": "array"
             }
@@ -5566,6 +5596,15 @@
           },
           "typeVersion": {
             "$ref": "#/components/schemas/FrameTypeVersion"
+          },
+          "uniqueRowIdFields": {
+            "description": "Array of field indices which values create a unique id for each row. Ideally this should be globally unique ID\nbut that isn't guarantied. Should help with keeping track and deduplicating rows in visualizations, especially\nwith streaming data with frequent updates.",
+            "example": "TraceID in Tempo, table name + primary key in SQL",
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
           }
         },
         "title": "FrameMeta matches:",
@@ -25196,7 +25235,19 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SSOSettings"
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "provider": {
+                    "type": "string"
+                  },
+                  "settings": {
+                    "additionalProperties": false,
+                    "type": "object"
+                  }
+                },
+                "type": "object"
               }
             }
           },
