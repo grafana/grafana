@@ -4,15 +4,16 @@ import { MenuItem, MenuGroup, ContextMenu, IconName } from '@grafana/ui';
 
 import { ClickedItemData } from '../types';
 
-import { CollapseConfig } from './dataTransform';
+import { CollapseConfig, FlameGraphDataContainer } from './dataTransform';
 
 export type ExtraContextMenuButton = {
   label: string;
   icon: IconName;
-  onClick: (clickedItemData: ClickedItemData) => void;
+  onClick: (clickedItemData: ClickedItemData, data: FlameGraphDataContainer) => void;
 };
 
 type Props = {
+  data: FlameGraphDataContainer;
   itemData: ClickedItemData;
   onMenuItemClick: () => void;
   onItemFocus: () => void;
@@ -29,6 +30,7 @@ type Props = {
 };
 
 const FlameGraphContextMenu = ({
+  data,
   itemData,
   onMenuItemClick,
   onItemFocus,
@@ -76,7 +78,7 @@ const FlameGraphContextMenu = ({
             return <MenuItem
               label={label}
               icon={icon}
-              onClick={() => onClick(itemData)}
+              onClick={() => onClick(itemData, data)}
               key={label}
             />
           })

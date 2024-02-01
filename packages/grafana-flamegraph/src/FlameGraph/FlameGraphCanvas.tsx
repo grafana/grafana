@@ -188,6 +188,7 @@ const FlameGraphCanvas = ({
       />
       {!showFlameGraphOnly && clickedItemData && (
         <FlameGraphContextMenu
+          data={data}
           itemData={clickedItemData}
           collapsing={collapsing}
           collapseConfig={collapsedMap.get(clickedItemData.item)}
