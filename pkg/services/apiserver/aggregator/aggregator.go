@@ -223,7 +223,7 @@ type Priority struct {
 	Version int32
 }
 
-// The proper way to resolve this letting the aggregator know the desired group and version-within-group order of the underlying servers
+// APIVersionPriorities are the proper way to resolve this letting the aggregator know the desired group and version-within-group order of the underlying servers
 // is to refactor the genericapiserver.DelegationTarget to include a list of priorities based on which APIs were installed.
 // This requires the APIGroupInfo struct to evolve and include the concept of priorities and to avoid mistakes, the core storage map there needs to be updated.
 // That ripples out every bit as far as you'd expect, so for 1.7 we'll include the list here instead of being built up during storage.
