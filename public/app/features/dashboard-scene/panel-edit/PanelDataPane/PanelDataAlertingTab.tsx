@@ -96,7 +96,7 @@ export function PanelDataAlertingTabRendered(props: SceneComponentProps<PanelDat
   if (rules.length) {
     return (
       <>
-        <RulesTable rules={rules} scenes={true} />
+        <RulesTable rules={rules} />
         {canCreateRules && (
           <ScenesNewRuleFromPanelButton
             className={styles.newButton}

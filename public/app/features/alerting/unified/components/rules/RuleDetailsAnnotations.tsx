@@ -8,14 +8,13 @@ import { AnnotationDetailsField } from '../AnnotationDetailsField';
 
 type Props = {
   annotations: Array<[string, string]>;
-  scenes?: boolean;
 };
 
 export function RuleDetailsAnnotations(props: Props): JSX.Element | null {
   const styles = useStyles2(getStyles);
 
-  const { annotations, scenes } = props;
-  const annotationLinks = useAnnotationLinks(annotations, scenes);
+  const { annotations } = props;
+  const annotationLinks = useAnnotationLinks(annotations);
 
   if (annotations.length === 0) {
     return null;

@@ -24,16 +24,16 @@ export function useCleanAnnotations(annotations: Annotations): Array<[string, st
   }, [annotations]);
 }
 
-export function useAnnotationLinks(annotations: Array<[string, string]>, scenes = false): Map<string, string> {
+export function useAnnotationLinks(annotations: Array<[string, string]>): Map<string, string> {
   const links = new Map<string, string>();
 
   const { panelId, dashboardUID } = usePanelAndDashboardIds(annotations);
 
   if (dashboardUID) {
-    links.set(Annotation.dashboardUID, `${makeDashboardLink(dashboardUID)}${scenes ? '?&scenes' : ''}`);
+    links.set(Annotation.dashboardUID, makeDashboardLink(dashboardUID));
   }
   if (dashboardUID && panelId) {
-    links.set(Annotation.panelID, `${makePanelLink(dashboardUID, panelId)}${scenes ? '&scenes' : ''}`);
+    links.set(Annotation.panelID, makePanelLink(dashboardUID, panelId));
   }
 
   return links;

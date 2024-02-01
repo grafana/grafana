@@ -8,12 +8,11 @@ import { DetailsField } from '../DetailsField';
 
 interface Props {
   instance: Alert;
-  scenes?: boolean;
 }
 
-export const AlertInstanceDetails = ({ instance, scenes = false }: Props) => {
+export const AlertInstanceDetails = ({ instance }: Props) => {
   const annotations = useCleanAnnotations(instance.annotations);
-  const annotationLinks = useAnnotationLinks(annotations, scenes);
+  const annotationLinks = useAnnotationLinks(annotations);
 
   return (
     <div>

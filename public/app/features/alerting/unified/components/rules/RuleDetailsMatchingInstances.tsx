@@ -27,7 +27,6 @@ interface Props {
   pagination?: PaginationProps;
   itemsDisplayLimit?: number;
   enableFiltering?: boolean;
-  scenes?: boolean;
 }
 
 interface ShowMoreStats {
@@ -53,13 +52,7 @@ function ShowMoreInstances(props: { onClick: () => void; stats: ShowMoreStats })
 
 export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
   const history = useHistory();
-  const {
-    rule,
-    itemsDisplayLimit = Number.POSITIVE_INFINITY,
-    pagination,
-    enableFiltering = false,
-    scenes = false,
-  } = props;
+  const { rule, itemsDisplayLimit = Number.POSITIVE_INFINITY, pagination, enableFiltering = false } = props;
   const { promRule, namespace, instanceTotals } = rule;
 
   const [queryString, setQueryString] = useState<string>();
@@ -138,13 +131,7 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
         </div>
       )}
       {!enableFiltering && <div className={styles.stats}>{statsComponents}</div>}
-      <AlertInstancesTable
-        rule={rule}
-        instances={visibleInstances}
-        pagination={pagination}
-        footerRow={footerRow}
-        scenes={scenes}
-      />
+      <AlertInstancesTable rule={rule} instances={visibleInstances} pagination={pagination} footerRow={footerRow} />
     </>
   );
 }

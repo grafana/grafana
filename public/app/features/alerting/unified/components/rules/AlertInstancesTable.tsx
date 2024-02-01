@@ -16,7 +16,6 @@ interface Props {
   instances: Alert[];
   pagination?: PaginationProps;
   footerRow?: JSX.Element;
-  scenes?: boolean;
 }
 
 interface AlertWithCommonLabels extends Alert {
@@ -31,7 +30,7 @@ interface RuleAndAlert {
 type AlertTableColumnProps = DynamicTableColumnProps<RuleAndAlert>;
 type AlertTableItemProps = DynamicTableItemProps<RuleAndAlert>;
 
-export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, scenes = false }: Props) => {
+export const AlertInstancesTable = ({ rule, instances, pagination, footerRow }: Props) => {
   const commonLabels = useMemo(() => {
     // only compute the common labels if we have more than 1 instance, if we don't then that single instance
     // will have the complete set of common labels and no unique ones
@@ -52,7 +51,7 @@ export const AlertInstancesTable = ({ rule, instances, pagination, footerRow, sc
       cols={columns}
       isExpandable={true}
       items={items}
-      renderExpandedContent={({ data }) => <AlertInstanceDetails instance={data.alert} scenes={scenes} />}
+      renderExpandedContent={({ data }) => <AlertInstanceDetails instance={data.alert} />}
       pagination={pagination}
       footerRow={footerRow}
     />
