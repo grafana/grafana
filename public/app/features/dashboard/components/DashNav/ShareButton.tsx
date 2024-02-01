@@ -1,6 +1,7 @@
 import React, { useContext, useEffect } from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { locationService } from '@grafana/runtime';
 import { ModalsContext, Button } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { Trans } from 'app/core/internationalization';
@@ -11,20 +12,26 @@ import { ShareModal } from '../ShareModal';
 
 export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
   const [queryParams] = useQueryParams();
+  const shareView = queryParams.shareView;
   const { showModal, hideModal } = useContext(ModalsContext);
 
   useEffect(() => {
-    if (!!queryParams.shareView) {
+    if (shareView) {
       showModal(ShareModal, {
         dashboard,
-        onDismiss: hideModal,
-        activeTab: String(queryParams.shareView),
+        onDismiss: () => {
+          locationService.partial({ shareView: null });
+        },
+        activeTab: String(shareView),
       });
     }
+
     return () => {
-      hideModal();
+      if (shareView) {
+        hideModal();
+      }
     };
-  }, [showModal, hideModal, dashboard, queryParams.shareView]);
+  }, [showModal, hideModal, dashboard, shareView]);
 
   return (
     <Button
@@ -33,10 +40,7 @@ export const ShareButton = ({ dashboard }: { dashboard: DashboardModel }) => {
       size="sm"
       onClick={() => {
         DashboardInteractions.toolbarShareClick();
-        showModal(ShareModal, {
-          dashboard,
-          onDismiss: hideModal,
-        });
+        locationService.partial({ shareView: 'link' });
       }}
     >
       <Trans i18nKey="dashboard.toolbar.share-button">Share</Trans>
