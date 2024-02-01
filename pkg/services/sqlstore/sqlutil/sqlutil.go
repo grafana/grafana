@@ -1,7 +1,9 @@
 package sqlutil
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 )
@@ -38,13 +40,13 @@ func GetTestDB(t ITestDB, dbType string) (*TestDB, error) {
 	case "postgres":
 		return PostgresTestDB()
 	case "sqlite3":
-		return SQLite3TestDB(t)
+		return SQLite3TestDB()
 	}
 
 	return nil, fmt.Errorf("unknown test db type: %s", dbType)
 }
 
-func SQLite3TestDB(t ITestDB) (*TestDB, error) {
+func SQLite3TestDB() (*TestDB, error) {
 	if os.Getenv("SQLITE_INMEMORY") == "true" {
 		return &TestDB{
 			DriverName: "sqlite3",
@@ -61,19 +63,34 @@ func SQLite3TestDB(t ITestDB) (*TestDB, error) {
 		}
 
 		// if cache dir doesn't exist, fall back to temp dir
-		if _, err := os.Stat(dir); os.IsNotExist(err) {
+		if _, err := os.Stat(dir); errors.Is(err, fs.ErrNotExist) {
 			dir = os.TempDir()
-			if _, err := os.Stat(dir); os.IsNotExist(err) {
+			if _, err := os.Stat(dir); err != nil {
 				return nil, err
 			}
 		}
 
 		err = os.Mkdir(filepath.Join(dir, "grafana-test"), 0750)
-		if err != nil {
+		if err != nil && !errors.Is(err, fs.ErrExist) {
 			return nil, err
 		}
 
 		sqliteDb = filepath.Join(dir, "grafana-test", "grafana-test.db")
+	}
+
+	// remove db file if it exists
+	err := os.Remove(sqliteDb)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, err
+	}
+	// remove wal & shm files if they exist
+	err = os.Remove(sqliteDb + "-wal")
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, err
+	}
+	err = os.Remove(sqliteDb + "-shm")
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return nil, err
 	}
 
 	//#nosec G304 - this is a test db
