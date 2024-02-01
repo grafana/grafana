@@ -153,6 +153,16 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
+    if (dashboard.canEditDashboard() && plugin && !plugin.meta.skipDataQuery) {
+      moreSubMenu.push({
+        text: t('panel.header-menu.get-help', 'Get help'),
+        onClick: (e: React.MouseEvent) => {
+          e.preventDefault();
+          onInspectPanel(panel, InspectTab.Help);
+        },
+      });
+    }
+
     if (config.featureToggles.datatrails) {
       addDataTrailPanelAction(dashboard, panel, items);
     }
@@ -453,3 +463,11 @@ export function toggleVizPanelLegend(vizPanel: VizPanel): void {
 function hasLegendOptions(optionsWithLegend: unknown): optionsWithLegend is OptionsWithLegend {
   return optionsWithLegend != null && typeof optionsWithLegend === 'object' && 'legend' in optionsWithLegend;
 }
+
+const onInspectPanel = (vizPanel: VizPanel, tab?: InspectTab) => {
+  locationService.partial({
+    inspect: vizPanel.state.key,
+    inspectTab: tab,
+  });
+  DashboardInteractions.panelMenuInspectClicked(tab ?? InspectTab.Data);
+};
