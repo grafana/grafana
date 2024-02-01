@@ -6,7 +6,11 @@ import { restore, versions } from './__mocks__/dashboardHistoryMocks';
 const getMock = jest.fn().mockResolvedValue({});
 const postMock = jest.fn().mockResolvedValue({});
 
-jest.mock('app/core/store');
+jest.mock('app/core/store', () => ({
+  get: jest.fn(),
+  getObject: jest.fn((_a, b) => b),
+}));
+
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
 
@@ -56,19 +60,37 @@ describe('historySrv', () => {
     });
   });
 
+  describe('getDashboardVersion', () => {
+    it('should return a version object for the given dashboard id and version', () => {
+      getMock.mockImplementation(() => Promise.resolve(versionsResponse[0]));
+      historySrv = new HistorySrv();
+
+      return historySrv.getDashboardVersion(dash.uid, 4).then((version) => {
+        expect(version).toEqual(versionsResponse[0]);
+      });
+    });
+
+    it('should return an empty object when not given an id', async () => {
+      historySrv = new HistorySrv();
+
+      const rsp = await historySrv.getDashboardVersion(emptyDash.uid, 6);
+      expect(rsp).toEqual({});
+    });
+  });
+
   describe('restoreDashboard', () => {
     it('should return a success response given valid parameters', () => {
       const version = 6;
       postMock.mockImplementation(() => Promise.resolve(restoreResponse(version)));
       historySrv = new HistorySrv();
-      return historySrv.restoreDashboard(dash, version).then((response) => {
+      return historySrv.restoreDashboard(dash.uid, version).then((response) => {
         expect(response).toEqual(restoreResponse(version));
       });
     });
 
     it('should return an empty object when not given an id', async () => {
       historySrv = new HistorySrv();
-      const rsp = await historySrv.restoreDashboard(emptyDash, 6);
+      const rsp = await historySrv.restoreDashboard(emptyDash.uid, 6);
       expect(rsp).toEqual({});
     });
   });

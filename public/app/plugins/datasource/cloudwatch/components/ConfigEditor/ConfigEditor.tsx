@@ -11,10 +11,8 @@ import {
   DataSourceTestFailed,
 } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
-import { getAppEvents, usePluginInteractionReporter } from '@grafana/runtime';
+import { getAppEvents, usePluginInteractionReporter, getDataSourceSrv, config } from '@grafana/runtime';
 import { Alert, Input, InlineField, FieldProps, SecureSocksProxySettings, Field, Divider } from '@grafana/ui';
-import { config } from 'app/core/config';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { CloudWatchDatasource } from '../../datasource';
 import { SelectableResourceValue } from '../../resources/types';
@@ -304,8 +302,8 @@ function useDatasource(props: Props) {
 
   useEffect(() => {
     if (props.options.version) {
-      getDatasourceSrv()
-        .loadDatasource(props.options.name)
+      getDataSourceSrv()
+        .get(props.options.name)
         .then((datasource) => {
           if (datasource instanceof CloudWatchDatasource) {
             setDatasource(datasource);

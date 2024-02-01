@@ -76,6 +76,7 @@
     "folder-picker": {
       "accessible-label": "Ordner auswählen: {{ label }} aktuell ausgewählt",
       "button-label": "Ordner auswählen",
+      "clear-selection": "",
       "empty-message": "Keine Ordner gefunden",
       "error-title": "Fehler beim Laden der Ordner",
       "search-placeholder": "Ordner suchen",
@@ -233,6 +234,10 @@
       "visualization": "Visualisierung",
       "widget": "Widget"
     },
+    "alert-rules-drawer": {
+      "redirect-link": "",
+      "subtitle": ""
+    },
     "empty": {
       "add-library-panel-body": "Visualisierungen hinzufügen, die mit anderen Dashboards geteilt werden.",
       "add-library-panel-button": "Bibliotheksfenster hinzufügen",
@@ -301,7 +306,7 @@
     },
     "toolbar": {
       "add": "Hinzufügen",
-      "add-panel": "Panel hinzufügen",
+      "alert-rules": "",
       "mark-favorite": "Als Favorit markieren",
       "open-original": "Original-Dashboard öffnen",
       "playlist-next": "Zum nächsten Dashboard",
@@ -361,6 +366,7 @@
       "title-label": "Titel"
     },
     "json-editor": {
+      "apply-button": "",
       "save-button": "Änderungen speichern",
       "subtitle": "Das JSON-Modell unten ist die Datenstruktur, die das Dashboard definiert. Dazu gehören Dashboard-Einstellungen, Fenster-Einstellungen, Layout, Abfragen und so weiter.",
       "title": "JSON-Modell"
@@ -586,6 +592,7 @@
     "shortcuts-description": {
       "change-theme": "Thema ändern",
       "collapse-all-rows": "Alle Zeilen einklappen",
+      "copy-time-range": "",
       "dashboard-settings": "Dashboard-Einstellungen",
       "duplicate-panel": "Fenster duplizieren",
       "exit-edit/setting-views": "Ansicht beenden/einstellen",
@@ -599,6 +606,7 @@
       "move-time-range-forward": "Zeitbereich nach vorne verschieben",
       "open-search": "Suche öffnen",
       "open-shared-modal": "Geteilter Fenstermodus öffnen",
+      "paste-time-range": "",
       "refresh-all-panels": "Alle Fenster aktualisieren",
       "remove-panel": "Fenster entfernen",
       "save-dashboard": "Dashboard speichern",
@@ -971,6 +979,7 @@
     "megamenu": {
       "close": "Menü schließen",
       "dock": "Menü andocken",
+      "list-label": "",
       "undock": ""
     },
     "toolbar": {
@@ -1221,6 +1230,12 @@
       "turned-off": "Automatische Aktualisierung aus"
     }
   },
+  "return-to-previous": {
+    "button": {
+      "label": ""
+    },
+    "dismissable-button": ""
+  },
   "search": {
     "actions": {
       "include-panels": "Panels einschließen",
@@ -1393,6 +1408,13 @@
       "empty-recent-list-docs": "<0><0>Lesen Sie die Dokumentation</0><1>, um mehr darüber zu erfahren, wie Sie benutzerdefinierte Zeitbereiche eingeben können.</1></0>",
       "empty-recent-list-info": "Es sieht so aus, als hätten Sie diesen Zeit-Auswähler noch nie benutzt. Sobald Sie einige Zeitintervalle eingeben, werden hier die zuletzt verwendeten Intervalle angezeigt.",
       "filter-placeholder": "Schnellbereiche suchen"
+    },
+    "copy-paste": {
+      "copy-success-message": "",
+      "default-error-message": "",
+      "default-error-title": "",
+      "tooltip-copy": "",
+      "tooltip-paste": ""
     },
     "footer": {
       "change-settings-button": "Zeiteinstellungen ändern",

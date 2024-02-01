@@ -24,38 +24,7 @@ func TestFeatureManager(t *testing.T) {
 		require.Equal(t, map[string]bool{"a": true}, ft.GetEnabled(context.Background()))
 	})
 
-	t.Run("check license validation", func(t *testing.T) {
-		ft := FeatureManager{
-			flags:    map[string]*FeatureFlag{},
-			warnings: map[string]string{},
-		}
-		ft.registerFlags(FeatureFlag{
-			Name:            "a",
-			RequiresLicense: true,
-			RequiresDevMode: true,
-			Expression:      "true",
-		}, FeatureFlag{
-			Name:       "b",
-			Expression: "true",
-		})
-		require.False(t, ft.IsEnabledGlobally("a"))
-		require.True(t, ft.IsEnabledGlobally("b"))
-		require.False(t, ft.IsEnabledGlobally("c")) // uknown flag
-
-		// Try changing "requires license"
-		ft.registerFlags(FeatureFlag{
-			Name:            "a",
-			RequiresLicense: false, // shuld still require license!
-		}, FeatureFlag{
-			Name:            "b",
-			RequiresLicense: true, // expression is still "true"
-		})
-		require.False(t, ft.IsEnabledGlobally("a"))
-		require.False(t, ft.IsEnabledGlobally("b"))
-		require.False(t, ft.IsEnabledGlobally("c"))
-	})
-
-	t.Run("check description and docs configs", func(t *testing.T) {
+	t.Run("check description and stage configs", func(t *testing.T) {
 		ft := FeatureManager{
 			flags: map[string]*FeatureFlag{},
 		}
@@ -66,13 +35,34 @@ func TestFeatureManager(t *testing.T) {
 			Name:        "a",
 			Description: "second",
 		}, FeatureFlag{
-			Name:    "a",
-			DocsURL: "http://something",
+			Name:  "a",
+			Stage: FeatureStagePrivatePreview,
 		}, FeatureFlag{
 			Name: "a",
 		})
 		flag := ft.flags["a"]
 		require.Equal(t, "second", flag.Description)
-		require.Equal(t, "http://something", flag.DocsURL)
+		require.Equal(t, FeatureStagePrivatePreview, flag.Stage)
+	})
+
+	t.Run("check startup false flags", func(t *testing.T) {
+		ft := FeatureManager{
+			flags: map[string]*FeatureFlag{},
+			startup: map[string]bool{
+				"a": true,
+				"b": false, // but default true
+			},
+		}
+		ft.registerFlags(FeatureFlag{
+			Name: "a",
+		}, FeatureFlag{
+			Name:       "b",
+			Expression: "true",
+		}, FeatureFlag{
+			Name: "c",
+		})
+		require.True(t, ft.IsEnabledGlobally("a"))
+		require.False(t, ft.IsEnabledGlobally("b"))
+		require.False(t, ft.IsEnabledGlobally("c"))
 	})
 }

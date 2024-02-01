@@ -22,11 +22,6 @@ import {
 
 const datasource = new CloudWatchDatasource(CloudWatchSettings, setupMockedTemplateService());
 const loadDataSourceMock = jest.fn();
-jest.mock('app/features/plugins/datasource_srv', () => ({
-  getDatasourceSrv: () => ({
-    loadDatasource: loadDataSourceMock,
-  }),
-}));
 
 jest.mock('./XrayLinkConfig', () => ({
   XrayLinkConfig: () => <></>,
@@ -42,6 +37,9 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     put: putMock,
     get: getMock,
+  }),
+  getDataSourceSrv: () => ({
+    get: loadDataSourceMock,
   }),
   getAppEvents: () => mockAppEvents,
   config: {

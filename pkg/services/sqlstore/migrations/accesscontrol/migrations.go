@@ -186,4 +186,14 @@ func AddMigration(mg *migrator.Migrator) {
 	mg.AddMigration("add permission identifier index", migrator.NewAddIndexMigration(permissionV1, &migrator.Index{
 		Cols: []string{"identifier"},
 	}))
+
+	mg.AddMigration("add permission action scope role_id index", migrator.NewAddIndexMigration(permissionV1, &migrator.Index{
+		Type: migrator.UniqueIndex,
+		Cols: []string{"action", "scope", "role_id"},
+	}))
+
+	mg.AddMigration("remove permission role_id action scope index", migrator.NewDropIndexMigration(permissionV1, &migrator.Index{
+		Type: migrator.UniqueIndex,
+		Cols: []string{"role_id", "action", "scope"},
+	}))
 }

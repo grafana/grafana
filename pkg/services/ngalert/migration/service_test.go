@@ -46,9 +46,9 @@ func TestServiceRevert(t *testing.T) {
 		createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
 	}
 	dashes := []*dashboards.Dashboard{
-		createDashboard(t, 1, 1, "dash1-1", 5, nil),
-		createDashboard(t, 2, 1, "dash2-1", 5, nil),
-		createDashboard(t, 8, 1, "dash-in-general-1", 0, nil),
+		createDashboard(t, 1, 1, "dash1-1", "folder5-1", 5, nil),
+		createDashboard(t, 2, 1, "dash2-1", "folder5-1", 5, nil),
+		createDashboard(t, 8, 1, "dash-in-general-1", "", 0, nil),
 	}
 	folders := []*dashboards.Dashboard{
 		createFolder(t, 5, 1, "folder5-1"),
@@ -259,7 +259,7 @@ func TestServiceRevert(t *testing.T) {
 
 		// Create dashboard in general alerting.
 		newDashes := []*dashboards.Dashboard{
-			createDashboard(t, 99, 1, "dash-in-general-alerting-1", generalAlertingFolder.ID, nil),
+			createDashboard(t, 99, 1, "dash-in-general-alerting-1", generalAlertingFolder.UID, generalAlertingFolder.ID, nil),
 		}
 		_, err = x.Insert(newDashes)
 		require.NoError(t, err)
@@ -1398,6 +1398,7 @@ func TestCommonServicePatterns(t *testing.T) {
 						d1Copy := *d1
 						//nolint:staticcheck
 						d1Copy.FolderID = f2.ID
+						d1Copy.FolderUID = f2.UID
 						_, err := x.ID(d1.ID).Update(d1Copy)
 						return err
 					},
@@ -1617,7 +1618,6 @@ func compareRules(t *testing.T, x *xorm.Engine, orgId int64, expectedRules []*mo
 		}),
 		cmpopts.IgnoreUnexported(models.AlertRule{}, models.AlertQuery{}),
 		cmpopts.IgnoreFields(models.AlertRule{}, "Updated", "UID", "ID", "Version"),
-		cmpopts.IgnoreMapEntries(func(k string, v string) bool { return k == "rule_uid" }),
 	}
 	if !cmp.Equal(expectedRules, rules, cOpt...) {
 		t.Errorf("Unexpected Rule: %v", cmp.Diff(expectedRules, rules, cOpt...))
@@ -1708,7 +1708,6 @@ func compareState(t *testing.T, x *xorm.Engine, service *migrationService, orgId
 			cmpopts.SortSlices(func(a, b *definitions.DashboardUpgrade) bool { return a.DashboardID < b.DashboardID }),
 			cmpopts.SortSlices(func(a, b *definitions.AlertPair) bool { return a.LegacyAlert.ID < b.LegacyAlert.ID }),
 			cmpopts.SortSlices(func(a, b *definitions.ContactPair) bool { return a.LegacyChannel.ID < b.LegacyChannel.ID }),
-			cmpopts.IgnoreMapEntries(func(k string, v string) bool { return k == "rule_uid" }),
 			cmpopts.IgnoreUnexported(labels.Matcher{}),
 			cmpopts.EquateEmpty(),
 		}
@@ -1828,7 +1827,7 @@ func (h *serviceHelper) genFolder() *dashboards.Dashboard {
 }
 
 func (h *serviceHelper) genDash(folder *dashboards.Dashboard) *dashboards.Dashboard {
-	d := createDashboard(h.t, h.dashIncr, 1, fmt.Sprintf("dash%d", h.dashIncr), folder.ID, nil)
+	d := createDashboard(h.t, h.dashIncr, 1, fmt.Sprintf("dash%d", h.dashIncr), folder.UID, folder.ID, nil)
 	d.Title = fmt.Sprintf("dash title%d", h.dashIncr)
 
 	h.dashIncr++
@@ -1880,7 +1879,6 @@ func (h *serviceHelper) genAlertPairs(f *dashboards.Dashboard, d *dashboards.Das
 			},
 			Labels: map[string]string{
 				models.MigratedUseLegacyChannelsLabel: "true",
-				"rule_uid":                            uid,
 			},
 			IsPaused: false,
 		}
