@@ -43,11 +43,22 @@ func newGrpcClient(cfg *setting.Cfg, settings backend.DataSourceInstanceSettings
 		}
 	}
 
-	// Add options and interceptors (middleware) this should roughly match what we do in http_client_provider.go for
-	// standard http requests.
-	// TODO: Missing middleware TracingMiddleware, DataSourceMetricsMiddleware, ContextualMiddleware,
-	// 	ResponseLimitMiddleware RedirectLimitMiddleware.
+	clientConn, err := grpc.Dial(onlyHost, getDialOpts(cfg, settings, opts)...)
+	if err != nil {
+		logger.Error("Error dialing gRPC client", "error", err, "URL", settings.URL, "function", logEntrypoint())
+		return nil, err
+	}
+
+	return tempopb.NewStreamingQuerierClient(clientConn), nil
+}
+
+// getDialOpts creates options and interceptors (middleware) this should roughly match what we do in
+// http_client_provider.go for standard http requests.
+func getDialOpts(cfg *setting.Cfg, settings backend.DataSourceInstanceSettings, opts httpclient.Options) []grpc.DialOption {
 	var dialOps []grpc.DialOption
+
+	// TODO: Missing middleware TracingMiddleware, DataSourceMetricsMiddleware, ContextualMiddleware,
+	//  ResponseLimitMiddleware RedirectLimitMiddleware.
 	dialOps = append(dialOps, grpc.WithUserAgent(cfg.DataProxyUserAgent))
 	dialOps = append(dialOps, grpc.WithChainStreamInterceptor(CustomHeadersStreamInterceptor(opts)))
 
@@ -62,13 +73,7 @@ func newGrpcClient(cfg *setting.Cfg, settings backend.DataSourceInstanceSettings
 		dialOps = append(dialOps, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
 
-	clientConn, err := grpc.Dial(onlyHost, dialOps...)
-	if err != nil {
-		logger.Error("Error dialing gRPC client", "error", err, "URL", settings.URL, "function", logEntrypoint())
-		return nil, err
-	}
-
-	return tempopb.NewStreamingQuerierClient(clientConn), nil
+	return dialOps
 }
 
 // CustomHeadersStreamInterceptor adds custom headers to the outgoing context for each RPC call. Should work similar
