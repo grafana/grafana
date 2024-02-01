@@ -110,6 +110,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
         "y": 1,
       },
       "id": 15,
+      "links": [],
       "options": {
         "code": {
           "language": "plaintext",
@@ -164,6 +165,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
             "y": 26,
           },
           "id": 30,
+          "links": [],
           "options": {
             "code": {
               "language": "plaintext",
@@ -185,7 +187,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
       "type": "row",
     },
   ],
-  "schemaVersion": 36,
+  "schemaVersion": 39,
   "tags": [
     "templating",
     "gdev",
@@ -376,6 +378,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "y": 0,
       },
       "id": 28,
+      "links": [],
       "options": {
         "legend": {
           "calcs": [],
@@ -434,6 +437,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "y": 9,
       },
       "id": 29,
+      "links": [],
       "options": {},
       "targets": [
         {
@@ -464,6 +468,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "y": 9,
       },
       "id": 25,
+      "links": [],
       "options": {
         "code": {
           "language": "plaintext",
@@ -479,7 +484,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
       "type": "text",
     },
   ],
-  "schemaVersion": 36,
+  "schemaVersion": 39,
   "tags": [
     "tag1",
     "tag2",
@@ -494,7 +499,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
           "text": "1m",
           "value": "1m",
         },
-        "hide": 2,
         "name": "intervalVar",
         "query": "1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
         "refresh": 2,
@@ -693,6 +697,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "y": 0,
       },
       "id": 28,
+      "links": [],
       "options": {
         "legend": {
           "calcs": [],
@@ -751,6 +756,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "y": 9,
       },
       "id": 29,
+      "links": [],
       "options": {},
       "targets": [
         {
@@ -781,6 +787,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "y": 9,
       },
       "id": 25,
+      "links": [],
       "options": {
         "code": {
           "language": "plaintext",
@@ -796,7 +803,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
       "type": "text",
     },
   ],
-  "schemaVersion": 36,
+  "schemaVersion": 39,
   "tags": [
     "gdev",
     "graph-ng",
@@ -812,7 +819,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
           "text": "1m",
           "value": "1m",
         },
-        "hide": 2,
         "name": "intervalVar",
         "query": "1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
         "refresh": 2,

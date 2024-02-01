@@ -43,7 +43,7 @@ import (
 	entitystorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/entity"
 	filestorage "github.com/grafana/grafana/pkg/services/grafana-apiserver/storage/file"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	entityDB "github.com/grafana/grafana/pkg/services/store/entity/db"
+	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -103,6 +103,9 @@ type DirectRestConfigProvider interface {
 	// logged logged in user as the current request context.  This is useful when
 	// creating clients that map legacy API handlers to k8s backed services
 	GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config
+
+	// This can be used to rewrite incoming requests to path now supported under /apis
+	DirectlyServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
 type service struct {
@@ -280,7 +283,7 @@ func (s *service) start(ctx context.Context) error {
 			return fmt.Errorf("unified storage requires the unifiedStorage feature flag (and app_mode = development)")
 		}
 
-		eDB, err := entityDB.ProvideEntityDB(s.db, s.cfg, s.features)
+		eDB, err := dbimpl.ProvideEntityDB(s.db, s.cfg, s.features)
 		if err != nil {
 			return err
 		}
@@ -375,6 +378,10 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 			},
 		},
 	}
+}
+
+func (s *service) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.handler.ServeHTTP(w, r)
 }
 
 func (s *service) running(ctx context.Context) error {
