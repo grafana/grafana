@@ -283,12 +283,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     this.setState({ metricsAfterFilter: undefined, metricsAfterSearch: undefined });
     // Clear all panels for the previous data source
     this.state.body.setState({ children: [] });
-
-    // Cancel any ongoing queries for metric names.
-    const variable = sceneGraph.lookupVariable(VAR_METRIC_NAMES, this);
-    if (variable instanceof QueryVariable) {
-      variable.onCancel();
-    }
     // The `VAR_METRIC_NAMES` will be queried again automatically with the new data source
   }
 
