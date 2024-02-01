@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import { LogRowModel, dateTimeForTimeZone } from '@grafana/data';
 import { convertRawToRange } from '@grafana/data/src/datetime/rangeutil';
+import { config } from '@grafana/runtime';
 import { LogsSortOrder } from '@grafana/schema';
 
 import { InfiniteScroll, Props, SCROLLING_THRESHOLD } from './InfiniteScroll';
@@ -56,9 +57,9 @@ function setup(loadMoreMock: () => void, startPosition: number, rows: LogRowMode
   function scrollTo(position: number) {
     element.scrollTop = position;
 
-      act(() => {
-        events['scroll'](new Event('scroll'));
-      });
+    act(() => {
+      events['scroll'](new Event('scroll'));
+    });
   }
   function wheel(deltaY: number) {
     act(() => {
@@ -81,6 +82,13 @@ function setup(loadMoreMock: () => void, startPosition: number, rows: LogRowMode
 
   return { element, events, scrollTo, wheel };
 }
+
+beforeAll(() => {
+  config.featureToggles.logsInfiniteScrolling = true;
+});
+afterAll(() => {
+  config.featureToggles.logsInfiniteScrolling = false;
+});
 
 describe('InfiniteScroll', () => {
   test('Wraps components without adding DOM elements', async () => {
@@ -121,7 +129,7 @@ describe('InfiniteScroll', () => {
         const { scrollTo } = setup(loadMoreMock, startPosition, rows, order);
 
         expect(await screen.findByTestId('contents')).toBeInTheDocument();
-        
+
         scrollTo(endPosition);
 
         expect(loadMoreMock).toHaveBeenCalled();
@@ -168,7 +176,7 @@ describe('InfiniteScroll', () => {
         const { scrollTo } = setup(loadMoreMock, startPosition, rows, order);
 
         expect(await screen.findByTestId('contents')).toBeInTheDocument();
-        
+
         scrollTo(endPosition);
 
         expect(loadMoreMock).toHaveBeenCalledWith({
@@ -185,7 +193,7 @@ describe('InfiniteScroll', () => {
         const { scrollTo } = setup(loadMoreMock, startPosition, rows, order);
 
         expect(await screen.findByTestId('contents')).toBeInTheDocument();
-        
+
         scrollTo(endPosition);
 
         expect(loadMoreMock).toHaveBeenCalledWith({
@@ -207,7 +215,7 @@ describe('InfiniteScroll', () => {
             const { scrollTo } = setup(loadMoreMock, startPosition, rows, order);
 
             expect(await screen.findByTestId('contents')).toBeInTheDocument();
-            
+
             scrollTo(endPosition);
 
             expect(loadMoreMock).not.toHaveBeenCalled();
@@ -230,7 +238,7 @@ describe('InfiniteScroll', () => {
             const { scrollTo } = setup(loadMoreMock, startPosition, rows, order);
 
             expect(await screen.findByTestId('contents')).toBeInTheDocument();
-            
+
             scrollTo(endPosition);
 
             expect(loadMoreMock).not.toHaveBeenCalled();
