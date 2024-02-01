@@ -119,7 +119,7 @@ To use a simple configuration, follow these steps:
 
 ### Custom queries
 
-To use custom querys with the configuration, follow these steps:
+To use custom queriess with the configuration, follow these steps:
 
 1. Select a metrics data source from the **Data source** drop-down.
 1. Optional: Choose any tags to use in the query. If left blank, the default values of `cluster`, `hostname`, `namespace`, `pod`, `service.name` and `service.namespace` are used.
