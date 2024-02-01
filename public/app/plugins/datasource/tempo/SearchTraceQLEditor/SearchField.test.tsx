@@ -290,7 +290,7 @@ const renderSearchField = (
       datasource={datasource}
       updateFilter={updateFilter}
       filter={filter}
-      setError={function (error: FetchError): void {
+      setError={function (error: FetchError | null): void {
         throw error;
       }}
       tags={tags || []}

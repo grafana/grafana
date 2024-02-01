@@ -124,7 +124,7 @@ describe('TagsInput', () => {
         updateFilter={jest.fn}
         deleteFilter={jest.fn}
         filters={[filter]}
-        setError={function (error: FetchError): void {
+        setError={function (error: FetchError | null): void {
           throw error;
         }}
         staticTags={[]}
