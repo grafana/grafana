@@ -59,7 +59,7 @@ The following example shows a complete YAML configuration file that:
 
 ```yaml
 ---
-# config file version
+# Configuration file version
 apiVersion: 2
 
 # <list> list of roles to insert/update/delete

@@ -290,6 +290,7 @@ The plugins must already be installed on the Grafana instance.
 ### Example plugin configuration file
 
 ```yaml
+# Configuration file version
 apiVersion: 1
 
 apps:
@@ -318,6 +319,7 @@ You can manage dashboards in Grafana by adding one or more YAML config files in 
 The dashboard provider config file looks somewhat like this:
 
 ```yaml
+# Configuration file version
 apiVersion: 1
 
 providers:
@@ -464,6 +466,9 @@ By default, exporting a dashboard as JSON will use a sequential identifier to re
 ### Example Alert Notification Channels Config File
 
 ```yaml
+# Configuration file version
+apiVersion: 1
+
 notifiers:
   - name: notification-channel-1
     type: slack
