@@ -11,7 +11,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { DataTrail } from './DataTrail';
 import { DataTrailsHome } from './DataTrailsHome';
 import { getTrailStore } from './TrailStore/TrailStore';
-import { getUrlForTrail, newMetricsTrail } from './utils';
+import { getMetricName, getUrlForTrail, newMetricsTrail } from './utils';
 
 export interface DataTrailsAppState extends SceneObjectState {
   trail: DataTrail;
@@ -49,7 +49,11 @@ export class DataTrailsApp extends SceneObjectBase<DataTrailsAppState> {
           exact={true}
           path="/explore/metrics/trail"
           render={() => (
-            <Page navId="explore/metrics" pageNav={{ text: 'Trail' }} layout={PageLayoutType.Custom}>
+            <Page
+              navId="explore/metrics"
+              pageNav={{ text: getMetricName(trail.state.metric) }}
+              layout={PageLayoutType.Custom}
+            >
               <div className={styles.customPage}>
                 <DataTrailView trail={trail} />
               </div>
