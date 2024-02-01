@@ -72,7 +72,7 @@
     "@testing-library/user-event": "14.5.2",
     "@types/dompurify": "^3.0.0",
     "@types/history": "4.7.11",
-    "@types/jest": "29.5.11",
+    "@types/jest": "29.5.12",
     "@types/jquery": "3.5.29",
     "@types/lodash": "4.14.202",
     "@types/marked": "5.0.2",
