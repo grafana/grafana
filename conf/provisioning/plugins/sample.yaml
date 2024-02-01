@@ -1,11 +1,20 @@
-# # config file version
+# Configuration file version
 apiVersion: 1
 
 # apps:
-#   - type: grafana-example-app
-#     org_name: Main Org.
-#     disabled: true
+#   # <string> the type of app, plugin identifier. Required
 #   - type: raintank-worldping-app
+#     # <int> Org ID. Default to 1, unless org_name is specified
 #     org_id: 1
+#     # <string> Org name. Overrides org_id unless org_id not specified
+#     org_name: Main Org.
+#     # <bool> disable the app. Default to false.
+#     disabled: false
+#     # <map> fields that will be converted to json and stored in jsonData. Custom per app.
 #     jsonData:
-#       apiKey: "API KEY"
+#       # key/value pairs of string to object
+#       key: value
+#     # <map> fields that will be converted to json, encrypted and stored in secureJsonData. Custom per app.
+#     secureJsonData:
+#       # key/value pairs of string to string
+#       key: value

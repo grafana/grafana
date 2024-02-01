@@ -1,25 +1,36 @@
-# # config file version
+# Configuration file version
 apiVersion: 1
 
 # notifiers:
-#   - name: default-slack-temp
+#   - name: notification-channel-1
 #     type: slack
+#     uid: notifier1
+#     # either
+#     org_id: 2
+#     # or
 #     org_name: Main Org.
 #     is_default: true
-#     uid: notifier1
+#     send_reminder: true
+#     frequency: 1h
+#     disable_resolve_message: false
+#     # See `Supported Settings` section for settings supported for each
+#     # alert notification type.
 #     settings:
-#       recipient: "XXX"
-#       token: "xoxb"
+#       recipient: 'XXX'
 #       uploadImage: true
+#       token: 'xoxb' # legacy setting since Grafana v7.2 (stored non-encrypted)
+#       url: https://slack.com # legacy setting since Grafana v7.2 (stored non-encrypted)
+#     # Secure settings that will be encrypted in the database (supported since Grafana v7.2). See `Supported Settings` section for secure settings supported for each notifier.
+#     secure_settings:
+#       token: 'xoxb'
 #       url: https://slack.com
-#   - name: default-email
-#     type: email
-#     org_id: 1
-#     uid: notifier2
-#     is_default: false  
-#     settings:
-#       addresses: example11111@example.com
+
 # delete_notifiers:
-#   - name: default-slack-temp
-#     org_name: Main Org.
+#   - name: notification-channel-1
 #     uid: notifier1
+#     # either
+#     org_id: 2
+#     # or
+#     org_name: Main Org.
+#   - name: notification-channel-2
+#     # default org_id: 1
