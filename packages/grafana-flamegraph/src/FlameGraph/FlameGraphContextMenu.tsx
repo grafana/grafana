@@ -44,7 +44,6 @@ const FlameGraphContextMenu = ({
   allGroupsCollapsed,
 }: Props) => {
   function renderItems() {
-    console.log('extraContextMenuButtons', extraContextMenuButtons)
     return (
       <>
         <MenuItem
