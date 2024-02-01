@@ -123,7 +123,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apk add --update python3 && ln -sf /usr/bin/python3 /usr/bin/python
+  - apk add --update python3 make && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -225,7 +225,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apk add --update python3 && ln -sf /usr/bin/python3 /usr/bin/python
+  - apk add --update python3 make && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -537,7 +537,7 @@ steps:
   image: golang:1.21.6-alpine
   name: wire-install
 - commands:
-  - apk add --update python3 && ln -sf /usr/bin/python3 /usr/bin/python
+  - apk add --update python3 make && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1047,7 +1047,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apk add --update python3 && ln -sf /usr/bin/python3 /usr/bin/python
+  - apk add --update python3 make && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1407,7 +1407,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apk add --update python3 && ln -sf /usr/bin/python3 /usr/bin/python
+  - apk add --update python3 make && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1484,7 +1484,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apk add --update python3 && ln -sf /usr/bin/python3 /usr/bin/python
+  - apk add --update python3 make && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1543,7 +1543,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apk add --update python3 && ln -sf /usr/bin/python3 /usr/bin/python
+  - apk add --update python3 make && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1806,7 +1806,7 @@ steps:
   image: golang:1.21.6-alpine
   name: wire-install
 - commands:
-  - apk add --update python3 && ln -sf /usr/bin/python3 /usr/bin/python
+  - apk add --update python3 make && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -2722,7 +2722,7 @@ steps:
   image: golang:1.21.6-alpine
   name: compile-build-cmd
 - commands:
-  - apk add --update python3 && ln -sf /usr/bin/python3 /usr/bin/python
+  - apk add --update python3 make && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -2996,7 +2996,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apk add --update python3 && ln -sf /usr/bin/python3 /usr/bin/python
+  - apk add --update python3 make && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -3420,7 +3420,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
-  - apk add --update python3 && ln -sf /usr/bin/python3 /usr/bin/python
+  - apk add --update python3 make && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -4788,6 +4788,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 9ceb307cb96e6f98dfe86f6dde4dcaf4ed415a1c35e2e74d08e4694c9e6e2d5f
+hmac: f303ab8fbba9f8020864d2ad9b7d9f4cf3fd61f554a219b023952cb996cafd6d
 
 ...
