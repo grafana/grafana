@@ -84,19 +84,22 @@ func New(
 }
 
 func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	cfg := backend.GrafanaConfigFromContext(ctx)
 	fromAlert := req.Headers["FromAlert"] == "true"
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
 
+	cfg := backend.GrafanaConfigFromContext(ctx)
+	hasPromQLScopeFeatureFlag := cfg.FeatureToggles().IsEnabled("promQLScope")
+	hasPrometheusDataplaneFeatureFlag := cfg.FeatureToggles().IsEnabled("prometheusDataplane")
+
 	for _, q := range req.Queries {
-		query, err := models.Parse(q, s.TimeInterval, s.intervalCalculator, fromAlert, cfg.FeatureToggles().IsEnabled("promQLScope"))
+		query, err := models.Parse(q, s.TimeInterval, s.intervalCalculator, fromAlert, hasPromQLScopeFeatureFlag)
 		if err != nil {
 			return &result, err
 		}
 
-		r := s.fetch(ctx, s.client, query, req.Headers)
+		r := s.fetch(ctx, s.client, query, hasPrometheusDataplaneFeatureFlag)
 		if r == nil {
 			s.log.FromContext(ctx).Debug("Received nil response from runQuery", "query", query.Expr)
 			continue
@@ -107,7 +110,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 	return &result, nil
 }
 
-func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.Query, headers map[string]string) *backend.DataResponse {
+func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.Query, enablePrometheusDataplane bool) *backend.DataResponse {
 	traceCtx, end := s.trace(ctx, q)
 	defer end()
 
@@ -120,14 +123,14 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 	}
 
 	if q.InstantQuery {
-		res := s.instantQuery(traceCtx, client, q, headers)
+		res := s.instantQuery(traceCtx, client, q, enablePrometheusDataplane)
 		dr.Error = res.Error
 		dr.Frames = res.Frames
 		dr.Status = res.Status
 	}
 
 	if q.RangeQuery {
-		res := s.rangeQuery(traceCtx, client, q, headers)
+		res := s.rangeQuery(traceCtx, client, q, enablePrometheusDataplane)
 		if res.Error != nil {
 			if dr.Error == nil {
 				dr.Error = res.Error
@@ -142,7 +145,7 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 	}
 
 	if q.ExemplarQuery {
-		res := s.exemplarQuery(traceCtx, client, q, headers)
+		res := s.exemplarQuery(traceCtx, client, q, enablePrometheusDataplane)
 		if res.Error != nil {
 			// If exemplar query returns error, we want to only log it and
 			// continue with other results processing
@@ -154,7 +157,7 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 	return dr
 }
 
-func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) backend.DataResponse {
+func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
 	res, err := c.QueryRange(ctx, q)
 	if err != nil {
 		return backend.DataResponse{
@@ -170,10 +173,10 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 		}
 	}()
 
-	return s.parseResponse(ctx, q, res)
+	return s.parseResponse(ctx, q, res, enablePrometheusDataplaneFlag)
 }
 
-func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) backend.DataResponse {
+func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
 	res, err := c.QueryInstant(ctx, q)
 	if err != nil {
 		return backend.DataResponse{
@@ -196,10 +199,10 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 		}
 	}()
 
-	return s.parseResponse(ctx, q, res)
+	return s.parseResponse(ctx, q, res, enablePrometheusDataplaneFlag)
 }
 
-func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) backend.DataResponse {
+func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, enablePrometheusDataplaneFlag bool) backend.DataResponse {
 	res, err := c.QueryExemplars(ctx, q)
 	if err != nil {
 		return backend.DataResponse{
@@ -213,7 +216,7 @@ func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *mode
 			s.log.Warn("Failed to close response body", "error", err)
 		}
 	}()
-	return s.parseResponse(ctx, q, res)
+	return s.parseResponse(ctx, q, res, enablePrometheusDataplaneFlag)
 }
 
 func (s *QueryData) trace(ctx context.Context, q *models.Query) (context.Context, func()) {
