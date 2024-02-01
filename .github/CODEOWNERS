@@ -343,10 +343,10 @@
 /packages/grafana-o11y-ds-frontend/ @grafana/observability-logs @grafana/observability-traces-and-profiling
 /packages/grafana-sql/ @grafana/partner-datasources @grafana/oss-big-tent
 
-# root files, mostly frontend
-.browserslistrc @grafana/frontend-ops
-package.json @grafana/frontend-ops
-tsconfig.json @grafana/frontend-ops
+# root files, mostly frontend 
+/.browserslistrc @grafana/frontend-ops
+/package.json @grafana/frontend-ops
+/tsconfig.json @grafana/frontend-ops
 /.editorconfig @grafana/frontend-ops
 /.eslintignore @grafana/frontend-ops
 /.gitattributes @grafana/frontend-ops
@@ -356,7 +356,7 @@ tsconfig.json @grafana/frontend-ops
 /.yarn @grafana/frontend-ops
 /.yarnrc.yml @grafana/frontend-ops
 /yarn.lock @grafana/frontend-ops
-lerna.json @grafana/frontend-ops
+/lerna.json @grafana/frontend-ops
 /.prettierrc.js @grafana/frontend-ops
 /.eslintrc @grafana/frontend-ops
 /.vim @zoltanbedi
@@ -367,9 +367,9 @@ lerna.json @grafana/frontend-ops
 /tools/ @grafana/frontend-ops
 /lefthook.yml @grafana/frontend-ops
 /lefthook.rc @grafana/frontend-ops
-.husky/pre-commit @grafana/frontend-ops
-cypress.config.js @grafana/grafana-frontend-platform
-.levignore.js @grafana/plugins-platform-frontend
+/.husky/pre-commit @grafana/frontend-ops
+/cypress.config.js @grafana/grafana-frontend-platform
+/.levignore.js @grafana/plugins-platform-frontend
 
 
 # public folder
@@ -382,7 +382,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/features/all.ts @grafana/grafana-frontend-platform
 /public/app/features/admin/ @grafana/identity-access-team
 /public/app/features/auth-config/ @grafana/identity-access-team
-/public/app/features/annotations/ @grafana/grafana-frontend-platform
+/public/app/features/annotations/ @grafana/dashboards-squad
 /public/app/features/api-keys/ @grafana/identity-access-team
 /public/app/features/canvas/ @grafana/dataviz-squad
 /public/app/features/geo/ @grafana/dataviz-squad
