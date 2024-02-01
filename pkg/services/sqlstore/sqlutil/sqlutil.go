@@ -3,6 +3,7 @@ package sqlutil
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 // ITestDB is an interface of arguments for testing db
@@ -51,25 +52,22 @@ func SQLite3TestDB(t ITestDB) (*TestDB, error) {
 		}, nil
 	}
 
-	f, err := os.CreateTemp("", "grafana-test-*.db")
+	// try to create a database file in the user's cache directory
+	dir, err := os.UserCacheDir()
 	if err != nil {
 		return nil, err
 	}
 
-	t.Cleanup(func() {
-		err := os.Remove(f.Name())
-		if err != nil {
-			t.Logf("failed to remove temporary file: %s", f.Name())
-		}
-		err = os.Remove(f.Name() + "-wal")
-		if err != nil && !os.IsNotExist(err) {
-			t.Logf("failed to remove temporary file: %s", f.Name()+"-wal")
-		}
-		err = os.Remove(f.Name() + "-shm")
-		if err != nil && !os.IsNotExist(err) {
-			t.Logf("failed to remove temporary file: %s", f.Name()+"-shm")
-		}
-	})
+	err = os.Mkdir(filepath.Join(dir, "grafana-test"), 0750)
+	if err != nil && !os.IsExist(err) {
+		return nil, err
+	}
+
+	//#nosec G304 - this is a test db
+	f, err := os.Create(filepath.Join(dir, "grafana-test", "grafana-test.db"))
+	if err != nil && !os.IsExist(err) {
+		return nil, err
+	}
 
 	connstr := "file:" + f.Name() + "?cache=private&mode=rwc"
 	if os.Getenv("SQLITE_JOURNAL_MODE") != "false" {

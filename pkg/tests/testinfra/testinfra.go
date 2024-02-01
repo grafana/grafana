@@ -52,7 +52,6 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 
 	env, err := server.InitializeForTest(t, cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)
-	require.NoError(t, env.SQLStore.Sync())
 
 	require.NotNil(t, env.SQLStore.Cfg)
 	dbSec, err := env.SQLStore.Cfg.Raw.GetSection("database")

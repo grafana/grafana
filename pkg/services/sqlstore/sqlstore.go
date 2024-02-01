@@ -145,11 +145,6 @@ func (ss *SQLStore) Migrate(isDatabaseLockingEnabled bool) error {
 	return migrator.Start(isDatabaseLockingEnabled, ss.dbCfg.MigrationLockAttemptTimeout)
 }
 
-// Sync syncs changes to the database.
-func (ss *SQLStore) Sync() error {
-	return ss.engine.Sync2()
-}
-
 // Reset resets database state.
 // If default org and user creation is enabled, it will be ensured they exist in the database.
 func (ss *SQLStore) Reset() error {
@@ -524,24 +519,6 @@ func initTestDB(t sqlutil.ITestDB, testCfg *setting.Cfg,
 		if err := testSQLStore.Migrate(false); err != nil {
 			return nil, err
 		}
-
-		if err := testSQLStore.Dialect.TruncateDBTables(engine); err != nil {
-			return nil, err
-		}
-
-		if err := testSQLStore.Reset(); err != nil {
-			return nil, err
-		}
-
-		// Make sure the changes are synced, so they get shared with eventual other DB connections
-		// XXX: Why is this only relevant when not skipping migrations?
-		if !testSQLStore.dbCfg.SkipMigrations {
-			if err := testSQLStore.Sync(); err != nil {
-				return nil, err
-			}
-		}
-
-		return testSQLStore, nil
 	}
 
 	// nolint:staticcheck
