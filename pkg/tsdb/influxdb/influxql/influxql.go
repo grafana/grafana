@@ -79,6 +79,10 @@ func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceIn
 			}
 			return nil // errors are saved per-query,always return nil
 		})
+
+		if err != nil {
+			logger.Debug("Influxdb concurrent query error", "concurrent query", err)
+		}
 	} else {
 		for _, reqQuery := range req.Queries {
 			query, err := models.QueryParse(reqQuery)
