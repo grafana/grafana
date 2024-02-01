@@ -22,7 +22,7 @@ func TestPostgresProxyDriver(t *testing.T) {
 		ProxyAddress: settings.ProxyAddress,
 		ServerName:   settings.ServerName,
 	}
-	opts := proxyutil.GetSQLProxyOptions(proxySettings, sqleng.DataSourceInfo{UID: "1", JsonData: sqleng.JsonData{SecureDSProxy: true}})
+	opts := proxyutil.GetSQLProxyOptions(proxySettings, sqleng.DataSourceInfo{UID: "1", JsonData: sqleng.JsonData{SecureDSProxy: true}}, "pg", "postgres")
 	dbURL := "localhost:5432"
 	cnnstr := fmt.Sprintf("postgres://auser:password@%s/db?sslmode=disable", dbURL)
 

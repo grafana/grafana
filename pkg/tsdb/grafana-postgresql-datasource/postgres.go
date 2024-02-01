@@ -57,7 +57,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return dsInfo.QueryData(ctx, req)
 }
 
-func newPostgres(cfg *setting.Cfg, dsInfo sqleng.DataSourceInfo, cnnstr string, logger log.Logger) (*sql.DB, *sqleng.DataSourceHandler, error) {
+func newPostgres(cfg *setting.Cfg, dsInfo sqleng.DataSourceInfo, cnnstr string, logger log.Logger, settings backend.DataSourceInstanceSettings) (*sql.DB, *sqleng.DataSourceHandler, error) {
 	connector, err := pq.NewConnector(cnnstr)
 	if err != nil {
 		logger.Error("postgres connector creation failed", "error", err)
@@ -65,7 +65,7 @@ func newPostgres(cfg *setting.Cfg, dsInfo sqleng.DataSourceInfo, cnnstr string, 
 	}
 
 	// use the proxy-dialer if the secure socks proxy is enabled
-	proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo)
+	proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo, settings.Name, settings.Type)
 	if sdkproxy.New(proxyOpts).SecureSocksProxyEnabled() {
 		dialer, err := newPostgresProxyDialer(proxyOpts)
 		if err != nil {
@@ -140,7 +140,7 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 			return nil, err
 		}
 
-		_, handler, err := newPostgres(cfg, dsInfo, cnnstr, logger)
+		_, handler, err := newPostgres(cfg, dsInfo, cnnstr, logger, settings)
 
 		if err != nil {
 			logger.Error("Failed connecting to Postgres", "err", err)

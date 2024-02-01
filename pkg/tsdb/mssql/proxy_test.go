@@ -22,7 +22,7 @@ func TestMSSQLProxyDriver(t *testing.T) {
 		ProxyAddress: settings.ProxyAddress,
 		ServerName:   settings.ServerName,
 	}
-	opts := proxyutil.GetSQLProxyOptions(proxySettings, sqleng.DataSourceInfo{UID: "1", JsonData: sqleng.JsonData{SecureDSProxy: true}})
+	opts := proxyutil.GetSQLProxyOptions(proxySettings, sqleng.DataSourceInfo{UID: "1", JsonData: sqleng.JsonData{SecureDSProxy: true}}, "mssql", "mssql")
 	cnnstr := "server=127.0.0.1;port=1433;user id=sa;password=yourStrong(!)Password;database=db"
 	driverName, err := createMSSQLProxyDriver(cnnstr, "127.0.0.1", opts)
 	require.NoError(t, err)
