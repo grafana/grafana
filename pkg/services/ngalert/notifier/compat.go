@@ -48,46 +48,43 @@ type DecryptFn = func(value string) string
 
 func PostableToGettableGrafanaReceiver(r *apimodels.PostableGrafanaReceiver, provenance *models.Provenance, decryptFn DecryptFn, listOnly bool) (apimodels.GettableGrafanaReceiver, error) {
 	out := apimodels.GettableGrafanaReceiver{
-		UID:                   r.UID,
-		Name:                  r.Name,
-		Type:                  r.Type,
-		DisableResolveMessage: r.DisableResolveMessage,
-		SecureFields:          make(map[string]bool, len(r.SecureSettings)),
+		UID:  r.UID,
+		Name: r.Name,
+		Type: r.Type,
 	}
-
 	if provenance != nil {
 		out.Provenance = apimodels.Provenance(*provenance)
 	}
 
-	settings, err := simplejson.NewJson([]byte(r.Settings))
-	if err != nil {
-		return apimodels.GettableGrafanaReceiver{}, err
-	}
-
-	for k, v := range r.SecureSettings {
-		decryptedValue := decryptFn(v)
+	// if we aren't only listing, include the settings in the output
+	if !listOnly {
+		secureFields := make(map[string]bool, len(r.SecureSettings))
+		settings, err := simplejson.NewJson([]byte(r.Settings))
 		if err != nil {
 			return apimodels.GettableGrafanaReceiver{}, err
 		}
-		if decryptedValue == "" {
-			continue
-		} else {
-			settings.Set(k, decryptedValue)
+
+		for k, v := range r.SecureSettings {
+			decryptedValue := decryptFn(v)
+			if err != nil {
+				return apimodels.GettableGrafanaReceiver{}, err
+			}
+			if decryptedValue == "" {
+				continue
+			} else {
+				settings.Set(k, decryptedValue)
+			}
+			secureFields[k] = true
 		}
-		out.SecureFields[k] = true
-	}
 
-	jsonBytes, err := settings.MarshalJSON()
-	if err != nil {
-		return apimodels.GettableGrafanaReceiver{}, err
-	}
-	out.Settings = jsonBytes
+		jsonBytes, err := settings.MarshalJSON()
+		if err != nil {
+			return apimodels.GettableGrafanaReceiver{}, err
+		}
 
-	if listOnly {
-		out.Settings = nil
-		out.DisableResolveMessage = false
-		out.SecureFields = nil
-		out.Provenance = apimodels.Provenance(models.ProvenanceNone)
+		out.Settings = jsonBytes
+		out.SecureFields = secureFields
+		out.DisableResolveMessage = r.DisableResolveMessage
 	}
 
 	return out, nil
