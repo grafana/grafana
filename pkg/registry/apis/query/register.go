@@ -21,14 +21,14 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*QueryAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*QueryAPIBuilder)(nil)
 
 type QueryAPIBuilder struct {
 	log                    log.Logger
@@ -54,7 +54,7 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 }
 
 func RegisterAPIService(features featuremgmt.FeatureToggles,
-	apiregistration grafanaapiserver.APIRegistrar,
+	apiregistration builder.APIRegistrar,
 	dataSourcesService datasources.DataSourceService,
 	pluginStore pluginstore.Store,
 	accessControl accesscontrol.AccessControl,
@@ -106,6 +106,7 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
+	_ bool,
 ) (*genericapiserver.APIGroupInfo, error) {
 	gv := v0alpha1.SchemeGroupVersion
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(gv.Group, scheme, metav1.ParameterCodec, codecs)
@@ -124,7 +125,7 @@ func (b *QueryAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 }
 
 // Register additional routes with the server
-func (b *QueryAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *QueryAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	defs := v0alpha1.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
 	querySchema := defs["github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryRequest"].Schema
 	responseSchema := defs["github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataResponse"].Schema
@@ -167,9 +168,9 @@ func (b *QueryAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 		  "to": "1704914981544"
 		}`), &randomWalkTable)
 
-	return &grafanaapiserver.APIRoutes{
-		Root: []grafanaapiserver.APIRouteHandler{},
-		Namespace: []grafanaapiserver.APIRouteHandler{
+	return &builder.APIRoutes{
+		Root: []builder.APIRouteHandler{},
+		Namespace: []builder.APIRouteHandler{
 			{
 				Path: "query",
 				Spec: &spec3.PathProps{
