@@ -205,7 +205,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 				token := &oauth2.Token{
 					AccessToken:  "testaccess",
 					RefreshToken: "testrefresh",
-					Expiry:       time.Now(),
+					Expiry:       time.Now().Add(time.Hour),
 					TokenType:    "Bearer",
 				}
 
@@ -222,11 +222,6 @@ func TestService_TryTokenRefresh(t *testing.T) {
 					ID:              "user:1234",
 				}
 
-				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token)).Once()
-
-				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
-					UseRefreshToken: true,
-				}
 			},
 		},
 		{ /** TestService_TryTokenRefresh_ExpiredToken **/
@@ -281,7 +276,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			},
 		},
 		{
-			desc: "should skip token refresh if the user doesn't has an oauth entry",
+			desc: "should skip token refresh if the user doesn't have an oauth entry",
 			setup: func(env *environment) {
 				env.identity = &authn.Identity{ID: "user:1234"}
 				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
@@ -322,7 +317,7 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			},
 		},
 		{
-			desc: "should skip token refresh when oauth provider token handling is disabled and the refresh token is empty",
+			desc: "should skip token refresh when there is no refresh token",
 			setup: func(env *environment) {
 				env.identity = &authn.Identity{ID: "user:1234"}
 				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
@@ -356,6 +351,32 @@ func TestService_TryTokenRefresh(t *testing.T) {
 					OAuthRefreshToken: token.RefreshToken,
 					OAuthExpiry:       token.Expiry,
 					OAuthTokenType:    token.TokenType,
+				}
+				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token)).Once()
+			},
+		},
+		{
+			desc: "should refresh token when the id token is expired",
+			setup: func(env *environment) {
+				token := &oauth2.Token{
+					AccessToken:  "testaccess",
+					RefreshToken: "testrefresh",
+					Expiry:       time.Now().Add(time.Hour),
+					TokenType:    "Bearer",
+				}
+				env.identity = &authn.Identity{ID: "user:1234"}
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
+					UseRefreshToken: true,
+				}
+				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
+					AuthModule:        login.GenericOAuthModule,
+					AuthId:            "subject",
+					UserId:            1,
+					OAuthAccessToken:  token.AccessToken,
+					OAuthRefreshToken: token.RefreshToken,
+					OAuthExpiry:       token.Expiry,
+					OAuthTokenType:    token.TokenType,
+					OAuthIdToken:      EXPIRED_JWT,
 				}
 				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token)).Once()
 			},
@@ -513,7 +534,6 @@ func TestOAuthTokenSync_needTokenRefresh(t *testing.T) {
 			name: "should flag token refresh when expiry date is zero",
 			usr: &login.UserAuth{
 				OAuthExpiry:  time.Unix(0, 0),
-				OAuthIdToken: EXPIRED_JWT,
 			},
 			expectedTokenRefreshFlag: true,
 			expectedTokenDuration:    time.Second,

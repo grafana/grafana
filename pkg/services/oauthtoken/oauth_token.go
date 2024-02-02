@@ -34,7 +34,6 @@ var (
 const maxOAuthTokenCacheTTL = 10 * time.Minute
 
 type Service struct {
-	// TODO: add logger
 	Cfg               *setting.Cfg
 	SocialService     social.Service
 	AuthInfoService   login.AuthInfoService
