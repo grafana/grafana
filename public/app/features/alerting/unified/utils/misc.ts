@@ -125,8 +125,8 @@ export function quoteWithEscape(input: string) {
 export function unquoteWithUnescape(input: string) {
   return input
     .replace(/^"(.*)"$/, '$1')
-    .replace(/\\\\/g, '\\')
-    .replace(/\\"/g, '"');
+    .replace(/\\"/g, '"')
+    .replace(/\\\\/g, '\\');
 }
 
 export function isQuoted(input: string) {
