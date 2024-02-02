@@ -23,12 +23,11 @@ describe('XYChartTooltip', () => {
 
   it('should render the tooltip header label with series name', () => {
     const seriesName = 'seriesName_1';
-    const { getByText, debug } = render(
+    const { getByText } = render(
       <XYChartTooltip
         {...getProps({ allSeries: buildAllSeries(seriesName), data: buildData(), dataIdxs: [1], seriesIdx: 1 })}
       />
     );
-    debug();
 
     expect(getByText(seriesName)).toBeInTheDocument();
   });
