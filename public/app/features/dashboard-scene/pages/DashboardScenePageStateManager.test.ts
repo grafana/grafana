@@ -111,6 +111,40 @@ describe('DashboardScenePageStateManager', () => {
     });
 
     describe('caching', () => {
+      it('should take scene from cache if it exists', async () => {
+        setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', version: 10 }, meta: {} });
+
+        const loader = new DashboardScenePageStateManager({});
+
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+        loader.state.dashboard?.onEnterEditMode();
+
+        expect(loader.state.dashboard?.state.isEditing).toBe(true);
+
+        loader.clearState();
+
+        // now load it again
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+        // should still be editing
+        expect(loader.state.dashboard?.state.isEditing).toBe(true);
+        expect(loader.state.dashboard?.state.version).toBe(10);
+
+        loader.clearState();
+
+        loader.setDashboardCache('fake-dash', {
+          dashboard: { title: 'new version', uid: 'fake-dash', version: 11, schemaVersion: 30 },
+          meta: {},
+        });
+
+        // now load a third time
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+        expect(loader.state.dashboard!.state.isEditing).toBe(undefined);
+        expect(loader.state.dashboard!.state.version).toBe(11);
+      });
+
       it('should cache the dashboard DTO', async () => {
         setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
 
