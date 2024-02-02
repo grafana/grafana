@@ -14,7 +14,6 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setRunRequest } from '@grafana/runtime';
-import { dataLayers } from '@grafana/scenes';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
@@ -90,16 +89,8 @@ describe('AnnotationSettingsEdit', () => {
       iconColor: 'blue',
     };
 
-    const annotationLayer = new dataLayers.AnnotationsDataLayer({
-      key: `annotations-${annotationQuery.name}`,
-      query: annotationQuery,
-      name: annotationQuery.name,
-      isEnabled: Boolean(annotationQuery.enable),
-      isHidden: Boolean(annotationQuery.hide),
-    });
-
     const props = {
-      annotationLayer,
+      annotation: annotationQuery,
       onUpdate: mockOnUpdate,
       editIndex: 1,
       panels: [],

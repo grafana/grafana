@@ -1,8 +1,15 @@
 import React from 'react';
 
-import { AnnotationQuery, DataTopic, PageLayoutType, getDataSourceRef } from '@grafana/data';
+import { AnnotationQuery, DataTopic, NavModel, NavModelItem, PageLayoutType, getDataSourceRef } from '@grafana/data';
 import { getDataSourceSrv, locationService } from '@grafana/runtime';
-import { SceneComponentProps, SceneDataLayers, SceneObjectBase, dataLayers, sceneGraph } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneDataLayers,
+  SceneObjectBase,
+  VizPanel,
+  dataLayers,
+  sceneGraph,
+} from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -169,31 +176,83 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
   const panels = dashboardSceneGraph.getVizPanels(dashboard);
 
   const annotations: AnnotationQuery[] = dataLayersToAnnotations(layers);
-  const isEditing = editIndex != null && editIndex < model.getAnnotationsLength();
+
+  if (editIndex != null && editIndex < model.getAnnotationsLength()) {
+    return (
+      <AnnotationsSettingsEditView
+        annotationLayer={model.getDataLayer(editIndex)}
+        pageNav={pageNav}
+        panels={panels}
+        editIndex={editIndex}
+        navModel={navModel}
+        dashboard={dashboard}
+        onUpdate={model.onUpdate}
+        goBackToList={model.goBackToList}
+        onPreview={model.onPreview}
+        onDelete={model.onDelete}
+      />
+    );
+  }
 
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
-      {!isEditing && (
-        <AnnotationSettingsList
-          annotations={annotations}
-          onNew={model.onNew}
-          onEdit={model.onEdit}
-          onDelete={model.onDelete}
-          onMove={model.onMove}
-        />
-      )}
-      {isEditing && (
-        <AnnotationSettingsEdit
-          annotationLayer={model.getDataLayer(editIndex)}
-          editIndex={editIndex}
-          panels={panels}
-          onUpdate={model.onUpdate}
-          goBackToList={model.goBackToList}
-          onDelete={model.onDelete}
-          onPreview={model.onPreview}
-        />
-      )}
+      <AnnotationSettingsList
+        annotations={annotations}
+        onNew={model.onNew}
+        onEdit={model.onEdit}
+        onDelete={model.onDelete}
+        onMove={model.onMove}
+      />
+    </Page>
+  );
+}
+
+interface AnnotationsSettingsEditViewProps {
+  annotationLayer: dataLayers.AnnotationsDataLayer;
+  pageNav: NavModelItem;
+  panels: VizPanel[];
+  editIndex: number;
+  navModel: NavModel;
+  dashboard: DashboardScene;
+  onUpdate: (annotation: AnnotationQuery, editIndex: number) => void;
+  goBackToList: () => void;
+  onPreview: () => void;
+  onDelete: (idx: number) => void;
+}
+
+function AnnotationsSettingsEditView({
+  annotationLayer,
+  pageNav,
+  navModel,
+  panels,
+  editIndex,
+  dashboard,
+  onUpdate,
+  goBackToList,
+  onPreview,
+  onDelete,
+}: AnnotationsSettingsEditViewProps) {
+  const parentTab = pageNav.children!.find((p) => p.active)!;
+  parentTab.parentItem = pageNav;
+  const { name, query } = annotationLayer.useState();
+
+  const editAnnotationPageNav = {
+    text: name,
+    parentItem: parentTab,
+  };
+  return (
+    <Page navModel={navModel} pageNav={editAnnotationPageNav} layout={PageLayoutType.Standard}>
+      <NavToolbarActions dashboard={dashboard} />
+      <AnnotationSettingsEdit
+        annotation={query}
+        editIndex={editIndex}
+        panels={panels}
+        onUpdate={onUpdate}
+        goBackToList={goBackToList}
+        onDelete={onDelete}
+        onPreview={onPreview}
+      />
     </Page>
   );
 }
