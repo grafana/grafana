@@ -172,9 +172,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secrets.Service) *Receive
 	provisioningStore := fakes.NewFakeProvisioningStore()
 
 	return &ReceiverService{
-		actest.FakeAccessControl{
-			ExpectedEvaluate: true,
-		},
+		actest.FakeAccessControl{},
 		provisioningStore,
 		store,
 		encryptSvc,

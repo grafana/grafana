@@ -63,15 +63,6 @@ func NewReceiverService(
 	}
 }
 
-func (rs *ReceiverService) canRead(ctx context.Context, user identity.Requester, name string) (bool, error) {
-	// TODO: migrate to new permission
-	eval := accesscontrol.EvalAny(
-		accesscontrol.EvalPermission(accesscontrol.ActionAlertingReceiversRead),
-		accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningRead),
-	)
-	return rs.ac.Evaluate(ctx, user, eval)
-}
-
 func (rs *ReceiverService) shouldDecrypt(ctx context.Context, user identity.Requester, name string, reqDecrypt bool) (bool, error) {
 	// TODO: migrate to new permission
 	eval := accesscontrol.EvalAny(
@@ -166,22 +157,13 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 			continue
 		}
 
-		readAccess, err := rs.canRead(ctx, user, r.Name)
-		if err != nil {
-			return nil, err
-		}
-
 		decrypt, err := rs.shouldDecrypt(ctx, user, r.Name, q.Decrypt)
 		if err != nil {
 			return nil, err
 		}
 
-		if !decrypt && !readAccess && !listAccess {
-			continue
-		}
-
 		decryptFn := rs.decryptOrRedact(ctx, decrypt, r.Name, "")
-		listOnly := !readAccess && listAccess
+		listOnly := !decrypt && listAccess
 
 		res, err := PostableToGettableApiReceiver(r, provenances, decryptFn, listOnly)
 		if err != nil {
