@@ -15,4 +15,3 @@ export * from './PromQueryLegendEditor';
 export * from './QueryPreview';
 export * from './metrics-modal';
 export * from './promQail';
-
