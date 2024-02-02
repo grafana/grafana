@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { isArray, isObject } from 'lodash';
 import React from 'react';
+import { useAsync } from 'react-use';
 
 import {
   type PluginExtensionLinkConfig,
@@ -11,9 +12,13 @@ import {
   type PluginExtensionOpenModalOptions,
   isDateTime,
   dateTime,
+  PluginContextProvider,
+  PluginExtensionLink,
+  PanelMenuItem,
 } from '@grafana/data';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { ShowModalReactEvent } from 'app/types/events';
 
 export function logWarning(message: string) {
@@ -45,13 +50,13 @@ export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
 }
 
 // Event helpers are designed to make it easier to trigger "core actions" from an extension event handler, e.g. opening a modal or showing a notification.
-export function getEventHelpers(context?: Readonly<object>): PluginExtensionEventHelpers {
-  const openModal: PluginExtensionEventHelpers['openModal'] = (options) => {
+export function getEventHelpers(pluginId: string, context?: Readonly<object>): PluginExtensionEventHelpers {
+  const openModal: PluginExtensionEventHelpers['openModal'] = async (options) => {
     const { title, body, width, height } = options;
 
     appEvents.publish(
       new ShowModalReactEvent({
-        component: getModalWrapper({ title, body, width, height }),
+        component: wrapWithPluginContext<ModalWrapperProps>(pluginId, getModalWrapper({ title, body, width, height })),
       })
     );
   };
@@ -61,6 +66,38 @@ export function getEventHelpers(context?: Readonly<object>): PluginExtensionEven
 
 type ModalWrapperProps = {
   onDismiss: () => void;
+};
+
+export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.ComponentType<T>) => {
+  const WrappedExtensionComponent = (props: T & React.JSX.IntrinsicAttributes) => {
+    const {
+      error,
+      loading,
+      value: pluginMeta,
+    } = useAsync(() => getPluginSettings(pluginId, { showErrorAlert: false }));
+
+    if (loading) {
+      return null;
+    }
+
+    if (error) {
+      logWarning(`Could not fetch plugin meta information for "${pluginId}", aborting. (${error.message})`);
+      return null;
+    }
+
+    if (!pluginMeta) {
+      logWarning(`Fetched plugin meta information is empty for "${pluginId}", aborting.`);
+      return null;
+    }
+
+    return (
+      <PluginContextProvider meta={pluginMeta}>
+        <Component {...props} />
+      </PluginContextProvider>
+    );
+  };
+
+  return WrappedExtensionComponent;
 };
 
 // Wraps a component with a modal.
@@ -213,4 +250,54 @@ export function truncateTitle(title: string, length: number): string {
   }
   const part = title.slice(0, length - 3);
   return `${part.trimEnd()}...`;
+}
+
+export function createExtensionSubMenu(extensions: PluginExtensionLink[]): PanelMenuItem[] {
+  const categorized: Record<string, PanelMenuItem[]> = {};
+  const uncategorized: PanelMenuItem[] = [];
+
+  for (const extension of extensions) {
+    const category = extension.category;
+
+    if (!category) {
+      uncategorized.push({
+        text: truncateTitle(extension.title, 25),
+        href: extension.path,
+        onClick: extension.onClick,
+      });
+      continue;
+    }
+
+    if (!Array.isArray(categorized[category])) {
+      categorized[category] = [];
+    }
+
+    categorized[category].push({
+      text: truncateTitle(extension.title, 25),
+      href: extension.path,
+      onClick: extension.onClick,
+    });
+  }
+
+  const subMenu = Object.keys(categorized).reduce((subMenu: PanelMenuItem[], category) => {
+    subMenu.push({
+      text: truncateTitle(category, 25),
+      type: 'group',
+      subMenu: categorized[category],
+    });
+    return subMenu;
+  }, []);
+
+  if (uncategorized.length > 0) {
+    if (subMenu.length > 0) {
+      subMenu.push({
+        text: 'divider',
+        type: 'divider',
+      });
+    }
+
+    Array.prototype.push.apply(subMenu, uncategorized);
+  }
+
+  return subMenu;
 }

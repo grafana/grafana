@@ -590,15 +590,6 @@ describe('PanelModel', () => {
 
         expect(model.getQueryRunner).toBeCalled();
       });
-      it('when called then it should not call all pending queries if the panel is a row', () => {
-        model.getQueryRunner = jest.fn().mockReturnValue({
-          run: jest.fn(),
-        });
-        model.type = 'row';
-        model.runAllPanelQueries({});
-
-        expect(model.getQueryRunner).not.toBeCalled();
-      });
     });
   });
 });

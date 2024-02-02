@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
@@ -306,7 +305,7 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 		if dtos.IsHiddenUser(user.Login, c.SignedInUser, hs.Cfg) {
 			continue
 		}
-		user.AvatarURL = dtos.GetGravatarUrl(user.Email)
+		user.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, user.Email)
 
 		userIDs[fmt.Sprint(user.UserID)] = true
 		authLabelsUserIDs = append(authLabelsUserIDs, user.UserID)
@@ -335,8 +334,9 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 	for i := range filteredUsers {
 		filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserID)]
 		if module, ok := modules[filteredUsers[i].UserID]; ok {
+			oauthInfo := hs.SocialService.GetOAuthInfoProvider(module)
 			filteredUsers[i].AuthLabels = []string{login.GetAuthProviderLabel(module)}
-			filteredUsers[i].IsExternallySynced = login.IsExternallySynced(hs.Cfg, module)
+			filteredUsers[i].IsExternallySynced = login.IsExternallySynced(hs.Cfg, module, oauthInfo)
 		}
 	}
 
@@ -422,10 +422,9 @@ func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.Up
 			return response.Error(http.StatusInternalServerError, "Failed to get user auth info", nil)
 		}
 	}
-	if authInfo != nil && authInfo.AuthModule != "" && login.IsExternallySynced(hs.Cfg, authInfo.AuthModule) {
-		// A GCom specific feature toggle for role locking has been introduced, as the previous implementation had a bug with locking down external users synced through GCom (https://github.com/grafana/grafana/pull/72044)
-		// Remove this conditional once FlagGcomOnlyExternalOrgRoleSync feature toggle has been removed
-		if authInfo.AuthModule != login.GrafanaComAuthModule || hs.Features.IsEnabled(featuremgmt.FlagGcomOnlyExternalOrgRoleSync) {
+	if authInfo != nil && authInfo.AuthModule != "" {
+		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
+		if login.IsExternallySynced(hs.Cfg, authInfo.AuthModule, oauthInfo) {
 			return response.Err(org.ErrCannotChangeRoleForExternallySyncedUser.Errorf("Cannot change role for externally synced user"))
 		}
 	}

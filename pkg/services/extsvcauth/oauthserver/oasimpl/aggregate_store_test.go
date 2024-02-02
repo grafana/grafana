@@ -113,7 +113,7 @@ func TestOAuth2ServiceImpl_GetPublicKeyScopes(t *testing.T) {
 				return
 			}
 
-			require.EqualValues(t, tc.expectedScopes, scopes)
+			require.ElementsMatch(t, tc.expectedScopes, scopes)
 		})
 	}
 }

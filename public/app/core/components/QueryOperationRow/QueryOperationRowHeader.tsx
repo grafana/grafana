@@ -4,6 +4,7 @@ import { DraggableProvided } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton, useStyles2, Stack } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 export interface QueryOperationRowHeaderProps {
   actionsElement?: React.ReactNode;
@@ -41,12 +42,16 @@ export const QueryOperationRowHeader = ({
 }: QueryOperationRowHeaderProps) => {
   const styles = useStyles2(getStyles);
 
-  let tooltipMessage = isContentVisible ? 'Collapse query row' : 'Expand query row';
+  let tooltipMessage = isContentVisible
+    ? t('query-operation.header.collapse-row', 'Collapse query row')
+    : t('query-operation.header.expand-row', 'Expand query row');
   if (expanderMessages !== undefined && isContentVisible) {
     tooltipMessage = expanderMessages.close;
   } else if (expanderMessages !== undefined) {
     tooltipMessage = expanderMessages?.open;
   }
+
+  const dragAndDropLabel = t('query-operation.header.drag-and-drop', 'Drag and drop to reorder');
 
   return (
     <div className={styles.header}>
@@ -76,7 +81,7 @@ export const QueryOperationRowHeader = ({
         {actionsElement}
         {draggable && (
           <div onMouseMove={reportDragMousePosition} {...dragHandleProps}>
-            <Icon title="Drag and drop to reorder" name="draggabledots" size="lg" className={styles.dragIcon} />
+            <Icon title={dragAndDropLabel} name="draggabledots" size="lg" className={styles.dragIcon} />
           </div>
         )}
       </Stack>

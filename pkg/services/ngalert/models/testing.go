@@ -6,12 +6,15 @@ import (
 	"math/rand"
 	"slices"
 	"sync"
+	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -183,6 +186,12 @@ func WithInterval(interval time.Duration) AlertRuleMutator {
 	}
 }
 
+func WithIntervalBetween(min, max int64) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.IntervalSeconds = rand.Int63n(max-min) + min
+	}
+}
+
 func WithTitle(title string) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.Title = title
@@ -263,6 +272,14 @@ func WithQuery(query ...AlertQuery) AlertRuleMutator {
 		if len(query) > 1 {
 			rule.Condition = query[0].RefID
 		}
+	}
+}
+
+func WithGroupKey(groupKey AlertRuleGroupKey) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.RuleGroup = groupKey.RuleGroup
+		rule.OrgID = groupKey.OrgID
+		rule.NamespaceUID = groupKey.NamespaceUID
 	}
 }
 
@@ -438,6 +455,108 @@ func CreateClassicConditionExpression(refID string, inputRefID string, reducer s
             ]
 		}`, refID, inputRefID, operation, threshold, reducer, expr.DatasourceUID, expr.DatasourceType)),
 	}
+}
+
+func CreateReduceExpression(refID string, inputRefID string, reducer string) AlertQuery {
+	return AlertQuery{
+		RefID:         refID,
+		QueryType:     expr.DatasourceType,
+		DatasourceUID: expr.DatasourceUID,
+		Model: json.RawMessage(fmt.Sprintf(`
+		{
+			"refId": "%[1]s",
+            "hide": false,
+            "type": "reduce",
+			"expression": "%[2]s",
+			"reducer": "%[3]s",
+            "datasource": {
+                "uid": "%[4]s",
+                "type": "%[5]s"
+            }
+		}`, refID, inputRefID, reducer, expr.DatasourceUID, expr.DatasourceType)),
+	}
+}
+
+func CreatePrometheusQuery(refID string, expr string, intervalMs int64, maxDataPoints int64, isInstant bool, datasourceUID string) AlertQuery {
+	return AlertQuery{
+		RefID:         refID,
+		QueryType:     "",
+		DatasourceUID: datasourceUID,
+		Model: json.RawMessage(fmt.Sprintf(`
+		{
+			"refId": "%[1]s",
+			"expr": "%[2]s",
+            "intervalMs": %[3]d,
+            "maxDataPoints": %[4]d,
+			"exemplar": false,
+			"instant": %[5]t,
+			"range": %[6]t,
+            "datasource": {
+                "uid": "%[7]s",
+                "type": "%[8]s"
+            }
+		}`, refID, expr, intervalMs, maxDataPoints, isInstant, !isInstant, datasourceUID, datasources.DS_PROMETHEUS)),
+	}
+}
+
+func CreateLokiQuery(refID string, expr string, intervalMs int64, maxDataPoints int64, queryType string, datasourceUID string) AlertQuery {
+	return AlertQuery{
+		RefID:         refID,
+		QueryType:     queryType,
+		DatasourceUID: datasourceUID,
+		Model: json.RawMessage(fmt.Sprintf(`
+		{
+			"refId": "%[1]s",
+			"expr": "%[2]s",
+            "intervalMs": %[3]d,
+            "maxDataPoints": %[4]d,
+			"queryType": "%[5]s",
+            "datasource": {
+                "uid": "%[6]s",
+                "type": "%[7]s"
+            }
+		}`, refID, expr, intervalMs, maxDataPoints, queryType, datasourceUID, datasources.DS_LOKI)),
+	}
+}
+
+func CreateHysteresisExpression(t *testing.T, refID string, inputRefID string, threshold int, recoveryThreshold int) AlertQuery {
+	t.Helper()
+	q := AlertQuery{
+		RefID:         refID,
+		QueryType:     expr.DatasourceType,
+		DatasourceUID: expr.DatasourceUID,
+		Model: json.RawMessage(fmt.Sprintf(`
+		{
+			"refId": "%[1]s",
+            "type": "threshold",
+            "datasource": {
+                "uid": "%[5]s",
+                "type": "%[6]s"
+            },
+			"expression": "%[2]s",
+            "conditions": [
+                {
+                    "type": "query",
+                    "evaluator": {
+                        "params": [
+                            %[3]d
+                        ],
+                        "type": "gt"
+                    },
+					"unloadEvaluator": {
+                        "params": [
+                            %[4]d
+                        ],
+                        "type": "lt"
+					}
+                }
+            ]
+		}`, refID, inputRefID, threshold, recoveryThreshold, expr.DatasourceUID, expr.DatasourceType)),
+	}
+	h, err := q.IsHysteresisExpression()
+	require.NoError(t, err)
+	require.Truef(t, h, "test model is expected to be a hysteresis expression")
+	return q
 }
 
 type AlertInstanceMutator func(*AlertInstance)

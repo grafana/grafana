@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	jsoniter "github.com/json-iterator/go"
+	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/util/converter/jsonitere"
 )
@@ -157,12 +158,28 @@ func readPrometheusData(iter *jsonitere.Iterator, opt Options) backend.DataRespo
 	resultTypeFound := false
 	var resultBytes []byte
 
+	encodingFlags := make([]string, 0)
+
 l1Fields:
 	for l1Field, err := iter.ReadObject(); ; l1Field, err = iter.ReadObject() {
 		if err != nil {
 			return rspErr(err)
 		}
 		switch l1Field {
+		case "encodingFlags":
+			for ok, err := iter.ReadArray(); ok; ok, err = iter.ReadArray() {
+				if err != nil {
+					return rspErr(err)
+				}
+				encodingFlag, err := iter.ReadString()
+				if err != nil {
+					return rspErr(err)
+				}
+				encodingFlags = append(encodingFlags, encodingFlag)
+			}
+			if err != nil {
+				return rspErr(err)
+			}
 		case "resultType":
 			resultType, err = iter.ReadString()
 			if err != nil {
@@ -174,14 +191,14 @@ l1Fields:
 			// we saved them because when we had them we don't know the resultType
 			if len(resultBytes) > 0 {
 				ji := jsonitere.NewIterator(jsoniter.ParseBytes(jsoniter.ConfigDefault, resultBytes))
-				rsp = readResult(resultType, rsp, ji, opt)
+				rsp = readResult(resultType, rsp, ji, opt, encodingFlags)
 			}
 		case "result":
 			// for some rare cases resultType is coming after the result.
 			// when that happens we save the bytes and parse them after reading resultType
 			// see: https://github.com/grafana/grafana/issues/64693
 			if resultTypeFound {
-				rsp = readResult(resultType, rsp, iter, opt)
+				rsp = readResult(resultType, rsp, iter, opt, encodingFlags)
 			} else {
 				resultBytes = iter.SkipAndReturnBytes()
 			}
@@ -224,7 +241,7 @@ l1Fields:
 }
 
 // will read the result object based on the resultType and return a DataResponse
-func readResult(resultType string, rsp backend.DataResponse, iter *jsonitere.Iterator, opt Options) backend.DataResponse {
+func readResult(resultType string, rsp backend.DataResponse, iter *jsonitere.Iterator, opt Options, encodingFlags []string) backend.DataResponse {
 	switch resultType {
 	case "matrix", "vector":
 		rsp = readMatrixOrVectorMulti(iter, resultType, opt)
@@ -232,7 +249,11 @@ func readResult(resultType string, rsp backend.DataResponse, iter *jsonitere.Ite
 			return rsp
 		}
 	case "streams":
-		rsp = readStream(iter)
+		if slices.Contains(encodingFlags, "categorize-labels") {
+			rsp = readCategorizedStream(iter)
+		} else {
+			rsp = readStream(iter)
+		}
 		if rsp.Error != nil {
 			return rsp
 		}
@@ -242,7 +263,7 @@ func readResult(resultType string, rsp backend.DataResponse, iter *jsonitere.Ite
 			return rsp
 		}
 	case "scalar":
-		rsp = readScalar(iter)
+		rsp = readScalar(iter, opt.Dataplane)
 		if rsp.Error != nil {
 			return rsp
 		}
@@ -520,7 +541,7 @@ func readString(iter *jsonitere.Iterator) backend.DataResponse {
 	}
 }
 
-func readScalar(iter *jsonitere.Iterator) backend.DataResponse {
+func readScalar(iter *jsonitere.Iterator, dataPlane bool) backend.DataResponse {
 	rsp := backend.DataResponse{}
 
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
@@ -541,6 +562,10 @@ func readScalar(iter *jsonitere.Iterator) backend.DataResponse {
 	frame.Meta = &data.FrameMeta{
 		Type:   data.FrameTypeNumericMulti,
 		Custom: resultTypeToCustomMeta("scalar"),
+	}
+
+	if dataPlane {
+		frame.Meta.TypeVersion = data.FrameTypeVersion{0, 1}
 	}
 
 	return backend.DataResponse{
@@ -925,6 +950,175 @@ func readStream(iter *jsonitere.Iterator) backend.DataResponse {
 	return rsp
 }
 
+func readCategorizedStream(iter *jsonitere.Iterator) backend.DataResponse {
+	rsp := backend.DataResponse{}
+
+	labelsField := data.NewFieldFromFieldType(data.FieldTypeJSON, 0)
+	labelsField.Name = "__labels" // avoid automatically spreading this by labels
+
+	labelTypesField := data.NewFieldFromFieldType(data.FieldTypeJSON, 0)
+	labelTypesField.Name = "__labelTypes" // avoid automatically spreading this by labels
+
+	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
+	timeField.Name = "Time"
+
+	lineField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	lineField.Name = "Line"
+
+	// Nanoseconds time field
+	tsField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
+	tsField.Name = "TS"
+
+	indexedLabels := data.Labels{}
+
+	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
+		if err != nil {
+			rspErr(err)
+		}
+
+	l1Fields:
+		for l1Field, err := iter.ReadObject(); ; l1Field, err = iter.ReadObject() {
+			if err != nil {
+				return rspErr(err)
+			}
+			switch l1Field {
+			case "stream":
+				// we need to clear `labels`, because `iter.ReadVal`
+				// only appends to it
+				indexedLabels = data.Labels{}
+				if err = iter.ReadVal(&indexedLabels); err != nil {
+					return rspErr(err)
+				}
+
+			case "values":
+				for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
+					if err != nil {
+						rsp.Error = err
+						return rsp
+					}
+
+					if _, err = iter.ReadArray(); err != nil {
+						return rspErr(err)
+					}
+
+					ts, err := iter.ReadString()
+					if err != nil {
+						return rspErr(err)
+					}
+
+					if _, err = iter.ReadArray(); err != nil {
+						return rspErr(err)
+					}
+
+					line, err := iter.ReadString()
+					if err != nil {
+						return rspErr(err)
+					}
+
+					if _, err = iter.ReadArray(); err != nil {
+						return rspErr(err)
+					}
+
+					parsedLabelsMap, structuredMetadataMap, err := readCategorizedStreamField(iter)
+					if err != nil {
+						return rspErr(err)
+					}
+
+					if _, err = iter.ReadArray(); err != nil {
+						return rspErr(err)
+					}
+
+					t, err := timeFromLokiString(ts)
+					if err != nil {
+						return rspErr(err)
+					}
+
+					typeMap := data.Labels{}
+					clonedLabels := data.Labels{}
+
+					for k := range indexedLabels {
+						typeMap[k] = "I"
+						clonedLabels[k] = indexedLabels[k]
+					}
+
+					// merge all labels (indexed, parsed, structuredMetadata) into one dataframe field
+					for k, v := range structuredMetadataMap {
+						clonedLabels[k] = fmt.Sprintf("%s", v)
+						typeMap[k] = "S"
+					}
+
+					for k, v := range parsedLabelsMap {
+						clonedLabels[k] = fmt.Sprintf("%s", v)
+						typeMap[k] = "P"
+					}
+
+					labelJson, err := labelsToRawJson(clonedLabels)
+					if err != nil {
+						return rspErr(err)
+					}
+
+					labelTypesJson, err := labelsToRawJson(typeMap)
+					if err != nil {
+						return rspErr(err)
+					}
+
+					labelsField.Append(labelJson)
+					labelTypesField.Append(labelTypesJson)
+					timeField.Append(t)
+					lineField.Append(line)
+					tsField.Append(ts)
+				}
+			case "":
+				if err != nil {
+					return rspErr(err)
+				}
+				break l1Fields
+			}
+		}
+	}
+
+	frame := data.NewFrame("", labelsField, timeField, lineField, tsField, labelTypesField)
+	frame.Meta = &data.FrameMeta{}
+	rsp.Frames = append(rsp.Frames, frame)
+
+	return rsp
+}
+
+func readCategorizedStreamField(iter *jsonitere.Iterator) (map[string]interface{}, map[string]interface{}, error) {
+	parsedLabels := data.Labels{}
+	structuredMetadata := data.Labels{}
+	var parsedLabelsMap map[string]interface{}
+	var structuredMetadataMap map[string]interface{}
+streamField:
+	for streamField, err := iter.ReadObject(); ; streamField, err = iter.ReadObject() {
+		if err != nil {
+			return nil, nil, err
+		}
+		switch streamField {
+		case "parsed":
+			if err = iter.ReadVal(&parsedLabels); err != nil {
+				return nil, nil, err
+			}
+		case "structuredMetadata":
+			if err = iter.ReadVal(&structuredMetadata); err != nil {
+				return nil, nil, err
+			}
+		case "":
+			if err != nil {
+				return nil, nil, err
+			}
+			if parsedLabelsMap, err = labelsToMap(parsedLabels); err != nil {
+				return nil, nil, err
+			}
+			if structuredMetadataMap, err = labelsToMap(structuredMetadata); err != nil {
+				return nil, nil, err
+			}
+			break streamField
+		}
+	}
+	return parsedLabelsMap, structuredMetadataMap, nil
+}
+
 func resultTypeToCustomMeta(resultType string) map[string]string {
 	return map[string]string{"resultType": resultType}
 }
@@ -962,4 +1156,20 @@ func labelsToRawJson(labels data.Labels) (json.RawMessage, error) {
 	}
 
 	return json.RawMessage(bytes), nil
+}
+
+func labelsToMap(labels data.Labels) (map[string]interface{}, error) {
+	// data.Labels when converted to JSON keep the fields sorted
+	labelJson, err := labelsToRawJson(labels)
+	if err != nil {
+		return nil, err
+	}
+
+	var labelMap map[string]interface{}
+	err = jsoniter.Unmarshal(labelJson, &labelMap)
+	if err != nil {
+		return nil, err
+	}
+
+	return labelMap, nil
 }

@@ -28,6 +28,7 @@ const SubscriptionField = ({ query, subscriptions, variableOptionGroup, onQueryC
   }, [query.subscriptions, subscriptions, variableOptionGroup.options]);
 
   const onChange = (change: Array<SelectableValue<string>>) => {
+    const containsSelectAll = change.filter((c) => c.value === 'Select all subscriptions');
     if (!change || change.length === 0) {
       setValues([]);
       onQueryChange({
@@ -35,6 +36,12 @@ const SubscriptionField = ({ query, subscriptions, variableOptionGroup, onQueryC
         subscriptions: [],
       });
       setError(true);
+    } else if (containsSelectAll.length > 0) {
+      const allSubs = subscriptions.map((c) => c.value ?? '').filter((c) => c !== 'Select all subscriptions');
+      onQueryChange({
+        ...query,
+        subscriptions: allSubs,
+      });
     } else {
       const newSubs = change.map((c) => c.value ?? '');
       onQueryChange({

@@ -92,15 +92,18 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
 
   const rulesSourcesWithRuler = useRulesSourcesWithRuler();
 
-  const runQueriesPreview = useCallback(() => {
-    if (isCloudAlertRuleType) {
-      // we will skip preview for cloud rules, these do not have any time series preview
-      // Grafana Managed rules and recording rules do
-      return;
-    }
+  const runQueriesPreview = useCallback(
+    (condition?: string) => {
+      if (isCloudAlertRuleType) {
+        // we will skip preview for cloud rules, these do not have any time series preview
+        // Grafana Managed rules and recording rules do
+        return;
+      }
 
-    runQueries(getValues('queries'));
-  }, [isCloudAlertRuleType, runQueries, getValues]);
+      runQueries(getValues('queries'), condition || (getValues('condition') ?? ''));
+    },
+    [isCloudAlertRuleType, runQueries, getValues]
+  );
 
   // whenever we update the queries we have to update the form too
   useEffect(() => {
@@ -149,7 +152,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         return;
       }
 
-      runQueriesPreview(); //we need to run the queries to know if the condition is valid
+      runQueriesPreview(refId); //we need to run the queries to know if the condition is valid
 
       setValue('condition', refId);
     },
@@ -183,8 +186,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
       // Invocation cycle => onChange -> dispatch(setDataQueries) -> onRunQueries -> setDataQueries Reducer
       // As a workaround we update form values as soon as possible to avoid stale state
       // This way we can access up to date queries in runQueriesPreview without waiting for re-render
-      setValue('queries', updatedQueries, { shouldValidate: false });
-
+      const previousQueries = getValues('queries');
+      const expressionQueries = previousQueries.filter((query) => isExpressionQuery(query.model));
+      setValue('queries', [...updatedQueries, ...expressionQueries], { shouldValidate: false });
       updateExpressionAndDatasource(updatedQueries);
 
       dispatch(setDataQueries(updatedQueries));
@@ -196,7 +200,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
         dispatch(rewireExpressions({ oldRefId, newRefId }));
       }
     },
-    [queries, setValue, updateExpressionAndDatasource]
+    [queries, updateExpressionAndDatasource, getValues, setValue]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
@@ -443,7 +447,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
           <QueryEditor
             queries={dataQueries}
             expressions={expressionQueries}
-            onRunQueries={runQueriesPreview}
+            onRunQueries={() => runQueriesPreview()}
             onChangeQueries={onChangeQueries}
             onDuplicateQuery={onDuplicateQuery}
             panelData={queryPreviewData}
@@ -457,7 +461,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
                 dispatch(addNewDataQuery());
               }}
               variant="secondary"
-              aria-label={selectors.components.QueryTab.addQuery}
+              data-testid={selectors.components.QueryTab.addQuery}
               disabled={noCompatibleDataSources}
               className={styles.addQueryButton}
             >
@@ -504,7 +508,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange }: P
               </Button>
             )}
             {!isPreviewLoading && (
-              <Button icon="sync" type="button" onClick={runQueriesPreview} disabled={emptyQueries}>
+              <Button icon="sync" type="button" onClick={() => runQueriesPreview()} disabled={emptyQueries}>
                 Preview
               </Button>
             )}

@@ -2,7 +2,6 @@ import 'angular';
 import 'angular-route';
 import 'angular-sanitize';
 import 'angular-bindonce';
-import 'vendor/bootstrap/bootstrap';
 
 import angular from 'angular'; // eslint-disable-line no-duplicate-imports
 import { extend } from 'lodash';

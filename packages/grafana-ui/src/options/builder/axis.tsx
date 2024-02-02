@@ -43,6 +43,7 @@ export function addAxisConfig(
       defaultValue: '',
       settings: {
         placeholder: 'Optional text',
+        expandTemplateVars: true,
       },
       showIf: (c) => c.axisPlacement !== AxisPlacement.Hidden,
       // Do not apply default settings to time and string fields which are used as x-axis fields in Time series and Bar chart panels

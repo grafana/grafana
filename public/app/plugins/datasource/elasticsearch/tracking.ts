@@ -41,7 +41,7 @@ export const onDashboardLoadedHandler = ({
 }: DashboardLoadedEvent<ElasticsearchQuery>) => {
   try {
     // We only want to track visible ElasticSearch queries
-    const elasticsearchQueries = queries[pluginJson.id].filter((query) => !query.hide);
+    const elasticsearchQueries = queries[pluginJson.id]?.filter((query) => !query.hide);
     if (!elasticsearchQueries?.length) {
       return;
     }

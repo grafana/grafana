@@ -12,7 +12,7 @@ function setupData(unit?: string) {
       { name: 'label', values: ['total'] },
     ],
   });
-  return new FlameGraphDataContainer(flameGraphData);
+  return new FlameGraphDataContainer(flameGraphData, { collapsing: true });
 }
 
 function setupDiffData() {
@@ -26,7 +26,7 @@ function setupDiffData() {
       { name: 'label', values: ['total', 'func1'] },
     ],
   });
-  return new FlameGraphDataContainer(flameGraphData);
+  return new FlameGraphDataContainer(flameGraphData, { collapsing: true });
 }
 
 describe('FlameGraphTooltip', () => {

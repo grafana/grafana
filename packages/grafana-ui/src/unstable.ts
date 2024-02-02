@@ -9,4 +9,4 @@
  * be subject to the standard policies
  */
 
-export { Grid } from './components/Layout/Grid/Grid';
+export * from './utils/skeleton';

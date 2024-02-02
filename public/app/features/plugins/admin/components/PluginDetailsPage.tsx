@@ -111,6 +111,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     tabContent: css`
       overflow: auto;
       height: 100%;
+      padding-left: 5px;
     `,
   };
 };

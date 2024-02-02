@@ -6,7 +6,7 @@ import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
 import { truncateResult } from '../../language_utils';
 import { promQueryModeller } from '../PromQueryModeller';
-import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
+import { regexifyLabelValuesQueryString } from '../parsingUtils';
 import { QueryBuilderLabelFilter } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
@@ -60,7 +60,6 @@ export function MetricsLabelsSection({
   const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<SelectableValue[]> => {
     // If no metric we need to use a different method
     if (!query.metric) {
-      // FIXME pass timeRange to fetchLabels method
       await datasource.languageProvider.fetchLabels();
       return datasource.languageProvider.getLabelKeys().map((k) => ({ value: k }));
     }
@@ -69,12 +68,7 @@ export function MetricsLabelsSection({
     labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
     const expr = promQueryModeller.renderLabels(labelsToConsider);
 
-    let labelsIndex: Record<string, string[]>;
-    if (datasource.hasLabelsMatchAPISupport()) {
-      labelsIndex = await datasource.languageProvider.fetchSeriesLabelsMatch(expr);
-    } else {
-      labelsIndex = await datasource.languageProvider.fetchSeriesLabels(expr);
-    }
+    let labelsIndex: Record<string, string[]> = await datasource.languageProvider.fetchLabelsWithMatch(expr);
 
     // filter out already used labels
     return Object.keys(labelsIndex)

@@ -1,8 +1,8 @@
 import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { DataSourceHttpSettings, EventsWithValidation, LegacyForms, regexValidation } from '@grafana/ui';
-import { config } from 'app/core/config';
 
 import { PyroscopeDataSourceOptions } from './types';
 

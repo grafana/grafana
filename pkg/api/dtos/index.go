@@ -26,7 +26,6 @@ type IndexViewData struct {
 	FavIcon                             template.URL
 	AppleTouchIcon                      template.URL
 	AppTitle                            string
-	ContentDeliveryURL                  string
 	LoadingLogo                         template.URL
 	CSPContent                          string
 	CSPEnabled                          bool
@@ -34,4 +33,29 @@ type IndexViewData struct {
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
 	Nonce           string
 	NewsFeedEnabled bool
+	Assets          *EntryPointAssets // Includes CDN info
+}
+
+type EntryPointAssets struct {
+	ContentDeliveryURL string            `json:"cdn,omitempty"`
+	JSFiles            []EntryPointAsset `json:"jsFiles"`
+	Dark               string            `json:"dark"`
+	Light              string            `json:"light"`
+}
+
+type EntryPointAsset struct {
+	FilePath  string `json:"filePath"`
+	Integrity string `json:"integrity"`
+}
+
+func (a *EntryPointAssets) SetContentDeliveryURL(prefix string) {
+	if prefix == "" {
+		return
+	}
+	a.ContentDeliveryURL = prefix
+	a.Dark = prefix + a.Dark
+	a.Light = prefix + a.Light
+	for i, p := range a.JSFiles {
+		a.JSFiles[i].FilePath = prefix + p.FilePath
+	}
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -14,6 +15,7 @@ import (
 	alertingModels "github.com/grafana/alerting/models"
 
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
@@ -104,6 +106,21 @@ const (
 
 	// StateReasonAnnotation is the name of the annotation that explains the difference between evaluation state and alert state (i.e. changing state when NoData or Error).
 	StateReasonAnnotation = GrafanaReservedLabelPrefix + "state_reason"
+
+	// MigratedLabelPrefix is a label prefix for all labels created during legacy migration.
+	MigratedLabelPrefix = "__legacy_"
+	// MigratedUseLegacyChannelsLabel is created during legacy migration to route to separate nested policies for migrated channels.
+	MigratedUseLegacyChannelsLabel = MigratedLabelPrefix + "use_channels__"
+	// MigratedContactLabelPrefix is created during legacy migration to route a migrated alert rule to a specific migrated channel.
+	MigratedContactLabelPrefix = MigratedLabelPrefix + "c_"
+	// MigratedSilenceLabelErrorKeepState is a label that will match a silence rule intended for legacy alerts with error state = keep_state.
+	MigratedSilenceLabelErrorKeepState = MigratedLabelPrefix + "silence_error_keep_state__"
+	// MigratedSilenceLabelNodataKeepState is a label that will match a silence rule intended for legacy alerts with nodata state = keep_state.
+	MigratedSilenceLabelNodataKeepState = MigratedLabelPrefix + "silence_nodata_keep_state__"
+	// MigratedAlertIdAnnotation is created during legacy migration to store the ID of the migrated legacy alert rule.
+	MigratedAlertIdAnnotation = "__alertId__"
+	// MigratedMessageAnnotation is created during legacy migration to store the migrated alert message.
+	MigratedMessageAnnotation = "message"
 )
 
 const (
@@ -423,6 +440,42 @@ func (alertRule *AlertRule) PreSave(timeNow func() time.Time) error {
 	return nil
 }
 
+// ValidateAlertRule validates various alert rule fields.
+func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSettings) error {
+	if len(alertRule.Data) == 0 {
+		return fmt.Errorf("%w: no queries or expressions are found", ErrAlertRuleFailedValidation)
+	}
+
+	if alertRule.Title == "" {
+		return fmt.Errorf("%w: title is empty", ErrAlertRuleFailedValidation)
+	}
+
+	if err := ValidateRuleGroupInterval(alertRule.IntervalSeconds, int64(cfg.BaseInterval.Seconds())); err != nil {
+		return err
+	}
+
+	if alertRule.OrgID == 0 {
+		return fmt.Errorf("%w: no organisation is found", ErrAlertRuleFailedValidation)
+	}
+
+	if alertRule.DashboardUID == nil && alertRule.PanelID != nil {
+		return fmt.Errorf("%w: cannot have Panel ID without a Dashboard UID", ErrAlertRuleFailedValidation)
+	}
+
+	if _, err := ErrStateFromString(string(alertRule.ExecErrState)); err != nil {
+		return err
+	}
+
+	if _, err := NoDataStateFromString(string(alertRule.NoDataState)); err != nil {
+		return err
+	}
+
+	if alertRule.For < 0 {
+		return fmt.Errorf("%w: field `for` cannot be negative", ErrAlertRuleFailedValidation)
+	}
+	return nil
+}
+
 func (alertRule *AlertRule) ResourceType() string {
 	return "alertRule"
 }
@@ -433,6 +486,13 @@ func (alertRule *AlertRule) ResourceID() string {
 
 func (alertRule *AlertRule) ResourceOrgID() int64 {
 	return alertRule.OrgID
+}
+
+func (alertRule *AlertRule) GetFolderKey() FolderKey {
+	return FolderKey{
+		OrgID: alertRule.OrgID,
+		UID:   alertRule.NamespaceUID,
+	}
 }
 
 // AlertRuleVersion is the model for alert rule versions in unified alerting.
@@ -493,12 +553,22 @@ type CountAlertRulesQuery struct {
 	NamespaceUID string
 }
 
+type FolderKey struct {
+	OrgID int64
+	UID   string
+}
+
+func (f FolderKey) String() string {
+	return fmt.Sprintf("%d:%s", f.OrgID, f.UID)
+}
+
 type GetAlertRulesForSchedulingQuery struct {
 	PopulateFolders bool
 	RuleGroups      []string
 
-	ResultRules         []*AlertRule
-	ResultFoldersTitles map[string]string
+	ResultRules []*AlertRule
+	// A map of folder UID to folder Title in NamespaceKey format (see GetNamespaceKey)
+	ResultFoldersTitles map[FolderKey]string
 }
 
 // ListNamespaceAlertRulesQuery is the query for listing namespace alert rules
@@ -634,4 +704,30 @@ func GroupByAlertRuleGroupKey(rules []*AlertRule) map[AlertRuleGroupKey]RulesGro
 		group.SortByGroupIndex()
 	}
 	return result
+}
+
+// GetNamespaceKey concatenates two strings with / as separator. If the latter string contains '/' it gets escaped with \/
+func GetNamespaceKey(parentUID, title string) string {
+	if parentUID == "" {
+		return title
+	}
+	b, err := json.Marshal([]string{parentUID, title})
+	if err != nil {
+		return title // this should not really happen
+	}
+	return string(b)
+}
+
+// GetNamespaceTitleFromKey extracts the latter part from the string produced by GetNamespaceKey
+func GetNamespaceTitleFromKey(ns string) string {
+	// the expected format of the string is a JSON array ["parentUID","title"]
+	if !strings.HasPrefix(ns, "[") {
+		return ns
+	}
+	var arr []string
+	err := json.Unmarshal([]byte(ns), &arr)
+	if err != nil || len(arr) != 2 {
+		return ns
+	}
+	return arr[1]
 }

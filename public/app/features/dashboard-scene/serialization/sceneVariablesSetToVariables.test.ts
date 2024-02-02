@@ -12,7 +12,14 @@ import {
   VariableSupportType,
 } from '@grafana/data';
 import { setRunRequest } from '@grafana/runtime';
-import { ConstantVariable, CustomVariable, DataSourceVariable, QueryVariable, SceneVariableSet } from '@grafana/scenes';
+import {
+  ConstantVariable,
+  CustomVariable,
+  DataSourceVariable,
+  QueryVariable,
+  SceneVariableSet,
+  TextBoxVariable,
+} from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
 import { sceneVariablesSetToVariables } from './sceneVariablesSetToVariables';
@@ -91,6 +98,7 @@ describe('sceneVariablesSetToVariables', () => {
       allValue: 'test-all',
       isMulti: true,
     });
+
     const set = new SceneVariableSet({
       variables: [variable],
     });
@@ -113,6 +121,58 @@ describe('sceneVariablesSetToVariables', () => {
         "type": "fake-std",
         "uid": "fake-std",
       },
+      "definition": undefined,
+      "description": "test-desc",
+      "includeAll": true,
+      "label": "test-label",
+      "multi": true,
+      "name": "test",
+      "options": [],
+      "query": "query",
+      "refresh": 1,
+      "regex": "",
+      "type": "query",
+    }
+    `);
+  });
+
+  it('should handle QueryVariable with definition set', () => {
+    const variable = new QueryVariable({
+      name: 'test',
+      label: 'test-label',
+      description: 'test-desc',
+      value: ['selected-value'],
+      text: ['selected-value-text'],
+      datasource: { uid: 'fake-std', type: 'fake-std' },
+      query: 'query',
+      definition: 'query',
+      includeAll: true,
+      allValue: 'test-all',
+      isMulti: true,
+    });
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    const result = sceneVariablesSetToVariables(set);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchInlineSnapshot(`
+    {
+      "allValue": "test-all",
+      "current": {
+        "text": [
+          "selected-value-text",
+        ],
+        "value": [
+          "selected-value",
+        ],
+      },
+      "datasource": {
+        "type": "fake-std",
+        "uid": "fake-std",
+      },
+      "definition": "query",
       "description": "test-desc",
       "includeAll": true,
       "label": "test-label",
@@ -250,6 +310,37 @@ describe('sceneVariablesSetToVariables', () => {
       "query": "constant value",
       "skipUrlSync": true,
       "type": "constant",
+    }
+    `);
+  });
+
+  it('should handle TextBoxVariable', () => {
+    const variable = new TextBoxVariable({
+      name: 'test',
+      label: 'test-label',
+      description: 'test-desc',
+      value: 'text value',
+      skipUrlSync: true,
+    });
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    const result = sceneVariablesSetToVariables(set);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchInlineSnapshot(`
+    {
+      "current": {
+        "text": "text value",
+        "value": "text value",
+      },
+      "description": "test-desc",
+      "label": "test-label",
+      "name": "test",
+      "query": "text value",
+      "skipUrlSync": true,
+      "type": "textbox",
     }
     `);
   });

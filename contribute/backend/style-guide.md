@@ -66,8 +66,8 @@ Use [`t.Cleanup`](https://golang.org/pkg/testing/#T.Cleanup) to clean up resourc
 
 ### Mock
 
-Optionally, we use [`mock.Mock`](https://github.com/stretchr/testify#mock-package) package to write mocks. This is
-useful when you expect different behaviours of the same function.
+Optionally, we use [`mock.Mock`](https://github.com/stretchr/testify#mock-package) package to write mocks.
+This is useful when you expect different behaviors of the same function.
 
 #### Tips
 
@@ -126,7 +126,7 @@ assert.Equal(t, resp.Message, objectToReturn.Message)
 
 #### Mockery
 
-When an interface to test is too big, it's annoying to mock each function manually. To avoid this, you can
+When an interface to test is too big, it may be toilsome to mock each function manually. To avoid this, you can
 use [`mockery`](https://github.com/vektra/mockery) library to generate the mocks.
 
 The command is like the following (there are more options documented if you need to use another one):

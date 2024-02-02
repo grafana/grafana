@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/annotation-label/how-to-use-labels/
-description: Learn about labels and label matchers in alerting
+description: Learn how to use labels to link alert rules to notification policies and silences
 keywords:
   - grafana
   - alerting

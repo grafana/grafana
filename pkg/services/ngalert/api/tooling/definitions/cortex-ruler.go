@@ -8,7 +8,7 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-// swagger:route Get /api/ruler/grafana/api/v1/rules ruler RouteGetGrafanaRulesConfig
+// swagger:route Get /ruler/grafana/api/v1/rules ruler RouteGetGrafanaRulesConfig
 //
 // List rule groups
 //
@@ -17,9 +17,10 @@ import (
 //
 //     Responses:
 //       202: NamespaceConfigResponse
+//       403: ForbiddenError
 //
 
-// swagger:route Get /api/ruler/grafana/api/v1/export/rules ruler RouteGetRulesForExport
+// swagger:route Get /ruler/grafana/api/v1/export/rules ruler RouteGetRulesForExport
 //
 // List rules in provisioning format
 //
@@ -29,9 +30,10 @@ import (
 //
 //     Responses:
 //       200: AlertingFileExport
+//       403: ForbiddenError
 //       404: description: Not found.
 
-// swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules ruler RouteGetRulesConfig
+// swagger:route Get /ruler/{DatasourceUID}/api/v1/rules ruler RouteGetRulesConfig
 //
 // List rule groups
 //
@@ -40,9 +42,10 @@ import (
 //
 //     Responses:
 //       202: NamespaceConfigResponse
+//       403: ForbiddenError
 //       404: NotFound
 
-// swagger:route POST /api/ruler/grafana/api/v1/rules/{Namespace} ruler RoutePostNameGrafanaRulesConfig
+// swagger:route POST /ruler/grafana/api/v1/rules/{Namespace} ruler RoutePostNameGrafanaRulesConfig
 //
 // Creates or updates a rule group
 //
@@ -52,9 +55,10 @@ import (
 //
 //     Responses:
 //       202: UpdateRuleGroupResponse
+//       403: ForbiddenError
 //
 
-// swagger:route POST /api/ruler/grafana/api/v1/rules/{Namespace}/export ruler RoutePostRulesGroupForExport
+// swagger:route POST /ruler/grafana/api/v1/rules/{Namespace}/export ruler RoutePostRulesGroupForExport
 //
 // Converts submitted rule group to provisioning format
 //
@@ -64,9 +68,10 @@ import (
 //
 //     Responses:
 //       200: AlertingFileExport
+//       403: ForbiddenError
 //       404: description: Not found.
 
-// swagger:route POST /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RoutePostNameRulesConfig
+// swagger:route POST /ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RoutePostNameRulesConfig
 //
 // Creates or updates a rule group
 //
@@ -76,9 +81,21 @@ import (
 //
 //     Responses:
 //       202: Ack
+//       403: ForbiddenError
 //       404: NotFound
 
-// swagger:route Get /api/ruler/grafana/api/v1/rules/{Namespace} ruler RouteGetNamespaceGrafanaRulesConfig
+// swagger:route Get /ruler/grafana/api/v1/rules/{Namespace} ruler RouteGetNamespaceGrafanaRulesConfig
+//
+// Get rule groups by namespace
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       403: ForbiddenError
+//       202: NamespaceConfigResponse
+
+// swagger:route Get /ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteGetNamespaceRulesConfig
 //
 // Get rule groups by namespace
 //
@@ -87,34 +104,27 @@ import (
 //
 //     Responses:
 //       202: NamespaceConfigResponse
-
-// swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteGetNamespaceRulesConfig
-//
-// Get rule groups by namespace
-//
-//     Produces:
-//     - application/json
-//
-//     Responses:
-//       202: NamespaceConfigResponse
+//       403: ForbiddenError
 //       404: NotFound
 
-// swagger:route Delete /api/ruler/grafana/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceGrafanaRulesConfig
+// swagger:route Delete /ruler/grafana/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceGrafanaRulesConfig
 //
 // Delete namespace
 //
 //     Responses:
 //       202: Ack
+//       403: ForbiddenError
 
-// swagger:route Delete /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceRulesConfig
+// swagger:route Delete /ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceRulesConfig
 //
 // Delete namespace
 //
 //     Responses:
 //       202: Ack
+//       403: ForbiddenError
 //       404: NotFound
 
-// swagger:route Get /api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetGrafanaRuleGroupConfig
+// swagger:route Get /ruler/grafana/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetGrafanaRuleGroupConfig
 //
 // Get rule group
 //
@@ -123,8 +133,9 @@ import (
 //
 //     Responses:
 //       202: RuleGroupConfigResponse
+//       403: ForbiddenError
 
-// swagger:route Get /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetRulegGroupConfig
+// swagger:route Get /ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteGetRulegGroupConfig
 //
 // Get rule group
 //
@@ -133,25 +144,29 @@ import (
 //
 //     Responses:
 //       202: RuleGroupConfigResponse
+//       403: ForbiddenError
 //       404: NotFound
 
-// swagger:route Delete /api/ruler/grafana/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteGrafanaRuleGroupConfig
+// swagger:route Delete /ruler/grafana/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteGrafanaRuleGroupConfig
 //
 // Delete rule group
 //
 //     Responses:
 //       202: Ack
+//       403: ForbiddenError
 
-// swagger:route Delete /api/ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteRuleGroupConfig
+// swagger:route Delete /ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteRuleGroupConfig
 //
 // Delete rule group
 //
 //     Responses:
 //       202: Ack
+//       403: ForbiddenError
 //       404: NotFound
 
 // swagger:parameters RoutePostNameRulesConfig RoutePostNameGrafanaRulesConfig RoutePostRulesGroupForExport
 type NamespaceConfig struct {
+	// The UID of the rule folder
 	// in:path
 	Namespace string
 	// in:body
@@ -160,12 +175,14 @@ type NamespaceConfig struct {
 
 // swagger:parameters RouteGetNamespaceRulesConfig RouteDeleteNamespaceRulesConfig RouteGetNamespaceGrafanaRulesConfig RouteDeleteNamespaceGrafanaRulesConfig
 type PathNamespaceConfig struct {
+	// The UID of the rule folder
 	// in: path
 	Namespace string
 }
 
 // swagger:parameters RouteGetRulegGroupConfig RouteDeleteRuleGroupConfig RouteGetGrafanaRuleGroupConfig RouteDeleteGrafanaRuleGroupConfig
 type PathRouleGroupConfig struct {
+	// The UID of the rule folder
 	// in: path
 	Namespace string
 	// in: path
@@ -412,7 +429,6 @@ type GettableGrafanaRule struct {
 	Version         int64               `json:"version" yaml:"version"`
 	UID             string              `json:"uid" yaml:"uid"`
 	NamespaceUID    string              `json:"namespace_uid" yaml:"namespace_uid"`
-	NamespaceID     int64               `json:"namespace_id" yaml:"namespace_id"`
 	RuleGroup       string              `json:"rule_group" yaml:"rule_group"`
 	NoDataState     NoDataState         `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState    ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`

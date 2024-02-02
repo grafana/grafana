@@ -3,7 +3,7 @@ aliases:
   - metrics/
   - unified-alerting/fundamentals/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/
-description: Intro to the key concepts in Alerting and how it works
+description: Learn about the fundamentals of Grafana Alerting as well as the key features it offers
 labels:
   products:
     - cloud

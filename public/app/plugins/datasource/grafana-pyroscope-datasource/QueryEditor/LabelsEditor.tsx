@@ -32,7 +32,7 @@ export function LabelsEditor(props: Props) {
       <CodeEditor
         value={props.value}
         language={langId}
-        onBlur={props.onChange}
+        onChange={props.onChange}
         containerStyles={styles.queryField}
         monacoOptions={{
           folding: false,

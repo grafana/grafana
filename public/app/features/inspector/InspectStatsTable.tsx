@@ -9,7 +9,7 @@ import {
   QueryResultMetaStat,
   TimeZone,
 } from '@grafana/data';
-import { stylesFactory, useTheme2 } from '@grafana/ui';
+import { useStyles2, useTheme2 } from '@grafana/ui';
 
 interface InspectStatsTableProps {
   timeZone: TimeZone;
@@ -19,7 +19,7 @@ interface InspectStatsTableProps {
 
 export const InspectStatsTable = ({ timeZone, name, stats }: InspectStatsTableProps) => {
   const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   if (!stats || !stats.length) {
     return null;
@@ -56,13 +56,11 @@ function formatStat(stat: QueryResultMetaStat, timeZone: TimeZone, theme: Grafan
   return formattedValueToString(display(stat.value));
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    wrapper: css`
-      padding-bottom: ${theme.spacing(2)};
-    `,
-    cell: css`
-      text-align: right;
-    `,
-  };
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css`
+    padding-bottom: ${theme.spacing(2)};
+  `,
+  cell: css`
+    text-align: right;
+  `,
 });

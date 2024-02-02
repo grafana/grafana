@@ -1,6 +1,6 @@
 import { DataFrame, FieldCache, FieldType, Field, Labels, FieldWithIndex } from '@grafana/data';
 
-import type { LogsFrame } from './logsFrame';
+import { logFrameLabelsToLabels, LogsFrame } from './logsFrame';
 
 // take the labels from the line-field, and "stretch" it into an array
 // with the length of the frame (so there are the same labels for every row)
@@ -15,7 +15,7 @@ function makeLabelsArray(lineField: Field, length: number): Labels[] | null {
   }
 }
 
-// we decide if the frame is old-loki-style frame, and adjust the behavior.
+// if the frame has "labels" field with type "other", adjust the behavior.
 // we also have to return the labels-field (if we used it),
 // to be able to remove it from the unused-fields, later.
 function makeLabelsGetter(
@@ -23,11 +23,13 @@ function makeLabelsGetter(
   lineField: Field,
   frame: DataFrame
 ): [FieldWithIndex | null, () => Labels[] | null] {
-  if (frame.meta?.custom?.frameType === 'LabeledTimeValues') {
-    const labelsField = cache.getFieldByName('labels');
-    return labelsField === undefined ? [null, () => null] : [labelsField, () => labelsField.values];
+  // If we have labels field with type "other", use that
+  const labelsField = cache.getFieldByName('labels');
+  if (labelsField !== undefined && labelsField.type === FieldType.other) {
+    const values = labelsField.values.map(logFrameLabelsToLabels);
+    return [labelsField, () => values];
   } else {
-    // we use the labels on the line-field, and make an array with it
+    // Otherwise we use the labels on the line-field, and make an array with it
     return [null, () => makeLabelsArray(lineField, frame.length)];
   }
 }
@@ -70,6 +72,7 @@ export function parseLegacyLogsFrame(frame: DataFrame): LogsFrame | null {
     idField,
     getLogFrameLabels: getL,
     getLogFrameLabelsAsLabels: getL,
+    getLabelFieldName: () => labelsField?.name ?? null,
     extraFields,
   };
 }

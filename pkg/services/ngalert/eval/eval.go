@@ -157,6 +157,23 @@ func (evalResults Results) HasErrors() bool {
 	return false
 }
 
+// HasNonRetryableErrors returns true if we have at least 1 result with:
+// 1. A `State` of `Error`
+// 2. The `Error` attribute is not nil
+// 3. The `Error` type is of `&invalidEvalResultFormatError`
+// Our thinking with this approach, is that we don't want to retry errors that have relation with invalid alert definition format.
+func (evalResults Results) HasNonRetryableErrors() bool {
+	for _, r := range evalResults {
+		if r.State == Error && r.Error != nil {
+			var nonRetryableError *invalidEvalResultFormatError
+			if errors.As(r.Error, &nonRetryableError) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // HasErrors returns true when Results contains at least one element and all elements are errors
 func (evalResults Results) IsError() bool {
 	for _, r := range evalResults {
@@ -175,6 +192,18 @@ func (evalResults Results) IsNoData() bool {
 		}
 	}
 	return true
+}
+
+// Error returns the aggregated `error` of all results of which state is `Error`.
+func (evalResults Results) Error() error {
+	var errs []error
+	for _, result := range evalResults {
+		if result.State == Error && result.Error != nil {
+			errs = append(errs, result.Error)
+		}
+	}
+
+	return errors.Join(errs...)
 }
 
 // Result contains the evaluated State of an alert instance
@@ -246,6 +275,23 @@ func (s State) String() string {
 	return [...]string{"Normal", "Alerting", "Pending", "NoData", "Error"}[s]
 }
 
+func ParseStateString(repr string) (State, error) {
+	switch strings.ToLower(repr) {
+	case "normal":
+		return Normal, nil
+	case "alerting":
+		return Alerting, nil
+	case "pending":
+		return Pending, nil
+	case "nodata":
+		return NoData, nil
+	case "error":
+		return Error, nil
+	default:
+		return -1, fmt.Errorf("invalid state: %s", repr)
+	}
+}
+
 func buildDatasourceHeaders(ctx context.Context) map[string]string {
 	headers := map[string]string{
 		// Many data sources check this in query method as sometimes alerting needs special considerations.
@@ -269,30 +315,16 @@ func buildDatasourceHeaders(ctx context.Context) map[string]string {
 }
 
 // getExprRequest validates the condition, gets the datasource information and creates an expr.Request from it.
-func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheService datasources.CacheService) (*expr.Request, error) {
+func getExprRequest(ctx EvaluationContext, condition models.Condition, dsCacheService datasources.CacheService, reader AlertingResultsReader) (*expr.Request, error) {
 	req := &expr.Request{
-		OrgId:   ctx.User.OrgID,
+		OrgId:   ctx.User.GetOrgID(),
 		Headers: buildDatasourceHeaders(ctx.Ctx),
 		User:    ctx.User,
 	}
+	datasources := make(map[string]*datasources.DataSource, len(condition.Data))
 
-	datasources := make(map[string]*datasources.DataSource, len(data))
-
-	for _, q := range data {
-		model, err := q.GetModel()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get query model from '%s': %w", q.RefID, err)
-		}
-		interval, err := q.GetIntervalDuration()
-		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve intervalMs from '%s': %w", q.RefID, err)
-		}
-
-		maxDatapoints, err := q.GetMaxDatapoints()
-		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve maxDatapoints from '%s': %w", q.RefID, err)
-		}
-
+	for _, q := range condition.Data {
+		var err error
 		ds, ok := datasources[q.DatasourceUID]
 		if !ok {
 			switch nodeType := expr.NodeTypeFromDatasourceUID(q.DatasourceUID); nodeType {
@@ -305,6 +337,45 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 				return nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
 			}
 			datasources[q.DatasourceUID] = ds
+		}
+
+		// TODO rewrite the code below and remove the mutable component from AlertQuery
+
+		// if the query is command expression and it's a hysteresis, patch it with the current state
+		// it's important to do this before GetModel
+		if ds.Type == expr.DatasourceType {
+			isHysteresis, err := q.IsHysteresisExpression()
+			if err != nil {
+				return nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
+			}
+			if isHysteresis {
+				// make sure we allow hysteresis expressions to be specified only as the alert condition.
+				// This guarantees us that the AlertResultsReader can be correctly applied to the expression tree.
+				if q.RefID != condition.Condition {
+					return nil, fmt.Errorf("recovery threshold '%s' is only allowed to be the alert condition", q.RefID)
+				}
+				if reader != nil {
+					logger.FromContext(ctx.Ctx).Debug("Detected hysteresis threshold command. Populating with the results")
+					err = q.PatchHysteresisExpression(reader.Read())
+					if err != nil {
+						return nil, fmt.Errorf("failed to amend hysteresis command '%s': %w", q.RefID, err)
+					}
+				}
+			}
+		}
+
+		model, err := q.GetModel()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get query model from '%s': %w", q.RefID, err)
+		}
+		interval, err := q.GetIntervalDuration()
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve intervalMs from '%s': %w", q.RefID, err)
+		}
+
+		maxDatapoints, err := q.GetMaxDatapoints()
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve maxDatapoints from '%s': %w", q.RefID, err)
 		}
 
 		req.Queries = append(req.Queries, expr.Query{
@@ -695,7 +766,7 @@ func (evalResults Results) AsDataFrame() data.Frame {
 }
 
 func (e *evaluatorImpl) Validate(ctx EvaluationContext, condition models.Condition) error {
-	req, err := getExprRequest(ctx, condition.Data, e.dataSourceCache)
+	req, err := getExprRequest(ctx, condition, e.dataSourceCache, ctx.AlertingResultsReader)
 	if err != nil {
 		return err
 	}
@@ -731,7 +802,7 @@ func (e *evaluatorImpl) Create(ctx EvaluationContext, condition models.Condition
 	if len(condition.Condition) == 0 {
 		return nil, errors.New("condition must not be empty")
 	}
-	req, err := getExprRequest(ctx, condition.Data, e.dataSourceCache)
+	req, err := getExprRequest(ctx, condition, e.dataSourceCache, ctx.AlertingResultsReader)
 	if err != nil {
 		return nil, err
 	}

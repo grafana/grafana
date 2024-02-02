@@ -30,12 +30,20 @@ export const MegaMenu = React.memo(
     // Remove profile + help from tree
     const navItems = navTree
       .filter((item) => item.id !== 'profile' && item.id !== 'help')
-      .map((item) => enrichWithInteractionTracking(item, state.megaMenu));
+      .map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked));
 
     const activeItem = getActiveItem(navItems, location.pathname);
 
     const handleDockedMenu = () => {
-      chrome.setMegaMenu(state.megaMenu === 'docked' ? 'closed' : 'docked');
+      chrome.setMegaMenuDocked(!state.megaMenuDocked);
+      if (state.megaMenuDocked) {
+        chrome.setMegaMenuOpen(false);
+      }
+
+      // refocus on undock/menu open button when changing state
+      setTimeout(() => {
+        document.getElementById(state.megaMenuDocked ? 'mega-menu-toggle' : 'dock-menu-button')?.focus();
+      });
     };
 
     return (
@@ -52,23 +60,28 @@ export const MegaMenu = React.memo(
         </div>
         <nav className={styles.content}>
           <CustomScrollbar showScrollIndicators hideHorizontalTrack>
-            <ul className={styles.itemList}>
+            <ul className={styles.itemList} aria-label={t('navigation.megamenu.list-label', 'Navigation')}>
               {navItems.map((link, index) => (
-                <Stack key={link.text} direction="row" alignItems="center">
-                  <MegaMenuItem
-                    link={link}
-                    onClick={state.megaMenu === 'open' ? onClose : undefined}
-                    activeItem={activeItem}
-                  />
-                  {index === 0 && Boolean(state.megaMenu === 'open') && (
+                <Stack key={link.text} direction={index === 0 ? 'row-reverse' : 'row'} alignItems="center">
+                  {index === 0 && (
                     <IconButton
+                      id="dock-menu-button"
                       className={styles.dockMenuButton}
-                      tooltip={t('navigation.megamenu.dock', 'Dock menu')}
+                      tooltip={
+                        state.megaMenuDocked
+                          ? t('navigation.megamenu.undock', 'Undock menu')
+                          : t('navigation.megamenu.dock', 'Dock menu')
+                      }
                       name="web-section-alt"
                       onClick={handleDockedMenu}
                       variant="secondary"
                     />
                   )}
+                  <MegaMenuItem
+                    link={link}
+                    onClick={state.megaMenuDocked ? undefined : onClose}
+                    activeItem={activeItem}
+                  />
                 </Stack>
               ))}
             </ul>

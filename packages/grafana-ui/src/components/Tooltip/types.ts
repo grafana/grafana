@@ -1,3 +1,4 @@
+import { Placement } from '@floating-ui/react';
 /**
  * This API allows popovers to update Popper's position when e.g. popover content changes
  * updatePopperPosition is delivered to content by react-popper.
@@ -9,19 +10,4 @@ export interface PopoverContentProps {
 
 export type PopoverContent = string | React.ReactElement | ((props: PopoverContentProps) => JSX.Element);
 
-export type TooltipPlacement =
-  | 'auto-start'
-  | 'auto'
-  | 'auto-end'
-  | 'top-start'
-  | 'top'
-  | 'top-end'
-  | 'right-start'
-  | 'right'
-  | 'right-end'
-  | 'bottom-end'
-  | 'bottom'
-  | 'bottom-start'
-  | 'left-end'
-  | 'left'
-  | 'left-start';
+export type TooltipPlacement = Placement | 'auto' | 'auto-start' | 'auto-end';

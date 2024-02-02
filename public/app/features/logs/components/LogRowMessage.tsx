@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import Highlighter from 'react-highlight-words';
 
-import { CoreApp, findHighlightChunksInText, LogRowModel } from '@grafana/data';
+import { CoreApp, findHighlightChunksInText, LogRowContextOptions, LogRowModel } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { LogRowMenuCell } from './LogRowMenuCell';
@@ -16,6 +17,11 @@ interface Props {
   app?: CoreApp;
   showContextToggle?: (row: LogRowModel) => boolean;
   onOpenContext: (row: LogRowModel) => void;
+  getRowContextQuery?: (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    cacheFilters?: boolean
+  ) => Promise<DataQuery | null>;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
@@ -77,6 +83,7 @@ export const LogRowMessage = React.memo((props: Props) => {
     pinned,
     mouseIsOver,
     onBlur,
+    getRowContextQuery,
   } = props;
   const { hasAnsi, raw } = row;
   const restructuredEntry = useMemo(() => restructureLog(raw, prettifyLogMessage), [raw, prettifyLogMessage]);
@@ -100,6 +107,7 @@ export const LogRowMessage = React.memo((props: Props) => {
             logText={restructuredEntry}
             row={row}
             showContextToggle={showContextToggle}
+            getRowContextQuery={getRowContextQuery}
             onOpenContext={onOpenContext}
             onPermalinkClick={onPermalinkClick}
             onPinLine={onPinLine}

@@ -7,6 +7,7 @@ import (
 )
 
 type FakeService struct {
+	ExpectedAdminStats             *stats.AdminStats
 	ExpectedSystemStats            *stats.SystemStats
 	ExpectedDataSourceStats        []*stats.DataSourceStats
 	ExpectedDataSourcesAccessStats []*stats.DataSourceAccessStats
@@ -20,7 +21,7 @@ func NewFakeService() *FakeService {
 }
 
 func (s *FakeService) GetAdminStats(ctx context.Context, query *stats.GetAdminStatsQuery) (*stats.AdminStats, error) {
-	return nil, s.ExpectedError
+	return s.ExpectedAdminStats, s.ExpectedError
 }
 
 func (s *FakeService) GetAlertNotifiersUsageStats(ctx context.Context, query *stats.GetAlertNotifierUsageStatsQuery) ([]*stats.NotifierUsageStats, error) {

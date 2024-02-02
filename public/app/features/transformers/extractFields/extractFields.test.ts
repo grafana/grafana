@@ -1,5 +1,14 @@
-import { DataFrame, Field, FieldType } from '@grafana/data';
+import {
+  DataFrame,
+  DataTransformerConfig,
+  DataTransformerID,
+  Field,
+  FieldType,
+  transformDataFrame,
+} from '@grafana/data';
 import { toDataFrame } from '@grafana/data/src/dataframe/processDataFrame';
+import { SortByTransformerOptions, sortByTransformer } from '@grafana/data/src/transformations/transformers/sortBy';
+import { mockTransformationsRegistry } from '@grafana/data/src/utils/tests/mockTransformationsRegistry';
 
 import { extractFieldsTransformer } from './extractFields';
 import { ExtractFieldsOptions, FieldExtractorID } from './types';
@@ -232,6 +241,118 @@ describe('Fields from JSON', () => {
       ],
       length: 2,
     });
+  });
+
+  it('works with different value sizes', async () => {
+    const extractConfig: ExtractFieldsOptions = {
+      source: 'line',
+      replace: false,
+    };
+    const sortConfig: DataTransformerConfig<SortByTransformerOptions> = {
+      id: DataTransformerID.sortBy,
+      options: {
+        sort: [
+          {
+            field: 'time',
+          },
+        ],
+      },
+    };
+    mockTransformationsRegistry([sortByTransformer]);
+    const ctx = { interpolate: (v: string) => v };
+
+    const testDataFrame: DataFrame = {
+      fields: [
+        { config: {}, name: 'Time', type: FieldType.time, values: [1, 2] },
+        { config: {}, name: 'line', type: FieldType.other, values: ['{"foo":"bar"}', '{"baz":"bar"}'] },
+      ],
+      length: 2,
+    };
+
+    const expected = {
+      fields: [
+        {
+          config: {},
+          name: 'Time',
+          type: 'time',
+          values: [1, 2],
+          state: {
+            displayName: 'Time',
+            multipleFrames: false,
+          },
+        },
+        {
+          config: {},
+          name: 'line',
+          state: {
+            displayName: 'line',
+            multipleFrames: false,
+          },
+          type: 'other',
+          values: ['{"foo":"bar"}', '{"baz":"bar"}'],
+        },
+        {
+          name: 'foo',
+          state: {
+            displayName: 'foo',
+            multipleFrames: false,
+          },
+          values: ['bar', undefined],
+          type: 'string',
+          config: {},
+        },
+        {
+          name: 'baz',
+          state: {
+            displayName: 'baz',
+            multipleFrames: false,
+          },
+          values: [undefined, 'bar'],
+          type: 'string',
+          config: {},
+        },
+      ],
+      length: 2,
+    };
+
+    const frames = extractFieldsTransformer.transformer(extractConfig, ctx)([testDataFrame]);
+
+    await expect(transformDataFrame([sortConfig], frames)).toEmitValuesWith((received) => {
+      expect(received[0][0].fields[2]).toMatchInlineSnapshot(`
+        {
+          "config": {},
+          "name": "foo",
+          "state": {
+            "displayName": "foo",
+            "multipleFrames": false,
+          },
+          "type": "string",
+          "values": [
+            "bar",
+            undefined,
+          ],
+        }
+      `);
+
+      expect(received[0][0].fields[3]).toMatchInlineSnapshot(`
+        {
+          "config": {},
+          "name": "baz",
+          "state": {
+            "displayName": "baz",
+            "multipleFrames": false,
+          },
+          "type": "string",
+          "values": [
+            undefined,
+            "bar",
+          ],
+        }
+      `);
+    });
+
+    expect(frames.length).toEqual(1);
+    expect(frames[0]).toEqual(expected);
   });
 });
 

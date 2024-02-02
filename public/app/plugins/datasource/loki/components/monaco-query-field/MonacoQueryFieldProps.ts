@@ -1,4 +1,4 @@
-import { HistoryItem } from '@grafana/data';
+import { HistoryItem, TimeRange } from '@grafana/data';
 
 import { LokiDatasource } from '../../datasource';
 import { LokiQuery } from '../../types';
@@ -15,4 +15,5 @@ export type Props = {
   placeholder: string;
   datasource: LokiDatasource;
   onChange: (query: string) => void;
+  timeRange?: TimeRange;
 };

@@ -1,5 +1,6 @@
 import { isEmptyObject, ScopedVars, TimeRange } from '@grafana/data';
 import {
+  behaviors,
   SceneDataLayers,
   SceneGridItem,
   SceneGridItemLike,
@@ -11,12 +12,15 @@ import {
   SceneVariableSet,
   AdHocFilterSet,
   LocalValueVariable,
+  SceneRefreshPicker,
 } from '@grafana/scenes';
 import {
   AnnotationQuery,
   Dashboard,
+  DashboardLink,
   DataTransformerConfig,
   defaultDashboard,
+  defaultTimePickerConfig,
   FieldConfigSource,
   Panel,
   RowPanel,
@@ -25,15 +29,16 @@ import {
 } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
+import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
-import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
@@ -46,8 +51,10 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   const data = state.$data;
   const variablesSet = state.$variables;
   const body = state.body;
+  let refresh_intervals = defaultTimePickerConfig.refresh_intervals;
+  let hideTimePicker: boolean = defaultTimePickerConfig.hidden;
   let panels: Panel[] = [];
-
+  let graphTooltip = defaultDashboard.graphTooltip;
   let variables: VariableModel[] = [];
 
   if (body instanceof SceneGridLayout) {
@@ -81,8 +88,17 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     variables = sceneVariablesSetToVariables(variablesSet);
   }
 
-  if (state.controls) {
-    for (const control of state.controls) {
+  if (state.controls && state.controls[0] instanceof DashboardControls) {
+    hideTimePicker = state.controls[0].state.hideTimeControls ?? hideTimePicker;
+
+    const timeControls = state.controls[0].state.timeControls;
+    for (const control of timeControls) {
+      if (control instanceof SceneRefreshPicker && control.state.intervals) {
+        refresh_intervals = control.state.intervals;
+      }
+    }
+    const variableControls = state.controls[0].state.variableControls;
+    for (const control of variableControls) {
       if (control instanceof AdHocFilterSet) {
         variables.push({
           name: control.state.name!,
@@ -93,14 +109,26 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     }
   }
 
+  if (state.$behaviors && state.$behaviors[0] instanceof behaviors.CursorSync) {
+    graphTooltip = state.$behaviors[0].state.sync;
+  }
+
   const dashboard: Dashboard = {
     ...defaultDashboard,
     title: state.title,
+    description: state.description || undefined,
     uid: state.uid,
     id: state.id,
+    editable: state.editable,
     time: {
       from: timeRange.from,
       to: timeRange.to,
+    },
+    timepicker: {
+      ...defaultTimePickerConfig,
+      refresh_intervals,
+      hidden: hideTimePicker,
+      nowDelay: timeRange.UNSAFE_nowDelay,
     },
     panels,
     annotations: {
@@ -109,9 +137,14 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     templating: {
       list: variables,
     },
+    version: state.version,
     timezone: timeRange.timeZone,
     fiscalYearStartMonth: timeRange.fiscalYearStartMonth,
     weekStart: timeRange.weekStart,
+    tags: state.tags,
+    links: state.links,
+    graphTooltip,
+    schemaVersion: DASHBOARD_SCHEMA_VERSION,
   };
 
   return sortedDeepCloneWithoutNulls(dashboard);
@@ -192,6 +225,9 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
     panel.repeatDirection = gridItem.getRepeatDirection();
   }
 
+  const panelLinks = dashboardSceneGraph.getPanelLinks(vizPanel);
+  panel.links = (panelLinks.state.rawLinks as DashboardLink[]) ?? [];
+
   return panel;
 }
 
@@ -202,21 +238,6 @@ function vizPanelDataToPanel(
   const dataProvider = vizPanel.state.$data;
 
   const panel: Pick<Panel, 'datasource' | 'targets' | 'maxDataPoints' | 'transformations'> = {};
-  // Dashboard datasource handling
-  if (dataProvider instanceof ShareQueryDataProvider) {
-    panel.datasource = {
-      type: 'datasource',
-      uid: SHARED_DASHBOARD_QUERY,
-    };
-    panel.targets = [
-      {
-        datasource: { ...panel.datasource },
-        refId: 'A',
-        panelId: dataProvider.state.query.panelId,
-        topic: dataProvider.state.query.topic,
-      },
-    ];
-  }
 
   // Regular queries handling
   if (dataProvider instanceof SceneQueryRunner) {
@@ -228,20 +249,6 @@ function vizPanelDataToPanel(
   // Transformations handling
   if (dataProvider instanceof SceneDataTransformer) {
     const panelData = dataProvider.state.$data;
-    if (panelData instanceof ShareQueryDataProvider) {
-      panel.datasource = {
-        type: 'datasource',
-        uid: SHARED_DASHBOARD_QUERY,
-      };
-      panel.targets = [
-        {
-          datasource: { ...panel.datasource },
-          refId: 'A',
-          panelId: panelData.state.query.panelId,
-          topic: panelData.state.query.topic,
-        },
-      ];
-    }
 
     if (panelData instanceof SceneQueryRunner) {
       panel.targets = panelData.state.queries;
@@ -407,10 +414,8 @@ export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: D
   // When VizPanel is present, we are snapshoting a single panel. The rest of the panels is removed from the dashboard,
   // and the panel is resized to 24x20 grid and placed at the top of the dashboard.
   if (panel) {
-    // @ts-expect-error Due to legacy panels types. Id is present on such panels too.
     const singlePanel = dash.panels?.find((p) => p.id === getPanelIdForVizPanel(panel));
     if (singlePanel) {
-      // @ts-expect-error Due to legacy panels types. Id is present on such panels too.
       singlePanel.gridPos = { w: 24, x: 0, y: 0, h: 20 };
       result = {
         ...result,

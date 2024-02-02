@@ -774,6 +774,39 @@ describe('optionsPickerReducer', () => {
     });
   });
 
+  describe('when similar data for updateOptionsAndFilter', () => {
+    it('should properly rank by match quality', () => {
+      const searchQuery = 'C';
+
+      const options: VariableOption[] = 'A AA AB AC BC C CD'.split(' ').map((v) => ({
+        selected: false,
+        text: v,
+        value: v,
+      }));
+
+      const expect: VariableOption[] = 'C CD AC BC'.split(' ').map((v) => ({
+        selected: false,
+        text: v,
+        value: v,
+      }));
+
+      const { initialState } = getVariableTestContext({
+        queryValue: searchQuery,
+      });
+
+      reducerTester<OptionsPickerState>()
+        .givenReducer(optionsPickerReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateOptionsAndFilter(options))
+        .thenStateShouldEqual({
+          ...cloneDeep(initialState),
+          options: expect,
+          selectedValues: [],
+          queryValue: 'C',
+          highlightIndex: 0,
+        });
+    });
+  });
+
   describe('when large data for updateOptionsFromSearch is dispatched and variable has searchFilter', () => {
     it('then state should be correct', () => {
       const searchQuery = '__searchFilter';

@@ -1,7 +1,7 @@
 package dtos
 
 import (
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -21,5 +21,5 @@ type DashboardACLUpdateItem struct {
 	// * `2` - Edit
 	// * `4` - Admin
 	// Enum: 1,2,4
-	Permission dashboards.PermissionType `json:"permission"`
+	Permission dashboardaccess.PermissionType `json:"permission"`
 }

@@ -3,7 +3,7 @@ import React, { HTMLProps } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { stylesFactory, useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 
 import { Legend } from './Legend';
 
@@ -14,8 +14,7 @@ export interface Props extends Omit<HTMLProps<HTMLFieldSetElement>, 'label'> {
 }
 
 export const FieldSet = ({ label, children, className, ...rest }: Props) => {
-  const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   return (
     <fieldset className={cx(styles.wrapper, className)} {...rest}>
@@ -25,14 +24,12 @@ export const FieldSet = ({ label, children, className, ...rest }: Props) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme2) => {
-  return {
-    wrapper: css({
-      marginBottom: theme.spacing(4),
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
+    marginBottom: theme.spacing(4),
 
-      '&:last-child': {
-        marginBottom: 0,
-      },
-    }),
-  };
+    '&:last-child': {
+      marginBottom: 0,
+    },
+  }),
 });

@@ -1,11 +1,12 @@
 import { MatcherOperator, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import {
-  findMatchingRoutes,
-  normalizeRoute,
-  getInheritedProperties,
+  InheritableProperties,
   computeInheritedTree,
+  findMatchingRoutes,
+  getInheritedProperties,
   matchLabels,
+  normalizeRoute,
 } from './notification-policies';
 
 import 'core-js/stable/structured-clone';
@@ -203,9 +204,19 @@ describe('getInheritedProperties()', () => {
       const childInherited = getInheritedProperties(parent, child);
       expect(childInherited).toHaveProperty('group_by', ['label']);
     });
+
+    it('should inherit from grandparent when parent is inheriting', () => {
+      const parentInheritedProperties: InheritableProperties = { receiver: 'grandparent' };
+      const parent: Route = { receiver: null, group_by: ['foo'] };
+      const child: Route = { receiver: null };
+
+      const childInherited = getInheritedProperties(parent, child, parentInheritedProperties);
+      expect(childInherited).toHaveProperty('receiver', 'grandparent');
+      expect(childInherited.group_by).toEqual(['foo']);
+    });
   });
 
-  describe('regular "undefined" values', () => {
+  describe('regular "undefined" or "null" values', () => {
     it('should compute inherited properties being undefined', () => {
       const parent: Route = {
         receiver: 'PARENT',
@@ -218,6 +229,20 @@ describe('getInheritedProperties()', () => {
 
       const childInherited = getInheritedProperties(parent, child);
       expect(childInherited).toHaveProperty('group_wait', '10s');
+    });
+
+    it('should compute inherited properties being null', () => {
+      const parent: Route = {
+        receiver: 'PARENT',
+        group_wait: '10s',
+      };
+
+      const child: Route = {
+        receiver: null,
+      };
+
+      const childInherited = getInheritedProperties(parent, child);
+      expect(childInherited).toHaveProperty('receiver', 'PARENT');
     });
 
     it('should compute inherited properties being undefined from parent inherited properties', () => {
@@ -293,6 +318,21 @@ describe('getInheritedProperties()', () => {
       expect(childInherited).toHaveProperty('group_wait', '1m');
       expect(childInherited).toHaveProperty('group_interval', '2m');
     });
+  });
+  it('should not inherit mute timings from parent route', () => {
+    const parent: Route = {
+      receiver: 'PARENT',
+      group_by: ['parentLabel'],
+      mute_time_intervals: ['Mon-Fri 09:00-17:00'],
+    };
+
+    const child: Route = {
+      receiver: 'CHILD',
+      group_by: ['childLabel'],
+    };
+
+    const childInherited = getInheritedProperties(parent, child);
+    expect(childInherited).not.toHaveProperty('mute_time_intervals');
   });
 });
 

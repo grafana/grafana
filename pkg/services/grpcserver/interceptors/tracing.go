@@ -3,7 +3,10 @@ package interceptors
 import (
 	"context"
 
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
@@ -17,6 +20,10 @@ func TracingUnaryInterceptor(tracer tracing.Tracer) grpc.UnaryServerInterceptor 
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (resp any, err error) {
+		if md, ok := metadata.FromIncomingContext(ctx); ok {
+			ctx = otel.GetTextMapPropagator().Extract(ctx, propagation.HeaderCarrier(md))
+		}
+
 		ctx, span := tracer.Start(ctx, tracingPrefix+info.FullMethod)
 		defer span.End()
 		resp, err = handler(ctx, req)
@@ -26,7 +33,11 @@ func TracingUnaryInterceptor(tracer tracing.Tracer) grpc.UnaryServerInterceptor 
 
 func TracingStreamInterceptor(tracer tracing.Tracer) grpc.StreamServerInterceptor {
 	return func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
-		ctx, span := tracer.Start(stream.Context(), tracingPrefix+info.FullMethod)
+		ctx := stream.Context()
+		if md, ok := metadata.FromIncomingContext(ctx); ok {
+			ctx = otel.GetTextMapPropagator().Extract(ctx, propagation.HeaderCarrier(md))
+		}
+		ctx, span := tracer.Start(ctx, tracingPrefix+info.FullMethod)
 		defer span.End()
 		tracingStream := &tracingServerStream{
 			ServerStream: stream,

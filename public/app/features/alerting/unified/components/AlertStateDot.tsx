@@ -2,26 +2,28 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { ComponentSize, Tooltip, useStyles2 } from '@grafana/ui';
-import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
+import { ComponentSize, Stack, useStyles2 } from '@grafana/ui';
+import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
 const AlertStateDot = (props: DotStylesProps) => {
   const styles = useStyles2(getDotStyles, props);
 
   return (
-    <Tooltip content={String(props.state)} placement="top">
+    <Stack direction="row" gap={0.5}>
       <div className={styles.dot} />
-    </Tooltip>
+    </Stack>
   );
 };
 
 interface DotStylesProps {
-  state?: GrafanaAlertState;
+  state: PromAlertingRuleState;
+  includeState?: boolean;
   size?: ComponentSize; // TODO support this
 }
 
 const getDotStyles = (theme: GrafanaTheme2, props: DotStylesProps) => {
   const size = theme.spacing(1.25);
+  const outlineSize = `calc(${size} / 2.5)`;
 
   return {
     dot: css`
@@ -31,21 +33,22 @@ const getDotStyles = (theme: GrafanaTheme2, props: DotStylesProps) => {
       border-radius: 100%;
 
       background-color: ${theme.colors.secondary.main};
-      outline: solid calc(${size} / 2.5) ${theme.colors.secondary.transparent};
+      outline: solid ${outlineSize} ${theme.colors.secondary.transparent};
+      margin: ${outlineSize};
 
-      ${props.state === GrafanaAlertState.Normal &&
+      ${props.state === PromAlertingRuleState.Inactive &&
       css`
         background-color: ${theme.colors.success.main};
         outline-color: ${theme.colors.success.transparent};
       `}
 
-      ${props.state === GrafanaAlertState.Pending &&
+      ${props.state === PromAlertingRuleState.Pending &&
       css`
         background-color: ${theme.colors.warning.main};
         outline-color: ${theme.colors.warning.transparent};
       `}
 
-      ${props.state === GrafanaAlertState.Alerting &&
+      ${props.state === PromAlertingRuleState.Firing &&
       css`
         background-color: ${theme.colors.error.main};
         outline-color: ${theme.colors.error.transparent};

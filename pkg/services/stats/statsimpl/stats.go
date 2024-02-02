@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -109,10 +109,10 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 		WHERE d.is_folder = ?
 	) AS folder_permissions,`, dialect.BooleanStr(true))
 
-		sb.Write(viewersPermissionsCounterSQL(ss.db, "dashboards_viewers_can_edit", false, dashboards.PERMISSION_EDIT))
-		sb.Write(viewersPermissionsCounterSQL(ss.db, "dashboards_viewers_can_admin", false, dashboards.PERMISSION_ADMIN))
-		sb.Write(viewersPermissionsCounterSQL(ss.db, "folders_viewers_can_edit", true, dashboards.PERMISSION_EDIT))
-		sb.Write(viewersPermissionsCounterSQL(ss.db, "folders_viewers_can_admin", true, dashboards.PERMISSION_ADMIN))
+		sb.Write(viewersPermissionsCounterSQL(ss.db, "dashboards_viewers_can_edit", false, dashboardaccess.PERMISSION_EDIT))
+		sb.Write(viewersPermissionsCounterSQL(ss.db, "dashboards_viewers_can_admin", false, dashboardaccess.PERMISSION_ADMIN))
+		sb.Write(viewersPermissionsCounterSQL(ss.db, "folders_viewers_can_edit", true, dashboardaccess.PERMISSION_EDIT))
+		sb.Write(viewersPermissionsCounterSQL(ss.db, "folders_viewers_can_admin", true, dashboardaccess.PERMISSION_ADMIN))
 
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_provisioning") + `) AS provisioned_dashboards,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_snapshot") + `) AS snapshots,`)
@@ -128,6 +128,9 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `WHERE active = true) AS active_data_keys,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("dashboard_public") + `) AS public_dashboards,`)
 		sb.Write(`(SELECT MIN(timestamp) FROM ` + dialect.Quote("migration_log") + `) AS database_created_time,`)
+		if ss.IsUnifiedAlertingEnabled() {
+			sb.Write(`(SELECT COUNT(DISTINCT (` + dialect.Quote("rule_group") + `)) FROM ` + dialect.Quote("alert_rule") + `) AS rule_groups,`)
+		}
 
 		sb.Write(ss.roleCounterSQL(ctx))
 
@@ -166,7 +169,7 @@ func (ss *sqlStatsService) roleCounterSQL(ctx context.Context) string {
 	return sqlQuery
 }
 
-func viewersPermissionsCounterSQL(db db.DB, statName string, isFolder bool, permission dashboards.PermissionType) string {
+func viewersPermissionsCounterSQL(db db.DB, statName string, isFolder bool, permission dashboardaccess.PermissionType) string {
 	dialect := db.GetDialect()
 	return `(
 		SELECT COUNT(*)

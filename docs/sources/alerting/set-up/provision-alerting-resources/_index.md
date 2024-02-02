@@ -2,7 +2,7 @@
 aliases:
   - ../provision-alerting-resources/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/
-description: Provision alerting resources
+description: Import and export alerting resources
 keywords:
   - grafana
   - alerting
@@ -14,29 +14,33 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Provision Grafana Alerting resources
+title: Import and export Grafana Alerting resources
 weight: 300
 ---
 
-# Provision Grafana Alerting resources
+# Import and export Grafana Alerting resources
 
-Alerting infrastructure is often complex, with many pieces of the pipeline that often live in different places. Scaling this across multiple teams and organizations is an especially challenging task. Grafana Alerting provisioning makes this process easier by enabling you to create, manage, and maintain your alerting data in a way that best suits your organization.
+Alerting infrastructure is often complex, with many pieces of the pipeline that often live in different places. Scaling this across multiple teams and organizations is an especially challenging task. Importing and exporting (or provisioning) your alerting resources in Grafana Alerting makes this process easier by enabling you to create, manage, and maintain your alerting data in a way that best suits your organization.
 
-There are three options to choose from:
+You can import alert rules, contact points, notification policies, mute timings, and templates.
 
-1. Use file provisioning to provision your Grafana Alerting resources, such as alert rules and contact points, through files on disk.
+You cannot edit imported alerting resources in the Grafana UI in the same way as alerting resources that were not imported. You can only edit imported contact points, notification policies, templates, and mute timings in the source where they were created. For example, if you manage your alerting resources using files from disk, you cannot edit the data in Terraform or from within Grafana.
 
-1. Provision your alerting resources using the Alerting Provisioning HTTP API.
+To modify imported alert rules, you can use the **Modify export** feature to edit and then export.
+
+Choose from the options below to import your Grafana Alerting resources.
+
+1. Use file provisioning to manage your Grafana Alerting resources, such as alert rules and contact points, through files on disk.
+
+   {{% admonition type="note" %}}
+   File provisioning is not available in Grafana Cloud instances.
+   {{% /admonition %}}
+
+2. Use the Alerting Provisioning HTTP API.
 
    For more information on the Alerting Provisioning HTTP API, refer to [Alerting provisioning HTTP API][alerting_provisioning].
 
-1. {{% admonition type="note" %}}
-   If you are using Open Source, you can provision your alerting resources using [Terraform](https://www.terraform.io/).
-   {{% /admonition %}}
-
-**Note:**
-
-Currently, provisioning for Grafana Alerting supports alert rules, contact points, notification policies, mute timings, and templates. Provisioned alerting resources using file provisioning or Terraform can only be edited in the source that created them and not from within Grafana or any other source. For example, if you provision your alerting resources using files from disk, you cannot edit the data in Terraform or from within Grafana.
+3. Use [Terraform](https://www.terraform.io/).
 
 **Useful Links:**
 

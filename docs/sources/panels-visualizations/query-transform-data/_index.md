@@ -19,7 +19,8 @@ labels:
     - enterprise
     - oss
 title: Query and transform data
-weight: 200
+description: Query and transform your data
+weight: 40
 ---
 
 # Query and transform data
@@ -41,7 +42,7 @@ Grafana supports up to 26 queries per panel.
 
 ### Query editors
 
-{{< figure src="/static/img/docs/queries/influxdb-query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" caption="The InfluxDB query editor" >}}
+{{< figure src="/static/img/docs/queries/influxdb-query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" alt="The InfluxDB query editor" >}}
 
 Each data source's **query editor** provides a customized user interface that helps you write queries that take advantage of its unique capabilities.
 
@@ -94,7 +95,7 @@ A panel's Query tab consists of the following elements:
 - **Expressions:** Uses the expression builder to create alert expressions.
   For more information about expressions, refer to [Use expressions to manipulate data][].
 
-{{< figure src="/static/img/docs/queries/query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" >}}
+{{< figure src="/static/img/docs/queries/query-editor-7-2.png" class="docs-image--no-shadow" max-width="1000px" alt="The Query tab of the panel editor" >}}
 
 ## Add a query
 
@@ -123,20 +124,20 @@ Each query row contains a query editor and is identified with a letter (A, B, C,
 
 You can:
 
-|                                                                    Icon                                                                     | Description                                                                                                                                                                                                                                     |
-| :-----------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|  {{< figure src="/static/img/docs/queries/query-editor-help-7-4.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}}   | Toggles query editor help. If supported by the data source, click this icon to display information on how to use the query editor or provide quick access to common queries.                                                                    |
-| {{< figure src="/static/img/docs/queries/duplicate-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}} | Copies a query. Duplicating queries is useful when working with multiple complex queries that are similar and you want to either experiment with different variants or do minor alterations.                                                    |
-|   {{< figure src="/static/img/docs/queries/hide-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}}    | Hides a query. Grafana does not send hidden queries to the data source.                                                                                                                                                                         |
-|  {{< figure src="/static/img/docs/queries/remove-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}}   | Removes a query. Removing a query permanently deletes it, but sometimes you can recover deleted queries by reverting to previously saved versions of the panel.                                                                                 |
-|   {{< figure src="/static/img/docs/queries/query-drag-icon-7-2.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" >}}    | Reorders queries. Change the order of queries by clicking and holding the drag icon, then drag queries where desired. The order of results reflects the order of the queries, so you can often adjust your visual results based on query order. |
+|                                                                               Icon                                                                               | Description                                                                                                                                                                                                                                     |
+| :--------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|     {{< figure src="/static/img/docs/queries/query-editor-help-7-4.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" alt="Help icon" >}}     | Toggles query editor help. If supported by the data source, click this icon to display information on how to use the query editor or provide quick access to common queries.                                                                    |
+| {{< figure src="/static/img/docs/queries/duplicate-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" alt="Duplicate icon" >}} | Copies a query. Duplicating queries is useful when working with multiple complex queries that are similar and you want to either experiment with different variants or do minor alterations.                                                    |
+|      {{< figure src="/static/img/docs/queries/hide-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" alt="Hide icon" >}}      | Hides a query. Grafana does not send hidden queries to the data source.                                                                                                                                                                         |
+|    {{< figure src="/static/img/docs/queries/remove-query-icon-7-0.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" alt="Remove icon">}}     | Removes a query. Removing a query permanently deletes it, but sometimes you can recover deleted queries by reverting to previously saved versions of the panel.                                                                                 |
+|      {{< figure src="/static/img/docs/queries/query-drag-icon-7-2.png" class="docs-image--no-shadow" max-width="30px" max-height="30px" alt="Drag icon" >}}      | Reorders queries. Change the order of queries by clicking and holding the drag icon, then drag queries where desired. The order of results reflects the order of the queries, so you can often adjust your visual results based on query order. |
 
 ## Query options
 
 Click **Query options** next to the data source selector to see settings for the selected data source.
 Changes you make here affect only queries made in this panel.
 
-{{< figure src="/static/img/docs/queries/data-source-options-7-0.png" class="docs-image--no-shadow" max-width="1000px" >}}
+{{< figure src="/static/img/docs/queries/data-source-options-7-0.png" class="docs-image--no-shadow" max-width="1000px" alt="Data source query options" >}}
 
 Grafana sets defaults that are shown in dark gray text.
 Changes are displayed in white text.
@@ -157,6 +158,11 @@ Panel data source query options include:
 - **Min interval:** Sets a minimum limit for the automatically calculated interval, which is typically the minimum scrape interval.
   If a data point is saved every 15 seconds, you don't benefit from having an interval lower than that.
   You can also set this to a higher minimum than the scrape interval to retrieve queries that are more coarse-grained and well-functioning.
+
+  {{% admonition type="note" %}}
+  The **Min interval** corresponds to the min step in Prometheus. Changing the Prometheus interval can change the start and end of the query range because Prometheus aligns the range to the interval. Refer to [Min step](https://grafana.com/docs/grafana/latest/datasources/prometheus/query-editor/#min-step) for more details.
+  {{% /admonition %}}
+
 - **Interval:** Sets a time span that you can use when aggregating or grouping data points by time.
 
   Grafana automatically calculates an appropriate interval that you can use as a variable in templated queries.

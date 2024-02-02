@@ -1,4 +1,4 @@
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import {
   QueryEditorArrayExpression,
@@ -146,10 +146,11 @@ export default class SQLGenerator {
   }
 
   private formatValue(label: string): string {
-    const specialCharacters = /[/\s\.-]/; // slash, space, dot or dash
+    const specialCharacters = /[/\s\.%-]/; // slash, space, dot, percent, or dash
+    const startsWithNumber = /^\d/;
 
     const interpolated = this.templateSrv.replace(label, {}, 'raw');
-    if (specialCharacters.test(interpolated)) {
+    if (specialCharacters.test(interpolated) || startsWithNumber.test(interpolated)) {
       return `"${label}"`;
     }
 

@@ -6,32 +6,34 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
 	store    store
-	cfg      *setting.Cfg
-	features *featuremgmt.FeatureManager
+	defaults pref.Preference
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureManager) pref.Service {
-	service := &Service{
-		cfg:      cfg,
-		features: features,
-	}
-	if features.IsEnabled(featuremgmt.FlagNewDBLibrary) {
-		service.store = &sqlxStore{
-			sess: db.GetSqlxSession(),
-		}
-	} else {
-		service.store = &sqlStore{
+func ProvideService(db db.DB, cfg *setting.Cfg) pref.Service {
+	return &Service{
+		store: &sqlStore{
 			db: db,
-		}
+		},
+		defaults: prefsFromConfig(cfg),
 	}
-	return service
+}
+
+func prefsFromConfig(cfg *setting.Cfg) pref.Preference {
+	return pref.Preference{
+		Theme:           cfg.DefaultTheme,
+		Timezone:        cfg.DateFormats.DefaultTimezone,
+		WeekStart:       &cfg.DateFormats.DefaultWeekStart,
+		HomeDashboardID: 0,
+		JSONData: &pref.PreferenceJSONData{
+			Language: cfg.DefaultLanguage,
+		},
+	}
 }
 
 func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreferenceWithDefaultsQuery) (*pref.Preference, error) {
@@ -217,16 +219,15 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 }
 
 func (s *Service) GetDefaults() *pref.Preference {
-	defaults := &pref.Preference{
-		Theme:           s.cfg.DefaultTheme,
-		Timezone:        s.cfg.DateFormats.DefaultTimezone,
-		WeekStart:       &s.cfg.DateFormats.DefaultWeekStart,
+	return &pref.Preference{
+		Theme:           s.defaults.Theme,
+		Timezone:        s.defaults.Timezone,
+		WeekStart:       s.defaults.WeekStart,
 		HomeDashboardID: 0,
-		JSONData:        &pref.PreferenceJSONData{},
+		JSONData: &pref.PreferenceJSONData{
+			Language: s.defaults.JSONData.Language,
+		},
 	}
-	defaults.JSONData.Language = s.cfg.DefaultLanguage
-
-	return defaults
 }
 
 func (s *Service) DeleteByUser(ctx context.Context, userID int64) error {

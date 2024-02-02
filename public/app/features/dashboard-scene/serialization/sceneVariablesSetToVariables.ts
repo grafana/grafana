@@ -1,27 +1,20 @@
-import {
-  SceneVariableSet,
-  QueryVariable,
-  CustomVariable,
-  DataSourceVariable,
-  ConstantVariable,
-  IntervalVariable,
-} from '@grafana/scenes';
-import { VariableModel, VariableHide, VariableRefresh, VariableSort } from '@grafana/schema';
+import { SceneVariables, sceneUtils } from '@grafana/scenes';
+import { VariableHide, VariableModel, VariableRefresh, VariableSort } from '@grafana/schema';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
 
-export function sceneVariablesSetToVariables(set: SceneVariableSet) {
+export function sceneVariablesSetToVariables(set: SceneVariables) {
   const variables: VariableModel[] = [];
   for (const variable of set.state.variables) {
     const commonProperties = {
       name: variable.state.name,
       label: variable.state.label,
-      description: variable.state.description,
+      description: variable.state.description ?? undefined,
       skipUrlSync: Boolean(variable.state.skipUrlSync),
       hide: variable.state.hide || VariableHide.dontHide,
       type: variable.state.type,
     };
-    if (variable instanceof QueryVariable) {
+    if (sceneUtils.isQueryVariable(variable)) {
       variables.push({
         ...commonProperties,
         current: {
@@ -32,6 +25,7 @@ export function sceneVariablesSetToVariables(set: SceneVariableSet) {
         },
         options: [],
         query: variable.state.query,
+        definition: variable.state.definition,
         datasource: variable.state.datasource,
         sort: variable.state.sort,
         refresh: variable.state.refresh,
@@ -40,9 +34,8 @@ export function sceneVariablesSetToVariables(set: SceneVariableSet) {
         includeAll: variable.state.includeAll,
         multi: variable.state.isMulti,
         skipUrlSync: variable.state.skipUrlSync,
-        hide: variable.state.hide || VariableHide.dontHide,
       });
-    } else if (variable instanceof CustomVariable) {
+    } else if (sceneUtils.isCustomVariable(variable)) {
       variables.push({
         ...commonProperties,
         current: {
@@ -57,7 +50,7 @@ export function sceneVariablesSetToVariables(set: SceneVariableSet) {
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
       });
-    } else if (variable instanceof DataSourceVariable) {
+    } else if (sceneUtils.isDataSourceVariable(variable)) {
       variables.push({
         ...commonProperties,
         current: {
@@ -74,7 +67,7 @@ export function sceneVariablesSetToVariables(set: SceneVariableSet) {
         allValue: variable.state.allValue,
         includeAll: variable.state.includeAll,
       });
-    } else if (variable instanceof ConstantVariable) {
+    } else if (sceneUtils.isConstantVariable(variable)) {
       variables.push({
         ...commonProperties,
         current: {
@@ -87,7 +80,7 @@ export function sceneVariablesSetToVariables(set: SceneVariableSet) {
         query: variable.state.value,
         hide: VariableHide.hideVariable,
       });
-    } else if (variable instanceof IntervalVariable) {
+    } else if (sceneUtils.isIntervalVariable(variable)) {
       const intervals = getIntervalsQueryFromNewIntervalModel(variable.state.intervals);
       variables.push({
         ...commonProperties,
@@ -96,12 +89,20 @@ export function sceneVariablesSetToVariables(set: SceneVariableSet) {
           value: variable.state.value,
         },
         query: intervals,
-        hide: VariableHide.hideVariable,
         refresh: variable.state.refresh,
         // @ts-expect-error ?? how to fix this without adding the ts-expect-error
         auto: variable.state.autoEnabled,
         auto_min: variable.state.autoMinInterval,
         auto_count: variable.state.autoStepCount,
+      });
+    } else if (sceneUtils.isTextBoxVariable(variable)) {
+      variables.push({
+        ...commonProperties,
+        current: {
+          text: variable.state.value,
+          value: variable.state.value,
+        },
+        query: variable.state.value,
       });
     } else {
       throw new Error('Unsupported variable type');

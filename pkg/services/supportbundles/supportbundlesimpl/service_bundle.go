@@ -74,9 +74,15 @@ func (s *Service) bundle(ctx context.Context, collectors []string, uid string) (
 	files := map[string][]byte{}
 
 	for _, collector := range s.bundleRegistry.Collectors() {
-		if !lookup[collector.UID] && !collector.IncludedByDefault {
+		collectorEnabled := true
+		if collector.EnabledFn != nil {
+			collectorEnabled = collector.EnabledFn()
+		}
+
+		if !(lookup[collector.UID] || collector.IncludedByDefault) || !collectorEnabled {
 			continue
 		}
+
 		item, err := collector.Fn(ctx)
 		if err != nil {
 			s.log.Warn("Failed to collect support bundle item", "error", err, "collector", collector.UID)

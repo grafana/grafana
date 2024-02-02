@@ -309,7 +309,8 @@ export async function getAfterSelectorCompletions(
     query = trimEnd(logQuery, '| ');
   }
 
-  const { extractedLabelKeys, hasJSON, hasLogfmt, hasPack } = await dataProvider.getParserAndLabelKeys(query);
+  const { extractedLabelKeys, structuredMetadataKeys, hasJSON, hasLogfmt, hasPack } =
+    await dataProvider.getParserAndLabelKeys(query);
   const hasQueryParser = isQueryWithParser(query).queryWithParser;
 
   const prefix = `${hasSpace ? '' : ' '}${afterPipe ? '' : '| '}`;
@@ -325,6 +326,15 @@ export async function getAfterSelectorCompletions(
   const pipeOperations = getPipeOperationsCompletions(prefix);
 
   const completions = [...parserCompletions, ...pipeOperations];
+
+  structuredMetadataKeys.forEach((key) => {
+    completions.push({
+      type: 'LABEL_NAME',
+      label: `${key} (detected)`,
+      insertText: `${prefix}${key}`,
+      documentation: `"${key}" was suggested based on structured metadata attached to your loglines.`,
+    });
+  });
 
   // Let's show label options only if query has parser
   if (hasQueryParser) {

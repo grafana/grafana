@@ -50,7 +50,10 @@ func (m *HTTPClientMiddleware) applyHeaders(ctx context.Context, pReq any) conte
 
 			if h, ok := pReq.(backend.ForwardHTTPHeaders); ok {
 				for k, v := range h.GetHTTPHeaders() {
-					req.Header[k] = v
+					// Only set a header if it is not already set.
+					if req.Header.Get(k) == "" {
+						req.Header[k] = v
+					}
 				}
 			}
 

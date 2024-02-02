@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { withinExplore } from './setup';
+import { getAllByRoleInQueryHistoryTab, withinExplore } from './setup';
 
 export const changeDatasource = async (name: string) => {
   const datasourcePicker = (await screen.findByTestId(selectors.components.DataSourcePicker.container)).children[0];
@@ -74,8 +74,7 @@ export const loadMoreQueryHistory = async (exploreId = 'left') => {
   await userEvent.click(button);
 };
 
-const invokeAction = async (queryIndex: number, actionAccessibleName: string, exploreId: string) => {
-  const selector = withinExplore(exploreId);
-  const buttons = selector.getAllByRole('button', { name: actionAccessibleName });
+const invokeAction = async (queryIndex: number, actionAccessibleName: string | RegExp, exploreId: string) => {
+  const buttons = getAllByRoleInQueryHistoryTab(exploreId, 'button', actionAccessibleName);
   await userEvent.click(buttons[queryIndex]);
 };

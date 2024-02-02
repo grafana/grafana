@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	rs "github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -248,7 +248,7 @@ func createUserAndTeam(t *testing.T, userSrv user.Service, teamSvc team.Service,
 	team, err := teamSvc.CreateTeam("team", "", orgID)
 	require.NoError(t, err)
 
-	err = teamSvc.AddTeamMember(user.ID, orgID, team.ID, false, dashboards.PERMISSION_VIEW)
+	err = teamSvc.AddTeamMember(user.ID, orgID, team.ID, false, dashboardaccess.PERMISSION_VIEW)
 	require.NoError(t, err)
 
 	return user, team
@@ -296,7 +296,7 @@ func createUsersAndTeams(t *testing.T, svcs helperServices, orgID int64, users [
 		team, err := svcs.teamSvc.CreateTeam(fmt.Sprintf("team%v", i+1), "", orgID)
 		require.NoError(t, err)
 
-		err = svcs.teamSvc.AddTeamMember(user.ID, orgID, team.ID, false, dashboards.PERMISSION_VIEW)
+		err = svcs.teamSvc.AddTeamMember(user.ID, orgID, team.ID, false, dashboardaccess.PERMISSION_VIEW)
 		require.NoError(t, err)
 
 		err = svcs.orgSvc.UpdateOrgUser(context.Background(),
@@ -522,6 +522,20 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 			},
 			options: accesscontrol.SearchOptions{Scope: "teams:id:1"},
 			wantPerm: map[int64][]accesscontrol.Permission{1: {
+				{Action: "teams:read", Scope: "teams:id:1"},
+				{Action: "teams:write", Scope: "teams:id:1"},
+			}},
+		},
+		{
+			name:  "user assignment by scope",
+			users: []testUser{{orgRole: org.RoleAdmin, isAdmin: false}},
+			permCmds: []rs.SetResourcePermissionsCommand{
+				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("*")}, // hack to have a global permission
+				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: writeTeamPerm("1")},
+			},
+			options: accesscontrol.SearchOptions{Scope: "teams:id:1"},
+			wantPerm: map[int64][]accesscontrol.Permission{1: {
+				{Action: "teams:read", Scope: "teams:id:*"},
 				{Action: "teams:read", Scope: "teams:id:1"},
 				{Action: "teams:write", Scope: "teams:id:1"},
 			}},

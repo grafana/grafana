@@ -16,7 +16,7 @@ schemas: [{
 		// grafana.com, then the plugin `id` has to follow the naming
 		// conventions.
 		id: string & strings.MinRunes(1)
-		id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([ for t in _types {t}], "|"))))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|datagrid|gauge|geomap|gettingstarted|graph|heatmap|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|trend|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|grafana-testdata-datasource|zipkin|phlare|parca)$"
+		id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([ for t in _types {t}], "|"))))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|datagrid|gauge|geomap|gettingstarted|graph|heatmap|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|trend|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|grafana-cloud-monitoring-datasource|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|grafana-testdata-datasource|zipkin|phlare|parca)$"
 
 		// An alias is useful when migrating from one plugin id to another (rebranding etc)
 		// This should be used sparingly, and is currently only supported though a hardcoded checklist
@@ -364,6 +364,9 @@ schemas: [{
 			reqSignedIn?: bool
 			reqRole?:     string
 
+			// RBAC action the user must have to access the route. i.e. plugin-id.projects:read
+			reqAction?: string
+
 			// For data source plugins. Route headers adds HTTP headers to the
 			// proxied request.
 			headers?: [...#Header]
@@ -410,12 +413,13 @@ schemas: [{
 			params: [string]: string
 		}
 
-		// External service registration information
-		externalServiceRegistration: #ExternalServiceRegistration
+		// Identity and Access Management information.
+		// Allows the plugin to define the permissions it requires to have on Grafana.
+		iam: #IAM
 
-		// ExternalServiceRegistration allows the service to get a service account token
+		// IAM allows the plugin to get a service account with tailored permissions and a token
 		// (or to use the client_credentials grant if the token provider is the OAuth2 Server)
-		#ExternalServiceRegistration: {
+		#IAM: {
 			// Permissions are the permissions that the external service needs its associated service account to have.
 			permissions?: [...#Permission]
 

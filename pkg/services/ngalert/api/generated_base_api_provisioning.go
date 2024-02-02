@@ -24,6 +24,8 @@ type ProvisioningApi interface {
 	RouteDeleteContactpoints(*contextmodel.ReqContext) response.Response
 	RouteDeleteMuteTiming(*contextmodel.ReqContext) response.Response
 	RouteDeleteTemplate(*contextmodel.ReqContext) response.Response
+	RouteExportMuteTiming(*contextmodel.ReqContext) response.Response
+	RouteExportMuteTimings(*contextmodel.ReqContext) response.Response
 	RouteGetAlertRule(*contextmodel.ReqContext) response.Response
 	RouteGetAlertRuleExport(*contextmodel.ReqContext) response.Response
 	RouteGetAlertRuleGroup(*contextmodel.ReqContext) response.Response
@@ -69,6 +71,14 @@ func (f *ProvisioningApiHandler) RouteDeleteTemplate(ctx *contextmodel.ReqContex
 	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
 	return f.handleRouteDeleteTemplate(ctx, nameParam)
+}
+func (f *ProvisioningApiHandler) RouteExportMuteTiming(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Path Parameters
+	nameParam := web.Params(ctx.Req)[":name"]
+	return f.handleRouteExportMuteTiming(ctx, nameParam)
+}
+func (f *ProvisioningApiHandler) RouteExportMuteTimings(ctx *contextmodel.ReqContext) response.Response {
+	return f.handleRouteExportMuteTimings(ctx)
 }
 func (f *ProvisioningApiHandler) RouteGetAlertRule(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
@@ -260,6 +270,30 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 				http.MethodDelete,
 				"/api/v1/provisioning/templates/{name}",
 				api.Hooks.Wrap(srv.RouteDeleteTemplate),
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/v1/provisioning/mute-timings/{name}/export"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/mute-timings/{name}/export"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/v1/provisioning/mute-timings/{name}/export",
+				api.Hooks.Wrap(srv.RouteExportMuteTiming),
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/v1/provisioning/mute-timings/export"),
+			requestmeta.SetOwner(requestmeta.TeamAlerting),
+			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/mute-timings/export"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/v1/provisioning/mute-timings/export",
+				api.Hooks.Wrap(srv.RouteExportMuteTimings),
 				m,
 			),
 		)

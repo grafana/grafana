@@ -3,7 +3,7 @@ aliases:
   - ../unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/
   - ../unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
-description: Configure recording rules
+description: Configure recording rules for an external Grafana Mimir or Loki instance
 keywords:
   - grafana
   - alerting
@@ -48,7 +48,7 @@ To create recording rules, follow these steps.
 
 1. Click **Alerts & IRM** -> **Alerting** ->
    **Alert rules**.
-1. Click the **More** dropdown and then **New recording rule**.
+1. Click **New recording rule**.
 
 1. Set rule name.
 

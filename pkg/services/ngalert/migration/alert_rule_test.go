@@ -7,14 +7,14 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
-	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
-	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
@@ -97,30 +97,33 @@ func TestMigrateAlertRuleQueries(t *testing.T) {
 func TestAddMigrationInfo(t *testing.T) {
 	tt := []struct {
 		name                string
-		alert               *migrationStore.DashAlert
+		alert               *legacymodels.Alert
 		dashboard           string
-		expectedLabels      map[string]string
-		expectedAnnotations map[string]string
+		expectedLabels      data.Labels
+		expectedAnnotations data.Labels
 	}{
 		{
-			name:                "when alert rule tags are a JSON array, they're ignored.",
-			alert:               &migrationStore.DashAlert{Alert: &legacymodels.Alert{ID: 43, PanelID: 42}, ParsedSettings: &migrationStore.DashAlertSettings{AlertRuleTags: []string{"one", "two", "three", "four"}}},
+			name: "when alert rule tags are a JSON array, they're ignored.",
+			alert: &legacymodels.Alert{ID: 43, PanelID: 42, Message: "message", Settings: simplejson.NewFromAny(map[string]any{
+				"alertRuleTags": []string{"one", "two", "three", "four"},
+			})},
 			dashboard:           "dashboard",
-			expectedLabels:      map[string]string{},
-			expectedAnnotations: map[string]string{"__alertId__": "43", "__dashboardUid__": "dashboard", "__panelId__": "42"},
+			expectedLabels:      data.Labels{models.MigratedUseLegacyChannelsLabel: "true"},
+			expectedAnnotations: data.Labels{models.MigratedAlertIdAnnotation: "43", models.DashboardUIDAnnotation: "dashboard", models.PanelIDAnnotation: "42", "message": "message"},
 		},
 		{
-			name:                "when alert rule tags are a JSON object",
-			alert:               &migrationStore.DashAlert{Alert: &legacymodels.Alert{ID: 43, PanelID: 42}, ParsedSettings: &migrationStore.DashAlertSettings{AlertRuleTags: map[string]any{"key": "value", "key2": "value2"}}},
-			dashboard:           "dashboard",
-			expectedLabels:      map[string]string{"key": "value", "key2": "value2"},
-			expectedAnnotations: map[string]string{"__alertId__": "43", "__dashboardUid__": "dashboard", "__panelId__": "42"},
+			name: "when alert rule tags are a JSON object",
+			alert: &legacymodels.Alert{ID: 43, PanelID: 42, Message: "message", Settings: simplejson.NewFromAny(map[string]any{
+				"alertRuleTags": map[string]any{"key": "value", "key2": "value2"},
+			})}, dashboard: "dashboard",
+			expectedLabels:      data.Labels{models.MigratedUseLegacyChannelsLabel: "true", "key": "value", "key2": "value2"},
+			expectedAnnotations: data.Labels{models.MigratedAlertIdAnnotation: "43", models.DashboardUIDAnnotation: "dashboard", models.PanelIDAnnotation: "42", "message": "message"},
 		},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			labels, annotations := addMigrationInfo(tc.alert, tc.dashboard)
+			labels, annotations := addLabelsAndAnnotations(&logtest.Fake{}, tc.alert, tc.dashboard)
 			require.Equal(t, tc.expectedLabels, labels)
 			require.Equal(t, tc.expectedAnnotations, annotations)
 		})
@@ -129,58 +132,17 @@ func TestAddMigrationInfo(t *testing.T) {
 
 func TestMakeAlertRule(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
-	info := migmodels.DashboardUpgradeInfo{
-		DashboardUID:  "dashboarduid",
-		DashboardName: "dashboardname",
-		NewFolderUID:  "ewfolderuid",
-		NewFolderName: "newfoldername",
-	}
+	dashboard := dashboards.Dashboard{ID: 1, UID: "dashboarduid", Title: "dashboardname"}
 	t.Run("when mapping rule names", func(t *testing.T) {
 		t.Run("leaves basic names untouched", func(t *testing.T) {
 			service := NewTestMigrationService(t, sqlStore, nil)
 			m := service.newOrgMigration(1)
 			da := createTestDashAlert()
 
-			ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+			ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
 
 			require.NoError(t, err)
 			require.Equal(t, da.Name, ar.Title)
-		})
-
-		t.Run("truncates very long names to max length", func(t *testing.T) {
-			service := NewTestMigrationService(t, sqlStore, nil)
-			m := service.newOrgMigration(1)
-			da := createTestDashAlert()
-			da.Name = strings.Repeat("a", store.AlertDefinitionMaxTitleLength+1)
-
-			ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
-
-			require.NoError(t, err)
-			require.Len(t, ar.Title, store.AlertDefinitionMaxTitleLength)
-		})
-
-		t.Run("deduplicate names in same org and folder", func(t *testing.T) {
-			service := NewTestMigrationService(t, sqlStore, nil)
-			m := service.newOrgMigration(1)
-			da := createTestDashAlert()
-			da.Name = strings.Repeat("a", store.AlertDefinitionMaxTitleLength+1)
-
-			ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
-
-			require.NoError(t, err)
-			require.Len(t, ar.Title, store.AlertDefinitionMaxTitleLength)
-
-			da = createTestDashAlert()
-			da.Name = strings.Repeat("a", store.AlertDefinitionMaxTitleLength+1)
-
-			ar, err = m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
-
-			require.NoError(t, err)
-			require.Len(t, ar.Title, store.AlertDefinitionMaxTitleLength)
-			parts := strings.SplitN(ar.Title, "_", 2)
-			require.Len(t, parts, 2)
-			require.Greater(t, len(parts[1]), 8, "unique identifier should be longer than 9 characters")
-			require.Equal(t, store.AlertDefinitionMaxTitleLength-1, len(parts[0])+len(parts[1]), "truncated name + underscore + unique identifier should together be DefaultFieldMaxLength")
 		})
 	})
 
@@ -189,7 +151,7 @@ func TestMakeAlertRule(t *testing.T) {
 		m := service.newOrgMigration(1)
 		da := createTestDashAlert()
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
 		require.NoError(t, err)
 		require.False(t, ar.IsPaused)
 	})
@@ -200,7 +162,7 @@ func TestMakeAlertRule(t *testing.T) {
 		da := createTestDashAlert()
 		da.State = "paused"
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
 		require.NoError(t, err)
 		require.True(t, ar.IsPaused)
 	})
@@ -209,9 +171,9 @@ func TestMakeAlertRule(t *testing.T) {
 		service := NewTestMigrationService(t, sqlStore, nil)
 		m := service.newOrgMigration(1)
 		da := createTestDashAlert()
-		da.ParsedSettings.NoDataState = uuid.NewString()
+		da.Settings.Set("noDataState", uuid.NewString())
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
 		require.Nil(t, err)
 		require.Equal(t, models.NoData, ar.NoDataState)
 	})
@@ -220,9 +182,9 @@ func TestMakeAlertRule(t *testing.T) {
 		service := NewTestMigrationService(t, sqlStore, nil)
 		m := service.newOrgMigration(1)
 		da := createTestDashAlert()
-		da.ParsedSettings.ExecutionErrorState = uuid.NewString()
+		da.Settings.Set("executionErrorState", uuid.NewString())
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
 		require.Nil(t, err)
 		require.Equal(t, models.ErrorErrState, ar.ExecErrState)
 	})
@@ -233,7 +195,7 @@ func TestMakeAlertRule(t *testing.T) {
 		da := createTestDashAlert()
 		da.Message = "Instance ${instance} is down"
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
 		require.Nil(t, err)
 		expected :=
 			"{{- $mergedLabels := mergeLabelValues $values -}}\n" +
@@ -241,78 +203,99 @@ func TestMakeAlertRule(t *testing.T) {
 		require.Equal(t, expected, ar.Annotations["message"])
 	})
 
-	t.Run("create unique group from dashboard title and panel", func(t *testing.T) {
+	t.Run("create unique group from dashboard title and humanized interval", func(t *testing.T) {
 		service := NewTestMigrationService(t, sqlStore, nil)
 		m := service.newOrgMigration(1)
 		da := createTestDashAlert()
 		da.PanelID = 42
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
-
-		require.NoError(t, err)
-		require.Equal(t, fmt.Sprintf("%s - %d", info.DashboardName, da.PanelID), ar.RuleGroup)
-	})
-
-	t.Run("truncate rule group if dashboard name + panel id is too long", func(t *testing.T) {
-		service := NewTestMigrationService(t, sqlStore, nil)
-		m := service.newOrgMigration(1)
-		da := createTestDashAlert()
-		da.PanelID = 42
-		info := migmodels.DashboardUpgradeInfo{
-			DashboardUID:  "dashboarduid",
-			DashboardName: strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-1),
-			NewFolderUID:  "newfolderuid",
-			NewFolderName: "newfoldername",
+		intervalTests := []struct {
+			interval int64
+			expected string
+		}{
+			{interval: 10, expected: "10s"},
+			{interval: 30, expected: "30s"},
+			{interval: 60, expected: "1m"},
+			{interval: 120, expected: "2m"},
+			{interval: 3600, expected: "1h"},
+			{interval: 7200, expected: "2h"},
+			{interval: 86400, expected: "1d"},
+			{interval: 172800, expected: "2d"},
+			{interval: 604800, expected: "1w"},
+			{interval: 1209600, expected: "2w"},
+			{interval: 31536000, expected: "1y"},
+			{interval: 63072000, expected: "2y"},
+			{interval: 60 + 30, expected: "1m30s"},
+			{interval: 3600 + 10, expected: "1h10s"},
+			{interval: 3600 + 60, expected: "1h1m"},
+			{interval: 3600 + 60 + 10, expected: "1h1m10s"},
+			{interval: 86400 + 10, expected: "1d10s"},
+			{interval: 86400 + 60, expected: "1d1m"},
+			{interval: 86400 + 3600, expected: "1d1h"},
+			{interval: 86400 + 3600 + 60, expected: "1d1h1m"},
+			{interval: 86400 + 3600 + 10, expected: "1d1h10s"},
+			{interval: 86400 + 60 + 10, expected: "1d1m10s"},
+			{interval: 86400 + 3600 + 60 + 10, expected: "1d1h1m10s"},
+			{interval: 604800 + 86400 + 3600 + 60 + 10, expected: "8d1h1m10s"},
+			{interval: 31536000 + 604800 + 86400 + 3600 + 60 + 10, expected: "373d1h1m10s"},
 		}
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+		for _, test := range intervalTests {
+			t.Run(fmt.Sprintf("interval %ds should be %s", test.interval, test.expected), func(t *testing.T) {
+				da.Frequency = test.interval
+
+				ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
+
+				require.NoError(t, err)
+				require.Equal(t, fmt.Sprintf("%s - %s", dashboard.Title, test.expected), ar.RuleGroup)
+			})
+		}
+	})
+
+	t.Run("truncate dashboard name part of rule group if too long", func(t *testing.T) {
+		service := NewTestMigrationService(t, sqlStore, nil)
+		m := service.newOrgMigration(1)
+		da := createTestDashAlert()
+		longNamedDashboard := dashboards.Dashboard{UID: "dashboarduid", Title: strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-1)}
+
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &longNamedDashboard)
 
 		require.NoError(t, err)
 		require.Len(t, ar.RuleGroup, store.AlertRuleMaxRuleGroupNameLength)
-		require.Equal(t, fmt.Sprintf("%s - %d", strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-5), da.PanelID), ar.RuleGroup)
+		suffix := fmt.Sprintf(" - %ds", ar.IntervalSeconds)
+		require.Equal(t, fmt.Sprintf("%s%s", strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-len(suffix)), suffix), ar.RuleGroup)
 	})
 
-	t.Run("deduplicate rule group name if truncation is not unique", func(t *testing.T) {
+	t.Run("keep last state error dash alert is silenced", func(t *testing.T) {
 		service := NewTestMigrationService(t, sqlStore, nil)
 		m := service.newOrgMigration(1)
 		da := createTestDashAlert()
-		da.PanelID = 42
-		info := migmodels.DashboardUpgradeInfo{
-			DashboardUID:  "dashboarduid",
-			DashboardName: strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-1),
-			NewFolderUID:  "newfolderuid",
-			NewFolderName: "newfoldername",
-		}
+		da.Settings.Set("executionErrorState", "keep_state")
 
-		_, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
 		require.NoError(t, err)
 
-		da = createTestDashAlert()
-		da.PanelID = 42
-		info = migmodels.DashboardUpgradeInfo{
-			DashboardUID:  "dashboarduid",
-			DashboardName: strings.Repeat("a", store.AlertRuleMaxRuleGroupNameLength-1),
-			NewFolderUID:  "newfolderuid",
-			NewFolderName: "newfoldername",
-		}
+		require.Equal(t, ar.Labels[models.MigratedSilenceLabelErrorKeepState], "true")
+	})
 
-		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, &da, info)
+	t.Run("keep last state nodata dash alert is silenced", func(t *testing.T) {
+		service := NewTestMigrationService(t, sqlStore, nil)
+		m := service.newOrgMigration(1)
+		da := createTestDashAlert()
+		da.Settings.Set("noDataState", "keep_state")
 
+		ar, err := m.migrateAlert(context.Background(), &logtest.Fake{}, da, &dashboard)
 		require.NoError(t, err)
-		require.Len(t, ar.RuleGroup, store.AlertRuleMaxRuleGroupNameLength)
-		parts := strings.SplitN(ar.RuleGroup, "_", 2)
-		require.Len(t, parts, 2)
-		require.Greater(t, len(parts[1]), 8, "unique identifier should be longer than 9 characters")
-		require.Equal(t, store.AlertDefinitionMaxTitleLength-1, len(parts[0])+len(parts[1]), "truncated name + underscore + unique identifier should together be DefaultFieldMaxLength")
+
+		require.Equal(t, ar.Labels[models.MigratedSilenceLabelNodataKeepState], "true")
 	})
 }
 
-func createTestDashAlert() migrationStore.DashAlert {
-	return migrationStore.DashAlert{
-		Alert: &legacymodels.Alert{
-			ID:   1,
-			Name: "test",
-		},
-		ParsedSettings: &migrationStore.DashAlertSettings{},
+func createTestDashAlert() *legacymodels.Alert {
+	return &legacymodels.Alert{
+		OrgID:    1,
+		ID:       1,
+		Name:     "test",
+		Settings: simplejson.New(),
 	}
 }

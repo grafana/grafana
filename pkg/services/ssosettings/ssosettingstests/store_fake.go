@@ -10,28 +10,42 @@ import (
 var _ ssosettings.Store = (*FakeStore)(nil)
 
 type FakeStore struct {
-	ExpectedSSOSetting  *models.SSOSetting
-	ExpectedSSOSettings []*models.SSOSetting
+	ExpectedSSOSetting  *models.SSOSettings
+	ExpectedSSOSettings []*models.SSOSettings
 	ExpectedError       error
+
+	ActualSSOSettings models.SSOSettings
+
+	GetFn    func(ctx context.Context, provider string) (*models.SSOSettings, error)
+	UpsertFn func(ctx context.Context, settings *models.SSOSettings) error
 }
 
 func NewFakeStore() *FakeStore {
 	return &FakeStore{}
 }
 
-func (f *FakeStore) Get(ctx context.Context, provider string) (*models.SSOSetting, error) {
+func (f *FakeStore) Get(ctx context.Context, provider string) (*models.SSOSettings, error) {
+	if f.GetFn != nil {
+		return f.GetFn(ctx, provider)
+	}
 	return f.ExpectedSSOSetting, f.ExpectedError
 }
 
-func (f *FakeStore) List(ctx context.Context) ([]*models.SSOSetting, error) {
+func (f *FakeStore) List(ctx context.Context) ([]*models.SSOSettings, error) {
 	return f.ExpectedSSOSettings, f.ExpectedError
 }
 
-func (f *FakeStore) Upsert(ctx context.Context, provider string, data map[string]interface{}) error {
+func (f *FakeStore) Upsert(ctx context.Context, settings *models.SSOSettings) error {
+	if f.UpsertFn != nil {
+		return f.UpsertFn(ctx, settings)
+	}
+
+	f.ActualSSOSettings = *settings
+
 	return f.ExpectedError
 }
 
-func (f *FakeStore) Patch(ctx context.Context, provider string, data map[string]interface{}) error {
+func (f *FakeStore) Patch(ctx context.Context, provider string, data map[string]any) error {
 	return f.ExpectedError
 }
 

@@ -10,10 +10,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -145,6 +147,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 		}
 	}
 
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 	element := model.LibraryElement{
 		OrgID:    signedInUser.GetOrgID(),
 		FolderID: cmd.FolderID, // nolint:staticcheck
@@ -166,7 +169,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 	}
 
 	err = l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		if l.features.IsEnabled(featuremgmt.FlagLibraryPanelRBAC) {
+		if l.features.IsEnabled(c, featuremgmt.FlagLibraryPanelRBAC) {
 			allowed, err := l.AccessControl.Evaluate(c, signedInUser, ac.EvalPermission(ActionLibraryPanelsCreate, dashboards.ScopeFoldersProvider.GetResourceScopeUID(*cmd.FolderUID)))
 			if !allowed {
 				return fmt.Errorf("insufficient permissions for creating library panel in folder with UID %s", *cmd.FolderUID)
@@ -175,6 +178,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 				return err
 			}
 		} else {
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 			// nolint:staticcheck
 			if err := l.requireEditPermissionsOnFolder(c, signedInUser, cmd.FolderID); err != nil {
 				return err
@@ -189,6 +193,7 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 		return nil
 	})
 
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 	dto := model.LibraryElementDTO{
 		ID:          element.ID,
 		OrgID:       element.OrgID,
@@ -207,12 +212,12 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 			CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 				Id:        element.CreatedBy,
 				Name:      signedInUser.GetLogin(),
-				AvatarUrl: dtos.GetGravatarUrl(signedInUser.GetEmail()),
+				AvatarUrl: dtos.GetGravatarUrl(l.Cfg, signedInUser.GetEmail()),
 			},
 			UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
 				Id:        element.UpdatedBy,
 				Name:      signedInUser.GetLogin(),
-				AvatarUrl: dtos.GetGravatarUrl(signedInUser.GetEmail()),
+				AvatarUrl: dtos.GetGravatarUrl(l.Cfg, signedInUser.GetEmail()),
 			},
 		},
 	}
@@ -228,6 +233,7 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 		if err != nil {
 			return err
 		}
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		// nolint:staticcheck
 		if err := l.requireEditPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
 			return err
@@ -279,6 +285,7 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		builder.Write(", ? as folder_name ", cmd.FolderName)
 		builder.Write(", '' as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		// nolint:staticcheck
 		writeParamSelectorSQL(&builder, append(params, Pair{"folder_id", cmd.FolderID})...)
 		builder.Write(" UNION ")
@@ -288,7 +295,7 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
 		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id <> 0")
 		writeParamSelectorSQL(&builder, params...)
-		builder.WriteDashboardPermissionFilter(signedInUser, dashboards.PERMISSION_VIEW, "")
+		builder.WriteDashboardPermissionFilter(signedInUser, dashboardaccess.PERMISSION_VIEW, "")
 		builder.Write(` OR dashboard.id=0`)
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElements); err != nil {
 			return err
@@ -313,6 +320,7 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 			}
 		}
 
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		leDtos[i] = model.LibraryElementDTO{
 			ID:          libraryElement.ID,
 			OrgID:       libraryElement.OrgID,
@@ -334,12 +342,12 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 				CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 					Id:        libraryElement.CreatedBy,
 					Name:      libraryElement.CreatedByName,
-					AvatarUrl: dtos.GetGravatarUrl(libraryElement.CreatedByEmail),
+					AvatarUrl: dtos.GetGravatarUrl(l.Cfg, libraryElement.CreatedByEmail),
 				},
 				UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
 					Id:        libraryElement.UpdatedBy,
 					Name:      libraryElement.UpdatedByName,
-					AvatarUrl: dtos.GetGravatarUrl(libraryElement.UpdatedByEmail),
+					AvatarUrl: dtos.GetGravatarUrl(l.Cfg, libraryElement.UpdatedByEmail),
 				},
 			},
 		}
@@ -421,7 +429,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			return err
 		}
 		if !signedInUser.HasRole(org.RoleAdmin) {
-			builder.WriteDashboardPermissionFilter(signedInUser, dashboards.PERMISSION_VIEW, "")
+			builder.WriteDashboardPermissionFilter(signedInUser, dashboardaccess.PERMISSION_VIEW, "")
 		}
 		if query.SortDirection == search.SortAlphaDesc.Name {
 			builder.Write(" ORDER BY 1 DESC")
@@ -433,6 +441,7 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 			return err
 		}
 
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		retDTOs := make([]model.LibraryElementDTO, 0)
 		for _, element := range elements {
 			retDTOs = append(retDTOs, model.LibraryElementDTO{
@@ -456,12 +465,12 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 					CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 						Id:        element.CreatedBy,
 						Name:      element.CreatedByName,
-						AvatarUrl: dtos.GetGravatarUrl(element.CreatedByEmail),
+						AvatarUrl: dtos.GetGravatarUrl(l.Cfg, element.CreatedByEmail),
 					},
 					UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
 						Id:        element.UpdatedBy,
 						Name:      element.UpdatedByName,
-						AvatarUrl: dtos.GetGravatarUrl(element.UpdatedByEmail),
+						AvatarUrl: dtos.GetGravatarUrl(l.Cfg, element.UpdatedByEmail),
 					},
 				},
 			})
@@ -525,6 +534,7 @@ func (l *LibraryElementService) handleFolderIDPatches(ctx context.Context, eleme
 	if err := l.requireEditPermissionsOnFolder(ctx, user, fromFolderID); err != nil {
 		return err
 	}
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 	// nolint:staticcheck
 	elementToPatch.FolderID = toFolderID
 
@@ -572,6 +582,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 			}
 		}
 
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		var libraryElement = model.LibraryElement{
 			ID:          elementInDB.ID,
 			OrgID:       signedInUser.GetOrgID(),
@@ -595,6 +606,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 		if cmd.Model == nil {
 			libraryElement.Model = elementInDB.Model
 		}
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		// nolint:staticcheck
 		if err := l.handleFolderIDPatches(c, &libraryElement, elementInDB.FolderID, cmd.FolderID, signedInUser); err != nil {
 			return err
@@ -611,6 +623,7 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 			return model.ErrLibraryElementNotFound
 		}
 
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		dto = model.LibraryElementDTO{
 			ID:          libraryElement.ID,
 			OrgID:       libraryElement.OrgID,
@@ -629,12 +642,12 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 				CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 					Id:        elementInDB.CreatedBy,
 					Name:      elementInDB.CreatedByName,
-					AvatarUrl: dtos.GetGravatarUrl(elementInDB.CreatedByEmail),
+					AvatarUrl: dtos.GetGravatarUrl(l.Cfg, elementInDB.CreatedByEmail),
 				},
 				UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
 					Id:        libraryElement.UpdatedBy,
 					Name:      signedInUser.GetLogin(),
-					AvatarUrl: dtos.GetGravatarUrl(signedInUser.GetEmail()),
+					AvatarUrl: dtos.GetGravatarUrl(l.Cfg, signedInUser.GetEmail()),
 				},
 			},
 		}
@@ -665,7 +678,7 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 		builder.Write(" INNER JOIN dashboard AS dashboard on lec.connection_id = dashboard.id")
 		builder.Write(` WHERE lec.element_id=?`, element.ID)
 		if signedInUser.GetOrgRole() != org.RoleAdmin {
-			builder.WriteDashboardPermissionFilter(signedInUser, dashboards.PERMISSION_VIEW, "")
+			builder.WriteDashboardPermissionFilter(signedInUser, dashboardaccess.PERMISSION_VIEW, "")
 		}
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElementConnections); err != nil {
 			return err
@@ -682,7 +695,7 @@ func (l *LibraryElementService) getConnections(c context.Context, signedInUser i
 				CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 					Id:        connection.CreatedBy,
 					Name:      connection.CreatedByName,
-					AvatarUrl: dtos.GetGravatarUrl(connection.CreatedByEmail),
+					AvatarUrl: dtos.GetGravatarUrl(l.Cfg, connection.CreatedByEmail),
 				},
 			})
 		}
@@ -710,6 +723,7 @@ func (l *LibraryElementService) getElementsForDashboardID(c context.Context, das
 			return err
 		}
 
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		for _, element := range libraryElements {
 			libraryElementMap[element.UID] = model.LibraryElementDTO{
 				ID:          element.ID,
@@ -731,12 +745,12 @@ func (l *LibraryElementService) getElementsForDashboardID(c context.Context, das
 					CreatedBy: librarypanel.LibraryElementDTOMetaUser{
 						Id:        element.CreatedBy,
 						Name:      element.CreatedByName,
-						AvatarUrl: dtos.GetGravatarUrl(element.CreatedByEmail),
+						AvatarUrl: dtos.GetGravatarUrl(l.Cfg, element.CreatedByEmail),
 					},
 					UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
 						Id:        element.UpdatedBy,
 						Name:      element.UpdatedByName,
-						AvatarUrl: dtos.GetGravatarUrl(element.UpdatedByEmail),
+						AvatarUrl: dtos.GetGravatarUrl(l.Cfg, element.UpdatedByEmail),
 					},
 				},
 			}
@@ -760,6 +774,7 @@ func (l *LibraryElementService) connectElementsToDashboardID(c context.Context, 
 			if err != nil {
 				return err
 			}
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 			// nolint:staticcheck
 			if err := l.requireViewPermissionsOnFolder(c, signedInUser, element.FolderID); err != nil {
 				return err

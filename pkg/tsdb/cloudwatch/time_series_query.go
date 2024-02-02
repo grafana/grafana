@@ -3,12 +3,13 @@ package cloudwatch
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
@@ -37,7 +38,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 	}
 
 	requestQueries, err := models.ParseMetricDataQueries(req.Queries, startTime, endTime, instance.Settings.Region, logger,
-		e.features.IsEnabled(featuremgmt.FlagCloudWatchCrossAccountQuerying))
+		features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying))
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +61,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 		region := r
 
 		batches := [][]*models.CloudWatchQuery{regionQueries}
-		if e.features.IsEnabled(featuremgmt.FlagCloudWatchBatchQueries) {
+		if features.IsEnabled(ctx, features.FlagCloudWatchBatchQueries) {
 			batches = getMetricQueryBatches(regionQueries, logger)
 		}
 
@@ -95,7 +96,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 					return err
 				}
 
-				if e.features.IsEnabled(featuremgmt.FlagCloudWatchWildCardDimensionValues) {
+				if features.IsEnabled(ctx, features.FlagCloudWatchWildCardDimensionValues) {
 					requestQueries, err = e.getDimensionValuesForWildcards(ctx, req.PluginContext, region, client, requestQueries, instance.tagValueCache, logger)
 					if err != nil {
 						return err
@@ -121,6 +122,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 			Error: fmt.Errorf("metric request error: %q", err),
 		}
 		resultChan <- &responseWrapper{
+			RefId:        getQueryRefIdFromErrorString(err.Error(), requestQueries),
 			DataResponse: &dataResponse,
 		}
 	}
@@ -131,4 +133,18 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 	}
 
 	return resp, nil
+}
+
+func getQueryRefIdFromErrorString(err string, queries []*models.CloudWatchQuery) string {
+	// error can be in format "Error in expression 'test': Invalid syntax"
+	// so we can find the query id or ref id between the quotations
+	erroredRefId := ""
+
+	for _, query := range queries {
+		if regexp.MustCompile(`'`+query.RefId+`':`).MatchString(err) || regexp.MustCompile(`'`+query.Id+`':`).MatchString(err) {
+			erroredRefId = query.RefId
+		}
+	}
+	// if errorRefId is empty, it means the error concerns all queries (error metric limit exceeded, for example)
+	return erroredRefId
 }

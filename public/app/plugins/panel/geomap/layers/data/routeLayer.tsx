@@ -252,7 +252,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
             const mapExtents = map.getView().calculateExtent(map.getSize());
             const feature = source.getFeatures()[0];
             const frame: DataFrame = feature?.get('frame');
-            const time: number = event.payload?.point?.time;
+            const time = event.payload?.point?.time;
             if (frame && time) {
               const timeField = frame.fields.find((f) => f.type === FieldType.time);
               if (timeField) {

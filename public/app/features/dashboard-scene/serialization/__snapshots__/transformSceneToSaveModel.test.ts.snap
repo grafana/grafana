@@ -110,6 +110,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
         "y": 1,
       },
       "id": 15,
+      "links": [],
       "options": {
         "code": {
           "language": "plaintext",
@@ -123,11 +124,6 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
 </div>",
         "mode": "markdown",
       },
-      "targets": [
-        {
-          "refId": "A",
-        },
-      ],
       "title": "",
       "transformations": [],
       "transparent": false,
@@ -169,6 +165,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
             "y": 26,
           },
           "id": 30,
+          "links": [],
           "options": {
             "code": {
               "language": "plaintext",
@@ -180,6 +177,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
 </div>",
             "mode": "markdown",
           },
+          "title": "Text panel in collapsed row",
           "transformations": [],
           "transparent": false,
           "type": "text",
@@ -189,8 +187,11 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
       "type": "row",
     },
   ],
-  "schemaVersion": 36,
-  "tags": [],
+  "schemaVersion": 39,
+  "tags": [
+    "templating",
+    "gdev",
+  ],
   "templating": {
     "list": [
       {
@@ -235,10 +236,370 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
     "from": "now-6h",
     "to": "now",
   },
+  "timepicker": {
+    "hidden": false,
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d",
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d",
+    ],
+  },
   "timezone": "",
   "title": "Repeating rows",
   "uid": "Repeating-rows-uid",
+  "version": 1,
   "weekStart": "",
+}
+`;
+
+exports[`transformSceneToSaveModel Given a simple scene with custom settings Should transform back to persisted model 1`] = `
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana",
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard",
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "gdev-testdata",
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "red",
+        "name": "Enabled",
+        "target": {
+          "lines": 4,
+          "refId": "Anno",
+          "scenarioId": "annotations",
+        },
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "gdev-testdata",
+        },
+        "enable": false,
+        "hide": false,
+        "iconColor": "yellow",
+        "name": "Disabled",
+        "target": {
+          "lines": 5,
+          "refId": "Anno",
+          "scenarioId": "annotations",
+        },
+      },
+      {
+        "datasource": {
+          "type": "testdata",
+          "uid": "gdev-testdata",
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "dark-purple",
+        "name": "Hidden",
+        "target": {
+          "lines": 6,
+          "refId": "Anno",
+          "scenarioId": "annotations",
+        },
+      },
+    ],
+  },
+  "description": "My custom description",
+  "editable": false,
+  "fiscalYearStartMonth": 1,
+  "graphTooltip": 0,
+  "id": 1351,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Link 1",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": "",
+    },
+  ],
+  "panels": [
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A",
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic",
+          },
+          "custom": {
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "lineWidth": 2,
+          },
+        },
+        "overrides": [],
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0,
+      },
+      "id": 28,
+      "links": [],
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true,
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none",
+        },
+      },
+      "targets": [
+        {
+          "alias": "series",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A",
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 1,
+        },
+      ],
+      "title": "Simple time series graph ",
+      "transformations": [],
+      "transparent": false,
+      "type": "timeseries",
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 8,
+      },
+      "id": 5,
+      "panels": [],
+      "title": "Row title",
+      "type": "row",
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A",
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [],
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 9,
+      },
+      "id": 29,
+      "links": [],
+      "options": {},
+      "targets": [
+        {
+          "alias": "series",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A",
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 1,
+        },
+      ],
+      "title": "panel inside row",
+      "transformations": [],
+      "transparent": false,
+      "type": "timeseries",
+    },
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [],
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 11,
+        "x": 12,
+        "y": 9,
+      },
+      "id": 25,
+      "links": [],
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false,
+        },
+        "content": "content",
+        "mode": "markdown",
+      },
+      "title": "Transparent text panel",
+      "transformations": [],
+      "transparent": true,
+      "type": "text",
+    },
+  ],
+  "schemaVersion": 39,
+  "tags": [
+    "tag1",
+    "tag2",
+  ],
+  "templating": {
+    "list": [
+      {
+        "auto": true,
+        "auto_count": 30,
+        "auto_min": "10s",
+        "current": {
+          "text": "1m",
+          "value": "1m",
+        },
+        "name": "intervalVar",
+        "query": "1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+        "refresh": 2,
+        "type": "interval",
+      },
+      {
+        "current": {
+          "text": [
+            "a",
+          ],
+          "value": [
+            "a",
+          ],
+        },
+        "includeAll": true,
+        "multi": true,
+        "name": "customVar",
+        "options": [],
+        "query": "a, b, c",
+        "type": "custom",
+      },
+      {
+        "current": {
+          "text": "gdev-testdata",
+          "value": "PD8C576611E62080A",
+        },
+        "includeAll": false,
+        "name": "dsVar",
+        "options": [],
+        "query": "grafana-testdata-datasource",
+        "refresh": 1,
+        "regex": "",
+        "type": "datasource",
+      },
+      {
+        "current": {
+          "text": "A",
+          "value": "A",
+        },
+        "definition": "*",
+        "includeAll": false,
+        "name": "query0",
+        "options": [],
+        "query": {
+          "query": "*",
+          "refId": "StandardVariableQuery",
+        },
+        "refresh": 1,
+        "regex": "",
+        "type": "query",
+      },
+      {
+        "current": {
+          "text": "test",
+          "value": "test",
+        },
+        "hide": 2,
+        "name": "constant",
+        "query": "test",
+        "skipUrlSync": true,
+        "type": "constant",
+      },
+      {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "wc2AL7L7k",
+        },
+        "name": "Filters",
+        "type": "adhoc",
+      },
+    ],
+  },
+  "time": {
+    "from": "now-5m",
+    "to": "now",
+  },
+  "timepicker": {
+    "hidden": true,
+    "refresh_intervals": [
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d",
+    ],
+  },
+  "timezone": "America/New_York",
+  "title": "My custom title",
+  "uid": "nP8rcffGkasd",
+  "version": 2,
+  "weekStart": "monday",
 }
 `;
 
@@ -336,6 +697,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "y": 0,
       },
       "id": 28,
+      "links": [],
       "options": {
         "legend": {
           "calcs": [],
@@ -394,6 +756,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "y": 9,
       },
       "id": 29,
+      "links": [],
       "options": {},
       "targets": [
         {
@@ -424,6 +787,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "y": 9,
       },
       "id": 25,
+      "links": [],
       "options": {
         "code": {
           "language": "plaintext",
@@ -433,19 +797,18 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "content": "content",
         "mode": "markdown",
       },
-      "targets": [
-        {
-          "refId": "A",
-        },
-      ],
       "title": "Transparent text panel",
       "transformations": [],
       "transparent": true,
       "type": "text",
     },
   ],
-  "schemaVersion": 36,
-  "tags": [],
+  "schemaVersion": 39,
+  "tags": [
+    "gdev",
+    "graph-ng",
+    "demo",
+  ],
   "templating": {
     "list": [
       {
@@ -456,7 +819,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
           "text": "1m",
           "value": "1m",
         },
-        "hide": 2,
         "name": "intervalVar",
         "query": "1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
         "refresh": 2,
@@ -496,6 +858,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
           "text": "A",
           "value": "A",
         },
+        "definition": "*",
         "includeAll": false,
         "name": "query0",
         "options": [],
@@ -532,9 +895,35 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
     "from": "now-5m",
     "to": "now",
   },
+  "timepicker": {
+    "hidden": false,
+    "refresh_intervals": [
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d",
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d",
+    ],
+  },
   "timezone": "America/New_York",
   "title": "Dashboard to load1",
   "uid": "nP8rcffGkasd",
+  "version": 2,
   "weekStart": "saturday",
 }
 `;

@@ -23,7 +23,6 @@
         "package.json",
         "tsconfig.json",
         "lerna.json",
-        ".babelrc",
         ".prettierrc.js",
         ".eslintrc",
         "**/*.mdx"
@@ -149,7 +148,13 @@
   },
   {
     "type": "changedfiles",
-    "matches": [ "public/app/plugins/datasource/postgres/**/*", "pkg/tsdb/postgres/**/*"],
+    "matches": [ "public/app/plugins/datasource/grafana-pyroscope-datasource/**/*", "pkg/tsdb/grafana-pyroscope-datasource/**/*"],
+    "action": "updateLabel",
+    "addLabel": "datasource/grafana-pyroscope"
+  },
+  {
+    "type": "changedfiles",
+    "matches": [ "public/app/plugins/datasource/grafana-postgresql-datasource/**/*", "pkg/tsdb/grafana-postgresql-datasource/**/*"],
     "action": "updateLabel",
     "addLabel": "datasource/Postgres"
   },

@@ -68,7 +68,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:        "Load a Core plugin",
 			class:       plugins.ClassCore,
-			cfg:         &config.Cfg{},
+			cfg:         &config.Cfg{Features: featuremgmt.WithFeatures()},
 			pluginPaths: []string{filepath.Join(corePluginDir(t), "app/plugins/datasource/cloudwatch")},
 			want: []*plugins.Plugin{
 				{
@@ -118,7 +118,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:        "Load a Bundled plugin",
 			class:       plugins.ClassBundled,
-			cfg:         &config.Cfg{},
+			cfg:         &config.Cfg{Features: featuremgmt.WithFeatures()},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "valid-v2-signature")},
 			want: []*plugins.Plugin{
 				{
@@ -158,7 +158,7 @@ func TestLoader_Load(t *testing.T) {
 		}, {
 			name:        "Load plugin with symbolic links",
 			class:       plugins.ClassExternal,
-			cfg:         &config.Cfg{},
+			cfg:         &config.Cfg{Features: featuremgmt.WithFeatures()},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "symbolic-plugin-dirs")},
 			want: []*plugins.Plugin{
 				{
@@ -235,7 +235,8 @@ func TestLoader_Load(t *testing.T) {
 			name:  "Load an unsigned plugin (development)",
 			class: plugins.ClassExternal,
 			cfg: &config.Cfg{
-				DevMode: true,
+				DevMode:  true,
+				Features: featuremgmt.WithFeatures(),
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "unsigned-datasource")},
 			want: []*plugins.Plugin{
@@ -272,7 +273,7 @@ func TestLoader_Load(t *testing.T) {
 		}, {
 			name:        "Load an unsigned plugin (production)",
 			class:       plugins.ClassExternal,
-			cfg:         &config.Cfg{},
+			cfg:         &config.Cfg{Features: featuremgmt.WithFeatures()},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "unsigned-datasource")},
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.SignatureError{
@@ -287,6 +288,7 @@ func TestLoader_Load(t *testing.T) {
 			class: plugins.ClassExternal,
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
+				Features:             featuremgmt.WithFeatures(),
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "unsigned-datasource")},
 			want: []*plugins.Plugin{
@@ -324,7 +326,7 @@ func TestLoader_Load(t *testing.T) {
 		{
 			name:        "Load a plugin with v1 manifest should return signatureInvalid",
 			class:       plugins.ClassExternal,
-			cfg:         &config.Cfg{},
+			cfg:         &config.Cfg{Features: featuremgmt.WithFeatures()},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "lacking-files")},
 			want:        []*plugins.Plugin{},
 			pluginErrors: map[string]*plugins.SignatureError{
@@ -339,6 +341,7 @@ func TestLoader_Load(t *testing.T) {
 			class: plugins.ClassExternal,
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
+				Features:             featuremgmt.WithFeatures(),
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "lacking-files")},
 			want:        []*plugins.Plugin{},
@@ -354,6 +357,7 @@ func TestLoader_Load(t *testing.T) {
 			class: plugins.ClassExternal,
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
+				Features:             featuremgmt.WithFeatures(),
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "invalid-v2-missing-file")},
 			want:        []*plugins.Plugin{},
@@ -369,6 +373,7 @@ func TestLoader_Load(t *testing.T) {
 			class: plugins.ClassExternal,
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-datasource"},
+				Features:             featuremgmt.WithFeatures(),
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "invalid-v2-extra-file")},
 			want:        []*plugins.Plugin{},
@@ -384,6 +389,7 @@ func TestLoader_Load(t *testing.T) {
 			class: plugins.ClassExternal,
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-app"},
+				Features:             featuremgmt.WithFeatures(),
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "test-app-with-includes")},
 			want: []*plugins.Plugin{
@@ -434,6 +440,7 @@ func TestLoader_Load(t *testing.T) {
 			cfg: &config.Cfg{
 				DevMode:          true,
 				GrafanaAppSubURL: "grafana",
+				Features:         featuremgmt.WithFeatures(),
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "unsigned-datasource")},
 			want: []*plugins.Plugin{
@@ -500,7 +507,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 
 	t.Run("Load a plugin with oauth client registration", func(t *testing.T) {
 		cfg := &config.Cfg{
-			Features:             fakes.NewFakeFeatureToggles(featuremgmt.FlagExternalServiceAuth),
+			Features:             featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
 			PluginsAllowUnsigned: []string{"grafana-test-datasource"},
 		}
 		pluginPaths := []string{filepath.Join(testDataDir(t), "oauth-external-registration")}
@@ -528,7 +535,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 					GrafanaVersion: "*",
 					Plugins:        []plugins.Dependency{},
 				},
-				ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{
+				IAM: &plugindef.IAM{
 					Impersonation: &plugindef.Impersonation{
 						Groups: boolPtr(true),
 						Permissions: []plugindef.Permission{
@@ -601,7 +608,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 
 	t.Run("Load a plugin with service account registration", func(t *testing.T) {
 		cfg := &config.Cfg{
-			Features:             fakes.NewFakeFeatureToggles(featuremgmt.FlagExternalServiceAuth),
+			Features:             featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
 			PluginsAllowUnsigned: []string{"grafana-test-datasource"},
 		}
 		pluginPaths := []string{filepath.Join(testDataDir(t), "external-registration")}
@@ -629,7 +636,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 					GrafanaVersion: "*",
 					Plugins:        []plugins.Dependency{},
 				},
-				ExternalServiceRegistration: &plugindef.ExternalServiceRegistration{
+				IAM: &plugindef.IAM{
 					Permissions: []plugindef.Permission{
 						{
 							Action: "read",
@@ -697,6 +704,7 @@ func TestLoader_Load_CustomSource(t *testing.T) {
 			PluginSettings: setting.PluginSettings{
 				"grafana-worldmap-panel": {"cdn": "true"},
 			},
+			Features: featuremgmt.WithFeatures(),
 		}
 
 		pluginPaths := []string{filepath.Join(testDataDir(t), "cdn")}
@@ -779,6 +787,7 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				name: "Load multiple plugins (broken, valid, unsigned)",
 				cfg: &config.Cfg{
 					GrafanaAppURL: "http://localhost:3000",
+					Features:      featuremgmt.WithFeatures(),
 				},
 				pluginPaths: []string{
 					filepath.Join(testDataDir(t), "invalid-plugin-json"),    // test-app
@@ -875,6 +884,7 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 			name: "Load plugin defining one RBAC role",
 			cfg: &config.Cfg{
 				GrafanaAppURL: "http://localhost:3000",
+				Features:      featuremgmt.WithFeatures(),
 			},
 			pluginPaths: []string{filepath.Join(testDataDir(t), "test-app-with-roles")},
 			want: []*plugins.Plugin{
@@ -992,7 +1002,7 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
-		cfg := &config.Cfg{GrafanaAppURL: defaultAppURL}
+		cfg := &config.Cfg{GrafanaAppURL: defaultAppURL, Features: featuremgmt.WithFeatures()}
 		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -1068,7 +1078,7 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
-		cfg := &config.Cfg{}
+		cfg := &config.Cfg{Features: featuremgmt.WithFeatures()}
 		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -1157,7 +1167,7 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 			}
 		}
 		procMgr := fakes.NewFakeProcessManager()
-		cfg := &config.Cfg{}
+		cfg := &config.Cfg{Features: featuremgmt.WithFeatures()}
 		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -1214,16 +1224,16 @@ func TestLoader_AngularClass(t *testing.T) {
 				},
 			}
 			// if angularDetected = true, it means that the detection has run
-			l := newLoaderWithOpts(t, &config.Cfg{AngularSupportEnabled: true}, loaderDepOpts{
+			l := newLoaderWithOpts(t, &config.Cfg{AngularSupportEnabled: true, Features: featuremgmt.WithFeatures()}, loaderDepOpts{
 				angularInspector: angularinspector.AlwaysAngularFakeInspector,
 			})
 			p, err := l.Load(context.Background(), fakePluginSource)
 			require.NoError(t, err)
 			require.Len(t, p, 1, "should load 1 plugin")
 			if tc.expAngularDetectionRun {
-				require.True(t, p[0].AngularDetected, "angular detection should run")
+				require.True(t, p[0].Angular.Detected, "angular detection should run")
 			} else {
-				require.False(t, p[0].AngularDetected, "angular detection should not run")
+				require.False(t, p[0].Angular.Detected, "angular detection should not run")
 			}
 		})
 	}
@@ -1242,8 +1252,8 @@ func TestLoader_Load_Angular(t *testing.T) {
 		name string
 		cfg  *config.Cfg
 	}{
-		{name: "angular support enabled", cfg: &config.Cfg{AngularSupportEnabled: true}},
-		{name: "angular support disabled", cfg: &config.Cfg{AngularSupportEnabled: false}},
+		{name: "angular support enabled", cfg: &config.Cfg{AngularSupportEnabled: true, Features: featuremgmt.WithFeatures()}},
+		{name: "angular support disabled", cfg: &config.Cfg{AngularSupportEnabled: false, Features: featuremgmt.WithFeatures()}},
 	} {
 		t.Run(cfgTc.name, func(t *testing.T) {
 			for _, tc := range []struct {
@@ -1275,6 +1285,48 @@ func TestLoader_Load_Angular(t *testing.T) {
 					}
 				})
 			}
+		})
+	}
+}
+
+func TestLoader_HideAngularDeprecation(t *testing.T) {
+	fakePluginSource := &fakes.FakePluginSource{
+		PluginClassFunc: func(ctx context.Context) plugins.Class {
+			return plugins.ClassExternal
+		},
+		PluginURIsFunc: func(ctx context.Context) []string {
+			return []string{filepath.Join(testDataDir(t), "valid-v2-signature")}
+		},
+	}
+	for _, tc := range []struct {
+		name                      string
+		cfg                       *config.Cfg
+		expHideAngularDeprecation bool
+	}{
+		{name: "with plugin id in HideAngularDeprecation list", cfg: &config.Cfg{
+			AngularSupportEnabled:  true,
+			HideAngularDeprecation: []string{"one-app", "two-panel", "test-datasource", "three-datasource"},
+			Features:               featuremgmt.WithFeatures(),
+		}, expHideAngularDeprecation: true},
+		{name: "without plugin id in HideAngularDeprecation list", cfg: &config.Cfg{
+			AngularSupportEnabled:  true,
+			HideAngularDeprecation: []string{"one-app", "two-panel", "three-datasource"},
+			Features:               featuremgmt.WithFeatures(),
+		}, expHideAngularDeprecation: false},
+		{name: "with empty HideAngularDeprecation", cfg: &config.Cfg{
+			AngularSupportEnabled:  true,
+			HideAngularDeprecation: nil,
+			Features:               featuremgmt.WithFeatures(),
+		}, expHideAngularDeprecation: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			l := newLoaderWithOpts(t, tc.cfg, loaderDepOpts{
+				angularInspector: angularinspector.AlwaysAngularFakeInspector,
+			})
+			p, err := l.Load(context.Background(), fakePluginSource)
+			require.NoError(t, err)
+			require.Len(t, p, 1, "should load 1 plugin")
+			require.Equal(t, tc.expHideAngularDeprecation, p[0].Angular.HideDeprecation)
 		})
 	}
 }
@@ -1352,7 +1404,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
 		reg := fakes.NewFakePluginRegistry()
-		cfg := &config.Cfg{}
+		cfg := &config.Cfg{Features: featuremgmt.WithFeatures()}
 		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
 
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
@@ -1527,7 +1579,7 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		reg := fakes.NewFakePluginRegistry()
 		procPrvdr := fakes.NewFakeBackendProcessProvider()
 		procMgr := fakes.NewFakeProcessManager()
-		cfg := &config.Cfg{}
+		cfg := &config.Cfg{Features: featuremgmt.WithFeatures()}
 		l := newLoader(t, cfg, reg, procMgr, procPrvdr, newFakeSignatureErrorTracker())
 		got, err := l.Load(context.Background(), &fakes.FakePluginSource{
 			PluginClassFunc: func(ctx context.Context) plugins.Class {
@@ -1567,7 +1619,8 @@ func newLoader(t *testing.T, cfg *config.Cfg, reg registry.Service, proc process
 	terminate, err := pipeline.ProvideTerminationStage(cfg, reg, proc)
 	require.NoError(t, err)
 
-	return ProvideService(pipeline.ProvideDiscoveryStage(cfg, finder.NewLocalFinder(false), reg),
+	return ProvideService(pipeline.ProvideDiscoveryStage(cfg,
+		finder.NewLocalFinder(false, featuremgmt.WithFeatures()), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector, sigErrTracker),
 		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry()),
@@ -1599,7 +1652,8 @@ func newLoaderWithOpts(t *testing.T, cfg *config.Cfg, opts loaderDepOpts) *Loade
 		backendFactoryProvider = fakes.NewFakeBackendProcessProvider()
 	}
 
-	return ProvideService(pipeline.ProvideDiscoveryStage(cfg, finder.NewLocalFinder(false), reg),
+	return ProvideService(pipeline.ProvideDiscoveryStage(cfg,
+		finder.NewLocalFinder(false, featuremgmt.WithFeatures()), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector, sigErrTracker),
 		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry()),

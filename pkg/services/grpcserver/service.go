@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/grafana/dskit/instrument"
+	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/weaveworks/common/instrument"
-	"github.com/weaveworks/common/middleware"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
@@ -38,12 +38,14 @@ type gPRCServerService struct {
 	logger  log.Logger
 	server  *grpc.Server
 	address string
+	enabled bool
 }
 
-func ProvideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, tracer tracing.Tracer, registerer prometheus.Registerer) (Provider, error) {
+func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, authenticator interceptors.Authenticator, tracer tracing.Tracer, registerer prometheus.Registerer) (Provider, error) {
 	s := &gPRCServerService{
-		cfg:    cfg,
-		logger: log.New("grpc-server"),
+		cfg:     cfg,
+		logger:  log.New("grpc-server"),
+		enabled: features.IsEnabledGlobally(featuremgmt.FlagGrpcServer),
 	}
 
 	// Register the metric here instead of an init() function so that we do
@@ -123,10 +125,7 @@ func (s *gPRCServerService) Run(ctx context.Context) error {
 }
 
 func (s *gPRCServerService) IsDisabled() bool {
-	if s.cfg == nil {
-		return true
-	}
-	return !s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrpcServer)
+	return !s.enabled
 }
 
 func (s *gPRCServerService) GetServer() *grpc.Server {

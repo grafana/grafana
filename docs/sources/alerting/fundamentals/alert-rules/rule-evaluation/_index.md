@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/alert-rules/rule-evaluation/
-description: Introduction to alert rule evaluation
+description: Use alert rule evaluation to determine how frequently an alert rule should be evaluated and how quickly it should change its state
 keywords:
   - grafana
   - alerting
@@ -22,9 +22,11 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
 ## Evaluation group
 
-Every alert rule is part of an evaluation group. Each evaluation group contains an evaluation interval that determines how frequently the alert rule is checked. Alert rules within the same group are evaluated one after the other, while alert rules in different groups can be evaluated simultaneously.
+Every alert rule is part of an evaluation group. Each evaluation group contains an evaluation interval that determines how frequently the alert rule is checked.
 
-This feature is especially useful for Prometheus/Mimir rules when you want to ensure that recording rules are evaluated before any alert rules.
+**Data-source managed** alert rules within the same group are evaluated one after the other, while alert rules in different groups can be evaluated simultaneously. This feature is especially useful when you want to ensure that recording rules are evaluated before any alert rules.
+
+**Grafana-managed** alert rules are evaluated at the same time, regardless of alert rule group. The default evaluation interval is set at 10 seconds, which means that Grafana-managed alert rules are evaluated every 10 seconds to the closest 10-second window on the clock, for example, 10:00:00, 10:00:10, 10:00:20, and so on. You can also configure your own evaluation interval, if required.
 
 **Note:**
 

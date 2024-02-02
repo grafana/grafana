@@ -13,7 +13,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	acmig "github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
@@ -45,6 +46,7 @@ var (
 	users = []user.User{
 		{
 			ID:      1,
+			UID:     "u1",
 			Email:   "viewer1@example.org",
 			Name:    "viewer1",
 			Login:   "viewer1",
@@ -54,6 +56,7 @@ var (
 		},
 		{
 			ID:      2,
+			UID:     "u2",
 			Email:   "viewer2@example.org",
 			Name:    "viewer2",
 			Login:   "viewer2",
@@ -63,6 +66,7 @@ var (
 		},
 		{
 			ID:      3,
+			UID:     "u3",
 			Email:   "editor1@example.org",
 			Name:    "editor1",
 			Login:   "editor1",
@@ -72,6 +76,7 @@ var (
 		},
 		{
 			ID:      4,
+			UID:     "u4",
 			Email:   "admin1@example.org",
 			Name:    "admin1",
 			Login:   "admin1",
@@ -81,6 +86,7 @@ var (
 		},
 		{
 			ID:      5,
+			UID:     "u5",
 			Email:   "editor2@example.org",
 			Name:    "editor2",
 			Login:   "editor2",
@@ -152,9 +158,8 @@ func TestMigrations(t *testing.T) {
 		{
 			desc: "with editors can admin",
 			config: &setting.Cfg{
-				EditorsCanAdmin:        true,
-				IsFeatureToggleEnabled: func(key string) bool { return key == "accesscontrol" },
-				Raw:                    ini.Empty(),
+				EditorsCanAdmin: true,
+				Raw:             ini.Empty(),
 			},
 			expectedRolePerms: map[string][]rawPermission{
 				"managed:users:1:permissions": {{Action: "teams:read", Scope: team1Scope}},
@@ -181,10 +186,8 @@ func TestMigrations(t *testing.T) {
 		},
 		{
 			desc: "without editors can admin",
-			config: &setting.Cfg{
-				IsFeatureToggleEnabled: func(key string) bool { return key == "accesscontrol" },
-				Raw:                    ini.Empty(),
-			},
+			// nolint:staticcheck
+			config: setting.NewCfgWithFeatures(featuremgmt.WithFeatures("accesscontrol").IsEnabledGlobally),
 			expectedRolePerms: map[string][]rawPermission{
 				"managed:users:1:permissions": {{Action: "teams:read", Scope: team1Scope}},
 				"managed:users:2:permissions": {{Action: "teams:read", Scope: team1Scope}},
@@ -358,7 +361,7 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 			TeamID:     1,
 			UserID:     2,
 			External:   false,
-			Permission: dashboards.PERMISSION_ADMIN,
+			Permission: dashboardaccess.PERMISSION_ADMIN,
 			Created:    now,
 			Updated:    now,
 		},
@@ -368,7 +371,7 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 			TeamID:     1,
 			UserID:     3,
 			External:   false,
-			Permission: dashboards.PERMISSION_ADMIN,
+			Permission: dashboardaccess.PERMISSION_ADMIN,
 			Created:    now,
 			Updated:    now,
 		},
@@ -378,7 +381,7 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 			TeamID:     1,
 			UserID:     4,
 			External:   false,
-			Permission: dashboards.PERMISSION_ADMIN,
+			Permission: dashboardaccess.PERMISSION_ADMIN,
 			Created:    now,
 			Updated:    now,
 		},

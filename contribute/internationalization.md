@@ -9,7 +9,8 @@ Grafana uses the [i18next](https://www.i18next.com/) framework for managing tran
 - Use `<Trans i18nKey="search-results.panel-link">Go to {{ pageTitle }}</Trans>` in code to add a translatable phrase
 - Translations are stored in JSON files in `public/locales/{locale}/grafana.json`
 - If a particular phrase is not available in the a language then it will fall back to English
-- To update phrases in English, edit the default phrase in both the component's source and the [English grafana.json message catalogue](../public/locales/en-US/grafana.json), then run `yarn i18n:extract`.
+- To update phrases in English, edit the default phrase in the component's source and then run `yarn i18n:extract`.
+- The single source of truth for en-US (fallback language) is in grafana/grafana, the single source of truth for any translated language is Crowdin
 - To update phrases in any translated language, edit the phrase in Crowdin. Do not edit the `{locale}/grafana.json`
 
 ## How to add a new translation phrase
@@ -40,7 +41,8 @@ const ErrorMessage = ({ id, message }) => <Trans i18nKey={`errors.${id}`}>There 
 
 2. Upon reload, the default English phrase will appear on the page.
 
-3. Before submitting your PR, run the `yarn i18n:extract` command to extract the messages you added into the `grafana.json` file and make them available for translation.
+3. Before submitting your PR, run the `yarn i18n:extract` command to extract the messages you added into the `public/locales/en-US/grafana.json` file and make them available for translation.
+   **Note:** All other languages will receive their translations when they are ready to be downloaded from Crowdin.
 
 ### Plain JS usage
 
@@ -64,20 +66,20 @@ While the `t` function can technically be used outside of React functions (e.g, 
 
 ## How to add a new language
 
-1. Add new locale in Crowdin and sync files to repo
+1. Add new locale in Crowdin and download files to repo
    1. Grafana OSS Crowdin project -> "dot dot dot" menu in top right -> Target languages
-   2. Grafana OSS Crowdin project -> Integrations -> Github -> Sync Now
-   3. If Crowdin's locale code is different from our IETF language tag, add a custom mapping in Project Settings -> Language mapping
-2. Update `public/app/core/internationalization/constants.ts` (add new constant, and add to `LOCALES`)
-3. Update `public/locales/i18next-parser.config.js` to add the new locale to `locales`
-4. Run `yarn i18n:extract` and commit the result
+   2. If Crowdin's locale code is different from our IETF language tag, add a custom mapping in Project Settings -> Language mapping
+   3. GH repo grafana/grafana -> Actions -> Choose `Crowdin Download Action` -> Run workflow -> Creates a PR automatically
+2. Review the PR `I18n: Download translations from Crowdin`
+3. Update `public/app/core/internationalization/constants.ts` (add new constant, and add to `LOCALES`) and add changes to the open PR
+4. Approve and merge the PR
 
 ## How translations work in Grafana
 
 Grafana uses the [i18next](https://www.i18next.com/) framework for managing translating phrases in the Grafana frontend. It:
 
 - Marks up phrases within our code for extraction
-- Extracts phrases into messages catalogues for translating in external systems
+- Extracts phrases into the default messages catalogue for translating in external systems
 - Manages the user's locale and putting the translated phrases in the UI
 
 Grafana will load the message catalogue JSON before the initial render.
@@ -188,6 +190,23 @@ Once extracted with `yarn i18n:extract` you will need to manually edit the [Engl
   }
 }
 ```
+
+## Feedback
+
+**Please note:** This is only for proofreaders with permissions to Grafana OSS project on Crowdin.
+
+To provide feedback on translations, sign into Crowdin and follow these steps:
+
+1. Open the Grafana OSS project in Crowdin.
+2. In the left-hand menu, click on the 'Dashboard' menu item.
+3. A list of available languages appears under the 'Translations' section. Click on the one you want to comment on.
+4. There is a table with the file structure in it:
+   <br>
+   `grafana/main > public > locales > 'language denomination' > grafana.json`
+   <br>
+   Click on the `grafana.json` file.
+5. In the left-hand section, click on the 'Search in file' input and search for the string that you want to comment on. You can search in English, as it is the default language, or in the language the string is translated to.
+6. Once you have found the string, on the right hand side there is a 'Comments' section where you can send the feedback about the translation. Tag @Translated to be sure the team of linguists gets notified.
 
 ## Documentation
 

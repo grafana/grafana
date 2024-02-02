@@ -171,6 +171,26 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it.each([
+    ['|=', LokiOperationId.LineContains],
+    ['!=', LokiOperationId.LineContainsNot],
+    ['|~', LokiOperationId.LineMatchesRegex],
+    ['!~', LokiOperationId.LineMatchesRegexNot],
+  ])('parses query with line filter and `or` statements', (op: string, id: LokiOperationId) => {
+    expect(buildVisualQueryFromString(`{app="frontend"} ${op} "line" or "text"`)).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id, params: ['line', 'text'] }],
+      })
+    );
+  });
+
   it('parses query with line filters and escaped characters', () => {
     expect(buildVisualQueryFromString('{app="frontend"} |= "\\\\line"')).toEqual(
       noErrors({
@@ -649,6 +669,21 @@ describe('buildVisualQueryFromString', () => {
           },
         ],
         operations: [{ id: LokiOperationId.QuantileOverTime, params: ['1m', '0.99'] }],
+      })
+    );
+  });
+
+  it('parses quantile queries with grouping', () => {
+    expect(buildVisualQueryFromString(`quantile_over_time(0.99, {app="frontend"} [1m]) by (host1, host2)`)).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.QuantileOverTime, params: ['1m', '0.99', 'host1', 'host2'] }],
       })
     );
   });

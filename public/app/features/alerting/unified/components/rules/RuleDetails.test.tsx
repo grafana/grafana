@@ -5,7 +5,8 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { byRole } from 'testing-library-selector';
 
-import { setBackendSrv } from '@grafana/runtime';
+import { PluginExtensionTypes } from '@grafana/data';
+import { getPluginLinkExtensions, setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
@@ -20,9 +21,16 @@ import { mockAlertmanagerChoiceResponse } from '../../mocks/alertmanagerApi';
 
 import { RuleDetails } from './RuleDetails';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getPluginLinkExtensions: jest.fn(),
+  useReturnToPrevious: jest.fn(),
+}));
+
 jest.mock('../../hooks/useIsRuleEditable');
 
 const mocks = {
+  getPluginLinkExtensionsMock: jest.mocked(getPluginLinkExtensions),
   useIsRuleEditable: jest.mocked(useIsRuleEditable),
 };
 
@@ -52,6 +60,19 @@ afterAll(() => {
 });
 
 beforeEach(() => {
+  mocks.getPluginLinkExtensionsMock.mockReturnValue({
+    extensions: [
+      {
+        pluginId: 'grafana-ml-app',
+        id: '1',
+        type: PluginExtensionTypes.link,
+        title: 'Run investigation',
+        category: 'Sift',
+        description: 'Run a Sift investigation for this alert',
+        onClick: jest.fn(),
+      },
+    ],
+  });
   server.resetHandlers();
 });
 

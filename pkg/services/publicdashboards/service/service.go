@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -35,6 +36,7 @@ type PublicDashboardServiceImpl struct {
 	AnnotationsRepo    annotations.Repository
 	ac                 accesscontrol.AccessControl
 	serviceWrapper     publicdashboards.ServiceWrapper
+	dashboardService   dashboards.DashboardService
 }
 
 var LogPrefix = "publicdashboards.service"
@@ -52,6 +54,7 @@ func ProvideService(
 	anno annotations.Repository,
 	ac accesscontrol.AccessControl,
 	serviceWrapper publicdashboards.ServiceWrapper,
+	dashboardService dashboards.DashboardService,
 ) *PublicDashboardServiceImpl {
 	return &PublicDashboardServiceImpl{
 		log:                log.New(LogPrefix),
@@ -62,6 +65,7 @@ func ProvideService(
 		AnnotationsRepo:    anno,
 		ac:                 ac,
 		serviceWrapper:     serviceWrapper,
+		dashboardService:   dashboardService,
 	}
 }
 
@@ -71,6 +75,7 @@ func (pd *PublicDashboardServiceImpl) GetPublicDashboardForView(ctx context.Cont
 		return nil, err
 	}
 
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.PublicDashboards).Inc()
 	meta := dtos.DashboardMeta{
 		Slug:                   dash.Slug,
 		Type:                   dashboards.DashTypeDB,
@@ -84,6 +89,7 @@ func (pd *PublicDashboardServiceImpl) GetPublicDashboardForView(ctx context.Cont
 		Version:                dash.Version,
 		IsFolder:               false,
 		FolderId:               dash.FolderID, // nolint:staticcheck
+		FolderUid:              dash.FolderUID,
 		PublicDashboardEnabled: pubdash.IsEnabled,
 	}
 	dash.Data.Get("timepicker").Set("hidden", !pubdash.TimeSelectionEnabled)
@@ -108,13 +114,15 @@ func (pd *PublicDashboardServiceImpl) Find(ctx context.Context, uid string) (*Pu
 
 // FindDashboard Gets a dashboard by Uid
 func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*dashboards.Dashboard, error) {
-	dash, err := pd.store.FindDashboard(ctx, orgId, dashboardUid)
+	dash, err := pd.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dashboardUid, OrgID: orgId})
 	if err != nil {
+		var dashboardErr dashboards.DashboardErr
+		if ok := errors.As(err, &dashboardErr); ok {
+			if dashboardErr.StatusCode == 404 {
+				return nil, ErrDashboardNotFound.Errorf("FindDashboard: dashboard not found by orgId: %d and dashboardUid: %s", orgId, dashboardUid)
+			}
+		}
 		return nil, ErrInternalServerError.Errorf("FindDashboard: failed to find dashboard by orgId: %d and dashboardUid: %s: %w", orgId, dashboardUid, err)
-	}
-
-	if dash == nil {
-		return nil, ErrDashboardNotFound.Errorf("FindDashboard: dashboard not found by orgId: %d and dashboardUid: %s", orgId, dashboardUid)
 	}
 
 	return dash, nil
@@ -155,7 +163,7 @@ func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessTok
 		return nil, nil, err
 	}
 
-	dash, err := pd.store.FindDashboard(ctx, pubdash.OrgId, pubdash.DashboardUid)
+	dash, err := pd.FindDashboard(ctx, pubdash.OrgId, pubdash.DashboardUid)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -352,7 +360,7 @@ func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, uid string, da
 func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) error {
 	if dashboard.IsFolder {
 		// get all pubdashes for the folder
-		pubdashes, err := pd.store.FindByDashboardFolder(ctx, dashboard)
+		pubdashes, err := pd.store.FindByFolder(ctx, dashboard.OrgID, dashboard.UID)
 		if err != nil {
 			return err
 		}

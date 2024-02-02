@@ -2,11 +2,12 @@ package mysql
 
 import (
 	"context"
+	"crypto/md5"
+	"fmt"
 	"net"
 
 	"github.com/go-sql-driver/mysql"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
-	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/net/proxy"
 )
 
@@ -21,10 +22,7 @@ func registerProxyDialerContext(protocol, cnnstr string, opts *sdkproxy.Options)
 
 	// the dialer context can be updated everytime the datasource is updated
 	// have a unique network per connection string
-	hash, err := util.Md5SumString(cnnstr)
-	if err != nil {
-		return "", err
-	}
+	hash := fmt.Sprintf("%x", md5.Sum([]byte(cnnstr)))
 	network := "proxy-" + hash
 	mysql.RegisterDialContext(network, dialer.DialContext)
 

@@ -3,7 +3,6 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneDebugger } from '@grafana/scenes';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -14,36 +13,40 @@ import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, viewPanelKey: viewPanelId, overlay } = model.useState();
+  const { controls, overlay, editview, editPanel } = model.useState();
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
   const pageNav = model.getPageNav(location, navIndex);
-  const bodyToRender = model.getBodyToRender(viewPanelId);
+  const bodyToRender = model.getBodyToRender();
+  const navModel = getNavModel(navIndex, 'dashboards/browse');
 
-  const navProps = config.featureToggles.dashboardSceneForViewers
-    ? { navModel: getNavModel(navIndex, 'dashboards/browse') }
-    : { navId: 'scenes' };
+  if (editview) {
+    return <editview.Component model={editview} />;
+  }
 
   return (
-    <Page {...navProps} pageNav={pageNav} layout={PageLayoutType.Custom}>
-      <CustomScrollbar autoHeightMin={'100%'}>
-        <div className={styles.canvasContent}>
-          <NavToolbarActions dashboard={model} />
+    <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
+      {editPanel && <editPanel.Component model={editPanel} />}
+      {!editPanel && (
+        <CustomScrollbar autoHeightMin={'100%'}>
+          <div className={styles.canvasContent}>
+            <NavToolbarActions dashboard={model} />
 
-          {controls && (
-            <div className={styles.controls}>
-              {controls.map((control) => (
-                <control.Component key={control.state.key} model={control} />
-              ))}
-              <SceneDebugger scene={model} key={'scene-debugger'} />
+            {controls && (
+              <div className={styles.controls}>
+                {controls.map((control) => (
+                  <control.Component key={control.state.key} model={control} />
+                ))}
+                <SceneDebugger scene={model} key={'scene-debugger'} />
+              </div>
+            )}
+            <div className={cx(styles.body)}>
+              <bodyToRender.Component model={bodyToRender} />
             </div>
-          )}
-          <div className={cx(styles.body)}>
-            <bodyToRender.Component model={bodyToRender} />
           </div>
-        </div>
-      </CustomScrollbar>
+        </CustomScrollbar>
+      )}
       {overlay && <overlay.Component model={overlay} />}
     </Page>
   );
@@ -75,7 +78,7 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'sticky',
       top: 0,
       background: theme.colors.background.canvas,
-      zIndex: 1,
+      zIndex: theme.zIndex.navbarFixed,
       padding: theme.spacing(2, 0),
     }),
   };

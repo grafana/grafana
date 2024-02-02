@@ -110,20 +110,19 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 			desc: "when the unified options equal the defaults, it should apply the legacy ones",
 			unifiedAlertingOptions: map[string]string{
 				"admin_config_poll_interval": "120s",
-				"max_attempts":               strconv.FormatInt(schedulerDefaultMaxAttempts, 10),
 				"min_interval":               SchedulerBaseInterval.String(),
 				"execute_alerts":             strconv.FormatBool(schedulereDefaultExecuteAlerts),
 				"evaluation_timeout":         evaluatorDefaultEvaluationTimeout.String(),
 			},
 			alertingOptions: map[string]string{
-				"max_attempts":               "12",
+				"max_attempts":               "1",
 				"min_interval_seconds":       "120",
 				"execute_alerts":             "true",
 				"evaluation_timeout_seconds": "160",
 			},
 			verifyCfg: func(t *testing.T, cfg Cfg) {
 				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.AdminConfigPollInterval)
-				require.Equal(t, int64(12), cfg.UnifiedAlerting.MaxAttempts)
+				require.Equal(t, int64(1), cfg.UnifiedAlerting.MaxAttempts)
 				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.MinInterval)
 				require.Equal(t, true, cfg.UnifiedAlerting.ExecuteAlerts)
 				require.Equal(t, 160*time.Second, cfg.UnifiedAlerting.EvaluationTimeout)
@@ -164,14 +163,14 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 				"evaluation_timeout": "invalid",
 			},
 			alertingOptions: map[string]string{
-				"max_attempts":               "12",
+				"max_attempts":               "1",
 				"min_interval_seconds":       "120",
 				"execute_alerts":             "false",
 				"evaluation_timeout_seconds": "160",
 			},
 			verifyCfg: func(t *testing.T, cfg Cfg) {
 				require.Equal(t, alertmanagerDefaultConfigPollInterval, cfg.UnifiedAlerting.AdminConfigPollInterval)
-				require.Equal(t, int64(12), cfg.UnifiedAlerting.MaxAttempts)
+				require.Equal(t, int64(1), cfg.UnifiedAlerting.MaxAttempts)
 				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.MinInterval)
 				require.Equal(t, false, cfg.UnifiedAlerting.ExecuteAlerts)
 				require.Equal(t, 160*time.Second, cfg.UnifiedAlerting.EvaluationTimeout)

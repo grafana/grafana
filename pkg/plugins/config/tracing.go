@@ -9,6 +9,10 @@ type Tracing struct {
 type OpenTelemetryCfg struct {
 	Address     string
 	Propagation string
+
+	Sampler          string
+	SamplerParam     float64
+	SamplerRemoteURL string
 }
 
 // IsEnabled returns true if OTLP tracing is enabled (address set)

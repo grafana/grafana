@@ -10,12 +10,11 @@ import {
   DataSourceTestSucceeded,
   DataSourceTestFailed,
 } from '@grafana/data';
-import { getAppEvents, usePluginInteractionReporter } from '@grafana/runtime';
-import { Input, InlineField, FieldProps, SecureSocksProxySettings } from '@grafana/ui';
+import { ConfigSection } from '@grafana/experimental';
+import { getAppEvents, usePluginInteractionReporter, getDataSourceSrv, config } from '@grafana/runtime';
+import { Input, InlineField, FieldProps, SecureSocksProxySettings, Field, Divider } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
-import { config } from 'app/core/config';
 import { createWarningNotification } from 'app/core/copy/appNotification';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { store } from 'app/store/store';
 
 import { CloudWatchDatasource } from '../../datasource';
@@ -23,6 +22,7 @@ import { SelectableResourceValue } from '../../resources/types';
 import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../../types';
 import { LogGroupsFieldWrapper } from '../shared/LogGroups/LogGroupsField';
 
+import { SecureSocksProxySettingsNewStyling } from './SecureSocksProxySettingsNewStyling';
 import { XrayLinkConfig } from './XrayLinkConfig';
 
 export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, CloudWatchSecureJsonData>;
@@ -39,6 +39,7 @@ export const ConfigEditor = (props: Props) => {
   const [logGroupFieldState, setLogGroupFieldState] = useState<LogGroupFieldState>({
     invalid: false,
   });
+  const newFormStylingEnabled = config.featureToggles.awsDatasourcesNewFormStyling;
   useEffect(() => setLogGroupFieldState({ invalid: false }), [props.options]);
   const report = usePluginInteractionReporter();
   useEffect(() => {
@@ -67,7 +68,103 @@ export const ConfigEditor = (props: Props) => {
     }
   }, [datasource, externalId]);
 
-  return (
+  return newFormStylingEnabled ? (
+    <div className="width-30">
+      <ConnectionConfig
+        {...props}
+        newFormStylingEnabled={true}
+        loadRegions={
+          datasource &&
+          (async () => {
+            return datasource.resources
+              .getRegions()
+              .then((regions) =>
+                regions.reduce(
+                  (acc: string[], curr: SelectableResourceValue) => (curr.value ? [...acc, curr.value] : acc),
+                  []
+                )
+              );
+          })
+        }
+        externalId={externalId}
+      />
+      {config.secureSocksDSProxyEnabled && (
+        <SecureSocksProxySettingsNewStyling options={options} onOptionsChange={onOptionsChange} />
+      )}
+      <Divider />
+      <ConfigSection title="Cloudwatch Logs">
+        <Field
+          htmlFor="logsTimeout"
+          label="Query Result Timeout"
+          description='Grafana will poll for Cloudwatch Logs results every second until Done status is returned from AWS or timeout is exceeded, in which case Grafana will return an error. Note: For Alerting, the timeout from Grafana config file will take precedence. Must be a valid duration string, such as "30m" (default) "30s" "2000ms" etc.'
+          invalid={Boolean(logsTimeoutError)}
+        >
+          <Input
+            id="logsTimeout"
+            width={60}
+            placeholder="30m"
+            value={options.jsonData.logsTimeout || ''}
+            onChange={onUpdateDatasourceJsonDataOption(props, 'logsTimeout')}
+            title={'The timeout must be a valid duration string, such as "15m" "30s" "2000ms" etc.'}
+          />
+        </Field>
+        <Field
+          label="Default Log Groups"
+          description="Optionally, specify default log groups for CloudWatch Logs queries."
+          {...logGroupFieldState}
+        >
+          {datasource ? (
+            <LogGroupsFieldWrapper
+              newFormStylingEnabled={true}
+              region={defaultRegion ?? ''}
+              datasource={datasource}
+              onBeforeOpen={() => {
+                if (saved) {
+                  return;
+                }
+
+                let error = 'You need to save the data source before adding log groups.';
+                if (props.options.version && props.options.version > 1) {
+                  error =
+                    'You have unsaved connection detail changes. You need to save the data source before adding log groups.';
+                }
+                setLogGroupFieldState({
+                  invalid: true,
+                  error,
+                });
+                throw new Error(error);
+              }}
+              legacyLogGroupNames={defaultLogGroups}
+              logGroups={logGroups}
+              onChange={(updatedLogGroups) => {
+                onOptionsChange({
+                  ...props.options,
+                  jsonData: {
+                    ...props.options.jsonData,
+                    logGroups: updatedLogGroups,
+                    defaultLogGroups: undefined,
+                  },
+                });
+              }}
+              maxNoOfVisibleLogGroups={2}
+              //legacy props
+              legacyOnChange={(logGroups) => {
+                updateDatasourcePluginJsonDataOption(props, 'defaultLogGroups', logGroups);
+              }}
+            />
+          ) : (
+            <></>
+          )}
+        </Field>
+      </ConfigSection>
+      <Divider />
+      <XrayLinkConfig
+        newFormStyling={true}
+        onChange={(uid) => updateDatasourcePluginJsonDataOption(props, 'tracingDatasourceUid', uid)}
+        datasourceUid={options.jsonData.tracingDatasourceUid}
+      />
+    </div>
+  ) : (
     <>
       <ConnectionConfig
         {...props}
@@ -198,8 +295,8 @@ function useDatasource(props: Props) {
 
   useEffect(() => {
     if (props.options.version) {
-      getDatasourceSrv()
-        .loadDatasource(props.options.name)
+      getDataSourceSrv()
+        .get(props.options.name)
         .then((datasource) => {
           if (datasource instanceof CloudWatchDatasource) {
             setDatasource(datasource);

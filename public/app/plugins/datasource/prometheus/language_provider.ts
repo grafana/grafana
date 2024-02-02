@@ -239,11 +239,16 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * Fetches all values for a label, with optional match[]
    * @param name
    * @param match
+   * @param timeRange
    */
-  fetchSeriesValuesWithMatch = async (name: string, match?: string): Promise<string[]> => {
+  fetchSeriesValuesWithMatch = async (
+    name: string,
+    match?: string,
+    timeRange: TimeRange = this.timeRange
+  ): Promise<string[]> => {
     const interpolatedName = name ? this.datasource.interpolateString(name) : null;
     const interpolatedMatch = match ? this.datasource.interpolateString(match) : null;
-    const range = this.datasource.getAdjustedInterval(this.timeRange);
+    const range = this.datasource.getAdjustedInterval(timeRange);
     const urlParams = {
       ...range,
       ...(interpolatedMatch && { 'match[]': interpolatedMatch }),
@@ -282,6 +287,20 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     const usedLabelNames = new Set(otherLabels.map((l) => l.name)); // names used in the query
     return possibleLabelNames.filter((l) => !usedLabelNames.has(l));
+  };
+
+  /**
+   * Fetch labels using the best endpoint that datasource supports.
+   * This is cached by its args but also by the global timeRange currently selected as they can change over requested time.
+   * @param name
+   * @param withName
+   */
+  fetchLabelsWithMatch = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
+    if (this.datasource.hasLabelsMatchAPISupport()) {
+      return this.fetchSeriesLabelsMatch(name, withName);
+    } else {
+      return this.fetchSeriesLabels(name, withName);
+    }
   };
 
   /**
@@ -348,9 +367,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
 function getNameLabelValue(promQuery: string, tokens: any): string {
   let nameLabelValue = '';
-  for (let prop in tokens) {
-    if (typeof tokens[prop] === 'string') {
-      nameLabelValue = tokens[prop] as string;
+
+  for (const token of tokens) {
+    if (typeof token === 'string') {
+      nameLabelValue = token;
       break;
     }
   }

@@ -16,8 +16,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 
 	"github.com/stretchr/testify/assert"
@@ -86,15 +86,9 @@ func TestNewInstanceSettings(t *testing.T) {
 		},
 	}
 
-	cfg := &setting.Cfg{
-		Azure: &azsettings.AzureSettings{
-			Cloud: azsettings.AzurePublic,
-		},
-	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			factory := NewInstanceSettings(cfg, &httpclient.Provider{}, map[string]azDatasourceExecutor{})
+			factory := NewInstanceSettings(&httpclient.Provider{}, map[string]azDatasourceExecutor{}, log.DefaultLogger)
 			instance, err := factory(context.Background(), tt.settings)
 			tt.Err(t, err)
 			if !cmp.Equal(instance, tt.expectedModel) {
@@ -155,19 +149,19 @@ func Test_newMux(t *testing.T) {
 		{
 			name:        "creates an Azure Monitor executor",
 			queryType:   azureMonitor,
-			expectedURL: routes[azureMonitorPublic][azureMonitor].URL,
+			expectedURL: routes[azsettings.AzurePublic][azureMonitor].URL,
 			Err:         require.NoError,
 		},
 		{
 			name:        "creates an Azure Log Analytics executor",
 			queryType:   azureLogAnalytics,
-			expectedURL: routes[azureMonitorPublic][azureLogAnalytics].URL,
+			expectedURL: routes[azsettings.AzurePublic][azureLogAnalytics].URL,
 			Err:         require.NoError,
 		},
 		{
 			name:        "creates an Azure Traces executor",
 			queryType:   azureTraces,
-			expectedURL: routes[azureMonitorPublic][azureLogAnalytics].URL,
+			expectedURL: routes[azsettings.AzurePublic][azureLogAnalytics].URL,
 			Err:         require.NoError,
 		},
 	}
@@ -176,10 +170,10 @@ func Test_newMux(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
 				im: &fakeInstance{
-					routes: routes[azureMonitorPublic],
+					routes: routes[azsettings.AzurePublic],
 					services: map[string]types.DatasourceService{
 						tt.queryType: {
-							URL:        routes[azureMonitorPublic][tt.queryType].URL,
+							URL:        routes[azsettings.AzurePublic][tt.queryType].URL,
 							HTTPClient: &http.Client{},
 						},
 					},

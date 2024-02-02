@@ -162,30 +162,73 @@ type AlertNG struct {
 }
 
 func (ng *AlertNG) init() error {
-	var err error
-
 	// AlertNG should be initialized before the cancellation deadline of initCtx
 	initCtx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancelFunc()
 
 	ng.store.Logger = ng.Log
 
+	// If enabled, configure the remote Alertmanager.
+	// - If several toggles are enabled, the order of precedence is RemoteOnly, RemotePrimary, RemoteSecondary
+	// - If no toggles are enabled, we default to using only the internal Alertmanager
+	// We currently support only remote secondary mode, so in case other toggles are enabled we fall back to remote secondary.
+	var overrides []notifier.Option
+	moaLogger := log.New("ngalert.multiorg.alertmanager")
+	remoteOnly := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteOnly)
+	remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
+	remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
+	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
+		switch {
+		case remoteOnly, remotePrimary:
+			ng.Log.Warn("Only remote secondary mode is supported at the moment, falling back to remote secondary")
+			fallthrough
+
+		case remoteSecondary:
+			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
+			m := ng.Metrics.GetRemoteAlertmanagerMetrics()
+			m.Info.WithLabelValues(metrics.ModeRemoteSecondary).Set(1)
+
+			// This function will be used by the MOA to create new Alertmanagers.
+			override := notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
+				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
+					// Create internal Alertmanager.
+					internalAM, err := factoryFn(ctx, orgID)
+					if err != nil {
+						return nil, err
+					}
+
+					// Create remote Alertmanager.
+					remoteAM, err := createRemoteAlertmanager(orgID, ng.Cfg.UnifiedAlerting.RemoteAlertmanager, ng.KVStore, m)
+					if err != nil {
+						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
+						return internalAM, nil
+					}
+
+					// Use both Alertmanager implementations in the forked Alertmanager.
+					cfg := remote.RemoteSecondaryConfig{
+						Logger:       log.New("ngalert.forked-alertmanager.remote-secondary"),
+						OrgID:        orgID,
+						Store:        ng.store,
+						SyncInterval: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
+					}
+					return remote.NewRemoteSecondaryForkedAlertmanager(cfg, internalAM, remoteAM)
+				}
+			})
+
+			overrides = append(overrides, override)
+
+		default:
+			ng.Log.Error("A mode should be selected when enabling the remote Alertmanager, falling back to using only the internal Alertmanager")
+		}
+	}
+
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-
-	var overrides []notifier.Option
-	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
-		override := notifier.WithAlertmanagerOverride(func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-			externalAMCfg := remote.AlertmanagerConfig{}
-			return remote.NewAlertmanager(externalAMCfg, orgID)
-		})
-
-		overrides = append(overrides, override)
-	}
-	ng.MultiOrgAlertmanager, err = notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, log.New("ngalert.multiorg.alertmanager"), ng.SecretsService, overrides...)
+	moa, err := notifier.NewMultiOrgAlertmanager(ng.Cfg, ng.store, ng.store, ng.KVStore, ng.store, decryptFn, multiOrgMetrics, ng.NotificationService, moaLogger, ng.SecretsService, overrides...)
 	if err != nil {
 		return err
 	}
+	ng.MultiOrgAlertmanager = moa
 
 	imageService, err := image.NewScreenshotImageServiceFromCfg(ng.Cfg, ng.store, ng.dashboardService, ng.renderService, ng.Metrics.Registerer)
 	if err != nil {
@@ -223,6 +266,7 @@ func (ng *AlertNG) init() error {
 		BaseInterval:         ng.Cfg.UnifiedAlerting.BaseInterval,
 		MinRuleInterval:      ng.Cfg.UnifiedAlerting.MinInterval,
 		DisableGrafanaFolder: ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel),
+		JitterEvaluations:    schedule.JitterStrategyFrom(ng.FeatureToggles),
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
 		RuleStore:            ng.store,
@@ -234,7 +278,7 @@ func (ng *AlertNG) init() error {
 
 	// There are a set of feature toggles available that act as short-circuits for common configurations.
 	// If any are set, override the config accordingly.
-	applyStateHistoryFeatureToggles(&ng.Cfg.UnifiedAlerting.StateHistory, ng.FeatureToggles, ng.Log)
+	ApplyStateHistoryFeatureToggles(&ng.Cfg.UnifiedAlerting.StateHistory, ng.FeatureToggles, ng.Log)
 	history, err := configureHistorianBackend(initCtx, ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store, ng.Metrics.GetHistorianMetrics(), ng.Log)
 	if err != nil {
 		return err
@@ -246,13 +290,19 @@ func (ng *AlertNG) init() error {
 		Images:                         ng.ImageService,
 		Clock:                          clk,
 		Historian:                      history,
-		DoNotSaveNormalState:           ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoNormalState),
+		DoNotSaveNormalState:           ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoNormalState),
+		ApplyNoDataAndErrorToAllStates: ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoDataErrorExecution),
 		MaxStateSaveConcurrency:        ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
-		ApplyNoDataAndErrorToAllStates: ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoDataErrorExecution),
 		Tracer:                         ng.tracer,
 		Log:                            log.New("ngalert.state.manager"),
 	}
-	stateManager := state.NewManager(cfg)
+	logger := log.New("ngalert.state.manager.persist")
+	statePersister := state.NewSyncStatePersisiter(logger, cfg)
+	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
+		ticker := clock.New().Ticker(ng.Cfg.UnifiedAlerting.StatePeriodicSaveInterval)
+		statePersister = state.NewAsyncStatePersister(logger, ticker, cfg)
+	}
+	stateManager := state.NewManager(cfg, statePersister)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
@@ -263,9 +313,11 @@ func (ng *AlertNG) init() error {
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
 
+	receiverService := notifier.NewReceiverService(ng.accesscontrol, ng.store, ng.store, ng.SecretsService, ng.store, ng.Log)
+
 	// Provisioning
 	policyService := provisioning.NewNotificationPolicyService(ng.store, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
-	contactPointService := provisioning.NewContactPointService(ng.store, ng.SecretsService, ng.store, ng.store, ng.Log, ng.accesscontrol)
+	contactPointService := provisioning.NewContactPointService(ng.store, ng.SecretsService, ng.store, ng.store, receiverService, ng.Log)
 	templateService := provisioning.NewTemplateService(ng.store, ng.store, ng.store, ng.Log)
 	muteTimingService := provisioning.NewMuteTimingService(ng.store, ng.store, ng.store, ng.Log)
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.dashboardService, ng.QuotaService, ng.store,
@@ -299,19 +351,11 @@ func (ng *AlertNG) init() error {
 		Historian:            history,
 		Hooks:                api.NewHooks(ng.Log),
 		Tracer:               ng.tracer,
+		UpgradeService:       ng.upgradeService,
 	}
 	ng.api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
-	defaultLimits, err := readQuotaConfig(ng.Cfg)
-	if err != nil {
-		return err
-	}
-
-	if err := ng.QuotaService.RegisterQuotaReporter(&quota.NewUsageReporter{
-		TargetSrv:     models.QuotaTargetSrv,
-		DefaultLimits: defaultLimits,
-		Reporter:      ng.api.Usage,
-	}); err != nil {
+	if err := RegisterQuotas(ng.Cfg, ng.QuotaService, ng.store); err != nil {
 		return err
 	}
 
@@ -329,23 +373,29 @@ func (ng *AlertNG) init() error {
 func subscribeToFolderChanges(logger log.Logger, bus bus.Bus, dbStore api.RuleStore) {
 	// if folder title is changed, we update all alert rules in that folder to make sure that all peers (in HA mode) will update folder title and
 	// clean up the current state
-	bus.AddEventListener(func(ctx context.Context, e *events.FolderTitleUpdated) error {
-		// do not block the upstream execution
-		go func(evt *events.FolderTitleUpdated) {
-			logger.Info("Got folder title updated event. updating rules in the folder", "folderUID", evt.UID)
-			_, err := dbStore.IncreaseVersionForAllRulesInNamespace(ctx, evt.OrgID, evt.UID)
-			if err != nil {
-				logger.Error("Failed to update alert rules in the folder after its title was changed", "error", err, "folderUID", evt.UID, "folder", evt.Title)
-				return
-			}
-		}(e)
+	bus.AddEventListener(func(ctx context.Context, evt *events.FolderTitleUpdated) error {
+		logger.Info("Got folder title updated event. updating rules in the folder", "folderUID", evt.UID)
+		_, err := dbStore.IncreaseVersionForAllRulesInNamespace(ctx, evt.OrgID, evt.UID)
+		if err != nil {
+			logger.Error("Failed to update alert rules in the folder after its title was changed", "error", err, "folderUID", evt.UID, "folder", evt.Title)
+			return err
+		}
 		return nil
 	})
 }
 
 // shouldRun determines if AlertNG should init or run anything more than just the migration.
 func (ng *AlertNG) shouldRun() bool {
-	return ng.Cfg.UnifiedAlerting.IsEnabled()
+	if ng.Cfg.UnifiedAlerting.IsEnabled() {
+		return true
+	}
+
+	// Feature flag will preview UA alongside legacy, so that UA routes are registered but the scheduler remains disabled.
+	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingPreviewUpgrade) {
+		return true
+	}
+
+	return false
 }
 
 // Run starts the scheduler and Alertmanager.
@@ -353,9 +403,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	if !ng.shouldRun() {
 		return nil
 	}
-	ng.Log.Debug("Starting")
-
-	ng.stateManager.Warm(ctx, ng.store)
+	ng.Log.Debug("Starting", "execute_alerts", ng.Cfg.UnifiedAlerting.ExecuteAlerts)
 
 	children, subCtx := errgroup.WithContext(ctx)
 
@@ -366,9 +414,24 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		return ng.AlertsRouter.Run(subCtx)
 	})
 
-	if ng.Cfg.UnifiedAlerting.ExecuteAlerts {
+	// We explicitly check that UA is enabled here in case FlagAlertingPreviewUpgrade is enabled but UA is disabled.
+	if ng.Cfg.UnifiedAlerting.ExecuteAlerts && ng.Cfg.UnifiedAlerting.IsEnabled() {
+		// Only Warm() the state manager if we are actually executing alerts.
+		// Doing so when we are not executing alerts is wasteful and could lead
+		// to misleading rule status queries, as the status returned will be
+		// always based on the state loaded from the database at startup, and
+		// not the most recent evaluation state.
+		//
+		// Also note that this runs synchronously to ensure state is loaded
+		// before rule evaluation begins, hence we use ctx and not subCtx.
+		//
+		ng.stateManager.Warm(ctx, ng.store)
+
 		children.Go(func() error {
 			return ng.schedule.Run(subCtx)
+		})
+		children.Go(func() error {
+			return ng.stateManager.Run(subCtx)
 		})
 	}
 	return children.Wait()
@@ -383,35 +446,6 @@ func (ng *AlertNG) IsDisabled() bool {
 // is invoked after all other middleware is invoked (authentication, instrumentation).
 func (ng *AlertNG) GetHooks() *api.Hooks {
 	return ng.api.Hooks
-}
-
-func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
-	limits := &quota.Map{}
-
-	if cfg == nil {
-		return limits, nil
-	}
-
-	var alertOrgQuota int64
-	var alertGlobalQuota int64
-
-	if cfg.UnifiedAlerting.IsEnabled() {
-		alertOrgQuota = cfg.Quota.Org.AlertRule
-		alertGlobalQuota = cfg.Quota.Global.AlertRule
-	}
-
-	globalQuotaTag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.GlobalScope)
-	if err != nil {
-		return limits, err
-	}
-	orgQuotaTag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)
-	if err != nil {
-		return limits, err
-	}
-
-	limits.Set(globalQuotaTag, alertGlobalQuota)
-	limits.Set(orgQuotaTag, alertOrgQuota)
-	return limits, nil
 }
 
 type Historian interface {
@@ -476,14 +510,14 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 	return nil, fmt.Errorf("unrecognized state history backend: %s", backend)
 }
 
-// applyStateHistoryFeatureToggles edits state history configuration to comply with currently active feature toggles.
-func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, logger log.Logger) {
+// ApplyStateHistoryFeatureToggles edits state history configuration to comply with currently active feature toggles.
+func ApplyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySettings, ft featuremgmt.FeatureToggles, logger log.Logger) {
 	backend, _ := historian.ParseBackendType(cfg.Backend)
 	// These feature toggles represent specific, common backend configurations.
 	// If all toggles are enabled, we listen to the state history config as written.
 	// If any of them are disabled, we ignore the configured backend and treat the toggles as an override.
 	// If multiple toggles are disabled, we go with the most "restrictive" one.
-	if !ft.IsEnabled(featuremgmt.FlagAlertStateHistoryLokiSecondary) {
+	if !ft.IsEnabledGlobally(featuremgmt.FlagAlertStateHistoryLokiSecondary) {
 		// If we cannot even treat Loki as a secondary, we must use annotations only.
 		if backend == historian.BackendTypeMultiple || backend == historian.BackendTypeLoki {
 			logger.Info("Forcing Annotation backend due to state history feature toggles")
@@ -493,7 +527,7 @@ func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 		}
 		return
 	}
-	if !ft.IsEnabled(featuremgmt.FlagAlertStateHistoryLokiPrimary) {
+	if !ft.IsEnabledGlobally(featuremgmt.FlagAlertStateHistoryLokiPrimary) {
 		// If we're using multiple backends, Loki must be the secondary.
 		if backend == historian.BackendTypeMultiple {
 			logger.Info("Coercing Loki to a secondary backend due to state history feature toggles")
@@ -509,7 +543,7 @@ func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 		}
 		return
 	}
-	if !ft.IsEnabled(featuremgmt.FlagAlertStateHistoryLokiOnly) {
+	if !ft.IsEnabledGlobally(featuremgmt.FlagAlertStateHistoryLokiOnly) {
 		// If we're not allowed to use Loki only, make it the primary but keep the annotation writes.
 		if backend == historian.BackendTypeLoki {
 			logger.Info("Forcing dual writes to Loki and Annotations due to state history feature toggles")
@@ -519,4 +553,16 @@ func applyStateHistoryFeatureToggles(cfg *setting.UnifiedAlertingStateHistorySet
 		}
 		return
 	}
+}
+
+func createRemoteAlertmanager(orgID int64, amCfg setting.RemoteAlertmanagerSettings, kvstore kvstore.KVStore, m *metrics.RemoteAlertmanager) (*remote.Alertmanager, error) {
+	externalAMCfg := remote.AlertmanagerConfig{
+		OrgID:             orgID,
+		URL:               amCfg.URL,
+		TenantID:          amCfg.TenantID,
+		BasicAuthPassword: amCfg.Password,
+	}
+	// We won't be handling files on disk, we can pass an empty string as workingDirPath.
+	stateStore := notifier.NewFileStore(orgID, kvstore, "")
+	return remote.NewAlertmanager(externalAMCfg, stateStore, m)
 }

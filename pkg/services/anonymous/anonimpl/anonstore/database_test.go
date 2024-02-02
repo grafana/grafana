@@ -13,7 +13,7 @@ import (
 
 func TestIntegrationAnonStore_DeleteDevicesOlderThan(t *testing.T) {
 	store := db.InitTestDB(t)
-	anonDBStore := ProvideAnonDBStore(store)
+	anonDBStore := ProvideAnonDBStore(store, 0)
 	const keepFor = time.Hour * 24 * 61
 
 	anonDevice := &Device{
@@ -48,9 +48,30 @@ func TestIntegrationAnonStore_DeleteDevicesOlderThan(t *testing.T) {
 	assert.Equal(t, "keep", devices[0].DeviceID)
 }
 
+func TestIntegrationBeyondDeviceLimit(t *testing.T) {
+	store := db.InitTestDB(t)
+	anonDBStore := ProvideAnonDBStore(store, 1)
+
+	anonDevice := &Device{
+		DeviceID:  "32mdo31deeqwes",
+		ClientIP:  "10.30.30.2",
+		UserAgent: "test",
+		UpdatedAt: time.Now().Add(-time.Hour),
+	}
+
+	err := anonDBStore.CreateOrUpdateDevice(context.Background(), anonDevice)
+	require.NoError(t, err)
+
+	anonDevice.DeviceID = "keep"
+	anonDevice.UpdatedAt = time.Now().Add(-time.Hour)
+
+	err = anonDBStore.CreateOrUpdateDevice(context.Background(), anonDevice)
+	require.ErrorIs(t, err, ErrDeviceLimitReached)
+}
+
 func TestIntegrationAnonStore_DeleteDevice(t *testing.T) {
 	store := db.InitTestDB(t)
-	anonDBStore := ProvideAnonDBStore(store)
+	anonDBStore := ProvideAnonDBStore(store, 0)
 	const keepFor = time.Hour * 24 * 61
 
 	anonDevice := &Device{

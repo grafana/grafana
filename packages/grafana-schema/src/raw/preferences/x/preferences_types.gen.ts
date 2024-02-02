@@ -21,6 +21,10 @@ export interface CookiePreferences {
   performance?: Record<string, unknown>;
 }
 
+/**
+ * Spec defines user, team or org Grafana preferences
+ * swagger:model Preferences
+ */
 export interface Preferences {
   /**
    * Cookie preferences

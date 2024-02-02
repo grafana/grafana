@@ -18,6 +18,7 @@ import {
 import { sceneGraph, VariableCustomFormatterFn } from '@grafana/scenes';
 import { VariableFormatID } from '@grafana/schema';
 
+import { getVariablesCompatibility } from '../dashboard-scene/utils/getVariablesCompatibility';
 import { variableAdapters } from '../variables/adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
 import { isAdHoc } from '../variables/guard';
@@ -68,17 +69,22 @@ export class TemplateSrv implements BaseTemplateSrv {
    *
    * Use getVariables function instead
    */
-  get variables(): any[] {
+  get variables(): TypedVariableModel[] {
     deprecationWarning('template_srv.ts', 'variables', 'getVariables');
     return this.getVariables();
   }
 
   getVariables(): TypedVariableModel[] {
+    // For scenes we have this backward compatiblity translation
+    if (window.__grafanaSceneContext) {
+      return getVariablesCompatibility(window.__grafanaSceneContext);
+    }
+
     return this.dependencies.getVariables();
   }
 
   updateIndex() {
-    const existsOrEmpty = (value: any) => value || value === '';
+    const existsOrEmpty = (value: unknown) => value || value === '';
 
     this.index = this._variables.reduce((acc, currentValue) => {
       if (currentValue.current && (currentValue.current.isNone || existsOrEmpty(currentValue.current.value))) {
@@ -117,7 +123,7 @@ export class TemplateSrv implements BaseTemplateSrv {
    * Use filters property on the request (DataQueryRequest) or if this is called from
    * interpolateVariablesInQueries or applyTemplateVariables it is passed as a new argument
    **/
-  getAdhocFilters(datasourceName: string): AdHocVariableFilter[] {
+  getAdhocFilters(datasourceName: string, skipDeprecationWarning?: boolean): AdHocVariableFilter[] {
     let filters: any = [];
     let ds = getDataSourceSrv().getInstanceSettings(datasourceName);
 
@@ -125,7 +131,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       return [];
     }
 
-    if (!this._adhocFiltersDeprecationWarningLogged.get(ds.type)) {
+    if (!skipDeprecationWarning && !this._adhocFiltersDeprecationWarningLogged.get(ds.type)) {
       if (process.env.NODE_ENV !== 'test') {
         deprecationWarning(
           `DataSource ${ds.type}`,
@@ -354,7 +360,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     });
   }
 
-  isAllValue(value: any) {
+  isAllValue(value: unknown) {
     return value === ALL_VARIABLE_VALUE || (Array.isArray(value) && value[0] === ALL_VARIABLE_VALUE);
   }
 

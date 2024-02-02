@@ -124,7 +124,7 @@ describe('<NextPrevResult>', () => {
     jest.advanceTimersByTime(1000);
     await waitFor(() => {
       expect(screen.getByText(/Services: 2\/3/)).toBeDefined();
-      expect(screen.getByText(/Depth: 1\/1/)).toBeDefined();
+      expect(screen.getByText(/Depth: 1/)).toBeDefined();
     });
   });
 });

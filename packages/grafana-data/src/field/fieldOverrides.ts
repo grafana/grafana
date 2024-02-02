@@ -238,7 +238,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 }
 
 function calculateRange(
-  config: FieldConfig<any>,
+  config: FieldConfig,
   field: Field,
   globalRange: NumericRange | undefined,
   data: DataFrame[]
@@ -269,7 +269,7 @@ function calculateRange(
 // 2. have the ability to selectively get display color or text (but not always both, which are each quite expensive)
 // 3. sufficently optimize text formatting and threshold color determinitation
 function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): DisplayProcessor {
-  type dispCache = Map<any, DisplayValue>;
+  type dispCache = Map<unknown, DisplayValue>;
   // decimals -> cache mapping, -1 is unspecified decimals
   const caches = new Map<number, dispCache>();
 

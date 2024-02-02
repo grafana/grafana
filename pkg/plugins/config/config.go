@@ -3,8 +3,8 @@ package config
 import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -18,6 +18,7 @@ type Cfg struct {
 	PluginSettings       setting.PluginSettings
 	PluginsAllowUnsigned []string
 	DisablePlugins       []string
+	ForwardHostEnvVars   []string
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
@@ -43,15 +44,18 @@ type Cfg struct {
 	GrafanaAppURL    string
 	GrafanaAppSubURL string
 
-	Features plugins.FeatureToggles
+	Features featuremgmt.FeatureToggles
 
-	AngularSupportEnabled bool
+	AngularSupportEnabled  bool
+	HideAngularDeprecation []string
+
+	ConcurrentQueryCount int
 }
 
 func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
 	awsAllowedAuthProviders []string, awsAssumeRoleEnabled bool, awsExternalId string, azure *azsettings.AzureSettings, secureSocksDSProxy setting.SecureSocksDSProxySettings,
-	grafanaVersion string, logDatasourceRequests bool, pluginsCDNURLTemplate string, appURL string, appSubURL string, tracing Tracing, features plugins.FeatureToggles, angularSupportEnabled bool,
-	grafanaComURL string, disablePlugins []string) *Cfg {
+	grafanaVersion string, logDatasourceRequests bool, pluginsCDNURLTemplate string, appURL string, appSubURL string, tracing Tracing, features featuremgmt.FeatureToggles, angularSupportEnabled bool,
+	grafanaComURL string, disablePlugins []string, hideAngularDeprecation []string, forwardHostEnvVars []string, concurrentQueryCount int) *Cfg {
 	return &Cfg{
 		log:                     log.New("plugin.cfg"),
 		PluginsPath:             pluginsPath,
@@ -73,5 +77,8 @@ func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSetti
 		GrafanaAppSubURL:        appSubURL,
 		Features:                features,
 		AngularSupportEnabled:   angularSupportEnabled,
+		HideAngularDeprecation:  hideAngularDeprecation,
+		ForwardHostEnvVars:      forwardHostEnvVars,
+		ConcurrentQueryCount:    concurrentQueryCount,
 	}
 }

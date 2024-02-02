@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
@@ -440,8 +441,6 @@ func setup() (*testContext, error) {
 		JSONData: json.RawMessage(`{"timeInterval": "15s"}`),
 	}
 
-	features := &fakeFeatureToggles{flags: map[string]bool{"prometheusBufferedClient": false}}
-
 	opts, err := client.CreateTransportOptions(context.Background(), settings, &setting.Cfg{}, log.New())
 	if err != nil {
 		return nil, err
@@ -452,20 +451,12 @@ func setup() (*testContext, error) {
 		return nil, err
 	}
 
-	queryData, _ := querydata.New(httpClient, features, settings, log.New())
+	queryData, _ := querydata.New(httpClient, settings, log.New())
 
 	return &testContext{
 		httpProvider: httpProvider,
 		queryData:    queryData,
 	}, nil
-}
-
-type fakeFeatureToggles struct {
-	flags map[string]bool
-}
-
-func (f *fakeFeatureToggles) IsEnabled(feature string) bool {
-	return f.flags[feature]
 }
 
 type fakeHttpClientProvider struct {

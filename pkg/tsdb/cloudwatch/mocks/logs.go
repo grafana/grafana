@@ -7,8 +7,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 )
 
 type LogsAPI struct {
@@ -41,16 +42,6 @@ func (l *LogsService) GetLogGroupFieldsWithContext(ctx context.Context, request 
 	args := l.Called(request)
 
 	return args.Get(0).([]resources.ResourceResponse[resources.LogGroupField]), args.Error(1)
-}
-
-type MockFeatures struct {
-	mock.Mock
-}
-
-func (f *MockFeatures) IsEnabled(feature string) bool {
-	args := f.Called(feature)
-
-	return args.Bool(0)
 }
 
 type MockLogEvents struct {

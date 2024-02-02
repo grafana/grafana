@@ -89,7 +89,7 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
         const columnValues = uniqueValues(keyColumnField.values);
         const rowValues = uniqueValues(keyRowField.values);
 
-        const matrixValues: { [key: string]: { [key: string]: any } } = {};
+        const matrixValues: { [key: string]: { [key: string]: unknown } } = {};
 
         for (let index = 0; index < valueField.values.length; index++) {
           const columnName = keyColumnField.values[index];

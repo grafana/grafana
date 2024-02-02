@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/manage-contact-points/
-description: Manage contact points
+description: View, edit, copy, or delete your contact points and notification templates
 keywords:
   - grafana
   - alerting

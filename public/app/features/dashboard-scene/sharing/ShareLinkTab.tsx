@@ -9,10 +9,10 @@ import { Alert, ClipboardButton, Field, FieldSet, Icon, Input, Switch } from '@g
 import { t, Trans } from 'app/core/internationalization';
 import { createShortLink } from 'app/core/utils/shortLinks';
 import { ThemePicker } from 'app/features/dashboard/components/ShareModal/ThemePicker';
-import { trackDashboardSharingActionPerType } from 'app/features/dashboard/components/ShareModal/analytics';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardUrl } from '../utils/urlBuilders';
 
 import { SceneShareTabState } from './types';
@@ -30,6 +30,8 @@ interface ShareOptions {
 }
 
 export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
+  public tabId = shareDashboardType.link;
+
   static Component = ShareLinkTabRenderer;
 
   constructor(state: Omit<ShareLinkTabState, keyof ShareOptions>) {
@@ -71,10 +73,10 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
 
     let shareUrl = getDashboardUrl({
       uid: dashboard.state.uid,
+      slug: dashboard.state.meta.slug,
       currentQueryParams: location.search,
       updateQuery: urlParamsUpdate,
       absolute: true,
-      useExperimentalURL: Boolean(config.featureToggles.dashboardSceneForViewers && dashboard.state.meta.canEdit),
     });
 
     if (useShortUrl) {
@@ -119,7 +121,11 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
   };
 
   onCopy() {
-    trackDashboardSharingActionPerType('copy_link', shareDashboardType.link);
+    DashboardInteractions.shareLinkCopied({
+      currentTimeRange: this.state.useLockedTime,
+      theme: this.state.selectedTheme,
+      shortenURL: this.state.useShortUrl,
+    });
   }
 }
 

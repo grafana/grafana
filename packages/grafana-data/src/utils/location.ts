@@ -69,7 +69,7 @@ const assureBaseUrl = (url: string): string => {
  * @param searchParamsToUpdate
  * @returns
  */
-const getUrlForPartial = (location: Location<any>, searchParamsToUpdate: Record<string, any>) => {
+const getUrlForPartial = (location: Location, searchParamsToUpdate: UrlQueryMap) => {
   const searchParams = urlUtil.parseKeyValue(
     location.search.startsWith('?') ? location.search.substring(1) : location.search
   );

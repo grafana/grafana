@@ -12,14 +12,15 @@ type PluginArchiveInfo struct {
 	Checksum string
 }
 
-// PluginRepo is (a subset of) the JSON response from /api/plugins/repo/$pluginID
-type PluginRepo struct {
-	Versions []Version `json:"versions"`
+// PluginVersions is the JSON response from /api/plugins/$pluginID/versions
+type PluginVersions struct {
+	Versions []Version `json:"items"`
 }
 
 type Version struct {
 	Version string              `json:"version"`
-	Arch    map[string]ArchMeta `json:"arch"`
+	Arch    map[string]ArchMeta `json:"packages"`
+	URL     string              `json:"url"`
 }
 
 type ArchMeta struct {

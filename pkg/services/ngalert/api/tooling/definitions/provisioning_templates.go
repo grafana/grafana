@@ -1,6 +1,6 @@
 package definitions
 
-// swagger:route GET /api/v1/provisioning/templates provisioning stable RouteGetTemplates
+// swagger:route GET /v1/provisioning/templates provisioning stable RouteGetTemplates
 //
 // Get all notification templates.
 //
@@ -8,7 +8,7 @@ package definitions
 //       200: NotificationTemplates
 //       404: description: Not found.
 
-// swagger:route GET /api/v1/provisioning/templates/{name} provisioning stable RouteGetTemplate
+// swagger:route GET /v1/provisioning/templates/{name} provisioning stable RouteGetTemplate
 //
 // Get a notification template.
 //
@@ -16,7 +16,7 @@ package definitions
 //       200: NotificationTemplate
 //       404: description: Not found.
 
-// swagger:route PUT /api/v1/provisioning/templates/{name} provisioning stable RoutePutTemplate
+// swagger:route PUT /v1/provisioning/templates/{name} provisioning stable RoutePutTemplate
 //
 // Updates an existing notification template.
 //
@@ -27,7 +27,7 @@ package definitions
 //       202: NotificationTemplate
 //       400: ValidationError
 
-// swagger:route DELETE /api/v1/provisioning/templates/{name} provisioning stable RouteDeleteTemplate
+// swagger:route DELETE /v1/provisioning/templates/{name} provisioning stable RouteDeleteTemplate
 //
 // Delete a template.
 //
@@ -59,6 +59,12 @@ type NotificationTemplateContent struct {
 type NotificationTemplatePayload struct {
 	// in:body
 	Body NotificationTemplateContent
+}
+
+// swagger:parameters RoutePutTemplate
+type NotificationTemplateHeaders struct {
+	// in:header
+	XDisableProvenance string `json:"X-Disable-Provenance"`
 }
 
 func (t *NotificationTemplate) ResourceType() string {

@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
@@ -26,6 +28,7 @@ import (
 	"golang.org/x/exp/rand"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -336,15 +339,20 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	generator := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID(), models.WithUniqueOrgID())
 	rule1 := createRule(t, store, generator)
 	rule2 := createRule(t, store, generator)
-	createFolder(t, store, rule1.NamespaceUID, rule1.Title, rule1.OrgID)
-	createFolder(t, store, rule2.NamespaceUID, rule2.Title, rule2.OrgID)
+
+	parentFolderUid := uuid.NewString()
+	createFolder(t, store, parentFolderUid, "Very Parent Folder", rule1.OrgID, "")
+	createFolder(t, store, rule1.NamespaceUID, rule1.Title, rule1.OrgID, parentFolderUid)
+	createFolder(t, store, rule2.NamespaceUID, rule2.Title, rule2.OrgID, "")
+
+	createFolder(t, store, rule2.NamespaceUID, "same UID folder", generator().OrgID, "") // create a folder with the same UID but in the different org
 
 	tc := []struct {
 		name         string
 		rules        []string
 		ruleGroups   []string
 		disabledOrgs []int64
-		folders      map[string]string
+		folders      map[models.FolderKey]string
 	}{
 		{
 			name:  "without a rule group filter, it returns all created rules",
@@ -363,13 +371,13 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		{
 			name:    "with populate folders enabled, it returns them",
 			rules:   []string{rule1.Title, rule2.Title},
-			folders: map[string]string{rule1.NamespaceUID: rule1.Title, rule2.NamespaceUID: rule2.Title},
+			folders: map[models.FolderKey]string{rule1.GetFolderKey(): models.GetNamespaceKey(parentFolderUid, rule1.Title), rule2.GetFolderKey(): rule2.Title},
 		},
 		{
 			name:         "with populate folders enabled and a filter on orgs, it only returns selected information",
 			rules:        []string{rule1.Title},
 			disabledOrgs: []int64{rule2.OrgID},
-			folders:      map[string]string{rule1.NamespaceUID: rule1.Title},
+			folders:      map[models.FolderKey]string{rule1.GetFolderKey(): models.GetNamespaceKey(parentFolderUid, rule1.Title)},
 		},
 	}
 
@@ -450,8 +458,8 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			count, err := store.CountInFolder(context.Background(),
-				test.query.OrgID, test.query.NamespaceUID, nil)
+			count, err := store.CountInFolders(context.Background(),
+				test.query.OrgID, []string{test.query.NamespaceUID}, nil)
 			if test.expectErr {
 				require.Error(t, err)
 			} else {
@@ -476,12 +484,23 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 	}
 	rule := createRule(t, store, nil)
 
-	err := store.DeleteInFolder(context.Background(), rule.OrgID, rule.NamespaceUID, nil)
-	require.NoError(t, err)
+	t.Run("should not be able to delete folder without permissions to delete rules", func(t *testing.T) {
+		store.AccessControl = acmock.New()
+		err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
+		require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
+	})
 
-	c, err := store.CountInFolder(context.Background(), rule.OrgID, rule.NamespaceUID, nil)
-	require.NoError(t, err)
-	require.Equal(t, int64(0), c)
+	t.Run("should be able to delete folder with permissions to delete rules", func(t *testing.T) {
+		store.AccessControl = acmock.New().WithPermissions([]accesscontrol.Permission{
+			{Action: accesscontrol.ActionAlertingRuleDelete, Scope: dashboards.ScopeFoldersAll},
+		})
+		err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
+		require.NoError(t, err)
+
+		c, err := store.CountInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
+		require.NoError(t, err)
+		require.Equal(t, int64(0), c)
+	})
 }
 
 func TestIntegration_GetNamespaceByUID(t *testing.T) {
@@ -506,7 +525,7 @@ func TestIntegration_GetNamespaceByUID(t *testing.T) {
 
 	uid := uuid.NewString()
 	title := "folder-title"
-	createFolder(t, store, uid, title, 1)
+	createFolder(t, store, uid, title, 1, "")
 
 	actual, err := store.GetNamespaceByUID(context.Background(), uid, 1, u)
 	require.NoError(t, err)
@@ -558,10 +577,12 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 	}
 }
 
+// createAlertRule creates an alert rule in the database and returns it.
+// If a generator is not specified, uniqueness of primary key is not guaranteed.
 func createRule(t *testing.T, store *DBstore, generate func() *models.AlertRule) *models.AlertRule {
 	t.Helper()
 	if generate == nil {
-		generate = models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID())
+		generate = models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval))
 	}
 	rule := generate()
 	err := store.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -588,7 +609,7 @@ func createRule(t *testing.T, store *DBstore, generate func() *models.AlertRule)
 	return rule
 }
 
-func createFolder(t *testing.T, store *DBstore, uid, title string, orgID int64) {
+func createFolder(t *testing.T, store *DBstore, uid, title string, orgID int64, parentUID string) {
 	t.Helper()
 	u := &user.SignedInUser{
 		UserID:         1,
@@ -603,6 +624,7 @@ func createFolder(t *testing.T, store *DBstore, uid, title string, orgID int64) 
 		Title:        title,
 		Description:  "",
 		SignedInUser: u,
+		ParentUID:    parentUID,
 	})
 
 	require.NoError(t, err)

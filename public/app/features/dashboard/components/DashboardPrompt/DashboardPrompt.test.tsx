@@ -11,9 +11,11 @@ function getDefaultDashboardModel() {
     panels: [
       createPanelSaveModel({
         id: 1,
-        type: 'graph',
+        type: 'timeseries',
         gridPos: { x: 0, y: 0, w: 24, h: 6 },
-        legend: { show: true, sortDesc: false }, // TODO legend is marked as a non-persisted field
+        options: {
+          legend: { showLegend: true },
+        },
       }),
 
       {
@@ -22,8 +24,8 @@ function getDefaultDashboardModel() {
         gridPos: { x: 0, y: 6, w: 24, h: 2 },
         collapsed: true,
         panels: [
-          { id: 3, type: 'graph', gridPos: { x: 0, y: 6, w: 12, h: 2 } },
-          { id: 4, type: 'graph', gridPos: { x: 12, y: 6, w: 12, h: 2 } },
+          { id: 3, type: 'timeseries', gridPos: { x: 0, y: 6, w: 12, h: 2 }, options: {} },
+          { id: 4, type: 'timeseries', gridPos: { x: 12, y: 6, w: 12, h: 2 }, options: {} },
         ],
       },
       { id: 5, type: 'row', gridPos: { x: 0, y: 6, w: 1, h: 1 }, collapsed: false, panels: [] },
@@ -66,10 +68,9 @@ describe('DashboardPrompt', () => {
     expect(hasChanges(dash, original)).toBe(false);
   });
 
-  it('Should ignore panel legend changes', () => {
+  it('Should ignore panel changes as those are handled via dirty flag', () => {
     const { original, dash } = getTestContext();
-    dash.panels[0]!.legend!.sortDesc = true;
-    dash.panels[0]!.legend!.sort = 'avg';
+    dash.panels[0]!.options = { legend: { showLegend: false } };
     expect(hasChanges(dash, original)).toBe(false);
   });
 

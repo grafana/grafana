@@ -1,4 +1,4 @@
-import { DataSourceRef as CommonDataSourceRef, DataSourceRef } from '../common/common.gen';
+import { DataSourceRef as CommonDataSourceRef, DataSourceRef, DataTopic } from '../common/common.gen';
 import * as raw from '../raw/dashboard/x/dashboard_types.gen';
 
 import { DataQuery } from './common.types';
@@ -11,7 +11,7 @@ export interface Panel<TOptions = Record<string, unknown>, TCustomFieldConfig = 
 }
 
 export interface RowPanel extends Omit<raw.RowPanel, 'panels'> {
-  panels: Array<Panel | raw.GraphPanel | raw.HeatmapPanel>;
+  panels: Panel[];
 }
 
 export enum VariableHide {
@@ -25,7 +25,7 @@ export interface VariableModel extends Omit<raw.VariableModel, 'datasource'> {
 }
 
 export interface Dashboard extends Omit<raw.Dashboard, 'templating' | 'annotations' | 'panels'> {
-  panels?: Array<Panel | RowPanel | raw.GraphPanel | raw.HeatmapPanel>;
+  panels?: Array<Panel | RowPanel>;
   annotations?: AnnotationContainer;
   templating?: {
     list?: VariableModel[];
@@ -59,12 +59,16 @@ export interface MatcherConfig<TConfig = any> extends raw.MatcherConfig {
 
 export interface DataTransformerConfig<TOptions = any> extends raw.DataTransformerConfig {
   options: TOptions;
+  topic?: DataTopic;
 }
+
+export interface TimePickerConfig extends raw.TimePickerConfig {}
 
 export const defaultDashboard = raw.defaultDashboard as Dashboard;
 export const defaultVariableModel = {
   ...raw.defaultVariableModel,
 } as VariableModel;
+export const defaultTimePickerConfig = raw.defaultTimePickerConfig as TimePickerConfig;
 export const defaultPanel: Partial<Panel> = raw.defaultPanel;
 export const defaultRowPanel: Partial<Panel> = raw.defaultRowPanel;
 export const defaultFieldConfig: Partial<FieldConfig> = raw.defaultFieldConfig;

@@ -6,7 +6,7 @@ aliases:
   - ../../linking/linking-overview/
   - ../../panels/working-with-panels/add-link-to-panel/
   - ../manage-dashboard-links/
-description: How to link Grafana dashboards.
+description: Add links to your Grafana dashboards to connect to other dashboards, panels, and websites
 keywords:
   - link
   - dashboard
@@ -119,7 +119,7 @@ Each panel can have its own set of links that are shown in the upper left of the
 
 Click the icon next to the panel title to see available panel links.
 
-{{< figure src="/media/docs/grafana/screenshot-panel-links.png" width="200px" >}}
+{{< figure src="/media/docs/grafana/screenshot-panel-links.png" width="200px" alt="List of panel links displayed" >}}
 
 ### Add a panel link
 

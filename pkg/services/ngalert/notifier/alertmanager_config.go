@@ -31,12 +31,11 @@ func (e AlertmanagerConfigRejectedError) Error() string {
 }
 
 type configurationStore interface {
-	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error)
+	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
 }
 
 func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Context, org int64) (definitions.GettableUserConfig, error) {
-	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
-	amConfig, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, &query)
+	amConfig, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, org)
 	if err != nil {
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to get latest configuration: %w", err)
 	}
@@ -157,9 +156,15 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 }
 
 func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config definitions.PostableUserConfig) error {
+	// We cannot add this validation to PostableUserConfig as that struct is used for both
+	// Grafana Alertmanager (where inhibition rules are not supported) and External Alertmanagers
+	// (including Mimir) where inhibition rules are supported.
+	if len(config.AlertmanagerConfig.InhibitRules) > 0 {
+		return errors.New("inhibition rules are not supported")
+	}
+
 	// Get the last known working configuration
-	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
-	_, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, &query)
+	_, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, org)
 	if err != nil {
 		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
 		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {

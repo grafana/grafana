@@ -136,15 +136,16 @@ groups_attribute_path = reverse("Global:department")
 To enable Single Logout, you need to add the following option to the configuration of Grafana:
 
 ```ini
-[auth]
-signout_redirect_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2<GRAFANA_DOMAIN>%2Flogin
+[auth.generic_oauth]
+signout_redirect_url = https://<PROVIDER_DOMAIN>/auth/realms/<REALM_NAME>/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2F<GRAFANA_DOMAIN>%2Flogin
 ```
 
 As an example, `<PROVIDER_DOMAIN>` can be `keycloak-demo.grafana.org`,
 `<REALM_NAME>` can be `grafana` and `<GRAFANA_DOMAIN>` can be `play.grafana.org`.
 
-> **Note**: Grafana does not support `id_token_hints`. From keycloak 18, it is necessary to disable `id_token_hints` enforcement in keycloak for
-> single logout to work. [Documentation reference](https://www.keycloak.org/2022/04/keycloak-1800-released#_openid_connect_logout).
+{{% admonition type="note" %}}
+Grafana supports ID token hints for single logout. Grafana automatically adds the `id_token_hint` parameter to the logout request if it detects OAuth as the authentication method.
+{{% /admonition %}}
 
 ## Allow assigning Grafana Admin
 
@@ -164,10 +165,12 @@ allow_assign_grafana_admin = true
 
 > Available in Grafana v9.3 and later versions.
 
-> **Note:** This feature is behind the `accessTokenExpirationCheck` feature toggle.
-
 When a user logs in using an OAuth provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token.
 
 Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
 
-To enable a refresh token for Keycloak, extend the `scopes` in `[auth.generic_oauth]` with `offline_access`.
+To enable a refresh token for Keycloak, do the following:
+
+1. Extend the `scopes` in `[auth.generic_oauth]` with `offline_access`.
+
+1. Add `use_refresh_token = true` to `[auth.generic_oauth]` configuration.

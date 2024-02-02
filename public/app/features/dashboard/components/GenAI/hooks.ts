@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 import { Subscription } from 'rxjs';
 
 import { llms } from '@grafana/experimental';
-import { logError } from '@grafana/runtime';
+import { createMonitoringLogger } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { isLLMPluginEnabled, DEFAULT_OAI_MODEL } from './utils';
@@ -11,6 +11,8 @@ import { isLLMPluginEnabled, DEFAULT_OAI_MODEL } from './utils';
 // Declared instead of imported from utils to make this hook modular
 // Ideally we will want to move the hook itself to a different scope later.
 type Message = llms.openai.Message;
+
+const genAILogger = createMonitoringLogger('features.dashboards.genai');
 
 export enum StreamStatus {
   IDLE = 'idle',
@@ -26,6 +28,8 @@ export function useOpenAIStream(
   temperature = 1
 ): {
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  setStopGeneration: React.Dispatch<React.SetStateAction<boolean>>;
+  messages: Message[];
   reply: string;
   streamStatus: StreamStatus;
   error: Error | undefined;
@@ -42,6 +46,7 @@ export function useOpenAIStream(
 } {
   // The messages array to send to the LLM, updated when the button is clicked.
   const [messages, setMessages] = useState<Message[]>([]);
+  const [stopGeneration, setStopGeneration] = useState(false);
   // The latest reply from the LLM.
   const [reply, setReply] = useState('');
   const [streamStatus, setStreamStatus] = useState<StreamStatus>(StreamStatus.IDLE);
@@ -52,13 +57,14 @@ export function useOpenAIStream(
     (e: Error) => {
       setStreamStatus(StreamStatus.IDLE);
       setMessages([]);
+      setStopGeneration(false);
       setError(e);
       notifyError(
         'Failed to generate content using OpenAI',
         `Please try again or if the problem persists, contact your organization admin.`
       );
       console.error(e);
-      logError(e, { messages: JSON.stringify(messages), model, temperature: String(temperature) });
+      genAILogger.logError(e, { messages: JSON.stringify(messages), model, temperature: String(temperature) });
     },
     [messages, model, temperature, notifyError]
   );
@@ -104,6 +110,7 @@ export function useOpenAIStream(
             setStreamStatus(StreamStatus.IDLE);
           });
           setMessages([]);
+          setStopGeneration(false);
           setError(undefined);
         },
       }),
@@ -118,6 +125,17 @@ export function useOpenAIStream(
       }
     };
   }, [value]);
+
+  // Unsubscribe from the stream when user stops the generation.
+  useEffect(() => {
+    if (stopGeneration) {
+      value?.stream?.unsubscribe();
+      setStreamStatus(StreamStatus.IDLE);
+      setStopGeneration(false);
+      setError(undefined);
+      setMessages([]);
+    }
+  }, [stopGeneration, value?.stream]);
 
   // If the stream is generating and we haven't received a reply, it times out.
   useEffect(() => {
@@ -138,6 +156,8 @@ export function useOpenAIStream(
 
   return {
     setMessages,
+    setStopGeneration,
+    messages,
     reply,
     streamStatus,
     error,

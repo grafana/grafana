@@ -12,7 +12,7 @@ import {
   ConcatenateFrameNameMode,
   ConcatenateTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/concat';
-import { Input, Select } from '@grafana/ui';
+import { InlineField, Input, Select } from '@grafana/ui';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -57,29 +57,18 @@ export class ConcatenateTransformerEditor extends React.PureComponent<Concatenat
 
     return (
       <div>
-        <div className="gf-form-inline">
-          <div className="gf-form">
-            <div className="gf-form-label width-8">Name</div>
-            <Select
-              className="width-18"
-              options={nameModes}
-              value={nameModes.find((v) => v.value === frameNameMode)}
-              onChange={this.onModeChanged}
-            />
-          </div>
-        </div>
+        <InlineField label="Name" labelWidth={16} grow>
+          <Select
+            width={36}
+            options={nameModes}
+            value={nameModes.find((v) => v.value === frameNameMode)}
+            onChange={this.onModeChanged}
+          />
+        </InlineField>
         {frameNameMode === ConcatenateFrameNameMode.Label && (
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <div className="gf-form-label width-8">Label</div>
-              <Input
-                className="width-18"
-                value={options.frameNameLabel ?? ''}
-                placeholder="frame"
-                onChange={this.onLabelChanged}
-              />
-            </div>
-          </div>
+          <InlineField label="Label" labelWidth={16} grow>
+            <Input width={36} value={options.frameNameLabel ?? ''} placeholder="frame" onChange={this.onLabelChanged} />
+          </InlineField>
         )}
       </div>
     );

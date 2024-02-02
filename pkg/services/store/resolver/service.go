@@ -23,7 +23,7 @@ var getNow = func() time.Time { return time.Now() }
 
 type ResolutionInfo struct {
 	OK        bool      `json:"ok"`
-	Key       string    `json:"key,omitempty"`  // GRN? UID?
+	Key       string    `json:"key,omitempty"`  // k8s key
 	Warning   string    `json:"kind,omitempty"` // old syntax?  (name>uid) references a renamed object?
 	Timestamp time.Time `json:"timestamp,omitempty"`
 }

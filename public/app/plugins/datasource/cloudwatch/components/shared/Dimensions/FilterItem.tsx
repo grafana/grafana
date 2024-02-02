@@ -4,9 +4,10 @@ import { useAsyncFn } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
-import { Select, stylesFactory, useTheme2 } from '@grafana/ui';
+import { Select, useStyles2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../datasource';
+import { useDimensionKeys } from '../../../hooks';
 import { Dimensions, MetricStat } from '../../../types';
 import { appendTemplateVariables } from '../../../utils/utils';
 
@@ -16,7 +17,6 @@ export interface Props {
   metricStat: MetricStat;
   datasource: CloudWatchDatasource;
   filter: DimensionFilterCondition;
-  dimensionKeys: Array<SelectableValue<string>>;
   disableExpressions: boolean;
   onChange: (value: DimensionFilterCondition) => void;
   onDelete: () => void;
@@ -32,19 +32,16 @@ const excludeCurrentKey = (dimensions: Dimensions, currentKey: string | undefine
     return acc;
   }, {});
 
-export const FilterItem = ({
-  filter,
-  metricStat: { region, namespace, metricName, dimensions, accountId },
-  datasource,
-  dimensionKeys,
-  disableExpressions,
-  onChange,
-  onDelete,
-}: Props) => {
+export const FilterItem = ({ filter, metricStat, datasource, disableExpressions, onChange, onDelete }: Props) => {
+  const { region, namespace, metricName, dimensions, accountId } = metricStat;
   const dimensionsExcludingCurrentKey = useMemo(
     () => excludeCurrentKey(dimensions ?? {}, filter.key),
     [dimensions, filter]
   );
+  const dimensionKeys = useDimensionKeys(datasource, {
+    ...metricStat,
+    dimensionFilters: dimensionsExcludingCurrentKey,
+  });
 
   const loadDimensionValues = async () => {
     if (!filter.key) {
@@ -76,8 +73,7 @@ export const FilterItem = ({
     metricName,
     accountId,
   ]);
-  const theme = useTheme2();
-  const styles = getOperatorStyles(theme);
+  const styles = useStyles2(getOperatorStyles);
 
   return (
     <div data-testid="cloudwatch-dimensions-filter-item">
@@ -119,9 +115,9 @@ export const FilterItem = ({
   );
 };
 
-const getOperatorStyles = stylesFactory((theme: GrafanaTheme2) => ({
+const getOperatorStyles = (theme: GrafanaTheme2) => ({
   root: css({
     padding: theme.spacing(0, 1),
     alignSelf: 'center',
   }),
-}));
+});

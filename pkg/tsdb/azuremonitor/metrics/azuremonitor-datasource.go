@@ -14,12 +14,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
@@ -28,8 +28,8 @@ import (
 
 // AzureMonitorDatasource calls the Azure Monitor API - one of the four API's supported
 type AzureMonitorDatasource struct {
-	Proxy    types.ServiceProxy
-	Features featuremgmt.FeatureToggles
+	Proxy  types.ServiceProxy
+	Logger log.Logger
 }
 
 var (
@@ -109,14 +109,17 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 				MetricNamespace:     azJSONModel.MetricNamespace,
 				ResourceName:        resourceName,
 			}
-			azureURL = ub.BuildMetricsURL()
-			// POST requests are only supported at the subscription level
-			filterInBody = false
+
+			// Construct the resourceURI (for legacy query objects pre Grafana 9)
 			resourceUri, err := ub.buildResourceURI()
 			if err != nil {
 				return nil, err
 			}
+
+			// POST requests are only supported at the subscription level
+			filterInBody = false
 			if resourceUri != nil {
+				azureURL = fmt.Sprintf("%s/providers/microsoft.insights/metrics", *resourceUri)
 				resourceMap[*resourceUri] = dataquery.AzureMonitorResource{ResourceGroup: resourceGroup, ResourceName: resourceName}
 			}
 		} else {
@@ -128,7 +131,11 @@ func (e *AzureMonitorDatasource) buildQueries(queries []backend.DataQuery, dsInf
 					MetricNamespace:     azJSONModel.MetricNamespace,
 					ResourceName:        r.ResourceName,
 				}
-				resourceUri, _ := ub.buildResourceURI()
+				resourceUri, err := ub.buildResourceURI()
+				if err != nil {
+					return nil, err
+				}
+
 				if resourceUri != nil {
 					resourceMap[*resourceUri] = r
 				}
@@ -271,7 +278,7 @@ func (e *AzureMonitorDatasource) retrieveSubscriptionDetails(cli *http.Client, c
 
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			backend.Logger.Warn("Failed to close response body", "err", err)
+			e.Logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
@@ -323,7 +330,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *types.
 
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			backend.Logger.Warn("Failed to close response body", "err", err)
+			e.Logger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 

@@ -4,7 +4,7 @@ import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import React, { PropsWithChildren, useRef } from 'react';
 
-import { useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { IconName } from '../../types';
 import { t } from '../../utils/i18n';
 import { IconButton } from '../IconButton/IconButton';
@@ -46,8 +46,7 @@ export function Modal(props: PropsWithChildren<Props>) {
     onClickBackdrop,
     trapFocus = true,
   } = props;
-  const theme = useTheme2();
-  const styles = getModalStyles(theme);
+  const styles = useStyles2(getModalStyles);
 
   const ref = useRef<HTMLDivElement>(null);
 
@@ -89,7 +88,7 @@ export function Modal(props: PropsWithChildren<Props>) {
                 name="times"
                 size="xl"
                 onClick={onDismiss}
-                tooltip={t('grafana-ui.modal.close-tooltip', 'Close')}
+                aria-label={t('grafana-ui.modal.close-tooltip', 'Close')}
               />
             </div>
           </div>
@@ -101,8 +100,7 @@ export function Modal(props: PropsWithChildren<Props>) {
 }
 
 function ModalButtonRow({ leftItems, children }: { leftItems?: React.ReactNode; children: React.ReactNode }) {
-  const theme = useTheme2();
-  const styles = getModalStyles(theme);
+  const styles = useStyles2(getModalStyles);
 
   if (leftItems) {
     return (

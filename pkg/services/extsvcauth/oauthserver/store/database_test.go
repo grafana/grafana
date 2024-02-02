@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/go-jose/go-jose/v3"
@@ -350,6 +351,114 @@ vuO8AU0bVoUmYMKhozkcCYHudkeS08hEjQIDAQAB
 			require.Equal(t, tc.wantKeyType, webKey.Algorithm)
 		})
 	}
+}
+
+func TestStore_RemoveExternalService(t *testing.T) {
+	ctx := context.Background()
+	client1 := oauthserver.OAuthExternalService{
+		Name:                   "my-external-service",
+		ClientID:               "ClientID",
+		ImpersonatePermissions: []accesscontrol.Permission{},
+	}
+	client2 := oauthserver.OAuthExternalService{
+		Name:     "my-external-service-2",
+		ClientID: "ClientID2",
+		ImpersonatePermissions: []accesscontrol.Permission{
+			{Action: "dashboards:read", Scope: "folders:*"},
+			{Action: "dashboards:read", Scope: "dashboards:*"},
+		},
+	}
+
+	// Init store
+	s := &store{db: db.InitTestDB(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagExternalServiceAuth}})}
+	require.NoError(t, s.SaveExternalService(context.Background(), &client1))
+	require.NoError(t, s.SaveExternalService(context.Background(), &client2))
+
+	// Check presence of clients in store
+	getState := func(t *testing.T) map[string]bool {
+		client, err := s.GetExternalService(ctx, "ClientID")
+		if err != nil && !errors.Is(err, oauthserver.ErrClientNotFound) {
+			require.Fail(t, "error fetching client")
+		}
+
+		client2, err := s.GetExternalService(ctx, "ClientID2")
+		if err != nil && !errors.Is(err, oauthserver.ErrClientNotFound) {
+			require.Fail(t, "error fetching client")
+		}
+
+		return map[string]bool{
+			"ClientID":  client != nil,
+			"ClientID2": client2 != nil,
+		}
+	}
+
+	tests := []struct {
+		name    string
+		id      string
+		state   map[string]bool
+		wantErr bool
+	}{
+		{
+			name:    "no id provided",
+			state:   map[string]bool{"ClientID": true, "ClientID2": true},
+			wantErr: true,
+		},
+		{
+			name:    "not found",
+			id:      "ClientID3",
+			state:   map[string]bool{"ClientID": true, "ClientID2": true},
+			wantErr: false,
+		},
+		{
+			name:    "remove client 2",
+			id:      "ClientID2",
+			state:   map[string]bool{"ClientID": true, "ClientID2": false},
+			wantErr: false,
+		},
+		{
+			name:    "remove client 1",
+			id:      "ClientID",
+			state:   map[string]bool{"ClientID": false, "ClientID2": false},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := s.DeleteExternalService(ctx, tt.id)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			require.EqualValues(t, tt.state, getState(t))
+		})
+	}
+}
+
+func Test_store_GetExternalServiceNames(t *testing.T) {
+	ctx := context.Background()
+	client1 := oauthserver.OAuthExternalService{
+		Name:                   "my-external-service",
+		ClientID:               "ClientID",
+		ImpersonatePermissions: []accesscontrol.Permission{},
+	}
+	client2 := oauthserver.OAuthExternalService{
+		Name:     "my-external-service-2",
+		ClientID: "ClientID2",
+		ImpersonatePermissions: []accesscontrol.Permission{
+			{Action: "dashboards:read", Scope: "folders:*"},
+			{Action: "dashboards:read", Scope: "dashboards:*"},
+		},
+	}
+
+	// Init store
+	s := &store{db: db.InitTestDB(t, db.InitTestDBOpt{FeatureFlags: []string{featuremgmt.FlagExternalServiceAuth}})}
+	require.NoError(t, s.SaveExternalService(context.Background(), &client1))
+	require.NoError(t, s.SaveExternalService(context.Background(), &client2))
+
+	got, err := s.GetExternalServiceNames(ctx)
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{"my-external-service", "my-external-service-2"}, got)
 }
 
 func compareClientToStored(t *testing.T, s *store, wanted *oauthserver.OAuthExternalService) {

@@ -1,7 +1,8 @@
-import { getTemplateSrv, type TemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { Monaco, monacoTypes } from '@grafana/ui';
 
 import { type ResourcesAPI } from '../../../resources/ResourcesAPI';
+import { LogGroup } from '../../../types';
 import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
 import { LinkedToken } from '../../monarch/LinkedToken';
 import { TRIGGER_SUGGEST } from '../../monarch/commands';
@@ -12,12 +13,26 @@ import { getStatementPosition } from './statementPosition';
 import { getSuggestionKinds } from './suggestionKinds';
 import { LogsTokenTypes } from './types';
 
+export type queryContext = {
+  logGroups?: LogGroup[];
+  region: string;
+};
+
+export function LogsCompletionItemProviderFunc(resources: ResourcesAPI, templateSrv: TemplateSrv = getTemplateSrv()) {
+  return (queryContext: queryContext) => {
+    return new LogsCompletionItemProvider(resources, templateSrv, queryContext);
+  };
+}
+
 export class LogsCompletionItemProvider extends CompletionItemProvider {
-  constructor(resources: ResourcesAPI, templateSrv: TemplateSrv = getTemplateSrv()) {
+  queryContext: queryContext;
+
+  constructor(resources: ResourcesAPI, templateSrv: TemplateSrv = getTemplateSrv(), queryContext: queryContext) {
     super(resources, templateSrv);
     this.getStatementPosition = getStatementPosition;
     this.getSuggestionKinds = getSuggestionKinds;
     this.tokenTypes = LogsTokenTypes;
+    this.queryContext = queryContext;
   }
 
   async getSuggestions(
@@ -56,6 +71,7 @@ export class LogsCompletionItemProvider extends CompletionItemProvider {
               insertText: `${command} $0`,
               insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
               command: TRIGGER_SUGGEST,
+              kind: monaco.languages.CompletionItemKind.Method,
             });
           });
           break;
@@ -65,12 +81,32 @@ export class LogsCompletionItemProvider extends CompletionItemProvider {
               insertText: `${f}($0)`,
               insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
               command: TRIGGER_SUGGEST,
+              kind: monaco.languages.CompletionItemKind.Function,
             });
           });
+
+          if (this.queryContext.logGroups && this.queryContext.logGroups.length > 0) {
+            let fields = await this.fetchFields(this.queryContext.logGroups, this.queryContext.region);
+            fields.push('@log');
+            fields.forEach((field) => {
+              if (field !== '') {
+                addSuggestion(field, {
+                  range,
+                  label: field,
+                  insertText: field,
+                  kind: monaco.languages.CompletionItemKind.Field,
+                  sortText: CompletionItemPriority.High,
+                });
+              }
+            });
+          }
           break;
         case SuggestionKind.SortOrderDirectionKeyword:
           SORT_DIRECTION_KEYWORDS.forEach((direction) => {
-            addSuggestion(direction, { sortText: CompletionItemPriority.High });
+            addSuggestion(direction, {
+              sortText: CompletionItemPriority.High,
+              kind: monaco.languages.CompletionItemKind.Operator,
+            });
           });
           break;
         case SuggestionKind.InKeyword:
@@ -82,19 +118,31 @@ export class LogsCompletionItemProvider extends CompletionItemProvider {
           });
           break;
       }
-
-      this.templateSrv.getVariables().map((v) => {
-        const variable = `$${v.name}`;
-        addSuggestion(variable, {
-          range,
-          label: variable,
-          insertText: variable,
-          kind: monaco.languages.CompletionItemKind.Variable,
-          sortText: CompletionItemPriority.Low,
-        });
-      });
     }
+
+    this.templateSrv.getVariables().map((v) => {
+      const variable = `$${v.name}`;
+      addSuggestion(variable, {
+        range,
+        label: variable,
+        insertText: variable,
+        kind: monaco.languages.CompletionItemKind.Variable,
+        sortText: CompletionItemPriority.Low,
+      });
+    });
 
     return suggestions;
   }
+
+  private fetchFields = async (logGroups: LogGroup[], region: string): Promise<string[]> => {
+    const results = await Promise.all(
+      logGroups.map((logGroup) =>
+        this.resources
+          .getLogGroupFields({ logGroupName: logGroup.name, arn: logGroup.arn, region })
+          .then((fields) => fields.filter((f) => f).map((f) => f.value.name ?? ''))
+      )
+    );
+    // Deduplicate fields
+    return [...new Set(results.flat())];
+  };
 }

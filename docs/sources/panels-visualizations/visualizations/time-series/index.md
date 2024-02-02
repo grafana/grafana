@@ -29,6 +29,7 @@ labels:
     - cloud
     - enterprise
     - oss
+description: Configure options for Grafana's time series visualization
 title: Time series
 weight: 10
 ---

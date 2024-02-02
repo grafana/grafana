@@ -40,7 +40,7 @@ type OAuthTokenSync struct {
 }
 
 func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
-	namespace, _ := identity.NamespacedID()
+	namespace, _ := identity.GetNamespacedID()
 	// only perform oauth token check if identity is a user
 	if namespace != authn.NamespaceUser {
 		return nil
@@ -53,12 +53,16 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 
 	// if we recently have performed this it would be cached, so we can skip the hook
 	if _, ok := s.cache.Get(identity.ID); ok {
+		s.log.FromContext(ctx).Debug("OAuth token check is cached", "id", identity.ID)
 		return nil
 	}
 
-	token, exists, _ := s.service.HasOAuthEntry(ctx, identity)
+	token, exists, err := s.service.HasOAuthEntry(ctx, identity)
 	// user is not authenticated through oauth so skip further checks
 	if !exists {
+		if err != nil {
+			s.log.FromContext(ctx).Error("Failed to fetch oauth entry", "id", identity.ID, "error", err)
+		}
 		return nil
 	}
 
@@ -69,6 +73,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 
 	// token has no expire time configured, so we don't have to refresh it
 	if token.OAuthExpiry.IsZero() {
+		s.log.FromContext(ctx).Debug("Access token without expiry", "id", identity.ID)
 		// cache the token check, so we don't perform it on every request
 		s.cache.Set(identity.ID, struct{}{}, getOAuthTokenCacheTTL(token.OAuthExpiry, idTokenExpiry))
 		return nil
@@ -97,6 +102,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 	}
 	// token has not expired, so we don't have to refresh it
 	if !hasAccessTokenExpired && !hasIdTokenExpired {
+		s.log.FromContext(ctx).Debug("Access and id token has not expired yet", "id", identity.ID)
 		// cache the token check, so we don't perform it on every request
 		s.cache.Set(identity.ID, struct{}{}, getOAuthTokenCacheTTL(accessTokenExpires, idTokenExpires))
 		return nil

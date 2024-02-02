@@ -10,8 +10,9 @@ export enum ColorIndicator {
   marker_lg = 'marker_lg',
 }
 
-export enum LabelValuePlacement {
+export enum ColorPlacement {
   hidden = 'hidden',
+  first = 'first',
   leading = 'leading',
   trailing = 'trailing',
 }
@@ -21,4 +22,8 @@ export interface LabelValue {
   value: string | number | null;
   color?: string;
   colorIndicator?: ColorIndicator;
+  colorPlacement?: ColorPlacement;
+  isActive?: boolean;
 }
+
+export const DEFAULT_COLOR_INDICATOR = ColorIndicator.series;

@@ -166,7 +166,7 @@ export function RichHistoryStarredTab(props: RichHistoryStarredTabProps) {
         )}
         {!loading &&
           queries.map((q) => {
-            return <RichHistoryCard query={q} key={q.id} exploreId={exploreId} />;
+            return <RichHistoryCard queryHistoryItem={q} key={q.id} exploreId={exploreId} />;
           })}
         {queries.length && queries.length !== totalQueries ? (
           <div>

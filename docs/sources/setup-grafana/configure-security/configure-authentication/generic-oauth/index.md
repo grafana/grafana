@@ -41,6 +41,7 @@ To follow this guide:
 
 - Ensure that you have access to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}).
 - Ensure you know how to create an OAuth2 application with your OAuth2 provider. Consult the documentation of your OAuth2 provider for more information.
+- Ensure your identity provider returns OpenID UserInfo compatible information such as `sub` claim.
 - If you are using refresh tokens, ensure you know how to set them up with your OAuth2 provider. Consult the documentation of your OAuth2 provider for more information.
 
 ## Steps
@@ -67,13 +68,11 @@ To integrate your OAuth2 provider with Grafana using our generic OAuth2 authenti
 
 1. Optional: [Configure a refresh token]({{< relref "#configure-a-refresh-token" >}}):
 
-   a. Enable `accessTokenExpirationCheck` feature toggle.
+   a. Extend the `scopes` field of `[auth.generic_oauth]` section in Grafana configuration file with refresh token scope used by your OAuth2 provider.
 
-   b. Extend the `scopes` field of `[auth.generic_oauth]` section in Grafana configuration file with refresh token scope used by your OAuth2 provider.
+   b. Set `use_refresh_token` to `true` in `[auth.generic_oauth]` section in Grafana configuration file.
 
-   c. Set `use_refresh_token` to `true` in `[auth.generic_oauth]` section in Grafana configuration file.
-
-   d. Enable the refresh token on the provider if required.
+   c. Enable the refresh token on the provider if required.
 
 1. [Configure role mapping]({{< relref "#configure-role-mapping" >}}).
 1. Optional: [Configure team synchronization]({{< relref "#configure-team-synchronization" >}}).
@@ -121,7 +120,7 @@ The following table outlines the various generic OAuth2 configuration options. Y
 | `tls_client_key`             | No       | The path to the key.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |                 |
 | `tls_client_ca`              | No       | The path to the trusted certificate authority list.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |                 |
 | `use_pkce`                   | No       | Set to `true` to use [Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636). Grafana uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.                                                                                                                                                                                                                                                                                                                                                                                         | `false`         |
-| `use_refresh_token`          | No       | Set to `true` to use refresh token and check access token expiration. The `accessTokenExpirationCheck` feature toggle should also be enabled to use refresh token.                                                                                                                                                                                                                                                                                                                                                                                                                                         | `false`         |
+| `use_refresh_token`          | No       | Set to `true` to use refresh token and check access token expiration.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `false`         |
 
 ### Configure login
 
@@ -183,7 +182,7 @@ To configure generic OAuth2 to use a refresh token, set `use_refresh_token` conf
 1. Extend the `scopes` field of `[auth.generic_oauth]` section in Grafana configuration file with additional scopes.
 1. Enable the refresh token on the provider.
 
-> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.2.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
+> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
 
 ## Configure role mapping
 
@@ -276,6 +275,17 @@ role_attribute_path = contains(info.roles[*], 'admin') && 'GrafanaAdmin' || cont
 allow_assign_grafana_admin = true
 ```
 
+#### Map one role to all users
+
+In this example, all users will be assigned `Viewer` role regardless of the user information received from the identity provider.
+
+Config:
+
+```ini
+role_attribute_path = "'Viewer'"
+skip_org_role_sync = false
+```
+
 ## Configure team synchronization
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
@@ -316,6 +326,40 @@ Payload:
 ## Examples of setting up generic OAuth2
 
 This section includes examples of setting up generic OAuth2 integration.
+
+### Set up OAuth2 with Descope
+
+To set up generic OAuth2 authentication with Descope, follow these steps:
+
+1. Create a Descope Project [here](https://app.descope.com/gettingStarted), and go through the Getting Started Wizard to configure your authentication. You can skip step if you already have Descope project set up.
+
+1. If you wish to use a flow besides `Sign Up or In`, go to the **IdP Applications** menu in the console, and select your IdP application. Then alter the **Flow Hosting URL** query parameter `?flow=sign-up-or-in` to change which flow id you wish to use.
+
+1. Click **Save**.
+
+1. Update the `[auth.generic_oauth]` section of the Grafana configuration file using the values from the **Settings** tab:
+
+   {{% admonition type="note" %}}
+   You can get your Client ID (Descope Project ID) under [Project Settings](https://app.descope.com/settings/project). Your Client Secret (Descope Access Key) can be generated under [Access Keys](https://app.descope.com/accesskeys).
+   {{% /admonition %}}
+
+   ```bash
+   [auth.generic_oauth]
+   enabled = true
+   allow_sign_up = true
+   auto_login = false
+   team_ids =
+   allowed_organizations =
+   name = Descope
+   client_id = <Descope Project ID>
+   client_secret = <Descope Access Key>
+   scopes = openid profile email descope.claims descope.custom_claims
+   auth_url = https://api.descope.com/oauth2/v1/authorize
+   token_url = https://api.descope.com/oauth2/v1/token
+   api_url = https://api.descope.com/oauth2/v1/userinfo
+   use_pkce = true
+   use_refresh_token = true
+   ```
 
 ### Set up OAuth2 with Auth0
 

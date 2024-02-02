@@ -30,7 +30,7 @@ const setup = () => {
   ];
 
   const grafanaContext = getGrafanaContextMock();
-  grafanaContext.chrome.setMegaMenu('open');
+  grafanaContext.chrome.setMegaMenuOpen(true);
 
   return render(
     <TestProvider storeState={{ navBarTree }} grafanaContext={grafanaContext}>
@@ -52,6 +52,7 @@ describe('MegaMenu', () => {
   it('should filter out profile', async () => {
     setup();
 
+    expect(await screen.findByTestId(selectors.components.NavMenu.Menu)).toBeInTheDocument();
     expect(screen.queryByLabelText('Profile')).not.toBeInTheDocument();
   });
 });

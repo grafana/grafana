@@ -19,10 +19,11 @@ import React, { useState, useEffect, memo, useCallback } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
+import { IntervalInput } from '@grafana/o11y-ds-frontend';
 import { Collapse, HorizontalGroup, Icon, InlineField, InlineFieldRow, Select, Tooltip, useStyles2 } from '@grafana/ui';
-import { IntervalInput } from 'app/core/components/IntervalInput/IntervalInput';
 
 import { defaultFilters, randomId, SearchProps, Tag } from '../../../useSearch';
+import SearchBarInput from '../../common/SearchBarInput';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE, ID } from '../../constants/span';
 import { Trace } from '../../types';
 import NextPrevResult from '../SearchBar/NextPrevResult';
@@ -298,7 +299,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
   return (
     <div className={styles.container}>
       <Collapse label={collapseLabel} collapsible={true} isOpen={showSpanFilters} onToggle={setShowSpanFilters}>
-        <InlineFieldRow>
+        <InlineFieldRow className={styles.flexContainer}>
           <InlineField label="Service Name" labelWidth={16}>
             <HorizontalGroup spacing={'xs'}>
               <Select
@@ -318,6 +319,15 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
               />
             </HorizontalGroup>
           </InlineField>
+          <SearchBarInput
+            onChange={(v) => {
+              setSpanFiltersSearch({ ...search, query: v });
+              if (v === '') {
+                setShowSpanFilterMatchesOnly(false);
+              }
+            }}
+            value={search.query || ''}
+          />
         </InlineFieldRow>
         <InlineFieldRow>
           <InlineField label="Span Name" labelWidth={16}>
@@ -479,6 +489,7 @@ SpanFilters.displayName = 'SpanFilters';
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
+      label: SpanFilters;
       margin: 0.5em 0 -${theme.spacing(1)} 0;
       z-index: 5;
 
@@ -493,6 +504,10 @@ const getStyles = (theme: GrafanaTheme2) => {
         margin: -2px 0 0 10px;
       }
     `,
+    flexContainer: css({
+      display: 'flex',
+      justifyContent: 'space-between',
+    }),
     addTag: css`
       margin: 0 0 0 10px;
     `,

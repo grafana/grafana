@@ -30,6 +30,7 @@ export interface Props {
   variableOptionGroup: SelectableValue<string>;
   aliasBy?: string;
   onChangeAliasBy: (aliasBy: string) => void;
+  range: TimeRange;
 }
 
 export function Editor({
@@ -41,14 +42,15 @@ export function Editor({
   customMetaData,
   aliasBy,
   onChangeAliasBy,
+  range,
 }: React.PropsWithChildren<Props>) {
-  const [labels, setLabels] = useState<{ [k: string]: any }>({});
+  const [labels, setLabels] = useState<{ [k: string]: string[] }>({});
   const [metricDescriptors, setMetricDescriptors] = useState<MetricDescriptor[]>([]);
   const [metricDescriptor, setMetricDescriptor] = useState<MetricDescriptor>();
   const [metrics, setMetrics] = useState<Array<SelectableValue<string>>>([]);
   const [services, setServices] = useState<Array<SelectableValue<string>>>([]);
   const [service, setService] = useState<string>('');
-  const [timeRange, setTimeRange] = useState<TimeRange>({ ...datasource.timeSrv.timeRange() });
+  const [timeRange, setTimeRange] = useState<TimeRange>({ ...range });
 
   const useTime = (time: TimeRange) => {
     if (
@@ -60,7 +62,7 @@ export function Editor({
     }
   };
 
-  useTime(datasource.timeSrv.timeRange());
+  useTime(range);
 
   const theme = useTheme2();
   const selectStyles = getSelectStyles(theme);

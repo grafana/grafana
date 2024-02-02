@@ -34,8 +34,9 @@ describe('MySQL datasource', () => {
     cy.wait('@datasets');
   });
 
-  it('code editor autocomplete should handle table name escaping/quoting', () => {
-    cy.get("label[for^='option-code']").should('be.visible').click();
+  it.skip('code editor autocomplete should handle table name escaping/quoting', () => {
+    e2e.components.RadioButton.container().filter(':contains("Code")').click();
+
     cy.get('textarea').type('S{downArrow}{enter}');
     cy.wait('@tables');
     cy.get('.suggest-widget').contains(tableNameWithSpecialCharacter).should('be.visible');

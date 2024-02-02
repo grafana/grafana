@@ -4,7 +4,8 @@ import { OptionsWithLegend } from '@grafana/schema';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 
 import { ShareModal } from '../sharing/ShareModal';
-import { getDashboardUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { getEditPanelUrl, getInspectUrl, getViewPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -16,7 +17,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'v',
     onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-      if (!scene.state.viewPanelKey) {
+      if (!scene.state.viewPanelScene) {
         locationService.push(getViewPanelUrl(vizPanel));
       }
     }),
@@ -29,13 +30,9 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       const sceneRoot = vizPanel.getRoot();
       if (sceneRoot instanceof DashboardScene) {
         const panelId = getPanelIdForVizPanel(vizPanel);
-        locationService.push(
-          getDashboardUrl({
-            uid: sceneRoot.state.uid,
-            subPath: `/panel-edit/${panelId}`,
-            currentQueryParams: location.search,
-          })
-        );
+        if (!scene.state.editPanel) {
+          locationService.push(getEditPanelUrl(panelId));
+        }
       }
     }),
   });
@@ -77,6 +74,45 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'd r',
     onTrigger: () => sceneGraph.getTimeRange(scene).onRefresh(),
+  });
+
+  // Zoom out
+  keybindings.addBinding({
+    key: 't z',
+    onTrigger: () => {
+      handleZoomOut(scene);
+    },
+  });
+  keybindings.addBinding({
+    key: 'ctrl+z',
+    onTrigger: () => {
+      handleZoomOut(scene);
+    },
+  });
+
+  keybindings.addBinding({
+    key: 't left',
+    onTrigger: () => {
+      handleTimeRangeShift(scene, 'left');
+    },
+  });
+
+  keybindings.addBinding({
+    key: 't right',
+    onTrigger: () => {
+      handleTimeRangeShift(scene, 'right');
+    },
+  });
+
+  // Dashboard settings
+  keybindings.addBinding({
+    key: 'd s',
+    onTrigger: scene.onOpenSettings,
+  });
+
+  keybindings.addBinding({
+    key: 'mod+s',
+    onTrigger: () => scene.openSaveDrawer({}),
   });
 
   // toggle all panel legends (TODO)
@@ -121,4 +157,24 @@ export function toggleVizPanelLegend(vizPanel: VizPanel) {
 
 function hasLegendOptions(optionsWithLegend: unknown): optionsWithLegend is OptionsWithLegend {
   return optionsWithLegend != null && typeof optionsWithLegend === 'object' && 'legend' in optionsWithLegend;
+}
+
+function handleZoomOut(scene: DashboardScene) {
+  const timePicker = dashboardSceneGraph.getTimePicker(scene);
+  timePicker?.onZoom();
+}
+
+function handleTimeRangeShift(scene: DashboardScene, direction: 'left' | 'right') {
+  const timePicker = dashboardSceneGraph.getTimePicker(scene);
+
+  if (!timePicker) {
+    return;
+  }
+
+  if (direction === 'left') {
+    timePicker.onMoveBackward();
+  }
+  if (direction === 'right') {
+    timePicker.onMoveForward();
+  }
 }

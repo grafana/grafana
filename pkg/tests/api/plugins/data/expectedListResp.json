@@ -156,12 +156,12 @@
           "path": "/public/app/plugins/datasource/azuremonitor/img/azure_monitor_cpu.png"
         }
       ],
-      "version": "1.0.0",
+      "version": "",
       "updated": ""
     },
     "dependencies": {
-      "grafanaDependency": "",
-      "grafanaVersion": "5.2.x",
+      "grafanaDependency": "\u003e=10.3.0",
+      "grafanaVersion": "*",
       "plugins": []
     },
     "latestVersion": "",
@@ -642,7 +642,7 @@
       },
       "build": {},
       "screenshots": null,
-      "version": "1.0.0",
+      "version": "",
       "updated": ""
     },
     "dependencies": {
@@ -688,7 +688,7 @@
       "updated": ""
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },
@@ -1238,7 +1238,7 @@
       "updated": ""
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },
@@ -1292,7 +1292,7 @@
   {
     "name": "PostgreSQL",
     "type": "datasource",
-    "id": "postgres",
+    "id": "grafana-postgresql-datasource",
     "enabled": true,
     "pinned": false,
     "info": {
@@ -1303,8 +1303,8 @@
       "description": "Data source for PostgreSQL and compatible databases",
       "links": null,
       "logos": {
-        "small": "/public/app/plugins/datasource/postgres/img/postgresql_logo.svg",
-        "large": "/public/app/plugins/datasource/postgres/img/postgresql_logo.svg"
+        "small": "/public/app/plugins/datasource/grafana-postgresql-datasource/img/postgresql_logo.svg",
+        "large": "/public/app/plugins/datasource/grafana-postgresql-datasource/img/postgresql_logo.svg"
       },
       "build": {},
       "screenshots": null,
@@ -1318,7 +1318,7 @@
     },
     "latestVersion": "",
     "hasUpdate": false,
-    "defaultNavUrl": "/plugins/postgres/",
+    "defaultNavUrl": "/plugins/grafana-postgresql-datasource/",
     "category": "sql",
     "state": "",
     "signature": "internal",
@@ -1581,7 +1581,7 @@
       "updated": ""
     },
     "dependencies": {
-      "grafanaDependency": "",
+      "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },
@@ -1618,7 +1618,7 @@
       "updated": ""
     },
     "dependencies": {
-      "grafanaDependency": ">=10.3.0-0",
+      "grafanaDependency": "\u003e=10.3.0-0",
       "grafanaVersion": "*",
       "plugins": []
     },

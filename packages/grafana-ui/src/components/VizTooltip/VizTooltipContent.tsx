@@ -1,33 +1,57 @@
 import { css } from '@emotion/css';
-import React, { ReactElement } from 'react';
+import React, { CSSProperties, ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { HorizontalGroup } from '..';
 import { useStyles2 } from '../../themes';
 
+import { VizTooltipRow } from './VizTooltipRow';
 import { LabelValue } from './types';
 
 interface Props {
   contentLabelValue: LabelValue[];
-  customContent?: ReactElement | null;
+  customContent?: ReactElement[];
+  scrollable?: boolean;
+  isPinned: boolean;
 }
-export const VizTooltipContent = ({ contentLabelValue, customContent }: Props) => {
+
+export const VizTooltipContent = ({ contentLabelValue, customContent, isPinned, scrollable = false }: Props) => {
   const styles = useStyles2(getStyles);
 
+  const scrollableStyle: CSSProperties = scrollable
+    ? {
+        maxHeight: 400,
+        overflowY: 'auto',
+      }
+    : {};
+
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} style={scrollableStyle}>
       <div>
-        {contentLabelValue?.map((labelValue, i) => {
+        {contentLabelValue.map((labelValue, i) => {
+          const { label, value, color, colorIndicator, colorPlacement, isActive } = labelValue;
           return (
-            <HorizontalGroup justify="space-between" spacing="lg" key={i}>
-              <div className={styles.label}>{labelValue.label}</div>
-              <div className={styles.value}>{labelValue.value}</div>
-            </HorizontalGroup>
+            <VizTooltipRow
+              key={i}
+              label={label}
+              value={value}
+              color={color}
+              colorIndicator={colorIndicator}
+              colorPlacement={colorPlacement}
+              isActive={isActive}
+              justify={'space-between'}
+              isPinned={isPinned}
+            />
           );
         })}
       </div>
-      {customContent && <div className={styles.customContentPadding}>{customContent}</div>}
+      {customContent?.map((content, i) => {
+        return (
+          <div key={i} className={styles.customContentPadding}>
+            {content}
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -43,12 +67,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   customContentPadding: css({
     padding: `${theme.spacing(1)} 0`,
-  }),
-  label: css({
-    color: theme.colors.text.secondary,
-    fontWeight: 400,
-  }),
-  value: css({
-    fontWeight: 500,
   }),
 });

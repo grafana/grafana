@@ -1,5 +1,4 @@
 import React from 'react';
-import { RouteChildrenProps } from 'react-router-dom';
 
 import { Alert } from '@grafana/ui';
 
@@ -7,7 +6,7 @@ import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { NewReceiverView } from '../receivers/NewReceiverView';
 
-const NewContactPoint = (_props: RouteChildrenProps) => {
+const NewContactPoint = () => {
   const { selectedAlertmanager } = useAlertmanager();
   const { data, isLoading, error } = useAlertmanagerConfig(selectedAlertmanager);
 

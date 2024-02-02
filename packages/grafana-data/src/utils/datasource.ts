@@ -94,7 +94,7 @@ export const onUpdateDatasourceResetOption =
 export function updateDatasourcePluginOption<J extends DataSourceJsonData, S extends {} = KeyValue>(
   props: DataSourcePluginOptionsEditorProps<J, S>,
   key: keyof DataSourceSettings,
-  val: any
+  val: unknown
 ) {
   const config = props.options;
 
@@ -107,7 +107,7 @@ export function updateDatasourcePluginOption<J extends DataSourceJsonData, S ext
 export const updateDatasourcePluginJsonDataOption = <J extends DataSourceJsonData, S, K extends keyof J>(
   props: DataSourcePluginOptionsEditorProps<J, S>,
   key: K,
-  val: any
+  val: unknown
 ) => {
   const config = props.options;
 
@@ -123,7 +123,7 @@ export const updateDatasourcePluginJsonDataOption = <J extends DataSourceJsonDat
 export const updateDatasourcePluginSecureJsonDataOption = <J extends DataSourceJsonData, S extends {} = KeyValue>(
   props: DataSourcePluginOptionsEditorProps<J, S>,
   key: string,
-  val: any
+  val: unknown
 ) => {
   const config = props.options;
 

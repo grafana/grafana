@@ -12,6 +12,7 @@ import {
   ReducerID,
   reduceField,
   TransformationApplicabilityLevels,
+  isTimeSeriesField,
 } from '@grafana/data';
 
 /**
@@ -142,23 +143,48 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
     // Intialize object for this refId
     refId2trends[refId] = {};
 
+    // Initialize labels object for this refId
+    refId2labelz[refId] = {};
+
+    // Collect all existing label names across frames
+    // so we can fill in nulls for frames that don't
+    // have a particular label
+    const labelNames: string[] = [];
+
+    framesForRef.forEach((frame) => {
+      frame.fields.forEach((field) => {
+        if (field.type !== FieldType.number) {
+          return;
+        }
+        if (field.labels) {
+          Object.keys(field.labels).forEach((labelName) => {
+            if (!labelNames.includes(labelName)) {
+              refId2labelz[refId][labelName] = newField(labelName, FieldType.string);
+              labelNames.push(labelName);
+            }
+          });
+        }
+      });
+    });
+
     for (let i = 0; i < framesForRef.length; i++) {
       const frame = framesForRef[i];
+
+      // Retrieve the time field that's been configured
+      // If one isn't configured then use the first found
+      let timeField = null;
+      let timeFieldName = options[refId]?.timeField;
+      if (timeFieldName && timeFieldName.length > 0) {
+        timeField = frame.fields.find((field) => field.name === timeFieldName);
+      } else {
+        timeField = frame.fields.find((field) => isTimeSeriesField(field));
+      }
 
       // If it's not a time series frame we add
       // it unmodified to the result
       if (!isTimeSeriesFrame(frame)) {
         result.push(frame);
         continue;
-      }
-
-      // Retrieve the time field that's been configured
-      // If one isn't configured then use the first found
-      let timeField = null;
-      if (options[refId]?.timeField !== undefined) {
-        timeField = frame.fields.find((field) => field.name === options[refId]?.timeField);
-      } else {
-        timeField = frame.fields.find((field) => field.type === FieldType.time);
       }
 
       for (const field of frame.fields) {
@@ -172,7 +198,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
         // and push the frame with reduction
         // into the the appropriate field
         const reducerId = options[refId]?.stat ?? ReducerID.lastNotNull;
-        const value = reduceField({ field, reducers: [reducerId] })[reducerId] || null;
+        const value = reduceField({ field, reducers: [reducerId] })[reducerId] ?? null;
 
         // Push the appropriate time and value frame
         // to the trend frame for the sparkline
@@ -194,19 +220,9 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
 
         // If there are labels add them to the appropriate fields
         // Because we iterate each frame
-        if (field.labels !== undefined) {
-          for (const [labelKey, labelValue] of Object.entries(field.labels)) {
-            if (refId2labelz[refId] === undefined) {
-              refId2labelz[refId] = {};
-            }
-
-            if (refId2labelz[refId][labelKey] === undefined) {
-              refId2labelz[refId][labelKey] = newField(labelKey, FieldType.string);
-            }
-
-            refId2labelz[refId][labelKey].values.push(labelValue);
-          }
-        }
+        labelNames.forEach((labelName) => {
+          refId2labelz[refId][labelName].values.push(field.labels?.[labelName] ?? '');
+        });
       }
     }
   }

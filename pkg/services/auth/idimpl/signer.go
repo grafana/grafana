@@ -28,7 +28,7 @@ type LocalSigner struct {
 }
 
 func (s *LocalSigner) SignIDToken(ctx context.Context, claims *auth.IDClaims) (string, error) {
-	if !s.features.IsEnabled(featuremgmt.FlagIdForwarding) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagIdForwarding) {
 		return "", nil
 	}
 
@@ -37,7 +37,7 @@ func (s *LocalSigner) SignIDToken(ctx context.Context, claims *auth.IDClaims) (s
 		return "", err
 	}
 
-	builder := jwt.Signed(signer).Claims(claims.Claims)
+	builder := jwt.Signed(signer).Claims(claims)
 
 	token, err := builder.CompactSerialize()
 	if err != nil {

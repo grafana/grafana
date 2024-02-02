@@ -34,6 +34,8 @@ export interface ServiceAccountDTO extends WithAccessControlMetadata {
   avatarUrl?: string;
   createdAt: string;
   isDisabled: boolean;
+  isExternal?: boolean;
+  requiredBy?: string;
   teams: string[];
   role: OrgRole;
   roles?: Role[];
@@ -60,6 +62,7 @@ export interface ServiceAccountProfileState {
 export enum ServiceAccountStateFilter {
   All = 'All',
   WithExpiredTokens = 'WithExpiredTokens',
+  External = 'External',
   Disabled = 'Disabled',
 }
 

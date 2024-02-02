@@ -5,15 +5,13 @@ import (
 	"errors"
 	"fmt"
 
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 )
 
@@ -28,17 +26,16 @@ var (
 	_ rest.GracefulDeleter      = (*legacyStorage)(nil)
 )
 
+var resourceInfo = playlist.PlaylistResourceInfo
+
 type legacyStorage struct {
 	service        playlistsvc.Service
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
-
-	DefaultQualifiedResource  schema.GroupResource
-	SingularQualifiedResource schema.GroupResource
 }
 
 func (s *legacyStorage) New() runtime.Object {
-	return &playlist.Playlist{}
+	return resourceInfo.NewFunc()
 }
 
 func (s *legacyStorage) Destroy() {}
@@ -48,11 +45,11 @@ func (s *legacyStorage) NamespaceScoped() bool {
 }
 
 func (s *legacyStorage) GetSingularName() string {
-	return "playlist"
+	return resourceInfo.GetSingularName()
 }
 
 func (s *legacyStorage) NewList() runtime.Object {
-	return &playlist.PlaylistList{}
+	return resourceInfo.NewListFunc()
 }
 
 func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Object, tableOptions runtime.Object) (*metav1.Table, error) {
@@ -60,38 +57,19 @@ func (s *legacyStorage) ConvertToTable(ctx context.Context, object runtime.Objec
 }
 
 func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	// TODO: handle fetching all available orgs when no namespace is specified
-	// To test: kubectl get playlists --all-namespaces
-	info, err := request.NamespaceInfoFrom(ctx, true)
+	orgId, err := request.OrgIDForList(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	limit := 100
-	if options.Limit > 0 {
-		limit = int(options.Limit)
-	}
-	res, err := s.service.Search(ctx, &playlistsvc.GetPlaylistsQuery{
-		OrgId: info.OrgID,
-		Limit: limit,
-	})
+	res, err := s.service.List(ctx, orgId)
 	if err != nil {
 		return nil, err
 	}
 
 	list := &playlist.PlaylistList{}
-	for _, v := range res {
-		p, err := s.service.Get(ctx, &playlistsvc.GetPlaylistByUidQuery{
-			UID:   v.UID,
-			OrgId: info.OrgID,
-		})
-		if err != nil {
-			return nil, err
-		}
-		list.Items = append(list.Items, *convertToK8sResource(p, s.namespacer))
-	}
-	if len(list.Items) == limit {
-		list.Continue = "<more>" // TODO?
+	for idx := range res {
+		list.Items = append(list.Items, *convertToK8sResource(&res[idx], s.namespacer))
 	}
 	return list, nil
 }
@@ -108,7 +86,7 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 	})
 	if err != nil || dto == nil {
 		if errors.Is(err, playlistsvc.ErrPlaylistNotFound) || err == nil {
-			err = k8serrors.NewNotFound(s.SingularQualifiedResource, name)
+			err = resourceInfo.NewNotFound(name)
 		}
 		return nil, err
 	}

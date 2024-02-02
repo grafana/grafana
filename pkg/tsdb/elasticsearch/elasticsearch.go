@@ -120,11 +120,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			interval = ""
 		}
 
-		timeInterval, ok := jsonData["timeInterval"].(string)
-		if !ok {
-			timeInterval = ""
-		}
-
 		index, ok := jsonData["index"].(string)
 		if !ok {
 			index = ""
@@ -171,7 +166,6 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			MaxConcurrentShardRequests: int64(maxConcurrentShardRequests),
 			ConfiguredFields:           configuredFields,
 			Interval:                   interval,
-			TimeInterval:               timeInterval,
 			IncludeFrozen:              includeFrozen,
 			XPack:                      xpack,
 		}
@@ -194,9 +188,10 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	logger := eslog.FromContext(ctx)
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
-	// - ?/_mapping for fetching index mapping
+	// - /_mapping for fetching index mapping, e.g. requests going to `index/_mapping`
 	// - _msearch for executing getTerms queries
-	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_msearch" {
+	// - _mapping for fetching "root" index mappings
+	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_msearch" && req.Path != "_mapping" {
 		logger.Error("Invalid resource path", "path", req.Path)
 		return fmt.Errorf("invalid resource URL: %s", req.Path)
 	}

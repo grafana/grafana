@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/data-source-alerting/
-description: Data sources in Grafana Alerting
+description: Learn about the data sources supported by Grafana Alerting
 labels:
   products:
     - cloud

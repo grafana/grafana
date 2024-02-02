@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React, { ComponentProps } from 'react';
+import { act } from 'react-test-renderer';
 
 import {
   createTheme,
@@ -92,24 +93,31 @@ describe('LogsTableWrap', () => {
 
     expect.assertions(3);
 
-    const checkboxLabel = screen.getByLabelText('app');
-    expect(checkboxLabel).toBeInTheDocument();
+    expect(screen.getByLabelText('app')).toBeInTheDocument();
 
     // Add a new column
+    act(() => {
+      screen.getByLabelText('app').click();
+    });
+
     await waitFor(() => {
-      checkboxLabel.click();
       expect(updatePanelState).toBeCalledWith({
         visualisationType: 'table',
         columns: { 0: 'app', 1: 'Line', 2: 'Time' },
+        labelFieldName: 'labels',
       });
     });
 
     // Remove the same column
+    act(() => {
+      screen.getByLabelText('app').click();
+    });
+
     await waitFor(() => {
-      checkboxLabel.click();
       expect(updatePanelState).toBeCalledWith({
         visualisationType: 'table',
         columns: { 0: 'Line', 1: 'Time' },
+        labelFieldName: 'labels',
       });
     });
   });
@@ -136,6 +144,27 @@ describe('LogsTableWrap', () => {
     expect(screen.getByLabelText('app')).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.queryByLabelText('cluster')).not.toBeInTheDocument();
+    });
+  });
+
+  it('should update selected dataframe when dataFrames update', async () => {
+    const initialProps = { logsFrames: [getMockLokiFrameDataPlane(undefined, 3)] };
+    const render = setup(initialProps);
+    await waitFor(() => {
+      const rows = render.getAllByRole('row');
+      expect(rows.length).toBe(4);
+    });
+
+    render.rerender(
+      getComponent({
+        ...initialProps,
+        logsFrames: [getMockLokiFrameDataPlane(undefined, 4)],
+      })
+    );
+
+    await waitFor(() => {
+      const rows = render.getAllByRole('row');
+      expect(rows.length).toBe(5);
     });
   });
 

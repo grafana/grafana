@@ -3,7 +3,7 @@ import { sortBy } from 'lodash';
 import React, { ChangeEvent } from 'react';
 import { FixedSizeList } from 'react-window';
 
-import { CoreApp, GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
@@ -17,7 +17,6 @@ import {
   fuzzyMatch,
 } from '@grafana/ui';
 
-import PromQlLanguageProvider from '../../prometheus/language_provider';
 import LokiLanguageProvider from '../LanguageProvider';
 import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../languageUtils';
 
@@ -28,12 +27,12 @@ const MAX_AUTO_SELECT = 4;
 const EMPTY_SELECTOR = '{}';
 
 export interface BrowserProps {
-  // TODO #33976: Is it possible to use a common interface here? For example: LabelsLanguageProvider
-  languageProvider: LokiLanguageProvider | PromQlLanguageProvider;
+  languageProvider: LokiLanguageProvider;
   onChange: (selector: string) => void;
   theme: GrafanaTheme2;
   app?: CoreApp;
   autoSelect?: number;
+  timeRange?: TimeRange;
   hide?: () => void;
   lastUsedLabels: string[];
   storeLastUsedLabels: (labels: string[]) => void;
@@ -188,7 +187,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
 export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, BrowserState> {
   state: BrowserState = {
-    labels: [] as SelectableLabel[],
+    labels: [],
     searchTerm: '',
     status: 'Ready',
     error: '',
@@ -283,10 +282,10 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   }
 
   componentDidMount() {
-    const { languageProvider, autoSelect = MAX_AUTO_SELECT, lastUsedLabels } = this.props;
+    const { languageProvider, autoSelect = MAX_AUTO_SELECT, lastUsedLabels, timeRange } = this.props;
     if (languageProvider) {
       const selectedLabels: string[] = lastUsedLabels;
-      languageProvider.start().then(() => {
+      languageProvider.start(timeRange).then(() => {
         let rawLabels: string[] = languageProvider.getLabelKeys();
         if (rawLabels.length > MAX_LABEL_COUNT) {
           const error = `Too many labels found (showing only ${MAX_LABEL_COUNT} of ${rawLabels.length})`;
@@ -347,10 +346,10 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   };
 
   async fetchValues(name: string, selector: string) {
-    const { languageProvider } = this.props;
+    const { languageProvider, timeRange } = this.props;
     this.updateLabelState(name, { loading: true }, `Fetching values for ${name}`);
     try {
-      let rawValues = await languageProvider.fetchLabelValues(name);
+      let rawValues = await languageProvider.fetchLabelValues(name, { timeRange });
       // If selector changed, clear loading state and discard result by returning early
       if (selector !== buildSelector(this.state.labels)) {
         this.updateLabelState(name, { loading: false }, '');
@@ -369,12 +368,12 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   }
 
   async fetchSeries(selector: string, lastFacetted?: string) {
-    const { languageProvider } = this.props;
+    const { languageProvider, timeRange } = this.props;
     if (lastFacetted) {
       this.updateLabelState(lastFacetted, { loading: true }, `Loading labels for ${selector}`);
     }
     try {
-      const possibleLabels = await languageProvider.fetchSeriesLabels(selector, true);
+      const possibleLabels = await languageProvider.fetchSeriesLabels(selector, { timeRange });
       // If selector changed, clear loading state and discard result by returning early
       if (selector !== buildSelector(this.state.labels)) {
         if (lastFacetted) {
@@ -397,9 +396,9 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
   }
 
   async validateSelector(selector: string) {
-    const { languageProvider } = this.props;
+    const { languageProvider, timeRange } = this.props;
     this.setState({ validationStatus: `Validating selector ${selector}`, error: '' });
-    const streams = await languageProvider.fetchSeries(selector);
+    const streams = await languageProvider.fetchSeries(selector, { timeRange });
     this.setState({ validationStatus: `Selector is valid (${streams.length} streams found)` });
   }
 
@@ -497,7 +496,7 @@ export class UnthemedLokiLabelBrowser extends React.Component<BrowserProps, Brow
                     height={200}
                     itemCount={label.values?.length || 0}
                     itemSize={28}
-                    itemKey={(i) => (label.values as FacettableValue[])[i].name}
+                    itemKey={(i) => label.values?.[i].name ?? i}
                     width={200}
                     className={styles.valueList}
                   >

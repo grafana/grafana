@@ -44,7 +44,7 @@ func newGrpcPlugin(descriptor PluginDescriptor, logger log.Logger, env func() []
 		descriptor: descriptor,
 		logger:     logger,
 		clientFactory: func() *plugin.Client {
-			return plugin.NewClient(newClientConfig(descriptor.executablePath, descriptor.executableArgs, env(), logger, descriptor.versionedPlugins))
+			return plugin.NewClient(newClientConfig(descriptor.executablePath, descriptor.executableArgs, env(), descriptor.skipHostEnvVars, logger, descriptor.versionedPlugins))
 		},
 	}
 }

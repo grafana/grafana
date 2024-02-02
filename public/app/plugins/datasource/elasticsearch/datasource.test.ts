@@ -151,6 +151,15 @@ describe('ElasticDatasource', () => {
       const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1];
       expect(lastCall[0].url).toBe(`${ELASTICSEARCH_MOCK_URL}/test-${today}/_mapping`);
     });
+
+    it('should call `/_mapping` with an empty index', async () => {
+      const { ds, fetchMock } = getTestContext({ jsonData: { index: '' } });
+
+      await ds.testDatasource();
+
+      const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1];
+      expect(lastCall[0].url).toBe(`${ELASTICSEARCH_MOCK_URL}/_mapping`);
+    });
   });
 
   describe('When issuing metric query with interval pattern', () => {
@@ -977,7 +986,7 @@ describe('ElasticDatasource', () => {
         ],
       });
 
-      expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).not.toBeDefined();
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsSample, options)).not.toBeDefined();
     });
 
     it('does create a logs sample provider for time series query', () => {
@@ -990,7 +999,7 @@ describe('ElasticDatasource', () => {
         ],
       });
 
-      expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).toBeDefined();
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsSample, options)).toBeDefined();
     });
   });
 
@@ -1010,7 +1019,7 @@ describe('ElasticDatasource', () => {
         ],
       });
 
-      expect(ds.getLogsSampleDataProvider(request)).not.toBeDefined();
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsSample, request)).not.toBeDefined();
     });
 
     it('returns a logs sample provider given a time series query', () => {
@@ -1023,7 +1032,7 @@ describe('ElasticDatasource', () => {
         ],
       });
 
-      expect(ds.getLogsSampleDataProvider(request)).toBeDefined();
+      expect(ds.getSupplementaryRequest(SupplementaryQueryType.LogsSample, request)).toBeDefined();
     });
   });
 });
@@ -1134,29 +1143,74 @@ describe('enhanceDataFrame', () => {
 
 describe('modifyQuery', () => {
   let ds: ElasticDatasource;
+  let query: ElasticsearchQuery;
   beforeEach(() => {
     ds = getTestContext().ds;
   });
   describe('with empty query', () => {
-    let query: ElasticsearchQuery;
+    describe('ADD_FILTER and ADD_FITER_OUT', () => {
+      beforeEach(() => {
+        query = { query: '', refId: 'A' };
+      });
+
+      it('should add the filter', () => {
+        expect(ds.modifyQuery(query, { type: 'ADD_FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe(
+          'foo:"bar"'
+        );
+      });
+
+      it('should add the negative filter', () => {
+        expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
+          '-foo:"bar"'
+        );
+      });
+
+      it('should do nothing on unknown type', () => {
+        expect(ds.modifyQuery(query, { type: 'unknown', options: { key: 'foo', value: 'bar' } }).query).toBe(
+          query.query
+        );
+      });
+    });
+
+    describe('with non-empty query', () => {
+      let query: ElasticsearchQuery;
+      beforeEach(() => {
+        query = { query: 'test:"value"', refId: 'A' };
+      });
+
+      it('should add the filter', () => {
+        expect(ds.modifyQuery(query, { type: 'ADD_FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe(
+          'test:"value" AND foo:"bar"'
+        );
+      });
+
+      it('should add the negative filter', () => {
+        expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
+          'test:"value" AND -foo:"bar"'
+        );
+      });
+
+      it('should do nothing on unknown type', () => {
+        expect(ds.modifyQuery(query, { type: 'unknown', options: { key: 'foo', value: 'bar' } }).query).toBe(
+          query.query
+        );
+      });
+    });
+  });
+
+  describe('ADD_STRING_FILTER and ADD_STRING_FILTER_OUT', () => {
     beforeEach(() => {
       query = { query: '', refId: 'A' };
     });
 
     it('should add the filter', () => {
-      expect(ds.modifyQuery(query, { type: 'ADD_FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe(
-        'foo:"bar"'
-      );
+      expect(ds.modifyQuery(query, { type: 'ADD_STRING_FILTER', options: { value: 'bar' } }).query).toBe('"bar"');
     });
 
     it('should add the negative filter', () => {
-      expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
-        '-foo:"bar"'
+      expect(ds.modifyQuery(query, { type: 'ADD_STRING_FILTER_OUT', options: { value: 'bar' } }).query).toBe(
+        'NOT "bar"'
       );
-    });
-
-    it('should do nothing on unknown type', () => {
-      expect(ds.modifyQuery(query, { type: 'unknown', options: { key: 'foo', value: 'bar' } }).query).toBe(query.query);
     });
   });
 
@@ -1167,19 +1221,15 @@ describe('modifyQuery', () => {
     });
 
     it('should add the filter', () => {
-      expect(ds.modifyQuery(query, { type: 'ADD_FILTER', options: { key: 'foo', value: 'bar' } }).query).toBe(
-        'test:"value" AND foo:"bar"'
+      expect(ds.modifyQuery(query, { type: 'ADD_STRING_FILTER', options: { value: 'bar' } }).query).toBe(
+        'test:"value" AND "bar"'
       );
     });
 
     it('should add the negative filter', () => {
-      expect(ds.modifyQuery(query, { type: 'ADD_FILTER_OUT', options: { key: 'foo', value: 'bar' } }).query).toBe(
-        'test:"value" AND -foo:"bar"'
+      expect(ds.modifyQuery(query, { type: 'ADD_STRING_FILTER_OUT', options: { value: 'bar' } }).query).toBe(
+        'test:"value" NOT "bar"'
       );
-    });
-
-    it('should do nothing on unknown type', () => {
-      expect(ds.modifyQuery(query, { type: 'unknown', options: { key: 'foo', value: 'bar' } }).query).toBe(query.query);
     });
   });
 });

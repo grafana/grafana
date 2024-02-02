@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 
-import { PluginType } from '@grafana/data';
+import { GrafanaTheme2, PluginType } from '@grafana/data';
 import { useStyles2, LoadingPlaceholder } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { t } from 'app/core/internationalization';
 import { useGetAll } from 'app/features/plugins/admin/state/hooks';
 import { AccessControlAction } from 'app/types';
@@ -16,27 +17,30 @@ import { NoAccessModal } from './NoAccessModal';
 import { NoResults } from './NoResults';
 import { Search } from './Search';
 
-const getStyles = () => ({
-  spacer: css`
-    height: 16px;
-  `,
-  modal: css`
-    width: 500px;
-  `,
-  modalContent: css`
-    overflow: visible;
-  `,
+const getStyles = (theme: GrafanaTheme2) => ({
+  spacer: css({
+    height: theme.spacing(2),
+  }),
+  modal: css({
+    width: '500px',
+  }),
+  modalContent: css({
+    overflow: 'visible',
+  }),
 });
 
 export function AddNewConnection() {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [queryParams, setQueryParams] = useQueryParams();
+  const searchTerm = queryParams.search ? String(queryParams.search) : '';
   const [isNoAccessModalOpen, setIsNoAccessModalOpen] = useState(false);
   const [focusedItem, setFocusedItem] = useState<CardGridItem | null>(null);
   const styles = useStyles2(getStyles);
   const canCreateDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
 
   const handleSearchChange = (e: React.FormEvent<HTMLInputElement>) => {
-    setSearchTerm(e.currentTarget.value.toLowerCase());
+    setQueryParams({
+      search: e.currentTarget.value.toLowerCase(),
+    });
   };
 
   const { error, plugins, isLoading } = useGetAll({
@@ -82,7 +86,7 @@ export function AddNewConnection() {
   return (
     <>
       {focusedItem && <NoAccessModal item={focusedItem} isOpen={isNoAccessModalOpen} onDismiss={closeModal} />}
-      <Search onChange={handleSearchChange} />
+      <Search onChange={handleSearchChange} value={searchTerm} />
       {/* We need this extra spacing when there are no filters */}
       <div className={styles.spacer} />
       <CategoryHeader iconName="database" label={categoryHeaderLabel} />

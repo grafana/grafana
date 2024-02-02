@@ -162,7 +162,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     return parser;
   }
 
-  private parseValue(field: Field, v: any): any {
+  private parseValue(field: Field, v: string) {
     let p = this.parsers?.get(field);
     if (!p) {
       p = this.setParser(field, makeFieldParser(v, field));

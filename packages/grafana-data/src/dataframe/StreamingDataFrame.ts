@@ -123,7 +123,7 @@ export class StreamingDataFrame implements DataFrame {
 
     dataFrameDTO.fields = dataFrameDTO.fields.map((f) => ({
       ...f,
-      values: (f.values as unknown[]).slice(numberOfItemsToRemove),
+      values: f.values?.slice(numberOfItemsToRemove),
     }));
 
     const length = dataFrameDTO.fields[0]?.values?.length ?? 0;
@@ -488,7 +488,7 @@ export function getStreamingFrameOptions(opts?: Partial<StreamingFrameOptions>):
 
 // converts vertical insertion records with table keys in [0] and column values in [1...N]
 // to join()-able tables with column arrays
-export function transpose(vrecs: any[][]) {
+export function transpose(vrecs: unknown[][]) {
   let tableKeys = new Set(vrecs[0]);
   let tables = new Map();
 
