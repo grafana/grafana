@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { BaseQueryFn, QueryDefinition } from '@reduxjs/toolkit/dist/query';
 import { QueryActionCreatorResult } from '@reduxjs/toolkit/dist/query/core/buildInitiate';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -49,14 +49,9 @@ export function ContactPointSelector({
   refetchReceivers,
 }: ContactPointSelectorProps) {
   const styles = useStyles2(getStyles);
-  const { control, watch } = useFormContext<RuleFormValues>();
+  const { control, watch, trigger } = useFormContext<RuleFormValues>();
 
   const contactPointInForm = watch(`contactPoints.${alertManager}.selectedContactPoint`);
-
-  const selectedContactPointWithMetadata = options.find((option) => option.value.name === contactPointInForm)?.value;
-  const selectedContactPointSelectableValue = selectedContactPointWithMetadata
-    ? { value: selectedContactPointWithMetadata, label: selectedContactPointWithMetadata.name }
-    : undefined;
 
   const LOADING_SPINNER_DURATION = 1000;
 
@@ -64,12 +59,25 @@ export function ContactPointSelector({
   // we need to keep track if the fetching takes more than 1 second, so we can show the loading spinner until the fetching is done
   const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+  // if we have a contact point selected, check if it still exists in the event that someone has deleted it
+  const validateContactPoint = useCallback(() => {
+    if (contactPointInForm) {
+      trigger(`contactPoints.${alertManager}.selectedContactPoint`, { shouldFocus: true });
+    }
+  }, [alertManager, contactPointInForm, trigger]);
+
   const onClickRefresh = () => {
     setLoadingContactPoints(true);
     Promise.all([refetchReceivers(), sleep(LOADING_SPINNER_DURATION)]).finally(() => {
       setLoadingContactPoints(false);
+      validateContactPoint();
     });
   };
+
+  // validate the contact point and check if it still exists when mounting the component
+  useEffect(() => {
+    validateContactPoint();
+  }, [validateContactPoint]);
 
   return (
     <Stack direction="column">
@@ -81,7 +89,6 @@ export function ContactPointSelector({
                 <div className={styles.contactPointsSelector}>
                   <Select
                     {...field}
-                    defaultValue={selectedContactPointSelectableValue}
                     aria-label="Contact point"
                     onChange={(value: SelectableValue<ContactPointWithMetadata>, _: ActionMeta) => {
                       onChange(value?.value?.name);
@@ -112,7 +119,7 @@ export function ContactPointSelector({
                 {/* Error can come from the required validation we have in here, or from the manual setError we do in the parent component.
                 The only way I found to check the custom error is to check if the field has a value and if it's not in the options. */}
 
-                {(error || (!selectedContactPointWithMetadata && Boolean(contactPointInForm))) && (
+                {error && (
                   <FieldValidationMessage>
                     {error?.message || `Contact point ${contactPointInForm} does not exist.`}
                   </FieldValidationMessage>
@@ -120,7 +127,18 @@ export function ContactPointSelector({
               </>
             )}
             rules={{
-              required: { value: true, message: 'Contact point is required.' },
+              required: {
+                value: true,
+                message: 'Contact point is required.',
+              },
+              validate: {
+                contactPointExists: (value: string) => {
+                  if (options.some((option) => option.value.name === value)) {
+                    return true;
+                  }
+                  return 'Contact point does not exist.';
+                },
+              },
             }}
             control={control}
             name={`contactPoints.${alertManager}.selectedContactPoint`}
