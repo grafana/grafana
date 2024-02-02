@@ -23,13 +23,13 @@ weight: 100
 In dashboards, a threshold is a value or limit you set for a metric that's reflected visually when it's met or exceeded. Thresholds are one way you can conditionally style and color your visualizations based on query results.
 
 Using thresholds, you can color grid lines and regions in a time series visualization:
-![Time series visualization with green, blue, and purple threshold lines and regions](screenshot-thresholds-lines-regions-v10.4.png)
+![Time series visualization with green, blue, and purple threshold lines and regions](/media/docs/grafana/panels-visualizations/screenshot-thresholds-lines-regions-v10.4.png)
 
 You can color the background or value text in a stat visualization:
-![Stat visualization with three values in green and orange](screenshot-thresholds-value-v10.4.png)
+![Stat visualization with three values in green and orange](/media/docs/grafana/panels-visualizations/screenshot-thresholds-value-v10.4.png)
 
 You can define regions and region colors in a state timeline:
-![State timeline with green, blue, and pink region thresholds](screenshot-thresholds-state-timeline-v10.4.png)
+![State timeline with green, blue, and pink region thresholds](/media/docs/grafana/panels-visualizations/screenshot-thresholds-state-timeline-v10.4.png)
 
 You can also use thresholds to:
 
@@ -84,14 +84,14 @@ This option is supported for the bar chart, candlestick, time series, and trend 
 
 Set if and how thresholds are shown with the following options.
 
-| Option                               | Example                                                                                                                                                                                          |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Off                                  |                                                                                                                                                                                                  |
-| As lines                             | {{< figure max-width="500px" class="w-100p" link-class="w-fit mx-auto d-flex flex-direction-column" src="screenshot-thresholds-lines-v10.4.png" alt="Visualization with threshold as a line" >}} |
-| As lines (dashed)                    | {{< figure max-width="500px" src="screenshot-thresholds-dashed-lines-v10.4.png" alt="Visualization with threshold as a dashed line" >}}                                                          |
-| As filled regions                    | {{< figure max-width="500px" src="screenshot-thresholds-regions-v10.4.png" alt="Visualization with threshold as a region" >}}                                                                    |
-| As filled regions and lines          | {{< figure max-width="500px" src="screenshot-thresholds-lines-regions-v10.4.png" alt="Visualization with threshold as a region and line" >}}                                                     |
-| As filled regions and lines (dashed) | {{< figure max-width="500px" src="screenshot-thresholds-dashed-lines-regions-v10.4.png" alt="Visualization with threshold as a region and dashed line" >}}                                       |
+| Option                               | Example                                                                                                                                                                                              |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Off                                  |                                                                                                                                                                                                      |
+| As lines                             | {{< figure max-width="500px" src="/media/docs/grafana/panels-visualizations/screenshot-thresholds-lines-v10.4.png" alt="Visualization with threshold as a line" >}}                                  |
+| As lines (dashed)                    | {{< figure max-width="500px" src="/media/docs/grafana/panels-visualizations/screenshot-thresholds-dashed-lines-v10.4.png" alt="Visualization with threshold as a dashed line" >}}                    |
+| As filled regions                    | {{< figure max-width="500px" src="/media/docs/grafana/panels-visualizations/screenshot-thresholds-regions-v10.4.png" alt="Visualization with threshold as a region" >}}                              |
+| As filled regions and lines          | {{< figure max-width="500px" src="/media/docs/grafana/panels-visualizations/screenshot-thresholds-lines-regions-v10.4.png" alt="Visualization with threshold as a region and line" >}}               |
+| As filled regions and lines (dashed) | {{< figure max-width="500px" src="/media/docs/grafana/panels-visualizations/screenshot-thresholds-dashed-lines-regions-v10.4.png" alt="Visualization with threshold as a region and dashed line" >}} |
 
 ## Add a threshold
 
@@ -112,7 +112,7 @@ To delete a threshold, navigate to the panel that contains the threshold and cli
 ## Add a threshold to a legacy graph panel
 
 {{< admonition type="caution" >}}
-Starting with Grafana v11, the legacy graph panel will be deprecated along with other Angular panel plugins. It will be removed in a future release. For more information, refer to [Angular support deprecation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation/).
+Starting with Grafana v11, the legacy graph panel will be deprecated along with all other Angular panel plugins. It will be removed in a future release. For more information, refer to [Angular support deprecation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation/).
 {{< /admonition >}}
 
 In the Graph panel visualization, thresholds enable you to add lines or sections to a graph to make it easier to recognize when the graph crosses a threshold.
