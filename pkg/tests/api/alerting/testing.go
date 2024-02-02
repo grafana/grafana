@@ -3,6 +3,7 @@ package alerting
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -339,6 +340,39 @@ func (a apiClient) UpdateAlertRuleOrgQuota(t *testing.T, orgID int64, limit int6
 		_ = resp.Body.Close()
 	}()
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
+func (a apiClient) PostConfiguration(t *testing.T, c apimodels.PostableUserConfig) (bool, error) {
+	t.Helper()
+
+	b, err := json.Marshal(c)
+	require.NoError(t, err)
+
+	u := fmt.Sprintf("%s/api/alertmanager/grafana/config/api/v1/alerts", a.url)
+	req, err := http.NewRequest(http.MethodPost, u, bytes.NewReader(b))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err = io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	data := struct {
+		Message string `json:"message"`
+	}{}
+	require.NoError(t, json.Unmarshal(b, &data))
+
+	if resp.StatusCode == http.StatusAccepted {
+		return true, nil
+	}
+
+	return false, errors.New(data.Message)
 }
 
 func (a apiClient) PostRulesGroupWithStatus(t *testing.T, folder string, group *apimodels.PostableRuleGroupConfig) (apimodels.UpdateRuleGroupResponse, int, string) {
@@ -720,6 +754,24 @@ func (a apiClient) GetRuleHistoryWithStatus(t *testing.T, ruleUID string) (data.
 	require.NoError(t, err)
 
 	return sendRequest[data.Frame](t, req, http.StatusOK)
+}
+
+func (a apiClient) GetAllTimeIntervalsWithStatus(t *testing.T) ([]apimodels.GettableTimeIntervals, int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/notifications/time-intervals", a.url), nil)
+	require.NoError(t, err)
+
+	return sendRequest[[]apimodels.GettableTimeIntervals](t, req, http.StatusOK)
+}
+
+func (a apiClient) GetTimeIntervalByNameWithStatus(t *testing.T, name string) (apimodels.GettableTimeIntervals, int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/notifications/time-intervals/%s", a.url, name), nil)
+	require.NoError(t, err)
+
+	return sendRequest[apimodels.GettableTimeIntervals](t, req, http.StatusOK)
 }
 
 func sendRequest[T any](t *testing.T, req *http.Request, successStatusCode int) (T, int, string) {

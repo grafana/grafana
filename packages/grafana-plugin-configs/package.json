@@ -13,7 +13,7 @@
     "fork-ts-checker-webpack-plugin": "8.0.0",
     "glob": "10.3.10",
     "replace-in-file-webpack-plugin": "1.0.6",
-    "swc-loader": "0.2.3",
+    "swc-loader": "0.2.4",
     "webpack": "5.90.0"
   },
   "packageManager": "yarn@4.1.0"
