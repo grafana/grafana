@@ -84,7 +84,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
       if (name === VAR_DATASOURCE) {
         // Clear all panels for the previous data source
-        this.clearPanels();
+        this.state.body.setState({ children: [] });
       } else if (name === VAR_METRIC_NAMES) {
         this.onMetricNamesChange();
         // Entire pipeline must be performed
@@ -101,10 +101,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       // Temp hack when going back to select metric scene and variable updates
       this.ignoreNextUpdate = true;
     }
-  }
-
-  private clearPanels() {
-    this.state.body.setState({ children: [] });
   }
 
   private sortedPreviewMetrics() {
@@ -139,11 +135,8 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const nameList = variable.state.options.map((option) => option.value.toString());
     const nameSet = new Set(nameList);
 
-    let hidden = 0;
-
     Object.values(this.previewCache).forEach((panel) => {
       if (!nameSet.has(panel.name)) {
-        hidden++;
         panel.isEmpty = true;
       }
     });
@@ -229,7 +222,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       // There is no current metric
     }
 
-    console.log('Replacing', this.previewCache, 'with', metricsMap);
     this.previewCache = metricsMap;
   }
 
