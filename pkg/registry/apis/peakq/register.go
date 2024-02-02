@@ -14,11 +14,11 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*PeakQAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*PeakQAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type PeakQAPIBuilder struct{}
@@ -27,7 +27,7 @@ func NewPeakQAPIBuilder() *PeakQAPIBuilder {
 	return &PeakQAPIBuilder{}
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration grafanaapiserver.APIRegistrar) *PeakQAPIBuilder {
+func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *PeakQAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
@@ -66,6 +66,7 @@ func (b *PeakQAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory,
 	optsGetter generic.RESTOptionsGetter,
+	_ bool, // dual write (not relevant)
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(peakq.GROUP, scheme, metav1.ParameterCodec, codecs)
 
@@ -89,7 +90,7 @@ func (b *PeakQAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 }
 
 // NOT A GREAT APPROACH... BUT will make a UI for statically defined
-func (b *PeakQAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *PeakQAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	defs := peakq.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
 	renderedQuerySchema := defs["github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.RenderedQuery"].Schema
 	queryTemplateSpecSchema := defs["github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.QueryTemplateSpec"].Schema
@@ -114,8 +115,8 @@ func (b *PeakQAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 		},
 	}
 
-	return &grafanaapiserver.APIRoutes{
-		Root: []grafanaapiserver.APIRouteHandler{
+	return &builder.APIRoutes{
+		Root: []builder.APIRouteHandler{
 			{
 				Path: "render",
 				Spec: &spec3.PathProps{

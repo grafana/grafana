@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/grafana/grafana-azure-sdk-go/util/maputil"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
@@ -20,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata/exemplar"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
-	"github.com/grafana/grafana/pkg/util/maputil"
 )
 
 const legendFormatAuto = "__auto"
