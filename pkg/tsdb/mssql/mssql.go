@@ -114,7 +114,7 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 		}
 
 		// register a new proxy driver if the secure socks proxy is enabled
-		proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo)
+		proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo, settings.Name, settings.Type)
 		if sdkproxy.New(proxyOpts).SecureSocksProxyEnabled() {
 			URL, err := ParseURL(dsInfo.URL, logger)
 			if err != nil {

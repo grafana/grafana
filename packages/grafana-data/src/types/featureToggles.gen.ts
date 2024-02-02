@@ -48,14 +48,11 @@ export interface FeatureToggles {
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
-  cloudwatchNewRegionsHandler?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   nestedFolderPicker?: boolean;
-  emptyDashboardPage?: boolean;
-  disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
@@ -66,6 +63,7 @@ export interface FeatureToggles {
   prometheusMetricEncyclopedia?: boolean;
   influxdbBackendMigration?: boolean;
   influxqlStreamingParser?: boolean;
+  influxdbRunQueriesInParallel?: boolean;
   clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
   lokiMetricDataplane?: boolean;
@@ -102,7 +100,6 @@ export interface FeatureToggles {
   mlExpressions?: boolean;
   traceQLStreaming?: boolean;
   metricsSummary?: boolean;
-  grafanaAPIServer?: boolean;
   grafanaAPIServerWithExperimentalAPIs?: boolean;
   grafanaAPIServerEnsureKubectlAccess?: boolean;
   featureToggleAdminPage?: boolean;
@@ -134,6 +131,7 @@ export interface FeatureToggles {
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
+  kubernetesQueryServiceRewrite?: boolean;
   cloudWatchBatchQueries?: boolean;
   recoveryThreshold?: boolean;
   lokiStructuredMetadata?: boolean;
@@ -166,7 +164,6 @@ export interface FeatureToggles {
   tableSharedCrosshair?: boolean;
   regressionTransformation?: boolean;
   displayAnonymousStats?: boolean;
-  alertStateHistoryAnnotationsFromLoki?: boolean;
   lokiQueryHints?: boolean;
   kubernetesFeatureToggles?: boolean;
   alertingPreviewUpgrade?: boolean;
@@ -177,5 +174,8 @@ export interface FeatureToggles {
   jitterAlertRules?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
+  alertingSaveStatePeriodic?: boolean;
+  promQLScope?: boolean;
+  nodeGraphDotLayout?: boolean;
   newPDFRendering?: boolean;
 }

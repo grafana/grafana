@@ -10,6 +10,7 @@ interface BaseQueryOperationActionProps {
   title: string;
   onClick: (e: React.MouseEvent) => void;
   disabled?: boolean;
+  dataTestId?: string;
 }
 
 function BaseQueryOperationAction(props: QueryOperationActionProps | QueryOperationToggleActionProps) {
@@ -25,6 +26,7 @@ function BaseQueryOperationAction(props: QueryOperationActionProps | QueryOperat
         onClick={props.onClick}
         type="button"
         aria-label={selectors.components.QueryEditorRow.actionButton(props.title)}
+        data-testid={props.dataTestId}
         {...('active' in props && { 'aria-pressed': props.active })}
       />
     </div>

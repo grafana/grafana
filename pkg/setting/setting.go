@@ -288,7 +288,8 @@ type Cfg struct {
 	ExtendedJWTExpectAudience string
 
 	// SSO Settings Auth
-	SSOSettingsReloadInterval time.Duration
+	SSOSettingsReloadInterval        time.Duration
+	SSOSettingsConfigurableProviders map[string]bool
 
 	// Dataproxy
 	SendUserHeader                 bool
@@ -345,6 +346,13 @@ type Cfg struct {
 
 	// Data sources
 	DataSourceLimit int
+	// Number of queries to be executed concurrently. Only for the datasource supports concurrency.
+	ConcurrentQueryCount int
+
+	// IP range access control
+	IPRangeACEnabled     bool
+	IPRangeACAllowedURLs []string
+	IPRangeACSecretKey   string
 
 	// SQL Data sources
 	SqlDatasourceMaxOpenConnsDefault    int
@@ -352,12 +360,14 @@ type Cfg struct {
 	SqlDatasourceMaxConnLifetimeDefault int
 
 	// Snapshots
-	SnapshotEnabled       bool
-	ExternalSnapshotUrl   string
-	ExternalSnapshotName  string
-	ExternalEnabled       bool
+	SnapshotEnabled      bool
+	ExternalSnapshotUrl  string
+	ExternalSnapshotName string
+	ExternalEnabled      bool
+	// Deprecated: setting this to false adds deprecation warnings at runtime
 	SnapShotRemoveExpired bool
 
+	// Only used in https://snapshots.raintank.io/
 	SnapshotPublicMode bool
 
 	ErrTemplateName string
@@ -580,6 +590,7 @@ func RedactedValue(key, value string) string {
 		"ENCRYPTION_KEY",
 		"VAULT_TOKEN",
 		"CLIENT_SECRET",
+		"ENTERPRISE_LICENSE",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
@@ -1198,6 +1209,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	}
 
 	cfg.readDataSourcesSettings()
+	cfg.readDataSourceSecuritySettings()
 	cfg.readSqlDataSourceSettings()
 
 	cfg.Storage = readStorageSettings(iniFile)
@@ -1629,7 +1641,12 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// SSO Settings
 	ssoSettings := iniFile.Section("sso_settings")
 	cfg.SSOSettingsReloadInterval = ssoSettings.Key("reload_interval").MustDuration(1 * time.Minute)
+	providers := ssoSettings.Key("configurable_providers").String()
 
+	cfg.SSOSettingsConfigurableProviders = make(map[string]bool)
+	for _, provider := range util.SplitString(providers) {
+		cfg.SSOSettingsConfigurableProviders[provider] = true
+	}
 	return nil
 }
 
@@ -1929,6 +1946,15 @@ func (cfg *Cfg) GetContentDeliveryURL(prefix string) (string, error) {
 func (cfg *Cfg) readDataSourcesSettings() {
 	datasources := cfg.Raw.Section("datasources")
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
+	cfg.ConcurrentQueryCount = datasources.Key("concurrent_query_count").MustInt(10)
+}
+
+func (cfg *Cfg) readDataSourceSecuritySettings() {
+	datasources := cfg.Raw.Section("datasources.ip_range_security")
+	cfg.IPRangeACEnabled = datasources.Key("enabled").MustBool(false)
+	cfg.IPRangeACSecretKey = datasources.Key("secret_key").MustString("")
+	allowedURLString := datasources.Key("allow_list").MustString("")
+	cfg.IPRangeACAllowedURLs = util.SplitString(allowedURLString)
 }
 
 func (cfg *Cfg) readSqlDataSourceSettings() {

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -64,8 +65,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 		authInfoStore := authinfoimpl.ProvideStore(sqlStore, secretsService)
 		srv := authinfoimpl.ProvideService(
-			authInfoStore,
-		)
+			authInfoStore, remotecache.NewFakeCacheStorage(), secretsService)
 		hs.authInfoService = srv
 		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
 		require.NoError(t, err)
@@ -82,6 +82,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		}
 		usr, err := userSvc.Create(context.Background(), &createUserCmd)
 		require.NoError(t, err)
+		theUserUID := usr.UID
 
 		sc.handlerFunc = hs.GetUserByID
 
@@ -108,6 +109,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 
 		expected := user.UserProfileDTO{
 			ID:             1,
+			UID:            theUserUID, // from original request
 			Email:          "user@test.com",
 			Name:           "user",
 			Login:          "loginuser",

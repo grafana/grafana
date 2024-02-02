@@ -28,9 +28,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionService "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/kmsproviders/osskmsproviders"
-	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -40,10 +39,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
+	"github.com/grafana/grafana/pkg/services/team/teamimpl"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func apiBuilderServices(cfg *setting.Cfg, pluginID string) (
+func apiBuilderServices(cfg *setting.Cfg, features featuremgmt.FeatureToggles, pluginID string) (
 	*acimpl.AccessControl,
 	*pluginstore.Service,
 	*datasourceService.Service,
@@ -57,27 +58,37 @@ func apiBuilderServices(cfg *setting.Cfg, pluginID string) (
 		return nil, nil, nil, nil, err
 	}
 	routeRegisterImpl := routing.ProvideRegister()
-	hooksService := hooks.ProvideService()
-	ossLicensingService := licensing.ProvideService(cfg, hooksService)
-	featureManager, err := featuremgmt.ProvideManagerService(cfg, ossLicensingService)
+	featureManager, err := featuremgmt.ProvideManagerService(cfg)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
 
 	inProcBus := bus.ProvideBus(tracingService)
-	ossMigrations := migrations.ProvideOSSMigrations()
-	sqlStore, err := sqlstore.ProvideService(cfg, ossMigrations, inProcBus, tracingService)
+	ossMigrations := migrations.ProvideOSSMigrations(features)
+	sqlStore, err := sqlstore.ProvideService(cfg, features, ossMigrations, inProcBus, tracingService)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
 
 	kvStore := kvstore.ProvideService(sqlStore)
 	featureToggles := featuremgmt.ProvideToggles(featureManager)
-	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, featureToggles)
+	bundleRegistry := bundleregistry.ProvideService()
+
+	quota := quotaimpl.ProvideService(sqlStore, cfg)
+	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quota)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-	bundleRegistry := bundleregistry.ProvideService()
+	teamService := teamimpl.ProvideService(sqlStore, cfg)
+	userService, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamService, cacheService, quota, bundleRegistry)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	acimplService, err := acimpl.ProvideService(cfg, sqlStore, routeRegisterImpl, cacheService, accessControl, userService, featureToggles)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
 	usageStats, err := service.ProvideService(cfg, kvStore, routeRegisterImpl, tracingService, accessControl, acimplService, bundleRegistry)
 	if err != nil {
 		return nil, nil, nil, nil, err

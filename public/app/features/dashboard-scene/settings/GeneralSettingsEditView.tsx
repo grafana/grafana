@@ -90,7 +90,7 @@ export class GeneralSettingsEditView
     this._dashboard.setState({ tags: value });
   };
 
-  public onFolderChange = (newUID: string, newTitle: string) => {
+  public onFolderChange = (newUID: string | undefined, newTitle: string | undefined) => {
     const newMeta = {
       ...this._dashboard.state.meta,
       folderUid: newUID || this._dashboard.state.meta.folderUid,

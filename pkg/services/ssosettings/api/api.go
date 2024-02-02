@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"hash/fnv"
 	"net/http"
@@ -140,12 +139,8 @@ func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Respons
 	}
 
 	provider, err := api.SSOSettingsService.GetForProviderWithRedactedSecrets(c.Req.Context(), key)
-
 	if err != nil {
-		if errors.Is(err, ssosettings.ErrNotFound) {
-			return response.Error(http.StatusNotFound, "The provider was not found", err)
-		}
-		return response.Error(http.StatusInternalServerError, "Failed to get provider settings", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to get provider settings", err)
 	}
 
 	etag, err := generateFNVETag(provider)
@@ -214,10 +209,7 @@ func (api *Api) removeProviderSettings(c *contextmodel.ReqContext) response.Resp
 
 	err := api.SSOSettingsService.Delete(c.Req.Context(), key)
 	if err != nil {
-		if errors.Is(err, ssosettings.ErrNotFound) {
-			return response.Error(http.StatusNotFound, "The provider was not found", err)
-		}
-		return response.Error(http.StatusInternalServerError, "Failed to delete provider settings", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to delete provider settings", err)
 	}
 
 	return response.Empty(http.StatusNoContent)
@@ -241,7 +233,11 @@ type UpdateProviderSettingsParams struct {
 	Provider string `json:"key"`
 	// in:body
 	// required:true
-	Body models.SSOSettings `json:"body"`
+	Body struct {
+		ID       string         `json:"id"`
+		Provider string         `json:"provider"`
+		Settings map[string]any `json:"settings"`
+	} `json:"body"`
 }
 
 // swagger:parameters removeProviderSettings
@@ -254,11 +250,21 @@ type RemoveProviderSettingsParams struct {
 // swagger:response listSSOSettingsResponse
 type ListSSOSettingsResponse struct {
 	// in: body
-	Body []models.SSOSettings `json:"body"`
+	Body []struct {
+		ID       string         `json:"id"`
+		Provider string         `json:"provider"`
+		Settings map[string]any `json:"settings"`
+		Source   string         `json:"source"`
+	} `json:"body"`
 }
 
 // swagger:response getSSOSettingsResponse
 type GetSSOSettingsResponse struct {
 	// in: body
-	Body models.SSOSettings `json:"body"`
+	Body struct {
+		ID       string         `json:"id"`
+		Provider string         `json:"provider"`
+		Settings map[string]any `json:"settings"`
+		Source   string         `json:"source"`
+	} `json:"body"`
 }
