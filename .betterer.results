@@ -532,6 +532,240 @@ exports[`better eslint`] = {
     "packages/grafana-o11y-ds-frontend/src/utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "packages/grafana-prometheus/src/components/PromExemplarField.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"]
+    ],
+    "packages/grafana-prometheus/src/components/PromExploreExtraField.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
+    ],
+    "packages/grafana-prometheus/src/components/PromQueryField.test.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-prometheus/src/components/PromQueryField.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-prometheus/src/components/PrometheusMetricsBrowser.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"],
+      [0, 0, 0, "Styles should be written using objects.", "8"],
+      [0, 0, 0, "Styles should be written using objects.", "9"],
+      [0, 0, 0, "Styles should be written using objects.", "10"],
+      [0, 0, 0, "Styles should be written using objects.", "11"]
+    ],
+    "packages/grafana-prometheus/src/components/monaco-query-field/MonacoQueryField.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
+    ],
+    "packages/grafana-prometheus/src/configuration/ConfigEditor.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"],
+      [0, 0, 0, "Styles should be written using objects.", "8"],
+      [0, 0, 0, "Styles should be written using objects.", "9"],
+      [0, 0, 0, "Styles should be written using objects.", "10"],
+      [0, 0, 0, "Styles should be written using objects.", "11"],
+      [0, 0, 0, "Styles should be written using objects.", "12"],
+      [0, 0, 0, "Styles should be written using objects.", "13"],
+      [0, 0, 0, "Styles should be written using objects.", "14"],
+      [0, 0, 0, "Styles should be written using objects.", "15"]
+    ],
+    "packages/grafana-prometheus/src/configuration/ExemplarsSettings.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "packages/grafana-prometheus/src/datasource.test.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
+    "packages/grafana-prometheus/src/datasource.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "12"]
+    ],
+    "packages/grafana-prometheus/src/gcopypaste/app/features/live/data/amendTimeSeries.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"],
+      [0, 0, 0, "Do not use any type assertions.", "4"]
+    ],
+    "packages/grafana-prometheus/src/gcopypaste/public/test/matchers/index.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-prometheus/src/gcopypaste/public/test/matchers/toEmitValuesWith.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
+    "packages/grafana-prometheus/src/gcopypaste/public/test/matchers/utils.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-prometheus/src/gcopypaste/test/helpers/selectOptionInTest.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "packages/grafana-prometheus/src/language_provider.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+    ],
+    "packages/grafana-prometheus/src/language_utils.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"]
+    ],
+    "packages/grafana-prometheus/src/metric_find_query.test.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-prometheus/src/metric_find_query.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+    ],
+    "packages/grafana-prometheus/src/query_hints.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/QueryPattern.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/QueryPatternsModal.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/binaryScalarOperations.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/components/LabelFilterItem.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/components/LabelFilters.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/components/LabelParamEditor.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/components/MetricSelect.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"],
+      [0, 0, 0, "Styles should be written using objects.", "8"],
+      [0, 0, 0, "Styles should be written using objects.", "9"],
+      [0, 0, 0, "Styles should be written using objects.", "10"],
+      [0, 0, 0, "Styles should be written using objects.", "11"],
+      [0, 0, 0, "Styles should be written using objects.", "12"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/components/PromQueryBuilder.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/components/PromQueryCodeEditor.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/components/metrics-modal/AdditionalSettings.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/components/metrics-modal/ResultsTable.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"],
+      [0, 0, 0, "Styles should be written using objects.", "8"],
+      [0, 0, 0, "Styles should be written using objects.", "9"],
+      [0, 0, 0, "Styles should be written using objects.", "10"],
+      [0, 0, 0, "Styles should be written using objects.", "11"],
+      [0, 0, 0, "Styles should be written using objects.", "12"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/components/metrics-modal/styles.ts:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"],
+      [0, 0, 0, "Styles should be written using objects.", "8"],
+      [0, 0, 0, "Styles should be written using objects.", "9"],
+      [0, 0, 0, "Styles should be written using objects.", "10"],
+      [0, 0, 0, "Styles should be written using objects.", "11"],
+      [0, 0, 0, "Styles should be written using objects.", "12"],
+      [0, 0, 0, "Styles should be written using objects.", "13"],
+      [0, 0, 0, "Styles should be written using objects.", "14"],
+      [0, 0, 0, "Styles should be written using objects.", "15"],
+      [0, 0, 0, "Styles should be written using objects.", "16"],
+      [0, 0, 0, "Styles should be written using objects.", "17"],
+      [0, 0, 0, "Styles should be written using objects.", "18"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/operationUtils.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/shared/OperationEditor.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/shared/OperationParamEditor.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/shared/QueryBuilderHints.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/shared/types.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
+    "packages/grafana-prometheus/src/result_transformer.test.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-prometheus/src/types.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
     "packages/grafana-runtime/src/analytics/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -6468,6 +6702,58 @@ exports[`no gf-form usage`] = {
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
     "packages/grafana-e2e/src/flows/addDataSource.ts:5381": [
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
+    ],
+    "packages/grafana-prometheus/src/components/PromExploreExtraField.tsx:5381": [
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
+    ],
+    "packages/grafana-prometheus/src/components/PromQueryField.tsx:5381": [
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
+    ],
+    "packages/grafana-prometheus/src/configuration/AlertingSettingsOverhaul.tsx:5381": [
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
+    ],
+    "packages/grafana-prometheus/src/configuration/ExemplarSetting.tsx:5381": [
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
+    ],
+    "packages/grafana-prometheus/src/configuration/PromSettings.tsx:5381": [
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/components/PromQueryCodeEditor.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
     "packages/grafana-ui/src/components/DataSourceSettings/AlertingSettings.tsx:5381": [
