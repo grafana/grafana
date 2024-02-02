@@ -180,7 +180,7 @@ export function ToolbarActions({ dashboard }: Props) {
         fill="text"
         variant="primary"
       >
-        Done editing
+        Exit edit
       </Button>
     ),
   });
