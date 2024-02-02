@@ -62,7 +62,7 @@ We have two teams, Team A and Team B. Loki access is setup with `Editor`, `Viewe
 
 - Team A has a rule `namespace="dev"` configured. A user that is part of Team A will have access to logs that match `namespace="dev"`.
 
-- Team B does not have a rule configured for it. A user that is part of Team B, ths is `Editor` or `Viewer` will have access to all logs (due to the query permission for the user).
+- Team B does not have a rule configured for it. A user that is part of Team B, that is `Editor` or `Viewer` will have access to all logs (due to the query permission for the user).
 
 **Scenario 3: Multiple rules setup for one team**
 
