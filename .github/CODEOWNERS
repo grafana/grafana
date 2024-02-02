@@ -108,7 +108,7 @@
 /pkg/services/dashboardversion/ @grafana/backend-platform
 /pkg/services/encryption/ @grafana/backend-platform
 /pkg/services/folder/ @grafana/backend-platform
-/pkg/services/grafana-apiserver @grafana/grafana-app-platform-squad
+/pkg/services/apiserver @grafana/grafana-app-platform-squad
 /pkg/services/hooks/ @grafana/backend-platform
 /pkg/services/kmsproviders/ @grafana/backend-platform
 /pkg/services/licensing/ @grafana/backend-platform
@@ -275,7 +275,6 @@
 /pkg/modules/ @grafana/grafana-app-platform-squad
 /pkg/kindsysreport/ @grafana/grafana-app-platform-squad
 /pkg/services/grpcserver/ @grafana/grafana-app-platform-squad
-/pkg/aggregator @grafana/grafana-app-platform-squad
 /pkg/generated @grafana/grafana-app-platform-squad
 
 # Alerting
@@ -344,9 +343,9 @@
 /packages/grafana-sql/ @grafana/partner-datasources @grafana/oss-big-tent
 
 # root files, mostly frontend 
-.browserslistrc @grafana/frontend-ops
-package.json @grafana/frontend-ops
-tsconfig.json @grafana/frontend-ops
+/.browserslistrc @grafana/frontend-ops
+/package.json @grafana/frontend-ops
+/tsconfig.json @grafana/frontend-ops
 /.editorconfig @grafana/frontend-ops
 /.eslintignore @grafana/frontend-ops
 /.gitattributes @grafana/frontend-ops
@@ -356,7 +355,7 @@ tsconfig.json @grafana/frontend-ops
 /.yarn @grafana/frontend-ops
 /.yarnrc.yml @grafana/frontend-ops
 /yarn.lock @grafana/frontend-ops
-lerna.json @grafana/frontend-ops
+/lerna.json @grafana/frontend-ops
 /.prettierrc.js @grafana/frontend-ops
 /.eslintrc @grafana/frontend-ops
 /.vim @zoltanbedi
@@ -367,9 +366,9 @@ lerna.json @grafana/frontend-ops
 /tools/ @grafana/frontend-ops
 /lefthook.yml @grafana/frontend-ops
 /lefthook.rc @grafana/frontend-ops
-.husky/pre-commit @grafana/frontend-ops
-cypress.config.js @grafana/grafana-frontend-platform
-.levignore.js @grafana/plugins-platform-frontend
+/.husky/pre-commit @grafana/frontend-ops
+/cypress.config.js @grafana/grafana-frontend-platform
+/.levignore.js @grafana/plugins-platform-frontend
 
 
 # public folder
@@ -382,7 +381,7 @@ cypress.config.js @grafana/grafana-frontend-platform
 /public/app/features/all.ts @grafana/grafana-frontend-platform
 /public/app/features/admin/ @grafana/identity-access-team
 /public/app/features/auth-config/ @grafana/identity-access-team
-/public/app/features/annotations/ @grafana/grafana-frontend-platform
+/public/app/features/annotations/ @grafana/dashboards-squad
 /public/app/features/api-keys/ @grafana/identity-access-team
 /public/app/features/canvas/ @grafana/dataviz-squad
 /public/app/features/geo/ @grafana/dataviz-squad
@@ -678,7 +677,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/ephemeral-instances-pr-opened-closed.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/create-security-patch-from-security-mirror.yml @grafana/grafana-release-guild
 /.github/workflows/core-plugins-build-and-release.yml @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
-/.github/workflows/i18n-crowdin-fix-files.yml @grafana/grafana-frontend-platform
+/.github/workflows/i18n-crowdin-upload.yml @grafana/grafana-frontend-platform
+/.github/workflows/i18n-crowdin-download.yml @grafana/grafana-frontend-platform
 /.github/workflows/feature-toggle-cleanup.yml @tolzhabayev
 /.github/workflows/scripts/feature-toggle-cleanup/feature-toggle-cleanup.js @tolzhabayev
 
