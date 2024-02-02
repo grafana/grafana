@@ -336,6 +336,11 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 		writeInt(0)
 	}
 
+	if len(rule.NotificationSettings) > 0 {
+		binary.LittleEndian.PutUint64(tmp, uint64(rule.NotificationSettings[0].Fingerprint()))
+		writeBytes(tmp)
+	}
+
 	// fields that do not affect the state.
 	// TODO consider removing fields below from the fingerprint
 	writeInt(rule.ID)
