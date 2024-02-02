@@ -2,6 +2,7 @@ package acimpl
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,6 +23,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func setupTestEnv(t testing.TB) *Service {
 	t.Helper()

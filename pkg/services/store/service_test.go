@@ -68,6 +68,12 @@ var (
 			}})
 )
 
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
+
 func TestListFiles(t *testing.T) {
 	roots := []storageRuntime{publicStaticFilesStorage}
 

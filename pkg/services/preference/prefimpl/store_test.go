@@ -2,6 +2,7 @@ package prefimpl
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -12,6 +13,12 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 type getStore func(db.DB) store
 

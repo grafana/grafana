@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -39,6 +40,12 @@ var timeSettings = &TimeSettings{From: "now-12h", To: "now"}
 var defaultPubdashTimeSettings = &TimeSettings{}
 var dashboardData = simplejson.NewFromAny(map[string]any{"time": map[string]any{"from": "now-8h", "to": "now"}})
 var SignedInUser = &user.SignedInUser{UserID: 1234, Login: "user@login.com"}
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func TestLogPrefix(t *testing.T) {
 	assert.Equal(t, LogPrefix, "publicdashboards.service")

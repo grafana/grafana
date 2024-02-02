@@ -2,6 +2,7 @@ package signingkeystore
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -11,6 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func TestIntegrationSigningKeyStore(t *testing.T) {
 	if testing.Short() {

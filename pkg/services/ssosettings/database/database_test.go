@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -17,6 +18,12 @@ import (
 const (
 	withinDuration = 5 * time.Minute
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func TestIntegrationGetSSOSettings(t *testing.T) {
 	if testing.Short() {

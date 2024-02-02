@@ -3,6 +3,7 @@ package manager
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 	"time"
 
@@ -22,6 +23,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func TestSecretsService_EnvelopeEncryption(t *testing.T) {
 	testDB := db.InitTestDB(t)

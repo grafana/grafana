@@ -2,6 +2,7 @@ package authinfoimpl
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -14,6 +15,12 @@ import (
 	secretstest "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func TestIntegrationAuthInfoStore(t *testing.T) {
 	if testing.Short() {

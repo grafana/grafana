@@ -2,6 +2,7 @@ package shorturlimpl
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -11,6 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func TestShortURLService(t *testing.T) {
 	user := &user.SignedInUser{UserID: 1}

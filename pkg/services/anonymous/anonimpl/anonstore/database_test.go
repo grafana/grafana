@@ -2,6 +2,7 @@ package anonstore
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -10,6 +11,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func TestIntegrationAnonStore_DeleteDevicesOlderThan(t *testing.T) {
 	store := db.InitTestDB(t)

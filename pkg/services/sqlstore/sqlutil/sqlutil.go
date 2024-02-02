@@ -21,6 +21,7 @@ type TestDB struct {
 	DriverName string
 	ConnStr    string
 	Path       string
+	Cleanup    func()
 }
 
 func GetTestDBType() string {
@@ -33,25 +34,29 @@ func GetTestDBType() string {
 	return dbType
 }
 
-func GetTestDB(t ITestDB, dbType string) (*TestDB, error) {
+func GetTestDB(dbType string) (*TestDB, error) {
 	switch dbType {
 	case "mysql":
-		return MySQLTestDB()
+		return mySQLTestDB()
 	case "postgres":
-		return PostgresTestDB()
+		return postgresTestDB()
 	case "sqlite3":
-		return SQLite3TestDB()
+		return sqLite3TestDB()
 	}
 
 	return nil, fmt.Errorf("unknown test db type: %s", dbType)
 }
 
-func SQLite3TestDB() (*TestDB, error) {
+func sqLite3TestDB() (*TestDB, error) {
 	if os.Getenv("SQLITE_INMEMORY") == "true" {
 		return &TestDB{
 			DriverName: "sqlite3",
 			ConnStr:    "file::memory:",
 		}, nil
+	}
+
+	ret := &TestDB{
+		DriverName: "sqlite3",
 	}
 
 	sqliteDb := os.Getenv("SQLITE_TEST_DB")
@@ -75,43 +80,42 @@ func SQLite3TestDB() (*TestDB, error) {
 			return nil, err
 		}
 
-		sqliteDb = filepath.Join(dir, "grafana-test", "grafana-test.db")
+		f, err := os.CreateTemp(filepath.Join(dir, "grafana-test"), "grafana-test-*.db")
+		if err != nil {
+			return nil, err
+		}
+
+		sqliteDb = f.Name()
+
+		ret.Cleanup = func() {
+			// remove db file if it exists
+			err := os.Remove(sqliteDb)
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
+				fmt.Printf("Error removing sqlite db file %s: %v\n", sqliteDb, err)
+			}
+
+			// remove wal & shm files if they exist
+			err = os.Remove(sqliteDb + "-wal")
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
+				fmt.Printf("Error removing sqlite wal file %s: %v\n", sqliteDb+"-wal", err)
+			}
+			err = os.Remove(sqliteDb + "-shm")
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
+				fmt.Printf("Error removing sqlite shm file %s: %v\n", sqliteDb+"-shm", err)
+			}
+		}
 	}
 
-	// remove db file if it exists
-	err := os.Remove(sqliteDb)
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return nil, err
-	}
-	// remove wal & shm files if they exist
-	err = os.Remove(sqliteDb + "-wal")
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return nil, err
-	}
-	err = os.Remove(sqliteDb + "-shm")
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return nil, err
-	}
-
-	//#nosec G304 - this is a test db
-	f, err := os.Create(sqliteDb)
-	if err != nil && !os.IsExist(err) {
-		return nil, err
-	}
-
-	connstr := "file:" + f.Name() + "?cache=private&mode=rwc"
+	ret.ConnStr = "file:" + sqliteDb + "?cache=private&mode=rwc"
 	if os.Getenv("SQLITE_JOURNAL_MODE") != "false" {
-		connstr = connstr + "&_journal_mode=WAL"
+		ret.ConnStr += "&_journal_mode=WAL"
 	}
+	ret.Path = sqliteDb
 
-	return &TestDB{
-		DriverName: "sqlite3",
-		ConnStr:    connstr,
-		Path:       f.Name(),
-	}, nil
+	return ret, nil
 }
 
-func MySQLTestDB() (*TestDB, error) {
+func mySQLTestDB() (*TestDB, error) {
 	host := os.Getenv("MYSQL_HOST")
 	if host == "" {
 		host = "localhost"
@@ -127,7 +131,7 @@ func MySQLTestDB() (*TestDB, error) {
 	}, nil
 }
 
-func PostgresTestDB() (*TestDB, error) {
+func postgresTestDB() (*TestDB, error) {
 	host := os.Getenv("POSTGRES_HOST")
 	if host == "" {
 		host = "localhost"

@@ -28,6 +28,12 @@ import (
 // "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
 const ignoredDatabase = migrator.MySQL
 
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
+
 func TestBuildConflictBlock(t *testing.T) {
 	type testBuildConflictBlock struct {
 		desc                string

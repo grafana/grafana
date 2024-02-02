@@ -2,6 +2,7 @@ package loginattemptimpl
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -9,6 +10,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func TestIntegrationLoginAttemptsQuery(t *testing.T) {
 	if testing.Short() {

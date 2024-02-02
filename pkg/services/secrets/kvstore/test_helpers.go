@@ -3,6 +3,7 @@ package kvstore
 import (
 	"context"
 	"errors"
+	"os"
 	"sync"
 	"testing"
 
@@ -22,6 +23,12 @@ import (
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func NewFakeSQLSecretsKVStore(t *testing.T) *SecretsKVStoreSQL {
 	t.Helper()

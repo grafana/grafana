@@ -48,6 +48,12 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
+
 func TestDataSourceProxy_routeRule(t *testing.T) {
 	cfg := &setting.Cfg{}
 

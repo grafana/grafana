@@ -53,6 +53,7 @@ type InitTestDBOpt = sqlstore.InitTestDBOpt
 
 var InitTestDB = sqlstore.InitTestDB
 var InitTestDBwithCfg = sqlstore.InitTestDBWithCfg
+var CleanupTestDB = sqlstore.CleanupTestDB
 var ProvideService = sqlstore.ProvideService
 
 func IsTestDbSQLite() bool {

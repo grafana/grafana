@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"testing"
 	"time"
@@ -32,6 +33,13 @@ var DefaultTimeSettings = &TimeSettings{}
 
 // Default time to pass in with seconds rounded
 var DefaultTime = time.Now().UTC().Round(time.Second)
+
+// run tests with cleanup
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func TestLogPrefix(t *testing.T) {
 	assert.Equal(t, LogPrefix, "publicdashboards.store")

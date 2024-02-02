@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -18,6 +19,12 @@ import (
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func setupAMTest(t *testing.T) *alertmanager {
 	dir := t.TempDir()

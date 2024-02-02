@@ -222,8 +222,10 @@ func TestMigrations(t *testing.T) {
 func setupTestDB(t *testing.T) *xorm.Engine {
 	t.Helper()
 	dbType := sqlutil.GetTestDBType()
-	testDB, err := sqlutil.GetTestDB(t, dbType)
+	testDB, err := sqlutil.GetTestDB(dbType)
 	require.NoError(t, err)
+
+	t.Cleanup(testDB.Cleanup)
 
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)

@@ -3,6 +3,7 @@ package userimpl
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -20,6 +21,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func TestIntegrationUserGet(t *testing.T) {
 	testCases := []struct {

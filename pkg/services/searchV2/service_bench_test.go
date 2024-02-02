@@ -3,6 +3,7 @@ package searchV2
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -20,6 +21,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 // setupBenchEnv will set up a database with folderCount folders and dashboardsPerFolder dashboards per folder
 // It will also set up and run the search service

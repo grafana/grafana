@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -30,6 +31,12 @@ import (
 )
 
 const testOrgID int64 = 1
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func TestIntegrationIntegratedDashboardService(t *testing.T) {
 	if testing.Short() {

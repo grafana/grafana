@@ -6,6 +6,7 @@ import (
 	"errors"
 	"math/rand"
 	"net/url"
+	"os"
 	"strconv"
 	"sync"
 	"testing"
@@ -31,6 +32,12 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 	if testing.Short() {

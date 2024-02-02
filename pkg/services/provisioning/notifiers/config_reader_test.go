@@ -3,6 +3,7 @@ package notifiers
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -33,6 +34,12 @@ var (
 	twoNotificationsConfig       = "./testdata/test-configs/two-notifications"
 	unknownNotifier              = "./testdata/test-configs/unknown-notifier"
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func TestNotificationAsConfig(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore

@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"context"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -19,6 +20,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func TestService(t *testing.T) {
 	sqlStore := &sqlStore{

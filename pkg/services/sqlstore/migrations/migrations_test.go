@@ -20,14 +20,20 @@ import (
 )
 
 func TestMigrations(t *testing.T) {
-	testDB, err := sqlutil.GetTestDB(t, SQLite)
+	testDB, err := sqlutil.GetTestDB(SQLite)
 	require.NoError(t, err)
+
+	t.Cleanup(testDB.Cleanup)
 
 	const query = `select count(*) as count from migration_log`
 	result := struct{ Count int }{}
 
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		x.Close()
+	})
 
 	err = NewDialect(x.DriverName()).CleanDB(x)
 	require.NoError(t, err)
@@ -67,11 +73,17 @@ func TestMigrationLock(t *testing.T) {
 		t.Skip()
 	}
 
-	testDB, err := sqlutil.GetTestDB(t, dbType)
+	testDB, err := sqlutil.GetTestDB(dbType)
 	require.NoError(t, err)
+
+	t.Cleanup(testDB.Cleanup)
 
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		x.Close()
+	})
 
 	dialect := NewDialect(x.DriverName())
 
@@ -167,11 +179,17 @@ func TestMigratorLocking(t *testing.T) {
 		t.Skip()
 	}
 
-	testDB, err := sqlutil.GetTestDB(t, dbType)
+	testDB, err := sqlutil.GetTestDB(dbType)
 	require.NoError(t, err)
+
+	t.Cleanup(testDB.Cleanup)
 
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		x.Close()
+	})
 
 	err = NewDialect(x.DriverName()).CleanDB(x)
 	require.NoError(t, err)
@@ -206,11 +224,17 @@ func TestDatabaseLocking(t *testing.T) {
 		t.Skip()
 	}
 
-	testDB, err := sqlutil.GetTestDB(t, dbType)
+	testDB, err := sqlutil.GetTestDB(dbType)
 	require.NoError(t, err)
+
+	t.Cleanup(testDB.Cleanup)
 
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		x.Close()
+	})
 
 	err = NewDialect(x.DriverName()).CleanDB(x)
 	require.NoError(t, err)

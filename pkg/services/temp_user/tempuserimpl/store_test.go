@@ -2,6 +2,7 @@ package tempuserimpl
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -10,6 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {
 	if testing.Short() {

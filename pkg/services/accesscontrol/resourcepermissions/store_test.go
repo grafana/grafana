@@ -3,6 +3,7 @@ package resourcepermissions
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
@@ -32,6 +33,12 @@ type setUserResourcePermissionTest struct {
 	resourceID        string
 	resourceAttribute string
 	seeds             []SetResourcePermissionCommand
+}
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
 }
 
 func TestIntegrationStore_SetUserResourcePermission(t *testing.T) {

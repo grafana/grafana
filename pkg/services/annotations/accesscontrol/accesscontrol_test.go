@@ -3,6 +3,7 @@ package accesscontrol
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -14,6 +15,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func TestIntegrationAuthorize(t *testing.T) {
 	if testing.Short() {

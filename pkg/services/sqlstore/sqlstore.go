@@ -385,23 +385,13 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 
 var testSQLStore *SQLStore
 var testSQLStoreMutex sync.Mutex
+var testSQLStoreCleanup []func()
 
 // InitTestDBOpt contains options for InitTestDB.
 type InitTestDBOpt struct {
 	// EnsureDefaultOrgAndUser flags whether to ensure that default org and user exist.
 	EnsureDefaultOrgAndUser bool
 	FeatureFlags            []string
-}
-
-// InitTestDBWithMigration initializes the test DB given custom migrations.
-func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
-	t.Helper()
-	features := getFeaturesForTesting(opts...)
-	store, err := initTestDB(t, setting.NewCfg(), features, migration, opts...)
-	if err != nil {
-		t.Fatalf("failed to initialize sql store: %s", err)
-	}
-	return store
 }
 
 // InitTestDB initializes the test DB.
@@ -419,6 +409,23 @@ func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *SQLStore {
 func InitTestDBWithCfg(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
 	store := InitTestDB(t, opts...)
 	return store, store.Cfg
+}
+
+func CleanupTestDB() {
+	testSQLStoreMutex.Lock()
+	defer testSQLStoreMutex.Unlock()
+	if testSQLStore != nil {
+		if err := testSQLStore.GetEngine().Close(); err != nil {
+			fmt.Printf("Failed to close testSQLStore engine: %s\n", err)
+		}
+
+		for _, cleanup := range testSQLStoreCleanup {
+			cleanup()
+		}
+
+		testSQLStoreCleanup = []func(){}
+		testSQLStore = nil
+	}
 }
 
 func getFeaturesForTesting(opts ...InitTestDBOpt) featuremgmt.FeatureToggles {
@@ -465,7 +472,7 @@ func initTestDB(t sqlutil.ITestDB, testCfg *setting.Cfg,
 			return nil, err
 		}
 
-		testDB, err := sqlutil.GetTestDB(t, dbType)
+		testDB, err := sqlutil.GetTestDB(dbType)
 		if err != nil {
 			return nil, err
 		}
@@ -476,6 +483,8 @@ func initTestDB(t sqlutil.ITestDB, testCfg *setting.Cfg,
 		if _, err := sec.NewKey("path", testDB.Path); err != nil {
 			return nil, err
 		}
+
+		testSQLStoreCleanup = append(testSQLStoreCleanup, testDB.Cleanup)
 
 		// useful if you already have a database that you want to use for tests.
 		// cannot just set it on testSQLStore as it overrides the config in Init

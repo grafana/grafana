@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"testing"
 	"time"
 
@@ -32,6 +33,12 @@ var (
 	testDsUID1 = "NCzh67i"
 	testDsUID2 = "ABch1a1"
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 type scenarioContext struct {
 	ctx           *web.Context

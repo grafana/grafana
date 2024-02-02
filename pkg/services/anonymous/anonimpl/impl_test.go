@@ -3,6 +3,7 @@ package anonimpl
 import (
 	"context"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -19,6 +20,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func TestIntegrationDeviceService_tag(t *testing.T) {
 	type tagReq struct {

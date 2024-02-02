@@ -3,6 +3,7 @@ package searchstore_test
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,6 +26,12 @@ const (
 	limit int64 = 15
 	page  int64 = 1
 )
+
+func TestMain(m *testing.M) {
+	code := m.Run()
+	db.CleanupTestDB()
+	os.Exit(code)
+}
 
 func TestBuilder_EqualResults_Basic(t *testing.T) {
 	user := &user.SignedInUser{
