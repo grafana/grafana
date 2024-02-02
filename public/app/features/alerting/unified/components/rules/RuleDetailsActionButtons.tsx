@@ -145,7 +145,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
             icon="apps"
             href={`d/${encodeURIComponent(dashboardUID)}`}
             onClick={() => {
-              setReturnToPrevious({ title: rule.name });
+              setReturnToPrevious(rule.name);
             }}
           >
             Go to dashboard
