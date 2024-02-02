@@ -105,6 +105,7 @@ const language: languages.IMonarchLanguage = {
       [/'([^'\\]|\\.)*$/, 'string.invalid'], // non-teminated string
       [/([^\w])(")/, [{ token: '' }, { token: 'string', next: '@string_double' }]],
       [/([^\w])(')/, [{ token: '' }, { token: 'string', next: '@string_single' }]],
+      [/([^\w])(`)/, [{ token: '' }, { token: 'string', next: '@string_back' }]],
 
       // delimiters and operators
       [/[{}()\[\]]/, 'delimiter.bracket'],
@@ -139,6 +140,13 @@ const language: languages.IMonarchLanguage = {
       [/@escapes/, 'string.escape'],
       [/\\./, 'string.escape.invalid'],
       [/'/, 'string', '@pop'],
+    ],
+
+    string_back: [
+      [/[^\\`]+/, 'string'],
+      [/@escapes/, 'string.escape'],
+      [/\\./, 'string.escape.invalid'],
+      [/`/, 'string', '@pop'],
     ],
   },
 };
