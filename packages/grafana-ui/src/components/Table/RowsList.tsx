@@ -206,7 +206,7 @@ export const RowsList = (props: RowsListProps) => {
 
       prepareRow(row);
 
-      const expandedRowStyle = tableState.expanded[row.index] ? css({ '&:hover': { background: 'inherit' } }) : {};
+      const expandedRowStyle = tableState.expanded[row.id] ? css({ '&:hover': { background: 'inherit' } }) : {};
 
       if (rowHighlightIndex !== undefined && row.index === rowHighlightIndex) {
         style = { ...style, backgroundColor: theme.components.table.rowHoverBackground };
@@ -220,7 +220,7 @@ export const RowsList = (props: RowsListProps) => {
           onMouseLeave={onRowLeave}
         >
           {/*add the nested data to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
-          {nestedDataField && tableState.expanded[row.index] && (
+          {nestedDataField && tableState.expanded[row.id] && (
             <ExpandedRow
               nestedData={nestedDataField}
               tableStyles={tableStyles}
@@ -265,7 +265,7 @@ export const RowsList = (props: RowsListProps) => {
   const getItemSize = (index: number): number => {
     const indexForPagination = rowIndexForPagination(index);
     const row = rows[indexForPagination];
-    if (tableState.expanded[row.index] && nestedDataField) {
+    if (tableState.expanded[row.id] && nestedDataField) {
       return getExpandedRowHeight(nestedDataField, index, tableStyles);
     }
 

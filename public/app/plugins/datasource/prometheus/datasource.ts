@@ -668,7 +668,7 @@ export class PrometheusDatasource
   // this is used to get label keys, a.k.a label names
   // it is used in metric_find_query.ts
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
-  async getTagKeys(options: DataSourceGetTagKeysOptions): Promise<MetricFindValue[]> {
+  async getTagKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
     if (!options || options.filters.length === 0) {
       await this.languageProvider.fetchLabels(options.timeRange);
       return this.languageProvider.getLabelKeys().map((k) => ({ value: k, text: k }));
@@ -681,13 +681,7 @@ export class PrometheusDatasource
     }));
     const expr = promQueryModeller.renderLabels(labelFilters);
 
-    let labelsIndex: Record<string, string[]>;
-
-    if (this.hasLabelsMatchAPISupport()) {
-      labelsIndex = await this.languageProvider.fetchSeriesLabelsMatch(expr);
-    } else {
-      labelsIndex = await this.languageProvider.fetchSeriesLabels(expr);
-    }
+    let labelsIndex: Record<string, string[]> = await this.languageProvider.fetchLabelsWithMatch(expr);
 
     // filter out already used labels
     return Object.keys(labelsIndex)

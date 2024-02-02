@@ -160,7 +160,7 @@ export const HeatmapPanel = ({
   const dataRef = useRef(info);
   dataRef.current = info;
   const showNewVizTooltips =
-    config.featureToggles.newVizTooltips && (sync == null || sync() === DashboardCursorSync.Off);
+    config.featureToggles.newVizTooltips && (sync == null || sync() !== DashboardCursorSync.Tooltip);
 
   const builder = useMemo(() => {
     const scaleConfig: ScaleDistributionConfig = dataRef.current?.heatmap?.fields[1].config?.custom?.scaleDistribution;
@@ -243,8 +243,12 @@ export const HeatmapPanel = ({
                     config={builder}
                     hoverMode={TooltipHoverMode.xyOne}
                     queryZoom={onChangeTimeRange}
-                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2) => {
-                      if (timeRange2 != null) {
+                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
+                      if (viaSync) {
+                        return null;
+                      }
+
+                      if (enableAnnotationCreation && timeRange2 != null) {
                         setNewAnnotationRange(timeRange2);
                         dismiss();
                         return;
