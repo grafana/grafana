@@ -65,7 +65,7 @@ func (hs *HTTPServer) GetFolders(c *contextmodel.ReqContext) response.Response {
 				Title:     f.Title,
 				ParentUID: f.ParentUID,
 			})
-			metrics.MFolderIDsAPICount.WithLabelValues("GetFolders").Inc()
+			metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetFolders).Inc()
 		}
 
 		return response.JSON(http.StatusOK, hits)
@@ -124,7 +124,7 @@ func (hs *HTTPServer) GetFolderByID(c *contextmodel.ReqContext) response.Respons
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
 	}
-	metrics.MFolderIDsAPICount.WithLabelValues("GetFolderByID").Inc()
+	metrics.MFolderIDsAPICount.WithLabelValues(metrics.GetFolderByID).Inc()
 	// nolint:staticcheck
 	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{ID: &id, OrgID: c.SignedInUser.GetOrgID(), SignedInUser: c.SignedInUser})
 	if err != nil {
@@ -372,7 +372,7 @@ func (hs *HTTPServer) newToFolderDto(c *contextmodel.ReqContext, f *folder.Folde
 				}, nil
 			}
 		}
-		metrics.MFolderIDsAPICount.WithLabelValues("newToFolderDto").Inc()
+		metrics.MFolderIDsAPICount.WithLabelValues(metrics.NewToFolderDTO).Inc()
 		return dtos.Folder{
 			ID:            f.ID, // nolint:staticcheck
 			UID:           f.UID,
@@ -472,7 +472,7 @@ func (hs *HTTPServer) searchFolders(c *contextmodel.ReqContext) ([]dtos.FolderSe
 			UID:   hit.UID,
 			Title: hit.Title,
 		})
-		metrics.MFolderIDsAPICount.WithLabelValues("searchFolders").Inc()
+		metrics.MFolderIDsAPICount.WithLabelValues(metrics.SearchFolders).Inc()
 	}
 
 	return folderHits, nil

@@ -1,3 +1,4 @@
+import { DataSourceApi } from '@grafana/data';
 import { setTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import {
   CustomVariable,
@@ -7,8 +8,11 @@ import {
   DataSourceVariable,
   AdHocFiltersVariable,
   TextBoxVariable,
+  SceneVariableSet,
 } from '@grafana/scenes';
-import { VariableType } from '@grafana/schema';
+import { DataQuery, DataSourceJsonData, VariableType } from '@grafana/schema';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
+import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor } from './editors/ConstantVariableEditor';
@@ -27,11 +31,45 @@ import {
   hasVariableOptions,
   EditableVariableType,
   getDefinition,
+  getOptionDataSourceTypes,
+  getNextAvailableId,
+  getVariableDefault,
 } from './utils';
 
 const templateSrv = {
   getAdhocFilters: jest.fn().mockReturnValue([{ key: 'origKey', operator: '=', value: '' }]),
 } as unknown as TemplateSrv;
+
+const dsMock: DataSourceApi = {
+  meta: {
+    id: DASHBOARD_DATASOURCE_PLUGIN_ID,
+  },
+  name: SHARED_DASHBOARD_QUERY,
+  type: SHARED_DASHBOARD_QUERY,
+  uid: SHARED_DASHBOARD_QUERY,
+  getRef: () => {
+    return { type: SHARED_DASHBOARD_QUERY, uid: SHARED_DASHBOARD_QUERY };
+  },
+} as DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: async () => dsMock,
+    getList: () => {
+      return [
+        {
+          name: 'DataSourceInstance1',
+          uid: 'ds1',
+          meta: {
+            name: 'ds1',
+            id: 'dsTestDataSource',
+          },
+        },
+      ];
+    },
+  }),
+}));
 
 describe('isEditableVariableType', () => {
   it('should return true for editable variable types', () => {
@@ -75,8 +113,12 @@ describe('getVariableTypeSelectOptions', () => {
 });
 
 describe('getVariableEditor', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it.each(Object.keys(EDITABLE_VARIABLES) as EditableVariableType[])(
-    'should define an editor for every variable type',
+    'should define an editor for variable type "%s"',
     (type) => {
       const editor = getVariableEditor(type);
       expect(editor).toBeDefined();
@@ -91,7 +133,7 @@ describe('getVariableEditor', () => {
     ['datasource', DataSourceVariableEditor],
     ['adhoc', AdHocFiltersVariableEditor],
     ['textbox', TextBoxVariableEditor],
-  ])('should return the correct editor for each variable type', (type, ExpectedVariableEditor) => {
+  ])('should return the correct editor for variable type "%s"', (type, ExpectedVariableEditor) => {
     expect(getVariableEditor(type as EditableVariableType)).toBe(ExpectedVariableEditor);
   });
 });
@@ -198,5 +240,59 @@ describe('getDefinition', () => {
       value: 'Constant Value',
     });
     expect(getDefinition(model)).toBe('Constant Value');
+  });
+});
+
+describe('getOptionDataSourceTypes', () => {
+  it('should return all data source types when no data source types are specified', () => {
+    const optionTypes = getOptionDataSourceTypes();
+    expect(optionTypes).toHaveLength(2);
+    // in the old code we always had an empty option
+    expect(optionTypes[0].value).toBe('');
+    expect(optionTypes[1].label).toBe('ds1');
+  });
+});
+
+describe('getNextAvailableId', () => {
+  it('should return the initial ID for an empty array', () => {
+    const sceneVariables = new SceneVariableSet({
+      variables: [],
+    });
+
+    expect(getNextAvailableId('query', sceneVariables.state.variables)).toBe('query0');
+  });
+
+  it('should return a non-conflicting ID for a non-empty array', () => {
+    const variable = new QueryVariable({
+      name: 'query0',
+      label: 'test-label',
+      description: 'test-desc',
+      value: ['selected-value'],
+      text: ['selected-value-text'],
+      datasource: { uid: 'fake-std', type: 'fake-std' },
+      query: 'query',
+      includeAll: true,
+      allValue: 'test-all',
+      isMulti: true,
+    });
+
+    const sceneVariables = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    expect(getNextAvailableId('query', sceneVariables.state.variables)).toBe('query1');
+  });
+});
+
+describe('getVariableDefault', () => {
+  it('should return a QueryVariable instance with the correct name', () => {
+    const sceneVariables = new SceneVariableSet({
+      variables: [],
+    });
+
+    const defaultVariable = getVariableDefault(sceneVariables.state.variables);
+
+    expect(defaultVariable).toBeInstanceOf(QueryVariable);
+    expect(defaultVariable.state.name).toBe('query0');
   });
 });

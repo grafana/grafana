@@ -6,6 +6,7 @@ import { HorizontalGroup, Spinner } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardEditView, DashboardEditViewState, useDashboardEditPageNav } from './utils';
@@ -188,32 +189,30 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
   const hasMore = model.versions.length >= model.limit;
   const isLastPage = model.versions.find((rev) => rev.version === 1);
 
-  if (viewMode === 'compare') {
-    return (
-      <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
-        <VersionHistoryHeader
-          onClick={model.reset}
-          baseVersion={baseInfo?.version}
-          newVersion={newInfo?.version}
-          isNewLatest={isNewLatest}
+  const viewModeCompare = (
+    <>
+      <VersionHistoryHeader
+        onClick={model.reset}
+        baseVersion={baseInfo?.version}
+        newVersion={newInfo?.version}
+        isNewLatest={isNewLatest}
+      />
+      {isLoading ? (
+        <VersionsHistorySpinner msg="Fetching changes&hellip;" />
+      ) : (
+        <VersionHistoryComparison
+          newInfo={newInfo!}
+          baseInfo={baseInfo!}
+          isNewLatest={isNewLatest!}
+          diffData={model.diffData}
+          onRestore={dashboard.onRestore}
         />
-        {isLoading ? (
-          <VersionsHistorySpinner msg="Fetching changes&hellip;" />
-        ) : (
-          <VersionHistoryComparison
-            newInfo={newInfo!}
-            baseInfo={baseInfo!}
-            isNewLatest={isNewLatest!}
-            diffData={model.diffData}
-            onRestore={dashboard.onRestore}
-          />
-        )}
-      </Page>
-    );
-  }
+      )}
+    </>
+  );
 
-  return (
-    <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
+  const viewModeList = (
+    <>
       {isLoading ? (
         <VersionsHistorySpinner msg="Fetching history list&hellip;" />
       ) : (
@@ -234,6 +233,13 @@ function VersionsEditorSettingsListView({ model }: SceneComponentProps<VersionsE
           isLastPage={!!isLastPage}
         />
       )}
+    </>
+  );
+
+  return (
+    <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
+      <NavToolbarActions dashboard={dashboard} />
+      {viewMode === 'compare' ? viewModeCompare : viewModeList}
     </Page>
   );
 }

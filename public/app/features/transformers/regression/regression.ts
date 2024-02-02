@@ -9,6 +9,7 @@ import {
   FieldType,
   SynchronousDataTransformerInfo,
   fieldMatchers,
+  getFieldDisplayName,
 } from '@grafana/data';
 
 export enum ModelType {
@@ -42,6 +43,7 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
 
       let xField;
       let yField;
+      let predictFromFrame;
       for (const frame of frames) {
         const fy = frame.fields.find((f) => matchesY(f, frame, frames));
         if (fy) {
@@ -49,6 +51,7 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
           const fx = frame.fields.find((f) => matchesX(f, frame, frames));
           if (fx) {
             xField = fx;
+            predictFromFrame = frame;
             break;
           } else {
             throw 'X and Y fields must be part of the same frame';
@@ -108,7 +111,7 @@ export const RegressionTransformer: SynchronousDataTransformerInfo<RegressionTra
         fields: [
           { name: xField.name, type: xField.type, values: predictionPoints, config: {} },
           {
-            name: `${yField.name} predicted`,
+            name: `${getFieldDisplayName(yField, predictFromFrame, frames)} predicted`,
             type: yField.type,
             values: predictionPoints.map((x) => result.predict(x - normalizationSubtrahend)),
             config: {},

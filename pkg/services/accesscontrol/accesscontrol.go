@@ -57,6 +57,7 @@ type SearchOptions struct {
 	ActionPrefix string // Needed for the PoC v1, it's probably going to be removed.
 	Action       string
 	Scope        string
+	UserLogin    string    // Login for which to return information, if none is specified information is returned for all users.
 	UserID       int64     // ID for the user for which to return information, if none is specified information is returned for all users.
 	wildcards    Wildcards // private field computed based on the Scope
 }
@@ -74,6 +75,19 @@ func (s *SearchOptions) Wildcards() []string {
 
 	s.wildcards = WildcardsFromPrefix(ScopePrefix(s.Scope))
 	return s.wildcards
+}
+
+func (s *SearchOptions) ResolveUserLogin(ctx context.Context, userSvc user.Service) error {
+	if s.UserLogin == "" {
+		return nil
+	}
+	// Resolve userLogin -> userID
+	dbUsr, err := userSvc.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: s.UserLogin})
+	if err != nil {
+		return err
+	}
+	s.UserID = dbUsr.ID
+	return nil
 }
 
 type SyncUserRolesCommand struct {
