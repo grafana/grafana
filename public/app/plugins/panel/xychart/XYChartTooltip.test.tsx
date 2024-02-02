@@ -162,8 +162,7 @@ function buildData({ dataLinkTitle = 'Grafana', field1Name = 'field_1', field2Na
               href: 'http://www.someWebsite.com',
               title: dataLinkTitle,
               target: '_blank' as LinkTarget,
-              // @ts-ignore - this is typed with `any` already in the main code
-              origin: { name: '' } as Field<any, any[]>,
+              origin: { name: '' } as unknown as Field<any, any[]>,
             },
           ],
         },
