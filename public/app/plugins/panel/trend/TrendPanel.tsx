@@ -142,6 +142,9 @@ export const TrendPanel = ({
                           mode={options.tooltip.mode}
                           sortOrder={options.tooltip.sort}
                           isPinned={isPinned}
+                          scrollable={
+                            options.tooltip.mode === TooltipDisplayMode.Multi && options.tooltip.maxHeight !== undefined
+                          }
                         />
                       );
                     }}

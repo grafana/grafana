@@ -11,8 +11,8 @@ import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
 
 import { CloseButton } from './CloseButton';
 
-export const DEFAULT_TOOLTIP_WIDTH = 300;
-export const DEFAULT_TOOLTIP_HEIGHT = 600;
+export const DEFAULT_TOOLTIP_WIDTH = 'none';
+export const DEFAULT_TOOLTIP_HEIGHT = 'none';
 export const TOOLTIP_OFFSET = 10;
 
 // todo: barchart? histogram?
@@ -46,7 +46,7 @@ interface TooltipPlugin2Props {
   ) => React.ReactNode;
 
   maxWidth?: number | string;
-  maxHeight?: number;
+  maxHeight?: number | string;
 }
 
 interface TooltipContainerState {
@@ -529,7 +529,7 @@ export const TooltipPlugin2 = ({
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2, maxWidth: number | string, maxHeight: number) => ({
+const getStyles = (theme: GrafanaTheme2, maxWidth: number | string, maxHeight: number | string) => ({
   tooltipWrapper: css({
     top: 0,
     left: 0,

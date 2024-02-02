@@ -298,6 +298,9 @@ export const CandlestickPanel = ({
                       mode={options.tooltip.mode}
                       isPinned={isPinned}
                       annotate={enableAnnotationCreation ? annotate : undefined}
+                      scrollable={
+                        options.tooltip.mode === TooltipDisplayMode.Multi && options.tooltip.maxHeight !== undefined
+                      }
                     />
                   );
                 }}

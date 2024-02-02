@@ -142,6 +142,9 @@ export const TimeSeriesPanel = ({
                           sortOrder={options.tooltip.sort}
                           isPinned={isPinned}
                           annotate={enableAnnotationCreation ? annotate : undefined}
+                          scrollable={
+                            options.tooltip.mode === TooltipDisplayMode.Multi && options.tooltip.maxHeight !== undefined
+                          }
                         />
                       );
                     }}
