@@ -229,10 +229,18 @@ export function ToolbarActions({ dashboard }: Props) {
       const menu = (
         <Menu>
           <Menu.Item
+            label="Save"
+            icon="save"
+            onClick={() => {
+              DashboardInteractions.toolbarSaveClick();
+              dashboard.openSaveDrawer({});
+            }}
+          />
+          <Menu.Item
             label="Save as copy"
             icon="copy"
             onClick={() => {
-              DashboardInteractions.toolbarSaveClick();
+              DashboardInteractions.toolbarSaveAsClick();
               dashboard.openSaveDrawer({ saveAsCopy: true });
             }}
           />
