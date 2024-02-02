@@ -38,6 +38,7 @@ func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderType Rend
 		Domain:            rs.domain,
 		Headers:           headers,
 		AuthToken:         rs.Cfg.RendererAuthToken,
+		Encoding:          opts.Encoding,
 	}
 	rs.log.Debug("Calling renderer plugin", "req", req)
 
