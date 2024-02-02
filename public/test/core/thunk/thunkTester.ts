@@ -2,7 +2,9 @@ import { PayloadAction } from '@reduxjs/toolkit';
 import configureMockStore from 'redux-mock-store';
 import thunk from 'redux-thunk';
 
-const mockStore = configureMockStore([thunk]);
+import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+
+const mockStore = configureMockStore([thunk, browseDashboardsAPI.middleware]);
 
 export interface ThunkGiven {
   givenThunk: (thunkFunction: any) => ThunkWhen;

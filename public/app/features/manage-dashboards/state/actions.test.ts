@@ -1,7 +1,7 @@
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
 import { DataSourceInstanceSettings, ThresholdsMode } from '@grafana/data';
-import { BackendSrv, setBackendSrv } from '@grafana/runtime';
+import { BackendSrv, BackendSrvRequest, setBackendSrv } from '@grafana/runtime';
 import { defaultDashboard, FieldColorModeId } from '@grafana/schema';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
@@ -40,14 +40,11 @@ describe('importDashboard', () => {
       },
     };
 
-    let postArgs: any;
+    let fetchArgs: unknown;
 
     setBackendSrv({
-      post: (url, args) => {
-        postArgs = args;
-        return Promise.resolve({
-          importedUrl: '/my/dashboard',
-        });
+      fetch: (options: BackendSrvRequest) => {
+        fetchArgs = options;
       },
     } as BackendSrv);
 
@@ -70,22 +67,26 @@ describe('importDashboard', () => {
       .givenThunk(importDashboard)
       .whenThunkIsDispatched(form);
 
-    expect(postArgs).toEqual({
-      dashboard: {
-        title: 'Asda',
-        uid: '12',
-      },
-      folderUid: '5v6e5VH4z',
-      inputs: [
-        {
-          name: 'ds-name',
-          pluginId: 'prometheus',
-          type: 'datasource',
-          value: 'ds-uid',
+    expect(fetchArgs).toEqual(
+      expect.objectContaining({
+        data: {
+          dashboard: {
+            title: 'Asda',
+            uid: '12',
+          },
+          folderUid: '5v6e5VH4z',
+          inputs: [
+            {
+              name: 'ds-name',
+              pluginId: 'prometheus',
+              type: 'datasource',
+              value: 'ds-uid',
+            },
+          ],
+          overwrite: true,
         },
-      ],
-      overwrite: true,
-    });
+      })
+    );
   });
 });
 
