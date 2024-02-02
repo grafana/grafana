@@ -99,9 +99,7 @@ export const AmRootRouteForm = ({
               className={styles.input}
               onCreateOption={(opt: string) => {
                 setGroupByOptions((opts) => [...opts, stringToSelectableValue(opt)]);
-
-                // @ts-ignore-check: react-hook-form made me do this
-                setValue('groupBy', [...field.value, opt]);
+                setValue('groupBy', [...(field.value || []), opt]);
               }}
               onChange={(value) => onChange(mapMultiSelectValueToStrings(value))}
               options={[...commonGroupByOptions, ...groupByOptions]}
