@@ -11912,6 +11912,9 @@
           "theme": {
             "type": "string"
           },
+          "uid": {
+            "type": "string"
+          },
           "updatedAt": {
             "format": "date-time",
             "type": "string"
@@ -11954,6 +11957,9 @@
             "type": "string"
           },
           "name": {
+            "type": "string"
+          },
+          "uid": {
             "type": "string"
           }
         },
