@@ -335,65 +335,31 @@ func TestService_TryTokenRefresh(t *testing.T) {
 				}
 			},
 		},
-
-		/**
-		  * MOVE THIS TEST OUT OF TryTokenRefresh
-			* /
-		// {
-		// 	desc:     "should do token refresh when the token is expired",
-		// 	identity: &authn.Identity{ID: "user:1234"},
-		// 	authInfoServiceSetup: func(authInfoService *authinfotest.FakeService) {
-		// 		authInfoService.ExpectedUserAuth = &login.UserAuth{
-		// 			AuthModule:        login.GenericOAuthModule,
-		// 			OAuthIdToken:      EXPIRED_JWT,
-		// 			OAuthRefreshToken: "",
-		// 		}
-		// 	},
-		// 	expectedErr: nil,
-		// 	oauthInfo: &social.OAuthInfo{
-		// 		UseRefreshToken: true,
-		// 	},
-		// },
-
-		/*
-		 * THIS IS WORKING AS EXPECTED
-		*/
-		// {
-		// 	desc:        "should do token refresh when the token is expired",
-		// 	identity:    &authn.Identity{ID: "user:1234"},
-		// 	expectedErr: nil,
-		// 	oauthInfo: &social.OAuthInfo{
-		// 		UseRefreshToken: true,
-		// 	},
-		// 	token: &oauth2.Token{
-		// 		AccessToken:  "testaccess",
-		// 		RefreshToken: "testrefresh",
-		// 		Expiry:       time.Now().Add(-time.Hour),
-		// 		TokenType:    "Bearer",
-		// 	},
-		// 	socialConnectorSetup: func(socialConnector *socialtest.MockSocialConnector, token *oauth2.Token) {
-		// 		socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token))
-		// 	},
-		// 	socialServiceSetup: func(socialService *socialtest.FakeSocialService) {
-		// 		socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
-		// 			UseRefreshToken: true,
-		// 		}
-		// 	},
-		// 	authInfoStoreSetup: func(authInfoStore *FakeAuthInfoStore, token *oauth2.Token) {
-		// 		authInfoStore.ExpectedOAuth = &login.UserAuth{
-		// 			AuthModule:        login.GenericOAuthModule,
-		// 			AuthId:            "subject",
-		// 			UserId:            1,
-		// 			OAuthAccessToken:  token.AccessToken,
-		// 			OAuthRefreshToken: token.RefreshToken,
-		// 			OAuthExpiry:       token.Expiry,
-		// 			OAuthTokenType:    token.TokenType,
-		// 		}
-		// 	},
-		// 	connectorValidations: func(socialConnector *socialtest.MockSocialConnector) {
-		// 		socialConnector.AssertNumberOfCalls(t, "TokenSource", 1)
-		// 	},
-		// },
+		{
+			desc: "should do token refresh when the token is expired",
+			setup: func(env *environment) {
+				token := &oauth2.Token{
+					AccessToken:  "testaccess",
+					RefreshToken: "testrefresh",
+					Expiry:       time.Now().Add(-time.Hour),
+					TokenType:    "Bearer",
+				}
+				env.identity = &authn.Identity{ID: "user:1234"}
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
+					UseRefreshToken: true,
+				}
+				env.authInfoService.ExpectedUserAuth = &login.UserAuth{
+					AuthModule:        login.GenericOAuthModule,
+					AuthId:            "subject",
+					UserId:            1,
+					OAuthAccessToken:  token.AccessToken,
+					OAuthRefreshToken: token.RefreshToken,
+					OAuthExpiry:       token.Expiry,
+					OAuthTokenType:    token.TokenType,
+				}
+				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token)).Once()
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
