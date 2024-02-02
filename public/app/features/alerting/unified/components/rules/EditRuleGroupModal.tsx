@@ -82,7 +82,7 @@ export const RulesForGroupTable = ({ rulesWithoutRecordingRules }: { rulesWithou
       },
       {
         id: 'for',
-        label: 'For',
+        label: 'Pending period',
         renderCell: ({ data: { forDuration } }) => {
           return <>{forDuration}</>;
         },
