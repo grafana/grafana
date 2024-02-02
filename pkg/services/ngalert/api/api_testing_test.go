@@ -399,6 +399,6 @@ func createTestingApiSrv(t *testing.T, ds *fakes.FakeCacheService, ac *acMock.Mo
 		cfg:             config(t),
 		tracer:          tracing.InitializeTracerForTest(),
 		featureManager:  featureManager,
-		rulesStore:      ruleStore,
+		folderService:   ruleStore,
 	}
 }
