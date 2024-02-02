@@ -1,7 +1,7 @@
 import { memoize } from 'lodash';
 
 import { DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
-import { getBackendSrv, config, TemplateSrv } from '@grafana/runtime';
+import { getBackendSrv, TemplateSrv } from '@grafana/runtime';
 
 import { CloudWatchRequest } from '../query-runner/CloudWatchRequest';
 import { CloudWatchJsonData, LogGroupField, MultiFilters } from '../types';
@@ -52,12 +52,6 @@ export class ResourcesAPI extends CloudWatchRequest {
   }
 
   getRegions(): Promise<SelectableResourceValue[]> {
-    if (!config.featureToggles.cloudwatchNewRegionsHandler) {
-      return this.memoizedGetRequest<SelectableResourceValue[]>('regions').then((regions) => [
-        { label: 'default', value: 'default', text: 'default' },
-        ...regions.filter((r) => r.value),
-      ]);
-    }
     return this.memoizedGetRequest<Array<ResourceResponse<RegionResponse>>>('regions').then((regions) => {
       return [
         { label: 'default', value: 'default', text: 'default' },

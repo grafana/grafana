@@ -412,10 +412,10 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 				},
 			},
 			dashboards: []*dashboards.Dashboard{
-				genDashboard(t, 3, "d_1", "", 1),
-				genDashboard(t, 4, "d_2", "", 1),
-				genDashboard(t, 5, "d_3", "", 2),
-				genDashboard(t, 6, "d_4", "", 2),
+				genDashboard(t, 3, "d_1", "1", 1),
+				genDashboard(t, 4, "d_2", "1", 1),
+				genDashboard(t, 5, "d_3", "2", 2),
+				genDashboard(t, 6, "d_4", "2", 2),
 			},
 			dashboardPerms: map[string][]accesscontrol.SetResourcePermissionCommand{
 				"d_1": {
@@ -643,6 +643,7 @@ func TestDashAlertPermissionMigration(t *testing.T) {
 					for i := 1; i < 3; i++ {
 						_, err := x.Insert(user.User{
 							ID:      int64(i),
+							UID:     fmt.Sprintf("u%d", i),
 							OrgID:   1,
 							Name:    fmt.Sprintf("user%v", i),
 							Login:   fmt.Sprintf("user%v", i),

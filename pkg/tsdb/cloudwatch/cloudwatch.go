@@ -3,6 +3,7 @@ package cloudwatch
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -20,9 +21,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/kinds/dataquery"
@@ -49,6 +50,7 @@ type DataSource struct {
 	Settings      models.CloudWatchSettings
 	HTTPClient    *http.Client
 	tagValueCache *cache.Cache
+	ProxyOpts     *proxy.Options
 }
 
 const (
@@ -62,10 +64,10 @@ const (
 
 var logger = log.New("tsdb.cloudwatch")
 
-func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider, features featuremgmt.FeatureToggles) *CloudWatchService {
+func ProvideService(cfg *setting.Cfg, httpClientProvider *httpclient.Provider) *CloudWatchService {
 	logger.Debug("Initializing")
 
-	executor := newExecutor(datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache(), features)
+	executor := newExecutor(datasource.NewInstanceManager(NewInstanceSettings(httpClientProvider)), cfg, awsds.NewSessionCache())
 
 	return &CloudWatchService{
 		Cfg:      cfg,
@@ -82,12 +84,11 @@ type SessionCache interface {
 	GetSession(c awsds.SessionConfig) (*session.Session, error)
 }
 
-func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache, features featuremgmt.FeatureToggles) *cloudWatchExecutor {
+func newExecutor(im instancemgmt.InstanceManager, cfg *setting.Cfg, sessions SessionCache) *cloudWatchExecutor {
 	e := &cloudWatchExecutor{
 		im:       im,
 		cfg:      cfg,
 		sessions: sessions,
-		features: features,
 	}
 
 	e.resourceHandler = httpadapter.New(e.newResourceMux())
@@ -115,6 +116,8 @@ func NewInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 			Settings:      instanceSettings,
 			HTTPClient:    httpClient,
 			tagValueCache: cache.New(tagValueCacheExpiration, tagValueCacheExpiration*5),
+			// this is used to build a custom dialer when secure socks proxy is enabled
+			ProxyOpts: opts.ProxyOptions,
 		}, nil
 	}
 }
@@ -124,7 +127,6 @@ type cloudWatchExecutor struct {
 	im          instancemgmt.InstanceManager
 	cfg         *setting.Cfg
 	sessions    SessionCache
-	features    featuremgmt.FeatureToggles
 	regionCache sync.Map
 
 	resourceHandler backend.CallResourceHandler
@@ -156,7 +158,6 @@ func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx ba
 		LogsAPIProvider:       NewLogsAPI(sess),
 		EC2APIProvider:        ec2Client,
 		Settings:              instance.Settings,
-		Features:              e.features,
 		Logger:                logger,
 	}, nil
 }
@@ -286,9 +287,22 @@ func (e *cloudWatchExecutor) newSession(ctx context.Context, pluginCtx backend.P
 	// work around until https://github.com/grafana/grafana/issues/39089 is implemented
 	if e.cfg.SecureSocksDSProxy.Enabled && instance.Settings.SecureSocksProxyEnabled {
 		// only update the transport to try to avoid the issue mentioned here https://github.com/grafana/grafana/issues/46365
-		sess.Config.HTTPClient.Transport = instance.HTTPClient.Transport
+		// also, 'sess' is cached and reused, so the first time it might have the transport not set, the following uses it will
+		if sess.Config.HTTPClient.Transport == nil {
+			// following go standard library logic (https://pkg.go.dev/net/http#Client), if no Transport is provided,
+			// then we use http.DefaultTransport
+			defTransport, ok := http.DefaultTransport.(*http.Transport)
+			if !ok {
+				// this should not happen but validating just in case
+				return nil, errors.New("default http client transport is not of type http.Transport")
+			}
+			sess.Config.HTTPClient.Transport = defTransport.Clone()
+		}
+		err = proxy.New(instance.ProxyOpts).ConfigureSecureSocksHTTPProxy(sess.Config.HTTPClient.Transport.(*http.Transport))
+		if err != nil {
+			return nil, fmt.Errorf("error configuring Secure Socks proxy for Transport: %w", err)
+		}
 	}
-
 	return sess, nil
 }
 
