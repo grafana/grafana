@@ -34,14 +34,15 @@ Configuring multiple rules for a team, each rule is evaluated separately. If a t
 Only a data source administrator with permission access can edit LBAC rules at the data source permissions tab. Changing LBAC rules requires the same access level as editing data source permissions (admin permission for data source).
 
 > "Can I use CAPs (cloud access policies) together with TeamLBAC rules?"
-No, CAP (cloud access policies) always have precedence. If there are any CAP LBAC configured for the same datasource and there are TeamLBAC rules configured, then only the CAP LBAC will be applied.
+> No, CAP (cloud access policies) always have precedence. If there are any CAP LBAC configured for the same datasource and there are TeamLBAC rules configured, then only the CAP LBAC will be applied.
 
 Cloud access policies are the access controls from Grafana Cloud, the CAP configured for loki should only to be used to gain read access to the logs.
 
 > "If administrator forget to add rule for a team, what happens?"
-The teams that does not have a rule applied to it, would be able to query the logs if `query` permissions are setup for their role within Grafana.
+> The teams that does not have a rule applied to it, would be able to query the logs if `query` permissions are setup for their role within Grafana.
 
 #### Best practices
+
 We recommend you only add team lbac permissions for teams that should use the data source and remove default `Viewer` and `Editor` query permissions.
 
 For validating the rules, we recommend testing the rules in the Loki Explore view. This will allow you to see the logs that would be returned for the rule.
@@ -92,7 +93,7 @@ Team A has a rule `namespace="dev"`. A user in Team A will have access to logs t
 
 Team B has a rule `namespace!="dev"`. A user in Team b will have access to logs that match `namespace!="dev"`.
 
-> *NOTE:* A user that is part of Team A and Team B will have access to logs that match `namespace="dev"` `OR` `namespace!="dev"`.
+> _NOTE:_ A user that is part of Team A and Team B will have access to logs that match `namespace="dev"` `OR` `namespace!="dev"`.
 
 ## Setting up Team LBAC rules
 
@@ -120,7 +121,7 @@ To configure Team LBAC rules, you need to have admin permissions for the data so
 
 1. Access Loki data sources details for your stack through grafana.com
 1. Copy Loki Details and Create a CAP
-   - Copy the details of your Loki setup. 
+   - Copy the details of your Loki setup.
    - Create a Cloud Access Policy (CAP) for the Loki data source in grafana.com.
    - Ensure the CAP includes `logs:read` permissions.
 1. Create a New Loki Data Source
