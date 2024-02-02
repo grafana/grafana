@@ -186,11 +186,3 @@ func testReqCtx(method string) contextmodel.ReqContext {
 		Logger: &logtest.Fake{},
 	}
 }
-
-func newTestReceiver(name string) definitions.GettableApiReceiver {
-	return definitions.GettableApiReceiver{
-		Receiver: am_config.Receiver{
-			Name: name,
-		},
-	}
-}
