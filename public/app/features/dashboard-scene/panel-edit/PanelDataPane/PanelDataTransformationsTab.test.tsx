@@ -86,7 +86,9 @@ describe('PanelDataTransformationsTab', () => {
     const modelMock = createModelMock(mockData);
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
     const addButton = await screen.findByTestId(selectors.components.Transforms.addTransformationButton);
-    userEvent.click(addButton);
+    await act(async () => {
+      userEvent.click(addButton);
+    });
     await screen.findByTestId(selectors.components.Transforms.searchInput);
   });
 
@@ -176,10 +178,12 @@ describe('PanelDataTransformationsTab', () => {
 
     await screen.findByTestId(selectors.components.TransformTab.newTransform('Reduce'));
 
-    await userEvent.type(searchInput, 'add field');
+    await act(async () => {
+      await userEvent.type(searchInput, 'add field');
+    });
 
     await screen.findByTestId(selectors.components.TransformTab.newTransform('Add field from calculation'));
-    const reduce = await screen.queryByTestId(selectors.components.TransformTab.newTransform('Reduce'));
+    const reduce = screen.queryByTestId(selectors.components.TransformTab.newTransform('Reduce'));
     expect(reduce).toBeNull();
   });
 });
