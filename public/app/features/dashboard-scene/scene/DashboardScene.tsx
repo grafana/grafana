@@ -388,7 +388,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     const gridItem = vizPanel.parent;
 
     if (!(gridItem instanceof SceneGridItem || PanelRepeaterGridItem)) {
-      console.error('Trying to duplicate a panel in a layout that is not SceneGridItem ');
+      console.error('Trying to duplicate a panel in a layout that is not SceneGridItem or PanelRepeaterGridItem');
       return;
     }
 
