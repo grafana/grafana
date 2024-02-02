@@ -7,6 +7,11 @@ load(
     "scripts/drone/variables.star",
     "golang_version",
 )
+load(
+    "scripts/drone/vault.star",
+    "from_secret",
+    "rgm_dagger_token",
+)
 
 def artifacts_cmd(artifacts = []):
     cmd = "/src/grafana-build artifacts "
@@ -25,6 +30,9 @@ def rgm_artifacts_step(name = "rgm-package", artifacts = ["targz:grafana:linux/a
         "image": "grafana/grafana-build:main",
         "pull": "always",
         "depends_on": depends_on,
+        "environment": {
+            "_EXPERIMENTAL_DAGGER_CLOUD_TOKEN": from_secret(rgm_dagger_token),
+        },
         "commands": [
             cmd +
             "--go-version={} ".format(golang_version) +
@@ -46,6 +54,9 @@ def rgm_build_docker_step(ubuntu, alpine, depends_on = ["yarn-install"], file = 
         "name": "rgm-build-docker",
         "image": "grafana/grafana-build:main",
         "pull": "always",
+        "environment": {
+            "_EXPERIMENTAL_DAGGER_CLOUD_TOKEN": from_secret(rgm_dagger_token),
+        },
         "commands": [
             "docker run --privileged --rm tonistiigi/binfmt --install all",
             "/src/grafana-build artifacts " +
