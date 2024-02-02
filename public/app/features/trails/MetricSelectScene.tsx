@@ -30,7 +30,6 @@ import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngin
 import { MetricCategoryCascader } from './MetricCategory/MetricCategoryCascader';
 import { MetricScene } from './MetricScene';
 import { SelectMetricAction } from './SelectMetricAction';
-import { hideEmptyPreviews } from './hideEmptyPreviews';
 import { getVariablesWithMetricConstant, trailDS, VAR_DATASOURCE, VAR_FILTERS_EXPR, VAR_METRIC_NAMES } from './shared';
 import { getColorByIndex, getTrailFor } from './utils';
 
@@ -118,21 +117,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
   private clearPanels() {
     this.state.body.setState({ children: [] });
-  }
-
-  private sortedPreviewMetrics() {
-    return Object.values(this.previewCache).sort((a, b) => {
-      if (a.isEmpty && b.isEmpty) {
-        return a.index - b.index;
-      }
-      if (a.isEmpty) {
-        return 1;
-      }
-      if (b.isEmpty) {
-        return -1;
-      }
-      return a.index - b.index;
-    });
   }
 
   private getAllMetricNames() {
@@ -243,7 +227,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     const children: SceneFlexItem[] = [];
 
-    const metricsList = !this.justChangedTimeRange ? this.sortedPreviewMetrics() : Object.values(this.previewCache);
+    const metricsList = Object.values(this.previewCache);
     for (let index = 0; index < metricsList.length; index++) {
       const metric = metricsList[index];
 
@@ -273,21 +257,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     this.state.body.setState({ children, autoRows: rowTemplate });
   }
-
-  public updateMetricPanel = (metric: string, isLoaded?: boolean, isEmpty?: boolean) => {
-    if (this.justChangedTimeRange) {
-      // We don't set the isEmpty marker on panels after a recent change of time line
-      return;
-    }
-
-    const metricPanel = this.previewCache[metric];
-    if (metricPanel) {
-      metricPanel.isEmpty = isEmpty;
-      metricPanel.loaded = isLoaded;
-      this.previewCache[metric] = metricPanel;
-      this.buildLayout();
-    }
-  };
 
   public onSearchChange = (evt: React.SyntheticEvent<HTMLInputElement>) => {
     this.setState({ searchQuery: evt.currentTarget.value });
@@ -409,7 +378,6 @@ function getPreviewPanelFor(metric: string, index: number) {
     $variables: new SceneVariableSet({
       variables: getVariablesWithMetricConstant(metric),
     }),
-    $behaviors: [hideEmptyPreviews(metric)],
     $data: new SceneQueryRunner({
       datasource: trailDS,
       maxDataPoints: 200,
