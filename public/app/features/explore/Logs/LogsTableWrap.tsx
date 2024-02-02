@@ -543,7 +543,6 @@ export function LogsTableWrap(props: Props) {
           dataFrame={currentDataFrame}
           columnsWithMeta={columnsWithMeta}
           height={height}
-          sample={true}
         />
       </div>
     </>
