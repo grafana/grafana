@@ -254,6 +254,12 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 		}
 		options.UserLogin = ""
 	}
+	if options.NamespaceID != "" {
+		if err := options.ResolveNamespaceID(ctx); err != nil {
+			return nil, err
+		}
+		options.NamespaceID = ""
+	}
 	if options.UserID > 0 {
 		// Reroute to the user specific implementation of search permissions
 		// because it leverages the user permission cache.
@@ -355,8 +361,14 @@ func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, search
 		}
 	}
 
+	if searchOptions.NamespaceID != "" {
+		if err := searchOptions.ResolveNamespaceID(ctx); err != nil {
+			return nil, err
+		}
+	}
+
 	if searchOptions.UserID == 0 {
-		return nil, fmt.Errorf("expected user ID or login to be specified")
+		return nil, fmt.Errorf("expected user ID, login or namespace ID to be specified")
 	}
 
 	if permissions, success := s.searchUserPermissionsFromCache(orgID, searchOptions); success {

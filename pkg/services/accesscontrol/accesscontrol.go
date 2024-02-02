@@ -3,6 +3,7 @@ package accesscontrol
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/registry"
@@ -59,6 +60,7 @@ type SearchOptions struct {
 	Scope        string
 	UserLogin    string    // Login for which to return information, if none is specified information is returned for all users.
 	UserID       int64     // ID for the user for which to return information, if none is specified information is returned for all users.
+	NamespaceID  string    // ID of the identity (ex: user:3, serviceaccount:4)
 	wildcards    Wildcards // private field computed based on the Scope
 }
 
@@ -87,6 +89,25 @@ func (s *SearchOptions) ResolveUserLogin(ctx context.Context, userSvc user.Servi
 		return err
 	}
 	s.UserID = dbUsr.ID
+	return nil
+}
+
+func (s *SearchOptions) ResolveNamespaceID(ctx context.Context) error {
+	parts := strings.Split(s.NamespaceID, ":")
+	// Validate namespace ID format
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid namespace ID: %s", s.NamespaceID)
+	}
+	// Validate namespace type is user or service account
+	if parts[0] != identity.NamespaceUser && parts[0] != identity.NamespaceServiceAccount {
+		return fmt.Errorf("invalid namespace type: %s", parts[0])
+	}
+	// Validate namespace ID is a number
+	id, err := strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid namespace ID: %s", s.NamespaceID)
+	}
+	s.UserID = id
 	return nil
 }
 

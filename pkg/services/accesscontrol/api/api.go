@@ -73,6 +73,7 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 		ActionPrefix: c.Query("actionPrefix"),
 		Action:       c.Query("action"),
 		Scope:        c.Query("scope"),
+		NamespaceID:  c.Query("namespaceId"),
 	}
 
 	userIDString := c.Query("userId")
@@ -88,11 +89,11 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 	if (searchOptions.ActionPrefix != "") && (searchOptions.Action != "") {
 		return response.JSON(http.StatusBadRequest, "'action' and 'actionPrefix' are mutually exclusive")
 	}
-	if (searchOptions.UserLogin != "") && (searchOptions.UserID > 0) {
-		return response.JSON(http.StatusBadRequest, "'userId' and 'userLogin' are mutually exclusive")
+	if (searchOptions.UserLogin != "") && (searchOptions.UserID > 0) && (searchOptions.NamespaceID != "") {
+		return response.JSON(http.StatusBadRequest, "'userId', 'userLogin' and 'namespaceID' are mutually exclusive")
 	}
 	if searchOptions.UserID <= 0 && searchOptions.UserLogin == "" &&
-		searchOptions.ActionPrefix == "" && searchOptions.Action == "" {
+		searchOptions.ActionPrefix == "" && searchOptions.Action == "" && searchOptions.NamespaceID == "" {
 		return response.JSON(http.StatusBadRequest, "at least one search option must be provided")
 	}
 

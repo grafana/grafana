@@ -113,7 +113,6 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 				params = append(params, scopes[i])
 			}
 		}
-
 		if options.UserID != 0 {
 			q += ` AND user_id = ?`
 			params = append(params, options.UserID)
