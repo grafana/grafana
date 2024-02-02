@@ -111,6 +111,30 @@ func (_m *MockServiceAccountService) EnableServiceAccount(ctx context.Context, o
 	return r0
 }
 
+// RetrieveServiceAccountIdByName provides a mock function with given fields: ctx, orgID, name
+func (_m *MockServiceAccountService) GetServiceAccountID(ctx context.Context, cmd *serviceaccounts.GetIDCmd) (int64, error) {
+	ret := _m.Called(ctx, cmd)
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *serviceaccounts.GetIDCmd) (int64, error)); ok {
+		return rf(ctx, cmd)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *serviceaccounts.GetIDCmd) int64); ok {
+		r0 = rf(ctx, cmd)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *serviceaccounts.GetIDCmd) error); ok {
+		r1 = rf(ctx, cmd)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ListTokens provides a mock function with given fields: ctx, query
 func (_m *MockServiceAccountService) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
 	ret := _m.Called(ctx, query)

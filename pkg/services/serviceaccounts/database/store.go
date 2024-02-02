@@ -229,7 +229,7 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, o
 	return serviceAccount, err
 }
 
-func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Context, orgId int64, name string) (int64, error) {
+func (s *ServiceAccountsStoreImpl) GetServiceAccountID(ctx context.Context, cmd *serviceaccounts.GetIDCmd) (int64, error) {
 	serviceAccount := &struct {
 		Id int64
 	}{}
@@ -237,16 +237,21 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Co
 	err := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sess := dbSession.Table("user")
 
-		whereConditions := []string{
-			fmt.Sprintf("%s.name = ?",
-				s.sqlStore.GetDialect().Quote("user")),
-			fmt.Sprintf("%s.org_id = ?",
-				s.sqlStore.GetDialect().Quote("user")),
-			fmt.Sprintf("%s.is_service_account = %s",
-				s.sqlStore.GetDialect().Quote("user"),
-				s.sqlStore.GetDialect().BooleanStr(true)),
+		whereConditions := []string{}
+		whereParams := []any{}
+		if cmd.Login != "" {
+			whereConditions = append(whereConditions, "login = ?")
+			whereParams = append(whereParams, cmd.Login)
 		}
-		whereParams := []any{name, orgId}
+		if cmd.Name != "" {
+			whereConditions = append(whereConditions, "name = ?")
+			whereParams = append(whereParams, cmd.Name)
+		}
+
+		whereConditions = append(whereConditions, fmt.Sprintf("%s.org_id = ?", s.sqlStore.GetDialect().Quote("user")),
+			fmt.Sprintf("%s.is_service_account = %s", s.sqlStore.GetDialect().Quote("user"), s.sqlStore.GetDialect().BooleanStr(true)))
+
+		whereParams = append(whereParams, cmd.OrgID, cmd.OrgID)
 
 		sess.Where(strings.Join(whereConditions, " AND "), whereParams...)
 
@@ -257,7 +262,15 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Co
 		if ok, err := sess.Get(serviceAccount); err != nil {
 			return err
 		} else if !ok {
-			return serviceaccounts.ErrServiceAccountNotFound.Errorf("service account with name %s not found", name)
+			msg := "service account with"
+			if cmd.Login != "" {
+				msg += " login " + cmd.Login
+			}
+			if cmd.Name != "" {
+				msg += " name " + cmd.Name
+			}
+			msg += " not found"
+			return serviceaccounts.ErrServiceAccountNotFound.Errorf(msg)
 		}
 
 		return nil

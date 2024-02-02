@@ -72,7 +72,7 @@ func TestStore_CreateServiceAccount(t *testing.T) {
 		assert.Equal(t, string(serviceAccountRole), retrieved.Role)
 		assert.True(t, retrieved.IsDisabled)
 
-		retrievedId, err := store.RetrieveServiceAccountIdByName(context.Background(), serviceAccountOrgId, serviceAccountName)
+		retrievedId, err := store.GetServiceAccountID(context.Background(), &serviceaccounts.GetIDCmd{Name: serviceAccountName, OrgID: serviceAccountOrgId})
 		require.NoError(t, err)
 		assert.Equal(t, saDTO.Id, retrievedId)
 	})
@@ -106,7 +106,7 @@ func TestStore_CreateServiceAccountRoleNone(t *testing.T) {
 	assert.Equal(t, serviceAccountOrgId, retrieved.OrgId)
 	assert.Equal(t, string(serviceAccountRole), retrieved.Role)
 
-	retrievedId, err := store.RetrieveServiceAccountIdByName(context.Background(), serviceAccountOrgId, serviceAccountName)
+	retrievedId, err := store.GetServiceAccountID(context.Background(), &serviceaccounts.GetIDCmd{Name: serviceAccountName, OrgID: serviceAccountOrgId})
 	require.NoError(t, err)
 	assert.Equal(t, saDTO.Id, retrievedId)
 	assert.Equal(t, saDTO.Role, string(org.RoleNone))

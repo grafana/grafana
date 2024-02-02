@@ -108,6 +108,12 @@ type AddServiceAccountTokenCommand struct {
 	SecondsToLive int64  `json:"secondsToLive"`
 }
 
+type GetIDCmd struct {
+	Name  string
+	Login string
+	OrgID int64
+}
+
 type SearchOrgServiceAccountsQuery struct {
 	OrgID        int64
 	Query        string

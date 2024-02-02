@@ -37,6 +37,10 @@ func (f *FakeServiceAccountService) EnableServiceAccount(ctx context.Context, or
 	return f.ExpectedErr
 }
 
+func (f *FakeServiceAccountService) GetServiceAccountID(ctx context.Context, cmd *serviceaccounts.GetIDCmd) (int64, error) {
+	return f.ExpectedServiceAccountID, f.ExpectedErr
+}
+
 func (f *FakeServiceAccountService) RetrieveServiceAccount(ctx context.Context, orgID, id int64) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	return f.ExpectedServiceAccountProfile, f.ExpectedErr
 }

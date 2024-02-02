@@ -36,8 +36,8 @@ func (f *FakeServiceAccountStore) RetrieveServiceAccount(ctx context.Context, or
 	return f.ExpectedServiceAccountProfileDTO, f.ExpectedError
 }
 
-// RetrieveServiceAccountIdByName is a fake retrieving a service account id by name.
-func (f *FakeServiceAccountStore) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
+// GetServiceAccountID is a fake retrieving a service account id by name.
+func (f *FakeServiceAccountStore) GetServiceAccountID(ctx context.Context, cmd *serviceaccounts.GetIDCmd) (int64, error) {
 	return f.ExpectedServiceAccountID.Id, f.ExpectedError
 }
 

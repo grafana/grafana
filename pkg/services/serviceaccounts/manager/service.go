@@ -157,6 +157,16 @@ func (sa *ServiceAccountsService) RetrieveServiceAccount(ctx context.Context, or
 	return sa.store.RetrieveServiceAccount(ctx, orgID, serviceAccountID)
 }
 
+func (sa *ServiceAccountsService) GetServiceAccountID(ctx context.Context, cmd *serviceaccounts.GetIDCmd) (int64, error) {
+	if err := validOrgID(cmd.OrgID); err != nil {
+		return 0, err
+	}
+	if cmd.Login == "" && cmd.Name == "" {
+		return 0, errors.New("login or name is required")
+	}
+	return sa.store.GetServiceAccountID(ctx, cmd)
+}
+
 func (sa *ServiceAccountsService) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
 	if err := validOrgID(orgID); err != nil {
 		return 0, err
@@ -164,7 +174,7 @@ func (sa *ServiceAccountsService) RetrieveServiceAccountIdByName(ctx context.Con
 	if name == "" {
 		return 0, errors.New("name is required")
 	}
-	return sa.store.RetrieveServiceAccountIdByName(ctx, orgID, name)
+	return sa.store.GetServiceAccountID(ctx, &serviceaccounts.GetIDCmd{Name: name, OrgID: orgID})
 }
 
 func (sa *ServiceAccountsService) DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error {

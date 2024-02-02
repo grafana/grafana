@@ -18,6 +18,9 @@ type Service interface {
 	CreateServiceAccount(ctx context.Context, orgID int64, saForm *CreateServiceAccountForm) (*ServiceAccountDTO, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
 	RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*ServiceAccountProfileDTO, error)
+	GetServiceAccountID(ctx context.Context, cmd *GetIDCmd) (int64, error)
+	// deprecated: use GetServiceAccountID instead
+	// FIXME: Remove this method and use GetServiceAccountID instead
 	RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error)
 	SearchOrgServiceAccounts(ctx context.Context, query *SearchOrgServiceAccountsQuery) (*SearchOrgServiceAccountsResult, error)
 	EnableServiceAccount(ctx context.Context, orgID, serviceAccountID int64, enable bool) error

@@ -119,6 +119,10 @@ func (s *ServiceAccountsProxy) EnableServiceAccount(ctx context.Context, orgID i
 	return s.proxiedService.EnableServiceAccount(ctx, orgID, serviceAccountID, enable)
 }
 
+func (s *ServiceAccountsProxy) GetServiceAccountID(ctx context.Context, cmd *serviceaccounts.GetIDCmd) (int64, error) {
+	return s.proxiedService.GetServiceAccountID(ctx, cmd)
+}
+
 func (s *ServiceAccountsProxy) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
 	return s.proxiedService.ListTokens(ctx, query)
 }
