@@ -27,7 +27,9 @@ For example, you set the unit for all fields that include the text 'bytes' by ad
 
 > The override settings that appear on the **All** tab are the same as the settings that appear on the **Overrides** tab.
 
-## Example 1: Format temperature
+## Examples
+
+### Example 1: Format temperature
 
 Let’s assume that our result set is a data frame that consists of two fields: time and temperature.
 
@@ -53,7 +55,7 @@ In addition, the decimal place is not required, so we can remove it. You can cha
 | 2020-01-02 03:05:00 |    47 °C    |
 | 2020-01-02 03:06:00 |    48 °C    |
 
-## Example 2: Format temperature and humidity
+### Example 2: Format temperature and humidity
 
 Let’s assume that our result set is a data frame that consists of four fields: time, high temp, low temp, and humidity.
 
