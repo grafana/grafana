@@ -1,6 +1,3 @@
-import { AnyAction, createAction } from '@reduxjs/toolkit';
-
-import { HistoryItem } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 import {
   addToRichHistory,
@@ -25,16 +22,6 @@ import {
   richHistoryUpdatedAction,
 } from './main';
 import { selectPanesEntries } from './selectors';
-
-//
-// Actions and Payloads
-//
-
-export interface HistoryUpdatedPayload {
-  exploreId: string;
-  history: HistoryItem[];
-}
-export const historyUpdatedAction = createAction<HistoryUpdatedPayload>('explore/historyUpdated');
 
 //
 // Action creators
@@ -200,14 +187,4 @@ export const updateHistorySearchFilters = (exploreId: string, filters: RichHisto
       );
     }
   };
-};
-
-export const historyReducer = (state: ExploreItemState, action: AnyAction): ExploreItemState => {
-  if (historyUpdatedAction.match(action)) {
-    return {
-      ...state,
-      history: action.payload.history,
-    };
-  }
-  return state;
 };
