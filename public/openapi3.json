@@ -21285,15 +21285,6 @@
         "parameters": [
           {
             "in": "path",
-            "name": "DashboardID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "path",
             "name": "dashboardID",
             "required": true,
             "schema": {
