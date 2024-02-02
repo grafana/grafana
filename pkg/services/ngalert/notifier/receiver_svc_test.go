@@ -27,7 +27,7 @@ func TestReceiverService_GetReceiver(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
-	t.Run("service gets receiver group from AM config", func(t *testing.T) {
+	t.Run("service gets receiver from AM config", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
 
 		Receiver, err := sut.GetReceiver(context.Background(), singleQ(1, "slack receiver"), nil)
@@ -37,7 +37,7 @@ func TestReceiverService_GetReceiver(t *testing.T) {
 		require.Equal(t, "UID2", Receiver.GrafanaManagedReceivers[0].UID)
 	})
 
-	t.Run("service returns error when receiver group does not exist", func(t *testing.T) {
+	t.Run("service returns error when receiver does not exist", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
 
 		_, err := sut.GetReceiver(context.Background(), singleQ(1, "nonexistent"), nil)
@@ -49,7 +49,7 @@ func TestReceiverService_GetReceivers(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
 	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 
-	t.Run("service gets receiver groups from AM config", func(t *testing.T) {
+	t.Run("service gets receivers from AM config", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
 
 		Receivers, err := sut.GetReceivers(context.Background(), multiQ(1), nil)
@@ -59,7 +59,7 @@ func TestReceiverService_GetReceivers(t *testing.T) {
 		require.Equal(t, "slack receiver", Receivers[1].Name)
 	})
 
-	t.Run("service filters receiver groups by name", func(t *testing.T) {
+	t.Run("service filters receivers by name", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
 
 		Receivers, err := sut.GetReceivers(context.Background(), multiQ(1, "slack receiver"), nil)
@@ -100,7 +100,7 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 		err     error
 	}{
 		{
-			name:    "service redacts receiver groups by default",
+			name:    "service redacts receivers by default",
 			decrypt: false,
 			user:    readUser,
 			err:     nil,
@@ -118,7 +118,7 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 			err:     ErrPermissionDenied,
 		},
 		{
-			name:    "service decrypts receiver groups with permission",
+			name:    "service decrypts receivers with permission",
 			decrypt: true,
 			user:    secretUser,
 			err:     nil,

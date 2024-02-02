@@ -54,7 +54,7 @@ func (srv *ReceiverSrv) RouteGetReceivers(c *contextmodel.ReqContext) response.R
 		Decrypt: c.QueryBool("decrypt"),
 	}
 
-	receiverGroups, err := srv.receiverService.GetReceivers(c.Req.Context(), q, c.SignedInUser)
+	receivers, err := srv.receiverService.GetReceivers(c.Req.Context(), q, c.SignedInUser)
 	if err != nil {
 		if errors.Is(err, notifier.ErrPermissionDenied) {
 			return ErrResp(http.StatusForbidden, err, "permission denied")
@@ -62,6 +62,6 @@ func (srv *ReceiverSrv) RouteGetReceivers(c *contextmodel.ReqContext) response.R
 		return ErrResp(http.StatusInternalServerError, err, "failed to get receiver groups")
 	}
 
-	res := receiverGroups
+	res := receivers
 	return response.JSON(http.StatusOK, res)
 }
