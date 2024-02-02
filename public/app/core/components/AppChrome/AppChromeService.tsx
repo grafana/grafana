@@ -24,8 +24,8 @@ export interface AppChromeState {
   kioskMode: KioskMode | null;
   layout: PageLayoutType;
   returnToPrevious?: {
-    href: ReturnToPreviousProps['href'];
     title: ReturnToPreviousProps['title'];
+    href: ReturnToPreviousProps['href'];
   };
 }
 

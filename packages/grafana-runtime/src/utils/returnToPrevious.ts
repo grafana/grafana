@@ -1,9 +1,4 @@
-interface ReturnToPreviousData {
-  title: string;
-  href: string;
-}
-
-type ReturnToPreviousHook = () => (rtp: ReturnToPreviousData) => void;
+type ReturnToPreviousHook = () => (title: string, href?: string) => void;
 
 let rtpHook: ReturnToPreviousHook | undefined = undefined;
 

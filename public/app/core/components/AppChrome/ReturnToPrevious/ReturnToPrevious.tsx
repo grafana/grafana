@@ -10,8 +10,8 @@ import { t } from 'app/core/internationalization';
 import { DismissableButton } from './DismissableButton';
 
 export interface ReturnToPreviousProps {
-  href: string;
   title: string;
+  href: string;
 }
 
 export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {

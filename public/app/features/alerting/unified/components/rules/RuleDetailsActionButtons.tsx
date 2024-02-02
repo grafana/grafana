@@ -4,7 +4,7 @@ import React, { Fragment, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, textUtil, urlUtil } from '@grafana/data';
-import { config, locationService, useReturnToPrevious } from '@grafana/runtime';
+import { config, useReturnToPrevious } from '@grafana/runtime';
 import {
   Button,
   ClipboardButton,
@@ -145,7 +145,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
             icon="apps"
             href={`d/${encodeURIComponent(dashboardUID)}`}
             onClick={() => {
-              setReturnToPrevious({ title: rule.name, href: locationService.getLocation().pathname });
+              setReturnToPrevious(rule.name);
             }}
           >
             Go to dashboard
