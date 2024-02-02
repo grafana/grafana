@@ -15,9 +15,7 @@ import {
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
-  SceneObjectStateChangedEvent,
   SceneQueryRunner,
-  SceneTimeRange,
   SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
@@ -25,7 +23,7 @@ import {
 import { VariableHide } from '@grafana/schema';
 import { Input, useStyles2, InlineSwitch, Field, Alert, Icon } from '@grafana/ui';
 
-import { ApplyMetricNamesButton } from './ApplyMetricNamesButton';
+// import { ApplyMetricNamesButton } from './ApplyMetricNamesButton';
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { MetricCategoryCascader } from './MetricCategory/MetricCategoryCascader';
 import { MetricScene } from './MetricScene';
@@ -77,7 +75,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     this.addActivationHandler(this._onActivate.bind(this));
   }
 
-  private justChangedTimeRange = false;
+  // private justChangedTimeRange = false;
 
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_METRIC_NAMES, VAR_DATASOURCE],
@@ -85,14 +83,10 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       const { name } = variable.state;
 
       if (name === VAR_DATASOURCE) {
-        this.justChangedTimeRange = false;
         // Clear all panels for the previous data source
         this.clearPanels();
       } else if (name === VAR_METRIC_NAMES) {
-        if (this.justChangedTimeRange) {
-          // If the new metric names are due to a time range change, we don't want to automatically update
-          return;
-        }
+        this.onMetricNamesChange();
         // Entire pipeline must be performed
         this.updateMetrics();
         this.buildLayout();
@@ -107,13 +101,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       // Temp hack when going back to select metric scene and variable updates
       this.ignoreNextUpdate = true;
     }
-
-    const trail = getTrailFor(this);
-    trail.subscribeToEvent(SceneObjectStateChangedEvent, (evt) => {
-      if (evt.payload.changedObject instanceof SceneTimeRange) {
-        this.justChangedTimeRange = true;
-      }
-    });
   }
 
   private clearPanels() {
@@ -135,25 +122,39 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     });
   }
 
-  private getAllMetricNames() {
+  private currentMetricNames = new Set<string>();
+
+  private onMetricNamesChange() {
     // Get the datasource metrics list from the VAR_METRIC_NAMES variable
     const variable = sceneGraph.lookupVariable(VAR_METRIC_NAMES, this);
 
     if (!(variable instanceof QueryVariable)) {
-      return null;
+      return;
     }
 
     if (variable.state.loading) {
-      return null;
+      return;
     }
 
-    const metricNames = variable.state.options.map((option) => option.value.toString());
-    return metricNames;
+    const nameList = variable.state.options.map((option) => option.value.toString());
+    const nameSet = new Set(nameList);
+
+    let hidden = 0;
+
+    Object.values(this.previewCache).forEach((panel) => {
+      if (!nameSet.has(panel.name)) {
+        hidden++;
+        panel.isEmpty = true;
+      }
+    });
+
+    this.currentMetricNames = nameSet;
+    this.buildLayout();
   }
 
   private applyMetricSearch() {
     // This should only occur when the `searchQuery` changes, of if the `metricNames` change
-    const metricNames = this.getAllMetricNames();
+    const metricNames = Array.from(this.currentMetricNames);
     if (metricNames == null) {
       return;
     }
@@ -199,6 +200,13 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const metricsMap: Record<string, MetricPanel> = {};
     const metricsLimit = 120;
 
+    // Clear absent metrics from cache
+    Object.keys(this.previewCache).forEach((metric) => {
+      if (!this.currentMetricNames.has(metric)) {
+        delete this.previewCache[metric];
+      }
+    });
+
     for (let index = 0; index < sortedMetricNames.length; index++) {
       const metricName = sortedMetricNames[index];
 
@@ -206,7 +214,11 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
         break;
       }
 
-      metricsMap[metricName] = { name: metricName, index, loaded: false };
+      const oldPanel = this.previewCache[metricName];
+
+      const panel = oldPanel || { name: metricName, index, loaded: false };
+
+      metricsMap[metricName] = panel;
     }
 
     try {
@@ -217,6 +229,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
       // There is no current metric
     }
 
+    console.log('Replacing', this.previewCache, 'with', metricsMap);
     this.previewCache = metricsMap;
   }
 
@@ -243,7 +256,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     const children: SceneFlexItem[] = [];
 
-    const metricsList = !this.justChangedTimeRange ? this.sortedPreviewMetrics() : Object.values(this.previewCache);
+    const metricsList = this.sortedPreviewMetrics(); //!this.justChangedTimeRange ? this.sortedPreviewMetrics() : Object.values(this.previewCache);
     for (let index = 0; index < metricsList.length; index++) {
       const metric = metricsList[index];
 
@@ -275,11 +288,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   }
 
   public updateMetricPanel = (metric: string, isLoaded?: boolean, isEmpty?: boolean) => {
-    if (this.justChangedTimeRange) {
-      // We don't set the isEmpty marker on panels after a recent change of time line
-      return;
-    }
-
     const metricPanel = this.previewCache[metric];
     if (metricPanel) {
       metricPanel.isEmpty = isEmpty;
@@ -326,15 +334,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     const disableSearch = metricNamesStatus.error || metricNamesStatus.isLoading;
 
-    const onMetricButtonClick = model.justChangedTimeRange
-      ? () => {
-          model.justChangedTimeRange = false;
-          model.clearPanels();
-          model.updateMetrics();
-          model.buildLayout();
-        }
-      : undefined;
-
     return (
       <div className={styles.container}>
         <div className={styles.header}>
@@ -347,7 +346,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
               disabled={disableSearch}
             />
           </Field>
-          <ApplyMetricNamesButton {...metricNamesStatus} onClick={onMetricButtonClick} />
           <InlineSwitch
             showLabel={true}
             label="Show previews"
