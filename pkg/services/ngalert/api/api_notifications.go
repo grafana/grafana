@@ -79,6 +79,5 @@ func (srv *NotificationSrv) RouteGetReceivers(c *contextmodel.ReqContext) respon
 		return ErrResp(http.StatusInternalServerError, err, "failed to get receiver groups")
 	}
 
-	res := receivers
-	return response.JSON(http.StatusOK, res)
+	return response.JSON(http.StatusOK, receivers)
 }
