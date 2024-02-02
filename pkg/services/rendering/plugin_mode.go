@@ -4,11 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 )
 
 func (rs *RenderingService) renderViaPlugin(ctx context.Context, renderType RenderType, renderKey string, opts Opts) (*RenderResult, error) {
+	if renderType == RenderPDF {
+		if !rs.features.IsEnabled(ctx, featuremgmt.FlagNewPDFRendering) {
+			return nil, fmt.Errorf("feature 'newPDFRendering' disabled")
+		}
+
+		opts.Encoding = "pdf"
+	}
+
 	// gives plugin some additional time to timeout and return possible errors.
 	ctx, cancel := context.WithTimeout(ctx, getRequestTimeout(opts.TimeoutOpts))
 	defer cancel()
