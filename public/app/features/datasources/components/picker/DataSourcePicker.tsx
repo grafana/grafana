@@ -253,20 +253,20 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
 
 function getStylesDropdown(theme: GrafanaTheme2, props: DataSourcePickerProps) {
   return {
-    container: css`
-      position: relative;
-      cursor: ${props.disabled ? 'not-allowed' : 'pointer'};
-      width: ${theme.spacing(props.width || 'auto')};
-    `,
-    trigger: css`
-      cursor: pointer;
-      ${props.disabled && `pointer-events: none;`}
-    `,
-    input: css`
-      input::placeholder {
-        color: ${props.disabled ? theme.colors.action.disabledText : theme.colors.text.primary};
-      }
-    `,
+    container: css({
+      position: 'relative',
+      cursor: props.disabled ? 'not-allowed' : 'pointer',
+      width: theme.spacing(props.width || 'auto'),
+    }),
+    trigger: css({
+      cursor: 'pointer',
+      pointerEvents: props.disabled ? 'none' : 'auto',
+    }),
+    input: css({
+      'input::placeholder': {
+        color: props.disabled ? theme.colors.action.disabledText : theme.colors.text.primary,
+      },
+    }),
   };
 }
 
@@ -331,27 +331,27 @@ PickerContent.displayName = 'PickerContent';
 
 function getStylesPickerContent(theme: GrafanaTheme2) {
   return {
-    container: css`
-      display: flex;
-      flex-direction: column;
-      background: ${theme.colors.background.primary};
-      box-shadow: ${theme.shadows.z3};
-    `,
-    picker: css`
-      background: ${theme.colors.background.secondary};
-    `,
-    dataSourceList: css`
-      flex: 1;
-    `,
-    footer: css`
-      flex: 0;
-      display: flex;
-      flex-direction: row-reverse;
-      justify-content: space-between;
-      padding: ${theme.spacing(1.5)};
-      border-top: 1px solid ${theme.colors.border.weak};
-      background-color: ${theme.colors.background.secondary};
-    `,
+    container: css({
+      display: 'flex',
+      flexDirection: 'column',
+      background: theme.colors.background.primary,
+      boxShadow: theme.shadows.z3,
+    }),
+    picker: css({
+      background: theme.colors.background.secondary,
+    }),
+    dataSourceList: css({
+      flex: 1,
+    }),
+    footer: css({
+      flex: 0,
+      display: 'flex',
+      flexDirection: 'row-reverse',
+      justifyContent: 'space-between',
+      padding: theme.spacing(1.5),
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      backgroundColor: theme.colors.background.secondary,
+    }),
   };
 }
 
@@ -424,14 +424,14 @@ function Footer({ onClose, onChange, onClickAddCSV, ...props }: FooterProps) {
 
 function getStylesFooter(theme: GrafanaTheme2) {
   return {
-    footer: css`
-      flex: 0;
-      display: flex;
-      flex-direction: row-reverse;
-      justify-content: space-between;
-      padding: ${theme.spacing(1.5)};
-      border-top: 1px solid ${theme.colors.border.weak};
-      background-color: ${theme.colors.background.secondary};
-    `,
+    footer: css({
+      flex: 0,
+      display: 'flex',
+      flexDirection: 'row-reverse',
+      justifyContent: 'space-between',
+      padding: theme.spacing(1.5),
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      backgroundColor: theme.colors.background.secondary,
+    }),
   };
 }
