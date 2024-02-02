@@ -479,7 +479,6 @@ var NamespaceDimensionKeysMap = map[string][]string{
 	"AWS/IoTSiteWise":             {"GatewayId", "SourceName"},
 	"AWS/KMS":                     {"KeyId"},
 	"AWS/Kafka":                   {"Broker ID", "Cluster Name", "Consumer Group", "Topic"},
-	"AWS/KafkaConnect":            {"ConnectorName"},
 	"AWS/Kinesis":                 {"ShardId", "StreamName"},
 	"AWS/KinesisAnalytics":        {"Application", "Flow", "Id"},
 	"AWS/KinesisVideo":            {"StreamName"},
