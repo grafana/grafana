@@ -147,11 +147,6 @@ func ProvideService(
 				req.URL.Path = "/"
 			}
 
-			// TODO: add support for the existing MetricsEndpointBasicAuth config option
-			if req.URL.Path == "/apiserver-metrics" {
-				req.URL.Path = "/metrics"
-			}
-
 			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 			s.handler.ServeHTTP(resp, req)
 		}
