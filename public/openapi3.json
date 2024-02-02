@@ -12165,7 +12165,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -12298,7 +12297,6 @@
         "type": "object"
       },
       "gettableAlert": {
-        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -12354,13 +12352,13 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
         "type": "array"
       },
       "gettableSilence": {
-        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12416,6 +12414,7 @@
         "type": "array"
       },
       "integration": {
+        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -12624,7 +12623,6 @@
         "type": "object"
       },
       "receiver": {
-        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -23927,75 +23925,6 @@
         "summary": "Get teams for user.",
         "tags": [
           "users"
-        ]
-      }
-    },
-    "/v1/notifications/time-intervals": {
-      "get": {
-        "description": "Get all the time intervals",
-        "operationId": "RouteNotificationsGetTimeIntervals",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/GetAllIntervalsResponse"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ForbiddenError"
-                }
-              }
-            },
-            "description": "ForbiddenError"
-          }
-        },
-        "tags": [
-          "notifications"
-        ]
-      }
-    },
-    "/v1/notifications/time-intervals/{name}": {
-      "get": {
-        "operationId": "RouteNotificationsGetTimeInterval",
-        "parameters": [
-          {
-            "description": "Time interval name",
-            "in": "path",
-            "name": "name",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/GetIntervalsByNameResponse"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ForbiddenError"
-                }
-              }
-            },
-            "description": "ForbiddenError"
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotFound"
-                }
-              }
-            },
-            "description": "NotFound"
-          }
-        },
-        "summary": "Get a time interval by name.",
-        "tags": [
-          "notifications"
         ]
       }
     },
