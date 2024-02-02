@@ -7,7 +7,6 @@ load(
     "scripts/drone/variables.star",
     "golang_version",
 )
-
 load(
     "scripts/drone/vault.star",
     "from_secret",
