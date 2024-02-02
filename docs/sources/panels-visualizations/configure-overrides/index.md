@@ -27,6 +27,24 @@ For example, you set the unit for all fields that include the text 'bytes' by ad
 
 > The override settings that appear on the **All** tab are the same as the settings that appear on the **Overrides** tab.
 
+## Override rules
+
+### Fields with name
+
+**Fields with name:** Select a field from the list of all available fields. Properties you add to a rule with this selector are only applied to this single field.
+
+### Fields with name matching regex
+
+**Fields with name matching regex:** Specify fields to override with a regular expression. Properties you add to a rule with this selector are applied to all fields where the field name match the regex. This override doesn't rename the field; to do this, use the [Rename by regex transformation]({{< relref "../query-transform-data/transform-data/#rename-by-regex" >}}).
+
+### Fields with type
+
+**Fields with type:** Select fields by type, such as string, numeric, and so on. Properties you add to a rule with this selector are applied to all fields that match the selected type.
+
+### Fields returned by query
+
+**Fields returned by query:** Select all fields returned by a specific query, such as A, B, or C. Properties you add to a rule with this selector are applied to all fields returned by the selected query.
+
 ## Examples
 
 ### Example 1: Format temperature
@@ -87,12 +105,11 @@ A field override rule can customize the visualization settings for a specific fi
 
 1. Edit the panel to which you want to add an override.
 1. In the panel options side pane, click **Add field override** at the bottom of the pane.
-
 1. Select which fields an override rule will be applied to:
-   - **Fields with name:** Select a field from the list of all available fields. Properties you add to a rule with this selector are only applied to this single field.
-   - **Fields with name matching regex:** Specify fields to override with a regular expression. Properties you add to a rule with this selector are applied to all fields where the field name match the regex. This override doesn't rename the field; to do this, use the [Rename by regex transformation]({{< relref "../query-transform-data/transform-data/#rename-by-regex" >}}).
-   - **Fields with type:** Select fields by type, such as string, numeric, and so on. Properties you add to a rule with this selector are applied to all fields that match the selected type.
-   - **Fields returned by query:** Select all fields returned by a specific query, such as A, B, or C. Properties you add to a rule with this selector are applied to all fields returned by the selected query.
+   - **Fields with name**
+   - **Fields with name matching regex**
+   - **Fields with type**
+   - **Fields returned by query**
 1. Click **Add override property**.
 1. Select the field option that you want to apply.
 1. Enter options by adding values in the fields. To return options to default values, delete the white text in the fields.
