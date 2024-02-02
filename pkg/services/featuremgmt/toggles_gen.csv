@@ -44,6 +44,7 @@ individualCookiePreferences,experimental,@grafana/backend-platform,2023-02-23,fa
 prometheusMetricEncyclopedia,GA,@grafana/observability-metrics,2023-03-07,false,false,true
 influxdbBackendMigration,GA,@grafana/observability-metrics,2023-03-15,false,false,true
 influxqlStreamingParser,experimental,@grafana/observability-metrics,2023-11-29,false,false,false
+influxdbRunQueriesInParallel,privatePreview,@grafana/observability-metrics,2024-01-29,false,false,false
 clientTokenRotation,GA,@grafana/identity-access-team,2023-03-23,false,false,false
 prometheusDataplane,GA,@grafana/observability-metrics,2023-03-29,false,false,false
 lokiMetricDataplane,GA,@grafana/observability-logs,2023-04-13,false,false,false
@@ -111,6 +112,7 @@ formatString,preview,@grafana/grafana-bi-squad,2023-10-13,false,false,true
 transformationsVariableSupport,preview,@grafana/grafana-bi-squad,2023-10-04,false,false,true
 kubernetesPlaylists,experimental,@grafana/grafana-app-platform-squad,2023-11-08,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,2023-12-04,false,true,false
+kubernetesQueryServiceRewrite,experimental,@grafana/grafana-app-platform-squad,2024-01-28,true,true,false
 cloudWatchBatchQueries,preview,@grafana/aws-datasources,2023-10-20,false,false,false
 recoveryThreshold,GA,@grafana/alerting-squad,2023-10-10,false,true,false
 lokiStructuredMetadata,experimental,@grafana/observability-logs,2023-11-16,false,false,false
@@ -155,5 +157,4 @@ jitterAlertRulesWithinGroups,preview,@grafana/alerting-squad,2024-01-17,false,tr
 onPremToCloudMigrations,experimental,@grafana/grafana-operator-experience-squad,2024-01-22,false,false,false
 alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,2024-01-22,false,false,false
 promQLScope,experimental,@grafana/observability-metrics,2024-01-29,false,false,false
-slateAutocomplete,GA,@grafana/grafana-frontend-platform,2024-01-29,false,false,true
 nodeGraphDotLayout,experimental,@grafana/observability-traces-and-profiling,2024-01-02,false,false,true
