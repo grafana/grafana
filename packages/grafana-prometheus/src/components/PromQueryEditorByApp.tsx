@@ -7,7 +7,7 @@ import { PromQueryEditorSelector } from '../querybuilder/components/PromQueryEdi
 import { PromQueryEditorForAlerting } from './PromQueryEditorForAlerting';
 import { PromQueryEditorProps } from './types';
 
-export function PromQueryEditorByApp(props: PromQueryEditorProps) {
+function PromQueryEditorByApp(props: PromQueryEditorProps) {
   const { app } = props;
 
   switch (app) {
@@ -18,4 +18,4 @@ export function PromQueryEditorByApp(props: PromQueryEditorProps) {
   }
 }
 
-export default memo(PromQueryEditorByApp);
+export const MemoPromQueryEditorByApp = memo(PromQueryEditorByApp);
