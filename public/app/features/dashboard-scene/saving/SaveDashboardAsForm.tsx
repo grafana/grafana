@@ -117,7 +117,7 @@ export function SaveDashboardAsForm({ dashboard, drawer, changeInfo }: Props) {
         <FolderPicker
           onChange={(uid: string | undefined, title: string | undefined) => setValue('folder', { uid, title })}
           // Old folder picker fields
-          value={formValues.folder.uid}
+          value={formValues.folder?.uid}
           initialTitle={defaultValues!.folder!.title}
           dashboardId={changedSaveModel.id ?? undefined}
           enableCreateNew
