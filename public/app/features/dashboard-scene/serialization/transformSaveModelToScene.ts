@@ -451,6 +451,10 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
 
   if (panel.repeat) {
     const repeatDirection = panel.repeatDirection ?? 'h';
+    vizPanelState.repeat = panel.repeat;
+    vizPanelState.repeatDirection = repeatDirection;
+    vizPanelState.maxPerRow = panel.maxPerRow;
+
     return new PanelRepeaterGridItem({
       key: `grid-item-${panel.id}`,
       x: panel.gridPos.x,

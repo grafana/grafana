@@ -1,14 +1,15 @@
 import React from 'react';
 
+import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
+import { VizPanel, VizPanelState } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { dashboardSceneGraph } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { GenAIPanelDescriptionButton } from '../GenAI/GenAIPanelDescriptionButton';
 import { GenAIPanelTitleButton } from '../GenAI/GenAIPanelTitleButton';
-import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
+import { RepeatRowSelect, RepeatRowSelect2 } from '../RepeatRowSelect/RepeatRowSelect';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
@@ -261,67 +262,70 @@ export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDesc
           },
         })
       )
-    );
-  //
-  // .addCategory(
-  //   new OptionsPaneCategoryDescriptor({
-  //     title: 'Repeat options',
-  //     id: 'Repeat options',
-  //     isOpenDefault: false,
-  //   })
-  //     .addItem(
-  //       new OptionsPaneItemDescriptor({
-  //         title: 'Repeat by variable',
-  //         description:
-  //           'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.',
-  //         render: function renderRepeatOptions() {
-  //           return (
-  //             <RepeatRowSelect
-  //               id="repeat-by-variable-select"
-  //               repeat={panel.repeat}
-  //               onChange={(value?: string) => {
-  //                 onPanelConfigChange('repeat', value);
-  //               }}
-  //             />
-  //           );
-  //         },
-  //       })
-  //     )
-  //     .addItem(
-  //       new OptionsPaneItemDescriptor({
-  //         title: 'Repeat direction',
-  //         showIf: () => !!panel.repeat,
-  //         render: function renderRepeatOptions() {
-  //           const directionOptions = [
-  //             { label: 'Horizontal', value: 'h' },
-  //             { label: 'Vertical', value: 'v' },
-  //           ];
+    )
+    .addCategory(
+      new OptionsPaneCategoryDescriptor({
+        title: 'Repeat options',
+        id: 'Repeat options',
+        isOpenDefault: false,
+      })
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: 'Repeat by variable',
+            description:
+              'Repeat this panel for each value in the selected variable. This is not visible while in edit mode. You need to go back to dashboard and then update the variable or reload the dashboard.',
+            render: function renderRepeatOptions() {
+              return (
+                <RepeatRowSelect2
+                  id="repeat-by-variable-select"
+                  panel={panel}
+                  onChange={(value?: string) => {
+                    const stateUpdate: Partial<VizPanelState> = { repeat: value };
+                    if (value && !panel.state.repeatDirection) {
+                      stateUpdate.repeatDirection = 'h';
+                    }
+                    panel.setState(stateUpdate);
+                  }}
+                />
+              );
+            },
+          })
+        )
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: 'Repeat direction',
+            showIf: () => !!panel.state.repeat,
+            render: function renderRepeatOptions() {
+              const directionOptions: Array<SelectableValue<'h' | 'v'>> = [
+                { label: 'Horizontal', value: 'h' },
+                { label: 'Vertical', value: 'v' },
+              ];
 
-  //           return (
-  //             <RadioButtonGroup
-  //               options={directionOptions}
-  //               value={panel.repeatDirection || 'h'}
-  //               onChange={(value) => onPanelConfigChange('repeatDirection', value)}
-  //             />
-  //           );
-  //         },
-  //       })
-  //     )
-  //     .addItem(
-  //       new OptionsPaneItemDescriptor({
-  //         title: 'Max per row',
-  //         showIf: () => Boolean(panel.repeat && panel.repeatDirection === 'h'),
-  //         render: function renderOption() {
-  //           const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));
-  //           return (
-  //             <Select
-  //               options={maxPerRowOptions}
-  //               value={panel.maxPerRow}
-  //               onChange={(value) => onPanelConfigChange('maxPerRow', value.value)}
-  //             />
-  //           );
-  //         },
-  //       })
-  //     )
-  // );
+              return (
+                <RadioButtonGroup
+                  options={directionOptions}
+                  value={panel.state.repeatDirection ?? 'h'}
+                  onChange={(value) => panel.setState({ repeatDirection: value })}
+                />
+              );
+            },
+          })
+        )
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: 'Max per row',
+            showIf: () => Boolean(panel.state.repeat && panel.state.repeatDirection === 'h'),
+            render: function renderOption() {
+              const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));
+              return (
+                <Select
+                  options={maxPerRowOptions}
+                  value={panel.state.maxPerRow}
+                  onChange={(value) => panel.setState({ maxPerRow: value.value })}
+                />
+              );
+            },
+          })
+        )
+    );
 }

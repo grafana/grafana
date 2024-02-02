@@ -6,6 +6,7 @@ import {
   SceneFlexItem,
   SceneFlexLayout,
   SceneGridItem,
+  SceneGridLayout,
   SceneObject,
   SceneObjectBase,
   SceneObjectRef,
@@ -14,6 +15,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 
+import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import {
   findVizPanelByKey,
@@ -81,8 +83,63 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     const panelMngr = this.state.panelRef.resolve();
 
-    if (sourcePanel!.parent instanceof SceneGridItem) {
-      sourcePanel!.parent.setState({ body: panelMngr.state.panel.clone() });
+    const sourcePanelParent = sourcePanel!.parent;
+    const sourcePanelGrandparent = sourcePanelParent!.parent!;
+    if (!(sourcePanelGrandparent instanceof SceneGridLayout)) {
+      console.error('Expected grandparent to be SceneGridLayout!');
+      return;
+    }
+
+    const normalToRepeat = !sourcePanel!.state.repeat && panelMngr.state.panel.state.repeat;
+    const repeatToNormal = sourcePanel!.state.repeat && !panelMngr.state.panel.state.repeat;
+
+    if (sourcePanelParent instanceof SceneGridItem) {
+      if (normalToRepeat) {
+        const panel = panelMngr.state.panel;
+        const repeatDirection = panel.state.repeatDirection ?? 'h';
+        const repeater = new PanelRepeaterGridItem({
+          key: sourcePanelParent.state.key,
+          x: sourcePanelParent.state.x,
+          y: sourcePanelParent.state.y,
+          width: repeatDirection === 'h' ? 24 : sourcePanelParent.state.width,
+          height: sourcePanelParent.state.height,
+          itemHeight: sourcePanelParent.state.height,
+          source: panelMngr.state.panel.clone(),
+          variableName: panel.state.repeat!,
+          repeatedPanels: [],
+          repeatDirection: panel.state.repeatDirection,
+          maxPerRow: panel.state.maxPerRow,
+        });
+        sourcePanelGrandparent.setState({
+          children: sourcePanelGrandparent.state.children.map((child) =>
+            child.state.key === sourcePanelParent.state.key ? repeater : child
+          ),
+        });
+      } else {
+        sourcePanelParent.setState({ body: panelMngr.state.panel.clone() });
+      }
+    } else if (sourcePanelParent instanceof PanelRepeaterGridItem) {
+      if (repeatToNormal) {
+        const panelClone = panelMngr.state.panel.clone();
+        panelClone.setState({ repeat: undefined, repeatDirection: undefined, maxPerRow: undefined });
+        const gridItem = new SceneGridItem({
+          key: sourcePanelParent.state.key,
+          x: sourcePanelParent.state.x,
+          y: sourcePanelParent.state.y,
+          width: sourcePanel!.state.repeatDirection === 'h' ? 8 : sourcePanelParent.state.width,
+          height: sourcePanel!.state.repeatDirection === 'v' ? 8 : sourcePanelParent.state.height,
+          body: panelClone,
+        });
+        sourcePanelGrandparent.setState({
+          children: sourcePanelGrandparent.state.children.map((child) =>
+            child.state.key === sourcePanelParent.state.key ? gridItem : child
+          ),
+        });
+      } else {
+        sourcePanelParent.setState({ source: panelMngr.state.panel.clone() });
+      }
+    } else {
+      console.error('Unsupported scene object type');
     }
 
     dashboard.setState({

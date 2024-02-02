@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { VizPanel, sceneGraph } from '@grafana/scenes';
 import { Select } from '@grafana/ui';
 import { useSelector } from 'app/types';
 
@@ -21,6 +22,43 @@ export const RepeatRowSelect = ({ repeat, onChange, id }: Props) => {
     const options: Array<SelectableValue<string | null>> = variables.map((item) => {
       return { label: item.name, value: item.name };
     });
+
+    if (options.length === 0) {
+      options.unshift({
+        label: 'No template variables found',
+        value: null,
+      });
+    }
+
+    options.unshift({
+      label: 'Disable repeating',
+      value: null,
+    });
+
+    return options;
+  }, [variables]);
+
+  const onSelectChange = useCallback((option: SelectableValue<string | null>) => onChange(option.value!), [onChange]);
+
+  return <Select inputId={id} value={repeat} onChange={onSelectChange} options={variableOptions} />;
+};
+
+interface Props2 {
+  panel: VizPanel;
+  id?: string;
+  onChange: (name?: string) => void;
+}
+
+export const RepeatRowSelect2 = ({ panel, id, onChange }: Props2) => {
+  const { repeat } = panel.useState();
+  const sceneVars = useMemo(() => sceneGraph.getVariables(panel), [panel]);
+  const variables = sceneVars.useState().variables;
+
+  const variableOptions = useMemo(() => {
+    const options: Array<SelectableValue<string | null>> = variables.map((item) => ({
+      label: item.state.name,
+      value: item.state.name,
+    }));
 
     if (options.length === 0) {
       options.unshift({
