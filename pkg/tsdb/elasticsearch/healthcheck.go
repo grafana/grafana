@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
@@ -44,25 +45,26 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 		}, err
 	}
 
-	logger.Debug("Sending health request to Elasticsearch")
+	start := time.Now()
+	logger.Debug("Sending healthcheck request to Elasticsearch", "url", esUrl.String())
 	response, err := ds.HTTPClient.Do(request)
 
 	if err != nil {
-		logger.Error("Failed to Do request", "error", err, "url", esUrl.String())
+		logger.Error("Failed to do healthcheck request", "error", err, "url", esUrl.String())
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusUnknown,
-			Message: "Failed to Do request",
+			Message: "Failed to do healthcheck request",
 		}, err
 	}
 
 	if response.StatusCode == http.StatusRequestTimeout {
 		return &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
-			Message: "Elasticsearch cluster is not healthy",
+			Message: "Elasticsearch data source is not healthy",
 		}, nil
 	}
 
-	logger.Info("Response received from Elasticsearch", "statusCode", response.StatusCode, "status", "ok")
+	logger.Info("Response received from Elasticsearch", "statusCode", response.StatusCode, "status", "ok", "duration", time.Since(start))
 
 	defer func() {
 		if err := response.Body.Close(); err != nil {
@@ -91,11 +93,11 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 	}
 
 	status := backend.HealthStatusOk
-	message := "Elasticsearch cluster is healthy"
+	message := "Elasticsearch data source is healthy"
 
 	if jsonData["status"] == "red" {
 		status = backend.HealthStatusError
-		message = "Elasticsearch cluster is not healthy"
+		message = "Elasticsearch data source is not healthy"
 	}
 
 	return &backend.CheckHealthResult{
