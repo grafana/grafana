@@ -9,6 +9,7 @@ import { MatcherFieldValue } from '../types/silence-form';
 import { matcherToMatcherField } from './alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import { normalizeMatchers, parseMatcher } from './matchers';
+import { quoteWithEscape, unquoteWithUnescape } from './misc';
 import { findExistingRoute } from './routeTree';
 import { isValidPrometheusDuration, safeParseDurationstr } from './time';
 
@@ -94,7 +95,14 @@ export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): Fo
 
   const objectMatchers =
     route.object_matchers?.map((matcher) => ({ name: matcher[0], operator: matcher[1], value: matcher[2] })) ?? [];
-  const matchers = route.matchers?.map((matcher) => matcherToMatcherField(parseMatcher(matcher))) ?? [];
+  const matchers =
+    route.matchers
+      ?.map((matcher) => matcherToMatcherField(parseMatcher(matcher)))
+      .map(({ name, operator, value }) => ({
+        name,
+        operator,
+        value: unquoteWithUnescape(value),
+      })) ?? [];
 
   return {
     id,
@@ -149,6 +157,7 @@ export const formAmRouteToAmRoute = (
 
   const overrideRepeatInterval = overrideTimings && repeatIntervalValue;
   const repeat_interval = overrideRepeatInterval ? repeatIntervalValue : INHERIT_FROM_PARENT;
+
   const object_matchers: ObjectMatcher[] | undefined = formAmRoute.object_matchers
     ?.filter((route) => route.name && route.value && route.operator)
     .map(({ name, operator, value }) => [name, operator, value]);
@@ -176,7 +185,9 @@ export const formAmRouteToAmRoute = (
   // Grafana maintains a fork of AM to support all utf-8 characters in the "object_matchers" property values but this
   // does not exist in upstream AlertManager
   if (alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME) {
-    amRoute.matchers = formAmRoute.object_matchers?.map(({ name, operator, value }) => `${name}${operator}${value}`);
+    amRoute.matchers = formAmRoute.object_matchers?.map(
+      ({ name, operator, value }) => `${name}${operator}${quoteWithEscape(value)}`
+    );
     amRoute.object_matchers = undefined;
   } else {
     amRoute.object_matchers = normalizeMatchers(amRoute);

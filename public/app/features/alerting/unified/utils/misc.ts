@@ -117,6 +117,18 @@ export function wrapWithQuotes(input: string) {
   return alreadyWrapped ? escapeQuotes(input) : `"${escapeQuotes(input)}"`;
 }
 
+export function quoteWithEscape(input: string) {
+  const escaped = input.replace(/[\\"]/g, (c) => `\\${c}`);
+  return `"${escaped}"`;
+}
+
+export function unquoteWithUnescape(input: string) {
+  return input
+    .replace(/^"(.*)"$/, '$1')
+    .replace(/\\\\/g, '\\')
+    .replace(/\\"/g, '"');
+}
+
 export function makeRuleBasedSilenceLink(alertManagerSourceName: string, rule: CombinedRule) {
   // we wrap the name of the alert with quotes since it might contain starting and trailing spaces
   const labels: Labels = {
