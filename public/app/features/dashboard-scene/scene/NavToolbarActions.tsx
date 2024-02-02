@@ -37,6 +37,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
           icon={
             <Icon name={meta.isStarred ? 'favorite' : 'star'} size="lg" type={meta.isStarred ? 'mono' : 'default'} />
           }
+          key="star-dashboard-button"
           onClick={() => {
             DashboardInteractions.toolbarFavoritesClick();
             dashboard.onStarDashboard();
@@ -232,7 +233,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
     }
 
     if (lastGroup && lastGroup !== action.group) {
-      lastGroup && actionElements.push(<NavToolbarSeparator key={`${lastGroup}-separator`} />);
+      lastGroup && actionElements.push(<NavToolbarSeparator key={`${action.group}-separator`} />);
     }
 
     actionElements.push(action.render());
