@@ -35,7 +35,7 @@ func TestCreateTransportOptions(t *testing.T) {
 			}`),
 			DecryptedSecureJSONData: map[string]string{},
 		}
-		opts, err := CreateTransportOptions(context.Background(), settings /*&setting.Cfg{AzureAuthEnabled: true, Azure: &azsettings.AzureSettings{}},*/, backend.NewLoggerWith("logger", "test"))
+		opts, err := CreateTransportOptions(context.Background(), settings, backend.NewLoggerWith("logger", "test"))
 		require.NoError(t, err)
 		require.Equal(t, 3, len(opts.Middlewares))
 	})
