@@ -390,6 +390,14 @@ var (
 			Created:     time.Date(2023, time.November, 29, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:         "influxdbRunQueriesInParallel",
+			Description:  "Enables running InfluxDB Influxql queries in parallel",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaObservabilityMetricsSquad,
+			Created:      time.Date(2024, time.January, 29, 12, 0, 0, 0, time.UTC),
+		},
+		{
 			Name:           "clientTokenRotation",
 			Description:    "Replaces the current in-request token rotation so that the client initiates the rotation",
 			Stage:          FeatureStageGeneralAvailability,
@@ -1328,15 +1336,6 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
 			Created:     time.Date(2024, time.January, 29, 0, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:         "slateAutocomplete",
-			Description:  "Adjusts the behaviour of the slate editor to properly handle autocomplete. Feature toggled for safety.",
-			Stage:        FeatureStageGeneralAvailability,
-			Expression:   "true", // enabled by default
-			FrontendOnly: true,
-			Owner:        grafanaFrontendPlatformSquad,
-			Created:      time.Date(2024, time.January, 29, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "nodeGraphDotLayout",

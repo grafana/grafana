@@ -187,6 +187,10 @@ const (
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
 	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
 
+	// FlagInfluxdbRunQueriesInParallel
+	// Enables running InfluxDB Influxql queries in parallel
+	FlagInfluxdbRunQueriesInParallel = "influxdbRunQueriesInParallel"
+
 	// FlagClientTokenRotation
 	// Replaces the current in-request token rotation so that the client initiates the rotation
 	FlagClientTokenRotation = "clientTokenRotation"
@@ -634,10 +638,6 @@ const (
 	// FlagPromQLScope
 	// In-development feature that will allow injection of labels into prometheus queries.
 	FlagPromQLScope = "promQLScope"
-
-	// FlagSlateAutocomplete
-	// Adjusts the behaviour of the slate editor to properly handle autocomplete. Feature toggled for safety.
-	FlagSlateAutocomplete = "slateAutocomplete"
 
 	// FlagNodeGraphDotLayout
 	// Changed the layout algorithm for the node graph
