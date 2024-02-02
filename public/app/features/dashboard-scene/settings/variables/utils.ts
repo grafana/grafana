@@ -12,6 +12,7 @@ import {
   AdHocFilterSet,
   SceneVariable,
   MultiValueVariable,
+  SceneVariableState,
 } from '@grafana/scenes';
 import { VariableType } from '@grafana/schema';
 
@@ -122,8 +123,28 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
   }
 }
 
+export function getVariableDefault(variables: Array<SceneVariable<SceneVariableState>>) {
+  const defaultVariableType = 'query';
+  const nextVariableIdName = getNextAvailableId(defaultVariableType, variables);
+  return new QueryVariable({
+    name: nextVariableIdName,
+  });
+}
+
+export function getNextAvailableId(type: VariableType, variables: Array<SceneVariable<SceneVariableState>>): string {
+  let counter = 0;
+  let nextId = `${type}${counter}`;
+
+  while (variables.find((variable) => variable.state.name === nextId)) {
+    nextId = `${type}${++counter}`;
+  }
+
+  return nextId;
+}
+
 export function hasVariableOptions(variable: SceneVariable): variable is MultiValueVariable {
-  return 'options' in variable.state;
+  // variable options can be defined by state.options or state.intervals in case of interval variable
+  return 'options' in variable.state || 'intervals' in variable.state;
 }
 
 export function getDefinition(model: SceneVariable): string {

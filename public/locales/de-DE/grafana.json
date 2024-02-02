@@ -234,6 +234,10 @@
       "visualization": "Visualisierung",
       "widget": "Widget"
     },
+    "alert-rules-drawer": {
+      "redirect-link": "",
+      "subtitle": ""
+    },
     "empty": {
       "add-library-panel-body": "Visualisierungen hinzufügen, die mit anderen Dashboards geteilt werden.",
       "add-library-panel-button": "Bibliotheksfenster hinzufügen",
@@ -302,6 +306,7 @@
     },
     "toolbar": {
       "add": "Hinzufügen",
+      "alert-rules": "",
       "mark-favorite": "Als Favorit markieren",
       "open-original": "Original-Dashboard öffnen",
       "playlist-next": "Zum nächsten Dashboard",
