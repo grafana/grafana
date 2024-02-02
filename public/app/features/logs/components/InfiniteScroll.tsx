@@ -210,16 +210,16 @@ function canScrollTop(
   currentRange: TimeRange,
   timeZone: TimeZone,
   sortOrder: LogsSortOrder
-): AbsoluteTimeRange | false {
+): AbsoluteTimeRange | undefined {
   if (sortOrder === LogsSortOrder.Descending) {
     // When requesting new logs, update the current range if using relative time ranges.
     currentRange = updateCurrentRange(currentRange, timeZone);
     const canScroll = currentRange.to.valueOf() - visibleRange.to > SCROLLING_THRESHOLD;
-    return canScroll ? getNextRange(visibleRange, currentRange, timeZone) : false;
+    return canScroll ? getNextRange(visibleRange, currentRange, timeZone) : undefined;
   }
 
   const canScroll = Math.abs(currentRange.from.valueOf() - visibleRange.from) > SCROLLING_THRESHOLD;
-  return canScroll ? getPrevRange(visibleRange, currentRange) : false;
+  return canScroll ? getPrevRange(visibleRange, currentRange) : undefined;
 }
 
 function canScrollBottom(
@@ -227,15 +227,15 @@ function canScrollBottom(
   currentRange: TimeRange,
   timeZone: TimeZone,
   sortOrder: LogsSortOrder
-): AbsoluteTimeRange | false {
+): AbsoluteTimeRange | undefined {
   if (sortOrder === LogsSortOrder.Descending) {
     const canScroll = Math.abs(currentRange.from.valueOf() - visibleRange.from) > SCROLLING_THRESHOLD;
-    return canScroll ? getPrevRange(visibleRange, currentRange) : false;
+    return canScroll ? getPrevRange(visibleRange, currentRange) : undefined;
   }
   // When requesting new logs, update the current range if using relative time ranges.
   currentRange = updateCurrentRange(currentRange, timeZone);
   const canScroll = currentRange.to.valueOf() - visibleRange.to > SCROLLING_THRESHOLD;
-  return canScroll ? getNextRange(visibleRange, currentRange, timeZone) : false;
+  return canScroll ? getNextRange(visibleRange, currentRange, timeZone) : undefined;
 }
 
 // Given a TimeRange, returns a new instance if using relative time, or else the same.
