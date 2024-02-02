@@ -98,23 +98,21 @@ func (b *PeakQAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	params := []*spec3.Parameter{
 		{
 			ParameterProps: spec3.ParameterProps{
-				Name:    "varName",
-				In:      "query",
-				Schema:  spec.StringProperty(),
-				Example: "metricName",
-			},
-		},
-		{
-			ParameterProps: spec3.ParameterProps{
-				Name:    "varValue",
-				In:      "query",
-				Schema:  spec.StringProperty(),
-				Explode: true,
-				Example: "up",
+				// Arbitrary name. It won't appear in the request URL,
+				// but will be used in code generated from this OAS spec
+				Name:        "variables",
+				In:          "query",
+				Schema:      spec.MapProperty(spec.ArrayProperty(spec.StringProperty())),
+				Style:       "form",
+				Explode:     true,
+				Description: "Each variable is prefixed with var-{variable}={value}",
+				Example: map[string][]string{
+					"var-metricName": {"up"},
+					"var-another":    {"first", "second"},
+				},
 			},
 		},
 	}
-
 	return &builder.APIRoutes{
 		Root: []builder.APIRouteHandler{
 			{

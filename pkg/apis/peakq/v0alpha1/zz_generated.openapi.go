@@ -16,13 +16,15 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Position":          schema_pkg_apis_peakq_v0alpha1_Position(ref),
-		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.QueryTemplate":     schema_pkg_apis_peakq_v0alpha1_QueryTemplate(ref),
-		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.QueryTemplateList": schema_pkg_apis_peakq_v0alpha1_QueryTemplateList(ref),
-		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.QueryTemplateSpec": schema_pkg_apis_peakq_v0alpha1_QueryTemplateSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.QueryVariable":     schema_pkg_apis_peakq_v0alpha1_QueryVariable(ref),
-		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.RenderedQuery":     schema_pkg_apis_peakq_v0alpha1_RenderedQuery(ref),
-		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Target":            schema_pkg_apis_peakq_v0alpha1_Target(ref),
+		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Position":            schema_pkg_apis_peakq_v0alpha1_Position(ref),
+		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.QueryTemplate":       schema_pkg_apis_peakq_v0alpha1_QueryTemplate(ref),
+		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.QueryTemplateList":   schema_pkg_apis_peakq_v0alpha1_QueryTemplateList(ref),
+		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.QueryTemplateSpec":   schema_pkg_apis_peakq_v0alpha1_QueryTemplateSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.RenderedQuery":       schema_pkg_apis_peakq_v0alpha1_RenderedQuery(ref),
+		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.ReplacementHistory":  schema_pkg_apis_peakq_v0alpha1_ReplacementHistory(ref),
+		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Target":              schema_pkg_apis_peakq_v0alpha1_Target(ref),
+		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.TemplateVariable":    schema_pkg_apis_peakq_v0alpha1_TemplateVariable(ref),
+		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.VariableReplacement": schema_pkg_apis_peakq_v0alpha1_VariableReplacement(ref),
 	}
 }
 
@@ -33,22 +35,6 @@ func schema_pkg_apis_peakq_v0alpha1_Position(ref common.ReferenceCallback) commo
 				Description: "Position is where to do replacement in the targets during render.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
-					"targetIdx": {
-						SchemaProps: spec.SchemaProps{
-							Description: "IndexIdx is the index of the target in The QueryTemplateSpec Targets property.",
-							Default:     0,
-							Type:        []string{"integer"},
-							Format:      "int32",
-						},
-					},
-					"path": {
-						SchemaProps: spec.SchemaProps{
-							Description: "TargetKey is the location of the property within the the target properties. The format for this is not figured out yet (Maybe JSONPath?). Idea: [\"string\", int, \"string\"] where int indicates array offset",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"start": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Start is the byte offset within TargetKey's property of the variable. It is the start location for replacements).",
@@ -66,7 +52,7 @@ func schema_pkg_apis_peakq_v0alpha1_Position(ref common.ReferenceCallback) commo
 						},
 					},
 				},
-				Required: []string{"targetIdx", "path", "start", "end"},
+				Required: []string{"start", "end"},
 			},
 		},
 	}
@@ -188,7 +174,7 @@ func schema_pkg_apis_peakq_v0alpha1_QueryTemplateSpec(ref common.ReferenceCallba
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.QueryVariable"),
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.TemplateVariable"),
 									},
 								},
 							},
@@ -218,64 +204,7 @@ func schema_pkg_apis_peakq_v0alpha1_QueryTemplateSpec(ref common.ReferenceCallba
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.QueryVariable", "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Target"},
-	}
-}
-
-func schema_pkg_apis_peakq_v0alpha1_QueryVariable(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "QueryVariable is the definition of a variable that will be interpolated in targets.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"key": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Key is the name of the variable.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"defaultValue": {
-						SchemaProps: spec.SchemaProps{
-							Description: "DefaultValue is the value to be used when there is no selected value during render.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"positions": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-list-type": "atomic",
-							},
-						},
-						SchemaProps: spec.SchemaProps{
-							Description: "Positions is a list of where to perform the interpolation within targets during render. The first string is the Idx of the target as a string, since openAPI does not support ints as map keys Positions map[string]map[Path][]Position `json:\"positions\"`",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Position"),
-									},
-								},
-							},
-						},
-					},
-					"valueListDefinition": {
-						SchemaProps: spec.SchemaProps{
-							Description: "ValueListDefinition is the object definition used by the FE to get a list of possible values to select for render.",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"),
-						},
-					},
-				},
-				Required: []string{"key", "defaultValue", "positions", "valueListDefinition"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured", "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Position"},
+			"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Target", "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.TemplateVariable"},
 	}
 }
 
@@ -326,6 +255,49 @@ func schema_pkg_apis_peakq_v0alpha1_RenderedQuery(ref common.ReferenceCallback) 
 	}
 }
 
+func schema_pkg_apis_peakq_v0alpha1_ReplacementHistory(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"source": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Who/what made the change",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"previous": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Value before replacement",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"replacement": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The value(s) that replaced the section",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"previous", "replacement"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_peakq_v0alpha1_Target(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -339,16 +311,140 @@ func schema_pkg_apis_peakq_v0alpha1_Target(ref common.ReferenceCallback) common.
 							Format:      "",
 						},
 					},
+					"variables": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Variables that will be replaced in the query",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Default: map[string]interface{}{},
+													Ref:     ref("github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.VariableReplacement"),
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
 					"properties": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"),
+							Description: "The raw query: TODO, should be query.GenericQuery",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"),
 						},
 					},
 				},
-				Required: []string{"properties"},
+				Required: []string{"variables", "properties"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured", "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.VariableReplacement"},
+	}
+}
+
+func schema_pkg_apis_peakq_v0alpha1_TemplateVariable(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TemplateVariable is the definition of a variable that will be interpolated in targets.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"key": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Key is the name of the variable.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"defaultValue": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "DefaultValue is the value to be used when there is no selected value during render.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"valueListDefinition": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ValueListDefinition is the object definition used by the FE to get a list of possible values to select for render.",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"),
+						},
+					},
+				},
+				Required: []string{"key", "defaultValue", "valueListDefinition"},
 			},
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"},
+	}
+}
+
+func schema_pkg_apis_peakq_v0alpha1_VariableReplacement(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "QueryVariable is the definition of a variable that will be interpolated in targets.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"path": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Path is the location of the property within the the target properties. The format for this is not figured out yet (Maybe JSONPath?). Idea: [\"string\", int, \"string\"] where int indicates array offset",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"position": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Positions is a list of where to perform the interpolation within targets during render. The first string is the Idx of the target as a string, since openAPI does not support ints as map keys",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Position"),
+						},
+					},
+					"format": {
+						SchemaProps: spec.SchemaProps{
+							Description: "How values should be interpolated See: https://grafana.com/docs/grafana/latest/dashboards/variables/variable-syntax/#advanced-variable-format-options NOTE: the format parameter is not yet supported!",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"history": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Keep track of the values from previous iterations",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.ReplacementHistory"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"path"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Position", "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.ReplacementHistory"},
 	}
 }

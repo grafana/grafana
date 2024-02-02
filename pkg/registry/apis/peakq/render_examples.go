@@ -9,30 +9,35 @@ import (
 
 var basicTemplateSpec = peakq.QueryTemplateSpec{
 	Title: "Test",
-	Variables: []peakq.QueryVariable{
+	Variables: []peakq.TemplateVariable{
 		{
-			Key:          "metricName",
-			DefaultValue: `down`,
-			Positions: []peakq.Position{
-				{
-					TargetIdx: 0,
-					Path:      "$.expr",
-					Start:     0,
-					End:       10,
-				},
-				{
-					TargetIdx: 0,
-					Path:      "$.expr",
-					Start:     13,
-					End:       23,
-				},
-			},
+			Key:           "metricName",
+			DefaultValues: []string{`down`},
 		},
 	},
 	Targets: []peakq.Target{
 		{
 			DataType: data.FrameTypeUnknown,
 			//DataTypeVersion: data.FrameTypeVersion{0, 0},
+			Variables: map[string][]peakq.VariableReplacement{
+				"metricName": {
+					{
+						Path: "$.expr",
+						Position: &peakq.Position{
+							Start: 0,
+							End:   10,
+						},
+					},
+					{
+						Path: "$.expr",
+						Position: &peakq.Position{
+							Start: 12,
+							End:   23,
+						},
+					},
+				},
+			},
+
 			Properties: common.Unstructured{
 				Object: map[string]any{
 					"refId": "A", // TODO: Set when Where?
