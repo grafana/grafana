@@ -109,8 +109,8 @@ type AddServiceAccountTokenCommand struct {
 }
 
 type GetIDCmd struct {
-	Name  string
 	Login string
+	Name  string
 	OrgID int64
 }
 
