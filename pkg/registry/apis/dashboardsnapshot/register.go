@@ -24,19 +24,19 @@ import (
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*SnapshotsAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*SnapshotsAPIBuilder)(nil)
 
 var resourceInfo = dashboardsnapshot.DashboardSnapshotResourceInfo
 
@@ -65,7 +65,7 @@ func NewSnapshotsAPIBuilder(
 
 func RegisterAPIService(
 	service dashboardsnapshots.Service,
-	apiregistration grafanaapiserver.APIRegistrar,
+	apiregistration builder.APIRegistrar,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	sql db.DB,
@@ -121,6 +121,7 @@ func (b *SnapshotsAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
+	dualWrite bool,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(dashboardsnapshot.GROUP, scheme, metav1.ParameterCodec, codecs)
 	storage := map[string]rest.Storage{}
@@ -169,7 +170,7 @@ func (b *SnapshotsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitio
 }
 
 // Register additional routes with the server
-func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *SnapshotsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	prefix := dashboardsnapshot.DashboardSnapshotResourceInfo.GroupResource().Resource
 	defs := dashboardsnapshot.GetOpenAPIDefinitions(func(path string) spec.Ref { return spec.Ref{} })
 	createCmd := defs["github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.DashboardCreateCommand"].Schema
@@ -177,8 +178,8 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
 	createRsp := defs["github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1.DashboardCreateResponse"].Schema
 
 	tags := []string{dashboardsnapshot.DashboardSnapshotResourceInfo.GroupVersionKind().Kind}
-	routes := &grafanaapiserver.APIRoutes{
-		Namespace: []grafanaapiserver.APIRouteHandler{
+	routes := &builder.APIRoutes{
+		Namespace: []builder.APIRouteHandler{
 			{
 				Path: prefix + "/create",
 				Spec: &spec3.PathProps{

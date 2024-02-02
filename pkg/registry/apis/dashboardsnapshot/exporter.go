@@ -11,8 +11,8 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 )
 
 type dashExportStatus struct {
@@ -31,8 +31,8 @@ type dashExporter struct {
 	sql     db.DB
 }
 
-func (d *dashExporter) getAPIRouteHandler() grafanaapiserver.APIRouteHandler {
-	return grafanaapiserver.APIRouteHandler{
+func (d *dashExporter) getAPIRouteHandler() builder.APIRouteHandler {
+	return builder.APIRouteHandler{
 		Path: "admin/export",
 		Spec: &spec3.PathProps{
 			Summary:     "an example at the root level",

@@ -7,9 +7,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 )
 
 func convertDTOToSnapshot(v *dashboardsnapshots.DashboardSnapshotDTO, namespacer request.NamespaceMapper) *dashboardsnapshot.DashboardSnapshot {
