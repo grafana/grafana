@@ -54,9 +54,6 @@ export interface QueryResultMeta {
   /** Meta Notices */
   notices?: QueryResultMetaNotice[];
 
-  /** Used to track transformation ids that where part of the processing */
-  transformations?: string[];
-
   /** Currently used to show results in Explore only in preferred visualisation option */
   preferredVisualisationType?: PreferredVisualisationType;
 

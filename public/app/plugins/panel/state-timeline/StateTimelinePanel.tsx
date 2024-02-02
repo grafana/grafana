@@ -109,10 +109,7 @@ export const StateTimelinePanel = ({
        * Render nothing in this case to prevent error.
        * See https://github.com/grafana/support-escalations/issues/932
        */
-      if (
-        (!alignedData.meta?.transformations?.length && alignedData.fields.length - 1 !== valueFieldsCount) ||
-        !alignedData.fields[seriesIdx]
-      ) {
+      if (alignedData.fields.length - 1 !== valueFieldsCount || !alignedData.fields[seriesIdx]) {
         return null;
       }
 
