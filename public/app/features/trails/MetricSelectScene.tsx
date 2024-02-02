@@ -314,11 +314,13 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     const metricNamesStatus = useVariableStatus(VAR_METRIC_NAMES, model);
     const tooStrict = children.length === 0 && (searchQuery || prefixFilter);
+    const noMetrics = !metricNamesStatus.isLoading && model.currentMetricNames.size === 0;
 
     const status =
       (metricNamesStatus.isLoading && children.length === 0 && (
         <LoadingPlaceholder className={styles.statusMessage} text="Loading..." />
       )) ||
+      (noMetrics && 'There are no results found. Try a different time range or a different data source.') ||
       (tooStrict && 'There are no results found. Try adjusting your search or filters.');
 
     const showStatus = status && <div className={styles.statusMessage}>{status}</div>;
