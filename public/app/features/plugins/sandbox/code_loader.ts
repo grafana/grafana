@@ -1,4 +1,5 @@
 import { PluginMeta, patchArrayVectorProrotypeMethods } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
 import { resolveWithCache } from '../loader/cache';
@@ -60,9 +61,12 @@ export async function getPluginCode(meta: PluginMeta): Promise<string> {
     });
     return pluginCode;
   } else {
-    // local plugin. resolveWithCache will append a query parameter with its version
-    // to ensure correct cached version is served
-    const pluginCodeUrl = resolveWithCache(meta.module);
+    // prepend appSubUrl to module path to support proxying and Image Renderer plugin
+    // https://github.com/grafana/grafana/issues/76180
+    let modulePath = `${config.appSubUrl ?? ''}/${meta.module}`;
+    // resolveWithCache will append a query parameter with its version
+    // to ensure correct cached version is served for local plugins
+    const pluginCodeUrl = resolveWithCache(modulePath);
     const response = await fetch(pluginCodeUrl);
     let pluginCode = await response.text();
     pluginCode = transformPluginSourceForCDN({
