@@ -1,44 +1,66 @@
 import { render } from '@testing-library/react';
 import React from 'react';
 
-import { DataFrame, FieldType, ValueLinkConfig, LinkTarget, Field, Vector } from '@grafana/data';
+import { DataFrame, FieldType, ValueLinkConfig, LinkTarget, Field } from '@grafana/data';
 import { SortOrder, VisibilityMode } from '@grafana/schema';
 import { LegendDisplayMode, TooltipDisplayMode } from '@grafana/ui';
 
 import { XYChartTooltip, Props } from './XYChartTooltip';
+import { ScatterSeries } from './types';
 
 describe('XYChartTooltip', () => {
   it('should render null when allSeries is empty', () => {
     const { container } = render(<XYChartTooltip {...getProps()} />);
+
     expect(container.firstChild).toBeNull();
   });
 
   it('should render null when rowIndex is null', () => {
     const { container } = render(<XYChartTooltip {...getProps({ dataIdxs: [null] })} />);
+
     expect(container.firstChild).toBeNull();
   });
 
   it('should render the tooltip content when allSeries and rowIndex are valid', () => {
+    const seriesName = 'seriesName_1';
     const { getByText } = render(
-      <XYChartTooltip {...getProps({ allSeries: builtAllSeries, data: buildData(), dataIdxs: [1], seriesIdx: 1 })} />
+      <XYChartTooltip
+        {...getProps({ allSeries: buildAllSeries(seriesName), data: buildData(), dataIdxs: [1], seriesIdx: 1 })}
+      />
     );
-    expect(getByText('test')).toBeInTheDocument();
+
+    expect(getByText(seriesName)).toBeInTheDocument();
   });
 
   it('should render the tooltip header label with series name', () => {
+    const seriesName = 'seriesName_2';
     const { getByText } = render(
-      <XYChartTooltip {...getProps({ allSeries: builtAllSeries, data: buildData(), dataIdxs: [1], seriesIdx: 1 })} />
+      <XYChartTooltip
+        {...getProps({ allSeries: buildAllSeries(seriesName), data: buildData(), dataIdxs: [1], seriesIdx: 1 })}
+      />
     );
-    expect(getByText('test')).toBeInTheDocument();
+
+    expect(getByText(seriesName)).toBeInTheDocument();
   });
 
   it('should render the tooltip content labels with x and y values', () => {
+    const field1Name = 'field_1';
+    const field2Name = 'field_2';
     const { getByText } = render(
-      <XYChartTooltip {...getProps({ allSeries: builtAllSeries, data: buildData(), dataIdxs: [1], seriesIdx: 1 })} />
+      <XYChartTooltip
+        {...getProps({
+          allSeries: buildAllSeries(),
+          data: buildData({ field1Name, field2Name }),
+          dataIdxs: [1],
+          seriesIdx: 1,
+        })}
+      />
     );
 
-    expect(getByText('field_1')).toBeInTheDocument();
+    expect(getByText(field1Name)).toBeInTheDocument();
     expect(getByText('32.799')).toBeInTheDocument();
+    expect(getByText(field2Name)).toBeInTheDocument();
+    expect(getByText(300)).toBeInTheDocument();
   });
 
   it('should render the tooltip footer with data links', () => {
@@ -46,8 +68,8 @@ describe('XYChartTooltip', () => {
     const { getByText } = render(
       <XYChartTooltip
         {...getProps({
-          allSeries: builtAllSeries,
-          data: buildData(dataLinkTitle),
+          allSeries: buildAllSeries(),
+          data: buildData({ dataLinkTitle }),
           dataIdxs: [1],
           seriesIdx: 1,
           isPinned: true,
@@ -61,74 +83,78 @@ describe('XYChartTooltip', () => {
 
 function getProps(additionalProps: Partial<Props> | null = null): Props {
   if (!additionalProps) {
-    return defaultProps;
+    return getDefaultProps();
   }
 
-  return { ...defaultProps, ...additionalProps };
+  return { ...getDefaultProps(), ...additionalProps };
 }
 
-const defaultProps: Props = {
-  data: [],
-  allSeries: [],
-  dataIdxs: [],
-  seriesIdx: null,
-  isPinned: false,
-  dismiss: jest.fn(),
-  options: {
-    dims: {
-      frame: 0,
+function getDefaultProps(): Props {
+  return {
+    data: [],
+    allSeries: [],
+    dataIdxs: [],
+    seriesIdx: null,
+    isPinned: false,
+    dismiss: jest.fn(),
+    options: {
+      dims: {
+        frame: 0,
+      },
+      series: [],
+      legend: {
+        calcs: [],
+        displayMode: LegendDisplayMode.List,
+        placement: 'bottom',
+        showLegend: true,
+      },
+      tooltip: {
+        mode: TooltipDisplayMode.Single,
+        sort: SortOrder.Ascending,
+      },
     },
-    series: [],
-    legend: {
-      calcs: [],
-      displayMode: LegendDisplayMode.List,
-      placement: 'bottom',
-      showLegend: true,
-    },
-    tooltip: {
-      mode: TooltipDisplayMode.Single,
-      sort: SortOrder.Ascending,
-    },
-  },
-};
+  };
+}
 
-const builtAllSeries = [
-  {
-    name: 'test',
-    legend: jest.fn(),
-    frame: (frames: DataFrame[]) => frames[0],
-    x: (frame: DataFrame) => frame.fields[0],
-    y: (frame: DataFrame) => frame.fields[1],
-    pointColor: (_frame: DataFrame) => '#111',
-    showLine: false,
-    lineWidth: 1,
-    lineStyle: {},
-    lineColor: jest.fn(),
-    showPoints: VisibilityMode.Always,
-    pointSize: jest.fn(),
-    pointSymbol: jest.fn(),
-    label: VisibilityMode.Always,
-    labelValue: jest.fn(),
-    show: true,
-    hints: {
-      pointSize: { fixed: 10, max: 10, min: 1 },
-      pointColor: {
-        mode: {
-          id: 'threshold',
-          name: 'Threshold',
-          getCalculator: jest.fn(),
+function buildAllSeries(testSeriesName = 'test'): ScatterSeries[] {
+  return [
+    {
+      name: testSeriesName,
+      legend: jest.fn(),
+      frame: (frames: DataFrame[]) => frames[0],
+      x: (frame: DataFrame) => frame.fields[0],
+      y: (frame: DataFrame) => frame.fields[1],
+      pointColor: (_frame: DataFrame) => '#111',
+      showLine: false,
+      lineWidth: 1,
+      lineStyle: {},
+      lineColor: jest.fn(),
+      showPoints: VisibilityMode.Always,
+      pointSize: jest.fn(),
+      pointSymbol: jest.fn(),
+      label: VisibilityMode.Always,
+      labelValue: jest.fn(),
+      show: true,
+      hints: {
+        pointSize: { fixed: 10, max: 10, min: 1 },
+        pointColor: {
+          mode: {
+            id: 'threshold',
+            name: 'Threshold',
+            getCalculator: jest.fn(),
+          },
         },
       },
     },
-  },
-];
+  ];
+}
 
-function buildData(dataLinkTitle = 'Grafana'): DataFrame[] {
+function buildData({ dataLinkTitle = 'Grafana', field1Name = 'field_1', field2Name = 'field_2' } = {}): DataFrame[] {
   return [
     {
       fields: [
         {
-          name: 'field_1',
+          name: field1Name,
           type: FieldType.number,
           config: {},
           values: [
@@ -137,7 +163,7 @@ function buildData(dataLinkTitle = 'Grafana'): DataFrame[] {
           ],
         },
         {
-          name: 'field_2',
+          name: field2Name,
           type: FieldType.number,
           config: {},
           values: [500, 300, 150, 250, 600, 500, 700, 400, 540, 630, 460, 250, 500, 400, 800, 930, 360],
