@@ -171,12 +171,16 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.connections.title', 'Connections');
     case 'connections-add-new-connection':
       return t('nav.add-new-connections.title', 'Add new connection');
+    case 'standalone-plugin-page-/connections/collector':
+      return t('nav.collector.title', 'Collector');
     case 'connections-datasources':
       return t('nav.data-sources.title', 'Data sources');
     case 'standalone-plugin-page-/connections/infrastructure':
       return t('nav.integrations.title', 'Integrations');
     case 'standalone-plugin-page-/connections/connect-data':
       return t('nav.connect-data.title', 'Connect data');
+    case 'standalone-plugin-page-/connections/private-data-source-connections':
+      return t('nav.private-data-source-connections.title', 'Private data source connect');
     case 'plugin-page-grafana-detect-app':
       return t('nav.detect.title', 'Detect');
     case 'plugin-page-grafana-quaderno-app':
@@ -276,6 +280,11 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.connections.subtitle', 'Browse and create new connections');
     case 'connections-datasources':
       return t('nav.data-sources.subtitle', 'View and manage your connected data source connections');
+    case 'connections-private-data-source-connections':
+      return t(
+        'nav.private-data-source-connections.subtitle',
+        'Query data that lives within a secured network without opening the network to inbound traffic from Grafana Cloud. Learn more in our docs.'
+      );
     default:
       return undefined;
   }
