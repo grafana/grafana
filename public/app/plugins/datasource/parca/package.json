@@ -23,7 +23,7 @@
     "@types/lodash": "4.14.202",
     "@types/react": "18.2.51",
     "ts-node": "10.9.2",
-    "webpack": "5.90.0"
+    "webpack": "5.90.1"
   },
   "peerDependencies": {
     "@grafana/runtime": "*"
