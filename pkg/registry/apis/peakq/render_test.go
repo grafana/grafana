@@ -47,6 +47,17 @@ var nestedFieldRender = peakq.QueryTemplateSpec{
 var nestedFieldRenderedTargets = []peakq.Target{
 	{
 		DataType: data.FrameTypeUnknown,
+		Variables: map[string][]peakq.VariableReplacement{
+			"metricName": {
+				{
+					Path: "$.nestedObject.anArray[0]",
+					Position: &peakq.Position{
+						Start: 0,
+						End:   3,
+					},
+				},
+			},
+		},
 		//DataTypeVersion: data.FrameTypeVersion{0, 0},
 		Properties: common.Unstructured{
 			Object: map[string]any{
@@ -122,6 +133,33 @@ var multiVarTemplate = peakq.QueryTemplateSpec{
 var multiVarRenderedTargets = []peakq.Target{
 	{
 		DataType: data.FrameTypeUnknown,
+		Variables: map[string][]peakq.VariableReplacement{
+			"metricName": {
+				{
+					Path: "$.expr",
+					Position: &peakq.Position{
+						Start: 4,
+						End:   14,
+					},
+				},
+				{
+					Path: "$.expr",
+					Position: &peakq.Position{
+						Start: 37,
+						End:   47,
+					},
+				},
+			},
+			"anotherMetric": {
+				{
+					Path: "$.expr",
+					Position: &peakq.Position{
+						Start: 21,
+						End:   34,
+					},
+				},
+			},
+		},
 		//DataTypeVersion: data.FrameTypeVersion{0, 0},
 		Properties: common.Unstructured{
 			Object: map[string]any{

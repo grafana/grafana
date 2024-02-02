@@ -63,7 +63,7 @@ type TemplateVariable struct {
 // QueryVariable is the definition of a variable that will be interpolated
 // in targets.
 type VariableReplacement struct {
-	// Path is the location of the property within the the target properties.
+	// Path is the location of the property within a target.
 	// The format for this is not figured out yet (Maybe JSONPath?).
 	// Idea: ["string", int, "string"] where int indicates array offset
 	Path string `json:"path"`

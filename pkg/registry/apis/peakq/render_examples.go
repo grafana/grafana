@@ -31,7 +31,7 @@ var basicTemplateSpec = peakq.QueryTemplateSpec{
 					{
 						Path: "$.expr",
 						Position: &peakq.Position{
-							Start: 12,
+							Start: 13,
 							End:   23,
 						},
 					},

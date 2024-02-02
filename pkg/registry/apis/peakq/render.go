@@ -6,13 +6,16 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
+	"github.com/spyzhov/ajson"
 )
 
 type renderREST struct {
@@ -107,106 +110,193 @@ type replacement struct {
 }
 
 func getReplacementMap(qt peakq.QueryTemplateSpec) map[int]map[string][]replacement {
-	return make(map[int]map[string][]replacement)
+	//return make(map[int]map[string][]replacement)
+
+	// int = targetIdx, string = Path
+	byTargetPath := make(map[int]map[string][]replacement)
+
+	varMap := make(map[string]*peakq.TemplateVariable, len(qt.Variables))
+	for i, v := range qt.Variables {
+		varMap[v.Key] = &qt.Variables[i]
+	}
+
+	for i, target := range qt.Targets {
+		if byTargetPath[i] == nil {
+			byTargetPath[i] = make(map[string][]replacement)
+		}
+		for k, vReps := range target.Variables {
+			for rI, rep := range vReps {
+				byTargetPath[i][rep.Path] = append(byTargetPath[i][rep.Path],
+					replacement{
+						Position:         vReps[rI].Position,
+						TemplateVariable: varMap[k],
+					},
+				)
+			}
+		}
+	}
 	/*
-	   // int = targetIdx, string = Path
-	   byTargetPath := make(map[int]map[string][]replacement)
-
-	   	for _, qVar := range qt.Variables {
-	   		for _, pos := range qVar.Positions {
-	   			if byTargetPath[pos.TargetIdx] == nil {
-	   				byTargetPath[pos.TargetIdx] = make(map[string][]replacement)
-	   			}
-	   			qVar, pos := qVar, pos
-	   			byTargetPath[pos.TargetIdx][pos.Path] = append(byTargetPath[pos.TargetIdx][pos.Path],
-	   				replacement{
-	   					Position:         &pos,
-	   					TemplateVariable: &qVar,
-	   				},
-	   			)
-	   		}
-	   	}
-
-	   	for idx, byTargetIdx := range byTargetPath {
-	   		for path := range byTargetIdx {
-	   			sort.Slice(byTargetPath[idx][path], func(i, j int) bool {
-	   				return byTargetPath[idx][path][i].Start < byTargetPath[idx][path][j].Start
-	   			})
-	   		}
-	   	}
-
-	   return byTargetPath
+		for _, rep := range target.Replacement {
+				if byTargetPath[pos.TargetIdx] == nil {
+					byTargetPath[pos.TargetIdx] = make(map[string][]replacement)
+				}
+				qVar, pos := qVar, pos
+				byTargetPath[pos.TargetIdx][pos.Path] = append(byTargetPath[pos.TargetIdx][pos.Path],
+					replacement{
+						Position:         &pos,
+						TemplateVariable: &qVar,
+					},
+				)
+			}
+		}
 	*/
+
+	for idx, byTargetIdx := range byTargetPath {
+		for path := range byTargetIdx {
+			sort.Slice(byTargetPath[idx][path], func(i, j int) bool {
+				return byTargetPath[idx][path][i].Start < byTargetPath[idx][path][j].Start
+			})
+		}
+	}
+
+	return byTargetPath
 }
 
 func Render(qt peakq.QueryTemplateSpec, selectedValues map[string][]string) (*peakq.RenderedQuery, error) {
-	fmt.Printf("TODO, replace: %v\n", selectedValues)
+	targets := qt.DeepCopy().Targets
+
+	rawTargetObjects := make([]*ajson.Node, len(qt.Targets))
+	for i, t := range qt.Targets {
+		b, err := t.Properties.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		rawTargetObjects[i], err = ajson.Unmarshal(b)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	rm := getReplacementMap(qt)
+	for targetIdx, byTargetIdx := range rm {
+		for path, reps := range byTargetIdx {
+			o := rawTargetObjects[targetIdx]
+			nodes, err := o.JSONPath(string(path))
+			if err != nil {
+				return nil, err
+			}
+			if len(nodes) != 1 {
+				return nil, fmt.Errorf("expected one lead node at path %v but got %v", path, len(nodes))
+			}
+			n := nodes[0]
+			if !n.IsString() {
+				return nil, fmt.Errorf("only string type leaf notes supported currently, %v is not a string", path)
+			}
+			s := n.String()
+			s = s[1 : len(s)-1]
+			var offSet int64
+			for _, r := range reps {
+				// I think breaks with utf...something...?
+				// TODO: Probably simpler to store the non-template parts and insert the values into that, then don't have to track
+				// offsets
+				if r.Position == nil {
+					return nil, fmt.Errorf("nil position not support yet, will be full replacement")
+				}
+				if len(selectedValues[r.Key]) != 1 {
+					return nil, fmt.Errorf("selected value missing, or more then one provided")
+				}
+				value := selectedValues[r.Key][0]
+				s = s[:r.Start+offSet] + value + s[r.End+offSet:]
+				offSet = int64(len(value)+int(offSet)) - (r.End - r.Start)
+			}
+			n.SetString(s)
+		}
+	}
+
+	for i, aT := range rawTargetObjects {
+		raw, err := ajson.Marshal(aT)
+		if err != nil {
+			return nil, err
+		}
+		u := v0alpha1.Unstructured{}
+		err = u.UnmarshalJSON(raw)
+		if err != nil {
+			return nil, err
+		}
+		targets[i].Properties = u
+	}
+
 	return &peakq.RenderedQuery{
-		Targets: qt.Targets,
+		Targets: targets,
 	}, nil
 
 	/*
+		fmt.Printf("TODO, replace: %v\n", selectedValues)
+		return &peakq.RenderedQuery{
+			Targets: qt.Targets,
+		}, nil
 
-		// Note: The following is super stupid, will only work with one var, no sanity checking etc
-		// selectedValues is for GET
-		targets := qt.DeepCopy().Targets
 
-		rawTargetObjects := make([]*ajson.Node, len(qt.Targets))
-		for i, t := range qt.Targets {
-			b, err := t.Properties.MarshalJSON()
-			if err != nil {
-				return nil, err
-			}
-			rawTargetObjects[i], err = ajson.Unmarshal(b)
-			if err != nil {
-				return nil, err
-			}
-		}
+			// Note: The following is super stupid, will only work with one var, no sanity checking etc
+			// selectedValues is for GET
+			targets := qt.DeepCopy().Targets
 
-		rm := getReplacementMap(qt)
-		for targetIdx, byTargetIdx := range rm {
-			for path, reps := range byTargetIdx {
-				o := rawTargetObjects[targetIdx]
-				nodes, err := o.JSONPath(string(path))
+			rawTargetObjects := make([]*ajson.Node, len(qt.Targets))
+			for i, t := range qt.Targets {
+				b, err := t.Properties.MarshalJSON()
 				if err != nil {
 					return nil, err
 				}
-				if len(nodes) != 1 {
-					return nil, fmt.Errorf("expected one lead node at path %v but got %v", path, len(nodes))
+				rawTargetObjects[i], err = ajson.Unmarshal(b)
+				if err != nil {
+					return nil, err
 				}
-				n := nodes[0]
-				if !n.IsString() {
-					return nil, fmt.Errorf("only string type leaf notes supported currently, %v is not a string", path)
-				}
-				s := n.String()
-				s = s[1 : len(s)-1]
-				var offSet int64
-				for _, r := range reps {
-					// I think breaks with utf...something...?
-					// TODO: Probably simpler to store the non-template parts and insert the values into that, then don't have to track
-					// offsets
-					value := selectedValues[r.Key]
-					s = s[:r.Start+offSet] + value + s[r.End+offSet:]
-					offSet = int64(len(value)+int(offSet)) - (r.End - r.Start)
-				}
-				n.SetString(s)
 			}
-		}
 
-		for i, aT := range rawTargetObjects {
-			raw, err := ajson.Marshal(aT)
-			if err != nil {
-				return nil, err
+			rm := getReplacementMap(qt)
+			for targetIdx, byTargetIdx := range rm {
+				for path, reps := range byTargetIdx {
+					o := rawTargetObjects[targetIdx]
+					nodes, err := o.JSONPath(string(path))
+					if err != nil {
+						return nil, err
+					}
+					if len(nodes) != 1 {
+						return nil, fmt.Errorf("expected one lead node at path %v but got %v", path, len(nodes))
+					}
+					n := nodes[0]
+					if !n.IsString() {
+						return nil, fmt.Errorf("only string type leaf notes supported currently, %v is not a string", path)
+					}
+					s := n.String()
+					s = s[1 : len(s)-1]
+					var offSet int64
+					for _, r := range reps {
+						// I think breaks with utf...something...?
+						// TODO: Probably simpler to store the non-template parts and insert the values into that, then don't have to track
+						// offsets
+						value := selectedValues[r.Key]
+						s = s[:r.Start+offSet] + value + s[r.End+offSet:]
+						offSet = int64(len(value)+int(offSet)) - (r.End - r.Start)
+					}
+					n.SetString(s)
+				}
 			}
-			u := v0alpha1.Unstructured{}
-			err = u.UnmarshalJSON(raw)
-			if err != nil {
-				return nil, err
-			}
-			targets[i].Properties = u
-		}
 
-		return &peakq.RenderedQuery{
-			Targets: targets,
-		}, nil */
+			for i, aT := range rawTargetObjects {
+				raw, err := ajson.Marshal(aT)
+				if err != nil {
+					return nil, err
+				}
+				u := v0alpha1.Unstructured{}
+				err = u.UnmarshalJSON(raw)
+				if err != nil {
+					return nil, err
+				}
+				targets[i].Properties = u
+			}
+
+			return &peakq.RenderedQuery{
+				Targets: targets,
+			}, nil */
 }
