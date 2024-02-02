@@ -41,7 +41,7 @@ func CreateTransportOptions(ctx context.Context, settings backend.DataSourceInst
 	azureSettings, err := azsettings.ReadSettings(ctx)
 	if err != nil {
 		logger.Error("failed to read Azure settings from Grafana", "error", err.Error())
-		return nil, err
+		return nil, fmt.Errorf("failed to read Azure settings from Grafana: %v", err)
 	}
 
 	// Set Azure authentication
