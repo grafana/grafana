@@ -73,7 +73,7 @@ export const BarChartTooltip = ({
 
     const dataIdx = dataIdxs[seriesIdx!]!;
     xVal = xFieldFmt(xField!.values[dataIdx]).text;
-    const fieldFmt = field.display || getDisplayProcessor({ field, theme });
+    const fieldFmt = getDisplayProcessor({ field, theme });
     const display = fieldFmt(field.values[dataIdx]);
 
     links = getDataLinks(field, dataIdx);
@@ -107,7 +107,8 @@ export const BarChartTooltip = ({
       }
 
       const v = seriesIdx != null ? seriesFrame.fields[i].values[dataIdxs[seriesIdx]!] : null;
-      const display = field.display!(v); // super expensive :(
+      const fieldFmt = getDisplayProcessor({ field, theme });
+      const display = fieldFmt(v);
 
       sortIdx.push(v);
       contentLabelValue.push({
