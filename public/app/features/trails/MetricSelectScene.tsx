@@ -21,7 +21,7 @@ import {
   VariableDependencyConfig,
 } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
-import { Input, useStyles2, InlineSwitch, Field, Alert, Icon } from '@grafana/ui';
+import { Input, useStyles2, InlineSwitch, Field, Alert, Icon, LoadingPlaceholder } from '@grafana/ui';
 
 // import { ApplyMetricNamesButton } from './ApplyMetricNamesButton';
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
@@ -323,7 +323,11 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const metricNamesStatus = useVariableStatus(VAR_METRIC_NAMES, model);
     const tooStrict = children.length === 0 && (searchQuery || prefixFilter);
 
-    let status = tooStrict && 'There are no results found. Try adjusting your search or filters.';
+    const status =
+      (metricNamesStatus.isLoading && children.length === 0 && (
+        <LoadingPlaceholder className={styles.statusMessage} text="Loading..." />
+      )) ||
+      (tooStrict && 'There are no results found. Try adjusting your search or filters.');
 
     const showStatus = status && <div className={styles.statusMessage}>{status}</div>;
 
