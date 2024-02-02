@@ -49,13 +49,6 @@ func (n NotificationSettingsValidator) Validate(settings models.NotificationSett
 	return errors.Join(errs...)
 }
 
-type noValidation struct {
-}
-
-func (n noValidation) Validate(_ models.NotificationSettings) error {
-	return nil
-}
-
 type NotificationSettingsValidationService struct {
 	store store.AlertingStore
 }

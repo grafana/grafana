@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
@@ -196,7 +195,7 @@ func ValidateNotificationsInGroupDelta(ctx context.Context, groupChanges *GroupD
 		for _, s := range rule.NotificationSettings {
 			err = validator.Validate(s)
 			if err != nil {
-				return false, errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
+				return false, errors.Join(models.ErrAlertRuleFailedValidation, err)
 			}
 			changed = true
 		}
@@ -220,7 +219,7 @@ func ValidateNotificationsInGroupDelta(ctx context.Context, groupChanges *GroupD
 		for _, s := range delta.New.NotificationSettings {
 			err = validator.Validate(s)
 			if err != nil {
-				return false, errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
+				return false, errors.Join(models.ErrAlertRuleFailedValidation, err)
 			}
 		}
 	}

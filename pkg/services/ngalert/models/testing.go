@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
@@ -600,4 +601,106 @@ func AlertInstanceGen(mutators ...AlertInstanceMutator) *AlertInstance {
 		mutator(instance)
 	}
 	return instance
+}
+
+type Mutator[T any] func(*T)
+
+// CopyNotificationSettings creates a deep copy of NotificationSettings.
+func CopyNotificationSettings(ns NotificationSettings) NotificationSettings {
+	c := NotificationSettings{
+		Receiver: ns.Receiver,
+	}
+	if ns.GroupWait != nil {
+		c.GroupWait = util.Pointer(*ns.GroupWait)
+	}
+	if ns.GroupInterval != nil {
+		c.GroupInterval = util.Pointer(*ns.GroupInterval)
+	}
+	if ns.RepeatInterval != nil {
+		c.RepeatInterval = util.Pointer(*ns.RepeatInterval)
+	}
+	if ns.GroupBy != nil {
+		c.GroupBy = make([]string, len(ns.GroupBy))
+		copy(c.GroupBy, ns.GroupBy)
+	}
+	if ns.MuteTimeIntervals != nil {
+		c.MuteTimeIntervals = make([]string, len(ns.MuteTimeIntervals))
+		copy(c.MuteTimeIntervals, ns.MuteTimeIntervals)
+	}
+
+	return c
+}
+
+// NotificationSettingsGen generates NotificationSettings using a base and mutators.
+func NotificationSettingsGen(base NotificationSettings, mutators ...Mutator[NotificationSettings]) *NotificationSettings {
+	c := CopyNotificationSettings(base)
+	for _, mutator := range mutators {
+		mutator(&c)
+	}
+	return &c
+}
+
+// RandomNotificationSettings generates NotificationSettings with random values.
+func RandomNotificationSettings() *NotificationSettings {
+	return &NotificationSettings{
+		Receiver:          util.GenerateShortUID(),
+		GroupBy:           []string{util.GenerateShortUID(), util.GenerateShortUID()},
+		GroupWait:         util.Pointer(model.Duration(time.Duration(rand.Intn(100) + 1))),
+		GroupInterval:     util.Pointer(model.Duration(time.Duration(rand.Intn(100) + 1))),
+		RepeatInterval:    util.Pointer(model.Duration(time.Duration(rand.Intn(100) + 1))),
+		MuteTimeIntervals: []string{util.GenerateShortUID(), util.GenerateShortUID()},
+	}
+}
+
+type NSMuts struct{}
+
+func (n NSMuts) WithReceiver(receiver string) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		ns.Receiver = receiver
+	}
+}
+
+func (n NSMuts) WithGroupWait(groupWait *time.Duration) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		if groupWait == nil {
+			ns.GroupWait = nil
+			return
+		}
+		dur := model.Duration(*groupWait)
+		ns.GroupWait = &dur
+	}
+}
+
+func (n NSMuts) WithGroupInterval(groupInterval *time.Duration) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		if groupInterval == nil {
+			ns.GroupInterval = nil
+			return
+		}
+		dur := model.Duration(*groupInterval)
+		ns.GroupInterval = &dur
+	}
+}
+
+func (n NSMuts) WithRepeatInterval(repeatInterval *time.Duration) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		if repeatInterval == nil {
+			ns.RepeatInterval = nil
+			return
+		}
+		dur := model.Duration(*repeatInterval)
+		ns.RepeatInterval = &dur
+	}
+}
+
+func (n NSMuts) WithGroupBy(groupBy ...string) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		ns.GroupBy = groupBy
+	}
+}
+
+func (n NSMuts) WithMuteTimeIntervals(muteTimeIntervals ...string) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		ns.MuteTimeIntervals = muteTimeIntervals
+	}
 }

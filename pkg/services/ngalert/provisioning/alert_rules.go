@@ -38,7 +38,8 @@ func NewAlertRuleService(ruleStore RuleStore,
 	defaultIntervalSeconds int64,
 	baseIntervalSeconds int64,
 	log log.Logger,
-	ns NotificationSettingsValidatorProvider) *AlertRuleService {
+	ns NotificationSettingsValidatorProvider,
+) *AlertRuleService {
 	return &AlertRuleService{
 		defaultIntervalSeconds: defaultIntervalSeconds,
 		baseIntervalSeconds:    baseIntervalSeconds,

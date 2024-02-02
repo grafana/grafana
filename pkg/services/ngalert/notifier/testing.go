@@ -19,6 +19,17 @@ type fakeConfigStore struct {
 
 	// historicConfigs stores configs by orgID.
 	historicConfigs map[int64][]*models.HistoricAlertConfiguration
+
+	// notificationSettings stores notification settings by orgID.
+	notificationSettings map[int64]map[models.AlertRuleKey][]models.NotificationSettings
+}
+
+func (f *fakeConfigStore) ListNotificationSettings(ctx context.Context, orgID int64) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
+	settings, ok := f.notificationSettings[orgID]
+	if !ok {
+		return nil, nil
+	}
+	return settings, nil
 }
 
 // Saves the image or returns an error.
@@ -198,4 +209,11 @@ type fakeState struct {
 
 func (fs *fakeState) MarshalBinary() ([]byte, error) {
 	return []byte(fs.data), nil
+}
+
+type NoValidation struct {
+}
+
+func (n NoValidation) Validate(_ models.NotificationSettings) error {
+	return nil
 }
