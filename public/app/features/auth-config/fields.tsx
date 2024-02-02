@@ -88,7 +88,7 @@ export const sectionFields: Section = {
     {
       name: 'TLS',
       id: 'tls',
-      fields: ['configureTLS', 'tlsSkipVerifyInsecure', 'tlsClientCert', 'tlsClientKey', 'tlsClientCa'],
+      fields: ['tlsSkipVerifyInsecure', 'tlsClientCert', 'tlsClientKey', 'tlsClientCa'],
     },
   ],
 };
@@ -311,23 +311,19 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         'If enabled, Grafana will fetch a new access token using the refresh token provided by the OAuth2 provider.',
       type: 'checkbox',
     },
-    configureTLS: {
-      label: 'Configure TLS',
-      type: 'switch',
-    },
     tlsClientCa: {
       label: 'TLS client ca',
-      description: 'The path to the trusted certificate authority list. Does not applicable on Grafana Cloud.',
+      description: 'The path to the trusted certificate authority list. Is not applicable on Grafana Cloud.',
       type: 'text',
     },
     tlsClientCert: {
       label: 'TLS client cert',
-      description: 'The path to the certificate. Does not applicable on Grafana Cloud.',
+      description: 'The path to the certificate. Is not applicable on Grafana Cloud.',
       type: 'text',
     },
     tlsClientKey: {
       label: 'TLS client key',
-      description: 'The path to the key. Does not applicable on Grafana Cloud.',
+      description: 'The path to the key. Is not applicable on Grafana Cloud.',
       type: 'text',
     },
     tlsSkipVerifyInsecure: {
@@ -342,7 +338,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       label: 'Groups attribute path',
       description:
         'JMESPath expression to use for user group lookup. If you configure allowed_groups, \n' +
-        'you must also configure groupsƒ_attribute_path.',
+        'you must also configure groups_attribute_path.',
       type: 'text',
     },
     teamsUrl: {
