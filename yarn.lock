@@ -3058,7 +3058,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.2"
     typescript: "npm:5.3.3"
-    webpack: "npm:5.90.0"
+    webpack: "npm:5.90.1"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3103,7 +3103,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.2"
     typescript: "npm:5.3.3"
-    webpack: "npm:5.90.0"
+    webpack: "npm:5.90.1"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3142,7 +3142,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.2"
     typescript: "npm:5.3.3"
-    webpack: "npm:5.90.0"
+    webpack: "npm:5.90.1"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3178,7 +3178,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.2"
     uuid: "npm:9.0.1"
-    webpack: "npm:5.90.0"
+    webpack: "npm:5.90.1"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3228,7 +3228,7 @@ __metadata:
     rxjs: "npm:7.8.1"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.2"
-    webpack: "npm:5.90.0"
+    webpack: "npm:5.90.1"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3289,7 +3289,7 @@ __metadata:
     tslib: "npm:2.6.2"
     typescript: "npm:5.3.3"
     uuid: "npm:9.0.1"
-    webpack: "npm:5.90.0"
+    webpack: "npm:5.90.1"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -3680,9 +3680,9 @@ __metadata:
     fork-ts-checker-webpack-plugin: "npm:8.0.0"
     glob: "npm:10.3.10"
     replace-in-file-webpack-plugin: "npm:1.0.6"
-    swc-loader: "npm:0.2.3"
+    swc-loader: "npm:0.2.4"
     tslib: "npm:2.6.2"
-    webpack: "npm:5.90.0"
+    webpack: "npm:5.90.1"
   languageName: unknown
   linkType: soft
 
@@ -3961,7 +3961,7 @@ __metadata:
     typescript: "npm:5.3.3"
     uplot: "npm:1.6.30"
     uuid: "npm:9.0.1"
-    webpack: "npm:5.90.0"
+    webpack: "npm:5.90.1"
   peerDependencies:
     react: ^17.0.0 || ^18.0.0
     react-dom: ^17.0.0 || ^18.0.0
@@ -17817,7 +17817,7 @@ __metadata:
     marked: "npm:5.1.1"
     marked-mangle: "npm:1.1.6"
     memoize-one: "npm:6.0.0"
-    mini-css-extract-plugin: "npm:2.7.7"
+    mini-css-extract-plugin: "npm:2.8.0"
     ml-regression-polynomial: "npm:^3.0.0"
     ml-regression-simple-linear: "npm:^3.0.0"
     moment: "npm:2.30.1"
@@ -17918,7 +17918,7 @@ __metadata:
     uplot: "npm:1.6.30"
     uuid: "npm:9.0.1"
     visjs-network: "npm:4.25.0"
-    webpack: "npm:5.90.0"
+    webpack: "npm:5.90.1"
     webpack-assets-manifest: "npm:^5.1.0"
     webpack-bundle-analyzer: "npm:4.10.1"
     webpack-cli: "npm:5.1.4"
@@ -21883,14 +21883,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mini-css-extract-plugin@npm:2.7.7":
-  version: 2.7.7
-  resolution: "mini-css-extract-plugin@npm:2.7.7"
+"mini-css-extract-plugin@npm:2.8.0":
+  version: 2.8.0
+  resolution: "mini-css-extract-plugin@npm:2.8.0"
   dependencies:
     schema-utils: "npm:^4.0.0"
+    tapable: "npm:^2.2.1"
   peerDependencies:
     webpack: ^5.0.0
-  checksum: 10/55e9cb89a648e9d493dd66eb54cbf02783c6623d0e332ddb4c2374891fcd8de051d5f97473e40478eb2e091ea32fc9ac84c3cd583b445df9f444cc6b7483e1b1
+  checksum: 10/38166b717682d9e8bd4c1426e1b6463d85c1853fb82c0bd9607c1cbeb070db0feb226acd54364633aeaa832f55230e171599936d85d010626c6414597ba0e1ae
   languageName: node
   linkType: hard
 
@@ -28632,13 +28633,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"swc-loader@npm:0.2.3, swc-loader@npm:^0.2.3":
+"swc-loader@npm:0.2.3":
   version: 0.2.3
   resolution: "swc-loader@npm:0.2.3"
   peerDependencies:
     "@swc/core": ^1.2.147
     webpack: ">=2"
   checksum: 10/010d84d399525c0185d36d62c86c55ae017e7a90046bc8a39be4b7e07526924037868049f6037bc966da98151cb2600934b96a66279b742d3c413a718b427251
+  languageName: node
+  linkType: hard
+
+"swc-loader@npm:0.2.4, swc-loader@npm:^0.2.3":
+  version: 0.2.4
+  resolution: "swc-loader@npm:0.2.4"
+  peerDependencies:
+    "@swc/core": ^1.2.147
+    webpack: ">=2"
+  checksum: 10/f23bfe8900b35abdcb9910a2749f3c9d66edf5c660afc67fcf7983647eaec322e024d1edd3bd9fd48bd3191eea0616f67b5f8b5f923e3a648fa5b448683c3213
   languageName: node
   linkType: hard
 
@@ -30649,9 +30660,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:5, webpack@npm:5.90.0, webpack@npm:^5":
-  version: 5.90.0
-  resolution: "webpack@npm:5.90.0"
+"webpack@npm:5, webpack@npm:5.90.1, webpack@npm:^5":
+  version: 5.90.1
+  resolution: "webpack@npm:5.90.1"
   dependencies:
     "@types/eslint-scope": "npm:^3.7.3"
     "@types/estree": "npm:^1.0.5"
@@ -30682,7 +30693,7 @@ __metadata:
       optional: true
   bin:
     webpack: bin/webpack.js
-  checksum: 10/7ff6286be54e00b2580274d8009b014fd03c6d8ade898434376c739e460da1f3a63a51006966024710061f440d6723813365b8a54ae6bcb93b94867c42cf017e
+  checksum: 10/6ad23518123f1742238177920cefa61152d981f986adac5901236845c86ba9bb375a3ba75e188925c856c3d2a76a2ba119e95b8a608a51424968389041089075
   languageName: node
   linkType: hard
 
