@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import React from 'react';
 
-import { DataFrame, FieldType, ValueLinkConfig, LinkTarget, Field } from '@grafana/data';
+import { DataFrame, FieldType, ValueLinkConfig, LinkTarget } from '@grafana/data';
 import { SortOrder, VisibilityMode } from '@grafana/schema';
 import { LegendDisplayMode, TooltipDisplayMode } from '@grafana/ui';
 
