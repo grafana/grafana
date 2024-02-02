@@ -23,15 +23,6 @@ describe('PermissionsEditView', () => {
     it('should return the dashboard', () => {
       expect(permissionsView.getDashboard()).toBe(dashboard);
     });
-
-    it('should return the dashboard uid', () => {
-      expect(permissionsView.getDashboardUid()).toBe('dash-1');
-    });
-
-    it('should throw an error if the dashboard uid is undefined', () => {
-      dashboard.setState({ uid: undefined });
-      expect(() => permissionsView.getDashboardUid()).toThrow('Dashboard uid is undefined');
-    });
   });
 });
 

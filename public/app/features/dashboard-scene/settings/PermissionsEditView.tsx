@@ -29,26 +29,18 @@ export class PermissionsEditView extends SceneObjectBase<PermissionsEditViewStat
   public getDashboard(): DashboardScene {
     return this._dashboard;
   }
-
-  public getDashboardUid(): string {
-    if (this._dashboard.state.uid === undefined) {
-      throw new Error('Dashboard uid is undefined');
-    }
-
-    return this._dashboard.state.uid;
-  }
 }
 
 function PermissionsEditorSettings({ model }: SceneComponentProps<PermissionsEditView>) {
   const dashboard = model.getDashboard();
-  const dashboardUid = model.getDashboardUid();
+  const { uid } = dashboard.useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   const canSetPermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPermissionsWrite);
 
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
-      <Permissions resource={'dashboards'} resourceId={dashboardUid} canSetPermissions={canSetPermissions} />
+      <Permissions resource={'dashboards'} resourceId={uid ?? ''} canSetPermissions={canSetPermissions} />
     </Page>
   );
 }
