@@ -26092,12 +26092,12 @@ __metadata:
   linkType: hard
 
 "react-zoom-pan-pinch@npm:^3.3.0":
-  version: 3.4.0
-  resolution: "react-zoom-pan-pinch@npm:3.4.0"
+  version: 3.4.1
+  resolution: "react-zoom-pan-pinch@npm:3.4.1"
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: 10/720f3ce6b42bbbfbb56bb684d525d0824978198c0650a1d20c3fff52ea595635bea7c748cd02cf75c0833b2bab2971dc129aa6bc4e06fa212e3c962ac63312ce
+  checksum: 10/6d46d88c869d49e511ed6899d736c8952a56ec38f7cdfa47fdd6c819c265ae4c503d4bdf6cb85557efb2e259489db6baaac9a3f3e0fa8703a534605afca6f8c2
   languageName: node
   linkType: hard
 
