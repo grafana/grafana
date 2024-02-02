@@ -20,6 +20,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const pageNav = model.getPageNav(location, navIndex);
   const bodyToRender = model.getBodyToRender();
   const navModel = getNavModel(navIndex, 'dashboards/browse');
+  const showDebugger = location.search.includes('scene-debugger');
 
   if (editview) {
     return <editview.Component model={editview} />;
@@ -38,7 +39,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
                 {controls.map((control) => (
                   <control.Component key={control.state.key} model={control} />
                 ))}
-                <SceneDebugger scene={model} key={'scene-debugger'} />
+                {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
               </div>
             )}
             <div className={cx(styles.body)}>

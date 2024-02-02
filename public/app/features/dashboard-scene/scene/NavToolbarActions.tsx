@@ -3,9 +3,20 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Box, Button, Icon, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
+import {
+  Box,
+  Button,
+  ButtonGroup,
+  Dropdown,
+  Icon,
+  Menu,
+  ToolbarButton,
+  ToolbarButtonRow,
+  useStyles2,
+} from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
+import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
@@ -22,6 +33,7 @@ interface Props {
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
   const { isEditing, viewPanelScene, isDirty, uid, meta, editview } = dashboard.useState();
   const buttonWithExtraMargin = useStyles2(getStyles);
+  const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
 
   toolbarActions.push({
@@ -168,45 +180,86 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
     ),
   });
 
-  if (!dashboard.state.meta.isNew) {
-    // toolbarActions.push(
-    //   <Button
-    //     onClick={() => {
-    //       dashboard.openSaveDrawer({ saveAsCopy: true });
-    //     }}
-    //     size="sm"
-    //     tooltip="Save as copy"
-    //     fill="text"
-    //     key="save-as"
-    //   >
-    //     Save as
-    //   </Button>
-    // );
-  }
-
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditing && meta.canSave,
-    render: () => (
-      <Button
-        onClick={() => {
-          DashboardInteractions.toolbarSaveClick();
-          dashboard.openSaveDrawer({});
-        }}
-        tooltip="Save changes"
-        key="save"
-        className={buttonWithExtraMargin}
-        size="sm"
-        variant={isDirty ? 'primary' : 'secondary'}
-      >
-        Save dashboard
-      </Button>
-    ),
+    condition: isEditing && (meta.canSave || canSaveAs),
+    render: () => {
+      // if we  only can save
+      if (meta.isNew) {
+        return (
+          <Button
+            onClick={() => {
+              DashboardInteractions.toolbarSaveClick();
+              dashboard.openSaveDrawer({});
+            }}
+            tooltip="Save changes"
+            key="save"
+            size="sm"
+            variant={'primary'}
+          >
+            Save dashboard
+          </Button>
+        );
+      }
+
+      // If we only can save as copy
+      if (canSaveAs && !meta.canSave) {
+        return (
+          <Button
+            onClick={() => {
+              DashboardInteractions.toolbarSaveClick();
+              dashboard.openSaveDrawer({ saveAsCopy: true });
+            }}
+            tooltip="Save as copy"
+            key="save"
+            size="sm"
+            variant={isDirty ? 'primary' : 'secondary'}
+          >
+            Save as copy
+          </Button>
+        );
+      }
+
+      // If we can do both save and save as copy we show a button group with dropdown menu
+
+      const menu = (
+        <Menu>
+          <Menu.Item
+            label="Save as copy"
+            icon="copy"
+            onClick={() => {
+              DashboardInteractions.toolbarSaveClick();
+              dashboard.openSaveDrawer({ saveAsCopy: true });
+            }}
+          />
+        </Menu>
+      );
+
+      return (
+        <ButtonGroup className={buttonWithExtraMargin}>
+          <Button
+            onClick={() => {
+              DashboardInteractions.toolbarSaveClick();
+              dashboard.openSaveDrawer({});
+            }}
+            tooltip="Save changes"
+            key="save"
+            size="sm"
+            variant={isDirty ? 'primary' : 'secondary'}
+          >
+            Save dashboard
+          </Button>
+          <Dropdown overlay={menu}>
+            <Button icon="angle-down" variant={isDirty ? 'primary' : 'secondary'} size="sm" />
+          </Dropdown>
+        </ButtonGroup>
+      );
+    },
   });
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: uid,
+    condition: uid && !isEditing,
     render: () => (
       <Button
         key="share-dashboard-button"
