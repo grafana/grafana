@@ -18,7 +18,7 @@ import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
-import { getTimezones, prepareGraphableFields, regenerateLinksSupplier } from './utils';
+import { getTimezones, isTooltipScrollable, prepareGraphableFields, regenerateLinksSupplier } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
@@ -142,9 +142,7 @@ export const TimeSeriesPanel = ({
                           sortOrder={options.tooltip.sort}
                           isPinned={isPinned}
                           annotate={enableAnnotationCreation ? annotate : undefined}
-                          scrollable={
-                            options.tooltip.mode === TooltipDisplayMode.Multi && options.tooltip.maxHeight !== undefined
-                          }
+                          scrollable={isTooltipScrollable(options.tooltip)}
                         />
                       );
                     }}
