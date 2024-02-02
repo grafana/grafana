@@ -3,9 +3,14 @@ import { SceneObject, SceneObjectState } from '@grafana/scenes';
 
 export interface PanelDataPaneTabState extends SceneObjectState {}
 
+export enum TabId {
+  Queries = 'queries',
+  Transformations = 'transformations',
+  Alert = 'alert',
+}
+
 export interface PanelDataPaneTab extends SceneObject {
   getTabLabel(): string;
-  getItemsCount?(): number | null;
-  tabId: string;
+  tabId: TabId;
   icon: IconName;
 }

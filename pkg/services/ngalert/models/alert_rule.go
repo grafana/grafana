@@ -488,6 +488,13 @@ func (alertRule *AlertRule) ResourceOrgID() int64 {
 	return alertRule.OrgID
 }
 
+func (alertRule *AlertRule) GetFolderKey() FolderKey {
+	return FolderKey{
+		OrgID: alertRule.OrgID,
+		UID:   alertRule.NamespaceUID,
+	}
+}
+
 // AlertRuleVersion is the model for alert rule versions in unified alerting.
 type AlertRuleVersion struct {
 	ID               int64  `xorm:"pk autoincr 'id'"`
@@ -546,13 +553,22 @@ type CountAlertRulesQuery struct {
 	NamespaceUID string
 }
 
+type FolderKey struct {
+	OrgID int64
+	UID   string
+}
+
+func (f FolderKey) String() string {
+	return fmt.Sprintf("%d:%s", f.OrgID, f.UID)
+}
+
 type GetAlertRulesForSchedulingQuery struct {
 	PopulateFolders bool
 	RuleGroups      []string
 
 	ResultRules []*AlertRule
 	// A map of folder UID to folder Title in NamespaceKey format (see GetNamespaceKey)
-	ResultFoldersTitles map[string]string
+	ResultFoldersTitles map[FolderKey]string
 }
 
 // ListNamespaceAlertRulesQuery is the query for listing namespace alert rules
