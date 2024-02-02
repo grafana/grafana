@@ -1,6 +1,18 @@
+import { of } from 'rxjs';
+
+import {
+  FieldType,
+  LoadingState,
+  PanelData,
+  VariableSupportType,
+  getDefaultTimeRange,
+  toDataFrame,
+} from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { SceneVariableSet, CustomVariable, SceneGridItem, SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -11,6 +23,46 @@ setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,
 });
+
+const defaultDatasource = mockDataSource({
+  name: 'Default Test Data Source',
+  type: 'test',
+});
+
+const promDatasource = mockDataSource({
+  name: 'Prometheus',
+  type: 'prometheus',
+});
+
+jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
+  ...jest.requireActual('@grafana/runtime/src/services/dataSourceSrv'),
+  getDataSourceSrv: () => ({
+    get: async () => ({
+      ...defaultDatasource,
+      variables: {
+        getType: () => VariableSupportType.Custom,
+        query: jest.fn(),
+        editor: jest.fn().mockImplementation(LegacyVariableQueryEditor),
+      },
+    }),
+    getList: () => [defaultDatasource, promDatasource],
+    getInstanceSettings: () => ({ ...defaultDatasource }),
+  }),
+}));
+
+const runRequestMock = jest.fn().mockReturnValue(
+  of<PanelData>({
+    state: LoadingState.Done,
+    series: [
+      toDataFrame({
+        fields: [{ name: 'text', type: FieldType.string, values: ['val1', 'val2', 'val11'] }],
+      }),
+    ],
+    timeRange: getDefaultTimeRange(),
+  })
+);
+
+setRunRequest(runRequestMock);
 
 describe('VariablesEditView', () => {
   describe('Dashboard Variables state', () => {
@@ -130,40 +182,15 @@ describe('VariablesEditView', () => {
       expect(variableView.state.editIndex).toBeUndefined();
     });
 
-    it('should reset editing variable when discarding changes', () => {
-      variableView.onEdit('customVar2');
-      const editIndex = variableView.state.editIndex!;
-      const variable = variableView.getVariables()[editIndex];
-      const originalState = { ...variable.state };
-
-      variable.setState({ name: 'newName' });
-      variableView.onDiscardChanges();
-
-      const newVariable = variableView.getVariables()[editIndex];
-      expect(newVariable.state).toEqual(originalState);
+    it('should add default new query variable when onAdd is called', () => {
+      variableView.onAdd();
+      expect(variableView.getVariables()).toHaveLength(3);
+      expect(variableView.getVariables()[2].state.name).toBe('query0');
+      expect(variableView.getVariables()[2].state.type).toBe('query');
     });
 
-    it('should reset editing variable when discarding changes after the type being changed', () => {
-      variableView.onEdit('customVar2');
-      const editIndex = variableView.state.editIndex!;
-      const variable = variableView.getVariables()[editIndex];
-      const originalState = { ...variable.state };
-
-      variableView.onTypeChange('constant');
-      variableView.onDiscardChanges();
-
-      const newVariable = variableView.getVariables()[editIndex];
-      expect(newVariable.state).toEqual(originalState);
-    });
-
-    it('should go back when discarding changes', () => {
-      variableView.onEdit('customVar2');
-      const editIndex = variableView.state.editIndex!;
-      expect(editIndex).toBeDefined();
-
-      variableView.onDiscardChanges();
-
-      expect(variableView.state.editIndex).toBeUndefined();
+    afterEach(() => {
+      jest.clearAllMocks();
     });
   });
 

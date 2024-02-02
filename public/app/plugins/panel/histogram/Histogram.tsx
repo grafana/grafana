@@ -136,6 +136,7 @@ const prepConfig = (frame: DataFrame, theme: GrafanaTheme2) => {
     distribution: ScaleDistribution.Linear,
     orientation: ScaleOrientation.Vertical,
     direction: ScaleDirection.Up,
+    softMin: 0,
   });
 
   const fmt = frame.fields[0].display!;
