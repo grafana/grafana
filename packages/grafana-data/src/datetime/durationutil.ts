@@ -1,6 +1,4 @@
-import { Duration, Interval, isAfter } from 'date-fns';
-import add from 'date-fns/add';
-import intervalToDuration from 'date-fns/intervalToDuration';
+import { add, Duration, intervalToDuration, Interval, isAfter } from 'date-fns';
 
 const durationMap: { [key in Required<keyof Duration>]: string[] } = {
   years: ['y', 'Y', 'years'],
