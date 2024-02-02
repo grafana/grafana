@@ -254,18 +254,26 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 
 	// fix empty folder_uid from already provisioned dashboards
 	if upToDate && folderUID != "" {
+		// search for root dashboard with the specified uid or title
 		d, err := fr.dashboardStore.GetDashboard(
 			ctx,
 			&dashboards.GetDashboardQuery{
-				OrgID: jsonFile.dashboard.OrgID,
-				UID:   jsonFile.dashboard.Dashboard.UID,
+				OrgID:     jsonFile.dashboard.OrgID,
+				UID:       jsonFile.dashboard.Dashboard.UID,
+				Title:     &jsonFile.dashboard.Dashboard.Title,
+				FolderUID: util.Pointer(""),
 			},
 		)
 		if err != nil {
-			return provisioningMetadata, err
-		}
-		if d.FolderUID != folderUID {
-			upToDate = false
+			// if no problematic entry is found it's safe to ignore
+			if !errors.Is(err, dashboards.ErrDashboardNotFound) {
+				return provisioningMetadata, err
+			}
+		} else {
+			// inconsistency is detected so force updating the dashboard
+			if d.FolderUID != folderUID {
+				upToDate = false
+			}
 		}
 	}
 
