@@ -265,15 +265,6 @@ var (
 			Created:        time.Date(2022, time.August, 27, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:           "cloudwatchNewRegionsHandler",
-			Description:    "Refactor of /regions endpoint, no user-facing changes",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // enabled by default
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: true,
-			Created:        time.Date(2023, time.September, 25, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:        "showDashboardValidationWarnings",
 			Description: "Show warnings when dashboards do not validate against the schema",
 			Stage:       FeatureStageExperimental,
@@ -311,14 +302,6 @@ var (
 			Expression:     "true", // enabled by default
 			AllowSelfServe: true,
 			Created:        time.Date(2023, time.July, 24, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:           "disablePrometheusExemplarSampling",
-			Description:    "Disable Prometheus exemplar sampling",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: true,
-			Created:        time.Date(2022, time.December, 19, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "alertingBacktesting",
@@ -405,6 +388,14 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
 			Created:     time.Date(2023, time.November, 29, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "influxdbRunQueriesInParallel",
+			Description:  "Enables running InfluxDB Influxql queries in parallel",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaObservabilityMetricsSquad,
+			Created:      time.Date(2024, time.January, 29, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "clientTokenRotation",
@@ -967,6 +958,15 @@ var (
 			Created:         time.Date(2023, time.December, 4, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:            "kubernetesQueryServiceRewrite",
+			Description:     "Rewrite requests targeting /ds/query to the query service",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+			RequiresDevMode: true,
+			Created:         time.Date(2024, time.January, 28, 12, 0, 0, 0, time.UTC),
+		},
+		{
 			Name:        "cloudWatchBatchQueries",
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStagePublicPreview,
@@ -1002,7 +1002,7 @@ var (
 		{
 			Name:         "awsDatasourcesNewFormStyling",
 			Description:  "Applies new form styling for configuration and query editors in AWS plugins",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        awsDatasourcesSquad,
 			Created:      time.Date(2023, time.October, 12, 12, 0, 0, 0, time.UTC),
@@ -1336,6 +1336,14 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
 			Created:     time.Date(2024, time.January, 29, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "nodeGraphDotLayout",
+			Description:  "Changed the layout algorithm for the node graph",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			Created:      time.Date(2024, time.January, 2, 12, 0, 0, 0, time.UTC),
 		},
 	}
 )

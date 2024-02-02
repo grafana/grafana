@@ -130,23 +130,11 @@ type FeatureFlag struct {
 	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
 	HideFromDocs    bool `json:"hideFromDocs,omitempty"`    // don't add the values to docs
 
-	// These are currently unused
-	DocsURL         string `json:"docsURL,omitempty"`
-	RequiresRestart bool   `json:"requiresRestart,omitempty"` // The server must be initialized with the value
+	// The server must be initialized with the value
+	RequiresRestart bool `json:"requiresRestart,omitempty"`
 }
 
-type UpdateFeatureTogglesCommand struct {
-	FeatureToggles []FeatureToggleDTO `json:"featureToggles"`
-}
-
-type FeatureToggleDTO struct {
-	Name        string `json:"name" binding:"Required"`
-	Description string `json:"description"`
-	Enabled     bool   `json:"enabled"`
-	ReadOnly    bool   `json:"readOnly,omitempty"`
-}
-
-type FeatureManagerState struct {
-	RestartRequired bool `json:"restartRequired"`
-	AllowEditing    bool `json:"allowEditing"`
+type FeatureToggleWebhookPayload struct {
+	FeatureToggles map[string]string `json:"feature_toggles"`
+	User           string            `json:"user"`
 }

@@ -31,7 +31,6 @@ package api
 
 import (
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -48,8 +47,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
 )
-
-var plog = log.New("api")
 
 // registerRoutes registers all API HTTP routes.
 func (hs *HTTPServer) registerRoutes() {
@@ -418,14 +415,6 @@ func (hs *HTTPServer) registerRoutes() {
 			pluginRoute.Get("/:pluginId/metrics", reqOrgAdmin, routing.Wrap(hs.CollectPluginMetrics))
 		})
 
-		if hs.Features.IsEnabledGlobally(featuremgmt.FlagFeatureToggleAdminPage) {
-			apiRoute.Group("/featuremgmt", func(featuremgmtRoute routing.RouteRegister) {
-				featuremgmtRoute.Get("/state", authorize(ac.EvalPermission(ac.ActionFeatureManagementRead)), hs.GetFeatureMgmtState)
-				featuremgmtRoute.Get("/", authorize(ac.EvalPermission(ac.ActionFeatureManagementRead)), hs.GetFeatureToggles)
-				featuremgmtRoute.Post("/", authorize(ac.EvalPermission(ac.ActionFeatureManagementWrite)), hs.UpdateFeatureToggle)
-			})
-		}
-
 		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)
 		apiRoute.Get("/frontend/assets", hs.GetFrontendAssets)
 
@@ -515,7 +504,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// metrics
 		// DataSource w/ expressions
-		apiRoute.Post("/ds/query", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), routing.Wrap(hs.QueryMetricsV2))
+		apiRoute.Post("/ds/query", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.getDSQueryEndpoint())
 
 		apiRoute.Group("/alerts", func(alertsRoute routing.RouteRegister) {
 			alertsRoute.Post("/test", routing.Wrap(hs.AlertTest))

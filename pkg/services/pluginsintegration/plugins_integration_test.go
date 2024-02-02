@@ -71,14 +71,14 @@ func TestIntegrationPluginManager(t *testing.T) {
 
 	hcp := httpclient.NewProvider()
 	am := azuremonitor.ProvideService(hcp)
-	cw := cloudwatch.ProvideService(cfg, hcp, features)
+	cw := cloudwatch.ProvideService(cfg, hcp)
 	cm := cloudmonitoring.ProvideService(hcp)
 	es := elasticsearch.ProvideService(hcp, tracer)
 	grap := graphite.ProvideService(hcp, tracer)
 	idb := influxdb.ProvideService(hcp, features)
 	lk := loki.ProvideService(hcp, features, tracer)
 	otsdb := opentsdb.ProvideService(hcp)
-	pr := prometheus.ProvideService(hcp, cfg, features)
+	pr := prometheus.ProvideService(hcp, cfg)
 	tmpo := tempo.ProvideService(hcp)
 	td := testdatasource.ProvideService()
 	pg := postgres.ProvideService(cfg)
@@ -166,8 +166,8 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 
 	expDataSources := map[string]struct{}{
 		"cloudwatch":                       {},
-		"stackdriver":                      {},
 		"grafana-azure-monitor-datasource": {},
+		"stackdriver":                      {},
 		"elasticsearch":                    {},
 		"graphite":                         {},
 		"influxdb":                         {},
