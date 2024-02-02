@@ -31,7 +31,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `redshiftAsyncQueryDataSupport`      | Enable async query data support for Redshift                                                                                                                                                                                 | Yes                |
 | `athenaAsyncQueryDataSupport`        | Enable async query data support for Athena                                                                                                                                                                                   | Yes                |
 | `nestedFolderPicker`                 | Enables the new folder picker to work with nested folders. Requires the nestedFolders feature toggle                                                                                                                         | Yes                |
-| `disablePrometheusExemplarSampling`  | Disable Prometheus exemplar sampling                                                                                                                                                                                         |                    |
 | `logsContextDatasourceUi`            | Allow datasource to provide custom UI for context view                                                                                                                                                                       | Yes                |
 | `lokiQuerySplitting`                 | Split large interval queries into subqueries with smaller time intervals                                                                                                                                                     | Yes                |
 | `prometheusMetricEncyclopedia`       | Adds the metrics explorer component to the Prometheus query builder as an option in metric select                                                                                                                            | Yes                |
@@ -175,6 +174,7 @@ Experimental features might be changed or removed without prior notice.
 | `newFolderPicker`                           | Enables the nested folder picker without having nested folders enabled                                                                                                                                                                                                            |
 | `onPremToCloudMigrations`                   | In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.                                                                                                                                                                  |
 | `promQLScope`                               | In-development feature that will allow injection of labels into prometheus queries.                                                                                                                                                                                               |
+| `nodeGraphDotLayout`                        | Changed the layout algorithm for the node graph                                                                                                                                                                                                                                   |
 
 ## Development feature toggles
 
@@ -186,4 +186,5 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `externalServiceAuth`                  | Starts an OAuth2 authentication provider for external services |
 | `grafanaAPIServerWithExperimentalAPIs` | Register experimental APIs with the k8s API server             |
 | `grafanaAPIServerEnsureKubectlAccess`  | Start an additional https handler and write kubectl options    |
+| `kubernetesQueryServiceRewrite`        | Rewrite requests targeting /ds/query to the query service      |
 | `panelTitleSearchInV1`                 | Enable searching for dashboards using panel title in search v1 |

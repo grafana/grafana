@@ -53,7 +53,6 @@ export interface FeatureToggles {
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   nestedFolderPicker?: boolean;
-  disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
@@ -64,6 +63,7 @@ export interface FeatureToggles {
   prometheusMetricEncyclopedia?: boolean;
   influxdbBackendMigration?: boolean;
   influxqlStreamingParser?: boolean;
+  influxdbRunQueriesInParallel?: boolean;
   clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
   lokiMetricDataplane?: boolean;
@@ -131,6 +131,7 @@ export interface FeatureToggles {
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
+  kubernetesQueryServiceRewrite?: boolean;
   cloudWatchBatchQueries?: boolean;
   recoveryThreshold?: boolean;
   lokiStructuredMetadata?: boolean;
@@ -175,4 +176,5 @@ export interface FeatureToggles {
   onPremToCloudMigrations?: boolean;
   alertingSaveStatePeriodic?: boolean;
   promQLScope?: boolean;
+  nodeGraphDotLayout?: boolean;
 }

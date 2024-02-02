@@ -7,7 +7,7 @@
     "@emotion/css": "11.11.2",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
-    "@grafana/experimental": "1.7.8",
+    "@grafana/experimental": "1.7.9",
     "@grafana/lezer-logql": "0.2.2",
     "@grafana/lezer-traceql": "0.0.13",
     "@grafana/monaco-logql": "^0.0.7",
@@ -42,21 +42,22 @@
   },
   "devDependencies": {
     "@grafana/plugin-configs": "10.4.0-pre",
-    "@testing-library/jest-dom": "6.4.0",
-    "@testing-library/react": "14.1.2",
+    "@testing-library/jest-dom": "6.4.1",
+    "@testing-library/react": "14.2.1",
     "@testing-library/user-event": "14.5.2",
-    "@types/jest": "29.5.11",
+    "@types/jest": "29.5.12",
     "@types/lodash": "4.14.202",
-    "@types/node": "20.11.10",
+    "@types/node": "20.11.16",
     "@types/prismjs": "1.26.3",
-    "@types/react": "18.2.48",
+    "@types/react": "18.2.51",
     "@types/react-dom": "18.2.18",
     "@types/semver": "7.5.6",
     "@types/uuid": "9.0.8",
     "glob": "10.3.10",
     "react-select-event": "5.5.1",
     "ts-node": "10.9.2",
-    "typescript": "5.3.3"
+    "typescript": "5.3.3",
+    "webpack": "5.90.0"
   },
   "peerDependencies": {
     "@grafana/runtime": "*"
@@ -66,5 +67,5 @@
     "build:commit": "webpack -c ./webpack.config.ts --env production --env commit=$(git rev-parse --short HEAD)",
     "dev": "webpack -w -c ./webpack.config.ts --env development"
   },
-  "packageManager": "yarn@4.0.2"
+  "packageManager": "yarn@4.1.0"
 }
