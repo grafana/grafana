@@ -383,9 +383,9 @@ export async function getInitialValues({ folderName, folderUid, getFolder }: Arg
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  newFolder: css`
-    color: ${theme.colors.warning.main};
-    font-size: ${theme.typography.bodySmall.fontSize};
-    padding-bottom: ${theme.spacing(1)};
-  `,
+  newFolder: css({
+    color: theme.colors.warning.main,
+    fontSize: theme.typography.bodySmall.fontSize,
+    paddingBottom: theme.spacing(1),
+  }),
 });

@@ -1010,10 +1010,6 @@ exports[`better eslint`] = {
     "public/app/core/components/QueryOperationRow/OperationRowHelp.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
-    "public/app/core/components/QueryOperationRow/QueryOperationAction.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
-    ],
     "public/app/core/components/QueryOperationRow/QueryOperationRow.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
@@ -1037,9 +1033,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "6"]
     ],
     "public/app/core/components/RolePicker/ValueContainer.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/core/components/Select/OldFolderPicker.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/core/components/TagFilter/TagFilter.tsx:5381": [
