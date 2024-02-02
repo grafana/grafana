@@ -394,6 +394,17 @@ type InitTestDBOpt struct {
 	FeatureFlags            []string
 }
 
+// InitTestDBWithMigration initializes the test DB given custom migrations.
+func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
+	t.Helper()
+	features := getFeaturesForTesting(opts...)
+	store, err := initTestDB(t, setting.NewCfg(), features, migration, opts...)
+	if err != nil {
+		t.Fatalf("failed to initialize sql store: %s", err)
+	}
+	return store
+}
+
 // InitTestDB initializes the test DB.
 func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
