@@ -14,6 +14,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -24,20 +25,19 @@ var gv = v0alpha1.SchemeGroupVersion
 
 // This is used just so wire has something unique to return
 type FeatureFlagAPIBuilder struct {
-	features *featuremgmt.FeatureManager
+	features      *featuremgmt.FeatureManager
+	accessControl accesscontrol.AccessControl
 }
 
-func NewFeatureFlagAPIBuilder(features *featuremgmt.FeatureManager) *FeatureFlagAPIBuilder {
-	return &FeatureFlagAPIBuilder{features}
+func NewFeatureFlagAPIBuilder(features *featuremgmt.FeatureManager, accessControl accesscontrol.AccessControl) *FeatureFlagAPIBuilder {
+	return &FeatureFlagAPIBuilder{features, accessControl}
 }
 
 func RegisterAPIService(features *featuremgmt.FeatureManager,
+	accessControl accesscontrol.AccessControl,
 	apiregistration builder.APIRegistrar,
 ) *FeatureFlagAPIBuilder {
-	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil // skip registration unless opting into experimental apis
-	}
-	builder := NewFeatureFlagAPIBuilder(features)
+	builder := NewFeatureFlagAPIBuilder(features, accessControl)
 	apiregistration.RegisterAPI(builder)
 	return builder
 }
@@ -161,7 +161,7 @@ func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 													"enable-auto-migrate": {
 														ExampleProps: spec3.ExampleProps{
 															Summary:     "enable auto-migrate panels",
-															Description: "example descr",
+															Description: "enable description",
 															Value: &v0alpha1.ResolvedToggleState{
 																Enabled: map[string]bool{
 																	featuremgmt.FlagAutoMigrateOldPanels: true,
@@ -172,7 +172,7 @@ func (b *FeatureFlagAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 													"disable-auto-migrate": {
 														ExampleProps: spec3.ExampleProps{
 															Summary:     "disable auto-migrate panels",
-															Description: "disable descr",
+															Description: "disable description",
 															Value: &v0alpha1.ResolvedToggleState{
 																Enabled: map[string]bool{
 																	featuremgmt.FlagAutoMigrateOldPanels: false,
