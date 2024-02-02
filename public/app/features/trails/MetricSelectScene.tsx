@@ -23,8 +23,9 @@ import {
   VariableDependencyConfig,
 } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
-import { Input, useStyles2, InlineSwitch, Field, LoadingPlaceholder, Alert, Icon } from '@grafana/ui';
+import { Input, useStyles2, InlineSwitch, Field, Alert, Icon } from '@grafana/ui';
 
+import { ApplyMetricNamesButton } from './ApplyMetricNamesButton';
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { MetricCategoryCascader } from './MetricCategory/MetricCategoryCascader';
 import { MetricScene } from './MetricScene';
@@ -76,15 +77,22 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     this.addActivationHandler(this._onActivate.bind(this));
   }
 
+  private justChangedTimeRange = false;
+
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_METRIC_NAMES, VAR_DATASOURCE],
     onReferencedVariableValueChanged: (variable: SceneVariable) => {
       const { name } = variable.state;
 
       if (name === VAR_DATASOURCE) {
+        this.justChangedTimeRange = false;
         // Clear all panels for the previous data source
         this.clearPanels();
       } else if (name === VAR_METRIC_NAMES) {
+        if (this.justChangedTimeRange) {
+          // If the new metric names are due to a time range change, we don't want to automatically update
+          return;
+        }
         // Entire pipeline must be performed
         this.updateMetrics();
         this.buildLayout();
@@ -103,7 +111,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const trail = getTrailFor(this);
     trail.subscribeToEvent(SceneObjectStateChangedEvent, (evt) => {
       if (evt.payload.changedObject instanceof SceneTimeRange) {
-        this.clearPanels();
+        this.justChangedTimeRange = true;
       }
     });
   }
@@ -235,7 +243,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     const children: SceneFlexItem[] = [];
 
-    const metricsList = this.sortedPreviewMetrics();
+    const metricsList = !this.justChangedTimeRange ? this.sortedPreviewMetrics() : Object.values(this.previewCache);
     for (let index = 0; index < metricsList.length; index++) {
       const metric = metricsList[index];
 
@@ -267,6 +275,11 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
   }
 
   public updateMetricPanel = (metric: string, isLoaded?: boolean, isEmpty?: boolean) => {
+    if (this.justChangedTimeRange) {
+      // We don't set the isEmpty marker on panels after a recent change of time line
+      return;
+    }
+
     const metricPanel = this.previewCache[metric];
     if (metricPanel) {
       metricPanel.isEmpty = isEmpty;
@@ -302,9 +315,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     const metricNamesStatus = useVariableStatus(VAR_METRIC_NAMES, model);
     const tooStrict = children.length === 0 && (searchQuery || prefixFilter);
 
-    let status =
-      (metricNamesStatus.isLoading && <LoadingPlaceholder text="Loading..." />) ||
-      (tooStrict && 'There are no results found. Try adjusting your search or filters.');
+    let status = tooStrict && 'There are no results found. Try adjusting your search or filters.';
 
     const showStatus = status && <div className={styles.statusMessage}>{status}</div>;
 
@@ -314,6 +325,15 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
         : undefined;
 
     const disableSearch = metricNamesStatus.error || metricNamesStatus.isLoading;
+
+    const onMetricButtonClick = model.justChangedTimeRange
+      ? () => {
+          model.justChangedTimeRange = false;
+          model.clearPanels();
+          model.updateMetrics();
+          model.buildLayout();
+        }
+      : undefined;
 
     return (
       <div className={styles.container}>
@@ -327,6 +347,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
               disabled={disableSearch}
             />
           </Field>
+          <ApplyMetricNamesButton {...metricNamesStatus} onClick={onMetricButtonClick} />
           <InlineSwitch
             showLabel={true}
             label="Show previews"
@@ -481,13 +502,10 @@ function useVariableStatus(name: string, sceneObject: SceneObject) {
     if (variable) {
       return variable.useState();
     }
-    return {
-      error: null,
-      loading: null,
-    };
+    return undefined;
   }, [variable]);
 
-  const { error, loading } = useVariableState();
+  const { error, loading } = useVariableState() || {};
 
-  return { isLoading: loading, error };
+  return { isLoading: !!loading, error };
 }
