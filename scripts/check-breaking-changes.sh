@@ -30,9 +30,9 @@ while IFS=" " read -r -a package; do
   # Run the comparison and record the exit code
   echo ""
   echo ""
-  echo "${PACKAGE_PATH}"
+  echo "$PACKAGE_PATH"
   echo "================================================="
-  npm exec -- @grafana/levitate compare --prev "$PREV" --current "$CURRENT" --json >data.json
+  npm exec -- @grafana/levitate@latest compare --prev "$PREV" --current "$CURRENT" --json >data.json
 
   # Check if the comparison returned with a non-zero exit code
   # Record the output, maybe with some additional information
@@ -40,7 +40,7 @@ while IFS=" " read -r -a package; do
   CURRENT_REPORT=$(node ./scripts/levitate-parse-json-report.js)
   # Final exit code
   # (non-zero if any of the packages failed the checks)
-  if [ $STATUS -gt 0 ]; then
+  if [ "$STATUS" -gt 0 ]; then
     EXIT_CODE=1
     GITHUB_MESSAGE="${GITHUB_MESSAGE}**\\\`${PACKAGE_PATH}\\\`** has possible breaking changes ([more info](${GITHUB_JOB_LINK}#step:${GITHUB_STEP_NUMBER}:1))<br />"
     GITHUB_LEVITATE_MARKDOWN+="<h3>${PACKAGE_PATH}</h3>${CURRENT_REPORT}<br>"
@@ -52,7 +52,7 @@ done <<<"$PACKAGES"
 echo "is_breaking=$EXIT_CODE" >>"$GITHUB_OUTPUT"
 echo "message=$GITHUB_MESSAGE" >>"$GITHUB_OUTPUT"
 mkdir -p ./levitate
-echo $GITHUB_LEVITATE_MARKDOWN >./levitate/levitate.md
+echo "$GITHUB_LEVITATE_MARKDOWN" >./levitate/levitate.md
 
 # We will exit the workflow accordingly at another step
 exit 0
