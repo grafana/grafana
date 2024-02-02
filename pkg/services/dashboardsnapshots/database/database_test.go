@@ -8,6 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
+	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -116,9 +118,11 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 			cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{
 				Key:       "strangesnapshotwithuserid0",
 				DeleteKey: "adeletekey",
-				Dashboard: simplejson.NewFromAny(map[string]any{
-					"hello": "mupp",
-				}),
+				DashboardCreateCommand: dashboardsnapshot.DashboardCreateCommand{
+					Dashboard: &common.Unstructured{Object: map[string]any{
+						"hello": "mupp",
+					}},
+				},
 				UserID: 0,
 				OrgID:  1,
 			}
@@ -155,11 +159,9 @@ func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	sqlstore := db.InitTestDB(t)
-	dashStore := ProvideStore(sqlstore, setting.NewCfg())
+	dashStore := NewStore(sqlstore, false)
 
 	t.Run("Testing dashboard snapshots clean up", func(t *testing.T) {
-		dashStore.cfg.SnapShotRemoveExpired = true
-
 		nonExpiredSnapshot := createTestSnapshot(t, dashStore, "key1", 48000)
 		createTestSnapshot(t, dashStore, "key2", -1200)
 		createTestSnapshot(t, dashStore, "key3", -1200)
@@ -196,12 +198,14 @@ func createTestSnapshot(t *testing.T, dashStore *DashboardSnapshotStore, key str
 	cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{
 		Key:       key,
 		DeleteKey: "delete" + key,
-		Dashboard: simplejson.NewFromAny(map[string]any{
-			"hello": "mupp",
-		}),
-		UserID:  1000,
-		OrgID:   1,
-		Expires: expires,
+		DashboardCreateCommand: dashboardsnapshot.DashboardCreateCommand{
+			Expires: expires,
+			Dashboard: &common.Unstructured{Object: map[string]any{
+				"hello": "mupp",
+			}},
+		},
+		UserID: 1000,
+		OrgID:  1,
 	}
 	result, err := dashStore.CreateDashboardSnapshot(context.Background(), &cmd)
 	require.NoError(t, err)

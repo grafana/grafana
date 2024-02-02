@@ -2,11 +2,13 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
+	dashboardsnapshot "github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	dashsnapdb "github.com/grafana/grafana/pkg/services/dashboardsnapshots/database"
@@ -30,8 +32,9 @@ func TestDashboardSnapshotsService(t *testing.T) {
 
 	dashboardKey := "12345"
 
+	dashboard := &common.Unstructured{}
 	rawDashboard := []byte(`{"id":123}`)
-	dashboard, err := simplejson.NewJson(rawDashboard)
+	err := json.Unmarshal(rawDashboard, dashboard)
 	require.NoError(t, err)
 
 	t.Run("create dashboard snapshot should encrypt the dashboard", func(t *testing.T) {
@@ -40,7 +43,9 @@ func TestDashboardSnapshotsService(t *testing.T) {
 		cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{
 			Key:       dashboardKey,
 			DeleteKey: dashboardKey,
-			Dashboard: dashboard,
+			DashboardCreateCommand: dashboardsnapshot.DashboardCreateCommand{
+				Dashboard: dashboard,
+			},
 		}
 
 		result, err := s.CreateDashboardSnapshot(ctx, &cmd)

@@ -13,8 +13,6 @@ import { getDashboardSnapshotSrv } from '../../services/SnapshotSrv';
 
 import { ShareModalTabProps } from './types';
 
-const snapshotApiUrl = '/api/snapshots';
-
 interface Props extends ShareModalTabProps {}
 
 interface State {
@@ -109,7 +107,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     };
 
     try {
-      const results: { deleteUrl: string; url: string } = await getBackendSrv().post(snapshotApiUrl, cmdData);
+      const results = await getDashboardSnapshotSrv().create(cmdData);
       this.setState({
         deleteUrl: results.deleteUrl,
         snapshotUrl: results.url,
