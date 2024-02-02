@@ -330,9 +330,7 @@ export function alertingRulerRuleToRuleForm(
 > {
   const defaultFormValues = getDefaultFormValues();
 
-  const [forTime, forTimeUnit] = rule.for
-    ? parseInterval(rule.for)
-    : [defaultFormValues.forTime, defaultFormValues.forTimeUnit];
+  const [forTime, forTimeUnit] = rule.for ? parseInterval(rule.for) : [0, 's'];
 
   const [keepFiringForTime, keepFiringForTimeUnit] = rule.keep_firing_for
     ? parseInterval(rule.keep_firing_for)
