@@ -37,6 +37,7 @@ import (
 )
 
 var _ builder.APIGroupBuilder = (*SnapshotsAPIBuilder)(nil)
+var _ builder.OpenAPIPostProcessor = (*SnapshotsAPIBuilder)(nil)
 
 var resourceInfo = dashboardsnapshot.DashboardSnapshotResourceInfo
 
@@ -183,11 +184,21 @@ func (b *SnapshotsAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 			{
 				Path: prefix + "/create",
 				Spec: &spec3.PathProps{
-					Summary:     "an example at the root level",
-					Description: "longer description here?",
 					Post: &spec3.Operation{
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: map[string]any{
+								"x-grafana-action": "create",
+								"x-kubernetes-group-version-kind": metav1.GroupVersionKind{
+									Group:   dashboardsnapshot.GROUP,
+									Version: dashboardsnapshot.VERSION,
+									Kind:    "DashboardCreateResponse",
+								},
+							},
+						},
 						OperationProps: spec3.OperationProps{
-							Tags: tags,
+							Tags:        tags,
+							Summary:     "Full dashboard",
+							Description: "longer description here?",
 							Parameters: []*spec3.Parameter{
 								{
 									ParameterProps: spec3.ParameterProps{
@@ -342,4 +353,25 @@ func (b *SnapshotsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			// Fallback to the default behaviors (namespace matches org)
 			return authorizer.DecisionNoOpinion, "", err
 		})
+}
+
+func (b *SnapshotsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	oas.Info.Description = "A dashboard snapshot shares an interactive dashboard publicly."
+
+	// Set a description on the
+	sub := oas.Paths.Paths["/apis/dashboardsnapshot.grafana.app/v0alpha1/namespaces/{namespace}/dashboardsnapshots/{name}/body"]
+	if sub != nil && sub.Get != nil {
+		sub.Get.Summary = "Full dashboard"
+		sub.Get.Description = "Read the full dashboard body"
+	}
+
+	// Hide the invalid endpoint to list all snapshots for all orgs
+	delete(oas.Paths.Paths, "/apis/dashboardsnapshot.grafana.app/v0alpha1/dashboardsnapshots")
+
+	// The root API discovery list
+	sub = oas.Paths.Paths["/apis/dashboardsnapshot.grafana.app/v0alpha1/"]
+	if sub != nil && sub.Get != nil {
+		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
+	}
+	return oas, nil
 }

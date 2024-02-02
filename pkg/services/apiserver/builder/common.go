@@ -42,6 +42,11 @@ type APIGroupBuilder interface {
 	GetAuthorizer() authorizer.Authorizer
 }
 
+// Builders that implement OpenAPIPostProcessor are given a chance to modify the schema directly
+type OpenAPIPostProcessor interface {
+	PostProcessOpenAPI(*spec3.OpenAPI) (*spec3.OpenAPI, error)
+}
+
 // This is used to implement dynamic sub-resources like pods/x/logs
 type APIRouteHandler struct {
 	Path    string           // added to the appropriate level
