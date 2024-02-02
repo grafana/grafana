@@ -34,6 +34,9 @@ func ValidatePluginRole(pluginID string, role ac.RoleDTO) error {
 	if pluginID == "" {
 		return ac.ErrPluginIDRequired
 	}
+	if role.DisplayName == "" {
+		return &ac.ErrorRoleNameMissing{}
+	}
 	if !strings.HasPrefix(role.Name, ac.PluginRolePrefix+pluginID+":") {
 		return &ac.ErrorRolePrefixMissing{Role: role.Name, Prefixes: []string{ac.PluginRolePrefix + pluginID + ":"}}
 	}
