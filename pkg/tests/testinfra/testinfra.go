@@ -31,14 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func RunTests(m *testing.M) {
-	// setup
-	code := m.Run()
-	// teardown
-	sqlstore.CleanupTestDB()
-	os.Exit(code)
-}
-
 // StartGrafana starts a Grafana server.
 // The server address is returned.
 func StartGrafana(t *testing.T, grafDir, cfgPath string) (string, *sqlstore.SQLStore) {

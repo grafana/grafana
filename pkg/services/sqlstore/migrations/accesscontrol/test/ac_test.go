@@ -230,6 +230,12 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
 
+	t.Cleanup(func() {
+		if err := x.Close(); err != nil {
+			fmt.Printf("failed to close xorm engine: %v", err)
+		}
+	})
+
 	err = migrator.NewDialect(x.DriverName()).CleanDB(x)
 	require.NoError(t, err)
 
