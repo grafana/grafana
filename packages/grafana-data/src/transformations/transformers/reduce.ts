@@ -224,7 +224,7 @@ export function reduceFields(data: DataFrame[], matcher: FieldMatcher, reducerId
           const value = results[reducer];
           const copy = {
             ...field,
-            type: guessFieldTypeFromValue(value),
+            type: field.type === FieldType.other || !field.type ? guessFieldTypeFromValue(value) : field.type,
             values: [value],
           };
           copy.state = undefined;

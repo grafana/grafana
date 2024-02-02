@@ -52,7 +52,14 @@ describe('Reducer Transformer', () => {
     const cfg = {
       id: DataTransformerID.reduce,
       options: {
-        reducers: [ReducerID.first, ReducerID.min, ReducerID.max, ReducerID.last],
+        reducers: [
+          ReducerID.first,
+          ReducerID.min,
+          ReducerID.max,
+          ReducerID.last,
+          ReducerID.uniqueValues,
+          ReducerID.count,
+        ],
       },
     };
 
@@ -88,6 +95,25 @@ describe('Reducer Transformer', () => {
             name: 'Last',
             type: FieldType.number,
             values: [6, 10000.6, 7, 11000.7],
+            config: {},
+          },
+          {
+            // expect type other
+            name: 'All unique values',
+            type: FieldType.other,
+            values: [
+              [3, 4, 5, 6],
+              [10000.3, 10000.4, 10000.5, 10000.6],
+              [1, 3, 5, 7],
+              [11000.1, 11000.3, 11000.5, 11000.7],
+            ],
+            config: {},
+          },
+          {
+            // expect type number
+            name: 'Count',
+            type: FieldType.number,
+            values: [4, 4, 4, 4],
             config: {},
           },
         ];
@@ -287,7 +313,7 @@ describe('Reducer Transformer', () => {
       name: 'a',
       fields: [
         { name: 'Time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
-        { name: 'Value', type: FieldType.number, values: [3, 4, 5, 6] },
+        { name: 'Value', type: FieldType.number, values: [3, 4, 5, 6, 6] },
       ],
     });
 
@@ -295,7 +321,7 @@ describe('Reducer Transformer', () => {
       name: '2021',
       fields: [
         { name: 'Time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
-        { name: 'Value', type: FieldType.number, values: [7, 8, 9, 10] },
+        { name: 'Value', type: FieldType.number, values: [7, 7, 8, 9, 10, 10] },
       ],
     });
 
