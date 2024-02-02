@@ -1021,12 +1021,6 @@ func (hs *HTTPServer) GetDashboardUIDs(c *contextmodel.ReqContext) {
 	c.JSON(http.StatusOK, uids)
 }
 
-// swagger:parameters renderReportPDF
-type RenderReportPDFParams struct {
-	// in:path
-	DashboardID int64
-}
-
 // swagger:parameters restoreDashboardVersionByID
 type RestoreDashboardVersionByIDParams struct {
 	// in:body
