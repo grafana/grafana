@@ -62,7 +62,7 @@ describe('OldFolderPicker', () => {
     render(<OldFolderPicker onChange={onChangeFn} enableCreateNew={true} allowEmpty={true} />);
     expect(await screen.findByTestId(selectors.components.FolderPicker.containerV2)).toBeInTheDocument();
 
-    await userEvent.type(screen.getByLabelText('Select a folder'), newFolder.title);
+    await userEvent.type(screen.getByTestId(selectors.components.FolderPicker.input), newFolder.title);
     const enter = await screen.findByText('Hit enter to add');
 
     await userEvent.click(enter);
