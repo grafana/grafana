@@ -170,7 +170,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         overflow: 'visible',
       },
       '@page': {
-        // margin: 0,
+        margin: 0,
         size: 'auto',
         padding: 0,
       },
