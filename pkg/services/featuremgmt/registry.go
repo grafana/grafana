@@ -510,17 +510,6 @@ var (
 			Created:        time.Date(2023, time.April, 14, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:              "advancedDataSourcePicker",
-			Description:       "Enable a new data source picker with contextual information, recently used order and advanced mode",
-			Stage:             FeatureStageGeneralAvailability,
-			FrontendOnly:      true,
-			Expression:        "true", // enabled by default
-			Owner:             grafanaDashboardsSquad,
-			AllowSelfServe:    false,
-			HideFromAdminPage: true,
-			Created:           time.Date(2023, time.April, 14, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:         "faroDatasourceSelector",
 			Description:  "Enable the data source selector within the Frontend Apps section of the Frontend Observability",
 			Stage:        FeatureStagePublicPreview,

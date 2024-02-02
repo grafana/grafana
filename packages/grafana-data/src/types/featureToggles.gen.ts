@@ -78,7 +78,6 @@ export interface FeatureToggles {
   externalServiceAuth?: boolean;
   refactorVariablesTimeRange?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
-  advancedDataSourcePicker?: boolean;
   faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
   extraThemes?: boolean;
