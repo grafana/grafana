@@ -423,6 +423,34 @@ export class ElasticDatasource
     return queries.map((q) => this.applyTemplateVariables(q, scopedVars, filters));
   }
 
+  async testDatasource() {
+    // we explicitly ask for uncached, "fresh" data here
+    const dbVersion = await this.getDatabaseVersion(false);
+    // if we are not able to determine the elastic-version, we assume it is a good version.
+    const isSupported = dbVersion != null ? isSupportedVersion(dbVersion) : true;
+    const versionMessage = isSupported ? '' : `WARNING: ${unsupportedVersionMessage} `;
+    // validate that the index exist and has date field
+    return lastValueFrom(
+      this.getFields(['date']).pipe(
+        mergeMap((dateFields) => {
+          const timeField = find(dateFields, { text: this.timeField });
+          if (!timeField) {
+            return of({
+              status: 'error',
+              message: 'No date field named ' + this.timeField + ' found',
+            });
+          }
+          return of({ status: 'success', message: `${versionMessage}Data source successfully connected.` });
+        }),
+        catchError((err) => {
+          const infoInParentheses = err.message ? ` (${err.message})` : '';
+          const message = `Unable to connect with Elasticsearch${infoInParentheses}. Please check the server logs for more details.`;
+          return of({ status: 'error', message });
+        })
+      )
+    );
+  }
+
   getQueryHeader(searchType: string, timeFrom?: DateTime, timeTo?: DateTime): string {
     const queryHeader = {
       search_type: searchType,
