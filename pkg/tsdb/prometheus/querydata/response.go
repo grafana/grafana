@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/converter"
 )
 
-func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) backend.DataResponse {
+func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response, enablePrometheusDataplaneFlag bool) backend.DataResponse {
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			s.log.FromContext(ctx).Error("Failed to close response body", "err", err)
@@ -30,7 +30,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
 	r := converter.ReadPrometheusStyleResult(iter, converter.Options{
-		Dataplane: s.enableDataplane,
+		Dataplane: enablePrometheusDataplaneFlag,
 	})
 	r.Status = backend.Status(res.StatusCode)
 
@@ -41,7 +41,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 
 	// The ExecutedQueryString can be viewed in QueryInspector in UI
 	for i, frame := range r.Frames {
-		addMetadataToMultiFrame(q, frame, s.enableDataplane)
+		addMetadataToMultiFrame(q, frame, enablePrometheusDataplaneFlag)
 		if i == 0 {
 			frame.Meta.ExecutedQueryString = executedQueryString(q)
 		}

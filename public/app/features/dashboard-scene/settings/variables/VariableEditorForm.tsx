@@ -22,10 +22,9 @@ interface VariableEditorFormProps {
   variable: SceneVariable;
   onTypeChange: (type: EditableVariableType) => void;
   onGoBack: () => void;
-  onDiscardChanges: () => void;
 }
 
-export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscardChanges }: VariableEditorFormProps) {
+export function VariableEditorForm({ variable, onTypeChange, onGoBack }: VariableEditorFormProps) {
   const { name, type, label, description, hide } = variable.useState();
   const EditorToRender = isEditableVariableType(type) ? getVariableEditor(type) : undefined;
   const [runQueryState, onRunQuery] = useAsyncFn(async () => {
@@ -106,13 +105,6 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDiscard
                 {runQueryState.loading ? <LoadingPlaceholder text="Running query..." /> : `Run query`}
               </Button>
             )}
-            <Button
-              variant="destructive"
-              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
-              onClick={onDiscardChanges}
-            >
-              Discard changes
-            </Button>
           </HorizontalGroup>
         </div>
       </form>

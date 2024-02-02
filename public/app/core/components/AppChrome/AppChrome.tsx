@@ -55,17 +55,18 @@ export function AppChrome({ children }: Props) {
     chrome.setMegaMenuOpen(!state.megaMenuOpen);
   };
 
-  const path = locationService.getLocation().pathname;
+  const { pathname, search } = locationService.getLocation();
+  const url = pathname + search;
   const shouldShowReturnToPrevious =
-    config.featureToggles.returnToPrevious && state.returnToPrevious && path !== state.returnToPrevious.href;
+    config.featureToggles.returnToPrevious && state.returnToPrevious && url !== state.returnToPrevious.href;
 
   useEffect(() => {
-    if (state.returnToPrevious && path === state.returnToPrevious.href) {
+    if (state.returnToPrevious && url === state.returnToPrevious.href) {
       chrome.clearReturnToPrevious();
     }
     // We only want to pay attention when the location changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chrome, path]);
+  }, [chrome, url]);
 
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
