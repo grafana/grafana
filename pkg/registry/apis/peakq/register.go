@@ -130,8 +130,8 @@ func (b *PeakQAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 									Content: map[string]*spec3.MediaType{
 										"application/json": {
 											MediaTypeProps: spec3.MediaTypeProps{
-												Schema:  &queryTemplateSpecSchema,
-												Example: basicTemplateSpec,
+												Schema: &queryTemplateSpecSchema,
+												//	Example: basicTemplateSpec,
 												Examples: map[string]*spec3.Example{
 													"test": {
 														ExampleProps: spec3.ExampleProps{

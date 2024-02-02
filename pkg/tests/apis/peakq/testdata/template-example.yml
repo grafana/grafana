@@ -1,6 +1,0 @@
-apiVersion: peakq.grafana.app/v0alpha1
-kind: QueryTemplate
-metadata:
-  name: example # This is the exposed user UID (there is also internal k8s uid)
-spec:
-  title: hi
