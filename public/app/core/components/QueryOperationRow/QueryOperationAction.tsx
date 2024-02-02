@@ -25,8 +25,7 @@ function BaseQueryOperationAction(props: QueryOperationActionProps | QueryOperat
         disabled={!!props.disabled}
         onClick={props.onClick}
         type="button"
-        aria-label={selectors.components.QueryEditorRow.actionButton(props.title)}
-        data-testid={props.dataTestId}
+        data-testid={props.dataTestId ?? selectors.components.QueryEditorRow.actionButton(props.title)}
         {...('active' in props && { 'aria-pressed': props.active })}
       />
     </div>

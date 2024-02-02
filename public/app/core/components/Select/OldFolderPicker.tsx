@@ -340,7 +340,7 @@ export function OldFolderPicker(props: Props) {
         <FolderWarningWhenSearching />
         <AsyncVirtualizedSelect
           inputId={inputId}
-          aria-label={selectors.components.FolderPicker.input}
+          data-testid={selectors.components.FolderPicker.input}
           loadingMessage={t('folder-picker.loading', 'Loading folders...')}
           defaultOptions
           defaultValue={folder}
