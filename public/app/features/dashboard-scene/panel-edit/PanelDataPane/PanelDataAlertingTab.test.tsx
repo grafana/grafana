@@ -32,6 +32,7 @@ import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { createDashboardSceneFromDashboardModel } from '../../serialization/transformSaveModelToScene';
 import { findVizPanelByKey, getVizPanelKeyForPanelId } from '../../utils/utils';
+import * as utils from '../../utils/utils';
 import { VizPanelManager } from '../VizPanelManager';
 
 import { PanelDataAlertingTab, PanelDataAlertingTabRendered } from './PanelDataAlertingTab';
@@ -350,6 +351,6 @@ function createModel(dashboard: DashboardModel) {
   const scene = createDashboardSceneFromDashboardModel(dashboard);
   const vizPanel = findVizPanelByKey(scene, getVizPanelKeyForPanelId(34));
   const model = new PanelDataAlertingTab(new VizPanelManager(vizPanel!.clone()));
-  model.getDashboard = jest.fn(() => scene);
+  jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(scene);
   return model;
 }
