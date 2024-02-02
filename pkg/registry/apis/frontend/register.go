@@ -12,12 +12,12 @@ import (
 	common "k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/pkg/apis/frontend/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*FrontendAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*FrontendAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type FrontendAPIBuilder struct {
@@ -32,7 +32,7 @@ func NewFrontendAPIBuilder() *FrontendAPIBuilder {
 
 func RegisterAPIService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
-	apiregistration grafanaapiserver.APIRegistrar,
+	apiregistration builder.APIRegistrar,
 ) *FrontendAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
@@ -77,6 +77,7 @@ func (b *FrontendAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
+	_ bool, // dual write
 ) (*genericapiserver.APIGroupInfo, error) {
 	resource := b.store.info
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(resource.GroupVersion().Group,
@@ -93,7 +94,7 @@ func (b *FrontendAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinition
 }
 
 // Register additional routes with the server
-func (b *FrontendAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *FrontendAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil
 }
 

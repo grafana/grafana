@@ -13,7 +13,7 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/frontend/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
 var (

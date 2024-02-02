@@ -13,12 +13,12 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Manage provisioned resources in Grafana
-title: Manage provisioned alerting resources in Grafana
+menuTitle: Manage provisioned alerting resources
+title: Manage provisioned alerting resources
 weight: 300
 ---
 
-# Manage provisioned alerting resources in Grafana
+# Manage provisioned alerting resources
 
 Verify that your alerting resources were created in Grafana, as well as edit or export your provisioned alerting resources.
 
@@ -39,7 +39,7 @@ Export your alerting resources, such as alert rules, contact points, and notific
 To export provisioned alerting resources from the Grafana UI, complete the following steps.
 
 1. Click **Alerts & IRM** -> **Alert rules**.
-1. To export all Grafana-managed rules, click **More v** -> **Export all Grafana-managed rules**.
+1. To export all Grafana-managed rules, click **Export rules**.
 1. To export a folder, change the **View as** to **List**.
 1. Select the folder you want to export and click the **Export rules folder** icon.
 1. To export a group, change the **View as** to **Grouped**.
