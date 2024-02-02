@@ -446,120 +446,120 @@ func TestService_TryTokenRefresh(t *testing.T) {
 	}
 }
 
-// func TestOAuthTokenSync_getOAuthTokenCacheTTL(t *testing.T) {
-// 	defaultTime := time.Now()
-// 	tests := []struct {
-// 		name              string
-// 		accessTokenExpiry time.Time
-// 		idTokenExpiry     time.Time
-// 		want              time.Duration
-// 	}{
-// 		{
-// 			name:              "should return maxOAuthTokenCacheTTL when no expiry is given",
-// 			accessTokenExpiry: time.Time{},
-// 			idTokenExpiry:     time.Time{},
+func TestOAuthTokenSync_getOAuthTokenCacheTTL(t *testing.T) {
+	defaultTime := time.Now()
+	tests := []struct {
+		name              string
+		accessTokenExpiry time.Time
+		idTokenExpiry     time.Time
+		want              time.Duration
+	}{
+		{
+			name:              "should return maxOAuthTokenCacheTTL when no expiry is given",
+			accessTokenExpiry: time.Time{},
+			idTokenExpiry:     time.Time{},
 
-// 			want: maxOAuthTokenCacheTTL,
-// 		},
-// 		{
-// 			name:              "should return maxOAuthTokenCacheTTL when access token is not given and id token expiry is greater than max cache ttl",
-// 			accessTokenExpiry: time.Time{},
-// 			idTokenExpiry:     defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
+			want: maxOAuthTokenCacheTTL,
+		},
+		{
+			name:              "should return maxOAuthTokenCacheTTL when access token is not given and id token expiry is greater than max cache ttl",
+			accessTokenExpiry: time.Time{},
+			idTokenExpiry:     defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
 
-// 			want: maxOAuthTokenCacheTTL,
-// 		},
-// 		{
-// 			name:              "should return idTokenExpiry when access token is not given and id token expiry is less than max cache ttl",
-// 			accessTokenExpiry: time.Time{},
-// 			idTokenExpiry:     defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL),
-// 			want:              time.Until(defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL)),
-// 		},
-// 		{
-// 			name:              "should return maxOAuthTokenCacheTTL when access token expiry is greater than max cache ttl and id token is not given",
-// 			accessTokenExpiry: defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
-// 			idTokenExpiry:     time.Time{},
-// 			want:              maxOAuthTokenCacheTTL,
-// 		},
-// 		{
-// 			name:              "should return accessTokenExpiry when access token expiry is less than max cache ttl and id token is not given",
-// 			accessTokenExpiry: defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL),
-// 			idTokenExpiry:     time.Time{},
-// 			want:              time.Until(defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL)),
-// 		},
-// 		{
-// 			name:              "should return accessTokenExpiry when access token expiry is less than max cache ttl and less than id token expiry",
-// 			accessTokenExpiry: defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL),
-// 			idTokenExpiry:     defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
-// 			want:              time.Until(defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL)),
-// 		},
-// 		{
-// 			name:              "should return idTokenExpiry when id token expiry is less than max cache ttl and less than access token expiry",
-// 			accessTokenExpiry: defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
-// 			idTokenExpiry:     defaultTime.Add(-3*time.Minute + maxOAuthTokenCacheTTL),
-// 			want:              time.Until(defaultTime.Add(-3*time.Minute + maxOAuthTokenCacheTTL)),
-// 		},
-// 		{
-// 			name:              "should return maxOAuthTokenCacheTTL when access token expiry is greater than max cache ttl and id token expiry is greater than max cache ttl",
-// 			accessTokenExpiry: defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
-// 			idTokenExpiry:     defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
-// 			want:              maxOAuthTokenCacheTTL,
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			got := getOAuthTokenCacheTTL(tt.accessTokenExpiry, tt.idTokenExpiry)
+			want: maxOAuthTokenCacheTTL,
+		},
+		{
+			name:              "should return idTokenExpiry when access token is not given and id token expiry is less than max cache ttl",
+			accessTokenExpiry: time.Time{},
+			idTokenExpiry:     defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL),
+			want:              time.Until(defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL)),
+		},
+		{
+			name:              "should return maxOAuthTokenCacheTTL when access token expiry is greater than max cache ttl and id token is not given",
+			accessTokenExpiry: defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
+			idTokenExpiry:     time.Time{},
+			want:              maxOAuthTokenCacheTTL,
+		},
+		{
+			name:              "should return accessTokenExpiry when access token expiry is less than max cache ttl and id token is not given",
+			accessTokenExpiry: defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL),
+			idTokenExpiry:     time.Time{},
+			want:              time.Until(defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL)),
+		},
+		{
+			name:              "should return accessTokenExpiry when access token expiry is less than max cache ttl and less than id token expiry",
+			accessTokenExpiry: defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL),
+			idTokenExpiry:     defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
+			want:              time.Until(defaultTime.Add(-5*time.Minute + maxOAuthTokenCacheTTL)),
+		},
+		{
+			name:              "should return idTokenExpiry when id token expiry is less than max cache ttl and less than access token expiry",
+			accessTokenExpiry: defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
+			idTokenExpiry:     defaultTime.Add(-3*time.Minute + maxOAuthTokenCacheTTL),
+			want:              time.Until(defaultTime.Add(-3*time.Minute + maxOAuthTokenCacheTTL)),
+		},
+		{
+			name:              "should return maxOAuthTokenCacheTTL when access token expiry is greater than max cache ttl and id token expiry is greater than max cache ttl",
+			accessTokenExpiry: defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
+			idTokenExpiry:     defaultTime.Add(5*time.Minute + maxOAuthTokenCacheTTL),
+			want:              maxOAuthTokenCacheTTL,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := getOAuthTokenCacheTTL(tt.accessTokenExpiry, tt.idTokenExpiry)
 
-// 			assert.Equal(t, tt.want.Round(time.Second), got.Round(time.Second))
-// 		})
-// 	}
-// }
+			assert.Equal(t, tt.want.Round(time.Second), got.Round(time.Second))
+		})
+	}
+}
 
-// func TestOAuthTokenSync_needTokenRefresh(t *testing.T) {
-// 	tests := []struct {
-// 		name                     string
-// 		usr                      *login.UserAuth
-// 		expectedTokenRefreshFlag bool
-// 		expectedTokenDuration    time.Duration
-// 	}{
-// 		{
-// 			name:                     "should not need token refresh when token has no expiration date",
-// 			usr:                      &login.UserAuth{},
-// 			expectedTokenRefreshFlag: false,
-// 			expectedTokenDuration:    maxOAuthTokenCacheTTL,
-// 		},
-// 		{
-// 			name: "should not need token refresh with an invalid jwt token that might result in an error when parsing",
-// 			usr: &login.UserAuth{
-// 				OAuthIdToken: "invalid_jwt_format",
-// 			},
-// 			expectedTokenRefreshFlag: false,
-// 			expectedTokenDuration:    maxOAuthTokenCacheTTL,
-// 		},
-// 		{
-// 			name: "should flag token refresh with id token is expired",
-// 			usr: &login.UserAuth{
-// 				OAuthIdToken: EXPIRED_JWT,
-// 			},
-// 			expectedTokenRefreshFlag: true,
-// 			expectedTokenDuration:    time.Second,
-// 		},
-// 		{
-// 			name: "should flag token refresh when expiry date is zero",
-// 			usr: &login.UserAuth{
-// 				OAuthExpiry:  time.Unix(0, 0),
-// 				OAuthIdToken: EXPIRED_JWT,
-// 			},
-// 			expectedTokenRefreshFlag: true,
-// 			expectedTokenDuration:    time.Second,
-// 		},
-// 	}
-// 	for _, tt := range tests {
-// 		t.Run(tt.name, func(t *testing.T) {
-// 			token, needsTokenRefresh, tokenDuration := needTokenRefresh(tt.usr)
+func TestOAuthTokenSync_needTokenRefresh(t *testing.T) {
+	tests := []struct {
+		name                     string
+		usr                      *login.UserAuth
+		expectedTokenRefreshFlag bool
+		expectedTokenDuration    time.Duration
+	}{
+		{
+			name:                     "should not need token refresh when token has no expiration date",
+			usr:                      &login.UserAuth{},
+			expectedTokenRefreshFlag: false,
+			expectedTokenDuration:    maxOAuthTokenCacheTTL,
+		},
+		{
+			name: "should not need token refresh with an invalid jwt token that might result in an error when parsing",
+			usr: &login.UserAuth{
+				OAuthIdToken: "invalid_jwt_format",
+			},
+			expectedTokenRefreshFlag: false,
+			expectedTokenDuration:    maxOAuthTokenCacheTTL,
+		},
+		{
+			name: "should flag token refresh with id token is expired",
+			usr: &login.UserAuth{
+				OAuthIdToken: EXPIRED_JWT,
+			},
+			expectedTokenRefreshFlag: true,
+			expectedTokenDuration:    time.Second,
+		},
+		{
+			name: "should flag token refresh when expiry date is zero",
+			usr: &login.UserAuth{
+				OAuthExpiry:  time.Unix(0, 0),
+				OAuthIdToken: EXPIRED_JWT,
+			},
+			expectedTokenRefreshFlag: true,
+			expectedTokenDuration:    time.Second,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			token, needsTokenRefresh, tokenDuration := needTokenRefresh(tt.usr)
 
-// 			assert.NotNil(t, token)
-// 			assert.Equal(t, tt.expectedTokenRefreshFlag, needsTokenRefresh)
-// 			assert.Equal(t, tt.expectedTokenDuration, tokenDuration)
-// 		})
-// 	}
-// }
+			assert.NotNil(t, token)
+			assert.Equal(t, tt.expectedTokenRefreshFlag, needsTokenRefresh)
+			assert.Equal(t, tt.expectedTokenDuration, tokenDuration)
+		})
+	}
+}
