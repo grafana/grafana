@@ -47,66 +47,52 @@ We recommend you only add team lbac permissions for teams that should use the da
 For validating the rules, we recommend testing the rules in the Loki Explore view. This will allow you to see the logs that would be returned for the rule.
 
 #### Scenarios
-**Scenario 1: One rule setup for a Team**
+
+**Scenario 1: One rule setup for each team**
+
+We have two teams, Team A and Team B. Loki access is setup with `Admin` roles to have `Query` permission.
+
+- Team A has a rule `namespace="dev"`. A user that is part of Team A will have access to logs that match `namespace="dev"`.
+
+- Team B has a rule `namespace="prod"`. A user that is part of Team B will have access to logs that match `namespace="prod"`.
+
+**Scenario 2: One rule setup for a Team**
+
 We have two teams, Team A and Team B. Loki access is setup with `Editor`, `Viewer` roles to have `Query` permission.
 
-Team A has a rule `namespace="dev"` configured. 
+- Team A has a rule `namespace="dev"` configured. A user that is part of Team A will have access to logs that match `namespace="dev"`.
 
-Team B does not have a rule configured for it. 
+- Team B does not have a rule configured for it. A user that is part of Team B, ths is `Editor` or `Viewer` will have access to all logs (due to the query permission for the user).
 
-**Logs Access**
-A user that is part of Team A will have access to logs that match `namespace="dev"`.
+**Scenario 3: Multiple rules setup for one team**
 
-A user that is part of Team B, ths is `Editor` or `Viewer` will have access to all logs (due to the query permission for the user).
+We have two teams, Team A and Team B. Loki access is setup with `Admin` roles having `Admin` permission.
 
-**Scenario 2: Multiple rules setup for two teams**
-We have two teams, Team A and Team B. Loki access is setup with `Admin` roles having `Query` permission.
+- Team A has rule `namespace="dev", namespace="prod"` configured. A user that is part of Team A will have access to logs that match `namespace="dev"` `AND` `namespace=prod`.
 
-Team A has rule `namespace="dev", namespace="prod"` configured. 
+- Team B has rule `namespace!="dev", namespace="prod"` configured. A user that is part of Team B will have access to logs that match `namespace!="bi"` `AND` `namespace=prod`.
 
-Team B has rule `namespace!="dev", namespace="prod"` configured. 
+- A user that is part of Team A and Team B will have access to logs that match `(namespace="dev" AND namespace="prod") OR (namespace="dev" AND namespace!="bi")`.
 
-**Logs Access**
-A user that is part of Team A will have access to logs that match `namespace="dev"` `OR` `namespace=prod`.
+**Scenario 4: Two or more rules configured for a team**
 
-A user that is part of Team B will have access to logs that match `namespace!="bi"` `OR` `namespace=prod`.
-
-A user that is part of Team A and Team B will have access to logs that match `namespace="dev"` `OR` `namespace=prod` `OR` `namespace!="bi"`.
-
-Any admin still have access to query all logs (due to the query permission for the user).
-
-**Scenario 3: Two or more rules configured for a team**
 We have three teams, Team A, Team B and Team C. Team C is a new team and has no rules configured for it. Loki access is setup with `Editor` role having `Query` permission.
 
-Team A has a rule `namespace="dev"` configured. Team A has a user with `Editor` role.
+Team A has a rule `namespace="dev"` configured. A user with `Editor` role has access to all logs. A user that is part of Team A without `Editor` role will get all logs that match `namespace="dev"`.
 
-Team B have two rules `namespace="dev"` and `namespace="prod"`. 
+Team B have two rules `namespace="dev"` and `namespace="prod"`. Team B, would be able to query all logs that match either `namespace="dev"` OR `namespace="prod"`.
 
-Team C have no rules. Team C has a user with an `Viewer`.
+Team C have no rules. Team C has a user with an `Viewer`. Team C's `Editors`, will have access to query all logs.
 
-**Log Access**
-Team A will have access to logs that match `namespace="dev"`.
+**Scenario 5: Rules that overlap**
 
-Team B, would be able to query all logs that match either `namespace="dev"` OR `namespace="prod"`.
-
-Team C's `Editors`, will have access to query all logs.
-
-
-**Scenario 4: Rules that overlap**
 We have two teams, Team A and Team B.
 
-Team A has a rule `namespace="dev"`.
+Team A has a rule `namespace="dev"`. A user in Team A will have access to logs that match `namespace="dev"`.
 
-Team B has a rule `namespace!="dev"`. 
+Team B has a rule `namespace!="dev"`. A user in Team b will have access to logs that match `namespace!="dev"`.
 
-**Log Access**
-A user in Team A will have access to logs that match `namespace="dev"`.
-
-A user in Team b will have access to logs that match `namespace!="dev"`.
-
-A user that is part of Team A and Team B will have access to logs that match `namespace="dev"` `OR` `namespace!="dev"`.
-
-> *NOTE:* If a user is part of Team A and Team B, the user will have access to all logs. This is because the rules are evaluated separately and the result is an "OR" oepration of the two rules.
+> *NOTE:* A user that is part of Team A and Team B will have access to logs that match `namespace="dev"` `OR` `namespace!="dev"`.
 
 ## Setting up Team LBAC rules
 
@@ -126,25 +112,25 @@ To configure Team LBAC rules, you need to have admin permissions for the data so
 1. Navigate to the permissions tab
    - Here, you'll find the Team LBAC rules section.
 1. Add a Team LBAC Rule
-   - If a relevant team doesn't exist, create one.
    - Add a new rule for the team in the Team LBAC rules section.
 1. Define Label Selector for the Rule
    - Add a label selector to the rule. Refer to Loki query documentation for guidance on the types of log selections you can specify.
 
 ### Steps to Configure Team LBAC Rules for a new Loki data source
 
-1. Access Loki Details in GCom
+1. Access Loki data sources details for your stack through grafana.com
 1. Copy Loki Details and Create a CAP
-   - Copy the details of your Loki setup. Create a Cloud Access Policy (CAP) for the Loki tenant in GCom.
-   - Ensure the CAP includes logs:read permissions.
+   - Copy the details of your Loki setup. 
+   - Create a Cloud Access Policy (CAP) for the Loki data source in grafana.com.
+   - Ensure the CAP includes `logs:read` permissions.
 1. Create a New Loki Data Source
    - In Grafana, proceed to add a new data source and select Loki as the type.
-1. Configure Basic Auth for the Loki Data Source
+1. Navigate back to the Loki data source
    - Set up the Loki data source using basic authentication. Use the userID as the username. Use the generated CAP token as the password.
+   - Save and connect.
 1. Navigate to Data Source Permissions
    - Go to the permissions tab of the newly created Loki data source. Here, you'll find the Team LBAC rules section.
 1. Add a Team LBAC Rule
-   - If a relevant team doesn't exist, create one.
    - Add a new rule for the team in the Team LBAC rules section.
 1. Define Label Selector for the Rule
    - Add a label selector to the rule. Refer to Loki query documentation for guidance on the types of log selections you can specify.
