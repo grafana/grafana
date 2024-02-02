@@ -45,6 +45,7 @@ import { forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel, isPanel
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
+import { PanelRepeaterGridItem } from './PanelRepeaterGridItem';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
@@ -386,7 +387,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     const gridItem = vizPanel.parent;
 
-    if (!(gridItem instanceof SceneGridItem)) {
+    if (!(gridItem instanceof SceneGridItem || PanelRepeaterGridItem)) {
       console.error('Trying to duplicate a panel in a layout that is not SceneGridItem ');
       return;
     }
