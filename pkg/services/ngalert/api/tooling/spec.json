@@ -2010,7 +2010,7 @@
     "/v1/notifications/receivers": {
       "get": {
         "tags": [
-          "receivers"
+          "notifications"
         ],
         "summary": "Get all receivers.",
         "operationId": "RouteGetReceivers",
@@ -2057,7 +2057,7 @@
     "/v1/notifications/receivers/{Name}": {
       "get": {
         "tags": [
-          "receivers"
+          "notifications"
         ],
         "summary": "Get a receiver by name.",
         "operationId": "RouteGetReceiver",
@@ -8074,6 +8074,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -8098,6 +8099,7 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -8267,6 +8269,7 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -8324,7 +8327,6 @@
       "$ref": "#/definitions/gettableSilences"
     },
     "integration": {
-      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -8508,7 +8510,6 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",

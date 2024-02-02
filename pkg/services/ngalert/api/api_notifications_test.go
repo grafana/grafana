@@ -44,7 +44,7 @@ func TestRouteGetReceiver(t *testing.T) {
 		fakeReceiverSvc.GetReceiverFn = func(ctx context.Context, q models.GetReceiverQuery, u identity.Requester) (definitions.GettableApiReceiver, error) {
 			return expected, nil
 		}
-		handler := NewReceiversApi(newReceiverSrv(fakeReceiverSvc))
+		handler := NewNotificationsApi(newNotificationSrv(fakeReceiverSvc))
 		rc := testReqCtx("GET")
 		resp := handler.handleRouteGetReceiver(&rc, "receiver1")
 		require.Equal(t, http.StatusOK, resp.Status())
@@ -57,7 +57,7 @@ func TestRouteGetReceiver(t *testing.T) {
 		fakeReceiverSvc.GetReceiverFn = func(ctx context.Context, q models.GetReceiverQuery, u identity.Requester) (definitions.GettableApiReceiver, error) {
 			return definitions.GettableApiReceiver{}, nil
 		}
-		handler := NewReceiversApi(newReceiverSrv(fakeReceiverSvc))
+		handler := NewNotificationsApi(newNotificationSrv(fakeReceiverSvc))
 		rc := testReqCtx("GET")
 		rc.Context.Req.Form.Set("decrypt", "true")
 		resp := handler.handleRouteGetReceiver(&rc, "receiver1")
@@ -77,7 +77,7 @@ func TestRouteGetReceiver(t *testing.T) {
 		fakeReceiverSvc.GetReceiverFn = func(ctx context.Context, q models.GetReceiverQuery, u identity.Requester) (definitions.GettableApiReceiver, error) {
 			return definitions.GettableApiReceiver{}, notifier.ErrNotFound
 		}
-		handler := NewReceiversApi(newReceiverSrv(fakeReceiverSvc))
+		handler := NewNotificationsApi(newNotificationSrv(fakeReceiverSvc))
 		rc := testReqCtx("GET")
 		resp := handler.handleRouteGetReceiver(&rc, "receiver1")
 		require.Equal(t, http.StatusNotFound, resp.Status())
@@ -87,7 +87,7 @@ func TestRouteGetReceiver(t *testing.T) {
 		fakeReceiverSvc.GetReceiverFn = func(ctx context.Context, q models.GetReceiverQuery, u identity.Requester) (definitions.GettableApiReceiver, error) {
 			return definitions.GettableApiReceiver{}, notifier.ErrPermissionDenied
 		}
-		handler := NewReceiversApi(newReceiverSrv(fakeReceiverSvc))
+		handler := NewNotificationsApi(newNotificationSrv(fakeReceiverSvc))
 		rc := testReqCtx("GET")
 		resp := handler.handleRouteGetReceiver(&rc, "receiver1")
 		require.Equal(t, http.StatusForbidden, resp.Status())
@@ -117,7 +117,7 @@ func TestRouteGetReceivers(t *testing.T) {
 		fakeReceiverSvc.GetReceiversFn = func(ctx context.Context, q models.GetReceiversQuery, u identity.Requester) ([]definitions.GettableApiReceiver, error) {
 			return expected, nil
 		}
-		handler := NewReceiversApi(newReceiverSrv(fakeReceiverSvc))
+		handler := NewNotificationsApi(newNotificationSrv(fakeReceiverSvc))
 		rc := testReqCtx("GET")
 		rc.Context.Req.Form.Set("names", "receiver1")
 		resp := handler.handleRouteGetReceivers(&rc)
@@ -131,7 +131,7 @@ func TestRouteGetReceivers(t *testing.T) {
 		fakeReceiverSvc.GetReceiversFn = func(ctx context.Context, q models.GetReceiversQuery, u identity.Requester) ([]definitions.GettableApiReceiver, error) {
 			return []definitions.GettableApiReceiver{}, nil
 		}
-		handler := NewReceiversApi(newReceiverSrv(fakeReceiverSvc))
+		handler := NewNotificationsApi(newNotificationSrv(fakeReceiverSvc))
 		rc := testReqCtx("GET")
 		rc.Context.Req.Form.Set("names", "receiver1")
 		rc.Context.Req.Form.Add("names", "receiver2")
@@ -157,15 +157,15 @@ func TestRouteGetReceivers(t *testing.T) {
 		fakeReceiverSvc.GetReceiversFn = func(ctx context.Context, q models.GetReceiversQuery, u identity.Requester) ([]definitions.GettableApiReceiver, error) {
 			return nil, notifier.ErrPermissionDenied
 		}
-		handler := NewReceiversApi(newReceiverSrv(fakeReceiverSvc))
+		handler := NewNotificationsApi(newNotificationSrv(fakeReceiverSvc))
 		rc := testReqCtx("GET")
 		resp := handler.handleRouteGetReceivers(&rc)
 		require.Equal(t, http.StatusForbidden, resp.Status())
 	})
 }
 
-func newReceiverSrv(receiverService ReceiverService) *ReceiverSrv {
-	return &ReceiverSrv{
+func newNotificationSrv(receiverService ReceiverService) *NotificationSrv {
+	return &NotificationSrv{
 		logger:          log.NewNopLogger(),
 		receiverService: receiverService,
 	}

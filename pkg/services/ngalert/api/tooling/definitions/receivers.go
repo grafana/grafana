@@ -1,6 +1,6 @@
 package definitions
 
-// swagger:route GET /v1/notifications/receivers/{Name} receivers RouteGetReceiver
+// swagger:route GET /v1/notifications/receivers/{Name} notifications RouteGetReceiver
 //
 // Get a receiver by name.
 //
@@ -8,7 +8,7 @@ package definitions
 //      200: GetReceiverResponse
 //      404: NotFound
 
-// swagger:route GET /v1/notifications/receivers receivers RouteGetReceivers
+// swagger:route GET /v1/notifications/receivers notifications RouteGetReceivers
 //
 // Get all receivers.
 //
