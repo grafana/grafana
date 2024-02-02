@@ -4,11 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
@@ -25,7 +23,7 @@ var (
 type DuckDB struct {
 	db     *sql.DB
 	name   string
-	lookup map[string]*data.Field
+	lookup Fields
 }
 
 // NewInMemoryDB creates a new in-memory DuckDB
@@ -45,7 +43,7 @@ func NewDuckDB(ctx context.Context, name string) (*DuckDB, error) {
 	return &DuckDB{
 		db:     db,
 		name:   name,
-		lookup: make(map[string]*data.Field),
+		lookup: Fields{},
 	}, nil
 }
 
@@ -84,30 +82,29 @@ func (d *DuckDB) Query(ctx context.Context, query string) (*data.Frame, error) {
 
 // AppendAll converts all the data frames into DuckDB tables
 func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
-	unknown, err := d.createTables(ctx, frames)
+	fieldLookup := fields(frames)
+	unknown, err := d.createTables(ctx, frames, fieldLookup)
 	if err != nil {
 		return err
 	}
 
-	for _, f := range frames {
-		err := d.appendFrame(ctx, f, unknown)
-		if err != nil {
-			return err
-		}
+	err = d.appendFrames(ctx, frames, unknown, fieldLookup)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (d *DuckDB) createTables(ctx context.Context, frames data.Frames) (Unknown, error) {
+func (d *DuckDB) createTables(ctx context.Context, frames data.Frames, fieldLookup TableFields) (Unknown, error) {
 	unknown := Unknown{}
 
-	for _, f := range frames {
-		name := tableName(f)
+	for id, tableFields := range fieldLookup {
+		name := id
 		stmt := []string{}
 		stmt = append(stmt, fmt.Sprintf("create or replace table %s (", name))
 		var fields []string
-		for _, fld := range f.Fields {
+		for _, fld := range tableFields {
 			var field []string
 
 			n := fld.Name
@@ -182,7 +179,8 @@ func (d *DuckDB) createTables(ctx context.Context, frames data.Frames) (Unknown,
 	return unknown, nil
 }
 
-func (d *DuckDB) appendFrame(ctx context.Context, f *data.Frame, u Unknown) error {
+// appendFrames - takes dataframes and appends the values into DuckDB
+func (d *DuckDB) appendFrames(ctx context.Context, f data.Frames, u Unknown, fl TableFields) error {
 	conn, err := d.db.Conn(ctx)
 	if err != nil {
 		return err
@@ -192,7 +190,7 @@ func (d *DuckDB) appendFrame(ctx context.Context, f *data.Frame, u Unknown) erro
 		if !ok {
 			return errors.New("bad connection")
 		}
-		return d.doAppend(c, f, u)
+		return d.doAppend(c, f, u, fl)
 	})
 	if err != nil {
 		return err
@@ -222,76 +220,37 @@ func connector(ctx context.Context, name string) (driver.Connector, error) {
 	return connector, err
 }
 
-func (d *DuckDB) doAppend(c driver.Conn, f *data.Frame, u Unknown) error {
-	appender, err := duckdb.NewAppenderFromConn(c, "", tableName(f))
-	if err != nil {
-		return err
-	}
-	for i := 0; i < f.Rows(); i++ {
-		var row []driver.Value
-		for _, ff := range f.Fields {
-			if u[ff.Name] {
-				continue
-			}
-			val := ff.At(i)
-			switch v := val.(type) {
-			case *float64:
-				val = *v
-			case *float32:
-				val = *v
-			case *string:
-				val = *v
-			case *int:
-				val = *v
-			case *int8:
-				val = *v
-			case *int32:
-				val = *v
-			case *int64:
-				val = *v
-			case *uint:
-				val = *v
-			case *uint8:
-				val = *v
-			case *uint16:
-				val = *v
-			case *uint32:
-				val = *v
-			case *uint64:
-				val = *v
-			case *bool:
-				val = *v
-			case *time.Time:
-				val = *v
-			case *json.RawMessage:
-				vv := *v
-				val = string(vv)
-			case json.RawMessage:
-				val = string(v)
-			}
-			row = append(row, val)
+func (d *DuckDB) doAppend(c driver.Conn, frames data.Frames, u Unknown, fl TableFields) error {
+	tables, nullFields := buildTables(frames, fl, u)
+	sortTablesByTime(tables)
+
+	for name, t := range tables {
+
+		appender, err := duckdb.NewAppenderFromConn(c, "", name)
+		if err != nil {
+			return err
 		}
-		err := appender.AppendRow(row...)
+
+		for _, row := range t {
+			err := appender.AppendRow(row...)
+			if err != nil {
+				fmt.Println(err)
+				return err
+			}
+		}
+
+		err = appender.Flush()
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+
+		err = appender.Close()
 		if err != nil {
 			fmt.Println(err)
 			return err
 		}
 	}
 
-	err = appender.Flush()
-	if err != nil {
-		fmt.Println(err)
-		return err
-	}
-
-	return nil
+	return d.updateNullPlaceholders(nullFields)
 }
-
-func tableName(f *data.Frame) string {
-	if f.RefID != "" {
-		return f.RefID
-	}
-	return f.Name
-}
-
-type Unknown map[string]bool
