@@ -9,43 +9,33 @@ import { XYChartTooltip, Props } from './XYChartTooltip';
 import { ScatterSeries } from './types';
 
 describe('XYChartTooltip', () => {
-  it('should render null when allSeries is empty', () => {
+  it('should render null when `allSeries` is empty', () => {
     const { container } = render(<XYChartTooltip {...getProps()} />);
 
     expect(container.firstChild).toBeNull();
   });
 
-  it('should render null when rowIndex is null', () => {
+  it('should render null when `dataIdxs` is null', () => {
     const { container } = render(<XYChartTooltip {...getProps({ dataIdxs: [null] })} />);
 
     expect(container.firstChild).toBeNull();
   });
 
-  it('should render the tooltip content when allSeries and rowIndex are valid', () => {
-    const seriesName = 'seriesName_1';
-    const { getByText } = render(
-      <XYChartTooltip
-        {...getProps({ allSeries: buildAllSeries(seriesName), data: buildData(), dataIdxs: [1], seriesIdx: 1 })}
-      />
-    );
-
-    expect(getByText(seriesName)).toBeInTheDocument();
-  });
-
   it('should render the tooltip header label with series name', () => {
-    const seriesName = 'seriesName_2';
-    const { getByText } = render(
+    const seriesName = 'seriesName_1';
+    const { getByText, debug } = render(
       <XYChartTooltip
         {...getProps({ allSeries: buildAllSeries(seriesName), data: buildData(), dataIdxs: [1], seriesIdx: 1 })}
       />
     );
+    debug();
 
     expect(getByText(seriesName)).toBeInTheDocument();
   });
 
-  it('should render the tooltip content labels with x and y values', () => {
-    const field1Name = 'field_1';
-    const field2Name = 'field_2';
+  it('should render the tooltip content with x and y field names and values', () => {
+    const field1Name = 'test_field_1';
+    const field2Name = 'test_field_2';
     const { getByText } = render(
       <XYChartTooltip
         {...getProps({
