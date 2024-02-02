@@ -11,7 +11,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "10.3.2";
+export const pluginVersion = "10.3.3";
 
 export interface Options {
   basemap: ui.MapLayerOptions;
