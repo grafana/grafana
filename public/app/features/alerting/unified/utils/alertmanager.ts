@@ -1,3 +1,4 @@
+import { produce } from 'immer';
 import { isEqual, uniqWith } from 'lodash';
 
 import { SelectableValue } from '@grafana/data';
@@ -16,6 +17,8 @@ import { MatcherFieldValue } from '../types/silence-form';
 
 import { getAllDataSources } from './config';
 import { DataSourceType } from './datasource';
+import { parseMatcher } from './matchers';
+import { isQuoted, quoteWithEscape, unquoteWithUnescape } from './misc';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -136,6 +139,39 @@ export function parseMatchers(matcherQueryString: string): Matcher[] {
   });
 
   return matchers;
+}
+
+export function unquoteRouteMatchers(route: Route): void {
+  if (route.matchers) {
+    route.matchers = route.matchers.map((stringMatcher) => {
+      const [name, operator, value] = matcherToObjectMatcher(parseMatcher(stringMatcher));
+      if (isQuoted(value)) {
+        return `${name}${operator}${unquoteWithUnescape(value)}`;
+      }
+      return stringMatcher;
+    });
+  }
+  route.routes?.forEach(unquoteRouteMatchers);
+}
+
+export function quoteRouteMatchers(route: Route): void {
+  if (route.matchers) {
+    route.matchers = route.matchers.map((stringMatcher) => {
+      const matcher = parseMatcher(stringMatcher);
+      const { name, value, operator } = matcherToMatcherField(matcher);
+      return `${name}${operator}${quoteWithEscape(value)}`;
+    });
+  }
+  route.routes?.forEach(quoteRouteMatchers);
+}
+
+export function quoteAmConfigMatchers(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
+  return produce(config, (draft) => {
+    if (draft.alertmanager_config.route) {
+      // Grafana AM doesn't use the matchers field so shouldn't be affected
+      quoteRouteMatchers(draft.alertmanager_config.route);
+    }
+  });
 }
 
 function getValidRegexString(regex: string): string {

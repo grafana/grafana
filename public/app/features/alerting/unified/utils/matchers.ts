@@ -60,6 +60,27 @@ export const getMatcherQueryParams = (labels: Labels) => {
   return matcherUrlParams;
 };
 
+export const matcherToObjectMatcher = (matcher: Matcher): ObjectMatcher => {
+  const { name, value, isRegex, isEqual } = matcher;
+
+  let operator = MatcherOperator.equal;
+
+  if (isEqual && isRegex) {
+    operator = MatcherOperator.regex;
+  }
+  if (!isEqual && isRegex) {
+    operator = MatcherOperator.notRegex;
+  }
+  if (isEqual && !isRegex) {
+    operator = MatcherOperator.equal;
+  }
+  if (!isEqual && !isRegex) {
+    operator = MatcherOperator.notEqual;
+  }
+
+  return [name, operator, value];
+};
+
 /**
  * We need to deal with multiple (deprecated) properties such as "match" and "match_re"
  * this function will normalize all of the different ways to define matchers in to a single one.
@@ -68,24 +89,11 @@ export const normalizeMatchers = (route: Route): ObjectMatcher[] => {
   const matchers: ObjectMatcher[] = [];
 
   if (route.matchers) {
-    route.matchers.forEach((matcher) => {
-      const { name, value, isEqual, isRegex } = parseMatcher(matcher);
-      let operator = MatcherOperator.equal;
+    route.matchers.forEach((stringMatcher) => {
+      const matcher = parseMatcher(stringMatcher);
+      const objectMatcher = matcherToObjectMatcher(matcher);
 
-      if (isEqual && isRegex) {
-        operator = MatcherOperator.regex;
-      }
-      if (!isEqual && isRegex) {
-        operator = MatcherOperator.notRegex;
-      }
-      if (isEqual && !isRegex) {
-        operator = MatcherOperator.equal;
-      }
-      if (!isEqual && !isRegex) {
-        operator = MatcherOperator.notEqual;
-      }
-
-      matchers.push([name, operator, value]);
+      matchers.push(objectMatcher);
     });
   }
 
