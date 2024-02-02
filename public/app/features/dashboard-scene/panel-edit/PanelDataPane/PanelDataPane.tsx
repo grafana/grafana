@@ -147,11 +147,11 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
       <TabsBar hideBorder={true} className={styles.tabsBar}>
         {tabs.map((t, index) => {
           return (
-            <t.tabComponent
+            <t.TabComponent
               key={`${t.getTabLabel()}-${index}`}
               active={t.tabId === tab}
               onChangeTab={() => model.onChangeTab(t)}
-            ></t.tabComponent>
+            ></t.TabComponent>
           );
         })}
       </TabsBar>

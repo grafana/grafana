@@ -12,14 +12,14 @@ import { PanelDataPaneTabState, PanelDataPaneTab, TabId, PanelDataTabHeaderProps
 
 export class PanelDataAlertingTab extends SceneObjectBase<PanelDataPaneTabState> implements PanelDataPaneTab {
   static Component = PanelDataAlertingTabRendered;
-  tabComponent: (props: PanelDataTabHeaderProps) => React.JSX.Element;
+  TabComponent: (props: PanelDataTabHeaderProps) => React.JSX.Element;
 
   tabId = TabId.Alert;
   private _panelManager: VizPanelManager;
 
   constructor(panelManager: VizPanelManager) {
     super({});
-    this.tabComponent = (props: PanelDataTabHeaderProps) => AlertingTab({ ...props, model: this });
+    this.TabComponent = (props: PanelDataTabHeaderProps) => AlertingTab({ ...props, model: this });
     this._panelManager = panelManager;
   }
   getTabLabel() {

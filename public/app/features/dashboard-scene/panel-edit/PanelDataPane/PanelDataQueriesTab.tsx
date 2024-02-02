@@ -26,7 +26,7 @@ interface PanelDataQueriesTabState extends PanelDataPaneTabState {
 }
 export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabState> implements PanelDataPaneTab {
   static Component = PanelDataQueriesTabRendered;
-  tabComponent: (props: PanelDataTabHeaderProps) => React.JSX.Element;
+  TabComponent: (props: PanelDataTabHeaderProps) => React.JSX.Element;
 
   tabId = TabId.Queries;
   icon: IconName = 'database';
@@ -42,7 +42,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
   constructor(panelManager: VizPanelManager) {
     super({});
-    this.tabComponent = (props: PanelDataTabHeaderProps) => {
+    this.TabComponent = (props: PanelDataTabHeaderProps) => {
       return QueriesTab({ ...props, model: this });
     };
 

@@ -21,7 +21,7 @@ export class PanelDataTransformationsTab
   implements PanelDataPaneTab
 {
   static Component = PanelDataTransformationsTabRendered;
-  tabComponent: (props: PanelDataTabHeaderProps) => React.JSX.Element;
+  TabComponent: (props: PanelDataTabHeaderProps) => React.JSX.Element;
 
   tabId = TabId.Transformations;
   icon: IconName = 'process';
@@ -33,7 +33,7 @@ export class PanelDataTransformationsTab
 
   constructor(panelManager: VizPanelManager) {
     super({});
-    this.tabComponent = (props: PanelDataTabHeaderProps) => TransformationsTab({ ...props, model: this });
+    this.TabComponent = (props: PanelDataTabHeaderProps) => TransformationsTab({ ...props, model: this });
 
     this._panelManager = panelManager;
   }

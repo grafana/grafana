@@ -15,7 +15,7 @@ export interface PanelDataTabHeaderProps {
 }
 
 export interface PanelDataPaneTab extends SceneObject {
-  tabComponent: (props: PanelDataTabHeaderProps) => React.JSX.Element;
+  TabComponent: (props: PanelDataTabHeaderProps) => React.JSX.Element;
   getTabLabel(): string;
   tabId: TabId;
 }
