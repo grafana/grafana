@@ -26,7 +26,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
   const _legacyDashboardModel = getDashboardSrv().getCurrent();
   const buttonWithExtraMargin = useStyles2(getStyles);
 
-  toolbarActions.push(<NavToolbarSeparator leftActionsSeparator key="separator" />);
+  toolbarActions.push(<NavToolbarSeparator leftActionsSeparator key="first-separator" />);
 
   if (uid && !editview) {
     if (meta.canStar) {
@@ -111,6 +111,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
         }}
         tooltip=""
         key="back"
+        fill="text"
         variant="secondary"
         size="sm"
         icon="arrow-left"
@@ -136,6 +137,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
         Edit
       </Button>
     );
+    toolbarActions.push(<NavToolbarSeparator key="edit-sep" />);
   }
 
   if (isEditing && dashboard.canEditDashboard() && !viewPanelScene) {
@@ -149,49 +151,44 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
           fill="text"
           size="sm"
           key="settings"
+          variant="secondary"
         >
           Settings
         </Button>
       );
+      toolbarActions.push(<NavToolbarSeparator key="setting-sep" />);
     }
 
     if (!dashboard.state.meta.isNew) {
-      toolbarActions.push(
-        <Button
-          onClick={() => {
-            dashboard.openSaveDrawer({ saveAsCopy: true });
-          }}
-          size="sm"
-          tooltip="Save as copy"
-          fill="text"
-          key="save-as"
-        >
-          Save as
-        </Button>
-      );
+      // toolbarActions.push(
+      //   <Button
+      //     onClick={() => {
+      //       dashboard.openSaveDrawer({ saveAsCopy: true });
+      //     }}
+      //     size="sm"
+      //     tooltip="Save as copy"
+      //     fill="text"
+      //     key="save-as"
+      //   >
+      //     Save as
+      //   </Button>
+      // );
     }
 
-    if (dashboard.canDiscard()) {
-      if (isDirty) {
-        toolbarActions.push(
-          <Button
-            onClick={dashboard.onDiscard}
-            tooltip="Discard changes and return to view mode"
-            fill="outline"
-            size="sm"
-            key="discard"
-            variant="destructive"
-          >
-            Discard changes
-          </Button>
-        );
-      } else {
-        toolbarActions.push(
-          <Button onClick={dashboard.onDiscard} tooltip="Will discard all changes" fill="text" size="sm" key="discard">
-            Switch to view mode
-          </Button>
-        );
-      }
+    if (dashboard.canDiscard() && !editview) {
+      toolbarActions.push(
+        <Button
+          onClick={dashboard.onDiscard}
+          tooltip="Discard changes and return to view mode"
+          size="sm"
+          key="discard"
+          fill="text"
+          variant="secondary"
+          icon="arrow-left"
+        >
+          Back to view mode
+        </Button>
+      );
     }
 
     toolbarActions.push(
