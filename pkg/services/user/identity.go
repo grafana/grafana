@@ -13,8 +13,9 @@ const (
 )
 
 type SignedInUser struct {
-	UserID           int64 `xorm:"user_id"`
-	OrgID            int64 `xorm:"org_id"`
+	UserID           int64  `xorm:"user_id"`
+	UserUID          string `xorm:"user_uid"`
+	OrgID            int64  `xorm:"org_id"`
 	OrgName          string
 	OrgRole          roletype.RoleType
 	Login            string
@@ -58,6 +59,7 @@ func (u *SignedInUser) NameOrFallback() string {
 func (u *SignedInUser) ToUserDisplayDTO() *UserDisplayDTO {
 	return &UserDisplayDTO{
 		ID:    u.UserID,
+		UID:   u.UserUID,
 		Login: u.Login,
 		Name:  u.Name,
 		// AvatarURL: dtos.GetGravatarUrl(u.GetEmail()),

@@ -92,6 +92,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	data := dtos.IndexViewData{
 		User: &dtos.CurrentUser{
 			Id:                         userID,
+			UID:                        c.UserUID, // << not set yet
 			IsSignedIn:                 c.IsSignedIn,
 			Login:                      c.Login,
 			Email:                      c.SignedInUser.GetEmail(),

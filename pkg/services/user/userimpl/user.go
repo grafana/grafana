@@ -129,6 +129,7 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 
 	// create user
 	usr := &user.User{
+		UID:              cmd.UID,
 		Email:            cmd.Email,
 		Name:             cmd.Name,
 		Login:            cmd.Login,

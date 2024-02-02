@@ -105,6 +105,7 @@ export interface AnalyticsSettings {
 export interface CurrentUserDTO {
   isSignedIn: boolean;
   id: number;
+  uid: string;
   externalUserId: string;
   login: string;
   email: string;
