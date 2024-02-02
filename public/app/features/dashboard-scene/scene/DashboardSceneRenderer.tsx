@@ -78,7 +78,7 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'sticky',
       top: 0,
       background: theme.colors.background.canvas,
-      zIndex: theme.zIndex.navbarFixed,
+      zIndex: theme.zIndex.activePanel,
       padding: theme.spacing(2, 0),
     }),
   };

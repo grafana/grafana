@@ -3,7 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { Box, Button, Icon, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Box, Button, Icon, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { t } from 'app/core/internationalization';
@@ -20,24 +20,20 @@ interface Props {
 }
 
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
-  const { actions = [], isEditing, viewPanelScene, isDirty, uid, meta, editview } = dashboard.useState();
-  const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
-  const rightToolbarActions: JSX.Element[] = [];
-  const _legacyDashboardModel = getDashboardSrv().getCurrent();
+  const { isEditing, viewPanelScene, isDirty, uid, meta, editview } = dashboard.useState();
   const buttonWithExtraMargin = useStyles2(getStyles);
+  const toolbarActions: ToolbarAction[] = [];
 
-  toolbarActions.push(<NavToolbarSeparator leftActionsSeparator key="first-separator" />);
-
-  if (uid && !editview) {
-    if (meta.canStar) {
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: uid && !editview && Boolean(meta.canStar),
+    render: () => {
       let desc = meta.isStarred
         ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
         : t('dashboard.toolbar.mark-favorite', 'Mark as favorite');
-
-      toolbarActions.push(
+      return (
         <ToolbarButton
           tooltip={desc}
-          key="star-button"
           icon={
             <Icon name={meta.isStarred ? 'favorite' : 'star'} size="lg" type={meta.isStarred ? 'mono' : 'default'} />
           }
@@ -47,47 +43,40 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
           }}
         />
       );
-    }
+    },
+  });
 
-    toolbarActions.push(
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: uid && !editview,
+    render: () => (
       <ToolbarButton
         key="view-in-old-dashboard-button"
         tooltip={'Switch to old dashboard page'}
         icon="apps"
         onClick={() => locationService.push(`/d/${uid}`)}
       />
-    );
+    ),
+  });
 
-    if (dynamicDashNavActions.left.length > 0) {
-      dynamicDashNavActions.left.map((action, index) => {
+  if (dynamicDashNavActions.left.length > 0) {
+    dynamicDashNavActions.left.map((action, index) => {
+      const props = { dashboard: getDashboardSrv().getCurrent()! };
+      if (action.show(props)) {
         const Component = action.component;
-        const element = <Component dashboard={_legacyDashboardModel} />;
-        typeof action.index === 'number'
-          ? toolbarActions.splice(action.index, 0, element)
-          : toolbarActions.push(element);
-      });
-    }
-  }
-
-  if (dynamicDashNavActions.right.length > 0 && !editview) {
-    dynamicDashNavActions.right.map((action, index) => {
-      const Component = action.component;
-      const element = <Component dashboard={_legacyDashboardModel} key={`button-custom-${index}`} />;
-      typeof action.index === 'number'
-        ? rightToolbarActions.splice(action.index, 0, element)
-        : rightToolbarActions.push(element);
+        toolbarActions.push({
+          group: 'icon-actions',
+          condition: true,
+          render: () => <Component {...props} />,
+        });
+      }
     });
-
-    toolbarActions.push(...rightToolbarActions);
   }
 
-  // Line between icon actions above and text actions below
-  if (toolbarActions.length > 1) {
-    toolbarActions.push(<NavToolbarSeparator key="dynamicActionsSeperator" />);
-  }
-
-  if (viewPanelScene) {
-    toolbarActions.push(
+  toolbarActions.push({
+    group: 'back-button',
+    condition: Boolean(viewPanelScene),
+    render: () => (
       <Button
         onClick={() => {
           locationService.partial({ viewPanel: null });
@@ -100,11 +89,13 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
       >
         Back to dashboard
       </Button>
-    );
-  }
+    ),
+  });
 
-  if (editview) {
-    toolbarActions.push(
+  toolbarActions.push({
+    group: 'back-button',
+    condition: Boolean(editview),
+    render: () => (
       <Button
         onClick={() => {
           locationService.partial({ editview: null });
@@ -118,11 +109,13 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
       >
         Back to dashboard
       </Button>
-    );
-  }
+    ),
+  });
 
-  if (!isEditing && dashboard.canEditDashboard() && !viewPanelScene) {
-    toolbarActions.push(
+  toolbarActions.push({
+    group: 'main-buttons',
+    condition: !isEditing && dashboard.canEditDashboard() && !viewPanelScene,
+    render: () => (
       <Button
         onClick={() => {
           dashboard.onEnterEditMode();
@@ -131,67 +124,69 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
         key="edit"
         className={buttonWithExtraMargin}
         variant="primary"
-        //        fill="text"
         size="sm"
       >
         Edit
       </Button>
-    );
-    toolbarActions.push(<NavToolbarSeparator key="edit-sep" />);
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'settings',
+    condition: isEditing && dashboard.canEditDashboard() && !viewPanelScene && !editview,
+    render: () => (
+      <Button
+        onClick={() => {
+          dashboard.onOpenSettings();
+        }}
+        tooltip="Dashboard settings"
+        fill="text"
+        size="sm"
+        key="settings"
+        variant="secondary"
+      >
+        Settings
+      </Button>
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'main-buttons',
+    condition: isEditing && !editview && !meta.isNew,
+    render: () => (
+      <Button
+        onClick={dashboard.onDiscard}
+        tooltip="Exits edit mode and discards unsaved changes"
+        size="sm"
+        key="discard"
+        fill="text"
+        variant="primary"
+      >
+        Done editing
+      </Button>
+    ),
+  });
+
+  if (!dashboard.state.meta.isNew) {
+    // toolbarActions.push(
+    //   <Button
+    //     onClick={() => {
+    //       dashboard.openSaveDrawer({ saveAsCopy: true });
+    //     }}
+    //     size="sm"
+    //     tooltip="Save as copy"
+    //     fill="text"
+    //     key="save-as"
+    //   >
+    //     Save as
+    //   </Button>
+    // );
   }
 
-  if (isEditing && dashboard.canEditDashboard() && !viewPanelScene) {
-    if (!editview) {
-      toolbarActions.push(
-        <Button
-          onClick={() => {
-            dashboard.onOpenSettings();
-          }}
-          tooltip="Dashboard settings"
-          fill="text"
-          size="sm"
-          key="settings"
-          variant="secondary"
-        >
-          Settings
-        </Button>
-      );
-      toolbarActions.push(<NavToolbarSeparator key="setting-sep" />);
-    }
-
-    if (!dashboard.state.meta.isNew) {
-      // toolbarActions.push(
-      //   <Button
-      //     onClick={() => {
-      //       dashboard.openSaveDrawer({ saveAsCopy: true });
-      //     }}
-      //     size="sm"
-      //     tooltip="Save as copy"
-      //     fill="text"
-      //     key="save-as"
-      //   >
-      //     Save as
-      //   </Button>
-      // );
-    }
-
-    if (dashboard.canDiscard() && !editview) {
-      toolbarActions.push(
-        <Button
-          onClick={dashboard.onDiscard}
-          tooltip="Discard changes and return to view mode"
-          size="sm"
-          key="discard"
-          fill="text"
-          variant="secondary"
-          icon="arrow-left"
-        >
-          Back to view mode
-        </Button>
-      );
-    }
-
-    toolbarActions.push(
+  toolbarActions.push({
+    group: 'main-buttons',
+    condition: isEditing && meta.canSave,
+    render: () => (
       <Button
         onClick={() => {
           DashboardInteractions.toolbarSaveClick();
@@ -201,16 +196,17 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
         key="save"
         className={buttonWithExtraMargin}
         size="sm"
-        //        variant={isDirty ? 'primary' : 'secondary'}
-        variant={'primary'}
+        variant={isDirty ? 'primary' : 'secondary'}
       >
-        Save
+        Save dashboard
       </Button>
-    );
-  }
+    ),
+  });
 
-  if (uid) {
-    toolbarActions.push(
+  toolbarActions.push({
+    group: 'main-buttons',
+    condition: uid,
+    render: () => (
       <Button
         key="share-dashboard-button"
         tooltip={t('dashboard.toolbar.share', 'Share dashboard')}
@@ -224,11 +220,33 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
       >
         Share
       </Button>
-    );
+    ),
+  });
+
+  const actionElements: React.ReactNode[] = [];
+  let lastGroup = '';
+
+  for (const action of toolbarActions) {
+    if (!action.condition) {
+      continue;
+    }
+
+    if (lastGroup && lastGroup !== action.group) {
+      lastGroup && actionElements.push(<NavToolbarSeparator key={`${lastGroup}-separator`} />);
+    }
+
+    actionElements.push(action.render());
+    lastGroup = action.group;
   }
 
-  return <AppChromeUpdate actions={toolbarActions} />;
+  return <AppChromeUpdate actions={<ToolbarButtonRow alignment="right">{actionElements}</ToolbarButtonRow>} />;
 });
+
+export interface ToolbarAction {
+  group: string;
+  condition?: boolean | string;
+  render: () => React.ReactNode;
+}
 
 NavToolbarActions.displayName = 'NavToolbarActions';
 

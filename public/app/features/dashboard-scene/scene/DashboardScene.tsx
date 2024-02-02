@@ -25,6 +25,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
@@ -218,16 +219,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       return;
     }
 
-    // appEvents.publish(
-    //   new ShowConfirmModalEvent({
-    //     title: 'Discard changes to dashboard?',
-    //     text: `You have unsaved changes to this dashboard. Are you sure you want to discard them?`,
-    //     icon: 'trash-alt',
-    //     yesText: 'Discard',
-    //     onConfirm: this.onConfirmDiscard,
-    //   })
-    // );
-    this.onConfirmDiscard();
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Discard changes to dashboard?',
+        text: `You have unsaved changes to this dashboard. Are you sure you want to discard them?`,
+        icon: 'trash-alt',
+        yesText: 'Discard',
+        onConfirm: this.onConfirmDiscard,
+      })
+    );
   };
 
   private onConfirmDiscard = () => {
