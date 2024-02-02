@@ -32,7 +32,9 @@ func TestMigrations(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		x.Close()
+		if err := x.Close(); err != nil {
+			fmt.Printf("failed to close xorm engine: %v", err)
+		}
 	})
 
 	err = NewDialect(x.DriverName()).CleanDB(x)
@@ -82,7 +84,9 @@ func TestMigrationLock(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		x.Close()
+		if err := x.Close(); err != nil {
+			fmt.Printf("failed to close xorm engine: %v", err)
+		}
 	})
 
 	dialect := NewDialect(x.DriverName())
@@ -188,7 +192,9 @@ func TestMigratorLocking(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		x.Close()
+		if err := x.Close(); err != nil {
+			fmt.Printf("failed to close xorm engine: %v", err)
+		}
 	})
 
 	err = NewDialect(x.DriverName()).CleanDB(x)
@@ -233,7 +239,9 @@ func TestDatabaseLocking(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		x.Close()
+		if err := x.Close(); err != nil {
+			fmt.Printf("failed to close xorm engine: %v", err)
+		}
 	})
 
 	err = NewDialect(x.DriverName()).CleanDB(x)
