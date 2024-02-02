@@ -10,7 +10,6 @@ import {
   ActionMeta,
   Field,
   FieldValidationMessage,
-  Icon,
   IconButton,
   InputControl,
   Select,
@@ -22,12 +21,15 @@ import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { createUrl } from 'app/features/alerting/unified/utils/url';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
-import { ContactPointReceiverSummary } from '../../../../contact-points/ContactPoints';
 import { ContactPointWithMetadata } from '../../../../contact-points/utils';
 
 export interface ContactPointSelectorProps {
   alertManager: string;
-  contactPoints: ContactPointWithMetadata[];
+  options: Array<{
+    label: string;
+    value: ContactPointWithMetadata;
+    description: React.JSX.Element;
+  }>;
   onSelectContactPoint: (contactPoint?: ContactPointWithMetadata) => void;
   refetchReceivers: () => QueryActionCreatorResult<
     QueryDefinition<
@@ -39,21 +41,15 @@ export interface ContactPointSelectorProps {
     >
   >;
 }
+
 export function ContactPointSelector({
   alertManager,
-  contactPoints,
+  options,
   onSelectContactPoint,
   refetchReceivers,
 }: ContactPointSelectorProps) {
   const styles = useStyles2(getStyles);
   const { control, watch } = useFormContext<RuleFormValues>();
-
-  const options = contactPoints.map((receiver) => {
-    const integrations = receiver?.grafana_managed_receiver_configs;
-    const description = <ContactPointReceiverSummary receivers={integrations ?? []} />;
-
-    return { label: receiver.name, value: receiver, description };
-  });
 
   const contactPointInForm = watch(`contactPoints.${alertManager}.selectedContactPoint`);
 
@@ -61,10 +57,6 @@ export function ContactPointSelector({
   const selectedContactPointSelectableValue = selectedContactPointWithMetadata
     ? { value: selectedContactPointWithMetadata, label: selectedContactPointWithMetadata.name }
     : undefined;
-
-  // We need to provide a fake loading state for the contact points, because it might be that the response is so fast that the loading spinner is not shown,
-  // and the user might think that the contact points are not fetched.
-  // We will show the loading spinner for 1 second, and if the fetching takes more than 1 second, we will show the loading spinner until the fetching is done.
 
   const LOADING_SPINNER_DURATION = 1000;
 
@@ -114,27 +106,21 @@ export function ContactPointSelector({
                       })}
                     />
                     <LinkToContactPoints />
-                    {!selectedContactPointWithMetadata && Boolean(contactPointInForm) && (
-                      <Stack direction="row" gap={1} alignItems="center">
-                        <Icon name="exclamation-triangle" className={styles.warn} />
-                        <div> {`Contact point ${contactPointInForm} does not exist.`} </div>
-                      </Stack>
-                    )}
                   </div>
                 </div>
-                {error && <FieldValidationMessage>{error.message}</FieldValidationMessage>}
+
+                {/* Error can come from the required validation we have in here, or from the manual setError we do in the parent component.
+                The only way I found to check the custom error is to check if the field has a value and if it's not in the options. */}
+
+                {(error || (!selectedContactPointWithMetadata && Boolean(contactPointInForm))) && (
+                  <FieldValidationMessage>
+                    {error?.message || `Contact point ${contactPointInForm} does not exist.`}
+                  </FieldValidationMessage>
+                )}
               </>
             )}
             rules={{
               required: { value: true, message: 'Contact point is required.' },
-              validate: {
-                contactPointExists: (value: string) => {
-                  if (options.some((option) => option.value.name === value)) {
-                    return true;
-                  }
-                  return 'Contact point does not exist.';
-                },
-              },
             }}
             control={control}
             name={`contactPoints.${alertManager}.selectedContactPoint`}

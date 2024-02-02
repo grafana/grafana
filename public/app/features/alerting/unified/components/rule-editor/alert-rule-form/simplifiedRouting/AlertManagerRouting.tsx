@@ -1,10 +1,13 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, CollapsableSection, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
+import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 
+import { ContactPointReceiverSummary } from '../../../contact-points/ContactPoints';
 import { useContactPointsWithStatus } from '../../../contact-points/useContactPoints';
 import { ContactPointWithMetadata } from '../../../contact-points/utils';
 
@@ -19,12 +22,54 @@ interface AlertManagerManualRoutingProps {
 
 export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRoutingProps) {
   const styles = useStyles2(getStyles);
+  const { watch, setError, clearErrors } = useFormContext<RuleFormValues>();
 
   const alertManagerName = alertManager.name;
   const { isLoading, error: errorInContactPointStatus, contactPoints, refetchReceivers } = useContactPointsWithStatus();
   const [selectedContactPointWithMetadata, setSelectedContactPointWithMetadata] = useState<
     ContactPointWithMetadata | undefined
   >();
+
+  const onSelectContactPoint = (contactPoint?: ContactPointWithMetadata) => {
+    setSelectedContactPointWithMetadata(contactPoint);
+  };
+
+  const contactPointInForm = watch(`contactPoints.${alertManager}.selectedContactPoint`);
+  const CONTACT_POINT_VALIDATION_ERROR_MSG = `Contact point ${contactPointInForm} does not exist.`;
+
+  const options = contactPoints.map((receiver) => {
+    const integrations = receiver?.grafana_managed_receiver_configs;
+    const description = <ContactPointReceiverSummary receivers={integrations ?? []} />;
+
+    return { label: receiver.name, value: receiver, description };
+  });
+
+  const contactPointValidate = useCallback(() => {
+    if (!selectedContactPointWithMetadata?.name) {
+      // we don't want to set an error if the field is empty, there are other validations for that in the form
+      return;
+    }
+    if (!options.some((option) => option.value.name === selectedContactPointWithMetadata.name)) {
+      setError(`contactPoints.${alertManager}.selectedContactPoint`, {
+        type: 'custom',
+        message: CONTACT_POINT_VALIDATION_ERROR_MSG,
+      });
+    } else {
+      clearErrors(`contactPoints.${alertManager}.selectedContactPoint`);
+    }
+  }, [
+    setError,
+    clearErrors,
+    alertManager,
+    options,
+    CONTACT_POINT_VALIDATION_ERROR_MSG,
+    selectedContactPointWithMetadata,
+  ]);
+
+  // validate the contact point any time the selected contact point changes
+  useEffect(() => {
+    contactPointValidate();
+  }, [selectedContactPointWithMetadata, contactPointValidate]);
 
   if (errorInContactPointStatus) {
     return <Alert title="Failed to fetch contact points" severity="error" />;
@@ -46,8 +91,8 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
       <Stack direction="row" gap={1} alignItems="center">
         <ContactPointSelector
           alertManager={alertManagerName}
-          contactPoints={contactPoints}
-          onSelectContactPoint={setSelectedContactPointWithMetadata}
+          options={options}
+          onSelectContactPoint={onSelectContactPoint}
           refetchReceivers={refetchReceivers}
         />
       </Stack>
