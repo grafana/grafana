@@ -9,6 +9,7 @@ import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsData
 import { DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { EditListViewSceneUrlSync } from './EditListViewSceneUrlSync';
@@ -45,6 +46,17 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     }
 
     return data;
+  }
+
+  public getDataLayer(editIndex: number): dataLayers.AnnotationsDataLayer {
+    const data = this.getSceneDataLayers();
+    const layer = data.state.layers[editIndex];
+
+    if (!(layer instanceof dataLayers.AnnotationsDataLayer)) {
+      throw new Error('AnnotationsDataLayer not found at index ' + editIndex);
+    }
+
+    return layer;
   }
 
   public getAnnotationsLength(): number {
@@ -145,10 +157,6 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
       //need to rerun the layer to update the query and
       //see the annotation on the panel
       layer.runLayer();
-
-      data.setState({
-        layers,
-      });
     }
   };
 }
@@ -158,7 +166,7 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
   const { layers } = model.getSceneDataLayers().useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   const { editIndex } = model.useState();
-  const panels = dashboard.getVizPanels();
+  const panels = dashboardSceneGraph.getVizPanels(dashboard);
 
   const annotations: AnnotationQuery[] = dataLayersToAnnotations(layers);
   const isEditing = editIndex != null && editIndex < model.getAnnotationsLength();
@@ -177,7 +185,7 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
       )}
       {isEditing && (
         <AnnotationSettingsEdit
-          annotation={annotations[editIndex]}
+          annotationLayer={model.getDataLayer(editIndex)}
           editIndex={editIndex}
           panels={panels}
           onUpdate={model.onUpdate}

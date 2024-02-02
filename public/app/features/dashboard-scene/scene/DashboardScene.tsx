@@ -17,7 +17,6 @@ import {
   sceneUtils,
   SceneVariable,
   SceneVariableDependencyConfigLike,
-  VizPanel,
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
@@ -328,22 +327,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    */
   public getBodyToRender(): SceneObject {
     return this.state.viewPanelScene ?? this.state.body;
-  }
-
-  public getVizPanels(): VizPanel[] {
-    const panels: VizPanel[] = [];
-
-    this.state.body.forEachChild((child) => {
-      if (child instanceof SceneGridItem) {
-        const panel = child.state.body;
-
-        if (panel instanceof VizPanel) {
-          panels.push(panel);
-        }
-      }
-    });
-
-    return panels;
   }
 
   private startTrackingChanges() {

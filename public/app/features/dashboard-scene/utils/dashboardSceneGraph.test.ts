@@ -1,6 +1,7 @@
 import {
   SceneGridItem,
   SceneGridLayout,
+  SceneGridRow,
   SceneQueryRunner,
   SceneRefreshPicker,
   SceneTimePicker,
@@ -91,6 +92,36 @@ describe('dashboardSceneGraph', () => {
       expect(dashboardSceneGraph.getPanelLinks(panelWithNoLinks)).toBeInstanceOf(VizPanelLinks);
     });
   });
+
+  describe('getVizPanels', () => {
+    let scene: DashboardScene;
+
+    beforeEach(async () => {
+      scene = buildTestScene();
+    });
+
+    it('Should return all panels', () => {
+      const vizPanels = dashboardSceneGraph.getVizPanels(scene);
+
+      expect(vizPanels.length).toBe(6);
+      expect(vizPanels[0].state.title).toBe('Panel A');
+      expect(vizPanels[1].state.title).toBe('Panel B');
+      expect(vizPanels[2].state.title).toBe('Panel C');
+      expect(vizPanels[3].state.title).toBe('Panel D');
+      expect(vizPanels[4].state.title).toBe('Panel E');
+      expect(vizPanels[5].state.title).toBe('Panel F');
+    });
+
+    it('Should return an empty array when scene has no panels', () => {
+      scene.setState({
+        body: new SceneGridLayout({ children: [] }),
+      });
+
+      const vizPanels = dashboardSceneGraph.getVizPanels(scene);
+
+      expect(vizPanels.length).toBe(0);
+    });
+  });
 });
 
 function buildTestScene(overrides?: Partial<DashboardSceneState>) {
@@ -131,7 +162,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
         }),
         new SceneGridItem({
           body: new VizPanel({
-            title: 'Panel B',
+            title: 'Panel C',
             key: 'panel-2-clone-1',
             pluginId: 'table',
             $data: new SceneQueryRunner({ key: 'data-query-runner2', queries: [{ refId: 'A' }] }),
@@ -139,12 +170,32 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
         }),
         new SceneGridItem({
           body: new VizPanel({
-            title: 'Panel B',
+            title: 'Panel D',
             key: 'panel-with-links',
             pluginId: 'table',
             $data: new SceneQueryRunner({ key: 'data-query-runner3', queries: [{ refId: 'A' }] }),
             titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
           }),
+        }),
+        new SceneGridRow({
+          key: 'key',
+          title: 'row',
+          children: [
+            new SceneGridItem({
+              body: new VizPanel({
+                title: 'Panel E',
+                key: 'panel-2-clone-2',
+                pluginId: 'table',
+              }),
+            }),
+            new SceneGridItem({
+              body: new VizPanel({
+                title: 'Panel F',
+                key: 'panel-2-clone-2',
+                pluginId: 'table',
+              }),
+            }),
+          ],
         }),
       ],
     }),

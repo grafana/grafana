@@ -205,33 +205,6 @@ describe('DashboardScene', () => {
       }
     });
   });
-
-  describe('When getting panels', () => {
-    let scene: DashboardScene;
-
-    beforeEach(async () => {
-      scene = buildTestScene();
-    });
-
-    it('Should return all panels', () => {
-      const vizPanels = scene.getVizPanels();
-
-      expect(vizPanels.length).toBe(3);
-      expect(vizPanels[0].state.key).toBe('panel-1');
-      expect(vizPanels[1].state.key).toBe('panel-2');
-      expect(vizPanels[2].state.key).toBe('panel-2-clone-1');
-    });
-
-    it('Should return an empty array when scene has no panels', () => {
-      scene.setState({
-        body: new SceneGridLayout({ children: [] }),
-      });
-
-      const vizPanels = scene.getVizPanels();
-
-      expect(vizPanels.length).toBe(0);
-    });
-  });
 });
 
 function buildTestScene(overrides?: Partial<DashboardSceneState>) {

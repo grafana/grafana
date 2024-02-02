@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
+import { dataLayers, VizPanel } from '@grafana/scenes';
 import { AnnotationPanelFilter } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import {
   Button,
@@ -34,7 +34,7 @@ import { getPanelIdForVizPanel } from '../../utils/utils';
 import { AngularEditorLoader } from './AngularEditorLoader';
 
 type Props = {
-  annotation: AnnotationQuery;
+  annotationLayer: dataLayers.AnnotationsDataLayer;
   editIndex: number;
   panels: VizPanel[];
   onUpdate: (annotation: AnnotationQuery, editIndex: number) => void;
@@ -46,7 +46,7 @@ type Props = {
 export const newAnnotationName = 'New annotation';
 
 export const AnnotationSettingsEdit = ({
-  annotation,
+  annotationLayer,
   editIndex,
   panels,
   onUpdate,
@@ -55,24 +55,25 @@ export const AnnotationSettingsEdit = ({
   onPreview,
 }: Props) => {
   const styles = useStyles2(getStyles);
+  const { query } = annotationLayer.useState();
 
   const panelFilter = useMemo(() => {
-    if (!annotation.filter) {
+    if (!query.filter) {
       return PanelFilterType.AllPanels;
     }
-    return annotation.filter.exclude ? PanelFilterType.ExcludePanels : PanelFilterType.IncludePanels;
-  }, [annotation.filter]);
+    return query.filter.exclude ? PanelFilterType.ExcludePanels : PanelFilterType.IncludePanels;
+  }, [query.filter]);
 
   const { value: ds } = useAsync(() => {
-    return getDataSourceSrv().get(annotation.datasource);
-  }, [annotation.datasource]);
+    return getDataSourceSrv().get(query.datasource);
+  }, [query.datasource]);
 
-  const dsi = getDataSourceSrv().getInstanceSettings(annotation.datasource);
+  const dsi = getDataSourceSrv().getInstanceSettings(query.datasource);
 
   const onNameChange = (ev: React.FocusEvent<HTMLInputElement>) => {
     onUpdate(
       {
-        ...annotation,
+        ...query,
         name: ev.currentTarget.value,
       },
       editIndex
@@ -82,25 +83,25 @@ export const AnnotationSettingsEdit = ({
   const onDataSourceChange = (ds: DataSourceInstanceSettings) => {
     const dsRef = getDataSourceRef(ds);
 
-    if (annotation.datasource?.type !== dsRef.type) {
+    if (query.datasource?.type !== dsRef.type) {
       onUpdate(
         {
           datasource: dsRef,
-          builtIn: annotation.builtIn,
-          enable: annotation.enable,
-          iconColor: annotation.iconColor,
-          name: annotation.name,
-          hide: annotation.hide,
-          filter: annotation.filter,
-          mappings: annotation.mappings,
-          type: annotation.type,
+          builtIn: query.builtIn,
+          enable: query.enable,
+          iconColor: query.iconColor,
+          name: query.name,
+          hide: query.hide,
+          filter: query.filter,
+          mappings: query.mappings,
+          type: query.type,
         },
         editIndex
       );
     } else {
       onUpdate(
         {
-          ...annotation,
+          ...query,
           datasource: dsRef,
         },
         editIndex
@@ -112,7 +113,7 @@ export const AnnotationSettingsEdit = ({
     const target = ev.currentTarget;
     onUpdate(
       {
-        ...annotation,
+        ...query,
         [target.name]: target.type === 'checkbox' ? target.checked : target.value,
       },
       editIndex
@@ -122,7 +123,7 @@ export const AnnotationSettingsEdit = ({
   const onColorChange = (color?: string) => {
     onUpdate(
       {
-        ...annotation,
+        ...query,
         iconColor: color!,
       },
       editIndex
@@ -135,9 +136,9 @@ export const AnnotationSettingsEdit = ({
         ? undefined
         : {
             exclude: v.value === PanelFilterType.ExcludePanels,
-            ids: annotation.filter?.ids ?? [],
+            ids: query.filter?.ids ?? [],
           };
-    onUpdate({ ...annotation, filter }, editIndex);
+    onUpdate({ ...query, filter }, editIndex);
   };
 
   const onAddFilterPanelID = (selections: Array<SelectableValue<number>>) => {
@@ -151,7 +152,7 @@ export const AnnotationSettingsEdit = ({
     };
 
     selections.forEach((selection) => selection.value && filter.ids.push(selection.value));
-    onUpdate({ ...annotation, filter }, editIndex);
+    onUpdate({ ...query, filter }, editIndex);
   };
 
   const onApply = goBackToList;
@@ -161,7 +162,7 @@ export const AnnotationSettingsEdit = ({
     goBackToList();
   };
 
-  const isNewAnnotation = annotation.name === newAnnotationName;
+  const isNewAnnotation = query.name === newAnnotationName;
 
   const sortFn = (a: SelectableValue<number>, b: SelectableValue<number>) => {
     if (a.label && b.label) {
@@ -197,18 +198,18 @@ export const AnnotationSettingsEdit = ({
             name="name"
             id="name"
             autoFocus={isNewAnnotation}
-            value={annotation.name}
+            value={query.name}
             onChange={onNameChange}
           />
         </Field>
         <Field label="Data source" htmlFor="data-source-picker">
-          <DataSourcePicker annotations variables current={annotation.datasource} onChange={onDataSourceChange} />
+          <DataSourcePicker annotations variables current={query.datasource} onChange={onDataSourceChange} />
         </Field>
         <Field label="Enabled" description="When enabled the annotation query is issued every dashboard refresh">
           <Checkbox
             name="enable"
             id="enable"
-            value={annotation.enable}
+            value={query.enable}
             onChange={onChange}
             data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.enable}
           />
@@ -220,14 +221,14 @@ export const AnnotationSettingsEdit = ({
           <Checkbox
             name="hide"
             id="hide"
-            value={annotation.hide}
+            value={query.hide}
             onChange={onChange}
             data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.hide}
           />
         </Field>
         <Field label="Color" description="Color to use for the annotation event markers">
           <HorizontalGroup>
-            <ColorValueEditor value={annotation?.iconColor} onChange={onColorChange} />
+            <ColorValueEditor value={query?.iconColor} onChange={onColorChange} />
           </HorizontalGroup>
         </Field>
         <Field label="Show in" data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel}>
@@ -241,7 +242,7 @@ export const AnnotationSettingsEdit = ({
             {panelFilter !== PanelFilterType.AllPanels && (
               <MultiSelect
                 options={selectablePanels}
-                value={selectablePanels.filter((panel) => annotation.filter?.ids.includes(panel.value!))}
+                value={selectablePanels.filter((panel) => query.filter?.ids.includes(panel.value!))}
                 onChange={onAddFilterPanelID}
                 isClearable={true}
                 placeholder="Choose panels"
@@ -260,20 +261,20 @@ export const AnnotationSettingsEdit = ({
           <StandardAnnotationQueryEditor
             datasource={ds}
             datasourceInstanceSettings={dsi}
-            annotation={annotation}
+            annotation={query}
             onChange={(annotation) => onUpdate(annotation, editIndex)}
           />
         )}
         {ds && !ds.annotations && (
           <AngularEditorLoader
             datasource={ds}
-            annotation={annotation}
+            annotation={query}
             onChange={(annotation) => onUpdate(annotation, editIndex)}
           />
         )}
       </FieldSet>
       <Stack>
-        {!annotation.builtIn && (
+        {!query.builtIn && (
           <Button
             variant="destructive"
             onClick={onDeleteAndLeavePage}
