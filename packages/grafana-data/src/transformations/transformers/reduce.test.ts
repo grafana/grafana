@@ -21,7 +21,7 @@ const seriesAWithMultipleFields = toDataFrame({
   name: 'A',
   fields: [
     { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
-    { name: 'temperature', type: FieldType.number, values: [3, 4, 5, 6] },
+    { name: 'temperature', type: FieldType.number, values: [3, 4, 5, 6, 6] },
     { name: 'humidity', type: FieldType.number, values: [10000.3, 10000.4, 10000.5, 10000.6] },
   ],
 });
@@ -113,7 +113,7 @@ describe('Reducer Transformer', () => {
             // expect type number
             name: 'Count',
             type: FieldType.number,
-            values: [4, 4, 4, 4],
+            values: [5, 4, 4, 4],
             config: {},
           },
         ];

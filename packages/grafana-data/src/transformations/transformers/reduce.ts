@@ -211,7 +211,6 @@ export function reduceFields(data: DataFrame[], matcher: FieldMatcher, reducerId
   const calculators = fieldReducers.list(reducerId);
   const reducers = calculators.map((c) => c.id);
   const processed: DataFrame[] = [];
-
   for (const series of data) {
     const fields: Field[] = [];
     for (const field of series.fields) {
@@ -222,9 +221,10 @@ export function reduceFields(data: DataFrame[], matcher: FieldMatcher, reducerId
         });
         for (const reducer of reducers) {
           const value = results[reducer];
+          const type = getFieldType(reducer, field);
           const copy = {
             ...field,
-            type: field.type === FieldType.other || !field.type ? guessFieldTypeFromValue(value) : field.type,
+            type: type === FieldType.other ? guessFieldTypeFromValue(value) : type,
             values: [value],
           };
           copy.state = undefined;
@@ -248,4 +248,19 @@ export function reduceFields(data: DataFrame[], matcher: FieldMatcher, reducerId
   }
 
   return processed;
+}
+
+function getFieldType(reducer: string, field: Field) {
+  switch (reducer) {
+    case ReducerID.allValues:
+    case ReducerID.uniqueValues:
+      return FieldType.other;
+    case ReducerID.first:
+    case ReducerID.firstNotNull:
+    case ReducerID.last:
+    case ReducerID.lastNotNull:
+      return field.type;
+    default:
+      return FieldType.number;
+  }
 }
