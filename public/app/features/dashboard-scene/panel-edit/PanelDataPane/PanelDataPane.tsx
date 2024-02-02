@@ -11,7 +11,7 @@ import {
   SceneObjectUrlValues,
   VizPanel,
 } from '@grafana/scenes';
-import { Container, CustomScrollbar, Tab, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
+import { Container, CustomScrollbar, TabContent, TabsBar, useStyles2 } from '@grafana/ui';
 import { shouldShowAlertingTab } from 'app/features/dashboard/components/PanelEditor/state/selectors';
 
 import { VizPanelManager } from '../VizPanelManager';
@@ -135,7 +135,6 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
 function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const { tab, tabs } = model.useState();
   const styles = useStyles2(getStyles);
-  const { queries } = model.panelManager.queryRunner.useState();
 
   if (!tabs) {
     return;
@@ -143,25 +142,16 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
 
   const currentTab = tabs.find((t) => t.tabId === tab);
 
-  const tabCounters = {
-    [TabId.Queries]: queries.length,
-    [TabId.Transformations]: 0, //TODO
-    [TabId.Alert]: 0, //TODO
-  };
-
   return (
     <>
       <TabsBar hideBorder={true} className={styles.tabsBar}>
         {tabs.map((t, index) => {
           return (
-            <Tab
+            <t.TabComponent
               key={`${t.getTabLabel()}-${index}`}
-              label={t.getTabLabel()}
-              icon={t.icon}
-              counter={tabCounters[t.tabId]}
               active={t.tabId === tab}
               onChangeTab={() => model.onChangeTab(t)}
-            />
+            ></t.TabComponent>
           );
         })}
       </TabsBar>
