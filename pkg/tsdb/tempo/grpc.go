@@ -5,9 +5,10 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
-	"google.golang.org/grpc/metadata"
 	"net/url"
 	"strings"
+
+	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
