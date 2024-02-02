@@ -21,6 +21,11 @@ while IFS=" " read -r -a package; do
     continue
   fi
 
+  # Skip packages that are marked as private in their package.json (private: true)
+  if [[ $(jq -r '.private' "./packages/$PACKAGE_PATH/package.json") == "true" ]]; then
+    continue
+  fi
+
   # Extract the npm package tarballs into separate directories e.g. ./base/@grafana-data.tgz -> ./base/grafana-data/
   mkdir "$PREV"
   tar -xf "./base/@$PACKAGE_PATH.tgz" --strip-components=1 -C "$PREV"
