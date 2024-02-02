@@ -25,7 +25,9 @@ Overrides allow you to customize visualization settings for specific fields or s
 
 For example, you set the unit for all fields that include the text 'bytes' by adding an override using the `Fields with name matching regex` matcher and then add the Unit option to the override rule.
 
-> The override settings that appear on the **All** tab are the same as the settings that appear on the **Overrides** tab.
+{{< admonition type="note" >}}
+The override settings that appear on the **All** tab are the same as the settings that appear on the **Overrides** tab.
+{{< /admonition >}}
 
 ## Supported visualizations
 
