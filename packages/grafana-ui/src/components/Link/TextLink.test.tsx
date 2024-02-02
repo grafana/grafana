@@ -1,9 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { Router } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 
 import { GrafanaConfig, locationUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
 
 import { TextLink } from './TextLink';
 
@@ -44,9 +43,9 @@ describe('TextLink', () => {
     });
 
     render(
-      <Router history={locationService.getHistory()}>
+      <MemoryRouter>
         <TextLink href={link}>Link to Grafana</TextLink>
-      </Router>
+      </MemoryRouter>
     );
     expect(screen.getByRole('link')).toHaveAttribute('href', '/after-sub-url');
   });
