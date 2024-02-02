@@ -53,6 +53,11 @@ export function ContactPointSelector({
 
   const contactPointInForm = watch(`contactPoints.${alertManager}.selectedContactPoint`);
 
+  const selectedContactPointWithMetadata = options.find((option) => option.value.name === contactPointInForm)?.value;
+  const selectedContactPointSelectableValue = selectedContactPointWithMetadata
+    ? { value: selectedContactPointWithMetadata, label: selectedContactPointWithMetadata.name }
+    : undefined;
+
   const LOADING_SPINNER_DURATION = 1000;
 
   const [loadingContactPoints, setLoadingContactPoints] = useState(false);
@@ -90,6 +95,7 @@ export function ContactPointSelector({
                   <Select
                     {...field}
                     aria-label="Contact point"
+                    defaultValue={selectedContactPointSelectableValue}
                     onChange={(value: SelectableValue<ContactPointWithMetadata>, _: ActionMeta) => {
                       onChange(value?.value?.name);
                       onSelectContactPoint(value?.value);
@@ -119,11 +125,7 @@ export function ContactPointSelector({
                 {/* Error can come from the required validation we have in here, or from the manual setError we do in the parent component.
                 The only way I found to check the custom error is to check if the field has a value and if it's not in the options. */}
 
-                {error && (
-                  <FieldValidationMessage>
-                    {error?.message || `Contact point ${contactPointInForm} does not exist.`}
-                  </FieldValidationMessage>
-                )}
+                {error && <FieldValidationMessage>{error?.message}</FieldValidationMessage>}
               </>
             )}
             rules={{
@@ -136,7 +138,7 @@ export function ContactPointSelector({
                   if (options.some((option) => option.value.name === value)) {
                     return true;
                   }
-                  return 'Contact point does not exist.';
+                  return `Contact point ${contactPointInForm} does not exist.`;
                 },
               },
             }}
