@@ -313,7 +313,7 @@ describe('Reducer Transformer', () => {
       name: 'a',
       fields: [
         { name: 'Time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
-        { name: 'Value', type: FieldType.number, values: [3, 4, 5, 6, 6] },
+        { name: 'Value', type: FieldType.number, values: [3, 4, 5, 6] },
       ],
     });
 
@@ -321,7 +321,7 @@ describe('Reducer Transformer', () => {
       name: '2021',
       fields: [
         { name: 'Time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
-        { name: 'Value', type: FieldType.number, values: [7, 7, 8, 9, 10, 10] },
+        { name: 'Value', type: FieldType.number, values: [7, 8, 9, 10] },
       ],
     });
 
