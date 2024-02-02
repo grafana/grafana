@@ -207,7 +207,7 @@ function prepSeries(options: Options, frames: DataFrame[]): ScatterSeries[] {
     throw 'Missing data';
   }
 
-  if (options.seriesMapping === 'manual') {
+  if (options.seriesMapping === 'manual' || options.seriesMapping === 'dynamic') {
     if (!options.series?.length) {
       throw 'Missing series config';
     }

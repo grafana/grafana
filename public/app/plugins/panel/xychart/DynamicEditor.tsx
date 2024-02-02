@@ -29,7 +29,7 @@ export const DynamicEditor = ({
     return [{ value: 0, label: 'First result' }];
   }, [context.data]);
 
-  const [selected, setSelected] = useState(0);
+  const selected = 0;
   const style = useStyles2(getStyles);
 
   const onFieldChange = (val: unknown | undefined, index: number, field: string) => {
@@ -43,24 +43,26 @@ export const DynamicEditor = ({
     );
   };
 
-  const createNewSeries = () => {
-    onChange([
-      ...value,
-      {
-        pointColor: undefined,
-        pointSize: defaultFieldConfig.pointSize,
-      },
-    ]);
-    setSelected(value.length);
-  };
+  // TODO set name of series based on common label value if applicable
+  // TODO on data changes, compare and recompute if needed
 
   // Component-did-mount callback to check if a new series should be created
   useEffect(() => {
-    console.log(frameNames);
-    console.log(value);
-
     if (!value?.length) {
-      createNewSeries(); // adds a new series
+      // loop through frames
+      // create series for each frame
+      const newSeries: ScatterSeriesConfig[] = [];
+      context.data.map((val, index) => {
+        console.log(val, index);
+        newSeries.push({
+          pointColor: undefined,
+          pointSize: defaultFieldConfig.pointSize,
+          name: val.name ?? `Series ${index + 1}`,
+          frame: index,
+          axisLabel: 'test',
+        });
+      });
+      onChange(newSeries);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -75,65 +77,43 @@ export const DynamicEditor = ({
     return index === selected ? `${style.row} ${style.sel}` : style.row;
   };
 
+  useEffect(() => {
+    console.log(context.data);
+  }, [context.data]);
+
+  useEffect(() => {
+    console.log(value);
+  }, [value]);
+
   return (
-    <>
-      <Button icon="plus" size="sm" variant="secondary" onClick={createNewSeries} className={style.marginBot}>
-        Add series
-      </Button>
-
-      <div className={style.marginBot}>
-        {value.map((series, index) => {
-          return (
-            <div
-              key={`series/${index}`}
-              className={getRowStyle(index)}
-              onClick={() => setSelected(index)}
-              role="button"
-              aria-label={`Select series ${index + 1}`}
-              tabIndex={0}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  setSelected(index);
-                }
-              }}
-            >
-              <LayerName
-                name={series.name ?? `Series ${index + 1}`}
-                onChange={(v) => onFieldChange(v, index, 'name')}
-              />
-
-              <IconButton
-                name="trash-alt"
-                title={'remove'}
-                className={cx(style.actionIcon)}
-                onClick={() => onSeriesDelete(index)}
-                tooltip="Delete series"
-              />
-            </div>
+    selected >= 0 &&
+    value[selected] && (
+      <ScatterSeriesEditor
+        key={`series/${selected}`}
+        baseNameMode={FieldNamePickerBaseNameMode.IncludeAll}
+        item={{} as StandardEditorsRegistryItem}
+        context={context}
+        value={value[selected]}
+        onChange={(val) => {
+          console.log(val);
+          // set x and y fields based on field selectors (same for each series)
+          onChange(
+            value.map((obj, i) => {
+              console.log(obj, i);
+              const newObj = {
+                ...obj,
+                x: val!.x ?? undefined,
+                y: val!.y ?? undefined,
+                pointColor: val!.pointColor ?? undefined,
+                pointSize: val!.pointSize ?? undefined,
+              };
+              return newObj;
+            })
           );
-        })}
-      </div>
-
-      {selected >= 0 && value[selected] && (
-        <ScatterSeriesEditor
-          key={`series/${selected}`}
-          baseNameMode={FieldNamePickerBaseNameMode.IncludeAll}
-          item={{} as StandardEditorsRegistryItem}
-          context={context}
-          value={value[selected]}
-          onChange={(val) => {
-            onChange(
-              value.map((obj, i) => {
-                if (i === selected) {
-                  return val!;
-                }
-                return obj;
-              })
-            );
-          }}
-        />
-      )}
-    </>
+          console.log(value);
+        }}
+      />
+    )
   );
 };
 
