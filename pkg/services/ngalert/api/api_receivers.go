@@ -56,7 +56,7 @@ func (srv *ReceiverSrv) RouteGetReceivers(c *contextmodel.ReqContext) response.R
 
 	receiverGroups, err := srv.receiverService.GetReceivers(c.Req.Context(), q, c.SignedInUser)
 	if err != nil {
-		if err == notifier.ErrPermissionDenied {
+		if errors.Is(err, notifier.ErrPermissionDenied) {
 			return ErrResp(http.StatusForbidden, err, "permission denied")
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to get receiver groups")
