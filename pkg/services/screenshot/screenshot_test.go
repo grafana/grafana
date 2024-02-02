@@ -23,7 +23,8 @@ func TestHeadlessScreenshotService(t *testing.T) {
 
 	d := dashboards.FakeDashboardService{}
 	r := rendering.NewMockService(c)
-	s := NewHeadlessScreenshotService(&d, r, prometheus.NewRegistry())
+	cfg := setting.NewCfg()
+	s := NewHeadlessScreenshotService(cfg, &d, r, prometheus.NewRegistry())
 
 	// a non-existent dashboard should return error
 	d.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(nil, dashboards.ErrDashboardNotFound).Once()
@@ -53,7 +54,7 @@ func TestHeadlessScreenshotService(t *testing.T) {
 		Height:          DefaultHeight,
 		Theme:           DefaultTheme,
 		Path:            "d-solo/foo/bar?from=now-6h&orgId=2&panelId=4&to=now-2h",
-		ConcurrentLimit: setting.AlertingRenderLimit,
+		ConcurrentLimit: cfg.AlertingRenderLimit,
 	}
 
 	opts.From = "now-6h"

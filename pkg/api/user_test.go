@@ -82,6 +82,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		}
 		usr, err := userSvc.Create(context.Background(), &createUserCmd)
 		require.NoError(t, err)
+		theUserUID := usr.UID
 
 		sc.handlerFunc = hs.GetUserByID
 
@@ -103,11 +104,12 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		}
 		err = srv.UpdateAuthInfo(context.Background(), cmd)
 		require.NoError(t, err)
-		avatarUrl := dtos.GetGravatarUrl("@test.com")
+		avatarUrl := dtos.GetGravatarUrl(hs.Cfg, "@test.com")
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"id": fmt.Sprintf("%v", usr.ID)}).exec()
 
 		expected := user.UserProfileDTO{
 			ID:             1,
+			UID:            theUserUID, // from original request
 			Email:          "user@test.com",
 			Name:           "user",
 			Login:          "loginuser",
@@ -160,7 +162,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "/api/users", "/api/users", func(sc *scenarioContext) {
 		userMock.ExpectedSearchUsers = mockResult
 
-		searchUsersService := searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), userMock)
+		searchUsersService := searchusers.ProvideUsersService(sc.cfg, filters.ProvideOSSSearchUserFilter(), userMock)
 		sc.handlerFunc = searchUsersService.SearchUsers
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
@@ -173,7 +175,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET with page and limit querystring parameters on", "/api/users", "/api/users", func(sc *scenarioContext) {
 		userMock.ExpectedSearchUsers = mockResult
 
-		searchUsersService := searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), userMock)
+		searchUsersService := searchusers.ProvideUsersService(sc.cfg, filters.ProvideOSSSearchUserFilter(), userMock)
 		sc.handlerFunc = searchUsersService.SearchUsers
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 
@@ -186,7 +188,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "/api/users/search", "/api/users/search", func(sc *scenarioContext) {
 		userMock.ExpectedSearchUsers = mockResult
 
-		searchUsersService := searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), userMock)
+		searchUsersService := searchusers.ProvideUsersService(sc.cfg, filters.ProvideOSSSearchUserFilter(), userMock)
 		sc.handlerFunc = searchUsersService.SearchUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
@@ -202,7 +204,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET with page and perpage querystring parameters on", "/api/users/search", "/api/users/search", func(sc *scenarioContext) {
 		userMock.ExpectedSearchUsers = mockResult
 
-		searchUsersService := searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), userMock)
+		searchUsersService := searchusers.ProvideUsersService(sc.cfg, filters.ProvideOSSSearchUserFilter(), userMock)
 		sc.handlerFunc = searchUsersService.SearchUsersWithPaging
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 

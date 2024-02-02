@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	alert_models "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -96,6 +97,7 @@ func (prov *defaultAlertRuleProvisioner) provisionRule(
 
 func (prov *defaultAlertRuleProvisioner) getOrCreateFolderUID(
 	ctx context.Context, folderName string, orgID int64) (string, error) {
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Provisioning).Inc()
 	cmd := &dashboards.GetDashboardQuery{
 		Title:    &folderName,
 		FolderID: util.Pointer(int64(0)), // nolint:staticcheck

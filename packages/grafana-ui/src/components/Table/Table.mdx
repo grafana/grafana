@@ -13,6 +13,12 @@ This nested fields values can contain an array of one or more dataframes. Each o
 
 For each dataframe and index in the nested field, the dataframe will be rendered as one or more sub-tables below the main dataframe row at that index.
 
+### Unique rowId
+
+In some cases it makes sense to persist the opened/closed state of the sub-tables. For example: with streaming queries where a user may manipulate the state while additional data is still loading. In such cases use `dataframe.meta.uniqueRowIdFields` property to specify which fields create unique row id and table will use it to persist the state across data changes.
+
+## Custom dataframe properties
+
 Each dataframe also supports using the following custom property under `dataframe.meta.custom`:
 
 - **noHeader**: boolean - Hides that sub-tables header.

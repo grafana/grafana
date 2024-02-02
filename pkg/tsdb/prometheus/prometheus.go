@@ -15,7 +15,7 @@ import (
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/instrumentation"
@@ -24,9 +24,8 @@ import (
 )
 
 type Service struct {
-	im       instancemgmt.InstanceManager
-	features featuremgmt.FeatureToggles
-	logger   log.Logger
+	im     instancemgmt.InstanceManager
+	logger log.Logger
 }
 
 type instance struct {
@@ -35,17 +34,16 @@ type instance struct {
 	versionCache *cache.Cache
 }
 
-func ProvideService(httpClientProvider *httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles) *Service {
+func ProvideService(httpClientProvider *httpclient.Provider, cfg *setting.Cfg) *Service {
 	plog := backend.NewLoggerWith("logger", "tsdb.prometheus")
 	plog.Debug("Initializing")
 	return &Service{
-		im:       datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, cfg, features, plog)),
-		features: features,
-		logger:   plog,
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, cfg, plog)),
+		logger: plog,
 	}
 }
 
-func newInstanceSettings(httpClientProvider *httpclient.Provider, cfg *setting.Cfg, features featuremgmt.FeatureToggles, log log.Logger) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider *httpclient.Provider, cfg *setting.Cfg, log log.Logger) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		// Creates a http roundTripper.
 		opts, err := client.CreateTransportOptions(ctx, settings, cfg, log)
@@ -58,7 +56,7 @@ func newInstanceSettings(httpClientProvider *httpclient.Provider, cfg *setting.C
 		}
 
 		// New version using custom client and better response parsing
-		qd, err := querydata.New(httpClient, features, settings, log)
+		qd, err := querydata.New(httpClient, settings, log)
 		if err != nil {
 			return nil, err
 		}

@@ -179,6 +179,9 @@ exports[`better eslint`] = {
     "packages/grafana-data/src/themes/createColors.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "packages/grafana-data/src/transformations/fieldReducer.test.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
     "packages/grafana-data/src/transformations/matchers/valueMatchers/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -324,9 +327,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Do not use any type assertions.", "7"],
       [0, 0, 0, "Do not use any type assertions.", "8"]
-    ],
-    "packages/grafana-data/src/types/logs.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "packages/grafana-data/src/types/options.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -532,6 +532,240 @@ exports[`better eslint`] = {
     "packages/grafana-o11y-ds-frontend/src/utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "packages/grafana-prometheus/src/components/PromExemplarField.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"]
+    ],
+    "packages/grafana-prometheus/src/components/PromExploreExtraField.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
+    ],
+    "packages/grafana-prometheus/src/components/PromQueryField.test.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-prometheus/src/components/PromQueryField.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-prometheus/src/components/PrometheusMetricsBrowser.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"],
+      [0, 0, 0, "Styles should be written using objects.", "8"],
+      [0, 0, 0, "Styles should be written using objects.", "9"],
+      [0, 0, 0, "Styles should be written using objects.", "10"],
+      [0, 0, 0, "Styles should be written using objects.", "11"]
+    ],
+    "packages/grafana-prometheus/src/components/monaco-query-field/MonacoQueryField.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
+    ],
+    "packages/grafana-prometheus/src/configuration/ConfigEditor.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"],
+      [0, 0, 0, "Styles should be written using objects.", "8"],
+      [0, 0, 0, "Styles should be written using objects.", "9"],
+      [0, 0, 0, "Styles should be written using objects.", "10"],
+      [0, 0, 0, "Styles should be written using objects.", "11"],
+      [0, 0, 0, "Styles should be written using objects.", "12"],
+      [0, 0, 0, "Styles should be written using objects.", "13"],
+      [0, 0, 0, "Styles should be written using objects.", "14"],
+      [0, 0, 0, "Styles should be written using objects.", "15"]
+    ],
+    "packages/grafana-prometheus/src/configuration/ExemplarsSettings.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "packages/grafana-prometheus/src/datasource.test.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
+    "packages/grafana-prometheus/src/datasource.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "12"]
+    ],
+    "packages/grafana-prometheus/src/gcopypaste/app/features/live/data/amendTimeSeries.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"],
+      [0, 0, 0, "Do not use any type assertions.", "4"]
+    ],
+    "packages/grafana-prometheus/src/gcopypaste/public/test/matchers/index.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-prometheus/src/gcopypaste/public/test/matchers/toEmitValuesWith.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
+    "packages/grafana-prometheus/src/gcopypaste/public/test/matchers/utils.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-prometheus/src/gcopypaste/test/helpers/selectOptionInTest.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "packages/grafana-prometheus/src/language_provider.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+    ],
+    "packages/grafana-prometheus/src/language_utils.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"]
+    ],
+    "packages/grafana-prometheus/src/metric_find_query.test.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-prometheus/src/metric_find_query.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+    ],
+    "packages/grafana-prometheus/src/query_hints.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/QueryPattern.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/QueryPatternsModal.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/binaryScalarOperations.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/components/LabelFilterItem.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/components/LabelFilters.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/components/LabelParamEditor.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/components/MetricSelect.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"],
+      [0, 0, 0, "Styles should be written using objects.", "8"],
+      [0, 0, 0, "Styles should be written using objects.", "9"],
+      [0, 0, 0, "Styles should be written using objects.", "10"],
+      [0, 0, 0, "Styles should be written using objects.", "11"],
+      [0, 0, 0, "Styles should be written using objects.", "12"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/components/PromQueryBuilder.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/components/PromQueryCodeEditor.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/components/metrics-modal/AdditionalSettings.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/components/metrics-modal/ResultsTable.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"],
+      [0, 0, 0, "Styles should be written using objects.", "8"],
+      [0, 0, 0, "Styles should be written using objects.", "9"],
+      [0, 0, 0, "Styles should be written using objects.", "10"],
+      [0, 0, 0, "Styles should be written using objects.", "11"],
+      [0, 0, 0, "Styles should be written using objects.", "12"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/components/metrics-modal/styles.ts:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"],
+      [0, 0, 0, "Styles should be written using objects.", "5"],
+      [0, 0, 0, "Styles should be written using objects.", "6"],
+      [0, 0, 0, "Styles should be written using objects.", "7"],
+      [0, 0, 0, "Styles should be written using objects.", "8"],
+      [0, 0, 0, "Styles should be written using objects.", "9"],
+      [0, 0, 0, "Styles should be written using objects.", "10"],
+      [0, 0, 0, "Styles should be written using objects.", "11"],
+      [0, 0, 0, "Styles should be written using objects.", "12"],
+      [0, 0, 0, "Styles should be written using objects.", "13"],
+      [0, 0, 0, "Styles should be written using objects.", "14"],
+      [0, 0, 0, "Styles should be written using objects.", "15"],
+      [0, 0, 0, "Styles should be written using objects.", "16"],
+      [0, 0, 0, "Styles should be written using objects.", "17"],
+      [0, 0, 0, "Styles should be written using objects.", "18"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/operationUtils.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/shared/OperationEditor.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/shared/OperationParamEditor.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/shared/QueryBuilderHints.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/shared/types.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
+    "packages/grafana-prometheus/src/result_transformer.test.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-prometheus/src/types.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
     "packages/grafana-runtime/src/analytics/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -594,6 +828,28 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "5"],
       [0, 0, 0, "Do not use any type assertions.", "6"]
     ],
+    "packages/grafana-sql/src/components/query-editor-raw/QueryToolbox.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"],
+      [0, 0, 0, "Styles should be written using objects.", "3"],
+      [0, 0, 0, "Styles should be written using objects.", "4"]
+    ],
+    "packages/grafana-sql/src/components/query-editor-raw/QueryValidator.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"],
+      [0, 0, 0, "Styles should be written using objects.", "2"]
+    ],
+    "packages/grafana-sql/src/components/query-editor-raw/RawEditor.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"],
+      [0, 0, 0, "Styles should be written using objects.", "1"]
+    ],
+    "packages/grafana-sql/src/components/visual-query-builder/AwesomeQueryBuilder.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-sql/src/components/visual-query-builder/SQLWhereRow.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "packages/grafana-ui/src/components/ColorPicker/ColorPicker.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -614,9 +870,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
-    ],
-    "packages/grafana-ui/src/components/DateTimePickers/TimeRangeInput.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "packages/grafana-ui/src/components/Forms/Legacy/Input/Input.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -737,7 +990,8 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/components/Table/Table.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "packages/grafana-ui/src/components/Table/TableCell.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -983,20 +1237,12 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
-    "public/app/core/components/PageHeader/PanelHeaderMenuItem.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
-    ],
     "public/app/core/components/PanelTypeFilter/PanelTypeFilter.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/core/components/QueryOperationRow/OperationRowHelp.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/core/components/QueryOperationRow/QueryOperationAction.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
     "public/app/core/components/QueryOperationRow/QueryOperationRow.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -1022,18 +1268,6 @@ exports[`better eslint`] = {
     ],
     "public/app/core/components/RolePicker/ValueContainer.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/core/components/Select/OldFolderPicker.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
-    ],
-    "public/app/core/components/SharedPreferences/SharedPreferences.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/core/components/SplitPaneWrapper/SplitPaneWrapper.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
     "public/app/core/components/TagFilter/TagFilter.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1997,9 +2231,6 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/rules/AlertInstanceStateFilter.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
-    "public/app/features/alerting/unified/components/rules/CloneRule.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
     "public/app/features/alerting/unified/components/rules/CloudRules.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
@@ -2078,13 +2309,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/unified/components/rules/RuleState.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/features/alerting/unified/components/rules/RulesFilter.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"]
     ],
     "public/app/features/alerting/unified/components/rules/RulesGroup.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -2371,12 +2595,29 @@ exports[`better eslint`] = {
     "public/app/features/dashboard-scene/inspect/InspectJsonTab.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
+    "public/app/features/dashboard-scene/pages/DashboardScenePage.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/dashboard-scene/panel-edit/PanelDataPane/PanelDataPane.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
     "public/app/features/dashboard-scene/panel-edit/VizPanelManager.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+    ],
+    "public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
+    ],
+    "public/app/features/dashboard-scene/saving/getSaveDashboardChange.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
+    ],
+    "public/app/features/dashboard-scene/saving/shared.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/features/dashboard-scene/scene/DashboardScene.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -2417,7 +2658,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"],
       [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"]
+      [0, 0, 0, "Do not use any type assertions.", "5"],
+      [0, 0, 0, "Do not use any type assertions.", "6"]
     ],
     "public/app/features/dashboard-scene/settings/variables/components/VariableSelectField.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -2432,22 +2674,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"]
-    ],
-    "public/app/features/dashboard/components/AddPanelWidget/AddPanelWidget.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/features/dashboard/components/AddPanelWidget/AddPanelWidget.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "3"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"],
-      [0, 0, 0, "Styles should be written using objects.", "6"],
-      [0, 0, 0, "Styles should be written using objects.", "7"],
-      [0, 0, 0, "Styles should be written using objects.", "8"],
-      [0, 0, 0, "Styles should be written using objects.", "9"],
-      [0, 0, 0, "Styles should be written using objects.", "10"]
     ],
     "public/app/features/dashboard/components/AddWidgetModal/AddWidgetModal.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -2553,16 +2779,7 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard/components/PanelEditor/OptionsPaneCategory.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"],
-      [0, 0, 0, "Styles should be written using objects.", "6"],
-      [0, 0, 0, "Styles should be written using objects.", "7"],
-      [0, 0, 0, "Styles should be written using objects.", "8"],
-      [0, 0, 0, "Styles should be written using objects.", "9"],
-      [0, 0, 0, "Styles should be written using objects.", "10"]
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
     ],
     "public/app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -2655,9 +2872,6 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/components/SaveDashboard/SaveDashboardButton.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
-    ],
-    "public/app/features/dashboard/components/SaveDashboard/SaveDashboardDiff.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/features/dashboard/components/SaveDashboard/SaveDashboardErrorProxy.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -2758,6 +2972,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "4"]
+    ],
+    "public/app/features/dashboard/containers/DashboardPageProxy.tsx:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/dashboard/dashgrid/PanelStateWrapper.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -2914,9 +3131,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
-    ],
-    "public/app/features/dashboard/state/initDashboard.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard/utils/getPanelMenu.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -3445,9 +3659,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "6"],
       [0, 0, 0, "Styles should be written using objects.", "7"]
     ],
-    "public/app/features/explore/TraceView/components/TraceTimelineViewer/TimelineRow.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
     "public/app/features/explore/TraceView/components/TraceTimelineViewer/VirtualizedTraceView.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
@@ -3483,8 +3694,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/explore/TraceView/components/model/link-patterns.test.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/explore/TraceView/components/model/link-patterns.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -3498,8 +3708,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
       [0, 0, 0, "Do not use any type assertions.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Do not use any type assertions.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"]
+      [0, 0, 0, "Do not use any type assertions.", "11"]
     ],
     "public/app/features/explore/TraceView/components/model/transform-trace-data.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -3510,25 +3719,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/explore/TraceView/components/types/trace.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/features/explore/TraceView/components/uberUtilityStyles.ts:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"],
-      [0, 0, 0, "Styles should be written using objects.", "6"],
-      [0, 0, 0, "Styles should be written using objects.", "7"],
-      [0, 0, 0, "Styles should be written using objects.", "8"],
-      [0, 0, 0, "Styles should be written using objects.", "9"],
-      [0, 0, 0, "Styles should be written using objects.", "10"],
-      [0, 0, 0, "Styles should be written using objects.", "11"],
-      [0, 0, 0, "Styles should be written using objects.", "12"],
-      [0, 0, 0, "Styles should be written using objects.", "13"],
-      [0, 0, 0, "Styles should be written using objects.", "14"],
-      [0, 0, 0, "Styles should be written using objects.", "15"],
-      [0, 0, 0, "Styles should be written using objects.", "16"]
     ],
     "public/app/features/explore/TraceView/createSpanLink.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3693,6 +3883,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "3"],
       [0, 0, 0, "Do not use any type assertions.", "4"]
     ],
+    "public/app/features/logs/components/LoadingIndicator.tsx:5381": [
+      [0, 0, 0, "Styles should be written using objects.", "0"]
+    ],
     "public/app/features/logs/components/LogDetailsRow.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"],
@@ -3764,9 +3957,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "33"],
       [0, 0, 0, "Styles should be written using objects.", "34"],
       [0, 0, 0, "Styles should be written using objects.", "35"]
-    ],
-    "public/app/features/logs/components/log-context/LoadingIndicator.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
     "public/app/features/logs/components/log-context/LogRowContextModal.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -3966,28 +4156,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"]
-    ],
-    "public/app/features/plugins/sql/components/query-editor-raw/QueryToolbox.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"]
-    ],
-    "public/app/features/plugins/sql/components/query-editor-raw/QueryValidator.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
-    ],
-    "public/app/features/plugins/sql/components/query-editor-raw/RawEditor.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
-    ],
-    "public/app/features/plugins/sql/components/visual-query-builder/AwesomeQueryBuilder.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/features/plugins/sql/components/visual-query-builder/SQLWhereRow.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/plugins/tests/datasource_srv.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -4375,9 +4543,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/variables/datasource/actions.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/features/variables/editor/LegacyVariableQueryEditor.tsx:5381": [
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/features/variables/editor/VariableEditorContainer.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -5226,9 +5391,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "0"],
       [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
-    "public/app/plugins/datasource/jaeger/components/QueryEditor.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
     "public/app/plugins/datasource/jaeger/configuration/ConfigEditor.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
     ],
@@ -5680,37 +5842,11 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
-    "public/app/plugins/datasource/tempo/NativeSearch/TagsField/TagsField.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
-    ],
-    "public/app/plugins/datasource/tempo/SearchTraceQLEditor/DurationInput.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/plugins/datasource/tempo/SearchTraceQLEditor/TagsInput.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
-    ],
-    "public/app/plugins/datasource/tempo/SearchTraceQLEditor/TraceQLSearch.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
-    ],
     "public/app/plugins/datasource/tempo/ServiceGraphSection.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/datasource/tempo/_importedDependencies/components/AdHocFilter/AdHocFilterRenderer.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/datasource/tempo/_importedDependencies/components/NodeGraphSettings.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
-    ],
-    "public/app/plugins/datasource/tempo/_importedDependencies/components/TraceView/SpanBarSettings.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/plugins/datasource/tempo/_importedDependencies/datasources/loki/LanguageProvider.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -5752,26 +5888,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
-    "public/app/plugins/datasource/tempo/_importedDependencies/utils/fetch.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Do not use any type assertions.", "4"],
-      [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Do not use any type assertions.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Do not use any type assertions.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"]
-    ],
-    "public/app/plugins/datasource/tempo/configuration/ConfigEditor.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/plugins/datasource/tempo/configuration/QuerySettings.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
-    ],
     "public/app/plugins/datasource/tempo/configuration/TraceQLSearchSettings.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -5785,12 +5901,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "9"]
     ],
     "public/app/plugins/datasource/tempo/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -5818,13 +5929,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "5"],
       [0, 0, 0, "Do not use any type assertions.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
-    ],
-    "public/app/plugins/datasource/tempo/traceql/QueryEditor.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"]
-    ],
-    "public/app/plugins/datasource/tempo/traceql/TraceQLEditor.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"]
     ],
     "public/app/plugins/datasource/zipkin/ConfigEditor.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"]
@@ -6600,6 +6704,58 @@ exports[`no gf-form usage`] = {
     "packages/grafana-e2e/src/flows/addDataSource.ts:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
+    "packages/grafana-prometheus/src/components/PromExploreExtraField.tsx:5381": [
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
+    ],
+    "packages/grafana-prometheus/src/components/PromQueryField.tsx:5381": [
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
+    ],
+    "packages/grafana-prometheus/src/configuration/AlertingSettingsOverhaul.tsx:5381": [
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
+    ],
+    "packages/grafana-prometheus/src/configuration/ExemplarSetting.tsx:5381": [
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
+    ],
+    "packages/grafana-prometheus/src/configuration/PromSettings.tsx:5381": [
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
+    ],
+    "packages/grafana-prometheus/src/querybuilder/components/PromQueryCodeEditor.tsx:5381": [
+      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
+    ],
     "packages/grafana-ui/src/components/DataSourceSettings/AlertingSettings.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
@@ -6792,35 +6948,6 @@ exports[`no gf-form usage`] = {
     ],
     "public/app/features/admin/UserLdapSyncInfo.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/features/admin/ldap/LdapConnectionStatus.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/features/admin/ldap/LdapSyncInfo.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/features/admin/ldap/LdapUserGroups.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/features/admin/ldap/LdapUserInfo.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/features/admin/ldap/LdapUserMappingInfo.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/features/admin/ldap/LdapUserPermissions.tsx:5381": [
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
-      [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
-    ],
-    "public/app/features/admin/ldap/LdapUserTeams.tsx:5381": [
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"],
       [0, 0, 0, "gf-form usage has been deprecated. Use a component from @grafana/ui or custom CSS instead.", "5381"]
     ],
