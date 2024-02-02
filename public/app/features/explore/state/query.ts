@@ -485,8 +485,9 @@ async function handleHistory(
   queries: DataQuery[],
   exploreId: string
 ) {
-  dispatch(addHistoryItem(true, datasource.uid, datasource.name, queries)); // always write to local
+  dispatch(addHistoryItem(true, datasource.uid, datasource.name, queries)); // always write to local for autocomplete, query history will use also if flag disabled
   if (config.queryHistoryEnabled) {
+    // write to remote if flag enabled
     dispatch(addHistoryItem(false, datasource.uid, datasource.name, queries));
   }
 

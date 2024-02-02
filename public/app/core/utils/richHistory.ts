@@ -45,6 +45,7 @@ export async function addToRichHistory(
     let warning: RichHistoryStorageWarningDetails | undefined;
 
     try {
+      // for autocomplete we want to ensure writing to local storage
       const storage = localOverride ? getLocalRichHistoryStorage() : getRichHistoryStorage();
       const result = await storage.addToRichHistory({
         datasourceUid: datasourceUid,
