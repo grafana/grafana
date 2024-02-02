@@ -4,12 +4,16 @@ import { usePrevious } from 'react-use';
 
 import { CoreApp, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { EditorHeader, EditorRows, FlexItem, Space, Stack } from '@grafana/experimental';
+import {
+  EditorHeader,
+  EditorRows,
+  FlexItem,
+  QueryEditorModeToggle,
+  QueryHeaderSwitch,
+  QueryEditorMode,
+} from '@grafana/experimental';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal } from '@grafana/ui';
-import { QueryEditorModeToggle } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryEditorModeToggle';
-import { QueryHeaderSwitch } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryHeaderSwitch';
-import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
+import { Button, ConfirmModal, Space, Stack } from '@grafana/ui';
 
 import { LabelBrowserModal } from '../querybuilder/components/LabelBrowserModal';
 import { LokiQueryBuilderContainer } from '../querybuilder/components/LokiQueryBuilderContainer';

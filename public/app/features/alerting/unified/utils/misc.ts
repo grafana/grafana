@@ -1,6 +1,6 @@
 import { sortBy } from 'lodash';
 
-import { UrlQueryMap, Labels, DataSourceInstanceSettings, DataSourceJsonData } from '@grafana/data';
+import { UrlQueryMap, Labels } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { config } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
@@ -137,8 +137,8 @@ export function makeLabelBasedSilenceLink(alertManagerSourceName: string, labels
   return createUrl('/alerting/silence/new', silenceUrlParams);
 }
 
-export function makeDataSourceLink<T extends DataSourceJsonData>(dataSource: DataSourceInstanceSettings<T>) {
-  return createUrl(`/datasources/edit/${dataSource.uid}`);
+export function makeDataSourceLink(uid: string) {
+  return createUrl(`/datasources/edit/${uid}`);
 }
 
 export function makeFolderLink(folderUID: string): string {

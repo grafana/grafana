@@ -123,6 +123,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -224,6 +225,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -248,7 +250,6 @@ steps:
     \"\nTranslation extraction has not been committed. Please run 'yarn i18n:extract',
     commit the changes and push again.\"\n                exit 1\n            fi\n
     \           "
-  - yarn run i18n:compile
   depends_on:
   - yarn-install
   failure: ignore
@@ -536,6 +537,7 @@ steps:
   image: golang:1.21.6-alpine
   name: wire-install
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -711,9 +713,9 @@ steps:
   - /src/grafana-build artifacts -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
     -a docker:grafana:linux/arm/v7:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
-    --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.18.5 --tag-format='{{ .version_base
-    }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD --ubuntu-tag-format='{{ .version_base
-    }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
+    --go-version=1.21.6 --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.18.5 --tag-format='{{
+    .version_base }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD --ubuntu-tag-format='{{
+    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - yarn-install
@@ -1045,6 +1047,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1404,6 +1407,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1480,6 +1484,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1538,6 +1543,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1562,7 +1568,6 @@ steps:
     \"\nTranslation extraction has not been committed. Please run 'yarn i18n:extract',
     commit the changes and push again.\"\n                exit 1\n            fi\n
     \           "
-  - yarn run i18n:compile
   depends_on:
   - yarn-install
   failure: ignore
@@ -1801,6 +1806,7 @@ steps:
   image: golang:1.21.6-alpine
   name: wire-install
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -2011,9 +2017,9 @@ steps:
   - /src/grafana-build artifacts -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
     -a docker:grafana:linux/arm/v7:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
-    --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.18.5 --tag-format='{{ .version_base
-    }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD --ubuntu-tag-format='{{ .version_base
-    }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
+    --go-version=1.21.6 --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.18.5 --tag-format='{{
+    .version_base }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD --ubuntu-tag-format='{{
+    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - update-package-json-version
@@ -2716,6 +2722,7 @@ steps:
   image: golang:1.21.6-alpine
   name: compile-build-cmd
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -2989,6 +2996,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -3412,6 +3420,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -4779,6 +4788,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 51ad95c27b1414d9e4acd0b920a3e9ceab5ccb2ef8df60fc43eb90c70cdf34d5
+hmac: c04928dc37abd22bc2d48c971f4f1fdfd722d38629016139fd0304e2aef60213
 
 ...

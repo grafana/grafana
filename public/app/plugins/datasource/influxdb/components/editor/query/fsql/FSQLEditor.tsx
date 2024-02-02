@@ -2,11 +2,9 @@ import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
+import { SQLQuery, SqlQueryEditor, applyQueryDefaults } from '@grafana/sql';
 import { InlineFormLabel, LinkButton, Themeable2, withTheme2 } from '@grafana/ui/src';
 
-import { SQLQuery } from '../../../../../../../features/plugins/sql';
-import { SqlQueryEditor } from '../../../../../../../features/plugins/sql/components/QueryEditor';
-import { applyQueryDefaults } from '../../../../../../../features/plugins/sql/defaults';
 import InfluxDatasource from '../../../../datasource';
 import { FlightSQLDatasource } from '../../../../fsql/datasource.flightsql';
 import { InfluxQuery } from '../../../../types';

@@ -120,6 +120,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
           variant="primary"
           icon="pen"
           fill="text"
+          size="sm"
         >
           Edit
         </Button>
@@ -127,40 +128,47 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
     }
   } else {
     if (dashboard.canEditDashboard()) {
-      toolbarActions.push(
-        <Button
-          onClick={() => {
-            dashboard.onSave();
-          }}
-          tooltip="Save as copy"
-          fill="text"
-          key="save-as"
-        >
-          Save as
-        </Button>
-      );
-      toolbarActions.push(
-        <Button
-          onClick={() => {
-            dashboard.onDiscard();
-          }}
-          tooltip="Discard changes"
-          fill="text"
-          key="discard"
-          variant="destructive"
-        >
-          Discard
-        </Button>
-      );
+      if (!dashboard.state.meta.isNew) {
+        toolbarActions.push(
+          <Button
+            onClick={() => {
+              dashboard.openSaveDrawer({ saveAsCopy: true });
+            }}
+            size="sm"
+            tooltip="Save as copy"
+            fill="text"
+            key="save-as"
+          >
+            Save as
+          </Button>
+        );
+      }
+      if (dashboard.canDiscard()) {
+        toolbarActions.push(
+          <Button
+            onClick={() => {
+              dashboard.onDiscard();
+            }}
+            tooltip="Discard changes"
+            fill="text"
+            size="sm"
+            key="discard"
+            variant="destructive"
+          >
+            Discard
+          </Button>
+        );
+      }
       toolbarActions.push(
         <Button
           onClick={() => {
             DashboardInteractions.toolbarSaveClick();
-            dashboard.onSave();
+            dashboard.openSaveDrawer({});
           }}
           tooltip="Save changes"
           key="save"
-          disabled={!isDirty}
+          size="sm"
+          variant={isDirty ? 'primary' : 'secondary'}
         >
           Save
         </Button>
