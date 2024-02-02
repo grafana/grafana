@@ -208,14 +208,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
   }
 
-  public onDiscard = () => {
+  public exitEditMode({ skipConfirm }: { skipConfirm: boolean }) {
     if (!this.canDiscard()) {
       console.error('Trying to discard back to a state that does not exist, initialState undefined');
       return;
     }
 
-    if (!this.state.isDirty) {
-      this.onConfirmDiscard();
+    if (!this.state.isDirty || skipConfirm) {
+      this.exitEditModeConfirmed();
       return;
     }
 
@@ -225,12 +225,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         text: `You have unsaved changes to this dashboard. Are you sure you want to discard them?`,
         icon: 'trash-alt',
         yesText: 'Discard',
-        onConfirm: this.onConfirmDiscard,
+        onConfirm: this.exitEditModeConfirmed.bind(this),
       })
     );
-  };
+  }
 
-  private onConfirmDiscard = () => {
+  private exitEditModeConfirmed() {
     // No need to listen to changes anymore
     this.stopTrackingChanges();
     // Stop url sync before updating url
@@ -256,7 +256,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.startUrlSync();
     // Disable grid dragging
     this.propagateEditModeChange();
-  };
+  }
 
   public canDiscard() {
     return this._initialState !== undefined;
@@ -278,7 +278,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     newState.version = versionRsp.version;
 
     this._initialState = newState;
-    this.onDiscard();
+    this.exitEditMode({ skipConfirm: false });
 
     return true;
   };

@@ -155,7 +155,7 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
     condition: isEditing && !editview && !meta.isNew,
     render: () => (
       <Button
-        onClick={dashboard.onDiscard}
+        onClick={() => dashboard.exitEditMode({ skipConfirm: false })}
         tooltip="Exits edit mode and discards unsaved changes"
         size="sm"
         key="discard"
