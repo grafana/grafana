@@ -19,7 +19,7 @@ type responseWrapper struct {
 }
 
 func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	e.logger.Debug("Executing time series query")
+	e.logger.FromContext(ctx).Debug("Executing time series query")
 	resp := backend.NewQueryDataResponse()
 
 	if len(req.Queries) == 0 {
@@ -37,7 +37,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 		return nil, err
 	}
 
-	requestQueries, err := models.ParseMetricDataQueries(req.Queries, startTime, endTime, instance.Settings.Region, e.logger,
+	requestQueries, err := models.ParseMetricDataQueries(req.Queries, startTime, endTime, instance.Settings.Region, e.logger.FromContext(ctx),
 		features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying))
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 
 		batches := [][]*models.CloudWatchQuery{regionQueries}
 		if features.IsEnabled(ctx, features.FlagCloudWatchBatchQueries) {
-			batches = getMetricQueryBatches(regionQueries, e.logger)
+			batches = getMetricQueryBatches(regionQueries, e.logger.FromContext(ctx))
 		}
 
 		for _, batch := range batches {
@@ -70,7 +70,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *ba
 			eg.Go(func() error {
 				defer func() {
 					if err := recover(); err != nil {
-						e.logger.Error("Execute Get Metric Data Query Panic", "error", err, "stack", utils.Stack(1))
+						e.logger.FromContext(ctx).Error("Execute Get Metric Data Query Panic", "error", err, "stack", utils.Stack(1))
 						if theErr, ok := err.(error); ok {
 							resultChan <- &responseWrapper{
 								DataResponse: &backend.DataResponse{

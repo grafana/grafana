@@ -228,7 +228,7 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 		startQueryInput.Limit = aws.Int64(*logsQuery.Limit)
 	}
 
-	e.logger.Debug("Calling startquery with context with input", "input", startQueryInput)
+	e.logger.FromContext(ctx).Debug("Calling startquery with context with input", "input", startQueryInput)
 	return logsClient.StartQueryWithContext(ctx, startQueryInput)
 }
 
@@ -238,7 +238,7 @@ func (e *cloudWatchExecutor) handleStartQuery(ctx context.Context, logsClient cl
 	if err != nil {
 		var awsErr awserr.Error
 		if errors.As(err, &awsErr) && awsErr.Code() == "LimitExceededException" {
-			e.logger.Debug("ExecuteStartQuery limit exceeded", "err", awsErr)
+			e.logger.FromContext(ctx).Debug("ExecuteStartQuery limit exceeded", "err", awsErr)
 			return nil, &AWSError{Code: limitExceededException, Message: err.Error()}
 		}
 		return nil, err

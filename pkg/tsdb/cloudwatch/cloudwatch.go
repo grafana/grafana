@@ -132,6 +132,21 @@ type cloudWatchExecutor struct {
 	resourceHandler backend.CallResourceHandler
 }
 
+// instrumentContext adds plugin key-values to the context; later, logger.FromContext(ctx) will provide a logger
+// that adds these values to its output.
+// TODO: this really shouldn't be here!
+func instrumentContext(ctx context.Context, endpoint string, pCtx backend.PluginContext) context.Context {
+	p := []any{"endpoint", endpoint, "pluginId", pCtx.PluginID}
+	if pCtx.DataSourceInstanceSettings != nil {
+		p = append(p, "dsName", pCtx.DataSourceInstanceSettings.Name)
+		p = append(p, "dsUID", pCtx.DataSourceInstanceSettings.UID)
+	}
+	if pCtx.User != nil {
+		p = append(p, "uname", pCtx.User.Login)
+	}
+	return log.WithContextualAttributes(ctx, p)
+}
+
 func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx backend.PluginContext, region string) (models.RequestContext, error) {
 	r := region
 	instance, err := e.getInstance(ctx, pluginCtx)
@@ -158,15 +173,17 @@ func (e *cloudWatchExecutor) getRequestContext(ctx context.Context, pluginCtx ba
 		LogsAPIProvider:       NewLogsAPI(sess),
 		EC2APIProvider:        ec2Client,
 		Settings:              instance.Settings,
-		Logger:                e.logger,
+		Logger:                e.logger.FromContext(ctx),
 	}, nil
 }
 
 func (e *cloudWatchExecutor) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	ctx = instrumentContext(ctx, "callResource", req.PluginContext)
 	return e.resourceHandler.CallResource(ctx, req, sender)
 }
 
 func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	ctx = instrumentContext(ctx, "queryData", req.PluginContext)
 	q := req.Queries[0]
 	var model DataQueryJson
 	err := json.Unmarshal(q.JSON, &model)
@@ -201,6 +218,7 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 }
 
 func (e *cloudWatchExecutor) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	ctx = instrumentContext(ctx, "checkHealth", req.PluginContext)
 	status := backend.HealthStatusOk
 	metricsTest := "Successfully queried the CloudWatch metrics API."
 	logsTest := "Successfully queried the CloudWatch logs API."

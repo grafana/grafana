@@ -41,23 +41,23 @@ func handleResourceReq(handleFunc handleFn, logger log.Logger) func(rw http.Resp
 		pluginContext := httpadapter.PluginConfigFromContext(ctx)
 		err := req.ParseForm()
 		if err != nil {
-			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err), logger)
+			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err), logger.FromContext(ctx))
 			return
 		}
 		data, err := handleFunc(ctx, pluginContext, req.URL.Query())
 		if err != nil {
-			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err), logger)
+			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err), logger.FromContext(ctx))
 			return
 		}
 		body, err := json.Marshal(data)
 		if err != nil {
-			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err), logger)
+			writeResponse(rw, http.StatusBadRequest, fmt.Sprintf("unexpected error %v", err), logger.FromContext(ctx))
 			return
 		}
 		rw.WriteHeader(http.StatusOK)
 		_, err = rw.Write(body)
 		if err != nil {
-			logger.Error("Unable to write HTTP response", "error", err)
+			logger.FromContext(ctx).Error("Unable to write HTTP response", "error", err)
 			return
 		}
 	}
