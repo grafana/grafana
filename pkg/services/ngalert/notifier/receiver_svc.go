@@ -94,6 +94,10 @@ func (rs *ReceiverService) shouldDecrypt(ctx context.Context, user identity.Requ
 // GetReceiver returns a receiver by name.
 // The receiver's secure settings are decrypted if requested and the user has access to do so.
 func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiverQuery, user identity.Requester) (definitions.GettableApiReceiver, error) {
+	if q.Decrypt && user == nil {
+		return definitions.GettableApiReceiver{}, ErrPermissionDenied
+	}
+
 	baseCfg, err := rs.cfgStore.GetLatestAlertmanagerConfiguration(ctx, q.OrgID)
 	if err != nil {
 		return definitions.GettableApiReceiver{}, err
@@ -129,6 +133,10 @@ func (rs *ReceiverService) GetReceiver(ctx context.Context, q models.GetReceiver
 // GetReceivers returns a list of receivers a user has access to.
 // Receivers can be filtered by name, and secure settings are decrypted if requested and the user has access to do so.
 func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceiversQuery, user identity.Requester) ([]definitions.GettableApiReceiver, error) {
+	if q.Decrypt && user == nil {
+		return nil, ErrPermissionDenied
+	}
+
 	baseCfg, err := rs.cfgStore.GetLatestAlertmanagerConfiguration(ctx, q.OrgID)
 	if err != nil {
 		return nil, err
@@ -163,13 +171,13 @@ func (rs *ReceiverService) GetReceivers(ctx context.Context, q models.GetReceive
 			return nil, err
 		}
 
-		if !readAccess && !listAccess {
-			continue
-		}
-
 		decrypt, err := rs.shouldDecrypt(ctx, user, r.Name, q.Decrypt)
 		if err != nil {
 			return nil, err
+		}
+
+		if !decrypt && !readAccess && !listAccess {
+			continue
 		}
 
 		decryptFn := rs.decryptOrRedact(ctx, decrypt, r.Name, "")

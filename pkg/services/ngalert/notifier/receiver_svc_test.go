@@ -30,7 +30,7 @@ func TestReceiverService_GetReceiver(t *testing.T) {
 	t.Run("service gets receiver group from AM config", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
 
-		Receiver, err := sut.GetReceiver(context.Background(), singleQ(1, "slack receiver"), createUser(1))
+		Receiver, err := sut.GetReceiver(context.Background(), singleQ(1, "slack receiver"), nil)
 		require.NoError(t, err)
 		require.Equal(t, "slack receiver", Receiver.Name)
 		require.Len(t, Receiver.GrafanaManagedReceivers, 1)
@@ -40,7 +40,7 @@ func TestReceiverService_GetReceiver(t *testing.T) {
 	t.Run("service returns error when receiver group does not exist", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
 
-		_, err := sut.GetReceiver(context.Background(), singleQ(1, "nonexistent"), createUser(1))
+		_, err := sut.GetReceiver(context.Background(), singleQ(1, "nonexistent"), nil)
 		require.ErrorIs(t, err, ErrNotFound)
 	})
 }
@@ -52,7 +52,7 @@ func TestReceiverService_GetReceivers(t *testing.T) {
 	t.Run("service gets receiver groups from AM config", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
 
-		Receivers, err := sut.GetReceivers(context.Background(), multiQ(1), createUser(1))
+		Receivers, err := sut.GetReceivers(context.Background(), multiQ(1), nil)
 		require.NoError(t, err)
 		require.Len(t, Receivers, 2)
 		require.Equal(t, "grafana-default-email", Receivers[0].Name)
@@ -62,7 +62,7 @@ func TestReceiverService_GetReceivers(t *testing.T) {
 	t.Run("service filters receiver groups by name", func(t *testing.T) {
 		sut := createReceiverServiceSut(t, secretsService)
 
-		Receivers, err := sut.GetReceivers(context.Background(), multiQ(1, "slack receiver"), createUser(1))
+		Receivers, err := sut.GetReceivers(context.Background(), multiQ(1, "slack receiver"), nil)
 		require.NoError(t, err)
 		require.Len(t, Receivers, 1)
 		require.Equal(t, "slack receiver", Receivers[0].Name)
@@ -75,9 +75,23 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 	ac := acimpl.ProvideAccessControl(setting.NewCfg())
 
 	getMethods := []string{"single", "multi"}
-	readUser := createUser(1)
-	secretUser := createUser(1)
-	secretUser.Permissions[1][accesscontrol.ActionAlertingProvisioningReadSecrets] = nil
+
+	readUser := &user.SignedInUser{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {accesscontrol.ActionAlertingProvisioningRead: nil},
+		},
+	}
+
+	secretUser := &user.SignedInUser{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {
+				accesscontrol.ActionAlertingProvisioningRead:        nil,
+				accesscontrol.ActionAlertingProvisioningReadSecrets: nil,
+			},
+		},
+	}
 
 	for _, tc := range []struct {
 		name    string
@@ -95,6 +109,12 @@ func TestReceiverService_DecryptRedact(t *testing.T) {
 			name:    "service returns error when trying to decrypt without permission",
 			decrypt: true,
 			user:    readUser,
+			err:     ErrPermissionDenied,
+		},
+		{
+			name:    "service returns error if user is nil and decrypt is true",
+			decrypt: true,
+			user:    nil,
 			err:     ErrPermissionDenied,
 		},
 		{
@@ -174,15 +194,6 @@ func createEncryptedConfig(t *testing.T, secretService secrets.Service) string {
 	bytes, err := json.Marshal(c)
 	require.NoError(t, err)
 	return string(bytes)
-}
-
-func createUser(orgID int64) *user.SignedInUser {
-	return &user.SignedInUser{
-		OrgID: orgID,
-		Permissions: map[int64]map[string][]string{
-			orgID: {accesscontrol.ActionAlertingProvisioningRead: nil},
-		},
-	}
 }
 
 func singleQ(orgID int64, name string) models.GetReceiverQuery {
