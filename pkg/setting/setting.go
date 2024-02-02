@@ -359,12 +359,14 @@ type Cfg struct {
 	SqlDatasourceMaxConnLifetimeDefault int
 
 	// Snapshots
-	SnapshotEnabled       bool
-	ExternalSnapshotUrl   string
-	ExternalSnapshotName  string
-	ExternalEnabled       bool
+	SnapshotEnabled      bool
+	ExternalSnapshotUrl  string
+	ExternalSnapshotName string
+	ExternalEnabled      bool
+	// Deprecated: setting this to false adds deprecation warnings at runtime
 	SnapShotRemoveExpired bool
 
+	// Only used in https://snapshots.raintank.io/
 	SnapshotPublicMode bool
 
 	ErrTemplateName string
