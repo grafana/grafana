@@ -10,7 +10,7 @@ export const PublicDashboardFooter = function () {
   const styles = useStyles2(getStyles);
   const conf = useGetPublicDashboardConfig();
 
-  return conf.footerHide ? null : (
+  return (
     <div className={styles.footer}>
       <a className={styles.link} href={conf.footerLink} target="_blank" rel="noreferrer noopener">
         {conf.footerText} <img className={styles.logoImg} alt="" src={conf.footerLogo} />

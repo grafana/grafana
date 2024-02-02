@@ -10,7 +10,6 @@ const GRAFANA_LOGO_DARK_URL = 'public/img/grafana_text_logo_dark.svg';
 const GRAFANA_LOGO_DEFAULT_VALUE = 'grafana-logo';
 
 export interface PublicDashboardCfg {
-  footerHide: boolean;
   footerText: React.ReactNode;
   footerLogo: string;
   footerLink: string;
@@ -20,8 +19,7 @@ const useGetConfig = (cfg?: PublicDashboardCfg) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
-  const { footerHide, footerText, footerLink, footerLogo, headerLogoHide } = cfg || {
-    footerHide: false,
+  const { footerText, footerLink, footerLogo, headerLogoHide } = cfg || {
     footerText: 'Powered by',
     footerLogo: GRAFANA_LOGO_DEFAULT_VALUE,
     footerLink: FOOTER_URL,
@@ -29,7 +27,6 @@ const useGetConfig = (cfg?: PublicDashboardCfg) => {
   };
 
   return {
-    footerHide,
     footerText: <span className={styles.text}>{footerText}</span>,
     footerLogo:
       footerLogo === GRAFANA_LOGO_DEFAULT_VALUE

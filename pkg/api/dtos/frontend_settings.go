@@ -120,7 +120,6 @@ type FrontendSettingsFooterConfigItemDTO struct {
 
 // Enterprise-only
 type FrontendSettingsPublicDashboardConfigDTO struct {
-	FooterHide     bool   `json:"footerHide"`
 	FooterText     string `json:"footerText"`
 	FooterLogo     string `json:"footerLogo"`
 	FooterLink     string `json:"footerLink"`
