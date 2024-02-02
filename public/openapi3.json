@@ -24,6 +24,29 @@
         },
         "description": "(empty)"
       },
+      "GetReceiverResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GettableApiReceiver"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "GetReceiversResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/GettableApiReceiver"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "GettableHistoricUserConfigs": {
         "content": {
           "application/json": {
@@ -12119,7 +12142,6 @@
         "type": "object"
       },
       "alertGroup": {
-        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -12276,6 +12298,7 @@
         "type": "object"
       },
       "gettableAlert": {
+        "description": "GettableAlert gettable alert",
         "properties": {
           "annotations": {
             "$ref": "#/components/schemas/labelSet"
@@ -12386,13 +12409,13 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
         "type": "array"
       },
       "integration": {
-        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -12536,7 +12559,6 @@
         "type": "array"
       },
       "postableSilence": {
-        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12602,6 +12624,7 @@
         "type": "object"
       },
       "receiver": {
+        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
