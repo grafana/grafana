@@ -18,7 +18,7 @@ func TestAsyncStatePersister_Async(t *testing.T) {
 		store := &FakeInstanceStore{}
 		logger := log.New("async.test")
 
-		persister := NewAsyncStatePersister(logger, ManagerCfg{
+		persister := NewAsyncStatePersister(logger, mockClock.Ticker(1*time.Second), ManagerCfg{
 			InstanceStore: store,
 		})
 
@@ -28,11 +28,9 @@ func TestAsyncStatePersister_Async(t *testing.T) {
 			cancel()
 		}()
 
-		ticker := mockClock.Ticker(1 * time.Second)
-
 		cache := newCache()
 
-		go persister.Async(ctx, ticker, cache)
+		go persister.Async(ctx, cache)
 
 		cache.set(&State{
 			OrgID:        1,
@@ -52,17 +50,15 @@ func TestAsyncStatePersister_Async(t *testing.T) {
 		store := &FakeInstanceStore{}
 		logger := log.New("async.test")
 
-		persister := NewAsyncStatePersister(logger, ManagerCfg{
+		persister := NewAsyncStatePersister(logger, mockClock.Ticker(1*time.Second), ManagerCfg{
 			InstanceStore: store,
 		})
 
 		ctx, cancel := context.WithCancel(context.Background())
 
-		ticker := mockClock.Ticker(1 * time.Second)
-
 		cache := newCache()
 
-		go persister.Async(ctx, ticker, cache)
+		go persister.Async(ctx, cache)
 
 		cache.set(&State{
 			OrgID:        1,

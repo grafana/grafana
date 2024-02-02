@@ -260,16 +260,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
                   return [dataMin, dataMax];
                 }
               : field.type === FieldType.enum
-              ? (u: uPlot, dataMin: number, dataMax: number) => {
-                  // this is the exhaustive enum (stable)
-                  let len = field.config.type!.enum!.text!.length;
+                ? (u: uPlot, dataMin: number, dataMax: number) => {
+                    // this is the exhaustive enum (stable)
+                    let len = field.config.type!.enum!.text!.length;
 
-                  return [-1, len];
+                    return [-1, len];
 
-                  // these are only values that are present
-                  // return [dataMin - 1, dataMax + 1]
-                }
-              : undefined,
+                    // these are only values that are present
+                    // return [dataMin - 1, dataMax + 1]
+                  }
+                : undefined,
           decimals: field.config.decimals,
         },
         field
@@ -561,51 +561,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   const hoverProximityPx = 15;
 
   let cursor: Partial<uPlot.Cursor> = {
-    // this scans left and right from cursor position to find nearest data index with value != null
-    // TODO: do we want to only scan past undefined values, but halt at explicit null values?
-    dataIdx: (self, seriesIdx, hoveredIdx, cursorXVal) => {
-      let seriesData = self.data[seriesIdx];
-
-      if (seriesData[hoveredIdx] == null) {
-        let nonNullLft = null,
-          nonNullRgt = null,
-          i;
-
-        i = hoveredIdx;
-        while (nonNullLft == null && i-- > 0) {
-          if (seriesData[i] != null) {
-            nonNullLft = i;
-          }
+    hover: {
+      prox: (self, seriesIdx, hoveredIdx) => {
+        const yVal = self.data[seriesIdx][hoveredIdx];
+        if (yVal === null) {
+          return hoverProximityPx;
         }
 
-        i = hoveredIdx;
-        while (nonNullRgt == null && i++ < seriesData.length) {
-          if (seriesData[i] != null) {
-            nonNullRgt = i;
-          }
-        }
-
-        let xVals = self.data[0];
-
-        let curPos = self.valToPos(cursorXVal, 'x');
-        let rgtPos = nonNullRgt == null ? Infinity : self.valToPos(xVals[nonNullRgt], 'x');
-        let lftPos = nonNullLft == null ? -Infinity : self.valToPos(xVals[nonNullLft], 'x');
-
-        let lftDelta = curPos - lftPos;
-        let rgtDelta = rgtPos - curPos;
-
-        if (lftDelta <= rgtDelta) {
-          if (lftDelta <= hoverProximityPx) {
-            hoveredIdx = nonNullLft!;
-          }
-        } else {
-          if (rgtDelta <= hoverProximityPx) {
-            hoveredIdx = nonNullRgt!;
-          }
-        }
-      }
-
-      return hoveredIdx;
+        return null;
+      },
+      skip: [null],
     },
   };
 

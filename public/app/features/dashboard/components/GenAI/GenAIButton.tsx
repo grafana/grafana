@@ -78,10 +78,10 @@ export const GenAIButton = ({
     const buttonItem = error
       ? AutoGenerateItem.erroredRetryButton
       : isFirstHistoryEntry
-      ? AutoGenerateItem.stopGenerationButton
-      : hasHistory
-      ? AutoGenerateItem.improveButton
-      : AutoGenerateItem.autoGenerateButton;
+        ? AutoGenerateItem.stopGenerationButton
+        : hasHistory
+          ? AutoGenerateItem.improveButton
+          : AutoGenerateItem.autoGenerateButton;
     reportInteraction(buttonItem);
   };
 

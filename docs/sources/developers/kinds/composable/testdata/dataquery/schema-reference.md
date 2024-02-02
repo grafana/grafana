@@ -58,10 +58,11 @@ title: TestDataDataQuery kind
 
 ### NodesQuery
 
-| Property | Type    | Required | Default | Description                                                |
-|----------|---------|----------|---------|------------------------------------------------------------|
-| `count`  | integer | No       |         |                                                            |
-| `type`   | string  | No       |         | Possible values are: `random`, `response`, `random edges`. |
+| Property | Type    | Required | Default | Description                                                                         |
+|----------|---------|----------|---------|-------------------------------------------------------------------------------------|
+| `count`  | integer | No       |         |                                                                                     |
+| `seed`   | integer | No       |         |                                                                                     |
+| `type`   | string  | No       |         | Possible values are: `random`, `response_small`, `response_medium`, `random edges`. |
 
 ### PulseWaveQuery
 
@@ -97,14 +98,14 @@ title: TestDataDataQuery kind
 
 ### StreamingQuery
 
-| Property | Type    | Required | Default | Description                                     |
-|----------|---------|----------|---------|-------------------------------------------------|
-| `noise`  | integer | **Yes**  |         |                                                 |
-| `speed`  | integer | **Yes**  |         |                                                 |
-| `spread` | integer | **Yes**  |         |                                                 |
-| `type`   | string  | **Yes**  |         | Possible values are: `signal`, `logs`, `fetch`. |
-| `bands`  | integer | No       |         |                                                 |
-| `url`    | string  | No       |         |                                                 |
+| Property | Type    | Required | Default | Description                                               |
+|----------|---------|----------|---------|-----------------------------------------------------------|
+| `noise`  | integer | **Yes**  |         |                                                           |
+| `speed`  | integer | **Yes**  |         |                                                           |
+| `spread` | integer | **Yes**  |         |                                                           |
+| `type`   | string  | **Yes**  |         | Possible values are: `signal`, `logs`, `fetch`, `traces`. |
+| `bands`  | integer | No       |         |                                                           |
+| `url`    | string  | No       |         |                                                           |
 
 ### USAQuery
 

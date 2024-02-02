@@ -28,7 +28,9 @@ const prometheusPlugin = async () =>
 const mssqlPlugin = async () =>
   await import(/* webpackChunkName: "mssqlPlugin" */ 'app/plugins/datasource/mssql/module');
 const cloudMonitoringPlugin = async () =>
-  await import(/* webpackChunkName: "cloudMonitoringPlugin" */ 'app/plugins/datasource/cloud-monitoring/module');
+  await import(
+    /* webpackChunkName: "cloudMonitoringPlugin" */ '@grafana-plugins/grafana-cloud-monitoring-datasource/module'
+  );
 const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
 
@@ -48,7 +50,6 @@ import * as histogramPanel from 'app/plugins/panel/histogram/module';
 import * as livePanel from 'app/plugins/panel/live/module';
 import * as logsPanel from 'app/plugins/panel/logs/module';
 import * as newsPanel from 'app/plugins/panel/news/module';
-import * as nodeGraph from 'app/plugins/panel/nodeGraph/module';
 import * as pieChartPanel from 'app/plugins/panel/piechart/module';
 import * as statPanel from 'app/plugins/panel/stat/module';
 import * as stateTimelinePanel from 'app/plugins/panel/state-timeline/module';
@@ -69,6 +70,9 @@ const heatmapPanel = async () =>
   await import(/* webpackChunkName: "heatmapPanel" */ 'app/plugins/panel/heatmap/module');
 const tableOldPanel = async () =>
   await import(/* webpackChunkName: "tableOldPlugin" */ 'app/plugins/panel/table-old/module');
+
+const nodeGraph = async () =>
+  await import(/* webpackChunkName: "nodeGraphPanel" */ 'app/plugins/panel/nodeGraph/module');
 
 const builtInPlugins: Record<string, System.Module | (() => Promise<System.Module>)> = {
   // datasources

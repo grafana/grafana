@@ -48,7 +48,7 @@ To create recording rules, follow these steps.
 
 1. Click **Alerts & IRM** -> **Alerting** ->
    **Alert rules**.
-1. Click the **More** dropdown and then **New recording rule**.
+1. Click **New recording rule**.
 
 1. Set rule name.
 
