@@ -210,7 +210,13 @@ func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string)
 }
 
 func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {
-	return v0alpha1.GetOpenAPIDefinitions
+	return func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
+		defs := query.GetOpenAPIDefinitions(ref) // required when running standalone
+		for k, v := range v0alpha1.GetOpenAPIDefinitions(ref) {
+			defs[k] = v
+		}
+		return defs
+	}
 }
 
 // Register additional routes with the server
