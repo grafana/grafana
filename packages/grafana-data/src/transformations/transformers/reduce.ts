@@ -43,6 +43,8 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
           return data; // nothing selected
         }
 
+        console.time('reduce');
+
         const matcher = options.fields
           ? getFieldMatcher(options.fields)
           : options.includeTimeField && options.mode === ReduceTransformerMode.ReduceFields
@@ -56,6 +58,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
 
         // Add a row for each series
         const res = reduceSeriesToRows(data, matcher, options.reducers, options.labelsToFields);
+        console.timeEnd('reduce');
         return res ? [res] : [];
       })
     ),

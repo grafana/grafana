@@ -34,6 +34,7 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
           return dataFrames;
         }
 
+        console.time('merge');
         const data = dataFrames.filter((frame) => frame.fields.length > 0);
 
         if (data.length === 0) {
@@ -116,7 +117,9 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
           }
         }
 
-        return [dataFrame];
+        const result = [dataFrame];
+        console.timeEnd('merge');
+        return result;
       })
     ),
 };

@@ -75,6 +75,7 @@ export const partitionByValuesTransformer: SynchronousDataTransformerInfo<Partit
     source.pipe(map((data) => partitionByValuesTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: PartitionByValuesTransformerOptions, ctx: DataTransformContext) => {
+    console.time('partitionByValues');
     const matcherConfig = getMatcherConfig(ctx, { names: options.fields });
 
     if (!matcherConfig) {
@@ -83,13 +84,17 @@ export const partitionByValuesTransformer: SynchronousDataTransformerInfo<Partit
 
     const matcher = getFieldMatcher(matcherConfig);
 
-    return (data: DataFrame[]) => {
+    const result = (data: DataFrame[]) => {
       if (!data.length) {
         return data;
       }
       // error if > 1 frame?
       return partitionByValues(data[0], matcher, options);
     };
+
+    console.timeEnd('partitionByValues');
+
+    return result;
   },
 };
 

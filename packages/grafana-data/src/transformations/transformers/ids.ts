@@ -6,6 +6,7 @@ export enum DataTransformerID {
   organize = 'organize',
   rename = 'rename',
   calculateField = 'calculateField',
+  dedupeByValues = 'dedupeByValues',
   /** @deprecated use joinByField */
   seriesToColumns = 'seriesToColumns',
   seriesToRows = 'seriesToRows',
