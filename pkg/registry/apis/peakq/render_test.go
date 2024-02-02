@@ -4,29 +4,35 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/require"
+
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
-	"github.com/stretchr/testify/require"
 )
 
 var nestedFieldRender = peakq.QueryTemplateSpec{
 	Title: "Test",
-	Variables: []peakq.QueryVariable{
+	Variables: []peakq.TemplateVariable{
 		{
 			Key: "metricName",
-			Positions: []peakq.Position{
-				{
-					Path:  "$.nestedObject.anArray[0]",
-					Start: 0,
-					End:   3,
-				},
-			},
 		},
 	},
 	Targets: []peakq.Target{
 		{
 			DataType: data.FrameTypeUnknown,
 			//DataTypeVersion: data.FrameTypeVersion{0, 0},
+
+			Variables: map[string][]peakq.VariableReplacement{
+				"metricName": {
+					{
+						Path: "$.nestedObject.anArray[0]",
+						Position: &peakq.Position{
+							Start: 0,
+							End:   3,
+						},
+					},
+				},
+			},
 			Properties: common.Unstructured{
 				Object: map[string]any{
 					"nestedObject": map[string]any{
@@ -41,6 +47,17 @@ var nestedFieldRender = peakq.QueryTemplateSpec{
 var nestedFieldRenderedTargets = []peakq.Target{
 	{
 		DataType: data.FrameTypeUnknown,
+		Variables: map[string][]peakq.VariableReplacement{
+			"metricName": {
+				{
+					Path: "$.nestedObject.anArray[0]",
+					Position: &peakq.Position{
+						Start: 0,
+						End:   3,
+					},
+				},
+			},
+		},
 		//DataTypeVersion: data.FrameTypeVersion{0, 0},
 		Properties: common.Unstructured{
 			Object: map[string]any{
@@ -53,7 +70,7 @@ var nestedFieldRenderedTargets = []peakq.Target{
 }
 
 func TestNestedFieldRender(t *testing.T) {
-	rT, err := Render(nestedFieldRender, map[string]string{"metricName": "up"})
+	rT, err := Render(nestedFieldRender, map[string][]string{"metricName": {"up"}})
 	require.NoError(t, err)
 	require.Equal(t,
 		nestedFieldRenderedTargets,
@@ -63,37 +80,47 @@ func TestNestedFieldRender(t *testing.T) {
 
 var multiVarTemplate = peakq.QueryTemplateSpec{
 	Title: "Test",
-	Variables: []peakq.QueryVariable{
+	Variables: []peakq.TemplateVariable{
 		{
 			Key: "metricName",
-			Positions: []peakq.Position{
-				{
-					Path:  "$.expr",
-					Start: 4,
-					End:   14,
-				},
-				{
-					Path:  "$.expr",
-					Start: 37,
-					End:   47,
-				},
-			},
 		},
 		{
 			Key: "anotherMetric",
-			Positions: []peakq.Position{
-				{
-					Path:  "$.expr",
-					Start: 21,
-					End:   34,
-				},
-			},
 		},
 	},
 	Targets: []peakq.Target{
 		{
 			DataType: data.FrameTypeUnknown,
 			//DataTypeVersion: data.FrameTypeVersion{0, 0},
+
+			Variables: map[string][]peakq.VariableReplacement{
+				"metricName": {
+					{
+						Path: "$.expr",
+						Position: &peakq.Position{
+							Start: 4,
+							End:   14,
+						},
+					},
+					{
+						Path: "$.expr",
+						Position: &peakq.Position{
+							Start: 37,
+							End:   47,
+						},
+					},
+				},
+				"anotherMetric": {
+					{
+						Path: "$.expr",
+						Position: &peakq.Position{
+							Start: 21,
+							End:   34,
+						},
+					},
+				},
+			},
+
 			Properties: common.Unstructured{
 				Object: map[string]any{
 					"expr": "1 + metricName + 1 + anotherMetric + metricName",
@@ -106,6 +133,33 @@ var multiVarTemplate = peakq.QueryTemplateSpec{
 var multiVarRenderedTargets = []peakq.Target{
 	{
 		DataType: data.FrameTypeUnknown,
+		Variables: map[string][]peakq.VariableReplacement{
+			"metricName": {
+				{
+					Path: "$.expr",
+					Position: &peakq.Position{
+						Start: 4,
+						End:   14,
+					},
+				},
+				{
+					Path: "$.expr",
+					Position: &peakq.Position{
+						Start: 37,
+						End:   47,
+					},
+				},
+			},
+			"anotherMetric": {
+				{
+					Path: "$.expr",
+					Position: &peakq.Position{
+						Start: 21,
+						End:   34,
+					},
+				},
+			},
+		},
 		//DataTypeVersion: data.FrameTypeVersion{0, 0},
 		Properties: common.Unstructured{
 			Object: map[string]any{
@@ -116,7 +170,10 @@ var multiVarRenderedTargets = []peakq.Target{
 }
 
 func TestMultiVarTemplate(t *testing.T) {
-	rT, err := Render(multiVarTemplate, map[string]string{"metricName": "up", "anotherMetric": "sloths_do_like_a_good_nap"})
+	rT, err := Render(multiVarTemplate, map[string][]string{
+		"metricName":    {"up"},
+		"anotherMetric": {"sloths_do_like_a_good_nap"},
+	})
 	require.NoError(t, err)
 	require.Equal(t,
 		multiVarRenderedTargets,
