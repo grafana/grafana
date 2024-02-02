@@ -221,7 +221,6 @@ export function reduceFields(data: DataFrame[], matcher: FieldMatcher, reducerId
         });
         for (const reducer of reducers) {
           const value = results[reducer];
-          const type = getFieldType(reducer, field);
           const copy = {
             ...field,
             type: getFieldType(reducer, field),
