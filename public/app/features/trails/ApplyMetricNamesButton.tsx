@@ -16,7 +16,7 @@ export function ApplyMetricNamesButton({ isLoading, error, onClick }: Props) {
   const text = isLoading ? `Loading new metric names` : `Apply updated metric names`;
 
   let tooltip =
-    'Changing the time range has resulted in a different set of metric names. Click to apply the recently updated metric names to the results.';
+    'Changing the time range has resulted in a different set of metric names. Click to apply the recently updated metric names to the results and result hiding any empty panels.';
 
   if (!onClick) {
     tooltip = 'Any recently updated metric names have already been applied.';
