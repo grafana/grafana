@@ -108,7 +108,7 @@
 /pkg/services/dashboardversion/ @grafana/backend-platform
 /pkg/services/encryption/ @grafana/backend-platform
 /pkg/services/folder/ @grafana/backend-platform
-/pkg/services/grafana-apiserver @grafana/grafana-app-platform-squad
+/pkg/services/apiserver @grafana/grafana-app-platform-squad
 /pkg/services/hooks/ @grafana/backend-platform
 /pkg/services/kmsproviders/ @grafana/backend-platform
 /pkg/services/licensing/ @grafana/backend-platform
@@ -275,7 +275,6 @@
 /pkg/modules/ @grafana/grafana-app-platform-squad
 /pkg/kindsysreport/ @grafana/grafana-app-platform-squad
 /pkg/services/grpcserver/ @grafana/grafana-app-platform-squad
-/pkg/aggregator @grafana/grafana-app-platform-squad
 /pkg/generated @grafana/grafana-app-platform-squad
 
 # Alerting
@@ -678,7 +677,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/ephemeral-instances-pr-opened-closed.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/create-security-patch-from-security-mirror.yml @grafana/grafana-release-guild
 /.github/workflows/core-plugins-build-and-release.yml @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
-/.github/workflows/i18n-crowdin-fix-files.yml @grafana/grafana-frontend-platform
+/.github/workflows/i18n-crowdin-upload.yml @grafana/grafana-frontend-platform
+/.github/workflows/i18n-crowdin-download.yml @grafana/grafana-frontend-platform
 /.github/workflows/feature-toggle-cleanup.yml @tolzhabayev
 /.github/workflows/scripts/feature-toggle-cleanup/feature-toggle-cleanup.js @tolzhabayev
 
