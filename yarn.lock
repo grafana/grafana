@@ -8115,6 +8115,39 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@testing-library/jest-dom@npm:6.4.0":
+  version: 6.4.0
+  resolution: "@testing-library/jest-dom@npm:6.4.0"
+  dependencies:
+    "@adobe/css-tools": "npm:^4.3.2"
+    "@babel/runtime": "npm:^7.9.2"
+    aria-query: "npm:^5.0.0"
+    chalk: "npm:^3.0.0"
+    css.escape: "npm:^1.5.1"
+    dom-accessibility-api: "npm:^0.6.3"
+    lodash: "npm:^4.17.15"
+    redent: "npm:^3.0.0"
+  peerDependencies:
+    "@jest/globals": ">= 28"
+    "@types/bun": "*"
+    "@types/jest": ">= 28"
+    jest: ">= 28"
+    vitest: ">= 0.32"
+  peerDependenciesMeta:
+    "@jest/globals":
+      optional: true
+    "@types/bun":
+      optional: true
+    "@types/jest":
+      optional: true
+    jest:
+      optional: true
+    vitest:
+      optional: true
+  checksum: 10/09179611c61357925ca26a9cde4398a6ceee87940ab1c991c61d76fa74adb80e637f60e2ad1443e2cc75f1d336dc6285d5f50419e37b9bd04ad585233f913fc8
+  languageName: node
+  linkType: hard
+
 "@testing-library/jest-dom@npm:6.4.1, @testing-library/jest-dom@npm:^6.1.2":
   version: 6.4.1
   resolution: "@testing-library/jest-dom@npm:6.4.1"
@@ -8167,6 +8200,20 @@ __metadata:
     react-test-renderer:
       optional: true
   checksum: 10/f7b69373feebe99bc7d60595822cc5c00a1a5a4801bc4f99b597256a5c1d23c45a51f359051dd8a7bdffcc23b26f324c582e9433c25804934fd351a886812790
+  languageName: node
+  linkType: hard
+
+"@testing-library/react@npm:14.2.0":
+  version: 14.2.0
+  resolution: "@testing-library/react@npm:14.2.0"
+  dependencies:
+    "@babel/runtime": "npm:^7.12.5"
+    "@testing-library/dom": "npm:^9.0.0"
+    "@types/react-dom": "npm:^18.0.0"
+  peerDependencies:
+    react: ^18.0.0
+    react-dom: ^18.0.0
+  checksum: 10/e32b6958141215b8a0c0637df8f27efb01da8e7c311f9faedb32bb08ce976632a31b10df4e6d4c02d63e5bdf1974b0d04f3f375be0f26a86727cdd73619fffc2
   languageName: node
   linkType: hard
 
@@ -8999,6 +9046,16 @@ __metadata:
     jest-diff: "npm:^26.0.0"
     pretty-format: "npm:^26.0.0"
   checksum: 10/6de98f19b115540985bc2d32566a4c5e98215161ab6c8b06854cace140623cd71949230ad258b5b7de7323a00668bea14e3b250277e5a484da479ab238687793
+  languageName: node
+  linkType: hard
+
+"@types/jest@npm:29.5.11":
+  version: 29.5.11
+  resolution: "@types/jest@npm:29.5.11"
+  dependencies:
+    expect: "npm:^29.0.0"
+    pretty-format: "npm:^29.0.0"
+  checksum: 10/798f4c89407d9457bea1256de74c26f2b279f6c789c0e3311cd604cc75cdab333b9a29b00c51b0090d31abdf11cc788b4103282851a653bef6daf72edf97eef2
   languageName: node
   linkType: hard
 
