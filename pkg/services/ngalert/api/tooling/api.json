@@ -4700,7 +4700,6 @@
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4756,6 +4755,7 @@
    "type": "array"
   },
   "integration": {
+   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -4899,7 +4899,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -5056,61 +5055,6 @@
   "version": "1.1.0"
  },
  "paths": {
-  "/v1/notifications/time-intervals": {
-   "get": {
-    "description": "Get all the time intervals",
-    "operationId": "RouteNotificationsGetTimeIntervals",
-    "responses": {
-     "200": {
-      "$ref": "#/responses/GetAllIntervalsResponse"
-     },
-     "403": {
-      "description": "ForbiddenError",
-      "schema": {
-       "$ref": "#/definitions/ForbiddenError"
-      }
-     }
-    },
-    "tags": [
-     "notifications"
-    ]
-   }
-  },
-  "/v1/notifications/time-intervals/{name}": {
-   "get": {
-    "operationId": "RouteNotificationsGetTimeInterval",
-    "parameters": [
-     {
-      "description": "Time interval name",
-      "in": "path",
-      "name": "name",
-      "required": true,
-      "type": "string"
-     }
-    ],
-    "responses": {
-     "200": {
-      "$ref": "#/responses/GetIntervalsByNameResponse"
-     },
-     "403": {
-      "description": "ForbiddenError",
-      "schema": {
-       "$ref": "#/definitions/ForbiddenError"
-      }
-     },
-     "404": {
-      "description": "NotFound",
-      "schema": {
-       "$ref": "#/definitions/NotFound"
-      }
-     }
-    },
-    "summary": "Get a time interval by name.",
-    "tags": [
-     "notifications"
-    ]
-   }
-  },
   "/v1/provisioning/alert-rules": {
    "get": {
     "operationId": "RouteGetAlertRules",

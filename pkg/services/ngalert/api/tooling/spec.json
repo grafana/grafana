@@ -2091,8 +2091,7 @@
       "get": {
         "description": "Get all the time intervals",
         "tags": [
-          "notifications",
-          "stable"
+          "notifications"
         ],
         "operationId": "RouteNotificationsGetTimeIntervals",
         "responses": {
@@ -2111,8 +2110,7 @@
     "/v1/notifications/time-intervals/{name}": {
       "get": {
         "tags": [
-          "notifications",
-          "stable"
+          "notifications"
         ],
         "summary": "Get a time interval by name.",
         "operationId": "RouteNotificationsGetTimeInterval",
@@ -8074,7 +8072,6 @@
       }
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -8269,7 +8266,6 @@
       "$ref": "#/definitions/gettableAlerts"
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -8319,7 +8315,6 @@
       "$ref": "#/definitions/gettableSilence"
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -8327,6 +8322,7 @@
       "$ref": "#/definitions/gettableSilences"
     },
     "integration": {
+      "description": "Integration integration",
       "type": "object",
       "required": [
         "name",
@@ -8471,7 +8467,6 @@
       }
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
