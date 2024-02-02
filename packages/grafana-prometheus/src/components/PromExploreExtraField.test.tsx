@@ -4,7 +4,7 @@ import React from 'react';
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
 
-import { PromExploreExtraField, PromExploreExtraFieldProps, testIds } from './PromExploreExtraField';
+import { PromExploreExtraField, PromExploreExtraFieldProps, exploreTestIds } from './PromExploreExtraField';
 
 const setup = (propOverrides?: PromExploreExtraFieldProps) => {
   const query = { exemplar: false } as PromQuery;
@@ -27,11 +27,11 @@ const setup = (propOverrides?: PromExploreExtraFieldProps) => {
 describe('PromExploreExtraField', () => {
   it('should render step field', () => {
     setup();
-    expect(screen.getByTestId(testIds.stepField)).toBeInTheDocument();
+    expect(screen.getByTestId(exploreTestIds.stepField)).toBeInTheDocument();
   });
 
   it('should render query type field', () => {
     setup();
-    expect(screen.getByTestId(testIds.queryTypeField)).toBeInTheDocument();
+    expect(screen.getByTestId(exploreTestIds.queryTypeField)).toBeInTheDocument();
   });
 });

@@ -49,10 +49,10 @@ export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQ
   const onQueryTypeChange = getQueryTypeChangeHandler(query, onChange);
 
   return (
-    <div aria-label="Prometheus extra field" className="gf-form-inline" data-testid={testIds.extraFieldEditor}>
+    <div aria-label="Prometheus extra field" className="gf-form-inline" data-testid={exploreTestIds.extraFieldEditor}>
       {/*Query type field*/}
       <div
-        data-testid={testIds.queryTypeField}
+        data-testid={exploreTestIds.queryTypeField}
         className={cx(
           'gf-form explore-input-margin',
           css`
@@ -71,7 +71,7 @@ export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQ
       </div>
       {/*Step field*/}
       <div
-        data-testid={testIds.stepField}
+        data-testid={exploreTestIds.stepField}
         className={cx(
           'gf-form',
           css`
@@ -134,7 +134,7 @@ export function getQueryTypeChangeHandler(query: PromQuery, onChange: (update: P
   };
 }
 
-export const testIds = {
+export const exploreTestIds = {
   extraFieldEditor: 'prom-editor-extra-field',
   stepField: 'prom-editor-extra-field-step',
   queryTypeField: 'prom-editor-extra-field-query-type',

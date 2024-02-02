@@ -5,7 +5,7 @@ import { Button, useTheme2 } from '@grafana/ui';
 
 import { PromVisualQuery } from '../../types';
 
-import { getStyles, testIds } from './PromQail';
+import { getStyles, promQailTestIds } from './PromQail';
 import { QuerySuggestionItem } from './QuerySuggestionItem';
 import { QuerySuggestion, SuggestionType } from './types';
 
@@ -81,7 +81,7 @@ export function QuerySuggestionContainer(props: Props) {
                 updateHasNextInteraction(true);
                 nextInteraction();
               }}
-              data-testid={testIds.refinePrompt}
+              data-testid={promQailTestIds.refinePrompt}
               fill="outline"
               variant="secondary"
               size="md"
