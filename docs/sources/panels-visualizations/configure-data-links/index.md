@@ -42,13 +42,15 @@ If there's only one data link in the visualization, clicking anywhere on the vis
 
 You can configure data links for the following visualizations:
 
-|                            |                                  |                                  |
-| -------------------------- | -------------------------------- | -------------------------------- |
-| [Bar chart][bar chart]     | [Geomap][geomap]                 | [Status history][status history] |
-| [Bar gauge][bar gauge]     | [Heatmap][heatmap]               | [Table][table]                   |
-| [Candlestick][candlestick] | [Histogram][histogram]           | [Time series][time series]       |
-| [Canvas][canvas]           | [Stat][stat]                     | [Trend][trend]                   |
-| [Gauge][gauge]             | [State timeline][state timeline] | <!--xy chart -->                 |
+|                            |                        |                                  |
+| -------------------------- | ---------------------- | -------------------------------- |
+| [Bar chart][bar chart]     | [Geomap][geomap]       | [State timeline][state timeline] |
+| [Bar gauge][bar gauge]     | [Heatmap][heatmap]     | [Status history][status history] |
+| [Candlestick][candlestick] | [Histogram][histogram] | [Table][table]                   |
+| [Canvas][canvas]           | [Pie chart][pie chart] | [Time series][time series]       |
+| [Gauge][gauge]             | [Stat][stat]           | [Trend][trend]                   |
+
+<!--Also xy chart -->
 
 ## Data link variables
 
@@ -171,6 +173,9 @@ If you want to add all of the current dashboard's variables to the URL, then use
 
 [histogram]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/histogram"
 [histogram]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/histogram"
+
+[pie chart]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/pie-chart"
+[pie chart]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/pie-chart"
 
 [stat]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/stat"
 [stat]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/stat"
