@@ -3,17 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import {
-  Box,
-  Button,
-  ButtonGroup,
-  Dropdown,
-  Icon,
-  Menu,
-  ToolbarButton,
-  ToolbarButtonRow,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { contextSrv } from 'app/core/core';
@@ -31,10 +21,25 @@ interface Props {
 }
 
 export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
+  const actions = (
+    <ToolbarButtonRow alignment="right">
+      <ToolbarActions dashboard={dashboard} />
+    </ToolbarButtonRow>
+  );
+
+  return <AppChromeUpdate actions={actions} />;
+});
+
+NavToolbarActions.displayName = 'NavToolbarActions';
+
+/**
+ * This part is split into a separate componet to help test this
+ */
+export function ToolbarActions({ dashboard }: Props) {
   const { isEditing, viewPanelScene, isDirty, uid, meta, editview } = dashboard.useState();
-  const buttonWithExtraMargin = useStyles2(getStyles);
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
+  const buttonWithExtraMargin = useStyles2(getStyles);
 
   toolbarActions.push({
     group: 'icon-actions',
@@ -221,7 +226,6 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
       }
 
       // If we can do both save and save as copy we show a button group with dropdown menu
-
       const menu = (
         <Menu>
           <Menu.Item
@@ -236,14 +240,13 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
       );
 
       return (
-        <ButtonGroup className={buttonWithExtraMargin}>
+        <ButtonGroup className={buttonWithExtraMargin} key="save">
           <Button
             onClick={() => {
               DashboardInteractions.toolbarSaveClick();
               dashboard.openSaveDrawer({});
             }}
             tooltip="Save changes"
-            key="save"
             size="sm"
             variant={isDirty ? 'primary' : 'secondary'}
           >
@@ -293,23 +296,13 @@ export const NavToolbarActions = React.memo<Props>(({ dashboard }) => {
     lastGroup = action.group;
   }
 
-  return <AppChromeUpdate actions={<ToolbarButtonRow alignment="right">{actionElements}</ToolbarButtonRow>} />;
-});
+  return actionElements;
+}
 
-export interface ToolbarAction {
+interface ToolbarAction {
   group: string;
   condition?: boolean | string;
   render: () => React.ReactNode;
-}
-
-NavToolbarActions.displayName = 'NavToolbarActions';
-
-export function ButtonWithExtraSpacing({ children }: { children: React.ReactNode }) {
-  return (
-    <Box paddingLeft={0.5} paddingRight={0.5}>
-      {children}
-    </Box>
-  );
 }
 
 function getStyles(theme: GrafanaTheme2) {
