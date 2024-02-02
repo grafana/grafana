@@ -356,9 +356,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
   };
 
   migrateToReact() {
-    let xmode = this.panel.xaxis.mode;
-    let pluginKey = xmode === 'histogram' ? 'histogram' : xmode === 'series' ? 'barchart' : 'timeseries';
-    this.onPluginTypeChange(config.panels[pluginKey]);
+    this.onPluginTypeChange(config.panels['timeseries']);
   }
 }
 

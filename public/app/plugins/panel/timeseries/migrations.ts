@@ -39,10 +39,8 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
-import { Options as HistogramOptions } from '../histogram/panelcfg.gen';
-
 import { defaultGraphConfig } from './config';
-import { Options as TimeSeriesOptions } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
 
 let dashboardRefreshDebouncer: ReturnType<typeof setTimeout> | null = null;
 
@@ -57,38 +55,28 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
 ) => {
   // Changing from angular/flot panel to react/uPlot
   if (prevPluginId === 'graph' && prevOptions.angular) {
-    const xmode = prevOptions.angular.xaxis.mode;
+    const { fieldConfig, options, annotations } = graphToTimeseriesOptions({
+      ...prevOptions.angular,
+      fieldConfig: prevFieldConfig,
+      panel: panel,
+    });
 
-    if (xmode === 'histogram') {
-      // Histogram
-      return graphToHistogramOptions(prevOptions.angular);
-    } else if (xmode === 'series') {
-      // BarChart
-    } else {
-      // TimeSeries
-      const { fieldConfig, options, annotations } = graphToTimeseriesOptions({
-        ...prevOptions.angular,
-        fieldConfig: prevFieldConfig,
-        panel: panel,
-      });
+    const dashboard = getDashboardSrv().getCurrent();
+    if (dashboard && annotations?.length > 0) {
+      dashboard.annotations.list = [...dashboard.annotations.list, ...annotations];
 
-      const dashboard = getDashboardSrv().getCurrent();
-      if (dashboard && annotations?.length > 0) {
-        dashboard.annotations.list = [...dashboard.annotations.list, ...annotations];
-
-        // Trigger a full dashboard refresh when annotations change
-        if (dashboardRefreshDebouncer == null) {
-          dashboardRefreshDebouncer = setTimeout(() => {
-            dashboardRefreshDebouncer = null;
-            getTimeSrv().refreshTimeModel();
-          });
-        }
+      // Trigger a full dashboard refresh when annotations change
+      if (dashboardRefreshDebouncer == null) {
+        dashboardRefreshDebouncer = setTimeout(() => {
+          dashboardRefreshDebouncer = null;
+          getTimeSrv().refreshTimeModel();
+        });
       }
-
-      panel.fieldConfig = fieldConfig; // Mutates the incoming panel
-      panel.alert = prevOptions.angular.alert;
-      return options;
     }
+
+    panel.fieldConfig = fieldConfig; // Mutates the incoming panel
+    panel.alert = prevOptions.angular.alert;
+    return options;
   }
 
   //fixes graph -> viz renaming in custom.hideFrom field config by mutation.
@@ -97,108 +85,14 @@ export const graphPanelChangedHandler: PanelTypeChangedHandler = (
   return {};
 };
 
-function initLegendAndTooltipConfig(angular: any, overrides: ConfigOverrideRule[]) {
-  const options: TimeSeriesOptions = {
-    legend: {
-      displayMode: LegendDisplayMode.List,
-      showLegend: true,
-      placement: 'bottom',
-      calcs: [],
-    },
-    tooltip: {
-      mode: TooltipDisplayMode.Single,
-      sort: SortOrder.None,
-    },
-  };
-
-  // Legend config migration
-  const legendConfig = angular.legend;
-  if (legendConfig) {
-    if (legendConfig.show) {
-      options.legend.displayMode = legendConfig.alignAsTable ? LegendDisplayMode.Table : LegendDisplayMode.List;
-    } else {
-      options.legend.showLegend = false;
-    }
-
-    if (legendConfig.rightSide) {
-      options.legend.placement = 'right';
-    }
-
-    if (angular.legend.values) {
-      const enabledLegendValues = pickBy(angular.legend);
-      options.legend.calcs = getReducersFromLegend(enabledLegendValues);
-    }
-
-    if (angular.legend.sideWidth) {
-      options.legend.width = angular.legend.sideWidth;
-    }
-
-    if (legendConfig.hideZero) {
-      overrides.push(getLegendHideFromOverride(ReducerID.allIsZero));
-    }
-
-    if (legendConfig.hideEmpty) {
-      overrides.push(getLegendHideFromOverride(ReducerID.allIsNull));
-    }
-  }
-
-  const tooltipConfig = angular.tooltip;
-  if (tooltipConfig) {
-    if (tooltipConfig.shared !== undefined) {
-      options.tooltip.mode = tooltipConfig.shared ? TooltipDisplayMode.Multi : TooltipDisplayMode.Single;
-    }
-
-    if (tooltipConfig.sort !== undefined && tooltipConfig.shared) {
-      switch (tooltipConfig.sort) {
-        case 1:
-          options.tooltip.sort = SortOrder.Ascending;
-          break;
-        case 2:
-          options.tooltip.sort = SortOrder.Descending;
-          break;
-        default:
-          options.tooltip.sort = SortOrder.None;
-      }
-    }
-  }
-
-  return options;
-}
-
-export function graphToHistogramOptions(angular: any): {
-  fieldConfig: FieldConfigSource;
-  options: TimeSeriesOptions;
-} {
-  const fieldConfig: FieldConfigSource = { defaults: { }, overrides: []};
-
-  const options: HistogramOptions = initLegendAndTooltipConfig(angular, fieldConfig.overrides);
-
-  const { min, max, buckets } = angular.xaxis;
-
-  if (min != null) {
-    fieldConfig.defaults.min = min;
-  }
-
-  if (max != null) {
-    fieldConfig.defaults.max = min;
-  }
-
-  if (buckets != null) {
-    options.bucketCount = buckets;
-  }
-
-  // TODO: color overrides?
-
-  return { options, fieldConfig };
-}
-
 export function graphToTimeseriesOptions(angular: any): {
   fieldConfig: FieldConfigSource;
-  options: TimeSeriesOptions;
+  options: Options;
   annotations: AnnotationQuery[];
 } {
   let annotations: AnnotationQuery[] = [];
 
+  const overrides: ConfigOverrideRule[] = angular.fieldConfig?.overrides ?? [];
   const yaxes = angular.yaxes ?? [];
   let y1 = getFieldConfigFromOldAxis(yaxes[0]);
   if (angular.fieldConfig?.defaults) {
@@ -224,8 +118,6 @@ export function graphToTimeseriesOptions(angular: any): {
   //     "linewidth": 2
   //   }
   // ],
-
-  const overrides: ConfigOverrideRule[] = angular.fieldConfig?.overrides ?? [];
 
   if (angular.aliasColors) {
     for (const alias of Object.keys(angular.aliasColors)) {
@@ -461,7 +353,49 @@ export function graphToTimeseriesOptions(angular: any): {
   y1.custom = omitBy(graph, isNil);
   y1.nullValueMode = angular.nullPointMode;
 
-  const options: TimeSeriesOptions = initLegendAndTooltipConfig(angular, overrides);
+  const options: Options = {
+    legend: {
+      displayMode: LegendDisplayMode.List,
+      showLegend: true,
+      placement: 'bottom',
+      calcs: [],
+    },
+    tooltip: {
+      mode: TooltipDisplayMode.Single,
+      sort: SortOrder.None,
+    },
+  };
+
+  // Legend config migration
+  const legendConfig = angular.legend;
+  if (legendConfig) {
+    if (legendConfig.show) {
+      options.legend.displayMode = legendConfig.alignAsTable ? LegendDisplayMode.Table : LegendDisplayMode.List;
+    } else {
+      options.legend.showLegend = false;
+    }
+
+    if (legendConfig.rightSide) {
+      options.legend.placement = 'right';
+    }
+
+    if (angular.legend.values) {
+      const enabledLegendValues = pickBy(angular.legend);
+      options.legend.calcs = getReducersFromLegend(enabledLegendValues);
+    }
+
+    if (angular.legend.sideWidth) {
+      options.legend.width = angular.legend.sideWidth;
+    }
+
+    if (legendConfig.hideZero) {
+      overrides.push(getLegendHideFromOverride(ReducerID.allIsZero));
+    }
+
+    if (legendConfig.hideEmpty) {
+      overrides.push(getLegendHideFromOverride(ReducerID.allIsNull));
+    }
+  }
 
   // timeRegions migration
   if (angular.timeRegions?.length) {
@@ -510,6 +444,26 @@ export function graphToTimeseriesOptions(angular: any): {
         annotations.push(anno);
       }
     });
+  }
+
+  const tooltipConfig = angular.tooltip;
+  if (tooltipConfig) {
+    if (tooltipConfig.shared !== undefined) {
+      options.tooltip.mode = tooltipConfig.shared ? TooltipDisplayMode.Multi : TooltipDisplayMode.Single;
+    }
+
+    if (tooltipConfig.sort !== undefined && tooltipConfig.shared) {
+      switch (tooltipConfig.sort) {
+        case 1:
+          options.tooltip.sort = SortOrder.Ascending;
+          break;
+        case 2:
+          options.tooltip.sort = SortOrder.Descending;
+          break;
+        default:
+          options.tooltip.sort = SortOrder.None;
+      }
+    }
   }
 
   if (angular.thresholds && angular.thresholds.length > 0) {
