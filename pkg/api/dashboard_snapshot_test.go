@@ -152,7 +152,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				sc.handlerFunc = wrapDirectHandler(hs.DeleteDashboardSnapshotByDeleteKey)
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{"deleteKey": "12345"}).exec()
 
-				require.Equal(t, 200, sc.resp.Code)
+				require.Equal(t, 200, sc.resp.Code, "BODY: "+sc.resp.Body.String())
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 				require.NoError(t, err)
 
@@ -275,7 +275,7 @@ func TestGetDashboardSnapshotNotFound(t *testing.T) {
 			sc.handlerFunc = hs.DeleteDashboardSnapshot
 			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
-			assert.Equal(t, http.StatusNotFound, sc.resp.Code)
+			assert.Equal(t, http.StatusNotFound, sc.resp.Code, "BODY: "+sc.resp.Body.String())
 		}, sqlmock)
 
 	loggedInUserScenarioWithRole(t,
@@ -286,7 +286,7 @@ func TestGetDashboardSnapshotNotFound(t *testing.T) {
 			sc.handlerFunc = wrapDirectHandler(hs.DeleteDashboardSnapshotByDeleteKey)
 			sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"deleteKey": "12345"}).exec()
 
-			assert.Equal(t, http.StatusNotFound, sc.resp.Code)
+			assert.Equal(t, http.StatusNotFound, sc.resp.Code, "BODY: "+sc.resp.Body.String())
 		}, sqlmock)
 }
 
