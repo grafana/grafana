@@ -831,6 +831,12 @@ func TestRedactedValue(t *testing.T) {
 			expected: RedactedPassword,
 		},
 		{
+			desc:     "license key with non-empty value",
+			key:      "GF_ENTERPRISE_LICENSE_TEXT",
+			value:    "some_license_key_test",
+			expected: RedactedPassword,
+		},
+		{
 			desc:     "sensitive key with empty value",
 			key:      "private_key_path",
 			value:    "",
