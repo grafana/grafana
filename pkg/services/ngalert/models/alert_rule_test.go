@@ -686,7 +686,8 @@ func TestDiff(t *testing.T) {
 	t.Run("should detect changes in NotificationSettings", func(t *testing.T) {
 		rule1 := AlertRuleGen()()
 
-		baseSettings := *RandomNotificationSettings()
+		ns := NotificationSettingsMutators
+		baseSettings := NotificationSettingsGen()()
 		rule1.NotificationSettings = []NotificationSettings{baseSettings}
 
 		addTime := func(d *model.Duration, duration time.Duration) *time.Duration {
@@ -697,12 +698,12 @@ func TestDiff(t *testing.T) {
 
 		testCases := []struct {
 			name                 string
-			notificationSettings *NotificationSettings
+			notificationSettings NotificationSettings
 			diffs                cmputil.DiffReport
 		}{
 			{
 				name:                 "should detect changes in Receiver",
-				notificationSettings: NotificationSettingsGen(baseSettings, NSMuts{}.WithReceiver(baseSettings.Receiver+"-modified")),
+				notificationSettings: CopyNotificationSettings(baseSettings, ns.WithReceiver(baseSettings.Receiver+"-modified")),
 				diffs: []cmputil.Diff{
 					{
 						Path:  "NotificationSettings[0].Receiver",
@@ -713,7 +714,7 @@ func TestDiff(t *testing.T) {
 			},
 			{
 				name:                 "should detect changes in GroupWait",
-				notificationSettings: NotificationSettingsGen(baseSettings, NSMuts{}.WithGroupWait(addTime(baseSettings.GroupWait, 1*time.Second))),
+				notificationSettings: CopyNotificationSettings(baseSettings, ns.WithGroupWait(addTime(baseSettings.GroupWait, 1*time.Second))),
 				diffs: []cmputil.Diff{
 					{
 						Path:  "NotificationSettings[0].GroupWait",
@@ -724,7 +725,7 @@ func TestDiff(t *testing.T) {
 			},
 			{
 				name:                 "should detect changes in GroupInterval",
-				notificationSettings: NotificationSettingsGen(baseSettings, NSMuts{}.WithGroupInterval(addTime(baseSettings.GroupInterval, 1*time.Second))),
+				notificationSettings: CopyNotificationSettings(baseSettings, ns.WithGroupInterval(addTime(baseSettings.GroupInterval, 1*time.Second))),
 				diffs: []cmputil.Diff{
 					{
 						Path:  "NotificationSettings[0].GroupInterval",
@@ -735,7 +736,7 @@ func TestDiff(t *testing.T) {
 			},
 			{
 				name:                 "should detect changes in RepeatInterval",
-				notificationSettings: NotificationSettingsGen(baseSettings, NSMuts{}.WithRepeatInterval(addTime(baseSettings.RepeatInterval, 1*time.Second))),
+				notificationSettings: CopyNotificationSettings(baseSettings, ns.WithRepeatInterval(addTime(baseSettings.RepeatInterval, 1*time.Second))),
 				diffs: []cmputil.Diff{
 					{
 						Path:  "NotificationSettings[0].RepeatInterval",
@@ -746,7 +747,7 @@ func TestDiff(t *testing.T) {
 			},
 			{
 				name:                 "should detect changes in GroupBy",
-				notificationSettings: NotificationSettingsGen(baseSettings, NSMuts{}.WithGroupBy(baseSettings.GroupBy[0]+"-modified", baseSettings.GroupBy[1]+"-modified")),
+				notificationSettings: CopyNotificationSettings(baseSettings, ns.WithGroupBy(baseSettings.GroupBy[0]+"-modified", baseSettings.GroupBy[1]+"-modified")),
 				diffs: []cmputil.Diff{
 					{
 						Path:  "NotificationSettings[0].GroupBy[0]",
@@ -762,7 +763,7 @@ func TestDiff(t *testing.T) {
 			},
 			{
 				name:                 "should detect changes in MuteTimeIntervals",
-				notificationSettings: NotificationSettingsGen(baseSettings, NSMuts{}.WithMuteTimeIntervals(baseSettings.MuteTimeIntervals[0]+"-modified", baseSettings.MuteTimeIntervals[1]+"-modified")),
+				notificationSettings: CopyNotificationSettings(baseSettings, ns.WithMuteTimeIntervals(baseSettings.MuteTimeIntervals[0]+"-modified", baseSettings.MuteTimeIntervals[1]+"-modified")),
 				diffs: []cmputil.Diff{
 					{
 						Path:  "NotificationSettings[0].MuteTimeIntervals[0]",
@@ -781,7 +782,7 @@ func TestDiff(t *testing.T) {
 		for _, tt := range testCases {
 			t.Run(tt.name, func(t *testing.T) {
 				rule2 := CopyRule(rule1)
-				rule2.NotificationSettings = []NotificationSettings{*tt.notificationSettings}
+				rule2.NotificationSettings = []NotificationSettings{tt.notificationSettings}
 				diffs := rule1.Diff(rule2)
 
 				cOpt := []cmp.Option{

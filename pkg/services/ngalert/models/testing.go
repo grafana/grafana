@@ -20,6 +20,10 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var (
+	NotificationSettingsMutators = NSMuts{}
+)
+
 type AlertRuleMutator func(*AlertRule)
 
 // AlertRuleGen provides a factory function that generates a random AlertRule.
@@ -65,26 +69,32 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 			panelID = &p
 		}
 
+		var ns []NotificationSettings
+		if rand.Int63()%2 == 0 {
+			ns = append(ns, NotificationSettingsGen()())
+		}
+
 		rule := &AlertRule{
-			ID:              rand.Int63n(1500),
-			OrgID:           rand.Int63n(1500) + 1, // Prevent OrgID=0 as this does not pass alert rule validation.
-			Title:           "TEST-ALERT-" + util.GenerateShortUID(),
-			Condition:       "A",
-			Data:            []AlertQuery{GenerateAlertQuery()},
-			Updated:         time.Now().Add(-time.Duration(rand.Intn(100) + 1)),
-			IntervalSeconds: rand.Int63n(60) + 1,
-			Version:         rand.Int63n(1500), // Don't generate a rule ID too big for postgres
-			UID:             util.GenerateShortUID(),
-			NamespaceUID:    util.GenerateShortUID(),
-			DashboardUID:    dashUID,
-			PanelID:         panelID,
-			RuleGroup:       "TEST-GROUP-" + util.GenerateShortUID(),
-			RuleGroupIndex:  rand.Intn(1500),
-			NoDataState:     randNoDataState(),
-			ExecErrState:    randErrState(),
-			For:             forInterval,
-			Annotations:     annotations,
-			Labels:          labels,
+			ID:                   rand.Int63n(1500),
+			OrgID:                rand.Int63n(1500) + 1, // Prevent OrgID=0 as this does not pass alert rule validation.
+			Title:                "TEST-ALERT-" + util.GenerateShortUID(),
+			Condition:            "A",
+			Data:                 []AlertQuery{GenerateAlertQuery()},
+			Updated:              time.Now().Add(-time.Duration(rand.Intn(100) + 1)),
+			IntervalSeconds:      rand.Int63n(60) + 1,
+			Version:              rand.Int63n(1500), // Don't generate a rule ID too big for postgres
+			UID:                  util.GenerateShortUID(),
+			NamespaceUID:         util.GenerateShortUID(),
+			DashboardUID:         dashUID,
+			PanelID:              panelID,
+			RuleGroup:            "TEST-GROUP-" + util.GenerateShortUID(),
+			RuleGroupIndex:       rand.Intn(1500),
+			NoDataState:          randNoDataState(),
+			ExecErrState:         randErrState(),
+			For:                  forInterval,
+			Annotations:          annotations,
+			Labels:               labels,
+			NotificationSettings: ns,
 		}
 
 		for _, mutator := range mutators {
@@ -606,7 +616,7 @@ func AlertInstanceGen(mutators ...AlertInstanceMutator) *AlertInstance {
 type Mutator[T any] func(*T)
 
 // CopyNotificationSettings creates a deep copy of NotificationSettings.
-func CopyNotificationSettings(ns NotificationSettings) NotificationSettings {
+func CopyNotificationSettings(ns NotificationSettings, mutators ...Mutator[NotificationSettings]) NotificationSettings {
 	c := NotificationSettings{
 		Receiver: ns.Receiver,
 	}
@@ -627,28 +637,27 @@ func CopyNotificationSettings(ns NotificationSettings) NotificationSettings {
 		c.MuteTimeIntervals = make([]string, len(ns.MuteTimeIntervals))
 		copy(c.MuteTimeIntervals, ns.MuteTimeIntervals)
 	}
-
+	for _, mutator := range mutators {
+		mutator(&c)
+	}
 	return c
 }
 
 // NotificationSettingsGen generates NotificationSettings using a base and mutators.
-func NotificationSettingsGen(base NotificationSettings, mutators ...Mutator[NotificationSettings]) *NotificationSettings {
-	c := CopyNotificationSettings(base)
-	for _, mutator := range mutators {
-		mutator(&c)
-	}
-	return &c
-}
-
-// RandomNotificationSettings generates NotificationSettings with random values.
-func RandomNotificationSettings() *NotificationSettings {
-	return &NotificationSettings{
-		Receiver:          util.GenerateShortUID(),
-		GroupBy:           []string{util.GenerateShortUID(), util.GenerateShortUID()},
-		GroupWait:         util.Pointer(model.Duration(time.Duration(rand.Intn(100) + 1))),
-		GroupInterval:     util.Pointer(model.Duration(time.Duration(rand.Intn(100) + 1))),
-		RepeatInterval:    util.Pointer(model.Duration(time.Duration(rand.Intn(100) + 1))),
-		MuteTimeIntervals: []string{util.GenerateShortUID(), util.GenerateShortUID()},
+func NotificationSettingsGen(mutators ...Mutator[NotificationSettings]) func() NotificationSettings {
+	return func() NotificationSettings {
+		c := NotificationSettings{
+			Receiver:          util.GenerateShortUID(),
+			GroupBy:           []string{util.GenerateShortUID(), util.GenerateShortUID()},
+			GroupWait:         util.Pointer(model.Duration(time.Duration(rand.Intn(100) + 1))),
+			GroupInterval:     util.Pointer(model.Duration(time.Duration(rand.Intn(100) + 1))),
+			RepeatInterval:    util.Pointer(model.Duration(time.Duration(rand.Intn(100) + 1))),
+			MuteTimeIntervals: []string{util.GenerateShortUID(), util.GenerateShortUID()},
+		}
+		for _, mutator := range mutators {
+			mutator(&c)
+		}
+		return c
 	}
 }
 
