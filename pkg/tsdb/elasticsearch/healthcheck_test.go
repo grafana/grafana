@@ -21,7 +21,7 @@ func Test_Healthcheck_OK(t *testing.T) {
 		Headers:       nil,
 	})
 	assert.Equal(t, backend.HealthStatusOk, res.Status)
-	assert.Equal(t, "Elasticsearch cluster is healthy", res.Message)
+	assert.Equal(t, "Elasticsearch data source is healthy", res.Message)
 }
 
 func Test_Healthcheck_Timeout(t *testing.T) {
@@ -31,16 +31,16 @@ func Test_Healthcheck_Timeout(t *testing.T) {
 		Headers:       nil,
 	})
 	assert.Equal(t, backend.HealthStatusError, res.Status)
-	assert.Equal(t, "Elasticsearch cluster is not healthy", res.Message)
+	assert.Equal(t, "Elasticsearch data source is not healthy", res.Message)
 }
 
 type FakeRoundTripper struct {
-	isClusterHealthy bool
+	isDsHealthy bool
 }
 
 func (fakeRoundTripper *FakeRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	var res *http.Response
-	if fakeRoundTripper.isClusterHealthy {
+	if fakeRoundTripper.isDsHealthy {
 		res = &http.Response{
 			StatusCode: http.StatusOK,
 			Status:     "200 OK",
@@ -57,12 +57,12 @@ func (fakeRoundTripper *FakeRoundTripper) RoundTrip(req *http.Request) (*http.Re
 }
 
 type FakeInstanceManager struct {
-	isClusterHealthy bool
+	isDsHealthy bool
 }
 
 func (fakeInstanceManager *FakeInstanceManager) Get(tx context.Context, pluginContext backend.PluginContext) (instancemgmt.Instance, error) {
 	httpClient, _ := sdkhttpclient.New(sdkhttpclient.Options{})
-	httpClient.Transport = &FakeRoundTripper{isClusterHealthy: fakeInstanceManager.isClusterHealthy}
+	httpClient.Transport = &FakeRoundTripper{isDsHealthy: fakeInstanceManager.isDsHealthy}
 
 	return es.DatasourceInfo{
 		HTTPClient: httpClient,
@@ -73,8 +73,8 @@ func (*FakeInstanceManager) Do(_ context.Context, _ backend.PluginContext, _ ins
 	return nil
 }
 
-func GetMockService(isClusterHealthy bool) *Service {
+func GetMockService(isDsHealthy bool) *Service {
 	return &Service{
-		im: &FakeInstanceManager{isClusterHealthy: isClusterHealthy},
+		im: &FakeInstanceManager{isDsHealthy: isDsHealthy},
 	}
 }
