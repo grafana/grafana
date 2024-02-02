@@ -12,11 +12,12 @@ import (
 	"github.com/prometheus/alertmanager/config"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -26,21 +27,25 @@ type ContactPointService struct {
 	encryptionService secrets.Service
 	provenanceStore   ProvisioningStore
 	xact              TransactionManager
+	receiverService   receiverService
 	log               log.Logger
-	ac                accesscontrol.AccessControl
+}
+
+type receiverService interface {
+	GetReceivers(ctx context.Context, query models.GetReceiversQuery, user identity.Requester) ([]apimodels.GettableApiReceiver, error)
 }
 
 func NewContactPointService(store AMConfigStore, encryptionService secrets.Service,
-	provenanceStore ProvisioningStore, xact TransactionManager, log log.Logger, ac accesscontrol.AccessControl) *ContactPointService {
+	provenanceStore ProvisioningStore, xact TransactionManager, receiverService receiverService, log log.Logger) *ContactPointService {
 	return &ContactPointService{
 		configStore: &alertmanagerConfigStoreImpl{
 			store: store,
 		},
+		receiverService:   receiverService,
 		encryptionService: encryptionService,
 		provenanceStore:   provenanceStore,
 		xact:              xact,
 		log:               log,
-		ac:                ac,
 	}
 }
 
@@ -52,48 +57,38 @@ type ContactPointQuery struct {
 	Decrypt bool
 }
 
-func (ecp *ContactPointService) canDecryptSecrets(ctx context.Context, u identity.Requester) bool {
-	if u == nil {
-		return false
-	}
-	permitted, err := ecp.ac.Evaluate(ctx, u, accesscontrol.EvalPermission(accesscontrol.ActionAlertingProvisioningReadSecrets))
-	if err != nil {
-		ecp.log.Error("Failed to evaluate user permissions", "error", err)
-		permitted = false
-	}
-	return permitted
-}
-
 // GetContactPoints returns contact points. If q.Decrypt is true and the user is an OrgAdmin, decrypted secure settings are included instead of redacted ones.
 func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactPointQuery, u identity.Requester) ([]apimodels.EmbeddedContactPoint, error) {
-	if q.Decrypt && !ecp.canDecryptSecrets(ctx, u) {
-		return nil, fmt.Errorf("%w: user requires Admin role or alert.provisioning.secrets:read permission to view decrypted secure settings", ErrPermissionDenied)
+	receiverQuery := models.GetReceiversQuery{
+		OrgID:   q.OrgID,
+		Decrypt: q.Decrypt,
 	}
-	revision, err := ecp.configStore.Get(ctx, q.OrgID)
-	if err != nil {
-		return nil, err
+	if q.Name != "" {
+		receiverQuery.Names = []string{q.Name}
 	}
-	provenances, err := ecp.provenanceStore.GetProvenances(ctx, q.OrgID, "contactPoint")
-	if err != nil {
-		return nil, err
-	}
-	var contactPoints []apimodels.EmbeddedContactPoint
 
-	for _, contactPoint := range revision.cfg.GetGrafanaReceiverMap() {
-		if q.Name != "" && contactPoint.Name != q.Name {
-			continue
+	res, err := ecp.receiverService.GetReceivers(ctx, receiverQuery, u)
+	if err != nil {
+		return nil, convertRecSvcErr(err)
+	}
+	grafanaReceivers := []*apimodels.GettableGrafanaReceiver{}
+	if q.Name != "" {
+		grafanaReceivers = res[0].GettableGrafanaReceivers.GrafanaManagedReceivers // we only expect one receiver group
+	} else {
+		for _, r := range res {
+			grafanaReceivers = append(grafanaReceivers, r.GettableGrafanaReceivers.GrafanaManagedReceivers...)
 		}
+	}
 
-		embeddedContactPoint, err := PostableGrafanaReceiverToEmbeddedContactPoint(
-			contactPoint,
-			provenances[contactPoint.UID],
-			ecp.decryptValueOrRedacted(q.Decrypt, contactPoint.UID),
-		)
+	var contactPoints []apimodels.EmbeddedContactPoint
+	for _, gr := range grafanaReceivers {
+		contactPoint, err := GettableGrafanaReceiverToEmbeddedContactPoint(gr)
 		if err != nil {
 			return nil, err
 		}
-		contactPoints = append(contactPoints, embeddedContactPoint)
+		contactPoints = append(contactPoints, contactPoint)
 	}
+
 	sort.SliceStable(contactPoints, func(i, j int) bool {
 		switch strings.Compare(contactPoints[i].Name, contactPoints[j].Name) {
 		case -1:
@@ -103,6 +98,7 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 		}
 		return contactPoints[i].UID < contactPoints[j].UID
 	})
+
 	return contactPoints, nil
 }
 
@@ -506,4 +502,24 @@ func RemoveSecretsForContactPoint(e *apimodels.EmbeddedContactPoint) (map[string
 		s[secretKey] = secretValue
 	}
 	return s, nil
+}
+
+// handleWrappedError unwraps an error and wraps it with a new expected error type. If the error is not wrapped, it returns just the expected error.
+func handleWrappedError(err error, expected error) error {
+	err = errors.Unwrap(err)
+	if err == nil {
+		return expected
+	}
+	return fmt.Errorf("%w: %s", expected, err.Error())
+}
+
+// convertRecSvcErr converts errors from notifier.ReceiverService to errors expected from ContactPointService.
+func convertRecSvcErr(err error) error {
+	if errors.Is(err, notifier.ErrPermissionDenied) {
+		return handleWrappedError(err, ErrPermissionDenied)
+	}
+	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+		return ErrNoAlertmanagerConfiguration.Errorf("")
+	}
+	return err
 }

@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -70,6 +71,7 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 			return err
 		}
 
+		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 		foldr, err = ss.Get(ctx, folder.GetFolderQuery{
 			ID: &lastInsertedID, // nolint:staticcheck
 		})
@@ -81,11 +83,20 @@ func (ss *sqlStore) Create(ctx context.Context, cmd folder.CreateFolderCommand) 
 	return foldr.WithURL(), err
 }
 
-func (ss *sqlStore) Delete(ctx context.Context, uid string, orgID int64) error {
+func (ss *sqlStore) Delete(ctx context.Context, UIDs []string, orgID int64) error {
+	if len(UIDs) == 0 {
+		return nil
+	}
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Exec("DELETE FROM folder WHERE uid=? AND org_id=?", uid, orgID)
+		s := fmt.Sprintf("DELETE FROM folder WHERE org_id=? AND uid IN (%s)", strings.Repeat("?, ", len(UIDs)-1)+"?")
+		sqlArgs := make([]any, 0, len(UIDs)+2)
+		sqlArgs = append(sqlArgs, s, orgID)
+		for _, uid := range UIDs {
+			sqlArgs = append(sqlArgs, uid)
+		}
+		_, err := sess.Exec(sqlArgs...)
 		if err != nil {
-			return folder.ErrDatabaseError.Errorf("failed to delete folder: %w", err)
+			return folder.ErrDatabaseError.Errorf("failed to delete folders: %w", err)
 		}
 		return nil
 	})
@@ -170,9 +181,19 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 			exists, err = sess.SQL("SELECT * FROM folder WHERE uid = ? AND org_id = ?", q.UID, q.OrgID).Get(foldr)
 		// nolint:staticcheck
 		case q.ID != nil:
+			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 			exists, err = sess.SQL("SELECT * FROM folder WHERE id = ?", q.ID).Get(foldr)
 		case q.Title != nil:
-			exists, err = sess.SQL("SELECT * FROM folder WHERE title = ? AND org_id = ?", q.Title, q.OrgID).Get(foldr)
+			s := strings.Builder{}
+			s.WriteString("SELECT * FROM folder WHERE title = ? AND org_id = ?")
+			args := []any{*q.Title, q.OrgID}
+			if q.ParentUID != nil {
+				s.WriteString(" AND parent_uid = ?")
+				args = append(args, *q.ParentUID)
+			} else {
+				s.WriteString(" AND parent_uid IS NULL")
+			}
+			exists, err = sess.SQL(s.String(), args...).Get(foldr)
 		default:
 			return folder.ErrBadRequest.Errorf("one of ID, UID, or Title must be included in the command")
 		}
@@ -233,7 +254,7 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 	if len(folders) < 1 {
 		// the query is expected to return at least the same folder
 		// if it's empty it means that the folder does not exist
-		return nil, folder.ErrFolderNotFound
+		return nil, folder.ErrFolderNotFound.Errorf("folder not found")
 	}
 
 	return util.Reverse(folders[1:]), nil
@@ -296,7 +317,7 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, q folder.GetParentsQuer
 			return err
 		}
 		if !ok {
-			return folder.ErrFolderNotFound
+			return folder.ErrFolderNotFound.Errorf("folder not found")
 		}
 		for {
 			f := &folder.Folder{}
@@ -319,6 +340,7 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, q folder.GetParentsQuer
 	return util.Reverse(folders), err
 }
 
+// TODO use a single query to get the height of a folder
 func (ss *sqlStore) GetHeight(ctx context.Context, foldrUID string, orgID int64, parentUID *string) (int, error) {
 	height := -1
 	queue := []string{foldrUID}
@@ -442,6 +464,65 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 	for i, f := range folders {
 		f.Fullpath = strings.TrimLeft(f.Fullpath, "/")
 		f.FullpathUIDs = strings.TrimLeft(f.FullpathUIDs, "/")
+		folders[i] = f.WithURL()
+	}
+
+	return folders, nil
+}
+
+func (ss *sqlStore) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*folder.Folder, error) {
+	var folders []*folder.Folder
+
+	recursiveQueriesAreSupported, err := ss.db.RecursiveQueriesAreSupported()
+	if err != nil {
+		return nil, err
+	}
+	switch recursiveQueriesAreSupported {
+	case true:
+		recQuery := `
+		WITH RECURSIVE RecQry AS (
+			SELECT * FROM folder WHERE parent_uid = ? AND org_id = ?
+			UNION ALL SELECT f.* FROM folder f INNER JOIN RecQry r ON f.parent_uid = r.uid and f.org_id = r.org_id
+		)
+		SELECT * FROM RecQry;
+	`
+		if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+			err := sess.SQL(recQuery, ancestor_uid, orgID).Find(&folders)
+			if err != nil {
+				return folder.ErrDatabaseError.Errorf("failed to get folder descendants: %w", err)
+			}
+			return nil
+		}); err != nil {
+			return nil, err
+		}
+	default:
+		// this is suboptimal because results is full table scan on f0
+		// but it's the best we can do without recursive CTE
+		if err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+			s := strings.Builder{}
+			args := make([]any, 0, 1+folder.MaxNestedFolderDepth)
+			args = append(args, orgID)
+			s.WriteString(`SELECT f0.id, f0.org_id, f0.uid, f0.parent_uid, f0.title, f0.description, f0.created, f0.updated`)
+			s.WriteString(` FROM folder f0`)
+			s.WriteString(getFullpathJoinsSQL())
+			s.WriteString(` WHERE f0.org_id=?`)
+			s.WriteString(` AND (`)
+			for i := 1; i <= folder.MaxNestedFolderDepth; i++ {
+				if i > 1 {
+					s.WriteString(` OR `)
+				}
+				s.WriteString(fmt.Sprintf(`f%d.uid=?`, i))
+				args = append(args, ancestor_uid)
+			}
+			s.WriteString(`)`)
+			return sess.SQL(s.String(), args...).Find(&folders)
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	// Add URLs
+	for i, f := range folders {
 		folders[i] = f.WithURL()
 	}
 
