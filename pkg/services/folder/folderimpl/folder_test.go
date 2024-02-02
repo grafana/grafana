@@ -1293,7 +1293,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		acmock.NewMockedPermissionsService(),
 		dashboardPermissions,
 		actest.FakeAccessControl{},
-		foldertest.NewFakeService(),
+		serviceWithFlagOn,
 		nil,
 	)
 	require.NoError(t, err)
@@ -1318,13 +1318,13 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		SignedInUser: &signedInAdminUser,
 	}
 
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+		CanSaveValue: true,
+		CanViewValue: true,
+	})
+
 	t.Run("Should get folders shared with given user", func(t *testing.T) {
 		depth := 3
-		origNewGuardian := guardian.New
-		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
-			CanSaveValue: true,
-			CanViewValue: true,
-		})
 
 		ancestorFoldersWithPermissions := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "withPermissions", createCmd)
 		ancestorFoldersWithoutPermissions := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOn, depth, "withoutPermissions", createCmd)
@@ -1338,17 +1338,6 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		// nolint:staticcheck
 		dash2 := insertTestDashboard(t, serviceWithFlagOn.dashboardStore, "dashboard in subfolder", orgID, subfolder.ID, subfolder.UID, "prod")
 
-		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
-			CanSaveValue: true,
-			CanViewValue: true,
-			CanViewUIDs: []string{
-				ancestorFoldersWithPermissions[0].UID,
-				ancestorFoldersWithPermissions[1].UID,
-				ancestorFoldersWithoutPermissions[1].UID,
-				dash1.UID,
-				dash2.UID,
-			},
-		})
 		signedInUser.Permissions[orgID][dashboards.ActionFoldersRead] = []string{
 			dashboards.ScopeFoldersProvider.GetResourceScopeUID(ancestorFoldersWithPermissions[0].UID),
 			// Add permission to the subfolder of folder with permission (to check deduplication)
@@ -1390,7 +1379,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		require.NotContains(t, sharedDashboardsUIDs, dash2.UID)
 
 		t.Cleanup(func() {
-			guardian.New = origNewGuardian
+			//guardian.New = origNewGuardian
 			toDelete := make([]string, 0, len(ancestorFoldersWithPermissions)+len(ancestorFoldersWithoutPermissions))
 			for _, ancestor := range append(ancestorFoldersWithPermissions, ancestorFoldersWithoutPermissions...) {
 				toDelete = append(toDelete, ancestor.UID)
@@ -1402,11 +1391,6 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 
 	t.Run("Should get org folders visible", func(t *testing.T) {
 		depth := 3
-		origNewGuardian := guardian.New
-		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
-			CanSaveValue: true,
-			CanViewValue: true,
-		})
 
 		// create folder sctructure like this:
 		// tree1-folder-0
@@ -1428,7 +1412,6 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		}
 
 		t.Cleanup(func() {
-			guardian.New = origNewGuardian
 			toDelete := make([]string, 0, len(tree1)+len(tree2))
 			for _, f := range append(tree1, tree2...) {
 				toDelete = append(toDelete, f.UID)

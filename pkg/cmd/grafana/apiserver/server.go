@@ -14,10 +14,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry/apis/example"
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
+	"github.com/grafana/grafana/pkg/registry/apis/query"
+	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
 	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	grafanaAPIServer "github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaAPIServer "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -28,7 +32,7 @@ const (
 
 // APIServerOptions contains the state for the apiserver
 type APIServerOptions struct {
-	builders           []grafanaAPIServer.APIGroupBuilder
+	builders           []builder.APIGroupBuilder
 	RecommendedOptions *options.RecommendedOptions
 	AlternateDNS       []string
 
@@ -44,7 +48,7 @@ func newAPIServerOptions(out, errOut io.Writer) *APIServerOptions {
 }
 
 func (o *APIServerOptions) loadAPIGroupBuilders(runtime []apiConfig) error {
-	o.builders = []grafanaAPIServer.APIGroupBuilder{}
+	o.builders = []builder.APIGroupBuilder{}
 	for _, gv := range runtime {
 		if !gv.enabled {
 			return fmt.Errorf("disabling apis is not yet supported")
@@ -54,9 +58,20 @@ func (o *APIServerOptions) loadAPIGroupBuilders(runtime []apiConfig) error {
 			return fmt.Errorf("managing all APIs is not yet supported")
 		case "example.grafana.app":
 			o.builders = append(o.builders, example.NewTestingAPIBuilder())
+		// Only works with testdata
+		case "query.grafana.app":
+			o.builders = append(o.builders, query.NewQueryAPIBuilder(
+				featuremgmt.WithFeatures(),
+				runner.NewDummyTestRunner(),
+				runner.NewDummyRegistry(),
+			))
 		case "featuretoggle.grafana.app":
-			features := featuremgmt.WithFeatureManager(setting.FeatureMgmtSettings{}, nil) // none... for now
-			o.builders = append(o.builders, featuretoggle.NewFeatureFlagAPIBuilder(features))
+			o.builders = append(o.builders,
+				featuretoggle.NewFeatureFlagAPIBuilder(
+					featuremgmt.WithFeatureManager(setting.FeatureMgmtSettings{}, nil), // none... for now
+					&actest.FakeAccessControl{ExpectedEvaluate: false},
+				),
+			)
 		case "testdata.datasource.grafana.app":
 			ds, err := server.InitializeDataSourceAPIServer(gv.group)
 			if err != nil {
@@ -166,7 +181,7 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("priority-and-fairness-config-consumer")
 
 	// Add OpenAPI specs for each group+version
-	err := grafanaAPIServer.SetupConfig(serverConfig, o.builders)
+	err := builder.SetupConfig(grafanaAPIServer.Scheme, serverConfig, o.builders)
 	return serverConfig, err
 }
 
@@ -194,7 +209,7 @@ func (o *APIServerOptions) RunAPIServer(config *genericapiserver.RecommendedConf
 	}
 
 	// Install the API Group+version
-	err = grafanaAPIServer.InstallAPIs(server, config.RESTOptionsGetter, o.builders)
+	err = builder.InstallAPIs(grafanaAPIServer.Scheme, grafanaAPIServer.Codecs, server, config.RESTOptionsGetter, o.builders, true)
 	if err != nil {
 		return err
 	}
