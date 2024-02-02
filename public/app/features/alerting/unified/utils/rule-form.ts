@@ -13,12 +13,15 @@ import {
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
-import { sceneGraph, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { DataSourceJsonData } from '@grafana/schema';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils';
+import {
+  getDashboardSceneFor,
+  getPanelIdForVizPanel,
+  getQueryRunnerFor,
+} from 'app/features/dashboard-scene/utils/utils';
 import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
@@ -602,18 +605,22 @@ export const panelToRuleFormValues = async (
   return formValues;
 };
 
-export const scenesPanelToRuleFormValues = async (
-  vizPanel: VizPanel,
-  scenesQueries: SceneQueryRunner,
-  scenesDashboard: DashboardScene
-): Promise<Partial<RuleFormValues> | undefined> => {
-  if (!vizPanel.state.key || !scenesDashboard.state.uid) {
+export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<Partial<RuleFormValues> | undefined> => {
+  if (!vizPanel.state.key) {
     return undefined;
   }
 
   const timeRange = sceneGraph.getTimeRange(vizPanel);
+  const queryRunner = getQueryRunnerFor(vizPanel);
+  if (!queryRunner) {
+    return undefined;
+  }
+  const { queries, datasource, maxDataPoints, minInterval } = queryRunner.state;
 
-  const { queries, datasource, maxDataPoints, minInterval } = scenesQueries.state;
+  const dashboard = getDashboardSceneFor(vizPanel);
+  if (!dashboard || !dashboard.state.uid) {
+    return undefined;
+  }
 
   const grafanaQueries = await dataQueriesToGrafanaQueries(
     queries,
@@ -640,7 +647,7 @@ export const scenesPanelToRuleFormValues = async (
     grafanaQueries.push(thresholdExpression);
   }
 
-  const { folderTitle, folderUid } = scenesDashboard.state.meta;
+  const { folderTitle, folderUid } = dashboard.state.meta;
 
   const formValues = {
     type: RuleFormType.grafana,
@@ -657,7 +664,7 @@ export const scenesPanelToRuleFormValues = async (
     annotations: [
       {
         key: Annotation.dashboardUID,
-        value: scenesDashboard.state.uid,
+        value: dashboard.state.uid,
       },
       {
         key: Annotation.panelID,

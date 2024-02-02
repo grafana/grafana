@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
-import { SceneObjectBase, SceneComponentProps, SceneQueryRunner } from '@grafana/scenes';
+import { SceneObjectBase, SceneComponentProps } from '@grafana/scenes';
 import { Alert, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { RulesTable } from 'app/features/alerting/unified/components/rules/RulesTable';
@@ -56,10 +56,6 @@ export class PanelDataAlertingTab extends SceneObjectBase<PanelDataPaneTabState>
   get panel() {
     return this._panelManager.state.panel;
   }
-
-  get queryRunner(): SceneQueryRunner {
-    return this._panelManager.queryRunner;
-  }
 }
 
 export function PanelDataAlertingTabRendered(props: SceneComponentProps<PanelDataAlertingTab>) {
@@ -89,22 +85,14 @@ export function PanelDataAlertingTabRendered(props: SceneComponentProps<PanelDat
     );
   }
 
-  const dashboard = model.getDashboard();
-  const { queryRunner, panel } = model;
+  const { panel } = model;
   const canCreateRules = model.getCanCreateRules();
 
   if (rules.length) {
     return (
       <>
         <RulesTable rules={rules} />
-        {canCreateRules && (
-          <ScenesNewRuleFromPanelButton
-            className={styles.newButton}
-            panel={panel}
-            dashboard={dashboard}
-            queryRunner={queryRunner}
-          />
-        )}
+        {canCreateRules && <ScenesNewRuleFromPanelButton className={styles.newButton} panel={panel} />}
       </>
     );
   }
@@ -112,13 +100,7 @@ export function PanelDataAlertingTabRendered(props: SceneComponentProps<PanelDat
   return (
     <div className={styles.noRulesWrapper}>
       <p>There are no alert rules linked to this panel.</p>
-      {canCreateRules && (
-        <ScenesNewRuleFromPanelButton
-          dashboard={dashboard}
-          panel={panel}
-          queryRunner={queryRunner}
-        ></ScenesNewRuleFromPanelButton>
-      )}
+      {canCreateRules && <ScenesNewRuleFromPanelButton panel={panel}></ScenesNewRuleFromPanelButton>}
     </div>
   );
 }

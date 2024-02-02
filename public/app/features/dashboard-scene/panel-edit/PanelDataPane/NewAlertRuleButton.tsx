@@ -4,26 +4,19 @@ import { useAsync } from 'react-use';
 
 import { urlUtil } from '@grafana/data';
 import { locationService, logInfo } from '@grafana/runtime';
-import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { VizPanel } from '@grafana/scenes';
 import { Alert, Button } from '@grafana/ui';
 import { LogMessages } from 'app/features/alerting/unified/Analytics';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 
-import { DashboardScene } from '../../scene/DashboardScene';
-
-interface ScenesProps {
+interface ScenesNewRuleFromPanelButtonProps {
   panel: VizPanel;
-  queryRunner: SceneQueryRunner;
-  dashboard: DashboardScene;
   className?: string;
 }
-export const ScenesNewRuleFromPanelButton = ({ dashboard, queryRunner, panel, className }: ScenesProps) => {
+export const ScenesNewRuleFromPanelButton = ({ panel, className }: ScenesNewRuleFromPanelButtonProps) => {
   const location = useLocation();
 
-  const { loading, value: formValues } = useAsync(
-    () => scenesPanelToRuleFormValues(panel, queryRunner, dashboard),
-    [panel, dashboard, queryRunner]
-  );
+  const { loading, value: formValues } = useAsync(() => scenesPanelToRuleFormValues(panel), [panel]);
 
   if (loading) {
     return <Button disabled={true}>New alert rule</Button>;
@@ -40,7 +33,7 @@ export const ScenesNewRuleFromPanelButton = ({ dashboard, queryRunner, panel, cl
   const onClick = async () => {
     logInfo(LogMessages.alertRuleFromPanel);
 
-    const updateToDateFormValues = await scenesPanelToRuleFormValues(panel, queryRunner, dashboard);
+    const updateToDateFormValues = await scenesPanelToRuleFormValues(panel);
 
     const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
       defaults: JSON.stringify(updateToDateFormValues),
