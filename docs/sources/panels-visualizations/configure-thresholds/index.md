@@ -112,7 +112,7 @@ To delete a threshold, navigate to the panel that contains the threshold and cli
 ## Add a threshold to a legacy graph panel
 
 {{< admonition type="caution" >}}
-Starting with Grafana v11, the legacy graph panel will be deprecated along with all other Angular panel plugins. It will be removed in a future release. For more information, refer to [Angular support deprecation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation/).
+Starting with Grafana v11, the legacy graph panel will be deprecated along with all other Angular panel plugins. For more information, refer to [Angular support deprecation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/angular_deprecation/).
 {{< /admonition >}}
 
 In the Graph panel visualization, thresholds enable you to add lines or sections to a graph to make it easier to recognize when the graph crosses a threshold.
