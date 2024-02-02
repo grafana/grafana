@@ -8,18 +8,20 @@ import { locationService } from '@grafana/runtime';
 import { TextLink } from './TextLink';
 
 describe('TextLink', () => {
-  const link = 'http://www.grafana.com/grafana/after-sub-url';
-  beforeEach(() => {
-    const { location } = window;
-    // @ts-ignore
-    delete window.location;
+  let windowSpy: jest.SpyInstance;
 
-    window.location = {
-      ...location,
+  beforeAll(() => {
+    windowSpy = jest.spyOn(window, 'location', 'get');
+    windowSpy.mockImplementation(() => ({
       origin: 'http://www.grafana.com',
-    };
+    }));
   });
 
+  afterAll(() => {
+    windowSpy.mockRestore();
+  });
+
+  const link = 'http://www.grafana.com/grafana/after-sub-url';
   it('should keep the whole url, including app sub url, if external', () => {
     locationUtil.initialize({
       config: { appSubUrl: '/grafana' } as GrafanaConfig,
