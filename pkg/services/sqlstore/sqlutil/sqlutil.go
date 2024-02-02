@@ -52,11 +52,13 @@ func sqLite3TestDB() (*TestDB, error) {
 		return &TestDB{
 			DriverName: "sqlite3",
 			ConnStr:    "file::memory:",
+			Cleanup:    func() {},
 		}, nil
 	}
 
 	ret := &TestDB{
 		DriverName: "sqlite3",
+		Cleanup:    func() {},
 	}
 
 	sqliteDb := os.Getenv("SQLITE_TEST_DB")
@@ -128,6 +130,7 @@ func mySQLTestDB() (*TestDB, error) {
 	return &TestDB{
 		DriverName: "mysql",
 		ConnStr:    conn_str,
+		Cleanup:    func() {},
 	}, nil
 }
 
@@ -144,5 +147,6 @@ func postgresTestDB() (*TestDB, error) {
 	return &TestDB{
 		DriverName: "postgres",
 		ConnStr:    connStr,
+		Cleanup:    func() {},
 	}, nil
 }
