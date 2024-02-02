@@ -23,6 +23,7 @@ import { DataQuery, OptionsWithLegend } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import { panelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
+import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
@@ -128,7 +129,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
             new ShareModal({
               panelRef: panel.getRef(),
               dashboardRef: dashboard.getRef(),
-              activeTab: 'Library panel',
+              activeTab: shareDashboardType.libraryPanel,
             })
           );
         },
