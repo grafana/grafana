@@ -147,7 +147,7 @@ export class ResourcesAPI extends CloudWatchRequest {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
       metricName: this.templateSrv.replace(metricName.trim()),
-      dimensionKey: this.templateSrv.replace(dimensionKey),
+      dimensionKey: this.replaceVariableAndDisplayWarningIfMulti(dimensionKey, {}, true),
       dimensionFilters: JSON.stringify(this.convertDimensionFormat(dimensionFilters, {})),
       accountId: this.templateSrv.replace(accountId),
     }).then((r) => r.map((r) => ({ label: r.value, value: r.value })));

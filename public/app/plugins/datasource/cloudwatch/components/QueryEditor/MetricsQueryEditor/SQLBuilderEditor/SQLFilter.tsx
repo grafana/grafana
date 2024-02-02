@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import React, { useMemo, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, EditorList, InputGroup } from '@grafana/experimental';
-import { Alert, Select } from '@grafana/ui';
+import { Alert, Select, useStyles2 } from '@grafana/ui';
 
 import { CloudWatchDatasource } from '../../../../datasource';
 import {
@@ -101,6 +102,7 @@ interface FilterItemProps {
 
 const FilterItem = (props: FilterItemProps) => {
   const { datasource, query, filter, onChange, onDelete } = props;
+  const styles = useStyles2(getStyles);
   const sql = query.sql ?? {};
 
   const namespace = getNamespaceFromExpression(sql.from);
@@ -134,7 +136,7 @@ const FilterItem = (props: FilterItemProps) => {
   );
 
   return (
-    <>
+    <div className={styles.container}>
       <InputGroup>
         <Select
           width="auto"
@@ -168,8 +170,17 @@ const FilterItem = (props: FilterItemProps) => {
         <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />
       </InputGroup>
 
-      {propertyNameError && <Alert title={propertyNameError} severity="error" topSpacing={1} />}
-      {operatorValueError && <Alert title={operatorValueError} severity="error" topSpacing={1} />}
-    </>
+      {propertyNameError && (
+        <Alert className={styles.alert} title={propertyNameError} severity="error" topSpacing={1} />
+      )}
+      {operatorValueError && (
+        <Alert className={styles.alert} title={operatorValueError} severity="error" topSpacing={1} />
+      )}
+    </div>
   );
 };
+
+const getStyles = () => ({
+  container: css({ display: 'inline-block' }),
+  alert: css({ minWidth: '100%', width: 'min-content' }),
+});

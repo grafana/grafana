@@ -77,7 +77,7 @@ export const FilterItem = ({ filter, metricStat, datasource, disableExpressions,
   const styles = useStyles2(getOperatorStyles);
 
   return (
-    <div data-testid="cloudwatch-dimensions-filter-item">
+    <div className={styles.container} data-testid="cloudwatch-dimensions-filter-item">
       <InputGroup>
         <Select
           aria-label="Dimensions filter key"
@@ -112,7 +112,7 @@ export const FilterItem = ({ filter, metricStat, datasource, disableExpressions,
         />
         <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} type="button" />
       </InputGroup>
-      {error && <Alert title={error} severity="error" topSpacing={1} />}
+      {error && <Alert className={styles.alert} title={error} severity="error" topSpacing={1} />}
     </div>
   );
 };
@@ -122,4 +122,6 @@ const getOperatorStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(0, 1),
     alignSelf: 'center',
   }),
+  container: css({ display: 'inline-block' }),
+  alert: css({ minWidth: '100%', width: 'min-content' }),
 });
