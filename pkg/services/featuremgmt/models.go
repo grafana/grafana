@@ -134,18 +134,7 @@ type FeatureFlag struct {
 	RequiresRestart bool `json:"requiresRestart,omitempty"`
 }
 
-type UpdateFeatureTogglesCommand struct {
-	FeatureToggles []FeatureToggleDTO `json:"featureToggles"`
-}
-
-type FeatureToggleDTO struct {
-	Name        string `json:"name" binding:"Required"`
-	Description string `json:"description"`
-	Enabled     bool   `json:"enabled"`
-	ReadOnly    bool   `json:"readOnly,omitempty"`
-}
-
-type FeatureManagerState struct {
-	RestartRequired bool `json:"restartRequired"`
-	AllowEditing    bool `json:"allowEditing"`
+type FeatureToggleWebhookPayload struct {
+	FeatureToggles map[string]string `json:"feature_toggles"`
+	User           string            `json:"user"`
 }

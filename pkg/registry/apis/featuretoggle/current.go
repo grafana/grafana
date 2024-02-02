@@ -1,25 +1,37 @@
 package featuretoggle
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"strconv"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
+	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func getResolvedToggleState(ctx context.Context, features *featuremgmt.FeatureManager) v0alpha1.ResolvedToggleState {
+func (b *FeatureFlagAPIBuilder) getResolvedToggleState(ctx context.Context) v0alpha1.ResolvedToggleState {
 	state := v0alpha1.ResolvedToggleState{
 		TypeMeta: v1.TypeMeta{
 			APIVersion: v0alpha1.APIVERSION,
 			Kind:       "ResolvedToggleState",
 		},
-		Enabled: features.GetEnabled(ctx),
+		Enabled:         b.features.GetEnabled(ctx),
+		RestartRequired: b.features.IsRestartRequired(),
 	}
 
 	// Reference to the object that defined the values
@@ -28,11 +40,11 @@ func getResolvedToggleState(ctx context.Context, features *featuremgmt.FeatureMa
 		Name:      "startup",
 	}
 
-	startup := features.GetStartupFlags()
-	warnings := features.GetWarning()
-	for _, f := range features.GetFlags() {
+	startup := b.features.GetStartupFlags()
+	warnings := b.features.GetWarning()
+	for _, f := range b.features.GetFlags() {
 		name := f.Name
-		if features.IsHiddenFromAdminPage(name, true) {
+		if b.features.IsHiddenFromAdminPage(name, false) {
 			continue
 		}
 
@@ -40,7 +52,7 @@ func getResolvedToggleState(ctx context.Context, features *featuremgmt.FeatureMa
 			Name:        name,
 			Description: f.Description, // simplify the UI changes
 			Enabled:     state.Enabled[name],
-			Writeable:   features.IsEditableFromAdminPage(name),
+			Writeable:   b.features.IsEditableFromAdminPage(name),
 			Source:      startupRef,
 			Warning:     warnings[name],
 		}
@@ -51,8 +63,28 @@ func getResolvedToggleState(ctx context.Context, features *featuremgmt.FeatureMa
 		if toggle.Enabled || toggle.Writeable || toggle.Warning != "" || inStartup {
 			state.Toggles = append(state.Toggles, toggle)
 		}
+
+		if toggle.Writeable {
+			state.AllowEditing = true
+		}
+	}
+
+	// Make sure the user can actually write values
+	if state.AllowEditing {
+		state.AllowEditing = b.features.IsFeatureEditingAllowed() && b.userCanWrite(ctx, nil)
 	}
 	return state
+}
+
+func (b *FeatureFlagAPIBuilder) userCanWrite(ctx context.Context, u *user.SignedInUser) bool {
+	if u == nil {
+		u, _ = appcontext.User(ctx)
+		if u == nil {
+			return false
+		}
+	}
+	ok, err := b.accessControl.Evaluate(ctx, u, ac.EvalPermission(ac.ActionFeatureManagementWrite))
+	return ok && err == nil
 }
 
 func (b *FeatureFlagAPIBuilder) handleCurrentStatus(w http.ResponseWriter, r *http.Request) {
@@ -61,45 +93,57 @@ func (b *FeatureFlagAPIBuilder) handleCurrentStatus(w http.ResponseWriter, r *ht
 		return
 	}
 
-	state := getResolvedToggleState(r.Context(), b.features)
-
-	err := json.NewEncoder(w).Encode(state)
-	if err != nil {
-		w.WriteHeader(500)
-	}
+	state := b.getResolvedToggleState(r.Context())
+	_ = json.NewEncoder(w).Encode(state)
 }
 
 // NOTE: authz is already handled by the authorizer
 func (b *FeatureFlagAPIBuilder) handlePatchCurrent(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	if !b.features.IsFeatureEditingAllowed() {
-		_, _ = w.Write([]byte("Feature editing is disabled"))
+		errhttp.Write(ctx, fmt.Errorf("feature editing is not enabled"), w)
 		return
 	}
 
-	ctx := r.Context()
-	request := v0alpha1.ResolvedToggleState{}
-	err := web.Bind(r, &request)
+	user, err := appcontext.User(ctx)
 	if err != nil {
-		_, _ = w.Write([]byte("ERROR!!! " + err.Error()))
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	if !b.userCanWrite(ctx, user) {
+		err = errutil.Unauthorized("featuretoggle.canNotWrite",
+			errutil.WithPublicMessage("missing write permission"))
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	request := v0alpha1.ResolvedToggleState{}
+	err = web.Bind(r, &request)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
 		return
 	}
 
 	if len(request.Toggles) > 0 {
-		w.WriteHeader(http.StatusBadRequest)
-		_, _ = w.Write([]byte("can only patch the enabled"))
+		err = errutil.BadRequest("featuretoggle.badRequest",
+			errutil.WithPublicMessage("can only path the enabled section"))
+		errhttp.Write(ctx, err, w)
 		return
 	}
 
-	changes := map[string]bool{}
+	changes := map[string]string{} // TODO would be nice to have this be a bool on the HG side
 	for k, v := range request.Enabled {
 		current := b.features.IsEnabled(ctx, k)
 		if current != v {
 			if !b.features.IsEditableFromAdminPage(k) {
+				err = errutil.BadRequest("featuretoggle.badRequest",
+					errutil.WithPublicMessage("can not edit toggle: "+k))
+				errhttp.Write(ctx, err, w)
 				w.WriteHeader(http.StatusBadRequest)
-				_, _ = w.Write([]byte("can not edit toggle: " + k))
 				return
 			}
-			changes[k] = v
+			changes[k] = strconv.FormatBool(v)
 		}
 	}
 
@@ -108,5 +152,55 @@ func (b *FeatureFlagAPIBuilder) handlePatchCurrent(w http.ResponseWriter, r *htt
 		return
 	}
 
-	_, _ = w.Write([]byte("TODO... actually UPDATE/call webhook: "))
+	payload := featuremgmt.FeatureToggleWebhookPayload{
+		FeatureToggles: changes,
+		User:           user.Email,
+	}
+
+	err = sendWebhookUpdate(b.features.Settings, payload)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	b.features.SetRestartRequired()
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte("feature toggles updated successfully"))
+}
+
+func sendWebhookUpdate(cfg setting.FeatureMgmtSettings, payload featuremgmt.FeatureToggleWebhookPayload) error {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, cfg.UpdateWebhook, bytes.NewBuffer(data))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+cfg.UpdateWebhookToken)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Warn("Failed to close response body", "err", err)
+		}
+	}()
+
+	if resp.StatusCode >= http.StatusBadRequest {
+		if body, err := io.ReadAll(resp.Body); err != nil {
+			return fmt.Errorf("SendWebhookUpdate failed with status=%d, error: %s", resp.StatusCode, string(body))
+		} else {
+			return fmt.Errorf("SendWebhookUpdate failed with status=%d, error: %w", resp.StatusCode, err)
+		}
+	}
+
+	return nil
 }

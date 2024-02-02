@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
 	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -61,8 +62,12 @@ func (o *APIServerOptions) loadAPIGroupBuilders(args []string) error {
 				runner.NewDummyRegistry(),
 			))
 		case "featuretoggle.grafana.app":
-			features := featuremgmt.WithFeatureManager(setting.FeatureMgmtSettings{}, nil) // none... for now
-			o.builders = append(o.builders, featuretoggle.NewFeatureFlagAPIBuilder(features))
+			o.builders = append(o.builders,
+				featuretoggle.NewFeatureFlagAPIBuilder(
+					featuremgmt.WithFeatureManager(setting.FeatureMgmtSettings{}, nil), // none... for now
+					&actest.FakeAccessControl{ExpectedEvaluate: false},
+				),
+			)
 		case "testdata.datasource.grafana.app":
 			ds, err := server.InitializeDataSourceAPIServer(g)
 			if err != nil {

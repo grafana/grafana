@@ -318,9 +318,16 @@ func schema_pkg_apis_featuretoggle_v0alpha1_ResolvedToggleState(ref common.Refer
 							Format:      "",
 						},
 					},
-					"writeable": {
+					"allowEditing": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Can any flag be updated",
+							Description: "The user is allowed to edit feature toggles on this system",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"restartRequired": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The system has changes that require still require a restart",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -395,6 +402,7 @@ func schema_pkg_apis_featuretoggle_v0alpha1_ToggleStatus(ref common.ReferenceCal
 					"writeable": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Can this flag be updated",
+							Default:     false,
 							Type:        []string{"boolean"},
 							Format:      "",
 						},
@@ -413,7 +421,7 @@ func schema_pkg_apis_featuretoggle_v0alpha1_ToggleStatus(ref common.ReferenceCal
 						},
 					},
 				},
-				Required: []string{"name", "enabled"},
+				Required: []string{"name", "enabled", "writeable"},
 			},
 		},
 		Dependencies: []string{

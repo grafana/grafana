@@ -78,8 +78,11 @@ type FeatureTogglesList struct {
 type ResolvedToggleState struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// Can any flag be updated
-	Writeable bool `json:"writeable,omitempty"`
+	// The user is allowed to edit feature toggles on this system
+	AllowEditing bool `json:"allowEditing,omitempty"`
+
+	// The system has changes that require still require a restart
+	RestartRequired bool `json:"restartRequired,omitempty"`
 
 	// The currently enabled flags
 	Enabled map[string]bool `json:"enabled,omitempty"`
@@ -99,7 +102,7 @@ type ToggleStatus struct {
 	Enabled bool `json:"enabled"`
 
 	// Can this flag be updated
-	Writeable bool `json:"writeable,omitempty"`
+	Writeable bool `json:"writeable"`
 
 	// Where was the value configured
 	// eg: startup | tenant|org | user | browser
