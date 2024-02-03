@@ -25,7 +25,7 @@ describe('NavToolbarActions', () => {
       await userEvent.click(await screen.findByText('Edit'));
 
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
-      expect(await screen.findByText('Done editing')).toBeInTheDocument();
+      expect(await screen.findByText('Exit edit')).toBeInTheDocument();
       expect(screen.queryByText('Edit')).not.toBeInTheDocument();
       expect(screen.queryByText('Share')).not.toBeInTheDocument();
     });
