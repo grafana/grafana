@@ -305,18 +305,24 @@ func setupDB(b testing.TB) benchScenario {
 
 		roleID := int64(i%TEAM_NUM + 1)
 		permissions = append(permissions, accesscontrol.Permission{
-			RoleID:  roleID,
-			Action:  dashboards.ActionFoldersRead,
-			Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
-			Updated: now,
-			Created: now,
+			RoleID:     roleID,
+			Action:     dashboards.ActionFoldersRead,
+			Scope:      dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
+			Updated:    now,
+			Created:    now,
+			Kind:       "folders",
+			Attribute:  "uid",
+			Identifier: f0.UID,
 		},
 			accesscontrol.Permission{
-				RoleID:  roleID,
-				Action:  dashboards.ActionDashboardsRead,
-				Scope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
-				Updated: now,
-				Created: now,
+				RoleID:     roleID,
+				Action:     dashboards.ActionDashboardsRead,
+				Scope:      dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID),
+				Updated:    now,
+				Created:    now,
+				Kind:       "folders",
+				Attribute:  "uid",
+				Identifier: f0.UID,
 			},
 		)
 		signedInUser.Permissions[orgID][dashboards.ActionFoldersRead] = append(signedInUser.Permissions[orgID][dashboards.ActionFoldersRead], dashboards.ScopeFoldersProvider.GetResourceScopeUID(f0.UID))
