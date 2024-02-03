@@ -3,7 +3,7 @@ import { useResizeObserver } from '@react-aria/utils';
 import React, { useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Select, RadioButtonGroup, useStyles2, useTheme2 } from '@grafana/ui';
+import { Select, RadioButtonGroup, useStyles2, useTheme2, measureText } from '@grafana/ui';
 
 type Props = {
   options: Array<SelectableValue<string>>;
@@ -33,19 +33,9 @@ export function BreakdownLabelSelector({ options, value, onChange }: Props) {
   });
 
   useEffect(() => {
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-
-    if (!context) {
-      return;
-    }
-
-    const { fontSize, fontFamily } = theme.typography;
-    context.font = `${fontSize}px ${fontFamily.split(',')}`;
-
+    const { fontSize } = theme.typography;
     const text = options.map((option) => option.label || option.value || '').join(' ');
-    const textWidth = Math.ceil(context.measureText(text).width);
-
+    const textWidth = measureText(text, fontSize).width;
     const additionalWidthPerItem = 32;
     setLabelSelectorRequiredWidth(textWidth + additionalWidthPerItem * options.length);
   }, [options, theme]);
