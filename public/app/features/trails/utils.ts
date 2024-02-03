@@ -1,6 +1,13 @@
 import { urlUtil } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { getUrlSyncManager, sceneGraph, SceneObject, SceneObjectUrlValues, SceneTimeRange } from '@grafana/scenes';
+import {
+  getUrlSyncManager,
+  sceneGraph,
+  SceneObject,
+  SceneObjectState,
+  SceneObjectUrlValues,
+  SceneTimeRange,
+} from '@grafana/scenes';
 
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 
@@ -88,4 +95,13 @@ export function getDatasourceForNewTrail(): string | undefined {
 export function getColorByIndex(index: number) {
   const visTheme = config.theme2.visualization;
   return visTheme.getColorByName(visTheme.palette[index % 8]);
+}
+
+export type SceneTimeRangeState = SceneObjectState & {
+  from: string;
+  to: string;
+};
+export function isSceneTimeRangeState(state: SceneObjectState): state is SceneTimeRangeState {
+  const keys = Object.keys(state);
+  return keys.includes('from') && keys.includes('to');
 }
