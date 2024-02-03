@@ -114,6 +114,7 @@ func TestCalculateChanges(t *testing.T) {
 			r.ID = int64(rand.Int31())
 			r.Version = int64(rand.Int31())
 			r.Updated = r.Updated.Add(1 * time.Minute)
+			r.RuleGroupIndex = int(rand.Int31())
 
 			submitted = append(submitted, &models.AlertRuleWithOptionals{AlertRule: *r})
 		}
