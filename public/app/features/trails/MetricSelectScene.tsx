@@ -23,7 +23,6 @@ import {
 import { VariableHide } from '@grafana/schema';
 import { Input, useStyles2, InlineSwitch, Field, Alert, Icon, LoadingPlaceholder } from '@grafana/ui';
 
-// import { ApplyMetricNamesButton } from './ApplyMetricNamesButton';
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { MetricCategoryCascader } from './MetricCategory/MetricCategoryCascader';
 import { MetricScene } from './MetricScene';
