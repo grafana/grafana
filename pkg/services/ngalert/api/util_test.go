@@ -63,7 +63,7 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 			accesscontrolmock.New(), accesscontrolmock.New(),
 		} {
 			proxy := AlertingProxy{
-				dataProxy: nil,
+				DataProxy: nil,
 				ac:        mock,
 			}
 
@@ -86,7 +86,7 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 	})
 	t.Run("should overwrite response writer", func(t *testing.T) {
 		proxy := AlertingProxy{
-			dataProxy: nil,
+			DataProxy: nil,
 			ac:        accesscontrolmock.New(),
 		}
 
@@ -105,7 +105,7 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 	t.Run("if access control is enabled", func(t *testing.T) {
 		t.Run("should elevate permissions to Editor for Viewer", func(t *testing.T) {
 			proxy := AlertingProxy{
-				dataProxy: nil,
+				DataProxy: nil,
 				ac:        accesscontrolmock.New(),
 			}
 
@@ -123,7 +123,7 @@ func TestAlertingProxy_createProxyContext(t *testing.T) {
 		})
 		t.Run("should not alter user if it is Editor", func(t *testing.T) {
 			proxy := AlertingProxy{
-				dataProxy: nil,
+				DataProxy: nil,
 				ac:        accesscontrolmock.New(),
 			}
 

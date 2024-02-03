@@ -85,7 +85,7 @@ type API struct {
 func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	logger := log.New("ngalert.api")
 	proxy := &AlertingProxy{
-		dataProxy: api.DataProxy,
+		DataProxy: api.DataProxy,
 		ac:        api.AccessControl,
 	}
 	ruleAuthzService := accesscontrol.NewRuleService(api.AccessControl)

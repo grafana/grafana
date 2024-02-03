@@ -96,8 +96,8 @@ func TestLotexRuler_ValidateAndGetPrefix(t *testing.T) {
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
 			// Setup Proxy.
-			proxy := &AlertingProxy{dataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: tt.datasourceCache}}
-			ruler := &LotexRuler{AlertingProxyInterface: proxy, log: log.NewNopLogger()}
+			proxy := &AlertingProxy{DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: tt.datasourceCache}}
+			ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger()}
 
 			// Setup request context.
 			httpReq, err := http.NewRequest(http.MethodGet, "http://grafanacloud.com"+tt.urlParams, nil)
@@ -163,12 +163,10 @@ func TestLotexRuler_RouteDeleteNamespaceRulesConfig(t *testing.T) {
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			alertingMock := AlertingProxyMock{
-				dataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: tt.datasource}},
-			}
-			defer alertingMock.AssertExpectations(t)
+			requestMock := RequestMock{}
+			defer requestMock.AssertExpectations(t)
 
-			alertingMock.On(
+			requestMock.On(
 				"withReq",
 				mock.Anything,
 				mock.Anything,
@@ -181,7 +179,9 @@ func TestLotexRuler_RouteDeleteNamespaceRulesConfig(t *testing.T) {
 				require.Equal(t, tt.expected, args.Get(2).(*url.URL).String())
 			})
 
-			ruler := &LotexRuler{AlertingProxyInterface: &alertingMock, log: log.NewNopLogger()}
+			// Setup Proxy.
+			proxy := &AlertingProxy{DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: tt.datasource}}}
+			ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger(), requester: &requestMock}
 
 			// Setup request context.
 			httpReq, err := http.NewRequest(http.MethodGet, tt.datasource.URL+tt.urlParams, nil)
@@ -225,12 +225,10 @@ func TestLotexRuler_RouteDeleteRuleGroupConfig(t *testing.T) {
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			alertingMock := AlertingProxyMock{
-				dataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: tt.datasource}},
-			}
-			defer alertingMock.AssertExpectations(t)
+			requestMock := RequestMock{}
+			defer requestMock.AssertExpectations(t)
 
-			alertingMock.On(
+			requestMock.On(
 				"withReq",
 				mock.Anything,
 				mock.Anything,
@@ -243,7 +241,9 @@ func TestLotexRuler_RouteDeleteRuleGroupConfig(t *testing.T) {
 				require.Equal(t, tt.expected, args.Get(2).(*url.URL).String())
 			})
 
-			ruler := &LotexRuler{AlertingProxyInterface: &alertingMock, log: log.NewNopLogger()}
+			// Setup Proxy.
+			proxy := &AlertingProxy{DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: tt.datasource}}}
+			ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger(), requester: &requestMock}
 
 			// Setup request context.
 			httpReq, err := http.NewRequest(http.MethodGet, tt.datasource.URL+tt.urlParams, nil)
@@ -285,12 +285,10 @@ func TestLotexRuler_RouteGetNamespaceRulesConfig(t *testing.T) {
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			alertingMock := AlertingProxyMock{
-				dataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: tt.datasource}},
-			}
-			defer alertingMock.AssertExpectations(t)
+			requestMock := RequestMock{}
+			defer requestMock.AssertExpectations(t)
 
-			alertingMock.On(
+			requestMock.On(
 				"withReq",
 				mock.Anything,
 				mock.Anything,
@@ -303,7 +301,9 @@ func TestLotexRuler_RouteGetNamespaceRulesConfig(t *testing.T) {
 				require.Equal(t, tt.expected, args.Get(2).(*url.URL).String())
 			})
 
-			ruler := &LotexRuler{AlertingProxyInterface: &alertingMock, log: log.NewNopLogger()}
+			// Setup Proxy.
+			proxy := &AlertingProxy{DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: tt.datasource}}}
+			ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger(), requester: &requestMock}
 
 			// Setup request context.
 			httpReq, err := http.NewRequest(http.MethodGet, tt.datasource.URL+tt.urlParams, nil)
@@ -347,12 +347,10 @@ func TestLotexRuler_RouteGetRulegGroupConfig(t *testing.T) {
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			alertingMock := AlertingProxyMock{
-				dataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: tt.datasource}},
-			}
-			defer alertingMock.AssertExpectations(t)
+			requestMock := RequestMock{}
+			defer requestMock.AssertExpectations(t)
 
-			alertingMock.On(
+			requestMock.On(
 				"withReq",
 				mock.Anything,
 				mock.Anything,
@@ -365,7 +363,9 @@ func TestLotexRuler_RouteGetRulegGroupConfig(t *testing.T) {
 				require.Equal(t, tt.expected, args.Get(2).(*url.URL).String())
 			})
 
-			ruler := &LotexRuler{AlertingProxyInterface: &alertingMock, log: log.NewNopLogger()}
+			// Setup Proxy.
+			proxy := &AlertingProxy{DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: fakeCacheService{datasource: tt.datasource}}}
+			ruler := &LotexRuler{AlertingProxy: proxy, log: log.NewNopLogger(), requester: &requestMock}
 
 			// Setup request context.
 			httpReq, err := http.NewRequest(http.MethodGet, tt.datasource.URL+tt.urlParams, nil)
@@ -377,12 +377,11 @@ func TestLotexRuler_RouteGetRulegGroupConfig(t *testing.T) {
 	}
 }
 
-type AlertingProxyMock struct {
+type RequestMock struct {
 	mock.Mock
-	dataProxy *datasourceproxy.DataSourceProxyService
 }
 
-func (a *AlertingProxyMock) withReq(
+func (a *RequestMock) withReq(
 	ctx *contextmodel.ReqContext,
 	method string,
 	u *url.URL,
@@ -392,13 +391,4 @@ func (a *AlertingProxyMock) withReq(
 ) response.Response {
 	args := a.Called(ctx, method, u, body, extractor, headers)
 	return args.Get(0).(response.Response)
-}
-
-func (a *AlertingProxyMock) createProxyContext(ctx *contextmodel.ReqContext, request *http.Request, response *response.NormalResponse) *contextmodel.ReqContext {
-	args := a.Called(ctx, request, response)
-	return args.Get(0).(*contextmodel.ReqContext)
-}
-
-func (a *AlertingProxyMock) DataProxy() *datasourceproxy.DataSourceProxyService {
-	return a.dataProxy
 }

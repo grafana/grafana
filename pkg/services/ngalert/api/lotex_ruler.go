@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -43,15 +44,21 @@ var subtypeToPrefix = map[string]string{
 	Mimir:      mimirPrefix,
 }
 
+type requester interface {
+	withReq(ctx *contextmodel.ReqContext, method string, u *url.URL, body io.Reader, extractor func(*response.NormalResponse) (any, error), headers map[string]string) response.Response
+}
+
 type LotexRuler struct {
 	log log.Logger
-	AlertingProxyInterface
+	*AlertingProxy
+	requester requester
 }
 
 func NewLotexRuler(proxy *AlertingProxy, log log.Logger) *LotexRuler {
 	return &LotexRuler{
-		log:                    log,
-		AlertingProxyInterface: proxy,
+		log:           log,
+		AlertingProxy: proxy,
+		requester:     proxy,
 	}
 }
 
@@ -60,7 +67,7 @@ func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *contextmodel.ReqContex
 	if err != nil {
 		return ErrResp(500, err, "")
 	}
-	return r.withReq(
+	return r.requester.withReq(
 		ctx,
 		http.MethodDelete,
 		withPath(
@@ -78,7 +85,7 @@ func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *contextmodel.ReqContext, na
 	if err != nil {
 		return ErrResp(500, err, "")
 	}
-	return r.withReq(
+	return r.requester.withReq(
 		ctx,
 		http.MethodDelete,
 		withPath(
@@ -101,7 +108,7 @@ func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *contextmodel.ReqContext, 
 	if err != nil {
 		return ErrResp(500, err, "")
 	}
-	return r.withReq(
+	return r.requester.withReq(
 		ctx,
 		http.MethodGet,
 		withPath(
@@ -123,7 +130,7 @@ func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *contextmodel.ReqContext, name
 	if err != nil {
 		return ErrResp(500, err, "")
 	}
-	return r.withReq(
+	return r.requester.withReq(
 		ctx,
 		http.MethodGet,
 		withPath(
@@ -147,7 +154,7 @@ func (r *LotexRuler) RouteGetRulesConfig(ctx *contextmodel.ReqContext) response.
 		return ErrResp(500, err, "")
 	}
 
-	return r.withReq(
+	return r.requester.withReq(
 		ctx,
 		http.MethodGet,
 		withPath(
@@ -170,7 +177,7 @@ func (r *LotexRuler) RoutePostNameRulesConfig(ctx *contextmodel.ReqContext, conf
 		return ErrResp(500, err, "Failed marshal rule group")
 	}
 	u := withPath(*ctx.Req.URL, fmt.Sprintf("%s/%s", legacyRulerPrefix, ns))
-	return r.withReq(ctx, http.MethodPost, u, bytes.NewBuffer(yml), jsonExtractor(nil), nil)
+	return r.requester.withReq(ctx, http.MethodPost, u, bytes.NewBuffer(yml), jsonExtractor(nil), nil)
 }
 
 func (r *LotexRuler) validateAndGetPrefix(ctx *contextmodel.ReqContext) (string, error) {
@@ -179,7 +186,7 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *contextmodel.ReqContext) (string,
 		return "", fmt.Errorf("datasource UID is invalid")
 	}
 
-	ds, err := r.DataProxy().DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipDSCache)
+	ds, err := r.DataProxy.DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipDSCache)
 	if err != nil {
 		return "", err
 	}
