@@ -70,7 +70,7 @@ lineage: schemas: [{
 			weekStart?: string
 
 			// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
-			refresh?: string | false
+			refresh?: string
 
 			// Version of the JSON schema, incremented each time a Grafana update brings
 			// changes to said schema.
@@ -457,11 +457,11 @@ lineage: schemas: [{
 		// It defines the default config for the time picker and the refresh picker for the specific dashboard.
 		#TimePickerConfig: {
 			// Whether timepicker is visible or not.
-			hidden: bool | *false
+			hidden?: bool | *false
 			// Interval options available in the refresh picker dropdown.
-			refresh_intervals: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+			refresh_intervals?: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
 			// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
-			time_options: [...string] | *["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+			time_options?: [...string] | *["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
 			// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
 			nowDelay?: string
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
