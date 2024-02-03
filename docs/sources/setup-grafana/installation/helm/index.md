@@ -33,15 +33,15 @@ To install Grafana using Helm, ensure you have completed the following:
 
 When you install Grafana using Helm, you complete the following tasks:
 
-1. Setting up the Grafana Helm repository: Provides a space in which you will install Grafana.
-2. Deploy Grafana using Helm: Involves installing Grafana into a namespace.
-3. Accessing Grafana: Provides steps to sign in to Grafana
+1. Set up the Grafana Helm repository, which provides a space in which you will install Grafana.
+1. Deploy Grafana using Helm, which installs Grafana into a namespace.
+1. Accessing Grafana, which provides steps to sign into Grafana.
 
-### Setting up the Grafana Helm repository
+### Set up the Grafana Helm repository
 
 The first step is to define the URL to the repository so that you download the correct Grafana Helm charts on your machine.
 
-To set up, complete the following steps:
+To set up the Grafana Helm repository, complete the following steps:
 
 1. To add the Grafana repository, use the following command syntax:
 
@@ -53,20 +53,20 @@ To set up, complete the following steps:
    helm repo add grafana https://grafana.github.io/helm-charts
    ```
 
-2. Run the following command to verify the repository was added:
+1. Run the following command to verify the repository was added:
 
    ```bash
    helm repo list
    ```
 
-   When the repository is successfully added, you should see an output similar to the following:
+   After you add the repository, you should see an output similar to the following:
 
    ```bash
    NAME    URL                                  
    grafana https://grafana.github.io/helm-charts
    ```
 
-3. Run the following command to update the repository to download the latest Grafana Helm charts:
+1. Run the following command to update the repository to download the latest Grafana Helm charts:
 
    ```bash
    helm repo update
@@ -74,11 +74,11 @@ To set up, complete the following steps:
 
 ### Deploy the Grafana Helm charts
 
-Now we have setup the Grafana Helm repository succesfully, we can start to deploy it on our Kubernetes cluster.
+After you have set up the Grafana Helm repository, you can start to deploy it on your Kubernetes cluster.
 
 When you deploy Grafana Helm charts, use a separate namespace instead of relying on the default namespace. The default namespace might already have other applications running, which can lead to conflicts and other potential issues.
 
-When you create a new namespace in Kubernetes, you can better organize, allocate, and manage cluster resources. For more information about Namespaces, refer to [Namespaces](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/).
+When you create a new namespace in Kubernetes, you can better organize, allocate, and manage cluster resources. For more information, refer to [Namespaces](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/).
 
 1. To create a namespace, run the following command:
 
@@ -92,7 +92,7 @@ When you create a new namespace in Kubernetes, you can better organize, allocate
    namespace/monitoring created
    ```
 
-2. Search for the official `grafana/grafana` repository using the command:
+1. Search for the official `grafana/grafana` repository using the command:
 
    `helm search repo <repo-name/package-name>`
 
@@ -102,17 +102,17 @@ When you create a new namespace in Kubernetes, you can better organize, allocate
    helm search repo grafana/grafana
    ```
 
-3. Run the following command to deploy the Grafana Helm Chart inside your created namespace.
+1. Run the following command to deploy the Grafana Helm Chart inside your namespace.
 
    ```bash
    helm install my-grafana grafana/grafana --namespace monitoring
    ```
 
    Where:
-   - `helm install`: installs the chart by deploying it on the Kubernetes cluster
-   - `my-grafana`: the logical chart name that we had given
-   - `grafana/grafana`: the repository and package name to install
-   - `--namespace`: the Kubernetes namespace (i.e. `monitoring`) where you want to deploy the chart
+   - `helm install`: Installs the chart by deploying it on the Kubernetes cluster
+   - `my-grafana`: The logical chart name that you provided
+   - `grafana/grafana`: The repository and package name to install
+   - `--namespace`: The Kubernetes namespace (i.e. `monitoring`) where you want to deploy the chart
 
 4. To verify the deployment status, run the following command and verify that `deployed` appears in the **STATUS** column:
 
@@ -133,7 +133,7 @@ When you create a new namespace in Kubernetes, you can better organize, allocate
       kubectl get all -n monitoring
       ```
 
-   If you encounter errors or warnings in the **STATUS** column, check the logs and refer to Troubleshooting setction of this documentation.
+   If you encounter errors or warnings in the **STATUS** column, check the logs and refer to the Troubleshooting section of this documentation.
 
 ### Accessing Grafana
 
@@ -183,9 +183,9 @@ It will give you a decoded `base64` string output which is the password for the 
 4. To sign in, enter `admin` for the username.
 5. For the password paste it which you have saved to a file after decoding it earlier.
 
-## Customizing Grafana default configuraiton
+## Customize Grafana default configuraiton
 
-Helm is a popular package manager for Kubernetes. It bundles Kubernetes resource manifests in a way that they may be re-used across different environments. These manifests are written in a templating language, allowing us to provide configuration values via `values.yaml` file, or in-line using helm, to replace the placeholders in the manifest where these configurations should reside.
+Helm is a popular package manager for Kubernetes. It bundles Kubernetes resource manifests to be re-used across different environments. These manifests are written in a templating language, allowing you to provide configuration values via `values.yaml` file, or in-line using Helm, to replace the placeholders in the manifest where these configurations should reside.
 
 The `values.yaml` file allows you to customize the chart's configuration by specifying values for various parameters such as image versions, resource limits, service configurations, etc.
 
@@ -234,7 +234,7 @@ To enable the persistent storage in the Grafana Helm charts, complete the follow
    helm upgrade my-grafana grafana/grafana -f values.yaml -n monitoring
    ```
 
-After that, the PVC will be enabled and able to store all of your data e.g. Dashboards, Data sources, etc.
+The PVC will now store all your data such as dashboards, data sources, and so on.
 
 ### Install plugins (e.g. Zabbix app, Clock panel, etc.)
 
@@ -246,7 +246,7 @@ To install plugins in the Grafana Helm Charts, complete the following steps:
 
 1. Open the `values.yaml` file in your favorite editor.
 
-2. Find the line that says `plugins:` and under that section, define the plugins that you would like to install e.g.
+2. Find the line that says `plugins:` and under that section, define the plugins that you want to install.
 
    ```yaml
    .......
