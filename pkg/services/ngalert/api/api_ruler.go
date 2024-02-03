@@ -48,6 +48,9 @@ var (
 	errProvisionedResource = errors.New("request affects resources created via provisioning API")
 )
 
+// ignore fields that are not part of the rule definition
+var ignoreFieldsForValidate = [...]string{"RuleGroupIndex"}
+
 // RouteDeleteAlertRules deletes all alert rules the user is authorized to access in the given namespace
 // or, if non-empty, a specific group of rules in the namespace.
 // Returns http.StatusForbidden if user does not have access to any of the rules that match the filter.
@@ -500,6 +503,9 @@ func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, valida
 	}
 	if len(groupChanges.Update) > 0 {
 		for _, upd := range groupChanges.Update {
+			if !shouldValidate(upd) {
+				continue
+			}
 			err := validator.Validate(eval.NewContext(ctx, user), upd.New.GetEvalCondition())
 			if err != nil {
 				return fmt.Errorf("%w '%s' (UID: %s): %s", ngmodels.ErrAlertRuleFailedValidation, upd.New.Title, upd.New.UID, err.Error())
@@ -507,6 +513,20 @@ func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, valida
 		}
 	}
 	return nil
+}
+
+// shouldValidate returns true if the rule is not paused and there are changes in the rule that are not ignored
+func shouldValidate(delta store.RuleDelta) bool {
+	diffs := make(map[string]bool)
+	for _, diff := range delta.Diff {
+		diffs[diff.Path] = true
+	}
+	for _, field := range ignoreFieldsForValidate {
+		delete(diffs, field)
+	}
+
+	// TODO: consider also checking if rule will be paused after the update
+	return len(diffs) > 0
 }
 
 // getAuthorizedRuleByUid fetches all rules in group to which the specified rule belongs, and checks whether the user is authorized to access the group.
