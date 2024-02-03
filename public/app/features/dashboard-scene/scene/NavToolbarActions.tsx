@@ -197,6 +197,7 @@ export function ToolbarActions({ dashboard }: Props) {
               DashboardInteractions.toolbarSaveClick();
               dashboard.openSaveDrawer({});
             }}
+            className={buttonWithExtraMargin}
             tooltip="Save changes"
             key="save"
             size="sm"
@@ -215,6 +216,7 @@ export function ToolbarActions({ dashboard }: Props) {
               DashboardInteractions.toolbarSaveClick();
               dashboard.openSaveDrawer({ saveAsCopy: true });
             }}
+            className={buttonWithExtraMargin}
             tooltip="Save as copy"
             key="save"
             size="sm"
