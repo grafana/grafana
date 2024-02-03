@@ -1345,5 +1345,14 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			Created:      time.Date(2024, time.January, 2, 12, 0, 0, 0, time.UTC),
 		},
+		{
+			Name:         "rowResizeVariable",
+			Description:  "Enables use of the `systemDynamicRowSizeVar` variable to resize to a certain amount of panels per row",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Created:      time.Date(2024, time.January, 17, 12, 0, 0, 0, time.UTC),
+		},
 	}
 )

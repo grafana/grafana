@@ -642,4 +642,8 @@ const (
 	// FlagNodeGraphDotLayout
 	// Changed the layout algorithm for the node graph
 	FlagNodeGraphDotLayout = "nodeGraphDotLayout"
+
+	// FlagRowResizeVariable
+	// Enables use of the `systemDynamicRowSizeVar` variable to resize to a certain amount of panels per row
+	FlagRowResizeVariable = "rowResizeVariable"
 )
