@@ -1189,6 +1189,14 @@ var (
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
+		{
+			Name:         "rowResizeVariable",
+			Description:  "Enables use of the `systemDynamicRowSizeVar` variable to resize to a certain amount of panels per row",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+		},
 	}
 )
 

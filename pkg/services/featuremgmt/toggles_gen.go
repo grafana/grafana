@@ -642,4 +642,7 @@ const (
 	// FlagOauthRequireSubClaim
 	// Require that sub claims is present in oauth tokens.
 	FlagOauthRequireSubClaim = "oauthRequireSubClaim"
+	// FlagRowResizeVariable
+	// Enables use of the `systemDynamicRowSizeVar` variable to resize to a certain amount of panels per row
+	FlagRowResizeVariable = "rowResizeVariable"
 )

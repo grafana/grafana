@@ -19,6 +19,7 @@ import DashboardEmpty from './DashboardEmpty';
 import { DashboardPanel } from './DashboardPanel';
 
 export const PANEL_FILTER_VARIABLE = 'systemPanelFilterVar';
+export const ROW_RESIZE_VARIABLE = 'systemDynamicRowSizeVar';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -31,6 +32,7 @@ export interface Props {
 interface State {
   panelFilter?: RegExp;
   width: number;
+  rowResize?: number;
 }
 
 export class DashboardGrid extends PureComponent<Props, State> {
@@ -48,6 +50,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
     this.state = {
       panelFilter: undefined,
       width: document.body.clientWidth, // initial very rough estimate
+      rowResize: undefined,
     };
   }
 
@@ -61,8 +64,8 @@ export class DashboardGrid extends PureComponent<Props, State> {
         if (variable.id === PANEL_FILTER_VARIABLE) {
           if ('query' in variable) {
             this.setPanelFilter(variable.query);
+            break;
           }
-          break;
         }
       }
 
@@ -76,8 +79,51 @@ export class DashboardGrid extends PureComponent<Props, State> {
               }
             }
           }
-        })
-      );
+        }));
+    }
+
+    if (config.featureToggles.rowResizeVariable) {
+      for (const variable of dashboard.getVariables()) {
+        if (variable.id === ROW_RESIZE_VARIABLE) {
+          if ('current' in variable) {
+            let current = variable.current;
+            if ('value' in current) {
+              const newColSize = Number(current.value);
+              if (!Number.isNaN(newColSize)) {
+                if (this.props.dashboard.panels.length > 0) {
+                  // Determine how many columns per row this dashboard
+                  // already uses
+                  const firstPanel = this.props.dashboard.panels[0];
+                  let curColSize = GRID_COLUMN_COUNT / firstPanel.gridPos.w;
+
+                  // Only fire off change if the current column size
+                  // is different than the one being set by variable.
+                  // This reduces reprocessing
+                  if (curColSize !== newColSize) {
+                    this.setRowResize(newColSize);
+                  }
+                }
+              }
+              break;
+            }
+          }
+        }
+      }
+
+      this.eventSubs.add(
+        appEvents.subscribe(VariablesChanged, (e) => {
+          if (e.payload.variable?.id === ROW_RESIZE_VARIABLE) {
+            if ('current' in e.payload.variable) {
+              let variable = e.payload.variable.current;
+              if ('value' in variable) {
+                const newColSize = Number(variable.value);
+                if (!Number.isNaN(newColSize)) {
+                  this.setRowResize(newColSize);
+                }
+              }
+            }
+          }
+        }));
     }
 
     this.eventSubs.add(dashboard.events.subscribe(DashboardPanelsChangedEvent, this.triggerForceUpdate));
@@ -100,10 +146,29 @@ export class DashboardGrid extends PureComponent<Props, State> {
     });
   }
 
+  setRowResize(rowSize?: number) {
+    this.setState({
+      rowResize: rowSize,
+    });
+  }
+
   buildLayout() {
     const layout: ReactGridLayout.Layout[] = [];
     this.panelMap = {};
-    const { panelFilter } = this.state;
+    const { panelFilter, rowResize } = this.state;
+
+    if (this.props.dashboard.panels.length === 0) {
+      return layout;
+    }
+
+    // Determine how many columns per row this dashboard
+    // already uses
+    const firstPanel = this.props.dashboard.panels[0];
+    let overrideCols = GRID_COLUMN_COUNT / firstPanel.gridPos.w;
+    if (rowResize) {
+      overrideCols = rowResize;
+    }
+    let overrideWidth = GRID_COLUMN_COUNT / overrideCols;
 
     let count = 0;
     for (const panel of this.props.dashboard.panels) {
@@ -132,18 +197,24 @@ export class DashboardGrid extends PureComponent<Props, State> {
         panelPos.isDraggable = panel.collapsed;
       }
 
-      if (!panelFilter) {
-        layout.push(panelPos);
-      } else {
-        if (panelFilter.test(panel.title)) {
-          panelPos.isResizable = false;
-          panelPos.isDraggable = false;
-          panelPos.x = (count % 2) * GRID_COLUMN_COUNT;
-          panelPos.y = Math.floor(count / 2);
-          layout.push(panelPos);
-          count++;
-        }
+      // If panel filter is set and this panel doesn't
+      // match then we just skip over it
+      if (panelFilter && !panelFilter.test(panel.title)) {
+        continue;
       }
+
+      // If filter is enabled or a dynamic row
+      // size is set
+      if (panelFilter || rowResize) {
+        panelPos.isResizable = false;
+        panelPos.isDraggable = false;
+        panelPos.w = overrideWidth;
+        panelPos.x = (count % overrideCols) * overrideWidth;
+        panelPos.y = Math.floor(count / overrideCols);
+        count++;
+      }
+
+      layout.push(panelPos);
     }
 
     return layout;
@@ -243,12 +314,8 @@ export class DashboardGrid extends PureComponent<Props, State> {
         </GrafanaGridItem>
       );
 
-      if (!panelFilter) {
+      if (!panelFilter || panelFilter.test(panel.title)) {
         panelElements.push(p);
-      } else {
-        if (panelFilter.test(panel.title)) {
-          panelElements.push(p);
-        }
       }
     }
 
