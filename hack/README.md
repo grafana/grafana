@@ -23,9 +23,7 @@ go mod download
 # the happy path
 ./hack/update-codegen.sh
 
-# if wanting to agree to a change which introduces different openapi violations, run with the bool set to true
-UPDATE_API_KNOWN_VIOLATIONS=true ./hack/update-codegen.sh
-```
 
 Note that the script deletes existing openapi go code and regenerates in place so that you will temporarily see
 deleted files in your `git status`. After a successful run, you should see them restored.
+```
