@@ -1,6 +1,5 @@
 import * as H from 'history';
-import { find, isEqual } from 'lodash';
-import { c } from 'msw/lib/glossary-de6278a9';
+import { find } from 'lodash';
 import React, { useContext, useEffect, useState } from 'react';
 import { Prompt } from 'react-router-dom';
 
