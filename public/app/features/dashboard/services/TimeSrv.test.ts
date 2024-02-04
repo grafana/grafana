@@ -239,7 +239,7 @@ describe('timeSrv', () => {
       _dashboard.refresh = '';
 
       timeSrv.setTime({ from: '2011-01-01', to: '2015-01-01' });
-      expect(_dashboard.refresh).toBe(false);
+      expect(_dashboard.refresh).toBe('');
     });
 
     it('should restore refresh for absolute time range', () => {
@@ -255,7 +255,7 @@ describe('timeSrv', () => {
         from: dateTime([2011, 1, 1]),
         to: dateTime([2015, 1, 1]),
       });
-      expect(_dashboard.refresh).toBe(false);
+      expect(_dashboard.refresh).toBe('');
       timeSrv.setTime({ from: '2011-01-01', to: 'now' });
       expect(_dashboard.refresh).toBe('10s');
     });

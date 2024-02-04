@@ -1,5 +1,6 @@
 import * as H from 'history';
-import { find } from 'lodash';
+import { find, isEqual } from 'lodash';
+import { c } from 'msw/lib/glossary-de6278a9';
 import React, { useContext, useEffect, useState } from 'react';
 import { Prompt } from 'react-router-dom';
 
@@ -183,7 +184,7 @@ function cleanDashboardFromIgnoredChanges(dashData: Dashboard) {
 
   // ignore time and refresh
   delete dash.time;
-  dash.refresh = '';
+  delete dash.refresh;
   dash.schemaVersion = 0;
   delete dash.timezone;
 
