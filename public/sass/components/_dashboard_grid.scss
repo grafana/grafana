@@ -1,9 +1,21 @@
 @import 'react-grid-layout/css/styles';
 @import 'react-resizable/css/styles';
 
-.react-resizable-handle {
+.react-grid-item > .react-resizable-handle {
   // this needs to use visibility and not display none in order not to cause resize flickering
   visibility: hidden;
+  background-image: none;
+
+  &::after {
+    width: 8px;
+    height: 8px;
+    bottom: 0;
+    right: 0;
+    border-right: 2px solid $border2;
+    border-bottom: 2px solid $border2;
+    border-right-style: solid;
+    border-bottom-style: solid;
+  }
 }
 
 .react-grid-item,
@@ -70,20 +82,6 @@
   background: $panel-grid-placeholder-bg;
   z-index: -1;
   opacity: unset;
-}
-
-.theme-dark {
-  .react-grid-item > .react-resizable-handle::after {
-    border-right: 2px solid $gray-1;
-    border-bottom: 2px solid $gray-1;
-  }
-}
-
-.theme-light {
-  .react-grid-item > .react-resizable-handle::after {
-    border-right: 2px solid $gray-3;
-    border-bottom: 2px solid $gray-3;
-  }
 }
 
 // Hack to prevent panel overlap during drag/hover (due to descending z-index assignment)

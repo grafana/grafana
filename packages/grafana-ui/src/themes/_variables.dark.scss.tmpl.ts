@@ -67,6 +67,7 @@ $divider: ${theme.colors.border.weak};
 
 $border0: ${theme.colors.border.weak};
 $border1: ${theme.colors.border.medium};
+$border2: ${theme.colors.border.strong};
 
 // Accent colors
 // -------------------------
