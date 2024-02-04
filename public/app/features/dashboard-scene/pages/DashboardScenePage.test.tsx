@@ -7,6 +7,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config, getPluginLinkExtensions, locationService, setPluginImportUtils } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 
 import { setupLoadDashboardMock } from '../utils/test-utils';
@@ -40,12 +41,22 @@ function setup() {
     </TestProvider>
   );
 
-  return { renderResult, context };
+  const rerender = (newProps: Props) => {
+    renderResult.rerender(
+      <TestProvider grafanaContext={context}>
+        <DashboardScenePage {...newProps} />
+      </TestProvider>
+    );
+  };
+
+  return { rerender, context, props };
 }
 
-const simpleDashboard = {
+const simpleDashboard: Dashboard = {
   title: 'My cool dashboard',
   uid: '10d',
+  schemaVersion: 30,
+  version: 1,
   panels: [
     {
       id: 1,
@@ -115,6 +126,23 @@ describe('DashboardScenePage', () => {
 
     expect(await screen.findByTitle('Panel B')).toBeInTheDocument();
     expect(await screen.findByText('Content B')).toBeInTheDocument();
+  });
+
+  it('routeReloadCounter should trigger reload', async () => {
+    const { rerender, props } = setup();
+
+    await waitForDashbordToRender();
+
+    expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
+
+    simpleDashboard.version = 11;
+    simpleDashboard.panels![0].title = 'Updated title';
+
+    props.history.location.state = { routeReloadCounter: 1 };
+
+    rerender(props);
+
+    expect(await screen.findByTitle('Updated title')).toBeInTheDocument();
   });
 
   it('Can inspect panel', async () => {

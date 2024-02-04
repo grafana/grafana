@@ -23,6 +23,7 @@ import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
 
@@ -136,6 +137,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.startTrackingChanges();
     }
 
+    if (!this.state.meta.isEmbedded && this.state.uid) {
+      dashboardWatcher.watch(this.state.uid);
+    }
+
     const clearKeyBindings = setupKeyboardShortcuts(this);
     const oldDashboardWrapper = new DashboardModelCompatibilityWrapper(this);
 
@@ -149,6 +154,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.stopTrackingChanges();
       this.stopUrlSync();
       oldDashboardWrapper.destroy();
+      dashboardWatcher.leave();
     };
   }
 
