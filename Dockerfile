@@ -194,7 +194,7 @@ ENV GF_PLUGIN_DIR="/usr/share/grafana/plugins" \
 
 RUN mkdir -p ${GF_PLUGIN_DIR} && \
     chmod -R 777 ${GF_PLUGIN_DIR} && \
-    grafana cli plugins install grafana-clickhouse-datasource && \
+    grafana cli --pluginUrl https://github.com/groundcover-com/clickhouse-datasource/releases/download/v4.0.2-custom-gc/grafana-clickhouse-datasource-4.0.2-custom.linux_amd64.zip plugins install grafana-clickhouse-datasource && \
     grafana cli plugins install marcusolsson-treemap-panel
-
+ENV GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=grafana-clickhouse-datasource
 USER "$GF_UID"
