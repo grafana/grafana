@@ -79,9 +79,9 @@ roles:
       # <string, required> action allowed.
       - action: 'users:read'
         #<string> scope it applies to.
-        scope: 'users:*'
+        scope: 'global.users:*'
       - action: 'users:write'
-        scope: 'users:*'
+        scope: 'global.users:*'
       - action: 'users:create'
   - name: 'custom:global:users:reader'
     # <bool> overwrite org id and creates a global role.
@@ -102,9 +102,9 @@ roles:
     # <list> list of the permissions to add/remove on top of the copied ones.
     permissions:
       - action: 'users:read'
-        scope: 'users:*'
+        scope: 'global.users:*'
       - action: 'users:write'
-        scope: 'users:*'
+        scope: 'global.users:*'
         # <string> state of the permission. Defaults to 'present'. If 'absent', the permission will be removed.
         state: absent
 
