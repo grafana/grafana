@@ -59,18 +59,6 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
 
   const onSearch = (q: string) => {
     history.push({ query: { filterBy, filterByType, q } });
-
-    // const pluginsAfterFuzzySearch = fuzzySearch(q, Object.values(pluginsForSearch));
-    // if(pluginsAfterFuzzySearch != null) {
-    // const filteredIds = Object.keys(pluginsAfterFuzzySearch).map(String);
-
-    // const filteredPlugins = plugins.filter((plugin) => filteredIds.includes(plugin.id));
-
-    // setFilteredPlugins(filteredPlugins)
-    // }
-    // else {
-    //   console.log('no results')
-    // }
   };
 
   // How should we handle errors?

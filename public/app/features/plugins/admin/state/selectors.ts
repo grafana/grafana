@@ -2,7 +2,7 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import { PluginError, PluginType, unEscapeStringFromRegex } from '@grafana/data';
 
-import { getPluginDetailsForFuzzySearch, fuzzySearch } from '../helpers';
+import { filterByKeyword } from '../helpers';
 import { RequestStatus, PluginCatalogStoreState } from '../types';
 
 import { pluginsAdapter } from './reducer';
@@ -33,15 +33,14 @@ export type PluginFilters = {
 export const selectPlugins = (filters: PluginFilters) =>
   createSelector(selectAll, (plugins) => {
     const keyword = filters.keyword ? unEscapeStringFromRegex(filters.keyword.toLowerCase()) : '';
-    const pluginsForSearch: { [key: string]: string } = getPluginDetailsForFuzzySearch(plugins);
-    const pluginsAfterFuzzySearch = fuzzySearch(keyword, Object.values(pluginsForSearch));
+    const filteredPluginIds = keyword !== '' ? filterByKeyword(plugins, keyword) : null;
 
     return plugins.filter((plugin) => {
-      if (keyword && pluginsAfterFuzzySearch == null) {
+      if (keyword && filteredPluginIds == null) {
         return false;
       }
 
-      if (keyword && pluginsAfterFuzzySearch != null && !Object.values(pluginsAfterFuzzySearch).includes(plugin.id)) {
+      if (keyword && filteredPluginIds != null && !filteredPluginIds.includes(plugin.id)) {
         return false;
       }
 
