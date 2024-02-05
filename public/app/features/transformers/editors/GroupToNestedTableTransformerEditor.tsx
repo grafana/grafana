@@ -75,7 +75,8 @@ export const GroupToNestedTableTransformerEditor = ({
   // See if there's both an aggregation and grouping field configured
   // for calculations. If not we display a warning because there
   // needs to be a grouping for the calculation to have effect
-  let hasGrouping, hasAggregation = false;
+  let hasGrouping,
+    hasAggregation = false;
   for (const field of Object.values(options.fields)) {
     if (field.aggregations.length > 0 && field.operation !== null) {
       hasAggregation = true;
@@ -88,23 +89,25 @@ export const GroupToNestedTableTransformerEditor = ({
 
   return (
     <Stack direction="column">
-        {
-          showCalcAlert &&
-          <Alert title="Calculations will not have an effect if no fields are being grouped on." severity="warning" />
-        }
-        <div>
-          {fieldNames.map((key) => (
-            <GroupByFieldConfiguration
-              onConfigChange={onConfigChange(key)}
-              fieldName={key}
-              config={options.fields[key]}
-              key={key}
-            />
-          ))}
-        </div>
-        <Field label="Show field names in nested tables" description="If enabled nested tables will show field names as a table header">
-          <Switch value={showHeaders} onChange={onShowFieldNamesChange} />
-        </Field>
+      {showCalcAlert && (
+        <Alert title="Calculations will not have an effect if no fields are being grouped on." severity="warning" />
+      )}
+      <div>
+        {fieldNames.map((key) => (
+          <GroupByFieldConfiguration
+            onConfigChange={onConfigChange(key)}
+            fieldName={key}
+            config={options.fields[key]}
+            key={key}
+          />
+        ))}
+      </div>
+      <Field
+        label="Show field names in nested tables"
+        description="If enabled nested tables will show field names as a table header"
+      >
+        <Switch value={showHeaders} onChange={onShowFieldNamesChange} />
+      </Field>
     </Stack>
   );
 };

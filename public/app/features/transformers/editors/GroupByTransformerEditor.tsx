@@ -52,7 +52,8 @@ export const GroupByTransformerEditor = ({
   // See if there's both an aggregation and grouping field configured
   // for calculations. If not we display a warning because there
   // needs to be a grouping for the calculation to have effect
-  let hasGrouping, hasAggregation = false;
+  let hasGrouping,
+    hasAggregation = false;
   for (const field of Object.values(options.fields)) {
     if (field.aggregations.length > 0 && field.operation !== null) {
       hasAggregation = true;
@@ -67,10 +68,9 @@ export const GroupByTransformerEditor = ({
 
   return (
     <Stack direction="column">
-       {
-          showCalcAlert &&
-          <Alert title="Calculations will not have an effect if no fields are being grouped on." severity="warning" />
-        }
+      {showCalcAlert && (
+        <Alert title="Calculations will not have an effect if no fields are being grouped on." severity="warning" />
+      )}
       {fieldNames.map((key) => (
         <GroupByFieldConfiguration
           onConfigChange={onConfigChange(key)}
