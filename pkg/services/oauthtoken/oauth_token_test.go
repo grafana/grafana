@@ -540,13 +540,16 @@ func TestOAuthTokenSync_tryGetOrRefreshOAuthToken(t *testing.T) {
 			usr: &login.UserAuth{
 				UserId:            int64(1234),
 				AuthModule:        login.GenericOAuthModule,
-				OAuthAccessToken:  "oauth_access_token",
-				OAuthRefreshToken: "refresh_token_found",
-				OAuthExpiry:       timeNow,
+				OAuthAccessToken:  token.AccessToken,
+				OAuthRefreshToken: token.RefreshToken,
+				OAuthExpiry:       timeNow.Add(time.Hour),
+				OAuthTokenType:    "Bearer",
 			},
-			expectedToken: token,
-			setup: func(env *environment) {
-				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token)).Once()
+			expectedToken: &oauth2.Token{
+				AccessToken:  token.AccessToken,
+				RefreshToken: token.RefreshToken,
+				Expiry:       timeNow.Add(time.Hour),
+				TokenType:    "Bearer",
 			},
 		},
 		{
