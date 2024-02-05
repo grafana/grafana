@@ -163,15 +163,11 @@ You can now view percent change in stat visualizations. This makes it easier to 
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/stat/#show-percent-change)
 
-### Data visualization quality of life improvements
+#### Apply data transformations to annotations
 
 <!--Nathan Marrs-->
 
 _Generally available in all editions of Grafana_
-
-We’ve made a few smaller improvements to the data visualization experience in Grafana.
-
-#### Apply data transformations to annotations
 
 You can now apply data transformations to annotation data. For example, you can now configure how exemplar data is displayed in tooltips.
 
