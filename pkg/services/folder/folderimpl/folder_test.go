@@ -1663,13 +1663,10 @@ func TestFolderServiceGetFolders(t *testing.T) {
 	})
 
 	folders := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOff, 4, "getfolders-ff-off", createCmd)
-	rand.Shuffle(len(folders), func(i, j int) {
-		folders[i], folders[j] = folders[j], folders[i]
-	})
 
 	t.Run("when flag is off", func(t *testing.T) {
 		t.Run("full path should be a title", func(t *testing.T) {
-			f := folders[0]
+			f := folders[rand.Intn(len(folders))]
 			q := folder.GetFoldersQuery{
 				OrgID:            orgID,
 				WithFullpath:     true,
