@@ -20,10 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var (
-	NotificationSettingsMutators = NSMuts{}
-)
-
 type AlertRuleMutator func(*AlertRule)
 
 // AlertRuleGen provides a factory function that generates a random AlertRule.
@@ -423,6 +419,10 @@ func CopyRule(r *AlertRule) *AlertRule {
 		}
 	}
 
+	for _, s := range r.NotificationSettings {
+		result.NotificationSettings = append(result.NotificationSettings, CopyNotificationSettings(s))
+	}
+
 	return &result
 }
 
@@ -648,7 +648,7 @@ func NotificationSettingsGen(mutators ...Mutator[NotificationSettings]) func() N
 	return func() NotificationSettings {
 		c := NotificationSettings{
 			Receiver:          util.GenerateShortUID(),
-			GroupBy:           []string{util.GenerateShortUID(), util.GenerateShortUID()},
+			GroupBy:           []string{model.AlertNameLabel, FolderTitleLabel, util.GenerateShortUID()},
 			GroupWait:         util.Pointer(model.Duration(time.Duration(rand.Intn(100) + 1))),
 			GroupInterval:     util.Pointer(model.Duration(time.Duration(rand.Intn(100) + 1))),
 			RepeatInterval:    util.Pointer(model.Duration(time.Duration(rand.Intn(100) + 1))),
