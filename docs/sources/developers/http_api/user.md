@@ -66,7 +66,7 @@ Content-Type: application/json
     "isAdmin": true,
     "isDisabled": false,
     "lastSeenAt": "2020-04-10T20:29:27+03:00",
-    "lastSeenAtAge': "2m",
+    "lastSeenAtAge": "2m",
     "authLabels": ["OAuth"]
   },
   {
