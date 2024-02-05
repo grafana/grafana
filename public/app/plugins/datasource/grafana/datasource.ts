@@ -27,14 +27,13 @@ import {
 } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
+import { djb2Hash } from 'app/features/dashboard-scene/utils/djb2Hash';
 
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
 import AnnotationQueryEditor from './components/AnnotationQueryEditor';
 import { doTimeRegionQuery } from './timeRegions';
 import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery, GrafanaQueryType } from './types';
-
-let counter = 100;
 
 export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
   constructor(instanceSettings: DataSourceInstanceSettings) {
@@ -135,14 +134,14 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
           buffer.maxDelta = request.range.to.valueOf() - request.range.from.valueOf();
         }
 
-        results.push(
-          getGrafanaLiveSrv().getDataStream({
-            key: `${request.requestId}.${counter++}`,
-            addr: addr!,
-            filter,
-            buffer,
-          })
-        );
+        const opts = {
+          key: `live-${target.refId}-`,
+          addr: addr!,
+          filter,
+          buffer,
+        };
+        opts.key += djb2Hash(JSON.stringify(opts)); // Keep a constant key for the same query+options
+        results.push(getGrafanaLiveSrv().getDataStream(opts));
       } else {
         if (!target.queryType) {
           target.queryType = GrafanaQueryType.RandomWalk;
