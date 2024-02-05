@@ -13,6 +13,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -159,6 +160,20 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 	sub := oas.Paths.Paths["/apis/folder.grafana.app/v0alpha1/namespaces/{namespace}/folders/{name}/move"]
 	if sub != nil && sub.Post != nil {
 		sub.Post.Summary = "Change the parent folder"
+		sub.Post.Description = "move folder into another"
+		sub.Post.RequestBody = &spec3.RequestBody{
+			RequestBodyProps: spec3.RequestBodyProps{
+				Content: map[string]*spec3.MediaType{
+					"application/x-www-form-urlencoded": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema: spec.MapProperty(spec.StringProperty()).WithProperties(map[string]spec.Schema{
+								"parent": *spec.StringProperty().WithDescription("The UID for the new parent folder"),
+							}),
+						},
+					},
+				},
+			},
+		}
 	}
 
 	// The root API discovery list

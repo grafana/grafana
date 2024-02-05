@@ -9,6 +9,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
 )
@@ -36,6 +37,10 @@ func (r *subMoveREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subMoveREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, err
+	}
 	ns, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -51,6 +56,7 @@ func (r *subMoveREST) Connect(ctx context.Context, name string, opts runtime.Obj
 			UID:          name,
 			OrgID:        ns.OrgID,
 			NewParentUID: target,
+			SignedInUser: user,
 		})
 		if err != nil {
 			responder.Error(err)
