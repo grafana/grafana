@@ -24,7 +24,7 @@ describe('GroupToSubframe transformer', () => {
     });
 
     const cfg: DataTransformerConfig<GroupToNestedTableTransformerOptions> = {
-      id: DataTransformerID.groupToSubframe,
+      id: DataTransformerID.groupToNestedTable,
       options: {
         fields: {
           message: {
@@ -120,7 +120,7 @@ describe('GroupToSubframe transformer', () => {
     });
 
     const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
-      id: DataTransformerID.groupToSubframe,
+      id: DataTransformerID.groupToNestedTable,
       options: {
         fields: {
           message: {
