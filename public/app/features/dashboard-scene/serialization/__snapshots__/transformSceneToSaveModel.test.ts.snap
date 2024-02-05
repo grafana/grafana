@@ -110,7 +110,6 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
         "y": 1,
       },
       "id": 15,
-      "links": [],
       "options": {
         "code": {
           "language": "plaintext",
@@ -124,9 +123,8 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
 </div>",
         "mode": "markdown",
       },
+      "pluginVersion": "10.2.0-pre",
       "title": "",
-      "transformations": [],
-      "transparent": false,
       "type": "text",
     },
     {
@@ -165,7 +163,6 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
             "y": 26,
           },
           "id": 30,
-          "links": [],
           "options": {
             "code": {
               "language": "plaintext",
@@ -177,9 +174,8 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
 </div>",
             "mode": "markdown",
           },
+          "pluginVersion": "10.2.0-pre",
           "title": "Text panel in collapsed row",
-          "transformations": [],
-          "transparent": false,
           "type": "text",
         },
       ],
@@ -378,7 +374,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "y": 0,
       },
       "id": 28,
-      "links": [],
       "options": {
         "legend": {
           "calcs": [],
@@ -404,8 +399,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         },
       ],
       "title": "Simple time series graph ",
-      "transformations": [],
-      "transparent": false,
       "type": "timeseries",
     },
     {
@@ -437,7 +430,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "y": 9,
       },
       "id": 29,
-      "links": [],
       "options": {},
       "targets": [
         {
@@ -452,8 +444,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         },
       ],
       "title": "panel inside row",
-      "transformations": [],
-      "transparent": false,
       "type": "timeseries",
     },
     {
@@ -468,7 +458,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "y": 9,
       },
       "id": 25,
-      "links": [],
       "options": {
         "code": {
           "language": "plaintext",
@@ -478,8 +467,8 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "content": "content",
         "mode": "markdown",
       },
+      "pluginVersion": "10.2.0-pre",
       "title": "Transparent text panel",
-      "transformations": [],
       "transparent": true,
       "type": "text",
     },
@@ -697,7 +686,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "y": 0,
       },
       "id": 28,
-      "links": [],
       "options": {
         "legend": {
           "calcs": [],
@@ -723,8 +711,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         },
       ],
       "title": "Simple time series graph ",
-      "transformations": [],
-      "transparent": false,
       "type": "timeseries",
     },
     {
@@ -756,7 +742,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "y": 9,
       },
       "id": 29,
-      "links": [],
       "options": {},
       "targets": [
         {
@@ -771,8 +756,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         },
       ],
       "title": "panel inside row",
-      "transformations": [],
-      "transparent": false,
       "type": "timeseries",
     },
     {
@@ -787,7 +770,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "y": 9,
       },
       "id": 25,
-      "links": [],
       "options": {
         "code": {
           "language": "plaintext",
@@ -797,8 +779,8 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "content": "content",
         "mode": "markdown",
       },
+      "pluginVersion": "10.2.0-pre",
       "title": "Transparent text panel",
-      "transformations": [],
       "transparent": true,
       "type": "text",
     },
