@@ -3,7 +3,16 @@ import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 import { DatasourceSrvMock, MockDataSourceApi } from 'test/mocks/datasource_srv';
 
-import { LoadingState, createDataFrame, FieldType, LogsSortOrder, CoreApp, getDefaultTimeRange, LogsDedupStrategy, EventBusSrv } from '@grafana/data';
+import {
+  LoadingState,
+  createDataFrame,
+  FieldType,
+  LogsSortOrder,
+  CoreApp,
+  getDefaultTimeRange,
+  LogsDedupStrategy,
+  EventBusSrv,
+} from '@grafana/data';
 import * as styles from 'app/features/logs/components/getLogRowStyles';
 import { LogRowContextModal } from 'app/features/logs/components/log-context/LogRowContextModal';
 
@@ -294,7 +303,7 @@ describe('LogsPanel', () => {
 
       expect(await screen.findByRole('row')).toBeInTheDocument();
 
-      rerender(<LogsPanel {...props} />)
+      rerender(<LogsPanel {...props} />);
 
       expect(await screen.findByRole('row')).toBeInTheDocument();
       expect(styles.getLogRowStyles).toHaveBeenCalledTimes(3);
@@ -309,7 +318,7 @@ describe('LogsPanel', () => {
 
       expect(await screen.findByRole('row')).toBeInTheDocument();
 
-      rerender(<LogsPanel {...props} data={{...props.data, series: [...series]}} />)
+      rerender(<LogsPanel {...props} data={{ ...props.data, series: [...series] }} />);
 
       expect(await screen.findByRole('row')).toBeInTheDocument();
       expect(jest.mocked(styles.getLogRowStyles).mock.calls.length).toBeGreaterThan(3);
@@ -337,7 +346,7 @@ const setup = (propsOverrides?: {}) => {
       series: [],
       state: LoadingState.Done,
       timeRange: getDefaultTimeRange(),
-    },    
+    },
     timeZone: 'utc',
     timeRange: getDefaultTimeRange(),
     options: {
