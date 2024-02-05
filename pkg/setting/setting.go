@@ -240,10 +240,12 @@ type Cfg struct {
 	AuthConfigUIAdminAccess bool
 
 	// AWS Plugin Auth
-	AWSAllowedAuthProviders []string
-	AWSAssumeRoleEnabled    bool
-	AWSListMetricsPageLimit int
-	AWSExternalId           string
+	AWSAllowedAuthProviders   []string
+	AWSAssumeRoleEnabled      bool
+	AWSSessionDuration        string
+	AWSExternalId             string
+	AWSListMetricsPageLimit   int
+	AWSForwardSettingsPlugins []string
 
 	// Azure Cloud settings
 	Azure *azsettings.AzureSettings
@@ -1325,6 +1327,10 @@ func (cfg *Cfg) handleAWSConfig() {
 		}
 	}
 	cfg.AWSListMetricsPageLimit = awsPluginSec.Key("list_metrics_page_limit").MustInt(500)
+	cfg.AWSExternalId = awsPluginSec.Key("external_id").Value()
+	cfg.AWSSessionDuration = awsPluginSec.Key("session_duration").Value()
+	cfg.AWSForwardSettingsPlugins = util.SplitString(awsPluginSec.Key("forward_settings_to_plugins").String())
+
 	// Also set environment variables that can be used by core plugins
 	err := os.Setenv(awsds.AssumeRoleEnabledEnvVarKeyName, strconv.FormatBool(cfg.AWSAssumeRoleEnabled))
 	if err != nil {
@@ -1336,10 +1342,19 @@ func (cfg *Cfg) handleAWSConfig() {
 		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AllowedAuthProvidersEnvVarKeyName), err)
 	}
 
-	cfg.AWSExternalId = awsPluginSec.Key("external_id").Value()
+	err = os.Setenv(awsds.ListMetricsPageLimitKeyName, strconv.Itoa(cfg.AWSListMetricsPageLimit))
+	if err != nil {
+		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.ListMetricsPageLimitKeyName), err)
+	}
+
 	err = os.Setenv(awsds.GrafanaAssumeRoleExternalIdKeyName, cfg.AWSExternalId)
 	if err != nil {
 		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.GrafanaAssumeRoleExternalIdKeyName), err)
+	}
+
+	err = os.Setenv(awsds.SessionDurationEnvVarKeyName, cfg.AWSSessionDuration)
+	if err != nil {
+		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.SessionDurationEnvVarKeyName), err)
 	}
 }
 
