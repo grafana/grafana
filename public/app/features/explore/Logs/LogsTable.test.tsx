@@ -2,11 +2,14 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React, { ComponentProps } from 'react';
 
 import { DataFrame, FieldType, LogsSortOrder, standardTransformersRegistry, toUtc } from '@grafana/data';
+import { mergeTransformer } from '@grafana/data/src/transformations/transformers/merge';
 import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
+import { reduceTransformer } from '@grafana/data/src/transformations/transformers/reduce';
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
+import { partitionByValuesTransformer } from '../../transformers/partitionByValues/partitionByValues';
 
 import { LogsTable } from './LogsTable';
 import { getMockElasticFrame, getMockLokiFrame, getMockLokiFrameDataPlane } from './utils/testMocks.test';
@@ -49,7 +52,11 @@ const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTable>>, 
         typeInfo: {
           frame: 'json.RawMessage',
         },
-        values: [{ foo: 'bar' }, { foo: 'bar' }, { foo: 'bar' }],
+        values: [
+          { foo: 'bar', ts: '123' },
+          { foo: 'bar', ts: '124' },
+          { foo: 'bar', ts: '125' },
+        ],
       },
     ],
     length: 3,
@@ -73,6 +80,7 @@ const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTable>>, 
         raw: { from: 'now-1h', to: 'now' },
       }}
       dataFrame={logs ?? testDataFrame}
+      uniqueLabels={false}
       {...partialProps}
     />
   );
@@ -90,7 +98,13 @@ const setup = (partialProps?: Partial<ComponentProps<typeof LogsTable>>, logs?: 
 
 describe('LogsTable', () => {
   beforeAll(() => {
-    const transformers = [extractFieldsTransformer, organizeFieldsTransformer];
+    const transformers = [
+      extractFieldsTransformer,
+      organizeFieldsTransformer,
+      partitionByValuesTransformer,
+      reduceTransformer,
+      mergeTransformer,
+    ];
     standardTransformersRegistry.setInit(() => {
       return transformers.map((t) => {
         return {
@@ -118,6 +132,51 @@ describe('LogsTable', () => {
 
   it('should render 4 table rows', async () => {
     setup();
+
+    await waitFor(() => {
+      const rows = screen.getAllByRole('row');
+      // tableFrame has 3 rows + 1 header row
+      expect(rows.length).toBe(4);
+    });
+  });
+
+  it('should render 4 table with unique labels rows when no columns are selected', async () => {
+    setup({ uniqueLabels: true });
+
+    await waitFor(() => {
+      const rows = screen.getAllByRole('row');
+      // tableFrame has 3 rows + 1 header row
+      expect(rows.length).toBe(4);
+    });
+  });
+
+  it('should render 2 rows with unique labels', async () => {
+    setup({
+      uniqueLabels: true,
+      columnsWithMeta: {
+        Time: { active: true, percentOfLinesWithLabel: 100, index: 0 },
+        line: { active: true, percentOfLinesWithLabel: 100, index: 1 },
+        foo: { active: true, percentOfLinesWithLabel: 100, index: 1 },
+      },
+    });
+
+    await waitFor(() => {
+      const rows = screen.getAllByRole('row');
+      // tableFrame has 3 rows + 1 header row
+      expect(rows.length).toBe(2);
+    });
+  });
+
+  it('should render all rows with unique labels and high cardinality field', async () => {
+    setup({
+      uniqueLabels: true,
+      columnsWithMeta: {
+        Time: { active: true, percentOfLinesWithLabel: 100, index: 0 },
+        line: { active: true, percentOfLinesWithLabel: 100, index: 1 },
+        foo: { active: true, percentOfLinesWithLabel: 100, index: 1 },
+        ts: { active: true, percentOfLinesWithLabel: 100, index: 1 },
+      },
+    });
 
     await waitFor(() => {
       const rows = screen.getAllByRole('row');

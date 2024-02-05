@@ -34,6 +34,7 @@ interface Props extends Themeable2 {
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   datasourceType?: string;
+  uniqueLabels: boolean;
 }
 
 type ActiveFieldMeta = {
@@ -543,7 +544,7 @@ export function LogsTableWrap(props: Props) {
           dataFrame={currentDataFrame}
           columnsWithMeta={columnsWithMeta}
           height={height}
-          sample={true}
+          uniqueLabels={props.uniqueLabels}
         />
       </div>
     </>

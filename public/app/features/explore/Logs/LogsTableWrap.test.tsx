@@ -35,6 +35,7 @@ const getComponent = (partialProps?: Partial<ComponentProps<typeof LogsTableWrap
       width={50}
       logsFrames={[getMockLokiFrame()]}
       theme={createTheme()}
+      uniqueLabels={false}
       {...partialProps}
     />
   );

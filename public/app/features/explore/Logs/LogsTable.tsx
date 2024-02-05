@@ -39,7 +39,7 @@ interface Props {
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   logsFrame: LogsFrame | null;
-  sample: boolean;
+  uniqueLabels: boolean;
 }
 
 export function LogsTable(props: Props) {
@@ -128,7 +128,7 @@ export function LogsTable(props: Props) {
         });
       }
 
-      if (props.sample) {
+      if (props.uniqueLabels) {
         const uniqueFieldsTransform = getUniqueValuesTransform(labelFilters, [
           logsFrame.bodyField.name,
           logsFrame.timeField.name,
@@ -139,7 +139,8 @@ export function LogsTable(props: Props) {
             id: DataTransformerID.reduce,
             options: {
               mode: ReduceTransformerMode.ReduceFields,
-              reducers: ['first'],
+              reducers: ['firstNotNull'],
+              includeTimeField: true,
             },
           });
           transformations.push({
@@ -165,6 +166,7 @@ export function LogsTable(props: Props) {
     prepareTableFrame,
     logsFrame?.bodyField.name,
     logsFrame?.timeField.name,
+    props.uniqueLabels,
   ]);
 
   if (!tableFrame) {
