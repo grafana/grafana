@@ -196,9 +196,11 @@ func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings) erro
 		return err
 	}
 
-	settings.Settings = overrideMaps(storedSettings.Settings, settings.Settings, secrets)
+	// make a copy of current settings for reload operation and apply overrides
+	reloadSettings := *settings
+	reloadSettings.Settings = overrideMaps(storedSettings.Settings, settings.Settings, secrets)
 
-	go s.reload(social, settings.Provider, *settings)
+	go s.reload(social, settings.Provider, reloadSettings)
 
 	return nil
 }
