@@ -117,9 +117,11 @@ export const groupToNestedTable: DataTransformerInfo<GroupToNestedTableTransform
 
           processed.push({
             fields,
-            length: valuesByGroupKey.size + 1,
+            length: valuesByGroupKey.size,
           });
         }
+
+        // console.log(processed);
 
         return processed;
       })
