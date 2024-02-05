@@ -1,3 +1,6 @@
+//go:build sqlexpressions
+// +build sqlexpressions
+
 package sql
 
 import (

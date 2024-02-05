@@ -1,3 +1,6 @@
+//go:build sqlexpressions
+// +build sqlexpressions
+
 package sql
 
 import (
@@ -17,14 +20,6 @@ import (
 var (
 	logger = log.New("expr")
 )
-
-// DuckDB stores dataframes from previous datasource queries
-// and allows querying using SQL Expressions in Grafana
-type DuckDB struct {
-	db     *sql.DB
-	name   string
-	lookup Fields
-}
 
 // NewInMemoryDB creates a new in-memory DuckDB
 func NewInMemoryDB(ctx context.Context) (*DuckDB, error) {
@@ -222,7 +217,6 @@ func connector(ctx context.Context, name string) (driver.Connector, error) {
 
 func (d *DuckDB) doAppend(c driver.Conn, frames data.Frames, u Unknown, fl TableFields) error {
 	tables, nullFields := buildTables(frames, fl, u)
-	sortTablesByTime(tables)
 
 	for name, t := range tables {
 

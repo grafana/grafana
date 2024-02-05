@@ -1,10 +1,12 @@
+//go:build sqlexpressions
+// +build sqlexpressions
+
 package sql
 
 import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -121,33 +123,33 @@ func fields(frames data.Frames) TableFields {
 }
 
 // TODO: maybe only if they don't have an order clause
-func sortTablesByTime(tables Tables) {
-	for _, t := range tables {
+// func sortTablesByTime(tables Tables) {
+// 	for _, t := range tables {
 
-		sortIndex := -1
+// 		sortIndex := -1
 
-		// find the time field
-		if len(t) >= 0 {
-			row1 := t[0]
-			for i, c := range row1 {
-				switch c.(type) {
-				case time.Time:
-					sortIndex = i
-				}
-				if sortIndex > -1 {
-					break
-				}
-			}
-		}
+// 		// find the time field
+// 		if len(t) >= 0 {
+// 			row1 := t[0]
+// 			for i, c := range row1 {
+// 				switch c.(type) {
+// 				case time.Time:
+// 					sortIndex = i
+// 				}
+// 				if sortIndex > -1 {
+// 					break
+// 				}
+// 			}
+// 		}
 
-		if sortIndex > -1 {
-			sort.SliceStable(t, func(i, j int) bool {
-				row := t[i]
-				row2 := t[j]
-				time1 := row[sortIndex].(time.Time)
-				time2 := row2[sortIndex].(time.Time)
-				return time1.Before(time2)
-			})
-		}
-	}
-}
+// 		if sortIndex > -1 {
+// 			sort.SliceStable(t, func(i, j int) bool {
+// 				row := t[i]
+// 				row2 := t[j]
+// 				time1 := row[sortIndex].(time.Time)
+// 				time2 := row2[sortIndex].(time.Time)
+// 				return time1.Before(time2)
+// 			})
+// 		}
+// 	}
+// }
