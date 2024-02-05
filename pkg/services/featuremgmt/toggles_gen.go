@@ -639,13 +639,10 @@ const (
 	// In-development feature that will allow injection of labels into prometheus queries.
 	FlagPromQLScope = "promQLScope"
 
-	// FlagSlateAutocomplete
-	// Adjusts the behaviour of the slate editor to properly handle autocomplete. Feature toggled for safety.
-	FlagSlateAutocomplete = "slateAutocomplete"
-
 	// FlagSqlExpressions
 	// Enables using SQL and DuckDB functions as Expressions.
 	FlagSqlExpressions = "sqlExpressions"
+
 	// FlagNodeGraphDotLayout
 	// Changed the layout algorithm for the node graph
 	FlagNodeGraphDotLayout = "nodeGraphDotLayout"
