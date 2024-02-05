@@ -1611,6 +1611,82 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 	})
 }
 
+func TestIntegrationFolderServiceGetFolders(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	db := sqlstore.InitTestDB(t)
+	quotaService := quotatest.New(false, nil)
+	folderStore := ProvideDashboardFolderStore(db)
+
+	cfg := setting.NewCfg()
+
+	featuresFlagOff := featuremgmt.WithFeatures()
+	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db), quotaService)
+	require.NoError(t, err)
+	nestedFolderStore := ProvideStore(db, db.Cfg)
+
+	b := bus.ProvideBus(tracing.InitializeTracerForTest())
+	ac := acimpl.ProvideAccessControl(cfg)
+
+	serviceWithFlagOff := &Service{
+		cfg:                  cfg,
+		log:                  log.New("test-folder-service"),
+		dashboardStore:       dashStore,
+		dashboardFolderStore: folderStore,
+		store:                nestedFolderStore,
+		features:             featuresFlagOff,
+		bus:                  b,
+		db:                   db,
+		accessControl:        ac,
+		registry:             make(map[string]folder.RegistryService),
+		metrics:              newFoldersMetrics(nil),
+	}
+
+	signedInAdminUser := user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
+		orgID: {
+			dashboards.ActionFoldersCreate: {},
+			dashboards.ActionFoldersWrite:  {dashboards.ScopeFoldersAll},
+			dashboards.ActionFoldersRead:   {dashboards.ScopeFoldersAll},
+		},
+	}}
+
+	createCmd := folder.CreateFolderCommand{
+		OrgID:        orgID,
+		ParentUID:    "",
+		SignedInUser: &signedInAdminUser,
+	}
+
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+		CanSaveValue: true,
+		CanViewValue: true,
+	})
+
+	folders := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOff, 4, "getfolders-ff-off", createCmd)
+	rand.Shuffle(len(folders), func(i, j int) {
+		folders[i], folders[j] = folders[j], folders[i]
+	})
+
+	t.Run("when flag is off", func(t *testing.T) {
+		t.Run("full path should be a title", func(t *testing.T) {
+			f := folders[0]
+			q := folder.GetFoldersQuery{
+				OrgID:            orgID,
+				WithFullpath:     true,
+				WithFullpathUIDs: true,
+				SignedInUser:     &signedInAdminUser,
+				UIDs:             []string{folders[0].UID},
+			}
+			fldrs, err := serviceWithFlagOff.GetFolders(context.Background(), q)
+			require.NoError(t, err)
+			require.Len(t, fldrs, 1)
+			require.Equal(t, f.UID, fldrs[0].UID)
+			require.Equal(t, f.Title, fldrs[0].Title)
+			require.Equal(t, f.Title, fldrs[0].Fullpath)
+		})
+	})
+}
+
 func CreateSubtreeInStore(t *testing.T, store *sqlStore, service *Service, depth int, prefix string, cmd folder.CreateFolderCommand) []*folder.Folder {
 	t.Helper()
 
