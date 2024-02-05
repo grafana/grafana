@@ -3721,7 +3721,7 @@ __metadata:
     "@types/jquery": "npm:3.5.29"
     "@types/lodash": "npm:4.14.202"
     "@types/marked": "npm:5.0.2"
-    "@types/node": "npm:20.11.13"
+    "@types/node": "npm:20.11.16"
     "@types/pluralize": "npm:^0.0.33"
     "@types/prismjs": "npm:1.26.3"
     "@types/react": "npm:18.2.48"
@@ -9205,15 +9205,6 @@ __metadata:
   version: 18.18.4
   resolution: "@types/node@npm:18.18.4"
   checksum: 10/2f55a7f0c603a3b56f2d24ec173d5f83be6470f638b551bab81821b6adf85d676656ed6ae267f994c029d48d4f1071b083ffdd5c7bbe7ae28533d1b4e1e83f12
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:20.11.13":
-  version: 20.11.13
-  resolution: "@types/node@npm:20.11.13"
-  dependencies:
-    undici-types: "npm:~5.26.4"
-  checksum: 10/ffe143dd5e52d0d29f5bcea165b752c5355eaff8b6b933441108b540419e14c0c7e0e7912783e914125ab957e30db93f9c827e8dd437ec7e5f03def995e9a5e6
   languageName: node
   linkType: hard
 
