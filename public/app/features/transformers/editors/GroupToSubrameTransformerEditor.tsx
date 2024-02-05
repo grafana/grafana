@@ -18,10 +18,10 @@ import {
 } from '@grafana/data/src/transformations/transformers/groupBy';
 import {
   GroupToSubframeTransformerOptions,
-  SHOW_SUBFRAME_HEADERS_DEFAULT,
+  SHOW_NESTED_HEADERS_DEFAULT,
 } from '@grafana/data/src/transformations/transformers/groupToSubframe';
 import { Stack } from '@grafana/experimental';
-import { useTheme2, Select, StatsPicker, InlineField, Field, Switch } from '@grafana/ui';
+import { useTheme2, Select, StatsPicker, InlineField, Field, Switch, Alert } from '@grafana/ui';
 
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
@@ -38,7 +38,7 @@ export const GroupToSubframeTransformerEditor = ({
 }: TransformerUIProps<GroupToSubframeTransformerOptions>) => {
   const fieldNames = useAllFieldNamesFromDataFrames(input);
   const showHeaders =
-    options.showSubframeHeaders === undefined ? SHOW_SUBFRAME_HEADERS_DEFAULT : options.showSubframeHeaders;
+    options.showSubframeHeaders === undefined ? SHOW_NESTED_HEADERS_DEFAULT : options.showSubframeHeaders;
 
   const onConfigChange = useCallback(
     (fieldName: string) => (config: GroupByFieldOptions) => {
@@ -58,7 +58,7 @@ export const GroupToSubframeTransformerEditor = ({
   const onShowFieldNamesChange = useCallback(
     () => {
       const showSubframeHeaders =
-        options.showSubframeHeaders === undefined ? !SHOW_SUBFRAME_HEADERS_DEFAULT : !options.showSubframeHeaders;
+        options.showSubframeHeaders === undefined ? !SHOW_NESTED_HEADERS_DEFAULT : !options.showSubframeHeaders;
 
       onChange({
         showSubframeHeaders,
@@ -74,6 +74,7 @@ export const GroupToSubframeTransformerEditor = ({
 
   return (
     <Stack direction="row">
+      <Alert title="Alert"></Alert>
       <div>
         {fieldNames.map((key) => (
           <GroupByFieldConfiguration

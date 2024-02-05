@@ -9,7 +9,7 @@ import { ReducerID, reduceField } from '../fieldReducer';
 import { GroupByFieldOptions, createGroupedFields, groupValuesByKey } from './groupBy';
 import { DataTransformerID } from './ids';
 
-export const SHOW_SUBFRAME_HEADERS_DEFAULT = true;
+export const SHOW_NESTED_HEADERS_DEFAULT = true;
 
 export enum GroupByOperationID {
   aggregate = 'aggregate',
@@ -27,10 +27,10 @@ interface FieldMap {
 
 export const groupToSubframeTransformer: DataTransformerInfo<GroupToSubframeTransformerOptions> = {
   id: DataTransformerID.groupToSubframe,
-  name: 'Group to Subframe',
-  description: 'Group and then place in a sub-frame',
+  name: 'Group to nested tables',
+  description: 'Group data by a field value and create nested tables with the grouped data',
   defaultOptions: {
-    showSubframeHeaders: SHOW_SUBFRAME_HEADERS_DEFAULT,
+    showSubframeHeaders: SHOW_NESTED_HEADERS_DEFAULT,
     fields: {},
   },
 
@@ -132,7 +132,7 @@ export const groupToSubframeTransformer: DataTransformerInfo<GroupToSubframeTran
  */
 function createSubframe(fields: Field[], frameLength: number, options: GroupToSubframeTransformerOptions) {
   const showHeaders =
-    options.showSubframeHeaders === undefined ? SHOW_SUBFRAME_HEADERS_DEFAULT : options.showSubframeHeaders;
+    options.showSubframeHeaders === undefined ? SHOW_NESTED_HEADERS_DEFAULT : options.showSubframeHeaders;
 
   return {
     meta: { custom: { noHeader: !showHeaders } },
