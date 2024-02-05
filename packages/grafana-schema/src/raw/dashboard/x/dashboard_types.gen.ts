@@ -758,10 +758,6 @@ export interface Panel {
    */
   repeatDirection?: ('h' | 'v');
   /**
-   * Tags for the panel.
-   */
-  tags?: Array<string>;
-  /**
    * Depends on the panel plugin. See the plugin documentation for details.
    */
   targets?: Array<Record<string, unknown>>;
@@ -806,7 +802,6 @@ export interface Panel {
 export const defaultPanel: Partial<Panel> = {
   links: [],
   repeatDirection: 'h',
-  tags: [],
   targets: [],
   transformations: [],
   transparent: false,
