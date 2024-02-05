@@ -6,6 +6,7 @@ package definitions
 //
 //    Responses:
 //      200: GetReceiverResponse
+// 	    403: PermissionDenied
 //      404: NotFound
 
 // swagger:route GET /v1/notifications/receivers notifications RouteGetReceivers
