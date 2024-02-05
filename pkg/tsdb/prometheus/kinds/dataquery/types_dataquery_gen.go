@@ -97,6 +97,9 @@ type PrometheusDataQuery struct {
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId string `json:"refId"`
+	Scope *struct {
+		Matchers string `json:"matchers"`
+	} `json:"scope,omitempty"`
 }
 
 // QueryEditorMode defines model for QueryEditorMode.

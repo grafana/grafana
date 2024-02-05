@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { Button, Form, Select, Stack } from '@grafana/ui';
+import { Button, Select, Stack } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ServiceAccountPicker } from 'app/core/components/Select/ServiceAccountPicker';
 import { TeamPicker } from 'app/core/components/Select/TeamPicker';
@@ -71,54 +71,54 @@ export const AddPermission = ({
       <CloseButton onClick={onCancel} />
       <h5>{title}</h5>
 
-      <Form
+      <form
         name="addPermission"
-        maxWidth="none"
-        onSubmit={() => onAdd({ userId, teamId, builtInRole, permission, target })}
+        onSubmit={(event) => {
+          event.preventDefault();
+          onAdd({ userId, teamId, builtInRole, permission, target });
+        }}
       >
-        {() => (
-          <Stack gap={1} direction="row">
+        <Stack gap={1} direction="row">
+          <Select
+            aria-label="Role to add new permission to"
+            value={target}
+            options={targetOptions}
+            onChange={(v) => setPermissionTarget(v.value!)}
+            disabled={targetOptions.length === 0}
+            width="auto"
+          />
+
+          {target === PermissionTarget.User && <UserPicker onSelected={(u) => setUserId(u?.value || 0)} />}
+
+          {target === PermissionTarget.ServiceAccount && (
+            <ServiceAccountPicker onSelected={(u) => setUserId(u?.value || 0)} />
+          )}
+
+          {target === PermissionTarget.Team && <TeamPicker onSelected={(t) => setTeamId(t.value?.id || 0)} />}
+
+          {target === PermissionTarget.BuiltInRole && (
             <Select
-              aria-label="Role to add new permission to"
-              value={target}
-              options={targetOptions}
-              onChange={(v) => setPermissionTarget(v.value!)}
-              disabled={targetOptions.length === 0}
+              aria-label={'Built-in role picker'}
+              options={Object.values(OrgRole)
+                .filter((r) => r !== OrgRole.None)
+                .map((r) => ({ value: r, label: r }))}
+              onChange={(r) => setBuiltinRole(r.value || '')}
               width="auto"
             />
+          )}
 
-            {target === PermissionTarget.User && <UserPicker onSelected={(u) => setUserId(u?.value || 0)} />}
-
-            {target === PermissionTarget.ServiceAccount && (
-              <ServiceAccountPicker onSelected={(u) => setUserId(u?.value || 0)} />
-            )}
-
-            {target === PermissionTarget.Team && <TeamPicker onSelected={(t) => setTeamId(t.value?.id || 0)} />}
-
-            {target === PermissionTarget.BuiltInRole && (
-              <Select
-                aria-label={'Built-in role picker'}
-                options={Object.values(OrgRole)
-                  .filter((r) => r !== OrgRole.None)
-                  .map((r) => ({ value: r, label: r }))}
-                onChange={(r) => setBuiltinRole(r.value || '')}
-                width="auto"
-              />
-            )}
-
-            <Select
-              aria-label="Permission Level"
-              width="auto"
-              value={permissions.find((p) => p === permission)}
-              options={permissions.map((p) => ({ label: p, value: p }))}
-              onChange={(v) => setPermission(v.value || '')}
-            />
-            <Button type="submit" disabled={!isValid()}>
-              <Trans i18nKey="access-control.add-permissions.save">Save</Trans>
-            </Button>
-          </Stack>
-        )}
-      </Form>
+          <Select
+            aria-label="Permission Level"
+            width="auto"
+            value={permissions.find((p) => p === permission)}
+            options={permissions.map((p) => ({ label: p, value: p }))}
+            onChange={(v) => setPermission(v.value || '')}
+          />
+          <Button type="submit" disabled={!isValid()}>
+            <Trans i18nKey="access-control.add-permissions.save">Save</Trans>
+          </Button>
+        </Stack>
+      </form>
     </div>
   );
 };

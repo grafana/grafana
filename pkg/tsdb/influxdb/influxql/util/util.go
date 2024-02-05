@@ -139,6 +139,15 @@ func ParseNumber(value any) *float64 {
 	return &fvalue
 }
 
+func ParseString(value any) *string {
+	switch val := value.(type) {
+	case string:
+		return ToPtr(val)
+	default:
+		return ToPtr(fmt.Sprintf("%v", value))
+	}
+}
+
 func GetVisType(resFormat string) data.VisType {
 	switch resFormat {
 	case "table":

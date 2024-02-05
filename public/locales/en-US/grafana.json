@@ -1,5 +1,5 @@
 {
-  "_comment": "This file is the source of truth for English strings. Edit this to change plurals and other phrases for the UI.",
+  "_comment": "This file is the source of truth for English strings. Edit this in the codebase to change plurals and other phrases for the UI.",
   "access-control": {
     "add-permission": {
       "role-label": "Role",
@@ -76,6 +76,7 @@
     "folder-picker": {
       "accessible-label": "Select folder: {{ label }} currently selected",
       "button-label": "Select folder",
+      "clear-selection": "Clear selection",
       "empty-message": "No folders found",
       "error-title": "Error loading folders",
       "search-placeholder": "Search folders",
@@ -233,6 +234,10 @@
       "visualization": "Visualization",
       "widget": "Widget"
     },
+    "alert-rules-drawer": {
+      "redirect-link": "List in Grafana Alerting",
+      "subtitle": "Alert rules related to this dashboard"
+    },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
       "add-library-panel-button": "Add library panel",
@@ -301,7 +306,7 @@
     },
     "toolbar": {
       "add": "Add",
-      "add-panel": "Add panel",
+      "alert-rules": "Alert rules",
       "mark-favorite": "Mark as favorite",
       "open-original": "Open original dashboard",
       "playlist-next": "Go to next dashboard",
@@ -736,6 +741,9 @@
     "authentication": {
       "title": "Authentication"
     },
+    "collector": {
+      "title": "Collector"
+    },
     "config": {
       "title": "Administration"
     },
@@ -882,6 +890,10 @@
     "plugins": {
       "subtitle": "Extend the Grafana experience with plugins",
       "title": "Plugins"
+    },
+    "private-data-source-connections": {
+      "subtitle": "Query data that lives within a secured network without opening the network to inbound traffic from Grafana Cloud. Learn more in our docs.",
+      "title": "Private data source connect"
     },
     "profile/notifications": {
       "title": "Notification history"

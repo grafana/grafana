@@ -47,6 +47,8 @@ func findPluginJSONDir(pluginID string) (string, error) {
 		if !fileHasString(pluginJSONMatch, fmt.Sprintf(`"id": "%s"`, pluginID)) {
 			continue
 		}
+		pluginJSONPath = pluginJSONMatch
+		break
 	}
 	pluginJSONPath, err = filepath.Abs(pluginJSONPath)
 	if err != nil {
