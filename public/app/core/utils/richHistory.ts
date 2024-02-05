@@ -34,7 +34,8 @@ export async function addToRichHistory(
   starred: boolean,
   comment: string | null,
   showQuotaExceededError: boolean,
-  showLimitExceededWarning: boolean
+  showLimitExceededWarning: boolean,
+  showOtherErrors: boolean
 ): Promise<{ richHistoryStorageFull?: boolean; limitExceeded?: boolean }> {
   /* Save only queries, that are not falsy (e.g. empty object, null, ...) */
   const newQueriesToSave: DataQuery[] = queries && queries.filter((query) => notEmptyQuery(query));
@@ -60,7 +61,7 @@ export async function addToRichHistory(
         if (error.name === RichHistoryServiceError.StorageFull) {
           richHistoryStorageFull = true;
           showQuotaExceededError && dispatch(notifyApp(createErrorNotification(error.message)));
-        } else if (error.name !== RichHistoryServiceError.DuplicatedEntry) {
+        } else if (showOtherErrors && error.name !== RichHistoryServiceError.DuplicatedEntry) {
           dispatch(
             notifyApp(
               createErrorNotification(

@@ -117,7 +117,8 @@ describe('richHistory', () => {
         mock.testStarred,
         mock.testComment,
         true,
-        true
+        true,
+        false
       );
       expect(limitExceeded).toBeFalsy();
       expect(richHistoryStorageFull).toBeFalsy();
@@ -151,7 +152,8 @@ describe('richHistory', () => {
         mock.testStarred,
         mock.testComment,
         true,
-        true
+        true,
+        false
       );
       expect(richHistoryStorageFull).toBeFalsy();
       expect(limitExceeded).toBeTruthy();

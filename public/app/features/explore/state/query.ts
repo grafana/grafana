@@ -13,7 +13,6 @@ import {
   dateTimeForTimeZone,
   hasQueryExportSupport,
   hasQueryImportSupport,
-  HistoryItem,
   LoadingState,
   LogsVolumeType,
   PanelEvents,
@@ -480,15 +479,17 @@ export function modifyQueries(
 async function handleHistory(
   dispatch: ThunkDispatch,
   state: ExploreState,
-  history: Array<HistoryItem<DataQuery>>,
   datasource: DataSourceApi,
-  queries: DataQuery[],
-  exploreId: string
+  queries: DataQuery[]
 ) {
-  dispatch(addHistoryItem(true, datasource.uid, datasource.name, queries)); // always write to local for autocomplete, query history will use also if flag disabled
+  /*
+  Always write to local storage. If query history is enabled, we will use local storage for autocomplete only (and want to hide errors)
+  If query history is disabled, we will use local storage for query history as well, and will want to show errors
+  */
+  dispatch(addHistoryItem(true, datasource.uid, datasource.name, queries, config.queryHistoryEnabled));
   if (config.queryHistoryEnabled) {
     // write to remote if flag enabled
-    dispatch(addHistoryItem(false, datasource.uid, datasource.name, queries));
+    dispatch(addHistoryItem(false, datasource.uid, datasource.name, queries, false));
   }
 
   // Because filtering happens in the backend we cannot add a new entry without checking if it matches currently
@@ -549,7 +550,7 @@ export const runQueries = createAsyncThunk<void, RunQueriesOptions>(
     }));
 
     if (datasourceInstance != null) {
-      handleHistory(dispatch, getState().explore, exploreItemState.history, datasourceInstance, queries, exploreId);
+      handleHistory(dispatch, getState().explore, datasourceInstance, queries);
     }
 
     const cachedValue = getResultsFromCache(cache, absoluteRange);

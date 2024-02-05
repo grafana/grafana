@@ -64,7 +64,8 @@ export const addHistoryItem = (
   localOverride: boolean,
   datasourceUid: string,
   datasourceName: string,
-  queries: DataQuery[]
+  queries: DataQuery[],
+  muteAllErrorsAndWarnings: boolean
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
     const { richHistoryStorageFull, limitExceeded } = await addToRichHistory(
@@ -74,13 +75,14 @@ export const addHistoryItem = (
       queries,
       false,
       '',
-      !getState().explore.richHistoryStorageFull,
-      !getState().explore.richHistoryLimitExceededWarningShown
+      muteAllErrorsAndWarnings ? false : !getState().explore.richHistoryStorageFull,
+      muteAllErrorsAndWarnings ? false : !getState().explore.richHistoryLimitExceededWarningShown,
+      muteAllErrorsAndWarnings
     );
-    if (richHistoryStorageFull) {
+    if (!muteAllErrorsAndWarnings && richHistoryStorageFull) {
       dispatch(richHistoryStorageFullAction());
     }
-    if (limitExceeded) {
+    if (!muteAllErrorsAndWarnings && limitExceeded) {
       dispatch(richHistoryLimitExceededAction());
     }
   };
