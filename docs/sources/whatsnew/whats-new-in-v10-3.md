@@ -177,12 +177,6 @@ You can now apply data transformations to annotation data. For example, you can 
 
 {{< video-embed src="/media/docs/grafana/screen-recording-10-3-data-transformations-annotation-support.mp4" caption="Configure how exemplar data appears in tooltip" >}}
 
-#### Disable auto scaling units
-
-By default, Grafana automatically scales the unit based on the magnitude of the value. For example, if you have a value of 0.14 kW, Grafana will display it as 140 W. You can now disable unit auto scaling. This is helpful in cases where you want to ensure that the same unit is shown in your visualization regardless of the magnitude of the data. See [the standard options documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#scale-units) for more information.
-
-{{< video-embed src="/media/docs/grafana/screen-recording-10-3-disable-unit-auto-scaling.mp4" caption="Disable auto scaling units" >}}
-
 ### New Transformations UI experience and documentation upgrades
 
 <!--Jev Forsberg-->
