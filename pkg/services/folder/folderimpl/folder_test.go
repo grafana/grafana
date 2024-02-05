@@ -1612,9 +1612,6 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 }
 
 func TestFolderServiceGetFolders(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
 	db := sqlstore.InitTestDB(t)
 	quotaService := quotatest.New(false, nil)
 	folderStore := ProvideDashboardFolderStore(db)
@@ -1662,17 +1659,18 @@ func TestFolderServiceGetFolders(t *testing.T) {
 		CanViewValue: true,
 	})
 
-	folders := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOff, 4, "getfolders-ff-off", createCmd)
+	prefix := "getfolders/ff/off"
+	folders := CreateSubtreeInStore(t, nestedFolderStore, serviceWithFlagOff, 5, prefix, createCmd)
+	f := folders[rand.Intn(len(folders))]
 
 	t.Run("when flag is off", func(t *testing.T) {
 		t.Run("full path should be a title", func(t *testing.T) {
-			f := folders[rand.Intn(len(folders))]
 			q := folder.GetFoldersQuery{
 				OrgID:            orgID,
 				WithFullpath:     true,
 				WithFullpathUIDs: true,
 				SignedInUser:     &signedInAdminUser,
-				UIDs:             []string{folders[0].UID},
+				UIDs:             []string{f.UID},
 			}
 			fldrs, err := serviceWithFlagOff.GetFolders(context.Background(), q)
 			require.NoError(t, err)
@@ -1680,6 +1678,11 @@ func TestFolderServiceGetFolders(t *testing.T) {
 			require.Equal(t, f.UID, fldrs[0].UID)
 			require.Equal(t, f.Title, fldrs[0].Title)
 			require.Equal(t, f.Title, fldrs[0].Fullpath)
+
+			t.Run("path should not be escaped", func(t *testing.T) {
+				require.Contains(t, fldrs[0].Fullpath, prefix)
+				require.Contains(t, fldrs[0].Title, prefix)
+			})
 		})
 	})
 }
