@@ -4,9 +4,6 @@ import { Matcher, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/data
 
 import { Labels } from '../../../../types/unified-alerting-dto';
 
-import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
-import { unquoteWithUnescape } from './misc';
-
 const matcherOperators = [
   MatcherOperator.regex,
   MatcherOperator.notRegex,
@@ -111,6 +108,22 @@ export const normalizeMatchers = (route: Route): ObjectMatcher[] => {
   return matchers;
 };
 
+export function quoteWithEscape(input: string) {
+  const escaped = input.replace(/[\\"]/g, (c) => `\\${c}`);
+  return `"${escaped}"`;
+}
+
+export function unquoteWithUnescape(input: string) {
+  if (!/^"(.*)"$/.test(input)) {
+    return input;
+  }
+
+  return input
+    .replace(/^"(.*)"$/, '$1')
+    .replace(/\\"/g, '"')
+    .replace(/\\\\/g, '\\');
+}
+
 export const matcherFormatter = {
   default: ([name, operator, value]: ObjectMatcher): string => {
     return `${name} ${operator} ${value}`;
@@ -121,9 +134,5 @@ export const matcherFormatter = {
 } as const;
 
 export type MatcherFormatter = keyof typeof matcherFormatter;
-
-export function getAmMatcherFormatter(alertmanagerSourceName?: string): MatcherFormatter {
-  return alertmanagerSourceName === GRAFANA_RULES_SOURCE_NAME ? 'default' : 'cloud';
-}
 
 export type Label = [string, string];

@@ -32,7 +32,8 @@ import { ReceiversState } from 'app/types';
 
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
-import { getAmMatcherFormatter, normalizeMatchers } from '../../utils/matchers';
+import { getAmMatcherFormatter } from '../../utils/alertmanager';
+import { normalizeMatchers } from '../../utils/matchers';
 import { createContactPointLink, createMuteTimingLink } from '../../utils/misc';
 import { InheritableProperties, getInheritedProperties } from '../../utils/notification-policies';
 import { Authorize } from '../Authorize';

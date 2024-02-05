@@ -15,8 +15,8 @@ import { Labels } from 'app/types/unified-alerting-dto';
 import { MatcherFieldValue } from '../types/silence-form';
 
 import { getAllDataSources } from './config';
-import { DataSourceType } from './datasource';
-import { unquoteWithUnescape } from './misc';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './datasource';
+import { MatcherFormatter, unquoteWithUnescape } from './matchers';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -180,6 +180,10 @@ export function combineMatcherStrings(...matcherStrings: string[]): string {
   const matchers = matcherStrings.map(parseMatchers).flat();
   const uniqueMatchers = uniqWith(matchers, isEqual);
   return matchersToString(uniqueMatchers);
+}
+
+export function getAmMatcherFormatter(alertmanagerSourceName?: string): MatcherFormatter {
+  return alertmanagerSourceName === GRAFANA_RULES_SOURCE_NAME ? 'default' : 'cloud';
 }
 
 export function getAllAlertmanagerDataSources() {

@@ -8,8 +8,7 @@ import { MatcherFieldValue } from '../types/silence-form';
 
 import { matcherToMatcherField } from './alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
-import { normalizeMatchers, parseMatcher } from './matchers';
-import { quoteWithEscape, unquoteWithUnescape } from './misc';
+import { normalizeMatchers, parseMatcher, quoteWithEscape, unquoteWithUnescape } from './matchers';
 import { findExistingRoute } from './routeTree';
 import { isValidPrometheusDuration, safeParseDurationstr } from './time';
 
