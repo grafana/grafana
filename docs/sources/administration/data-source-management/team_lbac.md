@@ -23,15 +23,12 @@ This feature addresses a common challenge faced by Grafana users: managing Loki 
 
 ## Team LBAC rules
 
-Users who want teams with a specific set of label selectors can add rules for each team. Team LBAC rules have no upper limit as to how many you can configure per team.
-
 Team LBAC rules are added to the http request to Loki data source. Setting up Team LBAC rules for any team will apply those rules to the teams.
-
-**Note:** Any teams within Grafana without a rule will be able to query all logs if there are role based queriying setup. See <> for more information.
+Users who want teams with a specific set of label selectors can add rules for each team.
 
 Configuring multiple rules for a team, each rule is evaluated separately. If a team has `X` number of rules configured for it, all rules will be applied to the request and the result will be the an "OR" operation of the `X` number of rules.
 
-Only a data source administrator with permission access can edit LBAC rules at the data source permissions tab. Changing LBAC rules requires the same access level as editing data source permissions (admin permission for data source).
+Only users with data source Admin permissions can edit LBAC rules at the data source permissions tab. Changing LBAC rules requires the same access level as editing data source permissions (admin permission for data source).
 
 > "Can I use CAPs (cloud access policies) together with TeamLBAC rules?"
 > No, CAP (cloud access policies) always have precedence. If there are any CAP LBAC configured for the same datasource and there are TeamLBAC rules configured, then only the CAP LBAC will be applied.
@@ -39,11 +36,15 @@ Only a data source administrator with permission access can edit LBAC rules at t
 Cloud access policies are the access controls from Grafana Cloud, the CAP configured for loki should only to be used to gain read access to the logs.
 
 > "If administrator forget to add rule for a team, what happens?"
-> The teams that does not have a rule applied to it, would be able to query the logs if `query` permissions are setup for their role within Grafana.
+> The teams that does not have a rule applied to it, would be able to query all logs if `query` permissions are setup for their role within Grafana.
+
+**Note:** A user who is part of a team within Grafana without a rule will be able to query all logs if there are role based queriying setup.
 
 #### Best practices
 
 We recommend you only add team lbac permissions for teams that should use the data source and remove default `Viewer` and `Editor` query permissions.
+
+We recommend for a first setup, setting up as few rules for each team as possible and make them additive and not negated.
 
 For validating the rules, we recommend testing the rules in the Loki Explore view. This will allow you to see the logs that would be returned for the rule.
 
@@ -51,7 +52,7 @@ For validating the rules, we recommend testing the rules in the Loki Explore vie
 
 **Scenario 1: One rule setup for each team**
 
-We have two teams, Team A and Team B. Loki access is setup with `Admin` roles to have `Query` permission.
+We have two teams, Team A and Team B. Loki access is setup with `Admin` roles to have `Admin` permission.
 
 - Team A has a rule `namespace="dev"`. A user that is part of Team A will have access to logs that match `namespace="dev"`.
 
@@ -63,17 +64,29 @@ We have two teams, Team A and Team B. Loki access is setup with `Editor`, `Viewe
 
 - Team A has a rule `namespace="dev"` configured. A user that is part of Team A will have access to logs that match `namespace="dev"`.
 
-- Team B does not have a rule configured for it. A user that is part of Team B, that is `Editor` or `Viewer` will have access to all logs (due to the query permission for the user).
+- Team B does not have a rule configured for it. 
+
+A user that is part of Team A and part of Team B will have access to logs that match `namespace="dev"`.
+
+A user that is not part of Team A and part of Team B, that is `Editor` or `Viewer` will have access to all logs (due to the query permission for the user). 
 
 **Scenario 3: Multiple rules setup for one team**
 
 We have two teams, Team A and Team B. Loki access is setup with `Admin` roles having `Admin` permission.
 
-- Team A has rule `namespace="dev", namespace="prod"` configured. A user that is part of Team A will have access to logs that match `namespace="dev"` `AND` `namespace=prod`.
+- Team A has rule `cluster="us-west-0", namespace="dev|prod"` configured. 
+ - A user that is only part of Team A will have access to logs that match `cluster="us-west-0"` `AND` (`namespace="dev" OR namespace="prod"`).
 
-- Team B has rule `namespace!="dev", namespace="prod"` configured. A user that is part of Team B will have access to logs that match `namespace!="bi"` `AND` `namespace=prod`.
+- Team B has rule `cluster="us-west-0", namespace="!prod"` configured. 
+ - A user that is only part of Team B will have access to logs that match `cluster="us-west-0"` `AND` `namespace="!prod"`.
 
-- A user that is part of Team A and Team B will have access to logs that match `(namespace="dev" AND namespace="prod") OR (namespace="dev" AND namespace!="bi")`.
+A user that is part of Team A and Team B will have access to logs that match `cluster="us-west-0" AND (namespace="dev" OR namespace="prod") OR (is this true?) (cluster="us-west-0" AND namespace="!prod")`.
+
+A user that is not part of any Team with `Editor/Viewer` role will not have access to query any logs
+
+A user that is part of a Team with `Admin` role will only have access to that teams logs
+
+A user that is not part of any Team with `Admin` role will have access to all logs
 
 **Scenario 4: Two or more rules configured for a team**
 
