@@ -1,5 +1,5 @@
 {
-  "_comment": "Diese Datei ist die Quelle für englische Strings. Bearbeiten Sie diese, um die Pluralformen und andere Ausdrücke für die Benutzeroberfläche zu ändern.",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "Rolle",
@@ -306,7 +306,7 @@
     },
     "toolbar": {
       "add": "Hinzufügen",
-      "alert-rules": "",
+      "alert-rules": "Warnregeln",
       "mark-favorite": "Als Favorit markieren",
       "open-original": "Original-Dashboard öffnen",
       "playlist-next": "Zum nächsten Dashboard",
@@ -316,7 +316,7 @@
       "save": "Dashboard speichern",
       "settings": "Dashboard-Einstellungen",
       "share": "Dashboard oder Panel teilen",
-      "share-button": "",
+      "share-button": "Teilen",
       "unmark-favorite": "Markierung als Favorit entfernen"
     },
     "validation": {
@@ -541,7 +541,7 @@
       "copy-link-abs-time": "",
       "copy-links-absolute-category": "",
       "copy-links-normal-category": "",
-      "copy-shortened-link": "Verkürzten Link kopieren",
+      "copy-shortened-link": "",
       "copy-shortened-link-abs-time": "",
       "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "Abbrechen",
@@ -559,7 +559,7 @@
   },
   "grafana-ui": {
     "drawer": {
-      "close": ""
+      "close": "Schließen"
     },
     "modal": {
       "close-tooltip": "Schließen"
@@ -649,15 +649,15 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "Dieses Fenster wird in {{count}} Dashboard verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:",
-      "body_other": "Dieses Fenster wird in {{count}} Dashboards verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:",
       "button-cancel": "<0>Abbrechen</0>",
       "button-view-panel1": "Fenster in {{label}} anzeigen...",
       "button-view-panel2": "Fenster im Dashboard anzeigen...",
       "panel-not-linked": "Fenster ist nicht mit einem Dashboard verbunden. Fügen Sie das Fenster einem Dashboard hinzu und versuchen Sie es erneut.",
       "select-no-options-message": "Keine Dashboards gefunden",
       "select-placeholder": "Tippen, um nach Dashboard zu suchen",
-      "title": "Fenster im Dashboard anzeigen"
+      "title": "Fenster im Dashboard anzeigen",
+      "body_one": "Dieses Fenster wird in {{count}} Dashboard verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:",
+      "body_other": "Dieses Fenster wird in {{count}} Dashboards verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:"
     },
     "save": {
       "error": "Fehler beim Speichern des Bibliotheks-Panels: „{{errorMsg}}“",
@@ -681,7 +681,7 @@
       "title": "Server-Administrator"
     },
     "alert-list-legacy": {
-      "title": ""
+      "title": "Warnregeln"
     },
     "alerting": {
       "subtitle": "Informiere dich über Probleme in deinen Systemen kurz nach deren Auftreten",
@@ -740,6 +740,9 @@
     },
     "authentication": {
       "title": "Authentifizierung"
+    },
+    "collector": {
+      "title": ""
     },
     "config": {
       "title": "Verwaltung"
@@ -887,6 +890,10 @@
     "plugins": {
       "subtitle": "Erweitere das Grafana-Erlebnis mit Plug-ins",
       "title": "Plug-ins"
+    },
+    "private-data-source-connections": {
+      "subtitle": "",
+      "title": ""
     },
     "profile/notifications": {
       "title": "Benachrichtigungsverlauf"
@@ -1093,14 +1100,14 @@
     },
     "config": {
       "can-view-dashboard-radio-button-label": "",
-      "copy-button": "",
+      "copy-button": "Kopieren",
       "dashboard-url-field-label": "",
       "email-share-type-option-label": "",
       "pause-sharing-dashboard-label": "",
       "public-share-type-option-label": "",
       "revoke-public-URL-button": "",
       "revoke-public-URL-button-title": "",
-      "settings-title": ""
+      "settings-title": "Einstellungen"
     },
     "create-page": {
       "generate-public-url-button": "",
@@ -1114,7 +1121,7 @@
     },
     "email-sharing": {
       "input-invalid-email-text": "",
-      "input-required-email-text": "",
+      "input-required-email-text": "E-Mail-Adresse ist erforderlich",
       "invite-button": "",
       "invite-field-desc": "",
       "invite-field-label": "",
@@ -1170,29 +1177,29 @@
   },
   "public-dashboard-users-access-list": {
     "dashboard-modal": {
-      "loading-text": "",
+      "loading-text": "Wird geladen ...",
       "open-dashboard-list-text": "",
       "public-dashboard-link": "",
       "public-dashboard-setting": ""
     },
     "delete-user-modal": {
       "delete-user-button-text": "",
-      "delete-user-cancel-button": "",
+      "delete-user-cancel-button": "Abbrechen",
       "delete-user-revoke-access-button": "",
       "revoke-access-title": "",
       "revoke-user-access-modal-desc-line1": "",
       "revoke-user-access-modal-desc-line2": ""
     },
     "modal": {
-      "dashboard-modal-title": ""
+      "dashboard-modal-title": "Öffentliche Dashboards"
     },
     "table-header": {
       "activated-label": "",
       "activated-tooltip": "",
-      "email-label": "",
+      "email-label": "E-Mail-Adresse",
       "last-active-label": "",
       "origin-label": "",
-      "role-label": ""
+      "role-label": "Rolle"
     }
   },
   "query-operation": {
@@ -1234,7 +1241,7 @@
     "button": {
       "label": ""
     },
-    "dismissable-button": ""
+    "dismissable-button": "Schließen"
   },
   "search": {
     "actions": {

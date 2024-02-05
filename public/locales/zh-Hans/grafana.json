@@ -1,5 +1,5 @@
 {
-  "_comment": "此文件是英文字符串的真实来源。编辑此文件可更改用户界面的复数形式和其他短语。",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "角色",
@@ -301,7 +301,7 @@
     },
     "toolbar": {
       "add": "添加",
-      "alert-rules": "",
+      "alert-rules": "警报规则",
       "mark-favorite": "标记为收藏",
       "open-original": "打开原始仪表板",
       "playlist-next": "前往下一个仪表板",
@@ -311,7 +311,7 @@
       "save": "保存仪表板",
       "settings": "仪表板设置",
       "share": "分享仪表板或面板",
-      "share-button": "",
+      "share-button": "分享",
       "unmark-favorite": "取消标记为收藏"
     },
     "validation": {
@@ -536,7 +536,7 @@
       "copy-link-abs-time": "",
       "copy-links-absolute-category": "",
       "copy-links-normal-category": "",
-      "copy-shortened-link": "复制短链接",
+      "copy-shortened-link": "",
       "copy-shortened-link-abs-time": "",
       "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "取消",
@@ -554,7 +554,7 @@
   },
   "grafana-ui": {
     "drawer": {
-      "close": ""
+      "close": "关闭"
     },
     "modal": {
       "close-tooltip": "关闭"
@@ -644,14 +644,14 @@
   },
   "library-panels": {
     "modal": {
-      "body_other": "此面板在 {{count}} 个仪表板中使用。请选择要在哪个仪表板中查看此面板：",
       "button-cancel": "<0>取消</0>",
       "button-view-panel1": "在 {{label}} 中查看面板...",
       "button-view-panel2": "在仪表板中查看面板...",
       "panel-not-linked": "面板没有链接到仪表板。请将面板添加到仪表板，然后重试。",
       "select-no-options-message": "未找到仪表板",
       "select-placeholder": "开始输入以搜索仪表板",
-      "title": "在仪表板中查看面板"
+      "title": "在仪表板中查看面板",
+      "body_other": "此面板在 {{count}} 个仪表板中使用。请选择要在哪个仪表板中查看此面板："
     },
     "save": {
       "error": "保存库面板时出错：\"{{errorMsg}}\"",
@@ -675,7 +675,7 @@
       "title": "服务器管理员"
     },
     "alert-list-legacy": {
-      "title": ""
+      "title": "警报规则"
     },
     "alerting": {
       "subtitle": "在系统发生问题后立即获悉",
@@ -734,6 +734,9 @@
     },
     "authentication": {
       "title": "身份验证"
+    },
+    "collector": {
+      "title": ""
     },
     "config": {
       "title": "管理"
@@ -881,6 +884,10 @@
     "plugins": {
       "subtitle": "使用插件扩展 Grafana 体验",
       "title": "插件"
+    },
+    "private-data-source-connections": {
+      "subtitle": "",
+      "title": ""
     },
     "profile/notifications": {
       "title": "通知历史记录"
@@ -1087,14 +1094,14 @@
     },
     "config": {
       "can-view-dashboard-radio-button-label": "",
-      "copy-button": "",
+      "copy-button": "复制",
       "dashboard-url-field-label": "",
       "email-share-type-option-label": "",
       "pause-sharing-dashboard-label": "",
       "public-share-type-option-label": "",
       "revoke-public-URL-button": "",
       "revoke-public-URL-button-title": "",
-      "settings-title": ""
+      "settings-title": "设置"
     },
     "create-page": {
       "generate-public-url-button": "",
@@ -1108,7 +1115,7 @@
     },
     "email-sharing": {
       "input-invalid-email-text": "",
-      "input-required-email-text": "",
+      "input-required-email-text": "电子邮箱是必填项",
       "invite-button": "",
       "invite-field-desc": "",
       "invite-field-label": "",
@@ -1164,29 +1171,29 @@
   },
   "public-dashboard-users-access-list": {
     "dashboard-modal": {
-      "loading-text": "",
+      "loading-text": "加载中...",
       "open-dashboard-list-text": "",
       "public-dashboard-link": "",
       "public-dashboard-setting": ""
     },
     "delete-user-modal": {
       "delete-user-button-text": "",
-      "delete-user-cancel-button": "",
+      "delete-user-cancel-button": "取消",
       "delete-user-revoke-access-button": "",
       "revoke-access-title": "",
       "revoke-user-access-modal-desc-line1": "",
       "revoke-user-access-modal-desc-line2": ""
     },
     "modal": {
-      "dashboard-modal-title": ""
+      "dashboard-modal-title": "公共仪表板"
     },
     "table-header": {
       "activated-label": "",
       "activated-tooltip": "",
-      "email-label": "",
+      "email-label": "电子邮箱",
       "last-active-label": "",
       "origin-label": "",
-      "role-label": ""
+      "role-label": "角色"
     }
   },
   "query-operation": {
@@ -1228,7 +1235,7 @@
     "button": {
       "label": ""
     },
-    "dismissable-button": ""
+    "dismissable-button": "关闭"
   },
   "search": {
     "actions": {
