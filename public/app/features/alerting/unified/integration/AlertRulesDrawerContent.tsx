@@ -1,7 +1,9 @@
+import { isEmpty } from 'lodash';
 import React from 'react';
 import { useAsync } from 'react-use';
 
-import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { PanelModel } from '@grafana/data';
+import { LoadingPlaceholder } from '@grafana/ui';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { DashboardRoutes, useDispatch } from 'app/types';
 
@@ -10,6 +12,8 @@ import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
 import { fetchPromAndRulerRulesAction } from '../state/actions';
 import { Annotation } from '../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+
+import LegacyAlertsWarning from './LegacyAlertsWarning';
 
 interface Props {
   dashboardUid: string;
@@ -27,11 +31,11 @@ export default function AlertRulesDrawerContent({ dashboardUid }: Props) {
     });
   }, [dashboardStateManager]);
 
-  console.log(dashboardData);
-  const hasLegacyAlerts = dashboardData?.dashboard.panels?.some((panel) => {
+  const panelsWithLegacyAlerts = dashboardData?.dashboard.panels?.filter((panel: PanelModel) => {
     return 'alert' in panel;
   });
-  console.log('hasLegacyAlerts', hasLegacyAlerts);
+
+  const hasLegacyAlerts = !isEmpty(panelsWithLegacyAlerts);
 
   const { loading: loadingRulesData } = useAsync(async () => {
     await dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
@@ -51,7 +55,7 @@ export default function AlertRulesDrawerContent({ dashboardUid }: Props) {
         <LoadingPlaceholder text="Loading alert rules" />
       ) : (
         <>
-          {hasLegacyAlerts && <Alert severity="warning" title="Legacy alerts found in this dashboard" />}
+          {hasLegacyAlerts && <LegacyAlertsWarning dashboardUid={dashboardUid} panels={panelsWithLegacyAlerts} />}
           <RulesTable rules={rules} showNextEvaluationColumn={false} showGroupColumn={false} />
         </>
       )}
