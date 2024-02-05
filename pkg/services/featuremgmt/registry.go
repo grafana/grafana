@@ -731,7 +731,7 @@ var (
 		{
 			Name:              "splitScopes",
 			Description:       "Support faster dashboard and folder search by splitting permission scopes into parts",
-			Stage:             FeatureStageGeneralAvailability,
+			Stage:             FeatureStageDeprecated,
 			FrontendOnly:      false,
 			Expression:        "true", // enabled by default
 			Owner:             identityAccessTeam,
@@ -903,11 +903,12 @@ var (
 			Created:        time.Date(2023, time.September, 27, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:        "externalServiceAccounts",
-			Description: "Automatic service account and token setup for plugins",
-			Stage:       FeatureStagePrivatePreview,
-			Owner:       identityAccessTeam,
-			Created:     time.Date(2023, time.September, 28, 12, 0, 0, 0, time.UTC),
+			Name:              "externalServiceAccounts",
+			Description:       "Automatic service account and token setup for plugins",
+			HideFromAdminPage: true,
+			Stage:             FeatureStagePublicPreview,
+			Owner:             identityAccessTeam,
+			Created:           time.Date(2023, time.September, 28, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "panelMonitoring",
@@ -951,7 +952,7 @@ var (
 		},
 		{
 			Name:            "kubernetesSnapshots",
-			Description:     "Use the kubernetes API in the frontend to support playlists",
+			Description:     "Routes snapshot requests from /api to the /apis endpoint",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing

@@ -228,6 +228,10 @@ export class DashboardModelCompatibilityWrapper {
     this.events.removeAllListeners();
     this._subs.unsubscribe();
   }
+
+  public hasUnsavedChanges() {
+    return this._scene.state.isDirty;
+  }
 }
 
 class PanelCompatibilityWrapper {

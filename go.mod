@@ -61,8 +61,8 @@ require (
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20240123184432-1d58deb6074c // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
-	github.com/grafana/grafana-aws-sdk v0.19.1 // @grafana/aws-datasources
-	github.com/grafana/grafana-azure-sdk-go v1.11.0 // @grafana/partner-datasources
+	github.com/grafana/grafana-aws-sdk v0.23.1 // @grafana/aws-datasources
+	github.com/grafana/grafana-azure-sdk-go v1.12.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-plugin-sdk-go v0.206.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.6.2 // @grafana/plugins-platform-backend
@@ -83,7 +83,7 @@ require (
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // @grafana/alerting-squad-backend
-	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
+	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/alertmanager v0.25.0 // @grafana/alerting-squad-backend
 	github.com/prometheus/client_golang v1.18.0 // @grafana/alerting-squad-backend
@@ -127,7 +127,7 @@ require (
 )
 
 require (
-	github.com/Azure/azure-sdk-for-go/sdk/internal v1.3.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v1.5.1 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/autorest/to v0.4.0 // indirect
@@ -223,7 +223,7 @@ require (
 
 require (
 	cloud.google.com/go/kms v1.15.5 // @grafana/backend-platform
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.4.0 // @grafana/backend-platform
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.5.1 // @grafana/backend-platform
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/azkeys v0.9.0 // @grafana/backend-platform
 	github.com/Azure/azure-storage-blob-go v0.15.0 // @grafana/backend-platform
 	github.com/Azure/go-autorest/autorest/adal v0.9.23 // @grafana/backend-platform
@@ -258,7 +258,7 @@ require (
 	github.com/dave/dst v0.27.2 // @grafana/grafana-as-code
 	github.com/go-jose/go-jose/v3 v3.0.1 // @grafana/grafana-authnz-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
-	github.com/grafana/dataplane/sdata v0.0.6 // @grafana/observability-metrics
+	github.com/grafana/dataplane/sdata v0.0.7 // @grafana/observability-metrics
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 //  @grafana/grafana-as-code
 	github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b // @grafana/observability-traces-and-profiling
 	github.com/grafana/thema v0.0.0-20230712153715-375c1b45f3ed // @grafana/grafana-as-code
@@ -344,7 +344,6 @@ require (
 	github.com/google/s2a-go v0.1.7 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/grafana/regexp v0.0.0-20221123153739-15dc172cd2db // indirect
-	github.com/grafana/sqlds/v2 v2.3.10 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.2 // indirect
@@ -431,9 +430,9 @@ require (
 	cloud.google.com/go/compute v1.23.3 // indirect
 	cloud.google.com/go/iam v1.1.5 // indirect
 	filippo.io/age v1.1.1 // @grafana/grafana-authnz-team
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.8.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.9.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/keyvault/internal v0.7.0 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v1.1.1 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.1 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.2 // @grafana/backend-platform
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230828082145-3c4c8a2d2371 // @grafana/plugins-platform-backend
@@ -474,7 +473,7 @@ require (
 require (
 	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230305170008-8188dc5388df // indirect
 	github.com/go-errors/errors v1.4.2 // indirect
-	github.com/golang-jwt/jwt/v5 v5.0.0 // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.0 // indirect
 	github.com/google/gnostic-models v0.6.8 // indirect
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/backend-platform
 	github.com/moby/spdystream v0.2.0 // indirect
@@ -493,6 +492,16 @@ require (
 	github.com/marcboeker/go-duckdb v1.5.6 // @grafana/grafana-bi-squad
 )
 require k8s.io/code-generator v0.29.1 // @grafana/grafana-app-platform-squad
+
+require (
+	github.com/grafana/sqlds/v3 v3.2.0 // indirect
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
+	github.com/mithrandie/csvq v1.17.10 // indirect
+	github.com/mithrandie/csvq-driver v1.6.8 // indirect
+	github.com/mithrandie/go-file/v2 v2.1.0 // indirect
+	github.com/mithrandie/go-text v1.5.4 // indirect
+	github.com/mithrandie/ternary v1.1.1 // indirect
+)
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20231025143828-a6c0e9b86a4c
