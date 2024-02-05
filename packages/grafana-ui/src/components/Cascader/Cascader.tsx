@@ -37,6 +37,7 @@ export interface CascaderProps {
   /** Don't show what is selected in the cascader input/search. Useful when input is used just as search and the
       cascader is hidden after selection. */
   hideActiveLevelLabel?: boolean;
+  disabled?: boolean;
 }
 
 interface CascaderState {
@@ -209,7 +210,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
   };
 
   render() {
-    const { allowCustomValue, formatCreateLabel, placeholder, width, changeOnSelect, options } = this.props;
+    const { allowCustomValue, formatCreateLabel, placeholder, width, changeOnSelect, options, disabled } = this.props;
     const { focusCascade, isSearching, rcValue, activeLabel } = this.state;
 
     const searchableOptions = this.getSearchableOptions(options);
@@ -228,6 +229,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
             formatCreateLabel={formatCreateLabel}
             width={width}
             onInputChange={this.onSelectInputChange}
+            disabled={disabled}
           />
         ) : (
           <RCCascader
@@ -238,6 +240,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
             fieldNames={{ label: 'label', value: 'value', children: 'items' }}
             expandIcon={null}
             open={this.props.alwaysOpen}
+            disabled={disabled}
           >
             <div className={disableDivFocus}>
               <Input
@@ -255,6 +258,7 @@ export class Cascader extends PureComponent<CascaderProps, CascaderState> {
                     <Icon name="angle-down" style={{ marginBottom: 0, marginLeft: '4px' }} />
                   )
                 }
+                disabled={disabled}
               />
             </div>
           </RCCascader>
