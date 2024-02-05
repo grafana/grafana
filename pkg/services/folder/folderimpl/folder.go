@@ -610,7 +610,7 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 			namespace, id := cmd.SignedInUser.GetNamespacedID()
 
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-			if err := s.bus.Publish(context.Background(), &events.FolderTitleUpdated{
+			if err := s.bus.Publish(ctx, &events.FolderTitleUpdated{
 				Timestamp: foldr.Updated,
 				Title:     foldr.Title,
 				ID:        dashFolder.ID, // nolint:staticcheck
