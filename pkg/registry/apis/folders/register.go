@@ -12,8 +12,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
-	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -126,7 +124,6 @@ func (b *FolderAPIBuilder) GetAPIGroupInfo(
 	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{b.folderSvc}
 	storage[resourceInfo.StoragePath("count")] = &subCountREST{b.folderSvc}
 	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc}
-	storage[resourceInfo.StoragePath("move")] = &subMoveREST{b.folderSvc, b.namespacer}
 
 	// enable dual writes if a RESTOptionsGetter is provided
 	if dualWrite && optsGetter != nil {
@@ -151,35 +148,4 @@ func (b *FolderAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return nil // TODO: the FGAC rules encoded in the service can be moved here
-}
-
-func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
-	oas.Info.Description = "Manage folders"
-
-	// Add a form parameter to move the parent folder
-	sub := oas.Paths.Paths["/apis/folder.grafana.app/v0alpha1/namespaces/{namespace}/folders/{name}/move"]
-	if sub != nil && sub.Post != nil {
-		sub.Post.Summary = "Change the parent folder"
-		sub.Post.Description = "move folder into another"
-		sub.Post.RequestBody = &spec3.RequestBody{
-			RequestBodyProps: spec3.RequestBodyProps{
-				Content: map[string]*spec3.MediaType{
-					"application/x-www-form-urlencoded": {
-						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: spec.MapProperty(spec.StringProperty()).WithProperties(map[string]spec.Schema{
-								"parent": *spec.StringProperty().WithDescription("The UID for the new parent folder"),
-							}),
-						},
-					},
-				},
-			},
-		}
-	}
-
-	// The root API discovery list
-	sub = oas.Paths.Paths["/apis/folder.grafana.app/v0alpha1/"]
-	if sub != nil && sub.Get != nil {
-		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
-	}
-	return oas, nil
 }
