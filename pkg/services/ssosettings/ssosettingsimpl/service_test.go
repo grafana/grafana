@@ -830,13 +830,11 @@ func TestService_Upsert(t *testing.T) {
 				},
 			}, nil
 		}
-		done, err := env.service.upsertAndReloadBg(context.Background(), &settings)
+		err := env.service.Upsert(context.Background(), &settings)
 		require.NoError(t, err)
-		require.NotNil(t, done)
 
 		// Wait for the goroutine first to assert the Reload call
 		wg.Wait()
-		<-done
 
 		settings.Settings["client_secret"] = base64.RawStdEncoding.EncodeToString([]byte("encrypted-client-secret"))
 		require.EqualValues(t, settings, env.store.ActualSSOSettings)
@@ -861,9 +859,8 @@ func TestService_Upsert(t *testing.T) {
 		reloadable := ssosettingstests.NewMockReloadable(t)
 		env.reloadables[provider] = reloadable
 
-		done, err := env.service.upsertAndReloadBg(context.Background(), settings)
+		err := env.service.Upsert(context.Background(), settings)
 		require.Error(t, err)
-		require.Nil(t, done)
 	})
 
 	t.Run("returns error if provider was not found in reloadables", func(t *testing.T) {
@@ -886,9 +883,8 @@ func TestService_Upsert(t *testing.T) {
 		// the reloadable is available for other provider
 		env.reloadables["github"] = reloadable
 
-		done, err := env.service.upsertAndReloadBg(context.Background(), settings)
+		err := env.service.Upsert(context.Background(), settings)
 		require.Error(t, err)
-		require.Nil(t, done)
 	})
 
 	t.Run("returns error if validation fails", func(t *testing.T) {
@@ -911,9 +907,8 @@ func TestService_Upsert(t *testing.T) {
 		reloadable.On("Validate", mock.Anything, settings).Return(errors.New("validation failed"))
 		env.reloadables[provider] = reloadable
 
-		done, err := env.service.upsertAndReloadBg(context.Background(), &settings)
+		err := env.service.Upsert(context.Background(), &settings)
 		require.Error(t, err)
-		require.Nil(t, done)
 	})
 
 	t.Run("returns error if a fallback strategy is not available for the provider", func(t *testing.T) {
@@ -933,9 +928,8 @@ func TestService_Upsert(t *testing.T) {
 
 		env.fallbackStrategy.ExpectedIsMatch = false
 
-		done, err := env.service.upsertAndReloadBg(context.Background(), settings)
+		err := env.service.Upsert(context.Background(), settings)
 		require.Error(t, err)
-		require.Nil(t, done)
 	})
 
 	t.Run("returns error if secrets encryption failed", func(t *testing.T) {
@@ -959,9 +953,8 @@ func TestService_Upsert(t *testing.T) {
 		env.reloadables[provider] = reloadable
 		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return(nil, errors.New("encryption failed")).Once()
 
-		done, err := env.service.upsertAndReloadBg(context.Background(), &settings)
+		err := env.service.Upsert(context.Background(), &settings)
 		require.Error(t, err)
-		require.Nil(t, done)
 	})
 
 	t.Run("should not update the current secret if the secret has not been updated", func(t *testing.T) {
@@ -994,10 +987,8 @@ func TestService_Upsert(t *testing.T) {
 		env.secrets.On("Decrypt", mock.Anything, []byte("current-client-secret"), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
 		env.secrets.On("Encrypt", mock.Anything, []byte("encrypted-client-secret"), mock.Anything).Return([]byte("current-client-secret"), nil).Once()
 
-		done, err := env.service.upsertAndReloadBg(context.Background(), &settings)
+		err := env.service.Upsert(context.Background(), &settings)
 		require.NoError(t, err)
-		require.NotNil(t, done)
-		<-done
 
 		settings.Settings["client_secret"] = base64.RawStdEncoding.EncodeToString([]byte("current-client-secret"))
 		require.EqualValues(t, settings, env.store.ActualSSOSettings)
@@ -1031,9 +1022,8 @@ func TestService_Upsert(t *testing.T) {
 			return errors.New("failed to upsert settings")
 		}
 
-		done, err := env.service.upsertAndReloadBg(context.Background(), &settings)
+		err := env.service.Upsert(context.Background(), &settings)
 		require.Error(t, err)
-		require.Nil(t, done)
 	})
 
 	t.Run("successfully upsert SSO settings if reload fails", func(t *testing.T) {
@@ -1058,10 +1048,8 @@ func TestService_Upsert(t *testing.T) {
 		env.reloadables[provider] = reloadable
 		env.secrets.On("Encrypt", mock.Anything, []byte(settings.Settings["client_secret"].(string)), mock.Anything).Return([]byte("encrypted-client-secret"), nil).Once()
 
-		done, err := env.service.upsertAndReloadBg(context.Background(), &settings)
+		err := env.service.Upsert(context.Background(), &settings)
 		require.NoError(t, err)
-		require.NotNil(t, done)
-		<-done
 
 		settings.Settings["client_secret"] = base64.RawStdEncoding.EncodeToString([]byte("encrypted-client-secret"))
 		require.EqualValues(t, settings, env.store.ActualSSOSettings)
@@ -1102,13 +1090,11 @@ func TestService_Delete(t *testing.T) {
 				})
 		})).Return(nil).Once()
 
-		done, err := env.service.deleteAndReloadBg(context.Background(), provider)
+		err := env.service.Delete(context.Background(), provider)
 		require.NoError(t, err)
-		require.NotNil(t, done)
 
 		// wait for the goroutine first to assert the Reload call
 		wg.Wait()
-		<-done
 	})
 
 	t.Run("return error if SSO setting was not found for the specified provider", func(t *testing.T) {
@@ -1121,9 +1107,8 @@ func TestService_Delete(t *testing.T) {
 		env.reloadables[provider] = reloadable
 		env.store.ExpectedError = ssosettings.ErrNotFound
 
-		done, err := env.service.deleteAndReloadBg(context.Background(), provider)
+		err := env.service.Delete(context.Background(), provider)
 		require.Error(t, err)
-		require.Nil(t, done)
 
 		require.ErrorIs(t, err, ssosettings.ErrNotFound)
 	})
@@ -1137,9 +1122,8 @@ func TestService_Delete(t *testing.T) {
 		provider := social.GrafanaComProviderName
 		env.store.ExpectedError = nil
 
-		done, err := env.service.deleteAndReloadBg(context.Background(), provider)
+		err := env.service.Delete(context.Background(), provider)
 		require.ErrorIs(t, err, ssosettings.ErrNotConfigurable)
-		require.Nil(t, done)
 	})
 
 	t.Run("return error when store fails to delete the SSO settings for the specified provider", func(t *testing.T) {
@@ -1150,9 +1134,8 @@ func TestService_Delete(t *testing.T) {
 		provider := social.AzureADProviderName
 		env.store.ExpectedError = errors.New("delete sso settings failed")
 
-		done, err := env.service.deleteAndReloadBg(context.Background(), provider)
+		err := env.service.Delete(context.Background(), provider)
 		require.Error(t, err)
-		require.Nil(t, done)
 		require.NotErrorIs(t, err, ssosettings.ErrNotFound)
 	})
 
@@ -1169,10 +1152,9 @@ func TestService_Delete(t *testing.T) {
 			return nil, errors.New("failed to get sso settings")
 		}
 
-		done, err := env.service.deleteAndReloadBg(context.Background(), provider)
+		err := env.service.Delete(context.Background(), provider)
 
 		require.NoError(t, err)
-		require.Nil(t, done)
 	})
 }
 

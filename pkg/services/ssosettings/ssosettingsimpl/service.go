@@ -165,50 +165,42 @@ func (s *Service) ListWithRedactedSecrets(ctx context.Context) ([]*models.SSOSet
 }
 
 func (s *Service) Upsert(ctx context.Context, settings *models.SSOSettings) error {
-	_, err := s.upsertAndReloadBg(ctx, settings)
-	return err
-}
-
-// upsertAndReloadBg implements Upsert but returning a second value which is a done channel that is closed when an
-// internal reload operation is completed. This is used to allow consistently testing that the implementation eventually
-// performs all the expected operations in a consistent manner.
-func (s *Service) upsertAndReloadBg(ctx context.Context, settings *models.SSOSettings) (<-chan struct{}, error) {
 	if !s.isProviderConfigurable(settings.Provider) {
-		return nil, ssosettings.ErrNotConfigurable
+		return ssosettings.ErrNotConfigurable
 	}
 
 	social, ok := s.reloadables[settings.Provider]
 	if !ok {
-		return nil, ssosettings.ErrInvalidProvider.Errorf("provider %s not found in reloadables", settings.Provider)
+		return ssosettings.ErrInvalidProvider.Errorf("provider %s not found in reloadables", settings.Provider)
 	}
 
 	err := social.Validate(ctx, *settings)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	storedSettings, err := s.GetForProvider(ctx, settings.Provider)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	secrets := collectSecrets(settings, storedSettings)
 
 	settings.Settings, err = s.encryptSecrets(ctx, settings.Settings, storedSettings.Settings)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = s.store.Upsert(ctx, settings)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	settings.Settings = overrideMaps(storedSettings.Settings, settings.Settings, secrets)
 
-	doneReloading := s.reloadBg(social, settings.Provider, *settings)
+	go s.reload(social, settings.Provider, *settings)
 
-	return doneReloading, nil
+	return nil
 }
 
 func (s *Service) Patch(ctx context.Context, provider string, data map[string]any) error {
@@ -216,48 +208,29 @@ func (s *Service) Patch(ctx context.Context, provider string, data map[string]an
 }
 
 func (s *Service) Delete(ctx context.Context, provider string) error {
-	_, err := s.deleteAndReloadBg(ctx, provider)
-	return err
-}
-
-// deleteAndReloadBg implements Delete but returning a second value which is a done channel that is closed when an
-// internal reload operation is completed. This is used to allow consistently testing that the implementation eventually
-// performs all the expected operations in a consistent manner.
-func (s *Service) deleteAndReloadBg(ctx context.Context, provider string) (<-chan struct{}, error) {
 	if !s.isProviderConfigurable(provider) {
-		return nil, ssosettings.ErrNotConfigurable
+		return ssosettings.ErrNotConfigurable
 	}
 
 	social, ok := s.reloadables[provider]
 	if !ok {
-		return nil, ssosettings.ErrInvalidProvider.Errorf("provider %s not found in reloadables", provider)
+		return ssosettings.ErrInvalidProvider.Errorf("provider %s not found in reloadables", provider)
 	}
 
 	err := s.store.Delete(ctx, provider)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	currentSettings, err := s.GetForProvider(ctx, provider)
 	if err != nil {
 		s.logger.Error("failed to get current settings, skipping reload", "provider", provider, "error", err)
-		return nil, nil
+		return nil
 	}
 
-	doneReloading := s.reloadBg(social, provider, *currentSettings)
+	go s.reload(social, provider, *currentSettings)
 
-	return doneReloading, nil
-}
-
-// reloadBg calls reload in a new goroutine and returns a done channel that is closed when the reload operation is
-// completed.
-func (s *Service) reloadBg(reloadable ssosettings.Reloadable, provider string, currentSettings models.SSOSettings) (done <-chan struct{}) {
-	doneChan := make(chan struct{})
-	go func() {
-		s.reload(reloadable, provider, currentSettings)
-		close(doneChan)
-	}()
-	return doneChan
+	return nil
 }
 
 func (s *Service) reload(reloadable ssosettings.Reloadable, provider string, currentSettings models.SSOSettings) {
