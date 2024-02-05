@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/osutil"
 )
 
 type Scheme string
@@ -822,6 +823,9 @@ func (cfg *Cfg) loadSpecifiedConfigFile(configFile string, masterFile *ini.File)
 		return fmt.Errorf("failed to parse %q: %w", configFile, err)
 	}
 
+	// micro-optimization since we don't need to share this ini file. In
+	// general, prefer to leave this flag as true as it is by default to prevent
+	// data races
 	userConfig.BlockMode = false
 
 	for _, section := range userConfig.Sections() {
@@ -864,8 +868,6 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 		os.Exit(1)
 		return nil, err
 	}
-
-	parsedFile.BlockMode = false
 
 	// command line props
 	commandLineProps := cfg.getCommandLineProperties(args.Args)
@@ -986,8 +988,6 @@ func NewCfgFromBytes(bytes []byte) (*Cfg, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse bytes as INI file: %w", err)
 	}
-
-	parsedFile.BlockMode = false
 
 	return NewCfgFromINIFile(parsedFile)
 }
@@ -1398,13 +1398,14 @@ func (cfg *Cfg) LogConfigSources() {
 type DynamicSection struct {
 	section *ini.Section
 	Logger  log.Logger
+	env     osutil.Env
 }
 
 // Key dynamically overrides keys with environment variables.
 // As a side effect, the value of the setting key will be updated if an environment variable is present.
 func (s *DynamicSection) Key(k string) *ini.Key {
 	envKey := EnvKey(s.section.Name(), k)
-	envValue := os.Getenv(envKey)
+	envValue := s.env.Getenv(envKey)
 	key := s.section.Key(k)
 
 	if len(envValue) == 0 {
@@ -1421,7 +1422,7 @@ func (s *DynamicSection) KeysHash() map[string]string {
 	hash := s.section.KeysHash()
 	for k := range hash {
 		envKey := EnvKey(s.section.Name(), k)
-		envValue := os.Getenv(envKey)
+		envValue := s.env.Getenv(envKey)
 		if len(envValue) > 0 {
 			hash[k] = envValue
 		}
@@ -1432,7 +1433,11 @@ func (s *DynamicSection) KeysHash() map[string]string {
 // SectionWithEnvOverrides dynamically overrides keys with environment variables.
 // As a side effect, the value of the setting key will be updated if an environment variable is present.
 func (cfg *Cfg) SectionWithEnvOverrides(s string) *DynamicSection {
-	return &DynamicSection{cfg.Raw.Section(s), cfg.Logger}
+	return &DynamicSection{
+		section: cfg.Raw.Section(s),
+		Logger:  cfg.Logger,
+		env:     osutil.RealEnv{},
+	}
 }
 
 func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
