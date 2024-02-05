@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"io"
 	"io/fs"
 	"mime"
@@ -15,6 +14,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var netTransport = &http.Transport{

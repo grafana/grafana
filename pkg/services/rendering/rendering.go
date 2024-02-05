@@ -375,8 +375,8 @@ func (rs *RenderingService) getNewFilePath(rt RenderType) (string, error) {
 		return "", err
 	}
 
-	ext := "png"
-	folder := rs.Cfg.ImagesDir
+	var ext string
+	var folder string
 	switch rt {
 	case RenderCSV:
 		ext = "csv"
@@ -384,6 +384,9 @@ func (rs *RenderingService) getNewFilePath(rt RenderType) (string, error) {
 	case RenderPDF:
 		ext = "pdf"
 		folder = rs.Cfg.PDFsDir
+	default:
+		ext = "png"
+		folder = rs.Cfg.ImagesDir
 	}
 
 	return filepath.Abs(filepath.Join(folder, fmt.Sprintf("%s.%s", rand, ext)))
