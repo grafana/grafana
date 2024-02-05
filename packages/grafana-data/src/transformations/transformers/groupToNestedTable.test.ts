@@ -5,12 +5,12 @@ import { ReducerID } from '../fieldReducer';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { GroupByOperationID, GroupByTransformerOptions } from './groupBy';
-import { groupToSubframeTransformer, GroupToSubframeTransformerOptions } from './groupToSubframe';
+import { groupToNestedTable, GroupToNestedTableTransformerOptions } from './groupToNestedTable';
 import { DataTransformerID } from './ids';
 
 describe('GroupToSubframe transformer', () => {
   beforeAll(() => {
-    mockTransformationsRegistry([groupToSubframeTransformer]);
+    mockTransformationsRegistry([groupToNestedTable]);
   });
 
   it('should group values by message and place values in subframe', async () => {
@@ -23,7 +23,7 @@ describe('GroupToSubframe transformer', () => {
       ],
     });
 
-    const cfg: DataTransformerConfig<GroupToSubframeTransformerOptions> = {
+    const cfg: DataTransformerConfig<GroupToNestedTableTransformerOptions> = {
       id: DataTransformerID.groupToSubframe,
       options: {
         fields: {

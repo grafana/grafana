@@ -16,7 +16,7 @@ export enum GroupByOperationID {
   groupBy = 'groupby',
 }
 
-export interface GroupToSubframeTransformerOptions {
+export interface GroupToNestedTableTransformerOptions {
   showSubframeHeaders?: boolean;
   fields: Record<string, GroupByFieldOptions>;
 }
@@ -25,8 +25,8 @@ interface FieldMap {
   [key: string]: Field;
 }
 
-export const groupToSubframeTransformer: DataTransformerInfo<GroupToSubframeTransformerOptions> = {
-  id: DataTransformerID.groupToSubframe,
+export const groupToNestedTable: DataTransformerInfo<GroupToNestedTableTransformerOptions> = {
+  id: DataTransformerID.groupToNestedTable,
   name: 'Group to nested tables',
   description: 'Group data by a field value and create nested tables with the grouped data',
   defaultOptions: {
@@ -130,7 +130,7 @@ export const groupToSubframeTransformer: DataTransformerInfo<GroupToSubframeTran
  * Given the appropriate data, create a sub-frame
  * which can then be displayed in a sub-table.
  */
-function createSubframe(fields: Field[], frameLength: number, options: GroupToSubframeTransformerOptions) {
+function createSubframe(fields: Field[], frameLength: number, options: GroupToNestedTableTransformerOptions) {
   const showHeaders =
     options.showSubframeHeaders === undefined ? SHOW_NESTED_HEADERS_DEFAULT : options.showSubframeHeaders;
 
@@ -147,7 +147,7 @@ function createSubframe(fields: Field[], frameLength: number, options: GroupToSu
  * @returns boolean
  *  This will return _true_ if a field should be grouped on and _false_ if it should not.
  */
-const shouldGroupOnField = (field: Field, options: GroupToSubframeTransformerOptions): boolean => {
+const shouldGroupOnField = (field: Field, options: GroupToNestedTableTransformerOptions): boolean => {
   const fieldName = getFieldDisplayName(field);
   return options?.fields[fieldName]?.operation === GroupByOperationID.groupBy;
 };
@@ -157,7 +157,7 @@ const shouldGroupOnField = (field: Field, options: GroupToSubframeTransformerOpt
  * @returns boolean
  *  This will return _true_ if a field should be calculated and _false_ if it should not.
  */
-const shouldCalculateField = (field: Field, options: GroupToSubframeTransformerOptions): boolean => {
+const shouldCalculateField = (field: Field, options: GroupToNestedTableTransformerOptions): boolean => {
   const fieldName = getFieldDisplayName(field);
   return (
     options?.fields[fieldName]?.operation === GroupByOperationID.aggregate &&
@@ -195,7 +195,7 @@ const detectFieldType = (aggregation: string, sourceField: Field, targetField: F
  */
 function groupToSubframes(
   valuesByGroupKey: Map<string, FieldMap>,
-  options: GroupToSubframeTransformerOptions
+  options: GroupToNestedTableTransformerOptions
 ): DataFrame[][] {
   const subFrames: DataFrame[][] = [];
 

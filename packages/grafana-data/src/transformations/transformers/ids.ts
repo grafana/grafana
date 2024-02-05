@@ -40,5 +40,5 @@ export enum DataTransformerID {
   formatTime = 'formatTime',
   formatString = 'formatString',
   regression = 'regression',
-  groupToSubframe = 'groupToSubframe',
+  groupToNestedTable = 'groupToNestedTable',
 }

@@ -17,9 +17,9 @@ import {
   GroupByTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/groupBy';
 import {
-  GroupToSubframeTransformerOptions,
+  GroupToNestedTableTransformerOptions,
   SHOW_NESTED_HEADERS_DEFAULT,
-} from '@grafana/data/src/transformations/transformers/groupToSubframe';
+} from '@grafana/data/src/transformations/transformers/groupToNestedTable';
 import { Stack } from '@grafana/experimental';
 import { useTheme2, Select, StatsPicker, InlineField, Field, Switch, Alert } from '@grafana/ui';
 
@@ -31,11 +31,11 @@ interface FieldProps {
   onConfigChange: (config: GroupByFieldOptions) => void;
 }
 
-export const GroupToSubframeTransformerEditor = ({
+export const GroupToNestedTableTransformerEditor = ({
   input,
   options,
   onChange,
-}: TransformerUIProps<GroupToSubframeTransformerOptions>) => {
+}: TransformerUIProps<GroupToNestedTableTransformerOptions>) => {
   const fieldNames = useAllFieldNamesFromDataFrames(input);
   const showHeaders =
     options.showSubframeHeaders === undefined ? SHOW_NESTED_HEADERS_DEFAULT : options.showSubframeHeaders;
@@ -168,12 +168,12 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const groupToSubframeTransformRegistryItem: TransformerRegistryItem<GroupByTransformerOptions> = {
-  id: DataTransformerID.groupToSubframe,
-  editor: GroupToSubframeTransformerEditor,
-  transformation: standardTransformers.groupToSubframeTransformer,
-  name: standardTransformers.groupToSubframeTransformer.name,
-  description: standardTransformers.groupToSubframeTransformer.description,
+export const groupToNestedTableTransformRegistryItem: TransformerRegistryItem<GroupByTransformerOptions> = {
+  id: DataTransformerID.groupToNestedTable,
+  editor: GroupToNestedTableTransformerEditor,
+  transformation: standardTransformers.groupToNestedTable,
+  name: standardTransformers.groupToNestedTable.name,
+  description: standardTransformers.groupToNestedTable.description,
   categories: new Set([
     TransformerCategory.Combine,
     TransformerCategory.CalculateNewFields,

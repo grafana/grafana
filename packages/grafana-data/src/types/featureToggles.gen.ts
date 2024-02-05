@@ -177,4 +177,5 @@ export interface FeatureToggles {
   alertingSaveStatePeriodic?: boolean;
   promQLScope?: boolean;
   nodeGraphDotLayout?: boolean;
+  groupToNestedTableTransformation?: boolean;
 }
