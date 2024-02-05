@@ -1,9 +1,7 @@
 import React from 'react';
 
 import { SceneObjectState, SceneObject, SceneObjectBase, SceneComponentProps } from '@grafana/scenes';
-import { Box, Stack, ToolbarButton } from '@grafana/ui';
-
-import { getDashboardSceneFor } from '../utils/utils';
+import { Box, Stack } from '@grafana/ui';
 
 import { DashboardLinksControls } from './DashboardLinksControls';
 
@@ -18,9 +16,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
 }
 
 function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardControls>) {
-  const dashboard = getDashboardSceneFor(model);
   const { variableControls, linkControls, timeControls, hideTimeControls } = model.useState();
-  const { isEditing } = dashboard.useState();
 
   return (
     <Stack
@@ -38,9 +34,6 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
         <linkControls.Component model={linkControls} />
       </Stack>
       <Stack justifyContent={'flex-end'}>
-        {isEditing && (
-          <ToolbarButton variant="canvas" icon="cog" tooltip="Dashboard settings" onClick={dashboard.onOpenSettings} />
-        )}
         {!hideTimeControls && timeControls.map((c) => <c.Component model={c} key={c.state.key} />)}
       </Stack>
     </Stack>

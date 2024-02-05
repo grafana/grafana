@@ -20,6 +20,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const pageNav = model.getPageNav(location, navIndex);
   const bodyToRender = model.getBodyToRender();
   const navModel = getNavModel(navIndex, 'dashboards/browse');
+  const showDebugger = location.search.includes('scene-debugger');
 
   if (editview) {
     return (
@@ -43,7 +44,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
                 {controls.map((control) => (
                   <control.Component key={control.state.key} model={control} />
                 ))}
-                <SceneDebugger scene={model} key={'scene-debugger'} />
+                {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
               </div>
             )}
             <div className={cx(styles.body)}>
@@ -83,7 +84,7 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'sticky',
       top: 0,
       background: theme.colors.background.canvas,
-      zIndex: theme.zIndex.navbarFixed,
+      zIndex: theme.zIndex.activePanel,
       padding: theme.spacing(2, 0),
     }),
   };

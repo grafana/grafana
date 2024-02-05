@@ -62,7 +62,6 @@ export function NavToolbar({
       <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
       <div className={styles.actions}>
         {actions}
-        {actions && <NavToolbarSeparator />}
         {searchBarHidden && (
           <ToolbarButton
             onClick={onToggleKioskMode}
@@ -71,6 +70,7 @@ export function NavToolbar({
             icon="monitor"
           />
         )}
+        {actions && <NavToolbarSeparator />}
         <ToolbarButton
           onClick={onToggleSearchBar}
           narrow
