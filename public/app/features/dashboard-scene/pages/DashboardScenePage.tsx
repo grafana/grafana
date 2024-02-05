@@ -17,7 +17,6 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
   const { dashboard, isLoading, loadError } = stateManager.useState();
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (history.location.state as any)?.routeReloadCounter;
-  console.log('reload counter', routeReloadCounter);
 
   useEffect(() => {
     stateManager.loadDashboard({
