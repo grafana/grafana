@@ -148,7 +148,7 @@ func (ng *AlertNG) init() error {
 	var err error
 
 	// AlertNG should be initialized before the cancellation deadline of initCtx
-	initCtx, cancelFunc := context.WithTimeout(context.Background(), 30*time.Second)
+	initCtx, cancelFunc := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancelFunc()
 
 	ng.store.Logger = ng.Log
