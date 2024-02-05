@@ -37,7 +37,6 @@ export const DynamicEditor = ({
           // TODO consider naming based on Query ref instead of series
           name: label ?? `Series ${index + 1}`,
           frame: index,
-          axisLabel: 'test',
         });
       });
       onChange(newSeries);
