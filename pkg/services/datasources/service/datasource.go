@@ -97,7 +97,6 @@ func ProvideService(
 	}); err != nil {
 		return nil, err
 	}
-	s.validateExternal()
 
 	return s, nil
 }
@@ -777,15 +776,4 @@ func (s *Service) CustomHeaders(ctx context.Context, ds *datasources.DataSource)
 		return nil, fmt.Errorf("failed to get custom headers: %w", err)
 	}
 	return s.getCustomHeaders(ds.JsonData, values), nil
-}
-
-func (s *Service) validateExternal() {
-	for pluginID, pluginCfg := range s.cfg.PluginSettings {
-		if pluginCfg["as_external"] == "true" {
-			_, exists := s.pluginStore.Plugin(context.Background(), pluginID)
-			if !exists {
-				s.logger.Error("Core plugin expected to be loaded as external, but it is missing", "pluginID", pluginID)
-			}
-		}
-	}
 }
