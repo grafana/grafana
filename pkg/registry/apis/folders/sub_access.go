@@ -2,7 +2,6 @@ package folders
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -45,6 +44,7 @@ func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.O
 	if err != nil {
 		return nil, err
 	}
+	// Can view is managed here (and in the Authorizer)
 	f, err := r.service.Get(ctx, &folder.GetFolderQuery{
 		UID:          &name,
 		SignedInUser: user,
@@ -55,10 +55,6 @@ func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.O
 	guardian, err := guardian.NewByFolder(ctx, f, ns.OrgID, user)
 	if err != nil {
 		return nil, err
-	}
-	canView, err := guardian.CanView()
-	if err != nil || !canView {
-		return nil, fmt.Errorf("not allowed to view")
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
