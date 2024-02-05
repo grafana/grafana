@@ -23,7 +23,12 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const showDebugger = location.search.includes('scene-debugger');
 
   if (editview) {
-    return <editview.Component model={editview} />;
+    return (
+      <>
+        <editview.Component model={editview} />
+        {overlay && <overlay.Component model={overlay} />}
+      </>
+    );
   }
 
   return (
