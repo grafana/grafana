@@ -667,7 +667,9 @@ func (s *store) createPermissions(sess *db.Session, roleID int64, resource, reso
 		p.RoleID = roleID
 		p.Created = time.Now()
 		p.Updated = time.Now()
-		p.Kind, p.Attribute, p.Identifier = p.SplitScope()
+		if s.features.IsEnabledGlobally(featuremgmt.FlagSplitScopes) {
+			p.Kind, p.Attribute, p.Identifier = p.SplitScope()
+		}
 		permissions = append(permissions, p)
 	}
 
