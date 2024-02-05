@@ -505,7 +505,7 @@ func TestOAuthTokenSync_tryGetOrRefreshOAuthToken(t *testing.T) {
 		setup         func(env *environment)
 	}{
 		{
-			desc: "should refresh token if the token is expired",
+			desc: "should find and retrieve token from cache",
 			usr: &login.UserAuth{
 				UserId:           int64(1234),
 				OAuthAccessToken: "new_access_token",
