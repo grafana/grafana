@@ -119,7 +119,11 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
     return results;
   }, [kbarResults, dashboardsSectionTitle, dashboardResultItems, foldersSectionTitle, folderResultItems]);
 
-  return items.length > 0 || isFetchingSearchResults ? (
+  const showEmptyState = !isFetchingSearchResults && items.length === 0;
+
+  return showEmptyState ? (
+    <EmptyState />
+  ) : (
     <KBarResults
       items={items}
       maxHeight={650}
@@ -136,8 +140,6 @@ const RenderResults = ({ isFetchingSearchResults, searchResults }: RenderResults
         return renderedItem;
       }}
     />
-  ) : (
-    <EmptyState />
   );
 };
 
