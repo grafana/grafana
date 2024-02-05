@@ -1,0 +1,30 @@
+//go:build sqlexpressions
+// +build sqlexpressions
+
+package sql
+
+import (
+	"errors"
+
+	"github.com/blastrain/vitess-sqlparser/sqlparser"
+)
+
+func TablesList(rawSQL string) ([]string, error) {
+	stmt, err := sqlparser.Parse(rawSQL)
+	if err != nil {
+		return nil, err
+	}
+
+	tables := []string{}
+	switch kind := stmt.(type) {
+	case *sqlparser.Select:
+		for _, t := range kind.From {
+			buf := sqlparser.NewTrackedBuffer(nil)
+			t.Format(buf)
+			tables = append(tables, buf.String())
+		}
+	default:
+		return nil, errors.New("not a select statement")
+	}
+	return tables, nil
+}

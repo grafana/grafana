@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/blastrain/vitess-sqlparser/sqlparser"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -22,21 +21,9 @@ type SQLCommand struct {
 
 // NewSQLCommand creates a new SQLCommand.
 func NewSQLCommand(refID, rawSQL string, tr TimeRange) (*SQLCommand, error) {
-	stmt, err := sqlparser.Parse(rawSQL)
+	tables, err := sql.TablesList(rawSQL)
 	if err != nil {
 		return nil, err
-	}
-
-	tables := []string{}
-	switch kind := stmt.(type) {
-	case *sqlparser.Select:
-		for _, t := range kind.From {
-			buf := sqlparser.NewTrackedBuffer(nil)
-			t.Format(buf)
-			tables = append(tables, buf.String())
-		}
-	default:
-		return nil, errors.New("not a select statement")
 	}
 
 	return &SQLCommand{

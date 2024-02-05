@@ -30,3 +30,8 @@ func (d *DuckDB) Query(ctx context.Context, query string) (*data.Frame, error) {
 func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 	return errors.New(err)
 }
+
+// TablesList ...
+func TablesList(rawSQL string) ([]string, error) {
+	return nil, errors.New(err)
+}
