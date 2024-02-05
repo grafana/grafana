@@ -85,7 +85,7 @@ grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-
 grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,2023-12-06,true,true,false
 featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,2023-07-18,false,true,false
 awsAsyncQueryCaching,GA,@grafana/aws-datasources,2023-07-21,false,false,false
-splitScopes,GA,@grafana/identity-access-team,2023-07-21,false,true,false
+splitScopes,deprecated,@grafana/identity-access-team,2023-07-21,false,true,false
 permissionsFilterRemoveSubquery,experimental,@grafana/backend-platform,2023-08-02,false,false,false
 prometheusConfigOverhaulAuth,GA,@grafana/observability-metrics,2023-07-21,false,false,false
 configurableSchedulerTick,experimental,@grafana/alerting-squad,2023-07-26,false,true,false

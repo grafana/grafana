@@ -50,14 +50,12 @@ func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegis
 		return nil, err
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagSplitScopes) {
-		// Migrating scopes that haven't been split yet to have kind, attribute and identifier in the DB
-		// This will be removed once we've:
-		// 1) removed the feature toggle and
-		// 2) have released enough versions not to support a version without split scopes
-		if err := migrator.MigrateScopeSplit(db, service.log); err != nil {
-			return nil, err
-		}
+	// Migrating scopes that haven't been split yet to have kind, attribute and identifier in the DB
+	// This will be removed once we've:
+	// 1) removed the feature toggle and
+	// 2) have released enough versions not to support a version without split scopes
+	if err := migrator.MigrateScopeSplit(db, service.log); err != nil {
+		return nil, err
 	}
 
 	return service, nil
