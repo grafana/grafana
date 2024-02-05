@@ -278,7 +278,7 @@ func TestContactPointServiceDecryptRedact(t *testing.T) {
 
 		q := cpsQuery(1)
 		q.Decrypt = true
-		_, err := sut.GetContactPoints(context.Background(), q, &user.SignedInUser{})
+		_, err := sut.GetContactPoints(context.Background(), q, nil)
 		require.ErrorIs(t, err, ErrPermissionDenied)
 	})
 	t.Run("GetContactPoints errors when Decrypt = true and user is nil", func(t *testing.T) {
