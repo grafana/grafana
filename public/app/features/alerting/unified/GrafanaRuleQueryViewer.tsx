@@ -184,7 +184,7 @@ function ExpressionPreview({ refId, model, evalData, isAlertCondition }: Express
         return <ThresholdExpressionViewer model={model} />;
 
       case ExpressionQueryType.sql:
-        return <Preview rawSql={model.expression || ''} />;
+        return <Preview rawSql={model.expression || ''} datasourceType={model.datasource?.type} />;
 
       default:
         return <>Expression not supported: {model.type}</>;
