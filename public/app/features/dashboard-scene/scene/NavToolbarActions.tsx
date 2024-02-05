@@ -132,6 +132,26 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
+    condition: uid && !isEditing,
+    render: () => (
+      <Button
+        key="share-dashboard-button"
+        tooltip={t('dashboard.toolbar.share', 'Share dashboard')}
+        size="sm"
+        className={buttonWithExtraMargin}
+        fill="outline"
+        onClick={() => {
+          DashboardInteractions.toolbarShareClick();
+          dashboard.showModal(new ShareModal({ dashboardRef: dashboard.getRef() }));
+        }}
+      >
+        Share
+      </Button>
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'main-buttons',
     condition: !isEditing && dashboard.canEditDashboard() && !viewPanelScene,
     render: () => (
       <Button
@@ -268,26 +288,6 @@ export function ToolbarActions({ dashboard }: Props) {
         </ButtonGroup>
       );
     },
-  });
-
-  toolbarActions.push({
-    group: 'main-buttons',
-    condition: uid && !isEditing,
-    render: () => (
-      <Button
-        key="share-dashboard-button"
-        tooltip={t('dashboard.toolbar.share', 'Share dashboard')}
-        size="sm"
-        className={buttonWithExtraMargin}
-        fill="outline"
-        onClick={() => {
-          DashboardInteractions.toolbarShareClick();
-          dashboard.showModal(new ShareModal({ dashboardRef: dashboard.getRef() }));
-        }}
-      >
-        Share
-      </Button>
-    ),
   });
 
   const actionElements: React.ReactNode[] = [];
