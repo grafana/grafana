@@ -1,6 +1,6 @@
 import { map, of } from 'rxjs';
 
-import { DataQueryRequest, DataSourceApi, LoadingState, PanelData } from '@grafana/data';
+import { DataQueryRequest, DataSourceApi, DataSourceInstanceSettings, LoadingState, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { SceneDataTransformer, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
@@ -244,7 +244,7 @@ describe('VizPanelManager', () => {
         await Promise.resolve();
 
         await vizPanelManager.changePanelDataSource(
-          { type: 'grafana-prometheus-datasource', uid: 'gdev-prometheus' } as any,
+          { type: 'grafana-prometheus-datasource', uid: 'gdev-prometheus' } as DataSourceInstanceSettings,
           []
         );
 
@@ -439,7 +439,7 @@ describe('VizPanelManager', () => {
             module: 'prometheus',
             id: 'grafana-prometheus-datasource',
           },
-        } as any);
+        } as DataSourceInstanceSettings);
 
         expect(vizPanelManager.queryRunner.state.datasource).toEqual({
           uid: 'gdev-prometheus',
@@ -466,7 +466,7 @@ describe('VizPanelManager', () => {
             module: 'prometheus',
             id: DASHBOARD_DATASOURCE_PLUGIN_ID,
           },
-        } as any);
+        } as DataSourceInstanceSettings);
 
         expect(vizPanelManager.queryRunner.state.datasource).toEqual({
           uid: SHARED_DASHBOARD_QUERY,
@@ -493,7 +493,7 @@ describe('VizPanelManager', () => {
             module: 'prometheus',
             id: 'grafana-prometheus-datasource',
           },
-        } as any);
+        } as DataSourceInstanceSettings);
 
         expect(vizPanelManager.queryRunner.state.datasource).toEqual({
           uid: 'gdev-prometheus',

@@ -40,7 +40,7 @@ describe('importDashboard', () => {
       },
     };
 
-    let postArgs: any;
+    let postArgs: unknown;
 
     setBackendSrv({
       post: (url, args) => {

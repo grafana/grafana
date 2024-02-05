@@ -14,6 +14,7 @@ import {
   DataSourceApi,
   DataQueryRequest,
   getTimeZone,
+  PluginMetaInfo,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -46,7 +47,7 @@ import { createMetadataRequest, createTempoDatasource } from './mocks';
 import { initTemplateSrv } from './test_utils';
 import { TempoJsonData, TempoQuery } from './types';
 
-let mockObservable: () => Observable<any>;
+let mockObservable: () => Observable<unknown>;
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
@@ -68,7 +69,9 @@ describe('Tempo data source', () => {
     const templateSrv: TemplateSrv = { replace: jest.fn() } as unknown as TemplateSrv;
     const ds = new TempoDatasource(defaultSettings, templateSrv);
     const response = await lastValueFrom(
-      ds.query({ targets: [{ refId: 'refid1', queryType: 'traceql', query: '' } as Partial<TempoQuery>] } as any),
+      ds.query({
+        targets: [{ refId: 'refid1', queryType: 'traceql', query: '' } as Partial<TempoQuery>],
+      } as DataQueryRequest<TempoQuery>),
       { defaultValue: 'empty' }
     );
     expect(response).toBe('empty');
@@ -168,9 +171,11 @@ describe('Tempo data source', () => {
         ],
       })
     );
-    const templateSrv: any = { replace: jest.fn() };
+    const templateSrv = { replace: jest.fn() } as unknown as TemplateSrv;
     const ds = new TempoDatasource(defaultSettings, templateSrv);
-    const response = await lastValueFrom(ds.query({ targets: [{ refId: 'refid1', query: '12345' }] } as any));
+    const response = await lastValueFrom(
+      ds.query({ targets: [{ refId: 'refid1', query: '12345' }] } as DataQueryRequest<TempoQuery>)
+    );
 
     expect(
       (response.data[0] as DataFrame).fields.map((f) => ({
@@ -222,7 +227,7 @@ describe('Tempo data source', () => {
     const response = await lastValueFrom(
       ds.query({
         targets: [{ queryType: 'upload', refId: 'A' }],
-      } as any)
+      } as DataQueryRequest<TempoQuery>)
     );
     const field = response.data[0].fields[0];
     expect(field.name).toBe('traceID');
@@ -237,7 +242,7 @@ describe('Tempo data source', () => {
     const response = await lastValueFrom(
       ds.query({
         targets: [{ queryType: 'upload', refId: 'A' }],
-      } as any)
+      } as DataQueryRequest<TempoQuery>)
     );
     expect(response.error?.message).toBeDefined();
     expect(response.data.length).toBe(0);
@@ -249,7 +254,7 @@ describe('Tempo data source', () => {
     const response = await lastValueFrom(
       ds.query({
         targets: [{ queryType: 'upload', refId: 'A' }],
-      } as any)
+      } as DataQueryRequest<TempoQuery>)
     );
     expect(response.data).toHaveLength(2);
     const nodesFrame = response.data[0];
@@ -262,10 +267,9 @@ describe('Tempo data source', () => {
   });
 
   it('should build search query correctly', () => {
-    const templateSrv: any = { replace: jest.fn() };
-    const ds = new TempoDatasource(defaultSettings, templateSrv);
     const duration = '10ms';
-    templateSrv.replace.mockReturnValue(duration);
+    const templateSrv = { replace: jest.fn().mockReturnValue(duration) } as unknown as TemplateSrv;
+    const ds = new TempoDatasource(defaultSettings, templateSrv);
     const tempoQuery: TempoQuery = {
       queryType: 'search',
       refId: 'A',
@@ -492,7 +496,11 @@ describe('Tempo service graph view', () => {
     });
     setDataSourceSrv(dataSourceSrvWithPrometheus(prometheusMock()));
     const response = await lastValueFrom(
-      ds.query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange(), app: CoreApp.Explore } as any)
+      ds.query({
+        targets: [{ queryType: 'serviceMap' }],
+        range: getDefaultTimeRange(),
+        app: CoreApp.Explore,
+      } as DataQueryRequest<TempoQuery>)
     );
 
     expect(response.data).toHaveLength(3);
@@ -1190,7 +1198,7 @@ export const defaultSettings: DataSourceInstanceSettings<TempoJsonData> = {
     id: 'tempo',
     name: 'tempo',
     type: PluginType.datasource,
-    info: {} as any,
+    info: {} as PluginMetaInfo,
     module: '',
     baseUrl: '',
   },
