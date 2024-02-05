@@ -24,6 +24,7 @@ export interface AzureSettings {
   managedIdentityEnabled: boolean;
   workloadIdentityEnabled: boolean;
   userIdentityEnabled: boolean;
+  userIdentityServiceCredentials: boolean;
 }
 
 export type AppPluginConfig = {
@@ -124,6 +125,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     managedIdentityEnabled: false,
     workloadIdentityEnabled: false,
     userIdentityEnabled: false,
+    userIdentityServiceCredentials: false,
   };
   caching = {
     enabled: false,
