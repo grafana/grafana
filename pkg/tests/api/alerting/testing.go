@@ -834,7 +834,3 @@ func sendRequest[T any](t *testing.T, req *http.Request, successStatusCode int) 
 func requireStatusCode(t *testing.T, expected, actual int, response string) {
 	require.Equalf(t, expected, actual, "Unexpected status. Response: %s", response)
 }
-
-func ptr[T any](v T) *T {
-	return &v
-}

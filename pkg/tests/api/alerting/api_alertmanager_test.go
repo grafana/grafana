@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -1866,96 +1867,96 @@ func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
 		name: "can create silence for foo=bar",
 		silence: apimodels.PostableSilence{
 			Silence: amv2.Silence{
-				Comment:   ptr("This is a comment"),
-				CreatedBy: ptr("test"),
-				EndsAt:    ptr(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Comment:   util.Pointer("This is a comment"),
+				CreatedBy: util.Pointer("test"),
+				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
 				Matchers: amv2.Matchers{{
-					IsEqual: ptr(true),
-					IsRegex: ptr(false),
-					Name:    ptr("foo"),
-					Value:   ptr("bar"),
+					IsEqual: util.Pointer(true),
+					IsRegex: util.Pointer(false),
+					Name:    util.Pointer("foo"),
+					Value:   util.Pointer("bar"),
 				}},
-				StartsAt: ptr(strfmt.DateTime(time.Now())),
+				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
 			},
 		},
 	}, {
 		name: "can create silence for _foo1=bar",
 		silence: apimodels.PostableSilence{
 			Silence: amv2.Silence{
-				Comment:   ptr("This is a comment"),
-				CreatedBy: ptr("test"),
-				EndsAt:    ptr(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Comment:   util.Pointer("This is a comment"),
+				CreatedBy: util.Pointer("test"),
+				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
 				Matchers: amv2.Matchers{{
-					IsEqual: ptr(true),
-					IsRegex: ptr(false),
-					Name:    ptr("_foo1"),
-					Value:   ptr("bar"),
+					IsEqual: util.Pointer(true),
+					IsRegex: util.Pointer(false),
+					Name:    util.Pointer("_foo1"),
+					Value:   util.Pointer("bar"),
 				}},
-				StartsAt: ptr(strfmt.DateTime(time.Now())),
+				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
 			},
 		},
 	}, {
 		name: "can create silence for 0foo=bar",
 		silence: apimodels.PostableSilence{
 			Silence: amv2.Silence{
-				Comment:   ptr("This is a comment"),
-				CreatedBy: ptr("test"),
-				EndsAt:    ptr(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Comment:   util.Pointer("This is a comment"),
+				CreatedBy: util.Pointer("test"),
+				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
 				Matchers: amv2.Matchers{{
-					IsEqual: ptr(true),
-					IsRegex: ptr(false),
-					Name:    ptr("0foo"),
-					Value:   ptr("bar"),
+					IsEqual: util.Pointer(true),
+					IsRegex: util.Pointer(false),
+					Name:    util.Pointer("0foo"),
+					Value:   util.Pointer("bar"),
 				}},
-				StartsAt: ptr(strfmt.DateTime(time.Now())),
+				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
 			},
 		},
 	}, {
 		name: "can create silence for foo=🙂bar",
 		silence: apimodels.PostableSilence{
 			Silence: amv2.Silence{
-				Comment:   ptr("This is a comment"),
-				CreatedBy: ptr("test"),
-				EndsAt:    ptr(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Comment:   util.Pointer("This is a comment"),
+				CreatedBy: util.Pointer("test"),
+				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
 				Matchers: amv2.Matchers{{
-					IsEqual: ptr(true),
-					IsRegex: ptr(false),
-					Name:    ptr("foo"),
-					Value:   ptr("🙂bar"),
+					IsEqual: util.Pointer(true),
+					IsRegex: util.Pointer(false),
+					Name:    util.Pointer("foo"),
+					Value:   util.Pointer("🙂bar"),
 				}},
-				StartsAt: ptr(strfmt.DateTime(time.Now())),
+				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
 			},
 		},
 	}, {
 		name: "can create silence for foo🙂=bar",
 		silence: apimodels.PostableSilence{
 			Silence: amv2.Silence{
-				Comment:   ptr("This is a comment"),
-				CreatedBy: ptr("test"),
-				EndsAt:    ptr(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Comment:   util.Pointer("This is a comment"),
+				CreatedBy: util.Pointer("test"),
+				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
 				Matchers: amv2.Matchers{{
-					IsEqual: ptr(true),
-					IsRegex: ptr(false),
-					Name:    ptr("foo🙂"),
-					Value:   ptr("bar"),
+					IsEqual: util.Pointer(true),
+					IsRegex: util.Pointer(false),
+					Name:    util.Pointer("foo🙂"),
+					Value:   util.Pointer("bar"),
 				}},
-				StartsAt: ptr(strfmt.DateTime(time.Now())),
+				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
 			},
 		},
 	}, {
 		name: "can't create silence for missing label name",
 		silence: apimodels.PostableSilence{
 			Silence: amv2.Silence{
-				Comment:   ptr("This is a comment"),
-				CreatedBy: ptr("test"),
-				EndsAt:    ptr(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Comment:   util.Pointer("This is a comment"),
+				CreatedBy: util.Pointer("test"),
+				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
 				Matchers: amv2.Matchers{{
-					IsEqual: ptr(true),
-					IsRegex: ptr(false),
-					Name:    ptr(""),
-					Value:   ptr("bar"),
+					IsEqual: util.Pointer(true),
+					IsRegex: util.Pointer(false),
+					Name:    util.Pointer(""),
+					Value:   util.Pointer("bar"),
 				}},
-				StartsAt: ptr(strfmt.DateTime(time.Now())),
+				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
 			},
 		},
 		expErr: "unable to save silence: silence invalid: invalid label matcher 0: invalid label name \"\": unable to create silence",
@@ -1963,16 +1964,16 @@ func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
 		name: "can't create silence for missing label value",
 		silence: apimodels.PostableSilence{
 			Silence: amv2.Silence{
-				Comment:   ptr("This is a comment"),
-				CreatedBy: ptr("test"),
-				EndsAt:    ptr(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Comment:   util.Pointer("This is a comment"),
+				CreatedBy: util.Pointer("test"),
+				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
 				Matchers: amv2.Matchers{{
-					IsEqual: ptr(true),
-					IsRegex: ptr(false),
-					Name:    ptr("foo"),
-					Value:   ptr(""),
+					IsEqual: util.Pointer(true),
+					IsRegex: util.Pointer(false),
+					Name:    util.Pointer("foo"),
+					Value:   util.Pointer(""),
 				}},
-				StartsAt: ptr(strfmt.DateTime(time.Now())),
+				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
 			},
 		},
 		expErr: "unable to save silence: silence invalid: at least one matcher must not match the empty string: unable to create silence",
