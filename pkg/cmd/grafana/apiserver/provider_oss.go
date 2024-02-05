@@ -1,6 +1,3 @@
-//go:build oss
-// +build oss
-
 package apiserver
 
 import "fmt"
