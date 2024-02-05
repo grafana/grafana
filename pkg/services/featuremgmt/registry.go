@@ -903,11 +903,12 @@ var (
 			Created:        time.Date(2023, time.September, 27, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:        "externalServiceAccounts",
-			Description: "Automatic service account and token setup for plugins",
-			Stage:       FeatureStagePrivatePreview,
-			Owner:       identityAccessTeam,
-			Created:     time.Date(2023, time.September, 28, 12, 0, 0, 0, time.UTC),
+			Name:              "externalServiceAccounts",
+			Description:       "Automatic service account and token setup for plugins",
+			HideFromAdminPage: true,
+			Stage:             FeatureStagePublicPreview,
+			Owner:             identityAccessTeam,
+			Created:           time.Date(2023, time.September, 28, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "panelMonitoring",
