@@ -49,7 +49,7 @@
     "marked": "5.1.1",
     "marked-mangle": "1.1.6",
     "moment": "2.30.1",
-    "moment-timezone": "0.5.44",
+    "moment-timezone": "0.5.45",
     "ol": "7.4.0",
     "papaparse": "5.4.1",
     "react-use": "17.5.0",
