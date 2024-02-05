@@ -88,6 +88,30 @@ describe('Plugins/Helpers', () => {
       expect(findMerged('plugin-5')).not.toBeUndefined();
       expect(findMerged('plugin-5')?.isDeprecated).toBe(true);
     });
+
+    test('core plugins should be fullyInstalled in cloud', () => {
+      const corePluginId = 'plugin-core';
+
+      const oldFeatureTogglesManagedPluginsInstall = config.featureToggles.managedPluginsInstall;
+      const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+
+      config.featureToggles.managedPluginsInstall = true;
+      config.pluginAdminExternalManageEnabled = true;
+
+      const merged = mergeLocalsAndRemotes({
+        local: [...localPlugins, getLocalPluginMock({ id: corePluginId, signature: PluginSignatureStatus.internal })],
+        remote: [...remotePlugins, getRemotePluginMock({ slug: corePluginId })],
+      });
+      const findMerged = (mergedId: string) => merged.find(({ id }) => id === mergedId);
+
+      expect(merged).toHaveLength(5);
+      expect(findMerged(corePluginId)).not.toBeUndefined();
+      expect(findMerged(corePluginId)?.isCore).toBe(true);
+      expect(findMerged(corePluginId)?.isFullyInstalled).toBe(true);
+
+      config.featureToggles.managedPluginsInstall = oldFeatureTogglesManagedPluginsInstall;
+      config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+    });
   });
 
   describe('mergeLocalAndRemote()', () => {
