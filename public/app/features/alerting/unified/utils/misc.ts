@@ -123,6 +123,10 @@ export function quoteWithEscape(input: string) {
 }
 
 export function unquoteWithUnescape(input: string) {
+  if (!/^"(.*)"$/.test(input)) {
+    return input;
+  }
+
   return input
     .replace(/^"(.*)"$/, '$1')
     .replace(/\\"/g, '"')

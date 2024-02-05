@@ -4,6 +4,9 @@ import { Matcher, MatcherOperator, ObjectMatcher, Route } from 'app/plugins/data
 
 import { Labels } from '../../../../types/unified-alerting-dto';
 
+import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
+import { unquoteWithUnescape } from './misc';
+
 const matcherOperators = [
   MatcherOperator.regex,
   MatcherOperator.notRegex,
@@ -107,5 +110,20 @@ export const normalizeMatchers = (route: Route): ObjectMatcher[] => {
 
   return matchers;
 };
+
+export const matcherFormatter = {
+  default: ([name, operator, value]: ObjectMatcher): string => {
+    return `${name} ${operator} ${value}`;
+  },
+  cloud: ([name, operator, value]: ObjectMatcher): string => {
+    return `${name} ${operator} ${unquoteWithUnescape(value)}`;
+  },
+} as const;
+
+export type MatcherFormatter = keyof typeof matcherFormatter;
+
+export function getAmMatcherFormatter(alertmanagerSourceName?: string): MatcherFormatter {
+  return alertmanagerSourceName === GRAFANA_RULES_SOURCE_NAME ? 'default' : 'cloud';
+}
 
 export type Label = [string, string];

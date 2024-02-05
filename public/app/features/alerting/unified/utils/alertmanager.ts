@@ -16,6 +16,7 @@ import { MatcherFieldValue } from '../types/silence-form';
 
 import { getAllDataSources } from './config';
 import { DataSourceType } from './datasource';
+import { unquoteWithUnescape } from './misc';
 
 export function addDefaultsToAlertmanagerConfig(config: AlertManagerCortexConfig): AlertManagerCortexConfig {
   // add default receiver if it does not exist
@@ -51,6 +52,10 @@ export function renameMuteTimings(newMuteTimingName: string, oldMuteTimingName: 
     ),
     routes: route.routes?.map((subRoute) => renameMuteTimings(newMuteTimingName, oldMuteTimingName, subRoute)),
   };
+}
+
+export function unescapeObjectMatchers(matchers: ObjectMatcher[]): ObjectMatcher[] {
+  return matchers.map(([name, operator, value]) => [name, operator, unquoteWithUnescape(value)]);
 }
 
 export function matcherToOperator(matcher: Matcher): MatcherOperator {

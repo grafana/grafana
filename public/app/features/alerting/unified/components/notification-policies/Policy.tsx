@@ -32,7 +32,7 @@ import { ReceiversState } from 'app/types';
 
 import { AlertmanagerAction, useAlertmanagerAbilities, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
-import { normalizeMatchers } from '../../utils/matchers';
+import { getAmMatcherFormatter, normalizeMatchers } from '../../utils/matchers';
 import { createContactPointLink, createMuteTimingLink } from '../../utils/misc';
 import { InheritableProperties, getInheritedProperties } from '../../utils/notification-policies';
 import { Authorize } from '../Authorize';
@@ -55,7 +55,6 @@ interface PolicyComponentProps {
   provisioned?: boolean;
   inheritedProperties?: Partial<InheritableProperties>;
   routesMatchingFilters?: RouteWithID[];
-  // routeAlertGroupsMap?: Map<string, AlertmanagerGroup[]>;
 
   matchingInstancesPreview?: { groupsMap?: Map<string, AlertmanagerGroup[]>; enabled: boolean };
 
@@ -194,7 +193,7 @@ const Policy = (props: PolicyComponentProps) => {
                       <DefaultPolicyIndicator />
                     )
                   ) : hasMatchers ? (
-                    <Matchers matchers={matchers ?? []} />
+                    <Matchers matchers={matchers ?? []} formatter={getAmMatcherFormatter(alertManagerSourceName)} />
                   ) : (
                     <span className={styles.metadata}>No matchers</span>
                   )}

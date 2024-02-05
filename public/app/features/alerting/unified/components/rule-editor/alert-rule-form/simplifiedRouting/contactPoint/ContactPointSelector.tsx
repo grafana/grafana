@@ -13,6 +13,7 @@ export interface ContactPointSelectorProps {
   alertManager: string;
   contactPoints: ContactPointWithMetadata[];
   onSelectContactPoint: (contactPoint?: ContactPointWithMetadata) => void;
+  onRefetch: () => Promise<unknown>;
 }
 export function ContactPointSelector({ alertManager, contactPoints, onSelectContactPoint }: ContactPointSelectorProps) {
   const styles = useStyles2(getStyles);

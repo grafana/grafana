@@ -66,6 +66,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
           alertManager={alertManagerName}
           contactPoints={contactPoints}
           onSelectContactPoint={setSelectedContactPointWithMetadata}
+          onRefetch={refetchReceivers}
         />
         <div className={styles.contactPointsInfo}>
           <IconButton
