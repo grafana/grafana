@@ -7,7 +7,6 @@ import {
   SceneGridLayout,
   SceneGridRow,
   VizPanel,
-  SceneQueryRunner,
   SceneDataTransformer,
   SceneVariableSet,
   AdHocFilterSet,
@@ -39,7 +38,7 @@ import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getPanelIdForVizPanel } from '../utils/utils';
+import { getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
 import { dataLayersToAnnotations } from './dataLayersToAnnotations';
@@ -208,6 +207,7 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
     fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
     transformations: [],
     transparent: vizPanel.state.displayMode === 'transparent',
+    pluginVersion: vizPanel.state.pluginVersion,
     ...vizPanelDataToPanel(vizPanel, isSnapshot),
   };
 
@@ -228,6 +228,18 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
   const panelLinks = dashboardSceneGraph.getPanelLinks(vizPanel);
   panel.links = (panelLinks.state.rawLinks as DashboardLink[]) ?? [];
 
+  if (panel.links.length === 0) {
+    delete panel.links;
+  }
+
+  if (panel.transformations?.length === 0) {
+    delete panel.transformations;
+  }
+
+  if (!panel.transparent) {
+    delete panel.transparent;
+  }
+
   return panel;
 }
 
@@ -238,24 +250,15 @@ function vizPanelDataToPanel(
   const dataProvider = vizPanel.state.$data;
 
   const panel: Pick<Panel, 'datasource' | 'targets' | 'maxDataPoints' | 'transformations'> = {};
+  const queryRunner = getQueryRunnerFor(vizPanel);
 
-  // Regular queries handling
-  if (dataProvider instanceof SceneQueryRunner) {
-    panel.targets = dataProvider.state.queries;
-    panel.maxDataPoints = dataProvider.state.maxDataPoints;
-    panel.datasource = dataProvider.state.datasource;
+  if (queryRunner) {
+    panel.targets = queryRunner.state.queries;
+    panel.maxDataPoints = queryRunner.state.maxDataPoints;
+    panel.datasource = queryRunner.state.datasource;
   }
 
-  // Transformations handling
   if (dataProvider instanceof SceneDataTransformer) {
-    const panelData = dataProvider.state.$data;
-
-    if (panelData instanceof SceneQueryRunner) {
-      panel.targets = panelData.state.queries;
-      panel.maxDataPoints = panelData.state.maxDataPoints;
-      panel.datasource = panelData.state.datasource;
-    }
-
     panel.transformations = dataProvider.state.transformations as DataTransformerConfig[];
   }
 

@@ -558,9 +558,6 @@ type Panel struct {
 	// `h` for horizontal, `v` for vertical.
 	RepeatDirection *PanelRepeatDirection `json:"repeatDirection,omitempty"`
 
-	// Tags for the panel.
-	Tags []string `json:"tags,omitempty"`
-
 	// Depends on the panel plugin. See the plugin documentation for details.
 	Targets []Target `json:"targets,omitempty"`
 
