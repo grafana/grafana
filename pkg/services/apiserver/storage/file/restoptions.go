@@ -3,7 +3,7 @@
 package file
 
 import (
-	"path"
+	"path/filepath"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -51,7 +51,7 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (gener
 		Decorator:                 NewStorage,
 		DeleteCollectionWorkers:   0,
 		EnableGarbageCollection:   false,
-		ResourcePrefix:            path.Join(storageConfig.Prefix, resource.Group, resource.Resource),
+		ResourcePrefix:            filepath.Join(storageConfig.Prefix, resource.Group, resource.Resource),
 		CountMetricPollPeriod:     1 * time.Second,
 		StorageObjectCountTracker: storageConfig.Config.StorageObjectCountTracker,
 	}
