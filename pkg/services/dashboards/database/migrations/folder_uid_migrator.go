@@ -90,4 +90,9 @@ func AddDashboardFolderMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("Add unique index for dashboard_org_id_folder_uid_title_is_folder", migrator.NewAddIndexMigration(migrator.Table{Name: "dashboard"}, &migrator.Index{
 		Cols: []string{"org_id", "folder_uid", "title", "is_folder"}, Type: migrator.UniqueIndex,
 	}))
+
+	// Temporary index until decommisioning of folder_id in query
+	mg.AddMigration("Restore index for dashboard_org_id_folder_id_title", migrator.NewAddIndexMigration(migrator.Table{Name: "dashboard"}, &migrator.Index{
+		Cols: []string{"org_id", "folder_id", "title"},
+	}))
 }
