@@ -654,7 +654,7 @@ export interface TimePickerConfig {
   /**
    * Whether timepicker is visible or not.
    */
-  hidden: boolean;
+  hidden?: boolean;
   /**
    * Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
    */
@@ -662,11 +662,11 @@ export interface TimePickerConfig {
   /**
    * Interval options available in the refresh picker dropdown.
    */
-  refresh_intervals: Array<string>;
+  refresh_intervals?: Array<string>;
   /**
    * Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
    */
-  time_options: Array<string>;
+  time_options?: Array<string>;
 }
 
 export const defaultTimePickerConfig: Partial<TimePickerConfig> = {
@@ -1057,7 +1057,7 @@ export interface Dashboard {
   /**
    * Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
    */
-  refresh?: (string | false);
+  refresh?: string;
   /**
    * This property should only be used in dashboards defined by plugins.  It is a quick check
    * to see if the version has changed since the last time.

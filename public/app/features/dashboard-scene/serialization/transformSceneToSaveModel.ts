@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import { isEmptyObject, ScopedVars, TimeRange } from '@grafana/data';
 import {
   behaviors,
@@ -23,6 +25,7 @@ import {
   FieldConfigSource,
   Panel,
   RowPanel,
+  TimePickerConfig,
   VariableModel,
   VariableRefresh,
 } from '@grafana/schema';
@@ -50,8 +53,10 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   const data = state.$data;
   const variablesSet = state.$variables;
   const body = state.body;
-  let refresh_intervals = defaultTimePickerConfig.refresh_intervals;
-  let hideTimePicker: boolean = defaultTimePickerConfig.hidden;
+
+  let refreshIntervals: string[] | undefined;
+  let hideTimePicker: boolean | undefined;
+
   let panels: Panel[] = [];
   let graphTooltip = defaultDashboard.graphTooltip;
   let variables: VariableModel[] = [];
@@ -88,14 +93,15 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   }
 
   if (state.controls && state.controls[0] instanceof DashboardControls) {
-    hideTimePicker = state.controls[0].state.hideTimeControls ?? hideTimePicker;
+    hideTimePicker = state.controls[0].state.hideTimeControls;
 
     const timeControls = state.controls[0].state.timeControls;
     for (const control of timeControls) {
       if (control instanceof SceneRefreshPicker && control.state.intervals) {
-        refresh_intervals = control.state.intervals;
+        refreshIntervals = control.state.intervals;
       }
     }
+
     const variableControls = state.controls[0].state.variableControls;
     for (const control of variableControls) {
       if (control instanceof AdHocFilterSet) {
@@ -112,6 +118,15 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     graphTooltip = state.$behaviors[0].state.sync;
   }
 
+  const timePickerWithoutDefaults = removeDefaults<TimePickerConfig>(
+    {
+      refresh_intervals: refreshIntervals,
+      hidden: hideTimePicker,
+      nowDelay: timeRange.UNSAFE_nowDelay,
+    },
+    defaultTimePickerConfig
+  );
+
   const dashboard: Dashboard = {
     ...defaultDashboard,
     title: state.title,
@@ -123,12 +138,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
       from: timeRange.from,
       to: timeRange.to,
     },
-    timepicker: {
-      ...defaultTimePickerConfig,
-      refresh_intervals,
-      hidden: hideTimePicker,
-      nowDelay: timeRange.UNSAFE_nowDelay,
-    },
+    timepicker: timePickerWithoutDefaults,
     panels,
     annotations: {
       list: annotations,
@@ -471,4 +481,15 @@ export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: D
   }
 
   return result;
+}
+
+function removeDefaults<T>(object: T, defaults: T): T {
+  const newObj = { ...object };
+  for (const key in defaults) {
+    if (isEqual(newObj[key], defaults[key])) {
+      delete newObj[key];
+    }
+  }
+
+  return newObj;
 }
