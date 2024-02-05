@@ -15,7 +15,7 @@ weight: 500
 
 On this page, you will find instructions for installing and running Grafana on Kubernetes using Kubernetes manifests for the setup. If Helm is your preferred option, refer to [Grafana Helm community charts](https://github.com/grafana/helm-charts).
 
-Watch this video to learn more about installing Grafana on Kubernetes: {{< vimeo 871940219 >}}
+Watch this video to learn more about installing Grafana on Kubernetes: {{< youtube id="DEv5wtZxNCk" start="1872">}}
 
 ## Before you begin
 

@@ -25,7 +25,6 @@ describe('DashboardsTable', () => {
     mockDashboard = {
       dashboardId: 0,
       description: '',
-      folderId: 0,
       imported: false,
       importedRevision: 0,
       importedUri: '',

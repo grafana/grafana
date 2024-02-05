@@ -6,18 +6,21 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
 
-func GetSQLProxyOptions(cfg setting.SecureSocksDSProxySettings, dsInfo sqleng.DataSourceInfo) *sdkproxy.Options {
+func GetSQLProxyOptions(cfg setting.SecureSocksDSProxySettings, dsInfo sqleng.DataSourceInfo, datasource, datasourceType string) *sdkproxy.Options {
 	opts := &sdkproxy.Options{
-		Enabled: dsInfo.JsonData.SecureDSProxy && cfg.Enabled,
+		Enabled:        dsInfo.JsonData.SecureDSProxy && cfg.Enabled,
+		DatasourceName: datasource,
+		DatasourceType: datasourceType,
 		Auth: &sdkproxy.AuthOptions{
 			Username: dsInfo.UID,
 		},
 		ClientCfg: &sdkproxy.ClientCfg{
-			ClientCert:   cfg.ClientCert,
-			ClientKey:    cfg.ClientKey,
-			ServerName:   cfg.ServerName,
-			RootCA:       cfg.RootCA,
-			ProxyAddress: cfg.ProxyAddress,
+			ClientCert:    cfg.ClientCert,
+			ClientKey:     cfg.ClientKey,
+			ServerName:    cfg.ServerName,
+			RootCA:        cfg.RootCA,
+			ProxyAddress:  cfg.ProxyAddress,
+			AllowInsecure: cfg.AllowInsecure,
 		},
 	}
 	if dsInfo.JsonData.SecureDSProxyUsername != "" {

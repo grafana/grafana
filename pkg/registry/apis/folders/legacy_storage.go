@@ -11,12 +11,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apis/folders/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
-	"github.com/grafana/grafana/pkg/kinds"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -65,6 +66,17 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
+	parentUID := ""
+	fieldRequirements, fieldSelector, err := entity.ReadFieldRequirements(options.FieldSelector)
+	if err != nil {
+		return nil, err
+	}
+	if fieldRequirements.Folder != nil {
+		parentUID = *fieldRequirements.Folder
+	}
+	// Update the field selector to remove the unneeded selectors
+	options.FieldSelector = fieldSelector
+
 	paging, err := readContinueToken(options)
 	if err != nil {
 		return nil, err
@@ -77,6 +89,7 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 
 	// When nested folders are not enabled, all folders are root folders
 	hits, err := s.service.GetChildren(ctx, &folder.GetChildrenQuery{
+		UID:          parentUID, // NOTE!  we should do a different query when nested folders are enabled!
 		SignedInUser: user,
 		Limit:        paging.page,
 		OrgID:        orgId,
@@ -148,7 +161,10 @@ func (s *legacyStorage) Create(ctx context.Context,
 		p.Spec.Title = strings.ReplaceAll(p.Spec.Title, "${RAND}", rand)
 	}
 
-	accessor := kinds.MetaAccessor(p)
+	accessor, err := utils.MetaAccessor(p)
+	if err != nil {
+		return nil, err
+	}
 	parent := accessor.GetFolder()
 
 	out, err := s.service.Create(ctx, &folder.CreateFolderCommand{
@@ -202,8 +218,10 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, created, fmt.Errorf("expected old object to be a folder also")
 	}
 
-	oldParent := kinds.MetaAccessor(old).GetFolder()
-	newParent := kinds.MetaAccessor(f).GetFolder()
+	mOld, _ := utils.MetaAccessor(old)
+	mNew, _ := utils.MetaAccessor(f)
+	oldParent := mOld.GetFolder()
+	newParent := mNew.GetFolder()
 	if oldParent != newParent {
 		_, err = s.service.Move(ctx, &folder.MoveFolderCommand{
 			SignedInUser: user,

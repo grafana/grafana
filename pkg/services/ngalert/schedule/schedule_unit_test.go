@@ -82,17 +82,16 @@ func TestProcessTicks(t *testing.T) {
 		Log:              log.New("ngalert.scheduler"),
 	}
 	managerCfg := state.ManagerCfg{
-		Metrics:                 testMetrics.GetStateMetrics(),
-		ExternalURL:             nil,
-		InstanceStore:           nil,
-		Images:                  &state.NoopImageService{},
-		Clock:                   mockedClock,
-		Historian:               &state.FakeHistorian{},
-		MaxStateSaveConcurrency: 1,
-		Tracer:                  testTracer,
-		Log:                     log.New("ngalert.state.manager"),
+		Metrics:       testMetrics.GetStateMetrics(),
+		ExternalURL:   nil,
+		InstanceStore: nil,
+		Images:        &state.NoopImageService{},
+		Clock:         mockedClock,
+		Historian:     &state.FakeHistorian{},
+		Tracer:        testTracer,
+		Log:           log.New("ngalert.state.manager"),
 	}
-	st := state.NewManager(managerCfg)
+	st := state.NewManager(managerCfg, state.NewNoopPersister())
 
 	sched := NewScheduler(schedCfg, st)
 
@@ -587,7 +586,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
 		ruleStore.PutRule(context.Background(), rule)
-		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[string]string{rule.NamespaceUID: folderTitle})
+		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle})
 
 		go func() {
 			ctx, cancel := context.WithCancel(context.Background())
@@ -906,11 +905,12 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		Images:                  &state.NoopImageService{},
 		Clock:                   mockedClock,
 		Historian:               &state.FakeHistorian{},
-		MaxStateSaveConcurrency: 1,
 		Tracer:                  testTracer,
 		Log:                     log.New("ngalert.state.manager"),
+		MaxStateSaveConcurrency: 1,
 	}
-	st := state.NewManager(managerCfg)
+	syncStatePersister := state.NewSyncStatePersisiter(log.New("ngalert.state.manager.perist"), managerCfg)
+	st := state.NewManager(managerCfg, syncStatePersister)
 
 	return NewScheduler(schedCfg, st)
 }

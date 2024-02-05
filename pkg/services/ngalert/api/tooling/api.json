@@ -1,5 +1,5 @@
 {
- "basePath": "/api/v1",
+ "basePath": "/api",
  "consumes": [
   "application/json"
  ],
@@ -1256,6 +1256,15 @@
     },
     "typeVersion": {
      "$ref": "#/definitions/FrameTypeVersion"
+    },
+    "uniqueRowIdFields": {
+     "description": "Array of field indices which values create a unique id for each row. Ideally this should be globally unique ID\nbut that isn't guarantied. Should help with keeping track and deduplicating rows in visualizations, especially\nwith streaming data with frequent updates.",
+     "example": "TraceID in Tempo, table name + primary key in SQL",
+     "items": {
+      "format": "int64",
+      "type": "integer"
+     },
+     "type": "array"
     }
    },
    "title": "FrameMeta matches:",
@@ -1280,6 +1289,14 @@
    },
    "title": "Frames is a slice of Frame pointers.",
    "type": "array"
+  },
+  "GenericPublicError": {
+   "properties": {
+    "body": {
+     "$ref": "#/definitions/PublicError"
+    }
+   },
+   "type": "object"
   },
   "GettableAlertmanagers": {
    "properties": {
@@ -1657,6 +1674,23 @@
     "uptime",
     "versionInfo"
    ],
+   "type": "object"
+  },
+  "GettableTimeIntervals": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeIntervalItem"
+     },
+     "type": "array"
+    }
+   },
    "type": "object"
   },
   "GettableUserConfig": {
@@ -2262,9 +2296,18 @@
    "title": "OAuth2 is the oauth2 client configuration.",
    "type": "object"
   },
+  "ObjectMatcher": {
+   "items": {
+    "type": "string"
+   },
+   "title": "ObjectMatcher is a matcher that can be used to filter alerts.",
+   "type": "array"
+  },
   "ObjectMatchers": {
-   "$ref": "#/definitions/Matchers",
-   "description": "ObjectMatchers is Matchers with a different Unmarshal and Marshal methods that accept matchers as objects\nthat have already been parsed."
+   "items": {
+    "$ref": "#/definitions/ObjectMatcher"
+   },
+   "type": "array"
   },
   "OpsGenieConfig": {
    "properties": {
@@ -2793,6 +2836,20 @@
     "rules": {
      "items": {
       "$ref": "#/definitions/PostableExtendedRuleNode"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "PostableTimeIntervals": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeIntervalItem"
      },
      "type": "array"
     }
@@ -4149,6 +4206,55 @@
    },
    "type": "object"
   },
+  "TimeIntervalItem": {
+   "properties": {
+    "days_of_month": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "location": {
+     "type": "string"
+    },
+    "months": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "times": {
+     "items": {
+      "$ref": "#/definitions/TimeIntervalTimeRange"
+     },
+     "type": "array"
+    },
+    "weekdays": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "years": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "TimeIntervalTimeRange": {
+   "properties": {
+    "end_time": {
+     "type": "string"
+    },
+    "start_time": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "TimeRange": {
    "description": "Redefining this to avoid an import cycle",
    "properties": {
@@ -4405,6 +4511,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -4533,7 +4640,6 @@
    "type": "object"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -4595,6 +4701,7 @@
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4793,6 +4900,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4949,7 +5057,62 @@
   "version": "1.1.0"
  },
  "paths": {
-  "/api/v1/provisioning/alert-rules": {
+  "/v1/notifications/time-intervals": {
+   "get": {
+    "description": "Get all the time intervals",
+    "operationId": "RouteNotificationsGetTimeIntervals",
+    "responses": {
+     "200": {
+      "$ref": "#/responses/GetAllIntervalsResponse"
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "tags": [
+     "notifications"
+    ]
+   }
+  },
+  "/v1/notifications/time-intervals/{name}": {
+   "get": {
+    "operationId": "RouteNotificationsGetTimeInterval",
+    "parameters": [
+     {
+      "description": "Time interval name",
+      "in": "path",
+      "name": "name",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "$ref": "#/responses/GetIntervalsByNameResponse"
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "summary": "Get a time interval by name.",
+    "tags": [
+     "notifications"
+    ]
+   }
+  },
+  "/v1/provisioning/alert-rules": {
    "get": {
     "operationId": "RouteGetAlertRules",
     "responses": {
@@ -5004,7 +5167,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/export": {
+  "/v1/provisioning/alert-rules/export": {
    "get": {
     "operationId": "RouteGetAlertRulesExport",
     "parameters": [
@@ -5061,7 +5224,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/{UID}": {
+  "/v1/provisioning/alert-rules/{UID}": {
    "delete": {
     "operationId": "RouteDeleteAlertRule",
     "parameters": [
@@ -5161,7 +5324,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/{UID}/export": {
+  "/v1/provisioning/alert-rules/{UID}/export": {
    "get": {
     "operationId": "RouteGetAlertRuleExport",
     "parameters": [
@@ -5209,7 +5372,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/contact-points": {
+  "/v1/provisioning/contact-points": {
    "get": {
     "operationId": "RouteGetContactpoints",
     "parameters": [
@@ -5272,7 +5435,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/contact-points/export": {
+  "/v1/provisioning/contact-points/export": {
    "get": {
     "operationId": "RouteGetContactpointsExport",
     "parameters": [
@@ -5324,7 +5487,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/contact-points/{UID}": {
+  "/v1/provisioning/contact-points/{UID}": {
    "delete": {
     "consumes": [
      "application/json"
@@ -5395,7 +5558,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+  "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
    "get": {
     "operationId": "RouteGetAlertRuleGroup",
     "parameters": [
@@ -5479,7 +5642,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
+  "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
    "get": {
     "operationId": "RouteGetAlertRuleGroupExport",
     "parameters": [
@@ -5532,7 +5695,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/mute-timings": {
+  "/v1/provisioning/mute-timings": {
    "get": {
     "operationId": "RouteGetMuteTimings",
     "responses": {
@@ -5587,7 +5750,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/mute-timings/export": {
+  "/v1/provisioning/mute-timings/export": {
    "get": {
     "operationId": "RouteExportMuteTimings",
     "parameters": [
@@ -5626,7 +5789,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/mute-timings/{name}": {
+  "/v1/provisioning/mute-timings/{name}": {
    "delete": {
     "operationId": "RouteDeleteMuteTiming",
     "parameters": [
@@ -5641,6 +5804,12 @@
     "responses": {
      "204": {
       "description": " The mute timing was deleted successfully."
+     },
+     "409": {
+      "description": "GenericPublicError",
+      "schema": {
+       "$ref": "#/definitions/GenericPublicError"
+      }
      }
     },
     "summary": "Delete a mute timing.",
@@ -5702,7 +5871,7 @@
      }
     ],
     "responses": {
-     "200": {
+     "202": {
       "description": "MuteTimeInterval",
       "schema": {
        "$ref": "#/definitions/MuteTimeInterval"
@@ -5721,7 +5890,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/mute-timings/{name}/export": {
+  "/v1/provisioning/mute-timings/{name}/export": {
    "get": {
     "operationId": "RouteExportMuteTiming",
     "parameters": [
@@ -5767,7 +5936,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/policies": {
+  "/v1/provisioning/policies": {
    "delete": {
     "consumes": [
      "application/json"
@@ -5841,7 +6010,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/policies/export": {
+  "/v1/provisioning/policies/export": {
    "get": {
     "operationId": "RouteGetPolicyTreeExport",
     "responses": {
@@ -5864,7 +6033,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/templates": {
+  "/v1/provisioning/templates": {
    "get": {
     "operationId": "RouteGetTemplates",
     "responses": {
@@ -5884,7 +6053,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/templates/{name}": {
+  "/v1/provisioning/templates/{name}": {
    "delete": {
     "operationId": "RouteDeleteTemplate",
     "parameters": [
@@ -5984,6 +6153,21 @@
   "application/json"
  ],
  "responses": {
+  "GetAllIntervalsResponse": {
+   "description": "",
+   "schema": {
+    "items": {
+     "$ref": "#/definitions/GettableTimeIntervals"
+    },
+    "type": "array"
+   }
+  },
+  "GetIntervalsByNameResponse": {
+   "description": "",
+   "schema": {
+    "$ref": "#/definitions/GettableTimeIntervals"
+   }
+  },
   "GettableHistoricUserConfigs": {
    "description": "",
    "schema": {

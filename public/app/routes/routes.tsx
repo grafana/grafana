@@ -39,12 +39,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/d/:uid/panel-edit/:panelId',
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "scenes"*/ 'app/features/dashboard-scene/pages/PanelEditPage')
-      ),
-    },
-    {
       path: '/d/:uid/:slug?',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Normal,
@@ -77,7 +71,17 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/d-solo/:uid/:slug?',
+      // We currently have no core usage of the embedded dashboard so is to have a page for e2e to test
+      path: '/dashboards/embedding-test',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "DashboardPage"*/ 'app/features/dashboard-scene/embedding/EmbeddedDashboardTestPage'
+          )
+      ),
+    },
+    {
+      path: '/d-solo/:uid/:slug',
       pageClass: 'dashboard-solo',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
@@ -287,7 +291,11 @@ export function getAppRoutes(): RouteDescriptor[] {
           : () => <Redirect to="/admin" />,
     },
     {
-      path: '/admin/authentication/advanced/:provider',
+      path: '/admin/authentication/ldap',
+      component: LdapPage,
+    },
+    {
+      path: '/admin/authentication/:provider',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.SettingsWrite]),
       component: config.featureToggles.ssoSettingsApi
         ? SafeDynamicImport(
@@ -353,10 +361,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')
       ),
-    },
-    {
-      path: '/admin/authentication/ldap',
-      component: LdapPage,
     },
     // LOGIN / SIGNUP
     {
@@ -480,7 +484,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/data-trails',
+      path: '/explore/metrics',
       chromeless: false,
       exact: false,
       component: SafeDynamicImport(

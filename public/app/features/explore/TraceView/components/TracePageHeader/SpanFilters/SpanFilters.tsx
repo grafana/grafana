@@ -19,8 +19,8 @@ import React, { useState, useEffect, memo, useCallback } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
+import { IntervalInput } from '@grafana/o11y-ds-frontend';
 import { Collapse, HorizontalGroup, Icon, InlineField, InlineFieldRow, Select, Tooltip, useStyles2 } from '@grafana/ui';
-import { IntervalInput } from 'app/core/components/IntervalInput/IntervalInput';
 
 import { defaultFilters, randomId, SearchProps, Tag } from '../../../useSearch';
 import SearchBarInput from '../../common/SearchBarInput';

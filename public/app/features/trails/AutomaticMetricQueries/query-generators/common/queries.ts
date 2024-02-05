@@ -1,6 +1,6 @@
 import { VAR_FILTERS_EXPR, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../../shared';
 import { simpleGraphBuilder } from '../../graph-builders/simple';
-import { AutoQueryDef, AutoQueryInfo } from '../../types';
+import { AutoQueryInfo } from '../../types';
 
 import { AutoQueryParameters } from './types';
 
@@ -14,28 +14,20 @@ export function getGeneralBaseQuery(rate: boolean) {
 export function generateQueries({ agg, rate, unit }: AutoQueryParameters): AutoQueryInfo {
   const baseQuery = getGeneralBaseQuery(rate);
 
-  const main = createMainQuery(baseQuery, agg, unit);
-
-  const breakdown = createBreakdownQuery(baseQuery, agg, unit);
-
-  return { preview: main, main: main, breakdown: breakdown, variants: [] };
-}
-
-function createMainQuery(baseQuery: string, agg: string, unit: string): AutoQueryDef {
-  return {
+  const common = {
     title: `${VAR_METRIC_EXPR}`,
-    variant: 'graph',
     unit,
-    queries: [{ refId: 'A', expr: `${agg}(${baseQuery})` }],
-    vizBuilder: simpleGraphBuilder,
+    variant: 'graph',
   };
-}
 
-function createBreakdownQuery(baseQuery: string, agg: string, unit: string): AutoQueryDef {
-  return {
-    title: `${VAR_METRIC_EXPR}`,
-    variant: 'graph',
-    unit,
+  const main = {
+    ...common,
+    queries: [{ refId: 'A', expr: `${agg}(${baseQuery})` }],
+    vizBuilder: () => simpleGraphBuilder(main),
+  };
+
+  const breakdown = {
+    ...common,
     queries: [
       {
         refId: 'A',
@@ -43,6 +35,8 @@ function createBreakdownQuery(baseQuery: string, agg: string, unit: string): Aut
         legendFormat: `{{${VAR_GROUP_BY_EXP}}}`,
       },
     ],
-    vizBuilder: simpleGraphBuilder,
+    vizBuilder: () => simpleGraphBuilder(breakdown),
   };
+
+  return { preview: main, main: main, breakdown: breakdown, variants: [] };
 }

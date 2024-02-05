@@ -3,6 +3,7 @@ package acimpl
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -41,8 +42,8 @@ var SharedWithMeFolderPermission = accesscontrol.Permission{
 }
 
 func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
-	accessControl accesscontrol.AccessControl, features featuremgmt.FeatureToggles) (*Service, error) {
-	service := ProvideOSSService(cfg, database.ProvideService(db), cache, features)
+	accessControl accesscontrol.AccessControl, userSvc user.Service, features featuremgmt.FeatureToggles) (*Service, error) {
+	service := ProvideOSSService(cfg, database.ProvideService(db), cache, userSvc, features)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
@@ -62,14 +63,15 @@ func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegis
 	return service, nil
 }
 
-func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService, features featuremgmt.FeatureToggles) *Service {
+func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService, userSvc user.Service, features featuremgmt.FeatureToggles) *Service {
 	s := &Service{
-		cfg:      cfg,
-		store:    store,
-		log:      log.New("accesscontrol.service"),
 		cache:    cache,
-		roles:    accesscontrol.BuildBasicRoleDefinitions(),
+		cfg:      cfg,
 		features: features,
+		log:      log.New("accesscontrol.service"),
+		roles:    accesscontrol.BuildBasicRoleDefinitions(),
+		store:    store,
+		userSvc:  userSvc,
 	}
 
 	return s
@@ -87,13 +89,14 @@ type store interface {
 
 // Service is the service implementing role based access control.
 type Service struct {
-	log           log.Logger
-	cfg           *setting.Cfg
-	store         store
 	cache         *localcache.CacheService
+	cfg           *setting.Cfg
+	features      featuremgmt.FeatureToggles
+	log           log.Logger
 	registrations accesscontrol.RegistrationList
 	roles         map[string]*accesscontrol.RoleDTO
-	features      featuremgmt.FeatureToggles
+	store         store
+	userSvc       user.Service
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
@@ -150,11 +153,13 @@ func (s *Service) getCachedUserPermissions(ctx context.Context, user identity.Re
 	if !options.ReloadCache {
 		permissions, ok := s.cache.Get(key)
 		if ok {
+			metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheHit).Inc()
 			s.log.Debug("Using cached permissions", "key", key)
 			return permissions.([]accesscontrol.Permission), nil
 		}
 	}
 
+	metrics.MAccessPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()
 	s.log.Debug("Fetch permissions from store", "key", key)
 	permissions, err := s.getUserPermissions(ctx, user, options)
 	if err != nil {
@@ -240,32 +245,52 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 }
 
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes
-func (s *Service) SearchUsersPermissions(ctx context.Context, user identity.Requester,
+func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester,
 	options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+	if options.UserLogin != "" {
+		// Resolve userLogin -> userID
+		if err := options.ResolveUserLogin(ctx, s.userSvc); err != nil {
+			return nil, err
+		}
+		options.UserLogin = ""
+	}
+	if options.UserID > 0 {
+		// Reroute to the user specific implementation of search permissions
+		// because it leverages the user permission cache.
+		userPerms, err := s.SearchUserPermissions(ctx, usr.GetOrgID(), options)
+		if err != nil {
+			return nil, err
+		}
+		return map[int64][]accesscontrol.Permission{options.UserID: userPerms}, nil
+	}
+
+	timer := prometheus.NewTimer(metrics.MAccessSearchPermissionsSummary)
+	defer timer.ObserveDuration()
+
 	// Filter ram permissions
 	basicPermissions := map[string][]accesscontrol.Permission{}
 	for role, basicRole := range s.roles {
 		for i := range basicRole.Permissions {
-			if PermissionMatchesSearchOptions(basicRole.Permissions[i], options) {
+			if PermissionMatchesSearchOptions(basicRole.Permissions[i], &options) {
 				basicPermissions[role] = append(basicPermissions[role], basicRole.Permissions[i])
 			}
 		}
 	}
 
-	usersRoles, err := s.store.GetUsersBasicRoles(ctx, nil, user.GetOrgID())
+	usersRoles, err := s.store.GetUsersBasicRoles(ctx, nil, usr.GetOrgID())
 	if err != nil {
 		return nil, err
 	}
 
 	// Get managed permissions (DB)
-	usersPermissions, err := s.store.SearchUsersPermissions(ctx, user.GetOrgID(), options)
+	usersPermissions, err := s.store.SearchUsersPermissions(ctx, usr.GetOrgID(), options)
 	if err != nil {
 		return nil, err
 	}
 
 	// helper to filter out permissions the signed in users cannot see
 	canView := func() func(userID int64) bool {
-		siuPermissions := user.GetPermissions()
+		siuPermissions := usr.GetPermissions()
 		if len(siuPermissions) == 0 {
 			return func(_ int64) bool { return false }
 		}
@@ -323,8 +348,15 @@ func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, search
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
+	if searchOptions.UserLogin != "" {
+		// Resolve userLogin -> userID
+		if err := searchOptions.ResolveUserLogin(ctx, s.userSvc); err != nil {
+			return nil, err
+		}
+	}
+
 	if searchOptions.UserID == 0 {
-		return nil, fmt.Errorf("expected user ID to be specified")
+		return nil, fmt.Errorf("expected user ID or login to be specified")
 	}
 
 	if permissions, success := s.searchUserPermissionsFromCache(orgID, searchOptions); success {
@@ -348,7 +380,7 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 	for _, builtin := range roles {
 		if basicRole, ok := s.roles[builtin]; ok {
 			for _, permission := range basicRole.Permissions {
-				if PermissionMatchesSearchOptions(permission, searchOptions) {
+				if PermissionMatchesSearchOptions(permission, &searchOptions) {
 					permissions = append(permissions, permission)
 				}
 			}
@@ -375,13 +407,16 @@ func (s *Service) searchUserPermissionsFromCache(orgID int64, searchOptions acce
 	key := permissionCacheKey(tempUser)
 	permissions, ok := s.cache.Get((key))
 	if !ok {
+		metrics.MAccessSearchUserPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()
 		return nil, false
 	}
+
+	metrics.MAccessSearchUserPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheHit).Inc()
 
 	s.log.Debug("Using cached permissions", "key", key)
 	filteredPermissions := make([]accesscontrol.Permission, 0)
 	for _, permission := range permissions.([]accesscontrol.Permission) {
-		if PermissionMatchesSearchOptions(permission, searchOptions) {
+		if PermissionMatchesSearchOptions(permission, &searchOptions) {
 			filteredPermissions = append(filteredPermissions, permission)
 		}
 	}
@@ -389,9 +424,13 @@ func (s *Service) searchUserPermissionsFromCache(orgID int64, searchOptions acce
 	return filteredPermissions, true
 }
 
-func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchOptions accesscontrol.SearchOptions) bool {
-	if searchOptions.Scope != "" && permission.Scope != searchOptions.Scope {
-		return false
+func PermissionMatchesSearchOptions(permission accesscontrol.Permission, searchOptions *accesscontrol.SearchOptions) bool {
+	if searchOptions.Scope != "" {
+		// Permissions including the scope should also match
+		scopes := append(searchOptions.Wildcards(), searchOptions.Scope)
+		if !slices.Contains[[]string, string](scopes, permission.Scope) {
+			return false
+		}
 	}
 	if searchOptions.Action != "" {
 		return permission.Action == searchOptions.Action
@@ -421,4 +460,8 @@ func (s *Service) DeleteExternalServiceRole(ctx context.Context, externalService
 	slug := slugify.Slugify(externalServiceID)
 
 	return s.store.DeleteExternalServiceRole(ctx, slug)
+}
+
+func (*Service) SyncUserRoles(ctx context.Context, orgID int64, cmd accesscontrol.SyncUserRolesCommand) error {
+	return nil
 }

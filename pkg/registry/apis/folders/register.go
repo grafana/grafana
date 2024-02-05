@@ -9,24 +9,21 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
-	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
 
-	"github.com/grafana/grafana/pkg/apis/folders/v0alpha1"
-	"github.com/grafana/grafana/pkg/kinds"
+	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	grafanarest "github.com/grafana/grafana/pkg/services/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	grafanaregistry "github.com/grafana/grafana/pkg/services/grafana-apiserver/registry/generic"
-	grafanarest "github.com/grafana/grafana/pkg/services/grafana-apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*FolderAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*FolderAPIBuilder)(nil)
 
 var resourceInfo = v0alpha1.FolderResourceInfo
 
@@ -40,7 +37,7 @@ type FolderAPIBuilder struct {
 
 func RegisterAPIService(cfg *setting.Cfg,
 	features *featuremgmt.FeatureManager,
-	apiregistration grafanaapiserver.APIRegistrar,
+	apiregistration builder.APIRegistrar,
 	folderSvc folder.Service,
 ) *FolderAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
@@ -65,7 +62,7 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 	scheme.AddKnownTypes(gv,
 		&v0alpha1.Folder{},
 		&v0alpha1.FolderList{},
-		&v0alpha1.FolderInfo{},
+		&v0alpha1.FolderInfoList{},
 	)
 }
 
@@ -92,43 +89,32 @@ func (b *FolderAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	optsGetter generic.RESTOptionsGetter,
+	dualWrite bool,
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
-	strategy := grafanaregistry.NewStrategy(scheme)
-	store := &genericregistry.Store{
-		NewFunc:                   resourceInfo.NewFunc,
-		NewListFunc:               resourceInfo.NewListFunc,
-		PredicateFunc:             grafanaregistry.Matcher,
-		DefaultQualifiedResource:  resourceInfo.GroupResource(),
-		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
-		CreateStrategy:            strategy,
-		UpdateStrategy:            strategy,
-		DeleteStrategy:            strategy,
-	}
-	store.TableConvertor = utils.NewTableConverter(
-		store.DefaultQualifiedResource,
-		[]metav1.TableColumnDefinition{
-			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Title", Type: "string", Format: "string", Description: "The display name"},
-			{Name: "Parent", Type: "string", Format: "string", Description: "Parent folder UID"},
-		},
-		func(obj any) ([]interface{}, error) {
-			r, ok := obj.(*v0alpha1.Folder)
-			if ok {
-				accessor := kinds.MetaAccessor(r)
-				return []interface{}{
-					r.Name,
-					r.Spec.Title,
-					accessor.GetFolder(),
-				}, nil
-			}
-			return nil, fmt.Errorf("expected resource or info")
-		})
 	legacyStore := &legacyStorage{
-		service:        b.folderSvc,
-		namespacer:     b.namespacer,
-		tableConverter: store.TableConvertor,
+		service:    b.folderSvc,
+		namespacer: b.namespacer,
+		tableConverter: utils.NewTableConverter(
+			resourceInfo.GroupResource(),
+			[]metav1.TableColumnDefinition{
+				{Name: "Name", Type: "string", Format: "name"},
+				{Name: "Title", Type: "string", Format: "string", Description: "The display name"},
+				{Name: "Parent", Type: "string", Format: "string", Description: "Parent folder UID"},
+			},
+			func(obj any) ([]interface{}, error) {
+				r, ok := obj.(*v0alpha1.Folder)
+				if ok {
+					accessor, _ := utils.MetaAccessor(r)
+					return []interface{}{
+						r.Name,
+						r.Spec.Title,
+						accessor.GetFolder(),
+					}, nil
+				}
+				return nil, fmt.Errorf("expected resource or info")
+			}),
 	}
 
 	storage := map[string]rest.Storage{}
@@ -137,7 +123,7 @@ func (b *FolderAPIBuilder) GetAPIGroupInfo(
 	storage[resourceInfo.StoragePath("children")] = &subChildrenREST{b.folderSvc}
 
 	// enable dual writes if a RESTOptionsGetter is provided
-	if optsGetter != nil {
+	if dualWrite && optsGetter != nil {
 		store, err := newStorage(scheme, optsGetter, legacyStore)
 		if err != nil {
 			return nil, err
@@ -153,7 +139,7 @@ func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 	return v0alpha1.GetOpenAPIDefinitions
 }
 
-func (b *FolderAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *FolderAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil // no custom API routes
 }
 

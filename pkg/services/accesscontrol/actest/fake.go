@@ -11,6 +11,7 @@ var _ accesscontrol.Service = new(FakeService)
 var _ accesscontrol.RoleRegistry = new(FakeService)
 
 type FakeService struct {
+	accesscontrol.Service
 	ExpectedErr                     error
 	ExpectedCachedPermissions       bool
 	ExpectedPermissions             []accesscontrol.Permission

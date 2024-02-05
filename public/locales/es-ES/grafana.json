@@ -81,6 +81,7 @@
     "folder-picker": {
       "accessible-label": "Seleccionar carpeta: {{ label }} seleccionada actualmente",
       "button-label": "Seleccionar carpeta",
+      "clear-selection": "",
       "empty-message": "No se ha encontrado ninguna carpeta",
       "error-title": "Error al cargar las carpetas",
       "search-placeholder": "Buscar carpetas",
@@ -238,6 +239,10 @@
       "visualization": "Visualización",
       "widget": "«Widget»"
     },
+    "alert-rules-drawer": {
+      "redirect-link": "",
+      "subtitle": ""
+    },
     "empty": {
       "add-library-panel-body": "Añadir las visualizaciones que se comparten con otros tableros.",
       "add-library-panel-button": "Añadir panel de biblioteca",
@@ -306,7 +311,7 @@
     },
     "toolbar": {
       "add": "Añadir",
-      "add-panel": "Añadir panel",
+      "alert-rules": "",
       "mark-favorite": "Marcar como favorito",
       "open-original": "Abrir el panel de control original",
       "playlist-next": "Ir al siguiente panel de control",
@@ -366,6 +371,7 @@
       "title-label": "Título"
     },
     "json-editor": {
+      "apply-button": "",
       "save-button": "Guardar cambios",
       "subtitle": "El siguiente modelo JSON es la estructura de datos que define el tablero. Incluye ajustes del tablero, ajustes del panel, diseño, consultas, etc.",
       "title": "Modelo JSON"
@@ -417,9 +423,6 @@
     "datasource-add-button": {
       "label": "Añadir nueva fuente de datos"
     }
-  },
-  "drawer": {
-    "close": ""
   },
   "explore": {
     "add-to-dashboard": "Añadir al tablero",
@@ -560,6 +563,9 @@
     "loading": "Cargando carpetas..."
   },
   "grafana-ui": {
+    "drawer": {
+      "close": ""
+    },
     "modal": {
       "close-tooltip": "Cerrar"
     },
@@ -591,6 +597,7 @@
     "shortcuts-description": {
       "change-theme": "Cambiar tema",
       "collapse-all-rows": "Contraer todas las filas",
+      "copy-time-range": "",
       "dashboard-settings": "Ajustes del panel de control",
       "duplicate-panel": "Duplicar panel",
       "exit-edit/setting-views": "Salir de las opciones de edición/ajustes",
@@ -604,6 +611,7 @@
       "move-time-range-forward": "Mover el rango de tiempo hacia delante",
       "open-search": "Abrir búsqueda",
       "open-shared-modal": "Abrir el modo de panel compartido",
+      "paste-time-range": "",
       "refresh-all-panels": "Actualizar todos los paneles",
       "remove-panel": "Eliminar panel",
       "save-dashboard": "Guardar panel de control",
@@ -977,6 +985,7 @@
     "megamenu": {
       "close": "Cerrar menú",
       "dock": "Anclar el menú",
+      "list-label": "",
       "undock": "Desanclar el menú"
     },
     "toolbar": {
@@ -1227,6 +1236,12 @@
       "turned-off": "Actualización automática desactivada"
     }
   },
+  "return-to-previous": {
+    "button": {
+      "label": ""
+    },
+    "dismissable-button": ""
+  },
   "search": {
     "actions": {
       "include-panels": "Incluir paneles",
@@ -1399,6 +1414,13 @@
       "empty-recent-list-docs": "<0><0>Lea la documentación</0><1> para saber más sobre cómo introducir intervalos de tiempo personalizados.</1></0>",
       "empty-recent-list-info": "Parece que no ha utilizado antes este selector de tiempo. En cuanto introduzca algún intervalo de tiempo, los intervalos que haya usado recientemente aparecerán aquí.",
       "filter-placeholder": "Buscar intervalos rápidos"
+    },
+    "copy-paste": {
+      "copy-success-message": "",
+      "default-error-message": "",
+      "default-error-title": "",
+      "tooltip-copy": "",
+      "tooltip-paste": ""
     },
     "footer": {
       "change-settings-button": "Cambiar ajustes de tiempo",

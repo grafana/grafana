@@ -1,9 +1,10 @@
-import { findLast, isEmpty } from 'lodash';
+import { isEmpty } from 'lodash';
 import React from 'react';
-import { catchError, map, Observable, of, throwError } from 'rxjs';
+import { catchError, map, Observable, of } from 'rxjs';
 
 import {
   DataFrame,
+  DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceInstanceSettings,
@@ -21,7 +22,7 @@ import { AppNotificationTimeout } from 'app/types';
 import { ThrottlingErrorMessage } from '../components/Errors/ThrottlingErrorMessage';
 import memoizedDebounce from '../memoizedDebounce';
 import { migrateMetricQuery } from '../migrations/metricQueryMigrations';
-import { CloudWatchJsonData, CloudWatchMetricsQuery, CloudWatchQuery, DataQueryError } from '../types';
+import { CloudWatchJsonData, CloudWatchMetricsQuery, CloudWatchQuery } from '../types';
 import { filterMetricsQuery } from '../utils/utils';
 
 import { CloudWatchRequest } from './CloudWatchRequest';
@@ -37,9 +38,10 @@ const displayAlert = (datasourceName: string, region: string) =>
       )
     )
   );
+
 // This class handles execution of CloudWatch metrics query data queries
 export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
-  debouncedAlert: (datasourceName: string, region: string) => void = memoizedDebounce(
+  debouncedThrottlingAlert: (datasourceName: string, region: string) => void = memoizedDebounce(
     displayAlert,
     AppNotificationTimeout.Error
   );
@@ -109,12 +111,7 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
   ): Observable<DataQueryResponse> {
     return queryFn(request).pipe(
       map((res) => {
-        const dataframes: DataFrame[] = res.data;
-        if (!dataframes || dataframes.length <= 0) {
-          return { data: [] };
-        }
-
-        const lastError = findLast(res.data, (v) => !!v.error);
+        const dataframes: DataFrame[] = res.data || [];
 
         dataframes.forEach((frame) => {
           frame.fields.forEach((field) => {
@@ -125,45 +122,46 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
           });
         });
 
+        if (res.errors?.length) {
+          this.alertOnErrors(res.errors, request);
+        }
+
         return {
           data: dataframes,
-          error: lastError ? { message: lastError.error } : undefined,
+          // DataSourceWithBackend will not throw an error, instead it will return "errors" field along with the response
+          errors: res.errors,
         };
       }),
-      catchError((err: DataQueryError<CloudWatchMetricsQuery>) => {
-        const isFrameError = err.data?.results;
-
-        // Error is not frame specific
-        if (!isFrameError && err.data && err.data.message === 'Metric request error' && err.data.error) {
-          err.message = err.data.error;
-          return throwError(() => err);
+      catchError((err: unknown) => {
+        if (Array.isArray(err)) {
+          return of({ data: [], errors: err });
+        } else {
+          return of({ data: [], errors: [{ message: err }] });
         }
-
-        // The error is either for a specific frame or for all the frames
-        const results: Array<{ error?: string }> = Object.values(err.data?.results ?? {});
-        const firstErrorResult = results.find((r) => r.error);
-        if (firstErrorResult) {
-          err.message = firstErrorResult.error;
-        }
-
-        if (results.some((r) => r.error && /^Throttling:.*/.test(r.error))) {
-          const failedRedIds = Object.keys(err.data?.results ?? {});
-          const regionsAffected = Object.values(request.targets).reduce(
-            (res: string[], { refId, region }) =>
-              (refId && !failedRedIds.includes(refId)) || res.includes(region) ? res : [...res, region],
-            []
-          );
-          regionsAffected.forEach((region) => {
-            const actualRegion = this.getActualRegion(region);
-            if (actualRegion) {
-              this.debouncedAlert(this.instanceSettings.name, actualRegion);
-            }
-          });
-        }
-
-        return throwError(() => err);
       })
     );
+  }
+
+  alertOnErrors(errors: DataQueryError[], request: DataQueryRequest<CloudWatchQuery>) {
+    const hasThrottlingError = errors.some(
+      (err) => err.message && (/^Throttling:.*/.test(err.message) || /^Rate exceeded.*/.test(err.message))
+    );
+    if (hasThrottlingError) {
+      const failedRefIds = errors.map((error) => error.refId).filter((refId) => refId);
+      if (failedRefIds.length > 0) {
+        const regionsAffected = Object.values(request.targets).reduce(
+          (res: string[], { refId, region }) =>
+            (refId && !failedRefIds.includes(refId)) || res.includes(region) ? res : [...res, region],
+          []
+        );
+        regionsAffected.forEach((region) => {
+          const actualRegion = this.getActualRegion(region);
+          if (actualRegion) {
+            this.debouncedThrottlingAlert(this.instanceSettings.name, actualRegion);
+          }
+        });
+      }
+    }
   }
 
   filterMetricQuery(query: CloudWatchMetricsQuery): boolean {

@@ -6,7 +6,7 @@ import { CustomVariableModel, DataSourceInstanceSettings } from '@grafana/data';
 import * as ui from '@grafana/ui';
 
 import { setupMockedTemplateService } from '../../../__mocks__/CloudWatchDataSource';
-import { initialVariableModelState } from '../../../__mocks__/variables';
+import { initialVariableModelState } from '../../../__mocks__/CloudWatchVariables';
 import { CloudWatchDatasource } from '../../../datasource';
 import { CloudWatchJsonData, MetricEditorMode, MetricQueryType } from '../../../types';
 

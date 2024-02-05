@@ -49,6 +49,7 @@ export function LogsNavigationPages({ pages, currentPageIndex, oldestLogsFirst, 
               onClick={() => {
                 onClick(page, index + 1);
               }}
+              disabled={loading}
             >
               <div className={cx(styles.line, { selectedBg: currentPageIndex === index })} />
               <div className={cx(styles.time, { selectedText: currentPageIndex === index })}>

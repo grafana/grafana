@@ -13,16 +13,16 @@ import SearchField from './SearchField';
 import { getFilteredTags } from './utils';
 
 const getStyles = () => ({
-  vertical: css`
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  `,
-  horizontal: css`
-    display: flex;
-    flex-direction: row;
-    gap: 1rem;
-  `,
+  vertical: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.25rem',
+  }),
+  horizontal: css({
+    display: 'flex',
+    flexDirection: 'row',
+    gap: '1rem',
+  }),
 });
 
 interface Props {

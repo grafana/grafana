@@ -355,6 +355,30 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 			exp:    expDefaultOtlp,
 		},
 		{
+			name: `enabled on plugin with no "tracing" plugin setting but with enablePluginsTracingByDefault feature flag`,
+			cfg: &config.Cfg{
+				Tracing: config.Tracing{
+					OpenTelemetry: defaultOTelCfg,
+				},
+				PluginSettings: map[string]map[string]string{pluginID: {}},
+				Features:       featuremgmt.WithFeatures(featuremgmt.FlagEnablePluginsTracingByDefault),
+			},
+			plugin: defaultPlugin,
+			exp:    expDefaultOtlp,
+		},
+		{
+			name: `enabled on plugin with plugin setting "tracing=false" but with enablePluginsTracingByDefault feature flag`,
+			cfg: &config.Cfg{
+				Tracing: config.Tracing{
+					OpenTelemetry: defaultOTelCfg,
+				},
+				PluginSettings: map[string]map[string]string{pluginID: {"tracing": "false"}},
+				Features:       featuremgmt.WithFeatures(featuremgmt.FlagEnablePluginsTracingByDefault),
+			},
+			plugin: defaultPlugin,
+			exp:    expDefaultOtlp,
+		},
+		{
 			name: "GF_PLUGIN_VERSION is not present if tracing is disabled",
 			cfg: &config.Cfg{
 				Tracing: config.Tracing{
@@ -771,6 +795,60 @@ func TestService_GetConfigMap_appURL(t *testing.T) {
 			},
 		}
 		require.Equal(t, map[string]string{"GF_APP_URL": "https://myorg.com/"}, s.GetConfigMap(context.Background(), "", nil))
+	})
+}
+
+func TestService_GetConfigMap_concurrentQueryCount(t *testing.T) {
+	t.Run("Uses the configured concurrent query count", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				ConcurrentQueryCount: 42,
+			},
+		}
+		require.Equal(t, map[string]string{"GF_CONCURRENT_QUERY_COUNT": "42"}, s.GetConfigMap(context.Background(), "", nil))
+	})
+
+	t.Run("Doesn't set the concurrent query count if it is not in the config", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{},
+		}
+		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+	})
+
+	t.Run("Doesn't set the concurrent query count if it is zero", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				ConcurrentQueryCount: 0,
+			},
+		}
+		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+	})
+}
+
+func TestService_GetConfigMap_azureAuthEnabled(t *testing.T) {
+	t.Run("Uses the configured azureAuthEnabled", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				AzureAuthEnabled: true,
+			},
+		}
+		require.Equal(t, map[string]string{"GFAZPL_AZURE_AUTH_ENABLED": "true"}, s.GetConfigMap(context.Background(), "", nil))
+	})
+
+	t.Run("Doesn't set the azureAuthEnabled if it is not in the config", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{},
+		}
+		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+	})
+
+	t.Run("Doesn't set the azureAuthEnabled if it is false", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				AzureAuthEnabled: false,
+			},
+		}
+		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
 	})
 }
 

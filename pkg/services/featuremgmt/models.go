@@ -8,11 +8,11 @@ import (
 )
 
 type FeatureToggles interface {
-	// Check if a feature is enabled for a given context.
+	// IsEnabled checks if a feature is enabled for a given context.
 	// The settings may be per user, tenant, or globally set in the cloud
 	IsEnabled(ctx context.Context, flag string) bool
 
-	// Check if a flag is configured globally.  For now, this is the same
+	// IsEnabledGlobally checks if a flag is configured globally.  For now, this is the same
 	// as the function above, however it will move to only checking flags that
 	// are configured by the operator and shared across all tenants.
 	// Use of global feature flags should be limited and careful as they require
@@ -110,8 +110,8 @@ func (s *FeatureFlagStage) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// These are properties about the feature, but not the current state or value for it
 type FeatureFlag struct {
-	// Required properties
 	Name        string           `json:"name" yaml:"name"` // Unique name
 	Description string           `json:"description"`
 	Stage       FeatureFlagStage `json:"stage,omitempty"`
@@ -127,30 +127,14 @@ type FeatureFlag struct {
 
 	// Special behavior properties
 	RequiresDevMode bool `json:"requiresDevMode,omitempty"` // can not be enabled in production
-	RequiresLicense bool `json:"requiresLicense,omitempty"` // Must be enabled in the license
 	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
 	HideFromDocs    bool `json:"hideFromDocs,omitempty"`    // don't add the values to docs
 
-	// This field is only for the feature management API. To enable your feature toggle by default, use `Expression`.
-	Enabled bool `json:"enabled,omitempty"`
-
-	// These are currently unused
-	DocsURL         string `json:"docsURL,omitempty"`
-	RequiresRestart bool   `json:"requiresRestart,omitempty"` // The server must be initialized with the value
+	// The server must be initialized with the value
+	RequiresRestart bool `json:"requiresRestart,omitempty"`
 }
 
-type UpdateFeatureTogglesCommand struct {
-	FeatureToggles []FeatureToggleDTO `json:"featureToggles"`
-}
-
-type FeatureToggleDTO struct {
-	Name        string `json:"name" binding:"Required"`
-	Description string `json:"description"`
-	Enabled     bool   `json:"enabled"`
-	ReadOnly    bool   `json:"readOnly,omitempty"`
-}
-
-type FeatureManagerState struct {
-	RestartRequired bool `json:"restartRequired"`
-	AllowEditing    bool `json:"allowEditing"`
+type FeatureToggleWebhookPayload struct {
+	FeatureToggles map[string]string `json:"feature_toggles"`
+	User           string            `json:"user"`
 }

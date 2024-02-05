@@ -1,28 +1,21 @@
 package apiserver
 
 import (
+	"fmt"
 	"os"
-	"path"
-
-	"github.com/grafana/grafana/pkg/aggregator"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/klog/v2"
+	"strings"
 
 	"github.com/spf13/cobra"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/component-base/cli"
-	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
-)
 
-const (
-	aggregatorDataPath              = "data/grafana-aggregator"
-	defaultAggregatorEtcdPathPrefix = "/registry/grafana.aggregator"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 )
 
 func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}) *cobra.Command {
 	devAcknowledgementNotice := "The apiserver command is in heavy development. The entire setup is subject to change without notice"
+	runtimeConfig := ""
 
 	cmd := &cobra.Command{
 		Use:   "apiserver [api group(s)]",
@@ -31,8 +24,13 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 			devAcknowledgementNotice,
 		Example: "grafana apiserver example.grafana.app",
 		RunE: func(c *cobra.Command, args []string) error {
+			apis, err := readRuntimeConfig(runtimeConfig)
+			if err != nil {
+				return err
+			}
+
 			// Load each group from the args
-			if err := o.LoadAPIGroupBuilders(args[1:]); err != nil {
+			if err := o.loadAPIGroupBuilders(apis); err != nil {
 				return err
 			}
 
@@ -53,10 +51,12 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 		},
 	}
 
+	cmd.Flags().StringVar(&runtimeConfig, "runtime-config", "", "A set of key=value pairs that enable or disable built-in APIs.")
+
 	// Register standard k8s flags with the command line
 	o.RecommendedOptions = options.NewRecommendedOptions(
 		defaultEtcdPathPrefix,
-		Codecs.LegacyCodec(), // the codec is passed to etcd and not used
+		grafanaapiserver.Codecs.LegacyCodec(), // the codec is passed to etcd and not used
 	)
 	o.RecommendedOptions.AddFlags(cmd.Flags())
 
@@ -72,93 +72,42 @@ func RunCLI() int {
 	return cli.Run(cmd)
 }
 
-func newCommandStartAggregator(o *aggregator.AggregatorServerOptions) *cobra.Command {
-	devAcknowledgementNotice := "The aggregator command is in heavy development. The entire setup is subject to change without notice"
-
-	cmd := &cobra.Command{
-		Use:   "aggregator",
-		Short: "Run the grafana aggregator",
-		Long: "Run a standalone kubernetes based aggregator server. " +
-			devAcknowledgementNotice,
-		Example: "grafana aggregator",
-		RunE: func(c *cobra.Command, args []string) error {
-			return run(o)
-		},
-	}
-
-	return cmd
+type apiConfig struct {
+	group   string
+	version string
+	enabled bool
 }
 
-func run(serverOptions *aggregator.AggregatorServerOptions) error {
-	if err := serverOptions.LoadAPIGroupBuilders(); err != nil {
-		klog.Errorf("Error loading prerequisite APIs: %s", err)
-		return err
-	}
-
-	serverOptions.RecommendedOptions.SecureServing.BindPort = 8443
-	delegationTarget := genericapiserver.NewEmptyDelegate()
-
-	config, err := serverOptions.CreateAggregatorConfig()
-	if err != nil {
-		klog.Errorf("Error creating aggregator config: %s", err)
-		return err
-	}
-
-	aggregator, err := serverOptions.CreateAggregatorServer(config, delegationTarget)
-	if err != nil {
-		klog.Errorf("Error creating aggregator server: %s", err)
-		return err
-	}
-
-	// Install the API Group+version
-	for _, b := range serverOptions.Builders {
-		g, err := b.GetAPIGroupInfo(Scheme, Codecs, config.GenericConfig.RESTOptionsGetter)
-		if err != nil {
-			klog.Errorf("Error getting group info for prerequisite API group: %s", err)
-			return err
-		}
-		if g == nil || len(g.PrioritizedVersions) < 1 {
-			continue
-		}
-		err = aggregator.GenericAPIServer.InstallAPIGroup(g)
-		if err != nil {
-			klog.Errorf("Error installing prerequisite API groups for aggregator: %s", err)
-			return err
-		}
-	}
-
-	if err := clientcmd.WriteToFile(
-		utils.FormatKubeConfig(aggregator.GenericAPIServer.LoopbackClientConfig),
-		path.Join(aggregatorDataPath, "aggregator.kubeconfig"),
-	); err != nil {
-		klog.Errorf("Error persisting aggregator.kubeconfig: %s", err)
-		return err
-	}
-
-	// Finish the config (a noop for now)
-	prepared, err := aggregator.PrepareRun()
-	if err != nil {
-		return err
-	}
-
-	stopCh := genericapiserver.SetupSignalHandler()
-	if err := prepared.Run(stopCh); err != nil {
-		return err
-	}
-	return nil
+func (a apiConfig) String() string {
+	return fmt.Sprintf("%s/%s=%v", a.group, a.version, a.enabled)
 }
 
-func RunCobraWrapper() int {
-	serverOptions := aggregator.NewAggregatorServerOptions(os.Stdout, os.Stderr)
-	// Register standard k8s flags with the command line
-	serverOptions.RecommendedOptions = options.NewRecommendedOptions(
-		defaultAggregatorEtcdPathPrefix,
-		aggregatorscheme.Codecs.LegacyCodec(), // codec is passed to etcd and hence not used
-	)
-
-	cmd := newCommandStartAggregator(serverOptions)
-
-	serverOptions.AddFlags(cmd.Flags())
-
-	return cli.Run(cmd)
+// Supported options are:
+//
+//	<group>/<version>=true|false for a specific API group and version (e.g. dashboards.grafana.app/v0alpha1=true)
+//	api/all=true|false controls all API versions
+//	api/ga=true|false controls all API versions of the form v[0-9]+
+//	api/beta=true|false controls all API versions of the form v[0-9]+beta[0-9]+
+//	api/alpha=true|false controls all API versions of the form v[0-9]+alpha[0-9]+`)
+//
+// See: https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/
+func readRuntimeConfig(cfg string) ([]apiConfig, error) {
+	if cfg == "" {
+		return nil, fmt.Errorf("missing --runtime-config={apiservers}")
+	}
+	parts := strings.Split(cfg, ",")
+	apis := make([]apiConfig, len(parts))
+	for i, part := range parts {
+		idx0 := strings.Index(part, "/")
+		idx1 := strings.LastIndex(part, "=")
+		if idx1 < idx0 || idx0 < 0 {
+			return nil, fmt.Errorf("expected values in the form: group/version=true")
+		}
+		apis[i] = apiConfig{
+			group:   part[:idx0],
+			version: part[idx0+1 : idx1],
+			enabled: part[idx1+1:] == "true",
+		}
+	}
+	return apis, nil
 }
