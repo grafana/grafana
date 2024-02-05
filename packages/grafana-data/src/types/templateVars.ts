@@ -1,4 +1,5 @@
 import { LoadingState } from './data';
+import { MetricFindValue } from './datasource';
 import { DataSourceRef } from './query';
 
 export type VariableType = TypedVariableModel['type'];
@@ -73,6 +74,8 @@ export interface GroupByVariableModel extends BaseVariableModel {
    * Filters that are always applied to the lookup of keys. Not shown in the AdhocFilterBuilder UI.
    */
   baseFilters?: AdHocVariableFilter[];
+  defaultOptions?: MetricFindValue[];
+  multi: true;
 }
 
 export interface VariableOption {
