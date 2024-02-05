@@ -72,22 +72,38 @@ export const GroupToSubframeTransformerEditor = ({
     [onChange]
   );
 
+  console.log(options);
+  let hasGrouping = false;
+  let hasAggregation = false;
+  for (const field of Object.values(options.fields)) {
+    if (field.aggregations.length > 0) {
+      hasAggregation = true;
+    }
+    if (field.operation === GroupByOperationID.groupBy) {
+      hasGrouping = true;
+    }
+  }
+  const showCalcAlert = hasAggregation && !hasGrouping;
+
   return (
-    <Stack direction="row">
-      <Alert title="Alert"></Alert>
-      <div>
-        {fieldNames.map((key) => (
-          <GroupByFieldConfiguration
-            onConfigChange={onConfigChange(key)}
-            fieldName={key}
-            config={options.fields[key]}
-            key={key}
-          />
-        ))}
-      </div>
-      <Field label="Show field names in subframe" description="If enabled subframes will show field names">
-        <Switch value={showHeaders} onChange={onShowFieldNamesChange} />
-      </Field>
+    <Stack direction="column">
+        {
+          showCalcAlert &&
+          <Alert title="Calculations will not have an effect if no fields are being grouped on." severity="warning" />
+        }
+        <div>
+          {fieldNames.map((key) => (
+            <GroupByFieldConfiguration
+              onConfigChange={onConfigChange(key)}
+              fieldName={key}
+              config={options.fields[key]}
+              key={key}
+            />
+          ))}
+        </div>
+        <Field label="Show field names in nested tables" description="If enabled nested tables will show field names as a table header">
+          <Switch value={showHeaders} onChange={onShowFieldNamesChange} />
+        </Field>
     </Stack>
   );
 };
