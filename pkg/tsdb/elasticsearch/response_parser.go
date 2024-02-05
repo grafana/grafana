@@ -907,10 +907,10 @@ func nameFields(queryResult backend.DataResponse, target *Query) {
 			// another is "number"
 			valueField := frame.Fields[1]
 			fieldName := getFieldName(*valueField, target, metricTypeCount)
-			if valueField.Config == nil {
-				valueField.Config = &data.FieldConfig{}
-			}
-			valueField.Config.DisplayNameFromDS = fieldName
+			// We need to remove labels so they are not added to legend as duplicates
+			// ensures backward compatibility with "frontend" version of the plugin
+			valueField.Labels = nil
+			frame.Name = fieldName
 		}
 	}
 }
