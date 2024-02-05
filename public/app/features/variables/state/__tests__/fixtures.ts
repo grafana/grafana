@@ -87,6 +87,7 @@ export function createGroupByVariable(input?: Partial<GroupByVariableModel>): Gr
       type: 'prometheus',
     },
     groupByKeys: [],
+    multi: true,
     ...input,
   };
 }
