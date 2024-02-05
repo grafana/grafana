@@ -312,5 +312,5 @@ export function regenerateLinksSupplier(
 }
 
 export const isTooltipScrollable = (tooltipOptions: VizTooltipOptions) => {
-  return tooltipOptions.mode === TooltipDisplayMode.Multi && tooltipOptions.maxHeight !== undefined;
+  return tooltipOptions.mode === TooltipDisplayMode.Multi && tooltipOptions.maxHeight != null;
 };
