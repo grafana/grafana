@@ -1611,7 +1611,7 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 	})
 }
 
-func TestIntegrationFolderServiceGetFolders(t *testing.T) {
+func TestFolderServiceGetFolders(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
