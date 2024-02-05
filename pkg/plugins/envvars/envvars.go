@@ -151,6 +151,9 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 	}
 
 	// Settings here will be extracted by grafana-azure-sdk-go from the plugin context
+	if s.cfg.AzureAuthEnabled {
+		m[azsettings.AzureAuthEnabled] = strconv.FormatBool(s.cfg.AzureAuthEnabled)
+	}
 	azureSettings := s.cfg.Azure
 	if azureSettings != nil && slices.Contains[[]string, string](azureSettings.ForwardSettingsPlugins, pluginID) {
 		if azureSettings.Cloud != "" {
