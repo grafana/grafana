@@ -6,14 +6,17 @@ import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { ExternalAlertmanagerDataSourceWithStatus } from '../../hooks/useExternalAmSelector';
-import { isAlertmanagerDataSourceInterestedInAlerts } from '../../utils/datasource';
+import {
+  isAlertmanagerDataSourceInterestedInAlerts,
+  isVanillaPrometheusAlertManagerDataSource,
+} from '../../utils/datasource';
 import { createUrl } from '../../utils/url';
 import { ProvisioningBadge } from '../Provisioning';
 
 import { useSettings } from './SettingsContext';
 
 interface Props {
-  onEditConfiguration: () => void;
+  onEditConfiguration: (dataSourceUid: string) => void;
 }
 
 export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
@@ -48,6 +51,10 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
         const isReceiving = isReceivingOnAlertmanager(alertmanager);
         const provisionedDataSource = alertmanager.dataSourceSettings.readOnly === true;
         const detailHref = createUrl(DATASOURCES_ROUTES.Edit.replace(/:uid/gi, uid));
+        const readOnlyDataSource =
+          provisionedDataSource || isVanillaPrometheusAlertManagerDataSource(alertmanager.dataSourceSettings.name);
+
+        const handleEditConfiguration = () => onEditConfiguration(name);
 
         return (
           <Card key={uid}>
@@ -82,8 +89,13 @@ export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
             {/* we'll use the "tags" to append buttons and actions */}
             <Card.Tags>
               <Stack direction="row" gap={1}>
-                <Button onClick={onEditConfiguration} icon="pen" variant="secondary" fill="outline">
-                  Edit configuration
+                <Button
+                  onClick={handleEditConfiguration}
+                  icon={readOnlyDataSource ? 'file-alt' : 'file-edit-alt'}
+                  variant="secondary"
+                  fill="outline"
+                >
+                  {readOnlyDataSource ? 'View configuration' : 'Edit configuration'}
                 </Button>
                 {provisionedDataSource ? null : (
                   <>

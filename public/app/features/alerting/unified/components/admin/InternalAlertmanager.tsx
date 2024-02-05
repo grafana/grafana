@@ -8,13 +8,14 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { useSettings } from './SettingsContext';
 
 interface Props {
-  onEditConfiguration: () => void;
+  onEditConfiguration: (dataSourceName: string) => void;
 }
 
 export default function InternalAlertmanager({ onEditConfiguration }: Props) {
   const { deliverySettings, enableAlertmanager, disableAlertmanager } = useSettings();
 
   const isReceiving = isReceivingOnInternalAlertmanager(deliverySettings);
+  const handleEditConfiguration = () => onEditConfiguration(GRAFANA_RULES_SOURCE_NAME);
 
   return (
     <Card>
@@ -33,7 +34,7 @@ export default function InternalAlertmanager({ onEditConfiguration }: Props) {
 
       <Card.Tags>
         <Stack direction="row" gap={1}>
-          <Button icon="pen" variant="secondary" fill="outline" onClick={onEditConfiguration}>
+          <Button icon="file-edit-alt" variant="secondary" fill="outline" onClick={handleEditConfiguration}>
             Edit configuration
           </Button>
           {isReceiving ? (

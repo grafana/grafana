@@ -33,6 +33,8 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss }: Prop
   const readOnly = alertmanagerName ? isVanillaPrometheusAlertManagerDataSource(alertmanagerName) : false;
   const styles = useStyles2(getStyles);
 
+  const handleDismiss = () => onDismiss();
+
   const [selectedAmConfig, setSelectedAmConfig] = useState<ValidAmConfigOption | undefined>();
 
   const {
@@ -130,11 +132,15 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss }: Prop
       </div>
       {!readOnly && (
         <Stack justifyContent="flex-end">
-          <Button variant="destructive">Reset</Button>
-          <Button variant="secondary" onClick={onDismiss}>
+          <Button variant="destructive" onClick={() => undefined}>
+            Reset
+          </Button>
+          <Button variant="secondary" onClick={handleDismiss}>
             Cancel
           </Button>
-          <Button variant="primary">Save</Button>
+          <Button variant="primary" onClick={() => undefined}>
+            Save
+          </Button>
         </Stack>
       )}
     </div>

@@ -21,6 +21,8 @@ interface Context {
   isUpdating: boolean;
   enableAlertmanager: (uid: string) => void;
   disableAlertmanager: (uid: string) => void;
+  updateAlertmanagerSettings: (uid: string) => void;
+  resetAlertmanagerSettings: (uid: string) => void;
 }
 
 const SettingsContext = React.createContext<Context | undefined>(undefined);
@@ -87,6 +89,10 @@ export const SettingsProvider = (props: PropsWithChildren) => {
     disableAlertmanager,
     isLoading: isLoadingDeliverySettings,
     isUpdating: updateDeliverySettingsState.isLoading || updateAlertmanagerDataSourceState.isLoading,
+
+    // CRUD for Alertmanager settings
+    updateAlertmanagerSettings: () => {},
+    resetAlertmanagerSettings: () => {},
   };
 
   return <SettingsContext.Provider value={value}>{props.children}</SettingsContext.Provider>;
