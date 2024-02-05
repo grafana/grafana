@@ -72,11 +72,12 @@ export const GroupToSubframeTransformerEditor = ({
     [onChange]
   );
 
-  console.log(options);
-  let hasGrouping = false;
-  let hasAggregation = false;
+  // See if there's both an aggregation and grouping field configured
+  // for calculations. If not we display a warning because there
+  // needs to be a grouping for the calculation to have effect
+  let hasGrouping, hasAggregation = false;
   for (const field of Object.values(options.fields)) {
-    if (field.aggregations.length > 0) {
+    if (field.aggregations.length > 0 && field.operation !== null) {
       hasAggregation = true;
     }
     if (field.operation === GroupByOperationID.groupBy) {
