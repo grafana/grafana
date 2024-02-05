@@ -25,8 +25,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/grafana/grafana/pkg/services/anonymous"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -127,7 +127,6 @@ type HTTPServer struct {
 	RenderService                rendering.Service
 	Cfg                          *setting.Cfg
 	Features                     featuremgmt.FeatureToggles
-	featureManager               *featuremgmt.FeatureManager
 	SettingsProvider             setting.Provider
 	HooksService                 *hooks.HooksService
 	navTreeService               navtree.Service
@@ -235,7 +234,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	correlationsService correlations.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
 	accessControl accesscontrol.AccessControl, dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
-	contextHandler *contexthandler.ContextHandler, loggerMiddleware loggermw.Logger, features *featuremgmt.FeatureManager,
+	contextHandler *contexthandler.ContextHandler, loggerMiddleware loggermw.Logger, features featuremgmt.FeatureToggles,
 	alertNG *ngalert.AlertNG, libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
 	quotaService quota.Service, socialService social.Service, tracer tracing.Tracer,
 	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
@@ -292,7 +291,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		QueryHistoryService:          queryHistoryService,
 		CorrelationsService:          correlationsService,
 		Features:                     features, // a read only view of the managers state
-		featureManager:               features,
 		StorageService:               storageService,
 		RemoteCacheService:           remoteCache,
 		ProvisioningService:          provisioningService,
