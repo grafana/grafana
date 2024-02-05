@@ -24,6 +24,29 @@
         },
         "description": "(empty)"
       },
+      "GetReceiverResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GettableApiReceiver"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "GetReceiversResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/GettableApiReceiver"
+              },
+              "type": "array"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
       "GettableHistoricUserConfigs": {
         "content": {
           "application/json": {
@@ -12194,7 +12217,6 @@
         "type": "object"
       },
       "alertGroup": {
-        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -12218,7 +12240,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -12406,13 +12427,13 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
         "type": "array"
       },
       "gettableSilence": {
-        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -12461,6 +12482,7 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
@@ -12611,7 +12633,6 @@
         "type": "array"
       },
       "postableSilence": {
-        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -23970,75 +23991,6 @@
         "summary": "Get teams for user.",
         "tags": [
           "users"
-        ]
-      }
-    },
-    "/v1/notifications/time-intervals": {
-      "get": {
-        "description": "Get all the time intervals",
-        "operationId": "RouteNotificationsGetTimeIntervals",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/GetAllIntervalsResponse"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ForbiddenError"
-                }
-              }
-            },
-            "description": "ForbiddenError"
-          }
-        },
-        "tags": [
-          "notifications"
-        ]
-      }
-    },
-    "/v1/notifications/time-intervals/{name}": {
-      "get": {
-        "operationId": "RouteNotificationsGetTimeInterval",
-        "parameters": [
-          {
-            "description": "Time interval name",
-            "in": "path",
-            "name": "name",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/GetIntervalsByNameResponse"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ForbiddenError"
-                }
-              }
-            },
-            "description": "ForbiddenError"
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NotFound"
-                }
-              }
-            },
-            "description": "NotFound"
-          }
-        },
-        "summary": "Get a time interval by name.",
-        "tags": [
-          "notifications"
         ]
       }
     },

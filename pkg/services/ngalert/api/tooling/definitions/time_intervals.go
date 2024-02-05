@@ -1,6 +1,6 @@
 package definitions
 
-// swagger:route GET /v1/notifications/time-intervals notifications stable RouteNotificationsGetTimeIntervals
+// swagger:route GET /v1/notifications/time-intervals notifications RouteNotificationsGetTimeIntervals
 //
 // Get all the time intervals
 //
@@ -8,7 +8,7 @@ package definitions
 //       200: GetAllIntervalsResponse
 //       403: ForbiddenError
 
-// swagger:route GET /v1/notifications/time-intervals/{name} notifications stable RouteNotificationsGetTimeInterval
+// swagger:route GET /v1/notifications/time-intervals/{name} notifications RouteNotificationsGetTimeInterval
 //
 // Get a time interval by name.
 //
@@ -17,7 +17,7 @@ package definitions
 //       404: NotFound
 //       403: ForbiddenError
 
-// swagger:parameters stable RouteNotificationsGetTimeInterval
+// swagger:parameters RouteNotificationsGetTimeInterval
 type RouteTimeIntervalNameParam struct {
 	// Time interval name
 	// in:path

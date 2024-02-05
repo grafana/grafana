@@ -25,8 +25,12 @@ var (
 					Action: accesscontrol.ActionAlertingRuleExternalRead,
 					Scope:  datasources.ScopeAll,
 				},
+				// Following are needed for simplified notification policies
 				{
-					Action: accesscontrol.ActionAlertingNotificationsTimeIntervalsRead, // This is needed for simplified notification policies
+					Action: accesscontrol.ActionAlertingNotificationsTimeIntervalsRead,
+				},
+				{
+					Action: accesscontrol.ActionAlertingReceiversList,
 				},
 			},
 		},
@@ -114,6 +118,9 @@ var (
 				},
 				{
 					Action: accesscontrol.ActionAlertingNotificationsTimeIntervalsRead,
+				},
+				{
+					Action: accesscontrol.ActionAlertingReceiversRead,
 				},
 			},
 		},
