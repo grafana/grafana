@@ -47,6 +47,7 @@ func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.O
 	// Can view is managed here (and in the Authorizer)
 	f, err := r.service.Get(ctx, &folder.GetFolderQuery{
 		UID:          &name,
+		OrgID:        ns.OrgID,
 		SignedInUser: user,
 	})
 	if err != nil {
