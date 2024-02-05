@@ -29,7 +29,7 @@ export interface Props {
 export function SaveDashboardAsForm({ dashboard, drawer, changeInfo }: Props) {
   const { changedSaveModel } = changeInfo;
 
-  const { register, handleSubmit, setValue, formState, getValues } = useForm<SaveDashboardAsFormDTO>({
+  const { register, handleSubmit, setValue, formState, getValues, watch } = useForm<SaveDashboardAsFormDTO>({
     mode: 'onBlur',
     defaultValues: {
       title: changeInfo.isNew ? changedSaveModel.title! : `${changedSaveModel.title} Copy`,
@@ -41,8 +41,9 @@ export function SaveDashboardAsForm({ dashboard, drawer, changeInfo }: Props) {
       copyTags: false,
     },
   });
+
   const { errors, isValid, defaultValues } = formState;
-  const formValues = getValues();
+  const formValues = watch();
 
   const { state, onSaveDashboard } = useDashboardSave(false);
 
@@ -116,7 +117,7 @@ export function SaveDashboardAsForm({ dashboard, drawer, changeInfo }: Props) {
         <FolderPicker
           onChange={(uid: string | undefined, title: string | undefined) => setValue('folder', { uid, title })}
           // Old folder picker fields
-          value={formValues.folder.uid}
+          value={formValues.folder?.uid}
           initialTitle={defaultValues!.folder!.title}
           dashboardId={changedSaveModel.id ?? undefined}
           enableCreateNew

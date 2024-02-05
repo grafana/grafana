@@ -27,7 +27,6 @@ export interface DashboardMeta {
   canStar?: boolean;
   canAdmin?: boolean;
   url?: string;
-  folderId?: number;
   folderUid?: string;
   canMakeEditable?: boolean;
   provisioned?: boolean;
@@ -51,6 +50,7 @@ export interface DashboardMeta {
   publicDashboardEnabled?: boolean;
   dashboardNotFound?: boolean;
   isEmbedded?: boolean;
+  isNew?: boolean;
 }
 
 export interface AnnotationActions {

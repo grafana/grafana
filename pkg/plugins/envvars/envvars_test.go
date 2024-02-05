@@ -798,6 +798,60 @@ func TestService_GetConfigMap_appURL(t *testing.T) {
 	})
 }
 
+func TestService_GetConfigMap_concurrentQueryCount(t *testing.T) {
+	t.Run("Uses the configured concurrent query count", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				ConcurrentQueryCount: 42,
+			},
+		}
+		require.Equal(t, map[string]string{"GF_CONCURRENT_QUERY_COUNT": "42"}, s.GetConfigMap(context.Background(), "", nil))
+	})
+
+	t.Run("Doesn't set the concurrent query count if it is not in the config", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{},
+		}
+		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+	})
+
+	t.Run("Doesn't set the concurrent query count if it is zero", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				ConcurrentQueryCount: 0,
+			},
+		}
+		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+	})
+}
+
+func TestService_GetConfigMap_azureAuthEnabled(t *testing.T) {
+	t.Run("Uses the configured azureAuthEnabled", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				AzureAuthEnabled: true,
+			},
+		}
+		require.Equal(t, map[string]string{"GFAZPL_AZURE_AUTH_ENABLED": "true"}, s.GetConfigMap(context.Background(), "", nil))
+	})
+
+	t.Run("Doesn't set the azureAuthEnabled if it is not in the config", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{},
+		}
+		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+	})
+
+	t.Run("Doesn't set the azureAuthEnabled if it is false", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				AzureAuthEnabled: false,
+			},
+		}
+		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+	})
+}
+
 func TestService_GetConfigMap_azure(t *testing.T) {
 	azSettings := &azsettings.AzureSettings{
 		Cloud:                   azsettings.AzurePublic,

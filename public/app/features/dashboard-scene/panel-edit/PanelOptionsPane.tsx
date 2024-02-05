@@ -3,8 +3,10 @@ import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
 import { ButtonGroup, FilterInput, RadioButtonGroup, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
+import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
 import { getPanelFrameCategory2 } from 'app/features/dashboard/components/PanelEditor/getPanelFrameOptions';
 import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
@@ -26,10 +28,15 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
   static Component = ({ model }: SceneComponentProps<PanelOptionsPane>) => {
     const { panelManager } = model;
     const { panel } = panelManager.state;
-    const { pluginId, options } = panel.useState();
+    const dataObject = sceneGraph.getData(panel);
+    const rawData = dataObject.useState();
+    const dataWithFieldConfig = panel.applyFieldConfig(rawData.data!);
+    const { pluginId, options, fieldConfig } = panel.useState();
     const styles = useStyles2(getStyles);
     const [isVizPickerOpen, setVizPickerOpen] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
     const panelFrameOptions = useMemo(() => getPanelFrameCategory2(panel), [panel]);
+    const [listMode, setListMode] = useState(OptionFilter.All);
 
     const visualizationOptions = useMemo(() => {
       const plugin = panel.getPlugin();
@@ -44,9 +51,53 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
         instanceState: panel.getPanelContext().instanceState!,
       });
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [panel, options]);
+    }, [panel, options, fieldConfig]);
 
-    const mainBoxElements = [panelFrameOptions.render(), ...(visualizationOptions?.map((v) => v.render()) ?? [])];
+    const justOverrides = useMemo(
+      () =>
+        getFieldOverrideCategories(
+          fieldConfig,
+          panel.getPlugin()?.fieldConfigRegistry!,
+          dataWithFieldConfig.series,
+          searchQuery,
+          (newConfig) => {
+            panel.setState({
+              fieldConfig: newConfig,
+            });
+          }
+        ),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [searchQuery, panel, fieldConfig]
+    );
+
+    const isSearching = searchQuery.length > 0;
+    const mainBoxElements: React.ReactNode[] = [];
+
+    if (isSearching) {
+      mainBoxElements.push(
+        renderSearchHits([panelFrameOptions, ...(visualizationOptions ?? [])], justOverrides, searchQuery)
+      );
+    } else {
+      switch (listMode) {
+        case OptionFilter.All:
+          mainBoxElements.push(panelFrameOptions.render());
+
+          for (const item of visualizationOptions ?? []) {
+            mainBoxElements.push(item.render());
+          }
+
+          for (const item of justOverrides) {
+            mainBoxElements.push(item.render());
+          }
+          break;
+        case OptionFilter.Overrides:
+          for (const item of justOverrides) {
+            mainBoxElements.push(item.render());
+          }
+        default:
+          break;
+      }
+    }
 
     return (
       <div className={styles.wrapper}>
@@ -67,18 +118,21 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
               <div className={styles.top}>
                 <FilterInput
                   className={styles.searchOptions}
-                  value={''}
+                  value={searchQuery}
                   placeholder="Search options"
-                  onChange={() => {}}
+                  onChange={setSearchQuery}
                 />
-                <RadioButtonGroup
-                  options={[
-                    { label: 'All', value: 'All' },
-                    { label: 'Overrides', value: 'Overrides' },
-                  ]}
-                  value={'All'}
-                  fullWidth
-                ></RadioButtonGroup>
+                {!isSearching && (
+                  <RadioButtonGroup
+                    options={[
+                      { label: 'All', value: OptionFilter.All },
+                      { label: 'Overrides', value: OptionFilter.Overrides },
+                    ]}
+                    value={listMode}
+                    onChange={setListMode}
+                    fullWidth
+                  ></RadioButtonGroup>
+                )}
               </div>
               <div className={styles.mainBox}>{mainBoxElements}</div>
             </>

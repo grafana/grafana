@@ -11,8 +11,10 @@ import {
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardLinksControls } from '../scene/DashboardLinksControls';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
+import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 
 import { dashboardSceneGraph } from './dashboardSceneGraph';
+import { findVizPanelByKey } from './utils';
 
 describe('dashboardSceneGraph', () => {
   describe('getTimePicker', () => {
@@ -75,6 +77,20 @@ describe('dashboardSceneGraph', () => {
       expect(dashboardControls).not.toBeNull();
     });
   });
+
+  describe('getPanelLinks', () => {
+    it('should throw if no links object defined', () => {
+      const scene = buildTestScene();
+      const panelWithNoLinks = findVizPanelByKey(scene, 'panel-1')!;
+      expect(() => dashboardSceneGraph.getPanelLinks(panelWithNoLinks)).toThrow();
+    });
+
+    it('should resolve VizPanelLinks object', () => {
+      const scene = buildTestScene();
+      const panelWithNoLinks = findVizPanelByKey(scene, 'panel-with-links')!;
+      expect(dashboardSceneGraph.getPanelLinks(panelWithNoLinks)).toBeInstanceOf(VizPanelLinks);
+    });
+  });
 });
 
 function buildTestScene(overrides?: Partial<DashboardSceneState>) {
@@ -119,6 +135,15 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
             key: 'panel-2-clone-1',
             pluginId: 'table',
             $data: new SceneQueryRunner({ key: 'data-query-runner2', queries: [{ refId: 'A' }] }),
+          }),
+        }),
+        new SceneGridItem({
+          body: new VizPanel({
+            title: 'Panel B',
+            key: 'panel-with-links',
+            pluginId: 'table',
+            $data: new SceneQueryRunner({ key: 'data-query-runner3', queries: [{ refId: 'A' }] }),
+            titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
           }),
         }),
       ],
