@@ -51,6 +51,8 @@ export function mergeLocalsAndRemotes({
           ? true
           : instancesSet.has(remotePlugin.slug) && catalogPlugin.isInstalled;
         catalogPlugin.isInstalled = instancesSet.has(remotePlugin.slug) || catalogPlugin.isInstalled;
+
+        catalogPlugin.isUninstalling = Boolean(localCounterpart) && !instancesSet.has(remotePlugin.slug);
       }
 
       catalogPlugins.push(catalogPlugin);
