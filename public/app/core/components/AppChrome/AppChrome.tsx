@@ -14,7 +14,7 @@ import { KioskMode } from 'app/types';
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { DOCKED_LOCAL_STORAGE_KEY, DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY } from './AppChromeService';
-import { MegaMenu as DockedMegaMenu } from './DockedMegaMenu/MegaMenu';
+import { MegaMenu } from './MegaMenu/MegaMenu';
 import { NavToolbar } from './NavToolbar/NavToolbar';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { TopSearchBar } from './TopBar/TopSearchBar';
@@ -98,7 +98,7 @@ export function AppChrome({ children }: Props) {
       <main className={contentClass}>
         <div className={styles.panes}>
           {!state.chromeless && state.megaMenuDocked && state.megaMenuOpen && (
-            <DockedMegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
+            <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
           )}
           <div className={styles.pageContainer} id="pageContent">
             {children}
