@@ -91,7 +91,7 @@ describe('QueryVariableEditor', () => {
     jest.clearAllMocks();
   });
 
-  it.only('should render the component with initializing the components correctly', async () => {
+  it('should render the component with initializing the components correctly', async () => {
     const { renderer } = await setup();
     const dataSourcePicker = renderer.getByTestId(selectors.components.DataSourcePicker.inputV2);
     const queryEditor = renderer.getByTestId(
