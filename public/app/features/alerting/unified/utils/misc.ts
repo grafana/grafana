@@ -129,10 +129,6 @@ export function unquoteWithUnescape(input: string) {
     .replace(/\\\\/g, '\\');
 }
 
-export function isQuoted(input: string) {
-  return input.startsWith('"') && input.endsWith('"');
-}
-
 export function makeRuleBasedSilenceLink(alertManagerSourceName: string, rule: CombinedRule) {
   // we wrap the name of the alert with quotes since it might contain starting and trailing spaces
   const labels: Labels = {

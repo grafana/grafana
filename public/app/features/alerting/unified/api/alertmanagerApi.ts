@@ -1,4 +1,3 @@
-import { produce } from 'immer';
 import { isEmpty } from 'lodash';
 
 import { dispatch } from 'app/store/store';
@@ -16,7 +15,7 @@ import {
 } from '../../../../plugins/datasource/alertmanager/types';
 import { NotifierDTO } from '../../../../types';
 import { withPerformanceLogging } from '../Analytics';
-import { matcherToOperator, quoteAmConfigMatchers, unquoteRouteMatchers } from '../utils/alertmanager';
+import { matcherToOperator } from '../utils/alertmanager';
 import {
   getDatasourceAPIUid,
   GRAFANA_RULES_SOURCE_NAME,
@@ -197,11 +196,7 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
               }));
             }
 
-            return produce(result, (draft) => {
-              if (draft.alertmanager_config.route) {
-                unquoteRouteMatchers(draft.alertmanager_config.route);
-              }
-            });
+            return result;
           })
           .then((result) => result ?? defaultConfig)
           .then((result) => ({ data: result }))
@@ -229,14 +224,12 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
       void,
       { selectedAlertmanager: string; config: AlertManagerCortexConfig }
     >({
-      query: ({ selectedAlertmanager, config, ...rest }) => {
-        return {
-          url: `/api/alertmanager/${getDatasourceAPIUid(selectedAlertmanager)}/config/api/v1/alerts`,
-          method: 'POST',
-          data: quoteAmConfigMatchers(config),
-          ...rest,
-        };
-      },
+      query: ({ selectedAlertmanager, config, ...rest }) => ({
+        url: `/api/alertmanager/${getDatasourceAPIUid(selectedAlertmanager)}/config/api/v1/alerts`,
+        method: 'POST',
+        data: config,
+        ...rest,
+      }),
       invalidatesTags: ['AlertmanagerConfiguration'],
     }),
 

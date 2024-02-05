@@ -66,11 +66,7 @@ import {
   setRulerRuleGroup,
 } from '../api/ruler';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
-import {
-  addDefaultsToAlertmanagerConfig,
-  quoteAmConfigMatchers,
-  removeMuteTimingFromRoute,
-} from '../utils/alertmanager';
+import { addDefaultsToAlertmanagerConfig, removeMuteTimingFromRoute } from '../utils/alertmanager';
 import {
   getAllRulesSourceNames,
   getRulesDataSource,
@@ -534,11 +530,7 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
               'A newer Alertmanager configuration is available. Please reload the page and try again to not overwrite recent changes.'
             );
           }
-
-          await updateAlertManagerConfig(
-            alertManagerSourceName,
-            addDefaultsToAlertmanagerConfig(quoteAmConfigMatchers(newConfig))
-          );
+          await updateAlertManagerConfig(alertManagerSourceName, addDefaultsToAlertmanagerConfig(newConfig));
           thunkAPI.dispatch(alertmanagerApi.util.invalidateTags(['AlertmanagerConfiguration']));
           if (redirectPath) {
             const options = new URLSearchParams(redirectSearch ?? '');

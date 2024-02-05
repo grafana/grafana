@@ -10,15 +10,13 @@ import { useDispatch } from 'app/types';
 import { AlertmanagerAction, useAlertmanagerAbility } from '../../hooks/useAbilities';
 import { expireSilenceAction } from '../../state/actions';
 import { parseMatchers } from '../../utils/alertmanager';
-import { matcherToObjectMatcher } from '../../utils/matchers';
 import { getSilenceFiltersFromUrlParams, makeAMLink } from '../../utils/misc';
 import { Authorize } from '../Authorize';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
-import { Matchers } from '../notification-policies/Matchers';
 import { ActionButton } from '../rules/ActionButton';
 import { ActionIcon } from '../rules/ActionIcon';
 
-// import { Matchers } from './Matchers';
+import { Matchers } from './Matchers';
 import { NoSilencesSplash } from './NoSilencesCTA';
 import { SilenceDetails } from './SilenceDetails';
 import { SilenceStateTag } from './SilenceStateTag';
@@ -221,9 +219,8 @@ function useColumns(alertManagerSourceName: string) {
       {
         id: 'matchers',
         label: 'Matching labels',
-        renderCell: function renderMatchers({ data: { matchers = [] } }) {
-          const objectMatchers = matchers.map(matcherToObjectMatcher);
-          return <Matchers matchers={objectMatchers} />;
+        renderCell: function renderMatchers({ data: { matchers } }) {
+          return <Matchers matchers={matchers || []} />;
         },
         size: 10,
       },
