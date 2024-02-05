@@ -104,7 +104,6 @@ import (
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	pluginDashboards "github.com/grafana/grafana/pkg/services/pluginsintegration/dashboards"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginexternal"
 	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -386,7 +385,6 @@ var wireBasicSet = wire.NewSet(
 	idimpl.ProvideService,
 	wire.Bind(new(auth.IDService), new(*idimpl.Service)),
 	cloudmigrations.ProvideService,
-	pluginexternal.ProvideService,
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
