@@ -5,6 +5,7 @@ import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import {
   SceneComponentProps,
   SceneDataLayers,
+  SceneObject,
   SceneObjectBase,
   VizPanel,
   dataLayers,
@@ -170,6 +171,7 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
 
 function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditView>) {
   const dashboard = model.getDashboard();
+  const { overlay } = dashboard.useState();
   const { layers } = model.getSceneDataLayers().useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   const { editIndex } = model.useState();
@@ -186,6 +188,7 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
         editIndex={editIndex}
         navModel={navModel}
         dashboard={dashboard}
+        overlay={overlay}
         onUpdate={model.onUpdate}
         goBackToList={model.goBackToList}
         onPreview={model.onPreview}
@@ -204,6 +207,7 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
         onDelete={model.onDelete}
         onMove={model.onMove}
       />
+      {overlay && <overlay.Component model={overlay} />}
     </Page>
   );
 }
@@ -215,6 +219,7 @@ interface AnnotationsSettingsEditViewProps {
   editIndex: number;
   navModel: NavModel;
   dashboard: DashboardScene;
+  overlay: SceneObject | undefined;
   onUpdate: (annotation: AnnotationQuery, editIndex: number) => void;
   goBackToList: () => void;
   onPreview: () => void;
@@ -228,6 +233,7 @@ function AnnotationsSettingsEditView({
   panels,
   editIndex,
   dashboard,
+  overlay,
   onUpdate,
   goBackToList,
   onPreview,
@@ -241,6 +247,7 @@ function AnnotationsSettingsEditView({
     text: name,
     parentItem: parentTab,
   };
+
   return (
     <Page navModel={navModel} pageNav={editAnnotationPageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
@@ -253,6 +260,7 @@ function AnnotationsSettingsEditView({
         onDelete={onDelete}
         onPreview={onPreview}
       />
+      {overlay && <overlay.Component model={overlay} />}
     </Page>
   );
 }
