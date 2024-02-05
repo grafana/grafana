@@ -3,4 +3,4 @@
 // +k8s:defaulter-gen=TypeMeta
 // +groupName=reporting.grafana.app
 
-package v0alpha1
+package v0alpha1 // import "github.com/grafana/grafana/pkg/apis/reporting/v0alpha1"

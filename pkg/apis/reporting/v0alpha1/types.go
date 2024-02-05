@@ -12,7 +12,11 @@ type Report struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// Report definition
 	Spec ReportSpec `json:"spec,omitempty"`
+
+	// Report status
+	Status *ReportStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -23,6 +27,7 @@ type ReportList struct {
 	Items []Report `json:"items,omitempty"`
 }
 
+// +enum
 type Type string
 
 const (
@@ -33,14 +38,18 @@ const (
 	PDFTablesAppendix Type = "pdf-tables-appendix"
 )
 
+// +enum
 type State string
 
 const (
-	Paused       State = "paused"
+	// Comment on paused
+	Paused State = "paused"
+	// Ready, but not scheduled
 	NotScheduled State = "not scheduled"
 	Expired      State = "expired"
 	Scheduled    State = "scheduled"
-	Draft        State = "draft"
+	// Work in progress
+	Draft State = "draft"
 )
 
 var WeekDays = map[string]int{
@@ -69,19 +78,47 @@ const (
 	MonthsInterval string = "months"
 )
 
-// Config is model representation of the report resource
+// ReportSpec defines the report generation behavior
 type ReportSpec struct {
-	Title              string               `json:"title"` // was name (but that is now UID)
-	Recipients         string               `json:"recipients"`
-	ReplyTo            string               `json:"replyTo"`
-	Message            string               `json:"message"`
-	Schedule           Schedule             `json:"schedule"`
-	Options            ReportOptions        `json:"options"`
-	EnableDashboardURL bool                 `json:"enableDashboardUrl"`
-	State              State                `json:"state"`
-	Dashboards         []DashboardReference `json:"dashboards"`
-	Formats            []Type               `json:"formats"`
-	ScaleFactor        int                  `json:"scaleFactor"`
+	// Report title
+	Title string `json:"title"`
+
+	// Send report to
+	Recipients string `json:"recipients"`
+
+	// Reply email address
+	ReplyTo string `json:"replyTo"`
+
+	// Message body
+	Message string `json:"message"`
+
+	// Reporting schedule
+	Schedule Schedule `json:"schedule"`
+
+	// Layout options for the report
+	Options ReportOptions `json:"options"`
+
+	// Adds a dashboard url to the bottom of the report email.
+	EnableDashboardURL bool `json:"enableDashboardUrl"`
+
+	// The current edit state
+	State State `json:"state"`
+
+	// Dashboards used to render the report
+	// +listType=map
+	// +listMapKey=uid
+	Dashboards []DashboardReference `json:"dashboards"`
+
+	// +listType=set
+	Formats []Type `json:"formats"`
+
+	// Scale the dashboard
+	ScaleFactor int `json:"scaleFactor"`
+}
+
+// Dummy
+type ReportStatus struct {
+	Scheduled int `json:"scheduled"`
 }
 
 type Schedule struct {

@@ -21,6 +21,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/reporting/v0alpha1.ReportList":         schema_pkg_apis_reporting_v0alpha1_ReportList(ref),
 		"github.com/grafana/grafana/pkg/apis/reporting/v0alpha1.ReportOptions":      schema_pkg_apis_reporting_v0alpha1_ReportOptions(ref),
 		"github.com/grafana/grafana/pkg/apis/reporting/v0alpha1.ReportSpec":         schema_pkg_apis_reporting_v0alpha1_ReportSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/reporting/v0alpha1.ReportStatus":       schema_pkg_apis_reporting_v0alpha1_ReportStatus(ref),
 		"github.com/grafana/grafana/pkg/apis/reporting/v0alpha1.Schedule":           schema_pkg_apis_reporting_v0alpha1_Schedule(ref),
 	}
 }
@@ -89,15 +90,22 @@ func schema_pkg_apis_reporting_v0alpha1_Report(ref common.ReferenceCallback) com
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/reporting/v0alpha1.ReportSpec"),
+							Description: "Report definition",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/reporting/v0alpha1.ReportSpec"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Report status",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/reporting/v0alpha1.ReportStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/reporting/v0alpha1.ReportSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/grafana/grafana/pkg/apis/reporting/v0alpha1.ReportSpec", "github.com/grafana/grafana/pkg/apis/reporting/v0alpha1.ReportStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
@@ -179,19 +187,20 @@ func schema_pkg_apis_reporting_v0alpha1_ReportSpec(ref common.ReferenceCallback)
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "Config is model representation of the report resource",
+				Description: "ReportSpec defines the report generation behavior",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"title": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "Report title",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"recipients": {
 						SchemaProps: spec.SchemaProps{
-							Description: "was name (but that is now UID)",
+							Description: "Send report to",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -199,47 +208,63 @@ func schema_pkg_apis_reporting_v0alpha1_ReportSpec(ref common.ReferenceCallback)
 					},
 					"replyTo": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "Reply email address",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"message": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "Message body",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"schedule": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/reporting/v0alpha1.Schedule"),
+							Description: "Reporting schedule",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/reporting/v0alpha1.Schedule"),
 						},
 					},
 					"options": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/pkg/apis/reporting/v0alpha1.ReportOptions"),
+							Description: "Layout options for the report",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/reporting/v0alpha1.ReportOptions"),
 						},
 					},
 					"enableDashboardUrl": {
 						SchemaProps: spec.SchemaProps{
-							Default: false,
-							Type:    []string{"boolean"},
-							Format:  "",
+							Description: "Adds a dashboard url to the bottom of the report email.",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
 						},
 					},
 					"state": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "The current edit state\n\nPossible enum values:\n - `\"draft\"` Work in progress\n - `\"expired\"`\n - `\"not scheduled\"` Ready, but not scheduled\n - `\"paused\"` Comment on paused\n - `\"scheduled\"`",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"draft", "expired", "not scheduled", "paused", "scheduled"},
 						},
 					},
 					"dashboards": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-map-keys": []interface{}{
+									"uid",
+								},
+								"x-kubernetes-list-type": "map",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
+							Description: "Dashboards used to render the report",
+							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
@@ -251,6 +276,11 @@ func schema_pkg_apis_reporting_v0alpha1_ReportSpec(ref common.ReferenceCallback)
 						},
 					},
 					"formats": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "set",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -266,9 +296,10 @@ func schema_pkg_apis_reporting_v0alpha1_ReportSpec(ref common.ReferenceCallback)
 					},
 					"scaleFactor": {
 						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int32",
+							Description: "Scale the dashboard",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int32",
 						},
 					},
 				},
@@ -277,6 +308,27 @@ func schema_pkg_apis_reporting_v0alpha1_ReportSpec(ref common.ReferenceCallback)
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/reporting/v0alpha1.DashboardReference", "github.com/grafana/grafana/pkg/apis/reporting/v0alpha1.ReportOptions", "github.com/grafana/grafana/pkg/apis/reporting/v0alpha1.Schedule"},
+	}
+}
+
+func schema_pkg_apis_reporting_v0alpha1_ReportStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Dummy",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"scheduled": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int32",
+						},
+					},
+				},
+				Required: []string{"scheduled"},
+			},
+		},
 	}
 }
 
