@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -1121,7 +1122,7 @@ func TestService_GetDecryptedValues(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
 		require.NoError(t, err)
 
 		jsonData := map[string]string{
@@ -1149,7 +1150,7 @@ func TestService_GetDecryptedValues(t *testing.T) {
 		secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 		secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 		quotaService := quotatest.New(false, nil)
-		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
+		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
 		require.NoError(t, err)
 
 		jsonData := map[string]string{
@@ -1173,7 +1174,7 @@ func TestDataSource_CustomHeaders(t *testing.T) {
 	secretsService := secretsmng.SetupTestService(t, fakes.NewFakeSecretsStore())
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	quotaService := quotatest.New(false, nil)
-	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, nil, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
+	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, &setting.Cfg{}, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{})
 	require.NoError(t, err)
 
 	dsService.cfg = setting.NewCfg()
@@ -1306,3 +1307,54 @@ Wtnpl+TdAoGAGqKqo2KU3JoY3IuTDUk1dsNAm8jd9EWDh+s1x4aG4N79mwcss5GD
 FF8MbFPneK7xQd8L6HisKUDAUi2NOyynM81LAftPkvN6ZuUVeFDfCL4vCA0HUXLD
 +VrOhtUZkNNJlLMiVRJuQKUOGlg8PpObqYbstQAf/0/yFJMRHG82Tcg=
 -----END RSA PRIVATE KEY-----`
+
+type mockLogger struct {
+	*log.ConcreteLogger
+	errors []string
+}
+
+func (l *mockLogger) Error(msg string, args ...any) {
+	l.errors = append(l.errors, msg)
+}
+
+func TestService_validateExternal(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.PluginSettings = setting.PluginSettings{
+		"grafana-testdata-datasource": map[string]string{
+			"as_external": "true",
+		},
+	}
+
+	t.Run("should not log error if core plugin is loaded as external", func(t *testing.T) {
+		l := &mockLogger{ConcreteLogger: log.NewNopLogger()}
+		s := &Service{
+			cfg:    cfg,
+			logger: l,
+			pluginStore: &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{
+					{
+						JSONData: plugins.JSONData{
+							ID: "grafana-testdata-datasource",
+						},
+					},
+				},
+			},
+		}
+		s.validateExternal()
+		assert.Len(t, l.errors, 0)
+	})
+
+	t.Run("should log error if a core plugin is missing", func(t *testing.T) {
+		l := &mockLogger{ConcreteLogger: log.NewNopLogger()}
+		s := &Service{
+			cfg:    cfg,
+			logger: l,
+			pluginStore: &pluginstore.FakePluginStore{
+				PluginList: []pluginstore.Plugin{},
+			},
+		}
+		s.validateExternal()
+		assert.Len(t, l.errors, 1)
+		assert.Contains(t, l.errors[0], "Core plugin expected to be loaded as external")
+	})
+}
