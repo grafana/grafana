@@ -52,18 +52,18 @@
   }
 }
 
-// @include media-breakpoint-down(sm) {
-//   .react-grid-item {
-//     display: block !important;
-//     transition-property: none !important;
-//     position: unset !important;
-//     transform: translate(0px, 0px) !important;
-//     margin-bottom: $space-md;
-//   }
-//   .panel-repeater-grid-item {
-//     height: auto !important;
-//   }
-// }
+@include media-breakpoint-down(sm) {
+  .react-grid-item {
+    display: block !important;
+    transition-property: none !important;
+    position: unset !important;
+    transform: translate(0px, 0px) !important;
+    margin-bottom: $space-md;
+  }
+  .panel-repeater-grid-item {
+    height: auto !important;
+  }
+}
 
 .react-grid-item.react-grid-placeholder {
   box-shadow: $panel-grid-placeholder-shadow;

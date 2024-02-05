@@ -85,18 +85,18 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       }
 
       if (rsp) {
-        // if (rsp.meta.url && route !== DashboardRoutes.Embedded) {
-        //   const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.meta.url);
-        //   const currentPath = locationService.getLocation().pathname;
-        //   if (dashboardUrl !== currentPath) {
-        //     // Spread current location to persist search params used for navigation
-        //     locationService.replace({
-        //       ...locationService.getLocation(),
-        //       pathname: dashboardUrl,
-        //     });
-        //     console.log('not correct url correcting', dashboardUrl, currentPath);
-        //   }
-        // }
+        if (rsp.meta.url && route !== DashboardRoutes.Embedded) {
+          const dashboardUrl = locationUtil.stripBaseFromUrl(rsp.meta.url);
+          const currentPath = locationService.getLocation().pathname;
+          if (dashboardUrl !== currentPath) {
+            // Spread current location to persist search params used for navigation
+            locationService.replace({
+              ...locationService.getLocation(),
+              pathname: dashboardUrl,
+            });
+            console.log('not correct url correcting', dashboardUrl, currentPath);
+          }
+        }
 
         // Populate nav model in global store according to the folder
         await this.initNavModel(rsp);
