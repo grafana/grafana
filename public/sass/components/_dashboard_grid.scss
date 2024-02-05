@@ -5,16 +5,35 @@
   // this needs to use visibility and not display none in order not to cause resize flickering
   visibility: hidden;
   background-image: none;
+  z-index: $zindex-active-panel;
 
   &::after {
     width: 8px;
     height: 8px;
     bottom: 0;
     right: 0;
-    border-right: 2px solid $border2;
-    border-bottom: 2px solid $border2;
+    border-right: 2px solid $border1;
+    border-bottom: 2px solid $border1;
     border-right-style: solid;
     border-bottom-style: solid;
+  }
+}
+
+.scene-grid-layout {
+  .react-grid-item > .react-resizable-handle {
+    visibility: visible;
+  }
+
+  .react-grid-item {
+    &:hover,
+    &.resizing {
+      .react-resizable-handle {
+        &::after {
+          border-right: 2px solid $external-link-color;
+          border-bottom: 2px solid $external-link-color;
+        }
+      }
+    }
   }
 }
 
@@ -25,7 +44,6 @@
   &:hover {
     .react-resizable-handle {
       visibility: visible;
-      z-index: $zindex-active-panel;
     }
   }
 }
