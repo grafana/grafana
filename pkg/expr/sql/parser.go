@@ -9,6 +9,7 @@ import (
 	"github.com/blastrain/vitess-sqlparser/sqlparser"
 )
 
+// TablesList returns a list of tables for the sql statement
 func TablesList(rawSQL string) ([]string, error) {
 	stmt, err := sqlparser.Parse(rawSQL)
 	if err != nil {
