@@ -31,8 +31,8 @@ async function main() {
           count: details.filter((i) => i.message === issue.message).length,
         });
       }
-
-      resultMap[suite.name][file] = fileIssues;
+      const relativePath = file.replace(process.cwd(), '');
+      resultMap[suite.name][relativePath] = fileIssues;
     }
   }
 
