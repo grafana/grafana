@@ -54,9 +54,9 @@ For validating the rules, we recommend testing the rules in the Loki Explore vie
 
 We have two teams, Team A and Team B. Loki access is setup with `Admin` roles to have `Admin` permission only.
 
-- Team A has a rule `namespace="dev"`. 
+- Team A has a rule `namespace="dev"`.
 
-- Team B has a rule `namespace="prod"`. 
+- Team B has a rule `namespace="prod"`.
 
 A user that is part of Team A will have access to logs that match `namespace="dev"`.
 
@@ -66,9 +66,9 @@ A user that is part of Team B will have access to logs that match `namespace="pr
 
 We have two teams, Team A and Team B. Loki access is setup with `Admin` roles having `Admin` permission.
 
-- Team A has rule `cluster="us-west-0", namespace="dev|prod"` configured. 
+- Team A has rule `cluster="us-west-0", namespace="dev|prod"` configured.
 
-- Team B has rule `cluster="us-west-0", namespace="!prod"` configured. 
+- Team B has rule `cluster="us-west-0", namespace="!prod"` configured.
 
 A user that is only part of Team A will have access to logs that match `cluster="us-west-0" AND (namespace="dev" OR namespace="prod")`.
 
@@ -88,10 +88,9 @@ A `Admin` user that is not part of any Team with `Admin` role will have access t
 
 We have two teams, Team A and Team B.
 
-- Team A has a rule `namespace="dev"`. 
+- Team A has a rule `namespace="dev"`.
 
-- Team B has a rule `namespace!="dev"`. 
-
+- Team B has a rule `namespace!="dev"`.
 
 A user in Team A will have access to logs that match `namespace="dev"`.
 
@@ -103,17 +102,15 @@ A user in Team b will have access to logs that match `namespace!="dev"`.
 
 We have two teams, Team A and Team B. Loki access is setup with `Editor`, `Viewer` roles to have `Query` permission.
 
-- Team A has a rule `namespace="dev"` configured. 
+- Team A has a rule `namespace="dev"` configured.
 
-- Team B does not have a rule configured for it. 
-
+- Team B does not have a rule configured for it.
 
 A user that is part of Team A will have access to logs that match `namespace="dev"`.
 
 A user that is part of Team A and part of Team B will have access to logs that match `namespace="dev"`.
 
-A user that is not part of Team A and part of Team B, that is `Editor` or `Viewer` will have access to all logs (due to the query permission for the user). 
-
+A user that is not part of Team A and part of Team B, that is `Editor` or `Viewer` will have access to all logs (due to the query permission for the user).
 
 ## Setting up Team LBAC rules
 
