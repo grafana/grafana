@@ -14,7 +14,11 @@ const err = "sqlexpressions feature is not enabled"
 
 // NewInMemoryDB ...
 func NewInMemoryDB(ctx context.Context) (*DuckDB, error) {
-	return nil, errors.New(err)
+	return &DuckDB{
+		db:     nil,
+		name:   "",
+		lookup: Fields{},
+	}, errors.New(err)
 }
 
 // Query ...
