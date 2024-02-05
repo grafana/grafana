@@ -3015,7 +3015,7 @@
     },
     "/dashboards/db": {
       "post": {
-        "description": "Creates a new dashboard or updates an existing dashboard.",
+        "description": "Creates a new dashboard or updates an existing dashboard.\nNote: This endpoint is not intended for creating folders, use `POST /api/folders` for that.",
         "tags": [
           "dashboards"
         ],
@@ -7850,13 +7850,6 @@
         "operationId": "renderReportPDF",
         "deprecated": true,
         "parameters": [
-          {
-            "type": "integer",
-            "format": "int64",
-            "name": "DashboardID",
-            "in": "path",
-            "required": true
-          },
           {
             "type": "integer",
             "format": "int64",

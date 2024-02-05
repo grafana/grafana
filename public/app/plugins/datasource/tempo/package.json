@@ -9,7 +9,7 @@
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/experimental": "1.7.9",
     "@grafana/lezer-logql": "0.2.2",
-    "@grafana/lezer-traceql": "0.0.13",
+    "@grafana/lezer-traceql": "0.0.14",
     "@grafana/monaco-logql": "^0.0.7",
     "@grafana/o11y-ds-frontend": "workspace:*",
     "@grafana/runtime": "workspace:*",
@@ -57,7 +57,7 @@
     "react-select-event": "5.5.1",
     "ts-node": "10.9.2",
     "typescript": "5.3.3",
-    "webpack": "5.90.0"
+    "webpack": "5.90.1"
   },
   "peerDependencies": {
     "@grafana/runtime": "*"
