@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry/apis/query/expr"
 	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -93,6 +94,8 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&v0alpha1.DataSourceApiServer{},
 		&v0alpha1.DataSourceApiServerList{},
 		&v0alpha1.QueryDataResponse{},
+		&v0alpha1.QueryTypeDefinition{},
+		&v0alpha1.QueryTypeDefinitionList{},
 	)
 }
 
@@ -115,6 +118,27 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 
 	storage := map[string]rest.Storage{}
 	storage[plugins.resourceInfo.StoragePath()] = plugins
+
+	// Expression QueryTypes
+	// exprs, err := expr.NewExpressionRegistry()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// exprstrorage := newQueryTypeStorage(exprs)
+
+	exprs, err := NewQueryTypeRegistry[v0alpha1.ExpressionQuery](
+		[]v0alpha1.QueryTypeSupport[v0alpha1.ExpressionQuery]{
+			&expr.MathExpressionSupport{},
+			&expr.ReduceExpressionSupport{},
+		},
+		func() v0alpha1.ExpressionQuery {
+			return nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	storage[exprs.resourceInfo.StoragePath()] = exprs
 
 	apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
 	return &apiGroupInfo, nil

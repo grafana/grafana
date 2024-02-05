@@ -9,7 +9,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
-	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 
@@ -46,7 +45,7 @@ func (s *pluginsStorage) NamespaceScoped() bool {
 }
 
 func (s *pluginsStorage) GetSingularName() string {
-	return example.DummyResourceInfo.GetSingularName()
+	return s.resourceInfo.GetSingularName()
 }
 
 func (s *pluginsStorage) NewList() runtime.Object {
