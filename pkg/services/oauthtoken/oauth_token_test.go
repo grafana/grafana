@@ -158,7 +158,6 @@ func TestService_TryTokenRefresh(t *testing.T) {
 		identity        identity.Requester
 		socialConnector *socialtest.MockSocialConnector
 		socialService   *socialtest.FakeSocialService
-		validations     func()
 
 		service *Service
 	}
@@ -185,21 +184,6 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			},
 		},
 		{
-			desc: "should skip token refresh if RefreshToken is empty",
-			setup: func(env *environment) {
-				env.authInfoService.ExpectedUserAuth = &login.UserAuth{}
-
-				env.identity = &user.SignedInUser{
-					AuthenticatedBy: login.GenericOAuthModule,
-					UserID:          1,
-				}
-
-				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
-					UseRefreshToken: true,
-				}
-			},
-		},
-		{ /** TestService_TryTokenRefresh_ValidToken **/
 			desc: "should skip token refresh since the token is still valid",
 			setup: func(env *environment) {
 				token := &oauth2.Token{
@@ -374,21 +358,6 @@ func TestService_TryTokenRefresh(t *testing.T) {
 			// token refresh
 			err := env.service.TryTokenRefresh(context.Background(), env.identity)
 
-			// validations
-			if env.validations != nil {
-				env.validations()
-			}
-
-			// socialConnector.AssertNumberOfCalls(t, "TokenSource", 1)
-
-			// authInfoQuery := &login.GetAuthInfoQuery{
-			// 	UserId:     1,
-			// 	AuthModule: login.GenericOAuthModule,
-			// 	AuthId:     "subject",
-			// }
-			// authInfo, err := env.service.AuthInfoService.GetAuthInfo(context.Background(), authInfoQuery)
-			// fmt.Println(authInfo)
-
 			// test and validations
 			assert.ErrorIs(t, err, tt.expectedErr)
 			socialConnector.AssertExpectations(t)
@@ -509,6 +478,131 @@ func TestOAuthTokenSync_needTokenRefresh(t *testing.T) {
 			assert.NotNil(t, token)
 			assert.Equal(t, tt.expectedTokenRefreshFlag, needsTokenRefresh)
 			assert.Equal(t, tt.expectedTokenDuration, tokenDuration)
+		})
+	}
+}
+
+func TestOAuthTokenSync_tryGetOrRefreshOAuthToken(t *testing.T) {
+	timeNow := time.Now()
+	token := &oauth2.Token{
+		AccessToken:  "oauth_access_token",
+		RefreshToken: "refresh_token_found",
+		Expiry:       timeNow,
+		TokenType:    "Bearer",
+	}
+	type environment struct {
+		authInfoService *authinfotest.FakeService
+		cache           *localcache.CacheService
+		socialConnector *socialtest.MockSocialConnector
+		socialService   *socialtest.FakeSocialService
+
+		service *Service
+	}
+	tests := []struct {
+		desc          string
+		expectedErr   error
+		expectedToken *oauth2.Token
+		usr           *login.UserAuth
+		setup         func(env *environment)
+	}{
+		{
+			desc: "should refresh token if the token is expired",
+			usr: &login.UserAuth{
+				UserId:           int64(1234),
+				OAuthAccessToken: "new_access_token",
+				OAuthExpiry:      timeNow,
+			},
+			setup: func(env *environment) {
+				env.cache.Set("token-check-1234", token, 1*time.Minute)
+			},
+			expectedToken: &oauth2.Token{
+				AccessToken: "new_access_token",
+				Expiry:      timeNow,
+			},
+		},
+		{
+			desc: "should return ErrNotAnOAuthProvider error when the user is not an oauth provider",
+			usr: &login.UserAuth{
+				UserId:     int64(1234),
+				AuthModule: login.SAMLAuthModule,
+			},
+			expectedErr: ErrNotAnOAuthProvider,
+		},
+		{
+			desc: "should return ErrNoRefreshTokenFound error when the no refresh token was found",
+			usr: &login.UserAuth{
+				UserId:     int64(1234),
+				AuthModule: login.GenericOAuthModule,
+			},
+			expectedErr: ErrNoRefreshTokenFound,
+		},
+		{
+			desc: "should not refresh token if the token is not expired",
+			usr: &login.UserAuth{
+				UserId:            int64(1234),
+				AuthModule:        login.GenericOAuthModule,
+				OAuthAccessToken:  "oauth_access_token",
+				OAuthRefreshToken: "refresh_token_found",
+				OAuthExpiry:       timeNow,
+			},
+			expectedToken: token,
+			setup: func(env *environment) {
+				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token)).Once()
+			},
+		},
+		{
+			desc: "should update saved token if the user auth has new access/refresh tokens",
+			usr: &login.UserAuth{
+				UserId:            int64(1234),
+				AuthModule:        login.GenericOAuthModule,
+				OAuthAccessToken:  "new_oauth_access_token",
+				OAuthRefreshToken: "new_refresh_token_found",
+				OAuthExpiry:       timeNow,
+			},
+			expectedToken: &oauth2.Token{
+				AccessToken:  "oauth_access_token",
+				RefreshToken: "refresh_token_found",
+				Expiry:       timeNow,
+				TokenType:    "Bearer",
+			},
+			setup: func(env *environment) {
+				env.socialConnector.On("TokenSource", mock.Anything, mock.Anything).Return(oauth2.StaticTokenSource(token)).Once()
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			socialConnector := &socialtest.MockSocialConnector{}
+
+			env := environment{
+				authInfoService: &authinfotest.FakeService{},
+				cache:           localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute),
+				socialConnector: socialConnector,
+				socialService: &socialtest.FakeSocialService{
+					ExpectedConnector: socialConnector,
+				},
+			}
+
+			if tt.setup != nil {
+				tt.setup(&env)
+			}
+
+			env.service = &Service{
+				AuthInfoService:      env.authInfoService,
+				Cfg:                  setting.NewCfg(),
+				cache:                env.cache,
+				singleFlightGroup:    &singleflight.Group{},
+				SocialService:        env.socialService,
+				tokenRefreshDuration: newTokenRefreshDurationMetric(prometheus.NewRegistry()),
+			}
+
+			token, err := env.service.tryGetOrRefreshOAuthToken(context.Background(), tt.usr)
+
+			if tt.expectedToken != nil {
+				assert.Equal(t, tt.expectedToken, token)
+			}
+			assert.ErrorIs(t, tt.expectedErr, err)
+			socialConnector.AssertExpectations(t)
 		})
 	}
 }
