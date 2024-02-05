@@ -3,7 +3,7 @@
     "default": {
       "runner": "nx/tasks-runners/default",
       "options": {
-        "cacheableOperations": ["build", "themes:generate", "i18n:compile"]
+        "cacheableOperations": ["build", "themes:generate"]
       }
     }
   },

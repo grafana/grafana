@@ -63,10 +63,10 @@
       "start": {
         "dependsOn": [
           "grafana:themes:generate",
-          "grafana:i18n:compile",
           "@grafana-plugins/grafana-testdata-datasource:build",
           "@grafana-plugins/grafana-pyroscope-datasource:build",
           "@grafana-plugins/grafana-azure-monitor-datasource:build",
+          "@grafana-plugins/grafana-cloud-monitoring-datasource:build",
           "@grafana-plugins/parca:build",
           "@grafana-plugins/tempo:build"
         ]
@@ -228,11 +228,13 @@
     "ts-node": "10.9.2",
     "typescript": "5.3.3",
     "webpack": "5.90.1",
+    "webpack-assets-manifest": "^5.1.0",
     "webpack-bundle-analyzer": "4.10.1",
     "webpack-cli": "5.1.4",
     "webpack-dev-server": "4.15.1",
     "webpack-manifest-plugin": "5.0.0",
     "webpack-merge": "5.10.0",
+    "webpackbar": "^6.0.0",
     "yaml": "^2.0.0",
     "yargs": "^17.5.1"
   },
@@ -419,7 +421,6 @@
     "uplot": "1.6.30",
     "uuid": "9.0.1",
     "visjs-network": "4.25.0",
-    "webpack-assets-manifest": "^5.1.0",
     "whatwg-fetch": "3.6.20",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
   },

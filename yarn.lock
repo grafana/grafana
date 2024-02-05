@@ -11161,7 +11161,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ansi-escapes@npm:^4.2.1, ansi-escapes@npm:^4.3.0":
+"ansi-escapes@npm:^4.2.1, ansi-escapes@npm:^4.3.0, ansi-escapes@npm:^4.3.2":
   version: 4.3.2
   resolution: "ansi-escapes@npm:4.3.2"
   dependencies:
@@ -13342,6 +13342,13 @@ __metadata:
   version: 2.0.0
   resolution: "connect-history-api-fallback@npm:2.0.0"
   checksum: 10/3b26bf4041fdb33deacdcb3af9ae11e9a0b413fb14c95844d74a460b55e407625b364955dcf965c654605cde9d24ad5dad423c489aa430825aab2035859aba0c
+  languageName: node
+  linkType: hard
+
+"consola@npm:^3.2.3":
+  version: 3.2.3
+  resolution: "consola@npm:3.2.3"
+  checksum: 10/02972dcb048c337357a3628438e5976b8e45bcec22fdcfbe9cd17622992953c4d695d5152f141464a02deac769b1d23028e8ac87f56483838df7a6bbf8e0f5a2
   languageName: node
   linkType: hard
 
@@ -18329,6 +18336,7 @@ __metadata:
     webpack-dev-server: "npm:4.15.1"
     webpack-manifest-plugin: "npm:5.0.0"
     webpack-merge: "npm:5.10.0"
+    webpackbar: "npm:^6.0.0"
     whatwg-fetch: "npm:3.6.20"
     xlsx: "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
     yaml: "npm:^2.0.0"
@@ -22042,6 +22050,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"markdown-table@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "markdown-table@npm:2.0.0"
+  dependencies:
+    repeat-string: "npm:^1.0.0"
+  checksum: 10/8018cd1a1733ffda916a0548438e50f3d21b6c6b71fb23696b33c0b5922a8cc46035eb4b204a59c6054f063076f934461ae094599656a63f87c1c3a80bd3c229
+  languageName: node
+  linkType: hard
+
 "markdown-to-jsx@npm:^7.1.8":
   version: 7.2.0
   resolution: "markdown-to-jsx@npm:7.2.0"
@@ -24964,6 +24981,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pretty-time@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "pretty-time@npm:1.1.0"
+  checksum: 10/ed5783ea5225680672c53ff104343256037a0e2296387d2f71afecce9e10e83f9131291e6809d4405c0dc25c53f2949dce0233349589762ca499e380d3df2f8a
+  languageName: node
+  linkType: hard
+
 "prismjs@npm:1.29.0, prismjs@npm:^1.27.0, prismjs@npm:^1.29.0":
   version: 1.29.0
   resolution: "prismjs@npm:1.29.0"
@@ -27027,6 +27051,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"repeat-string@npm:^1.0.0":
+  version: 1.6.1
+  resolution: "repeat-string@npm:1.6.1"
+  checksum: 10/1b809fc6db97decdc68f5b12c4d1a671c8e3f65ec4a40c238bc5200e44e85bcc52a54f78268ab9c29fcf5fe4f1343e805420056d1f30fa9a9ee4c2d93e3cc6c0
+  languageName: node
+  linkType: hard
+
 "replace-ext@npm:^1.0.0":
   version: 1.0.1
   resolution: "replace-ext@npm:1.0.1"
@@ -28623,6 +28654,13 @@ __metadata:
   version: 1.5.0
   resolution: "statuses@npm:1.5.0"
   checksum: 10/c469b9519de16a4bb19600205cffb39ee471a5f17b82589757ca7bd40a8d92ebb6ed9f98b5a540c5d302ccbc78f15dc03cc0280dd6e00df1335568a5d5758a5c
+  languageName: node
+  linkType: hard
+
+"std-env@npm:^3.6.0":
+  version: 3.7.0
+  resolution: "std-env@npm:3.7.0"
+  checksum: 10/6ee0cca1add3fd84656b0002cfbc5bfa20340389d9ba4720569840f1caa34bce74322aef4c93f046391583e50649d0cf81a5f8fe1d411e50b659571690a45f12
   languageName: node
   linkType: hard
 
@@ -31341,6 +31379,24 @@ __metadata:
   bin:
     webpack: bin/webpack.js
   checksum: 10/7ff6286be54e00b2580274d8009b014fd03c6d8ade898434376c739e460da1f3a63a51006966024710061f440d6723813365b8a54ae6bcb93b94867c42cf017e
+  languageName: node
+  linkType: hard
+
+"webpackbar@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "webpackbar@npm:6.0.0"
+  dependencies:
+    ansi-escapes: "npm:^4.3.2"
+    chalk: "npm:^4.1.2"
+    consola: "npm:^3.2.3"
+    figures: "npm:^3.2.0"
+    markdown-table: "npm:^2.0.0"
+    pretty-time: "npm:^1.1.0"
+    std-env: "npm:^3.6.0"
+    wrap-ansi: "npm:^7.0.0"
+  peerDependencies:
+    webpack: 3 || 4 || 5
+  checksum: 10/aa26c2dff6c2384f39b77e57375af52a65fbd3c54b9a5a8e1c53e79b0c25eaabc8602469ec3742bf93f7d178f5a96e3d6bd4fcbb256808e730eecb91091df466
   languageName: node
   linkType: hard
 

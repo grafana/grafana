@@ -27,10 +27,6 @@ const prometheusPlugin = async () =>
   await import(/* webpackChunkName: "prometheusPlugin" */ 'app/plugins/datasource/prometheus/module');
 const mssqlPlugin = async () =>
   await import(/* webpackChunkName: "mssqlPlugin" */ 'app/plugins/datasource/mssql/module');
-const cloudMonitoringPlugin = async () =>
-  await import(
-    /* webpackChunkName: "cloudMonitoringPlugin" */ '@grafana-plugins/grafana-cloud-monitoring-datasource/module'
-  );
 const alertmanagerPlugin = async () =>
   await import(/* webpackChunkName: "alertmanagerPlugin" */ 'app/plugins/datasource/alertmanager/module');
 
@@ -91,7 +87,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/grafana-postgresql-datasource': postgresPlugin,
   'core:plugin/mssql': mssqlPlugin,
   'core:plugin/prometheus': prometheusPlugin,
-  'core:plugin/cloud-monitoring': cloudMonitoringPlugin,
   'core:plugin/alertmanager': alertmanagerPlugin,
   // panels
   'core:plugin/text': textPanel,

@@ -5,10 +5,10 @@ const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const path = require('path');
 const { DefinePlugin } = require('webpack');
 const WebpackAssetsManifest = require('webpack-assets-manifest');
 const { merge } = require('webpack-merge');
+const WebpackBar = require('webpackbar');
 
 const common = require('./webpack.common.js');
 const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTargets: false });
@@ -34,11 +34,11 @@ module.exports = (env = {}) => {
     watchOptions: {
       ignored: [
         '/node_modules/',
-        'public/app/plugins/datasource/azuremonitor',
-        'public/app/plugins/datasource/grafana-pyroscope-datasource',
-        'public/app/plugins/datasource/grafana-testdata-datasource',
-        'public/app/plugins/datasource/parca',
-        'public/app/plugins/datasource/tempo',
+        '**/plugins/datasource/azuremonitor/**',
+        '**/plugins/datasource/grafana-pyroscope-datasource/**',
+        '**/plugins/datasource/grafana-testdata-datasource/**',
+        '**/plugins/datasource/parca/**',
+        '**/plugins/datasource/tempo/**',
       ],
     },
 
@@ -59,8 +59,7 @@ module.exports = (env = {}) => {
       ],
     },
 
-    infrastructureLogging: { level: 'error' },
-    stats: 'minimal',
+    // infrastructureLogging: { level: 'error' },
 
     // https://webpack.js.org/guides/build-performance/#output-without-path-info
     output: {
@@ -119,6 +118,7 @@ module.exports = (env = {}) => {
         integrity: true,
         publicPath: true,
       }),
+      new WebpackBar(),
     ],
   });
 };

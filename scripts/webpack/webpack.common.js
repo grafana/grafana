@@ -53,10 +53,6 @@ module.exports = {
     },
   },
   ignoreWarnings: [/export .* was not found in/],
-  stats: {
-    children: false,
-    source: false,
-  },
   plugins: [
     new webpack.NormalModuleReplacementPlugin(/^@grafana\/schema\/dist\/esm\/(.*)$/, (resource) => {
       resource.request = resource.request.replace('@grafana/schema/dist/esm', '@grafana/schema/src');
