@@ -225,7 +225,7 @@
     "@emotion/css": "11.11.2",
     "@emotion/react": "11.11.3",
     "@fingerprintjs/fingerprintjs": "^3.4.2",
-    "@floating-ui/react": "0.26.8",
+    "@floating-ui/react": "0.26.9",
     "@glideapps/glide-data-grid": "^6.0.0",
     "@grafana-plugins/grafana-azure-monitor-datasource": "workspace:*",
     "@grafana-plugins/grafana-cloud-monitoring-datasource": "workspace:*",
