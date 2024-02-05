@@ -456,7 +456,7 @@ const (
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
 
 	// FlagKubernetesSnapshots
-	// Use the kubernetes API in the frontend to support playlists
+	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
 
 	// FlagKubernetesQueryServiceRewrite
@@ -638,10 +638,6 @@ const (
 	// FlagPromQLScope
 	// In-development feature that will allow injection of labels into prometheus queries.
 	FlagPromQLScope = "promQLScope"
-
-	// FlagSlateAutocomplete
-	// Adjusts the behaviour of the slate editor to properly handle autocomplete. Feature toggled for safety.
-	FlagSlateAutocomplete = "slateAutocomplete"
 
 	// FlagNodeGraphDotLayout
 	// Changed the layout algorithm for the node graph
