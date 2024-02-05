@@ -1,8 +1,9 @@
 import React from 'react';
 import { useAsync } from 'react-use';
 
-import { LoadingPlaceholder } from '@grafana/ui';
-import { useDispatch } from 'app/types';
+import { Alert, LoadingPlaceholder } from '@grafana/ui';
+import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
+import { DashboardRoutes, useDispatch } from 'app/types';
 
 import { RulesTable } from '../components/rules/RulesTable';
 import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
@@ -17,7 +18,22 @@ interface Props {
 export default function AlertRulesDrawerContent({ dashboardUid }: Props) {
   const dispatch = useDispatch();
 
-  const { loading } = useAsync(async () => {
+  const dashboardStateManager = getDashboardScenePageStateManager();
+
+  const { loading: loadingDashboardData, value: dashboardData } = useAsync(() => {
+    return dashboardStateManager.fetchDashboard({
+      uid: dashboardUid,
+      route: DashboardRoutes.Normal,
+    });
+  }, [dashboardStateManager]);
+
+  console.log(dashboardData);
+  const hasLegacyAlerts = dashboardData?.dashboard.panels?.some((panel) => {
+    return 'alert' in panel;
+  });
+  console.log('hasLegacyAlerts', hasLegacyAlerts);
+
+  const { loading: loadingRulesData } = useAsync(async () => {
     await dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
   }, [dispatch]);
 
@@ -27,12 +43,17 @@ export default function AlertRulesDrawerContent({ dashboardUid }: Props) {
     .flatMap((g) => g.rules)
     .filter((rule) => rule.annotations[Annotation.dashboardUID] === dashboardUid);
 
+  const loading = loadingRulesData || loadingDashboardData;
+
   return (
     <>
       {loading ? (
         <LoadingPlaceholder text="Loading alert rules" />
       ) : (
-        <RulesTable rules={rules} showNextEvaluationColumn={false} showGroupColumn={false} />
+        <>
+          {hasLegacyAlerts && <Alert severity="warning" title="Legacy alerts found in this dashboard" />}
+          <RulesTable rules={rules} showNextEvaluationColumn={false} showGroupColumn={false} />
+        </>
       )}
     </>
   );
