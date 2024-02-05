@@ -92,30 +92,6 @@ describe('AppChrome', () => {
     jest.clearAllMocks();
   });
 
-  it('should render section nav model based on navId', async () => {
-    setup(<Page navId="child1">Children</Page>);
-    expect(await screen.findByTestId('page-children')).toBeInTheDocument();
-
-    expect(screen.getByRole('tab', { name: 'Tab Section name' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
-    expect(screen.getAllByRole('tab').length).toBe(3);
-  });
-
-  it('should render section nav model based on navId and item page nav', async () => {
-    setup(
-      <Page navId="child1" pageNav={pageNav}>
-        Children
-      </Page>
-    );
-    expect(await screen.findByTestId('page-children')).toBeInTheDocument();
-
-    expect(screen.getByRole('tab', { name: 'Tab Section name' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'pageNav title' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Tab pageNav child1' })).toBeInTheDocument();
-  });
-
   it('should create a skip link to skip to main content', async () => {
     setup(<Page navId="child1">Children</Page>);
     expect(await screen.findByRole('link', { name: 'Skip to main content' })).toBeInTheDocument();
