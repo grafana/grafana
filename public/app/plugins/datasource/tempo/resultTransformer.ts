@@ -3,32 +3,33 @@ import { collectorTypes } from '@opentelemetry/exporter-collector';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 import {
+  createDataFrame,
+  createTheme,
   DataFrame,
+  DataFrameDTO,
+  DataLink,
+  DataLinkConfigOrigin,
   DataQueryResponse,
   DataSourceInstanceSettings,
+  DataSourceJsonData,
+  Field,
+  FieldDTO,
   FieldType,
+  getDisplayProcessor,
+  Labels,
   MutableDataFrame,
+  toDataFrame,
   TraceKeyValuePair,
   TraceLog,
   TraceSpanReference,
   TraceSpanRow,
-  FieldDTO,
-  createDataFrame,
-  getDisplayProcessor,
-  createTheme,
-  DataFrameDTO,
-  toDataFrame,
-  DataLink,
-  DataSourceJsonData,
-  Field,
-  DataLinkConfigOrigin,
 } from '@grafana/data';
 import { TraceToProfilesData } from '@grafana/o11y-ds-frontend';
 import { getDataSourceSrv } from '@grafana/runtime';
 
 import { SearchTableType } from './dataquery.gen';
 import { createGraphFrames } from './graphTransform';
-import { Span, SpanAttributes, Spanset, TempoJsonData, TraceSearchMetadata } from './types';
+import { Span, SpanAttributes, Spanset, TempoJsonData, TraceqlMetricsResponse, TraceSearchMetadata } from './types';
 
 export function createTableFrame(
   logsFrame: DataFrame | DataFrameDTO,
@@ -621,6 +622,39 @@ function transformToTraceData(data: TraceSearchMetadata) {
     traceService: data.rootServiceName || '',
     traceName: data.rootTraceName || '',
   };
+}
+
+export function formatTraceQLMetrics(data: TraceqlMetricsResponse) {
+  const frames = data.series.map((series) => {
+    const timeValues: number[] = series.samples.map((sample) => parseInt(sample.timestampMs, 10));
+    const labels: Labels = {};
+    series.labels.forEach((label) => {
+      labels[label.key] = label.value.stringValue || label.value.intValue || label.value.doubleValue || '';
+    });
+    return createDataFrame({
+      refId: series.promLabels,
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: timeValues,
+        },
+        {
+          name: series.promLabels,
+          labels,
+          type: FieldType.number,
+          values: series.samples.map((sample) => sample.value),
+          config: {
+            displayNameFromDS: series.promLabels,
+          },
+        },
+      ],
+      meta: {
+        preferredVisualisationType: 'graph',
+      },
+    });
+  });
+  return frames;
 }
 
 export function formatTraceQLResponse(
