@@ -37,6 +37,7 @@ function incrRoundUp(num: number, incr: number) {
 export interface HistogramProps extends Themeable2 {
   options: Options; // used for diff
   alignedFrame: DataFrame; // This could take HistogramFields
+  bucketCount?: number;
   bucketSize: number;
   width: number;
   height: number;
@@ -310,13 +311,14 @@ export class Histogram extends React.Component<HistogramProps, State> {
   }
 
   componentDidUpdate(prevProps: HistogramProps) {
-    const { structureRev, alignedFrame, bucketSize } = this.props;
+    const { structureRev, alignedFrame, bucketSize, bucketCount } = this.props;
 
     if (alignedFrame !== prevProps.alignedFrame) {
       let newState = this.prepState(this.props, false);
 
       if (newState) {
         const shouldReconfig =
+          bucketCount !== prevProps.bucketCount ||
           bucketSize !== prevProps.bucketSize ||
           this.props.options !== prevProps.options ||
           this.state.config === undefined ||

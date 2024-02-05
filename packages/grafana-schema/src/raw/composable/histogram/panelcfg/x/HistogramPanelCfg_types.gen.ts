@@ -15,6 +15,10 @@ export const pluginVersion = "10.4.0-pre";
 
 export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip {
   /**
+   * Bucket count (approx)
+   */
+  bucketCount?: number;
+  /**
    * Offset buckets by this amount
    */
   bucketOffset?: number;
@@ -29,6 +33,7 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
 }
 
 export const defaultOptions: Partial<Options> = {
+  bucketCount: 30,
   bucketOffset: 0,
 };
 
