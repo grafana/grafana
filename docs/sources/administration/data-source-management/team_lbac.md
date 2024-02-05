@@ -42,7 +42,7 @@ Cloud access policies are the access controls from Grafana Cloud, the CAP config
 
 #### Best practices
 
-We recommend you only add team lbac permissions for teams that should use the data source and remove default `Viewer` and `Editor` query permissions.
+We recommend you only add team LBAC permissions for teams that should use the data source and remove default `Viewer` and `Editor` query permissions.
 
 We recommend for a first setup, setting up as few rules for each team as possible and make them additive and not negated.
 
@@ -52,61 +52,68 @@ For validating the rules, we recommend testing the rules in the Loki Explore vie
 
 **Scenario 1: One rule setup for each team**
 
-We have two teams, Team A and Team B. Loki access is setup with `Admin` roles to have `Admin` permission.
+We have two teams, Team A and Team B. Loki access is setup with `Admin` roles to have `Admin` permission only.
 
-- Team A has a rule `namespace="dev"`. A user that is part of Team A will have access to logs that match `namespace="dev"`.
+- Team A has a rule `namespace="dev"`. 
 
-- Team B has a rule `namespace="prod"`. A user that is part of Team B will have access to logs that match `namespace="prod"`.
+- Team B has a rule `namespace="prod"`. 
 
-**Scenario 2: One rule setup for a Team**
+A user that is part of Team A will have access to logs that match `namespace="dev"`.
+
+A user that is part of Team B will have access to logs that match `namespace="prod"`.
+
+**Scenario 2: Multiple rules setup for one team**
+
+We have two teams, Team A and Team B. Loki access is setup with `Admin` roles having `Admin` permission.
+
+- Team A has rule `cluster="us-west-0", namespace="dev|prod"` configured. 
+
+- Team B has rule `cluster="us-west-0", namespace="!prod"` configured. 
+
+A user that is only part of Team A will have access to logs that match `cluster="us-west-0" AND (namespace="dev" OR namespace="prod")`.
+
+A user that is only part of Team B will have access to logs that match `cluster="us-west-0" AND namespace!="prod"`.
+
+A user that is part of both Team A and Team B will have access to logs that match `cluster="us-west-0" AND (namespace="dev" OR namespace="prod") OR (is this true?) (cluster="us-west-0" AND namespace!="prod")`.
+
+A user that is **not** part of any Team with `Editor/Viewer` role will not have access to query any logs.
+
+**Important**
+
+A `Admin` user that is part of a Team with will only have access to that teams logs
+
+A `Admin` user that is not part of any Team with `Admin` role will have access to all logs
+
+**Scenario 3: Rules that overlap**
+
+We have two teams, Team A and Team B.
+
+- Team A has a rule `namespace="dev"`. 
+
+- Team B has a rule `namespace!="dev"`. 
+
+
+A user in Team A will have access to logs that match `namespace="dev"`.
+
+A user in Team b will have access to logs that match `namespace!="dev"`.
+
+> _NOTE:_ A user that is part of Team A and Team B will have access to all logs that match `namespace="dev"` `OR` `namespace!="dev"`.
+
+**Scenario 4: One rule setup for a Team**
 
 We have two teams, Team A and Team B. Loki access is setup with `Editor`, `Viewer` roles to have `Query` permission.
 
-- Team A has a rule `namespace="dev"` configured. A user that is part of Team A will have access to logs that match `namespace="dev"`.
+- Team A has a rule `namespace="dev"` configured. 
 
 - Team B does not have a rule configured for it. 
+
+
+A user that is part of Team A will have access to logs that match `namespace="dev"`.
 
 A user that is part of Team A and part of Team B will have access to logs that match `namespace="dev"`.
 
 A user that is not part of Team A and part of Team B, that is `Editor` or `Viewer` will have access to all logs (due to the query permission for the user). 
 
-**Scenario 3: Multiple rules setup for one team**
-
-We have two teams, Team A and Team B. Loki access is setup with `Admin` roles having `Admin` permission.
-
-- Team A has rule `cluster="us-west-0", namespace="dev|prod"` configured. 
- - A user that is only part of Team A will have access to logs that match `cluster="us-west-0"` `AND` (`namespace="dev" OR namespace="prod"`).
-
-- Team B has rule `cluster="us-west-0", namespace="!prod"` configured. 
- - A user that is only part of Team B will have access to logs that match `cluster="us-west-0"` `AND` `namespace="!prod"`.
-
-A user that is part of Team A and Team B will have access to logs that match `cluster="us-west-0" AND (namespace="dev" OR namespace="prod") OR (is this true?) (cluster="us-west-0" AND namespace="!prod")`.
-
-A user that is not part of any Team with `Editor/Viewer` role will not have access to query any logs
-
-A user that is part of a Team with `Admin` role will only have access to that teams logs
-
-A user that is not part of any Team with `Admin` role will have access to all logs
-
-**Scenario 4: Two or more rules configured for a team**
-
-We have three teams, Team A, Team B and Team C. Team C is a new team and has no rules configured for it. Loki access is setup with `Editor` role having `Query` permission.
-
-Team A has a rule `namespace="dev"` configured. A user with `Editor` role has access to all logs. A user that is part of Team A without `Editor` role will get all logs that match `namespace="dev"`.
-
-Team B have two rules `namespace="dev"` and `namespace="prod"`. Team B, would be able to query all logs that match either `namespace="dev"` OR `namespace="prod"`.
-
-Team C have no rules. Team C has a user with an `Viewer`. Team C's `Editors`, will have access to query all logs.
-
-**Scenario 5: Rules that overlap**
-
-We have two teams, Team A and Team B.
-
-Team A has a rule `namespace="dev"`. A user in Team A will have access to logs that match `namespace="dev"`.
-
-Team B has a rule `namespace!="dev"`. A user in Team b will have access to logs that match `namespace!="dev"`.
-
-> _NOTE:_ A user that is part of Team A and Team B will have access to logs that match `namespace="dev"` `OR` `namespace!="dev"`.
 
 ## Setting up Team LBAC rules
 
