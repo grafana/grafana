@@ -43,7 +43,7 @@ func (f *TestLogger) FromContext(_ context.Context) Logger {
 }
 
 type Logs struct {
-	Calls   uint64
+	Calls   int
 	Message string
 	Ctx     []any
 
