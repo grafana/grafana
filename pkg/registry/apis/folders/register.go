@@ -12,6 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	common "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -63,6 +64,8 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&v0alpha1.Folder{},
 		&v0alpha1.FolderList{},
 		&v0alpha1.FolderInfoList{},
+		&v0alpha1.DescendantCounts{},
+		&v0alpha1.FolderAccessInfo{},
 	)
 }
 
@@ -120,7 +123,9 @@ func (b *FolderAPIBuilder) GetAPIGroupInfo(
 	storage := map[string]rest.Storage{}
 	storage[resourceInfo.StoragePath()] = legacyStore
 	storage[resourceInfo.StoragePath("parents")] = &subParentsREST{b.folderSvc}
-	storage[resourceInfo.StoragePath("children")] = &subChildrenREST{b.folderSvc}
+	storage[resourceInfo.StoragePath("count")] = &subCountREST{b.folderSvc}
+	storage[resourceInfo.StoragePath("access")] = &subAccessREST{b.folderSvc}
+	storage[resourceInfo.StoragePath("move")] = &subMoveREST{b.folderSvc, b.namespacer}
 
 	// enable dual writes if a RESTOptionsGetter is provided
 	if dualWrite && optsGetter != nil {
@@ -145,4 +150,21 @@ func (b *FolderAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	return nil // TODO: the FGAC rules encoded in the service can be moved here
+}
+
+func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	oas.Info.Description = "Manage folders"
+
+	// Add a form parameter to move the parent folder
+	sub := oas.Paths.Paths["/apis/folder.grafana.app/v0alpha1/namespaces/{namespace}/folders/{name}/move"]
+	if sub != nil && sub.Post != nil {
+		sub.Post.Summary = "Change the parent folder"
+	}
+
+	// The root API discovery list
+	sub = oas.Paths.Paths["/apis/folder.grafana.app/v0alpha1/"]
+	if sub != nil && sub.Get != nil {
+		sub.Get.Tags = []string{"API Discovery"} // sorts first in the list
+	}
+	return oas, nil
 }
