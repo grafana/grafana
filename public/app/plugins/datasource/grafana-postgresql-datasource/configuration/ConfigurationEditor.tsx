@@ -10,6 +10,7 @@ import {
 } from '@grafana/data';
 import { ConfigSection, ConfigSubSection, DataSourceDescription, Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
+import { ConnectionLimits, Divider, TLSSecretsConfig, useMigrateDatabaseFields } from '@grafana/sql';
 import {
   Input,
   Select,
@@ -22,10 +23,6 @@ import {
   SecureSocksProxySettings,
   Collapse,
 } from '@grafana/ui';
-import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
-import { Divider } from 'app/features/plugins/sql/components/configuration/Divider';
-import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
-import { useMigrateDatabaseFields } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseFields';
 
 import { PostgresOptions, PostgresTLSMethods, PostgresTLSModes, SecureJsonData } from '../types';
 

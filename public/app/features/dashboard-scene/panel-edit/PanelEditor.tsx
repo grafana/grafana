@@ -126,11 +126,24 @@ export function buildPanelEditScene(panel: VizPanel): PanelEditor {
         secondary: new SceneFlexItem({
           body: new PanelDataPane(vizPanelMgr),
         }),
+        primaryPaneStyles: {
+          minHeight: 0,
+          overflow: 'hidden',
+        },
+        secondaryPaneStyles: {
+          minHeight: 0,
+        },
       }),
       secondary: new SceneFlexItem({
         body: new PanelOptionsPane(vizPanelMgr),
         width: '100%',
       }),
+      primaryPaneStyles: {
+        minWidth: '0',
+      },
+      secondaryPaneStyles: {
+        minWidth: '0',
+      },
     }),
   });
 }

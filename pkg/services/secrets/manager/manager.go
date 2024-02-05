@@ -160,7 +160,7 @@ var b64 = base64.RawStdEncoding
 func (s *SecretsService) Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error) {
 	// Use legacy encryption service if featuremgmt.FlagDisableEnvelopeEncryption toggle is on
 	if s.features.IsEnabled(ctx, featuremgmt.FlagDisableEnvelopeEncryption) {
-		return s.enc.Encrypt(ctx, payload, setting.SecretKey)
+		return s.enc.Encrypt(ctx, payload, s.cfg.SecretKey)
 	}
 
 	var err error

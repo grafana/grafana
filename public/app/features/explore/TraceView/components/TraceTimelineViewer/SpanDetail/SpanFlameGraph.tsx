@@ -13,9 +13,9 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { FlameGraph } from '@grafana/flamegraph';
+import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
-import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PyroscopeQueryType } from 'app/plugins/datasource/grafana-pyroscope-datasource/dataquery.gen';
 import { Query } from 'app/plugins/datasource/grafana-pyroscope-datasource/types';
@@ -145,7 +145,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
   );
 
   useEffect(() => {
-    if (config.featureToggles.traceToProfiles && !Object.keys(traceFlameGraphs).includes(profileTagValue)) {
+    if (!Object.keys(traceFlameGraphs).includes(profileTagValue)) {
       let profilesDataSourceSettings: DataSourceInstanceSettings<DataSourceJsonData> | undefined;
       if (traceToProfilesOptions && traceToProfilesOptions?.datasourceUid) {
         profilesDataSourceSettings = getDatasourceSrv().getInstanceSettings(traceToProfilesOptions.datasourceUid);

@@ -17,14 +17,15 @@ import {
   SceneObjectBase,
   SceneObjectState,
   SceneQueryRunner,
+  VariableDependencyConfig,
 } from '@grafana/scenes';
-import { Button, Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, Field, Select, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
 import { AutoQueryDef } from '../AutomaticMetricQueries/types';
 import { MetricScene } from '../MetricScene';
-import { trailDS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
+import { trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
 import { getColorByIndex } from '../utils';
 
 import { AddToFiltersGraphAction } from './AddToFiltersGraphAction';
@@ -40,6 +41,11 @@ export interface BreakdownSceneState extends SceneObjectState {
 }
 
 export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
+  protected _variableDependency = new VariableDependencyConfig(this, {
+    variableNames: [VAR_FILTERS],
+    onReferencedVariableValueChanged: this.onReferencedVariableValueChanged.bind(this),
+  });
+
   constructor(state: Partial<BreakdownSceneState>) {
     super({
       labels: state.labels ?? [],
@@ -79,6 +85,12 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
     return variable;
   }
 
+  private onReferencedVariableValueChanged() {
+    const variable = this.getVariable();
+    variable.changeValueTo(ALL_VARIABLE_VALUE);
+    this.updateBody(variable);
+  }
+
   private updateBody(variable: QueryVariable) {
     const options = getLabelOptions(this, variable);
 
@@ -88,7 +100,7 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
       labels: options,
     };
 
-    if (!this.state.body && !variable.state.loading) {
+    if (!variable.state.loading) {
       stateUpdate.body = variable.hasAllValue()
         ? buildAllLayout(options, this._query!)
         : buildNormalLayout(this._query!);
@@ -97,11 +109,15 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
     this.setState(stateUpdate);
   }
 
-  public onChange = (value: string) => {
+  public onChange = (value?: string) => {
+    if (!value) {
+      return;
+    }
+
     const variable = this.getVariable();
 
     if (value === ALL_VARIABLE_VALUE) {
-      this.setState({ body: buildAllLayout(getLabelOptions(this, variable), this._query!) });
+      this.setState({ body: buildAllLayout(this.state.labels, this._query!) });
     } else if (variable.hasAllValue()) {
       this.setState({ body: buildNormalLayout(this._query!) });
     }
@@ -113,13 +129,26 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
     const { labels, body, loading, value } = model.useState();
     const styles = useStyles2(getStyles);
 
+    const useHorizontalLabelSelector = labels.length <= 6;
+
     return (
       <div className={styles.container}>
         {loading && <div>Loading...</div>}
         <div className={styles.controls}>
-          <Field label="By label">
-            <RadioButtonGroup options={labels} value={value} onChange={model.onChange} />
-          </Field>
+          {!loading && (
+            <Field label="By label">
+              {useHorizontalLabelSelector ? (
+                <RadioButtonGroup options={labels} value={value} onChange={model.onChange} />
+              ) : (
+                <Select
+                  options={labels}
+                  value={value}
+                  onChange={(selected) => model.onChange(selected.value)}
+                  className={styles.select}
+                />
+              )}
+            </Field>
+          )}
           {body instanceof LayoutSwitcher && (
             <div className={styles.controlsRight}>
               <body.Selector model={body} />
@@ -159,6 +188,9 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       display: 'flex',
       justifyContent: 'flex-end',
+    }),
+    select: css({
+      minWidth: theme.spacing(16),
     }),
   };
 }

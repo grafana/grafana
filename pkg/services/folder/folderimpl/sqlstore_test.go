@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -29,7 +29,7 @@ func TestIntegrationCreate(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -64,7 +64,7 @@ func TestIntegrationCreate(t *testing.T) {
 		require.NoError(t, err)
 
 		t.Cleanup(func() {
-			err := folderStore.Delete(context.Background(), f.UID, orgID)
+			err := folderStore.Delete(context.Background(), []string{f.UID}, orgID)
 			require.NoError(t, err)
 		})
 
@@ -102,7 +102,7 @@ func TestIntegrationCreate(t *testing.T) {
 		assert.NotEmpty(t, parent.URL)
 
 		t.Cleanup(func() {
-			err := folderStore.Delete(context.Background(), parent.UID, orgID)
+			err := folderStore.Delete(context.Background(), []string{parent.UID}, orgID)
 			require.NoError(t, err)
 		})
 		assertAncestorUIDs(t, folderStore, parent, []string{folder.GeneralFolderUID})
@@ -117,7 +117,7 @@ func TestIntegrationCreate(t *testing.T) {
 		})
 		require.NoError(t, err)
 		t.Cleanup(func() {
-			err := folderStore.Delete(context.Background(), f.UID, orgID)
+			err := folderStore.Delete(context.Background(), []string{f.UID}, orgID)
 			require.NoError(t, err)
 		})
 
@@ -149,7 +149,7 @@ func TestIntegrationDelete(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -165,7 +165,7 @@ func TestIntegrationDelete(t *testing.T) {
 
 	t.Cleanup(func() {
 		for _, uid := range ancestorUIDs[1:] {
-			err := folderStore.Delete(context.Background(), uid, orgID)
+			err := folderStore.Delete(context.Background(), []string{uid}, orgID)
 			require.NoError(t, err)
 		}
 	})
@@ -178,7 +178,7 @@ func TestIntegrationDelete(t *testing.T) {
 	*/
 
 	t.Run("deleting a leaf folder should succeed", func(t *testing.T) {
-		err := folderStore.Delete(context.Background(), ancestorUIDs[len(ancestorUIDs)-1], orgID)
+		err := folderStore.Delete(context.Background(), []string{ancestorUIDs[len(ancestorUIDs)-1]}, orgID)
 		require.NoError(t, err)
 
 		children, err := folderStore.GetChildren(context.Background(), folder.GetChildrenQuery{
@@ -196,7 +196,7 @@ func TestIntegrationUpdate(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -221,7 +221,7 @@ func TestIntegrationUpdate(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, f.ParentUID, parent.UID)
 	t.Cleanup(func() {
-		err := folderStore.Delete(context.Background(), f.UID, orgID)
+		err := folderStore.Delete(context.Background(), []string{f.UID}, orgID)
 		require.NoError(t, err)
 	})
 
@@ -371,7 +371,7 @@ func TestIntegrationGet(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -384,9 +384,16 @@ func TestIntegrationGet(t *testing.T) {
 		UID:         uid1,
 	})
 	require.NoError(t, err)
+	subfolderWithSameName, err := folderStore.Create(context.Background(), folder.CreateFolderCommand{
+		Title:       folderTitle,
+		Description: folderDsc,
+		OrgID:       orgID,
+		UID:         util.GenerateShortUID(),
+		ParentUID:   f.UID,
+	})
 
 	t.Cleanup(func() {
-		err := folderStore.Delete(context.Background(), f.UID, orgID)
+		err := folderStore.Delete(context.Background(), []string{f.UID}, orgID)
 		require.NoError(t, err)
 	})
 
@@ -427,6 +434,23 @@ func TestIntegrationGet(t *testing.T) {
 		assert.NotEmpty(t, ff.URL)
 	})
 
+	t.Run("get folder by title and parent UID should succeed", func(t *testing.T) {
+		ff, err := folderStore.Get(context.Background(), folder.GetFolderQuery{
+			Title:     &f.Title,
+			OrgID:     orgID,
+			ParentUID: &uid1,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, subfolderWithSameName.UID, ff.UID)
+		assert.Equal(t, subfolderWithSameName.OrgID, ff.OrgID)
+		assert.Equal(t, subfolderWithSameName.Title, ff.Title)
+		assert.Equal(t, subfolderWithSameName.Description, ff.Description)
+		assert.Equal(t, subfolderWithSameName.ParentUID, ff.ParentUID)
+		assert.NotEmpty(t, ff.Created)
+		assert.NotEmpty(t, ff.Updated)
+		assert.NotEmpty(t, ff.URL)
+	})
+
 	t.Run("get folder by title should succeed", func(t *testing.T) {
 		ff, err := folderStore.Get(context.Background(), folder.GetFolderQuery{
 			UID:   &f.UID,
@@ -450,7 +474,7 @@ func TestIntegrationGetParents(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -465,7 +489,7 @@ func TestIntegrationGetParents(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		err := folderStore.Delete(context.Background(), f.UID, orgID)
+		err := folderStore.Delete(context.Background(), []string{f.UID}, orgID)
 		require.NoError(t, err)
 	})
 
@@ -518,7 +542,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -537,7 +561,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 
 	t.Cleanup(func() {
 		for _, uid := range treeLeaves {
-			err := folderStore.Delete(context.Background(), uid, orgID)
+			err := folderStore.Delete(context.Background(), []string{uid}, orgID)
 			require.NoError(t, err)
 		}
 	})
@@ -698,7 +722,7 @@ func TestIntegrationGetHeight(t *testing.T) {
 	}
 
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -731,7 +755,7 @@ func TestIntegrationGetFolders(t *testing.T) {
 
 	foldersNum := 10
 	db := sqlstore.InitTestDB(t)
-	folderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+	folderStore := ProvideStore(db, db.Cfg)
 
 	orgID := CreateOrg(t, db)
 
@@ -754,29 +778,96 @@ func TestIntegrationGetFolders(t *testing.T) {
 
 	t.Cleanup(func() {
 		for _, uid := range uids {
-			err := folderStore.Delete(context.Background(), uid, orgID)
+			err := folderStore.Delete(context.Background(), []string{uid}, orgID)
 			require.NoError(t, err)
 		}
 	})
 
 	t.Run("get folders by UIDs should succeed", func(t *testing.T) {
-		ff, err := folderStore.GetFolders(context.Background(), orgID, uids)
+		actualFolders, err := folderStore.GetFolders(context.Background(), NewGetFoldersQuery(folder.GetFoldersQuery{OrgID: orgID, UIDs: uids[1:]}))
 		require.NoError(t, err)
-		assert.Equal(t, len(uids), len(ff))
-		for _, f := range folders {
-			folderInResponseIdx := slices.IndexFunc(ff, func(rf *folder.Folder) bool {
+		assert.Equal(t, len(uids[1:]), len(actualFolders))
+		for _, f := range folders[1:] {
+			folderInResponseIdx := slices.IndexFunc(actualFolders, func(rf *folder.Folder) bool {
 				return rf.UID == f.UID
 			})
 			assert.NotEqual(t, -1, folderInResponseIdx)
-			rf := ff[folderInResponseIdx]
-			assert.Equal(t, f.UID, rf.UID)
-			assert.Equal(t, f.OrgID, rf.OrgID)
-			assert.Equal(t, f.Title, rf.Title)
-			assert.Equal(t, f.Description, rf.Description)
-			assert.NotEmpty(t, rf.Created)
-			assert.NotEmpty(t, rf.Updated)
-			assert.NotEmpty(t, rf.URL)
+			actualFolder := actualFolders[folderInResponseIdx]
+			assert.Equal(t, f.UID, actualFolder.UID)
+			assert.Equal(t, f.OrgID, actualFolder.OrgID)
+			assert.Equal(t, f.Title, actualFolder.Title)
+			assert.Equal(t, f.Description, actualFolder.Description)
+			assert.NotEmpty(t, actualFolder.Created)
+			assert.NotEmpty(t, actualFolder.Updated)
+			assert.NotEmpty(t, actualFolder.URL)
 		}
+	})
+
+	t.Run("get folders by UIDs batching should work as expected", func(t *testing.T) {
+		q := NewGetFoldersQuery(folder.GetFoldersQuery{OrgID: orgID, UIDs: uids[1:], BatchSize: 3})
+		actualFolders, err := folderStore.GetFolders(context.Background(), q)
+		require.NoError(t, err)
+		assert.Equal(t, len(uids[1:]), len(actualFolders))
+		for _, f := range folders[1:] {
+			folderInResponseIdx := slices.IndexFunc(actualFolders, func(rf *folder.Folder) bool {
+				return rf.UID == f.UID
+			})
+			assert.NotEqual(t, -1, folderInResponseIdx)
+			actualFolder := actualFolders[folderInResponseIdx]
+			assert.Equal(t, f.UID, actualFolder.UID)
+			assert.Equal(t, f.OrgID, actualFolder.OrgID)
+			assert.Equal(t, f.Title, actualFolder.Title)
+			assert.Equal(t, f.Description, actualFolder.Description)
+			assert.NotEmpty(t, actualFolder.Created)
+			assert.NotEmpty(t, actualFolder.Updated)
+			assert.NotEmpty(t, actualFolder.URL)
+		}
+	})
+
+	t.Run("get folders by UIDs with fullpath should succeed", func(t *testing.T) {
+		q := NewGetFoldersQuery(folder.GetFoldersQuery{OrgID: orgID, UIDs: uids[1:], WithFullpath: true})
+		q.BatchSize = 3
+		actualFolders, err := folderStore.GetFolders(context.Background(), q)
+		require.NoError(t, err)
+		assert.Equal(t, len(uids[1:]), len(actualFolders))
+		for _, f := range folders[1:] {
+			folderInResponseIdx := slices.IndexFunc(actualFolders, func(rf *folder.Folder) bool {
+				return rf.UID == f.UID
+			})
+			assert.NotEqual(t, -1, folderInResponseIdx)
+			actualFolder := actualFolders[folderInResponseIdx]
+			assert.Equal(t, f.UID, actualFolder.UID)
+			assert.Equal(t, f.OrgID, actualFolder.OrgID)
+			assert.Equal(t, f.Title, actualFolder.Title)
+			assert.Equal(t, f.Description, actualFolder.Description)
+			assert.NotEmpty(t, actualFolder.Created)
+			assert.NotEmpty(t, actualFolder.Updated)
+			assert.NotEmpty(t, actualFolder.URL)
+			assert.NotEmpty(t, actualFolder.Fullpath)
+		}
+	})
+
+	t.Run("get folders by UIDs and ancestor UIDs should work as expected", func(t *testing.T) {
+		q := NewGetFoldersQuery(folder.GetFoldersQuery{OrgID: orgID, UIDs: uids[1:], BatchSize: 3})
+		q.ancestorUIDs = make([]string, 0, int(q.BatchSize)+1)
+		for i := 0; i < int(q.BatchSize); i++ {
+			q.ancestorUIDs = append(q.ancestorUIDs, uuid.New().String())
+		}
+		q.ancestorUIDs = append(q.ancestorUIDs, folders[len(folders)-1].UID)
+
+		actualFolders, err := folderStore.GetFolders(context.Background(), q)
+		require.NoError(t, err)
+		assert.Equal(t, 1, len(actualFolders))
+
+		f := folders[len(folders)-1]
+		actualFolder := actualFolders[0]
+		assert.Equal(t, f.UID, actualFolder.UID)
+		assert.Equal(t, f.OrgID, actualFolder.OrgID)
+		assert.Equal(t, f.Title, actualFolder.Title)
+		assert.Equal(t, f.Description, actualFolder.Description)
+		assert.NotEmpty(t, actualFolder.Created)
+		assert.NotEmpty(t, actualFolder.Updated)
+		assert.NotEmpty(t, actualFolder.URL)
 	})
 }
 

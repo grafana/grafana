@@ -69,7 +69,9 @@ export const AnnotationsPlugin2 = ({
   const getColorByName = useTheme2().visualization.getColorByName;
 
   const annos = useMemo(() => {
-    let annos = annotations.filter((frame) => frame.name !== 'exemplar');
+    let annos = annotations.filter(
+      (frame) => frame.name !== 'exemplar' && frame.length > 0 && frame.fields.some((f) => f.name === 'time')
+    );
 
     if (newRange) {
       let isRegion = newRange.to > newRange.from;

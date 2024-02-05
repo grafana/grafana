@@ -373,28 +373,28 @@ function rulerRuleToCombinedRule(
         filteredInstanceTotals: {},
       }
     : isRecordingRulerRule(rule)
-    ? {
-        name: rule.record,
-        query: rule.expr,
-        labels: rule.labels || {},
-        annotations: {},
-        rulerRule: rule,
-        namespace,
-        group,
-        instanceTotals: {},
-        filteredInstanceTotals: {},
-      }
-    : {
-        name: rule.grafana_alert.title,
-        query: '',
-        labels: rule.labels || {},
-        annotations: rule.annotations || {},
-        rulerRule: rule,
-        namespace,
-        group,
-        instanceTotals: {},
-        filteredInstanceTotals: {},
-      };
+      ? {
+          name: rule.record,
+          query: rule.expr,
+          labels: rule.labels || {},
+          annotations: {},
+          rulerRule: rule,
+          namespace,
+          group,
+          instanceTotals: {},
+          filteredInstanceTotals: {},
+        }
+      : {
+          name: rule.grafana_alert.title,
+          query: '',
+          labels: rule.labels || {},
+          annotations: rule.annotations || {},
+          rulerRule: rule,
+          namespace,
+          group,
+          instanceTotals: {},
+          filteredInstanceTotals: {},
+        };
 }
 
 // find existing rule in group that matches the given prom rule
