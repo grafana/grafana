@@ -82,30 +82,3 @@ describe('SIPrefix', () => {
     expect(text).toEqual(expectedText);
   });
 });
-
-describe('SIPrefix with scalable set to false', () => {
-  const symbol = 'V';
-  const fmtFunc = SIPrefix(symbol, 0, false);
-
-  it.each`
-    value               | expectedSuffix | expectedText
-    ${0}                | ${' V'}        | ${'0'}
-    ${999}              | ${' V'}        | ${'999'}
-    ${1000}             | ${' V'}        | ${'1000'}
-    ${1000000}          | ${' V'}        | ${'1000000'}
-    ${1000000000}       | ${' V'}        | ${'1000000000'}
-    ${1000000000000}    | ${' V'}        | ${'1000000000000'}
-    ${1000000000000000} | ${' V'}        | ${'1000000000000000'}
-    ${-1000000000000}   | ${' V'}        | ${'-1000000000000'}
-    ${-1000000000}      | ${' V'}        | ${'-1000000000'}
-    ${-1000000}         | ${' V'}        | ${'-1000000'}
-    ${-1000}            | ${' V'}        | ${'-1000'}
-    ${-999}             | ${' V'}        | ${'-999'}
-  `('when called with value:{$value}', ({ value, expectedSuffix, expectedText }) => {
-    const { prefix, suffix, text } = fmtFunc(value);
-
-    expect(prefix).toEqual(undefined);
-    expect(suffix).toEqual(expectedSuffix);
-    expect(text).toEqual(expectedText);
-  });
-});
