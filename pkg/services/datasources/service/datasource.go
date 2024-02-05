@@ -97,7 +97,6 @@ func ProvideService(
 	}); err != nil {
 		return nil, err
 	}
-
 	return s, nil
 }
 
