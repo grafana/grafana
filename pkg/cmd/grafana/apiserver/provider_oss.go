@@ -1,1 +1,11 @@
-/Users/ryan/workspace/grafana/grafana-enterprise/src/pkg/cmd/grafana/apiserver/provider_enterprise.go
+//go:build oss
+// +build oss
+
+package apiserver
+
+import "fmt"
+
+func GetXXX() StandaloneAPIProvider {
+	fmt.Printf("OSS")
+	return &DummyAPIProvider{}
+}
