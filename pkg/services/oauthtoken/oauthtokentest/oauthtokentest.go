@@ -33,7 +33,7 @@ func (s *Service) HasOAuthEntry(context.Context, identity.Requester) (*login.Use
 	return nil, false, nil
 }
 
-func (s *Service) TryTokenRefresh(context.Context, *login.UserAuth) error {
+func (s *Service) TryTokenRefresh(context.Context, identity.Requester) error {
 	return nil
 }
 
