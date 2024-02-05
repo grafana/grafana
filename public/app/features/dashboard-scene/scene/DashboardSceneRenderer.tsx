@@ -22,7 +22,12 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const navModel = getNavModel(navIndex, 'dashboards/browse');
 
   if (editview) {
-    return <editview.Component model={editview} />;
+    return (
+      <>
+        <editview.Component model={editview} />
+        {overlay && <overlay.Component model={overlay} />}
+      </>
+    );
   }
 
   return (

@@ -148,7 +148,7 @@ export class GeneralSettingsEditView
 
   static Component = ({ model }: SceneComponentProps<GeneralSettingsEditView>) => {
     const { navModel, pageNav } = useDashboardEditPageNav(model.getDashboard(), model.getUrlKey());
-    const { title, description, tags, meta, editable, overlay } = model.getDashboard().useState();
+    const { title, description, tags, meta, editable } = model.getDashboard().useState();
     const { sync: graphTooltip } = model.getCursorSync()?.useState() || {};
     const { timeZone, weekStart, UNSAFE_nowDelay: nowDelay } = model.getTimeRange().useState();
     const { intervals } = model.getRefreshPicker()?.useState() || {};
@@ -260,7 +260,6 @@ export class GeneralSettingsEditView
 
           <Box marginTop={3}>{meta.canDelete && <DeleteDashboardButton />}</Box>
         </div>
-        {overlay && <overlay.Component model={overlay} />}
       </Page>
     );
   };
