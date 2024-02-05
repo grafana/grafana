@@ -64,7 +64,7 @@ func TestAddAutogenConfig(t *testing.T) {
 			Continue:       true,
 		}
 	}
-	ns := models.NotificationSettingsMutators
+	ns := models.NSMuts{}
 
 	testCases := []struct {
 		name             string

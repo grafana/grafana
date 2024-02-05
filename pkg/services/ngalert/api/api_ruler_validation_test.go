@@ -793,7 +793,7 @@ func TestValidateRuleNodeIntervalFailures(t *testing.T) {
 func TestValidateRuleNodeNotificationSettings(t *testing.T) {
 	cfg := config(t)
 
-	ns := models.NotificationSettingsMutators
+	ns := models.NSMuts{}
 	validNotificationSettings := models.NotificationSettingsGen(ns.WithGroupBy(model.AlertNameLabel, models.FolderTitleLabel))
 
 	testCases := []struct {

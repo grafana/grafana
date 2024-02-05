@@ -388,7 +388,7 @@ func TestDiff(t *testing.T) {
 		rule1 := AlertRuleGen()()
 		rule2 := AlertRuleGen()()
 
-		diffs := rule1.Diff(rule2, "Data", "Annotations", "Labels") // these fields will be tested separately
+		diffs := rule1.Diff(rule2, "Data", "Annotations", "Labels", "NotificationSettings") // these fields will be tested separately
 
 		difCnt := 0
 		if rule1.ID != rule2.ID {
@@ -686,8 +686,8 @@ func TestDiff(t *testing.T) {
 	t.Run("should detect changes in NotificationSettings", func(t *testing.T) {
 		rule1 := AlertRuleGen()()
 
-		ns := NotificationSettingsMutators
-		baseSettings := NotificationSettingsGen()()
+		ns := NSMuts{}
+		baseSettings := NotificationSettingsGen(ns.WithGroupBy("test1", "test2"))()
 		rule1.NotificationSettings = []NotificationSettings{baseSettings}
 
 		addTime := func(d *model.Duration, duration time.Duration) *time.Duration {
