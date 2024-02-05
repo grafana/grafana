@@ -17,6 +17,8 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 	devAcknowledgementNotice := "The apiserver command is in heavy development. The entire setup is subject to change without notice"
 	runtimeConfig := ""
 
+	o.loader = GetXXX()
+
 	cmd := &cobra.Command{
 		Use:   "apiserver [api group(s)]",
 		Short: "Run the grafana apiserver",
