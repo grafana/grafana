@@ -123,6 +123,8 @@ export async function loadAndInitDatasource(
     }
   }
 
+  let history: HistoryItem[] = [];
+
   const localStorageHistory = getLocalRichHistoryStorage();
 
   const historyResults = await localStorageHistory.getRichHistory({
@@ -134,7 +136,7 @@ export async function loadAndInitDatasource(
     starred: false,
   });
 
-  let history: HistoryItem[] = [];
+  // first, fill autocomplete with query history for that datasource
   if ((historyResults.total || 0) > 0) {
     historyResults.richHistory.forEach((historyResult: RichHistoryQuery) => {
       historyResult.queries.forEach((q) => {
@@ -155,6 +157,7 @@ export async function loadAndInitDatasource(
     });
 
     if ((historyMixedResults.total || 0) > 0) {
+      // second, fill autocomplete with queries for that datasource used in Mixed scenarios
       historyMixedResults.richHistory.forEach((historyResult: RichHistoryQuery) => {
         historyResult.queries.forEach((q) => {
           if (q?.datasource?.uid === instance.uid) {
@@ -163,6 +166,12 @@ export async function loadAndInitDatasource(
         });
       });
     }
+  }
+
+  // finally, add any legacy local storage history that might exist. To be removed in Grafana 11
+  if (history.length < MAX_HISTORY_AUTOCOMPLETE_ITEMS) {
+    const historyKey = `grafana.explore.history.${instance.meta?.id}`;
+    history = [...history, ...store.getObject<HistoryItem[]>(historyKey, [])];
   }
 
   if (history.length > MAX_HISTORY_AUTOCOMPLETE_ITEMS) {
