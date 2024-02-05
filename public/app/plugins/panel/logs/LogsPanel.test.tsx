@@ -278,6 +278,9 @@ describe('LogsPanel', () => {
     ];
 
     beforeEach(() => {
+      /**
+       * For the lack of a better option, we spy on getLogRowStyles calls to count re-renders.
+       */
       jest.spyOn(styles, 'getLogRowStyles');
       jest.mocked(styles.getLogRowStyles).mockClear();
     });
