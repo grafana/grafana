@@ -138,18 +138,20 @@ describe('QueryVariableEditor', () => {
   it('should update variable state when changing the datasource', async () => {
     const {
       variable,
-      renderer: { getByTestId },
+      renderer: { getByTestId, getByText },
       user,
     } = await setup();
-    const dataSourcePicker = getByTestId(selectors.components.DataSourcePicker.container).getElementsByTagName('input');
+
+    expect(variable.state.datasource).toEqual({ uid: 'mock-ds-2', type: 'test' });
+
+    await user.click(getByTestId(selectors.components.DataSourcePicker.inputV2));
+    await user.click(getByText(/prom/i));
 
     await waitFor(async () => {
-      await user.type(dataSourcePicker[0], 'm');
-      await user.tab();
       await lastValueFrom(variable.validateAndUpdate());
     });
 
-    expect(variable.state.datasource).toEqual({ uid: 'mock-ds-2', type: 'test' });
+    expect(variable.state.datasource).toEqual({ uid: 'mock-ds-3', type: 'prometheus' });
   });
 
   it('should update the variable state when changing the query', async () => {
