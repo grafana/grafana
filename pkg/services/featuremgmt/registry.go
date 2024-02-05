@@ -1342,7 +1342,6 @@ var (
 			Description:     "Enables using SQL and DuckDB functions as Expressions.",
 			RequiresDevMode: true,
 			Stage:           FeatureStageExperimental,
-			Expression:      "true", // enabled by default
 			FrontendOnly:    false,
 			Owner:           grafanaBiSquad,
 			Created:         time.Date(2024, time.January, 31, 12, 0, 0, 0, time.UTC),
