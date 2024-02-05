@@ -1347,13 +1347,12 @@ var (
 			Created:      time.Date(2024, time.January, 2, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:           "groupToNestedTableTransformation",
-			Description:    "Enables the group to nested table transformation",
-			Stage:          FeatureStagePublicPreview,
-			FrontendOnly:   true,
-			Owner:          grafanaDatavizSquad,
-			AllowSelfServe: true,
-			Created:        time.Date(2024, time.February, 5, 12, 0, 0, 0, time.UTC),
+			Name:         "groupToNestedTableTransformation",
+			Description:  "Enables the group to nested table transformation",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Created:      time.Date(2024, time.February, 5, 12, 0, 0, 0, time.UTC),
 		},
 	}
 )
