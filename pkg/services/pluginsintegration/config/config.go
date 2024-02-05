@@ -62,6 +62,7 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, fe
 		grafanaCfg.HideAngularDeprecation,
 		grafanaCfg.ForwardHostEnvVars,
 		grafanaCfg.ConcurrentQueryCount,
+		grafanaCfg.AzureAuthEnabled,
 	), nil
 }
 

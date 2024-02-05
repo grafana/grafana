@@ -41,7 +41,7 @@ export function MetricCategoryCascader({ metricNames, onSelect, disabled, initia
         }}
         {...{ options, disabled, initialValue }}
       />
-      <Button disabled={disableClear} onClick={clear} variant="secondary">
+      <Button disabled={disableClear || disabled} onClick={clear} variant="secondary">
         Clear
       </Button>
     </HorizontalGroup>
