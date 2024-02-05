@@ -205,7 +205,6 @@ func TestService_TryTokenRefresh(t *testing.T) {
 					AuthenticatedBy: login.GenericOAuthModule,
 					ID:              "user:1234",
 				}
-
 			},
 		},
 		{
