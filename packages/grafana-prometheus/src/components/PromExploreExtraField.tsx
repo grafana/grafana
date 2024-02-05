@@ -49,7 +49,11 @@ export const PromExploreExtraField = memo(({ query, datasource, onChange, onRunQ
   const onQueryTypeChange = getQueryTypeChangeHandler(query, onChange);
 
   return (
-    <div aria-label="Prometheus extra field" className="gf-form-inline" data-testid={promExploreExtraFieldTestIds.extraFieldEditor}>
+    <div
+      aria-label="Prometheus extra field"
+      className="gf-form-inline"
+      data-testid={promExploreExtraFieldTestIds.extraFieldEditor}
+    >
       {/*Query type field*/}
       <div
         data-testid={promExploreExtraFieldTestIds.queryTypeField}

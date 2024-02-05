@@ -47,7 +47,11 @@ export function AdditionalSettings(props: AdditionalSettingsProps) {
         <div className={styles.selectItemLabel}>Disable text wrap</div>
       </div>
       <div className={styles.selectItem}>
-        <Switch data-testid={metricsModaltestIds.setUseBackend} value={state.useBackend} onChange={() => onChangeUseBackend()} />
+        <Switch
+          data-testid={metricsModaltestIds.setUseBackend}
+          value={state.useBackend}
+          onChange={() => onChangeUseBackend()}
+        />
         <div className={styles.selectItemLabel}>{placeholders.setUseBackend}&nbsp;</div>
         <Tooltip
           content={'Filter metric names by regex search, using an additional call on the Prometheus API.'}
