@@ -7,7 +7,7 @@ import { AutoSizeInput, Select } from '@grafana/ui';
 
 import { LegendFormatMode } from '../../types';
 
-export interface Props {
+export interface PromQueryLegendEditorProps {
   legendFormat: string | undefined;
   onChange: (legendFormat: string) => void;
   onRunQuery: () => void;
@@ -26,7 +26,7 @@ const legendModeOptions = [
 /**
  * Tests for this component are on the parent level (PromQueryBuilderOptions).
  */
-export const PromQueryLegendEditor = React.memo<Props>(({ legendFormat, onChange, onRunQuery }) => {
+export const PromQueryLegendEditor = React.memo<PromQueryLegendEditorProps>(({ legendFormat, onChange, onRunQuery }) => {
   const mode = getLegendMode(legendFormat);
   const inputRef = useRef<HTMLInputElement | null>(null);
 

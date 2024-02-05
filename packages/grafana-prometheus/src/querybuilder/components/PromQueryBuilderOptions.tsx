@@ -22,14 +22,14 @@ export interface UIOptions {
   resolution: boolean;
 }
 
-export interface Props {
+export interface PromQueryBuilderOptionsProps {
   query: PromQuery;
   app?: CoreApp;
   onChange: (update: PromQuery) => void;
   onRunQuery: () => void;
 }
 
-export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange, onRunQuery }) => {
+export const PromQueryBuilderOptions = React.memo<PromQueryBuilderOptionsProps>(({ query, app, onChange, onRunQuery }) => {
   const onChangeFormat = (value: SelectableValue<PromQueryFormat>) => {
     onChange({ ...query, format: value.value });
     onRunQuery();
