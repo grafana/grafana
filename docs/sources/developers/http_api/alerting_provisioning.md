@@ -1164,7 +1164,7 @@ Status: Accepted
 | ------------ | ----------------------------------------- | --------------------- | :------: | ------- | ----------- | ------- |
 | annotations  | map of string                             | `map[string]string`   |          |         |             |         |
 | condition    | string                                    | `string`              |          |         |             |         |
-| dashboardUid  | string                                    | `string`              |          |         |             |         |
+| dashboardUid | string                                    | `string`              |          |         |             |         |
 | data         | [][AlertQueryExport](#alert-query-export) | `[]*AlertQueryExport` |          |         |             |         |
 | execErrState | string                                    | `string`              |          |         |             |         |
 | for          | [Duration](#duration)                     | `Duration`            |          |         |             |         |
