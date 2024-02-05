@@ -16107,7 +16107,7 @@
     },
     "/dashboards/db": {
       "post": {
-        "description": "Creates a new dashboard or updates an existing dashboard.",
+        "description": "Creates a new dashboard or updates an existing dashboard.\nNote: This endpoint is not intended for creating folders, use `POST /api/folders` for that.",
         "operationId": "postDashboard",
         "requestBody": {
           "content": {
@@ -21283,15 +21283,6 @@
         "description": "Please refer to [reports enterprise](#/reports/renderReportPDFs) instead. This will be removed in Grafana 10.",
         "operationId": "renderReportPDF",
         "parameters": [
-          {
-            "in": "path",
-            "name": "DashboardID",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          },
           {
             "in": "path",
             "name": "dashboardID",

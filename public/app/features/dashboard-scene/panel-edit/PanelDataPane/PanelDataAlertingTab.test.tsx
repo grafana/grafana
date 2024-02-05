@@ -159,7 +159,7 @@ const dashboard = {
     folderId: 1,
     folderTitle: 'super folder',
   },
-} as DashboardModel;
+} as unknown as DashboardModel;
 
 const panel = new PanelModel({
   datasource: {

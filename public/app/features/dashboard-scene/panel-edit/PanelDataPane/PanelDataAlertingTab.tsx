@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, IconName } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObjectBase, SceneComponentProps } from '@grafana/scenes';
-import { Alert, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, Tab, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { RulesTable } from 'app/features/alerting/unified/components/rules/RulesTable';
 import { usePanelCombinedRules } from 'app/features/alerting/unified/hooks/usePanelCombinedRules';
@@ -13,17 +13,18 @@ import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../utils/utils';
 import { VizPanelManager } from '../VizPanelManager';
 
 import { ScenesNewRuleFromPanelButton } from './NewAlertRuleButton';
-import { PanelDataPaneTabState, PanelDataPaneTab, TabId } from './types';
+import { PanelDataPaneTabState, PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
 
 export class PanelDataAlertingTab extends SceneObjectBase<PanelDataPaneTabState> implements PanelDataPaneTab {
   static Component = PanelDataAlertingTabRendered;
+  TabComponent: (props: PanelDataTabHeaderProps) => React.JSX.Element;
 
   tabId = TabId.Alert;
-  icon: IconName = 'bell';
   private _panelManager: VizPanelManager;
 
   constructor(panelManager: VizPanelManager) {
     super({});
+    this.TabComponent = (props: PanelDataTabHeaderProps) => AlertingTab({ ...props, model: this });
     this._panelManager = panelManager;
   }
 
@@ -115,3 +116,27 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(3),
   }),
 });
+interface PanelDataAlertingTabHeaderProps extends PanelDataTabHeaderProps {
+  model: PanelDataAlertingTab;
+}
+
+function AlertingTab(props: PanelDataAlertingTabHeaderProps) {
+  const { model } = props;
+
+  const { rules } = usePanelCombinedRules({
+    dashboardUID: model.getDashboardUID(),
+    panelId: model.getLegacyPanelId(),
+    poll: false,
+  });
+
+  return (
+    <Tab
+      key={props.key}
+      label={model.getTabLabel()}
+      icon="bell"
+      counter={rules.length}
+      active={props.active}
+      onChangeTab={props.onChangeTab}
+    />
+  );
+}
