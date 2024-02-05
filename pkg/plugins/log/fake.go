@@ -23,19 +23,19 @@ func (f *TestLogger) New(_ ...any) Logger {
 }
 
 func (f *TestLogger) Info(msg string, ctx ...any) {
-	f.InfoLogs.Set(msg, ctx)
+	f.InfoLogs.Call(msg, ctx)
 }
 
 func (f *TestLogger) Warn(msg string, ctx ...any) {
-	f.WarnLogs.Set(msg, ctx)
+	f.WarnLogs.Call(msg, ctx)
 }
 
 func (f *TestLogger) Debug(msg string, ctx ...any) {
-	f.DebugLogs.Set(msg, ctx)
+	f.DebugLogs.Call(msg, ctx)
 }
 
 func (f *TestLogger) Error(msg string, ctx ...any) {
-	f.ErrorLogs.Set(msg, ctx)
+	f.ErrorLogs.Call(msg, ctx)
 }
 
 func (f *TestLogger) FromContext(_ context.Context) Logger {
@@ -50,7 +50,7 @@ type Logs struct {
 	mu sync.Mutex
 }
 
-func (l *Logs) Set(msg string, ctx ...any) {
+func (l *Logs) Call(msg string, ctx ...any) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.Calls++
