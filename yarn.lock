@@ -3717,7 +3717,7 @@ __metadata:
     "@types/d3": "npm:7.4.3"
     "@types/debounce-promise": "npm:3.1.9"
     "@types/eslint": "npm:8.56.2"
-    "@types/jest": "npm:29.5.11"
+    "@types/jest": "npm:29.5.12"
     "@types/jquery": "npm:3.5.29"
     "@types/lodash": "npm:4.14.202"
     "@types/marked": "npm:5.0.2"
@@ -8999,16 +8999,6 @@ __metadata:
     jest-diff: "npm:^26.0.0"
     pretty-format: "npm:^26.0.0"
   checksum: 10/6de98f19b115540985bc2d32566a4c5e98215161ab6c8b06854cace140623cd71949230ad258b5b7de7323a00668bea14e3b250277e5a484da479ab238687793
-  languageName: node
-  linkType: hard
-
-"@types/jest@npm:29.5.11":
-  version: 29.5.11
-  resolution: "@types/jest@npm:29.5.11"
-  dependencies:
-    expect: "npm:^29.0.0"
-    pretty-format: "npm:^29.0.0"
-  checksum: 10/798f4c89407d9457bea1256de74c26f2b279f6c789c0e3311cd604cc75cdab333b9a29b00c51b0090d31abdf11cc788b4103282851a653bef6daf72edf97eef2
   languageName: node
   linkType: hard
 
