@@ -484,13 +484,13 @@ require (
 require k8s.io/apiextensions-apiserver v0.29.0 // @grafana/grafana-app-platform-squad
 
 require (
-	github.com/blastrain/vitess-sqlparser v0.0.0-20201030050434-a139afbb1aba
+	github.com/blastrain/vitess-sqlparser v0.0.0-20201030050434-a139afbb1aba // @grafana/grafana-bi-squad
 	k8s.io/code-generator v0.29.1 // @grafana/grafana-app-platform-squad
 )
 
 require (
 	github.com/juju/errors v0.0.0-20170703010042-c7d06af17c68 // indirect
-	github.com/marcboeker/go-duckdb v1.5.6
+	github.com/marcboeker/go-duckdb v1.5.6 // @grafana/grafana-bi-squad
 )
 require k8s.io/code-generator v0.29.1 // @grafana/grafana-app-platform-squad
 
