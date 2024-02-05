@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { cloneDeep } from 'lodash';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
@@ -9,10 +10,10 @@ import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config, getPluginLinkExtensions, locationService, setPluginImportUtils } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
-
-import { setupLoadDashboardMock } from '../utils/test-utils';
+import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 
 import { DashboardScenePage, Props } from './DashboardScenePage';
+import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -33,7 +34,7 @@ function setup() {
   const props: Props = {
     ...getRouteComponentProps(),
   };
-  props.match.params.uid = 'd10';
+  props.match.params.uid = 'my-dash-uid';
 
   const renderResult = render(
     <TestProvider grafanaContext={context}>
@@ -54,7 +55,7 @@ function setup() {
 
 const simpleDashboard: Dashboard = {
   title: 'My cool dashboard',
-  uid: '10d',
+  uid: 'my-dash-uid',
   schemaVersion: 30,
   version: 1,
   panels: [
@@ -105,10 +106,20 @@ setPluginImportUtils({
   getPanelPluginFromCache: (id: string) => undefined,
 });
 
+const loadDashboardMock = jest.fn();
+
+setDashboardLoaderSrv({
+  loadDashboard: loadDashboardMock,
+  // disabling type checks since this is a test util
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+} as unknown as DashboardLoaderSrv);
+
 describe('DashboardScenePage', () => {
   beforeEach(() => {
     locationService.push('/');
-    setupLoadDashboardMock({ dashboard: simpleDashboard, meta: {} });
+    getDashboardScenePageStateManager().clearDashboardCache();
+    loadDashboardMock.mockClear();
+    loadDashboardMock.mockResolvedValue({ dashboard: simpleDashboard, meta: {} });
     // hacky way because mocking autosizer does not work
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 1000 });
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
@@ -135,8 +146,12 @@ describe('DashboardScenePage', () => {
 
     expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
 
-    simpleDashboard.version = 11;
-    simpleDashboard.panels![0].title = 'Updated title';
+    const updatedDashboard = cloneDeep(simpleDashboard);
+    updatedDashboard.version = 11;
+    updatedDashboard.panels![0].title = 'Updated title';
+
+    getDashboardScenePageStateManager().clearDashboardCache();
+    loadDashboardMock.mockResolvedValue({ dashboard: updatedDashboard, meta: {} });
 
     props.history.location.state = { routeReloadCounter: 1 };
 
