@@ -5,7 +5,7 @@ import React, { ReactNode } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { DataFrame, DataFrameView, FieldType, NavModelItem } from '@grafana/data';
+import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from 'app/features/search/service';
@@ -18,14 +18,6 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getPluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
 }));
-
-const pageNav: NavModelItem = {
-  text: 'pageNav title',
-  children: [
-    { text: 'pageNav child1', url: '1', active: true },
-    { text: 'pageNav child2', url: '2' },
-  ],
-};
 
 const searchData: DataFrame = {
   fields: [
