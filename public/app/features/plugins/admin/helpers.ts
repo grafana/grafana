@@ -47,7 +47,10 @@ export function mergeLocalsAndRemotes({
 
       // for managed instances, check if plugin is installed, but not yet present in the current instance
       if (configCore.featureToggles.managedPluginsInstall && config.pluginAdminExternalManageEnabled) {
-        catalogPlugin.isFullyInstalled = instancesMap.has(remotePlugin.slug) && catalogPlugin.isInstalled;
+        catalogPlugin.isFullyInstalled = catalogPlugin.isCore
+          ? true
+          : instancesMap.has(remotePlugin.slug) && catalogPlugin.isInstalled;
+
         catalogPlugin.isInstalled = instancesMap.has(remotePlugin.slug) || catalogPlugin.isInstalled;
 
         const instancePlugin = instancesMap.get(remotePlugin.slug);
