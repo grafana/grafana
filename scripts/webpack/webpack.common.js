@@ -34,14 +34,6 @@ module.exports = {
       '@locker/near-membrane-dom/custom-devtools-formatter': require.resolve(
         '@locker/near-membrane-dom/custom-devtools-formatter.js'
       ),
-
-      // Ensure that all dependencies share the same copy of react.
-      // Mainly linking in packages for local development.
-      react: require.resolve('react'),
-
-      // All dependencies also need to share the same copy of the singletons inside @grafana/runtime.
-      // Mainly linking in packages for local development.
-      '@grafana/runtime': path.resolve(__dirname, '../../packages/grafana-runtime'),
     },
     modules: [
       // default value
