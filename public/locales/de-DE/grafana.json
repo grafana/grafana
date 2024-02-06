@@ -1,5 +1,5 @@
 {
-  "_comment": "Diese Datei ist die Quelle für englische Strings. Bearbeiten Sie diese, um die Pluralformen und andere Ausdrücke für die Benutzeroberfläche zu ändern.",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "Rolle",
@@ -26,7 +26,7 @@
     }
   },
   "bouncing-loader": {
-    "label": ""
+    "label": "Wird geladen"
   },
   "browse-dashboards": {
     "action": {
@@ -76,7 +76,7 @@
     "folder-picker": {
       "accessible-label": "Ordner auswählen: {{ label }} aktuell ausgewählt",
       "button-label": "Ordner auswählen",
-      "clear-selection": "",
+      "clear-selection": "Auswahl löschen",
       "empty-message": "Keine Ordner gefunden",
       "error-title": "Fehler beim Laden der Ordner",
       "search-placeholder": "Ordner suchen",
@@ -306,7 +306,7 @@
     },
     "toolbar": {
       "add": "Hinzufügen",
-      "alert-rules": "",
+      "alert-rules": "Warnregeln",
       "mark-favorite": "Als Favorit markieren",
       "open-original": "Original-Dashboard öffnen",
       "playlist-next": "Zum nächsten Dashboard",
@@ -316,7 +316,7 @@
       "save": "Dashboard speichern",
       "settings": "Dashboard-Einstellungen",
       "share": "Dashboard oder Panel teilen",
-      "share-button": "",
+      "share-button": "Teilen",
       "unmark-favorite": "Markierung als Favorit entfernen"
     },
     "validation": {
@@ -366,7 +366,7 @@
       "title-label": "Titel"
     },
     "json-editor": {
-      "apply-button": "",
+      "apply-button": "Änderungen anwenden",
       "save-button": "Änderungen speichern",
       "subtitle": "Das JSON-Modell unten ist die Datenstruktur, die das Dashboard definiert. Dazu gehören Dashboard-Einstellungen, Fenster-Einstellungen, Layout, Abfragen und so weiter.",
       "title": "JSON-Modell"
@@ -537,11 +537,11 @@
     },
     "toolbar": {
       "aria-label": "Werkzeugleiste durchsuchen",
-      "copy-link": "",
-      "copy-link-abs-time": "",
+      "copy-link": "URL kopieren",
+      "copy-link-abs-time": "Absolute URL kopieren",
       "copy-links-absolute-category": "",
-      "copy-links-normal-category": "",
-      "copy-shortened-link": "Verkürzten Link kopieren",
+      "copy-links-normal-category": "Normale URL-Links",
+      "copy-shortened-link": "Gekürzte URL kopieren",
       "copy-shortened-link-abs-time": "",
       "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "Abbrechen",
@@ -559,7 +559,7 @@
   },
   "grafana-ui": {
     "drawer": {
-      "close": ""
+      "close": "Schließen"
     },
     "modal": {
       "close-tooltip": "Schließen"
@@ -649,15 +649,15 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "Dieses Fenster wird in {{count}} Dashboard verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:",
-      "body_other": "Dieses Fenster wird in {{count}} Dashboards verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:",
       "button-cancel": "<0>Abbrechen</0>",
       "button-view-panel1": "Fenster in {{label}} anzeigen...",
       "button-view-panel2": "Fenster im Dashboard anzeigen...",
       "panel-not-linked": "Fenster ist nicht mit einem Dashboard verbunden. Fügen Sie das Fenster einem Dashboard hinzu und versuchen Sie es erneut.",
       "select-no-options-message": "Keine Dashboards gefunden",
       "select-placeholder": "Tippen, um nach Dashboard zu suchen",
-      "title": "Fenster im Dashboard anzeigen"
+      "title": "Fenster im Dashboard anzeigen",
+      "body_one": "Dieses Fenster wird in {{count}} Dashboard verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:",
+      "body_other": "Dieses Fenster wird in {{count}} Dashboards verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:"
     },
     "save": {
       "error": "Fehler beim Speichern des Bibliotheks-Panels: „{{errorMsg}}“",
@@ -681,7 +681,7 @@
       "title": "Server-Administrator"
     },
     "alert-list-legacy": {
-      "title": ""
+      "title": "Warnregeln"
     },
     "alerting": {
       "subtitle": "Informiere dich über Probleme in deinen Systemen kurz nach deren Auftreten",
@@ -740,6 +740,9 @@
     },
     "authentication": {
       "title": "Authentifizierung"
+    },
+    "collector": {
+      "title": ""
     },
     "config": {
       "title": "Verwaltung"
@@ -833,13 +836,13 @@
     },
     "infrastructure": {
       "subtitle": "",
-      "title": ""
+      "title": "Infrastruktur"
     },
     "integrations": {
       "title": "Integrationen"
     },
     "k6": {
-      "title": ""
+      "title": "Leistung"
     },
     "kubernetes": {
       "title": "Kubernetes"
@@ -887,6 +890,10 @@
     "plugins": {
       "subtitle": "Erweitere das Grafana-Erlebnis mit Plug-ins",
       "title": "Plug-ins"
+    },
+    "private-data-source-connections": {
+      "subtitle": "",
+      "title": "Private Datenquelle verbinden"
     },
     "profile/notifications": {
       "title": "Benachrichtigungsverlauf"
@@ -979,7 +986,7 @@
     "megamenu": {
       "close": "Menü schließen",
       "dock": "Menü andocken",
-      "list-label": "",
+      "list-label": "Navigation",
       "undock": ""
     },
     "toolbar": {
@@ -1093,19 +1100,19 @@
     },
     "config": {
       "can-view-dashboard-radio-button-label": "",
-      "copy-button": "",
+      "copy-button": "Kopieren",
       "dashboard-url-field-label": "",
       "email-share-type-option-label": "",
-      "pause-sharing-dashboard-label": "",
-      "public-share-type-option-label": "",
+      "pause-sharing-dashboard-label": "Teilen des Dashboards pausieren",
+      "public-share-type-option-label": "Jeder mit einem Link",
       "revoke-public-URL-button": "",
       "revoke-public-URL-button-title": "",
-      "settings-title": ""
+      "settings-title": "Einstellungen"
     },
     "create-page": {
       "generate-public-url-button": "",
       "unsupported-features-desc": "",
-      "welcome-title": ""
+      "welcome-title": "Willkommen zu öffentlichen Dashboards!"
     },
     "delete-modal": {
       "revoke-nonorphaned-body-text": "",
@@ -1113,13 +1120,13 @@
       "revoke-title": ""
     },
     "email-sharing": {
-      "input-invalid-email-text": "",
-      "input-required-email-text": "",
-      "invite-button": "",
+      "input-invalid-email-text": "Ungültige E-Mail",
+      "input-required-email-text": "E-Mail-Adresse ist erforderlich",
+      "invite-button": "Einladen",
       "invite-field-desc": "",
-      "invite-field-label": "",
-      "resend-button": "",
-      "resend-button-title": "",
+      "invite-field-label": "Einladen",
+      "resend-button": "Erneut senden",
+      "resend-button-title": "Erneut senden",
       "revoke-button": "",
       "revoke-button-title": ""
     },
@@ -1129,12 +1136,12 @@
       "save-dashboard-changes-alert-title": "",
       "unsupport-data-source-alert-readmore-link": "",
       "unsupported-data-source-alert-desc": "",
-      "unsupported-data-source-alert-title": "",
+      "unsupported-data-source-alert-title": "Nicht unterstützte Datenquellen",
       "unsupported-template-variable-alert-desc": "",
       "unsupported-template-variable-alert-title": ""
     },
     "settings-bar-header": {
-      "collapse-settings-tooltip": "",
+      "collapse-settings-tooltip": "Einstellungen einklappen",
       "expand-settings-tooltip": ""
     },
     "settings-configuration": {
@@ -1158,7 +1165,7 @@
       "config-button-tooltip": "",
       "revoke-button-text": "",
       "revoke-button-tooltip": "",
-      "view-button-tooltip": ""
+      "view-button-tooltip": "Öffentliches Dashboard anzeigen"
     },
     "dashboard-title": {
       "orphaned-title": "",
@@ -1170,29 +1177,29 @@
   },
   "public-dashboard-users-access-list": {
     "dashboard-modal": {
-      "loading-text": "",
+      "loading-text": "Wird geladen ...",
       "open-dashboard-list-text": "",
       "public-dashboard-link": "",
       "public-dashboard-setting": ""
     },
     "delete-user-modal": {
-      "delete-user-button-text": "",
-      "delete-user-cancel-button": "",
-      "delete-user-revoke-access-button": "",
-      "revoke-access-title": "",
-      "revoke-user-access-modal-desc-line1": "",
-      "revoke-user-access-modal-desc-line2": ""
+      "delete-user-button-text": "Benutzer löschen",
+      "delete-user-cancel-button": "Abbrechen",
+      "delete-user-revoke-access-button": "Zugriff widerrufen",
+      "revoke-access-title": "Zugriff widerrufen",
+      "revoke-user-access-modal-desc-line1": "Sind Sie sicher, dass Sie den Zugriff für {{email}} widerrufen möchten?",
+      "revoke-user-access-modal-desc-line2": "Durch diese Aktion wird {{email}}&apos; sofort der Zugriff auf alle öffentlichen Dashboards entzogen."
     },
     "modal": {
-      "dashboard-modal-title": ""
+      "dashboard-modal-title": "Öffentliche Dashboards"
     },
     "table-header": {
-      "activated-label": "",
+      "activated-label": "Aktiviert",
       "activated-tooltip": "",
-      "email-label": "",
-      "last-active-label": "",
+      "email-label": "E-Mail-Adresse",
+      "last-active-label": "Zuletzt aktiv",
       "origin-label": "",
-      "role-label": ""
+      "role-label": "Rolle"
     }
   },
   "query-operation": {
@@ -1232,9 +1239,9 @@
   },
   "return-to-previous": {
     "button": {
-      "label": ""
+      "label": "Zurück zu {{title}}"
     },
-    "dismissable-button": ""
+    "dismissable-button": "Schließen"
   },
   "search": {
     "actions": {
@@ -1330,7 +1337,7 @@
       "link": "Link",
       "panel-embed": "Einbetten",
       "public-dashboard": "Öffentliches Dashboard",
-      "public-dashboard-title": "",
+      "public-dashboard-title": "Öffentliches Dashboard",
       "snapshot": "Schnappschuss"
     },
     "theme-picker": {
@@ -1401,7 +1408,7 @@
     "calendar": {
       "apply-button": "Zeitbereich anwenden",
       "cancel-button": "Abbrechen",
-      "close": "",
+      "close": "Kalender schließen",
       "select-time": "Einen Zeitbereich auswählen"
     },
     "content": {
@@ -1428,7 +1435,7 @@
       "default-error": "Ein vergangenes Datum oder \"heutiges\" eingeben",
       "fiscal-year": "Geschäftsjahr",
       "from-input": "Von",
-      "open-input-calendar": "",
+      "open-input-calendar": "Kalender öffnen",
       "range-error": "„Von“ darf nicht nach „Bis“ sein",
       "to-input": "Bis"
     },
@@ -1454,7 +1461,7 @@
   "transformations": {
     "empty": {
       "add-transformation-body": "",
-      "add-transformation-header": ""
+      "add-transformation-header": "Daten transformieren beginnen"
     }
   },
   "user-orgs": {
