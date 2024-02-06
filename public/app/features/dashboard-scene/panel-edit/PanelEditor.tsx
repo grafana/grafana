@@ -160,33 +160,26 @@ function conditionalDataPaneBehavior(scene: SplitLayout) {
   const panelManager = editor.state.panelRef.resolve();
   const panel = panelManager.state.panel;
 
+  const getDataPane = () =>
+    new SceneFlexItem({
+      body: new PanelDataPane(panelManager),
+    });
+
   if (!config.panels[panel.state.pluginId].skipDataQuery) {
     scene.setState({
-      secondary: new SceneFlexItem({
-        body: new PanelDataPane(panelManager),
-      }),
+      secondary: getDataPane(),
     });
   }
 
   const sub = panelManager.subscribeToState((n, p) => {
-    const nextPluginId = n.panel.state.pluginId;
-    const prevPluginId = p.panel.state.pluginId;
-    const hadDataSupport = !config.panels[prevPluginId].skipDataQuery;
-    const willHaveDataSupport = !config.panels[nextPluginId].skipDataQuery;
+    const hadDataSupport = !config.panels[p.panel.state.pluginId].skipDataQuery;
+    const willHaveDataSupport = !config.panels[n.panel.state.pluginId].skipDataQuery;
 
-    if (nextPluginId !== prevPluginId) {
-      if (hadDataSupport && !willHaveDataSupport) {
-        locationService.partial({ tab: null }, true);
-        scene.setState({
-          secondary: undefined,
-        });
-      } else if (!hadDataSupport && willHaveDataSupport) {
-        scene.setState({
-          secondary: new SceneFlexItem({
-            body: new PanelDataPane(panelManager),
-          }),
-        });
-      }
+    if (hadDataSupport && !willHaveDataSupport) {
+      locationService.partial({ tab: null }, true);
+      scene.setState({ secondary: undefined });
+    } else if (!hadDataSupport && willHaveDataSupport) {
+      scene.setState({ secondary: getDataPane() });
     }
   });
 
