@@ -439,7 +439,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				s := states[0]
 
 				var cmd *models.AlertInstance
-				for _, op := range instanceStore.RecordedOps {
+				for _, op := range instanceStore.RecordedOps() {
 					switch q := op.(type) {
 					case models.AlertInstance:
 						cmd = &q
