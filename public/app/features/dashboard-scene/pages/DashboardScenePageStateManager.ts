@@ -13,11 +13,9 @@ import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel } from '../serialization/buildNewDashboardSaveModel';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { SoloPanelScene } from '../solo/SoloPanelScene';
 
 export interface DashboardScenePageState {
   dashboard?: DashboardScene;
-  soloPanel?: SoloPanelScene;
   panelEditor?: PanelEditor;
   isLoading?: boolean;
   loadError?: string;
@@ -153,22 +151,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
     throw new Error('Dashboard not found');
   }
 
-  public async loadSoloPanel(uid: string, panelId: string, timezone?: string) {
-    try {
-      const dashboard = await this.loadScene({ uid, route: DashboardRoutes.Embedded });
-
-      const soloScene = new SoloPanelScene({
-        dashboardRef: dashboard.getRef(),
-        panelId: panelId,
-        timezone: timezone,
-      });
-
-      this.setState({ soloPanel: soloScene, isLoading: false });
-    } catch (err) {
-      this.setState({ isLoading: false, loadError: String(err) });
-    }
-  }
-
   public getFromCache(cacheKey: string) {
     const cachedDashboard = this.dashboardCache;
 
@@ -205,7 +187,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
       loadError: undefined,
       isLoading: false,
       panelEditor: undefined,
-      soloPanel: undefined,
     });
   }
 

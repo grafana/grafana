@@ -1079,6 +1079,7 @@ var (
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
 			Owner:        grafanaDashboardsSquad,
+			Created:      time.Date(2024, time.January, 6, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "dashboardScene",
