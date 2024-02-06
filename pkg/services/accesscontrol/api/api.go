@@ -66,10 +66,10 @@ func (api *AccessControlAPI) getUserPermissions(c *contextmodel.ReqContext) resp
 	return response.JSON(http.StatusOK, ac.GroupScopesByAction(permissions))
 }
 
-func maxOneOption(options ...bool) bool {
+func atMostOneOption(options ...bool) bool {
 	provided := 0
-	for _, option := range options {
-		if option {
+	for i := 0; i < len(options) && provided <= 1; i++ {
+		if options[i] {
 			provided++
 		}
 	}
@@ -96,10 +96,10 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 	}
 
 	// Validate inputs
-	if !maxOneOption((searchOptions.ActionPrefix != ""), (searchOptions.Action != "")) {
+	if !atMostOneOption((searchOptions.ActionPrefix != ""), (searchOptions.Action != "")) {
 		return response.JSON(http.StatusBadRequest, "'action' and 'actionPrefix' are mutually exclusive")
 	}
-	if !maxOneOption((searchOptions.UserLogin != ""), (searchOptions.UserID > 0), (searchOptions.NamespaceID != "")) {
+	if !atMostOneOption((searchOptions.UserLogin != ""), (searchOptions.UserID > 0), (searchOptions.NamespaceID != "")) {
 		return response.JSON(http.StatusBadRequest, "'userId', 'userLogin' and 'namespaceID' are mutually exclusive")
 	}
 	if searchOptions.UserID <= 0 && searchOptions.UserLogin == "" && searchOptions.NamespaceID == "" &&
