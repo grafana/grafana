@@ -559,9 +559,6 @@ type Panel struct {
 	// `h` for horizontal, `v` for vertical.
 	RepeatDirection *PanelRepeatDirection `json:"repeatDirection,omitempty"`
 
-	// Tags for the panel.
-	Tags []string `json:"tags,omitempty"`
-
 	// Depends on the panel plugin. See the plugin documentation for details.
 	Targets []Target `json:"targets,omitempty"`
 
@@ -748,7 +745,7 @@ type Spec struct {
 	Panels []any `json:"panels,omitempty"`
 
 	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
-	Refresh *any `json:"refresh,omitempty"`
+	Refresh *string `json:"refresh,omitempty"`
 
 	// This property should only be used in dashboards defined by plugins.  It is a quick check
 	// to see if the version has changed since the last time.
@@ -857,16 +854,16 @@ type ThresholdsMode string
 // It defines the default config for the time picker and the refresh picker for the specific dashboard.
 type TimePickerConfig struct {
 	// Whether timepicker is visible or not.
-	Hidden bool `json:"hidden"`
+	Hidden *bool `json:"hidden,omitempty"`
 
 	// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
 	NowDelay *string `json:"nowDelay,omitempty"`
 
 	// Interval options available in the refresh picker dropdown.
-	RefreshIntervals []string `json:"refresh_intervals"`
+	RefreshIntervals []string `json:"refresh_intervals,omitempty"`
 
 	// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
-	TimeOptions []string `json:"time_options"`
+	TimeOptions []string `json:"time_options,omitempty"`
 }
 
 // Maps text values to a color or different display text and color.
