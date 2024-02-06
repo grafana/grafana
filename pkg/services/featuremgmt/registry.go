@@ -204,14 +204,6 @@ var (
 			Created:     time.Date(2022, time.June, 20, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:         "dockedMegaMenu",
-			Description:  "Enable support for a persistent (docked) navigation menu",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaFrontendPlatformSquad,
-			Created:      time.Date(2023, time.September, 18, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:         "returnToPrevious",
 			Description:  "Enables the return to previous context functionality",
 			Stage:        FeatureStageExperimental,

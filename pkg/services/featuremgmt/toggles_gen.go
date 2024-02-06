@@ -99,10 +99,6 @@ const (
 	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
 	FlagTopnav = "topnav"
 
-	// FlagDockedMegaMenu
-	// Enable support for a persistent (docked) navigation menu
-	FlagDockedMegaMenu = "dockedMegaMenu"
-
 	// FlagReturnToPrevious
 	// Enables the return to previous context functionality
 	FlagReturnToPrevious = "returnToPrevious"

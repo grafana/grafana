@@ -41,7 +41,6 @@ export interface FeatureToggles {
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
   topnav?: boolean;
-  dockedMegaMenu?: boolean;
   returnToPrevious?: boolean;
   grpcServer?: boolean;
   unifiedStorage?: boolean;

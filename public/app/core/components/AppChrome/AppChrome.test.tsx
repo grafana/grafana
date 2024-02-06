@@ -5,7 +5,7 @@ import React, { ReactNode } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { DataFrame, DataFrameView, FieldType, NavModelItem } from '@grafana/data';
+import { DataFrame, DataFrameView, FieldType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from 'app/features/search/service';
@@ -18,14 +18,6 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getPluginLinkExtensions: jest.fn().mockReturnValue({ extensions: [] }),
 }));
-
-const pageNav: NavModelItem = {
-  text: 'pageNav title',
-  children: [
-    { text: 'pageNav child1', url: '1', active: true },
-    { text: 'pageNav child2', url: '2' },
-  ],
-};
 
 const searchData: DataFrame = {
   fields: [
@@ -90,30 +82,6 @@ describe('AppChrome', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
-  });
-
-  it('should render section nav model based on navId', async () => {
-    setup(<Page navId="child1">Children</Page>);
-    expect(await screen.findByTestId('page-children')).toBeInTheDocument();
-
-    expect(screen.getByRole('tab', { name: 'Tab Section name' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
-    expect(screen.getAllByRole('tab').length).toBe(3);
-  });
-
-  it('should render section nav model based on navId and item page nav', async () => {
-    setup(
-      <Page navId="child1" pageNav={pageNav}>
-        Children
-      </Page>
-    );
-    expect(await screen.findByTestId('page-children')).toBeInTheDocument();
-
-    expect(screen.getByRole('tab', { name: 'Tab Section name' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'pageNav title' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Tab pageNav child1' })).toBeInTheDocument();
   });
 
   it('should create a skip link to skip to main content', async () => {
