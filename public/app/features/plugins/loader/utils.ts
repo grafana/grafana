@@ -29,7 +29,7 @@ export function isHostedOnCDN(path: string) {
   return Boolean(config.pluginsCDNBaseURL) && path.startsWith(config.pluginsCDNBaseURL);
 }
 
-// This function is used to dynamically prepend the assPubUrl in the frontend.
+// This function is used to dynamically prepend the appSubUrl in the frontend.
 // This is required because if serve_from_sub_path is false the Image Renderer sets the subpath
 // to an empty string and sets appurl to localhost which causes plugins to fail to load.
 // https://github.com/grafana/grafana/issues/76180
