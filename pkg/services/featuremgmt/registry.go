@@ -819,14 +819,6 @@ var (
 			Created:     time.Date(2023, time.September, 7, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:         "requestInstrumentationStatusSource",
-			Description:  "Include a status source label for request metrics and logs",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaPluginsPlatformSquad,
-			Created:      time.Date(2023, time.September, 11, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:            "libraryPanelRBAC",
 			Description:     "Enables RBAC support for library panels",
 			Stage:           FeatureStageExperimental,
@@ -876,15 +868,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaPluginsPlatformSquad,
 			Created:      time.Date(2023, time.September, 21, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:            "httpSLOLevels",
-			Description:     "Adds SLO level to http request metrics",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           hostedGrafanaTeam,
-			RequiresRestart: true,
-			Created:         time.Date(2023, time.September, 22, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "idForwarding",
