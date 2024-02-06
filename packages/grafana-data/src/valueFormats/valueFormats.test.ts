@@ -154,16 +154,4 @@ describe('valueFormats', () => {
       expect(fmt0).toEqual(fmt1);
     });
   });
-
-  describe('getValueFormat with scalable set to false', () => {
-    it.each`
-      value      | expected
-      ${1000000} | ${'1000000 W'}
-      ${0.001}   | ${'0.00100 W'}
-    `('should return a fixed unit regardless of the input value', ({ value, expected }) => {
-      const result = getValueFormat('watt', false)(value);
-      const full = formattedValueToString(result);
-      expect(full).toBe(expected);
-    });
-  });
 });

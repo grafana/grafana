@@ -32,7 +32,7 @@ describe('Auto-migrate graph panel', () => {
         e2e.pages.Dashboard.Annotations.marker().should('exist');
       });
 
-    cy.get('body').children().find('.scrollbar-view').first().scrollTo('bottom');
+    cy.get('#pageContent .scrollbar-view').first().scrollTo('bottom');
 
     e2e.components.Panels.Panel.title('05:00')
       .should('exist')
