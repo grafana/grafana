@@ -17,27 +17,33 @@ import {
   sceneUtils,
   SceneVariable,
   SceneVariableDependencyConfigLike,
+  SceneVariableSet,
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
+import { getSaveDashboardChange } from '../saving/getSaveDashboardChange';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
+import { isSceneVariableInstance } from '../settings/variables/utils';
 import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import { forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel, isPanelClone } from '../utils/utils';
 
+import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DashboardControls } from './DashboardControls';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { ViewPanelScene } from './ViewPanelScene';
@@ -136,6 +142,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.startTrackingChanges();
     }
 
+    if (!this.state.meta.isEmbedded && this.state.uid) {
+      dashboardWatcher.watch(this.state.uid);
+    }
+
     const clearKeyBindings = setupKeyboardShortcuts(this);
     const oldDashboardWrapper = new DashboardModelCompatibilityWrapper(this);
 
@@ -149,6 +159,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.stopTrackingChanges();
       this.stopUrlSync();
       oldDashboardWrapper.destroy();
+      dashboardWatcher.leave();
     };
   }
 
@@ -207,12 +218,29 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
   }
 
-  public onDiscard = () => {
+  public exitEditMode({ skipConfirm }: { skipConfirm: boolean }) {
     if (!this.canDiscard()) {
       console.error('Trying to discard back to a state that does not exist, initialState undefined');
       return;
     }
 
+    if (!this.state.isDirty || skipConfirm) {
+      this.exitEditModeConfirmed();
+      return;
+    }
+
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Discard changes to dashboard?',
+        text: `You have unsaved changes to this dashboard. Are you sure you want to discard them?`,
+        icon: 'trash-alt',
+        yesText: 'Discard',
+        onConfirm: this.exitEditModeConfirmed.bind(this),
+      })
+    );
+  }
+
+  private exitEditModeConfirmed() {
     // No need to listen to changes anymore
     this.stopTrackingChanges();
     // Stop url sync before updating url
@@ -238,7 +266,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.startUrlSync();
     // Disable grid dragging
     this.propagateEditModeChange();
-  };
+  }
 
   public canDiscard() {
     return this._initialState !== undefined;
@@ -260,7 +288,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     newState.version = versionRsp.version;
 
     this._initialState = newState;
-    this.onDiscard();
+    this.exitEditMode({ skipConfirm: false });
 
     return true;
   };
@@ -335,32 +363,49 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       (event: SceneObjectStateChangedEvent) => {
         if (event.payload.changedObject instanceof SceneRefreshPicker) {
           if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'intervals')) {
-            this.setIsDirty();
+            this.detectChanges();
           }
         }
         if (event.payload.changedObject instanceof SceneGridItem) {
-          this.setIsDirty();
+          this.detectChanges();
         }
         if (event.payload.changedObject instanceof DashboardScene) {
           if (Object.keys(event.payload.partialUpdate).some((key) => PERSISTED_PROPS.includes(key))) {
-            this.setIsDirty();
+            this.detectChanges();
           }
         }
         if (event.payload.changedObject instanceof SceneTimeRange) {
-          this.setIsDirty();
+          this.detectChanges();
         }
         if (event.payload.changedObject instanceof DashboardControls) {
           if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'hideTimeControls')) {
-            this.setIsDirty();
+            this.detectChanges();
           }
+        }
+        if (event.payload.changedObject instanceof SceneVariableSet) {
+          this.detectChanges();
+        }
+        if (event.payload.changedObject instanceof DashboardAnnotationsDataLayer) {
+          this.detectChanges();
+        }
+        if (isSceneVariableInstance(event.payload.changedObject)) {
+          this.detectChanges();
         }
       }
     );
   }
 
-  private setIsDirty() {
-    if (!this.state.isDirty) {
-      this.setState({ isDirty: true });
+  private detectChanges() {
+    const { hasChanges } = getSaveDashboardChange(this, true, true);
+
+    if (hasChanges) {
+      if (!this.state.isDirty) {
+        this.setState({ isDirty: true });
+      }
+    } else {
+      if (this.state.isDirty) {
+        this.setState({ isDirty: false });
+      }
     }
   }
 

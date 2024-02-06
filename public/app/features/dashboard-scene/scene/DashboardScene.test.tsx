@@ -9,6 +9,7 @@ import {
   SceneVariableSet,
   TestVariable,
   VizPanel,
+  TextBoxVariable,
 } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
@@ -57,7 +58,7 @@ describe('DashboardScene', () => {
 
         expect(scene.state.isDirty).toBe(true);
 
-        scene.onDiscard();
+        scene.exitEditMode({ skipConfirm: true });
         const gridItem2 = sceneGraph.findObject(scene, (p) => p.state.key === 'griditem-1') as SceneGridItem;
         expect(gridItem2.state.x).toBe(0);
       });
@@ -77,7 +78,7 @@ describe('DashboardScene', () => {
 
           expect(scene.state.isDirty).toBe(true);
 
-          scene.onDiscard();
+          scene.exitEditMode({ skipConfirm: true });
           expect(scene.state[prop]).toEqual(prevState);
         }
       );
@@ -89,7 +90,7 @@ describe('DashboardScene', () => {
 
         expect(scene.state.isDirty).toBe(true);
 
-        scene.onDiscard();
+        scene.exitEditMode({ skipConfirm: true });
         expect(dashboardSceneGraph.getRefreshPicker(scene)!.state.intervals).toEqual(prevState);
       });
 
@@ -100,7 +101,7 @@ describe('DashboardScene', () => {
 
         expect(scene.state.isDirty).toBe(true);
 
-        scene.onDiscard();
+        scene.exitEditMode({ skipConfirm: true });
         expect(dashboardSceneGraph.getDashboardControls(scene)!.state.hideTimeControls).toEqual(prevState);
       });
 
@@ -111,8 +112,48 @@ describe('DashboardScene', () => {
 
         expect(scene.state.isDirty).toBe(true);
 
-        scene.onDiscard();
+        scene.exitEditMode({ skipConfirm: true });
         expect(sceneGraph.getTimeRange(scene)!.state.timeZone).toBe(prevState);
+      });
+      describe('When editing individual variables', () => {
+        it('A change to variable name should set isDirty true', () => {
+          const textBox1 = new TextBoxVariable({
+            name: 'textbox1',
+            value: 'value1',
+          });
+
+          const scene = buildTestScene({
+            $variables: new SceneVariableSet({ variables: [textBox1] }),
+          });
+
+          scene.activate();
+          scene.onEnterEditMode();
+
+          textBox1.setState({ name: 'textBoxNew' });
+          expect(scene.state.isDirty).toBe(true);
+        });
+
+        // TODO: This test is failing because the logic of detecting variable changes in the save drawer (comparison
+        // between saving dashboard jsons) is not using
+        // the same logic as detecting changes in the dashboards settings (comparison between scene state objects ,
+        // previous state and new state).
+        it('A change to variable name is set but return to original name should set isDirty false', () => {
+          const textBox1 = new TextBoxVariable({
+            name: 'textbox1',
+            value: 'value1',
+          });
+
+          const scene = buildTestScene({
+            $variables: new SceneVariableSet({ variables: [textBox1] }),
+          });
+
+          scene.activate();
+          scene.onEnterEditMode();
+
+          textBox1.setState({ name: 'textBoxNew' });
+          textBox1.setState({ name: 'textbox1' });
+          expect(scene.state.isDirty).toBe(false);
+        });
       });
     });
   });
