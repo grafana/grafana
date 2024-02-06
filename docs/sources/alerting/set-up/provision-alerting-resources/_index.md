@@ -42,7 +42,7 @@ Choose from the options below to import your Grafana Alerting resources.
 
    Example ready-to-use:
 
-   #### Alert-rules template
+   #### Alert rules template
 
 ```
 {
