@@ -35,7 +35,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
-	"github.com/grafana/grafana/pkg/registry/apis/datasource"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -45,6 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/idimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
@@ -465,7 +465,8 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	return &ModuleServer{}, nil
 }
 
-func InitializeDataSourceAPIServer(group string) (*datasource.DataSourceAPIBuilder, error) {
-	wire.Build(wireExtsDataSourceApiServerSet)
-	return &datasource.DataSourceAPIBuilder{}, nil
+// Initialize the standalone APIServer factory
+func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
+	wire.Build(wireExtsStandaloneAPIServerSet)
+	return &standalone.DummyAPIFactory{}, nil // Wire will replace this with a real interface
 }
