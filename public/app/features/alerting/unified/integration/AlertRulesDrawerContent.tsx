@@ -2,7 +2,8 @@ import React from 'react';
 import { useAsync } from 'react-use';
 
 import { LoadingPlaceholder } from '@grafana/ui';
-import { useDispatch } from 'app/types';
+import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
+import { DashboardRoutes, useDispatch } from 'app/types';
 
 import { RulesTable } from '../components/rules/RulesTable';
 import { useCombinedRuleNamespaces } from '../hooks/useCombinedRuleNamespaces';
@@ -18,6 +19,16 @@ interface Props {
 
 export default function AlertRulesDrawerContent({ dashboardUid }: Props) {
   const dispatch = useDispatch();
+  const dashboardStateManager = getDashboardScenePageStateManager();
+
+  const { value: dashboard } = useAsync(() => {
+    return dashboardStateManager
+      .fetchDashboard({
+        uid: dashboardUid,
+        route: DashboardRoutes.Normal,
+      })
+      .then((data) => (data ? data.dashboard : undefined));
+  }, [dashboardStateManager]);
 
   const { loading: loadingRulesData } = useAsync(async () => {
     await dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
@@ -37,7 +48,7 @@ export default function AlertRulesDrawerContent({ dashboardUid }: Props) {
         <LoadingPlaceholder text="Loading alert rules" />
       ) : (
         <>
-          <LegacyAlertsDeprecationNotice dashboardUid={dashboardUid} />
+          <LegacyAlertsDeprecationNotice dashboard={dashboard} />
           <RulesTable rules={rules} showNextEvaluationColumn={false} showGroupColumn={false} />
         </>
       )}

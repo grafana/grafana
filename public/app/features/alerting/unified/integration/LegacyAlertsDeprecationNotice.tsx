@@ -1,51 +1,18 @@
 import { isEmpty } from 'lodash';
 import React from 'react';
-import { useAsync, useToggle } from 'react-use';
+import { useToggle } from 'react-use';
 
 import { Dashboard, Panel, RowPanel } from '@grafana/schema';
 import { Alert, Collapse, Column, InteractiveTable, TextLink } from '@grafana/ui';
-import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
-import { DashboardRoutes } from 'app/types';
 
 import { makePanelLink } from '../utils/misc';
 
 interface DeprecationNoticeProps {
-  dashboardUid?: string;
-  dashboard?: Dashboard;
+  dashboard: Dashboard;
 }
 
-export default function LegacyAlertsDeprecationNotice({ dashboardUid, dashboard }: DeprecationNoticeProps) {
-  const dashboardStateManager = getDashboardScenePageStateManager();
-
-  const {
-    loading,
-    value: dashboardData,
-    error,
-  } = useAsync(() => {
-    if (dashboard) {
-      return Promise.resolve(dashboard);
-    } else if (dashboardUid) {
-      return dashboardStateManager
-        .fetchDashboard({
-          uid: dashboardUid,
-          route: DashboardRoutes.Normal,
-        })
-        .then((data) => (data ? data.dashboard : undefined));
-    } else {
-      throw new Error('LegacyAlertsDeprecationNotice missing any of "dashboardUid" or "dashboardModel"');
-    }
-  }, [dashboardStateManager]);
-
-  if (loading) {
-    return null;
-  }
-
-  // we probably don't want to show the user an error if this fails because there's nothing they can do about it
-  if (error) {
-    console.error(error);
-  }
-
-  const panelsWithLegacyAlerts = getLegacyAlertPanelsFromDashboard(dashboardData);
+export default function LegacyAlertsDeprecationNotice({ dashboard }: DeprecationNoticeProps) {
+  const panelsWithLegacyAlerts = getLegacyAlertPanelsFromDashboard(dashboard);
 
   // don't show anything when the user has no legacy alerts defined
   const hasLegacyAlerts = !isEmpty(panelsWithLegacyAlerts);
@@ -53,7 +20,7 @@ export default function LegacyAlertsDeprecationNotice({ dashboardUid, dashboard 
     return null;
   }
 
-  return <LegacyAlertsWarning dashboardUid={dashboardData.uid} panels={panelsWithLegacyAlerts} />;
+  return dashboard.uid ? <LegacyAlertsWarning dashboardUid={dashboard.uid} panels={panelsWithLegacyAlerts} /> : null;
 }
 
 /**
