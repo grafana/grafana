@@ -5,7 +5,9 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/spf13/pflag"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -23,7 +25,14 @@ import (
 )
 
 type APIServerFactory interface {
-	MakeAPIServer(group string, version string) (builder.APIGroupBuilder, error)
+	// Called before the groups are loaded so any custom command can be registered
+	InitFlags(flags *pflag.FlagSet) error
+
+	// Given the flags, what can we produce
+	GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error)
+
+	// Make an API server for a given group+version
+	MakeAPIServer(gv schema.GroupVersion) (builder.APIGroupBuilder, error)
 }
 
 // Zero dependency provider for testing
@@ -33,12 +42,30 @@ func GetDummyAPIFactory() APIServerFactory {
 
 type DummyAPIFactory struct{}
 
-func (p *DummyAPIFactory) MakeAPIServer(group string, version string) (builder.APIGroupBuilder, error) {
-	if version != "v0alpha1" {
+func (p *DummyAPIFactory) InitFlags(flags *pflag.FlagSet) error {
+	return nil
+}
+
+func (p *DummyAPIFactory) GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error) {
+	gv := []schema.GroupVersion{}
+	for _, cfg := range runtime {
+		if !cfg.Enabled {
+			return nil, fmt.Errorf("only enabled supported now")
+		}
+		if cfg.Group == "all" {
+			return nil, fmt.Errorf("all not yet supported")
+		}
+		gv = append(gv, schema.GroupVersion{Group: cfg.Group, Version: cfg.Version})
+	}
+	return gv, nil
+}
+
+func (p *DummyAPIFactory) MakeAPIServer(gv schema.GroupVersion) (builder.APIGroupBuilder, error) {
+	if gv.Version != "v0alpha1" {
 		return nil, fmt.Errorf("only alpha supported now")
 	}
 
-	switch group {
+	switch gv.Group {
 	case "example.grafana.app":
 		return example.NewTestingAPIBuilder(), nil
 

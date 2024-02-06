@@ -6,13 +6,13 @@ import (
 	"net"
 	"path"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/client-go/tools/clientcmd"
 	netutils "k8s.io/utils/net"
 
-	"github.com/grafana/grafana/pkg/server"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
@@ -26,6 +26,7 @@ const (
 
 // APIServerOptions contains the state for the apiserver
 type APIServerOptions struct {
+	factory            standalone.APIServerFactory
 	builders           []builder.APIGroupBuilder
 	RecommendedOptions *options.RecommendedOptions
 	AlternateDNS       []string
@@ -41,22 +42,10 @@ func newAPIServerOptions(out, errOut io.Writer) *APIServerOptions {
 	}
 }
 
-func (o *APIServerOptions) loadAPIGroupBuilders(runtime []standalone.RuntimeConfig) error {
-	factory, err := server.InitializeAPIServerFactory()
-	if err != nil {
-		return err
-	}
-
+func (o *APIServerOptions) loadAPIGroupBuilders(apis []schema.GroupVersion) error {
 	o.builders = []builder.APIGroupBuilder{}
-	for _, gv := range runtime {
-		if !gv.Enabled {
-			return fmt.Errorf("disabling apis is not yet supported")
-		}
-		if gv.Group == "all" {
-			return fmt.Errorf("managing all APIs is not yet supported")
-		}
-
-		api, err := factory.MakeAPIServer(gv.Group, gv.Version)
+	for _, gv := range apis {
+		api, err := o.factory.MakeAPIServer(gv)
 		if err != nil {
 			return err
 		}
