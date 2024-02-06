@@ -44,7 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl/anonstore"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
-	standaloneapiserver "github.com/grafana/grafana/pkg/services/apiserver/standalone"
+	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/idimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
@@ -465,7 +465,8 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	return &ModuleServer{}, nil
 }
 
-func InitializeAPIServer() (standaloneapiserver.APIServerProvider, error) {
+// Initalize a component that will create apiservers
+func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 	wire.Build(wireExtsStandaloneAPIServerSet)
-	return &standaloneapiserver.DummyAPIProvider{}, nil
+	return &standalone.DummyAPIFactory{}, nil
 }

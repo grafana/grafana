@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
-	standaloneapiserver "github.com/grafana/grafana/pkg/services/apiserver/standalone"
+	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
 	"github.com/grafana/grafana/pkg/services/auth/idimpl"
@@ -140,5 +140,5 @@ var wireExtsModuleServerSet = wire.NewSet(
 )
 
 var wireExtsStandaloneAPIServerSet = wire.NewSet(
-	standaloneapiserver.GetDummyAPIProvider,
+	standalone.GetDummyAPIFactory,
 )
