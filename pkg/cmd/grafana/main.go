@@ -18,12 +18,15 @@ var enterpriseCommit = gcli.DefaultCommitValue
 var buildBranch = "main"
 var buildstamp string
 
+// Extra commands may be added from enterprise
+var extra = []*cli.Command{}
+
 func main() {
 	commands := []*cli.Command{
 		gcli.CLICommand(version),
 		gsrv.ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp),
 	}
-	commands = append(commands, getExtraCommands()...)
+	commands = append(commands, extra...)
 
 	app := &cli.App{
 		Name:  "grafana",
