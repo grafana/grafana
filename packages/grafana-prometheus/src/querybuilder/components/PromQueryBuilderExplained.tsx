@@ -12,11 +12,11 @@ import { PromVisualQuery } from '../types';
 
 export const EXPLAIN_LABEL_FILTER_CONTENT = 'Fetch all series matching metric name and label filters.';
 
-export interface Props {
+export interface PromQueryBuilderExplainedProps {
   query: string;
 }
 
-export const PromQueryBuilderExplained = React.memo<Props>(({ query }) => {
+export const PromQueryBuilderExplained = React.memo<PromQueryBuilderExplainedProps>(({ query }) => {
   const visQuery = buildVisualQueryFromString(query || '').query;
   const lang = { grammar: promqlGrammar, name: 'promql' };
 

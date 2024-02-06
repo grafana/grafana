@@ -7,7 +7,7 @@ import { CoreApp } from '@grafana/data';
 import { PrometheusDatasource } from '../datasource';
 
 import { PromQueryEditorByApp } from './PromQueryEditorByApp';
-import { testIds as alertingTestIds } from './PromQueryEditorForAlerting';
+import { alertingTestIds } from './PromQueryEditorForAlerting';
 import { Props } from './monaco-query-field/MonacoQueryFieldProps';
 
 // the monaco-based editor uses lazy-loading and that does not work

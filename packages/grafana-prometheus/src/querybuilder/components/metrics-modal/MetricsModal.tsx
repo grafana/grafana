@@ -197,7 +197,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
 
   return (
     <Modal
-      data-testid={testIds.metricModal}
+      data-testid={metricsModaltestIds.metricModal}
       isOpen={isOpen}
       title="Metrics explorer"
       onDismiss={onClose}
@@ -212,7 +212,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
         <div className={cx(styles.inputItem, styles.inputItemFirst)}>
           <Input
             autoFocus={true}
-            data-testid={testIds.searchMetric}
+            data-testid={metricsModaltestIds.searchMetric}
             placeholder={placeholders.browse}
             value={state.fuzzySearchQuery}
             onInput={(e) => {
@@ -225,7 +225,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
         {state.hasMetadata && (
           <div className={styles.inputItem}>
             <MultiSelect
-              data-testid={testIds.selectType}
+              data-testid={metricsModaltestIds.selectType}
               inputId="my-select"
               options={typeOptions}
               value={state.selectedTypes}
@@ -249,7 +249,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
                 variant="secondary"
                 size="md"
                 onClick={() => dispatch(showAdditionalSettings())}
-                data-testid={testIds.showAdditionalSettings}
+                data-testid={metricsModaltestIds.showAdditionalSettings}
                 className={styles.noBorder}
               >
                 Additional Settings
@@ -301,7 +301,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
         <div className={styles.resultsPerPageWrapper}>
           <p className={styles.resultsPerPageLabel}># Results per page&nbsp;</p>
           <Input
-            data-testid={testIds.resultsPerPage}
+            data-testid={metricsModaltestIds.resultsPerPage}
             value={calculateResultsPerPage(state.resultsPerPage, DEFAULT_RESULTS_PER_PAGE, MAXIMUM_RESULTS_PER_PAGE)}
             placeholder="results per page"
             width={10}
@@ -323,7 +323,7 @@ export const MetricsModal = (props: MetricsModalProps) => {
   );
 };
 
-export const testIds = {
+export const metricsModaltestIds = {
   metricModal: 'metric-modal',
   searchMetric: 'search-metric',
   searchWithMetadata: 'search-with-metadata',

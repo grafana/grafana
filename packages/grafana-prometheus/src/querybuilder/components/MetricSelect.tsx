@@ -33,7 +33,7 @@ import { tracking } from './metrics-modal/state/helpers';
 // We are matching words split with space
 const splitSeparator = ' ';
 
-export interface Props {
+export interface MetricSelectProps {
   metricLookupDisabled: boolean;
   query: PromVisualQuery;
   onChange: (query: PromVisualQuery) => void;
@@ -55,7 +55,7 @@ export function MetricSelect({
   metricLookupDisabled,
   onBlur,
   variableEditor,
-}: Props) {
+}: MetricSelectProps) {
   const styles = useStyles2(getStyles);
   const [state, setState] = useState<{
     metrics?: Array<SelectableValue<any>>;

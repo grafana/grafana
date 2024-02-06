@@ -5,11 +5,11 @@ import { EditorFieldGroup, EditorRow } from '@grafana/experimental';
 import promqlGrammar from '../../promql';
 import { RawQuery } from '../shared/RawQuery';
 
-export interface Props {
+export interface QueryPreviewProps {
   query: string;
 }
 
-export function QueryPreview({ query }: Props) {
+export function QueryPreview({ query }: QueryPreviewProps) {
   if (!query) {
     return null;
   }

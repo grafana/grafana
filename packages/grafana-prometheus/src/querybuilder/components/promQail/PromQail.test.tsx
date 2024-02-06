@@ -10,7 +10,7 @@ import { EmptyLanguageProviderMock } from '../../../language_provider.mock';
 import { PromOptions } from '../../../types';
 import { PromVisualQuery } from '../../types';
 
-import { PromQail, testIds } from './PromQail';
+import { PromQail, queryAssistanttestIds } from './PromQail';
 
 // don't care about interaction tracking in our unit tests
 jest.mock('@grafana/runtime', () => ({
@@ -56,7 +56,7 @@ describe('PromQail', () => {
       expect(screen.getByText('Do you know what you want to query?')).toBeInTheDocument();
     });
 
-    const aiPrompt = screen.getByTestId(testIds.clickForAi);
+    const aiPrompt = screen.getByTestId(queryAssistanttestIds.clickForAi);
 
     userEvent.click(aiPrompt);
 
@@ -75,7 +75,7 @@ describe('PromQail', () => {
       expect(screen.getByText('Do you know what you want to query?')).toBeInTheDocument();
     });
 
-    const historicalPrompt = screen.getByTestId(testIds.clickForHistorical);
+    const historicalPrompt = screen.getByTestId(queryAssistanttestIds.clickForHistorical);
 
     userEvent.click(historicalPrompt);
 
@@ -142,7 +142,7 @@ function setup(query: PromVisualQuery) {
 }
 
 function clickSecurityButton() {
-  const securityInfoButton = screen.getByTestId(testIds.securityInfoButton);
+  const securityInfoButton = screen.getByTestId(queryAssistanttestIds.securityInfoButton);
 
   userEvent.click(securityInfoButton);
 }
