@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Text, useStyles2 } from '@grafana/ui';
 
 import { PageInfo } from '../PageInfo/PageInfo';
 
@@ -27,7 +27,13 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
   ) : (
     <div className={styles.title}>
       {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
-      {renderTitle ? renderTitle(navItem.text) : <h1>{navItem.text}</h1>}
+      {renderTitle ? (
+        renderTitle(navItem.text)
+      ) : (
+        <Text element="h1" truncate>
+          {navItem.text}
+        </Text>
+      )}
     </div>
   );
 
@@ -57,8 +63,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     title: css({
       display: 'flex',
       flexDirection: 'row',
+      maxWidth: '100%',
       h1: {
-        display: 'flex',
         marginBottom: 0,
       },
     }),

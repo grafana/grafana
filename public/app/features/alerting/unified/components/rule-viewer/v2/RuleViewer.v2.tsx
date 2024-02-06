@@ -1,8 +1,9 @@
+import { css } from '@emotion/css';
 import { isEmpty, truncate } from 'lodash';
 import React, { useState } from 'react';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
-import { Alert, LinkButton, Stack, TabContent, Text, TextLink } from '@grafana/ui';
+import { Alert, LinkButton, Stack, TabContent, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { CombinedRule, RuleHealth, RuleIdentifier } from 'app/types/unified-alerting';
@@ -212,10 +213,11 @@ interface TitleProps {
 }
 
 export const Title = ({ name, state, health, ruleType }: TitleProps) => {
+  const styles = useStyles2(getStyles);
   const isRecordingRule = ruleType === PromRuleType.Recording;
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, maxWidth: '100%' }}>
+    <div className={styles.title}>
       <LinkButton variant="secondary" icon="angle-left" href="/alerting/list" />
       <Text element="h1" truncate>
         {name}
@@ -319,5 +321,14 @@ function usePageNav(rule: CombinedRule) {
     activeTab,
   };
 }
+
+const getStyles = () => ({
+  title: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    minWidth: 0,
+  }),
+});
 
 export default RuleViewer;
