@@ -70,13 +70,13 @@ export class DashboardModel implements TimeModel {
   editable: any;
   graphTooltip: DashboardCursorSync;
   time: any;
-  liveNow: boolean;
+  liveNow?: boolean;
   private originalTime: any;
   timepicker: any;
   templating: { list: any[] };
   private originalTemplating: any;
   annotations: { list: AnnotationQuery[] };
-  refresh: string;
+  refresh?: string;
   snapshot: any;
   schemaVersion: number;
   version: number;
@@ -147,10 +147,10 @@ export class DashboardModel implements TimeModel {
     this.graphTooltip = data.graphTooltip || 0;
     this.time = data.time ?? { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker ?? {};
-    this.liveNow = Boolean(data.liveNow);
+    this.liveNow = data.liveNow;
     this.templating = this.ensureListExist(data.templating);
     this.annotations = this.ensureListExist(data.annotations);
-    this.refresh = data.refresh || '';
+    this.refresh = data.refresh;
     this.snapshot = data.snapshot;
     this.schemaVersion = data.schemaVersion ?? 0;
     this.fiscalYearStartMonth = data.fiscalYearStartMonth ?? 0;
@@ -302,12 +302,8 @@ export class DashboardModel implements TimeModel {
   }
 
   private getPanelSaveModels() {
-    // Todo: Remove panel.type === 'add-panel' when we remove the emptyDashboardPage toggle
     return this.panels
-      .filter(
-        (panel) =>
-          this.isSnapshotTruthy() || !(panel.type === 'add-panel' || panel.repeatPanelId || panel.repeatedByRow)
-      )
+      .filter((panel) => this.isSnapshotTruthy() || !(panel.repeatPanelId || panel.repeatedByRow))
       .map((panel) => {
         // Clean libarary panels on save
         if (panel.libraryPanel) {

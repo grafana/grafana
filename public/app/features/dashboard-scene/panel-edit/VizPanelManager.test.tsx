@@ -1,6 +1,6 @@
 import { map, of } from 'rxjs';
 
-import { DataQueryRequest, DataSourceApi, LoadingState, PanelData } from '@grafana/data';
+import { DataQueryRequest, DataSourceApi, DataSourceInstanceSettings, LoadingState, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { SceneDataTransformer, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, DataSourceRef } from '@grafana/schema';
@@ -95,7 +95,7 @@ const instance2SettingsMock = {
 jest.mock('app/core/store', () => ({
   exists: jest.fn(),
   get: jest.fn(),
-  getObject: jest.fn(),
+  getObject: jest.fn((_a, b) => b),
   setObject: jest.fn(),
 }));
 
@@ -244,7 +244,7 @@ describe('VizPanelManager', () => {
         await Promise.resolve();
 
         await vizPanelManager.changePanelDataSource(
-          { type: 'grafana-prometheus-datasource', uid: 'gdev-prometheus' } as any,
+          { type: 'grafana-prometheus-datasource', uid: 'gdev-prometheus' } as DataSourceInstanceSettings,
           []
         );
 
@@ -439,7 +439,7 @@ describe('VizPanelManager', () => {
             module: 'prometheus',
             id: 'grafana-prometheus-datasource',
           },
-        } as any);
+        } as DataSourceInstanceSettings);
 
         expect(vizPanelManager.queryRunner.state.datasource).toEqual({
           uid: 'gdev-prometheus',
@@ -466,7 +466,7 @@ describe('VizPanelManager', () => {
             module: 'prometheus',
             id: DASHBOARD_DATASOURCE_PLUGIN_ID,
           },
-        } as any);
+        } as DataSourceInstanceSettings);
 
         expect(vizPanelManager.queryRunner.state.datasource).toEqual({
           uid: SHARED_DASHBOARD_QUERY,
@@ -493,13 +493,33 @@ describe('VizPanelManager', () => {
             module: 'prometheus',
             id: 'grafana-prometheus-datasource',
           },
-        } as any);
+        } as DataSourceInstanceSettings);
 
         expect(vizPanelManager.queryRunner.state.datasource).toEqual({
           uid: 'gdev-prometheus',
           type: 'grafana-prometheus-datasource',
         });
       });
+    });
+  });
+
+  describe('change transformations', () => {
+    it('should update and reprocess transformations', () => {
+      const { scene, panel } = setupTest('panel-3');
+      scene.setState({
+        editPanel: buildPanelEditScene(panel),
+      });
+
+      const vizPanelManager = scene.state.editPanel!.state.panelRef.resolve();
+      vizPanelManager.activate();
+      vizPanelManager.state.panel.state.$data?.activate();
+
+      const reprocessMock = jest.fn();
+      vizPanelManager.dataTransformer.reprocessTransformations = reprocessMock;
+      vizPanelManager.changeTransformations([{ id: 'calculateField', options: {} }]);
+
+      expect(reprocessMock).toHaveBeenCalledTimes(1);
+      expect(vizPanelManager.dataTransformer.state.transformations).toEqual([{ id: 'calculateField', options: {} }]);
     });
   });
 
