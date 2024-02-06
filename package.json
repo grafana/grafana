@@ -329,7 +329,7 @@
     "lru-memoize": "^1.1.0",
     "lucene": "^2.1.1",
     "marked": "5.1.1",
-    "marked-mangle": "1.1.6",
+    "marked-mangle": "1.1.7",
     "memoize-one": "6.0.0",
     "ml-regression-polynomial": "^3.0.0",
     "ml-regression-simple-linear": "^3.0.0",
