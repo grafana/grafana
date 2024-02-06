@@ -109,10 +109,7 @@ export const StateTimelinePanel = ({
        * Render nothing in this case to prevent error.
        * See https://github.com/grafana/support-escalations/issues/932
        */
-      if (
-        (!alignedData.meta?.transformations?.length && alignedData.fields.length - 1 !== valueFieldsCount) ||
-        !alignedData.fields[seriesIdx]
-      ) {
+      if (alignedData.fields.length - 1 !== valueFieldsCount || !alignedData.fields[seriesIdx]) {
         return null;
       }
 
@@ -167,7 +164,7 @@ export const StateTimelinePanel = ({
   }
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   const showNewVizTooltips =
-    config.featureToggles.newVizTooltips && (sync == null || sync() === DashboardCursorSync.Off);
+    config.featureToggles.newVizTooltips && (sync == null || sync() !== DashboardCursorSync.Tooltip);
 
   return (
     <TimelineChart
@@ -207,8 +204,12 @@ export const StateTimelinePanel = ({
                     config={builder}
                     hoverMode={TooltipHoverMode.xOne}
                     queryZoom={onChangeTimeRange}
-                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2) => {
-                      if (timeRange2 != null) {
+                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
+                      if (viaSync) {
+                        return null;
+                      }
+
+                      if (enableAnnotationCreation && timeRange2 != null) {
                         setNewAnnotationRange(timeRange2);
                         dismiss();
                         return;

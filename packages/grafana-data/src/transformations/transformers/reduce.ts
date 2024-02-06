@@ -46,8 +46,8 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
         const matcher = options.fields
           ? getFieldMatcher(options.fields)
           : options.includeTimeField && options.mode === ReduceTransformerMode.ReduceFields
-          ? alwaysFieldMatcher
-          : notTimeFieldMatcher;
+            ? alwaysFieldMatcher
+            : notTimeFieldMatcher;
 
         // Collapse all matching fields into a single row
         if (options.mode === ReduceTransformerMode.ReduceFields) {

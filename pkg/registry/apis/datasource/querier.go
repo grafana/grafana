@@ -2,7 +2,6 @@ package datasource
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,9 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 )
 
 type QuerierFactoryFunc func(ctx context.Context, ri common.ResourceInfo, pj plugins.JSONData) (Querier, error)
@@ -118,7 +116,7 @@ func (q *DefaultQuerier) Datasource(ctx context.Context, name string) (*v0alpha1
 	if err != nil {
 		return nil, err
 	}
-	return asConnection(q.connectionResourceInfo.TypeMeta(), ds, info.Value)
+	return asConnection(ds, info.Value)
 }
 
 func (q *DefaultQuerier) Datasources(ctx context.Context) (*v0alpha1.DataSourceConnectionList, error) {
@@ -137,31 +135,12 @@ func (q *DefaultQuerier) Datasources(ctx context.Context) (*v0alpha1.DataSourceC
 	return asConnectionList(q.connectionResourceInfo.TypeMeta(), ds, info.Value)
 }
 
-func asConnection(typeMeta metav1.TypeMeta, ds *datasources.DataSource, ns string) (*v0alpha1.DataSourceConnection, error) {
-	v := &v0alpha1.DataSourceConnection{
-		TypeMeta: typeMeta,
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              ds.UID,
-			Namespace:         ns,
-			CreationTimestamp: metav1.NewTime(ds.Created),
-			ResourceVersion:   fmt.Sprintf("%d", ds.Updated.UnixMilli()),
-		},
-		Title: ds.Name,
-	}
-	v.UID = utils.CalculateClusterWideUID(v) // indicates if the value changed on the server
-	meta, err := utils.MetaAccessor(v)
-	if err != nil {
-		meta.SetUpdatedTimestamp(&ds.Updated)
-	}
-	return v, err
-}
-
 func asConnectionList(typeMeta metav1.TypeMeta, dss []*datasources.DataSource, ns string) (*v0alpha1.DataSourceConnectionList, error) {
 	result := &v0alpha1.DataSourceConnectionList{
 		Items: []v0alpha1.DataSourceConnection{},
 	}
 	for _, ds := range dss {
-		v, _ := asConnection(typeMeta, ds, ns)
+		v, _ := asConnection(ds, ns)
 		result.Items = append(result.Items, *v)
 	}
 

@@ -11,10 +11,10 @@ import (
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	ldapapi "github.com/grafana/grafana/pkg/services/ldap/api"
@@ -59,7 +59,7 @@ func ProvideBackgroundServiceRegistry(
 	keyRetriever *dynamic.KeyRetriever, dynamicAngularDetectorsProvider *angulardetectorsprovider.Dynamic,
 	grafanaAPIServer grafanaapiserver.Service,
 	anon *anonimpl.AnonDeviceService,
-	ssoSettings *ssosettingsimpl.SSOSettingsService,
+	ssoSettings *ssosettingsimpl.Service,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,

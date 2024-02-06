@@ -81,6 +81,7 @@
     "folder-picker": {
       "accessible-label": "Sélectionnez un dossier : {{ label }} est sélectionné actuellement",
       "button-label": "Sélectionner un dossier",
+      "clear-selection": "",
       "empty-message": "Aucun dossier trouvé",
       "error-title": "Impossible de charger les dossiers",
       "search-placeholder": "Rechercher dans les dossiers",
@@ -238,6 +239,10 @@
       "visualization": "Visualisation",
       "widget": "Widget"
     },
+    "alert-rules-drawer": {
+      "redirect-link": "",
+      "subtitle": ""
+    },
     "empty": {
       "add-library-panel-body": "Ajoutez des visualisations partagées avec d'autres tableaux de bord.",
       "add-library-panel-button": "Ajouter un panneau Bibliothèque",
@@ -306,7 +311,7 @@
     },
     "toolbar": {
       "add": "Ajouter",
-      "add-panel": "Ajouter un panneau",
+      "alert-rules": "",
       "mark-favorite": "Marquer comme favori",
       "open-original": "Ouvrir le tableau de bord d'origine",
       "playlist-next": "Accéder au tableau de bord suivant",
@@ -980,6 +985,7 @@
     "megamenu": {
       "close": "Fermer le menu",
       "dock": "Ancrer le menu",
+      "list-label": "",
       "undock": ""
     },
     "toolbar": {
@@ -1229,6 +1235,12 @@
       "interval-selected": "Définir l'intervalle d'actualisation automatique",
       "turned-off": "Actualisation automatique désactivée"
     }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": ""
+    },
+    "dismissable-button": ""
   },
   "search": {
     "actions": {

@@ -40,6 +40,7 @@ func TestInitializer_envVars(t *testing.T) {
 					"custom_env_var": "customVal",
 				},
 			},
+			AWSAssumeRoleEnabled: true,
 		}, licensing)
 
 		envVars := envVarsProvider.Get(context.Background(), p)
@@ -203,7 +204,8 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 		{
 			name: "otel not configured",
 			cfg: &config.Cfg{
-				Tracing: config.Tracing{},
+				Tracing:              config.Tracing{},
+				AWSAssumeRoleEnabled: false,
 			},
 			plugin: defaultPlugin,
 			exp:    expNoTracing,
@@ -257,6 +259,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 				PluginSettings: map[string]map[string]string{
 					pluginID: {"tracing": "true"},
 				},
+				AWSAssumeRoleEnabled: true,
 			},
 			plugin: defaultPlugin,
 			exp: func(t *testing.T, envVars []string) {
@@ -288,6 +291,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 				PluginSettings: map[string]map[string]string{
 					pluginID: {"tracing": "true"},
 				},
+				AWSAssumeRoleEnabled: true,
 			},
 			plugin: defaultPlugin,
 			exp: func(t *testing.T, envVars []string) {
@@ -337,6 +341,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 				PluginSettings: map[string]map[string]string{
 					pluginID: {"some_other_option": "true"},
 				},
+				AWSAssumeRoleEnabled: true,
 			},
 			plugin: defaultPlugin,
 			exp:    expNoTracing,
@@ -581,12 +586,14 @@ func TestInitalizer_awsEnvVars(t *testing.T) {
 	t.Run("backend datasource with aws settings", func(t *testing.T) {
 		p := &plugins.Plugin{}
 		envVarsProvider := NewProvider(&config.Cfg{
-			AWSAssumeRoleEnabled:    true,
+			AWSAssumeRoleEnabled:    false,
 			AWSAllowedAuthProviders: []string{"grafana_assume_role", "keys"},
 			AWSExternalId:           "mock_external_id",
+			AWSSessionDuration:      "10m",
+			AWSListMetricsPageLimit: "100",
 		}, nil)
 		envVars := envVarsProvider.Get(context.Background(), p)
-		assert.ElementsMatch(t, []string{"GF_VERSION=", "AWS_AUTH_AssumeRoleEnabled=true", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id"}, envVars)
+		assert.ElementsMatch(t, []string{"GF_VERSION=", "AWS_AUTH_AssumeRoleEnabled=false", "AWS_AUTH_AllowedAuthProviders=grafana_assume_role,keys", "AWS_AUTH_EXTERNAL_ID=mock_external_id", "AWS_AUTH_SESSION_DURATION=10m", "AWS_CW_LIST_METRICS_PAGE_LIMIT=100"}, envVars)
 	})
 }
 
@@ -604,7 +611,7 @@ func TestInitializer_featureToggleEnvVar(t *testing.T) {
 		}, nil)
 		envVars := envVarsProvider.Get(context.Background(), p)
 
-		assert.Equal(t, 2, len(envVars))
+		assert.Equal(t, 3, len(envVars))
 
 		toggleExpression := strings.Split(envVars[1], "=")
 		assert.Equal(t, 2, len(toggleExpression))
@@ -628,6 +635,7 @@ func TestInitalizer_azureEnvVars(t *testing.T) {
 	t.Run("backend datasource with azure settings", func(t *testing.T) {
 		p := &plugins.Plugin{}
 		envVarsProvider := NewProvider(&config.Cfg{
+			AWSAssumeRoleEnabled: true,
 			Azure: &azsettings.AzureSettings{
 				Cloud:                   azsettings.AzurePublic,
 				ManagedIdentityEnabled:  true,
@@ -798,6 +806,60 @@ func TestService_GetConfigMap_appURL(t *testing.T) {
 	})
 }
 
+func TestService_GetConfigMap_concurrentQueryCount(t *testing.T) {
+	t.Run("Uses the configured concurrent query count", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				ConcurrentQueryCount: 42,
+			},
+		}
+		require.Equal(t, map[string]string{"GF_CONCURRENT_QUERY_COUNT": "42"}, s.GetConfigMap(context.Background(), "", nil))
+	})
+
+	t.Run("Doesn't set the concurrent query count if it is not in the config", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{},
+		}
+		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+	})
+
+	t.Run("Doesn't set the concurrent query count if it is zero", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				ConcurrentQueryCount: 0,
+			},
+		}
+		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+	})
+}
+
+func TestService_GetConfigMap_azureAuthEnabled(t *testing.T) {
+	t.Run("Uses the configured azureAuthEnabled", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				AzureAuthEnabled: true,
+			},
+		}
+		require.Equal(t, map[string]string{"GFAZPL_AZURE_AUTH_ENABLED": "true"}, s.GetConfigMap(context.Background(), "", nil))
+	})
+
+	t.Run("Doesn't set the azureAuthEnabled if it is not in the config", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{},
+		}
+		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+	})
+
+	t.Run("Doesn't set the azureAuthEnabled if it is false", func(t *testing.T) {
+		s := &Service{
+			cfg: &config.Cfg{
+				AzureAuthEnabled: false,
+			},
+		}
+		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+	})
+}
+
 func TestService_GetConfigMap_azure(t *testing.T) {
 	azSettings := &azsettings.AzureSettings{
 		Cloud:                   azsettings.AzurePublic,
@@ -868,6 +930,51 @@ func TestService_GetConfigMap_azure(t *testing.T) {
 			"GFAZPL_USER_IDENTITY_CLIENT_ID":      "mock_user_identity_client_id",
 			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":  "mock_user_identity_client_secret",
 			"GFAZPL_USER_IDENTITY_ASSERTION":      "username",
+		}, s.GetConfigMap(context.Background(), "test-datasource", nil))
+	})
+}
+
+func TestService_GetConfigMap_aws(t *testing.T) {
+	cfg := &config.Cfg{
+		AWSAssumeRoleEnabled:      false,
+		AWSAllowedAuthProviders:   []string{"grafana_assume_role", "keys"},
+		AWSExternalId:             "mock_external_id",
+		AWSSessionDuration:        "10m",
+		AWSListMetricsPageLimit:   "100",
+		AWSForwardSettingsPlugins: []string{"cloudwatch", "prometheus", "elasticsearch"},
+	}
+
+	t.Run("uses the aws settings for an AWS plugin", func(t *testing.T) {
+		s := &Service{
+			cfg: cfg,
+		}
+		require.Equal(t, map[string]string{
+			"AWS_AUTH_AssumeRoleEnabled":     "false",
+			"AWS_AUTH_AllowedAuthProviders":  "grafana_assume_role,keys",
+			"AWS_AUTH_EXTERNAL_ID":           "mock_external_id",
+			"AWS_AUTH_SESSION_DURATION":      "10m",
+			"AWS_CW_LIST_METRICS_PAGE_LIMIT": "100",
+		}, s.GetConfigMap(context.Background(), "cloudwatch", nil))
+	})
+
+	t.Run("does not use the aws settings for a non-aws plugin", func(t *testing.T) {
+		s := &Service{
+			cfg: cfg,
+		}
+		require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
+	})
+
+	t.Run("uses the aws settings for a non-aws user-specified plugin", func(t *testing.T) {
+		cfg.AWSForwardSettingsPlugins = append(cfg.AWSForwardSettingsPlugins, "test-datasource")
+		s := &Service{
+			cfg: cfg,
+		}
+		require.Equal(t, map[string]string{
+			"AWS_AUTH_AssumeRoleEnabled":     "false",
+			"AWS_AUTH_AllowedAuthProviders":  "grafana_assume_role,keys",
+			"AWS_AUTH_EXTERNAL_ID":           "mock_external_id",
+			"AWS_AUTH_SESSION_DURATION":      "10m",
+			"AWS_CW_LIST_METRICS_PAGE_LIMIT": "100",
 		}, s.GetConfigMap(context.Background(), "test-datasource", nil))
 	})
 }

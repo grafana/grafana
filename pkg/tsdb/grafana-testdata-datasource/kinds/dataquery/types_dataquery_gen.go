@@ -11,9 +11,10 @@ package dataquery
 
 // Defines values for NodesQueryType.
 const (
-	NodesQueryTypeRandom      NodesQueryType = "random"
-	NodesQueryTypeRandomEdges NodesQueryType = "random edges"
-	NodesQueryTypeResponse    NodesQueryType = "response"
+	NodesQueryTypeRandom         NodesQueryType = "random"
+	NodesQueryTypeRandomEdges    NodesQueryType = "random edges"
+	NodesQueryTypeResponseMedium NodesQueryType = "response_medium"
+	NodesQueryTypeResponseSmall  NodesQueryType = "response_small"
 )
 
 // Defines values for StreamingQueryType.
@@ -21,6 +22,7 @@ const (
 	StreamingQueryTypeFetch  StreamingQueryType = "fetch"
 	StreamingQueryTypeLogs   StreamingQueryType = "logs"
 	StreamingQueryTypeSignal StreamingQueryType = "signal"
+	StreamingQueryTypeTraces StreamingQueryType = "traces"
 )
 
 // Defines values for ErrorType.
@@ -99,6 +101,7 @@ type DataQuery struct {
 // NodesQuery defines model for NodesQuery.
 type NodesQuery struct {
 	Count *int64          `json:"count,omitempty"`
+	Seed  *int64          `json:"seed,omitempty"`
 	Type  *NodesQueryType `json:"type,omitempty"`
 }
 

@@ -14,7 +14,7 @@ import {
   TimeRange,
   LoadingState,
 } from '@grafana/data';
-import { combineResponses } from 'app/features/logs/response';
+import { combineResponses } from '@grafana/o11y-ds-frontend';
 
 import { LokiDatasource } from './datasource';
 import { splitTimeRange as splitLogsTimeRange } from './logsTimeSplitting';

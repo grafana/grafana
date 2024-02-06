@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/prometheus/alertmanager/featurecontrol"
+	"github.com/prometheus/alertmanager/matchers/compat"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -168,6 +170,12 @@ func (ng *AlertNG) init() error {
 
 	ng.store.Logger = ng.Log
 
+	// This initializes the compat package in fallback mode with logging. It parses first
+	// using the UTF-8 parser and then fallsback to the classic parser on error.
+	// UTF-8 is permitted in label names. This should be removed when the compat package
+	// is removed from Alertmanager.
+	compat.InitFromFlags(ng.Log, compat.RegisteredMetrics, featurecontrol.NoopFlags{})
+
 	// If enabled, configure the remote Alertmanager.
 	// - If several toggles are enabled, the order of precedence is RemoteOnly, RemotePrimary, RemoteSecondary
 	// - If no toggles are enabled, we default to using only the internal Alertmanager
@@ -296,7 +304,12 @@ func (ng *AlertNG) init() error {
 		Tracer:                         ng.tracer,
 		Log:                            log.New("ngalert.state.manager"),
 	}
-	statePersister := state.NewSyncStatePersisiter(log.New("ngalert.state.manager.persist"), cfg)
+	logger := log.New("ngalert.state.manager.persist")
+	statePersister := state.NewSyncStatePersisiter(logger, cfg)
+	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingSaveStatePeriodic) {
+		ticker := clock.New().Ticker(ng.Cfg.UnifiedAlerting.StatePeriodicSaveInterval)
+		statePersister = state.NewAsyncStatePersister(logger, ticker, cfg)
+	}
 	stateManager := state.NewManager(cfg, statePersister)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)
 
@@ -308,9 +321,11 @@ func (ng *AlertNG) init() error {
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
 
+	receiverService := notifier.NewReceiverService(ng.accesscontrol, ng.store, ng.store, ng.SecretsService, ng.store, ng.Log)
+
 	// Provisioning
 	policyService := provisioning.NewNotificationPolicyService(ng.store, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.Log)
-	contactPointService := provisioning.NewContactPointService(ng.store, ng.SecretsService, ng.store, ng.store, ng.Log, ng.accesscontrol)
+	contactPointService := provisioning.NewContactPointService(ng.store, ng.SecretsService, ng.store, ng.store, receiverService, ng.Log)
 	templateService := provisioning.NewTemplateService(ng.store, ng.store, ng.store, ng.Log)
 	muteTimingService := provisioning.NewMuteTimingService(ng.store, ng.store, ng.store, ng.Log)
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.dashboardService, ng.QuotaService, ng.store,
@@ -422,6 +437,9 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 
 		children.Go(func() error {
 			return ng.schedule.Run(subCtx)
+		})
+		children.Go(func() error {
+			return ng.stateManager.Run(subCtx)
 		})
 	}
 	return children.Wait()

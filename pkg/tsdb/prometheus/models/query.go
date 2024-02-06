@@ -2,12 +2,15 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/prometheus/prometheus/model/labels"
+	"github.com/prometheus/prometheus/promql/parser"
 
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
@@ -75,9 +78,14 @@ type Query struct {
 	RangeQuery    bool
 	ExemplarQuery bool
 	UtcOffsetSec  int64
+	Scope         Scope
 }
 
-func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool) (*Query, error) {
+type Scope struct {
+	Matchers []*labels.Matcher
+}
+
+func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool, enableScope bool) (*Query, error) {
 	model := &QueryModel{}
 	if err := json.Unmarshal(query.JSON, model); err != nil {
 		return nil, err
@@ -99,6 +107,17 @@ func Parse(query backend.DataQuery, dsScrapeInterval string, intervalCalculator 
 		dsScrapeInterval,
 		timeRange,
 	)
+	var matchers []*labels.Matcher
+	if enableScope && model.Scope != nil && model.Scope.Matchers != "" {
+		matchers, err = parser.ParseMetricSelector(model.Scope.Matchers)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse metric selector %v in scope", model.Scope.Matchers)
+		}
+		expr, err = ApplyQueryScope(expr, matchers)
+		if err != nil {
+			return nil, err
+		}
+	}
 	var rangeQuery, instantQuery bool
 	if model.Instant == nil {
 		instantQuery = false
@@ -284,6 +303,11 @@ func isVariableInterval(interval string) bool {
 	return false
 }
 
+// This function aligns query range to step and handles the time offset.
+// It rounds start and end down to a multiple of step.
+// Prometheus caching is dependent on the range being aligned with the step.
+// Rounding to the step can significantly change the start and end of the range for larger steps, i.e. a week.
+// In rounding the range to a 1w step the range will always start on a Thursday.
 func AlignTimeRange(t time.Time, step time.Duration, offset int64) time.Time {
 	offsetNano := float64(offset * 1e9)
 	stepNano := float64(step.Nanoseconds())
