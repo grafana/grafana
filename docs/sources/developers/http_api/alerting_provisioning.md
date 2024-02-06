@@ -715,7 +715,6 @@ Status: Bad Request
 
 [ValidationError](#validation-error)
 
-
 ### <span id="route-post-contactpoints"></span> Create a contact point. (_RoutePostContactpoints_)
 
 ```
