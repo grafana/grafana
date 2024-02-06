@@ -110,9 +110,6 @@ type replacement struct {
 }
 
 func getReplacementMap(qt peakq.QueryTemplateSpec) map[int]map[string][]replacement {
-	//return make(map[int]map[string][]replacement)
-
-	// int = targetIdx, string = Path
 	byTargetPath := make(map[int]map[string][]replacement)
 
 	varMap := make(map[string]*peakq.TemplateVariable, len(qt.Variables))
@@ -135,21 +132,6 @@ func getReplacementMap(qt peakq.QueryTemplateSpec) map[int]map[string][]replacem
 			}
 		}
 	}
-	/*
-		for _, rep := range target.Replacement {
-				if byTargetPath[pos.TargetIdx] == nil {
-					byTargetPath[pos.TargetIdx] = make(map[string][]replacement)
-				}
-				qVar, pos := qVar, pos
-				byTargetPath[pos.TargetIdx][pos.Path] = append(byTargetPath[pos.TargetIdx][pos.Path],
-					replacement{
-						Position:         &pos,
-						TemplateVariable: &qVar,
-					},
-				)
-			}
-		}
-	*/
 
 	for idx, byTargetIdx := range byTargetPath {
 		for path := range byTargetIdx {
@@ -181,7 +163,7 @@ func Render(qt peakq.QueryTemplateSpec, selectedValues map[string][]string) (*pe
 	for targetIdx, byTargetIdx := range rm {
 		for path, reps := range byTargetIdx {
 			o := rawTargetObjects[targetIdx]
-			nodes, err := o.JSONPath(string(path))
+			nodes, err := o.JSONPath(path)
 			if err != nil {
 				return nil, err
 			}
@@ -209,7 +191,10 @@ func Render(qt peakq.QueryTemplateSpec, selectedValues map[string][]string) (*pe
 				s = s[:r.Start+offSet] + value + s[r.End+offSet:]
 				offSet = int64(len(value)+int(offSet)) - (r.End - r.Start)
 			}
-			n.SetString(s)
+			if err = n.SetString(s); err != nil {
+				return nil, err
+			}
+
 		}
 	}
 
@@ -229,74 +214,4 @@ func Render(qt peakq.QueryTemplateSpec, selectedValues map[string][]string) (*pe
 	return &peakq.RenderedQuery{
 		Targets: targets,
 	}, nil
-
-	/*
-		fmt.Printf("TODO, replace: %v\n", selectedValues)
-		return &peakq.RenderedQuery{
-			Targets: qt.Targets,
-		}, nil
-
-
-			// Note: The following is super stupid, will only work with one var, no sanity checking etc
-			// selectedValues is for GET
-			targets := qt.DeepCopy().Targets
-
-			rawTargetObjects := make([]*ajson.Node, len(qt.Targets))
-			for i, t := range qt.Targets {
-				b, err := t.Properties.MarshalJSON()
-				if err != nil {
-					return nil, err
-				}
-				rawTargetObjects[i], err = ajson.Unmarshal(b)
-				if err != nil {
-					return nil, err
-				}
-			}
-
-			rm := getReplacementMap(qt)
-			for targetIdx, byTargetIdx := range rm {
-				for path, reps := range byTargetIdx {
-					o := rawTargetObjects[targetIdx]
-					nodes, err := o.JSONPath(string(path))
-					if err != nil {
-						return nil, err
-					}
-					if len(nodes) != 1 {
-						return nil, fmt.Errorf("expected one lead node at path %v but got %v", path, len(nodes))
-					}
-					n := nodes[0]
-					if !n.IsString() {
-						return nil, fmt.Errorf("only string type leaf notes supported currently, %v is not a string", path)
-					}
-					s := n.String()
-					s = s[1 : len(s)-1]
-					var offSet int64
-					for _, r := range reps {
-						// I think breaks with utf...something...?
-						// TODO: Probably simpler to store the non-template parts and insert the values into that, then don't have to track
-						// offsets
-						value := selectedValues[r.Key]
-						s = s[:r.Start+offSet] + value + s[r.End+offSet:]
-						offSet = int64(len(value)+int(offSet)) - (r.End - r.Start)
-					}
-					n.SetString(s)
-				}
-			}
-
-			for i, aT := range rawTargetObjects {
-				raw, err := ajson.Marshal(aT)
-				if err != nil {
-					return nil, err
-				}
-				u := v0alpha1.Unstructured{}
-				err = u.UnmarshalJSON(raw)
-				if err != nil {
-					return nil, err
-				}
-				targets[i].Properties = u
-			}
-
-			return &peakq.RenderedQuery{
-				Targets: targets,
-			}, nil */
 }
