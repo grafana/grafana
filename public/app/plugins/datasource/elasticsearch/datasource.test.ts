@@ -1588,6 +1588,9 @@ describe('ElasticDatasource using backend', () => {
 
         const annotations = await ds.annotationQuery({
           annotation: {},
+          dashboard: {
+            getVariables: () => []
+          },
           range: timeRange,
         });
 
@@ -1618,6 +1621,9 @@ describe('ElasticDatasource using backend', () => {
             query: 'abc',
             tagsField: '@test_tags',
             textField: 'text',
+          },
+          dashboard: {
+            getVariables: () => []
           },
           range: timeRange,
         });
@@ -1657,6 +1663,9 @@ describe('ElasticDatasource using backend', () => {
             tagsField: '@test_tags',
             textField: 'text',
           },
+          dashboard: {
+            getVariables: () => []
+          },
           range: {
             from: dateTime(1683291160012),
             to: dateTime(1683291460012),
@@ -1685,6 +1694,9 @@ describe('ElasticDatasource using backend', () => {
 
         await ds.annotationQuery({
           annotation: {},
+          dashboard: {
+            getVariables: () => []
+          },
           range: {
             from: dateTime(1683291160012),
             to: dateTime(1683291460012),
