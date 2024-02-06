@@ -1331,6 +1331,76 @@ func TestIntegrationRuleGroupSequence(t *testing.T) {
 	})
 }
 
+func TestIntegrationRuleCreate(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		AppModeProduction:     true,
+	})
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+	})
+	client := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+
+	namespaceUID := "default"
+	client.CreateFolder(t, namespaceUID, namespaceUID)
+
+	cases := []struct {
+		name   string
+		config apimodels.PostableRuleGroupConfig
+	}{{
+		name: "can create a rule with UTF-8",
+		config: apimodels.PostableRuleGroupConfig{
+			Name:     "test1",
+			Interval: model.Duration(time.Minute),
+			Rules: []apimodels.PostableExtendedRuleNode{
+				{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For: util.Pointer(model.Duration(2 * time.Minute)),
+						Labels: map[string]string{
+							"foo🙂":  "bar",
+							"_bar1": "baz🙂",
+						},
+						Annotations: map[string]string{
+							"Προμηθέας": "prom",      // Prometheus in Greek
+							"犬":         "Shiba Inu", // Dog in Japanese
+						},
+					},
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						Title:     "test1 rule1",
+						Condition: "A",
+						Data: []apimodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: apimodels.RelativeTimeRange{
+									From: apimodels.Duration(0),
+									To:   apimodels.Duration(15 * time.Minute),
+								},
+								DatasourceUID: expr.DatasourceUID,
+								Model:         json.RawMessage(`{"type": "math","expression": "1"}`),
+							},
+						},
+					},
+				},
+			},
+		},
+	}}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			resp, status, _ := client.PostRulesGroupWithStatus(t, namespaceUID, &tc.config)
+			require.Equal(t, http.StatusAccepted, status)
+			require.Len(t, resp.Created, 1)
+			require.Len(t, resp.Updated, 0)
+			require.Len(t, resp.Deleted, 0)
+		})
+	}
+}
+
 func TestIntegrationRuleUpdate(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 

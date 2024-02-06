@@ -12,13 +12,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-openapi/strfmt"
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/util/errutil"
-
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -31,6 +31,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type Response struct {
@@ -704,7 +706,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 	apiClient := newAlertingApiClient(grafanaListedAddr, "editor", "editor")
 
 	// Create the namespace we'll save our alerts to.
-	namespaceUID := "default"
+	namespaceUID := "default" //nolint:goconst
 	apiClient.CreateFolder(t, namespaceUID, namespaceUID)
 
 	createRule(t, apiClient, "default")
@@ -1838,6 +1840,155 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 
 			require.Equal(t, http.StatusAccepted, resp.StatusCode)
 			require.JSONEq(t, `{"message":"rules deleted"}`, string(b))
+		})
+	}
+}
+
+func TestIntegrationAlertmanagerCreateSilence(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		AppModeProduction:     true,
+	})
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+	})
+	client := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+
+	cases := []struct {
+		name    string
+		silence apimodels.PostableSilence
+		expErr  string
+	}{{
+		name: "can create silence for foo=bar",
+		silence: apimodels.PostableSilence{
+			Silence: amv2.Silence{
+				Comment:   util.Pointer("This is a comment"),
+				CreatedBy: util.Pointer("test"),
+				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Matchers: amv2.Matchers{{
+					IsEqual: util.Pointer(true),
+					IsRegex: util.Pointer(false),
+					Name:    util.Pointer("foo"),
+					Value:   util.Pointer("bar"),
+				}},
+				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
+			},
+		},
+	}, {
+		name: "can create silence for _foo1=bar",
+		silence: apimodels.PostableSilence{
+			Silence: amv2.Silence{
+				Comment:   util.Pointer("This is a comment"),
+				CreatedBy: util.Pointer("test"),
+				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Matchers: amv2.Matchers{{
+					IsEqual: util.Pointer(true),
+					IsRegex: util.Pointer(false),
+					Name:    util.Pointer("_foo1"),
+					Value:   util.Pointer("bar"),
+				}},
+				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
+			},
+		},
+	}, {
+		name: "can create silence for 0foo=bar",
+		silence: apimodels.PostableSilence{
+			Silence: amv2.Silence{
+				Comment:   util.Pointer("This is a comment"),
+				CreatedBy: util.Pointer("test"),
+				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Matchers: amv2.Matchers{{
+					IsEqual: util.Pointer(true),
+					IsRegex: util.Pointer(false),
+					Name:    util.Pointer("0foo"),
+					Value:   util.Pointer("bar"),
+				}},
+				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
+			},
+		},
+	}, {
+		name: "can create silence for foo=🙂bar",
+		silence: apimodels.PostableSilence{
+			Silence: amv2.Silence{
+				Comment:   util.Pointer("This is a comment"),
+				CreatedBy: util.Pointer("test"),
+				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Matchers: amv2.Matchers{{
+					IsEqual: util.Pointer(true),
+					IsRegex: util.Pointer(false),
+					Name:    util.Pointer("foo"),
+					Value:   util.Pointer("🙂bar"),
+				}},
+				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
+			},
+		},
+	}, {
+		name: "can create silence for foo🙂=bar",
+		silence: apimodels.PostableSilence{
+			Silence: amv2.Silence{
+				Comment:   util.Pointer("This is a comment"),
+				CreatedBy: util.Pointer("test"),
+				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Matchers: amv2.Matchers{{
+					IsEqual: util.Pointer(true),
+					IsRegex: util.Pointer(false),
+					Name:    util.Pointer("foo🙂"),
+					Value:   util.Pointer("bar"),
+				}},
+				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
+			},
+		},
+	}, {
+		name: "can't create silence for missing label name",
+		silence: apimodels.PostableSilence{
+			Silence: amv2.Silence{
+				Comment:   util.Pointer("This is a comment"),
+				CreatedBy: util.Pointer("test"),
+				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Matchers: amv2.Matchers{{
+					IsEqual: util.Pointer(true),
+					IsRegex: util.Pointer(false),
+					Name:    util.Pointer(""),
+					Value:   util.Pointer("bar"),
+				}},
+				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
+			},
+		},
+		expErr: "unable to save silence: silence invalid: invalid label matcher 0: invalid label name \"\": unable to create silence",
+	}, {
+		name: "can't create silence for missing label value",
+		silence: apimodels.PostableSilence{
+			Silence: amv2.Silence{
+				Comment:   util.Pointer("This is a comment"),
+				CreatedBy: util.Pointer("test"),
+				EndsAt:    util.Pointer(strfmt.DateTime(time.Now().Add(time.Minute))),
+				Matchers: amv2.Matchers{{
+					IsEqual: util.Pointer(true),
+					IsRegex: util.Pointer(false),
+					Name:    util.Pointer("foo"),
+					Value:   util.Pointer(""),
+				}},
+				StartsAt: util.Pointer(strfmt.DateTime(time.Now())),
+			},
+		},
+		expErr: "unable to save silence: silence invalid: at least one matcher must not match the empty string: unable to create silence",
+	}}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			silenceID, err := client.PostSilence(t, tc.silence)
+			if tc.expErr != "" {
+				require.EqualError(t, err, tc.expErr)
+				require.Empty(t, silenceID)
+			} else {
+				require.NoError(t, err)
+				require.NotEmpty(t, silenceID)
+			}
 		})
 	}
 }

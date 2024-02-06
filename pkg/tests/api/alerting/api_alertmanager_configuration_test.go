@@ -10,16 +10,203 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
+
+func TestIntegrationAlertmanagerConfiguration(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		AppModeProduction:     true,
+	})
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+	})
+	client := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+
+	cases := []struct {
+		name   string
+		cfg    apimodels.PostableUserConfig
+		expErr string
+	}{{
+		name: "configuration with default route",
+		cfg: apimodels.PostableUserConfig{
+			AlertmanagerConfig: apimodels.PostableApiAlertingConfig{
+				Config: apimodels.Config{
+					Route: &apimodels.Route{
+						Receiver: "test",
+					},
+				},
+				Receivers: []*apimodels.PostableApiReceiver{{
+					Receiver: config.Receiver{
+						Name: "test",
+					},
+				}},
+			},
+		},
+	}, {
+		name: "configuration with UTF-8 matchers",
+		cfg: apimodels.PostableUserConfig{
+			AlertmanagerConfig: apimodels.PostableApiAlertingConfig{
+				Config: apimodels.Config{
+					Route: &apimodels.Route{
+						Receiver: "test",
+						Routes: []*apimodels.Route{{
+							GroupBy: []model.LabelName{"foo🙂"},
+							Matchers: config.Matchers{{
+								Type:  labels.MatchEqual,
+								Name:  "foo🙂",
+								Value: "bar",
+							}, {
+								Type:  labels.MatchNotEqual,
+								Name:  "_bar1",
+								Value: "baz🙂",
+							}, {
+								Type:  labels.MatchRegexp,
+								Name:  "0baz",
+								Value: "[a-zA-Z0-9]+,?",
+							}, {
+								Type:  labels.MatchNotRegexp,
+								Name:  "corge",
+								Value: "^[0-9]+((,[0-9]{3})*(,[0-9]{0,3})?)?$",
+							}, {
+								Type:  labels.MatchEqual,
+								Name:  "Προμηθέας", // Prometheus in Greek
+								Value: "Prom",
+							}, {
+								Type:  labels.MatchNotEqual,
+								Name:  "犬", // Dog in Japanese
+								Value: "Shiba Inu",
+							}},
+						}},
+					},
+				},
+				Receivers: []*apimodels.PostableApiReceiver{{
+					Receiver: config.Receiver{
+						Name: "test",
+					},
+				}},
+			},
+		},
+	}, {
+		name: "configuration with UTF-8 object matchers",
+		cfg: apimodels.PostableUserConfig{
+			AlertmanagerConfig: apimodels.PostableApiAlertingConfig{
+				Config: apimodels.Config{
+					Route: &apimodels.Route{
+						Receiver: "test",
+						Routes: []*apimodels.Route{{
+							GroupBy: []model.LabelName{"foo🙂"},
+							ObjectMatchers: apimodels.ObjectMatchers{{
+								Type:  labels.MatchEqual,
+								Name:  "foo🙂",
+								Value: "bar",
+							}, {
+								Type:  labels.MatchNotEqual,
+								Name:  "_bar1",
+								Value: "baz🙂",
+							}, {
+								Type:  labels.MatchRegexp,
+								Name:  "0baz",
+								Value: "[a-zA-Z0-9]+,?",
+							}, {
+								Type:  labels.MatchNotRegexp,
+								Name:  "corge",
+								Value: "^[0-9]+((,[0-9]{3})*(,[0-9]{0,3})?)?$",
+							}, {
+								Type:  labels.MatchEqual,
+								Name:  "Προμηθέας", // Prometheus in Greek
+								Value: "Prom",
+							}, {
+								Type:  labels.MatchNotEqual,
+								Name:  "犬", // Dog in Japanese
+								Value: "Shiba Inu",
+							}},
+						}},
+					},
+				},
+				Receivers: []*apimodels.PostableApiReceiver{{
+					Receiver: config.Receiver{
+						Name: "test",
+					},
+				}},
+			},
+		},
+	}, {
+		name: "configuration with UTF-8 in both matchers and object matchers",
+		cfg: apimodels.PostableUserConfig{
+			AlertmanagerConfig: apimodels.PostableApiAlertingConfig{
+				Config: apimodels.Config{
+					Route: &apimodels.Route{
+						Receiver: "test",
+						Routes: []*apimodels.Route{{
+							GroupBy: []model.LabelName{"foo🙂"},
+							Matchers: config.Matchers{{
+								Type:  labels.MatchEqual,
+								Name:  "foo🙂",
+								Value: "bar",
+							}, {
+								Type:  labels.MatchNotEqual,
+								Name:  "_bar1",
+								Value: "baz🙂",
+							}, {
+								Type:  labels.MatchRegexp,
+								Name:  "0baz",
+								Value: "[a-zA-Z0-9]+,?",
+							}, {
+								Type:  labels.MatchNotRegexp,
+								Name:  "corge",
+								Value: "^[0-9]+((,[0-9]{3})*(,[0-9]{0,3})?)?$",
+							}},
+							ObjectMatchers: apimodels.ObjectMatchers{{
+								Type:  labels.MatchEqual,
+								Name:  "Προμηθέας", // Prometheus in Greek
+								Value: "Prom",
+							}, {
+								Type:  labels.MatchNotEqual,
+								Name:  "犬", // Dog in Japanese
+								Value: "Shiba Inu",
+							}},
+						}},
+					},
+				},
+				Receivers: []*apimodels.PostableApiReceiver{{
+					Receiver: config.Receiver{
+						Name: "test",
+					},
+				}},
+			},
+		},
+	}}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ok, err := client.PostConfiguration(t, tc.cfg)
+			if tc.expErr != "" {
+				require.EqualError(t, err, tc.expErr)
+				require.False(t, ok)
+			} else {
+				require.NoError(t, err)
+				require.True(t, ok)
+			}
+		})
+	}
+}
 
 func TestIntegrationAlertmanagerConfigurationIsTransactional(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
@@ -231,7 +418,7 @@ func TestIntegrationAlertmanagerConfigurationPersistSecrets(t *testing.T) {
 	// The secure settings must be present
 	{
 		resp := getRequest(t, alertConfigURL, http.StatusOK) // nolint
-		var c definitions.GettableUserConfig
+		var c apimodels.GettableUserConfig
 		bb := getBody(t, resp.Body)
 		err := json.Unmarshal([]byte(bb), &c)
 		require.NoError(t, err)
