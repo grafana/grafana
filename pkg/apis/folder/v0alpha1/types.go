@@ -52,3 +52,21 @@ type FolderInfo struct {
 	// The parent folder UID
 	Parent string `json:"parent,omitempty"`
 }
+
+// Access control information for the current user
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type FolderAccessInfo struct {
+	metav1.TypeMeta `json:",inline"`
+
+	CanSave   bool `json:"canSave"`
+	CanEdit   bool `json:"canEdit"`
+	CanAdmin  bool `json:"canAdmin"`
+	CanDelete bool `json:"canDelete"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type DescendantCounts struct {
+	metav1.TypeMeta `json:",inline"`
+
+	Counts map[string]int64 `json:"counts"`
+}
