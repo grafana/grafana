@@ -2,6 +2,8 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 )
 
 // Mirrors the info exposed in "github.com/grafana/grafana/pkg/setting"
@@ -26,7 +28,7 @@ type DummyResource struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec string `json:"spec,omitempty"`
+	Spec common.Unstructured `json:"spec,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
