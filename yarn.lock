@@ -4740,39 +4740,39 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@locker/near-membrane-base@npm:0.13.3":
-  version: 0.13.3
-  resolution: "@locker/near-membrane-base@npm:0.13.3"
+"@locker/near-membrane-base@npm:0.13.6":
+  version: 0.13.6
+  resolution: "@locker/near-membrane-base@npm:0.13.6"
   dependencies:
-    "@locker/near-membrane-shared": "npm:0.13.3"
-  checksum: 10/69fbe70e6a6a9e5ac3dd74ff0efc789abce002eb4fea69d8782124d7b56a3024251d96ac1a28d24e07a5f1ba59538b6c2b2d1bbfd67f19e0a168d61c4914aecc
+    "@locker/near-membrane-shared": "npm:0.13.6"
+  checksum: 10/308ff2a9a4a078837116d1ce140f9f367feb49f6a0802f7427ec225b594092d653918adceb9dd4a279c56433546002ccbcc64ada3fa0a72616ea598f061767bb
   languageName: node
   linkType: hard
 
-"@locker/near-membrane-dom@npm:0.13.3":
-  version: 0.13.3
-  resolution: "@locker/near-membrane-dom@npm:0.13.3"
+"@locker/near-membrane-dom@npm:0.13.6":
+  version: 0.13.6
+  resolution: "@locker/near-membrane-dom@npm:0.13.6"
   dependencies:
-    "@locker/near-membrane-base": "npm:0.13.3"
-    "@locker/near-membrane-shared": "npm:0.13.3"
-    "@locker/near-membrane-shared-dom": "npm:0.13.3"
-  checksum: 10/9149cacba4951d8ed109a933b03c1523699861d46274b060a3f4ca06201a8253121993494d34ba03354439d75642dcd91e9bbf9b689788fc75a183aea66d801f
+    "@locker/near-membrane-base": "npm:0.13.6"
+    "@locker/near-membrane-shared": "npm:0.13.6"
+    "@locker/near-membrane-shared-dom": "npm:0.13.6"
+  checksum: 10/ad622f0a57c9041e396663c1cd293cdb1a98ae2a48a08616fc8331526d836716f7a25774a55d87d4b716f2ff0c03013239790a2261eb9c9992f570d75d7c0f8a
   languageName: node
   linkType: hard
 
-"@locker/near-membrane-shared-dom@npm:0.13.3":
-  version: 0.13.3
-  resolution: "@locker/near-membrane-shared-dom@npm:0.13.3"
+"@locker/near-membrane-shared-dom@npm:0.13.6":
+  version: 0.13.6
+  resolution: "@locker/near-membrane-shared-dom@npm:0.13.6"
   dependencies:
-    "@locker/near-membrane-shared": "npm:0.13.3"
-  checksum: 10/3b7f0091884929240c6575ae9f76849a02599cc0622faaade959a77b78f910f6aea9d7e0a4f8461d660c814db47129d6e876dce1bc4bdb28b10ead0d4b495036
+    "@locker/near-membrane-shared": "npm:0.13.6"
+  checksum: 10/2171637f36f780df424de705d4ee792a5499c6b09e050458c0d0eb2d021ed0b900c70f13c35354299b3bc8ff2484615c4e9967a4c794a90b35222d6431d75142
   languageName: node
   linkType: hard
 
-"@locker/near-membrane-shared@npm:0.13.3":
-  version: 0.13.3
-  resolution: "@locker/near-membrane-shared@npm:0.13.3"
-  checksum: 10/4dfee4863497d9b131ff0deb328989491376417a47afaefbdd51b42fac5ef47dca05b1e04276cd28a325274c8a6e316122fd97a618bc31a75894083ddb7a5d0f
+"@locker/near-membrane-shared@npm:0.13.6":
+  version: 0.13.6
+  resolution: "@locker/near-membrane-shared@npm:0.13.6"
+  checksum: 10/4596c9167f27483cd1875a70f25f395125943ff4dcc5b03e95f785ccc00d8b767c2b1d8e81271f7923ec5c6189efcd58d4c5f531bdf45be2be37fdd6ac7a6023
   languageName: node
   linkType: hard
 
@@ -17734,9 +17734,9 @@ __metadata:
     "@lezer/common": "npm:1.2.1"
     "@lezer/highlight": "npm:1.2.0"
     "@lezer/lr": "npm:1.3.3"
-    "@locker/near-membrane-dom": "npm:0.13.3"
-    "@locker/near-membrane-shared": "npm:0.13.3"
-    "@locker/near-membrane-shared-dom": "npm:0.13.3"
+    "@locker/near-membrane-dom": "npm:0.13.6"
+    "@locker/near-membrane-shared": "npm:0.13.6"
+    "@locker/near-membrane-shared-dom": "npm:0.13.6"
     "@msagl/core": "npm:^1.1.16"
     "@msagl/parser": "npm:^1.1.16"
     "@opentelemetry/api": "npm:1.7.0"
