@@ -227,6 +227,7 @@ func TestProxy_Hook(t *testing.T) {
 				},
 			}
 			err = c.Hook(context.Background(), userIdentity, userReq)
+			assert.NoError(t, err)
 			expectedCache := map[string][]byte{
 				cacheKey: []byte(fmt.Sprintf("%d", userId)),
 				fmt.Sprintf("%s:%s", proxyCachePrefix, "johndoe"): []byte(fmt.Sprintf("users:johndoe-%s", role)),
