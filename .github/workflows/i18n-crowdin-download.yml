@@ -25,6 +25,7 @@ jobs:
           upload_translations: false
           download_sources: false
           download_translations: true
+          export_only_approved: true
           localization_branch_name: i18n_crowdin_translations
           create_pull_request: true
           pull_request_title: 'I18n: Download translations from Crowdin'
