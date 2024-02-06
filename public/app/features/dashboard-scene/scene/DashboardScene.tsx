@@ -392,13 +392,21 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       return;
     }
 
-    const panelData = sceneGraph.getData(vizPanel).clone();
+    let panelState;
+    let panelData;
+    if (gridItem instanceof PanelRepeaterGridItem) {
+      const { key, ...gridRepeaterSourceState } = sceneUtils.cloneSceneObjectState(gridItem.state.source.state);
+      panelState = { ...gridRepeaterSourceState };
+      panelData = sceneGraph.getData(gridItem.state.source).clone();
+    } else {
+      const { key, ...gridItemPanelState } = sceneUtils.cloneSceneObjectState(vizPanel.state);
+      panelState = { ...gridItemPanelState };
+      panelData = sceneGraph.getData(vizPanel).clone();
+    }
 
     // when we duplicate a panel we don't want to clone the alert state
     delete panelData.state.data?.alertState;
 
-    // destructuring to remove key from the state for the panel and grid item
-    const { key, ...panelState } = sceneUtils.cloneSceneObjectState(vizPanel.state);
     const { key: gridItemKey, ...gridItemToDuplicateState } = sceneUtils.cloneSceneObjectState(gridItem.state);
 
     const newGridItem = new SceneGridItem({
