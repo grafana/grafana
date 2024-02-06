@@ -125,7 +125,7 @@ func TestService(t *testing.T) {
 		})
 	}
 
-	t.Run("With App Sub URL", func(t *testing.T) {
+	t.Run("App Sub URL has no effect on the path", func(t *testing.T) {
 		for _, tc := range []struct {
 			appSubURL string
 		}{
