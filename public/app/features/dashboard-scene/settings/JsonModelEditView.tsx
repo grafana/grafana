@@ -83,7 +83,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
             The JSON model below is the data structure that defines the dashboard. This includes dashboard settings,
             panel settings, layout, queries, and so on.
           </Trans>
-          <LegacyAlertsDeprecationNotice dashboardModel={saveModel} />
+          <LegacyAlertsDeprecationNotice dashboard={saveModel} />
           <CodeEditor
             width="100%"
             value={jsonText}

@@ -2,20 +2,19 @@ import { isEmpty } from 'lodash';
 import React from 'react';
 import { useAsync, useToggle } from 'react-use';
 
-import { PanelModel } from '@grafana/data';
-import { Dashboard } from '@grafana/schema';
+import { Dashboard, Panel, RowPanel } from '@grafana/schema';
 import { Alert, Collapse, Column, InteractiveTable, TextLink } from '@grafana/ui';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
-import { DashboardDataDTO, DashboardRoutes } from 'app/types';
+import { DashboardRoutes } from 'app/types';
 
 import { makePanelLink } from '../utils/misc';
 
 interface DeprecationNoticeProps {
   dashboardUid?: string;
-  dashboardModel?: Dashboard;
+  dashboard?: Dashboard;
 }
 
-export default function LegacyAlertsDeprecationNotice({ dashboardUid, dashboardModel }: DeprecationNoticeProps) {
+export default function LegacyAlertsDeprecationNotice({ dashboardUid, dashboard }: DeprecationNoticeProps) {
   const dashboardStateManager = getDashboardScenePageStateManager();
 
   const {
@@ -23,8 +22,8 @@ export default function LegacyAlertsDeprecationNotice({ dashboardUid, dashboardM
     value: dashboardData,
     error,
   } = useAsync(() => {
-    if (dashboardModel) {
-      return Promise.resolve(dashboardModel);
+    if (dashboard) {
+      return Promise.resolve(dashboard);
     } else if (dashboardUid) {
       return dashboardStateManager
         .fetchDashboard({
@@ -63,10 +62,10 @@ export default function LegacyAlertsDeprecationNotice({ dashboardUid, dashboardM
  * 1. if using the older (non-scenes) dashboard system we can simply check for "alert" in the panel definition.
  * 2. for dashboard scenes the alerts are no longer added to the model but we can check for "alertThreshold" in the panel options object
  */
-function getLegacyAlertPanelsFromDashboard(dashboard: DashboardDataDTO): PanelModel[] {
-  const panelsWithLegacyAlerts = dashboard.panels?.filter((panel: PanelModel) => {
+function getLegacyAlertPanelsFromDashboard(dashboard: Dashboard): Panel[] {
+  const panelsWithLegacyAlerts = dashboard.panels?.filter((panel) => {
     const hasAlertDefinition = 'alert' in panel;
-    const hasAlertThreshold = 'alertThreshold' in panel.options;
+    const hasAlertThreshold = 'options' in panel && panel.options ? 'alertThreshold' in panel.options : false;
     return hasAlertDefinition || hasAlertThreshold;
   });
 
@@ -75,13 +74,13 @@ function getLegacyAlertPanelsFromDashboard(dashboard: DashboardDataDTO): PanelMo
 
 interface Props {
   dashboardUid: string;
-  panels: PanelModel[];
+  panels: Panel[];
 }
 
 function LegacyAlertsWarning({ dashboardUid, panels }: Props) {
   const [isOpen, toggleCollapsible] = useToggle(false);
 
-  const columns: Array<Column<PanelModel>> = [
+  const columns: Array<Column<Panel | RowPanel>> = [
     { id: 'id', header: 'ID' },
     {
       id: 'title',
