@@ -215,6 +215,7 @@ export const RowsList = (props: RowsListProps) => {
       return (
         <div
           {...row.getRowProps({ style })}
+          data-row-index={row.index}
           className={cx(tableStyles.row, expandedRowStyle)}
           onMouseEnter={() => onRowHover(index, data)}
           onMouseLeave={onRowLeave}

@@ -97,6 +97,10 @@ export interface Props {
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
+
+  // PoC for cell interaction menus
+  //we prolly dont need a dom ref for each cell since we can pull the target out of the event handler and get its DOMRect
+  onCellClick?: (rect: DOMRect, columnIndex: number, rowIndex: number, e?: HTMLElement) => void;
 }
 
 /**

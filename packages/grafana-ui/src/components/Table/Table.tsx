@@ -276,6 +276,17 @@ export const Table = memo((props: Props) => {
     <div
       {...getTableProps()}
       className={tableStyles.table}
+      onClick={(e: React.MouseEvent<HTMLElement>) => {
+        if (props?.onCellClick) {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+          const target = e.target as HTMLElement;
+          const columnIndex = Number(target.getAttribute('data-column-index'));
+          const rowIndex = Number(target.parentElement?.getAttribute('data-row-index'));
+
+          // Only if role=cell?
+          props.onCellClick(e.currentTarget.getBoundingClientRect(), columnIndex, rowIndex, e.currentTarget);
+        }
+      }}
       aria-label={ariaLabel}
       role="table"
       ref={tableDivRef}
