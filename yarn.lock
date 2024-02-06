@@ -3680,7 +3680,7 @@ __metadata:
     fork-ts-checker-webpack-plugin: "npm:8.0.0"
     glob: "npm:10.3.10"
     replace-in-file-webpack-plugin: "npm:1.0.6"
-    swc-loader: "npm:0.2.4"
+    swc-loader: "npm:0.2.6"
     tslib: "npm:2.6.2"
     webpack: "npm:5.90.1"
   languageName: unknown
@@ -3708,8 +3708,8 @@ __metadata:
     "@lezer/lr": "npm:1.3.3"
     "@prometheus-io/lezer-promql": "npm:^0.37.0-rc.1"
     "@reduxjs/toolkit": "npm:1.9.5"
-    "@swc/core": "npm:1.3.107"
-    "@swc/helpers": "npm:0.5.3"
+    "@swc/core": "npm:1.4.0"
+    "@swc/helpers": "npm:0.5.6"
     "@testing-library/dom": "npm:9.3.4"
     "@testing-library/jest-dom": "npm:6.4.2"
     "@testing-library/react": "npm:14.2.1"
@@ -7960,90 +7960,90 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@swc/core-darwin-arm64@npm:1.3.107":
-  version: 1.3.107
-  resolution: "@swc/core-darwin-arm64@npm:1.3.107"
+"@swc/core-darwin-arm64@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@swc/core-darwin-arm64@npm:1.4.0"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@swc/core-darwin-x64@npm:1.3.107":
-  version: 1.3.107
-  resolution: "@swc/core-darwin-x64@npm:1.3.107"
+"@swc/core-darwin-x64@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@swc/core-darwin-x64@npm:1.4.0"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@swc/core-linux-arm-gnueabihf@npm:1.3.107":
-  version: 1.3.107
-  resolution: "@swc/core-linux-arm-gnueabihf@npm:1.3.107"
+"@swc/core-linux-arm-gnueabihf@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@swc/core-linux-arm-gnueabihf@npm:1.4.0"
   conditions: os=linux & cpu=arm
   languageName: node
   linkType: hard
 
-"@swc/core-linux-arm64-gnu@npm:1.3.107":
-  version: 1.3.107
-  resolution: "@swc/core-linux-arm64-gnu@npm:1.3.107"
+"@swc/core-linux-arm64-gnu@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@swc/core-linux-arm64-gnu@npm:1.4.0"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@swc/core-linux-arm64-musl@npm:1.3.107":
-  version: 1.3.107
-  resolution: "@swc/core-linux-arm64-musl@npm:1.3.107"
+"@swc/core-linux-arm64-musl@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@swc/core-linux-arm64-musl@npm:1.4.0"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@swc/core-linux-x64-gnu@npm:1.3.107":
-  version: 1.3.107
-  resolution: "@swc/core-linux-x64-gnu@npm:1.3.107"
+"@swc/core-linux-x64-gnu@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@swc/core-linux-x64-gnu@npm:1.4.0"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@swc/core-linux-x64-musl@npm:1.3.107":
-  version: 1.3.107
-  resolution: "@swc/core-linux-x64-musl@npm:1.3.107"
+"@swc/core-linux-x64-musl@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@swc/core-linux-x64-musl@npm:1.4.0"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@swc/core-win32-arm64-msvc@npm:1.3.107":
-  version: 1.3.107
-  resolution: "@swc/core-win32-arm64-msvc@npm:1.3.107"
+"@swc/core-win32-arm64-msvc@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@swc/core-win32-arm64-msvc@npm:1.4.0"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@swc/core-win32-ia32-msvc@npm:1.3.107":
-  version: 1.3.107
-  resolution: "@swc/core-win32-ia32-msvc@npm:1.3.107"
+"@swc/core-win32-ia32-msvc@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@swc/core-win32-ia32-msvc@npm:1.4.0"
   conditions: os=win32 & cpu=ia32
   languageName: node
   linkType: hard
 
-"@swc/core-win32-x64-msvc@npm:1.3.107":
-  version: 1.3.107
-  resolution: "@swc/core-win32-x64-msvc@npm:1.3.107"
+"@swc/core-win32-x64-msvc@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@swc/core-win32-x64-msvc@npm:1.4.0"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
-"@swc/core@npm:1.3.107, @swc/core@npm:^1.3.49":
-  version: 1.3.107
-  resolution: "@swc/core@npm:1.3.107"
+"@swc/core@npm:1.4.0, @swc/core@npm:^1.3.49":
+  version: 1.4.0
+  resolution: "@swc/core@npm:1.4.0"
   dependencies:
-    "@swc/core-darwin-arm64": "npm:1.3.107"
-    "@swc/core-darwin-x64": "npm:1.3.107"
-    "@swc/core-linux-arm-gnueabihf": "npm:1.3.107"
-    "@swc/core-linux-arm64-gnu": "npm:1.3.107"
-    "@swc/core-linux-arm64-musl": "npm:1.3.107"
-    "@swc/core-linux-x64-gnu": "npm:1.3.107"
-    "@swc/core-linux-x64-musl": "npm:1.3.107"
-    "@swc/core-win32-arm64-msvc": "npm:1.3.107"
-    "@swc/core-win32-ia32-msvc": "npm:1.3.107"
-    "@swc/core-win32-x64-msvc": "npm:1.3.107"
+    "@swc/core-darwin-arm64": "npm:1.4.0"
+    "@swc/core-darwin-x64": "npm:1.4.0"
+    "@swc/core-linux-arm-gnueabihf": "npm:1.4.0"
+    "@swc/core-linux-arm64-gnu": "npm:1.4.0"
+    "@swc/core-linux-arm64-musl": "npm:1.4.0"
+    "@swc/core-linux-x64-gnu": "npm:1.4.0"
+    "@swc/core-linux-x64-musl": "npm:1.4.0"
+    "@swc/core-win32-arm64-msvc": "npm:1.4.0"
+    "@swc/core-win32-ia32-msvc": "npm:1.4.0"
+    "@swc/core-win32-x64-msvc": "npm:1.4.0"
     "@swc/counter": "npm:^0.1.1"
     "@swc/types": "npm:^0.1.5"
   peerDependencies:
@@ -8072,23 +8072,23 @@ __metadata:
   peerDependenciesMeta:
     "@swc/helpers":
       optional: true
-  checksum: 10/9f679f79cd4f89f20035a8f25945942f6d39a068ccec4a1c3b72d4266dddec8c4de38b89d65affd24768609f44da7217fe28e6498d2c95449ecbc76099e61bce
+  checksum: 10/2f310f81c24b5688a6d4171b4fdb59987070ecda03aad51d755592607b461ddcd6a9d0488510f47785ce634707fd6f30f986ab1f1138e794972d53ce0e94db80
   languageName: node
   linkType: hard
 
-"@swc/counter@npm:^0.1.1":
-  version: 0.1.1
-  resolution: "@swc/counter@npm:0.1.1"
-  checksum: 10/bb974babd493ba01c0d4a95ab610c3fc15fbf609c08cb0342798e485f57ecc0950abbf84e07124e63c5fe610b492d9a8dd03701d3b9ef7329d9e8bf3cc44980f
+"@swc/counter@npm:^0.1.1, @swc/counter@npm:^0.1.3":
+  version: 0.1.3
+  resolution: "@swc/counter@npm:0.1.3"
+  checksum: 10/df8f9cfba9904d3d60f511664c70d23bb323b3a0803ec9890f60133954173047ba9bdeabce28cd70ba89ccd3fd6c71c7b0bd58be85f611e1ffbe5d5c18616598
   languageName: node
   linkType: hard
 
-"@swc/helpers@npm:0.5.3, @swc/helpers@npm:^0.5.0":
-  version: 0.5.3
-  resolution: "@swc/helpers@npm:0.5.3"
+"@swc/helpers@npm:0.5.6, @swc/helpers@npm:^0.5.0":
+  version: 0.5.6
+  resolution: "@swc/helpers@npm:0.5.6"
   dependencies:
     tslib: "npm:^2.4.0"
-  checksum: 10/5ed4329cd36106e4c3c9c9fa710fae5b80521accce697d81030c42798c4653237f719269c24c26adf42579e15e1f720f31cd63983dea30debd298582a6cbd20a
+  checksum: 10/16f0a18367b1248317dcc3e5f32411da1a2906f983f4f072e394dfed37523385bc4d7bf71bab204cc8b3875c024a91421dd5c1f9c5bad1b1172fcb50aa2ec96f
   languageName: node
   linkType: hard
 
@@ -17758,8 +17758,8 @@ __metadata:
     "@reduxjs/toolkit": "npm:1.9.5"
     "@remix-run/router": "npm:^1.5.0"
     "@rtsao/plugin-proposal-class-properties": "npm:7.0.1-patch.1"
-    "@swc/core": "npm:1.3.107"
-    "@swc/helpers": "npm:0.5.3"
+    "@swc/core": "npm:1.4.0"
+    "@swc/helpers": "npm:0.5.6"
     "@testing-library/dom": "npm:9.3.4"
     "@testing-library/jest-dom": "npm:6.4.2"
     "@testing-library/react": "npm:14.2.1"
@@ -28745,13 +28745,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"swc-loader@npm:0.2.4, swc-loader@npm:^0.2.3":
-  version: 0.2.4
-  resolution: "swc-loader@npm:0.2.4"
+"swc-loader@npm:0.2.6, swc-loader@npm:^0.2.3":
+  version: 0.2.6
+  resolution: "swc-loader@npm:0.2.6"
+  dependencies:
+    "@swc/counter": "npm:^0.1.3"
   peerDependencies:
     "@swc/core": ^1.2.147
     webpack: ">=2"
-  checksum: 10/f23bfe8900b35abdcb9910a2749f3c9d66edf5c660afc67fcf7983647eaec322e024d1edd3bd9fd48bd3191eea0616f67b5f8b5f923e3a648fa5b448683c3213
+  checksum: 10/fe90948c02a51bb8ffcff1ce3590e01dc12860b0bb7c9e22052b14fa846ed437781ae265614a5e14344bea22001108780f00a6e350e28c0b3499bc4cd11335fb
   languageName: node
   linkType: hard
 
