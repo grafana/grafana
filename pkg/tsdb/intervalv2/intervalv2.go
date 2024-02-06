@@ -1,7 +1,6 @@
 package intervalv2
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -13,8 +12,6 @@ import (
 var (
 	DefaultRes         int64 = 1500
 	defaultMinInterval       = time.Millisecond * 1
-	year                     = time.Hour * 24 * 365
-	day                      = time.Hour * 24
 )
 
 type Interval struct {
@@ -129,31 +126,7 @@ func ParseIntervalStringToTimeDuration(interval string) (time.Duration, error) {
 
 // FormatDuration converts a duration into the kbn format e.g. 1m 2h or 3d
 func FormatDuration(inter time.Duration) string {
-	if inter >= year {
-		return fmt.Sprintf("%dy", inter/year)
-	}
-
-	if inter >= day {
-		return fmt.Sprintf("%dd", inter/day)
-	}
-
-	if inter >= time.Hour {
-		return fmt.Sprintf("%dh", inter/time.Hour)
-	}
-
-	if inter >= time.Minute {
-		return fmt.Sprintf("%dm", inter/time.Minute)
-	}
-
-	if inter >= time.Second {
-		return fmt.Sprintf("%ds", inter/time.Second)
-	}
-
-	if inter >= time.Millisecond {
-		return fmt.Sprintf("%dms", inter/time.Millisecond)
-	}
-
-	return "1ms"
+	return gtime.FormatInterval(inter)
 }
 
 //nolint:gocyclo

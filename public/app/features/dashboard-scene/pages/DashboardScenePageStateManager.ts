@@ -80,7 +80,6 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
           break;
         default:
           rsp = await dashboardLoaderSrv.loadDashboard('db', '', uid);
-
           if (route === DashboardRoutes.Embedded) {
             rsp.meta.isEmbedded = true;
           }
@@ -187,6 +186,10 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
   public setDashboardCache(cacheKey: string, dashboard: DashboardDTO) {
     this.dashboardCache = { dashboard, ts: Date.now(), cacheKey };
+  }
+
+  public clearDashboardCache() {
+    this.dashboardCache = undefined;
   }
 }
 
