@@ -79,6 +79,56 @@ export const Table = memo((props: Props) => {
     return EXTENDED_ROW_HEIGHT;
   }, [footerItems]);
 
+  data.fields.map((field) => {
+    const { thresholds } = field.config;
+
+    console.log(thresholds);
+
+    if (thresholds === undefined) {
+      return;
+    }
+
+    // Get threshold configurations for this field
+
+
+    for(let i = 0; i < field.values.length; i++) {
+      const value = field.values[i];
+
+      // If we're not dealing with numbers we
+      // don't need to do anything
+      if (field.type !== FieldType.number) {
+        continue;
+      }
+
+      for (let i = (thresholds.steps.length - 1); i >= 0; i--) {
+
+      }
+      
+      // We have five distinct cases (and assuming)
+      // that the field is numeric
+      // 
+      // 1. Absolute Threshold applied to rows
+      //    In this case we go from highest to lowest
+      //    threshold for each field value and if it 
+      //    matches that threshold we save the color
+      //    for that index and then contine
+      // 2. Absolute threshold applied to columns
+      //    We do the same process as above but stop
+      //    once the threshold has been satisfied
+      //    as it will apply to all values in the column
+      // 3. Percentage threshold for rows
+      //    We do the same as number 1 using the correct
+      //    percentage of the maximum value
+      // 4. Percentage threshold for columns
+      //    The same as number 2 but using the apppropriate
+      //    percentage of the maximum value
+      
+
+      // TODO: Support nested tables
+      
+    }
+  })
+
   // React table data array. This data acts just like a dummy array to let react-table know how many rows exist.
   // The cells use the field to look up values, therefore this is simply a length/size placeholder.
   const memoizedData = useMemo(() => {
