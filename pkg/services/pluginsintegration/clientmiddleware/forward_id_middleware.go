@@ -28,8 +28,8 @@ type ForwardIDMiddleware struct {
 
 func (m *ForwardIDMiddleware) applyToken(ctx context.Context, pCtx backend.PluginContext, req backend.ForwardHTTPHeaders) error {
 	reqCtx := contexthandler.FromContext(ctx)
-	// if request not for a datasource or no HTTP request context skip middleware
-	if req == nil || reqCtx == nil || reqCtx.SignedInUser == nil || pCtx.DataSourceInstanceSettings == nil {
+	// no HTTP request context => skip middleware
+	if req == nil || reqCtx == nil || reqCtx.SignedInUser == nil {
 		return nil
 	}
 
