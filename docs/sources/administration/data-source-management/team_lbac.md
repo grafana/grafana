@@ -19,6 +19,8 @@ weight: 100
 
 Grafana's new Team LBAC (Label-Based Access Control) feature for Loki is a significant enhancement that simplifies and streamlines data source access management based on team memberships. Users wanting fine grained access to data sources such as Loki with `X` amount of teams with different levels of access can make use of Team LBAC.
 
+In short LBAC stands for Label-Based Access Control. It is a way to control access to data based on labels. In the context of Loki, it is a way to control access to logs based on labels.
+
 This feature addresses a common challenge faced by Grafana users: managing Loki data source access for different teams. Previously, this led to the creation of numerous connections and duplicate dashboards, hampering scalability and user experience. With Team LBAC, users can now configure access to specific labels based solely on team memberships.
 
 ## Team LBAC rules
