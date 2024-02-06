@@ -134,10 +134,6 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 			cnnstr += fmt.Sprintf("&time_zone='%s'", url.QueryEscape(dsInfo.JsonData.Timezone))
 		}
 
-		if cfg.Env == setting.Dev {
-			logger.Debug("GetEngine", "connection", cnnstr)
-		}
-
 		config := sqleng.DataPluginConfiguration{
 			DSInfo:            dsInfo,
 			TimeColumnNames:   []string{"time", "time_sec"},
