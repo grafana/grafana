@@ -32,7 +32,7 @@ import (
 
 const (
 	CloudWatch      = "cloudwatch"
-	CloudMonitoring = "stackdriver"
+	CloudMonitoring = "grafana-cloud-monitoring-datasource"
 	AzureMonitor    = "grafana-azure-monitor-datasource"
 	Elasticsearch   = "elasticsearch"
 	Graphite        = "graphite"

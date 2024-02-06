@@ -1,14 +1,14 @@
 {
   "type": "datasource",
   "name": "Google Cloud Monitoring",
-  "id": "stackdriver",
+  "id": "grafana-cloud-monitoring-datasource",
   "category": "cloud",
-
+  "aliasIDs": ["stackdriver"],
   "metrics": true,
   "alerting": true,
   "annotations": true,
-  "logs": true,
   "backend": true,
+  "logs": true,
   "includes": [
     {
       "type": "dashboard",

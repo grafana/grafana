@@ -143,6 +143,8 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 		fallthrough
 	case "annolist":
 		fallthrough
+	case "grafana-cloud-monitoring-datasource":
+		fallthrough
 	case "debug":
 		if len(plugin.AliasIDs) == 0 {
 			return plugin, fmt.Errorf("expected alias to be set")
