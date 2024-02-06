@@ -20,12 +20,6 @@ weight: 250
 
 # Configure Team LBAC for Loki data source on Grafana Cloud
 
-{{% alert title="Creating Team LBAC rules is available for preview for logs with Loki in Grafana Cloud." color="warning" %}}
-
-Report any unexpected behavior to the Grafana Support team.
-
-{{% /alert %}}
-
 Team LBAC is available on Cloud for data sources created with basic authentication. Any managed Loki data source can **NOT** be configured with Team LBAC rules.
 
 ## Before you begin
