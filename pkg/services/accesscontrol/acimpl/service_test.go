@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -565,6 +566,39 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 			name:           "check userLogin filter works correctly",
 			siuPermissions: listAllPerms,
 			searchOption:   accesscontrol.SearchOptions{UserLogin: "testUser"},
+			ramRoles: map[string]*accesscontrol.RoleDTO{
+				string(roletype.RoleEditor): {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},
+				}},
+				string(roletype.RoleAdmin): {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:*"},
+				}},
+				accesscontrol.RoleGrafanaAdmin: {Permissions: []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"},
+				}},
+			},
+			storedPerms: map[int64][]accesscontrol.Permission{
+				1: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"}},
+				2: {{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"}},
+			},
+			storedRoles: map[int64][]string{
+				1: {string(roletype.RoleEditor)},
+				2: {string(roletype.RoleAdmin), accesscontrol.RoleGrafanaAdmin},
+			},
+			want: map[int64][]accesscontrol.Permission{
+				2: {{Action: accesscontrol.ActionTeamsWrite, Scope: "teams:*"},
+					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:id:1"},
+					{Action: accesscontrol.ActionTeamsPermissionsRead, Scope: "teams:*"}},
+			},
+		},
+		{
+			// This test is not exactly representative as normally the store would return
+			// only the user's basic roles and the user's stored permissions
+			name:           "check namespaceId filter works correctly",
+			siuPermissions: listAllPerms,
+			searchOption:   accesscontrol.SearchOptions{NamespaceID: identity.NamespaceServiceAccount + ":2"},
 			ramRoles: map[string]*accesscontrol.RoleDTO{
 				string(roletype.RoleEditor): {Permissions: []accesscontrol.Permission{
 					{Action: accesscontrol.ActionTeamsRead, Scope: "teams:*"},

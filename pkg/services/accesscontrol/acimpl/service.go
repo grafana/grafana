@@ -245,20 +245,12 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes
 func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester,
 	options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
-	if options.UserLogin != "" {
-		// Resolve userLogin -> userID
-		if err := options.ResolveUserLogin(ctx, s.userSvc); err != nil {
+	if options.UserLogin != "" || options.NamespaceID != "" || options.UserID > 0 {
+		if err := options.ComputeUserID(ctx, s.userSvc); err != nil {
+			s.log.Error("Failed to resolve user ID", "error", err)
 			return nil, err
 		}
-		options.UserLogin = ""
-	}
-	if options.NamespaceID != "" {
-		if err := options.ResolveNamespaceID(ctx); err != nil {
-			return nil, err
-		}
-		options.NamespaceID = ""
-	}
-	if options.UserID > 0 {
+
 		// Reroute to the user specific implementation of search permissions
 		// because it leverages the user permission cache.
 		userPerms, err := s.SearchUserPermissions(ctx, usr.GetOrgID(), options)
@@ -352,15 +344,9 @@ func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, search
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
-	if searchOptions.UserLogin != "" {
-		// Resolve userLogin -> userID
-		if err := searchOptions.ResolveUserLogin(ctx, s.userSvc); err != nil {
-			return nil, err
-		}
-	}
-
-	if searchOptions.NamespaceID != "" {
-		if err := searchOptions.ResolveNamespaceID(ctx); err != nil {
+	if searchOptions.UserLogin != "" || searchOptions.NamespaceID != "" {
+		if err := searchOptions.ComputeUserID(ctx, s.userSvc); err != nil {
+			s.log.Error("Failed to resolve user ID", "error", err)
 			return nil, err
 		}
 	}

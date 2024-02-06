@@ -144,13 +144,25 @@ func TestAccessControlAPI_searchUsersPermissions(t *testing.T) {
 			expectedCode: http.StatusBadRequest,
 		},
 		{
-			desc:         "Should reject if invalid userID is provided",
+			desc:         "Should reject if conflicting user and namespaceID filters are provided",
+			filters:      "?namespaceId=service-account:2&userId=2",
+			expectedCode: http.StatusBadRequest,
+		},
+		{
+			desc:         "Should reject if invalid userId is provided",
 			filters:      "?userId=invalid",
 			expectedCode: http.StatusBadRequest,
 		},
 		{
 			desc:           "Should work with valid filter provided",
 			filters:        "?userId=2",
+			permissions:    map[int64][]ac.Permission{2: {{Action: "users:read", Scope: "users:*"}}},
+			expectedCode:   http.StatusOK,
+			expectedOutput: map[int64]map[string][]string{2: {"users:read": {"users:*"}}},
+		},
+		{
+			desc:           "Should work with valid namespaceId filter provided",
+			filters:        "?namespaceId=service-account:2",
 			permissions:    map[int64][]ac.Permission{2: {{Action: "users:read", Scope: "users:*"}}},
 			expectedCode:   http.StatusOK,
 			expectedOutput: map[int64]map[string][]string{2: {"users:read": {"users:*"}}},

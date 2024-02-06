@@ -66,6 +66,16 @@ func (api *AccessControlAPI) getUserPermissions(c *contextmodel.ReqContext) resp
 	return response.JSON(http.StatusOK, ac.GroupScopesByAction(permissions))
 }
 
+func maxOneOption(options ...bool) bool {
+	provided := 0
+	for _, option := range options {
+		if option {
+			provided++
+		}
+	}
+	return provided <= 1
+}
+
 // GET /api/access-control/users/permissions/search
 func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) response.Response {
 	searchOptions := ac.SearchOptions{
@@ -86,14 +96,14 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 	}
 
 	// Validate inputs
-	if (searchOptions.ActionPrefix != "") && (searchOptions.Action != "") {
+	if !maxOneOption((searchOptions.ActionPrefix != ""), (searchOptions.Action != "")) {
 		return response.JSON(http.StatusBadRequest, "'action' and 'actionPrefix' are mutually exclusive")
 	}
-	if (searchOptions.UserLogin != "") && (searchOptions.UserID > 0) && (searchOptions.NamespaceID != "") {
+	if !maxOneOption((searchOptions.UserLogin != ""), (searchOptions.UserID > 0), (searchOptions.NamespaceID != "")) {
 		return response.JSON(http.StatusBadRequest, "'userId', 'userLogin' and 'namespaceID' are mutually exclusive")
 	}
-	if searchOptions.UserID <= 0 && searchOptions.UserLogin == "" &&
-		searchOptions.ActionPrefix == "" && searchOptions.Action == "" && searchOptions.NamespaceID == "" {
+	if searchOptions.UserID <= 0 && searchOptions.UserLogin == "" && searchOptions.NamespaceID == "" &&
+		searchOptions.ActionPrefix == "" && searchOptions.Action == "" {
 		return response.JSON(http.StatusBadRequest, "at least one search option must be provided")
 	}
 

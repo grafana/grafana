@@ -2,6 +2,7 @@ package accesscontrol
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -79,36 +80,42 @@ func (s *SearchOptions) Wildcards() []string {
 	return s.wildcards
 }
 
-func (s *SearchOptions) ResolveUserLogin(ctx context.Context, userSvc user.Service) error {
-	if s.UserLogin == "" {
+func (s *SearchOptions) ComputeUserID(ctx context.Context, userSvc user.Service) error {
+	if s.UserID > 0 {
 		return nil
 	}
-	// Resolve userLogin -> userID
-	dbUsr, err := userSvc.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: s.UserLogin})
-	if err != nil {
-		return err
-	}
-	s.UserID = dbUsr.ID
-	return nil
-}
 
-func (s *SearchOptions) ResolveNamespaceID(ctx context.Context) error {
-	parts := strings.Split(s.NamespaceID, ":")
-	// Validate namespace ID format
-	if len(parts) != 2 {
-		return fmt.Errorf("invalid namespace ID: %s", s.NamespaceID)
+	// Resolve namespaceID -> userID
+	if s.NamespaceID != "" {
+		parts := strings.Split(s.NamespaceID, ":")
+		// Validate namespace ID format
+		if len(parts) != 2 {
+			return fmt.Errorf("invalid namespace ID: %s", s.NamespaceID)
+		}
+		// Validate namespace type is user or service account
+		if parts[0] != identity.NamespaceUser && parts[0] != identity.NamespaceServiceAccount {
+			return fmt.Errorf("invalid namespace type: %s", parts[0])
+		}
+		// Validate namespace ID is a number
+		id, err := strconv.ParseInt(parts[1], 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid namespace ID: %s", s.NamespaceID)
+		}
+		s.UserID = id
+		return nil
 	}
-	// Validate namespace type is user or service account
-	if parts[0] != identity.NamespaceUser && parts[0] != identity.NamespaceServiceAccount {
-		return fmt.Errorf("invalid namespace type: %s", parts[0])
+
+	// Resolve userLogin -> userID
+	if s.UserLogin != "" {
+		dbUsr, err := userSvc.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: s.UserLogin})
+		if err != nil {
+			return err
+		}
+		s.UserID = dbUsr.ID
+		return nil
 	}
-	// Validate namespace ID is a number
-	id, err := strconv.ParseInt(parts[1], 10, 64)
-	if err != nil {
-		return fmt.Errorf("invalid namespace ID: %s", s.NamespaceID)
-	}
-	s.UserID = id
-	return nil
+
+	return errors.New("either userID, userLogin or namespaceID must be set")
 }
 
 type SyncUserRolesCommand struct {
