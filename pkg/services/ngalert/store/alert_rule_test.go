@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"path"
 	"strings"
 	"testing"
 	"time"
@@ -345,8 +344,10 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	parentFolderUid := uuid.NewString()
 	parentFolderTitle := "Very Parent Folder"
 	createFolder(t, store, parentFolderUid, parentFolderTitle, rule1.OrgID, "")
-	createFolder(t, store, rule1.NamespaceUID, rule1.Title, rule1.OrgID, parentFolderUid)
-	createFolder(t, store, rule2.NamespaceUID, rule2.Title, rule2.OrgID, "")
+	rule1FolderTitle := "folder-" + rule1.Title
+	rule2FolderTitle := "folder-" + rule2.Title
+	createFolder(t, store, rule1.NamespaceUID, rule1FolderTitle, rule1.OrgID, parentFolderUid)
+	createFolder(t, store, rule2.NamespaceUID, rule2FolderTitle, rule2.OrgID, "")
 
 	createFolder(t, store, rule2.NamespaceUID, "same UID folder", generator().OrgID, "") // create a folder with the same UID but in the different org
 
@@ -356,6 +357,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		ruleGroups   []string
 		disabledOrgs []int64
 		folders      map[models.FolderKey]string
+		flags        []string
 	}{
 		{
 			name:  "without a rule group filter, it returns all created rules",
@@ -374,13 +376,13 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		{
 			name:    "with populate folders enabled, it returns them",
 			rules:   []string{rule1.Title, rule2.Title},
-			folders: map[models.FolderKey]string{rule1.GetFolderKey(): path.Join(parentFolderTitle, rule1.Title), rule2.GetFolderKey(): rule2.Title},
+			folders: map[models.FolderKey]string{rule1.GetFolderKey(): rule1FolderTitle, rule2.GetFolderKey(): rule2FolderTitle},
 		},
 		{
 			name:         "with populate folders enabled and a filter on orgs, it only returns selected information",
 			rules:        []string{rule1.Title},
 			disabledOrgs: []int64{rule2.OrgID},
-			folders:      map[models.FolderKey]string{rule1.GetFolderKey(): path.Join(parentFolderTitle, rule1.Title)},
+			folders:      map[models.FolderKey]string{rule1.GetFolderKey(): rule1FolderTitle},
 		},
 	}
 
@@ -417,6 +419,20 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("when nested folders are enabled folders should contain full path", func(t *testing.T) {
+		store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+		query := &models.GetAlertRulesForSchedulingQuery{
+			PopulateFolders: true,
+		}
+		require.NoError(t, store.GetAlertRulesForScheduling(context.Background(), query))
+
+		expected := map[models.FolderKey]string{
+			rule1.GetFolderKey(): parentFolderTitle + "/" + rule1FolderTitle,
+			rule2.GetFolderKey(): rule2FolderTitle,
+		}
+		require.Equal(t, expected, query.ResultFoldersTitles)
+	})
 }
 
 func withIntervalMatching(baseInterval time.Duration) func(*models.AlertRule) {
@@ -537,7 +553,7 @@ func TestIntegration_GetNamespaceByUID(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, title, actual.Title)
 	require.Equal(t, uid, actual.UID)
-	require.Equal(t, "parent-title/folder\\/title", actual.Fullpath)
+	require.Equal(t, title, actual.Fullpath)
 
 	t.Run("error when user does not have permissions", func(t *testing.T) {
 		someUser := &user.SignedInUser{
@@ -547,6 +563,15 @@ func TestIntegration_GetNamespaceByUID(t *testing.T) {
 		}
 		_, err = store.GetNamespaceByUID(context.Background(), uid, 1, someUser)
 		require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
+	})
+
+	t.Run("when nested folders are enabled full path should be populated with correct value", func(t *testing.T) {
+		store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+		actual, err := store.GetNamespaceByUID(context.Background(), uid, 1, u)
+		require.NoError(t, err)
+		require.Equal(t, title, actual.Title)
+		require.Equal(t, uid, actual.UID)
+		require.Equal(t, "parent-title/folder\\/title", actual.Fullpath)
 	})
 }
 
