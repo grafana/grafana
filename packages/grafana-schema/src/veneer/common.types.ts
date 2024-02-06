@@ -44,6 +44,7 @@ export const defaultTableFieldOptions: raw.TableFieldOptions = {
   cellOptions: {
     type: raw.TableCellDisplayMode.Auto,
   },
+  formattingOrientation: raw.TableFormattingOrientation.Columns,
 };
 
 /**

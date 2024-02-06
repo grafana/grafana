@@ -11,6 +11,7 @@ import {
   GrafanaTheme2,
   MappingType,
 } from '@grafana/data';
+import { TableFormattingOrientation } from '@grafana/schema';
 import {
   IconButton,
   Table,
@@ -222,6 +223,7 @@ function createNumberField(name: string, unit?: string): Field {
     align: 'auto',
     inspect: false,
     cellOptions: { type: TableCellDisplayMode.Auto },
+    formattingOrientation: TableFormattingOrientation.Columns,
   };
 
   return {
@@ -266,6 +268,7 @@ function createActionField(
     inspect: false,
     align: 'auto',
     cellOptions: options,
+    formattingOrientation: TableFormattingOrientation.Columns,
   };
 
   return {
