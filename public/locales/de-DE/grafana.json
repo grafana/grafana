@@ -1,5 +1,5 @@
 {
-  "_comment": "Diese Datei ist die Quelle für englische Strings. Bearbeiten Sie diese, um die Pluralformen und andere Ausdrücke für die Benutzeroberfläche zu ändern.",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "Rolle",
@@ -107,6 +107,9 @@
       "change-theme": "Thema ändern...",
       "dark-theme": "Dunkel",
       "light-theme": "Hell"
+    },
+    "empty-state": {
+      "title": ""
     },
     "search-box": {
       "placeholder": "Suche oder springe zu ..."
@@ -541,7 +544,7 @@
       "copy-link-abs-time": "",
       "copy-links-absolute-category": "",
       "copy-links-normal-category": "",
-      "copy-shortened-link": "Verkürzten Link kopieren",
+      "copy-shortened-link": "",
       "copy-shortened-link-abs-time": "",
       "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "Abbrechen",
@@ -649,15 +652,15 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "Dieses Fenster wird in {{count}} Dashboard verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:",
-      "body_other": "Dieses Fenster wird in {{count}} Dashboards verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:",
       "button-cancel": "<0>Abbrechen</0>",
       "button-view-panel1": "Fenster in {{label}} anzeigen...",
       "button-view-panel2": "Fenster im Dashboard anzeigen...",
       "panel-not-linked": "Fenster ist nicht mit einem Dashboard verbunden. Fügen Sie das Fenster einem Dashboard hinzu und versuchen Sie es erneut.",
       "select-no-options-message": "Keine Dashboards gefunden",
       "select-placeholder": "Tippen, um nach Dashboard zu suchen",
-      "title": "Fenster im Dashboard anzeigen"
+      "title": "Fenster im Dashboard anzeigen",
+      "body_one": "Dieses Fenster wird in {{count}} Dashboard verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:",
+      "body_other": "Dieses Fenster wird in {{count}} Dashboards verwendet. Bitte wählen Sie aus, in welchem Dashboard Sie das Fenster sehen möchten:"
     },
     "save": {
       "error": "Fehler beim Speichern des Bibliotheks-Panels: „{{errorMsg}}“",
@@ -741,6 +744,9 @@
     "authentication": {
       "title": "Authentifizierung"
     },
+    "collector": {
+      "title": ""
+    },
     "config": {
       "title": "Verwaltung"
     },
@@ -805,7 +811,7 @@
       "title": "Frontend"
     },
     "frontend-app": {
-      "title": "Frontend"
+      "title": ""
     },
     "global-orgs": {
       "subtitle": "Isolierte Instanzen von Grafana auf dem gleichen Server",
@@ -836,7 +842,7 @@
       "title": ""
     },
     "integrations": {
-      "title": "Integrationen"
+      "title": ""
     },
     "k6": {
       "title": ""
@@ -887,6 +893,10 @@
     "plugins": {
       "subtitle": "Erweitere das Grafana-Erlebnis mit Plug-ins",
       "title": "Plug-ins"
+    },
+    "private-data-source-connections": {
+      "subtitle": "",
+      "title": ""
     },
     "profile/notifications": {
       "title": "Benachrichtigungsverlauf"
@@ -1473,7 +1483,7 @@
       "username-label": "Benutzername"
     },
     "tabs": {
-      "general": "Allgemein"
+      "general": ""
     }
   },
   "user-session": {
