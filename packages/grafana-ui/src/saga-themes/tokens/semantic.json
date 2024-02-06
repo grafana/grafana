@@ -1,0 +1,308 @@
+{
+  "font": {
+    "h1": {
+      "value": {
+        "fontFamily": "{font.fontFamily.primary}",
+        "fontWeight": "{font.fontWeight.regular}",
+        "lineHeight": "{font.lineHeight.3}",
+        "fontSize": "{font.fontSize.8}",
+        "letterSpacing": "{font.letterSpacing.tight}",
+        "textDecoration": "{font.textDecoration.none}",
+        "textCase": "{font.textTransform.none}",
+        "paragraphSpacing": "{font.paragraphSpacing.normal}"
+      },
+      "type": "typography",
+      "description": "H1 on the typography hierarchy."
+    },
+    "h2": {
+      "value": {
+        "fontFamily": "{font.fontFamily.primary}",
+        "fontWeight": "{font.fontWeight.regular}",
+        "lineHeight": "{font.lineHeight.2}",
+        "fontSize": "{font.fontSize.7}",
+        "letterSpacing": "{font.letterSpacing.normal}",
+        "textDecoration": "{font.textDecoration.none}",
+        "textCase": "{font.textTransform.none}",
+        "paragraphSpacing": "{font.paragraphSpacing.normal}"
+      },
+      "type": "typography",
+      "description": "H2 on the typography hierarchy."
+    },
+    "h3": {
+      "value": {
+        "fontFamily": "{font.fontFamily.primary}",
+        "fontWeight": "{font.fontWeight.regular}",
+        "lineHeight": "{font.lineHeight.2}",
+        "fontSize": "{font.fontSize.6}",
+        "letterSpacing": "{font.letterSpacing.normal}",
+        "textDecoration": "{font.textDecoration.none}",
+        "textCase": "{font.textTransform.none}",
+        "paragraphSpacing": "{font.paragraphSpacing.normal}"
+      },
+      "type": "typography",
+      "description": "H3 on the typography hierarchy."
+    },
+    "h4": {
+      "value": {
+        "fontFamily": "{font.fontFamily.primary}",
+        "fontWeight": "{font.fontWeight.regular}",
+        "lineHeight": "{font.lineHeight.1}",
+        "fontSize": "{font.fontSize.4}",
+        "letterSpacing": "{font.letterSpacing.wider}",
+        "textDecoration": "{font.textDecoration.none}",
+        "textCase": "{font.textTransform.none}",
+        "paragraphSpacing": "{font.paragraphSpacing.normal}"
+      },
+      "type": "typography",
+      "description": "H4 on the typography hierarchy."
+    },
+    "h4Strong": {
+      "value": {
+        "fontFamily": "{font.fontFamily.primary}",
+        "fontWeight": "{font.fontWeight.medium}",
+        "lineHeight": "{font.lineHeight.1}",
+        "fontSize": "{font.fontSize.4}",
+        "letterSpacing": "{font.letterSpacing.normal}",
+        "textDecoration": "{font.textDecoration.none}",
+        "textCase": "{font.textTransform.none}",
+        "paragraphSpacing": "{font.paragraphSpacing.normal}"
+      },
+      "type": "typography",
+      "description": "H4 - Strong variant on the typography hierarchy."
+    },
+    "h5": {
+      "value": {
+        "fontFamily": "{font.fontFamily.primary}",
+        "fontWeight": "{font.fontWeight.regular}",
+        "lineHeight": "{font.lineHeight.1}",
+        "fontSize": "{font.fontSize.3}",
+        "letterSpacing": "{font.letterSpacing.normal}",
+        "textDecoration": "{font.textDecoration.none}",
+        "textCase": "{font.textTransform.none}",
+        "paragraphSpacing": "{font.paragraphSpacing.normal}"
+      },
+      "type": "typography",
+      "description": "H5 on the typography hierarchy."
+    },
+    "h5Strong": {
+      "value": {
+        "fontFamily": "{font.fontFamily.primary}",
+        "fontWeight": "{font.fontWeight.medium}",
+        "lineHeight": "{font.lineHeight.1}",
+        "fontSize": "{font.fontSize.3}",
+        "letterSpacing": "{font.letterSpacing.wide}",
+        "textDecoration": "{font.textDecoration.none}",
+        "textCase": "{font.textTransform.none}",
+        "paragraphSpacing": "{font.paragraphSpacing.normal}"
+      },
+      "type": "typography",
+      "description": "H5 - Strong variant on the typography hierarchy."
+    },
+    "h6": {
+      "value": {
+        "fontFamily": "{font.fontFamily.primary}",
+        "fontWeight": "{font.fontWeight.medium}",
+        "lineHeight": "{font.lineHeight.0}",
+        "fontSize": "{font.fontSize.2}",
+        "letterSpacing": "{font.letterSpacing.wide}",
+        "textDecoration": "{font.textDecoration.none}",
+        "textCase": "{font.textTransform.none}",
+        "paragraphSpacing": "{font.paragraphSpacing.normal}"
+      },
+      "type": "typography",
+      "description": "H6 on the typography hierarchy."
+    },
+    "body": {
+      "value": {
+        "fontFamily": "{font.fontFamily.primary}",
+        "fontWeight": "{font.fontWeight.regular}",
+        "lineHeight": "{font.lineHeight.0}",
+        "fontSize": "{font.fontSize.2}",
+        "letterSpacing": "{font.letterSpacing.wide}",
+        "textDecoration": "{font.textDecoration.none}",
+        "textCase": "{font.textTransform.none}",
+        "paragraphSpacing": "{font.paragraphSpacing.normal}"
+      },
+      "type": "typography",
+      "description": "Body on the typography hierarchy."
+    },
+    "bodyStrong": {
+      "value": {
+        "fontFamily": "{font.fontFamily.primary}",
+        "fontWeight": "{font.fontWeight.medium}",
+        "lineHeight": "{font.lineHeight.0}",
+        "fontSize": "{font.fontSize.2}",
+        "letterSpacing": "{font.letterSpacing.wide}",
+        "textDecoration": "{font.textDecoration.none}",
+        "textCase": "{font.textTransform.none}",
+        "paragraphSpacing": "{font.paragraphSpacing.normal}"
+      },
+      "type": "typography",
+      "description": "Body - Strong variant on the typography hierarchy."
+    },
+    "bodySmall": {
+      "value": {
+        "fontFamily": "{font.fontFamily.primary}",
+        "fontWeight": "{font.fontWeight.regular}",
+        "lineHeight": "{font.lineHeight.0}",
+        "fontSize": "{font.fontSize.1}",
+        "letterSpacing": "{font.letterSpacing.wide}",
+        "textDecoration": "{font.textDecoration.none}",
+        "textCase": "{font.textTransform.none}",
+        "paragraphSpacing": "{font.paragraphSpacing.normal}"
+      },
+      "type": "typography",
+      "description": "Body Small on the typography hierarchy."
+    },
+    "bodySmallStrong": {
+      "value": {
+        "fontFamily": "{font.fontFamily.primary}",
+        "fontWeight": "{font.fontWeight.medium}",
+        "lineHeight": "{font.lineHeight.0}",
+        "fontSize": "{font.fontSize.1}",
+        "letterSpacing": "{font.letterSpacing.wide}",
+        "textDecoration": "{font.textDecoration.none}",
+        "textCase": "{font.textTransform.none}",
+        "paragraphSpacing": "{font.paragraphSpacing.normal}"
+      },
+      "type": "typography",
+      "description": "Body Small - Strong variant on the typography hierarchy."
+    },
+    "code": {
+      "value": {
+        "fontFamily": "{font.fontFamily.monospace}",
+        "fontWeight": "{font.fontWeight.regular}",
+        "lineHeight": "{font.lineHeight.0}",
+        "fontSize": "{font.fontSize.2}",
+        "letterSpacing": "{font.letterSpacing.wide}",
+        "textDecoration": "{font.textDecoration.none}",
+        "textCase": "{font.textTransform.none}",
+        "paragraphSpacing": "{font.paragraphSpacing.normal}"
+      },
+      "type": "typography",
+      "description": "Code on the typography hierarchy."
+    }
+  },
+  "color": {
+    "background": {
+      "primary": {
+        "default": {
+          "value": "{color.blue.400}",
+          "type": "color"
+        },
+        "hover": {
+          "value": "{color.blue.300}",
+          "type": "color"
+        }
+      },
+      "error": {
+        "default": {
+          "value": "{color.magenta.400}",
+          "type": "color"
+        },
+        "hover": {
+          "value": "{color.magenta.300}",
+          "type": "color"
+        },
+        "text": {
+          "value": "{color.magenta.0}",
+          "type": "color"
+        }
+      },
+      "success": {
+        "default": {
+          "value": "{color.green.400}",
+          "type": "color"
+        },
+        "hover": {
+          "value": "{color.green.300}",
+          "type": "color"
+        },
+        "text": {
+          "value": "{color.green.0}",
+          "type": "color"
+        }
+      },
+      "warning": {
+        "default": {
+          "value": "{color.orange.400}",
+          "type": "color"
+        },
+        "hover": {
+          "value": "{color.orange.300}",
+          "type": "color"
+        },
+        "text": {
+          "value": "{color.orange.0}",
+          "type": "color"
+        }
+      },
+      "info": {
+        "default": {
+          "value": "{color.blue.400}",
+          "type": "color"
+        },
+        "hover": {
+          "value": "{color.blue.300}",
+          "type": "color"
+        },
+        "text": {
+          "value": "{color.blue.0}",
+          "type": "color"
+        }
+      }
+    },
+    "level": {
+      "background": {
+        "canvas": {
+          "value": "{color.gray.1300}",
+          "type": "color"
+        },
+        "primary": {
+          "value": "{color.gray.1200}",
+          "type": "color"
+        },
+        "secondary": {
+          "value": "{color.gray.1100}",
+          "type": "color"
+        }
+      }
+    },
+    "text": {
+      "primary": {
+        "value": "{color.gray.200}",
+        "type": "color"
+      },
+      "secondary": {
+        "value": "{color.gray.500}",
+        "type": "color"
+      },
+      "disabled": {
+        "value": "{color.gray.800}",
+        "type": "color"
+      },
+      "max-contrast": {
+        "value": "{color.gray.0}",
+        "type": "color"
+      },
+      "link": {
+        "value": "{color.blue.300}",
+        "type": "color"
+      }
+    },
+    "border": {
+      "weak": {
+        "value": "{color.gray.1100}",
+        "type": "color"
+      },
+      "medium": {
+        "value": "{color.gray.1000}",
+        "type": "color"
+      },
+      "strong": {
+        "value": "{color.gray.900}",
+        "type": "color"
+      }
+    }
+  }
+}
