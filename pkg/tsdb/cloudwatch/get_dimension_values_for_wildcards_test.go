@@ -17,7 +17,7 @@ import (
 
 func TestGetDimensionValuesForWildcards(t *testing.T) {
 	logger := &logtest.Fake{}
-	executor := &cloudWatchExecutor{}
+	executor := &cloudWatchExecutor{im: defaultTestInstanceManager()}
 	ctx := context.Background()
 	pluginCtx := backend.PluginContext{
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 1, Updated: time.Now()},

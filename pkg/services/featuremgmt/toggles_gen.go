@@ -99,10 +99,6 @@ const (
 	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
 	FlagTopnav = "topnav"
 
-	// FlagDockedMegaMenu
-	// Enable support for a persistent (docked) navigation menu
-	FlagDockedMegaMenu = "dockedMegaMenu"
-
 	// FlagReturnToPrevious
 	// Enables the return to previous context functionality
 	FlagReturnToPrevious = "returnToPrevious"
@@ -187,6 +183,10 @@ const (
 	// Enable streaming JSON parser for InfluxDB datasource InfluxQL query language
 	FlagInfluxqlStreamingParser = "influxqlStreamingParser"
 
+	// FlagInfluxdbRunQueriesInParallel
+	// Enables running InfluxDB Influxql queries in parallel
+	FlagInfluxdbRunQueriesInParallel = "influxdbRunQueriesInParallel"
+
 	// FlagClientTokenRotation
 	// Replaces the current in-request token rotation so that the client initiates the rotation
 	FlagClientTokenRotation = "clientTokenRotation"
@@ -242,10 +242,6 @@ const (
 	// FlagEnableElasticsearchBackendQuerying
 	// Enable the processing of queries and responses in the Elasticsearch data source through backend
 	FlagEnableElasticsearchBackendQuerying = "enableElasticsearchBackendQuerying"
-
-	// FlagAdvancedDataSourcePicker
-	// Enable a new data source picker with contextual information, recently used order and advanced mode
-	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
 
 	// FlagFaroDatasourceSelector
 	// Enable the data source selector within the Frontend Apps section of the Frontend Observability
@@ -387,10 +383,6 @@ const (
 	// Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
 	FlagSseGroupByDatasource = "sseGroupByDatasource"
 
-	// FlagRequestInstrumentationStatusSource
-	// Include a status source label for request metrics and logs
-	FlagRequestInstrumentationStatusSource = "requestInstrumentationStatusSource"
-
 	// FlagLibraryPanelRBAC
 	// Enables RBAC support for library panels
 	FlagLibraryPanelRBAC = "libraryPanelRBAC"
@@ -414,10 +406,6 @@ const (
 	// FlagPluginsAPIMetrics
 	// Sends metrics of public grafana packages usage by plugins
 	FlagPluginsAPIMetrics = "pluginsAPIMetrics"
-
-	// FlagHttpSLOLevels
-	// Adds SLO level to http request metrics
-	FlagHttpSLOLevels = "httpSLOLevels"
 
 	// FlagIdForwarding
 	// Generate signed id token for identity that can be forwarded to plugins and external services
@@ -452,7 +440,7 @@ const (
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
 
 	// FlagKubernetesSnapshots
-	// Use the kubernetes API in the frontend to support playlists
+	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
 
 	// FlagKubernetesQueryServiceRewrite
@@ -634,10 +622,6 @@ const (
 	// FlagPromQLScope
 	// In-development feature that will allow injection of labels into prometheus queries.
 	FlagPromQLScope = "promQLScope"
-
-	// FlagSlateAutocomplete
-	// Adjusts the behaviour of the slate editor to properly handle autocomplete. Feature toggled for safety.
-	FlagSlateAutocomplete = "slateAutocomplete"
 
 	// FlagNodeGraphDotLayout
 	// Changed the layout algorithm for the node graph
