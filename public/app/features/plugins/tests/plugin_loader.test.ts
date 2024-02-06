@@ -10,10 +10,10 @@ jest.mock('app/core/core', () => {
 });
 
 import { AppPluginMeta, PluginMetaInfo, PluginType, AppPlugin } from '@grafana/data';
-import { SystemJS } from '@grafana/runtime';
+import { SystemJS, config } from '@grafana/runtime';
 
 // Loaded after the `unmock` above
-import { importAppPlugin } from '../plugin_loader';
+import {importAppPlugin, wrangleUrl} from '../plugin_loader';
 
 class MyCustomApp extends AppPlugin {
   initWasCalled = false;
@@ -33,7 +33,7 @@ describe('Load App', () => {
   SystemJS.constructor.prototype.resolve = (x: unknown) => x;
 
   beforeAll(() => {
-    SystemJS.set(modulePath, { plugin: app });
+    SystemJS.set(modulePath, {plugin: app});
   });
 
   afterAll(() => {
@@ -65,4 +65,32 @@ describe('Load App', () => {
     expect(again).toBe(app);
     expect(app.calledTwice).toBeTruthy();
   });
+});
+
+describe('Wrangles URLs correctly', () => {
+  it.each`
+    value                | expected
+    ${'http://localhost:3000/public/plugins/my-app-plugin/module.js'} | ${'http://localhost:3000/public/plugins/my-app-plugin/module.js'}
+    ${'/public/plugins/my-app-plugin/module.js'}  | ${'/public/plugins/my-app-plugin/module.js'}
+    ${'public/plugins/my-app-plugin/module.js'}  | ${'/public/plugins/my-app-plugin/module.js'}
+  `(
+    "Url correct formatting, when calling the rule with correct formatted value: '$value' then result should be '$expected'",
+    ({value, expected}) => {
+      expect(wrangleUrl(value)).toBe(expected);
+    }
+  );
+
+  it.each`
+    value                | expected
+    ${'http://localhost:3000/public/plugins/my-app-plugin/module.js'} | ${'http://localhost:3000/public/plugins/my-app-plugin/module.js'}
+    ${'/public/plugins/my-app-plugin/module.js'}  | ${'/public/plugins/my-app-plugin/module.js'}
+    ${'public/plugins/my-app-plugin/module.js'}  | ${'/grafana/public/plugins/my-app-plugin/module.js'}
+  `(
+    "Url correct formatting, when calling the rule with correct formatted value: '$value' then result should be '$expected'",
+    ({value, expected}) => {
+      config.appSubUrl = '/grafana';
+
+      expect(wrangleUrl(value)).toBe(expected);
+    }
+  );
 });
