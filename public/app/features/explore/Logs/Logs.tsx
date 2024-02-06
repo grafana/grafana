@@ -215,6 +215,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
           visualisationType: logsPanelState.visualisationType ?? this.state.visualisationType,
           labelFieldName: logsPanelState.labelFieldName,
           refId: logsPanelState.refId ?? this.props.panelState?.logs?.refId,
+          specialFields: logsPanelState.specialFields ?? this.props.panelState?.logs?.specialFields,
         })
       );
     }
@@ -310,6 +311,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       this.setState({
         showLabels,
       });
+      this.props.logsFrames;
       store.set(SETTINGS_KEYS.showLabels, showLabels);
     }
   };

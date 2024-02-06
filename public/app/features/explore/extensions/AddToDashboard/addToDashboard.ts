@@ -1,10 +1,15 @@
-import { DataFrame, ExplorePanelsState } from '@grafana/data';
+import { DataFrame, DataTransformerID, ExplorePanelsState } from '@grafana/data';
+import { ReduceTransformerMode } from '@grafana/data/src/transformations/transformers/reduce';
 import { Dashboard, DataQuery, DataSourceRef } from '@grafana/schema';
 import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { setDashboardToFetchFromLocalStorage } from 'app/features/dashboard/state/initDashboard';
 import { buildNewDashboardSaveModel } from 'app/features/dashboard-scene/serialization/buildNewDashboardSaveModel';
 import { DashboardDTO, ExplorePanelData } from 'app/types';
+
+import store from '../../../../core/store';
+import { getPartitionByValuesTransform } from '../../Logs/LogsTable';
+import { SETTINGS_KEYS } from '../../Logs/utils/logs';
 
 export enum AddToDashboardError {
   FETCH_DASHBOARD = 'fetch-dashboard',
@@ -60,6 +65,39 @@ function getLogsTableTransformations(panelType: string, options: AddPanelToDashb
         ),
       },
     });
+
+    if (
+      store.getBool(SETTINGS_KEYS.showLabels, false) &&
+      options.panelState.logs?.specialFields?.time &&
+      options.panelState.logs?.specialFields?.body
+    ) {
+      const labels = Object.values(options.panelState.logs.columns).reduce(
+        (acc: Record<string, number>, value: string, idx) => ({
+          ...acc,
+          [value]: idx,
+        }),
+        {}
+      );
+      const uniqueFieldsTransform = getPartitionByValuesTransform(labels, [
+        options.panelState.logs?.specialFields?.time,
+        options.panelState.logs?.specialFields?.body,
+      ]);
+      if (uniqueFieldsTransform) {
+        transformations.push(uniqueFieldsTransform);
+        transformations.push({
+          id: DataTransformerID.reduce,
+          options: {
+            mode: ReduceTransformerMode.ReduceFields,
+            reducers: ['firstNotNull'],
+            includeTimeField: true,
+          },
+        });
+        transformations.push({
+          id: DataTransformerID.merge,
+          options: {},
+        });
+      }
+    }
   }
   return transformations;
 }

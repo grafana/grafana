@@ -129,7 +129,7 @@ export function LogsTable(props: Props) {
       }
 
       if (props.uniqueLabels) {
-        const uniqueFieldsTransform = getUniqueValuesTransform(labelFilters, [
+        const uniqueFieldsTransform = getPartitionByValuesTransform(labelFilters, [
           logsFrame.bodyField.name,
           logsFrame.timeField.name,
         ]);
@@ -260,7 +260,7 @@ function buildLabelFilters(columnsWithMeta: Record<string, FieldNameMeta>) {
   return labelFilters;
 }
 
-function getUniqueValuesTransform(labelFilters: Record<string, number>, excludeFields: string[]) {
+export function getPartitionByValuesTransform(labelFilters: Record<string, number>, excludeFields: string[]) {
   let labelFiltersInclude: string[] = [];
 
   for (const key in labelFilters) {

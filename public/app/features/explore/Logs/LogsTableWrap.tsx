@@ -364,6 +364,10 @@ export function LogsTableWrap(props: Props) {
       refId: currentDataFrame.refId,
       visualisationType: 'table',
       labelFieldName: logsFrame?.getLabelFieldName() ?? undefined,
+      specialFields: {
+        time: logsFrame?.timeField.name ?? undefined,
+        body: logsFrame?.bodyField.name ?? undefined,
+      },
     };
 
     // Update url state
