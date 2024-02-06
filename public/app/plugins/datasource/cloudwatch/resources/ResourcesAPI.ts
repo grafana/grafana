@@ -110,19 +110,18 @@ export class ResourcesAPI extends CloudWatchRequest {
     }).then((metrics) => metrics.map((m) => ({ metricName: m.value.name, namespace: m.value.namespace })));
   }
 
-  getDimensionKeys({
-    region,
-    namespace = '',
-    dimensionFilters = {},
-    metricName = '',
-    accountId,
-  }: GetDimensionKeysRequest): Promise<Array<SelectableValue<string>>> {
+  getDimensionKeys(
+    { region, namespace = '', dimensionFilters = {}, metricName = '', accountId }: GetDimensionKeysRequest,
+    displayErrorIfIsMultiTemplateVariable?: boolean
+  ): Promise<Array<SelectableValue<string>>> {
     return this.memoizedGetRequest<Array<ResourceResponse<string>>>('dimension-keys', {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
       accountId: this.templateSrv.replace(accountId),
       metricName: this.templateSrv.replace(metricName),
-      dimensionFilters: JSON.stringify(this.convertDimensionFormat(dimensionFilters, {})),
+      dimensionFilters: JSON.stringify(
+        this.convertDimensionFormat(dimensionFilters, {}, displayErrorIfIsMultiTemplateVariable)
+      ),
     }).then((r) => r.map((r) => ({ label: r.value, value: r.value })));
   }
 
@@ -142,7 +141,7 @@ export class ResourcesAPI extends CloudWatchRequest {
       region: this.templateSrv.replace(this.getActualRegion(region)),
       namespace: this.templateSrv.replace(namespace),
       metricName: this.templateSrv.replace(metricName.trim()),
-      dimensionKey: this.templateSrv.replace(dimensionKey),
+      dimensionKey: this.replaceVariableAndDisplayWarningIfMulti(dimensionKey, {}, true),
       dimensionFilters: JSON.stringify(this.convertDimensionFormat(dimensionFilters, {})),
       accountId: this.templateSrv.replace(accountId),
     }).then((r) => r.map((r) => ({ label: r.value, value: r.value })));
