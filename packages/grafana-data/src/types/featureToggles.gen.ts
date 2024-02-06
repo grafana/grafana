@@ -78,7 +78,6 @@ export interface FeatureToggles {
   externalServiceAuth?: boolean;
   refactorVariablesTimeRange?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
-  advancedDataSourcePicker?: boolean;
   faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
   extraThemes?: boolean;
@@ -114,14 +113,12 @@ export interface FeatureToggles {
   dashgpt?: boolean;
   reportingRetries?: boolean;
   sseGroupByDatasource?: boolean;
-  requestInstrumentationStatusSource?: boolean;
   libraryPanelRBAC?: boolean;
   lokiRunQueriesInParallel?: boolean;
   wargamesTesting?: boolean;
   alertingInsights?: boolean;
   externalCorePlugins?: boolean;
   pluginsAPIMetrics?: boolean;
-  httpSLOLevels?: boolean;
   idForwarding?: boolean;
   cloudWatchWildCardDimensionValues?: boolean;
   externalServiceAccounts?: boolean;
