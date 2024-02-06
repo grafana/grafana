@@ -114,7 +114,7 @@ export function InstallControlsButton({
   };
 
   if (pluginStatus === PluginStatus.UNINSTALL) {
-    const isUninstallingInCloud =
+    const disableUninstall =
       config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
         ? plugin.isUninstalling
         : isUninstalling;
@@ -131,7 +131,7 @@ export function InstallControlsButton({
           onDismiss={hideConfirmModal}
         />
         <HorizontalGroup align="flex-start" width="auto" height="auto">
-          <Button variant="destructive" disabled={isUninstalling || isUninstallingInCloud} onClick={showConfirmModal}>
+          <Button variant="destructive" disabled={disableUninstall} onClick={showConfirmModal}>
             {uninstallBtnText}
           </Button>
         </HorizontalGroup>
