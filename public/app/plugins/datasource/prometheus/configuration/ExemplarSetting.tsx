@@ -40,7 +40,7 @@ export default function ExemplarSetting({ value, onChange, onDelete, disabled }:
         <>
           <Switch
             value={isInternalLink}
-            aria-label={selectors.components.DataSource.Prometheus.configPage.internalLinkSwitch}
+            data-testid={selectors.components.DataSource.Prometheus.configPage.internalLinkSwitch}
             onChange={(ev) => setIsInternalLink(ev.currentTarget.checked)}
           />
         </>

@@ -45,7 +45,7 @@ labels:
     - enterprise
     - oss
 title: Transform data
-description: Use transformations to manipulate your data before visualizations are applied
+description: Use transformations to rename fields, join series data, apply mathematical operations, and more
 weight: 100
 ---
 
@@ -123,7 +123,7 @@ We recommend that you remove transformations that you don't need. When you delet
 1. Click the **Transform** tab.
 1. Click the trash icon next to the transformation you want to delete.
 
-{{< figure src="/static/img/docs/transformations/screenshot-example-remove-transformation.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< figure src="/static/img/docs/transformations/screenshot-example-remove-transformation.png" class="docs-image--no-shadow" max-width= "1100px" alt="A transformation row with the remove transformation icon highlighted" >}}
 
 ## Transformation functions
 

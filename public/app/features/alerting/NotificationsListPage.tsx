@@ -57,7 +57,7 @@ const NotificationsListPage: FC = () => {
           <>
             <div className="page-action-bar">
               <div className="page-action-bar__spacer" />
-              <LinkButton icon="channel-add" href="alerting/notification/new">
+              <LinkButton icon="channel-add" href="alerting-legacy/notification/new">
                 New channel
               </LinkButton>
             </div>
@@ -75,10 +75,10 @@ const NotificationsListPage: FC = () => {
                 {notifications.map((notification) => (
                   <tr key={notification.id}>
                     <td className="link-td">
-                      <a href={`alerting/notification/${notification.id}/edit`}>{notification.name}</a>
+                      <a href={`alerting-legacy/notification/${notification.id}/edit`}>{notification.name}</a>
                     </td>
                     <td className="link-td">
-                      <a href={`alerting/notification/${notification.id}/edit`}>{notification.type}</a>
+                      <a href={`alerting-legacy/notification/${notification.id}/edit`}>{notification.type}</a>
                     </td>
                     <td className="text-right">
                       <HorizontalGroup justify="flex-end">
@@ -108,7 +108,7 @@ const NotificationsListPage: FC = () => {
           <EmptyListCTA
             title="There are no notification channels defined yet"
             buttonIcon="channel-add"
-            buttonLink="alerting/notification/new"
+            buttonLink="alerting-legacy/notification/new"
             buttonTitle="Add channel"
             proTip="You can include images in your alert notifications."
             proTipLink="http://docs.grafana.org/alerting/notifications/"

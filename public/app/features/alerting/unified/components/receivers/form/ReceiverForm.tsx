@@ -10,7 +10,7 @@ import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { getMessageFromError } from '../../../../../../core/utils/errors';
-import { logAlertingError } from '../../../Analytics';
+import { logError } from '../../../Analytics';
 import { isOnCallFetchError } from '../../../api/onCallApi';
 import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray';
 import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
@@ -83,7 +83,7 @@ export function ReceiverForm<R extends ChannelValues>({
 
   const { fields, append, remove } = useControlledFieldArray<R>({ name: 'items', formAPI, softDelete: true });
 
-  const validateNameIsAvailable: Validate<string> = useCallback(
+  const validateNameIsAvailable: Validate<string, ReceiverFormValues<R>> = useCallback(
     (name: string) =>
       takenReceiverNames.map((name) => name.trim().toLowerCase()).includes(name.trim().toLowerCase())
         ? 'Another receiver with this name already exists.'
@@ -103,7 +103,7 @@ export function ReceiverForm<R extends ChannelValues>({
 
         const error = new Error('Failed to save the contact point');
         error.cause = e;
-        logAlertingError(error);
+        logError(error);
       }
       throw e;
     }

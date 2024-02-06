@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { createLokiDatasource } from '../../mocks';
+import { createLokiDatasource } from '../../__mocks__/datasource';
 import { LokiVisualQueryBinary } from '../types';
 
 import { NestedQuery, Props as NestedQueryProps } from './NestedQuery';

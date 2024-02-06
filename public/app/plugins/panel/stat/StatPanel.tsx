@@ -112,6 +112,7 @@ export class StatPanel extends PureComponent<PanelProps<Options>> {
       theme: config.theme2,
       data: data.series,
       sparkline: options.graphMode !== BigValueGraphMode.None,
+      percentChange: options.showPercentChange,
       timeZone,
     });
   };

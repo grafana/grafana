@@ -22,6 +22,7 @@ const publicDashboardListResponse: PublicDashboardListResponse[] = [
     title: 'New dashboardasdf',
     dashboardUid: 'iF36Qb6nz',
     isEnabled: false,
+    slug: 'new-dashboardasdf',
   },
   {
     uid: 'EuiEbd3nz',
@@ -29,6 +30,7 @@ const publicDashboardListResponse: PublicDashboardListResponse[] = [
     title: 'New dashboard',
     dashboardUid: 'kFlxbd37k',
     isEnabled: true,
+    slug: 'new-dashboard',
   },
 ];
 
@@ -39,6 +41,7 @@ const orphanedDashboardListResponse: PublicDashboardListResponse[] = [
     title: '',
     dashboardUid: '',
     isEnabled: false,
+    slug: '',
   },
   {
     uid: 'EuiEbd3nz2',
@@ -46,6 +49,7 @@ const orphanedDashboardListResponse: PublicDashboardListResponse[] = [
     title: '',
     dashboardUid: '',
     isEnabled: true,
+    slug: '',
   },
 ];
 

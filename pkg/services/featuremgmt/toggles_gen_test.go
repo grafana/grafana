@@ -42,10 +42,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 			if flag.Name != strings.TrimSpace(flag.Name) {
 				t.Errorf("flag Name should not start/end with spaces.  See: %s", flag.Name)
 			}
-			if flag.Stage == FeatureStageGeneralAvailability && flag.AllowSelfServe == nil {
-				t.Errorf("feature stage FeatureStageGeneralAvailability should have the AllowSelfServe field defined")
-			}
-			if flag.AllowSelfServe != nil && flag.Stage != FeatureStageGeneralAvailability {
+			if flag.AllowSelfServe && flag.Stage != FeatureStageGeneralAvailability {
 				t.Errorf("only allow self-serving GA toggles")
 			}
 			if flag.Created.Year() < 2021 {
@@ -221,7 +218,6 @@ func generateCSV() string {
 		"Owner", //string(flag.Owner),
 		"Created",
 		"requiresDevMode", //strconv.FormatBool(flag.RequiresDevMode),
-		"RequiresLicense", //strconv.FormatBool(flag.RequiresLicense),
 		"RequiresRestart", //strconv.FormatBool(flag.RequiresRestart),
 		"FrontendOnly",    //strconv.FormatBool(flag.FrontendOnly),
 	}); err != nil {
@@ -242,7 +238,6 @@ func generateCSV() string {
 			string(flag.Owner),
 			dateFormatter(flag.Created),
 			strconv.FormatBool(flag.RequiresDevMode),
-			strconv.FormatBool(flag.RequiresLicense),
 			strconv.FormatBool(flag.RequiresRestart),
 			strconv.FormatBool(flag.FrontendOnly),
 		}); err != nil {

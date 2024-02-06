@@ -1,4 +1,11 @@
 import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef } from '@grafana/data';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import {
+  initLastUsedDatasourceKeyForDashboard,
+  setLastUsedDatasourceKeyForDashboard,
+} from 'app/features/dashboard/utils/dashboard';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { QueryGroupDataSource } from 'app/types';
 
 export function isDataSourceMatch(
   ds: DataSourceInstanceSettings | undefined,
@@ -96,4 +103,18 @@ export function getDataSourceCompareFn(
  */
 export function matchDataSourceWithSearch(ds: DataSourceInstanceSettings, searchTerm = '') {
   return ds.name.toLowerCase().includes(searchTerm.toLowerCase());
+}
+
+export function storeLastUsedDataSourceInLocalStorage(datasource: QueryGroupDataSource) {
+  if (!datasource.uid) {
+    return;
+  }
+
+  const dashboardUid = getDashboardSrv().getCurrent()?.uid ?? '';
+  // if datasource is MIXED reset datasource uid in storage, because Mixed datasource can contain multiple ds
+  if (datasource.uid === MIXED_DATASOURCE_NAME) {
+    return initLastUsedDatasourceKeyForDashboard(dashboardUid!);
+  }
+
+  setLastUsedDatasourceKeyForDashboard(dashboardUid, datasource.uid);
 }

@@ -10,17 +10,17 @@
 
     <base href="[[.AppSubUrl]]/" />
 
-    [[ if eq .Theme "light" ]]
-    <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/[[.Assets.CSSLight]]" />
-    [[ else if eq .Theme "dark" ]]
-    <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/[[.Assets.CSSDark]]" />
+    [[ if eq .ThemeType "light" ]]
+    <link rel="stylesheet" href="[[.Assets.Light]]" />
+    [[ else ]]
+    <link rel="stylesheet" href="[[.Assets.Dark]]" />
     [[ end ]]
 
     <link rel="icon" type="image/png" href="public/img/fav32.png" />
     <link rel="mask-icon" href="public/img/grafana_mask_icon.svg" color="#F05A28" />
   </head>
 
-  <body class="theme-[[ .Theme ]]">
+  <body class="theme-[[ .ThemeType ]]">
     <div class="main-view">
       <div class="page-container">
         <div class="page-header">

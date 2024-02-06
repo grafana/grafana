@@ -21,10 +21,14 @@ var (
 type Service interface {
 	// List returns all SSO settings from DB and config files
 	List(ctx context.Context) ([]*models.SSOSettings, error)
+	// ListWithRedactedSecrets returns all SSO settings from DB and config files with secret values redacted
+	ListWithRedactedSecrets(ctx context.Context) ([]*models.SSOSettings, error)
 	// GetForProvider returns the SSO settings for a given provider (DB or config file)
 	GetForProvider(ctx context.Context, provider string) (*models.SSOSettings, error)
+	// GetForProviderWithRedactedSecrets returns the SSO settings for a given provider (DB or config file) with secret values redacted
+	GetForProviderWithRedactedSecrets(ctx context.Context, provider string) (*models.SSOSettings, error)
 	// Upsert creates or updates the SSO settings for a given provider
-	Upsert(ctx context.Context, settings models.SSOSettings) error
+	Upsert(ctx context.Context, settings *models.SSOSettings) error
 	// Delete deletes the SSO settings for a given provider (soft delete)
 	Delete(ctx context.Context, provider string) error
 	// Patch updates the specified SSO settings (key-value pairs) for a given provider
@@ -36,6 +40,8 @@ type Service interface {
 }
 
 // Reloadable is an interface that can be implemented by a provider to allow it to be validated and reloaded
+//
+//go:generate mockery --name Reloadable --structname MockReloadable --outpkg ssosettingstests --filename reloadable_mock.go --output ./ssosettingstests/
 type Reloadable interface {
 	Reload(ctx context.Context, settings models.SSOSettings) error
 	Validate(ctx context.Context, settings models.SSOSettings) error
@@ -46,7 +52,8 @@ type Reloadable interface {
 // using the config file and/or environment variables. Used mostly for backwards compatibility.
 type FallbackStrategy interface {
 	IsMatch(provider string) bool
-	GetProviderConfig(ctx context.Context, provider string) (any, error)
+	// TODO: check if GetProviderConfig can return an error
+	GetProviderConfig(ctx context.Context, provider string) (map[string]any, error)
 }
 
 // Store is a SSO settings store
@@ -55,7 +62,6 @@ type FallbackStrategy interface {
 type Store interface {
 	Get(ctx context.Context, provider string) (*models.SSOSettings, error)
 	List(ctx context.Context) ([]*models.SSOSettings, error)
-	Upsert(ctx context.Context, settings models.SSOSettings) error
-	Patch(ctx context.Context, provider string, data map[string]any) error
+	Upsert(ctx context.Context, settings *models.SSOSettings) error
 	Delete(ctx context.Context, provider string) error
 }

@@ -20,15 +20,15 @@ export const customVariableSlice = createSlice({
   name: 'templating/custom',
   initialState: initialVariablesState,
   reducers: {
-    createCustomOptionsFromQuery: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
+    createCustomOptionsFromQuery: (state: VariablesState, action: PayloadAction<VariablePayload<string>>) => {
       const instanceState = getInstanceState(state, action.payload.id);
       if (instanceState.type !== 'custom') {
         return;
       }
 
-      const { includeAll, query } = instanceState;
-
-      const match = query.match(/(?:\\,|[^,])+/g) ?? [];
+      const { includeAll } = instanceState;
+      const queryInterpolated = action.payload.data;
+      const match = queryInterpolated.match(/(?:\\,|[^,])+/g) ?? [];
       const options = match.map((text) => {
         text = text.replace(/\\,/g, ',');
         const textMatch = /^(.+)\s:\s(.+)$/g.exec(text) ?? [];

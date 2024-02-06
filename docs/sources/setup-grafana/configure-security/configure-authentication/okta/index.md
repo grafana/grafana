@@ -110,13 +110,11 @@ The following table outlines the various Okta OIDC configuration options. You ca
 | `allowed_groups`        | No       | List of comma- or space-separated groups. The user should be a member of at least one group to log in.                                                                                                                                                                                                                                                                                                                                                                                                                       |                               |
 | `allowed_domains`       | No       | List comma- or space-separated domains. The user should belong to at least one domain to log in.                                                                                                                                                                                                                                                                                                                                                                                                                             |                               |
 | `use_pkce`              | No       | Set to `true` to use [Proof Key for Code Exchange (PKCE)](https://datatracker.ietf.org/doc/html/rfc7636). Grafana uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.                                                                                                                                                                                                                                                                                                           | `true`                        |
-| `use_refresh_token`     | No       | Set to `true` to use refresh token and check access token expiration. The `accessTokenExpirationCheck` feature toggle should also be enabled to use refresh token.                                                                                                                                                                                                                                                                                                                                                           | `false`                       |
+| `use_refresh_token`     | No       | Set to `true` to use refresh token and check access token expiration.                                                                                                                                                                                                                                                                                                                                                                                                                                                        | `false`                       |
 
 ### Configure a refresh token
 
 > Available in Grafana v9.3 and later versions.
-
-> **Note:** This feature is behind the `accessTokenExpirationCheck` feature toggle.
 
 When a user logs in using an OAuth provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token without requiring the user to log in again.
 
@@ -129,7 +127,9 @@ To enable the `Refresh Token` head over the Okta application settings and:
 
 At the configuration file, extend the `scopes` in `[auth.okta]` section with `offline_access`.
 
-> **Note:** The `accessTokenExpirationCheck` feature toggle will be removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
+{{% admonition type="note" %}}
+The `accessTokenExpirationCheck` feature toggle has been removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
+{{% /admonition %}}
 
 ### Configure role mapping
 

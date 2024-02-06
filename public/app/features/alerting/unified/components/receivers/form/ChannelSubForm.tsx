@@ -69,7 +69,8 @@ export function ChannelSubForm<R extends ChannelValues>({
   // Prevent forgetting about initial values when switching the integration type and the oncall integration type
   useEffect(() => {
     // Restore values when switching back from a changed integration to the default one
-    const subscription = watch((_, { name, type, value }) => {
+    const subscription = watch((v, { name, type }) => {
+      const value = name ? v[name] : '';
       if (initialValues && name === fieldName('type') && value === initialValues.type && type === 'change') {
         setValue(fieldName('settings'), initialValues.settings);
       }

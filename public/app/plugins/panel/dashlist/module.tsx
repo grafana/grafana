@@ -57,7 +57,7 @@ export const plugin = new PanelPlugin<Options>(DashList)
         id: 'folderUID',
         defaultValue: undefined,
         editor: function RenderFolderPicker({ value, onChange }) {
-          return <FolderPicker value={value} onChange={(folderUID) => onChange(folderUID)} />;
+          return <FolderPicker clearable value={value} onChange={(folderUID) => onChange(folderUID)} />;
         },
       })
       .addCustomEditor({

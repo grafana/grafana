@@ -111,7 +111,7 @@ describe('OptionPicker', () => {
         variable: { ...defaultVariable, state: LoadingState.Loading },
       });
       expect(getSubMenu('A + C')).toBeInTheDocument();
-      expect(screen.getByLabelText(selectors.components.LoadingIndicator.icon)).toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.LoadingIndicator.icon)).toBeInTheDocument();
     });
 
     it('link text should not be clickable', async () => {

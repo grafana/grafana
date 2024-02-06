@@ -305,7 +305,7 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 		if dtos.IsHiddenUser(user.Login, c.SignedInUser, hs.Cfg) {
 			continue
 		}
-		user.AvatarURL = dtos.GetGravatarUrl(user.Email)
+		user.AvatarURL = dtos.GetGravatarUrl(hs.Cfg, user.Email)
 
 		userIDs[fmt.Sprint(user.UserID)] = true
 		authLabelsUserIDs = append(authLabelsUserIDs, user.UserID)
@@ -334,8 +334,9 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 	for i := range filteredUsers {
 		filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserID)]
 		if module, ok := modules[filteredUsers[i].UserID]; ok {
+			oauthInfo := hs.SocialService.GetOAuthInfoProvider(module)
 			filteredUsers[i].AuthLabels = []string{login.GetAuthProviderLabel(module)}
-			filteredUsers[i].IsExternallySynced = login.IsExternallySynced(hs.Cfg, module)
+			filteredUsers[i].IsExternallySynced = login.IsExternallySynced(hs.Cfg, module, oauthInfo)
 		}
 	}
 
@@ -421,8 +422,11 @@ func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.Up
 			return response.Error(http.StatusInternalServerError, "Failed to get user auth info", nil)
 		}
 	}
-	if authInfo != nil && authInfo.AuthModule != "" && login.IsExternallySynced(hs.Cfg, authInfo.AuthModule) {
-		return response.Err(org.ErrCannotChangeRoleForExternallySyncedUser.Errorf("Cannot change role for externally synced user"))
+	if authInfo != nil && authInfo.AuthModule != "" {
+		oauthInfo := hs.SocialService.GetOAuthInfoProvider(authInfo.AuthModule)
+		if login.IsExternallySynced(hs.Cfg, authInfo.AuthModule, oauthInfo) {
+			return response.Err(org.ErrCannotChangeRoleForExternallySyncedUser.Errorf("Cannot change role for externally synced user"))
+		}
 	}
 
 	if err := hs.orgService.UpdateOrgUser(c.Req.Context(), &cmd); err != nil {

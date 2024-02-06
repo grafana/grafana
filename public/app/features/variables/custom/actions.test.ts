@@ -58,7 +58,7 @@ describe('custom actions', () => {
         .whenAsyncActionIsDispatched(updateCustomVariableOptions(toKeyedVariableIdentifier(variable)), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction('key', createCustomOptionsFromQuery(toVariablePayload(variable))),
+        toKeyedAction('key', createCustomOptionsFromQuery(toVariablePayload(variable, variable.query))),
         toKeyedAction('key', setCurrentVariableValue(toVariablePayload(variable, { option })))
       );
     });
