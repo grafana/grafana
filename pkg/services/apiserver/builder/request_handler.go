@@ -7,9 +7,6 @@ import (
 	"github.com/gorilla/mux"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/validation/spec"
-
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type requestHandler struct {
@@ -115,54 +112,4 @@ type methodNotAllowedHandler struct{}
 
 func (h *methodNotAllowedHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(405) // method not allowed
-}
-
-// Modify the the OpenAPI spec to include the additional routes.
-// Currently this requires: https://github.com/kubernetes/kube-openapi/pull/420
-// In future k8s release, the hook will use Config3 rather than the same hook for both v2 and v3
-func getOpenAPIPostProcessor(builders []APIGroupBuilder) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
-	return func(s *spec3.OpenAPI) (*spec3.OpenAPI, error) {
-		if s.Paths == nil {
-			return s, nil
-		}
-		for _, b := range builders {
-			routes := b.GetAPIRoutes()
-			gv := b.GetGroupVersion()
-			prefix := "/apis/" + gv.String() + "/"
-			if s.Paths.Paths[prefix] != nil {
-				copy := spec3.OpenAPI{
-					Version: s.Version,
-					Info: &spec.Info{
-						InfoProps: spec.InfoProps{
-							Title:   gv.String(),
-							Version: setting.BuildVersion,
-						},
-					},
-					Components:   s.Components,
-					ExternalDocs: s.ExternalDocs,
-					Servers:      s.Servers,
-					Paths:        s.Paths,
-				}
-
-				if routes == nil {
-					routes = &APIRoutes{}
-				}
-
-				for _, route := range routes.Root {
-					copy.Paths.Paths[prefix+route.Path] = &spec3.Path{
-						PathProps: *route.Spec,
-					}
-				}
-
-				for _, route := range routes.Namespace {
-					copy.Paths.Paths[prefix+"namespaces/{namespace}/"+route.Path] = &spec3.Path{
-						PathProps: *route.Spec,
-					}
-				}
-
-				return &copy, nil
-			}
-		}
-		return s, nil
-	}
 }
