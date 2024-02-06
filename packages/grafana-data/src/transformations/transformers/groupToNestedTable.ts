@@ -121,8 +121,6 @@ export const groupToNestedTable: DataTransformerInfo<GroupToNestedTableTransform
           });
         }
 
-        // console.log(processed);
-
         return processed;
       })
     ),

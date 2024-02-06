@@ -54,6 +54,7 @@ export const GroupByTransformerEditor = ({
   // needs to be a grouping for the calculation to have effect
   let hasGrouping,
     hasAggregation = false;
+
   for (const field of Object.values(options.fields)) {
     if (field.aggregations.length > 0 && field.operation !== null) {
       hasAggregation = true;
@@ -62,9 +63,8 @@ export const GroupByTransformerEditor = ({
       hasGrouping = true;
     }
   }
-  const showCalcAlert = hasAggregation && !hasGrouping;
 
-  console.log(options);
+  const showCalcAlert = hasAggregation && !hasGrouping;
 
   return (
     <Stack direction="column">
