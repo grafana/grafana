@@ -7,18 +7,17 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -434,58 +433,34 @@ func (st DBstore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespa
 	})
 }
 
-// GetUserVisibleNamespaces returns the folders that are visible to the user and have at least one alert in it
+// GetUserVisibleNamespaces returns the folders that are visible to the user
 func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, user identity.Requester) (map[string]*folder.Folder, error) {
-	namespaceMap := make(map[string]*folder.Folder)
-
-	searchQuery := dashboards.FindPersistedDashboardsQuery{
-		OrgId:        orgID,
+	folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
+		OrgID:        orgID,
+		WithFullpath: true,
 		SignedInUser: user,
-		Type:         searchstore.TypeAlertFolder,
-		Limit:        -1,
-		Permission:   dashboardaccess.PERMISSION_VIEW,
-		Sort:         model.SortOption{},
-		Filters: []any{
-			searchstore.FolderWithAlertsFilter{},
-		},
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	var page int64 = 1
-	for {
-		query := searchQuery
-		query.Page = page
-		proj, err := st.DashboardService.FindDashboards(ctx, &query)
-		if err != nil {
-			return nil, err
-		}
-
-		if len(proj) == 0 {
-			break
-		}
-
-		for _, hit := range proj {
-			if !hit.IsFolder {
-				continue
-			}
-			namespaceMap[hit.UID] = &folder.Folder{
-				UID:       hit.UID,
-				Title:     hit.Title,
-				ParentUID: hit.FolderUID,
-			}
-		}
-		page += 1
+	namespaceMap := make(map[string]*folder.Folder)
+	for _, f := range folders {
+		namespaceMap[f.UID] = f
 	}
 	return namespaceMap, nil
 }
 
 // GetNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
 func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user identity.Requester) (*folder.Folder, error) {
-	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &uid, SignedInUser: user})
+	f, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{OrgID: orgID, UIDs: []string{uid}, WithFullpath: true, SignedInUser: user})
 	if err != nil {
 		return nil, err
 	}
-
-	return folder, nil
+	if len(f) == 0 {
+		return nil, dashboards.ErrFolderAccessDenied
+	}
+	return f[0], nil
 }
 
 func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodels.AlertRuleKeyWithVersion, error) {
@@ -513,12 +488,6 @@ func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodel
 
 // GetAlertRulesForScheduling returns a short version of all alert rules except those that belong to an excluded list of organizations
 func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error {
-	var folders []struct {
-		OrgId     int64
-		Uid       string
-		Title     string
-		ParentUid string
-	}
 	var rules []*ngmodels.AlertRule
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var disabledOrgs []int64
@@ -566,22 +535,36 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 		query.ResultRules = rules
 
 		if query.PopulateFolders {
-			foldersSql := sess.Table("folder").Alias("d").Select("d.org_id, d.uid, d.title, d.parent_uid").
-				Where(`EXISTS (SELECT 1 FROM alert_rule a WHERE d.uid = a.namespace_uid AND d.org_id = a.org_id)`)
-			if len(disabledOrgs) > 0 {
-				foldersSql.NotIn("org_id", disabledOrgs)
-			}
-
-			if err := foldersSql.Find(&folders); err != nil {
-				return fmt.Errorf("failed to fetch a list of folders that contain alert rules: %w", err)
-			}
-			query.ResultFoldersTitles = make(map[ngmodels.FolderKey]string, len(folders))
-			for _, f := range folders {
-				key := ngmodels.FolderKey{
-					OrgID: f.OrgId,
-					UID:   f.Uid,
+			query.ResultFoldersTitles = map[ngmodels.FolderKey]string{}
+			uids := map[int64]map[string]struct{}{}
+			for _, r := range rules {
+				om, ok := uids[r.OrgID]
+				if !ok {
+					om = make(map[string]struct{})
+					uids[r.OrgID] = om
 				}
-				query.ResultFoldersTitles[key] = ngmodels.GetNamespaceKey(f.ParentUid, f.Title)
+				om[r.NamespaceUID] = struct{}{}
+			}
+			for orgID, uids := range uids {
+				schedulerUser := accesscontrol.BackgroundUser("grafana_scheduler", orgID, org.RoleAdmin,
+					[]accesscontrol.Permission{
+						{
+							Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll,
+						},
+					})
+
+				folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
+					OrgID:        orgID,
+					UIDs:         maps.Keys(uids),
+					WithFullpath: true,
+					SignedInUser: schedulerUser,
+				})
+				if err != nil {
+					return fmt.Errorf("failed to fetch a list of folders that contain alert rules: %w", err)
+				}
+				for _, f := range folders {
+					query.ResultFoldersTitles[ngmodels.FolderKey{OrgID: f.OrgID, UID: f.UID}] = f.Fullpath
+				}
 			}
 		}
 		return nil

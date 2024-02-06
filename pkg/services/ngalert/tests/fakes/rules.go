@@ -247,12 +247,18 @@ func (f *RuleStore) GetUserVisibleNamespaces(_ context.Context, orgID int64, _ i
 	return namespacesMap, nil
 }
 
-func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, _ identity.Requester) (*folder.Folder, error) {
-	f.RecordedOps = append(f.RecordedOps, GenericRecordedQuery{
+func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64, user identity.Requester) (*folder.Folder, error) {
+	q := GenericRecordedQuery{
 		Name:   "GetNamespaceByUID",
-		Params: []any{orgID, uid},
-	})
-
+		Params: []any{orgID, uid, user},
+	}
+	defer func() {
+		f.RecordedOps = append(f.RecordedOps, q)
+	}()
+	err := f.Hook(q)
+	if err != nil {
+		return nil, err
+	}
 	folders := f.Folders[orgID]
 	for _, folder := range folders {
 		if folder.UID == uid {

@@ -24,12 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, dashboardStore dashboards.Store, folderStore *folderimpl.DashboardFolderStoreImpl, bus *bus.InProcBus) folder.Service {
+func SetupFolderService(tb testing.TB, cfg *setting.Cfg, db db.DB, dashboardStore dashboards.Store, folderStore *folderimpl.DashboardFolderStoreImpl, bus *bus.InProcBus, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) folder.Service {
 	tb.Helper()
-
-	ac := acmock.New()
-	features := featuremgmt.WithFeatures()
-
 	return folderimpl.ProvideService(ac, bus, cfg, dashboardStore, folderStore, db, features, nil)
 }
 
