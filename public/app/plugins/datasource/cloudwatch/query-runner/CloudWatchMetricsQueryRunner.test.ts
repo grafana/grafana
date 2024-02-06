@@ -773,8 +773,28 @@ describe('CloudWatchMetricsQueryRunner', () => {
     beforeEach(() => {
       const { runner, request, queryMock } = setupMockedMetricsQueryRunner({
         variables: [
-          { ...namespaceVariable, multi: true },
-          { ...metricVariable, multi: true },
+          {
+            ...namespaceVariable,
+            current: {
+              value: ['AWS/Redshift', 'AWS/EC2'],
+              text: ['AWS/Redshift', 'AWS/EC2'].toString(),
+              selected: true,
+            },
+            multi: true,
+          },
+          {
+            ...metricVariable,
+            current: {
+              value: ['CPUUtilization', 'DroppedBytes'],
+              text: ['CPUUtilization', 'DroppedBytes'].toString(),
+              selected: true,
+            },
+            multi: true,
+          },
+          {
+            ...dimensionVariable,
+            multi: true,
+          },
         ],
       });
       runner.debouncedCustomAlert = debouncedAlert;
@@ -789,7 +809,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
             metricName: '$' + metricVariable.name,
             period: '',
             alias: '',
-            dimensions: {},
+            dimensions: { [`$${dimensionVariable.name}`]: '' },
             matchExact: true,
             statistic: '',
             refId: '',
@@ -802,7 +822,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
         queryMock
       );
     });
-    it('should show debounced alert for namespace and metric name', async () => {
+    it('should show debounced alert for namespace and metric name when multiple options are selected', async () => {
       expect(debouncedAlert).toHaveBeenCalledWith(
         'CloudWatch templating error',
         'Multi template variables are not supported for namespace'
@@ -810,6 +830,13 @@ describe('CloudWatchMetricsQueryRunner', () => {
       expect(debouncedAlert).toHaveBeenCalledWith(
         'CloudWatch templating error',
         'Multi template variables are not supported for metric name'
+      );
+    });
+
+    it('should not show debounced alert for a multi-variable if it only has one option selected', async () => {
+      expect(debouncedAlert).not.toHaveBeenCalledWith(
+        'CloudWatch templating error',
+        `Multi template variables are not supported for dimension keys`
       );
     });
 
