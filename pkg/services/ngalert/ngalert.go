@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/prometheus/alertmanager/featurecontrol"
+	"github.com/prometheus/alertmanager/matchers/compat"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -167,6 +169,12 @@ func (ng *AlertNG) init() error {
 	defer cancelFunc()
 
 	ng.store.Logger = ng.Log
+
+	// This initializes the compat package in fallback mode with logging. It parses first
+	// using the UTF-8 parser and then fallsback to the classic parser on error.
+	// UTF-8 is permitted in label names. This should be removed when the compat package
+	// is removed from Alertmanager.
+	compat.InitFromFlags(ng.Log, compat.RegisteredMetrics, featurecontrol.NoopFlags{})
 
 	// If enabled, configure the remote Alertmanager.
 	// - If several toggles are enabled, the order of precedence is RemoteOnly, RemotePrimary, RemoteSecondary

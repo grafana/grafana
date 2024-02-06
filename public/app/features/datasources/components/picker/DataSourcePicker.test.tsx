@@ -9,7 +9,7 @@ import { ModalRoot, ModalsProvider } from '@grafana/ui';
 import config from 'app/core/config';
 import { defaultFileUploadQuery } from 'app/plugins/datasource/grafana/types';
 
-import { DataSourceDropdown, DataSourceDropdownProps } from './DataSourceDropdown';
+import { DataSourcePicker, DataSourcePickerProps } from './DataSourcePicker';
 import * as utils from './utils';
 
 const pluginMetaInfo: PluginMetaInfo = {
@@ -45,8 +45,8 @@ const MockDSBuiltIn = createDS('mock.datasource.builtin', 3, true);
 
 const mockDSList = [mockDS1, mockDS2, MockDSBuiltIn];
 
-async function setupOpenDropdown(user: UserEvent, props: DataSourceDropdownProps) {
-  const dropdown = render(<DataSourceDropdown {...props}></DataSourceDropdown>);
+async function setupOpenDropdown(user: UserEvent, props: DataSourcePickerProps) {
+  const dropdown = render(<DataSourcePicker {...props}></DataSourcePicker>);
   const searchBox = dropdown.container.querySelector('input');
   expect(searchBox).toBeInTheDocument();
   await user.click(searchBox!);
@@ -93,9 +93,9 @@ beforeEach(() => {
   getInstanceSettingsMock.mockReturnValue(mockDS1);
 });
 
-describe('DataSourceDropdown', () => {
+describe('DataSourcePicker', () => {
   it('should render', () => {
-    expect(() => render(<DataSourceDropdown onChange={jest.fn()}></DataSourceDropdown>)).not.toThrow();
+    expect(() => render(<DataSourcePicker onChange={jest.fn()}></DataSourcePicker>)).not.toThrow();
   });
 
   describe('configuration', () => {
@@ -123,7 +123,7 @@ describe('DataSourceDropdown', () => {
 
       render(
         <ModalsProvider>
-          <DataSourceDropdown {...props}></DataSourceDropdown>
+          <DataSourcePicker {...props}></DataSourcePicker>
           <ModalRoot />
         </ModalsProvider>
       );
@@ -145,7 +145,7 @@ describe('DataSourceDropdown', () => {
 
     it('should display the current selected DS in the selector', async () => {
       getInstanceSettingsMock.mockReturnValue(mockDS2);
-      render(<DataSourceDropdown onChange={jest.fn()} current={mockDS2}></DataSourceDropdown>);
+      render(<DataSourcePicker onChange={jest.fn()} current={mockDS2}></DataSourcePicker>);
       expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
         'placeholder',
         mockDS2.name
@@ -169,7 +169,7 @@ describe('DataSourceDropdown', () => {
 
     it('should display the default DS as selected when `current` is not set', async () => {
       getInstanceSettingsMock.mockReturnValue(mockDS2);
-      render(<DataSourceDropdown onChange={jest.fn()} current={undefined}></DataSourceDropdown>);
+      render(<DataSourcePicker onChange={jest.fn()} current={undefined}></DataSourcePicker>);
       expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
         'placeholder',
         mockDS2.name
@@ -186,12 +186,12 @@ describe('DataSourceDropdown', () => {
     });
 
     it('should disable the dropdown when `disabled` is true', () => {
-      render(<DataSourceDropdown onChange={jest.fn()} disabled></DataSourceDropdown>);
+      render(<DataSourcePicker onChange={jest.fn()} disabled></DataSourcePicker>);
       expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toBeDisabled();
     });
 
     it('should assign the correct `id` to the input element to pair it with a label', () => {
-      render(<DataSourceDropdown onChange={jest.fn()} inputId={'custom.input.id'}></DataSourceDropdown>);
+      render(<DataSourcePicker onChange={jest.fn()} inputId={'custom.input.id'}></DataSourcePicker>);
       expect(screen.getByTestId(selectors.components.DataSourcePicker.inputV2)).toHaveAttribute(
         'id',
         'custom.input.id'
@@ -199,7 +199,7 @@ describe('DataSourceDropdown', () => {
     });
 
     it('should not set the default DS when setting `noDefault` to true and `current` is not provided', () => {
-      render(<DataSourceDropdown onChange={jest.fn()} current={null} noDefault></DataSourceDropdown>);
+      render(<DataSourcePicker onChange={jest.fn()} current={null} noDefault></DataSourcePicker>);
       getListMock.mockClear();
       getInstanceSettingsMock.mockClear();
       // Doesn't try to get the default DS
@@ -300,7 +300,7 @@ describe('DataSourceDropdown', () => {
       const props = { onChange: jest.fn(), current: mockDS1.name };
       render(
         <ModalsProvider>
-          <DataSourceDropdown {...props}></DataSourceDropdown>
+          <DataSourcePicker {...props}></DataSourcePicker>
           <ModalRoot />
         </ModalsProvider>
       );

@@ -85,7 +85,7 @@
     "@types/node": "20.11.16",
     "@types/pluralize": "^0.0.33",
     "@types/prismjs": "1.26.3",
-    "@types/react": "18.2.53",
+    "@types/react": "18.2.55",
     "@types/react-beautiful-dnd": "13.1.8",
     "@types/react-dom": "18.2.18",
     "@types/react-highlight-words": "0.16.7",
@@ -124,7 +124,7 @@
     "testing-library-selector": "0.3.1",
     "ts-node": "10.9.2",
     "typescript": "5.3.3",
-    "webpack": "5.90.0",
+    "webpack": "5.90.1",
     "webpack-cli": "5.1.4"
   },
   "peerDependencies": {
