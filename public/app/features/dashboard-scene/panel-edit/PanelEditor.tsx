@@ -146,6 +146,8 @@ export function buildPanelEditScene(panel: VizPanel): PanelEditor {
   });
 }
 
+// This function is used to conditionally add the data pane to the panel editor,
+// depending on the type of a panel being edited.
 function conditionalDataPaneBehavior(scene: SplitLayout) {
   const dashboard = getDashboardSceneFor(scene);
 
