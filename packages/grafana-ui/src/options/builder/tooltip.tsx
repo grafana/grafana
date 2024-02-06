@@ -50,7 +50,6 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       category,
       settings: {
         integer: true,
-        placeholder: '300',
       },
     })
     .addNumberInput({
@@ -59,7 +58,6 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       category,
       settings: {
         integer: true,
-        placeholder: '600',
       },
     });
 }

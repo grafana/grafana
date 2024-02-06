@@ -428,7 +428,6 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       category,
       settings: {
         integer: true,
-        placeholder: '300',
       },
     });
 
@@ -438,7 +437,6 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       category,
       settings: {
         integer: true,
-        placeholder: '600',
       },
     });
 
