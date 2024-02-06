@@ -41,7 +41,7 @@ Choose from the options below to import your Grafana Alerting resources.
    For more information on the Alerting Provisioning HTTP API, refer to [Alerting provisioning HTTP API][alerting_provisioning].
 
    Example ready-to-use:
-   
+
    #### Alert-rules template
 
 ```
