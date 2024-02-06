@@ -395,7 +395,6 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	}
 
 	for _, evalState := range normalStates {
-
 		evalState := evalState // make a local copy to allow parallel tests
 		setupNormalStatesTest := func(t *testing.T) normalStatesSetup {
 			evalChan := make(chan *evaluation)

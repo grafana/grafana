@@ -9,7 +9,6 @@ import (
 
 	definitions "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -98,7 +97,7 @@ func NewSyncAlertsSenderMock() *SyncAlertsSenderMock {
 	}
 }
 
-func (m *SyncAlertsSenderMock) Send(ctx context.Context, key ngmodels.AlertRuleKey, alerts definitions.PostableAlerts) {
+func (m *SyncAlertsSenderMock) Send(ctx context.Context, key models.AlertRuleKey, alerts definitions.PostableAlerts) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.AlertsSenderMock.Send(ctx, key, alerts)
