@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -45,7 +46,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 	store := &DBstore{
 		SQLStore:      sqlStore,
 		Cfg:           cfg.UnifiedAlerting,
-		FolderService: setupFolderService(t, sqlStore, cfg),
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
 		Logger:        &logtest.Fake{},
 	}
 	generator := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID())
@@ -99,7 +100,7 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 	store := &DBstore{
 		SQLStore:      sqlStore,
 		Cfg:           cfg.UnifiedAlerting,
-		FolderService: setupFolderService(t, sqlStore, cfg),
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
 		Logger:        &logtest.Fake{},
 	}
 
@@ -333,7 +334,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	store := &DBstore{
 		SQLStore:       sqlStore,
 		Cfg:            cfg.UnifiedAlerting,
-		FolderService:  setupFolderService(t, sqlStore, cfg),
+		FolderService:  setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
 		FeatureToggles: featuremgmt.WithFeatures(),
 	}
 
@@ -432,7 +433,7 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	store := &DBstore{SQLStore: sqlStore, FolderService: setupFolderService(t, sqlStore, cfg)}
+	store := &DBstore{SQLStore: sqlStore, FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())}
 	rule := createRule(t, store, nil)
 
 	tests := map[string]struct {
@@ -481,7 +482,7 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 	cfg := setting.NewCfg()
 	store := &DBstore{
 		SQLStore:      sqlStore,
-		FolderService: setupFolderService(t, sqlStore, cfg),
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
 		Logger:        log.New("test-dbstore"),
 	}
 	rule := createRule(t, store, nil)
@@ -514,7 +515,7 @@ func TestIntegration_GetNamespaceByUID(t *testing.T) {
 	cfg := setting.NewCfg()
 	store := &DBstore{
 		SQLStore:      sqlStore,
-		FolderService: setupFolderService(t, sqlStore, cfg),
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
 		Logger:        log.New("test-dbstore"),
 	}
 
@@ -559,7 +560,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
 	store := &DBstore{
 		SQLStore:      sqlStore,
-		FolderService: setupFolderService(t, sqlStore, cfg),
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
 		Logger:        log.New("test-dbstore"),
 		Cfg:           cfg.UnifiedAlerting,
 	}
@@ -646,11 +647,11 @@ func createFolder(t *testing.T, store *DBstore, uid, title string, orgID int64, 
 	require.NoError(t, err)
 }
 
-func setupFolderService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg) folder.Service {
+func setupFolderService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg, features featuremgmt.FeatureToggles) folder.Service {
 	tracer := tracing.InitializeTracerForTest()
 	inProcBus := bus.ProvideBus(tracer)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
 
-	return testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, folderStore, inProcBus)
+	return testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, folderStore, inProcBus, features, &actest.FakeAccessControl{})
 }
