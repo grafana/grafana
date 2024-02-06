@@ -26,7 +26,7 @@ import (
 
 type APIServerFactory interface {
 	// Called before the groups are loaded so any custom command can be registered
-	InitFlags(flags *pflag.FlagSet) error
+	InitFlags(flags *pflag.FlagSet)
 
 	// Given the flags, what can we produce
 	GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error)
@@ -42,9 +42,7 @@ func GetDummyAPIFactory() APIServerFactory {
 
 type DummyAPIFactory struct{}
 
-func (p *DummyAPIFactory) InitFlags(flags *pflag.FlagSet) error {
-	return nil
-}
+func (p *DummyAPIFactory) InitFlags(flags *pflag.FlagSet) {}
 
 func (p *DummyAPIFactory) GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error) {
 	gv := []schema.GroupVersion{}
