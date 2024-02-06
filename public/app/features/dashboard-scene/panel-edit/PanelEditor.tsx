@@ -1,7 +1,7 @@
 import * as H from 'history';
 
 import { NavIndex } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   SceneFlexItem,
   SceneFlexLayout,
@@ -118,13 +118,11 @@ export function buildPanelEditScene(panel: VizPanel): PanelEditor {
       direction: 'row',
       primary: new SplitLayout({
         direction: 'column',
+        $behaviors: [conditionalDataPaneBehavior],
         primary: new SceneFlexLayout({
           direction: 'column',
           minHeight: 200,
           children: [vizPanelMgr],
-        }),
-        secondary: new SceneFlexItem({
-          body: new PanelDataPane(vizPanelMgr),
         }),
         primaryPaneStyles: {
           minHeight: 0,
@@ -146,4 +144,51 @@ export function buildPanelEditScene(panel: VizPanel): PanelEditor {
       },
     }),
   });
+}
+
+function conditionalDataPaneBehavior(scene: SplitLayout) {
+  const dashboard = getDashboardSceneFor(scene);
+
+  const editor = dashboard.state.editPanel;
+
+  if (!editor) {
+    return;
+  }
+
+  const panelManager = editor.state.panelRef.resolve();
+  const panel = panelManager.state.panel;
+
+  if (!config.panels[panel.state.pluginId].skipDataQuery) {
+    scene.setState({
+      secondary: new SceneFlexItem({
+        body: new PanelDataPane(panelManager),
+      }),
+    });
+  }
+
+  const sub = panelManager.subscribeToState((n, p) => {
+    const nextPluginId = n.panel.state.pluginId;
+    const prevPluginId = p.panel.state.pluginId;
+    const hadDataSupport = !config.panels[prevPluginId].skipDataQuery;
+    const willHaveDataSupport = !config.panels[nextPluginId].skipDataQuery;
+
+    if (nextPluginId !== prevPluginId) {
+      if (hadDataSupport && !willHaveDataSupport) {
+        locationService.partial({ tab: null }, true);
+        scene.setState({
+          secondary: undefined,
+        });
+      } else if (!hadDataSupport && willHaveDataSupport) {
+        scene.setState({
+          secondary: new SceneFlexItem({
+            body: new PanelDataPane(panelManager),
+          }),
+        });
+      }
+    }
+  });
+
+  return () => {
+    sub.unsubscribe();
+  };
 }
