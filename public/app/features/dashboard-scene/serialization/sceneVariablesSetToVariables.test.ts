@@ -86,7 +86,7 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-describe.only('sceneVariablesSetToVariables', () => {
+describe('sceneVariablesSetToVariables', () => {
   it('should handle QueryVariable', () => {
     const variable = new QueryVariable({
       name: 'test',
