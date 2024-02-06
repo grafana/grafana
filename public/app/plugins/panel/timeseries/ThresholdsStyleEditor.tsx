@@ -1,17 +1,17 @@
 import React, { useCallback } from 'react';
 
 import { StandardEditorProps, SelectableValue } from '@grafana/data';
-import { GraphTresholdsStyleMode } from '@grafana/schema';
+import { GraphThresholdsStyleMode } from '@grafana/schema';
 import { Select } from '@grafana/ui';
 
 type Props = StandardEditorProps<
-  SelectableValue<{ mode: GraphTresholdsStyleMode }>,
-  { options: Array<SelectableValue<GraphTresholdsStyleMode>> }
+  SelectableValue<{ mode: GraphThresholdsStyleMode }>,
+  { options: Array<SelectableValue<GraphThresholdsStyleMode>> }
 >;
 
 export const ThresholdsStyleEditor = ({ item, value, onChange, id }: Props) => {
   const onChangeCb = useCallback(
-    (v: SelectableValue<GraphTresholdsStyleMode>) => {
+    (v: SelectableValue<GraphThresholdsStyleMode>) => {
       onChange({
         mode: v.value,
       });

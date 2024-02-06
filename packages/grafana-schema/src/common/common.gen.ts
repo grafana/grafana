@@ -409,7 +409,7 @@ export interface HideableFieldConfig {
 /**
  * TODO docs
  */
-export enum GraphTresholdsStyleMode {
+export enum GraphThresholdsStyleMode {
   Area = 'area',
   Dashed = 'dashed',
   DashedAndArea = 'dashed+area',
@@ -423,7 +423,7 @@ export enum GraphTresholdsStyleMode {
  * TODO docs
  */
 export interface GraphThresholdsStyleConfig {
-  mode: GraphTresholdsStyleMode;
+  mode: GraphThresholdsStyleMode;
 }
 
 /**
