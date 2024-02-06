@@ -20,7 +20,7 @@
     "dist",
     "./README.md",
     "./CHANGELOG.md",
-    "LICENSE_APACHE2"
+    "LICENSE"
   ],
   "scripts": {
     "typecheck": "tsc --emitDeclarationOnly false --noEmit"
