@@ -18,7 +18,7 @@ import { DashboardMeta } from 'app/types';
 import { DashboardModel } from '../state';
 import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
-import { DashboardGrid, PANEL_FILTER_VARIABLE, ROW_RESIZE_VARIABLE, Props } from './DashboardGrid';
+import { DashboardGrid, PANEL_FILTER_VARIABLE, Props } from './DashboardGrid';
 import { Props as LazyLoaderProps } from './LazyLoader';
 
 jest.mock('@grafana/runtime', () => ({

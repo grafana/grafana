@@ -170,7 +170,8 @@ export class DashboardGrid extends PureComponent<Props, State> {
     }
     let overrideWidth = GRID_COLUMN_COUNT / overrideCols;
 
-    let count = 0;
+    let x = 0;
+    let y = 0;
     for (const panel of this.props.dashboard.panels) {
       if (!panel.key) {
         panel.key = `panel-${panel.id}-${Date.now()}`;
@@ -197,21 +198,41 @@ export class DashboardGrid extends PureComponent<Props, State> {
         panelPos.isDraggable = panel.collapsed;
       }
 
-      // If panel filter is set and this panel doesn't
-      // match then we just skip over it
-      if (panelFilter && !panelFilter.test(panel.title)) {
-        continue;
-      }
-
       // If filter is enabled or a dynamic row
-      // size is set
+      // size is set then proceed with dynamic
+      // resizing of panels
       if (panelFilter || rowResize) {
-        panelPos.isResizable = false;
-        panelPos.isDraggable = false;
-        panelPos.w = overrideWidth;
-        panelPos.x = (count % overrideCols) * overrideWidth;
-        panelPos.y = Math.floor(count / overrideCols);
-        count++;
+
+        // Rows will be treated differently.
+        // They will not be filtered and won't
+        // be resized
+        if (panel.type === 'row') {
+          // If we're not on the first
+          // column then go to the next
+          // row
+          if (x !== 0) {
+            x = 0;
+            y++;
+          }
+          panelPos.x = x;
+          panelPos.y = y;
+          y++;
+        } else {
+          // Skip if this non-row panel doesn't
+          // match the title filter
+          if (panelFilter && !panelFilter.test(panel.title)) {
+            continue
+          }
+
+          panelPos.w = overrideWidth;
+          panelPos.x = x;
+          panelPos.y = y;
+          x += overrideWidth;
+          if (x >= GRID_COLUMN_COUNT) {
+            x = 0;
+            y++;
+          }
+        }
       }
 
       layout.push(panelPos);
@@ -314,7 +335,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
         </GrafanaGridItem>
       );
 
-      if (!panelFilter || panelFilter.test(panel.title)) {
+      if (!panelFilter || panelFilter.test(panel.title) || panel.type === 'row') {
         panelElements.push(p);
       }
     }
