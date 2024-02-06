@@ -43,7 +43,6 @@ Team LBAC is available on Cloud for data sources created with basic authenticati
 1. Define Label Selector for the Rule
    - Add a label selector to the rule. Refer to Loki query documentation for guidance on the types of log selections you can specify.
 
-
 #### Best practices
 
 We recommend you only add team LBAC permissions for teams that should use the data source and remove default `Viewer` and `Editor` query permissions.
@@ -115,4 +114,3 @@ A user that is part of Team A will have access to logs that match `namespace="de
 A user that is part of Team A and part of Team B will have access to logs that match `namespace="dev"`.
 
 A user that is not part of Team A and part of Team B, that is `Editor` or `Viewer` will have access to all logs (due to the query permission for the user).
-

@@ -1,8 +1,6 @@
 ---
 aliases:
-  - ../../../enterprise/activate-aws-marketplace-license/activate-license-on-ecs/
-  - ../../../enterprise/license/activate-aws-marketplace-license/activate-license-on-ecs/
-description: Configure Team LBAC for Loki data soure on Grafana Cloud
+description: Configure Team LBAC for Loki data source on Grafana Cloud
 keywords:
   - grafana
   - ecs
@@ -20,18 +18,14 @@ weight: 250
 
 # Configure Team LBAC for Loki data source on Grafana Cloud
 
-{{% alert title="Creating Team LBAC rules is available for preview for logs with Loki in Grafana Cloud." color="warning" %}}
-
-Report any unexpected behavior to the Grafana Support team.
-
-{{% /alert %}}
-
-Team LBAC is available on Cloud for data sources created with basic authentication. Any managed Loki data source can **NOT** be configured with Team LBAC rules.
+Team LBAC is available in private preview on Grafana Cloud for Loki created with basic authentication. Managed Loki data source can **NOT** be configured with Team LBAC rules. We recommend creating a new one.
 
 ## Before you begin
 
-- Be sure that you have the permission setup to create a loki tenant in Grafana Cloud 
+- Be sure that you have the permission setup to create a loki tenant in Grafana Cloud
 - Be sure that you have admin data source permissions for Grafana.
+
+To be able to use Team LBAC rules, you need to enable the feature toggle `teamHTTPHeaders` on your Grafana instance. Contact support to enable the feature toggle for you.
 
 ## Task 1: Configure Team LBAC for a new Loki data source
 
