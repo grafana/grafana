@@ -114,14 +114,12 @@ export interface FeatureToggles {
   dashgpt?: boolean;
   reportingRetries?: boolean;
   sseGroupByDatasource?: boolean;
-  requestInstrumentationStatusSource?: boolean;
   libraryPanelRBAC?: boolean;
   lokiRunQueriesInParallel?: boolean;
   wargamesTesting?: boolean;
   alertingInsights?: boolean;
   externalCorePlugins?: boolean;
   pluginsAPIMetrics?: boolean;
-  httpSLOLevels?: boolean;
   idForwarding?: boolean;
   cloudWatchWildCardDimensionValues?: boolean;
   externalServiceAccounts?: boolean;
