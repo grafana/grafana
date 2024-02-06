@@ -303,15 +303,16 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 			args = append(args, q.UID, q.OrgID)
 		}
 
-		if q.FolderUIDs != nil {
-			sql.WriteString(" AND uid IN (?")
-			for range q.FolderUIDs[1:] {
-				sql.WriteString(", ?")
-			}
-			sql.WriteString(")")
-			for _, uid := range q.FolderUIDs {
+		if len(q.FolderUIDs) > 0 {
+			sql.WriteString(" AND uid IN (")
+			for i, uid := range q.FolderUIDs {
+				if i > 0 {
+					sql.WriteString(", ")
+				}
+				sql.WriteString("?")
 				args = append(args, uid)
 			}
+			sql.WriteString(")")
 		}
 		sql.WriteString(" ORDER BY title ASC")
 
