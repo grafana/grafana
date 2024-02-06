@@ -407,7 +407,7 @@ func schema_pkg_apis_peakq_v0alpha1_VariableReplacement(ref common.ReferenceCall
 				Properties: map[string]spec.Schema{
 					"path": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Path is the location of the property within the the target properties. The format for this is not figured out yet (Maybe JSONPath?). Idea: [\"string\", int, \"string\"] where int indicates array offset",
+							Description: "Path is the location of the property within a target. The format for this is not figured out yet (Maybe JSONPath?). Idea: [\"string\", int, \"string\"] where int indicates array offset",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
