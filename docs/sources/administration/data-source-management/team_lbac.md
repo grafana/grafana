@@ -1,27 +1,25 @@
 ---
 aliases:
-  - ../datasources/datasource_permissions/team_lbac
-  - ../datasources/datasource_permissions/teamlbac
-  - ../enterprise/datasource_permissions/team_lbac
-  - ../enterprise/datasource_permissions/teamlbac
-  - ../permissions/datasource_permissions/team_lbac
-  - ../permissions/datasource_permissions/teamlbac
-description: Data source permissions for Teams for Grafana administrators
+description: Label based data access for Loki given Teams
 labels:
   products:
     - enterprise
     - cloud
-title: Data source permissions for Team LBAC
+title: Team LBAC
 weight: 100
 ---
 
 # Team LBAC
 
-Grafana's new Team LBAC (Label-Based Access Control) feature for Loki is a significant enhancement that simplifies and streamlines data source access management based on team memberships. Users wanting fine grained access to data sources such as Loki with `X` amount of teams with different levels of access can make use of Team LBAC.
+Grafana's new Team LBAC (Label Based Access Control) feature for Loki is a significant enhancement that simplifies and streamlines data source access management based on team memberships. Users wanting fine grained access to their logs in Loki, can now configure their users access based on their team memberships.
 
-In short LBAC stands for Label-Based Access Control. It is a way to control access to data based on labels. In the context of Loki, it is a way to control access to logs based on labels.
+**LBAC**
+control access to data based on labels. In the context of Loki, it is a way to control access to logs based on labels. Users wanting fine grained access to their logs in Loki, can now configure their users access based on their team memberships via **LogQL**.
 
-This feature addresses a common challenge faced by Grafana users: managing Loki data source access for different teams. Previously, this led to the creation of numerous connections and duplicate dashboards, hampering scalability and user experience. With Team LBAC, users can now configure access to specific labels based solely on team memberships.
+This feature addresses two common challenge faced by Grafana users:
+
+1. High volume of Grafana Cloud datasource. Team LBAC lets Grafana Admins reduce the total volume of data sources per instance from hundreds, to one.
+1. Hard for teams to share dashboard. Team LBAC lets Grafana Teams share the same dashboard despite different access control rules.
 
 ## Team LBAC rules
 
