@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 
 import { StandardEditorProps, FieldNamePickerBaseNameMode, StandardEditorsRegistryItem } from '@grafana/data';
+import { getFrameDisplayName, getSingleLabelName } from '@grafana/data/src/field/fieldState';
 
 import { ScatterSeriesEditor } from './ScatterSeriesEditor';
 import { Options, ScatterSeriesConfig, defaultFieldConfig } from './panelcfg.gen';
@@ -22,20 +23,13 @@ export const DynamicEditor = ({
       // loop through frames
       // create series for each frame
       const newSeries: ScatterSeriesConfig[] = [];
+      const labelName = getSingleLabelName(context.data) ?? undefined;
       context.data.map((val, index) => {
-        // check for labels, use first one found (for now)
-        let label = undefined;
-        // TODO turn this into a traditional for loop so we can break out
-        val.fields.map((field) => {
-          if (field.labels) {
-            label = Object.values(field.labels)[0];
-          }
-        });
         newSeries.push({
           pointColor: undefined,
           pointSize: defaultFieldConfig.pointSize,
           // TODO consider naming based on Query ref instead of series
-          name: label ?? `Series ${index + 1}`,
+          name: getFrameDisplayName(val, index, labelName),
           frame: index,
         });
       });
