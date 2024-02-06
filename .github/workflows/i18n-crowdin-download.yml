@@ -47,6 +47,8 @@ jobs:
           config: 'crowdin.yml'
           source: 'public/locales/en-US/grafana.json'
           translation: 'public/locales/%locale%/%original_file_name%'
+          github_user_name: "github-actions[bot]"
+          github_user_email: "41898282+github-actions[bot]@users.noreply.github.com"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
