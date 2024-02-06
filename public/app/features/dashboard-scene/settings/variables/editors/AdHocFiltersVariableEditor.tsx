@@ -33,13 +33,6 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     };
 
     filterSet.setState({ datasource: dsRef });
-
-    const newFilterSet = new AdHocFilterSet({
-      ...variable.state,
-      datasource: dsRef,
-    });
-
-    variable.setState({ set: newFilterSet });
   };
 
   return <AdHocVariableForm datasource={datasource} infoText={message} onDataSourceChange={onDataSourceChange} />;

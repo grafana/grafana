@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { DataSourceRef } from '@grafana/schema';
 import { Alert, Field } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
@@ -21,7 +22,13 @@ export function AdHocVariableForm({ datasource, infoText, onDataSourceChange }: 
         <DataSourcePicker current={datasource} onChange={onDataSourceChange} width={30} variables={true} noDefault />
       </Field>
 
-      {infoText ? <Alert title={infoText} severity="info" /> : null}
+      {infoText ? (
+        <Alert
+          title={infoText}
+          severity="info"
+          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.infoText}
+        />
+      ) : null}
     </>
   );
 }
