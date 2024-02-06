@@ -465,8 +465,8 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	return &ModuleServer{}, nil
 }
 
-// Initalize a component that will create apiservers
+// Initialize the standalone APIServer factory
 func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 	wire.Build(wireExtsStandaloneAPIServerSet)
-	return &standalone.DummyAPIFactory{}, nil
+	return &standalone.DummyAPIFactory{}, nil // Wire will replace this with a real interface
 }
