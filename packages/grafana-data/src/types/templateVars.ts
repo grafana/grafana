@@ -70,10 +70,6 @@ export interface GroupByVariableModel extends BaseVariableModel {
   type: 'groupby';
   datasource: DataSourceRef | null;
   groupByKeys: string[];
-  /**
-   * Filters that are always applied to the lookup of keys. Not shown in the AdhocFilterBuilder UI.
-   */
-  baseFilters?: AdHocVariableFilter[];
   defaultOptions?: MetricFindValue[];
   multi: true;
 }
