@@ -413,6 +413,8 @@
     "ngtemplate-loader/loader-utils": "^2.0.0",
     "semver@~7.0.0": "7.5.4",
     "semver@7.3.4": "7.5.4",
+    "debug@npm:^0.7.2": "2.6.9",
+    "debug@npm:^0.7.4": "2.6.9",
     "slate-dev-environment@^0.2.2": "patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch",
     "react-split-pane@0.1.92": "patch:react-split-pane@npm:0.1.92#.yarn/patches/react-split-pane-npm-0.1.92-93dbf51dff.patch",
     "@storybook/blocks@7.4.5": "patch:@storybook/blocks@npm%3A7.4.5#./.yarn/patches/@storybook-blocks-npm-7.4.5-5a2374564a.patch",
