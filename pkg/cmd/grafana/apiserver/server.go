@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
-	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -72,12 +71,12 @@ func (o *APIServerOptions) loadAPIGroupBuilders(runtime []apiConfig) error {
 					&actest.FakeAccessControl{ExpectedEvaluate: false},
 				),
 			)
-		case "testdata.datasource.grafana.app":
-			ds, err := server.InitializeDataSourceAPIServer(gv.group)
-			if err != nil {
-				return err
-			}
-			o.builders = append(o.builders, ds)
+		// case "testdata.datasource.grafana.app":
+		// 	ds, err := server.InitializeDataSourceAPIServer(gv.group)
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// 	o.builders = append(o.builders, ds)
 		default:
 			return fmt.Errorf("unsupported runtime-config: %v", gv)
 		}

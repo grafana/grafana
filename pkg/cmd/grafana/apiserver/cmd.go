@@ -29,6 +29,8 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 				return err
 			}
 
+			//server.InitializeDataSourceAPIServer()
+
 			// Load each group from the args
 			if err := o.loadAPIGroupBuilders(apis); err != nil {
 				return err
