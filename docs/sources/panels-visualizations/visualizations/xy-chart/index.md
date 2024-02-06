@@ -13,43 +13,72 @@ labels:
     - enterprise
     - oss
 description: Configure options for Grafana's xy chart
-title: Xy chart
+title: XY chart
 weight: 100
 ---
 
-# Xy chart
+# XY chart
 
-<!--add image here-->
-<!--decide on spelling of xy chart-->
+XY charts provide a way to visualize...
 
-Xy charts...
+<!--add brief description here-->
 
-<!--add description/use case here-->
+![An xy chart showing height weight distribution](screenshot-xy-chart-v10.4.png)
 
-## XY Chart options
+<!--add more ideal use cases/examples here-->
+
+## Supported data formats
+
+TBA
+
+## XY chart options
 
 ### Series mapping
 
-- **Table** -
-- **Manual** -
+Set how series data is mapped in the visualization.
+
+<!--i don't understand these descriptions-->
+
+- **Table** - Plot values within a single table result.
+- **Manual** - Construct values from any result. You can add multiple series for which you'll set the **X-field** and **Y-field** options. When you choose this option, the **Point color** and **Point size** fields are also displayed.
 
 ### Data
 
-### X Field
+<!--what is the scenario where you need to choose a data set?-->
 
-### Y Fields
+Select your data set. This option is only available when you set **Series mapping** to **Table** mode.
+
+### X-field
+
+Select which field the x-axis represents.
+
+<!--can we make clear here how this is different when you map your series by table or manual; there seem to be more fields to choose from on manual mode-->
+
+### Y-fields
+
+Select which fields the y-axis represents.
+
+**Table** mode - When you set the series mapping to **Table** mode, you can only update the x-field and the y-fields are automatically assigned based on that selection. In this mode you can enable and disable the **Y-field**.
+
+<!--why would you want to disable the y-field-->
+
+**Manual** mode - When you set series mapping to **Manual**, you can control both the **X-field** and **Y-field** options.
+
+<!--can we make clearer here how this is different when you map your series by table or manual; there seem to be more fields to choose from on manual mode-->
 
 ### Show
 
-- **Points** -
-- **Lines** -
-- **Both** -
+Set how values are represented in the visualization.
 
-### Line style
+- **Points** - Display values as points. When you select this option, the [Point size](#point-size) option is also displayed.
+- **Lines** - Display values as lines. When you select this option, the [line style](#line-style) and [line width](#line-width) options are also displayed.
+- **Both** - Display values as both points and lines.
 
-- **Solid** -
-- **Dash** -
-- **Dots** -
+### Point size
+
+<!--how do we differentiate this setting from the one that's displayed when you set the series mapping to manual-->
+
+Set the size of the points, from 1 to 40 pixels in diameter.
 
 ### Line style
 
@@ -61,19 +90,9 @@ Set the style of the line. To change the color, use the standard [color scheme][
 - **Dash:** Display a dashed line. When you choose this option, a list appears for you to select the length and gap (length, gap) for the line dashes. Dash spacing set to 10, 10 (default).
 - **Dots:** Display dotted lines. When you choose this option, a list appears for you to select the gap (length = 0, gap) for the dot spacing. Dot spacing set to 0, 10 (default)
 
-![Line styles examples](/static/img/docs/time-series-panel/line-styles-examples-v9.png)
-
-{{< docs/shared lookup="visualizations/connect-null-values.md" source="grafana" version="<GRAFANA VERSION>" >}}
-
-{{< docs/shared lookup="visualizations/disconnect-values.md" source="grafana" version="<GRAFANA VERSION>" >}}
-
 ### Line width
 
-### Point color
-
-### Point size
-
-Set the size of the points, from 1 to 40 pixels in diameter.
+Set the width of the lines, from 1 to 10 pixels.
 
 ## Tooltip options
 
@@ -183,8 +202,6 @@ Learn about [data links][] that you can set for a visualization.
 ### Field overrides
 
 Learn about [field overrides][Configure field overrides] that you can set for a visualization.
-
-## Docs refs
 
 {{% docs/reference %}}
 [Color scheme]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options#color-scheme"
