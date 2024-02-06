@@ -3,8 +3,8 @@ import React from 'react';
 import { useAsync, useToggle } from 'react-use';
 
 import { PanelModel } from '@grafana/data';
+import { Dashboard } from '@grafana/schema';
 import { Alert, Collapse, Column, InteractiveTable, TextLink } from '@grafana/ui';
-import { DashboardModel } from 'app/features/dashboard/state';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { DashboardDataDTO, DashboardRoutes } from 'app/types';
 
@@ -12,7 +12,7 @@ import { makePanelLink } from '../utils/misc';
 
 interface DeprecationNoticeProps {
   dashboardUid?: string;
-  dashboardModel?: DashboardModel;
+  dashboardModel?: Dashboard;
 }
 
 export default function LegacyAlertsDeprecationNotice({ dashboardUid, dashboardModel }: DeprecationNoticeProps) {
@@ -57,9 +57,17 @@ export default function LegacyAlertsDeprecationNotice({ dashboardUid, dashboardM
   return <LegacyAlertsWarning dashboardUid={dashboardData.uid} panels={panelsWithLegacyAlerts} />;
 }
 
+/**
+ * This function uses two different ways to detect legacy alerts based on what dashboard system is being used.
+ *
+ * 1. if using the older (non-scenes) dashboard system we can simply check for "alert" in the panel definition.
+ * 2. for dashboard scenes the alerts are no longer added to the model but we can check for "alertThreshold" in the panel options object
+ */
 function getLegacyAlertPanelsFromDashboard(dashboard: DashboardDataDTO): PanelModel[] {
   const panelsWithLegacyAlerts = dashboard.panels?.filter((panel: PanelModel) => {
-    return 'alert' in panel;
+    const hasAlertDefinition = 'alert' in panel;
+    const hasAlertThreshold = 'alertThreshold' in panel.options;
+    return hasAlertDefinition || hasAlertThreshold;
   });
 
   return panelsWithLegacyAlerts ?? [];
