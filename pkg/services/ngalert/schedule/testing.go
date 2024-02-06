@@ -2,10 +2,15 @@ package schedule
 
 import (
 	"context"
+	"slices"
+	"sync"
 	"testing"
 	"time"
 
+	definitions "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	mock "github.com/stretchr/testify/mock"
 )
 
 // waitForTimeChannel blocks the execution until either the channel ch has some data or a timeout of 10 second expires.
@@ -80,4 +85,27 @@ func (f *fakeRulesStore) DeleteRule(rules ...*models.AlertRule) {
 
 func (f *fakeRulesStore) getNamespaceTitle(uid string) string {
 	return "TEST-FOLDER-" + uid
+}
+
+type SyncAlertsSenderMock struct {
+	*AlertsSenderMock
+	mu sync.Mutex
+}
+
+func NewSyncAlertsSenderMock() *SyncAlertsSenderMock {
+	return &SyncAlertsSenderMock{
+		AlertsSenderMock: new(AlertsSenderMock),
+	}
+}
+
+func (m *SyncAlertsSenderMock) Send(ctx context.Context, key ngmodels.AlertRuleKey, alerts definitions.PostableAlerts) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.AlertsSenderMock.Send(ctx, key, alerts)
+}
+
+func (m *SyncAlertsSenderMock) Calls() []mock.Call {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return slices.Clone(m.AlertsSenderMock.Calls)
 }
