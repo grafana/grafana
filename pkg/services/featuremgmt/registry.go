@@ -731,7 +731,7 @@ var (
 		{
 			Name:              "splitScopes",
 			Description:       "Support faster dashboard and folder search by splitting permission scopes into parts",
-			Stage:             FeatureStageGeneralAvailability,
+			Stage:             FeatureStageDeprecated,
 			FrontendOnly:      false,
 			Expression:        "true", // enabled by default
 			Owner:             identityAccessTeam,
@@ -819,14 +819,6 @@ var (
 			Created:     time.Date(2023, time.September, 7, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:         "requestInstrumentationStatusSource",
-			Description:  "Include a status source label for request metrics and logs",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaPluginsPlatformSquad,
-			Created:      time.Date(2023, time.September, 11, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:            "libraryPanelRBAC",
 			Description:     "Enables RBAC support for library panels",
 			Stage:           FeatureStageExperimental,
@@ -878,15 +870,6 @@ var (
 			Created:      time.Date(2023, time.September, 21, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:            "httpSLOLevels",
-			Description:     "Adds SLO level to http request metrics",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           hostedGrafanaTeam,
-			RequiresRestart: true,
-			Created:         time.Date(2023, time.September, 22, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:        "idForwarding",
 			Description: "Generate signed id token for identity that can be forwarded to plugins and external services",
 			Stage:       FeatureStageExperimental,
@@ -903,11 +886,12 @@ var (
 			Created:        time.Date(2023, time.September, 27, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:        "externalServiceAccounts",
-			Description: "Automatic service account and token setup for plugins",
-			Stage:       FeatureStagePrivatePreview,
-			Owner:       identityAccessTeam,
-			Created:     time.Date(2023, time.September, 28, 12, 0, 0, 0, time.UTC),
+			Name:              "externalServiceAccounts",
+			Description:       "Automatic service account and token setup for plugins",
+			HideFromAdminPage: true,
+			Stage:             FeatureStagePublicPreview,
+			Owner:             identityAccessTeam,
+			Created:           time.Date(2023, time.September, 28, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "panelMonitoring",
