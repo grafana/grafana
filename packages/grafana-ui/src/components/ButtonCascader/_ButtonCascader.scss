@@ -127,13 +127,13 @@
         &:after {
           background: $text-color-weak;
           content: '';
-          height: 32px;
+          height: 24px;
           mask: url(../img/icons/unicons/angle-right.svg);
           mask-type: luminance;
           position: absolute;
           right: 0px;
-          top: 0;
-          width: 32px;
+          top: calc((32px - 24px) / 2);
+          width: 24px;
         }
       }
     }
