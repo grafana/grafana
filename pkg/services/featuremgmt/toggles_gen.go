@@ -99,10 +99,6 @@ const (
 	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
 	FlagTopnav = "topnav"
 
-	// FlagDockedMegaMenu
-	// Enable support for a persistent (docked) navigation menu
-	FlagDockedMegaMenu = "dockedMegaMenu"
-
 	// FlagReturnToPrevious
 	// Enables the return to previous context functionality
 	FlagReturnToPrevious = "returnToPrevious"
@@ -246,10 +242,6 @@ const (
 	// FlagEnableElasticsearchBackendQuerying
 	// Enable the processing of queries and responses in the Elasticsearch data source through backend
 	FlagEnableElasticsearchBackendQuerying = "enableElasticsearchBackendQuerying"
-
-	// FlagAdvancedDataSourcePicker
-	// Enable a new data source picker with contextual information, recently used order and advanced mode
-	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
 
 	// FlagFaroDatasourceSelector
 	// Enable the data source selector within the Frontend Apps section of the Frontend Observability

@@ -204,14 +204,6 @@ var (
 			Created:     time.Date(2022, time.June, 20, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:         "dockedMegaMenu",
-			Description:  "Enable support for a persistent (docked) navigation menu",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaFrontendPlatformSquad,
-			Created:      time.Date(2023, time.September, 18, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:         "returnToPrevious",
 			Description:  "Enables the return to previous context functionality",
 			Stage:        FeatureStageExperimental,
@@ -508,17 +500,6 @@ var (
 			Expression:     "true", // enabled by default
 			AllowSelfServe: true,
 			Created:        time.Date(2023, time.April, 14, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:              "advancedDataSourcePicker",
-			Description:       "Enable a new data source picker with contextual information, recently used order and advanced mode",
-			Stage:             FeatureStageGeneralAvailability,
-			FrontendOnly:      true,
-			Expression:        "true", // enabled by default
-			Owner:             grafanaDashboardsSquad,
-			AllowSelfServe:    false,
-			HideFromAdminPage: true,
-			Created:           time.Date(2023, time.April, 14, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "faroDatasourceSelector",

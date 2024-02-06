@@ -41,7 +41,6 @@ export interface FeatureToggles {
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
   topnav?: boolean;
-  dockedMegaMenu?: boolean;
   returnToPrevious?: boolean;
   grpcServer?: boolean;
   unifiedStorage?: boolean;
@@ -78,7 +77,6 @@ export interface FeatureToggles {
   externalServiceAuth?: boolean;
   refactorVariablesTimeRange?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
-  advancedDataSourcePicker?: boolean;
   faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
   extraThemes?: boolean;
