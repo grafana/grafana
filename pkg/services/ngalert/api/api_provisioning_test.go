@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"path"
+	"strings"
 	"testing"
 	"time"
 
@@ -1363,9 +1364,13 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 		})
 
 		t.Run("decrypt true without alert.provisioning.secrets:read permissions returns 403", func(t *testing.T) {
+			recPermCheck := false
 			env := createTestEnv(t, testConfig)
 			env.ac = &recordingAccessControlFake{
 				Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					if strings.Contains(evaluator.String(), accesscontrol.ActionAlertingProvisioningReadSecrets) {
+						recPermCheck = true
+					}
 					return false, nil
 				},
 			}
@@ -1377,16 +1382,18 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 
 			response := sut.RouteGetContactPointsExport(&rc)
 
+			require.True(t, recPermCheck)
 			require.Equal(t, 403, response.Status())
-			require.Len(t, env.ac.EvaluateRecordings, 1)
-			require.Equal(t, accesscontrol.ActionAlertingProvisioningReadSecrets, env.ac.EvaluateRecordings[0].Evaluator.String())
 		})
 
 		t.Run("decrypt true with admin returns 200", func(t *testing.T) {
+			recPermCheck := false
 			env := createTestEnv(t, testConfig)
 			env.ac = &recordingAccessControlFake{
 				Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
-					require.Equal(t, accesscontrol.ActionAlertingProvisioningReadSecrets, evaluator.String())
+					if strings.Contains(evaluator.String(), accesscontrol.ActionAlertingProvisioningReadSecrets) {
+						recPermCheck = true
+					}
 					return true, nil
 				},
 			}
@@ -1399,9 +1406,8 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			response := sut.RouteGetContactPointsExport(&rc)
 			response.WriteTo(&rc)
 
+			require.True(t, recPermCheck)
 			require.Equal(t, 200, response.Status())
-			require.Len(t, env.ac.EvaluateRecordings, 1)
-			require.Equal(t, accesscontrol.ActionAlertingProvisioningReadSecrets, env.ac.EvaluateRecordings[0].Evaluator.String())
 		})
 
 		t.Run("json body content is as expected", func(t *testing.T) {

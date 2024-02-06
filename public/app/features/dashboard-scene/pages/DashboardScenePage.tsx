@@ -12,9 +12,11 @@ import { getDashboardScenePageStateManager } from './DashboardScenePageStateMana
 
 export interface Props extends GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> {}
 
-export function DashboardScenePage({ match, route, queryParams }: Props) {
+export function DashboardScenePage({ match, route, queryParams, history }: Props) {
   const stateManager = getDashboardScenePageStateManager();
   const { dashboard, isLoading, loadError } = stateManager.useState();
+  // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
+  const routeReloadCounter = (history.location.state as any)?.routeReloadCounter;
 
   useEffect(() => {
     if (route.routeName === DashboardRoutes.Normal && match.params.type === 'snapshot') {
@@ -30,7 +32,15 @@ export function DashboardScenePage({ match, route, queryParams }: Props) {
     return () => {
       stateManager.clearState();
     };
-  }, [stateManager, match.params.uid, route.routeName, queryParams.folderUid, match.params.slug, match.params.type]);
+  }, [
+    stateManager,
+    match.params.uid,
+    route.routeName,
+    queryParams.folderUid,
+    routeReloadCounter,
+    match.params.slug,
+    match.params.type,
+  ]);
 
   if (!dashboard) {
     return (

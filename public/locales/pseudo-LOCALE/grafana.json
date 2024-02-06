@@ -108,6 +108,9 @@
       "dark-theme": "Đäřĸ",
       "light-theme": "Ŀįģĥŧ"
     },
+    "empty-state": {
+      "title": "Ńő řęşūľŧş ƒőūŉđ"
+    },
     "search-box": {
       "placeholder": "Ŝęäřčĥ őř ĵūmp ŧő..."
     },
@@ -879,9 +882,6 @@
     "org-settings": {
       "subtitle": "Mäŉäģę přęƒęřęŉčęş äčřőşş äŉ őřģäŉįžäŧįőŉ",
       "title": "Đęƒäūľŧ přęƒęřęŉčęş"
-    },
-    "performance-testing": {
-      "title": "Pęřƒőřmäŉčę ŧęşŧįŉģ"
     },
     "playlists": {
       "subtitle": "Ğřőūpş őƒ đäşĥþőäřđş ŧĥäŧ äřę đįşpľäyęđ įŉ ä şęqūęŉčę",
