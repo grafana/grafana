@@ -1,8 +1,11 @@
 import { css, cx } from '@emotion/css';
+import { BaseQueryFn, QueryDefinition } from '@reduxjs/toolkit/dist/query';
+import { QueryActionCreatorResult } from '@reduxjs/toolkit/dist/query/core/buildInitiate';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { BackendSrvRequest } from '@grafana/runtime';
 import {
   ActionMeta,
   Field,
@@ -16,6 +19,7 @@ import {
 } from '@grafana/ui';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { createUrl } from 'app/features/alerting/unified/utils/url';
+import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { ContactPointWithMetadata } from '../../../../contact-points/utils';
 
@@ -27,7 +31,19 @@ export interface ContactPointSelectorProps {
     description: React.JSX.Element;
   }>;
   onSelectContactPoint: (contactPoint?: ContactPointWithMetadata) => void;
-  refetchReceivers: () => Promise<unknown>;
+  refetchReceivers: () => QueryActionCreatorResult<
+    QueryDefinition<
+      string,
+      BaseQueryFn<BackendSrvRequest>,
+      | 'AlertmanagerChoice'
+      | 'AlertmanagerConfiguration'
+      | 'OnCallIntegrations'
+      | 'OrgMigrationState'
+      | 'DataSourceSettings',
+      AlertManagerCortexConfig,
+      'alertingApi'
+    >
+  >;
 }
 
 export function ContactPointSelector({
