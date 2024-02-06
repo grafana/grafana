@@ -822,7 +822,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:    "Integer Telegram Message Thread Identifier",
 					PropertyName:   "message_thread_id",
 					Required:       false,
-					ValidationRule: "^-?[0-9]{10}$",
+					ValidationRule: "-?[0-9]{1,10}",
 				},
 				{ // New in 8.0.
 					Label:        "Message",
