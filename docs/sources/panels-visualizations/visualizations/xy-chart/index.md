@@ -174,7 +174,7 @@ Learn about [panel options][] that you can set for a visualization.
 
 ### Standard options
 
-Learn about [standard options][Configure standard options] that you can set for a visualization.
+Learn about [standard options][] that you can set for a visualization.
 
 ### Data links
 
@@ -182,7 +182,7 @@ Learn about [data links][] that you can set for a visualization.
 
 ### Field overrides
 
-Learn about [field overrides][] that you can set for a visualization.
+Learn about [field overrides][Configure field overrides] that you can set for a visualization.
 
 ## Docs refs
 
@@ -205,9 +205,9 @@ Learn about [field overrides][] that you can set for a visualization.
 [panel options]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-panel-options"
 [panel options]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-panel-options"
 
+[standard options]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-standard-options"
+[standard options]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-standard-options"
+
 [data links]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-data-links"
 [data links]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-data-links"
-
-[field overrides]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/configure-overrides"
-[field overrides]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides"
 {{% /docs/reference %}}
