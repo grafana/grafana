@@ -108,6 +108,9 @@
       "dark-theme": "Dark",
       "light-theme": "Light"
     },
+    "empty-state": {
+      "title": "No results found"
+    },
     "search-box": {
       "placeholder": "Search or jump to..."
     },
