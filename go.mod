@@ -61,7 +61,7 @@ require (
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20240123184432-1d58deb6074c // @grafana/alerting-squad-backend
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
-	github.com/grafana/grafana-aws-sdk v0.19.1 // @grafana/aws-datasources
+	github.com/grafana/grafana-aws-sdk v0.23.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.12.0 // @grafana/partner-datasources
 	github.com/grafana/grafana-plugin-sdk-go v0.206.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
@@ -258,7 +258,7 @@ require (
 	github.com/dave/dst v0.27.2 // @grafana/grafana-as-code
 	github.com/go-jose/go-jose/v3 v3.0.1 // @grafana/grafana-authnz-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
-	github.com/grafana/dataplane/sdata v0.0.6 // @grafana/observability-metrics
+	github.com/grafana/dataplane/sdata v0.0.7 // @grafana/observability-metrics
 	github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 //  @grafana/grafana-as-code
 	github.com/grafana/tempo v1.5.1-0.20230524121406-1dc1bfe7085b // @grafana/observability-traces-and-profiling
 	github.com/grafana/thema v0.0.0-20230712153715-375c1b45f3ed // @grafana/grafana-as-code
@@ -344,7 +344,6 @@ require (
 	github.com/google/s2a-go v0.1.7 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/grafana/regexp v0.0.0-20221123153739-15dc172cd2db // indirect
-	github.com/grafana/sqlds/v2 v2.3.10 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.2 // indirect
@@ -482,6 +481,16 @@ require (
 )
 
 require k8s.io/code-generator v0.29.1 // @grafana/grafana-app-platform-squad
+
+require (
+	github.com/grafana/sqlds/v3 v3.2.0 // indirect
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
+	github.com/mithrandie/csvq v1.17.10 // indirect
+	github.com/mithrandie/csvq-driver v1.6.8 // indirect
+	github.com/mithrandie/go-file/v2 v2.1.0 // indirect
+	github.com/mithrandie/go-text v1.5.4 // indirect
+	github.com/mithrandie/ternary v1.1.1 // indirect
+)
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
 replace github.com/crewjam/saml => github.com/grafana/saml v0.4.15-0.20231025143828-a6c0e9b86a4c
