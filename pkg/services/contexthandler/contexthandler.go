@@ -209,6 +209,9 @@ func WithAuthHTTPHeaders(ctx context.Context, cfg *setting.Cfg) context.Context 
 	// used by basic auth, api keys and potentially jwt auth
 	list.Items = append(list.Items, "Authorization")
 
+	// remove X-Grafana-Device-Id as it is only used for auth in authn clients.
+	list.Items = append(list.Items, "X-Grafana-Device-Id")
+
 	// if jwt is enabled we add it to the list. We can ignore in case it is set to Authorization
 	if cfg.JWTAuthEnabled && cfg.JWTAuthHeaderName != "" && cfg.JWTAuthHeaderName != "Authorization" {
 		list.Items = append(list.Items, cfg.JWTAuthHeaderName)
