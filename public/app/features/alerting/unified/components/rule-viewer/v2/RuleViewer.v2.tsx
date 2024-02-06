@@ -219,7 +219,7 @@ export const Title = ({ name, state, health, ruleType }: TitleProps) => {
   return (
     <div className={styles.title}>
       <LinkButton variant="secondary" icon="angle-left" href="/alerting/list" />
-      <Text element="h1" truncate>
+      <Text variant="h1" truncate>
         {name}
       </Text>
       {/* recording rules won't have a state */}
