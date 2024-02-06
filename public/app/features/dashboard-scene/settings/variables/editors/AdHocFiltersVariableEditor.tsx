@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { AdHocFilterSet, AdHocFiltersVariable } from '@grafana/scenes';
+import { AdHocFiltersVariable } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
 import { AdHocVariableForm } from '../components/AdHocVariableForm';
