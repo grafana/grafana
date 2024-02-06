@@ -3,11 +3,10 @@ import { isEqual } from 'lodash';
 import { AdHocVariableModel, TypedVariableModel } from '@grafana/data';
 import { Dashboard } from '@grafana/schema';
 
+import { DashboardChangeInfo } from '../saving/shared';
 import { DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { jsonDiff } from '../settings/version-history/utils';
-
-import { DashboardChangeInfo } from './shared';
 
 export function getSaveDashboardChange(
   dashboard: DashboardScene,

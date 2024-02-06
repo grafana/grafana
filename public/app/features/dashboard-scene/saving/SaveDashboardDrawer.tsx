@@ -5,11 +5,11 @@ import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { getSaveDashboardChange } from '../utils/getSaveDashboardChange';
 
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
-import { getSaveDashboardChange } from './getSaveDashboardChange';
 
 interface SaveDashboardDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;

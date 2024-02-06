@@ -31,7 +31,6 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
-import { getSaveDashboardChange } from '../saving/getSaveDashboardChange';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
@@ -40,6 +39,7 @@ import { isSceneVariableInstance } from '../settings/variables/utils';
 import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { djb2Hash } from '../utils/djb2Hash';
+import { getSaveDashboardChange } from '../utils/getSaveDashboardChange';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import { forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel, isPanelClone } from '../utils/utils';
 
@@ -396,9 +396,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   private detectChanges() {
-    const { hasChanges } = getSaveDashboardChange(this, true, true);
+    const { hasChanges, hasTimeChanges, hasVariableValueChanges } = getSaveDashboardChange(this, true, true);
+    const hasChangesToSave = hasChanges || hasTimeChanges || hasVariableValueChanges;
 
-    if (hasChanges) {
+    if (hasChangesToSave) {
       if (!this.state.isDirty) {
         this.setState({ isDirty: true });
       }

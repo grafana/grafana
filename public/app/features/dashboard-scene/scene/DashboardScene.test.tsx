@@ -9,9 +9,9 @@ import {
   SceneVariableSet,
   TestVariable,
   VizPanel,
-  TextBoxVariable,
+  ConstantVariable,
 } from '@grafana/scenes';
-import { Dashboard } from '@grafana/schema';
+import { Dashboard, DashboardCursorSync } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
@@ -19,8 +19,10 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { historySrv } from '../settings/version-history/HistorySrv';
+import { Diffs } from '../settings/version-history/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
+import { getSaveDashboardChange } from '../utils/getSaveDashboardChange';
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
@@ -28,6 +30,20 @@ import { DashboardScene, DashboardSceneState } from './DashboardScene';
 
 jest.mock('../settings/version-history/HistorySrv');
 jest.mock('../serialization/transformSaveModelToScene');
+jest.mock('../utils/getSaveDashboardChange', () => ({
+  // It compares the initial and changed save models and returns the differences
+  // By default we assume there are differences to have the dirty state test logic tested
+  getSaveDashboardChange: jest.fn(() => ({
+    changedSaveModel: {},
+    initialSaveModel: {},
+    diffs: [],
+    diffCount: 0,
+    hasChanges: true,
+    hasTimeChanges: false,
+    isNew: false,
+    hasVariableValueChanges: false,
+  })),
+}));
 
 describe('DashboardScene', () => {
   describe('DashboardSrv.getCurrent compatibility', () => {
@@ -115,45 +131,21 @@ describe('DashboardScene', () => {
         scene.exitEditMode({ skipConfirm: true });
         expect(sceneGraph.getTimeRange(scene)!.state.timeZone).toBe(prevState);
       });
-      describe('When editing individual variables', () => {
-        it('A change to variable name should set isDirty true', () => {
-          const textBox1 = new TextBoxVariable({
-            name: 'textbox1',
-            value: 'value1',
-          });
 
-          const scene = buildTestScene({
-            $variables: new SceneVariableSet({ variables: [textBox1] }),
-          });
+      it('should not set the state to true if there are not changes detected in the saving model', () => {
+        mockSaveDashboardChange({ hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: false });
+        scene.setState({ title: 'hello' });
+        expect(scene.state.isDirty).toBeFalsy();
+      });
 
-          scene.activate();
-          scene.onEnterEditMode();
-
-          textBox1.setState({ name: 'textBoxNew' });
-          expect(scene.state.isDirty).toBe(true);
-        });
-
-        // TODO: This test is failing because the logic of detecting variable changes in the save drawer (comparison
-        // between saving dashboard jsons) is not using
-        // the same logic as detecting changes in the dashboards settings (comparison between scene state objects ,
-        // previous state and new state).
-        it('A change to variable name is set but return to original name should set isDirty false', () => {
-          const textBox1 = new TextBoxVariable({
-            name: 'textbox1',
-            value: 'value1',
-          });
-
-          const scene = buildTestScene({
-            $variables: new SceneVariableSet({ variables: [textBox1] }),
-          });
-
-          scene.activate();
-          scene.onEnterEditMode();
-
-          textBox1.setState({ name: 'textBoxNew' });
-          textBox1.setState({ name: 'textbox1' });
-          expect(scene.state.isDirty).toBe(false);
-        });
+      it.each([
+        { hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false },
+        { hasChanges: false, hasTimeChanges: true, hasVariableValueChanges: false },
+        { hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: true },
+      ])('should set the state to true if there are changes detected in the saving model', (diffResults) => {
+        mockSaveDashboardChange(diffResults);
+        scene.setState({ title: 'hello' });
+        expect(scene.state.isDirty).toBeTruthy();
       });
     });
   });
@@ -184,6 +176,10 @@ describe('DashboardScene', () => {
   });
 
   describe('When variables change', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
     it('A change to griditem pos should set isDirty true', () => {
       const varA = new TestVariable({ name: 'A', query: 'A.*', value: 'A.AA', text: '', options: [], delayMs: 0 });
       const scene = buildTestScene({
@@ -198,6 +194,42 @@ describe('DashboardScene', () => {
       varA.changeValueTo('A.AB');
 
       expect(eventHandler).toHaveBeenCalledTimes(1);
+    });
+
+    it('A change to a variable "%s" should set isDirty true', () => {
+      mockSaveDashboardChange({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: true });
+      const variable = new TestVariable({ name: 'A' });
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [variable] }),
+      });
+
+      scene.activate();
+      scene.onEnterEditMode();
+
+      variable.setState({ name: 'new-name' });
+
+      expect(variable.state.name).toBe('new-name');
+      expect(scene.state.isDirty).toBe(true);
+    });
+
+    it('A change to variable name is restored to original name should set isDirty back to false', () => {
+      const variable = new TestVariable({ name: 'A' });
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [variable] }),
+      });
+
+      scene.activate();
+      scene.onEnterEditMode();
+
+      mockSaveDashboardChange({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false });
+      variable.setState({ name: 'B' });
+      expect(scene.state.isDirty).toBe(true);
+      mockSaveDashboardChange(
+        // No changes, it is the same name than before comparing saving models
+        { hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: false }
+      );
+      variable.setState({ name: 'A' });
+      expect(scene.state.isDirty).toBe(false);
     });
   });
 
@@ -324,4 +356,25 @@ function getVersionMock(): DecoratedRevisionModel {
     createdDateString: '2017-02-22 20:43:01',
     ageString: '7 years ago',
   };
+}
+
+function mockSaveDashboardChange({
+  hasChanges,
+  hasTimeChanges,
+  hasVariableValueChanges,
+}: {
+  hasChanges: boolean;
+  hasTimeChanges: boolean;
+  hasVariableValueChanges: boolean;
+}) {
+  jest.mocked(getSaveDashboardChange).mockReturnValue({
+    changedSaveModel: {} as Dashboard,
+    initialSaveModel: {} as Dashboard,
+    diffs: {} as Diffs,
+    diffCount: 0,
+    hasChanges,
+    hasTimeChanges,
+    isNew: false,
+    hasVariableValueChanges,
+  });
 }
