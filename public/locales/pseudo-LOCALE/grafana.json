@@ -108,6 +108,9 @@
       "dark-theme": "Đäřĸ",
       "light-theme": "Ŀįģĥŧ"
     },
+    "empty-state": {
+      "title": "Ńő řęşūľŧş ƒőūŉđ"
+    },
     "search-box": {
       "placeholder": "Ŝęäřčĥ őř ĵūmp ŧő..."
     },
@@ -741,6 +744,9 @@
     "authentication": {
       "title": "Åūŧĥęŉŧįčäŧįőŉ"
     },
+    "collector": {
+      "title": "Cőľľęčŧőř"
+    },
     "config": {
       "title": "Åđmįŉįşŧřäŧįőŉ"
     },
@@ -887,6 +893,10 @@
     "plugins": {
       "subtitle": "Ēχŧęŉđ ŧĥę Ğřäƒäŉä ęχpęřįęŉčę ŵįŧĥ pľūģįŉş",
       "title": "Pľūģįŉş"
+    },
+    "private-data-source-connections": {
+      "subtitle": "Qūęřy đäŧä ŧĥäŧ ľįvęş ŵįŧĥįŉ ä şęčūřęđ ŉęŧŵőřĸ ŵįŧĥőūŧ őpęŉįŉģ ŧĥę ŉęŧŵőřĸ ŧő įŉþőūŉđ ŧřäƒƒįč ƒřőm Ğřäƒäŉä Cľőūđ. Ŀęäřŉ mőřę įŉ őūř đőčş.",
+      "title": "Přįväŧę đäŧä şőūřčę čőŉŉęčŧ"
     },
     "profile/notifications": {
       "title": "Ńőŧįƒįčäŧįőŉ ĥįşŧőřy"
