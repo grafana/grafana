@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { DataSourceRef } from '@grafana/schema';
 import { t } from 'app/core/internationalization';
 
@@ -69,7 +70,7 @@ export function BuiltInDataSourceList({
   const filteredResults = grafanaDataSources.filter((ds) => (filter ? filter?.(ds) : true) && !!ds.meta.builtIn);
 
   return (
-    <div className={className} data-testid="built-in-data-sources-list">
+    <div className={className} data-testid={selectors.components.DataSourcePicker.advancedModal.builtInDataSourceList}>
       {filteredResults.map((ds) => {
         return (
           <DataSourceCard
