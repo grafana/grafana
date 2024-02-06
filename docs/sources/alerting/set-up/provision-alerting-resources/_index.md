@@ -14,7 +14,7 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Import and export Grafana Alerting resources
+title: Import and export alerting resources
 weight: 300
 ---
 

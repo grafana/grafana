@@ -13,7 +13,7 @@ labels:
   products:
     - enterprise
     - oss
-title: Use Terraform to manage alerting resources
+title: Use Terraform to provision alerting resources
 weight: 200
 ---
 

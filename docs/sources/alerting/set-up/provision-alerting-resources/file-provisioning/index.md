@@ -14,11 +14,11 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Use file provisioning to manage alerting resources
+title: Use configuration files to provision alerting resources
 weight: 100
 ---
 
-## Use file provisioning to manage alerting resources
+# Use file provisioning to manage alerting resources
 
 Manage your alerting resources using files from disk. When you start Grafana, the data from these files is created in your Grafana system. Grafana adds any new resources you created, updates any that you changed, and deletes old ones.
 

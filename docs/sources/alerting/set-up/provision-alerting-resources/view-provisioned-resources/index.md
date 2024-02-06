@@ -2,7 +2,7 @@
 aliases:
   - ../../provision-alerting-resources/view-provisioned-resources/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/view-provisioned-resources/
-description: Manage provisioned alerting resources in Grafana
+description: Export alerting resources in Grafana
 keywords:
   - grafana
   - alerting
@@ -13,9 +13,9 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Manage provisioned alerting resources
-title: Manage provisioned alerting resources
-weight: 300
+menuTitle: Export alerting resources
+title: Export alerting resources
+weight: 400
 ---
 
 # Manage provisioned alerting resources
