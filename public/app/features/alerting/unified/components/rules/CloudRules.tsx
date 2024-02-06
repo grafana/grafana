@@ -56,16 +56,16 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
       <div className={styles.sectionHeader}>
         <div className={styles.headerRow}>
           <h5>Mimir / Cortex / Loki</h5>
+          {dataSourcesLoading.length ? (
+            <LoadingPlaceholder
+              className={styles.loader}
+              text={`Loading rules from ${dataSourcesLoading.length} ${pluralize('source', dataSourcesLoading.length)}`}
+            />
+          ) : (
+            <div />
+          )}
           <CreateRecordingRuleButton />
         </div>
-        {dataSourcesLoading.length ? (
-          <LoadingPlaceholder
-            className={styles.loader}
-            text={`Loading rules from ${dataSourcesLoading.length} ${pluralize('source', dataSourcesLoading.length)}`}
-          />
-        ) : (
-          <div />
-        )}
       </div>
 
       {pageItems.map(({ group, namespace }) => {

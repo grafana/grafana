@@ -46,6 +46,7 @@ var (
 	users = []user.User{
 		{
 			ID:      1,
+			UID:     "u1",
 			Email:   "viewer1@example.org",
 			Name:    "viewer1",
 			Login:   "viewer1",
@@ -55,6 +56,7 @@ var (
 		},
 		{
 			ID:      2,
+			UID:     "u2",
 			Email:   "viewer2@example.org",
 			Name:    "viewer2",
 			Login:   "viewer2",
@@ -64,6 +66,7 @@ var (
 		},
 		{
 			ID:      3,
+			UID:     "u3",
 			Email:   "editor1@example.org",
 			Name:    "editor1",
 			Login:   "editor1",
@@ -73,6 +76,7 @@ var (
 		},
 		{
 			ID:      4,
+			UID:     "u4",
 			Email:   "admin1@example.org",
 			Name:    "admin1",
 			Login:   "admin1",
@@ -82,6 +86,7 @@ var (
 		},
 		{
 			ID:      5,
+			UID:     "u5",
 			Email:   "editor2@example.org",
 			Name:    "editor2",
 			Login:   "editor2",
@@ -154,9 +159,7 @@ func TestMigrations(t *testing.T) {
 			desc: "with editors can admin",
 			config: &setting.Cfg{
 				EditorsCanAdmin: true,
-				// nolint:staticcheck
-				IsFeatureToggleEnabled: func(key string) bool { return key == "accesscontrol" },
-				Raw:                    ini.Empty(),
+				Raw:             ini.Empty(),
 			},
 			expectedRolePerms: map[string][]rawPermission{
 				"managed:users:1:permissions": {{Action: "teams:read", Scope: team1Scope}},
@@ -262,9 +265,6 @@ func setupTestDB(t *testing.T) *xorm.Engine {
 	mg := migrator.NewMigrator(x, &setting.Cfg{
 		Logger: log.New("acmigration.test"),
 		Raw:    ini.Empty(),
-		IsFeatureToggleEnabled: func(key string) bool {
-			return true
-		},
 	})
 	migrations := &migrations.OSSMigrations{}
 	migrations.AddMigration(mg)
