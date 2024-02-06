@@ -5,9 +5,9 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 // this client wraps the CloudWatch API and handles pagination and the composition of the MetricResponse DTO
@@ -25,7 +25,7 @@ func (l *metricsClient) ListMetricsWithPageLimit(ctx context.Context, params *cl
 	pageNum := 0
 	err := l.ListMetricsPagesWithContext(ctx, params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
 		pageNum++
-		metrics.MAwsCloudWatchListMetrics.Inc()
+		utils.QueriesTotalCounter.WithLabelValues(utils.ListMetricsLabel).Inc()
 		metrics, err := awsutil.ValuesAtPath(page, "Metrics")
 		if err == nil {
 			for idx, metric := range metrics {

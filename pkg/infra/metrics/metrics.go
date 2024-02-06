@@ -81,15 +81,6 @@ var (
 	// MAlertingNotificationSent is a metric counter for how many alert notifications that failed
 	MAlertingNotificationFailed *prometheus.CounterVec
 
-	// MAwsCloudWatchGetMetricStatistics is a metric counter for getting metric statistics from aws
-	MAwsCloudWatchGetMetricStatistics prometheus.Counter
-
-	// MAwsCloudWatchListMetrics is a metric counter for getting list of metrics from aws
-	MAwsCloudWatchListMetrics prometheus.Counter
-
-	// MAwsCloudWatchGetMetricData is a metric counter for getting metric data time series from aws
-	MAwsCloudWatchGetMetricData prometheus.Counter
-
 	// MDBDataSourceQueryByID is a metric counter for getting datasource by id
 	MDBDataSourceQueryByID prometheus.Counter
 
@@ -396,24 +387,6 @@ func init() {
 		Help:      "counter for how many alert notifications have failed",
 		Namespace: ExporterName,
 	}, []string{"type"})
-
-	MAwsCloudWatchGetMetricStatistics = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
-		Name:      "aws_cloudwatch_get_metric_statistics_total",
-		Help:      "counter for getting metric statistics from aws",
-		Namespace: ExporterName,
-	})
-
-	MAwsCloudWatchListMetrics = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
-		Name:      "aws_cloudwatch_list_metrics_total",
-		Help:      "counter for getting list of metrics from aws",
-		Namespace: ExporterName,
-	})
-
-	MAwsCloudWatchGetMetricData = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
-		Name:      "aws_cloudwatch_get_metric_data_total",
-		Help:      "counter for getting metric data time series from aws",
-		Namespace: ExporterName,
-	})
 
 	MDBDataSourceQueryByID = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "db_datasource_query_by_id_total",
@@ -763,9 +736,6 @@ func initMetricVars(reg prometheus.Registerer) {
 		MAlertingResultState,
 		MAlertingNotificationSent,
 		MAlertingNotificationFailed,
-		MAwsCloudWatchGetMetricStatistics,
-		MAwsCloudWatchListMetrics,
-		MAwsCloudWatchGetMetricData,
 		MDBDataSourceQueryByID,
 		LDAPUsersSyncExecutionTime,
 		MRenderingRequestTotal,
