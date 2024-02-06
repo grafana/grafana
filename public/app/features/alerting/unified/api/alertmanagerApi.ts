@@ -11,6 +11,7 @@ import {
   ExternalAlertmanagerConfig,
   ExternalAlertmanagers,
   ExternalAlertmanagersResponse,
+  GrafanaManagedContactPoint,
   Matcher,
 } from '../../../../plugins/datasource/alertmanager/types';
 import { NotifierDTO } from '../../../../types';
@@ -256,6 +257,11 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
           }),
         }));
       },
+    }),
+    // Grafana Managed Alertmanager only
+    getContactPointsList: build.query<GrafanaManagedContactPoint[], void>({
+      //todo change this dto
+      query: () => ({ url: '/api/v1/notifications/receivers' }),
     }),
   }),
 });

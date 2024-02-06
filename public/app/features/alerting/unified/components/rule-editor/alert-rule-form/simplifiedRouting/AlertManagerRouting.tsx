@@ -22,7 +22,12 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
   const styles = useStyles2(getStyles);
 
   const alertManagerName = alertManager.name;
-  const { isLoading, error: errorInContactPointStatus, contactPoints, refetchReceivers } = useContactPointsWithStatus();
+  const {
+    isLoading,
+    error: errorInContactPointStatus,
+    contactPoints,
+    refetchReceivers,
+  } = useContactPointsWithStatus(false);
   const [selectedContactPointWithMetadata, setSelectedContactPointWithMetadata] = useState<
     ContactPointWithMetadata | undefined
   >();
@@ -60,7 +65,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
           alertManager={alertManagerName}
           options={options}
           onSelectContactPoint={onSelectContactPoint}
-          refetchReceivers={refetchReceivers}
+          refetchReceivers={refetchReceivers!} // if we call useContactPointsWithStatus with false, refetchReceivers will not be undefined
         />
       </Stack>
       {selectedContactPointWithMetadata?.grafana_managed_receiver_configs && (
