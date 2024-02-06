@@ -707,6 +707,15 @@ export enum TableCellBackgroundDisplayMode {
 }
 
 /**
+ * When applying conditional formatting to the table determines
+ * whether the formatting is applied either to rows or to columns
+ */
+export enum TableFormattingOrientation {
+  Columns = 'columns',
+  Rows = 'rows',
+}
+
+/**
  * Sort by field state
  */
 export interface TableSortByFieldState {
@@ -922,6 +931,7 @@ export interface TableFieldOptions {
    */
   displayMode?: TableCellDisplayMode;
   filterable?: boolean;
+  formattingOrientation: TableFormattingOrientation.Columns;
   hidden?: boolean; // ?? default is missing or false ??
   /**
    * Hides any header for a column, useful for columns that show some static content or buttons.

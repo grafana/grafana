@@ -11,6 +11,10 @@ TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-backgr
 // or a gradient.
 TableCellBackgroundDisplayMode: "basic" | "gradient" @cuetsy(kind="enum",memberNames="Basic|Gradient")
 
+// When applying conditional formatting to the table determines
+// whether the formatting is applied either to rows or to columns
+TableFormattingOrientation: "rows" | "columns" @cuetsy(kind="enum", memberNames="Rows|Columns")
+
 // Sort by field state
 TableSortByFieldState: {
 	// Sets the display name of the field to sort by
@@ -89,6 +93,7 @@ TableFieldOptions: {
 	// This field is deprecated in favor of using cellOptions
 	displayMode?: TableCellDisplayMode
 	cellOptions: TableCellOptions
+	formattingOrientation: TableFormattingOrientation & "columns"
 	hidden?:     bool // ?? default is missing or false ??
 	inspect: bool | *false
 	filterable?: bool

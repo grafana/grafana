@@ -93,6 +93,18 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           description: 'Enables/disables field filters in table',
           defaultValue: defaultTableFieldOptions.filterable,
         })
+        .addRadio({
+          path: 'formattingOrientation',
+          name: 'Threshold Formatting',
+          description: 'When using thresholds, formatting can be applied to table rows or to table columns',
+          settings: {
+            options: [
+              { label: 'Columns', value: 'columns' },
+              { label: 'Rows', value: 'rows' },
+            ],
+          },
+          defaultValue: defaultTableFieldOptions.formattingOrientation,
+        })
         .addBooleanSwitch({
           path: 'hidden',
           name: 'Hide in table',
