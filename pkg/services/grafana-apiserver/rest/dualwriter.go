@@ -84,14 +84,22 @@ func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValid
 			return nil, err
 		}
 
-		accessor, err := meta.Accessor(created)
+		accessorC, err := meta.Accessor(created)
 		if err != nil {
 			return created, err
 		}
-		accessor.SetResourceVersion("")
-		accessor.SetUID("")
 
-		rsp, err := d.Storage.Create(ctx, created, createValidation, options)
+		accessorO, err := meta.Accessor(obj)
+		if err != nil {
+			return created, err
+		}
+
+		accessorO.SetName(accessorC.GetName())
+		accessorO.SetCreationTimestamp(accessorC.GetCreationTimestamp())
+		// #TODO figure out what other properties need to be set and how to get/set them properties
+		// based on that decide where it's better to pass "obj" or "created" to the next Create call
+
+		rsp, err := d.Storage.Create(ctx, obj, createValidation, options)
 		if err != nil {
 			d.log.Error("unable to create object in duplicate storage", "error", err)
 		}
