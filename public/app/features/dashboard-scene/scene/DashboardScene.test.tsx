@@ -223,10 +223,10 @@ describe('DashboardScene', () => {
         ...location,
         href: 'http://snapshots.grafana.com/snapshots/dashboard/abcdefghi/my-dash',
       };
+      jest.spyOn(appEvents, 'publish');
     });
 
     config.appUrl = 'http://snapshots.grafana.com/';
-    jest.spyOn(appEvents, 'publish');
 
     it('redirects to the original dashboard', () => {
       scene.setInitialSaveModel({
