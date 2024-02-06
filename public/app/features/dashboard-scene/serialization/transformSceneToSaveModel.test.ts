@@ -21,7 +21,6 @@ import {
   SceneGridItemLike,
   SceneGridLayout,
   SceneGridRow,
-  SceneVariable,
   VizPanel,
 } from '@grafana/scenes';
 import { Dashboard, LoadingState, Panel, RowPanel, VariableRefresh } from '@grafana/schema';
@@ -226,7 +225,7 @@ describe('transformSceneToSaveModel', () => {
       const rowRepeater = rowWithRepeat.state.$behaviors![0] as RowRepeaterBehavior;
 
       // trigger row repeater
-      rowRepeater.variableDependency?.variableUpdatesCompleted(new Set<SceneVariable>([variable]));
+      rowRepeater.variableDependency?.variableUpdateCompleted(variable, true);
 
       // Make sure the repeated rows have been added to runtime scene model
       expect(grid.state.children.length).toBe(5);
@@ -277,6 +276,39 @@ describe('transformSceneToSaveModel', () => {
       expect(saveModel.gridPos?.y).toBe(2);
       expect(saveModel.gridPos?.w).toBe(12);
       expect(saveModel.gridPos?.h).toBe(8);
+    });
+    it('Given panel with links', () => {
+      const gridItem = buildGridItemFromPanelSchema({
+        title: '',
+        type: 'text-plugin-34',
+        gridPos: { x: 1, y: 2, w: 12, h: 8 },
+        links: [
+          // @ts-expect-error Panel link is wrongly typed as DashboardLink
+          {
+            title: 'Link 1',
+            url: 'http://some.test.link1',
+          },
+          // @ts-expect-error Panel link is wrongly typed as DashboardLink
+          {
+            targetBlank: true,
+            title: 'Link 2',
+            url: 'http://some.test.link2',
+          },
+        ],
+      });
+
+      const saveModel = gridItemToPanel(gridItem);
+      expect(saveModel.links).toEqual([
+        {
+          title: 'Link 1',
+          url: 'http://some.test.link1',
+        },
+        {
+          targetBlank: true,
+          title: 'Link 2',
+          url: 'http://some.test.link2',
+        },
+      ]);
     });
   });
 

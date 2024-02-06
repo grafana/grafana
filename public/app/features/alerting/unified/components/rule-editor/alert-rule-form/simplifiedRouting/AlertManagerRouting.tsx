@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, CollapsableSection, Icon, Link, LoadingPlaceholder, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, CollapsableSection, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
-import { createUrl } from 'app/features/alerting/unified/utils/url';
 
+import { ContactPointReceiverSummary } from '../../../contact-points/ContactPoints';
 import { useContactPointsWithStatus } from '../../../contact-points/useContactPoints';
 import { ContactPointWithMetadata } from '../../../contact-points/utils';
 
@@ -22,10 +22,21 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
   const styles = useStyles2(getStyles);
 
   const alertManagerName = alertManager.name;
-  const { isLoading, error: errorInContactPointStatus, contactPoints } = useContactPointsWithStatus();
+  const { isLoading, error: errorInContactPointStatus, contactPoints, refetchReceivers } = useContactPointsWithStatus();
   const [selectedContactPointWithMetadata, setSelectedContactPointWithMetadata] = useState<
     ContactPointWithMetadata | undefined
   >();
+
+  const onSelectContactPoint = (contactPoint?: ContactPointWithMetadata) => {
+    setSelectedContactPointWithMetadata(contactPoint);
+  };
+
+  const options = contactPoints.map((receiver) => {
+    const integrations = receiver?.grafana_managed_receiver_configs;
+    const description = <ContactPointReceiverSummary receivers={integrations ?? []} />;
+
+    return { label: receiver.name, value: receiver, description };
+  });
 
   if (errorInContactPointStatus) {
     return <Alert title="Failed to fetch contact points" severity="error" />;
@@ -47,10 +58,10 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
       <Stack direction="row" gap={1} alignItems="center">
         <ContactPointSelector
           alertManager={alertManagerName}
-          contactPoints={contactPoints}
-          onSelectContactPoint={setSelectedContactPointWithMetadata}
+          options={options}
+          onSelectContactPoint={onSelectContactPoint}
+          refetchReceivers={refetchReceivers}
         />
-        <LinkToContactPoints />
       </Stack>
       {selectedContactPointWithMetadata?.grafana_managed_receiver_configs && (
         <ContactPointDetails receivers={selectedContactPointWithMetadata.grafana_managed_receiver_configs} />
@@ -68,18 +79,6 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
         </CollapsableSection>
       </div>
     </Stack>
-  );
-}
-function LinkToContactPoints() {
-  const hrefToContactPoints = '/alerting/notifications';
-  return (
-    <Link target="_blank" href={createUrl(hrefToContactPoints)} rel="noopener" aria-label="View alert rule">
-      <Stack direction="row" gap={1} alignItems="center" justifyContent="center">
-        <Text color="secondary">To browse contact points and create new ones, go to</Text>
-        <Text color="link">Contact points</Text>
-        <Icon name={'external-link-alt'} size="sm" color="link" />
-      </Stack>
-    </Link>
   );
 }
 

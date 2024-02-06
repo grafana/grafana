@@ -6,11 +6,12 @@ import { Page } from 'app/core/components/Page/Page';
 import {
   historySrv,
   RevisionsModel,
-  VersionHistoryTable,
   VersionHistoryHeader,
   VersionsHistoryButtons,
-  VersionHistoryComparison,
 } from 'app/features/dashboard-scene/settings/version-history';
+
+import { VersionHistoryComparison } from '../VersionHistory/VersionHistoryComparison';
+import { VersionHistoryTable } from '../VersionHistory/VersionHistoryTable';
 
 import { SettingsPageProps } from './types';
 

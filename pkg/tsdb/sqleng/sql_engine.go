@@ -18,9 +18,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -41,8 +41,6 @@ type SqlQueryResultTransformer interface {
 	TransformQueryError(logger log.Logger, err error) error
 	GetConverterList() []sqlutil.StringConverter
 }
-
-var sqlIntervalCalculator = intervalv2.NewCalculator()
 
 type JsonData struct {
 	MaxOpenConns            int    `json:"maxOpenConns"`
@@ -177,6 +175,13 @@ func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDat
 		if err != nil {
 			return nil, fmt.Errorf("error unmarshal query json: %w", err)
 		}
+
+		// the fill-params are only stored inside this function, during query-interpolation. we do not support
+		// sending them in "from the outside"
+		if queryjson.Fill || queryjson.FillInterval != 0.0 || queryjson.FillMode != "" || queryjson.FillValue != 0.0 {
+			return nil, fmt.Errorf("query fill-parameters not supported")
+		}
+
 		if queryjson.RawSql == "" {
 			continue
 		}
@@ -371,14 +376,10 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 // Interpolate provides global macros/substitutions for all sql datasources.
 var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
-	minInterval, err := intervalv2.GetIntervalFrom(timeInterval, query.Interval.String(), query.Interval.Milliseconds(), time.Second*60)
-	if err != nil {
-		return "", err
-	}
-	interval := sqlIntervalCalculator.Calculate(timeRange, minInterval, query.MaxDataPoints)
+	interval := query.Interval
 
 	sql = strings.ReplaceAll(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10))
-	sql = strings.ReplaceAll(sql, "$__interval", interval.Text)
+	sql = strings.ReplaceAll(sql, "$__interval", gtime.FormatInterval(interval))
 	sql = strings.ReplaceAll(sql, "$__unixEpochFrom()", fmt.Sprintf("%d", timeRange.From.UTC().Unix()))
 	sql = strings.ReplaceAll(sql, "$__unixEpochTo()", fmt.Sprintf("%d", timeRange.To.UTC().Unix()))
 
