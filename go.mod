@@ -482,6 +482,8 @@ require (
 
 require k8s.io/code-generator v0.29.1 // @grafana/grafana-app-platform-squad
 
+require github.com/spyzhov/ajson v0.9.0 // @grafana/grafana-app-platform-squad
+
 require (
 	github.com/grafana/sqlds/v3 v3.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
