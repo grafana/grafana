@@ -156,6 +156,13 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 }
 
 func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config definitions.PostableUserConfig) error {
+	// We cannot add this validation to PostableUserConfig as that struct is used for both
+	// Grafana Alertmanager (where inhibition rules are not supported) and External Alertmanagers
+	// (including Mimir) where inhibition rules are supported.
+	if len(config.AlertmanagerConfig.InhibitRules) > 0 {
+		return errors.New("inhibition rules are not supported")
+	}
+
 	// Get the last known working configuration
 	_, err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, org)
 	if err != nil {

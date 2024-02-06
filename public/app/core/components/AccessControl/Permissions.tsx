@@ -3,8 +3,7 @@ import { sortBy } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Space } from '@grafana/experimental';
-import { Text, Box, Button, useStyles2 } from '@grafana/ui';
+import { Text, Box, Button, useStyles2, Space } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { Trans, t } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';

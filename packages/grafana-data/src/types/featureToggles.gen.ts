@@ -48,14 +48,11 @@ export interface FeatureToggles {
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
-  cloudwatchNewRegionsHandler?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   nestedFolderPicker?: boolean;
-  emptyDashboardPage?: boolean;
-  disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
@@ -66,6 +63,7 @@ export interface FeatureToggles {
   prometheusMetricEncyclopedia?: boolean;
   influxdbBackendMigration?: boolean;
   influxqlStreamingParser?: boolean;
+  influxdbRunQueriesInParallel?: boolean;
   clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
   lokiMetricDataplane?: boolean;
@@ -80,7 +78,6 @@ export interface FeatureToggles {
   externalServiceAuth?: boolean;
   refactorVariablesTimeRange?: boolean;
   enableElasticsearchBackendQuerying?: boolean;
-  advancedDataSourcePicker?: boolean;
   faroDatasourceSelector?: boolean;
   enableDatagridEditing?: boolean;
   extraThemes?: boolean;
@@ -116,14 +113,12 @@ export interface FeatureToggles {
   dashgpt?: boolean;
   reportingRetries?: boolean;
   sseGroupByDatasource?: boolean;
-  requestInstrumentationStatusSource?: boolean;
   libraryPanelRBAC?: boolean;
   lokiRunQueriesInParallel?: boolean;
   wargamesTesting?: boolean;
   alertingInsights?: boolean;
   externalCorePlugins?: boolean;
   pluginsAPIMetrics?: boolean;
-  httpSLOLevels?: boolean;
   idForwarding?: boolean;
   cloudWatchWildCardDimensionValues?: boolean;
   externalServiceAccounts?: boolean;
@@ -133,6 +128,7 @@ export interface FeatureToggles {
   transformationsVariableSupport?: boolean;
   kubernetesPlaylists?: boolean;
   kubernetesSnapshots?: boolean;
+  kubernetesQueryServiceRewrite?: boolean;
   cloudWatchBatchQueries?: boolean;
   recoveryThreshold?: boolean;
   lokiStructuredMetadata?: boolean;
@@ -165,7 +161,6 @@ export interface FeatureToggles {
   tableSharedCrosshair?: boolean;
   regressionTransformation?: boolean;
   displayAnonymousStats?: boolean;
-  alertStateHistoryAnnotationsFromLoki?: boolean;
   lokiQueryHints?: boolean;
   kubernetesFeatureToggles?: boolean;
   alertingPreviewUpgrade?: boolean;
@@ -177,4 +172,6 @@ export interface FeatureToggles {
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
   alertingSaveStatePeriodic?: boolean;
+  promQLScope?: boolean;
+  nodeGraphDotLayout?: boolean;
 }
