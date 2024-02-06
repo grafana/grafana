@@ -404,6 +404,11 @@ export const Components = {
      */
     input: () => 'input[id="data-source-picker"]',
     inputV2: 'data-testid Select a data source',
+    dataSourceList: 'data-testid Data source list dropdown',
+    advancedModal: {
+      dataSourceList: 'data-testid Data source list',
+      builtInDataSourceList: 'data-testid Built in data source list',
+    },
   },
   TimeZonePicker: {
     /**

@@ -59,7 +59,6 @@ renderAuthJWT,preview,@grafana/grafana-as-code,2023-04-03,false,false,false
 externalServiceAuth,experimental,@grafana/identity-access-team,2023-04-11,true,false,false
 refactorVariablesTimeRange,preview,@grafana/dashboards-squad,2023-06-06,false,false,false
 enableElasticsearchBackendQuerying,GA,@grafana/observability-logs,2023-04-14,false,false,false
-advancedDataSourcePicker,GA,@grafana/dashboards-squad,2023-04-14,false,false,true
 faroDatasourceSelector,preview,@grafana/app-o11y,2023-05-04,false,false,true
 enableDatagridEditing,preview,@grafana/grafana-bi-squad,2023-04-24,false,false,true
 extraThemes,experimental,@grafana/grafana-frontend-platform,2023-05-10,false,false,true

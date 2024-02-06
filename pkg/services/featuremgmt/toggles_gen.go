@@ -247,10 +247,6 @@ const (
 	// Enable the processing of queries and responses in the Elasticsearch data source through backend
 	FlagEnableElasticsearchBackendQuerying = "enableElasticsearchBackendQuerying"
 
-	// FlagAdvancedDataSourcePicker
-	// Enable a new data source picker with contextual information, recently used order and advanced mode
-	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
-
 	// FlagFaroDatasourceSelector
 	// Enable the data source selector within the Frontend Apps section of the Frontend Observability
 	FlagFaroDatasourceSelector = "faroDatasourceSelector"
