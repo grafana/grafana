@@ -168,6 +168,8 @@ describe('Highlighting', () => {
       ['{span.s"t\\"at"us}'],
       ['{span.s"t\\\\at"us}'],
       ['{ span.s"tat"us" = "GET123 }'], // weird query, but technically valid
+      ['{ duration = 123.456us}'],
+      ['{ .foo = `GET` && .bar = `P\'O"S\\T` }'],
     ])('valid query - %s', (query: string) => {
       expect(getErrorNodes(query)).toStrictEqual([]);
     });

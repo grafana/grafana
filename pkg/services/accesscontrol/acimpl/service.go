@@ -50,14 +50,12 @@ func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegis
 		return nil, err
 	}
 
-	if features.IsEnabledGlobally(featuremgmt.FlagSplitScopes) {
-		// Migrating scopes that haven't been split yet to have kind, attribute and identifier in the DB
-		// This will be removed once we've:
-		// 1) removed the feature toggle and
-		// 2) have released enough versions not to support a version without split scopes
-		if err := migrator.MigrateScopeSplit(db, service.log); err != nil {
-			return nil, err
-		}
+	// Migrating scopes that haven't been split yet to have kind, attribute and identifier in the DB
+	// This will be removed once we've:
+	// 1) removed the feature toggle and
+	// 2) have released enough versions not to support a version without split scopes
+	if err := migrator.MigrateScopeSplit(db, service.log); err != nil {
+		return nil, err
 	}
 
 	return service, nil
@@ -407,8 +405,11 @@ func (s *Service) searchUserPermissionsFromCache(orgID int64, searchOptions acce
 	key := permissionCacheKey(tempUser)
 	permissions, ok := s.cache.Get((key))
 	if !ok {
+		metrics.MAccessSearchUserPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()
 		return nil, false
 	}
+
+	metrics.MAccessSearchUserPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheHit).Inc()
 
 	s.log.Debug("Using cached permissions", "key", key)
 	filteredPermissions := make([]accesscontrol.Permission, 0)

@@ -5,14 +5,14 @@ import { DragDropContext, DropResult, Droppable } from 'react-beautiful-dnd';
 import { DataTransformerConfig, GrafanaTheme2, IconName, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneObjectBase, SceneComponentProps, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
-import { Button, ButtonGroup, ConfirmModal, useStyles2 } from '@grafana/ui';
+import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 
 import { VizPanelManager } from '../VizPanelManager';
 
 import { EmptyTransformationsMessage } from './EmptyTransformationsMessage';
 import { TransformationsDrawer } from './TransformationsDrawer';
-import { PanelDataPaneTabState, PanelDataPaneTab } from './types';
+import { PanelDataPaneTabState, PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
 
 interface PanelDataTransformationsTabState extends PanelDataPaneTabState {}
 
@@ -21,7 +21,9 @@ export class PanelDataTransformationsTab
   implements PanelDataPaneTab
 {
   static Component = PanelDataTransformationsTabRendered;
-  tabId = 'transformations';
+  TabComponent: (props: PanelDataTabHeaderProps) => React.JSX.Element;
+
+  tabId = TabId.Transformations;
   icon: IconName = 'process';
   private _panelManager: VizPanelManager;
 
@@ -29,12 +31,9 @@ export class PanelDataTransformationsTab
     return 'Transformations';
   }
 
-  getItemsCount() {
-    return this._panelManager.dataTransformer.state.transformations.length;
-  }
-
   constructor(panelManager: VizPanelManager) {
     super({});
+    this.TabComponent = (props: PanelDataTabHeaderProps) => TransformationsTab({ ...props, model: this });
 
     this._panelManager = panelManager;
   }
@@ -49,6 +48,10 @@ export class PanelDataTransformationsTab
 
   public onChangeTransformations(transformations: DataTransformerConfig[]) {
     this._panelManager.changeTransformations(transformations);
+  }
+
+  get panelManager() {
+    return this._panelManager;
   }
 }
 
@@ -190,3 +193,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginLeft: theme.spacing(2),
   }),
 });
+
+interface TransformationsTabProps extends PanelDataTabHeaderProps {
+  model: PanelDataTransformationsTab;
+}
+
+function TransformationsTab(props: TransformationsTabProps) {
+  const { model } = props;
+
+  const transformerState = model.getDataTransformer().useState();
+  return (
+    <Tab
+      key={props.key}
+      label={model.getTabLabel()}
+      icon="process"
+      counter={transformerState.transformations.length}
+      active={props.active}
+      onChangeTab={props.onChangeTab}
+    />
+  );
+}
