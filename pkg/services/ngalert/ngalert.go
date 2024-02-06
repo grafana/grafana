@@ -187,9 +187,42 @@ func (ng *AlertNG) init() error {
 	remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
 	if ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Enable {
 		switch {
-		case remoteOnly, remotePrimary:
-			ng.Log.Warn("Only remote secondary mode is supported at the moment, falling back to remote secondary")
+		case remoteOnly:
+			ng.Log.Warn("Remote only mode not supported at the moment, falling back to remote primary")
 			fallthrough
+
+		case remotePrimary:
+			ng.Log.Debug("Starting Grafana with remote primary mode enabled")
+			fmt.Println("Remote primary!")
+			m := ng.Metrics.GetRemoteAlertmanagerMetrics()
+			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
+			// This function will be used by the MOA to create new Alertmanagers.
+			override := notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
+				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
+					// Create internal Alertmanager.
+					internalAM, err := factoryFn(ctx, orgID)
+					if err != nil {
+						return nil, err
+					}
+
+					// Create remote Alertmanager.
+					remoteAM, err := createRemoteAlertmanager(orgID, ng.Cfg.UnifiedAlerting.RemoteAlertmanager, ng.KVStore, m)
+					if err != nil {
+						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
+						return internalAM, nil
+					}
+
+					// Use both Alertmanager implementations in the forked Alertmanager.
+					cfg := remote.RemotePrimaryConfig{
+						Logger: log.New("ngalert.forked-alertmanager.remote-primary"),
+						OrgID:  orgID,
+						Store:  ng.store,
+					}
+					return remote.NewRemotePrimaryForkedAlertmanager(cfg, internalAM, remoteAM)
+				}
+			})
+
+			overrides = append(overrides, override)
 
 		case remoteSecondary:
 			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")

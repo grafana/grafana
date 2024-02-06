@@ -2,46 +2,129 @@ package remote
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 )
 
 type RemotePrimaryForkedAlertmanager struct {
+	log   log.Logger
+	orgID int64
+	store configStore
+
 	internal notifier.Alertmanager
-	remote   notifier.Alertmanager
+	remote   remoteAlertmanager
 }
 
-func NewRemotePrimaryForkedAlertmanager(internal, remote notifier.Alertmanager) *RemotePrimaryForkedAlertmanager {
-	return &RemotePrimaryForkedAlertmanager{
-		internal: internal,
-		remote:   remote,
+type RemotePrimaryConfig struct {
+	Logger log.Logger
+	OrgID  int64
+	Store  configStore
+}
+
+func (c *RemotePrimaryConfig) Validate() error {
+	if c.Logger == nil {
+		return fmt.Errorf("logger cannot be nil")
 	}
-}
-
-func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
 	return nil
 }
 
+func NewRemotePrimaryForkedAlertmanager(cfg RemotePrimaryConfig, internal notifier.Alertmanager, remote remoteAlertmanager) (*RemotePrimaryForkedAlertmanager, error) {
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+	return &RemotePrimaryForkedAlertmanager{
+		log:   cfg.Logger,
+		orgID: cfg.OrgID,
+		store: cfg.Store,
+
+		internal: internal,
+		remote:   remote,
+	}, nil
+}
+
+func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
+	fmt.Println("forked.ApplyConfig()")
+	// If the Alertmanager has not been marked as "ready" yet, delegate the call to the remote Alertmanager.
+	// This will perform a readiness check and sync the Alertmanagers.
+	if !fam.remote.Ready() {
+		if err := fam.remote.ApplyConfig(ctx, config); err != nil {
+			// In remote primary mode, we care about errors in the remote Alertmanager.
+			return fmt.Errorf("failed to apply config to the remote Alertmanager: %w", err)
+		}
+	}
+
+	return fam.internal.ApplyConfig(ctx, config)
+}
+
 func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
+	fmt.Println("forked.SaveAndApplyConfig()")
+	rawConfig, err := json.Marshal(config)
+	if err != nil {
+		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
+	}
+
+	cmd := &models.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: string(rawConfig),
+		Default:                   false,
+		ConfigurationVersion:      fmt.Sprintf("v%d", models.AlertConfigurationVersion),
+		OrgID:                     fam.orgID,
+		LastApplied:               time.Now().UTC().Unix(),
+	}
+
+	// TODO: what if we fail in the remote Alertmanager but not here?
+	dbCfg, err := fam.store.SaveAlertmanagerConfiguration(ctx, cmd)
+	if err != nil {
+		return err
+	}
+
+	// Note: the id is always 1 when there's only one org.
+	dbCfg.ID = 1
+	if err := fam.remote.SendConfiguration(ctx, dbCfg); err != nil {
+		return fmt.Errorf("failed to send config to the remote Alertmanager: %w", err)
+	}
 	return nil
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
+	fmt.Println("forked.SaveAndApplyDefaultConfig()")
 	return nil
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) GetStatus() apimodels.GettableStatus {
+	fmt.Println("forked.GetStatus()")
 	return fam.remote.GetStatus()
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
-	return fam.remote.CreateSilence(ctx, silence)
+	fmt.Println("forked.CreateSilence()")
+	// Create que silence in the remote Alertmanager.
+	_, err := fam.remote.CreateSilence(ctx, silence)
+	if err != nil {
+		return "", fmt.Errorf("failed to create silence in the remote Alertmanager: %w", err)
+	}
+
+	// Use the returned ID to create a silence in the internal Alertmanager.
+	// TODO: refactor silence creation to be able to specify the ID.
+	return fam.internal.CreateSilence(ctx, silence)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) DeleteSilence(ctx context.Context, id string) error {
-	return fam.remote.DeleteSilence(ctx, id)
+	fmt.Println("forked.DeleteSilence()")
+	if err := fam.remote.DeleteSilence(ctx, id); err != nil {
+		return fmt.Errorf("failed to delete silence in the remote Alertmanager: %w", err)
+	}
+	// TODO: use the same uid to delete the silence in the internal Alertmanager.
+	if err := fam.internal.DeleteSilence(ctx, id); err != nil {
+		// If deleting the silence fails in the internal Alertmanager, log it and return nil.
+		fam.log.Error("Error deleting silence in the internal Alertmanager", "id", id, "err", err)
+	}
+	return nil
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) GetSilence(ctx context.Context, id string) (apimodels.GettableSilence, error) {
@@ -62,6 +145,7 @@ func (fam *RemotePrimaryForkedAlertmanager) GetAlertGroups(ctx context.Context, 
 
 func (fam *RemotePrimaryForkedAlertmanager) PutAlerts(ctx context.Context, alerts apimodels.PostableAlerts) error {
 	return fam.remote.PutAlerts(ctx, alerts)
+	// TODO: no-op sender for internal.
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver, error) {

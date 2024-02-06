@@ -178,20 +178,24 @@ func (am *Alertmanager) checkReadiness(ctx context.Context) error {
 func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
 	if am.shouldSendConfig(ctx, config) {
 		am.metrics.ConfigSyncsTotal.Inc()
-		if err := am.mimirClient.CreateGrafanaAlertmanagerConfig(
-			ctx,
-			config.AlertmanagerConfiguration,
-			config.ConfigurationHash,
-			config.ID,
-			config.CreatedAt,
-			config.Default,
-		); err != nil {
+		if err := am.SendConfiguration(ctx, config); err != nil {
 			am.metrics.ConfigSyncErrorsTotal.Inc()
 			return err
 		}
 		am.metrics.LastConfigSync.SetToCurrentTime()
 	}
 	return nil
+}
+
+func (am *Alertmanager) SendConfiguration(ctx context.Context, config *models.AlertConfiguration) error {
+	return am.mimirClient.CreateGrafanaAlertmanagerConfig(
+		ctx,
+		config.AlertmanagerConfiguration,
+		config.ConfigurationHash,
+		config.ID,
+		config.CreatedAt,
+		config.Default,
+	)
 }
 
 // CompareAndSendState gets the Alertmanager's internal state and compares it with the remote Alertmanager's one.
@@ -347,17 +351,20 @@ func (am *Alertmanager) GetReceivers(ctx context.Context) ([]apimodels.Receiver,
 
 	var rcvs []apimodels.Receiver
 	for _, rcv := range res.Payload {
+		if rcv.Integrations == nil {
+			rcv.Integrations = []*apimodels.Integration{}
+		}
 		rcvs = append(rcvs, *rcv)
 	}
 	return rcvs, nil
 }
 
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error) {
-	return &notifier.TestReceiversResult{}, nil
+	return nil, fmt.Errorf("not implemented")
 }
 
 func (am *Alertmanager) TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error) {
-	return &notifier.TestTemplatesResults{}, nil
+	return nil, fmt.Errorf("not implemented")
 }
 
 // StopAndWait is called when the grafana server is instructed to shut down or an org is deleted.

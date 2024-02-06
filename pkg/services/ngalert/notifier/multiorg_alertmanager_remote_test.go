@@ -120,11 +120,12 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 	// It should send config and state on an interval.
 	{
 		// Let's change the configuration and state.
-		require.NoError(t, configStore.SaveAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
+		_, err := configStore.SaveAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: validConfig,
 			OrgID:                     1,
 			LastApplied:               time.Now().Unix(),
-		}))
+		})
+		require.NoError(t, err)
 		require.NoError(t, kvStore.Set(ctx, 1, "alertmanager", notifier.SilencesFilename, "dGVzdAo="))        // base64-encoded string "test"
 		require.NoError(t, kvStore.Set(ctx, 1, "alertmanager", notifier.NotificationLogFilename, "dGVzdAo=")) // base64-encoded string "test"
 
@@ -144,12 +145,13 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 	// It should send config and state on shutdown.
 	{
 		// Let's change the configuration and state again.
-		require.NoError(t, configStore.SaveAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
+		configStore.SaveAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: setting.GetAlertmanagerDefaultConfiguration(),
 			Default:                   true,
 			OrgID:                     1,
 			LastApplied:               time.Now().Unix(),
-		}))
+		})
+		require.NoError(t, err)
 		require.NoError(t, kvStore.Set(ctx, 1, "alertmanager", notifier.SilencesFilename, "dGVzdC0yCg=="))        // base64-encoded string "test-2"
 		require.NoError(t, kvStore.Set(ctx, 1, "alertmanager", notifier.NotificationLogFilename, "dGVzdC0yCg==")) // base64-encoded string "test-2"
 

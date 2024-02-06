@@ -409,7 +409,8 @@ func (ms *migrationStore) SaveAlertmanagerConfiguration(ctx context.Context, org
 		OrgID:                     orgID,
 		LastApplied:               0,
 	}
-	return ms.alertingStore.SaveAlertmanagerConfiguration(ctx, &cmd)
+	_, err = ms.alertingStore.SaveAlertmanagerConfiguration(ctx, &cmd)
+	return err
 }
 
 // revertPermissions are the permissions required for the background user to revert the migration.

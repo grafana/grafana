@@ -14,6 +14,7 @@ import (
 
 type configStore interface {
 	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
+	SaveAlertmanagerConfiguration(context.Context, *models.SaveAlertmanagerConfigurationCmd) (*models.AlertConfiguration, error)
 }
 
 //go:generate mockery --name remoteAlertmanager --structname RemoteAlertmanagerMock --with-expecter --output mock --outpkg alertmanager_mock
@@ -21,6 +22,7 @@ type remoteAlertmanager interface {
 	notifier.Alertmanager
 	CompareAndSendConfiguration(context.Context, *models.AlertConfiguration) error
 	CompareAndSendState(context.Context) error
+	SendConfiguration(context.Context, *models.AlertConfiguration) error
 }
 
 type RemoteSecondaryForkedAlertmanager struct {

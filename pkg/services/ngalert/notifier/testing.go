@@ -73,11 +73,11 @@ func (f *fakeConfigStore) GetLatestAlertmanagerConfiguration(_ context.Context, 
 	return config, nil
 }
 
-func (f *fakeConfigStore) SaveAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {
+func (f *fakeConfigStore) SaveAlertmanagerConfiguration(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) (*models.AlertConfiguration, error) {
 	return f.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error { return nil })
 }
 
-func (f *fakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback store.SaveCallback) error {
+func (f *fakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd, callback store.SaveCallback) (*models.AlertConfiguration, error) {
 	cfg := models.AlertConfiguration{
 		AlertmanagerConfiguration: cmd.AlertmanagerConfiguration,
 		ConfigurationHash:         fmt.Sprintf("%x", md5.Sum([]byte(cmd.AlertmanagerConfiguration))),
@@ -94,10 +94,10 @@ func (f *fakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Co
 	}
 
 	if err := callback(); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &cfg, nil
 }
 
 func (f *fakeConfigStore) UpdateAlertmanagerConfiguration(_ context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) error {

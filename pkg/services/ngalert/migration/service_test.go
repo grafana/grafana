@@ -1742,7 +1742,7 @@ func setupUATables(t *testing.T, store *store.DBstore, orgID int64, rules []*mod
 			OrgID:                     orgID,
 			LastApplied:               0,
 		}
-		err = store.SaveAlertmanagerConfiguration(ctx, &cmd)
+		_, err = store.SaveAlertmanagerConfiguration(ctx, &cmd)
 		require.NoError(t, err)
 	}
 }

@@ -626,12 +626,22 @@ func genTestAlertmanagersWithSyncInterval(t *testing.T, mode int, syncInterval t
 		require.NoError(t, err)
 		return internal, remote, forked
 	}
-	return internal, remote, NewRemotePrimaryForkedAlertmanager(internal, remote)
+
+	cfg := RemotePrimaryConfig{
+		Logger: log.NewNopLogger(),
+		OrgID:  1,
+	}
+	forked, err := NewRemotePrimaryForkedAlertmanager(cfg, internal, remote)
+	require.NoError(t, err)
+	return internal, remote, forked
 }
 
 // errConfigStore returns an error when a method is called.
 type errConfigStore struct{}
 
 func (s *errConfigStore) GetLatestAlertmanagerConfiguration(context.Context, int64) (*models.AlertConfiguration, error) {
+	return nil, errors.New("test error")
+}
+func (s *errConfigStore) SaveAlertmanagerConfiguration(context.Context, *models.SaveAlertmanagerConfigurationCmd) (*models.AlertConfiguration, error) {
 	return nil, errors.New("test error")
 }
