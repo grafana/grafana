@@ -455,5 +455,14 @@
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/56"
     }
+  },
+  {
+    "type": "changedfiles",
+    "matches": ["public/locales/de-DE/grafana.json", "public/locales/es-ES/grafana.json", "public/locales/fr-FR/grafana.json", "public/locales/zh-Hans/grafana.json"],
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/78",
+      "column": "\uD83D\uDD0D In review"
+    }
   }
 ]
