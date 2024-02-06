@@ -45,6 +45,8 @@ jobs:
           pull_request_base_branch_name: 'main'
           base_url: 'https://grafana.api.crowdin.com'
           config: 'crowdin.yml'
+          source: 'public/locales/en-US/grafana.json'
+          translation: 'public/locales/%locale%/%original_file_name%'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
