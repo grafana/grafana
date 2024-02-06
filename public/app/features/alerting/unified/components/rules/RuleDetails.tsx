@@ -72,7 +72,7 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
 
   // recording rules don't have a for duration
   if (!isRecordingRulerRule(rule.rulerRule)) {
-    forDuration = rule.rulerRule?.for;
+    forDuration = rule.rulerRule?.for ?? '0s';
   }
 
   return (
@@ -82,11 +82,10 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
           Every {every}
         </DetailsField>
       )}
-      {forDuration && (
-        <DetailsField label="For" horizontal={true}>
-          {forDuration}
-        </DetailsField>
-      )}
+
+      <DetailsField label="Pending period" horizontal={true}>
+        {forDuration}
+      </DetailsField>
 
       {lastEvaluation && !isNullDate(lastEvaluation) && (
         <DetailsField label="Last evaluation" horizontal={true}>

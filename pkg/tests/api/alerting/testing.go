@@ -352,6 +352,7 @@ func (a apiClient) PostConfiguration(t *testing.T, c apimodels.PostableUserConfi
 	req, err := http.NewRequest(http.MethodPost, u, bytes.NewReader(b))
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", "application/json")
+
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	require.NoError(t, err)
@@ -450,6 +451,41 @@ func (a apiClient) DeleteRulesGroup(t *testing.T, folder string, group string) (
 	require.NoError(t, err)
 
 	return resp.StatusCode, string(b)
+}
+
+func (a apiClient) PostSilence(t *testing.T, s apimodels.PostableSilence) (string, error) {
+	t.Helper()
+
+	b, err := json.Marshal(s)
+	require.NoError(t, err)
+
+	u := fmt.Sprintf("%s/api/alertmanager/grafana/api/v2/silences", a.url)
+	req, err := http.NewRequest(http.MethodPost, u, bytes.NewReader(b))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+	b, err = io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	data := struct {
+		SilenceID string `json:"silenceID"`
+		Message   string `json:"message"`
+	}{}
+	require.NoError(t, json.Unmarshal(b, &data))
+
+	if resp.StatusCode == http.StatusAccepted {
+		return data.SilenceID, nil
+	}
+
+	return "", errors.New(data.Message)
 }
 
 func (a apiClient) GetRulesGroup(t *testing.T, folder string, group string) apimodels.RuleGroupConfigResponse {
@@ -754,6 +790,24 @@ func (a apiClient) GetRuleHistoryWithStatus(t *testing.T, ruleUID string) (data.
 	require.NoError(t, err)
 
 	return sendRequest[data.Frame](t, req, http.StatusOK)
+}
+
+func (a apiClient) GetAllTimeIntervalsWithStatus(t *testing.T) ([]apimodels.GettableTimeIntervals, int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/notifications/time-intervals", a.url), nil)
+	require.NoError(t, err)
+
+	return sendRequest[[]apimodels.GettableTimeIntervals](t, req, http.StatusOK)
+}
+
+func (a apiClient) GetTimeIntervalByNameWithStatus(t *testing.T, name string) (apimodels.GettableTimeIntervals, int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/v1/notifications/time-intervals/%s", a.url, name), nil)
+	require.NoError(t, err)
+
+	return sendRequest[apimodels.GettableTimeIntervals](t, req, http.StatusOK)
 }
 
 func sendRequest[T any](t *testing.T, req *http.Request, successStatusCode int) (T, int, string) {
