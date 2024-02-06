@@ -79,13 +79,13 @@ Set the size of the points, from 1 to 40 pixels in diameter.
 
 Tooltip options control the information overlay that appears when you hover over data points in the graph.
 
-{{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="visualizations/tooltip-options-2.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Legend options
 
 Legend options control the series names and statistics that appear under or to the right of the graph.
 
-{{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
+{{< docs/shared lookup="visualizations/legend-options-2.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 ## Axis options
 
@@ -169,6 +169,8 @@ The transform option is only available as an override.
 ## Standard options
 
 ## Data links
+
+## Field overrides
 
 ## Docs refs
 
