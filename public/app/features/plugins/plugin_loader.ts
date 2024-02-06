@@ -6,7 +6,7 @@ import {
   DataSourcePluginMeta,
   PluginMeta,
 } from '@grafana/data';
-import { SystemJS, config } from '@grafana/runtime';
+import { SystemJS } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
 import { GenericDataSourcePlugin } from '../datasources/types';
@@ -16,7 +16,7 @@ import { registerPluginInCache } from './loader/cache';
 import { sharedDependenciesMap } from './loader/sharedDependencies';
 import { decorateSystemJSFetch, decorateSystemJSResolve, decorateSystemJsOnload } from './loader/systemjsHooks';
 import { SystemJSWithLoaderHooks } from './loader/types';
-import { buildImportMap } from './loader/utils';
+import { buildImportMap, resolveModulePath } from './loader/utils';
 import { importPluginModuleInSandbox } from './sandbox/sandbox_plugin_loader';
 import { isFrontendSandboxSupported } from './sandbox/utils';
 
@@ -67,10 +67,7 @@ export async function importPluginModule({
     }
   }
 
-  // We do this dynamically in the frontend because if serve_from_sub_path is false the Image Renderer
-  // sets the subpath to an empty string and sets appurl to localhost which causes the plugin loader to fail to load.
-  // https://github.com/grafana/grafana/issues/76180
-  let modulePath = wrangleUrl(path);
+  let modulePath = resolveModulePath(path);
 
   // the sandboxing environment code cannot work in nodejs and requires a real browser
   if (await isFrontendSandboxSupported({ isAngular, pluginId })) {
@@ -78,14 +75,6 @@ export async function importPluginModule({
   }
 
   return SystemJS.import(modulePath);
-}
-
-export function wrangleUrl(path: string) {
-  if (path.startsWith('http') || path.startsWith('/')) {
-    return path;
-  }
-
-  return `${config.appSubUrl ?? ''}/${path}`;
 }
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
