@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
-	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 type Authenticator struct{}
@@ -36,20 +35,22 @@ func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, erro
 	}
 
 	// TODO: validate id token
-	idToken := md.Get("grafana-idtoken")[0]
-	if idToken == "" {
-		return nil, fmt.Errorf("no id token found in context")
-	}
-	jwtToken, err := jwt.ParseSigned(idToken)
-	if err != nil {
-		return nil, fmt.Errorf("invalid id token: %w", err)
-	}
-	claims := jwt.Claims{}
-	err = jwtToken.UnsafeClaimsWithoutVerification(&claims)
-	if err != nil {
-		return nil, fmt.Errorf("invalid id token: %w", err)
-	}
-	// fmt.Printf("JWT CLAIMS: %+v\n", claims)
+	/*
+		idToken := md.Get("grafana-idtoken")[0]
+		if idToken == "" {
+			return nil, fmt.Errorf("no id token found in context")
+		}
+		jwtToken, err := jwt.ParseSigned(idToken)
+		if err != nil {
+			return nil, fmt.Errorf("invalid id token: %w", err)
+		}
+		claims := jwt.Claims{}
+		err = jwtToken.UnsafeClaimsWithoutVerification(&claims)
+		if err != nil {
+			return nil, fmt.Errorf("invalid id token: %w", err)
+		}
+		// fmt.Printf("JWT CLAIMS: %+v\n", claims)
+	*/
 
 	return appcontext.WithUser(ctx, &user.SignedInUser{
 		Login:  login,
