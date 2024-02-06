@@ -194,7 +194,6 @@ func Render(qt peakq.QueryTemplateSpec, selectedValues map[string][]string) (*pe
 			if err = n.SetString(s); err != nil {
 				return nil, err
 			}
-
 		}
 	}
 
