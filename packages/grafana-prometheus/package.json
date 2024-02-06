@@ -3,7 +3,7 @@
   "license": "Apache-2.0",
   "name": "@grafana/prometheus",
   "private": true,
-  "version": "10.4.0-pre",
+  "version": "0.0.1",
   "description": "Grafana Prometheus Library",
   "keywords": [
     "typescript"
