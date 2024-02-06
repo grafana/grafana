@@ -71,7 +71,6 @@
 /pkg/apis/ @grafana/grafana-app-platform-squad
 /pkg/bus/ @grafana/backend-platform
 /pkg/cmd/ @grafana/backend-platform
-/pkg/cmd/grafana/apiserver @grafana/grafana-app-platform-squad
 /pkg/components/apikeygen/ @grafana/identity-access-team
 /pkg/components/satokengen/ @grafana/identity-access-team
 /pkg/components/dashdiffs/ @grafana/backend-platform
