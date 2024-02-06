@@ -194,7 +194,6 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   // get variables from dashboard state
   const { onDelete, onDuplicated, onOrderChanged, onEdit, onTypeChange, onGoBack, onAdd } = model;
   const { variables } = model.getVariableSet().useState();
-  const { overlay } = dashboard.useState();
   const { editIndex } = model.useState();
 
   if (editIndex !== undefined && variables[editIndex]) {
@@ -224,7 +223,6 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
         onAdd={onAdd}
         onEdit={onEdit}
       />
-      {overlay && <overlay.Component model={overlay} />}
     </Page>
   );
 }
