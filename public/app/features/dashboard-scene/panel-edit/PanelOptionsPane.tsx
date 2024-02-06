@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
 import { ButtonGroup, FilterInput, RadioButtonGroup, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
 import { getPanelFrameCategory2 } from 'app/features/dashboard/components/PanelEditor/getPanelFrameOptions';
 import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
@@ -35,6 +36,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     const [isVizPickerOpen, setVizPickerOpen] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const panelFrameOptions = useMemo(() => getPanelFrameCategory2(panel), [panel]);
+    const [listMode, setListMode] = useState(OptionFilter.All);
 
     const visualizationOptions = useMemo(() => {
       const plugin = panel.getPlugin();
@@ -68,11 +70,34 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
       [searchQuery, panel, fieldConfig]
     );
 
-    const mainBoxElements = [
-      panelFrameOptions.render(),
-      ...(visualizationOptions?.map((v) => v.render()) ?? []),
-      ...justOverrides.map((v) => v.render()),
-    ];
+    const isSearching = searchQuery.length > 0;
+    const mainBoxElements: React.ReactNode[] = [];
+
+    if (isSearching) {
+      mainBoxElements.push(
+        renderSearchHits([panelFrameOptions, ...(visualizationOptions ?? [])], justOverrides, searchQuery)
+      );
+    } else {
+      switch (listMode) {
+        case OptionFilter.All:
+          mainBoxElements.push(panelFrameOptions.render());
+
+          for (const item of visualizationOptions ?? []) {
+            mainBoxElements.push(item.render());
+          }
+
+          for (const item of justOverrides) {
+            mainBoxElements.push(item.render());
+          }
+          break;
+        case OptionFilter.Overrides:
+          for (const item of justOverrides) {
+            mainBoxElements.push(item.render());
+          }
+        default:
+          break;
+      }
+    }
 
     return (
       <div className={styles.wrapper}>
@@ -97,14 +122,17 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                   placeholder="Search options"
                   onChange={setSearchQuery}
                 />
-                <RadioButtonGroup
-                  options={[
-                    { label: 'All', value: 'All' },
-                    { label: 'Overrides', value: 'Overrides' },
-                  ]}
-                  value={'All'}
-                  fullWidth
-                ></RadioButtonGroup>
+                {!isSearching && (
+                  <RadioButtonGroup
+                    options={[
+                      { label: 'All', value: OptionFilter.All },
+                      { label: 'Overrides', value: OptionFilter.Overrides },
+                    ]}
+                    value={listMode}
+                    onChange={setListMode}
+                    fullWidth
+                  ></RadioButtonGroup>
+                )}
               </div>
               <div className={styles.mainBox}>{mainBoxElements}</div>
             </>
