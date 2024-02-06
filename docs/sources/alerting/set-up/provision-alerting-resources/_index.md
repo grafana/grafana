@@ -40,6 +40,91 @@ Choose from the options below to import your Grafana Alerting resources.
 
    For more information on the Alerting Provisioning HTTP API, refer to [Alerting provisioning HTTP API][alerting_provisioning].
 
+   Here is a ready-to-use template for alert rules:
+
+   #### Alert rules template
+
+```
+{
+    "title": "TEST-API_1",
+    "ruleGroup": "API",
+    "folderUID": "FOLDER",
+    "noDataState": "OK",
+    "execErrState": "OK",
+    "for": "5m",
+    "orgId": 1,
+    "uid": "",
+    "condition": "B",
+    "annotations": {
+        "summary": "test_api_1"
+    },
+    "labels": {
+        "API": "test1"
+    },
+    "data": [
+        {
+            "refId": "A",
+            "queryType": "",
+            "relativeTimeRange": {
+                "from": 600,
+                "to": 0
+            },
+            "datasourceUid": " XXXXXXXXX-XXXXXXXXX-XXXXXXXXXX",
+            "model": {
+                "expr": "up",
+                "hide": false,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "A"
+            }
+        },
+        {
+            "refId": "B",
+            "queryType": "",
+            "relativeTimeRange": {
+                "from": 0,
+                "to": 0
+            },
+            "datasourceUid": "-100",
+            "model": {
+                "conditions": [
+                    {
+                        "evaluator": {
+                            "params": [
+                                6
+                            ],
+                            "type": "gt"
+                        },
+                        "operator": {
+                            "type": "and"
+                        },
+                        "query": {
+                            "params": [
+                                "A"
+                            ]
+                        },
+                        "reducer": {
+                            "params": [],
+                            "type": "last"
+                        },
+                        "type": "query"
+                    }
+                ],
+                "datasource": {
+                    "type": "__expr__",
+                    "uid": "-100"
+                },
+                "hide": false,
+                "intervalMs": 1000,
+                "maxDataPoints": 43200,
+                "refId": "B",
+                "type": "classic_conditions"
+            }
+        }
+    ]
+}
+```
+
 3. Use [Terraform](https://www.terraform.io/).
 
 **Useful Links:**
