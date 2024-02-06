@@ -83,6 +83,21 @@ export function ToolbarActions({ dashboard }: Props) {
     ),
   });
 
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: meta.isSnapshot && !isEditing,
+    render: () => (
+      <ToolbarButton
+        key="button-snapshot"
+        tooltip={t('dashboard.toolbar.open-original', 'Open original dashboard')}
+        icon="link"
+        onClick={() => {
+          dashboard.onOpenSnapshotOriginalDashboard();
+        }}
+      />
+    ),
+  });
+
   if (dynamicDashNavActions.left.length > 0) {
     dynamicDashNavActions.left.map((action, index) => {
       const props = { dashboard: getDashboardSrv().getCurrent()! };
@@ -113,23 +128,6 @@ export function ToolbarActions({ dashboard }: Props) {
       >
         Back to dashboard
       </Button>
-    ),
-  });
-
-  toolbarActions.push({
-    group: 'main-buttons',
-    condition: meta.isSnapshot && !isEditing,
-    render: () => (
-      <Button
-        key="button-snapshot"
-        tooltip={t('dashboard.toolbar.open-original', 'Open original dashboard')}
-        icon="link"
-        variant="secondary"
-        fill="text"
-        onClick={() => {
-          dashboard.onOpenSnapshotOriginalDashboard();
-        }}
-      />
     ),
   });
 
