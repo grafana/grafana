@@ -9,9 +9,8 @@ import {
   SceneVariableSet,
   TestVariable,
   VizPanel,
-  ConstantVariable,
 } from '@grafana/scenes';
-import { Dashboard, DashboardCursorSync } from '@grafana/schema';
+import { Dashboard } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
@@ -180,7 +179,7 @@ describe('DashboardScene', () => {
       jest.clearAllMocks();
     });
 
-    it('A change to griditem pos should set isDirty true', () => {
+    it('A change to variable values should trigger VariablesChanged event', () => {
       const varA = new TestVariable({ name: 'A', query: 'A.*', value: 'A.AA', text: '', options: [], delayMs: 0 });
       const scene = buildTestScene({
         $variables: new SceneVariableSet({ variables: [varA] }),
@@ -196,7 +195,22 @@ describe('DashboardScene', () => {
       expect(eventHandler).toHaveBeenCalledTimes(1);
     });
 
-    it('A change to a variable "%s" should set isDirty true', () => {
+    it('A change to the variable set should set isDirty true', () => {
+      const varA = new TestVariable({ name: 'A', query: 'A.*', value: 'A.AA', text: '', options: [], delayMs: 0 });
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [varA] }),
+      });
+
+      scene.activate();
+      scene.onEnterEditMode();
+
+      const variableSet = sceneGraph.getVariables(scene);
+      variableSet.setState({ variables: [] });
+
+      expect(scene.state.isDirty).toBe(true);
+    });
+
+    it('A change to a variable state should set isDirty true', () => {
       mockSaveDashboardChange({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: true });
       const variable = new TestVariable({ name: 'A' });
       const scene = buildTestScene({
