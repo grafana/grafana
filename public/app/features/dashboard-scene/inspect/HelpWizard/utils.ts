@@ -1,5 +1,4 @@
 import { cloneDeep } from 'lodash';
-import { firstValueFrom } from 'rxjs';
 
 import {
   dateTimeFormat,
@@ -69,7 +68,12 @@ export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRa
 
   // reproducable
   const queryRunner = getQueryRunnerFor(panel)!;
-  const { data } = await firstValueFrom(queryRunner.getResultsStream());
+
+  if (!queryRunner.state.data) {
+    return;
+  }
+
+  const data = queryRunner.state.data;
 
   const dsref = queryRunner?.state.datasource;
   const frames = randomizeData(getPanelDataFrames(data), rand);

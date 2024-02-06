@@ -1,11 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { of } from 'rxjs';
 
 import { FieldType, getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import {
-  sceneGraph,
   SceneGridItem,
   SceneGridLayout,
   SceneQueryRunner,
@@ -23,22 +21,13 @@ import { HelpWizard } from './HelpWizard';
 async function setup() {
   const { panel } = await buildTestScene();
   panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
-  const queryRunner = sceneGraph.getData(panel);
-  queryRunner.getResultsStream = jest.fn().mockImplementation(() =>
-    of({
-      data: {
-        state: 'Done',
-        series: [],
-      },
-    })
-  );
 
   return render(<HelpWizard panel={panel} onClose={() => {}} />);
 }
 describe('SupportSnapshot', () => {
   it('Can render', async () => {
     setup();
-    expect(await screen.findByRole('button', { name: 'Dashboard (2.74 KiB)' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Dashboard (3.50 KiB)' })).toBeInTheDocument();
   });
 });
 

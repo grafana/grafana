@@ -1,8 +1,5 @@
-import { of } from 'rxjs';
-
 import { FieldType, getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
 import {
-  sceneGraph,
   SceneGridItem,
   SceneGridLayout,
   SceneQueryRunner,
@@ -19,24 +16,6 @@ import { SnapshotTab, SupportSnapshotService } from './SupportSnapshotService';
 
 async function setup() {
   const { panel } = await buildTestScene();
-
-  const queryRunner = sceneGraph.getData(panel);
-  queryRunner.getResultsStream = jest.fn().mockImplementation(() =>
-    of({
-      data: {
-        state: 'Done',
-        series: [
-          toDataFrame({
-            name: 'http_requests_total',
-            fields: [
-              { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
-              { name: 'Value', type: FieldType.number, values: [11, 22, 33] },
-            ],
-          }),
-        ],
-      },
-    })
-  );
 
   return new SupportSnapshotService(panel);
 }
