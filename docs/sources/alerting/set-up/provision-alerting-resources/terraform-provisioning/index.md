@@ -11,6 +11,7 @@ keywords:
   - Terraform
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: Use Terraform to provision alerting resources

@@ -12,6 +12,7 @@ keywords:
   - alerts
 labels:
   products:
+    - cloud
     - enterprise
     - oss
 title: 'Alerting Provisioning HTTP API '

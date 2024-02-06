@@ -8,9 +8,9 @@ keywords:
   - provisioning
 labels:
   products:
-    - oss
     - cloud
     - enterprise
+    - oss
 title: Use the HTTP API to provision alerting resources
 weight: 300
 ---

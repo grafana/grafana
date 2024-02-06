@@ -11,7 +11,6 @@ keywords:
   - provisioning
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 title: Use configuration files to provision alerting resources
