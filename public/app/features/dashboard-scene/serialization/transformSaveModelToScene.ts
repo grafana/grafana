@@ -211,7 +211,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     });
   }
 
-  if (oldModel.annotations?.list?.length) {
+  if (oldModel.annotations?.list?.length && !oldModel.isSnapshot()) {
     layers = oldModel.annotations?.list.map((a) => {
       // Each annotation query is an individual data layer
       return new DashboardAnnotationsDataLayer({

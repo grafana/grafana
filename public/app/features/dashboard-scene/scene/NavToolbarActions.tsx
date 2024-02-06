@@ -72,7 +72,28 @@ export function ToolbarActions({ dashboard }: Props) {
         key="view-in-old-dashboard-button"
         tooltip={'Switch to old dashboard page'}
         icon="apps"
-        onClick={() => locationService.push(`/d/${uid}`)}
+        onClick={() => {
+          if (meta.isSnapshot) {
+            locationService.partial({ scenes: null });
+          } else {
+            locationService.push(`/d/${uid}`);
+          }
+        }}
+      />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: meta.isSnapshot && !isEditing,
+    render: () => (
+      <ToolbarButton
+        key="button-snapshot"
+        tooltip={t('dashboard.toolbar.open-original', 'Open original dashboard')}
+        icon="link"
+        onClick={() => {
+          dashboard.onOpenSnapshotOriginalDashboard();
+        }}
       />
     ),
   });
@@ -132,7 +153,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: uid && !isEditing,
+    condition: uid && !isEditing && !meta.isSnapshot,
     render: () => (
       <Button
         key="share-dashboard-button"

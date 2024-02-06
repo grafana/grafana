@@ -198,7 +198,7 @@ export const DashNav = React.memo<Props>((props) => {
       );
     }
 
-    if (config.featureToggles.scenes && !dashboard.isSnapshot()) {
+    if (config.featureToggles.scenes) {
       buttons.push(
         <DashNavButton
           key="button-scenes"

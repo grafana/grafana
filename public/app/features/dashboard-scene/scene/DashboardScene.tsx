@@ -1,8 +1,10 @@
+import { css } from '@emotion/css';
 import * as H from 'history';
+import React from 'react';
 import { Unsubscribable } from 'rxjs';
 
-import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil, textUtil } from '@grafana/data';
+import { locationService, config } from '@grafana/runtime';
 import {
   getUrlSyncManager,
   SceneFlexLayout,
@@ -19,6 +21,7 @@ import {
   SceneVariableDependencyConfigLike,
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink } from '@grafana/schema';
+import { ConfirmModal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -26,7 +29,7 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
-import { ShowConfirmModalEvent } from 'app/types/events';
+import { ShowModalReactEvent, ShowConfirmModalEvent } from 'app/types/events';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
@@ -422,6 +425,47 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       console.error('Failed to star dashboard', err);
     }
   }
+
+  public onOpenSnapshotOriginalDashboard = () => {
+    // @ts-ignore
+    const relativeURL = this.getInitialSaveModel()?.snapshot?.originalUrl ?? '';
+    const sanitizedRelativeURL = textUtil.sanitizeUrl(relativeURL);
+    try {
+      const sanitizedAppUrl = new URL(sanitizedRelativeURL, config.appUrl);
+      const appUrl = new URL(config.appUrl);
+      if (sanitizedAppUrl.host !== appUrl.host) {
+        appEvents.publish(
+          new ShowModalReactEvent({
+            component: ConfirmModal,
+            props: {
+              title: 'Proceed to external site?',
+              modalClass: css({
+                width: 'max-content',
+                maxWidth: '80vw',
+              }),
+              body: (
+                <>
+                  <p>
+                    {`This link connects to an external website at`} <code>{relativeURL}</code>
+                  </p>
+                  <p>{"Are you sure you'd like to proceed?"}</p>
+                </>
+              ),
+              confirmVariant: 'primary',
+              confirmText: 'Proceed',
+              onConfirm: () => {
+                window.location.href = sanitizedAppUrl.href;
+              },
+            },
+          })
+        );
+      } else {
+        locationService.push(sanitizedRelativeURL);
+      }
+    } catch (err) {
+      console.error('Failed to open original dashboard', err);
+    }
+  };
 
   public onOpenSettings = () => {
     locationService.partial({ editview: 'settings' });
