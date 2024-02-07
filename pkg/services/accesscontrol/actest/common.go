@@ -2,6 +2,7 @@ package actest
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -113,8 +114,15 @@ func AddUserPermissionToDB(t testing.TB, db db.DB, user *user.SignedInUser) {
 		var permissions []accesscontrol.Permission
 		for action, scopes := range user.Permissions[user.OrgID] {
 			for _, scope := range scopes {
+				kind, uid := "", ""
+				parts := strings.Split(scope, ":")
+				if len(parts) == 3 && parts[1] == "uid" {
+					kind, uid = parts[0], parts[2]
+				}
 				p := accesscontrol.Permission{
-					RoleID: role.ID, Action: action, Scope: scope, Created: time.Now(), Updated: time.Now(),
+					RoleID: role.ID,
+					Action: action, Scope: scope, Kind: kind, Identifier: uid,
+					Created: time.Now(), Updated: time.Now(),
 				}
 				//p.Kind, p.Attribute, p.Identifier = p.SplitScope()
 
