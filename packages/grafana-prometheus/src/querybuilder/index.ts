@@ -8,6 +8,5 @@ export * from './PromQueryModeller';
 export * from './QueryPattern';
 export * from './QueryPatternsModal';
 export * from './state';
-export * from './testUtils';
 export * from './types';
 export * from './components';
