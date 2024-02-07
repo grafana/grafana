@@ -9,6 +9,7 @@ import (
 )
 
 // MultiPluginVersion is a registry that only allows multiple versions of a plugin to be registered at a time.
+// TODO add alias support
 type MultiPluginVersion struct {
 	store map[string]*plugins.Plugin
 	mu    sync.RWMutex
