@@ -130,7 +130,7 @@ describe('getContactPointsFromDTO', () => {
       ],
       notification_settings: {
         receiver: 'receiver',
-        mute_timings: ['mute_timing'],
+        mute_time_intervals: ['mute_timing'],
         group_by: ['group_by'],
         group_wait: 'group_wait',
         group_interval: 'group_interval',
@@ -199,7 +199,7 @@ describe('getNotificationSettingsForDTO', () => {
     const result = getNotificationSettingsForDTO(manualRouting, contactPoints);
     expect(result).toEqual({
       receiver: 'receiver',
-      mute_timings: ['mute_timing'],
+      mute_time_intervals: ['mute_timing'],
       group_by: ['group_by'],
       group_wait: 'group_wait',
       group_interval: 'group_interval',
