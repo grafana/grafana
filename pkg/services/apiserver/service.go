@@ -240,10 +240,12 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 
-		store, err := sqlstash.ProvideSQLEntityServer(eDB)
+		storeServer, err := sqlstash.ProvideSQLEntityServer(eDB)
 		if err != nil {
 			return err
 		}
+
+		store := entity.NewEntityStoreClientLocal(storeServer)
 
 		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.RecommendedOptions.Etcd.StorageConfig.Codec)
 
@@ -259,7 +261,7 @@ func (s *service) start(ctx context.Context) error {
 		// defer conn.Close()
 
 		// Create a client instance
-		store := entity.NewEntityStoreClientWrapper(conn)
+		store := entity.NewEntityStoreClientGRPC(conn)
 
 		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.RecommendedOptions.Etcd.StorageConfig.Codec)
 

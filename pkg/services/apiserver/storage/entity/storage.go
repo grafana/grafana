@@ -36,7 +36,7 @@ const MaxUpdateAttempts = 1
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type Storage struct {
 	config       *storagebackend.ConfigForResource
-	store        entityStore.EntityStoreServer
+	store        entityStore.EntityStoreClient
 	gr           schema.GroupResource
 	codec        runtime.Codec
 	keyFunc      func(obj runtime.Object) (string, error)
@@ -52,7 +52,7 @@ type Storage struct {
 func NewStorage(
 	config *storagebackend.ConfigForResource,
 	gr schema.GroupResource,
-	store entityStore.EntityStoreServer,
+	store entityStore.EntityStoreClient,
 	codec runtime.Codec,
 	keyFunc func(obj runtime.Object) (string, error),
 	newFunc func() runtime.Object,
