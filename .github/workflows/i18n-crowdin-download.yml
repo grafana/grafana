@@ -68,9 +68,12 @@ jobs:
       - name: Get pull request ID
         if: steps.crowdin-download.outputs.pull_request_url
         shell: bash
+        # Crowdin action returns us the URL of the pull request, but we need an ID for the GraphQL API
+        # that looks like 'PR_kwDOAOaWjc5mP_GU'
         run: |
-          echo "PR_NUMBER=$(echo "$PULL_REQUEST_URL" | awk -F / '{print $7}')" >> "$GITHUB_ENV"
+          echo "PULL_REQUEST_ID=$(gh pr view "$PULL_REQUEST_URL" --json id -q .id)" >> "$GITHUB_ENV"
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PULL_REQUEST_URL: ${{ steps.crowdin-download.outputs.pull_request_url }}
 
       - name: Add to project board
@@ -85,9 +88,11 @@ jobs:
                 }
               }
             }
+          # Frontend Platform project ID - from GraphQL API
+          # TODO: get this from the API from the project number or url or something
           variables: |
-            projectid: 78
-            prid: ${{ env.PR_NUMBER }}
+            projectid: PVT_kwDOAG3Mbc2Pyw
+            prid: ${{ env.PULL_REQUEST_ID }}
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
