@@ -476,7 +476,7 @@ func TestIntegrationGet(t *testing.T) {
 		assert.Equal(t, subfolderWithSameName.Title, ff.Title)
 		assert.Equal(t, subfolderWithSameName.Description, ff.Description)
 		assert.Equal(t, path.Join(f.Title, subfolderWithSameName.Title), ff.Fullpath)
-		//assert.Equal(t, folder.GeneralFolderUID, ff.ParentUID)
+		assert.Equal(t, f.UID, ff.ParentUID)
 		assert.NotEmpty(t, ff.Created)
 		assert.NotEmpty(t, ff.Updated)
 		assert.NotEmpty(t, ff.URL)
