@@ -5,21 +5,15 @@ import (
 	"net"
 	"time"
 
-	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/lib/pq"
 	"golang.org/x/net/proxy"
 )
 
 // newPostgresProxyDriver updates the dialer for a postgres connector with a dialer that proxies connections through the secure socks proxy
 // and returns a new postgres driver to register
-func newPostgresProxyDialer(opts *sdkproxy.Options) (pq.Dialer, error) {
-	dialer, err := sdkproxy.New(opts).NewSecureSocksProxyContextDialer()
-	if err != nil {
-		return nil, err
-	}
-
+func newPostgresProxyDialer(dialer proxy.Dialer) pq.Dialer {
 	// update the postgres dialer with the proxy dialer
-	return &postgresProxyDialer{d: dialer}, nil
+	return &postgresProxyDialer{d: dialer}
 }
 
 var _ pq.Dialer = (&postgresProxyDialer{})
