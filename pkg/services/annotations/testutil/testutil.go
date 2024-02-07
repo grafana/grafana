@@ -2,6 +2,7 @@ package testutil
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -60,8 +61,14 @@ func SetupRBACPermission(t *testing.T, db *sqlstore.SQLStore, role *accesscontro
 		var acPermission []accesscontrol.Permission
 		for action, scopes := range user.Permissions[user.OrgID] {
 			for _, scope := range scopes {
+				parts := strings.Split(scope, ":")
+				kind, uid := "", ""
+				if len(parts) == 3 && parts[1] == "uid" {
+					kind, uid = parts[0], parts[2]
+				}
 				acPermission = append(acPermission, accesscontrol.Permission{
-					RoleID: role.ID, Action: action, Scope: scope, Created: time.Now(), Updated: time.Now(),
+					RoleID: role.ID, Action: action, Scope: scope, Kind: kind, Identifier: uid,
+					Created: time.Now(), Updated: time.Now(),
 				})
 			}
 		}
