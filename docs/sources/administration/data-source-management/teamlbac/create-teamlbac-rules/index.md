@@ -14,7 +14,7 @@ labels:
   products:
     - enterprise
     - oss
-title: Configure Team LBAC rules for a Loki data source
+title: Create Team LBAC rules for the Loki data source
 weight: 250
 ---
 
