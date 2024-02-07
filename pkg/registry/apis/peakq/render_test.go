@@ -180,3 +180,42 @@ func TestMultiVarTemplate(t *testing.T) {
 		rT.Targets,
 	)
 }
+
+func TestRenderWithRune(t *testing.T) {
+	qt := peakq.QueryTemplateSpec{
+		Variables: []peakq.TemplateVariable{
+			{
+				Key: "name",
+			},
+		},
+		Targets: []peakq.Target{
+			{
+				Properties: common.Unstructured{
+					Object: map[string]any{
+						"message": "🐦 name!",
+					},
+				},
+				Variables: map[string][]peakq.VariableReplacement{
+					"name": {
+						{
+							Path: "$.message",
+							Position: &peakq.Position{
+								Start: 2,
+								End:   6,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	selectedValues := map[string][]string{
+		"name": {"🦥"},
+	}
+
+	rq, err := Render(qt, selectedValues)
+	require.NoError(t, err)
+
+	require.Equal(t, "🐦 🦥!", rq.Targets[0].Properties.Object["message"])
+}
