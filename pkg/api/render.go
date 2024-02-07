@@ -24,13 +24,13 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 
 	queryParams := fmt.Sprintf("?%s", c.Req.URL.RawQuery)
 
-	width, err := strconv.Atoi(queryReader.Get("width", "800"))
+	width, err := strconv.Atoi(queryReader.Get("width", hs.Cfg.RendererImageWidth))
 	if err != nil {
 		c.Handle(hs.Cfg, 400, "Render parameters error", fmt.Errorf("cannot parse width as int: %s", err))
 		return
 	}
 
-	height, err := strconv.Atoi(queryReader.Get("height", "400"))
+	height, err := strconv.Atoi(queryReader.Get("height", hs.Cfg.RendererImageHeight))
 	if err != nil {
 		c.Handle(hs.Cfg, 400, "Render parameters error", fmt.Errorf("cannot parse height as int: %s", err))
 		return
@@ -42,7 +42,7 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 		return
 	}
 
-	scale, err := strconv.ParseFloat(queryReader.Get("scale", "1"), 64)
+	scale, err := strconv.ParseFloat(queryReader.Get("scale", hs.Cfg.RendererImageScale), 64)
 	if err != nil {
 		c.Handle(hs.Cfg, 400, "Render parameters error", fmt.Errorf("cannot parse scale as float: %s", err))
 		return
