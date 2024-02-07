@@ -91,7 +91,7 @@ We have two teams, Team A and Team B.
 
 A user in Team A will have access to logs that match `namespace="dev"`.
 
-A user in Team b will have access to logs that match `namespace!="dev"`.
+A user in Team B will have access to logs that match `namespace!="dev"`.
 
 > _NOTE:_ A user that is part of Team A and Team B will have access to all logs that match `namespace="dev"` `OR` `namespace!="dev"`.
 
