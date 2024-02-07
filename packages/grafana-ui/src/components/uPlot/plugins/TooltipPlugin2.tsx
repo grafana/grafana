@@ -82,14 +82,16 @@ function mergeState(prevState: TooltipContainerState, nextState: Partial<Tooltip
   };
 }
 
-const INITIAL_STATE: TooltipContainerState = {
-  style: { transform: '', pointerEvents: 'none' },
-  isHovering: false,
-  isPinned: false,
-  contents: null,
-  plot: null,
-  dismiss: () => {},
-};
+function initState(): TooltipContainerState {
+  return {
+    style: { transform: '', pointerEvents: 'none' },
+    isHovering: false,
+    isPinned: false,
+    contents: null,
+    plot: null,
+    dismiss: () => {},
+  };
+}
 
 // min px width that triggers zoom
 const MIN_ZOOM_DIST = 5;
@@ -116,7 +118,7 @@ export const TooltipPlugin2 = ({
     portalRoot.current = getPortalContainer();
   }
 
-  const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, INITIAL_STATE);
+  const [{ plot, isHovering, isPinned, contents, style, dismiss }, setState] = useReducer(mergeState, null, initState);
 
   const sizeRef = useRef<TooltipContainerSize>();
 
