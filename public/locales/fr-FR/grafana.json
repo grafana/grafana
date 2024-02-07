@@ -676,21 +676,6 @@
       "invalid-user-or-password": "Nom d'utilisateur ou mot de passe invalide",
       "title": "Échec de la connexion",
       "unknown": "Une erreur inconnue est survenue"
-    },
-    "forgot-password": "",
-    "form": {
-      "password-label": "",
-      "password-required": "",
-      "submit-label": "",
-      "submit-loading-label": "",
-      "username-label": "",
-      "username-required": ""
-    },
-    "services": {
-      "sing-in-with-prefix": ""
-    },
-    "signup": {
-      "new-to-question": ""
     }
   },
   "nav": {
@@ -1403,7 +1388,6 @@
     },
     "title": "Préférences"
   },
-  "Sign up": "",
   "snapshot": {
     "external-badge": "Externe",
     "name-column-header": "Nom",

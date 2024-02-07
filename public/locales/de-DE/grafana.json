@@ -670,21 +670,6 @@
       "invalid-user-or-password": "Ungültiger Benutzername oder Passwort",
       "title": "Login fehlgeschlagen",
       "unknown": "Unbekannter Fehler aufgetreten"
-    },
-    "forgot-password": "",
-    "form": {
-      "password-label": "",
-      "password-required": "",
-      "submit-label": "",
-      "submit-loading-label": "",
-      "username-label": "",
-      "username-required": ""
-    },
-    "services": {
-      "sing-in-with-prefix": ""
-    },
-    "signup": {
-      "new-to-question": ""
     }
   },
   "nav": {
@@ -1397,7 +1382,6 @@
     },
     "title": "Einstellungen"
   },
-  "Sign up": "",
   "snapshot": {
     "external-badge": "Extern",
     "name-column-header": "Name",
