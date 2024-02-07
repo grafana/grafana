@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	"github.com/stretchr/testify/assert"
 )
 
-var testLogger = log.New("test logger")
+var testLogger = log.New().With("logger", "test.logger")
 
 func TestRegions(t *testing.T) {
 	t.Run("returns regions from the api and merges them with default regions", func(t *testing.T) {

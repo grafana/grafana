@@ -31,6 +31,7 @@ func TestCreate(t *testing.T) {
 				Name:      "set-minimum-uid",
 				Key:       "/playlist.grafana.app/playlists/default/set-minimum-uid",
 				CreatedBy: "set-minimum-creator",
+				Origin:    &entity.EntityOriginInfo{},
 			},
 			false,
 			true,
@@ -103,7 +104,7 @@ func TestCreate(t *testing.T) {
 			require.Equal(t, tc.ent.Status, read.Status)
 			require.Equal(t, tc.ent.Title, read.Title)
 			require.Equal(t, tc.ent.Size, read.Size)
-			require.Equal(t, tc.ent.CreatedAt, read.CreatedAt)
+			require.Greater(t, read.CreatedAt, int64(0))
 			require.Equal(t, tc.ent.CreatedBy, read.CreatedBy)
 			require.Equal(t, tc.ent.UpdatedAt, read.UpdatedAt)
 			require.Equal(t, tc.ent.UpdatedBy, read.UpdatedBy)

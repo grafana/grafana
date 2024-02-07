@@ -221,3 +221,11 @@ export function isLocalDevEnv() {
   const buildInfo = config.buildInfo;
   return buildInfo.env === 'development';
 }
+
+export function isErrorLike(error: unknown): error is Error {
+  return 'message' in (error as Error);
+}
+
+export function stringifyErrorLike(error: unknown): string {
+  return isErrorLike(error) ? error.message : String(error);
+}
