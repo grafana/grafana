@@ -8,6 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
+// NOTE: This is just here for illustration purposes (not actually in use). Will remove before merging.
+
 // MultiPluginVersion is a registry that only allows multiple versions of a plugin to be registered at a time.
 // TODO add alias support
 type MultiPluginVersion struct {

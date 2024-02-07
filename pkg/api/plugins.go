@@ -276,7 +276,7 @@ func (hs *HTTPServer) GetPluginMarkdown(c *contextmodel.ReqContext) response.Res
 
 	p, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !exists {
-		return response.Error(404, "Plugin not installed", nil)
+		return response.Error(http.StatusNotFound, "Plugin not installed", nil)
 	}
 
 	content, err := hs.pluginMarkdown(c.Req.Context(), pluginID, p.Info.Version, name)
