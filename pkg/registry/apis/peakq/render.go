@@ -167,7 +167,7 @@ func Render(qt peakq.QueryTemplateSpec, selectedValues map[string][]string) (*pe
 			o := rawTargetObjects[targetIdx]
 			nodes, err := o.JSONPath(path)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("failed to find path %v: %w", path, err)
 			}
 			if len(nodes) != 1 {
 				return nil, fmt.Errorf("expected one lead node at path %v but got %v", path, len(nodes))
@@ -176,21 +176,18 @@ func Render(qt peakq.QueryTemplateSpec, selectedValues map[string][]string) (*pe
 			if !n.IsString() {
 				return nil, fmt.Errorf("only string type leaf notes supported currently, %v is not a string", path)
 			}
-			s := n.String()
+			s := []rune(n.String())
 			s = s[1 : len(s)-1]
 			var offSet int64
 			for _, r := range reps {
-				// I think breaks with utf...something...?
-				// TODO: Probably simpler to store the non-template parts and insert the values into that, then don't have to track
-				// offsets
+				value := []rune(formatVariables(r.format, selectedValues[r.Key]))
 				if r.Position == nil {
 					return nil, fmt.Errorf("nil position not support yet, will be full replacement")
 				}
-				value := formatVariables(r.format, selectedValues[r.Key])
-				s = s[:r.Start+offSet] + value + s[r.End+offSet:]
-				offSet = int64(len(value)+int(offSet)) - (r.End - r.Start)
+				s = append(s[:r.Start+offSet], append(value, s[r.End+offSet:]...)...)
+				offSet += int64(len(value)) - (r.End - r.Start)
 			}
-			if err = n.SetString(s); err != nil {
+			if err = n.SetString(string(s)); err != nil {
 				return nil, err
 			}
 		}
