@@ -172,7 +172,12 @@ export function prepConfig(opts: PrepConfigOpts) {
     },
     data: dataRef.current?.heatmap,
   };
+
   const hoverEvent = new DataHoverEvent(payload);
+  hoverEvent.publisher = 'uplot';
+
+  const clearEvent = new DataHoverClearEvent();
+  clearEvent.publisher = 'uplot';
 
   let pendingOnleave: ReturnType<typeof setTimeout> | 0;
 
@@ -209,9 +214,7 @@ export function prepConfig(opts: PrepConfigOpts) {
         if (!pendingOnleave) {
           pendingOnleave = setTimeout(() => {
             onhover(null);
-            payload.rowIndex = undefined;
-            payload.point[xScaleUnit] = null;
-            eventBus.publish(hoverEvent);
+            eventBus.publish(clearEvent);
           }, 100);
         }
       }

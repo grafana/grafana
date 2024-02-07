@@ -19,6 +19,9 @@ export abstract class BusEventBase implements BusEvent {
   readonly payload?: any;
   readonly origin?: EventBus;
 
+  // allows tagging of events for fine-grained filtering in subscribers
+  publisher?: string;
+
   constructor() {
     //@ts-ignore
     this.type = this.__proto__.constructor.type;
