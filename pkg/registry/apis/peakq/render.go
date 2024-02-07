@@ -9,13 +9,12 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/spyzhov/ajson"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/spyzhov/ajson"
-
-	"github.com/grafana/grafana/pkg/apis/common/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
 )
 
@@ -202,7 +201,7 @@ func Render(qt peakq.QueryTemplateSpec, selectedValues map[string][]string) (*pe
 		if err != nil {
 			return nil, err
 		}
-		u := v0alpha1.Unstructured{}
+		u := common.Unstructured{}
 		err = u.UnmarshalJSON(raw)
 		if err != nil {
 			return nil, err
