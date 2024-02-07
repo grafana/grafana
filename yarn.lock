@@ -2280,6 +2280,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@es-joy/jsdoccomment@npm:~0.42.0":
+  version: 0.42.0
+  resolution: "@es-joy/jsdoccomment@npm:0.42.0"
+  dependencies:
+    comment-parser: "npm:1.4.1"
+    esquery: "npm:^1.5.0"
+    jsdoc-type-pratt-parser: "npm:~4.0.0"
+  checksum: 10/413c058f224f91cf6370a514e7024944d20977819724878121178e598714cc4734ee9898b3eca6396f67542ad81acd9d46d5a0209e62306b0ef17a28626ec566
+  languageName: node
+  linkType: hard
+
 "@esbuild/android-arm64@npm:0.17.19":
   version: 0.17.19
   resolution: "@esbuild/android-arm64@npm:0.17.19"
@@ -3744,7 +3755,7 @@ __metadata:
     eslint-config-prettier: "npm:8.8.0"
     eslint-plugin-import: "npm:^2.26.0"
     eslint-plugin-jest: "npm:27.6.3"
-    eslint-plugin-jsdoc: "npm:46.8.2"
+    eslint-plugin-jsdoc: "npm:48.0.6"
     eslint-plugin-jsx-a11y: "npm:6.8.0"
     eslint-plugin-lodash: "npm:7.4.0"
     eslint-plugin-react: "npm:7.33.2"
@@ -12970,6 +12981,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"comment-parser@npm:1.4.1":
+  version: 1.4.1
+  resolution: "comment-parser@npm:1.4.1"
+  checksum: 10/16a3260b5e77819ebd9c99b0b65c7d6723b1ff73487bac9ce2d8f016a2847dd689e8663b88e1fad1444bbea89847c42f785708ac86a2c55f614f7095249bbf6b
+  languageName: node
+  linkType: hard
+
 "common-path-prefix@npm:^3.0.0":
   version: 3.0.0
   resolution: "common-path-prefix@npm:3.0.0"
@@ -15831,6 +15849,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-plugin-jsdoc@npm:48.0.6":
+  version: 48.0.6
+  resolution: "eslint-plugin-jsdoc@npm:48.0.6"
+  dependencies:
+    "@es-joy/jsdoccomment": "npm:~0.42.0"
+    are-docs-informative: "npm:^0.0.2"
+    comment-parser: "npm:1.4.1"
+    debug: "npm:^4.3.4"
+    escape-string-regexp: "npm:^4.0.0"
+    esquery: "npm:^1.5.0"
+    is-builtin-module: "npm:^3.2.1"
+    semver: "npm:^7.6.0"
+    spdx-expression-parse: "npm:^4.0.0"
+  peerDependencies:
+    eslint: ^7.0.0 || ^8.0.0 || ^9.0.0
+  checksum: 10/367ac9e6b44e83ccbc36a10f0e70c29dfa25e6db9628175107b3028b77e51a099aaf37d1ae951ed0aef915fd9515b16f2c0a5c861130629e75c10dad1dfb4fa7
+  languageName: node
+  linkType: hard
+
 "eslint-plugin-jsx-a11y@npm:6.8.0":
   version: 6.8.0
   resolution: "eslint-plugin-jsx-a11y@npm:6.8.0"
@@ -17872,7 +17909,7 @@ __metadata:
     eslint-config-prettier: "npm:8.8.0"
     eslint-plugin-import: "npm:^2.26.0"
     eslint-plugin-jest: "npm:27.6.3"
-    eslint-plugin-jsdoc: "npm:46.8.2"
+    eslint-plugin-jsdoc: "npm:48.0.6"
     eslint-plugin-jsx-a11y: "npm:6.8.0"
     eslint-plugin-lodash: "npm:7.4.0"
     eslint-plugin-react: "npm:7.33.2"
@@ -27337,7 +27374,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:7.6.0, semver@npm:7.x, semver@npm:^7.0.0, semver@npm:^7.1.1, semver@npm:^7.3.2, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.7, semver@npm:^7.3.8, semver@npm:^7.5.3, semver@npm:^7.5.4":
+"semver@npm:7.6.0, semver@npm:7.x, semver@npm:^7.0.0, semver@npm:^7.1.1, semver@npm:^7.3.2, semver@npm:^7.3.4, semver@npm:^7.3.5, semver@npm:^7.3.7, semver@npm:^7.3.8, semver@npm:^7.5.3, semver@npm:^7.5.4, semver@npm:^7.6.0":
   version: 7.6.0
   resolution: "semver@npm:7.6.0"
   dependencies:
@@ -27970,6 +28007,16 @@ __metadata:
     spdx-exceptions: "npm:^2.1.0"
     spdx-license-ids: "npm:^3.0.0"
   checksum: 10/a1c6e104a2cbada7a593eaa9f430bd5e148ef5290d4c0409899855ce8b1c39652bcc88a725259491a82601159d6dc790bedefc9016c7472f7de8de7361f8ccde
+  languageName: node
+  linkType: hard
+
+"spdx-expression-parse@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "spdx-expression-parse@npm:4.0.0"
+  dependencies:
+    spdx-exceptions: "npm:^2.1.0"
+    spdx-license-ids: "npm:^3.0.0"
+  checksum: 10/936be681fbf5edeec3a79c023136479f70d6edb3fd3875089ac86cd324c6c8c81add47399edead296d1d0af17ae5ce88c7f88885eb150b62c2ff6e535841ca6a
   languageName: node
   linkType: hard
 
