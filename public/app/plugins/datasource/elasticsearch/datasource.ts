@@ -306,7 +306,7 @@ export class ElasticDatasource
 
     let finalQuery = queryInterpolated;
     filters.forEach(filter => {
-      finalQuery = addAddHocFilter(finalQuery, filter)
+      finalQuery = addAddHocFilter(finalQuery, filter);
     })
 
     const query: {
