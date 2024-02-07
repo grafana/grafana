@@ -1,5 +1,5 @@
 {
-  "_comment": "此文件是英文字符串的真实来源。编辑此文件可更改用户界面的复数形式和其他短语。",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "角色",
@@ -102,6 +102,9 @@
       "change-theme": "更改主题...",
       "dark-theme": "深色",
       "light-theme": "浅色"
+    },
+    "empty-state": {
+      "title": ""
     },
     "search-box": {
       "placeholder": "搜索或跳转至..."
@@ -536,7 +539,7 @@
       "copy-link-abs-time": "",
       "copy-links-absolute-category": "",
       "copy-links-normal-category": "",
-      "copy-shortened-link": "复制短链接",
+      "copy-shortened-link": "",
       "copy-shortened-link-abs-time": "",
       "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "取消",
@@ -644,14 +647,14 @@
   },
   "library-panels": {
     "modal": {
-      "body_other": "此面板在 {{count}} 个仪表板中使用。请选择要在哪个仪表板中查看此面板：",
       "button-cancel": "<0>取消</0>",
       "button-view-panel1": "在 {{label}} 中查看面板...",
       "button-view-panel2": "在仪表板中查看面板...",
       "panel-not-linked": "面板没有链接到仪表板。请将面板添加到仪表板，然后重试。",
       "select-no-options-message": "未找到仪表板",
       "select-placeholder": "开始输入以搜索仪表板",
-      "title": "在仪表板中查看面板"
+      "title": "在仪表板中查看面板",
+      "body_other": "此面板在 {{count}} 个仪表板中使用。请选择要在哪个仪表板中查看此面板："
     },
     "save": {
       "error": "保存库面板时出错：\"{{errorMsg}}\"",
@@ -664,6 +667,22 @@
       "invalid-user-or-password": "用户名或密码无效",
       "title": "登录失败",
       "unknown": "发生了未知错误"
+    },
+    "forgot-password": "",
+    "form": {
+      "password-label": "",
+      "password-required": "",
+      "submit-label": "",
+      "submit-loading-label": "",
+      "username-label": "",
+      "username-required": ""
+    },
+    "services": {
+      "sing-in-with-prefix": ""
+    },
+    "signup": {
+      "button-label": "",
+      "new-to-question": ""
     }
   },
   "nav": {
@@ -735,6 +754,9 @@
     "authentication": {
       "title": "身份验证"
     },
+    "collector": {
+      "title": ""
+    },
     "config": {
       "title": "管理"
     },
@@ -799,7 +821,7 @@
       "title": "前端"
     },
     "frontend-app": {
-      "title": "前端"
+      "title": ""
     },
     "global-orgs": {
       "subtitle": "在同一服务器上运行的 Grafana 的孤立实例",
@@ -830,7 +852,7 @@
       "title": ""
     },
     "integrations": {
-      "title": "集成"
+      "title": ""
     },
     "k6": {
       "title": ""
@@ -871,9 +893,6 @@
       "subtitle": "管理整个组织的首选项",
       "title": "默认首选项"
     },
-    "performance-testing": {
-      "title": "性能测试"
-    },
     "playlists": {
       "subtitle": "以序列显示的仪表板组",
       "title": "播放列表"
@@ -881,6 +900,10 @@
     "plugins": {
       "subtitle": "使用插件扩展 Grafana 体验",
       "title": "插件"
+    },
+    "private-data-source-connections": {
+      "subtitle": "",
+      "title": ""
     },
     "profile/notifications": {
       "title": "通知历史记录"
@@ -1467,7 +1490,7 @@
       "username-label": "用户名"
     },
     "tabs": {
-      "general": "概况"
+      "general": ""
     }
   },
   "user-session": {
