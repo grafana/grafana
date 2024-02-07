@@ -408,6 +408,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   private detectChanges(changes: DashboardChangeInfo) {
+    console.log('deecting changed');
     const { hasChanges, hasTimeChanges, hasVariableValueChanges } = changes;
     const hasChangesToSave = hasChanges || hasTimeChanges || hasVariableValueChanges;
 
