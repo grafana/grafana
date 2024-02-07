@@ -159,6 +159,7 @@ const (
 	VariableTypeConstant   VariableType = "constant"
 	VariableTypeCustom     VariableType = "custom"
 	VariableTypeDatasource VariableType = "datasource"
+	VariableTypeGroupby    VariableType = "groupby"
 	VariableTypeInterval   VariableType = "interval"
 	VariableTypeQuery      VariableType = "query"
 	VariableTypeSystem     VariableType = "system"

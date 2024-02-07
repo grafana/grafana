@@ -5,6 +5,7 @@ import {
   CustomVariableModel,
   DashboardVariableModel,
   DataSourceVariableModel,
+  GroupByVariableModel,
   IntervalVariableModel,
   LoadingState,
   OrgVariableModel,
@@ -74,6 +75,19 @@ export function createAdhocVariable(input?: Partial<AdHocVariableModel>): AdHocV
       type: 'prometheus',
     },
     filters: [],
+    ...input,
+  };
+}
+
+export function createGroupByVariable(input?: Partial<GroupByVariableModel>): GroupByVariableModel {
+  return {
+    ...createBaseVariableModel('groupby'),
+    datasource: {
+      uid: 'abc-123',
+      type: 'prometheus',
+    },
+    groupByKeys: [],
+    multi: true,
     ...input,
   };
 }
