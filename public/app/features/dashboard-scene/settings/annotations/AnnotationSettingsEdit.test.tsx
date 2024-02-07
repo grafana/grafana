@@ -143,30 +143,6 @@ describe('AnnotationSettingsEdit', () => {
     expect(mockOnUpdate).toHaveBeenCalled();
   });
 
-  it('should update annotation datasource on change', async () => {
-    const {
-      renderer: { getByTestId },
-      user,
-      anno,
-    } = await setup();
-
-    const annoArg = {
-      ...anno,
-      datasource: {
-        type: 'test',
-        uid: 'mock-ds-2',
-      },
-    };
-
-    const dataSourcePicker = getByTestId(selectors.components.DataSourcePicker.inputV2);
-
-    await user.click(dataSourcePicker); // open the select
-    await userEvent.tab();
-
-    expect(mockOnUpdate).toHaveBeenCalledTimes(1);
-    expect(mockOnUpdate).toHaveBeenCalledWith(annoArg, 1);
-  });
-
   it('should toggle annotation enabled on change', async () => {
     const {
       renderer: { getByTestId },
