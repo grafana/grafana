@@ -139,8 +139,8 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 				sqleng.Interpolate = origInterpolate
 			})
 
-			sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
-				return sql, nil
+			sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) string {
+				return sql
 			}
 
 			cfg := setting.NewCfg()
