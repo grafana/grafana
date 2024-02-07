@@ -8,3 +8,4 @@ export * from './PromQueryEditorForAlerting';
 export * from './PromQueryField';
 export * from './types';
 export * from './VariableQueryEditor';
+export * from './PromCheatSheet';
