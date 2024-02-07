@@ -1,19 +1,17 @@
 package tests
 
 import (
-	"os"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/services/live/database"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 func TestMain(m *testing.M) {
-	code := m.Run()
-	db.CleanupTestDB()
-	os.Exit(code)
+	testsuite.Run(m)
 }
 
 // SetupTestStorage initializes a storage to used by the integration tests.

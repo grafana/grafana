@@ -3,7 +3,6 @@ package orgimpl
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -22,12 +21,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 func TestMain(m *testing.M) {
-	code := m.Run()
-	db.CleanupTestDB()
-	os.Exit(code)
+	testsuite.Run(m)
 }
 
 func TestIntegrationOrgDataAccess(t *testing.T) {

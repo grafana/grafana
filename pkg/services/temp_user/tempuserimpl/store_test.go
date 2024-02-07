@@ -2,7 +2,6 @@ package tempuserimpl
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
@@ -10,12 +9,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 func TestMain(m *testing.M) {
-	code := m.Run()
-	db.CleanupTestDB()
-	os.Exit(code)
+	testsuite.Run(m)
 }
 
 func TestIntegrationTempUserCommandsAndQueries(t *testing.T) {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
-	"os"
 	"sort"
 	"testing"
 	"time"
@@ -14,12 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 func TestMain(m *testing.M) {
-	code := m.Run()
-	db.CleanupTestDB()
-	os.Exit(code)
+	testsuite.Run(m)
 }
 
 func TestIntegrationAlertmanagerStore(t *testing.T) {

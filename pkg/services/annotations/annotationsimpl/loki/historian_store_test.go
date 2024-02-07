@@ -6,7 +6,6 @@ import (
 	"errors"
 	"math/rand"
 	"net/url"
-	"os"
 	"strconv"
 	"sync"
 	"testing"
@@ -28,15 +27,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	historymodel "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
-	code := m.Run()
-	db.CleanupTestDB()
-	os.Exit(code)
+	testsuite.Run(m)
 }
 
 func TestIntegrationAlertStateHistoryStore(t *testing.T) {

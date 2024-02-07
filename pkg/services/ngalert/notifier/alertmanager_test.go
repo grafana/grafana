@@ -2,7 +2,6 @@ package notifier
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
@@ -18,12 +17,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 func TestMain(m *testing.M) {
-	code := m.Run()
-	db.CleanupTestDB()
-	os.Exit(code)
+	testsuite.Run(m)
 }
 
 func setupAMTest(t *testing.T) *alertmanager {

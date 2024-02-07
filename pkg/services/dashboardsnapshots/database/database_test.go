@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
@@ -19,12 +18,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 func TestMain(m *testing.M) {
-	code := m.Run()
-	db.CleanupTestDB()
-	os.Exit(code)
+	testsuite.Run(m)
 }
 
 func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {

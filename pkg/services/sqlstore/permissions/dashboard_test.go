@@ -2,7 +2,6 @@ package permissions_test
 
 import (
 	"context"
-	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -32,12 +31,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 func TestMain(m *testing.M) {
-	code := m.Run()
-	db.CleanupTestDB()
-	os.Exit(code)
+	testsuite.Run(m)
 }
 
 func TestIntegration_DashboardPermissionFilter(t *testing.T) {

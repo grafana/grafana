@@ -3,7 +3,6 @@ package notifiers
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -20,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 var (
@@ -36,9 +36,7 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	code := m.Run()
-	db.CleanupTestDB()
-	os.Exit(code)
+	testsuite.Run(m)
 }
 
 func TestNotificationAsConfig(t *testing.T) {

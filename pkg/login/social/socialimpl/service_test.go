@@ -1,7 +1,6 @@
 package socialimpl
 
 import (
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -19,12 +18,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 func TestMain(m *testing.M) {
-	code := m.Run()
-	db.CleanupTestDB()
-	os.Exit(code)
+	testsuite.Run(m)
 }
 
 func TestSocialService_ProvideService(t *testing.T) {

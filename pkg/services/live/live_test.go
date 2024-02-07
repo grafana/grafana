@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http/httptest"
 	"net/url"
-	"os"
 	"testing"
 	"time"
 
@@ -18,12 +17,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 func TestMain(m *testing.M) {
-	code := m.Run()
-	db.CleanupTestDB()
-	os.Exit(code)
+	testsuite.Run(m)
 }
 
 func Test_provideLiveService_RedisUnavailable(t *testing.T) {

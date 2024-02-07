@@ -2,7 +2,6 @@ package shorturlimpl
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
@@ -11,12 +10,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 func TestMain(m *testing.M) {
-	code := m.Run()
-	db.CleanupTestDB()
-	os.Exit(code)
+	testsuite.Run(m)
 }
 
 func TestShortURLService(t *testing.T) {

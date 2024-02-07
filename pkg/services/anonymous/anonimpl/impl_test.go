@@ -3,7 +3,6 @@ package anonimpl
 import (
 	"context"
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
@@ -19,12 +18,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 func TestMain(m *testing.M) {
-	code := m.Run()
-	db.CleanupTestDB()
-	os.Exit(code)
+	testsuite.Run(m)
 }
 
 func TestIntegrationDeviceService_tag(t *testing.T) {

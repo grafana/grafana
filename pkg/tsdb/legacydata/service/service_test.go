@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -28,13 +27,12 @@ import (
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 func TestMain(m *testing.M) {
-	code := m.Run()
-	db.CleanupTestDB()
-	os.Exit(code)
+	testsuite.Run(m)
 }
 
 func TestHandleRequest(t *testing.T) {

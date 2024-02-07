@@ -2,7 +2,6 @@ package alerting
 
 import (
 	"context"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -19,12 +18,11 @@ import (
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 func TestMain(m *testing.M) {
-	code := m.Run()
-	db.CleanupTestDB()
-	os.Exit(code)
+	testsuite.Run(m)
 }
 
 func TestService(t *testing.T) {

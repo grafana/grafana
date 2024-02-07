@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
@@ -13,12 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 func TestMain(m *testing.M) {
-	code := m.Run()
-	db.CleanupTestDB()
-	os.Exit(code)
+	testsuite.Run(m)
 }
 
 func TestService_DecryptedValuesCache(t *testing.T) {

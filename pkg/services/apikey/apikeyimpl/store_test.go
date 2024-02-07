@@ -3,7 +3,6 @@ package apikeyimpl
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -15,12 +14,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 func TestMain(m *testing.M) {
-	code := m.Run()
-	db.CleanupTestDB()
-	os.Exit(code)
+	testsuite.Run(m)
 }
 
 type getStore func(db.DB) store

@@ -92,7 +92,7 @@ func ProvideService(cfg *setting.Cfg,
 }
 
 func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator) (*SQLStore, error) {
-	return initTestDB(t, cfg, features, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
+	return initTestDB(cfg, features, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
 }
 
 func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine,
@@ -383,6 +383,7 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 	return *ss.recursiveQueriesAreSupported, nil
 }
 
+var testSQLStoreSetup = false
 var testSQLStore *SQLStore
 var testSQLStoreMutex sync.Mutex
 var testSQLStoreCleanup []func()
@@ -398,7 +399,7 @@ type InitTestDBOpt struct {
 func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
-	store, err := initTestDB(t, setting.NewCfg(), features, migration, opts...)
+	store, err := initTestDB(setting.NewCfg(), features, migration, opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -410,21 +411,28 @@ func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
 
-	store, err := initTestDB(t, setting.NewCfg(), features, migrations.ProvideOSSMigrations(features), opts...)
+	store, err := initTestDB(setting.NewCfg(), features, migrations.ProvideOSSMigrations(features), opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
 	return store
 }
 
-func InitTestDBWithCfg(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
-	store := InitTestDB(t, opts...)
-	return store, store.Cfg
+func SetupTestDB() {
+	testSQLStoreMutex.Lock()
+	defer testSQLStoreMutex.Unlock()
+	if testSQLStoreSetup {
+		panic("Test DB already set up, SetupTestDB called twice\n")
+	}
+	testSQLStoreSetup = true
 }
 
 func CleanupTestDB() {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
+	if !testSQLStoreSetup {
+		panic("Test DB not set up, SetupTestDB not called\n")
+	}
 	if testSQLStore != nil {
 		if err := testSQLStore.GetEngine().Close(); err != nil {
 			fmt.Printf("Failed to close testSQLStore engine: %s\n", err)
@@ -455,12 +463,31 @@ func getFeaturesForTesting(opts ...InitTestDBOpt) featuremgmt.FeatureToggles {
 }
 
 //nolint:gocyclo
-func initTestDB(t sqlutil.ITestDB, testCfg *setting.Cfg,
+func initTestDB(testCfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	migration registry.DatabaseMigrator,
 	opts ...InitTestDBOpt) (*SQLStore, error) {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
+	if !testSQLStoreSetup {
+		panic(`Test DB not set up, are you missing TestMain?
+
+Example:
+
+package mypkg
+
+import (
+	"testing"
+
+	"github.com/grafana/grafana/pkg/tests/testsuite"
+)
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
+`)
+	}
 
 	if len(opts) == 0 {
 		opts = []InitTestDBOpt{{EnsureDefaultOrgAndUser: false, FeatureFlags: []string{}}}

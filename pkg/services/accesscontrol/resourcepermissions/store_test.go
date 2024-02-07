@@ -3,7 +3,6 @@ package resourcepermissions
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -22,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 type setUserResourcePermissionTest struct {
@@ -36,9 +36,7 @@ type setUserResourcePermissionTest struct {
 }
 
 func TestMain(m *testing.M) {
-	code := m.Run()
-	db.CleanupTestDB()
-	os.Exit(code)
+	testsuite.Run(m)
 }
 
 func TestIntegrationStore_SetUserResourcePermission(t *testing.T) {

@@ -13,6 +13,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
+	SetupTestDB()
 	code := m.Run()
 	CleanupTestDB()
 	os.Exit(code)
