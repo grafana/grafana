@@ -1,3 +1,4 @@
+// Package intervalv2 partially copied from https://github.com/grafana/grafana/blob/main/pkg/tsdb/intervalv2/intervalv2.go
 package intervalv2
 
 import (
