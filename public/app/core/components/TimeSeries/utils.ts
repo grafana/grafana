@@ -583,11 +583,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       data: frame,
     };
 
-    const hoverEvent = new DataHoverEvent(payload);
-    hoverEvent.publisher = 'uplot';
-
-    const clearEvent = new DataHoverClearEvent();
-    clearEvent.publisher = 'uplot';
+    const hoverEvent = new DataHoverEvent(payload).setTags(['uplot']);
+    const clearEvent = new DataHoverClearEvent().setTags(['uplot']);
 
     cursor.sync = {
       key: eventsScope,

@@ -180,11 +180,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     data: frame,
   };
 
-  const hoverEvent = new DataHoverEvent(payload);
-  hoverEvent.publisher = 'uplot';
-
-  const clearEvent = new DataHoverClearEvent();
-  clearEvent.publisher = 'uplot';
+  const hoverEvent = new DataHoverEvent(payload).setTags(['uplot']);
+  const clearEvent = new DataHoverClearEvent().setTags(['uplot']);
 
   builder.addHook('init', coreConfig.init);
   builder.addHook('drawClear', coreConfig.drawClear);
