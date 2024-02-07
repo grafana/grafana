@@ -99,10 +99,6 @@ const (
 	// Enables topnav support in external plugins. The new Grafana navigation cannot be disabled.
 	FlagTopnav = "topnav"
 
-	// FlagDockedMegaMenu
-	// Enable support for a persistent (docked) navigation menu
-	FlagDockedMegaMenu = "dockedMegaMenu"
-
 	// FlagReturnToPrevious
 	// Enables the return to previous context functionality
 	FlagReturnToPrevious = "returnToPrevious"
@@ -247,10 +243,6 @@ const (
 	// Enable the processing of queries and responses in the Elasticsearch data source through backend
 	FlagEnableElasticsearchBackendQuerying = "enableElasticsearchBackendQuerying"
 
-	// FlagAdvancedDataSourcePicker
-	// Enable a new data source picker with contextual information, recently used order and advanced mode
-	FlagAdvancedDataSourcePicker = "advancedDataSourcePicker"
-
 	// FlagFaroDatasourceSelector
 	// Enable the data source selector within the Frontend Apps section of the Frontend Observability
 	FlagFaroDatasourceSelector = "faroDatasourceSelector"
@@ -391,10 +383,6 @@ const (
 	// Send query to the same datasource in a single request when using server side expressions. The `cloudWatchBatchQueries` feature toggle should be enabled if this used with CloudWatch.
 	FlagSseGroupByDatasource = "sseGroupByDatasource"
 
-	// FlagRequestInstrumentationStatusSource
-	// Include a status source label for request metrics and logs
-	FlagRequestInstrumentationStatusSource = "requestInstrumentationStatusSource"
-
 	// FlagLibraryPanelRBAC
 	// Enables RBAC support for library panels
 	FlagLibraryPanelRBAC = "libraryPanelRBAC"
@@ -418,10 +406,6 @@ const (
 	// FlagPluginsAPIMetrics
 	// Sends metrics of public grafana packages usage by plugins
 	FlagPluginsAPIMetrics = "pluginsAPIMetrics"
-
-	// FlagHttpSLOLevels
-	// Adds SLO level to http request metrics
-	FlagHttpSLOLevels = "httpSLOLevels"
 
 	// FlagIdForwarding
 	// Generate signed id token for identity that can be forwarded to plugins and external services
@@ -642,4 +626,8 @@ const (
 	// FlagNodeGraphDotLayout
 	// Changed the layout algorithm for the node graph
 	FlagNodeGraphDotLayout = "nodeGraphDotLayout"
+
+	// FlagGroupToNestedTableTransformation
+	// Enables the group to nested table transformation
+	FlagGroupToNestedTableTransformation = "groupToNestedTableTransformation"
 )

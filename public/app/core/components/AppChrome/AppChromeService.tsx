@@ -38,12 +38,8 @@ export class AppChromeService {
   private routeChangeHandled = true;
 
   private megaMenuDocked = Boolean(
-    config.featureToggles.dockedMegaMenu &&
-      window.innerWidth >= config.theme2.breakpoints.values.xl &&
-      store.getBool(
-        DOCKED_LOCAL_STORAGE_KEY,
-        Boolean(config.featureToggles.dockedMegaMenu && window.innerWidth >= config.theme2.breakpoints.values.xxl)
-      )
+    window.innerWidth >= config.theme2.breakpoints.values.xl &&
+      store.getBool(DOCKED_LOCAL_STORAGE_KEY, Boolean(window.innerWidth >= config.theme2.breakpoints.values.xxl))
   );
 
   private sessionStorageData = window.sessionStorage.getItem('returnToPrevious');
@@ -130,14 +126,10 @@ export class AppChromeService {
 
   public setMegaMenuOpen = (newOpenState: boolean) => {
     const { megaMenuDocked } = this.state.getValue();
-    if (config.featureToggles.dockedMegaMenu) {
-      if (megaMenuDocked) {
-        store.set(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, newOpenState);
-      }
-      reportInteraction('grafana_mega_menu_open', { state: newOpenState });
-    } else {
-      reportInteraction('grafana_toggle_menu_clicked', { action: newOpenState ? 'open' : 'close' });
+    if (megaMenuDocked) {
+      store.set(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, newOpenState);
     }
+    reportInteraction('grafana_mega_menu_open', { state: newOpenState });
     this.update({
       megaMenuOpen: newOpenState,
     });

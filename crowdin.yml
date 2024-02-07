@@ -1,7 +1,5 @@
 files:
-  - source: /public/locales/en-US/grafana.json
-    translation: /public/locales/%locale%/%original_file_name%
-    type: i18next_json
+  - type: i18next_json
 # The following are pulled from env variables
 project_id_env: CROWDIN_PROJECT_ID
 api_token_env: CROWDIN_PERSONAL_TOKEN
