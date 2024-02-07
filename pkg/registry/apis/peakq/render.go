@@ -9,13 +9,13 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/spyzhov/ajson"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apis/common/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
-	"github.com/spyzhov/ajson"
 )
 
 type renderREST struct {
@@ -107,6 +107,7 @@ func makeVarMapFromParams(v url.Values) (map[string][]string, error) {
 type replacement struct {
 	*peakq.Position
 	*peakq.TemplateVariable
+	format peakq.VariableFormat
 }
 
 func getReplacementMap(qt peakq.QueryTemplateSpec) map[int]map[string][]replacement {
@@ -127,6 +128,7 @@ func getReplacementMap(qt peakq.QueryTemplateSpec) map[int]map[string][]replacem
 					replacement{
 						Position:         vReps[rI].Position,
 						TemplateVariable: varMap[k],
+						format:           rep.Format,
 					},
 				)
 			}
@@ -178,13 +180,10 @@ func Render(qt peakq.QueryTemplateSpec, selectedValues map[string][]string) (*pe
 			s = s[1 : len(s)-1]
 			var offSet int64
 			for _, r := range reps {
+				value := []rune(formatVariables(r.format, selectedValues[r.Key]))
 				if r.Position == nil {
 					return nil, fmt.Errorf("nil position not support yet, will be full replacement")
 				}
-				if len(selectedValues[r.Key]) != 1 {
-					return nil, fmt.Errorf("selected value missing, or more then one provided")
-				}
-				value := []rune(selectedValues[r.Key][0])
 				s = append(s[:r.Start+offSet], append(value, s[r.End+offSet:]...)...)
 				offSet += int64(len(value)) - (r.End - r.Start)
 			}
@@ -199,7 +198,7 @@ func Render(qt peakq.QueryTemplateSpec, selectedValues map[string][]string) (*pe
 		if err != nil {
 			return nil, err
 		}
-		u := v0alpha1.Unstructured{}
+		u := common.Unstructured{}
 		err = u.UnmarshalJSON(raw)
 		if err != nil {
 			return nil, err

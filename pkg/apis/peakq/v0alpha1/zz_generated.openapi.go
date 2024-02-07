@@ -21,7 +21,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.QueryTemplateList":   schema_pkg_apis_peakq_v0alpha1_QueryTemplateList(ref),
 		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.QueryTemplateSpec":   schema_pkg_apis_peakq_v0alpha1_QueryTemplateSpec(ref),
 		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.RenderedQuery":       schema_pkg_apis_peakq_v0alpha1_RenderedQuery(ref),
-		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.ReplacementHistory":  schema_pkg_apis_peakq_v0alpha1_ReplacementHistory(ref),
 		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Target":              schema_pkg_apis_peakq_v0alpha1_Target(ref),
 		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.TemplateVariable":    schema_pkg_apis_peakq_v0alpha1_TemplateVariable(ref),
 		"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.VariableReplacement": schema_pkg_apis_peakq_v0alpha1_VariableReplacement(ref),
@@ -255,49 +254,6 @@ func schema_pkg_apis_peakq_v0alpha1_RenderedQuery(ref common.ReferenceCallback) 
 	}
 }
 
-func schema_pkg_apis_peakq_v0alpha1_ReplacementHistory(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"source": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Who/what made the change",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"previous": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Value before replacement",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"replacement": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The value(s) that replaced the section",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"previous", "replacement"},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_peakq_v0alpha1_Target(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -421,23 +377,10 @@ func schema_pkg_apis_peakq_v0alpha1_VariableReplacement(ref common.ReferenceCall
 					},
 					"format": {
 						SchemaProps: spec.SchemaProps{
-							Description: "How values should be interpolated See: https://grafana.com/docs/grafana/latest/dashboards/variables/variable-syntax/#advanced-variable-format-options NOTE: the format parameter is not yet supported!",
+							Description: "How values should be interpolated See: NOTE: the format parameter is not yet supported!\n\nPossible enum values:\n - `\"csv\"` Formats variables with multiple values as a comma-separated string.\n - `\"doublequote\"` Formats single- and multi-valued variables into a comma-separated string\n - `\"json\"` Formats variables with multiple values as a comma-separated string.\n - `\"pipe\"` Formats variables with multiple values into a pipe-separated string.\n - `\"raw\"` Formats variables with multiple values into comma-separated string. This is the default behavior when no format is specified\n - `\"singlequote\"` Formats single- and multi-valued variables into a comma-separated string",
 							Type:        []string{"string"},
 							Format:      "",
-						},
-					},
-					"history": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Keep track of the values from previous iterations",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.ReplacementHistory"),
-									},
-								},
-							},
+							Enum:        []interface{}{"csv", "doublequote", "json", "pipe", "raw", "singlequote"},
 						},
 					},
 				},
@@ -445,6 +388,6 @@ func schema_pkg_apis_peakq_v0alpha1_VariableReplacement(ref common.ReferenceCall
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Position", "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.ReplacementHistory"},
+			"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.Position"},
 	}
 }
