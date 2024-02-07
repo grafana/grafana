@@ -227,8 +227,10 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 	}
 
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		dashFolder.Fullpath = dashFolder.Title
 		return dashFolder, nil
 	}
+
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	if q.ID != nil {
@@ -246,6 +248,10 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 	// nolint:staticcheck
 	f.ID = dashFolder.ID
 	f.Version = dashFolder.Version
+
+	if q.WithFullpath == false {
+		f.Fullpath = f.Title // and fix the full path with folder title (unescaped)
+	}
 
 	return f, err
 }
