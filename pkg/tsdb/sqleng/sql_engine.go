@@ -21,13 +21,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
 const MetaKeyExecutedQueryString = "executedQueryString"
-
-var ErrConnectionFailed = errutil.Internal("sqleng.connectionError")
 
 // SQLMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
 // timeRange to be able to generate queries that use from and to.
@@ -112,7 +109,7 @@ func (e *DataSourceHandler) TransformQueryError(logger log.Logger, err error) er
 	var opErr *net.OpError
 	if errors.As(err, &opErr) {
 		logger.Error("Query error", "err", err)
-		return ErrConnectionFailed.Errorf("failed to connect to server - %s", e.userError)
+		return fmt.Errorf("failed to connect to server - %s", e.userError)
 	}
 
 	return e.queryResultTransformer.TransformQueryError(logger, err)
@@ -249,14 +246,10 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 	}
 
 	// global substitutions
-	interpolatedQuery, err := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJson.RawSql)
-	if err != nil {
-		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery)
-		return
-	}
+	interpolatedQuery := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJson.RawSql)
 
 	// data source specific substitutions
-	interpolatedQuery, err = e.macroEngine.Interpolate(&query, timeRange, interpolatedQuery)
+	interpolatedQuery, err := e.macroEngine.Interpolate(&query, timeRange, interpolatedQuery)
 	if err != nil {
 		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery)
 		return
@@ -375,7 +368,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 }
 
 // Interpolate provides global macros/substitutions for all sql datasources.
-var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
+var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) string {
 	interval := query.Interval
 
 	sql = strings.ReplaceAll(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10))
@@ -383,7 +376,7 @@ var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, tim
 	sql = strings.ReplaceAll(sql, "$__unixEpochFrom()", fmt.Sprintf("%d", timeRange.From.UTC().Unix()))
 	sql = strings.ReplaceAll(sql, "$__unixEpochTo()", fmt.Sprintf("%d", timeRange.To.UTC().Unix()))
 
-	return sql, nil
+	return sql
 }
 
 func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext context.Context,
