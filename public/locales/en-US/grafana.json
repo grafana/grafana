@@ -1,5 +1,5 @@
 {
-  "_comment": "This file is the source of truth for English strings. Edit this to change plurals and other phrases for the UI.",
+  "_comment": "This file is the source of truth for English strings. Edit this in the codebase to change plurals and other phrases for the UI.",
   "access-control": {
     "add-permission": {
       "role-label": "Role",
@@ -31,7 +31,7 @@
   "browse-dashboards": {
     "action": {
       "cancel-button": "Cancel",
-      "cannot-move-folders": "Folders cannot be moved",
+      "cannot-move-folders": "Folders can not be moved",
       "delete-button": "Delete",
       "delete-modal-invalid-text": "One or more folders contain library panels or alert rules. Delete these first in order to proceed.",
       "delete-modal-invalid-title": "Cannot delete folder",
@@ -49,15 +49,15 @@
     },
     "counts": {
       "alertRule_one": "{{count}} alert rule",
-      "alertRule_other": "{{count}} alert rule",
+      "alertRule_other": "{{count}} alert rules",
       "dashboard_one": "{{count}} dashboard",
-      "dashboard_other": "{{count}} dashboard",
+      "dashboard_other": "{{count}} dashboards",
       "folder_one": "{{count}} folder",
-      "folder_other": "{{count}} folder",
+      "folder_other": "{{count}} folders",
       "libraryPanel_one": "{{count}} library panel",
-      "libraryPanel_other": "{{count}} library panel",
+      "libraryPanel_other": "{{count}} library panels",
       "total_one": "{{count}} item",
-      "total_other": "{{count}} item"
+      "total_other": "{{count}} items"
     },
     "dashboards-tree": {
       "collapse-folder-button": "Collapse folder {{title}}",
@@ -244,14 +244,14 @@
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
       "add-library-panel-button": "Add library panel",
-      "add-library-panel-header": "Import panel",
+      "add-library-panel-header": "Add a library panel",
       "add-visualization-body": "Select a data source and then query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
       "add-widget-body": "Create lists, markdowns and other widgets",
       "add-widget-button": "Add widget",
       "add-widget-header": "Add a widget",
-      "import-a-dashboard-body": "Import dashboards from files or<1>grafana.com</1>.",
+      "import-a-dashboard-body": "Import dashboard from file or <1>grafana.com</1>.",
       "import-a-dashboard-header": "Import a dashboard",
       "import-dashboard-button": "Import dashboard"
     },
@@ -541,15 +541,15 @@
     "toolbar": {
       "aria-label": "Explore toolbar",
       "copy-link": "Copy URL",
-      "copy-link-abs-time": "Copy Absolute Shortened URL",
+      "copy-link-abs-time": "Copy absolute URL",
       "copy-links-absolute-category": "Time-sync URL links (share with time range intact)",
       "copy-links-normal-category": "Normal URL links",
       "copy-shortened-link": "Copy shortened URL",
-      "copy-shortened-link-abs-time": "Copy Absolute Shortened URL",
-      "copy-shortened-link-menu": "Open copy link options",
+      "copy-shortened-link-abs-time": "Copy absolute shortened URL",
+      "copy-shortened-link-menu": "Open shortened link menu",
       "refresh-picker-cancel": "Cancel",
       "refresh-picker-run": "Run query",
-      "split-close": " Close ",
+      "split-close": "Close",
       "split-close-tooltip": "Close split pane",
       "split-narrow": "Narrow pane",
       "split-title": "Split",
@@ -653,8 +653,8 @@
   "library-panels": {
     "modal": {
       "body_one": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
-      "body_other": "This panel is being used in {{count}} dashboard. Please choose which dashboard to view the panel in:",
-      "button-cancel": "Cancel",
+      "body_other": "This panel is being used in {{count}} dashboards. Please choose which dashboard to view the panel in:",
+      "button-cancel": "<0>Cancel</0>",
       "button-view-panel1": "View panel in {{label}}...",
       "button-view-panel2": "View panel in dashboard...",
       "panel-not-linked": "Panel is not linked to a dashboard. Add the panel to a dashboard and retry.",
@@ -793,7 +793,7 @@
       "title": "Create"
     },
     "create-alert": {
-      "title": "New alert rule"
+      "title": "Create alert rule"
     },
     "create-dashboard": {
       "title": "Dashboard"
@@ -877,7 +877,7 @@
       "subtitle": "Manage folder dashboards and permissions"
     },
     "monitoring": {
-      "subtitle": "Out-of-the-box observability solutions",
+      "subtitle": "Monitoring and infrastructure apps",
       "title": "Observability"
     },
     "new": {
@@ -1316,7 +1316,7 @@
       "info-text": "Create a direct link to this dashboard or panel, customized with the options below.",
       "link-url": "Link URL",
       "render-alert": "Image renderer plugin not installed",
-      "render-instructions": "To render a panel image, you must install the<1>Grafana image renderer plugin</1>. Please contact your Grafana administrator to install the plugin.",
+      "render-instructions": "To render a panel image, you must install the <1>Grafana image renderer plugin</1>. Please contact your Grafana administrator to install the plugin.",
       "rendered-image": "Direct link rendered image",
       "save-alert": "Dashboard is not saved",
       "save-dashboard": "To render a panel image, you must save the dashboard first.",
