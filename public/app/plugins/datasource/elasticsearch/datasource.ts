@@ -305,10 +305,7 @@ export class ElasticDatasource
 
     const queryInterpolated = this.interpolateLuceneQuery(queryString);
 
-    let finalQuery = queryInterpolated;
-    filters.forEach(filter => {
-      finalQuery = addAddHocFilter(finalQuery, filter);
-    })
+    const finalQuery = this.addAdHocFilters(queryInterpolated, filters);
 
     const query: {
       bool: { filter: Array<Record<string, Record<string, string | number | Array<{ range: RangeMap }>>>> };
