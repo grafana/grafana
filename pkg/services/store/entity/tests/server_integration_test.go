@@ -110,11 +110,6 @@ func requireVersionMatch(t *testing.T, obj *entity.Entity, m objectVersionMatche
 }
 
 func TestIntegrationEntityServer(t *testing.T) {
-	if true {
-		// TODO: enable this test once we fix test "database locked" issues
-		t.Skip()
-	}
-
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}

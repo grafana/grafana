@@ -422,7 +422,8 @@ func SetupTestDB() {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
 	if testSQLStoreSetup {
-		panic("Test DB already set up, SetupTestDB called twice\n")
+		fmt.Printf("ERROR: Test DB already set up, SetupTestDB called twice\n")
+		os.Exit(1)
 	}
 	testSQLStoreSetup = true
 }
@@ -431,7 +432,8 @@ func CleanupTestDB() {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
 	if !testSQLStoreSetup {
-		panic("Test DB not set up, SetupTestDB not called\n")
+		fmt.Printf("ERROR: Test DB not set up, SetupTestDB not called\n")
+		os.Exit(1)
 	}
 	if testSQLStore != nil {
 		if err := testSQLStore.GetEngine().Close(); err != nil {
@@ -470,7 +472,7 @@ func initTestDB(testCfg *setting.Cfg,
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
 	if !testSQLStoreSetup {
-		panic(`Test DB not set up, are you missing TestMain?
+		fmt.Printf(`ERROR: Test DB not set up, are you missing TestMain?
 
 Example:
 
@@ -487,6 +489,7 @@ func TestMain(m *testing.M) {
 }
 
 `)
+		os.Exit(1)
 	}
 
 	if len(opts) == 0 {

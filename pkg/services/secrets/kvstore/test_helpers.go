@@ -21,12 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
-
-func TestMain(m *testing.M) {
-	testsuite.Run(m)
-}
 
 func NewFakeSQLSecretsKVStore(t *testing.T) *SecretsKVStoreSQL {
 	t.Helper()
