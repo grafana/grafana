@@ -403,8 +403,6 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, json.Unmarshal(getGroup3Raw, &group3))
 
-			nestedKey := ngmodels.GetNamespaceKey("folder1", "subfolder")
-
 			expected := apimodels.NamespaceConfigResponse{
 				"folder1": []apimodels.GettableRuleGroupConfig{
 					group1,
@@ -412,7 +410,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 				"folder2": []apimodels.GettableRuleGroupConfig{
 					group2,
 				},
-				nestedKey: []apimodels.GettableRuleGroupConfig{
+				"folder1/subfolder": []apimodels.GettableRuleGroupConfig{
 					group3,
 				},
 			}
@@ -446,7 +444,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 				assert.Equal(t, "folder2", rule.GrafanaManagedAlert.NamespaceUID)
 			}
 
-			for _, rule := range allRules[nestedKey][0].Rules {
+			for _, rule := range allRules["folder1/subfolder"][0].Rules {
 				assert.Equal(t, "subfolder", rule.GrafanaManagedAlert.NamespaceUID)
 			}
 		})
@@ -468,7 +466,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 			rules, status, _ := apiClient.GetAllRulesGroupInFolderWithStatus(t, "subfolder")
 			require.Equal(t, http.StatusAccepted, status)
 
-			nestedKey := ngmodels.GetNamespaceKey("folder1", "subfolder")
+			nestedKey := "folder1/subfolder"
 			require.Contains(t, rules, nestedKey)
 			require.Len(t, rules[nestedKey], 1)
 			require.Equal(t, allRules[nestedKey], rules[nestedKey])
@@ -602,7 +600,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 			require.Equal(t, http.StatusOK, status)
 			require.Contains(t, newAll, "folder1")
 			require.NotContains(t, newAll, "folder2")
-			require.Contains(t, newAll, ngmodels.GetNamespaceKey("folder1", "subfolder"))
+			require.Contains(t, newAll, "folder1/subfolder")
 		})
 
 		t.Run("Get by folder returns groups in folder", func(t *testing.T) {
@@ -1329,6 +1327,76 @@ func TestIntegrationRuleGroupSequence(t *testing.T) {
 			require.NotEqual(t, movedRule.GrafanaManagedAlert.UID, rule.GrafanaManagedAlert.UID)
 		}
 	})
+}
+
+func TestIntegrationRuleCreate(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		AppModeProduction:     true,
+	})
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+	})
+	client := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+
+	namespaceUID := "default"
+	client.CreateFolder(t, namespaceUID, namespaceUID)
+
+	cases := []struct {
+		name   string
+		config apimodels.PostableRuleGroupConfig
+	}{{
+		name: "can create a rule with UTF-8",
+		config: apimodels.PostableRuleGroupConfig{
+			Name:     "test1",
+			Interval: model.Duration(time.Minute),
+			Rules: []apimodels.PostableExtendedRuleNode{
+				{
+					ApiRuleNode: &apimodels.ApiRuleNode{
+						For: util.Pointer(model.Duration(2 * time.Minute)),
+						Labels: map[string]string{
+							"foo🙂":  "bar",
+							"_bar1": "baz🙂",
+						},
+						Annotations: map[string]string{
+							"Προμηθέας": "prom",      // Prometheus in Greek
+							"犬":         "Shiba Inu", // Dog in Japanese
+						},
+					},
+					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
+						Title:     "test1 rule1",
+						Condition: "A",
+						Data: []apimodels.AlertQuery{
+							{
+								RefID: "A",
+								RelativeTimeRange: apimodels.RelativeTimeRange{
+									From: apimodels.Duration(0),
+									To:   apimodels.Duration(15 * time.Minute),
+								},
+								DatasourceUID: expr.DatasourceUID,
+								Model:         json.RawMessage(`{"type": "math","expression": "1"}`),
+							},
+						},
+					},
+				},
+			},
+		},
+	}}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			resp, status, _ := client.PostRulesGroupWithStatus(t, namespaceUID, &tc.config)
+			require.Equal(t, http.StatusAccepted, status)
+			require.Len(t, resp.Created, 1)
+			require.Len(t, resp.Updated, 0)
+			require.Len(t, resp.Deleted, 0)
+		})
+	}
 }
 
 func TestIntegrationRuleUpdate(t *testing.T) {

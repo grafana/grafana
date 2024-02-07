@@ -1313,23 +1313,23 @@ func TestMSSQL(t *testing.T) {
 func TestTransformQueryError(t *testing.T) {
 	transformer := &mssqlQueryResultTransformer{}
 
-	randomErr := fmt.Errorf("random error")
-
-	tests := []struct {
-		err         error
-		expectedErr error
-	}{
-		{err: fmt.Errorf("Unable to open tcp connection with host 'localhost:5000': dial tcp: connection refused"), expectedErr: sqleng.ErrConnectionFailed},
-		{err: fmt.Errorf("unable to open tcp connection with host 'localhost:5000': dial tcp: connection refused"), expectedErr: sqleng.ErrConnectionFailed},
-		{err: randomErr, expectedErr: randomErr},
-	}
-
 	logger := backend.NewLoggerWith("logger", "mssql.test")
 
-	for _, tc := range tests {
-		resultErr := transformer.TransformQueryError(logger, tc.err)
-		assert.ErrorIs(t, resultErr, tc.expectedErr)
-	}
+	t.Run("Should not return a connection error", func(t *testing.T) {
+		err := fmt.Errorf("Unable to open tcp connection with host 'localhost:5000': dial tcp: connection refused")
+		resultErr := transformer.TransformQueryError(logger, err)
+		errorText := resultErr.Error()
+		assert.NotEqual(t, err, resultErr)
+		assert.NotContains(t, errorText, "Unable to open tcp connection with host")
+		assert.Contains(t, errorText, "failed to connect to server")
+	})
+
+	t.Run("Should return a non-connection error unmodified", func(t *testing.T) {
+		err := fmt.Errorf("normal error")
+		resultErr := transformer.TransformQueryError(logger, err)
+		assert.Equal(t, err, resultErr)
+		assert.ErrorIs(t, err, resultErr)
+	})
 }
 
 func TestGenerateConnectionString(t *testing.T) {
