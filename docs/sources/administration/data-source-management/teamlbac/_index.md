@@ -1,5 +1,4 @@
 ---
-aliases:
 description: Label based data access for Loki given Teams
 keywords:
   - grafana
