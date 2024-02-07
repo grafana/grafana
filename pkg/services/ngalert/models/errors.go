@@ -5,11 +5,11 @@ import (
 )
 
 var (
-	errAlertRuleConflictMsg  = "conflicting alert rule found [UID: {{ .Public.UID }}, Title: {{ .Public.Title }}, NamespaceUID: {{ .Public.NamespaceUID }}]: {{ .Error }}"
+	errAlertRuleConflictMsg  = "conflicting alert rule found [rule_uid: '{{ .Public.RuleUID }}', title: '{{ .Public.Title }}', namespace_uid: '{{ .Public.NamespaceUID }}']: {{ .Error }}"
 	ErrAlertRuleConflictBase = errutil.Conflict("alerting.alert-rule.conflict").
 					MustTemplate(errAlertRuleConflictMsg, errutil.WithPublic(errAlertRuleConflictMsg))
 )
 
 func ErrAlertRuleConflict(rule AlertRule, underlying error) error {
-	return ErrAlertRuleConflictBase.Build(errutil.TemplateData{Public: map[string]any{"UID": rule.UID, "Title": rule.Title, "NamespaceUID": rule.NamespaceUID}, Error: underlying})
+	return ErrAlertRuleConflictBase.Build(errutil.TemplateData{Public: map[string]any{"RuleUID": rule.UID, "Title": rule.Title, "NamespaceUID": rule.NamespaceUID}, Error: underlying})
 }
