@@ -252,7 +252,7 @@ type GetDashboardQuery struct {
 	Title *string
 	// Deprecated: use FolderUID instead
 	FolderID  *int64
-	FolderUID string
+	FolderUID *string
 	OrgID     int64
 }
 
