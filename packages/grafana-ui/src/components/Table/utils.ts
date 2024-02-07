@@ -385,10 +385,19 @@ export function getFooterItems(
 }
 
 function getFormattedValue(field: Field, reducer: string[], theme: GrafanaTheme2) {
+  const reducerInfo = fieldReducers.get(reducer[0]);
   const fmt = field.display ?? getDisplayProcessor({ field, theme });
   const calc = reducer[0];
   const v = reduceField({ field, reducers: reducer })[calc];
-  return formattedValueToString(fmt(v));
+
+  // If the reducer preserves units then format the
+  // end value with the field display processor
+  if (reducerInfo.preservesUnits) {
+    return formattedValueToString(fmt(v));
+  }
+  
+  // Otherwise we simply return the formatted string
+  return formattedValueToString({ text: v });
 }
 
 // This strips the raw vales from the `rows` object.
