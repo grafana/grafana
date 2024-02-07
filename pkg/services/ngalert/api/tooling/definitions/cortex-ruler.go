@@ -479,7 +479,7 @@ type GettableGrafanaRule struct {
 	ExecErrState         ExecutionErrorState            `json:"exec_err_state" yaml:"exec_err_state"`
 	Provenance           Provenance                     `json:"provenance,omitempty" yaml:"provenance,omitempty"`
 	IsPaused             bool                           `json:"is_paused" yaml:"is_paused"`
-	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings" yaml:"notification_settings"`
+	NotificationSettings *AlertRuleNotificationSettings `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty"`
 }
 
 // AlertQuery represents a single query associated with an alert definition.
