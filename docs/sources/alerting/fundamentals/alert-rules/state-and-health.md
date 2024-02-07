@@ -47,7 +47,7 @@ An alert instance can be in either of the following states:
 | **Pending**  | The state of an alert that has been active for less than the configured threshold duration.   |
 | **Alerting** | The state of an alert that has been active for longer than the configured threshold duration. |
 | **NoData**   | No data has been received for the configured time window.                                     |
-| **Error**    | The error that occurred when attempting to evaluate an alert rule.                         |
+| **Error**    | The error that occurred when attempting to evaluate an alert rule.                            |
 
 ## Alert rule health
 
@@ -55,8 +55,8 @@ An alert rule can have one the following health statuses:
 
 | State      | Description                                                                        |
 | ---------- | ---------------------------------------------------------------------------------- |
-| **Ok**     | No error when evaluating an alert rule.                                         |
-| **Error**  | An error occurred when evaluating an alert rule.                                |
+| **Ok**     | No error when evaluating an alert rule.                                            |
+| **Error**  | An error occurred when evaluating an alert rule.                                   |
 | **NoData** | The absence of data in at least one time series returned during a rule evaluation. |
 
 ## Special alerts for `NoData` and `Error`
