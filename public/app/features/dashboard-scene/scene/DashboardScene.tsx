@@ -1,8 +1,10 @@
+import { css } from '@emotion/css';
 import * as H from 'history';
+import React from 'react';
 import { Unsubscribable } from 'rxjs';
 
-import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil, textUtil } from '@grafana/data';
+import { locationService, config } from '@grafana/runtime';
 import {
   getUrlSyncManager,
   SceneFlexLayout,
@@ -19,12 +21,15 @@ import {
   SceneVariableDependencyConfigLike,
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink } from '@grafana/schema';
+import { ConfirmModal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
+import { ShowModalReactEvent, ShowConfirmModalEvent } from 'app/types/events';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
@@ -136,6 +141,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.startTrackingChanges();
     }
 
+    if (!this.state.meta.isEmbedded && this.state.uid) {
+      dashboardWatcher.watch(this.state.uid);
+    }
+
     const clearKeyBindings = setupKeyboardShortcuts(this);
     const oldDashboardWrapper = new DashboardModelCompatibilityWrapper(this);
 
@@ -149,11 +158,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.stopTrackingChanges();
       this.stopUrlSync();
       oldDashboardWrapper.destroy();
+      dashboardWatcher.leave();
     };
   }
 
   public startUrlSync() {
-    getUrlSyncManager().initSync(this);
+    if (!this.state.meta.isEmbedded) {
+      getUrlSyncManager().initSync(this);
+    }
   }
 
   public stopUrlSync() {
@@ -205,7 +217,29 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
   }
 
-  public onDiscard = () => {
+  public exitEditMode({ skipConfirm }: { skipConfirm: boolean }) {
+    if (!this.canDiscard()) {
+      console.error('Trying to discard back to a state that does not exist, initialState undefined');
+      return;
+    }
+
+    if (!this.state.isDirty || skipConfirm) {
+      this.exitEditModeConfirmed();
+      return;
+    }
+
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Discard changes to dashboard?',
+        text: `You have unsaved changes to this dashboard. Are you sure you want to discard them?`,
+        icon: 'trash-alt',
+        yesText: 'Discard',
+        onConfirm: this.exitEditModeConfirmed.bind(this),
+      })
+    );
+  }
+
+  private exitEditModeConfirmed() {
     // No need to listen to changes anymore
     this.stopTrackingChanges();
     // Stop url sync before updating url
@@ -231,7 +265,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     this.startUrlSync();
     // Disable grid dragging
     this.propagateEditModeChange();
-  };
+  }
+
+  public canDiscard() {
+    return this._initialState !== undefined;
+  }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
     const versionRsp = await historySrv.restoreDashboard(version.uid, version.version);
@@ -249,7 +287,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     newState.version = versionRsp.version;
 
     this._initialState = newState;
-    this.onDiscard();
+    this.exitEditMode({ skipConfirm: false });
 
     return true;
   };
@@ -387,6 +425,47 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       console.error('Failed to star dashboard', err);
     }
   }
+
+  public onOpenSnapshotOriginalDashboard = () => {
+    // @ts-ignore
+    const relativeURL = this.getInitialSaveModel()?.snapshot?.originalUrl ?? '';
+    const sanitizedRelativeURL = textUtil.sanitizeUrl(relativeURL);
+    try {
+      const sanitizedAppUrl = new URL(sanitizedRelativeURL, config.appUrl);
+      const appUrl = new URL(config.appUrl);
+      if (sanitizedAppUrl.host !== appUrl.host) {
+        appEvents.publish(
+          new ShowModalReactEvent({
+            component: ConfirmModal,
+            props: {
+              title: 'Proceed to external site?',
+              modalClass: css({
+                width: 'max-content',
+                maxWidth: '80vw',
+              }),
+              body: (
+                <>
+                  <p>
+                    {`This link connects to an external website at`} <code>{relativeURL}</code>
+                  </p>
+                  <p>{"Are you sure you'd like to proceed?"}</p>
+                </>
+              ),
+              confirmVariant: 'primary',
+              confirmText: 'Proceed',
+              onConfirm: () => {
+                window.location.href = sanitizedAppUrl.href;
+              },
+            },
+          })
+        );
+      } else {
+        locationService.push(sanitizedRelativeURL);
+      }
+    } catch (err) {
+      console.error('Failed to open original dashboard', err);
+    }
+  };
 
   public onOpenSettings = () => {
     locationService.partial({ editview: 'settings' });
