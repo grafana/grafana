@@ -57,7 +57,6 @@ jobs:
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
 
-      # App is not available in test repo
       - name: Generate token
         if: steps.crowdin-download.outputs.pull_request_url
         id: generate_token
@@ -95,12 +94,14 @@ jobs:
               }
             }
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
       - name: Add to project board
         uses: octokit/graphql-action@v2.x
         if: steps.crowdin-download.outputs.pull_request_url
         with:
+          projectid: ${{ fromJson(steps.get-project-id.outputs.data).organization.projectV2.id }}
+          prid: ${{ env.PULL_REQUEST_ID }}
           query: |
             mutation addPullRequestToProject($projectid: ID!, $prid: ID!){
               addProjectV2ItemById(input: {projectId: $projectid, contentId: $prid}) {
@@ -109,9 +110,6 @@ jobs:
                 }
               }
             }
-          variables: |
-            projectid: ${{ fromJson(steps.get-project-id.outputs.data).organization.projectV2.id }}
-            prid: ${{ env.PULL_REQUEST_ID }}
+
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
-
