@@ -122,8 +122,7 @@ func generateRouteFromSettings(defaultReceiver string, settings map[data.Fingerp
 			receiverRoute = &definitions.Route{
 				Receiver:       s.Receiver,
 				ObjectMatchers: definitions.ObjectMatchers{contactMatcher},
-				// We continue on to check all other contact routes.
-				Continue: true,
+				Continue:       false,
 				// Since we'll have many rules from different folders using this policy, we ensure it has these necessary groupings.
 				GroupByStr: []string{models.FolderTitleLabel, model.AlertNameLabel},
 			}
