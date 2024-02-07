@@ -75,6 +75,10 @@ type GenericDataQuery struct {
 	props map[string]any `json:"-"`
 }
 
+func NewGenericDataQuery(vals map[string]any) {
+
+}
+
 // TimeRange represents a time range for a query and is a property of DataQuery.
 type TimeRange struct {
 	// From is the start time of the query.
@@ -82,6 +86,11 @@ type TimeRange struct {
 
 	// To is the end time of the query.
 	To string `json:"to"`
+}
+
+func (g *GenericDataQuery) WithProps(props map[string]any) *GenericDataQuery {
+	g.props = props
+	return g
 }
 
 func (g *GenericDataQuery) AdditionalProperties() map[string]any {
@@ -143,6 +152,10 @@ func (g *GenericDataQuery) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
+	return g.Unmarshal(vals)
+}
+
+func (g *GenericDataQuery) Unmarshal(vals map[string]any) error {
 	key := "refId"
 	v, ok := vals[key]
 	if ok {

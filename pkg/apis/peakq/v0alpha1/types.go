@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -41,7 +42,7 @@ type Target struct {
 	Variables map[string][]VariableReplacement `json:"variables"`
 
 	// The raw query: TODO, should be query.GenericQuery
-	Properties common.Unstructured `json:"properties"`
+	Properties query.GenericDataQuery `json:"properties"`
 }
 
 // TemplateVariable is the definition of a variable that will be interpolated
