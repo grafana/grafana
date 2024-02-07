@@ -11,8 +11,8 @@ import {
   createDataFrame,
   TimeRange,
 } from '@grafana/data';
+import { SQLQuery } from '@grafana/sql';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { SQLQuery } from 'app/features/plugins/sql/types';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';

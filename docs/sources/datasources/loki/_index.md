@@ -60,6 +60,7 @@ datasources:
     access: proxy
     url: http://localhost:3100
     jsonData:
+      timeout: 60
       maxLines: 1000
 ```
 

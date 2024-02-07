@@ -98,7 +98,8 @@ type UnifiedAlertingSettings struct {
 	RemoteAlertmanager            RemoteAlertmanagerSettings
 	Upgrade                       UnifiedAlertingUpgradeSettings
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
-	MaxStateSaveConcurrency int
+	MaxStateSaveConcurrency   int
+	StatePeriodicSaveInterval time.Duration
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
@@ -402,6 +403,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.StateHistory = uaCfgStateHistory
 
 	uaCfg.MaxStateSaveConcurrency = ua.Key("max_state_save_concurrency").MustInt(1)
+
+	uaCfg.StatePeriodicSaveInterval, err = gtime.ParseDuration(valueAsString(ua, "state_periodic_save_interval", (time.Minute * 5).String()))
+	if err != nil {
+		return err
+	}
 
 	upgrade := iniFile.Section("unified_alerting.upgrade")
 	uaCfgUpgrade := UnifiedAlertingUpgradeSettings{

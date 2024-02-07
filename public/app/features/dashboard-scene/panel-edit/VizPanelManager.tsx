@@ -9,7 +9,7 @@ import {
   isStandardFieldProp,
   restoreCustomOverrideRules,
 } from '@grafana/data';
-import { getDataSourceSrv, locationService } from '@grafana/runtime';
+import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
 import {
   SceneObjectState,
   VizPanel,
@@ -20,16 +20,18 @@ import {
   SceneQueryRunner,
   sceneGraph,
   SceneDataProvider,
+  SceneDataTransformer,
 } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, DataTransformerConfig } from '@grafana/schema';
 import { getPluginVersion } from 'app/features/dashboard/state/PanelModel';
+import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { updateQueries } from 'app/features/query/state/updateQueries';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
-import { getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
@@ -127,6 +129,27 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       ...restOfOldState,
     });
 
+    // When changing from non-data to data panel, we need to add a new data provider
+    if (!restOfOldState.$data && !config.panels[pluginType].skipDataQuery) {
+      let ds = getLastUsedDatasourceFromStorage(getDashboardSceneFor(this).state.uid!)?.datasourceUid;
+
+      if (!ds) {
+        ds = config.defaultDatasource;
+      }
+
+      newPanel.setState({
+        $data: new SceneDataTransformer({
+          $data: new SceneQueryRunner({
+            datasource: {
+              uid: ds,
+            },
+            queries: [{ refId: 'A' }],
+          }),
+          transformations: [],
+        }),
+      });
+    }
+
     const newPlugin = newPanel.getPlugin();
     const panel: PanelModel = {
       title: newPanel.state.title,
@@ -145,6 +168,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
 
     this.setState({ panel: newPanel });
+    this.loadDataSource();
   }
 
   public async changePanelDataSource(
@@ -217,6 +241,12 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     runner.setState({ queries });
   }
 
+  public changeTransformations(transformations: DataTransformerConfig[]) {
+    const dataprovider = this.dataTransformer;
+    dataprovider.setState({ transformations });
+    dataprovider.reprocessTransformations();
+  }
+
   public inspectPanel() {
     const panel = this.state.panel;
     const panelId = getPanelIdForVizPanel(panel);
@@ -235,6 +265,14 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       throw new Error('Query runner not found');
     }
     return runner;
+  }
+
+  get dataTransformer(): SceneDataTransformer {
+    const provider = this.state.panel.state.$data;
+    if (!provider || !(provider instanceof SceneDataTransformer)) {
+      throw new Error('Could not find SceneDataTransformer for panel');
+    }
+    return provider;
   }
 
   get panelData(): SceneDataProvider {
