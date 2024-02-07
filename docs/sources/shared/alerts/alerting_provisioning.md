@@ -162,6 +162,19 @@ For managing resources related to [data source-managed alerts]({{< relref "/docs
 | GET    | /api/v1/provisioning/templates       | [route get templates](#route-get-templates)     | Get all notification templates.            |
 | PUT    | /api/v1/provisioning/templates/:name | [route put template](#route-put-template)       | Updates an existing notification template. |
 
+## Edit resources in the Grafana UI
+
+By default, you cannot edit API-provisioned alerting resources in Grafana. To enable editing these resources in the Grafana UI, add the `X-Disable-Provenance` header to the following requests in the API:
+
+- `POST /api/v1/provisioning/alert-rules`
+- `PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}` (calling this endpoint will change provenance for all alert rules within the alert group)
+- `POST /api/v1/provisioning/contact-points`
+- `POST /api/v1/provisioning/mute-timings`
+- `PUT /api/v1/provisioning/policies`
+- `PUT /api/v1/provisioning/templates/{name}`
+
+To reset the notification policy tree to the default and unlock it for editing in the Grafana UI, use the `DELETE /api/v1/provisioning/policies` endpoint.
+
 ## Paths
 
 ### <span id="route-delete-alert-rule"></span> Delete a specific alert rule by UID. (_RouteDeleteAlertRule_)

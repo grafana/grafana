@@ -27,9 +27,11 @@ Details on how to set up the files and which fields are required for each object
 
 **Note:**
 
+You cannot edit provisioned resources from files in Grafana. You can only change the resource properties by changing the provisioning file and restarting Grafana or carrying out a hot reload. This prevents changes being made to the resource that would be overwritten if a file is provisioned again or a hot reload is carried out.
+
 Importing takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Admin API][reload-provisioning-configurations].
 
-### Import alert rules
+## Import alert rules
 
 Create or delete alert rules in your Grafana instance(s).
 
@@ -133,7 +135,7 @@ deleteRules:
     uid: my_id_1
 ```
 
-### Import contact points
+## Import contact points
 
 Create or delete contact points in your Grafana instance(s).
 
@@ -183,12 +185,12 @@ deleteContactPoints:
     uid: first_uid
 ```
 
-#### Settings
+### Settings
 
 Here are some examples of settings you can use for the different
 contact point integrations.
 
-##### Alertmanager
+#### Alertmanager
 
 ```yaml
 type: prometheus-alertmanager
@@ -201,7 +203,7 @@ settings:
   basicAuthPassword: abc123
 ```
 
-##### DingDing
+#### DingDing
 
 ```yaml
 type: dingding
@@ -215,7 +217,7 @@ settings:
     {{ template "default.message" . }}
 ```
 
-##### Discord
+#### Discord
 
 ```yaml
 type: discord
@@ -231,7 +233,7 @@ settings:
     {{ template "default.message" . }}
 ```
 
-##### E-Mail
+#### E-Mail
 
 ```yaml
 type: email
@@ -247,7 +249,7 @@ settings:
     {{ template "default.title" . }}
 ```
 
-##### Google Chat
+#### Google Chat
 
 ```yaml
 type: googlechat
@@ -259,7 +261,7 @@ settings:
     {{ template "default.message" . }}
 ```
 
-##### Kafka
+#### Kafka
 
 ```yaml
 type: kafka
@@ -270,7 +272,7 @@ settings:
   kafkaTopic: topic1
 ```
 
-##### LINE
+#### LINE
 
 ```yaml
 type: line
@@ -279,7 +281,7 @@ settings:
   token: xxx
 ```
 
-##### Microsoft Teams
+#### Microsoft Teams
 
 ```yaml
 type: teams
@@ -296,7 +298,7 @@ settings:
     {{ template "default.message" . }}
 ```
 
-##### OpsGenie
+#### OpsGenie
 
 ```yaml
 type: opsgenie
@@ -318,7 +320,7 @@ settings:
   sendTagsAs: both
 ```
 
-##### PagerDuty
+#### PagerDuty
 
 ```yaml
 type: pagerduty
@@ -338,7 +340,7 @@ settings:
     {{ template "default.message" . }}
 ```
 
-##### Pushover
+#### Pushover
 
 ```yaml
 type: pushover
@@ -366,7 +368,7 @@ settings:
     {{ template "default.message" . }}
 ```
 
-##### Slack
+#### Slack
 
 ```yaml
 type: slack
@@ -398,7 +400,7 @@ settings:
     {{ template "slack.default.text" . }}
 ```
 
-##### Sensu Go
+#### Sensu Go
 
 ```yaml
 type: sensugo
@@ -420,7 +422,7 @@ settings:
     {{ template "default.message" . }}
 ```
 
-##### Telegram
+#### Telegram
 
 ```yaml
 type: telegram
@@ -434,7 +436,7 @@ settings:
     {{ template "default.message" . }}
 ```
 
-##### Threema Gateway
+#### Threema Gateway
 
 ```yaml
 type: threema
@@ -447,7 +449,7 @@ settings:
   recipient_id: A9R4KL4S
 ```
 
-##### VictorOps
+#### VictorOps
 
 ```yaml
 type: victorops
@@ -458,7 +460,7 @@ settings:
   messageType: CRITICAL
 ```
 
-##### Webhook
+#### Webhook
 
 ```yaml
 type: webhook
@@ -479,7 +481,7 @@ settings:
   maxAlerts: '10'
 ```
 
-##### WeCom
+#### WeCom
 
 ```yaml
 type: wecom
@@ -494,7 +496,7 @@ settings:
     {{ template "default.title" . }}
 ```
 
-### Import notification policies
+## Import notification policies
 
 Create or reset the notification policy tree in your Grafana instance(s).
 
@@ -586,7 +588,7 @@ In Grafana, the entire notification policy tree is considered a single, large re
 
 Since the policy tree is a single resource, applying it will overwrite a policy tree created through any other means.
 
-### Import templates
+## Import templates
 
 Create or delete templates in your Grafana instance(s).
 
@@ -626,7 +628,7 @@ deleteTemplates:
     name: my_first_template
 ```
 
-### Import mute timings
+## Import mute timings
 
 Create or delete mute timings in your Grafana instance(s).
 
@@ -675,7 +677,7 @@ deleteMuteTimes:
     name: mti_1
 ```
 
-### File provisioning using Kubernetes
+## File provisioning using Kubernetes
 
 If you are a Kubernetes user, you can leverage file provisioning using Kubernetes configuration maps.
 

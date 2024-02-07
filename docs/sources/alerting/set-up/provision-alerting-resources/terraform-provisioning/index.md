@@ -353,6 +353,23 @@ When the alert fires, Grafana routes a notification through the policy you defin
 
 For example, if you chose Slack as a contact point, Grafana’s embedded [Alertmanager](https://github.com/prometheus/alertmanager) automatically posts a message to Slack.
 
+## Edit resources in the Grafana UI
+
+By default, you cannot edit resources provisioned via Terraform in Grafana. To enable editing these resources in the Grafana UI, use the `disable_provenance` attribute on alerting resources:
+
+```HCL
+provider "grafana" {
+  url  = "http://grafana.example.com/"
+  auth = var.grafana_auth
+}
+
+resource "grafana_mute_timing" "mute_all" {
+  name = "mute all"
+  disable_provenance = true
+  intervals {}
+}
+```
+
 {{% docs/reference %}}
 [alerting-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules"
 [alerting-rules]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules"
