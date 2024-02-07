@@ -158,7 +158,8 @@ export const TooltipPlugin2 = ({
     let _style = style;
 
     const updateHovering = () => {
-      _isHovering = closestSeriesIdx != null || (hoverMode === TooltipHoverMode.xAll && _someSeriesIdx);
+      let canHover = !viaSync || syncTooltip();
+      _isHovering = canHover && (closestSeriesIdx != null || (hoverMode === TooltipHoverMode.xAll && _someSeriesIdx));
     };
 
     let offsetX = 0;
@@ -379,6 +380,8 @@ export const TooltipPlugin2 = ({
     // TODO: we only need this for multi/all mode?
     config.addHook('setSeries', (u, seriesIdx) => {
       closestSeriesIdx = seriesIdx;
+
+      viaSync = u.cursor.event == null;
       updateHovering();
       scheduleRender();
     });
@@ -388,6 +391,7 @@ export const TooltipPlugin2 = ({
       seriesIdxs = _plot?.cursor!.idxs!.slice()!;
       _someSeriesIdx = seriesIdxs.some((v, i) => i > 0 && v != null);
 
+      viaSync = u.cursor.event == null;
       updateHovering();
       scheduleRender();
     });
@@ -405,9 +409,13 @@ export const TooltipPlugin2 = ({
 
     // fires on mousemoves
     config.addHook('setCursor', (u) => {
-      let { left = -10, top = -10, event } = u.cursor;
+      viaSync = u.cursor.event == null;
 
-      viaSync = event == null;
+      if (!_isHovering) {
+        return;
+      }
+
+      let { left = -10, top = -10 } = u.cursor;
 
       if (left >= 0 || top >= 0) {
         let clientX = u.rect.left + left;
@@ -455,13 +463,11 @@ export const TooltipPlugin2 = ({
 
         transform = `translateX(${shiftX}px) ${reflectX} translateY(${shiftY}px) ${reflectY}`;
 
-        if (_isHovering) {
-          if (domRef.current != null) {
-            domRef.current.style.transform = transform;
-          } else {
-            _style.transform = transform;
-            scheduleRender();
-          }
+        if (domRef.current != null) {
+          domRef.current.style.transform = transform;
+        } else {
+          _style.transform = transform;
+          scheduleRender();
         }
       }
     });
