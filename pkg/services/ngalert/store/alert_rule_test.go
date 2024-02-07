@@ -317,6 +317,28 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 		require.Equal(t, newRule3.Title, dbrule3.Title)
 		require.Equal(t, newRule4.Title, dbrule4.Title)
 	})
+
+	t.Run("should fail with unique constraint violation", func(t *testing.T) {
+		rule1 := createRuleInFolder("unique-rule1", 1, "my-namespace")
+		rule2 := createRuleInFolder("unique-rule2", 1, "my-namespace")
+
+		newRule1 := models.CopyRule(rule1)
+		newRule2 := models.CopyRule(rule2)
+		newRule2.Title = newRule1.Title
+
+		err := store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
+			Existing: rule2,
+			New:      *newRule2,
+		},
+		})
+		require.ErrorIs(t, err, models.ErrAlertRuleUniqueConstraintViolation)
+		require.NotEqual(t, newRule2.UID, "")
+		require.NotEqual(t, newRule2.Title, "")
+		require.NotEqual(t, newRule2.NamespaceUID, "")
+		require.ErrorContains(t, err, newRule2.UID)
+		require.ErrorContains(t, err, newRule2.Title)
+		require.ErrorContains(t, err, newRule2.NamespaceUID)
+	})
 }
 
 func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
@@ -617,6 +639,15 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		}
 		require.Truef(t, found, "Rule with key %#v was not found in database", keyWithID)
 	}
+
+	_, err = store.InsertAlertRules(context.Background(), []models.AlertRule{deref[0]})
+	require.ErrorIs(t, err, models.ErrAlertRuleUniqueConstraintViolation)
+	require.NotEqual(t, deref[0].UID, "")
+	require.NotEqual(t, deref[0].Title, "")
+	require.NotEqual(t, deref[0].NamespaceUID, "")
+	require.ErrorContains(t, err, deref[0].UID)
+	require.ErrorContains(t, err, deref[0].Title)
+	require.ErrorContains(t, err, deref[0].NamespaceUID)
 }
 
 // createAlertRule creates an alert rule in the database and returns it.

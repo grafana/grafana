@@ -27,7 +27,7 @@ var (
 	ErrCannotEditNamespace                = errors.New("user does not have permissions to edit the namespace")
 	ErrRuleGroupNamespaceNotFound         = errors.New("rule group not found under this namespace")
 	ErrAlertRuleFailedValidation          = errors.New("invalid alert rule")
-	ErrAlertRuleUniqueConstraintViolation = errors.New("a conflicting alert rule is found: rule title under the same organisation and folder should be unique")
+	ErrAlertRuleUniqueConstraintViolation = errors.New("rule title under the same organisation and folder should be unique")
 	ErrQuotaReached                       = errors.New("quota has been exceeded")
 	// ErrNoDashboard is returned when the alert rule does not have a Dashboard UID
 	// in its annotations or the dashboard does not exist.
