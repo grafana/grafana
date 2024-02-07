@@ -75,24 +75,35 @@ type VariableReplacement struct {
 	Position *Position `json:"position,omitempty"`
 
 	// How values should be interpolated
-	// See: https://grafana.com/docs/grafana/latest/dashboards/variables/variable-syntax/#advanced-variable-format-options
-	// NOTE: the format parameter is not yet supported!
-	Format string `json:"format,omitempty"`
-
-	// Keep track of the values from previous iterations
-	History []ReplacementHistory `json:"history,omitempty"`
+	Format VariableFormat `json:"format,omitempty"`
 }
 
-type ReplacementHistory struct {
-	// Who/what made the change
-	Source string `json:"source,omitempty"`
+// Define how to format values in the template.
+// See: https://grafana.com/docs/grafana/latest/dashboards/variables/variable-syntax/#advanced-variable-format-options
+// +enum
+type VariableFormat string
 
-	// Value before replacement
-	Previous string `json:"previous"`
+// Defines values for ItemType.
+const (
+	// Formats variables with multiple values as a comma-separated string.
+	FormatCSV VariableFormat = "csv"
 
-	// The value(s) that replaced the section
-	Replacement []string `json:"replacement"`
-}
+	// Formats variables with multiple values as a comma-separated string.
+	FormatJSON VariableFormat = "json"
+
+	// Formats single- and multi-valued variables into a comma-separated string
+	FormatDoubleQuote VariableFormat = "doublequote"
+
+	// Formats single- and multi-valued variables into a comma-separated string
+	FormatSingleQuote VariableFormat = "singlequote"
+
+	// Formats variables with multiple values into a pipe-separated string.
+	FormatPipe VariableFormat = "pipe"
+
+	// Formats variables with multiple values into comma-separated string.
+	// This is the default behavior when no format is specified
+	FormatRaw VariableFormat = "raw"
+)
 
 // Position is where to do replacement in the targets
 // during render.
