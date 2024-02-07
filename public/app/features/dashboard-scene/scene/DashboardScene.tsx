@@ -48,6 +48,7 @@ import { DashboardControls } from './DashboardControls';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
+import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links'];
 
@@ -122,6 +123,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    */
   private _changeTrackerSub?: Unsubscribable;
 
+  private _changesWorker?: Worker;
+
   public constructor(state: Partial<DashboardSceneState>) {
     super({
       title: 'Dashboard',
@@ -137,10 +140,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   private _activationHandler() {
     window.__grafanaSceneContext = this;
-
-    if (this.state.isEditing) {
-      this.startTrackingChanges();
-    }
 
     if (!this.state.meta.isEmbedded && this.state.uid) {
       dashboardWatcher.watch(this.state.uid);
@@ -184,6 +183,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // Propagate change edit mode change to children
     this.propagateEditModeChange();
     this.startTrackingChanges();
+    this._changesWorker = new Worker(new URL('./DetectChangesWorker.ts', import.meta.url));
+    this._changesWorker.onmessage = (event) => {
+      console.log('worker message', event.data);
+    };
+    this.startTrackingChanges();
+
+    // setInterval(() => {
+    if (window.Worker) {
+      // console.log('posting message to worker');
+      this._changesWorker?.postMessage({ changed: transformSceneToSaveModel(this), initial: this._initialSaveModel });
+    }
+    // }, 1000);
   };
 
   public saveCompleted(saveModel: Dashboard, result: SaveDashboardResponseDTO, folderUid?: string) {
@@ -396,6 +407,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   private detectChanges() {
+    if (window.Worker) {
+      // console.log('posting message to worker');
+      this._changesWorker?.postMessage({ changed: transformSceneToSaveModel(this), initial: this._initialSaveModel });
+    }
     const { hasChanges, hasTimeChanges, hasVariableValueChanges } = getSaveDashboardChange(this, true, true);
     const hasChangesToSave = hasChanges || hasTimeChanges || hasVariableValueChanges;
 
