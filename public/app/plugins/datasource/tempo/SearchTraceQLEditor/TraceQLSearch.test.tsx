@@ -1,7 +1,6 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useState } from 'react';
-import { act } from 'react-dom/test-utils';
 
 import { config } from '@grafana/runtime';
 
@@ -108,16 +107,24 @@ describe('TraceQLSearch', () => {
     };
     render(<TraceQLSearchWithProps />);
 
-    expect(screen.queryAllByLabelText('Add tag').length).toBe(0); // not filled in the default tag, so no need to add another one
-    expect(screen.queryAllByLabelText('Remove tag').length).toBe(0); // mot filled in the default tag, so no values to remove
-    expect(screen.getAllByText('Select tag').length).toBe(1);
+    await act(async () => {
+      expect(screen.queryAllByLabelText('Add tag').length).toBe(0); // not filled in the default tag, so no need to add another one
+      expect(screen.queryAllByLabelText('Remove tag').length).toBe(0); // mot filled in the default tag, so no values to remove
+      expect(screen.getAllByText('Select tag').length).toBe(1);
+    });
 
     await user.click(screen.getByText('Select tag'));
     jest.advanceTimersByTime(1000);
     await user.click(screen.getByText('foo'));
     jest.advanceTimersByTime(1000);
-    expect(screen.getAllByLabelText('Add tag').length).toBe(1);
-    expect(screen.getAllByLabelText(/Remove tag/).length).toBe(1);
+    await user.click(screen.getAllByText('Select value')[2]);
+    jest.advanceTimersByTime(1000);
+    await user.click(screen.getByText('driver'));
+    jest.advanceTimersByTime(1000);
+    await act(async () => {
+      expect(screen.getAllByLabelText('Add tag').length).toBe(1);
+      expect(screen.getAllByLabelText(/Remove tag/).length).toBe(1);
+    });
 
     await user.click(screen.getByLabelText('Add tag'));
     jest.advanceTimersByTime(1000);
@@ -131,8 +138,10 @@ describe('TraceQLSearch', () => {
 
     await user.click(screen.getAllByLabelText(/Remove tag/)[0]);
     jest.advanceTimersByTime(1000);
-    expect(screen.queryAllByLabelText('Add tag').length).toBe(0); // not filled in the default tag, so no need to add another one
-    expect(screen.queryAllByLabelText(/Remove tag/).length).toBe(0); // mot filled in the default tag, so no values to remove
+    await act(async () => {
+      expect(screen.queryAllByLabelText('Add tag').length).toBe(0); // not filled in the default tag, so no need to add another one
+      expect(screen.queryAllByLabelText(/Remove tag/).length).toBe(0); // mot filled in the default tag, so no values to remove
+    });
   });
 
   it('should update operator when new value is selected in operator input', async () => {

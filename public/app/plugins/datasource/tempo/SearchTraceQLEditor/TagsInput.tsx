@@ -38,6 +38,7 @@ interface Props {
   staticTags: Array<string | undefined>;
   isTagsLoading: boolean;
   hideValues?: boolean;
+  requireTagAndValue?: boolean;
   query: string;
 }
 const TagsInput = ({
@@ -49,6 +50,7 @@ const TagsInput = ({
   staticTags,
   isTagsLoading,
   hideValues,
+  requireTagAndValue,
   query,
 }: Props) => {
   const styles = useStyles2(getStyles);
@@ -69,6 +71,11 @@ const TagsInput = ({
     return getFilteredTags(tags, staticTags);
   };
 
+  const validInput = (f: TraceqlFilter) => {
+    // If value is removed from the filter, it can be set as an empty array
+    return requireTagAndValue ? f.tag && f.value && f.value.length > 0 : f.tag;
+  };
+
   return (
     <div className={styles.vertical}>
       {filters?.map((f, i) => (
@@ -83,7 +90,7 @@ const TagsInput = ({
             hideValue={hideValues}
             query={query}
           />
-          {(f.tag || f.value || filters.length > 1) && (
+          {(validInput(f) || filters.length > 1) && (
             <AccessoryButton
               aria-label={`Remove tag with ID ${f.id}`}
               variant={'secondary'}
@@ -92,7 +99,7 @@ const TagsInput = ({
               tooltip={'Remove tag'}
             />
           )}
-          {(f.tag || f.value) && i === filters.length - 1 && (
+          {validInput(f) && i === filters.length - 1 && (
             <span className={styles.addTag}>
               <AccessoryButton
                 aria-label="Add tag"

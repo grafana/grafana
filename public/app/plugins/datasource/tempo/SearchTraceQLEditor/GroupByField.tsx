@@ -101,7 +101,7 @@ export const GroupByField = (props: Props) => {
                 placeholder="Select tag"
                 value={f.tag || ''}
               />
-              {(f.tag || f.value || (query.groupBy?.length ?? 0) > 1) && (
+              {(f.tag || (query.groupBy?.length ?? 0) > 1) && (
                 <AccessoryButton
                   aria-label={`Remove tag for filter ${i + 1}`}
                   icon="times"
@@ -111,7 +111,7 @@ export const GroupByField = (props: Props) => {
                   variant="secondary"
                 />
               )}
-              {(f.tag || f.value) && i === (query.groupBy?.length ?? 0) - 1 && (
+              {f.tag && i === (query.groupBy?.length ?? 0) - 1 && (
                 <span className={styles.addTag}>
                   <AccessoryButton
                     aria-label="Add tag"
