@@ -72,6 +72,8 @@ jobs:
         # that looks like 'PR_kwDOAOaWjc5mP_GU'
         run: |
           echo "PULL_REQUEST_ID=$(gh pr view "$PULL_REQUEST_URL" --json id -q .id)" >> "$GITHUB_ENV"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
