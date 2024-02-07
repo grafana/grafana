@@ -117,15 +117,28 @@ describe('InteractiveTable', () => {
       expect(screen.queryByRole('button', { name: /previous/i })).not.toBeInTheDocument();
     });
 
-    it('renders pagination controls if pageSize is set', () => {
+    it('renders pagination controls if pageSize is set and more items than page size', () => {
       const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
-      const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
-      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={10} />);
+      const data: TableData[] = [
+        { id: '1', value: '1', country: 'Sweden' },
+        { id: '2', value: '2', country: 'Belgium' },
+      ];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={1} />);
 
       expect(screen.getByRole('button', { name: /next/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /previous/i })).toBeInTheDocument();
     });
+
+    it('does not render pagination controls if pageSize is set and fewer items than page size', () => {
+      const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
+      const data: TableData[] = [{ id: '1', value: '1', country: 'Sweden' }];
+      render(<InteractiveTable columns={columns} data={data} getRowId={getRowId} pageSize={10} />);
+
+      expect(screen.queryByRole('button', { name: /next/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /previous/i })).not.toBeInTheDocument();
+    });
   });
+
   describe('headerTooltip', () => {
     it('does not render tooltips if headerTooltips is not set', () => {
       const columns: Array<Column<TableData>> = [{ id: 'id', header: 'ID' }];
