@@ -290,6 +290,18 @@ func WithGroupKey(groupKey AlertRuleGroupKey) AlertRuleMutator {
 	}
 }
 
+func WithNotificationSettingsGen(ns func() NotificationSettings) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.NotificationSettings = []NotificationSettings{ns()}
+	}
+}
+
+func WithNoNotificationSettings() AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.NotificationSettings = nil
+	}
+}
+
 func GenerateAlertLabels(count int, prefix string) data.Labels {
 	labels := make(data.Labels, count)
 	for i := 0; i < count; i++ {
@@ -649,9 +661,9 @@ func NotificationSettingsGen(mutators ...Mutator[NotificationSettings]) func() N
 		c := NotificationSettings{
 			Receiver:          util.GenerateShortUID(),
 			GroupBy:           []string{model.AlertNameLabel, FolderTitleLabel, util.GenerateShortUID()},
-			GroupWait:         util.Pointer(model.Duration(time.Duration(rand.Intn(100) + 1))),
-			GroupInterval:     util.Pointer(model.Duration(time.Duration(rand.Intn(100) + 1))),
-			RepeatInterval:    util.Pointer(model.Duration(time.Duration(rand.Intn(100) + 1))),
+			GroupWait:         util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
+			GroupInterval:     util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
+			RepeatInterval:    util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
 			MuteTimeIntervals: []string{util.GenerateShortUID(), util.GenerateShortUID()},
 		}
 		for _, mutator := range mutators {

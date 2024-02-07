@@ -672,7 +672,7 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 func (st DBstore) ListNotificationSettings(ctx context.Context, orgID int64) (map[ngmodels.AlertRuleKey][]ngmodels.NotificationSettings, error) {
 	var rules []ngmodels.AlertRule
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Table(ngmodels.AlertRule{}).Select("uid, notification_settings").Where("notification_settings IS NOT NULL AND org_id = ?", orgID).Find(&rules)
+		return sess.Table(ngmodels.AlertRule{}).Select("uid, notification_settings").Where("notification_settings IS NOT NULL AND notification_settings <> 'null' AND org_id = ?", orgID).Find(&rules)
 	})
 	if err != nil {
 		return nil, err

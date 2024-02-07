@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -574,6 +576,60 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 			}
 		}
 		require.Truef(t, found, "Rule with key %#v was not found in database", keyWithID)
+	}
+}
+
+func TestIntegrationListNotificationSettings(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
+	store := &DBstore{
+		SQLStore:      sqlStore,
+		FolderService: setupFolderService(t, sqlStore, cfg),
+		Logger:        log.New("test-dbstore"),
+		Cfg:           cfg.UnifiedAlerting,
+	}
+
+	uids := &sync.Map{}
+
+	rulesWithNotifications := models.GenerateAlertRules(5, models.AlertRuleGen(
+		models.WithOrgID(1),
+		models.WithUniqueUID(uids),
+		withIntervalMatching(store.Cfg.BaseInterval),
+		models.WithNotificationSettingsGen(models.NotificationSettingsGen()),
+	))
+	rulesInOtherOrg := models.GenerateAlertRules(5, models.AlertRuleGen(
+		models.WithOrgID(2),
+		models.WithUniqueUID(uids),
+		withIntervalMatching(store.Cfg.BaseInterval),
+		models.WithNotificationSettingsGen(models.NotificationSettingsGen()),
+	))
+	rulesWithNoNotifications := models.GenerateAlertRules(5, models.AlertRuleGen(
+		models.WithOrgID(1),
+		models.WithUniqueUID(uids),
+		withIntervalMatching(store.Cfg.BaseInterval),
+		models.WithNoNotificationSettings(),
+	))
+	deref := make([]models.AlertRule, 0, len(rulesWithNotifications)+len(rulesWithNoNotifications)+len(rulesInOtherOrg))
+	for _, rule := range append(append(rulesWithNotifications, rulesWithNoNotifications...), rulesInOtherOrg...) {
+		deref = append(deref, *rule)
+	}
+
+	_, err := store.InsertAlertRules(context.Background(), deref)
+	require.NoError(t, err)
+
+	result, err := store.ListNotificationSettings(context.Background(), 1)
+	require.NoError(t, err)
+	require.Len(t, result, len(rulesWithNotifications))
+	for _, rule := range rulesWithNotifications {
+		if !assert.Contains(t, result, rule.GetKey()) {
+			continue
+		}
+		assert.EqualValues(t, rule.NotificationSettings, result[rule.GetKey()])
 	}
 }
 
