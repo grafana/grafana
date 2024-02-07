@@ -34,7 +34,8 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     const styles = useStyles2(getStyles);
     const [isVizPickerOpen, setVizPickerOpen] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const panelFrameOptions = useMemo(() => getPanelFrameCategory2(panel), [panel]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const panelFrameOptions = useMemo(() => getPanelFrameCategory2(panelManager), [panelManager, panel]);
 
     const visualizationOptions = useMemo(() => {
       const plugin = panel.getPlugin();

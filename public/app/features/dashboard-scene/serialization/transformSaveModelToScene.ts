@@ -450,10 +450,7 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
   }
 
   if (panel.repeat) {
-    const repeatDirection = panel.repeatDirection ?? 'h';
-    vizPanelState.repeat = panel.repeat;
-    vizPanelState.repeatDirection = repeatDirection;
-    vizPanelState.maxPerRow = panel.maxPerRow;
+    const repeatDirection = panel.repeatDirection === 'h' ? 'h' : 'v';
 
     return new PanelRepeaterGridItem({
       key: `grid-item-${panel.id}`,
@@ -465,7 +462,7 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
       source: new VizPanel(vizPanelState),
       variableName: panel.repeat,
       repeatedPanels: [],
-      repeatDirection: panel.repeatDirection,
+      repeatDirection: repeatDirection,
       maxPerRow: panel.maxPerRow,
     });
   }

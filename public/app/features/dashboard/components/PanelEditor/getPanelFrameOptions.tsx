@@ -2,8 +2,8 @@ import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { VizPanel, VizPanelState } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
+import { VizPanelManager, VizPanelManagerState } from 'app/features/dashboard-scene/panel-edit/VizPanelManager';
 import { dashboardSceneGraph } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
@@ -175,7 +175,8 @@ export function getPanelFrameCategory(props: OptionPaneRenderProps): OptionsPane
     );
 }
 
-export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDescriptor {
+export function getPanelFrameCategory2(panelManager: VizPanelManager): OptionsPaneCategoryDescriptor {
+  const { panel } = panelManager.state;
   const descriptor = new OptionsPaneCategoryDescriptor({
     title: 'Panel options',
     id: 'Panel options',
@@ -278,13 +279,13 @@ export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDesc
               return (
                 <RepeatRowSelect2
                   id="repeat-by-variable-select"
-                  panel={panel}
+                  panelManager={panelManager}
                   onChange={(value?: string) => {
-                    const stateUpdate: Partial<VizPanelState> = { repeat: value };
-                    if (value && !panel.state.repeatDirection) {
+                    const stateUpdate: Partial<VizPanelManagerState> = { repeat: value };
+                    if (value && !panelManager.state.repeatDirection) {
                       stateUpdate.repeatDirection = 'h';
                     }
-                    panel.setState(stateUpdate);
+                    panelManager.setState(stateUpdate);
                   }}
                 />
               );
@@ -294,7 +295,7 @@ export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDesc
         .addItem(
           new OptionsPaneItemDescriptor({
             title: 'Repeat direction',
-            showIf: () => !!panel.state.repeat,
+            showIf: () => !!panelManager.state.repeat,
             render: function renderRepeatOptions() {
               const directionOptions: Array<SelectableValue<'h' | 'v'>> = [
                 { label: 'Horizontal', value: 'h' },
@@ -304,8 +305,8 @@ export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDesc
               return (
                 <RadioButtonGroup
                   options={directionOptions}
-                  value={panel.state.repeatDirection ?? 'h'}
-                  onChange={(value) => panel.setState({ repeatDirection: value })}
+                  value={panelManager.state.repeatDirection ?? 'h'}
+                  onChange={(value) => panelManager.setState({ repeatDirection: value })}
                 />
               );
             },
@@ -314,14 +315,14 @@ export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDesc
         .addItem(
           new OptionsPaneItemDescriptor({
             title: 'Max per row',
-            showIf: () => Boolean(panel.state.repeat && panel.state.repeatDirection === 'h'),
+            showIf: () => Boolean(panelManager.state.repeat && panelManager.state.repeatDirection === 'h'),
             render: function renderOption() {
               const maxPerRowOptions = [2, 3, 4, 6, 8, 12].map((value) => ({ label: value.toString(), value }));
               return (
                 <Select
                   options={maxPerRowOptions}
-                  value={panel.state.maxPerRow}
-                  onChange={(value) => panel.setState({ maxPerRow: value.value })}
+                  value={panelManager.state.maxPerRow}
+                  onChange={(value) => panelManager.setState({ maxPerRow: value.value })}
                 />
               );
             },

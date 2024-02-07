@@ -29,13 +29,17 @@ import { updateQueries } from 'app/features/query/state/updateQueries';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
+import { RepeatDirection } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
-interface VizPanelManagerState extends SceneObjectState {
+export interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
+  repeat?: string;
+  repeatDirection?: RepeatDirection;
+  maxPerRow?: number;
 }
 
 // VizPanelManager serves as an API to manipulate VizPanel state from the outside. It allows panel type, options and  data maniulation.

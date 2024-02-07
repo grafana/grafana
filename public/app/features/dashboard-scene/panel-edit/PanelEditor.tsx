@@ -27,7 +27,7 @@ import {
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
-import { VizPanelManager } from './VizPanelManager';
+import { VizPanelManager, VizPanelManagerState } from './VizPanelManager';
 
 export interface PanelEditorState extends SceneObjectState {
   body: SceneObject;
@@ -38,11 +38,25 @@ export interface PanelEditorState extends SceneObjectState {
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
+  private _initialRepeatOptions: Pick<VizPanelManagerState, 'repeat' | 'repeatDirection' | 'maxPerRow'> = {};
   static Component = PanelEditorRenderer;
 
   public constructor(state: PanelEditorState) {
     super(state);
+
+    const panelManager = state.panelRef.resolve();
+    const panel = panelManager.state.panel;
+    if (panel.parent instanceof PanelRepeaterGridItem) {
+      const { variableName: repeat, repeatDirection, maxPerRow } = panel.parent.state;
+
+      this._initialRepeatOptions = {
+        repeat,
+        repeatDirection,
+        maxPerRow,
+      };
+    }
   }
+
   public getUrlKey() {
     return this.state.panelId.toString();
   }
@@ -81,7 +95,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       dashboard.onEnterEditMode();
     }
 
-    const panelMngr = this.state.panelRef.resolve();
+    const panelManager = this.state.panelRef.resolve();
 
     const sourcePanelParent = sourcePanel!.parent;
     const sourcePanelGrandparent = sourcePanelParent!.parent!;
@@ -90,13 +104,12 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       return;
     }
 
-    const normalToRepeat = !sourcePanel!.state.repeat && panelMngr.state.panel.state.repeat;
-    const repeatToNormal = sourcePanel!.state.repeat && !panelMngr.state.panel.state.repeat;
+    const normalToRepeat = !this._initialRepeatOptions.repeat && panelManager.state.repeat;
+    const repeatToNormal = this._initialRepeatOptions.repeat && !panelManager.state.repeat;
 
     if (sourcePanelParent instanceof SceneGridItem) {
       if (normalToRepeat) {
-        const panel = panelMngr.state.panel;
-        const repeatDirection = panel.state.repeatDirection ?? 'h';
+        const repeatDirection = panelManager.state.repeatDirection ?? 'h';
         const repeater = new PanelRepeaterGridItem({
           key: sourcePanelParent.state.key,
           x: sourcePanelParent.state.x,
@@ -104,11 +117,11 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
           width: repeatDirection === 'h' ? 24 : sourcePanelParent.state.width,
           height: sourcePanelParent.state.height,
           itemHeight: sourcePanelParent.state.height,
-          source: panelMngr.state.panel.clone(),
-          variableName: panel.state.repeat!,
+          source: panelManager.state.panel.clone(),
+          variableName: panelManager.state.repeat!,
           repeatedPanels: [],
-          repeatDirection: panel.state.repeatDirection,
-          maxPerRow: panel.state.maxPerRow,
+          repeatDirection: panelManager.state.repeatDirection,
+          maxPerRow: panelManager.state.maxPerRow,
         });
         sourcePanelGrandparent.setState({
           children: sourcePanelGrandparent.state.children.map((child) =>
@@ -116,18 +129,17 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
           ),
         });
       } else {
-        sourcePanelParent.setState({ body: panelMngr.state.panel.clone() });
+        sourcePanelParent.setState({ body: panelManager.state.panel.clone() });
       }
     } else if (sourcePanelParent instanceof PanelRepeaterGridItem) {
       if (repeatToNormal) {
-        const panelClone = panelMngr.state.panel.clone();
-        panelClone.setState({ repeat: undefined, repeatDirection: undefined, maxPerRow: undefined });
+        const panelClone = panelManager.state.panel.clone();
         const gridItem = new SceneGridItem({
           key: sourcePanelParent.state.key,
           x: sourcePanelParent.state.x,
           y: sourcePanelParent.state.y,
-          width: sourcePanel!.state.repeatDirection === 'h' ? 8 : sourcePanelParent.state.width,
-          height: sourcePanel!.state.repeatDirection === 'v' ? 8 : sourcePanelParent.state.height,
+          width: this._initialRepeatOptions.repeatDirection === 'h' ? 8 : sourcePanelParent.state.width,
+          height: this._initialRepeatOptions.repeatDirection === 'v' ? 8 : sourcePanelParent.state.height,
           body: panelClone,
         });
         sourcePanelGrandparent.setState({
@@ -136,7 +148,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
           ),
         });
       } else {
-        sourcePanelParent.setState({ source: panelMngr.state.panel.clone() });
+        sourcePanelParent.setState({ source: panelManager.state.panel.clone() });
       }
     } else {
       console.error('Unsupported scene object type');
