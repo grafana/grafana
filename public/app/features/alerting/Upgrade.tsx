@@ -42,7 +42,7 @@ import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from './
 import { DynamicTableWithGuidelines } from './unified/components/DynamicTableWithGuidelines';
 import { Matchers } from './unified/components/notification-policies/Matchers';
 import { ActionIcon } from './unified/components/rules/ActionIcon';
-import { createContactPointLink, makeDashboardLink, makeFolderLink } from './unified/utils/misc';
+import { createContactPointLink, makeDashboardLink, makeFolderAlertsLink } from './unified/utils/misc';
 import { createUrl } from './unified/utils/url';
 
 export const UpgradePage = () => {
@@ -1011,7 +1011,7 @@ const useAlertColumns = (): Array<DynamicTableColumnProps<DashboardUpgrade>> => 
                 rel="noreferrer"
                 target="_blank"
                 className={styles.textLink}
-                href={makeFolderLink(dashUpgrade.folderUid)}
+                href={makeFolderAlertsLink(dashUpgrade.folderUid, dashUpgrade.folderName)}
               >
                 {dashUpgrade.folderName}
               </Link>
@@ -1075,7 +1075,7 @@ const useAlertColumns = (): Array<DynamicTableColumnProps<DashboardUpgrade>> => 
                   rel="noreferrer"
                   target="_blank"
                   className={styles.textLink}
-                  href={makeFolderLink(migratedFolderUid)}
+                  href={makeFolderAlertsLink(migratedFolderUid, dashUpgrade.newFolderName)}
                 >
                   {dashUpgrade.newFolderName}
                 </Link>

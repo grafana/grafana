@@ -145,6 +145,10 @@ export function makeFolderLink(folderUID: string): string {
   return createUrl(`/dashboards/f/${folderUID}`);
 }
 
+export function makeFolderAlertsLink(folderUID: string, title: string): string {
+  return createUrl(`/dashboards/f/${folderUID}/${title}/alerting`);
+}
+
 export function makeFolderSettingsLink(folder: FolderDTO): string {
   return createUrl(`/dashboards/f/${folder.uid}/${folder.title}/settings`);
 }
