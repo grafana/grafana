@@ -74,9 +74,6 @@ jobs:
           echo "PULL_REQUEST_ID=$(gh pr view "$PULL_REQUEST_URL" --json id -q .id)" >> "$GITHUB_ENV"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PULL_REQUEST_URL: ${{ steps.crowdin-download.outputs.pull_request_url }}
 
       - name: Add to project board
