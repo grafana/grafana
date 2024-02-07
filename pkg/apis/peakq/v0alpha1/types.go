@@ -41,7 +41,7 @@ type Target struct {
 	// Variables that will be replaced in the query
 	Variables map[string][]VariableReplacement `json:"variables"`
 
-	// The raw query: TODO, should be query.GenericQuery
+	// Query target
 	Properties query.GenericDataQuery `json:"properties"`
 }
 
