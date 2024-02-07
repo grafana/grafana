@@ -179,18 +179,6 @@ export const NotSelected: StoryFn<typeof Card> = () => {
   );
 };
 
-export const Compact: StoryFn<typeof Card> = (args) => {
-  return (
-    <Card {...args}>
-      <Card.Heading>Filter by name</Card.Heading>
-      <Card.Description>
-        Filter data by query. This is useful if you are sharing the results from a different panel that has many queries
-        and you want to only visualize a subset of that in this panel.
-      </Card.Description>
-    </Card>
-  );
-};
-
 export const WithOverline: StoryFn<typeof Card> = (args) => {
   return (
     <Card {...args}>
