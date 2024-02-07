@@ -175,7 +175,7 @@ describe('LinksSettings', () => {
     expect(screen.queryByText('Type')).toBeInTheDocument();
     expect(screen.queryByText('Title')).toBeInTheDocument();
     expect(screen.queryByText('With tags')).toBeInTheDocument();
-    expect(screen.queryByText('Apply')).toBeInTheDocument();
+    expect(screen.queryByText('Back to list')).toBeInTheDocument();
 
     expect(screen.queryByText('Url')).not.toBeInTheDocument();
     expect(screen.queryByText('Tooltip')).not.toBeInTheDocument();
