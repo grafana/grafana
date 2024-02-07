@@ -204,14 +204,6 @@ var (
 			Created:     time.Date(2022, time.June, 20, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:         "dockedMegaMenu",
-			Description:  "Enable support for a persistent (docked) navigation menu",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaFrontendPlatformSquad,
-			Created:      time.Date(2023, time.September, 18, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:         "returnToPrevious",
 			Description:  "Enables the return to previous context functionality",
 			Stage:        FeatureStageExperimental,
@@ -508,17 +500,6 @@ var (
 			Expression:     "true", // enabled by default
 			AllowSelfServe: true,
 			Created:        time.Date(2023, time.April, 14, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:              "advancedDataSourcePicker",
-			Description:       "Enable a new data source picker with contextual information, recently used order and advanced mode",
-			Stage:             FeatureStageGeneralAvailability,
-			FrontendOnly:      true,
-			Expression:        "true", // enabled by default
-			Owner:             grafanaDashboardsSquad,
-			AllowSelfServe:    false,
-			HideFromAdminPage: true,
-			Created:           time.Date(2023, time.April, 14, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "faroDatasourceSelector",
@@ -819,14 +800,6 @@ var (
 			Created:     time.Date(2023, time.September, 7, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:         "requestInstrumentationStatusSource",
-			Description:  "Include a status source label for request metrics and logs",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaPluginsPlatformSquad,
-			Created:      time.Date(2023, time.September, 11, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:            "libraryPanelRBAC",
 			Description:     "Enables RBAC support for library panels",
 			Stage:           FeatureStageExperimental,
@@ -876,15 +849,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaPluginsPlatformSquad,
 			Created:      time.Date(2023, time.September, 21, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:            "httpSLOLevels",
-			Description:     "Adds SLO level to http request metrics",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           hostedGrafanaTeam,
-			RequiresRestart: true,
-			Created:         time.Date(2023, time.September, 22, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "idForwarding",
@@ -1345,6 +1309,14 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			Created:      time.Date(2024, time.January, 2, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "groupToNestedTableTransformation",
+			Description:  "Enables the group to nested table transformation",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Created:      time.Date(2024, time.February, 5, 12, 0, 0, 0, time.UTC),
 		},
 	}
 )
