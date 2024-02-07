@@ -72,7 +72,7 @@ describe('Loki query builder', () => {
     e2e.components.QueryBuilder.labelSelect().children('div').children('input').type('instance{enter}');
     e2e.components.QueryBuilder.matchOperatorSelect()
       .should('be.visible')
-      .click()
+      .click({ force: true })
       .children('div')
       .children('input')
       .type('=~{enter}', { force: true });
