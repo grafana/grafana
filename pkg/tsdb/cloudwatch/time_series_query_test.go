@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
@@ -26,7 +27,7 @@ import (
 )
 
 func TestTimeSeriesQuery(t *testing.T) {
-	executor := newExecutor(nil, &fakeSessionCache{})
+	executor := newExecutor(nil, &fakeSessionCache{}, log.NewNullLogger())
 	now := time.Now()
 
 	origNewCWClient := NewCWClient
@@ -52,7 +53,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 
 		im := defaultTestInstanceManager()
 
-		executor := newExecutor(im, &fakeSessionCache{})
+		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
 		resp, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -117,7 +118,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 	})
 
 	t.Run("End time before start time should result in error", func(t *testing.T) {
-		_, err := executor.executeTimeSeriesQuery(context.Background(), logger, &backend.QueryDataRequest{Queries: []backend.DataQuery{{TimeRange: backend.TimeRange{
+		_, err := executor.executeTimeSeriesQuery(context.Background(), &backend.QueryDataRequest{Queries: []backend.DataQuery{{TimeRange: backend.TimeRange{
 			From: now.Add(time.Hour * -1),
 			To:   now.Add(time.Hour * -2),
 		}}}})
@@ -125,7 +126,7 @@ func TestTimeSeriesQuery(t *testing.T) {
 	})
 
 	t.Run("End time equals start time should result in error", func(t *testing.T) {
-		_, err := executor.executeTimeSeriesQuery(context.Background(), logger, &backend.QueryDataRequest{Queries: []backend.DataQuery{{TimeRange: backend.TimeRange{
+		_, err := executor.executeTimeSeriesQuery(context.Background(), &backend.QueryDataRequest{Queries: []backend.DataQuery{{TimeRange: backend.TimeRange{
 			From: now.Add(time.Hour * -1),
 			To:   now.Add(time.Hour * -1),
 		}}}})
@@ -158,7 +159,7 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 		mockMetricClient = mocks.MetricsAPI{}
 		mockMetricClient.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
-		executor := newExecutor(im, mockSessionCache)
+		executor := newExecutor(im, mockSessionCache, log.NewNullLogger())
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -209,7 +210,7 @@ func Test_executeTimeSeriesQuery_getCWClient_is_called_once_per_region_and_GetMe
 		mockMetricClient = mocks.MetricsAPI{}
 		mockMetricClient.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 
-		executor := newExecutor(im, sessionCache)
+		executor := newExecutor(im, sessionCache, log.NewNullLogger())
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -342,7 +343,7 @@ func Test_QueryData_timeSeriesQuery_GetMetricDataWithContext(t *testing.T) {
 	t.Run("passes query label as GetMetricData label", func(t *testing.T) {
 		api = mocks.MetricsAPI{}
 		api.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatch.GetMetricDataOutput{}, nil)
-		executor := newExecutor(im, &fakeSessionCache{})
+		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
 		query := newTestQuery(t, queryParameters{
 			Label: aws.String("${PROP('Period')} some words ${PROP('Dim.InstanceId')}"),
 		})
@@ -381,7 +382,7 @@ func Test_QueryData_timeSeriesQuery_GetMetricDataWithContext(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			api = mocks.MetricsAPI{}
 			api.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatch.GetMetricDataOutput{}, nil)
-			executor := newExecutor(im, &fakeSessionCache{})
+			executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
 
 			_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 				PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
@@ -432,7 +433,7 @@ func Test_QueryData_response_data_frame_name_is_always_response_label(t *testing
 			}}, nil)
 
 	im := defaultTestInstanceManager()
-	executor := newExecutor(im, &fakeSessionCache{})
+	executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
 
 	t.Run("where user defines search expression", func(t *testing.T) {
 		query := newTestQuery(t, queryParameters{
@@ -589,7 +590,7 @@ func TestTimeSeriesQuery_CrossAccountQuerying(t *testing.T) {
 	t.Run("should call GetMetricDataInput with AccountId nil when no AccountId is provided", func(t *testing.T) {
 		api = mocks.MetricsAPI{}
 		api.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatch.GetMetricDataOutput{}, nil)
-		executor := newExecutor(im, &fakeSessionCache{})
+		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
 
 		_, err := executor.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
@@ -630,7 +631,7 @@ func TestTimeSeriesQuery_CrossAccountQuerying(t *testing.T) {
 	t.Run("should call GetMetricDataInput with AccountId nil when feature flag is false", func(t *testing.T) {
 		api = mocks.MetricsAPI{}
 		api.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatch.GetMetricDataOutput{}, nil)
-		executor := newExecutor(im, &fakeSessionCache{})
+		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -671,7 +672,7 @@ func TestTimeSeriesQuery_CrossAccountQuerying(t *testing.T) {
 	t.Run("should call GetMetricDataInput with AccountId in a MetricStat query", func(t *testing.T) {
 		api = mocks.MetricsAPI{}
 		api.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatch.GetMetricDataOutput{}, nil)
-		executor := newExecutor(im, &fakeSessionCache{})
+		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
 		_, err := executor.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
@@ -712,7 +713,7 @@ func TestTimeSeriesQuery_CrossAccountQuerying(t *testing.T) {
 	t.Run("should GetMetricDataInput with AccountId in an inferred search expression query", func(t *testing.T) {
 		api = mocks.MetricsAPI{}
 		api.On("GetMetricDataWithContext", mock.Anything, mock.Anything, mock.Anything).Return(&cloudwatch.GetMetricDataOutput{}, nil)
-		executor := newExecutor(im, &fakeSessionCache{})
+		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
 		_, err := executor.QueryData(contextWithFeaturesEnabled(features.FlagCloudWatchCrossAccountQuerying), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{},
