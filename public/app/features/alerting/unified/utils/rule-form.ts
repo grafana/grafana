@@ -622,7 +622,7 @@ export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<P
 
   const grafanaQueries = await dataQueriesToGrafanaQueries(
     queries,
-    rangeUtil.timeRangeToRelative(timeRange.state.value),
+    rangeUtil.timeRangeToRelative(rangeUtil.convertRawToRange(timeRange.state.value.raw)),
     { __sceneObject: { value: vizPanel } },
     datasource,
     maxDataPoints,
