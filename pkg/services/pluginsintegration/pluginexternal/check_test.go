@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestService_validateExternal(t *testing.T) {
@@ -34,7 +34,7 @@ func TestService_validateExternal(t *testing.T) {
 			},
 		}
 		s.validateExternal()
-		assert.Equal(t, l.ErrorLogs.Calls, 0)
+		require.Equal(t, l.ErrorLogs.Calls, 0)
 	})
 
 	t.Run("should log error if a core plugin is missing", func(t *testing.T) {
@@ -47,7 +47,7 @@ func TestService_validateExternal(t *testing.T) {
 			},
 		}
 		s.validateExternal()
-		assert.Equal(t, l.ErrorLogs.Calls, 1)
-		assert.Contains(t, l.ErrorLogs.Message, "Core plugin expected to be loaded as external")
+		require.Equal(t, l.ErrorLogs.Calls, 1)
+		require.Contains(t, l.ErrorLogs.Message, "Core plugin expected to be loaded as external")
 	})
 }

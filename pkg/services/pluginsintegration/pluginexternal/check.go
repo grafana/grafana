@@ -17,10 +17,10 @@ type Service struct {
 func ProvideService(
 	cfg *setting.Cfg, pluginStore pluginstore.Store,
 ) (*Service, error) {
-	dslogger := log.New("datasources")
+	logger := log.New("datasources")
 	s := &Service{
 		cfg:         cfg,
-		logger:      dslogger,
+		logger:      logger,
 		pluginStore: pluginStore,
 	}
 	return s, nil
@@ -28,7 +28,7 @@ func ProvideService(
 
 func (s *Service) Run(ctx context.Context) error {
 	s.validateExternal()
-	return nil
+	return ctx.Err()
 }
 
 func (s *Service) validateExternal() {
