@@ -219,9 +219,9 @@ func (c *AsExternal) Filter(cl plugins.Class, bundles []*plugins.FoundBundle) ([
 	return bundles, nil
 }
 
-// DuplicatePluginValidation is a filter step that will filter out any plugins that are already registered with the
-// plugin ID. This includes both the primary plugin and any child plugins, which are matched using the plugin.json
-// plugin ID field.
+// DuplicatePluginValidation is a filter step that will filter out any plugins that are already registered with the same
+// plugin ID. This includes both the primary plugin and child plugins, which are matched using the plugin.json plugin
+// ID field.
 type DuplicatePluginValidation struct {
 	registry registry.Service
 	log      log.Logger

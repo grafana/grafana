@@ -25,7 +25,7 @@ type PluginSource interface {
 
 type FileStore interface {
 	// File retrieves a plugin file.
-	File(ctx context.Context, pluginID, filename string) (*File, error)
+	File(ctx context.Context, pluginID, pluginVersion, filename string) (*File, error)
 }
 
 type File struct {
