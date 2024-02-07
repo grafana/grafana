@@ -1,7 +1,4 @@
 ---
-aliases:
-  - ../../../enterprise/activate-aws-marketplace-license/activate-license-on-ecs/
-  - ../../../enterprise/license/activate-aws-marketplace-license/activate-license-on-ecs/
 description: Learn how to create Team LBAC rules for the Loki data source.
 keywords:
   - grafana
