@@ -5,7 +5,6 @@ import { getDataSourceSrv, locationService } from '@grafana/runtime';
 import {
   SceneComponentProps,
   SceneDataLayers,
-  SceneObject,
   SceneObjectBase,
   VizPanel,
   dataLayers,
@@ -94,7 +93,6 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     const data = this.getSceneDataLayers();
 
     const layers = [...data.state.layers];
-    newAnnotation.activate();
 
     //keep annotation layers together
     layers.splice(this.getAnnotationsLength(), 0, newAnnotation);
@@ -103,6 +101,7 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
       layers,
     });
 
+    newAnnotation.activate();
     this.setState({ editIndex: this.getAnnotationsLength() - 1 });
   };
 
@@ -110,7 +109,7 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     this.setState({ editIndex: idx });
   };
 
-  public goBackToList = () => {
+  public onBackToList = () => {
     this.setState({ editIndex: undefined });
   };
 
@@ -148,30 +147,24 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
   };
 
   public onUpdate = (annotation: AnnotationQuery, editIndex: number) => {
-    const data = this.getSceneDataLayers();
+    const layer = this.getDataLayer(editIndex);
 
-    const layers = [...data.state.layers];
-    const layer = layers[editIndex];
+    layer.setState({
+      key: `annotations-${annotation.name}`,
+      name: annotation.name,
+      isEnabled: Boolean(annotation.enable),
+      isHidden: Boolean(annotation.hide),
+      query: annotation,
+    });
 
-    if (layer instanceof dataLayers.AnnotationsDataLayer) {
-      layer.setState({
-        key: `annotations-${annotation.name}`,
-        name: annotation.name,
-        isEnabled: Boolean(annotation.enable),
-        isHidden: Boolean(annotation.hide),
-        query: annotation,
-      });
-
-      //need to rerun the layer to update the query and
-      //see the annotation on the panel
-      layer.runLayer();
-    }
+    //need to rerun the layer to update the query and
+    //see the annotation on the panel
+    layer.runLayer();
   };
 }
 
 function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditView>) {
   const dashboard = model.getDashboard();
-  const { overlay } = dashboard.useState();
   const { layers } = model.getSceneDataLayers().useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   const { editIndex } = model.useState();
@@ -188,9 +181,8 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
         editIndex={editIndex}
         navModel={navModel}
         dashboard={dashboard}
-        overlay={overlay}
         onUpdate={model.onUpdate}
-        goBackToList={model.goBackToList}
+        onBackToList={model.onBackToList}
         onPreview={model.onPreview}
         onDelete={model.onDelete}
       />
@@ -207,7 +199,6 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
         onDelete={model.onDelete}
         onMove={model.onMove}
       />
-      {overlay && <overlay.Component model={overlay} />}
     </Page>
   );
 }
@@ -219,9 +210,8 @@ interface AnnotationsSettingsEditViewProps {
   editIndex: number;
   navModel: NavModel;
   dashboard: DashboardScene;
-  overlay: SceneObject | undefined;
   onUpdate: (annotation: AnnotationQuery, editIndex: number) => void;
-  goBackToList: () => void;
+  onBackToList: () => void;
   onPreview: () => void;
   onDelete: (idx: number) => void;
 }
@@ -233,9 +223,8 @@ function AnnotationsSettingsEditView({
   panels,
   editIndex,
   dashboard,
-  overlay,
   onUpdate,
-  goBackToList,
+  onBackToList,
   onPreview,
   onDelete,
 }: AnnotationsSettingsEditViewProps) {
@@ -256,11 +245,10 @@ function AnnotationsSettingsEditView({
         editIndex={editIndex}
         panels={panels}
         onUpdate={onUpdate}
-        goBackToList={goBackToList}
+        onBackToList={onBackToList}
         onDelete={onDelete}
         onPreview={onPreview}
       />
-      {overlay && <overlay.Component model={overlay} />}
     </Page>
   );
 }

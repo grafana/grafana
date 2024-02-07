@@ -38,7 +38,7 @@ type Props = {
   editIndex: number;
   panels: VizPanel[];
   onUpdate: (annotation: AnnotationQuery, editIndex: number) => void;
-  goBackToList: () => void;
+  onBackToList: () => void;
   onDelete: (index: number) => void;
   onPreview: () => void;
 };
@@ -50,7 +50,7 @@ export const AnnotationSettingsEdit = ({
   editIndex,
   panels,
   onUpdate,
-  goBackToList,
+  onBackToList,
   onDelete,
   onPreview,
 }: Props) => {
@@ -154,11 +154,9 @@ export const AnnotationSettingsEdit = ({
     onUpdate({ ...annotation, filter }, editIndex);
   };
 
-  const onApply = goBackToList;
-
   const onDeleteAndLeavePage = () => {
     onDelete(editIndex);
-    goBackToList();
+    onBackToList();
   };
 
   const isNewAnnotation = annotation.name === newAnnotationName;
@@ -282,19 +280,8 @@ export const AnnotationSettingsEdit = ({
             Delete
           </Button>
         )}
-        <Button
-          variant="secondary"
-          onClick={onPreview}
-          data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.previewInDashboard}
-        >
-          Preview in dashboard
-        </Button>
-        <Button
-          variant="primary"
-          onClick={onApply}
-          data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.apply}
-        >
-          Apply
+        <Button onClick={onBackToList} data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.apply}>
+          Back to list
         </Button>
       </Stack>
     </div>

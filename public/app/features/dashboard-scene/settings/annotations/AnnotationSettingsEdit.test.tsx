@@ -94,7 +94,7 @@ describe('AnnotationSettingsEdit', () => {
       onUpdate: mockOnUpdate,
       editIndex: 1,
       panels: [],
-      goBackToList: mockGoBackToList,
+      onBackToList: mockGoBackToList,
       onDelete: mockOnDelete,
       onPreview: mockOnPreview,
     };
@@ -122,7 +122,6 @@ describe('AnnotationSettingsEdit', () => {
       const hideToggle = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.hide);
       const iconColorToggle = getByTestId(selectors.components.ColorSwatch.name);
       const panelSelect = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel);
-      const preview = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.previewInDashboard);
       const deleteAnno = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.delete);
       const apply = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.apply);
 
@@ -132,7 +131,6 @@ describe('AnnotationSettingsEdit', () => {
       expect(hideToggle).toBeInTheDocument();
       expect(iconColorToggle).toBeInTheDocument();
       expect(panelSelect).toBeInTheDocument();
-      expect(preview).toBeInTheDocument();
       expect(deleteAnno).toBeInTheDocument();
       expect(apply).toBeInTheDocument();
     });
@@ -248,29 +246,15 @@ describe('AnnotationSettingsEdit', () => {
     expect(mockOnDelete).toHaveBeenCalledTimes(1);
   });
 
-  it('should preview annotation', async () => {
+  it('should go back to list annotation', async () => {
     const {
       renderer: { getByTestId },
       user,
     } = setup();
 
-    const preview = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.previewInDashboard);
+    const goBack = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.apply);
     await waitFor(async () => {
-      await user.click(preview);
-    });
-
-    expect(mockOnPreview).toHaveBeenCalledTimes(1);
-  });
-
-  it('should apply annotation', async () => {
-    const {
-      renderer: { getByTestId },
-      user,
-    } = setup();
-
-    const apply = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.apply);
-    await waitFor(async () => {
-      await user.click(apply);
+      await user.click(goBack);
     });
 
     expect(mockGoBackToList).toHaveBeenCalledTimes(1);
