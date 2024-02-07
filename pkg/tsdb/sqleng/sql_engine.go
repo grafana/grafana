@@ -21,13 +21,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
 const MetaKeyExecutedQueryString = "executedQueryString"
-
-var ErrConnectionFailed = errutil.Internal("sqleng.connectionError")
 
 // SQLMacroEngine interpolates macros into sql. It takes in the Query to have access to query context and
 // timeRange to be able to generate queries that use from and to.
@@ -112,7 +109,7 @@ func (e *DataSourceHandler) TransformQueryError(logger log.Logger, err error) er
 	var opErr *net.OpError
 	if errors.As(err, &opErr) {
 		logger.Error("Query error", "err", err)
-		return ErrConnectionFailed.Errorf("failed to connect to server - %s", e.userError)
+		return fmt.Errorf("failed to connect to server - %s", e.userError)
 	}
 
 	return e.queryResultTransformer.TransformQueryError(logger, err)

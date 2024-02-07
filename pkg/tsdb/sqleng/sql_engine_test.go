@@ -400,28 +400,32 @@ func TestSQLEngine(t *testing.T) {
 		}
 	})
 
-	t.Run("Should handle connection errors", func(t *testing.T) {
-		randomErr := fmt.Errorf("random error")
-
-		tests := []struct {
-			err                                   error
-			expectedErr                           error
-			expectQueryResultTransformerWasCalled bool
-		}{
-			{err: &net.OpError{Op: "Dial", Err: fmt.Errorf("inner-error")}, expectedErr: ErrConnectionFailed, expectQueryResultTransformerWasCalled: false},
-			{err: randomErr, expectedErr: randomErr, expectQueryResultTransformerWasCalled: true},
+	t.Run("Should not return raw connection errors", func(t *testing.T) {
+		err := net.OpError{Op: "Dial", Err: fmt.Errorf("inner-error")}
+		transformer := &testQueryResultTransformer{}
+		dp := DataSourceHandler{
+			log:                    backend.NewLoggerWith("logger", "test"),
+			queryResultTransformer: transformer,
 		}
+		resultErr := dp.TransformQueryError(dp.log, &err)
+		assert.False(t, transformer.transformQueryErrorWasCalled)
+		errorText := resultErr.Error()
+		assert.NotEqual(t, err, resultErr)
+		assert.NotContains(t, errorText, "inner-error")
+		assert.Contains(t, errorText, "failed to connect to server")
+	})
 
-		for _, tc := range tests {
-			transformer := &testQueryResultTransformer{}
-			dp := DataSourceHandler{
-				log:                    backend.NewLoggerWith("logger", "test"),
-				queryResultTransformer: transformer,
-			}
-			resultErr := dp.TransformQueryError(dp.log, tc.err)
-			assert.ErrorIs(t, resultErr, tc.expectedErr)
-			assert.Equal(t, tc.expectQueryResultTransformerWasCalled, transformer.transformQueryErrorWasCalled)
+	t.Run("Should return non-connection errors unmodified", func(t *testing.T) {
+		err := fmt.Errorf("normal error")
+		transformer := &testQueryResultTransformer{}
+		dp := DataSourceHandler{
+			log:                    backend.NewLoggerWith("logger", "test"),
+			queryResultTransformer: transformer,
 		}
+		resultErr := dp.TransformQueryError(dp.log, err)
+		assert.True(t, transformer.transformQueryErrorWasCalled)
+		assert.Equal(t, err, resultErr)
+		assert.ErrorIs(t, err, resultErr)
 	})
 }
 
