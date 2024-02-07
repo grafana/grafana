@@ -25,8 +25,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel)
         },
       })
       .addCustomEditor({
-        id: 'series',
-        path: 'series',
+        id: 'dynamicConfig',
+        path: 'dynamicConfig',
         name: '',
         editor: DynamicEditor,
         showIf: (cfg) => cfg.seriesMapping === 'dynamic',

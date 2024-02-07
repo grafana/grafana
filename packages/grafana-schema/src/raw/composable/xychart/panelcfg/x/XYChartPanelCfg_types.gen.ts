@@ -70,6 +70,10 @@ export interface Options extends common.OptionsWithLegend, common.OptionsWithToo
    */
   dims: XYDimensionConfig;
   /**
+   * Dynamic Mode
+   */
+  dynamicConfig?: ScatterSeriesConfig;
+  /**
    * Manual Mode
    */
   series: Array<ScatterSeriesConfig>;

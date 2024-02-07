@@ -154,6 +154,7 @@ It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#opt
 | `legend`        | [VizLegendOptions](#vizlegendoptions)         | **Yes**  |         | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs        |
 | `series`        | [ScatterSeriesConfig](#scatterseriesconfig)[] | **Yes**  |         | Manual Mode                                                                     |
 | `tooltip`       | [VizTooltipOptions](#viztooltipoptions)       | **Yes**  |         | *(Inherited from [OptionsWithTooltip](#optionswithtooltip))*<br/>TODO docs      |
+| `dynamicConfig` | [ScatterSeriesConfig](#scatterseriesconfig)   | No       |         |                                                                                 |
 | `seriesMapping` | string                                        | No       |         | Auto is "table" in the UI<br/>Possible values are: `auto`, `manual`, `dynamic`. |
 
 ### OptionsWithLegend

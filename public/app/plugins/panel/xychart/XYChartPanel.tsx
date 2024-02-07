@@ -175,10 +175,7 @@ export const XYChartPanel = (props: Props) => {
 
           item.disabled = !(s.show ?? true);
 
-          if (
-            props.options.seriesMapping === SeriesMapping.Manual ||
-            props.options.seriesMapping === SeriesMapping.Dynamic
-          ) {
+          if (props.options.seriesMapping === SeriesMapping.Manual) {
             item.label = props.options.series?.[si]?.name ?? `Series ${si + 1}`;
           }
 

@@ -74,6 +74,9 @@ composableKinds: PanelCfg: {
 
 					// Manual Mode
 					series: [...ScatterSeriesConfig]
+
+					// Dynamic Mode
+					dynamicConfig?: ScatterSeriesConfig
 				} @cuetsy(kind="interface")
 			}
 		}]
