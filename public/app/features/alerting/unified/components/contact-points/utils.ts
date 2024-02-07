@@ -31,6 +31,9 @@ export function isProvisioned(contactPoint: GrafanaManagedContactPoint) {
 
 // TODO we should really add some type information to these receiver settings...
 export function getReceiverDescription(receiver: ReceiverConfigWithMetadata): ReactNode | undefined {
+  if (!receiver.settings) {
+    return undefined;
+  }
   switch (receiver.type) {
     case 'email': {
       const hasEmailAddresses = 'addresses' in receiver.settings; // when dealing with alertmanager email_configs we don't normalize the settings
