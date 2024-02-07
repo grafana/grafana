@@ -59,12 +59,12 @@ func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, minInterval
 	calculatedInterval := time.Duration((to - from) / resolution)
 
 	if calculatedInterval < minInterval {
-		return Interval{Text: FormatDuration(minInterval), Value: minInterval}
+		return Interval{Text: gtime.FormatInterval(minInterval), Value: minInterval}
 	}
 
 	rounded := gtime.RoundInterval(calculatedInterval)
 
-	return Interval{Text: FormatDuration(rounded), Value: rounded}
+	return Interval{Text: gtime.FormatInterval(rounded), Value: rounded}
 }
 
 func (ic *intervalCalculator) CalculateSafeInterval(timerange backend.TimeRange, safeRes int64) Interval {
@@ -73,27 +73,5 @@ func (ic *intervalCalculator) CalculateSafeInterval(timerange backend.TimeRange,
 	safeInterval := time.Duration((to - from) / safeRes)
 
 	rounded := gtime.RoundInterval(safeInterval)
-	return Interval{Text: FormatDuration(rounded), Value: rounded}
-}
-
-// GetIntervalFrom returns the minimum interval.
-// dsInterval is the string representation of data source min interval, if configured.
-// queryInterval is the string representation of query interval (min interval), e.g. "10ms" or "10s".
-// queryIntervalMS is a pre-calculated numeric representation of the query interval in milliseconds.
-//
-// Deprecated: use grafana-plugin-sdk-go/backend/gtime instead
-func GetIntervalFrom(dsInterval, queryInterval string, queryIntervalMS int64, defaultInterval time.Duration) (time.Duration, error) {
-	return gtime.GetIntervalFrom(dsInterval, queryInterval, queryIntervalMS, defaultInterval)
-}
-
-// Deprecated: use grafana-plugin-sdk-go/backend/gtime instead
-func ParseIntervalStringToTimeDuration(interval string) (time.Duration, error) {
-	return gtime.ParseIntervalStringToTimeDuration(interval)
-}
-
-// FormatDuration converts a duration into the kbn format e.g. 1m 2h or 3d
-//
-// Deprecated: use grafana-plugin-sdk-go/backend/gtime instead
-func FormatDuration(inter time.Duration) string {
-	return gtime.FormatInterval(inter)
+	return Interval{Text: gtime.FormatInterval(rounded), Value: rounded}
 }
