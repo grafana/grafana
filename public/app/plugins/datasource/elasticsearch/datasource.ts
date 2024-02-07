@@ -262,16 +262,20 @@ export class ElasticDatasource
     );
   }
 
-  private prepareAnnotationRequest(options: { annotation: ElasticsearchAnnotationQuery; dashboard: DashboardModel, range: TimeRange }) {
+  private prepareAnnotationRequest(options: {
+    annotation: ElasticsearchAnnotationQuery;
+    dashboard: DashboardModel;
+    range: TimeRange;
+  }) {
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
     const dashboard = options.dashboard;
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const adhocVariables = dashboard.getVariables().filter(v => v.type === "adhoc") as AdHocVariableModel[];
-    const annotationRelatedVariables = adhocVariables.filter(v => v.datasource?.uid === annotation.datasource.uid);
-    const filters = annotationRelatedVariables.map(v => v.filters).flat();
+    const adhocVariables = dashboard.getVariables().filter((v) => v.type === 'adhoc') as AdHocVariableModel[];
+    const annotationRelatedVariables = adhocVariables.filter((v) => v.datasource?.uid === annotation.datasource.uid);
+    const filters = annotationRelatedVariables.map((v) => v.filters).flat();
 
     // the `target.query` is the "new" location for the query.
     // normally we would write this code as
@@ -304,7 +308,6 @@ export class ElasticDatasource
     }
 
     const queryInterpolated = this.interpolateLuceneQuery(queryString);
-
     const finalQuery = this.addAdHocFilters(queryInterpolated, filters);
 
     const query: {

@@ -1,5 +1,5 @@
 import { DataSourceJsonData } from '@grafana/data';
-import {DataSourceRef} from '@grafana/schema'
+import { DataSourceRef } from '@grafana/schema';
 
 import {
   BucketAggregationType,

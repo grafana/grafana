@@ -1589,7 +1589,7 @@ describe('ElasticDatasource using backend', () => {
         const annotations = await ds.annotationQuery({
           annotation: {},
           dashboard: {
-            getVariables: () => []
+            getVariables: () => [],
           },
           range: timeRange,
         });
@@ -1623,7 +1623,7 @@ describe('ElasticDatasource using backend', () => {
             textField: 'text',
           },
           dashboard: {
-            getVariables: () => []
+            getVariables: () => [],
           },
           range: timeRange,
         });
@@ -1664,7 +1664,7 @@ describe('ElasticDatasource using backend', () => {
             textField: 'text',
           },
           dashboard: {
-            getVariables: () => []
+            getVariables: () => [],
           },
           range: {
             from: dateTime(1683291160012),
@@ -1695,7 +1695,7 @@ describe('ElasticDatasource using backend', () => {
         await ds.annotationQuery({
           annotation: {},
           dashboard: {
-            getVariables: () => []
+            getVariables: () => [],
           },
           range: {
             from: dateTime(1683291160012),
@@ -1733,24 +1733,26 @@ describe('ElasticDatasource using backend', () => {
             textField: 'text',
             datasource: {
               type: 'elasticsearch',
-              uid: 'gdev-elasticsearch'
-            }
+              uid: 'gdev-elasticsearch',
+            },
           },
           dashboard: {
-            getVariables: () => [{
-              type: 'adhoc',
-              datasource: {
-                type: 'elasticsearch',
-                uid: 'gdev-elasticsearch'
+            getVariables: () => [
+              {
+                type: 'adhoc',
+                datasource: {
+                  type: 'elasticsearch',
+                  uid: 'gdev-elasticsearch',
+                },
+                filters: [
+                  {
+                    key: 'abc_key',
+                    operator: '=',
+                    value: 'abc_value',
+                  },
+                ],
               },
-              filters: [
-                {
-                  key: 'abc_key',
-                  operator: '=',
-                  value: 'abc_value'
-                }
-              ]
-            }]
+            ],
           },
           range: {
             from: dateTime(1683291160012),
