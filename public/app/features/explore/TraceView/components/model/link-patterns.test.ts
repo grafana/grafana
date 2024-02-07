@@ -63,7 +63,7 @@ describe('processTemplate()', () => {
     expect(() =>
       processTemplate(
         {
-          template: (data: { [key: string]: any }) => `a${data.b}c`,
+          template: (data: { [key: string]: unknown }) => `a${data.b}c`,
         },
         (a) => a
       )

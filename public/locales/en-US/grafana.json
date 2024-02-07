@@ -108,6 +108,9 @@
       "dark-theme": "Dark",
       "light-theme": "Light"
     },
+    "empty-state": {
+      "title": "No results found"
+    },
     "search-box": {
       "placeholder": "Search or jump to..."
     },
@@ -757,6 +760,9 @@
     "authentication": {
       "title": "Authentication"
     },
+    "collector": {
+      "title": "Collector"
+    },
     "config": {
       "title": "Administration"
     },
@@ -893,9 +899,6 @@
       "subtitle": "Manage preferences across an organization",
       "title": "Default preferences"
     },
-    "performance-testing": {
-      "title": "Performance testing"
-    },
     "playlists": {
       "subtitle": "Groups of dashboards that are displayed in a sequence",
       "title": "Playlists"
@@ -903,6 +906,10 @@
     "plugins": {
       "subtitle": "Extend the Grafana experience with plugins",
       "title": "Plugins"
+    },
+    "private-data-source-connections": {
+      "subtitle": "Query data that lives within a secured network without opening the network to inbound traffic from Grafana Cloud. Learn more in our docs.",
+      "title": "Private data source connect"
     },
     "profile/notifications": {
       "title": "Notification history"
