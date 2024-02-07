@@ -49,7 +49,6 @@ type DatasourceService struct {
 }
 
 type DatasourceInfo struct {
-	Cloud       string
 	Credentials azcredentials.AzureCredentials
 	Settings    AzureMonitorSettings
 	Routes      map[string]AzRoute
