@@ -631,7 +631,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
 	store := &DBstore{
 		SQLStore:      sqlStore,
-		FolderService: setupFolderService(t, sqlStore, cfg),
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
 		Logger:        log.New("test-dbstore"),
 		Cfg:           cfg.UnifiedAlerting,
 	}

@@ -416,7 +416,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			},
 			IsPaused: false,
 			NotificationSettings: []models.NotificationSettings{
-				*models.RandomNotificationSettings(),
+				models.NotificationSettingsGen()(),
 			},
 		}
 		r2 := &models.AlertRule{
@@ -454,7 +454,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			},
 			IsPaused: true,
 			NotificationSettings: []models.NotificationSettings{
-				*models.RandomNotificationSettings(),
+				models.NotificationSettingsGen()(),
 			},
 		}
 

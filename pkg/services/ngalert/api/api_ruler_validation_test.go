@@ -797,8 +797,7 @@ func TestValidateRuleNodeIntervalFailures(t *testing.T) {
 func TestValidateRuleNodeNotificationSettings(t *testing.T) {
 	cfg := config(t)
 
-	ns := models.NSMuts{}
-	validNotificationSettings := models.NotificationSettingsGen(ns.WithGroupBy(model.AlertNameLabel, models.FolderTitleLabel))
+	validNotificationSettings := models.NotificationSettingsGen(models.NSMuts.WithGroupBy(model.AlertNameLabel, models.FolderTitleLabel))
 
 	testCases := []struct {
 		name                 string
@@ -811,68 +810,68 @@ func TestValidateRuleNodeNotificationSettings(t *testing.T) {
 		},
 		{
 			name:                 "missing receiver is invalid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), ns.WithReceiver("")),
+			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithReceiver("")),
 			expErrorContains:     "receiver",
 		},
 		{
 			name:                 "group by empty is valid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), ns.WithGroupBy()),
+			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupBy()),
 		},
 		{
 			name:                 "group by ... is valid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), ns.WithGroupBy("...")),
+			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupBy("...")),
 		},
 		{
 			name:                 "group by with alert name and folder name labels is valid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), ns.WithGroupBy(model.AlertNameLabel, models.FolderTitleLabel)),
+			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupBy(model.AlertNameLabel, models.FolderTitleLabel)),
 		},
 		{
 			name:                 "group by missing alert name label is invalid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), ns.WithGroupBy(models.FolderTitleLabel)),
+			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupBy(models.FolderTitleLabel)),
 			expErrorContains:     model.AlertNameLabel,
 		},
 		{
 			name:                 "group by missing folder name label is invalid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), ns.WithGroupBy(model.AlertNameLabel)),
+			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupBy(model.AlertNameLabel)),
 			expErrorContains:     models.FolderTitleLabel,
 		},
 		{
 			name:                 "group wait empty is valid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), ns.WithGroupWait(nil)),
+			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupWait(nil)),
 		},
 		{
 			name:                 "group wait positive is valid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), ns.WithGroupWait(util.Pointer(1*time.Second))),
+			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupWait(util.Pointer(1*time.Second))),
 		},
 		{
 			name:                 "group wait negative is invalid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), ns.WithGroupWait(util.Pointer(-1*time.Second))),
+			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupWait(util.Pointer(-1*time.Second))),
 			expErrorContains:     "group wait",
 		},
 		{
 			name:                 "group interval empty is valid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), ns.WithGroupInterval(nil)),
+			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupInterval(nil)),
 		},
 		{
 			name:                 "group interval positive is valid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), ns.WithGroupInterval(util.Pointer(1*time.Second))),
+			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupInterval(util.Pointer(1*time.Second))),
 		},
 		{
 			name:                 "group interval negative is invalid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), ns.WithGroupInterval(util.Pointer(-1*time.Second))),
+			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithGroupInterval(util.Pointer(-1*time.Second))),
 			expErrorContains:     "group interval",
 		},
 		{
 			name:                 "repeat interval empty is valid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), ns.WithRepeatInterval(nil)),
+			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithRepeatInterval(nil)),
 		},
 		{
 			name:                 "repeat interval positive is valid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), ns.WithRepeatInterval(util.Pointer(1*time.Second))),
+			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithRepeatInterval(util.Pointer(1*time.Second))),
 		},
 		{
 			name:                 "repeat interval negative is invalid",
-			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), ns.WithRepeatInterval(util.Pointer(-1*time.Second))),
+			notificationSettings: models.CopyNotificationSettings(validNotificationSettings(), models.NSMuts.WithRepeatInterval(util.Pointer(-1*time.Second))),
 			expErrorContains:     "repeat interval",
 		},
 	}

@@ -63,7 +63,6 @@ func TestAddAutogenConfig(t *testing.T) {
 			GroupByStr:     []string{models.FolderTitleLabel, model.AlertNameLabel},
 		}
 	}
-	ns := models.NSMuts{}
 
 	testCases := []struct {
 		name             string
@@ -111,11 +110,11 @@ func TestAddAutogenConfig(t *testing.T) {
 			name:           "settings with custom options, add option-specific routes",
 			existingConfig: configGen([]string{"receiver1", "receiver2", "receiver3", "receiver4", "receiver5"}, []string{"maintenance"}),
 			storeSettings: []models.NotificationSettings{
-				models.CopyNotificationSettings(models.NewDefaultNotificationSettings("receiver1"), ns.WithGroupInterval(util.Pointer(1*time.Minute))),
-				models.CopyNotificationSettings(models.NewDefaultNotificationSettings("receiver2"), ns.WithGroupWait(util.Pointer(2*time.Minute))),
-				models.CopyNotificationSettings(models.NewDefaultNotificationSettings("receiver3"), ns.WithRepeatInterval(util.Pointer(3*time.Minute))),
-				models.CopyNotificationSettings(models.NewDefaultNotificationSettings("receiver4"), ns.WithGroupBy(model.AlertNameLabel, models.FolderTitleLabel, "custom")),
-				models.CopyNotificationSettings(models.NewDefaultNotificationSettings("receiver5"), ns.WithMuteTimeIntervals("maintenance")),
+				models.CopyNotificationSettings(models.NewDefaultNotificationSettings("receiver1"), models.NSMuts.WithGroupInterval(util.Pointer(1*time.Minute))),
+				models.CopyNotificationSettings(models.NewDefaultNotificationSettings("receiver2"), models.NSMuts.WithGroupWait(util.Pointer(2*time.Minute))),
+				models.CopyNotificationSettings(models.NewDefaultNotificationSettings("receiver3"), models.NSMuts.WithRepeatInterval(util.Pointer(3*time.Minute))),
+				models.CopyNotificationSettings(models.NewDefaultNotificationSettings("receiver4"), models.NSMuts.WithGroupBy(model.AlertNameLabel, models.FolderTitleLabel, "custom")),
+				models.CopyNotificationSettings(models.NewDefaultNotificationSettings("receiver5"), models.NSMuts.WithMuteTimeIntervals("maintenance")),
 				{
 					Receiver:          "receiver1",
 					GroupBy:           []string{model.AlertNameLabel, models.FolderTitleLabel, "custom"},
@@ -169,9 +168,9 @@ func TestAddAutogenConfig(t *testing.T) {
 			name:           "when skipInvalid=true, invalid settings are skipped",
 			existingConfig: configGen([]string{"receiver1", "receiver2", "receiver3"}, nil),
 			storeSettings: []models.NotificationSettings{
-				models.NewDefaultNotificationSettings("receiverA"),                                                                                  // Doesn't exist.
-				models.CopyNotificationSettings(models.NewDefaultNotificationSettings("receiver1"), ns.WithMuteTimeIntervals("maintenance")),        // Doesn't exist.
-				models.CopyNotificationSettings(models.NewDefaultNotificationSettings("receiver2"), ns.WithGroupWait(util.Pointer(-2*time.Minute))), // Negative.
+				models.NewDefaultNotificationSettings("receiverA"), // Doesn't exist.
+				models.CopyNotificationSettings(models.NewDefaultNotificationSettings("receiver1"), models.NSMuts.WithMuteTimeIntervals("maintenance")),        // Doesn't exist.
+				models.CopyNotificationSettings(models.NewDefaultNotificationSettings("receiver2"), models.NSMuts.WithGroupWait(util.Pointer(-2*time.Minute))), // Negative.
 			},
 			skipInvalid: true,
 			expRoute: withChildRoutes(rootRoute(), &definitions.Route{
@@ -194,14 +193,14 @@ func TestAddAutogenConfig(t *testing.T) {
 		{
 			name:             "when skipInvalid=false, invalid settings throws error",
 			existingConfig:   configGen([]string{"receiver1", "receiver2", "receiver3"}, nil),
-			storeSettings:    []models.NotificationSettings{models.CopyNotificationSettings(models.NewDefaultNotificationSettings("receiver1"), ns.WithMuteTimeIntervals("maintenance"))},
+			storeSettings:    []models.NotificationSettings{models.CopyNotificationSettings(models.NewDefaultNotificationSettings("receiver1"), models.NSMuts.WithMuteTimeIntervals("maintenance"))},
 			skipInvalid:      false,
 			expErrorContains: "maintenance",
 		},
 		{
 			name:             "when skipInvalid=false, invalid settings throws error",
 			existingConfig:   configGen([]string{"receiver1", "receiver2", "receiver3"}, nil),
-			storeSettings:    []models.NotificationSettings{models.CopyNotificationSettings(models.NewDefaultNotificationSettings("receiver2"), ns.WithGroupWait(util.Pointer(-2*time.Minute)))},
+			storeSettings:    []models.NotificationSettings{models.CopyNotificationSettings(models.NewDefaultNotificationSettings("receiver2"), models.NSMuts.WithGroupWait(util.Pointer(-2*time.Minute)))},
 			skipInvalid:      false,
 			expErrorContains: "group wait",
 		},

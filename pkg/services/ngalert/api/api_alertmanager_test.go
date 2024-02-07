@@ -841,12 +841,12 @@ var validConfigWithAutogen = `{
 					"receiver": "some email",
 					"group_by": ["grafana_folder", "alertname"],
 					"object_matchers": [["__grafana_receiver__", "=", "some email"]],
-					"continue": true
+					"continue": false
 				},{
 					"receiver": "other email",
 					"group_by": ["grafana_folder", "alertname"],
 					"object_matchers": [["__grafana_receiver__", "=", "other email"]],
-					"continue": true
+					"continue": false
 				}]
 			},{
 				"receiver": "other email",
