@@ -14,7 +14,7 @@ import { PromQueryBuilder } from './PromQueryBuilder';
 import { QueryPreview } from './QueryPreview';
 import { getSettings, MetricsModalSettings } from './metrics-modal/state/state';
 
-export interface Props {
+export interface PromQueryBuilderContainerProps {
   query: PromQuery;
   datasource: PrometheusDatasource;
   onChange: (update: PromQuery) => void;
@@ -33,7 +33,7 @@ const prometheusMetricEncyclopedia = config.featureToggles.prometheusMetricEncyc
 /**
  * This component is here just to contain the translation logic between string query and the visual query builder model.
  */
-export function PromQueryBuilderContainer(props: Props) {
+export function PromQueryBuilderContainer(props: PromQueryBuilderContainerProps) {
   const { query, onChange, onRunQuery, datasource, data, showExplain } = props;
   const [state, dispatch] = useReducer(stateSlice.reducer, { expr: query.expr });
   // Only rebuild visual query if expr changes from outside

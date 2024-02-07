@@ -129,6 +129,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			featureManager:  api.FeatureManager,
 			appUrl:          api.AppUrl,
 			tracer:          api.Tracer,
+			folderService:   api.RuleStore,
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewConfiguration(
 		&ConfigSrv{
