@@ -39,7 +39,7 @@ interface VizPanelManagerState extends SceneObjectState {
   dsSettings?: DataSourceInstanceSettings;
 }
 
-// VizPanelManager serves as an API to manipulate VizPanel state from the outside. It allows panel type, options and  data maniulation.
+// VizPanelManager serves as an API to manipulate VizPanel state from the outside. It allows panel type, options and  data manipulation.
 export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   public static Component = ({ model }: SceneComponentProps<VizPanelManager>) => {
     const { panel } = model.useState();

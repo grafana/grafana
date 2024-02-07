@@ -3,11 +3,12 @@ import * as H from 'history';
 import React from 'react';
 import { Unsubscribable } from 'rxjs';
 
-import { CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil, textUtil } from '@grafana/data';
+import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil, textUtil } from '@grafana/data';
 import { locationService, config } from '@grafana/runtime';
 import {
   getUrlSyncManager,
   SceneFlexLayout,
+  sceneGraph,
   SceneGridItem,
   SceneGridLayout,
   SceneObject,
@@ -19,11 +20,14 @@ import {
   sceneUtils,
   SceneVariable,
   SceneVariableDependencyConfigLike,
+  VizPanel,
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink } from '@grafana/schema';
 import { ConfirmModal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
+import store from 'app/core/store';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
@@ -35,6 +39,7 @@ import { PanelEditor } from '../panel-edit/PanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
 import { historySrv } from '../settings/version-history';
@@ -45,6 +50,7 @@ import { forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel, isPanel
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
+import { PanelRepeaterGridItem } from './PanelRepeaterGridItem';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
@@ -135,6 +141,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   private _activationHandler() {
+    let prevSceneContext = window.__grafanaSceneContext;
+
     window.__grafanaSceneContext = this;
 
     if (this.state.isEditing) {
@@ -153,7 +161,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     // Deactivation logic
     return () => {
-      window.__grafanaSceneContext = undefined;
+      window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this.stopTrackingChanges();
       this.stopUrlSync();
@@ -397,6 +405,65 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public getInitialState(): DashboardSceneState | undefined {
     return this._initialState;
+  }
+
+  public duplicatePanel(vizPanel: VizPanel) {
+    if (!vizPanel.parent) {
+      return;
+    }
+
+    const gridItem = vizPanel.parent;
+
+    if (!(gridItem instanceof SceneGridItem || PanelRepeaterGridItem)) {
+      console.error('Trying to duplicate a panel in a layout that is not SceneGridItem or PanelRepeaterGridItem');
+      return;
+    }
+
+    let panelState;
+    let panelData;
+    if (gridItem instanceof PanelRepeaterGridItem) {
+      const { key, ...gridRepeaterSourceState } = sceneUtils.cloneSceneObjectState(gridItem.state.source.state);
+      panelState = { ...gridRepeaterSourceState };
+      panelData = sceneGraph.getData(gridItem.state.source).clone();
+    } else {
+      const { key, ...gridItemPanelState } = sceneUtils.cloneSceneObjectState(vizPanel.state);
+      panelState = { ...gridItemPanelState };
+      panelData = sceneGraph.getData(vizPanel).clone();
+    }
+
+    // when we duplicate a panel we don't want to clone the alert state
+    delete panelData.state.data?.alertState;
+
+    const { key: gridItemKey, ...gridItemToDuplicateState } = sceneUtils.cloneSceneObjectState(gridItem.state);
+
+    const newGridItem = new SceneGridItem({
+      ...gridItemToDuplicateState,
+      body: new VizPanel({ ...panelState, $data: panelData }),
+    });
+
+    if (!(this.state.body instanceof SceneGridLayout)) {
+      console.error('Trying to duplicate a panel in a layout that is not SceneGridLayout ');
+      return;
+    }
+
+    const sceneGridLayout = this.state.body;
+
+    sceneGridLayout.setState({
+      children: [...sceneGridLayout.state.children, newGridItem],
+    });
+  }
+
+  public copyPanel(vizPanel: VizPanel) {
+    if (!vizPanel.parent) {
+      return;
+    }
+
+    const gridItem = vizPanel.parent;
+
+    const jsonData = gridItemToPanel(gridItem);
+
+    store.set(LS_PANEL_COPY_KEY, JSON.stringify(jsonData));
+    appEvents.emit(AppEvents.alertSuccess, ['Panel copied. Click **Add panel** icon to paste.']);
   }
 
   public showModal(modal: SceneObject) {
