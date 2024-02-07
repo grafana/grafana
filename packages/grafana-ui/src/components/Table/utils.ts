@@ -395,7 +395,7 @@ function getFormattedValue(field: Field, reducer: string[], theme: GrafanaTheme2
   if (reducerInfo.preservesUnits) {
     return formattedValueToString(fmt(v));
   }
-  
+
   // Otherwise we simply return the formatted string
   return formattedValueToString({ text: v });
 }
