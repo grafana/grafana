@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useLayoutEffect, useRef, useReducer, CSSProperties, useContext, useEffect } from 'react';
+import React, { useLayoutEffect, useRef, useReducer, CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import uPlot from 'uplot';
 
@@ -223,7 +223,7 @@ export const TooltipPlugin2 = ({
         isPinned: _isPinned,
         isHovering: _isHovering,
         contents:
-          (_isHovering || selectedRange != null)
+          _isHovering || selectedRange != null
             ? renderRef.current(_plot!, seriesIdxs, closestSeriesIdx, _isPinned, dismiss, selectedRange, viaSync)
             : null,
         dismiss,
