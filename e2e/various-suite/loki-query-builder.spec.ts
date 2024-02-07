@@ -70,12 +70,6 @@ describe('Loki query builder', () => {
     // wait until labels are loaded and set on the component before starting to type
     cy.wait('@labelsRequest');
     e2e.components.QueryBuilder.labelSelect().children('div').children('input').type('instance{enter}');
-    e2e.components.QueryBuilder.matchOperatorSelect()
-      .should('be.visible')
-      .click({ force: true })
-      .children('div')
-      .children('input')
-      .type('=~{enter}', { force: true });
     e2e.components.QueryBuilder.valueSelect().should('be.visible').click();
     cy.wait('@valuesRequest');
     e2e.components.QueryBuilder.valueSelect()
@@ -84,6 +78,12 @@ describe('Loki query builder', () => {
       .type('instance1{enter}')
       .type('instance2{enter}');
     cy.contains(MISSING_LABEL_FILTER_ERROR_MESSAGE).should('not.exist');
+    e2e.components.QueryBuilder.matchOperatorSelect()
+      .should('be.visible')
+      .click({ force: true })
+      .children('div')
+      .children('input')
+      .type('=~{enter}', { force: true });
     cy.contains(finalQuery).should('be.visible');
 
     // Change to code editor
