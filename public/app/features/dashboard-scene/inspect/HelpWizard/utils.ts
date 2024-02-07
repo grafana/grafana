@@ -1,10 +1,8 @@
 import { cloneDeep } from 'lodash';
-import { firstValueFrom } from 'rxjs';
 
 import {
   dateTimeFormat,
   TimeRange,
-  DataQuery,
   PanelData,
   DataTransformerConfig,
   DataFrameJSON,
@@ -13,9 +11,13 @@ import {
   DataTopic,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { PanelModel } from 'app/features/dashboard/state';
-import { Randomize, randomizeData } from 'app/features/dashboard-scene/inspect/HelpWizard/randomizer';
+import { SceneGridItem, VizPanel } from '@grafana/scenes';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
+
+import { gridItemToPanel } from '../../serialization/transformSceneToSaveModel';
+import { getQueryRunnerFor } from '../../utils/utils';
+
+import { Randomize, randomizeData } from './randomizer';
 
 export function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
   const frames: DataFrameJSON[] = [];
@@ -37,17 +39,16 @@ export function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
   return frames;
 }
 
-export function getGithubMarkdown(panel: PanelModel, snapshot: string): string {
-  const saveModel = panel.getSaveModel();
+export function getGithubMarkdown(panel: VizPanel, snapshot: string): string {
   const info = {
-    panelType: saveModel.type,
+    panelType: panel.state.pluginId,
     datasource: '??',
   };
   const grafanaVersion = `${config.buildInfo.version} (${config.buildInfo.commit})`;
 
   let md = `| Key | Value |
 |--|--|
-| Panel | ${info.panelType} @ ${saveModel.pluginVersion ?? grafanaVersion} |
+| Panel | ${info.panelType} @ ${panel.state.pluginVersion ?? grafanaVersion} |
 | Grafana | ${grafanaVersion} // ${config.buildInfo.edition} |
 `;
 
@@ -57,8 +58,8 @@ export function getGithubMarkdown(panel: PanelModel, snapshot: string): string {
   return md;
 }
 
-export async function getDebugDashboard(panel: PanelModel, rand: Randomize, timeRange: TimeRange) {
-  const saveModel = panel.getSaveModel();
+export async function getDebugDashboard(panel: VizPanel, rand: Randomize, timeRange: TimeRange) {
+  const saveModel = gridItemToPanel(panel.parent as SceneGridItem);
   const dashboard = cloneDeep(embeddedDataTemplate);
   const info = {
     panelType: saveModel.type,
@@ -66,17 +67,18 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
   };
 
   // reproducable
-  const data = await firstValueFrom(
-    panel.getQueryRunner().getData({
-      withFieldConfig: false,
-      withTransforms: false,
-    })
-  );
+  const queryRunner = getQueryRunnerFor(panel)!;
 
-  const dsref = panel.datasource;
+  if (!queryRunner.state.data) {
+    return;
+  }
+
+  const data = queryRunner.state.data;
+
+  const dsref = queryRunner?.state.datasource;
   const frames = randomizeData(getPanelDataFrames(data), rand);
   const grafanaVersion = `${config.buildInfo.version} (${config.buildInfo.commit})`;
-  const queries = saveModel?.targets ?? [];
+  const queries = queryRunner.state.queries ?? [];
   const html = `<table width="100%">
     <tr>
       <th width="2%">Panel</th>
@@ -85,7 +87,7 @@ export async function getDebugDashboard(panel: PanelModel, rand: Randomize, time
     <tr>
       <th>Queries</th>
       <td>${queries
-        .map((t: DataQuery) => {
+        .map((t) => {
           const ds = t.datasource ?? dsref;
           return `${t.refId}[${ds?.type}]`;
         })

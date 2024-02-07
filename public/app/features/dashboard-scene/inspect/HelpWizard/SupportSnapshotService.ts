@@ -1,16 +1,12 @@
 import saveAs from 'file-saver';
 
 import { dateTimeFormat, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { SceneObject } from '@grafana/scenes';
+import { sceneGraph, SceneObject, VizPanel } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
-import { Randomize } from 'app/features/dashboard-scene/inspect/HelpWizard/randomizer';
-import { createDashboardSceneFromDashboardModel } from 'app/features/dashboard-scene/serialization/transformSaveModelToScene';
 
-import { getTimeSrv } from '../../services/TimeSrv';
-import { DashboardModel, PanelModel } from '../../state';
-import { setDashboardToFetchFromLocalStorage } from '../../state/initDashboard';
+import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 
+import { Randomize } from './randomizer';
 import { getDebugDashboard, getGithubMarkdown } from './utils';
 
 interface SupportSnapshotState {
@@ -26,7 +22,7 @@ interface SupportSnapshotState {
     title: string;
     message: string;
   };
-  panel: PanelModel;
+  panel: VizPanel;
   panelTitle: string;
 
   // eslint-disable-next-line
@@ -46,10 +42,10 @@ export enum ShowMessage {
 }
 
 export class SupportSnapshotService extends StateManagerBase<SupportSnapshotState> {
-  constructor(panel: PanelModel) {
+  constructor(panel: VizPanel) {
     super({
       panel,
-      panelTitle: panel.replaceVariables(panel.title, undefined, 'text') || 'Panel',
+      panelTitle: sceneGraph.interpolate(panel, panel.state.title, {}, 'text'),
       currentTab: SnapshotTab.Support,
       showMessage: ShowMessage.GithubComment,
       snapshotText: '',
@@ -73,21 +69,18 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
 
   async buildDebugDashboard() {
     const { panel, randomize, snapshotUpdate } = this.state;
-    const snapshot = await getDebugDashboard(panel, randomize, getTimeSrv().timeRange());
+    const snapshot = await getDebugDashboard(panel, randomize, sceneGraph.getTimeRange(panel).state.value);
     const snapshotText = JSON.stringify(snapshot, null, 2);
     const markdownText = getGithubMarkdown(panel, snapshotText);
     const snapshotSize = formattedValueToString(getValueFormat('bytes')(snapshotText?.length ?? 0));
 
     let scene: SceneObject | undefined = undefined;
 
-    if (!panel.isAngularPlugin()) {
-      try {
-        const oldModel = new DashboardModel(snapshot, { isEmbedded: true });
-        const dash = createDashboardSceneFromDashboardModel(oldModel);
-        scene = dash.state.body; // skip the wrappers
-      } catch (ex) {
-        console.log('Error creating scene:', ex);
-      }
+    try {
+      const dash = transformSaveModelToScene({ dashboard: snapshot, meta: { isEmbedded: true } });
+      scene = dash.state.body; // skip the wrappers
+    } catch (ex) {
+      console.log('Error creating scene:', ex);
     }
 
     this.setState({ snapshot, snapshotText, markdownText, snapshotSize, snapshotUpdate: snapshotUpdate + 1, scene });
@@ -135,13 +128,5 @@ export class SupportSnapshotService extends StateManagerBase<SupportSnapshotStat
   onToggleRandomize = (k: keyof Randomize) => {
     const { randomize } = this.state;
     this.setState({ randomize: { ...randomize, [k]: !randomize[k] } });
-  };
-
-  onPreviewDashboard = () => {
-    const { snapshot } = this.state;
-    if (snapshot) {
-      setDashboardToFetchFromLocalStorage({ meta: {}, dashboard: snapshot });
-      global.open(config.appUrl + 'dashboard/new', '_blank');
-    }
   };
 }
