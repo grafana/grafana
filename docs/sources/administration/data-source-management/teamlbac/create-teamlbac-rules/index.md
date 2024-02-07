@@ -1,16 +1,13 @@
 ---
 description: Learn how to create Team LBAC rules for the Loki data source.
 keywords:
-  - grafana
-  - ecs
-  - enterprise
-  - aws
-  - marketplace
-  - activate
+  - loki
+  - lbac
+  - team
 labels:
   products:
     - enterprise
-    - oss
+    - cloud
 title: Create Team LBAC rules for the Loki data source
 weight: 250
 ---
@@ -62,13 +59,13 @@ We have two teams, Team A and Team B. Loki access is setup with `Admin` roles ha
 
 - Team A has rule `cluster="us-west-0", namespace=~"dev|prod"` configured.
 
-- Team B has rule `cluster="us-west-0", namespace!="prod"` configured.
+- Team B has rule `cluster="us-west-0", namespace="staging"` configured.
 
 A user that is only part of Team A will have access to logs that match `cluster="us-west-0" AND (namespace="dev" OR namespace="prod")`.
 
-A user that is only part of Team B will have access to logs that match `cluster="us-west-0" AND namespace!="prod"`.
+A user that is only part of Team B will have access to logs that match `cluster="us-west-0" AND namespace="staging"`.
 
-A user that is part of both Team A and Team B will have access to logs that match `cluster="us-west-0" AND (namespace="dev" OR namespace="prod") OR (is this true?) (cluster="us-west-0" AND namespace!="prod")`.
+A user in Team A has access to logs in cluster us-west-0 with namespaces `dev` and `prod`. A user in Team B has access to to everything in cluster us-west-0, except namespace prod. So basically, user who is member of both team A and team B has access to everything in cluster us-west-0.
 
 A user that is **not** part of any Team with `Editor/Viewer` role will not have access to query any logs.
 

@@ -2,8 +2,8 @@
 description: Label based data access for Loki given Teams
 keywords:
   - grafana
-  - licensing
-  - enterprise
+  - loki
+  - lbac
 labels:
   products:
     - enterprise

@@ -1,17 +1,13 @@
 ---
-aliases:
 description: Configure Team LBAC for Loki data source on Grafana Cloud
 keywords:
-  - grafana
-  - ecs
-  - enterprise
-  - aws
-  - marketplace
-  - activate
+  - loki
+  - datasource
+  - team
 labels:
   products:
     - enterprise
-    - oss
+    - cloud
 title: Configure Team LBAC for Loki
 weight: 250
 ---
