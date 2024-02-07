@@ -490,132 +490,6 @@ type dataQueryModel struct {
 	queryContext      context.Context
 }
 
-func convertInt64ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := time.Unix(0, int64(epochPrecisionToMS(float64(origin.At(i).(int64))))*int64(time.Millisecond))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableInt64ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*int64)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := time.Unix(0, int64(epochPrecisionToMS(float64(*iv)))*int64(time.Millisecond))
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertUInt64ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := time.Unix(0, int64(epochPrecisionToMS(float64(origin.At(i).(uint64))))*int64(time.Millisecond))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableUInt64ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*uint64)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := time.Unix(0, int64(epochPrecisionToMS(float64(*iv)))*int64(time.Millisecond))
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertInt32ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := time.Unix(0, int64(epochPrecisionToMS(float64(origin.At(i).(int32))))*int64(time.Millisecond))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableInt32ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*int32)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := time.Unix(0, int64(epochPrecisionToMS(float64(*iv)))*int64(time.Millisecond))
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertUInt32ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := time.Unix(0, int64(epochPrecisionToMS(float64(origin.At(i).(uint32))))*int64(time.Millisecond))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableUInt32ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*uint32)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := time.Unix(0, int64(epochPrecisionToMS(float64(*iv)))*int64(time.Millisecond))
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertFloat64ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := time.Unix(0, int64(epochPrecisionToMS(origin.At(i).(float64)))*int64(time.Millisecond))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableFloat64ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*float64)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := time.Unix(0, int64(epochPrecisionToMS(*iv))*int64(time.Millisecond))
-			newField.Append(&value)
-		}
-	}
-}
-
-func convertFloat32ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		value := time.Unix(0, int64(epochPrecisionToMS(float64(origin.At(i).(float32))))*int64(time.Millisecond))
-		newField.Append(&value)
-	}
-}
-
-func convertNullableFloat32ToEpochMS(origin *data.Field, newField *data.Field) {
-	valueLength := origin.Len()
-	for i := 0; i < valueLength; i++ {
-		iv := origin.At(i).(*float32)
-		if iv == nil {
-			newField.Append(nil)
-		} else {
-			value := time.Unix(0, int64(epochPrecisionToMS(float64(*iv)))*int64(time.Millisecond))
-			newField.Append(&value)
-		}
-	}
-}
-
 func convertSQLTimeColumnsToEpochMS(frame *data.Frame, qm *dataQueryModel) error {
 	if qm.timeIndex != -1 {
 		if err := convertSQLTimeColumnToEpochMS(frame, qm.timeIndex); err != nil {
@@ -649,33 +523,18 @@ func convertSQLTimeColumnToEpochMS(frame *data.Frame, timeIndex int) error {
 	newField.Name = origin.Name
 	newField.Labels = origin.Labels
 
-	switch valueType {
-	case data.FieldTypeInt64:
-		convertInt64ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeNullableInt64:
-		convertNullableInt64ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeUint64:
-		convertUInt64ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeNullableUint64:
-		convertNullableUInt64ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeInt32:
-		convertInt32ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeNullableInt32:
-		convertNullableInt32ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeUint32:
-		convertUInt32ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeNullableUint32:
-		convertNullableUInt32ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeFloat64:
-		convertFloat64ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeNullableFloat64:
-		convertNullableFloat64ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeFloat32:
-		convertFloat32ToEpochMS(frame.Fields[timeIndex], newField)
-	case data.FieldTypeNullableFloat32:
-		convertNullableFloat32ToEpochMS(frame.Fields[timeIndex], newField)
-	default:
-		return fmt.Errorf("column type %q is not convertible to time.Time", valueType)
+	valueLength := origin.Len()
+	for i := 0; i < valueLength; i++ {
+		v, err := origin.NullableFloatAt(i)
+		if err != nil {
+			return fmt.Errorf("unable to convert data to a time field")
+		}
+		if v == nil {
+			newField.Append(nil)
+		} else {
+			timestamp := time.Unix(0, int64(epochPrecisionToMS(*v))*int64(time.Millisecond))
+			newField.Append(&timestamp)
+		}
 	}
 	frame.Fields[timeIndex] = newField
 
