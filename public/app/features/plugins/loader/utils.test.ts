@@ -2,7 +2,7 @@ import { config } from '@grafana/runtime';
 
 import { resolveModulePath } from './utils';
 
-describe('', () => {
+describe('resolveModulePath', () => {
   it.each`
     value                                                             | expected
     ${'http://localhost:3000/public/plugins/my-app-plugin/module.js'} | ${'http://localhost:3000/public/plugins/my-app-plugin/module.js'}
