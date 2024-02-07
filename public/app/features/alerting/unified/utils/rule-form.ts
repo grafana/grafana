@@ -147,7 +147,7 @@ export function getNotificationSettingsForDTO(
   if (contactPoints?.grafana?.selectedContactPoint && manualRouting) {
     return {
       receiver: contactPoints?.grafana?.selectedContactPoint,
-      mute_timings: contactPoints?.grafana?.muteTimeIntervals,
+      mute_time_intervals: contactPoints?.grafana?.muteTimeIntervals,
       group_by: contactPoints?.grafana?.overrideGrouping ? contactPoints?.grafana?.groupBy : undefined,
       group_wait:
         contactPoints?.grafana?.overrideTimings && contactPoints?.grafana?.groupWaitValue
@@ -197,7 +197,7 @@ export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManager
   const contactPoint: ContactPoint | undefined = ga.notification_settings
     ? {
         selectedContactPoint: ga.notification_settings.receiver,
-        muteTimeIntervals: ga.notification_settings.mute_timings ?? [],
+        muteTimeIntervals: ga.notification_settings.mute_time_intervals ?? [],
         overrideGrouping:
           Array.isArray(ga.notification_settings.group_by) && ga.notification_settings.group_by.length > 0,
         overrideTimings: [
@@ -247,24 +247,6 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
 
         contactPoints: routingSettings,
         manualRouting: Boolean(routingSettings),
-        // next line is for testing
-        // manualRouting: true,
-        // contactPoints: {
-        //   grafana: {
-        //       selectedContactPoint: "contact_point_5",
-        //       muteTimeIntervals: [
-        //           "mute timing 1"
-        //       ],
-        //       overrideGrouping: true,
-        //       overrideTimings: true,
-        //       "groupBy": [
-        //           "..."
-        //       ],
-        //       groupWaitValue: "35s",
-        //       groupIntervalValue: "6m",
-        //       repeatIntervalValue: "5h"
-        //   }
-        // }
       };
     } else {
       throw new Error('Unexpected type of rule for grafana rules source');

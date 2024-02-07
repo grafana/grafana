@@ -1,4 +1,5 @@
 import { CoreApp } from '@grafana/data';
+import { config, locationService } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneGridItem,
@@ -11,10 +12,12 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema';
+import { ConfirmModal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 
+import { ShowModalReactEvent } from '../../../types/events';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { historySrv } from '../settings/version-history/HistorySrv';
@@ -203,6 +206,63 @@ describe('DashboardScene', () => {
           expect(res).toBe(false);
         });
       }
+    });
+  });
+
+  describe('when opening a dashboard from a snapshot', () => {
+    let scene: DashboardScene;
+    beforeEach(async () => {
+      scene = buildTestScene();
+      locationService.push('/');
+      // mockLocationHref('http://snapshots.grafana.com/snapshots/dashboard/abcdefghi/my-dash');
+      const location = window.location;
+
+      //@ts-ignore
+      delete window.location;
+      window.location = {
+        ...location,
+        href: 'http://snapshots.grafana.com/snapshots/dashboard/abcdefghi/my-dash',
+      };
+      jest.spyOn(appEvents, 'publish');
+    });
+
+    config.appUrl = 'http://snapshots.grafana.com/';
+
+    it('redirects to the original dashboard', () => {
+      scene.setInitialSaveModel({
+        // @ts-ignore
+        snapshot: { originalUrl: '/d/c0d2742f-b827-466d-9269-fb34d6af24ff' },
+      });
+
+      // Call the function
+      scene.onOpenSnapshotOriginalDashboard();
+
+      // Assertions
+      expect(appEvents.publish).toHaveBeenCalledTimes(0);
+      expect(locationService.getLocation().pathname).toEqual('/d/c0d2742f-b827-466d-9269-fb34d6af24ff');
+      expect(window.location.href).toBe('http://snapshots.grafana.com/snapshots/dashboard/abcdefghi/my-dash');
+    });
+
+    it('opens a confirmation modal', () => {
+      scene.setInitialSaveModel({
+        // @ts-ignore
+        snapshot: { originalUrl: 'http://www.anotherdomain.com/' },
+      });
+
+      // Call the function
+      scene.onOpenSnapshotOriginalDashboard();
+
+      // Assertions
+      expect(appEvents.publish).toHaveBeenCalledTimes(1);
+      expect(appEvents.publish).toHaveBeenCalledWith(
+        new ShowModalReactEvent(
+          expect.objectContaining({
+            component: ConfirmModal,
+          })
+        )
+      );
+      expect(locationService.getLocation().pathname).toEqual('/');
+      expect(window.location.href).toBe('http://snapshots.grafana.com/snapshots/dashboard/abcdefghi/my-dash');
     });
   });
 });
