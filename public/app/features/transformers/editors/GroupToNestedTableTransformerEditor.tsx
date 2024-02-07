@@ -16,9 +16,13 @@ import {
   GroupByOperationID,
   GroupByTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/groupBy';
-import { useTheme2, Select, StatsPicker, InlineField, Stack, Alert } from '@grafana/ui';
+import {
+  GroupToNestedTableTransformerOptions,
+  SHOW_NESTED_HEADERS_DEFAULT,
+} from '@grafana/data/src/transformations/transformers/groupToNestedTable';
+import { Stack } from '@grafana/experimental';
+import { useTheme2, Select, StatsPicker, InlineField, Field, Switch, Alert } from '@grafana/ui';
 
-import { getTransformationContent } from '../docs/getTransformationContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
 interface FieldProps {
@@ -27,12 +31,14 @@ interface FieldProps {
   onConfigChange: (config: GroupByFieldOptions) => void;
 }
 
-export const GroupByTransformerEditor = ({
+export const GroupToNestedTableTransformerEditor = ({
   input,
   options,
   onChange,
-}: TransformerUIProps<GroupByTransformerOptions>) => {
+}: TransformerUIProps<GroupToNestedTableTransformerOptions>) => {
   const fieldNames = useAllFieldNamesFromDataFrames(input);
+  const showHeaders =
+    options.showSubframeHeaders === undefined ? SHOW_NESTED_HEADERS_DEFAULT : options.showSubframeHeaders;
 
   const onConfigChange = useCallback(
     (fieldName: string) => (config: GroupByFieldOptions) => {
@@ -49,12 +55,28 @@ export const GroupByTransformerEditor = ({
     [onChange]
   );
 
+  const onShowFieldNamesChange = useCallback(
+    () => {
+      const showSubframeHeaders =
+        options.showSubframeHeaders === undefined ? !SHOW_NESTED_HEADERS_DEFAULT : !options.showSubframeHeaders;
+
+      onChange({
+        showSubframeHeaders,
+        fields: {
+          ...options.fields,
+        },
+      });
+    },
+    // Adding options to the dependency array causes infinite loop here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [onChange]
+  );
+
   // See if there's both an aggregation and grouping field configured
   // for calculations. If not we display a warning because there
   // needs to be a grouping for the calculation to have effect
   let hasGrouping,
     hasAggregation = false;
-
   for (const field of Object.values(options.fields)) {
     if (field.aggregations.length > 0 && field.operation !== null) {
       hasAggregation = true;
@@ -63,7 +85,6 @@ export const GroupByTransformerEditor = ({
       hasGrouping = true;
     }
   }
-
   const showCalcAlert = hasAggregation && !hasGrouping;
 
   return (
@@ -71,14 +92,22 @@ export const GroupByTransformerEditor = ({
       {showCalcAlert && (
         <Alert title="Calculations will not have an effect if no fields are being grouped on." severity="warning" />
       )}
-      {fieldNames.map((key) => (
-        <GroupByFieldConfiguration
-          onConfigChange={onConfigChange(key)}
-          fieldName={key}
-          config={options.fields[key]}
-          key={key}
-        />
-      ))}
+      <div>
+        {fieldNames.map((key) => (
+          <GroupByFieldConfiguration
+            onConfigChange={onConfigChange(key)}
+            fieldName={key}
+            config={options.fields[key]}
+            key={key}
+          />
+        ))}
+      </div>
+      <Field
+        label="Show field names in nested tables"
+        description="If enabled nested tables will show field names as a table header"
+      >
+        <Switch value={showHeaders} onChange={onShowFieldNamesChange} />
+      </Field>
     </Stack>
   );
 };
@@ -104,7 +133,7 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
 
   return (
     <InlineField className={styles.label} label={fieldName} grow shrink>
-      <Stack gap={0.5} direction="row">
+      <Stack gap={0.5} direction="row" wrap={false}>
         <div className={styles.operation}>
           <Select options={options} value={config?.operation} placeholder="Ignored" onChange={onChange} isClearable />
         </div>
@@ -116,6 +145,7 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
             allowMultiple
             stats={config.aggregations}
             onChange={(stats) => {
+              // eslint-disable-next-line
               onConfigChange({ ...config, aggregations: stats as ReducerID[] });
             }}
           />
@@ -127,32 +157,29 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    label: css`
-      label {
-        min-width: ${theme.spacing(32)};
-      }
-    `,
-    operation: css`
-      flex-shrink: 0;
-      height: 100%;
-      width: ${theme.spacing(24)};
-    `,
-    aggregations: css`
-      flex-grow: 1;
-    `,
+    label: css({
+      minWidth: theme.spacing(32),
+    }),
+    operation: css({
+      flexShrink: 0,
+      height: '100%',
+      width: theme.spacing(24),
+    }),
+    aggregations: css({
+      flexGrow: 1,
+    }),
   };
 };
 
-export const groupByTransformRegistryItem: TransformerRegistryItem<GroupByTransformerOptions> = {
-  id: DataTransformerID.groupBy,
-  editor: GroupByTransformerEditor,
-  transformation: standardTransformers.groupByTransformer,
-  name: standardTransformers.groupByTransformer.name,
-  description: standardTransformers.groupByTransformer.description,
+export const groupToNestedTableTransformRegistryItem: TransformerRegistryItem<GroupByTransformerOptions> = {
+  id: DataTransformerID.groupToNestedTable,
+  editor: GroupToNestedTableTransformerEditor,
+  transformation: standardTransformers.groupToNestedTable,
+  name: standardTransformers.groupToNestedTable.name,
+  description: standardTransformers.groupToNestedTable.description,
   categories: new Set([
     TransformerCategory.Combine,
     TransformerCategory.CalculateNewFields,
     TransformerCategory.Reformat,
   ]),
-  help: getTransformationContent(DataTransformerID.groupBy).helperDocs,
 };

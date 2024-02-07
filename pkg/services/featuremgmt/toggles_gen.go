@@ -626,4 +626,8 @@ const (
 	// FlagNodeGraphDotLayout
 	// Changed the layout algorithm for the node graph
 	FlagNodeGraphDotLayout = "nodeGraphDotLayout"
+
+	// FlagGroupToNestedTableTransformation
+	// Enables the group to nested table transformation
+	FlagGroupToNestedTableTransformation = "groupToNestedTableTransformation"
 )
