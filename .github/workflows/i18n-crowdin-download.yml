@@ -19,6 +19,7 @@ jobs:
           ref: ${{ github.head_ref }}
 
       - name: Download sources
+        id: crowdin-download
         uses: crowdin/github-action@v1
         with:
           upload_sources: false
@@ -48,9 +49,50 @@ jobs:
           config: 'crowdin.yml'
           source: 'public/locales/en-US/grafana.json'
           translation: 'public/locales/%locale%/%original_file_name%'
+          # Magic details of the github-actions bot user, to pass CLA checks
           github_user_name: "github-actions[bot]"
           github_user_email: "41898282+github-actions[bot]@users.noreply.github.com"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+
+      - name: Generate token
+        if: steps.crowdin-download.outputs.pull_request_url
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_PEM }}
+
+      - name: Get pull request ID
+        if: steps.crowdin-download.outputs.pull_request_url
+        shell: bash
+        # Crowdin action returns us the URL of the pull request, but we need an ID for the GraphQL API
+        # that looks like 'PR_kwDOAOaWjc5mP_GU'
+        run: |
+          echo "PULL_REQUEST_ID=$(gh pr view $PULL_REQUEST_URL --json id -q .id)" >> "$GITHUB_ENV"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PULL_REQUEST_URL: ${{ steps.crowdin-download.outputs.pull_request_url }}
+
+      - name: Add to project board
+        uses: octokit/graphql-action@v2.x
+        if: steps.crowdin-download.outputs.pull_request_url
+        with:
+          query: |
+            mutation addPullRequestToProject($projectid: ID!, $prid: ID!){
+              addProjectV2ItemById(input: {projectId: $projectid, contentId: $prid}) {
+                item {
+                  id
+                }
+              }
+            }
+          # Frontend Platform project ID - from GraphQL API
+          # TODO: get this from the API from the project number or url or something
+          variables: |
+            projectid: PVT_kwDOAG3Mbc2Pyw
+            prid: ${{ env.PULL_REQUEST_ID }}
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+
