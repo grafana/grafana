@@ -15,7 +15,7 @@ import {
   isPluginDashboardError,
   isVersionMismatchError,
 } from './shared';
-import { useDashboardSave } from './useSaveDashboard';
+import { useSaveDashboard } from './useSaveDashboard';
 
 export interface Props {
   dashboard: DashboardScene;
@@ -26,7 +26,7 @@ export interface Props {
 export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
   const { changedSaveModel, hasChanges } = changeInfo;
 
-  const { state, onSaveDashboard } = useDashboardSave(false);
+  const { state, onSaveDashboard } = useSaveDashboard(false);
   const [options, setOptions] = useState<SaveDashboardOptions>({
     folderUid: dashboard.state.meta.folderUid,
   });
