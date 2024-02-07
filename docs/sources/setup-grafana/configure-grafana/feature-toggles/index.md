@@ -87,6 +87,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `canvasPanelPanZoom`                   | Allow pan and zoom in canvas panel                                                                                                                                                           |
 | `regressionTransformation`             | Enables regression analysis transformation                                                                                                                                                   |
 | `alertingPreviewUpgrade`               | Show Unified Alerting preview and upgrade page in legacy alerting                                                                                                                            |
+| `groupToNestedTableTransformation`     | Enables the group to nested table transformation                                                                                                                                             |
 
 ## Experimental feature toggles
 
