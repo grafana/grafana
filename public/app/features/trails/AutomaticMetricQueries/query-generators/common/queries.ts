@@ -39,8 +39,9 @@ export function generateQueries({ agg, rate, unit }: AutoQueryParameters): AutoQ
 
   const main = {
     ...common,
+    title: `${VAR_METRIC_EXPR} (${description})`,
     queries: [mainQuery],
-    vizBuilder: () => simpleGraphBuilder({ ...main, axisLabel: description }),
+    vizBuilder: () => simpleGraphBuilder({ ...main }),
   };
 
   const preview = {
