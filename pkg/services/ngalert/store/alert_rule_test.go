@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -44,7 +45,7 @@ func TestIntegrationUpdateAlertRules(t *testing.T) {
 	store := &DBstore{
 		SQLStore:      sqlStore,
 		Cfg:           cfg.UnifiedAlerting,
-		FolderService: setupFolderService(t, sqlStore, cfg),
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
 		Logger:        &logtest.Fake{},
 	}
 	generator := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID())
@@ -98,7 +99,7 @@ func TestIntegrationUpdateAlertRulesWithUniqueConstraintViolation(t *testing.T) 
 	store := &DBstore{
 		SQLStore:      sqlStore,
 		Cfg:           cfg.UnifiedAlerting,
-		FolderService: setupFolderService(t, sqlStore, cfg),
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
 		Logger:        &logtest.Fake{},
 	}
 
@@ -332,7 +333,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	store := &DBstore{
 		SQLStore:       sqlStore,
 		Cfg:            cfg.UnifiedAlerting,
-		FolderService:  setupFolderService(t, sqlStore, cfg),
+		FolderService:  setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
 		FeatureToggles: featuremgmt.WithFeatures(),
 	}
 
@@ -341,9 +342,12 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 	rule2 := createRule(t, store, generator)
 
 	parentFolderUid := uuid.NewString()
-	createFolder(t, store, parentFolderUid, "Very Parent Folder", rule1.OrgID, "")
-	createFolder(t, store, rule1.NamespaceUID, rule1.Title, rule1.OrgID, parentFolderUid)
-	createFolder(t, store, rule2.NamespaceUID, rule2.Title, rule2.OrgID, "")
+	parentFolderTitle := "Very Parent Folder"
+	createFolder(t, store, parentFolderUid, parentFolderTitle, rule1.OrgID, "")
+	rule1FolderTitle := "folder-" + rule1.Title
+	rule2FolderTitle := "folder-" + rule2.Title
+	createFolder(t, store, rule1.NamespaceUID, rule1FolderTitle, rule1.OrgID, parentFolderUid)
+	createFolder(t, store, rule2.NamespaceUID, rule2FolderTitle, rule2.OrgID, "")
 
 	createFolder(t, store, rule2.NamespaceUID, "same UID folder", generator().OrgID, "") // create a folder with the same UID but in the different org
 
@@ -353,6 +357,7 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		ruleGroups   []string
 		disabledOrgs []int64
 		folders      map[models.FolderKey]string
+		flags        []string
 	}{
 		{
 			name:  "without a rule group filter, it returns all created rules",
@@ -371,13 +376,13 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 		{
 			name:    "with populate folders enabled, it returns them",
 			rules:   []string{rule1.Title, rule2.Title},
-			folders: map[models.FolderKey]string{rule1.GetFolderKey(): models.GetNamespaceKey(parentFolderUid, rule1.Title), rule2.GetFolderKey(): rule2.Title},
+			folders: map[models.FolderKey]string{rule1.GetFolderKey(): rule1FolderTitle, rule2.GetFolderKey(): rule2FolderTitle},
 		},
 		{
 			name:         "with populate folders enabled and a filter on orgs, it only returns selected information",
 			rules:        []string{rule1.Title},
 			disabledOrgs: []int64{rule2.OrgID},
-			folders:      map[models.FolderKey]string{rule1.GetFolderKey(): models.GetNamespaceKey(parentFolderUid, rule1.Title)},
+			folders:      map[models.FolderKey]string{rule1.GetFolderKey(): rule1FolderTitle},
 		},
 	}
 
@@ -414,6 +419,20 @@ func TestIntegration_GetAlertRulesForScheduling(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("when nested folders are enabled folders should contain full path", func(t *testing.T) {
+		store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+		query := &models.GetAlertRulesForSchedulingQuery{
+			PopulateFolders: true,
+		}
+		require.NoError(t, store.GetAlertRulesForScheduling(context.Background(), query))
+
+		expected := map[models.FolderKey]string{
+			rule1.GetFolderKey(): parentFolderTitle + "/" + rule1FolderTitle,
+			rule2.GetFolderKey(): rule2FolderTitle,
+		}
+		require.Equal(t, expected, query.ResultFoldersTitles)
+	})
 }
 
 func withIntervalMatching(baseInterval time.Duration) func(*models.AlertRule) {
@@ -430,7 +449,7 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 
 	sqlStore := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	store := &DBstore{SQLStore: sqlStore, FolderService: setupFolderService(t, sqlStore, cfg)}
+	store := &DBstore{SQLStore: sqlStore, FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())}
 	rule := createRule(t, store, nil)
 
 	tests := map[string]struct {
@@ -479,7 +498,7 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 	cfg := setting.NewCfg()
 	store := &DBstore{
 		SQLStore:      sqlStore,
-		FolderService: setupFolderService(t, sqlStore, cfg),
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
 		Logger:        log.New("test-dbstore"),
 	}
 	rule := createRule(t, store, nil)
@@ -512,7 +531,7 @@ func TestIntegration_GetNamespaceByUID(t *testing.T) {
 	cfg := setting.NewCfg()
 	store := &DBstore{
 		SQLStore:      sqlStore,
-		FolderService: setupFolderService(t, sqlStore, cfg),
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
 		Logger:        log.New("test-dbstore"),
 	}
 
@@ -524,13 +543,36 @@ func TestIntegration_GetNamespaceByUID(t *testing.T) {
 	}
 
 	uid := uuid.NewString()
-	title := "folder-title"
-	createFolder(t, store, uid, title, 1, "")
+	parentUid := uuid.NewString()
+	title := "folder/title"
+	parentTitle := "parent-title"
+	createFolder(t, store, parentUid, parentTitle, 1, "")
+	createFolder(t, store, uid, title, 1, parentUid)
 
 	actual, err := store.GetNamespaceByUID(context.Background(), uid, 1, u)
 	require.NoError(t, err)
 	require.Equal(t, title, actual.Title)
 	require.Equal(t, uid, actual.UID)
+	require.Equal(t, title, actual.Fullpath)
+
+	t.Run("error when user does not have permissions", func(t *testing.T) {
+		someUser := &user.SignedInUser{
+			UserID:  2,
+			OrgID:   1,
+			OrgRole: org.RoleViewer,
+		}
+		_, err = store.GetNamespaceByUID(context.Background(), uid, 1, someUser)
+		require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
+	})
+
+	t.Run("when nested folders are enabled full path should be populated with correct value", func(t *testing.T) {
+		store.FolderService = setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders))
+		actual, err := store.GetNamespaceByUID(context.Background(), uid, 1, u)
+		require.NoError(t, err)
+		require.Equal(t, title, actual.Title)
+		require.Equal(t, uid, actual.UID)
+		require.Equal(t, "parent-title/folder\\/title", actual.Fullpath)
+	})
 }
 
 func TestIntegrationInsertAlertRules(t *testing.T) {
@@ -543,7 +585,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
 	store := &DBstore{
 		SQLStore:      sqlStore,
-		FolderService: setupFolderService(t, sqlStore, cfg),
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
 		Logger:        log.New("test-dbstore"),
 		Cfg:           cfg.UnifiedAlerting,
 	}
@@ -630,11 +672,11 @@ func createFolder(t *testing.T, store *DBstore, uid, title string, orgID int64, 
 	require.NoError(t, err)
 }
 
-func setupFolderService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg) folder.Service {
+func setupFolderService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg, features featuremgmt.FeatureToggles) folder.Service {
 	tracer := tracing.InitializeTracerForTest()
 	inProcBus := bus.ProvideBus(tracer)
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	_, dashboardStore := testutil.SetupDashboardService(t, sqlStore, folderStore, cfg)
 
-	return testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, folderStore, inProcBus)
+	return testutil.SetupFolderService(t, cfg, sqlStore, dashboardStore, folderStore, inProcBus, features, &actest.FakeAccessControl{})
 }

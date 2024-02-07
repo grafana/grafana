@@ -22,7 +22,7 @@ import {
   AxisPlacement,
   GraphDrawStyle,
   GraphFieldConfig,
-  GraphTresholdsStyleMode,
+  GraphThresholdsStyleMode,
   VisibilityMode,
   ScaleDirection,
   ScaleOrientation,
@@ -520,8 +520,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
     // Render thresholds in graph
     if (customConfig.thresholdsStyle && config.thresholds) {
-      const thresholdDisplay = customConfig.thresholdsStyle.mode ?? GraphTresholdsStyleMode.Off;
-      if (thresholdDisplay !== GraphTresholdsStyleMode.Off) {
+      const thresholdDisplay = customConfig.thresholdsStyle.mode ?? GraphThresholdsStyleMode.Off;
+      if (thresholdDisplay !== GraphThresholdsStyleMode.Off) {
         builder.addThresholds({
           config: customConfig.thresholdsStyle,
           thresholds: config.thresholds,

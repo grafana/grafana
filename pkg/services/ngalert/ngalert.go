@@ -348,6 +348,7 @@ func (ng *AlertNG) init() error {
 		StateManager:         ng.stateManager,
 		AccessControl:        ng.accesscontrol,
 		Policies:             policyService,
+		ReceiverService:      receiverService,
 		ContactPointService:  contactPointService,
 		Templates:            templateService,
 		MuteTimings:          muteTimingService,
