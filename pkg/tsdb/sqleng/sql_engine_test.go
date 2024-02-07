@@ -28,22 +28,19 @@ func TestSQLEngine(t *testing.T) {
 
 		t.Run("interpolate 10 minutes $__interval", func(t *testing.T) {
 			query := backend.DataQuery{JSON: []byte("{}"), MaxDataPoints: 1500, Interval: time.Minute * 10}
-			sql, err := Interpolate(query, timeRange, "", text)
-			require.NoError(t, err)
+			sql := Interpolate(query, timeRange, "", text)
 			require.Equal(t, "10m $__timeGroupAlias(time,10m) 600000", sql)
 		})
 
 		t.Run("interpolate 4seconds $__interval", func(t *testing.T) {
 			query := backend.DataQuery{JSON: []byte("{}"), MaxDataPoints: 1500, Interval: time.Second * 4}
-			sql, err := Interpolate(query, timeRange, "", text)
-			require.NoError(t, err)
+			sql := Interpolate(query, timeRange, "", text)
 			require.Equal(t, "4s $__timeGroupAlias(time,4s) 4000", sql)
 		})
 
 		t.Run("interpolate 200 milliseconds $__interval", func(t *testing.T) {
 			query := backend.DataQuery{JSON: []byte("{}"), MaxDataPoints: 1500, Interval: time.Millisecond * 200}
-			sql, err := Interpolate(query, timeRange, "", text)
-			require.NoError(t, err)
+			sql := Interpolate(query, timeRange, "", text)
 			require.Equal(t, "200ms $__timeGroupAlias(time,200ms) 200", sql)
 		})
 	})
@@ -55,14 +52,12 @@ func TestSQLEngine(t *testing.T) {
 		query := backend.DataQuery{JSON: []byte("{}"), MaxDataPoints: 1500, Interval: time.Second * 60}
 
 		t.Run("interpolate __unixEpochFrom function", func(t *testing.T) {
-			sql, err := Interpolate(query, timeRange, "", "select $__unixEpochFrom()")
-			require.NoError(t, err)
+			sql := Interpolate(query, timeRange, "", "select $__unixEpochFrom()")
 			require.Equal(t, fmt.Sprintf("select %d", from.Unix()), sql)
 		})
 
 		t.Run("interpolate __unixEpochTo function", func(t *testing.T) {
-			sql, err := Interpolate(query, timeRange, "", "select $__unixEpochTo()")
-			require.NoError(t, err)
+			sql := Interpolate(query, timeRange, "", "select $__unixEpochTo()")
 			require.Equal(t, fmt.Sprintf("select %d", to.Unix()), sql)
 		})
 	})

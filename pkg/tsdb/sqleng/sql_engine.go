@@ -246,14 +246,10 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 	}
 
 	// global substitutions
-	interpolatedQuery, err := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJson.RawSql)
-	if err != nil {
-		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery)
-		return
-	}
+	interpolatedQuery := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJson.RawSql)
 
 	// data source specific substitutions
-	interpolatedQuery, err = e.macroEngine.Interpolate(&query, timeRange, interpolatedQuery)
+	interpolatedQuery, err := e.macroEngine.Interpolate(&query, timeRange, interpolatedQuery)
 	if err != nil {
 		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery)
 		return
@@ -372,7 +368,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 }
 
 // Interpolate provides global macros/substitutions for all sql datasources.
-var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
+var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) string {
 	interval := query.Interval
 
 	sql = strings.ReplaceAll(sql, "$__interval_ms", strconv.FormatInt(interval.Milliseconds(), 10))
@@ -380,7 +376,7 @@ var Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, tim
 	sql = strings.ReplaceAll(sql, "$__unixEpochFrom()", fmt.Sprintf("%d", timeRange.From.UTC().Unix()))
 	sql = strings.ReplaceAll(sql, "$__unixEpochTo()", fmt.Sprintf("%d", timeRange.To.UTC().Unix()))
 
-	return sql, nil
+	return sql
 }
 
 func (e *DataSourceHandler) newProcessCfg(query backend.DataQuery, queryContext context.Context,
