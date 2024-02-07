@@ -3752,7 +3752,7 @@ __metadata:
     debounce-promise: "npm:3.1.2"
     esbuild: "npm:0.18.12"
     eslint: "npm:8.56.0"
-    eslint-config-prettier: "npm:8.8.0"
+    eslint-config-prettier: "npm:9.1.0"
     eslint-plugin-import: "npm:^2.26.0"
     eslint-plugin-jest: "npm:27.6.3"
     eslint-plugin-jsdoc: "npm:48.0.6"
@@ -15762,6 +15762,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-config-prettier@npm:9.1.0":
+  version: 9.1.0
+  resolution: "eslint-config-prettier@npm:9.1.0"
+  peerDependencies:
+    eslint: ">=7.0.0"
+  bin:
+    eslint-config-prettier: bin/cli.js
+  checksum: 10/411e3b3b1c7aa04e3e0f20d561271b3b909014956c4dba51c878bf1a23dbb8c800a3be235c46c4732c70827276e540b6eed4636d9b09b444fd0a8e07f0fcd830
+  languageName: node
+  linkType: hard
+
 "eslint-import-resolver-node@npm:^0.3.9":
   version: 0.3.9
   resolution: "eslint-import-resolver-node@npm:0.3.9"
@@ -17906,7 +17917,7 @@ __metadata:
     esbuild-loader: "npm:3.0.1"
     esbuild-plugin-browserslist: "npm:^0.11.0"
     eslint: "npm:8.56.0"
-    eslint-config-prettier: "npm:8.8.0"
+    eslint-config-prettier: "npm:9.1.0"
     eslint-plugin-import: "npm:^2.26.0"
     eslint-plugin-jest: "npm:27.6.3"
     eslint-plugin-jsdoc: "npm:48.0.6"
