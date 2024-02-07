@@ -74,7 +74,22 @@ export async function importPluginModule({
     return importPluginModuleInSandbox({ pluginId });
   }
 
-  return SystemJS.import(modulePath);
+  let mod = await SystemJS.import(modulePath);
+  let attempts = 0;
+  // While the module's default export is a promise, wait for it to resolve.
+  // Do we need to recurse here? It seems unlikely that a module would return a promise that resolves to another promise.
+  while (
+    !('plugin' in mod) &&
+    'default' in mod &&
+    typeof mod.default === 'object' &&
+    'then' in mod.default &&
+    typeof mod.default.then === 'function' &&
+    attempts < 5
+  ) {
+    mod = await mod.default;
+    attempts++;
+  }
+  return mod;
 }
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
