@@ -14,7 +14,7 @@ type Installer interface {
 	// Add adds a new plugin.
 	Add(ctx context.Context, pluginID, version string, opts CompatOpts) error
 	// Remove removes an existing plugin.
-	Remove(ctx context.Context, pluginID string) error
+	Remove(ctx context.Context, pluginID, version string) error
 }
 
 type PluginSource interface {
