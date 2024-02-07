@@ -48,7 +48,6 @@ Use full URLs for links. When linking to versioned docs, replace the version wit
 ## Navigation updates\*
 
 <!--Laura Benz-->
-<!--internal_enablement_video-->
 
 _Available in public preview in Grafana Open Source and Enterprise_
 
@@ -59,8 +58,6 @@ The improved navigation menu gives you a better overview by showing all levels o
 ## Table data in PDF reports
 
 <!--Agnès Toulet-->
-
-<!--internal_enablement_video-->
 
 _Available in public preview in Grafana Enterprise and Grafana Cloud_
 
@@ -80,7 +77,6 @@ To try out this feature, enable the `pdfTables` [feature toggle](https://grafana
 ### Moving average and trend lines using transformations
 
 <!--Oscar Kilhed-->
-<!--internal_enablement_video for either moving average or trend lines or both-->
 
 _Available in public preview in all editions of Grafana_
 
@@ -109,7 +105,6 @@ The transformation currently supports linear regression and polynomial regressio
 ### Canvas visualization supports pan and zoom
 
 <!--Nathan Marrs-->
-<!--internal_enablement_video-->
 
 _Available in public preview in all editions of Grafana_
 
@@ -168,30 +163,19 @@ You can now view percent change in stat visualizations. This makes it easier to 
 
 [Documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/stat/#show-percent-change)
 
-### Data visualization quality of life improvements
+#### Apply data transformations to annotations
 
 <!--Nathan Marrs-->
 
 _Generally available in all editions of Grafana_
 
-We’ve made a few smaller improvements to the data visualization experience in Grafana.
-
-#### Apply data transformations to annotations
-
 You can now apply data transformations to annotation data. For example, you can now configure how exemplar data is displayed in tooltips.
 
 {{< video-embed src="/media/docs/grafana/screen-recording-10-3-data-transformations-annotation-support.mp4" caption="Configure how exemplar data appears in tooltip" >}}
 
-#### Disable auto scaling units
-
-By default, Grafana automatically scales the unit based on the magnitude of the value. For example, if you have a value of 0.14 kW, Grafana will display it as 140 W. You can now disable unit auto scaling. This is helpful in cases where you want to ensure that the same unit is shown in your visualization regardless of the magnitude of the data. See [the standard options documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/configure-standard-options/#scale-units) for more information.
-
-{{< video-embed src="/media/docs/grafana/screen-recording-10-3-disable-unit-auto-scaling.mp4" caption="Disable auto scaling units" >}}
-
 ### New Transformations UI experience and documentation upgrades
 
 <!--Jev Forsberg-->
-<!--internal_enablement_video-->
 
 _Generally available in all editions of Grafana_
 
@@ -209,12 +193,19 @@ We've also streamlined the user experience by integrating documentation directly
 
 {{< figure src="/media/docs/grafana/transformations/transformations_internal_documentation.png" caption="Transformation documentation is now internally available inside the Grafana app itself." alt="Transformation documentation internally available" >}}
 
+### Copy and paste time range
+
+<!--Haris Rozajac-->
+
+_Generally available in all editions of Grafana_
+
+Copying and pasting time range in the time range picker is now available. For example, you can copy a time range in **Explore** and paste it into **Dashboards** and vice versa. You can also copy and paste a time range using the new keyboard shortcuts `t+c` and `t+v`, respectively.
+
 ## Profiles
 
 ### Trace to Profiles\*
 
 <!--Joey Tawadrous-->
-<!--internal_enablement_video-->
 
 _Experimental in all editions of Grafana_
 
@@ -379,7 +370,6 @@ The following example would add the derived field `traceID regex` based on a reg
 ### InfluxDB native SQL support
 
 <!--Ismail Simsek-->
-<!--internal_enablement_video-->
 
 _Generally available in all editions of Grafana_
 
@@ -394,7 +384,6 @@ All you need to do is set up your InfluxDB Cloud Account and create your InfluxD
 ### Grafana Anonymous Access\*
 
 <!--Eric Leijonmarck-->
-<!--internal_enablement_video-->
 
 _Generally available in Grafana Open Source and Enterprise_
 

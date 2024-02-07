@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { useToggle } from 'react-use';
 
 import { DataTransformerConfig, TransformerRegistryItem, FrameMatcherID, DataTopic } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
 import {
@@ -120,6 +121,7 @@ export const TransformationOperationRow = ({
           icon={disabled ? 'eye-slash' : 'eye'}
           onClick={instrumentToggleCallback(() => onDisableToggle(index), 'disabled', disabled)}
           active={disabled}
+          dataTestId={selectors.components.Transforms.disableTransformationButton}
         />
         <QueryOperationAction
           title="Remove"
