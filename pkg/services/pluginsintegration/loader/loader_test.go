@@ -509,6 +509,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 		cfg := &config.Cfg{
 			Features:             featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
 			PluginsAllowUnsigned: []string{"grafana-test-datasource"},
+			AWSAssumeRoleEnabled: true,
 		}
 		pluginPaths := []string{filepath.Join(testDataDir(t), "oauth-external-registration")}
 		expected := []*plugins.Plugin{
@@ -610,6 +611,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 		cfg := &config.Cfg{
 			Features:             featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
 			PluginsAllowUnsigned: []string{"grafana-test-datasource"},
+			AWSAssumeRoleEnabled: true,
 		}
 		pluginPaths := []string{filepath.Join(testDataDir(t), "external-registration")}
 		expected := []*plugins.Plugin{

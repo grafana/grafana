@@ -12,7 +12,7 @@ export function initAlerting() {
   addCustomRightAction({
     show: () => config.unifiedAlertingEnabled,
     component: ({ dashboard }) => (
-      <React.Suspense fallback={null}>
+      <React.Suspense fallback={null} key="alert-rules-button">
         {dashboard && <AlertRulesToolbarButton dashboardUid={dashboard.uid} />}
       </React.Suspense>
     ),
