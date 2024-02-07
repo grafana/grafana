@@ -22,16 +22,6 @@ weight: 400
 
 Verify that your alerting resources were created in Grafana, as well as edit or export your provisioned alerting resources.
 
-## View provisioned alerting resoureces
-
-To view your provisioned resources in Grafana, complete the following steps.
-
-1. Open your Grafana instance.
-1. Navigate to Alerting.
-1. Click an alerting resource folder, for example, Alert rules.
-
-Provisioned resources are labeled **Provisioned**, so that it is clear that they were not created manually.
-
 ## Export provisioned alerting resources
 
 Export your alerting resources, such as alert rules, contact points, and notification policies in JSON, YAML, or Terraform format. You can export all Grafana-managed alert rules, single folders, and single groups.
