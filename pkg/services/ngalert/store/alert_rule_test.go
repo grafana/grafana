@@ -598,7 +598,7 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 		require.Truef(t, found, "Rule with key %#v was not found in database", keyWithID)
 	}
 
-	ids, err = store.InsertAlertRules(context.Background(), []models.AlertRule{deref[0]})
+	_, err = store.InsertAlertRules(context.Background(), []models.AlertRule{deref[0]})
 	require.ErrorIs(t, err, models.ErrAlertRuleUniqueConstraintViolation)
 	require.NotEqual(t, deref[0].UID, "")
 	require.NotEqual(t, deref[0].Title, "")
