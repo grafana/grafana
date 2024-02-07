@@ -24,6 +24,7 @@ export interface Props extends Omit<CardContainerProps, 'disableEvents' | 'disab
   /** @deprecated Use `Card.Description` instead */
   description?: string;
   isSelected?: boolean;
+  /** If true, the padding of the Card will be smaller */
   isCompact?: boolean;
 }
 
