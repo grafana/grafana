@@ -6,8 +6,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
-	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 
 var nestedFieldRender = peakq.QueryTemplateSpec{
@@ -33,13 +33,11 @@ var nestedFieldRender = peakq.QueryTemplateSpec{
 					},
 				},
 			},
-			Properties: common.Unstructured{
-				Object: map[string]any{
-					"nestedObject": map[string]any{
-						"anArray": []any{"foo", .2},
-					},
+			Properties: query.NewGenericDataQuery(map[string]any{
+				"nestedObject": map[string]any{
+					"anArray": []any{"foo", .2},
 				},
-			},
+			}),
 		},
 	},
 }
@@ -59,13 +57,12 @@ var nestedFieldRenderedTargets = []peakq.Target{
 			},
 		},
 		//DataTypeVersion: data.FrameTypeVersion{0, 0},
-		Properties: common.Unstructured{
-			Object: map[string]any{
+		Properties: query.NewGenericDataQuery(
+			map[string]any{
 				"nestedObject": map[string]any{
 					"anArray": []any{"up", .2},
 				},
-			},
-		},
+			}),
 	},
 }
 
@@ -121,11 +118,9 @@ var multiVarTemplate = peakq.QueryTemplateSpec{
 				},
 			},
 
-			Properties: common.Unstructured{
-				Object: map[string]any{
-					"expr": "1 + metricName + 1 + anotherMetric + metricName",
-				},
-			},
+			Properties: query.NewGenericDataQuery(map[string]any{
+				"expr": "1 + metricName + 1 + anotherMetric + metricName",
+			}),
 		},
 	},
 }
@@ -161,11 +156,9 @@ var multiVarRenderedTargets = []peakq.Target{
 			},
 		},
 		//DataTypeVersion: data.FrameTypeVersion{0, 0},
-		Properties: common.Unstructured{
-			Object: map[string]any{
-				"expr": "1 + up + 1 + sloths_do_like_a_good_nap + up",
-			},
-		},
+		Properties: query.NewGenericDataQuery(map[string]any{
+			"expr": "1 + up + 1 + sloths_do_like_a_good_nap + up",
+		}),
 	},
 }
 
@@ -190,11 +183,9 @@ func TestRenderWithRune(t *testing.T) {
 		},
 		Targets: []peakq.Target{
 			{
-				Properties: common.Unstructured{
-					Object: map[string]any{
-						"message": "🐦 name!",
-					},
-				},
+				Properties: query.NewGenericDataQuery(map[string]any{
+					"message": "🐦 name!",
+				}),
 				Variables: map[string][]peakq.VariableReplacement{
 					"name": {
 						{
@@ -217,5 +208,5 @@ func TestRenderWithRune(t *testing.T) {
 	rq, err := Render(qt, selectedValues)
 	require.NoError(t, err)
 
-	require.Equal(t, "🐦 🦥!", rq.Targets[0].Properties.Object["message"])
+	require.Equal(t, "🐦 🦥!", rq.Targets[0].Properties.AdditionalProperties()["message"])
 }
