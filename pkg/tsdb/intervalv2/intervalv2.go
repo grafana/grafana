@@ -1,8 +1,6 @@
 package intervalv2
 
 import (
-	"regexp"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -82,49 +80,20 @@ func (ic *intervalCalculator) CalculateSafeInterval(timerange backend.TimeRange,
 // dsInterval is the string representation of data source min interval, if configured.
 // queryInterval is the string representation of query interval (min interval), e.g. "10ms" or "10s".
 // queryIntervalMS is a pre-calculated numeric representation of the query interval in milliseconds.
+//
+// Deprecated: use grafana-plugin-sdk-go/backend/gtime instead
 func GetIntervalFrom(dsInterval, queryInterval string, queryIntervalMS int64, defaultInterval time.Duration) (time.Duration, error) {
-	// Apparently we are setting default value of queryInterval to 0s now
-	interval := queryInterval
-	if interval == "0s" {
-		interval = ""
-	}
-	if interval == "" {
-		if queryIntervalMS != 0 {
-			return time.Duration(queryIntervalMS) * time.Millisecond, nil
-		}
-	}
-	if interval == "" && dsInterval != "" {
-		interval = dsInterval
-	}
-	if interval == "" {
-		return defaultInterval, nil
-	}
-
-	parsedInterval, err := ParseIntervalStringToTimeDuration(interval)
-	if err != nil {
-		return time.Duration(0), err
-	}
-
-	return parsedInterval, nil
+	return gtime.GetIntervalFrom(dsInterval, queryInterval, queryIntervalMS, defaultInterval)
 }
 
+// Deprecated: use grafana-plugin-sdk-go/backend/gtime instead
 func ParseIntervalStringToTimeDuration(interval string) (time.Duration, error) {
-	formattedInterval := strings.Replace(strings.Replace(interval, "<", "", 1), ">", "", 1)
-	isPureNum, err := regexp.MatchString(`^\d+$`, formattedInterval)
-	if err != nil {
-		return time.Duration(0), err
-	}
-	if isPureNum {
-		formattedInterval += "s"
-	}
-	parsedInterval, err := gtime.ParseDuration(formattedInterval)
-	if err != nil {
-		return time.Duration(0), err
-	}
-	return parsedInterval, nil
+	return gtime.ParseIntervalStringToTimeDuration(interval)
 }
 
 // FormatDuration converts a duration into the kbn format e.g. 1m 2h or 3d
+//
+// Deprecated: use grafana-plugin-sdk-go/backend/gtime instead
 func FormatDuration(inter time.Duration) string {
 	return gtime.FormatInterval(inter)
 }

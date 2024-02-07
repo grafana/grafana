@@ -4,9 +4,6 @@
 package time
 
 import (
-	"fmt"
-	"regexp"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -16,8 +13,6 @@ import (
 var (
 	DefaultRes         int64 = 1500
 	defaultMinInterval       = time.Millisecond * 1
-	year                     = time.Hour * 24 * 365
-	day                      = time.Hour * 24
 )
 
 type Interval struct {
@@ -52,10 +47,6 @@ func NewCalculator(opts ...CalculatorOptions) *intervalCalculator {
 	return calc
 }
 
-func (i *Interval) Milliseconds() int64 {
-	return i.Value.Nanoseconds() / int64(time.Millisecond)
-}
-
 func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, minInterval time.Duration, maxDataPoints int64) Interval {
 	to := timerange.To.UnixNano()
 	from := timerange.From.UnixNano()
@@ -67,12 +58,12 @@ func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, minInterval
 	calculatedInterval := time.Duration((to - from) / resolution)
 
 	if calculatedInterval < minInterval {
-		return Interval{Text: FormatDuration(minInterval), Value: minInterval}
+		return Interval{Text: gtime.FormatInterval(minInterval), Value: minInterval}
 	}
 
 	rounded := roundInterval(calculatedInterval)
 
-	return Interval{Text: FormatDuration(rounded), Value: rounded}
+	return Interval{Text: gtime.FormatInterval(rounded), Value: rounded}
 }
 
 func (ic *intervalCalculator) CalculateSafeInterval(timerange backend.TimeRange, safeRes int64) Interval {
@@ -81,82 +72,7 @@ func (ic *intervalCalculator) CalculateSafeInterval(timerange backend.TimeRange,
 	safeInterval := time.Duration((to - from) / safeRes)
 
 	rounded := roundInterval(safeInterval)
-	return Interval{Text: FormatDuration(rounded), Value: rounded}
-}
-
-// GetIntervalFrom returns the minimum interval.
-// dsInterval is the string representation of data source min interval, if configured.
-// queryInterval is the string representation of query interval (min interval), e.g. "10ms" or "10s".
-// queryIntervalMS is a pre-calculated numeric representation of the query interval in milliseconds.
-func GetIntervalFrom(dsInterval, queryInterval string, queryIntervalMS int64, defaultInterval time.Duration) (time.Duration, error) {
-	// Apparently we are setting default value of queryInterval to 0s now
-	interval := queryInterval
-	if interval == "0s" {
-		interval = ""
-	}
-	if interval == "" {
-		if queryIntervalMS != 0 {
-			return time.Duration(queryIntervalMS) * time.Millisecond, nil
-		}
-	}
-	if interval == "" && dsInterval != "" {
-		interval = dsInterval
-	}
-	if interval == "" {
-		return defaultInterval, nil
-	}
-
-	parsedInterval, err := ParseIntervalStringToTimeDuration(interval)
-	if err != nil {
-		return time.Duration(0), err
-	}
-
-	return parsedInterval, nil
-}
-
-func ParseIntervalStringToTimeDuration(interval string) (time.Duration, error) {
-	formattedInterval := strings.Replace(strings.Replace(interval, "<", "", 1), ">", "", 1)
-	isPureNum, err := regexp.MatchString(`^\d+$`, formattedInterval)
-	if err != nil {
-		return time.Duration(0), err
-	}
-	if isPureNum {
-		formattedInterval += "s"
-	}
-	parsedInterval, err := gtime.ParseDuration(formattedInterval)
-	if err != nil {
-		return time.Duration(0), err
-	}
-	return parsedInterval, nil
-}
-
-// FormatDuration converts a duration into the kbn format e.g. 1m 2h or 3d
-func FormatDuration(inter time.Duration) string {
-	if inter >= year {
-		return fmt.Sprintf("%dy", inter/year)
-	}
-
-	if inter >= day {
-		return fmt.Sprintf("%dd", inter/day)
-	}
-
-	if inter >= time.Hour {
-		return fmt.Sprintf("%dh", inter/time.Hour)
-	}
-
-	if inter >= time.Minute {
-		return fmt.Sprintf("%dm", inter/time.Minute)
-	}
-
-	if inter >= time.Second {
-		return fmt.Sprintf("%ds", inter/time.Second)
-	}
-
-	if inter >= time.Millisecond {
-		return fmt.Sprintf("%dms", inter/time.Millisecond)
-	}
-
-	return "1ms"
+	return Interval{Text: gtime.FormatInterval(rounded), Value: rounded}
 }
 
 //nolint:gocyclo
