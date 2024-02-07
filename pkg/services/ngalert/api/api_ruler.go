@@ -52,9 +52,9 @@ type RulerSrv struct {
 	conditionValidator ConditionValidator
 	authz              RuleAccessControlService
 
-	notificationSettingsValidatorFactory NotificationSettingsValidatorProvider
-	amRefresher                          AMRefresher
-	featureManager                       featuremgmt.FeatureToggles
+	nsValidatorProvider NotificationSettingsValidatorProvider
+	amRefresher         AMRefresher
+	featureManager      featuremgmt.FeatureToggles
 }
 
 var (
@@ -309,7 +309,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			return err
 		}
 
-		notificationSettingsChanged, err = store.ValidateNotificationsInGroupDelta(c.Req.Context(), groupChanges, srv.notificationSettingsValidatorFactory)
+		notificationSettingsChanged, err = store.ValidateNotificationsInGroupDelta(c.Req.Context(), groupChanges, srv.nsValidatorProvider)
 		if err != nil {
 			return err
 		}
