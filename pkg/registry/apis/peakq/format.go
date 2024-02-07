@@ -15,10 +15,12 @@ func formatVariables(fmt peakq.VariableFormat, input []string) string {
 	}
 
 	// MultiValued formats
+	// nolint: exhaustive
 	switch fmt {
 	case peakq.FormatJSON:
 		v, _ := json.Marshal(input)
 		return string(v)
+
 	case peakq.FormatDoubleQuote:
 		sb := bytes.NewBufferString("")
 		for idx, val := range input {
@@ -46,7 +48,7 @@ func formatVariables(fmt peakq.VariableFormat, input []string) string {
 	case peakq.FormatCSV:
 		sb := bytes.NewBufferString("")
 		w := csv.NewWriter(sb)
-		w.Write(input)
+		_ = w.Write(input)
 		w.Flush()
 		v := sb.Bytes()
 		return string(v[:len(v)-1])
@@ -57,6 +59,7 @@ func formatVariables(fmt peakq.VariableFormat, input []string) string {
 		return input[0]
 	}
 
+	// nolint: exhaustive
 	switch fmt {
 	case peakq.FormatPipe:
 		return strings.Join(input, "|")
