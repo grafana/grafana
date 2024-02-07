@@ -4,7 +4,7 @@
  */
 
 import { produce } from 'immer';
-import { remove } from 'lodash';
+import { noop, remove } from 'lodash';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { onCallApi, OnCallIntegrationDTO } from '../../api/onCallApi';
@@ -118,6 +118,7 @@ export function useContactPointsWithStatus(getPoliciesCount = true) {
       error,
       isLoading,
       contactPoints,
+      refetchReceivers: () => Promise.resolve(noop), // in this case we will not use this function
     };
   } else {
     const contactPoints = fetchGrafanaContactPoints.contactPoints.sort((a, b) => a.name.localeCompare(b.name));

@@ -40,7 +40,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
     formState: { errors },
   } = useFormContext<RuleFormValues>();
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues([]));
-  const { groupIntervalValue, groupWaitValue, repeatIntervalValue } = useGetDefaultsForRoutingSettings();
+  const { groupIntervalValue, groupWaitValue, repeatIntervalValue } = getDefaultsForRoutingSettings();
   const overrideGrouping = watch(`contactPoints.${alertManager}.overrideGrouping`);
   const overrideTimings = watch(`contactPoints.${alertManager}.overrideTimings`);
   const requiredFieldsInGroupBy = ['grafana_folder', 'alertname'];
@@ -129,7 +129,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
   );
 };
 
-function useGetDefaultsForRoutingSettings() {
+function getDefaultsForRoutingSettings() {
   return {
     groupWaitValue: TIMING_OPTIONS_DEFAULTS.group_wait,
     groupIntervalValue: TIMING_OPTIONS_DEFAULTS.group_interval,

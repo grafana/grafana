@@ -65,7 +65,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
           alertManager={alertManagerName}
           options={options}
           onSelectContactPoint={onSelectContactPoint}
-          refetchReceivers={refetchReceivers!} // if we call useContactPointsWithStatus with false, refetchReceivers will not be undefined
+          refetchReceivers={refetchReceivers}
         />
       </Stack>
       {selectedContactPointWithMetadata?.grafana_managed_receiver_configs && (
