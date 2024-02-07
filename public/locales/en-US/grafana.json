@@ -673,6 +673,22 @@
       "invalid-user-or-password": "Invalid username or password",
       "title": "Login failed",
       "unknown": "Unknown error occurred"
+    },
+    "forgot-password": "Forgot your password?",
+    "form": {
+      "password-label": "Password",
+      "password-required": "Password is required",
+      "submit-label": "Log in",
+      "submit-loading-label": "Logging in...",
+      "username-label": "Email or username",
+      "username-required": "Email or username is required"
+    },
+    "services": {
+      "sing-in-with-prefix": "Sign in with {{serviceName}}"
+    },
+    "signup": {
+      "button-label": "Sign up",
+      "new-to-question": "New to Grafana?"
     }
   },
   "nav": {
