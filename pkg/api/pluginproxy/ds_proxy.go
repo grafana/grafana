@@ -252,6 +252,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 		ApplyRoute(req.Context(), req, proxy.proxyPath, proxy.matchedRoute, DSInfo{
 			ID:                      proxy.ds.ID,
+			URL:                     proxy.ds.URL,
 			Updated:                 proxy.ds.Updated,
 			JSONData:                jsonData,
 			DecryptedSecureJSONData: decryptedValues,

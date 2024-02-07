@@ -193,26 +193,5 @@ func (c *AsExternal) Filter(cl plugins.Class, bundles []*plugins.FoundBundle) ([
 		}
 		return res, nil
 	}
-
-	if cl == plugins.ClassExternal {
-		// Warn if the plugin is not found in the external plugins directory.
-		asExternal := map[string]bool{}
-		for pluginID, pluginCfg := range c.cfg.PluginSettings {
-			if pluginCfg["as_external"] == "true" {
-				asExternal[pluginID] = true
-			}
-		}
-		for _, bundle := range bundles {
-			if asExternal[bundle.Primary.JSONData.ID] {
-				delete(asExternal, bundle.Primary.JSONData.ID)
-			}
-		}
-		if len(asExternal) > 0 {
-			for p := range asExternal {
-				c.log.Error("Core plugin expected to be loaded as external, but it is missing", "pluginID", p)
-			}
-		}
-	}
-
 	return bundles, nil
 }
