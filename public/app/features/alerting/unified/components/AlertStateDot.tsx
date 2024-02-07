@@ -2,12 +2,11 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { ComponentSize, Stack, useStyles2 } from '@grafana/ui';
+import { Stack, useStyles2 } from '@grafana/ui';
 
 interface DotStylesProps {
   color: 'success' | 'error' | 'warning' | 'info';
   includeState?: boolean;
-  size?: ComponentSize; // TODO support this
 }
 
 const AlertStateDot = (props: DotStylesProps) => {

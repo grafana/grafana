@@ -20,7 +20,7 @@ export const RecordingBadge = ({ health }: RecordingBadgeProps) => {
 
   return (
     <Stack direction="row" gap={0.5}>
-      <AlertStateDot size="md" color={color} />
+      <AlertStateDot color={color} />
       <Text variant="bodySmall" color={color}>
         {text}
       </Text>
@@ -66,7 +66,7 @@ export const StateBadge = ({ state, health }: StateBadgeProps) => {
 
   return (
     <Stack direction="row" gap={0.5}>
-      <AlertStateDot size="md" color={color} />
+      <AlertStateDot color={color} />
       <Text variant="bodySmall" color={color}>
         {stateLabel}
       </Text>
