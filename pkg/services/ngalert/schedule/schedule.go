@@ -155,6 +155,13 @@ func (sch *schedule) Run(ctx context.Context) error {
 	return nil
 }
 
+// Rules fetches the entire set of rules considered for evaluation by the scheduler on the next tick.
+// Such rules are not guaranteed to have been evaluated by the scheduler.
+// Rules returns all supplementary metadata for the rules that is stored by the scheduler - namely, the set of folder titles.
+func (sch *schedule) Rules() ([]*ngmodels.AlertRule, map[ngmodels.FolderKey]string) {
+	return sch.schedulableAlertRules.all()
+}
+
 // deleteAlertRule stops evaluation of the rule, deletes it from active rules, and cleans up state cache.
 func (sch *schedule) deleteAlertRule(keys ...ngmodels.AlertRuleKey) {
 	for _, key := range keys {
