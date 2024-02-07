@@ -1,7 +1,7 @@
 import * as H from 'history';
 
 import { NavIndex } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   SceneFlexItem,
   SceneFlexLayout,
@@ -118,13 +118,11 @@ export function buildPanelEditScene(panel: VizPanel): PanelEditor {
       direction: 'row',
       primary: new SplitLayout({
         direction: 'column',
+        $behaviors: [conditionalDataPaneBehavior],
         primary: new SceneFlexLayout({
           direction: 'column',
           minHeight: 200,
           children: [vizPanelMgr],
-        }),
-        secondary: new SceneFlexItem({
-          body: new PanelDataPane(vizPanelMgr),
         }),
         primaryPaneStyles: {
           minHeight: 0,
@@ -146,4 +144,46 @@ export function buildPanelEditScene(panel: VizPanel): PanelEditor {
       },
     }),
   });
+}
+
+// This function is used to conditionally add the data pane to the panel editor,
+// depending on the type of a panel being edited.
+function conditionalDataPaneBehavior(scene: SplitLayout) {
+  const dashboard = getDashboardSceneFor(scene);
+
+  const editor = dashboard.state.editPanel;
+
+  if (!editor) {
+    return;
+  }
+
+  const panelManager = editor.state.panelRef.resolve();
+  const panel = panelManager.state.panel;
+
+  const getDataPane = () =>
+    new SceneFlexItem({
+      body: new PanelDataPane(panelManager),
+    });
+
+  if (!config.panels[panel.state.pluginId].skipDataQuery) {
+    scene.setState({
+      secondary: getDataPane(),
+    });
+  }
+
+  const sub = panelManager.subscribeToState((n, p) => {
+    const hadDataSupport = !config.panels[p.panel.state.pluginId].skipDataQuery;
+    const willHaveDataSupport = !config.panels[n.panel.state.pluginId].skipDataQuery;
+
+    if (hadDataSupport && !willHaveDataSupport) {
+      locationService.partial({ tab: null }, true);
+      scene.setState({ secondary: undefined });
+    } else if (!hadDataSupport && willHaveDataSupport) {
+      scene.setState({ secondary: getDataPane() });
+    }
+  });
+
+  return () => {
+    sub.unsubscribe();
+  };
 }
