@@ -1,7 +1,3 @@
-// import { DashboardChangeInfo } from '../saving/shared';
-// import { jsonDiff } from '../settings/version-history/utils';
-// import { applyVariableChanges, getHasTimeChanged } from '../utils/getSaveDashboardChange';
-
 import { compare, Operation } from 'fast-json-patch';
 // @ts-ignore
 import jsonMap from 'json-source-map';
@@ -10,10 +6,9 @@ import { flow, get, isEqual, sortBy, tail } from 'lodash';
 import { AdHocVariableModel, TypedVariableModel } from '@grafana/data';
 import { Dashboard } from '@grafana/schema';
 
-export function getSaveDashboardChange(
+export function getDashboardChanges(
   initial: Dashboard,
   changed: Dashboard,
-  //   dashboard: DashboardScene,
   saveTimeRange?: boolean,
   saveVariables?: boolean
 ) {

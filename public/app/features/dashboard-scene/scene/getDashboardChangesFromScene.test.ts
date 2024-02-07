@@ -3,12 +3,12 @@ import { MultiValueVariable, sceneGraph } from '@grafana/scenes';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 
-import { getSaveDashboardChange } from './getSaveDashboardChange';
+import { getDashboardChangesFromScene } from './getDashboardChangesFromScene';
 
-describe('getSaveDashboardChange', () => {
+describe('getDashboardChangesFromScene', () => {
   it('Can detect no changes', () => {
     const dashboard = setup();
-    const result = getSaveDashboardChange(dashboard, false);
+    const result = getDashboardChangesFromScene(dashboard, false);
     expect(result.hasChanges).toBe(false);
     expect(result.diffCount).toBe(0);
   });
@@ -18,7 +18,7 @@ describe('getSaveDashboardChange', () => {
 
     sceneGraph.getTimeRange(dashboard).setState({ from: 'now-1h', to: 'now' });
 
-    const result = getSaveDashboardChange(dashboard, false);
+    const result = getDashboardChangesFromScene(dashboard, false);
     expect(result.hasChanges).toBe(false);
     expect(result.diffCount).toBe(0);
     expect(result.hasTimeChanges).toBe(true);
@@ -29,7 +29,7 @@ describe('getSaveDashboardChange', () => {
 
     sceneGraph.getTimeRange(dashboard).setState({ from: 'now-1h', to: 'now' });
 
-    const result = getSaveDashboardChange(dashboard, true);
+    const result = getDashboardChangesFromScene(dashboard, true);
     expect(result.hasChanges).toBe(true);
     expect(result.diffCount).toBe(1);
   });
@@ -40,7 +40,7 @@ describe('getSaveDashboardChange', () => {
     const appVar = sceneGraph.lookupVariable('app', dashboard) as MultiValueVariable;
     appVar.changeValueTo('app2');
 
-    const result = getSaveDashboardChange(dashboard, false, false);
+    const result = getDashboardChangesFromScene(dashboard, false, false);
 
     expect(result.hasVariableValueChanges).toBe(true);
     expect(result.hasChanges).toBe(false);
@@ -53,7 +53,7 @@ describe('getSaveDashboardChange', () => {
     const appVar = sceneGraph.lookupVariable('app', dashboard) as MultiValueVariable;
     appVar.changeValueTo('app2');
 
-    const result = getSaveDashboardChange(dashboard, false, true);
+    const result = getDashboardChangesFromScene(dashboard, false, true);
 
     expect(result.hasVariableValueChanges).toBe(true);
     expect(result.hasChanges).toBe(true);

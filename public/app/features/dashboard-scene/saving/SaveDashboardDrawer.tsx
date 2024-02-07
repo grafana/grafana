@@ -5,7 +5,7 @@ import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { getSaveDashboardChange } from '../utils/getSaveDashboardChange';
+import { getDashboardChangesFromScene } from '../scene/getDashboardChangesFromScene';
 
 import { SaveDashboardAsForm } from './SaveDashboardAsForm';
 import { SaveDashboardForm } from './SaveDashboardForm';
@@ -34,7 +34,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
 
   static Component = ({ model }: SceneComponentProps<SaveDashboardDrawer>) => {
     const { showDiff, saveAsCopy, saveTimeRange, saveVariables } = model.useState();
-    const changeInfo = getSaveDashboardChange(model.state.dashboardRef.resolve(), saveTimeRange, saveVariables);
+    const changeInfo = getDashboardChangesFromScene(model.state.dashboardRef.resolve(), saveTimeRange, saveVariables);
     const { changedSaveModel, initialSaveModel, diffs, diffCount } = changeInfo;
     const dashboard = model.state.dashboardRef.resolve();
     const isProvisioned = dashboard.state.meta.provisioned;

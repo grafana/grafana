@@ -21,18 +21,18 @@ import { historySrv } from '../settings/version-history/HistorySrv';
 import { Diffs } from '../settings/version-history/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
-import { getSaveDashboardChange } from '../utils/getSaveDashboardChange';
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
+import { getDashboardChangesFromScene } from './getDashboardChangesFromScene';
 
 jest.mock('../settings/version-history/HistorySrv');
 jest.mock('../serialization/transformSaveModelToScene');
-jest.mock('../utils/getSaveDashboardChange', () => ({
+jest.mock('./getDashboardChangesFromScene', () => ({
   // It compares the initial and changed save models and returns the differences
   // By default we assume there are differences to have the dirty state test logic tested
-  getSaveDashboardChange: jest.fn(() => ({
+  getDashboardChangesFromScene: jest.fn(() => ({
     changedSaveModel: {},
     initialSaveModel: {},
     diffs: [],
@@ -381,7 +381,7 @@ function mockSaveDashboardChange({
   hasTimeChanges: boolean;
   hasVariableValueChanges: boolean;
 }) {
-  jest.mocked(getSaveDashboardChange).mockReturnValue({
+  jest.mocked(getDashboardChangesFromScene).mockReturnValue({
     changedSaveModel: {} as Dashboard,
     initialSaveModel: {} as Dashboard,
     diffs: {} as Diffs,

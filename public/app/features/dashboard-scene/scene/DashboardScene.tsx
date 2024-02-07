@@ -31,15 +31,16 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
+import { DashboardChangeInfo } from '../saving/shared';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
 import { isSceneVariableInstance } from '../settings/variables/utils';
 import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { djb2Hash } from '../utils/djb2Hash';
-import { getSaveDashboardChange } from '../utils/getSaveDashboardChange';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import { forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel, isPanelClone } from '../utils/utils';
 
@@ -48,7 +49,6 @@ import { DashboardControls } from './DashboardControls';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
-import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links'];
 
@@ -182,19 +182,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     // Propagate change edit mode change to children
     this.propagateEditModeChange();
-    this.startTrackingChanges();
-    this._changesWorker = new Worker(new URL('./DetectChangesWorker.ts', import.meta.url));
-    this._changesWorker.onmessage = (event) => {
-      console.log('worker message', event.data);
-    };
-    this.startTrackingChanges();
 
-    // setInterval(() => {
-    if (window.Worker) {
-      // console.log('posting message to worker');
-      this._changesWorker?.postMessage({ changed: transformSceneToSaveModel(this), initial: this._initialSaveModel });
-    }
-    // }, 1000);
+    this.startTrackingChanges();
   };
 
   public saveCompleted(saveModel: Dashboard, result: SaveDashboardResponseDTO, folderUid?: string) {
@@ -369,49 +358,57 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   private startTrackingChanges() {
+    console.log('Starting tracking changes');
+    this._changesWorker = new Worker(new URL('./DetectChangesWorker.ts', import.meta.url));
+    this._changesWorker.onmessage = (e: MessageEvent<DashboardChangeInfo>) => {
+      this.detectChanges(e.data);
+    };
     this._changeTrackerSub = this.subscribeToEvent(
       SceneObjectStateChangedEvent,
       (event: SceneObjectStateChangedEvent) => {
         if (event.payload.changedObject instanceof SceneRefreshPicker) {
           if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'intervals')) {
-            this.detectChanges();
+            this.postChangesMessage();
           }
         }
         if (event.payload.changedObject instanceof SceneGridItem) {
-          this.detectChanges();
+          this.postChangesMessage();
         }
         if (event.payload.changedObject instanceof DashboardScene) {
           if (Object.keys(event.payload.partialUpdate).some((key) => PERSISTED_PROPS.includes(key))) {
-            this.detectChanges();
+            this.postChangesMessage();
           }
         }
         if (event.payload.changedObject instanceof SceneTimeRange) {
-          this.detectChanges();
+          this.postChangesMessage();
         }
         if (event.payload.changedObject instanceof DashboardControls) {
           if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'hideTimeControls')) {
-            this.detectChanges();
+            this.postChangesMessage();
           }
         }
         if (event.payload.changedObject instanceof SceneVariableSet) {
-          this.detectChanges();
+          this.postChangesMessage();
         }
         if (event.payload.changedObject instanceof DashboardAnnotationsDataLayer) {
-          this.detectChanges();
+          this.postChangesMessage();
         }
         if (isSceneVariableInstance(event.payload.changedObject)) {
-          this.detectChanges();
+          this.postChangesMessage();
         }
       }
     );
   }
 
-  private detectChanges() {
+  private postChangesMessage() {
+    console.log('Changes posted');
     if (window.Worker) {
-      // console.log('posting message to worker');
       this._changesWorker?.postMessage({ changed: transformSceneToSaveModel(this), initial: this._initialSaveModel });
     }
-    const { hasChanges, hasTimeChanges, hasVariableValueChanges } = getSaveDashboardChange(this, true, true);
+  }
+
+  private detectChanges(changes: DashboardChangeInfo) {
+    const { hasChanges, hasTimeChanges, hasVariableValueChanges } = changes;
     const hasChangesToSave = hasChanges || hasTimeChanges || hasVariableValueChanges;
 
     if (hasChangesToSave) {
@@ -426,7 +423,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   private stopTrackingChanges() {
+    console.log('Stopping tracking changes');
     this._changeTrackerSub?.unsubscribe();
+    this._changesWorker?.terminate();
   }
 
   public getInitialState(): DashboardSceneState | undefined {
