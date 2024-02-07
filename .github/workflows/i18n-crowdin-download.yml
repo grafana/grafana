@@ -57,6 +57,7 @@ jobs:
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
 
+      # App is not available in test repo
       - name: Generate token
         if: steps.crowdin-download.outputs.pull_request_url
         id: generate_token
@@ -71,10 +72,30 @@ jobs:
         # Crowdin action returns us the URL of the pull request, but we need an ID for the GraphQL API
         # that looks like 'PR_kwDOAOaWjc5mP_GU'
         run: |
-          echo "PULL_REQUEST_ID=$(gh pr view $PULL_REQUEST_URL --json id -q .id)" >> "$GITHUB_ENV"
+          pr_id=$(gh pr view ${{ steps.crowdin-download.outputs.pull_request_url }} --json id -q .id)
+          echo "PULL_REQUEST_ID=$pr_id" >> "$GITHUB_ENV"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PULL_REQUEST_URL: ${{ steps.crowdin-download.outputs.pull_request_url }}
+
+      - name: Get project board ID
+        uses: octokit/graphql-action@v2.x
+        id: get-project-id
+        if: steps.crowdin-download.outputs.pull_request_url
+        with:
+          # Frontend Platform project - https://github.com/orgs/grafana/projects/78
+          org: grafana
+          project_number: 78
+          query: |
+            query getProjectId($org: String!, $project_number: Int!){
+              organization(login: $org) {
+                projectV2(number: $project_number) {
+                  title
+                  id
+                }
+              }
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Add to project board
         uses: octokit/graphql-action@v2.x
@@ -88,10 +109,8 @@ jobs:
                 }
               }
             }
-          # Frontend Platform project ID - from GraphQL API
-          # TODO: get this from the API from the project number or url or something
           variables: |
-            projectid: PVT_kwDOAG3Mbc2Pyw
+            projectid: ${{ fromJson(steps.get-project-id.outputs.data).organization.projectV2.id }}
             prid: ${{ env.PULL_REQUEST_ID }}
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
