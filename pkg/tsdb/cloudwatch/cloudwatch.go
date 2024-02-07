@@ -134,7 +134,7 @@ type cloudWatchExecutor struct {
 
 // instrumentContext adds plugin key-values to the context; later, logger.FromContext(ctx) will provide a logger
 // that adds these values to its output.
-// TODO: this really shouldn't be here!
+// TODO: move this into the sdk (see https://github.com/grafana/grafana/issues/82033)
 func instrumentContext(ctx context.Context, endpoint string, pCtx backend.PluginContext) context.Context {
 	p := []any{"endpoint", endpoint, "pluginId", pCtx.PluginID}
 	if pCtx.DataSourceInstanceSettings != nil {
