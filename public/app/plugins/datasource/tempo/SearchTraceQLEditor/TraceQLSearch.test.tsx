@@ -2,13 +2,13 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { act } from 'react-dom/test-utils';
-import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
 import { config } from '@grafana/runtime';
 
 import { TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
+import { initTemplateSrv } from '../test_utils';
 import { TempoQuery } from '../types';
 
 import TraceQLSearch from './TraceQLSearch';
@@ -43,7 +43,13 @@ jest.mock('../language_provider', () => {
 });
 
 describe('TraceQLSearch', () => {
-  initTemplateSrv('key', []);
+  const expectedValues = {
+    interpolationVar: 'interpolationText',
+    interpolationText: 'interpolationText',
+    interpolationVarWithPipe: 'interpolationTextOne|interpolationTextTwo',
+    scopedInterpolationText: 'scopedInterpolationText',
+  };
+  initTemplateSrv([{ name: 'templateVariable1' }, { name: 'templateVariable2' }], expectedValues);
 
   let user: ReturnType<typeof userEvent.setup>;
 

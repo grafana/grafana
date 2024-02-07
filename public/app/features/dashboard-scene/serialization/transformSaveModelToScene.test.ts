@@ -22,6 +22,7 @@ import {
   SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
+  SceneQueryRunner,
   SceneRefreshPicker,
   SceneTimePicker,
   VizPanel,
@@ -44,9 +45,10 @@ import { DashboardControls } from '../scene/DashboardControls';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
-import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
+import { NEW_LINK } from '../settings/links/utils';
 import { getQueryRunnerFor } from '../utils/utils';
 
+import { buildNewDashboardSaveModel } from './buildNewDashboardSaveModel';
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
 import repeatingRowsAndPanelsDashboardJson from './testfiles/repeating_rows_and_panels.json';
 import {
@@ -71,6 +73,7 @@ describe('transformSaveModelToScene', () => {
           ...defaultTimePickerConfig,
           hidden: true,
         },
+        links: [{ ...NEW_LINK, title: 'Link 1' }],
         templating: {
           list: [
             {
@@ -110,6 +113,8 @@ describe('transformSaveModelToScene', () => {
 
       expect(scene.state.title).toBe('test');
       expect(scene.state.uid).toBe('test-uid');
+      expect(scene.state.links).toHaveLength(1);
+      expect(scene.state.links![0].title).toBe('Link 1');
       expect(scene.state?.$timeRange?.state.value.raw).toEqual(dash.time);
       expect(scene.state?.$timeRange?.state.fiscalYearStartMonth).toEqual(2);
       expect(scene.state?.$timeRange?.state.timeZone).toEqual('America/New_York');
@@ -160,6 +165,16 @@ describe('transformSaveModelToScene', () => {
 
       const scene = createDashboardSceneFromDashboardModel(oldModel);
       expect(scene.state.$variables?.state.variables).toBeDefined();
+    });
+  });
+
+  describe('When creating a new dashboard', () => {
+    it('should initialize the DashboardScene in edit mode and dirty', () => {
+      const rsp = buildNewDashboardSaveModel();
+      const scene = transformSaveModelToScene(rsp);
+
+      expect(scene.state.isEditing).toBe(true);
+      expect(scene.state.isDirty).toBe(true);
     });
   });
 
@@ -382,7 +397,9 @@ describe('transformSaveModelToScene', () => {
       };
 
       const { vizPanel } = buildGridItemForTest(panel);
-      expect(vizPanel.state.$data).toBeInstanceOf(ShareQueryDataProvider);
+      expect(vizPanel.state.$data).toBeInstanceOf(SceneDataTransformer);
+      expect(vizPanel.state.$data?.state.$data).toBeInstanceOf(SceneQueryRunner);
+      expect((vizPanel.state.$data?.state.$data as SceneQueryRunner).state.queries).toEqual(panel.targets);
     });
 
     it('should not set SceneQueryRunner for plugins with skipDataQuery', () => {

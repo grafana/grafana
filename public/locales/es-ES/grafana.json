@@ -81,6 +81,7 @@
     "folder-picker": {
       "accessible-label": "Seleccionar carpeta: {{ label }} seleccionada actualmente",
       "button-label": "Seleccionar carpeta",
+      "clear-selection": "",
       "empty-message": "No se ha encontrado ninguna carpeta",
       "error-title": "Error al cargar las carpetas",
       "search-placeholder": "Buscar carpetas",
@@ -238,6 +239,10 @@
       "visualization": "Visualización",
       "widget": "«Widget»"
     },
+    "alert-rules-drawer": {
+      "redirect-link": "",
+      "subtitle": ""
+    },
     "empty": {
       "add-library-panel-body": "Añadir las visualizaciones que se comparten con otros tableros.",
       "add-library-panel-button": "Añadir panel de biblioteca",
@@ -306,7 +311,7 @@
     },
     "toolbar": {
       "add": "Añadir",
-      "add-panel": "Añadir panel",
+      "alert-rules": "",
       "mark-favorite": "Marcar como favorito",
       "open-original": "Abrir el panel de control original",
       "playlist-next": "Ir al siguiente panel de control",
@@ -316,6 +321,7 @@
       "save": "Guardar panel de control",
       "settings": "Ajustes del panel de control",
       "share": "Compartir panel o panel de control",
+      "share-button": "",
       "unmark-favorite": "Deshacer marca como favorito"
     },
     "validation": {
@@ -365,6 +371,7 @@
       "title-label": "Título"
     },
     "json-editor": {
+      "apply-button": "",
       "save-button": "Guardar cambios",
       "subtitle": "El siguiente modelo JSON es la estructura de datos que define el tablero. Incluye ajustes del tablero, ajustes del panel, diseño, consultas, etc.",
       "title": "Modelo JSON"
@@ -416,9 +423,6 @@
     "datasource-add-button": {
       "label": "Añadir nueva fuente de datos"
     }
-  },
-  "drawer": {
-    "close": ""
   },
   "explore": {
     "add-to-dashboard": "Añadir al tablero",
@@ -559,6 +563,9 @@
     "loading": "Cargando carpetas..."
   },
   "grafana-ui": {
+    "drawer": {
+      "close": ""
+    },
     "modal": {
       "close-tooltip": "Cerrar"
     },
@@ -590,6 +597,7 @@
     "shortcuts-description": {
       "change-theme": "Cambiar tema",
       "collapse-all-rows": "Contraer todas las filas",
+      "copy-time-range": "",
       "dashboard-settings": "Ajustes del panel de control",
       "duplicate-panel": "Duplicar panel",
       "exit-edit/setting-views": "Salir de las opciones de edición/ajustes",
@@ -603,6 +611,7 @@
       "move-time-range-forward": "Mover el rango de tiempo hacia delante",
       "open-search": "Abrir búsqueda",
       "open-shared-modal": "Abrir el modo de panel compartido",
+      "paste-time-range": "",
       "refresh-all-panels": "Actualizar todos los paneles",
       "remove-panel": "Eliminar panel",
       "save-dashboard": "Guardar panel de control",
@@ -976,6 +985,7 @@
     "megamenu": {
       "close": "Cerrar menú",
       "dock": "Anclar el menú",
+      "list-label": "",
       "undock": "Desanclar el menú"
     },
     "toolbar": {
@@ -1077,6 +1087,120 @@
       "passwords-must-match": "Las contraseñas deben coincidir"
     }
   },
+  "public-dashboard": {
+    "acknowledgment-checkboxes": {
+      "ack-title": "",
+      "data-src-ack-desc": "",
+      "data-src-ack-tooltip": "",
+      "public-ack-desc": "",
+      "public-ack-tooltip": "",
+      "usage-ack-desc": "",
+      "usage-ack-desc-tooltip": ""
+    },
+    "config": {
+      "can-view-dashboard-radio-button-label": "",
+      "copy-button": "",
+      "dashboard-url-field-label": "",
+      "email-share-type-option-label": "",
+      "pause-sharing-dashboard-label": "",
+      "public-share-type-option-label": "",
+      "revoke-public-URL-button": "",
+      "revoke-public-URL-button-title": "",
+      "settings-title": ""
+    },
+    "create-page": {
+      "generate-public-url-button": "",
+      "unsupported-features-desc": "",
+      "welcome-title": ""
+    },
+    "delete-modal": {
+      "revoke-nonorphaned-body-text": "",
+      "revoke-orphaned-body-text": "",
+      "revoke-title": ""
+    },
+    "email-sharing": {
+      "input-invalid-email-text": "",
+      "input-required-email-text": "",
+      "invite-button": "",
+      "invite-field-desc": "",
+      "invite-field-label": "",
+      "resend-button": "",
+      "resend-button-title": "",
+      "revoke-button": "",
+      "revoke-button-title": ""
+    },
+    "modal-alerts": {
+      "no-upsert-perm-alert-desc": "",
+      "no-upsert-perm-alert-title": "",
+      "save-dashboard-changes-alert-title": "",
+      "unsupport-data-source-alert-readmore-link": "",
+      "unsupported-data-source-alert-desc": "",
+      "unsupported-data-source-alert-title": "",
+      "unsupported-template-variable-alert-desc": "",
+      "unsupported-template-variable-alert-title": ""
+    },
+    "settings-bar-header": {
+      "collapse-settings-tooltip": "",
+      "expand-settings-tooltip": ""
+    },
+    "settings-configuration": {
+      "default-time-range-label": "",
+      "default-time-range-label-desc": "",
+      "show-annotations-label": "",
+      "show-annotations-label-desc": "",
+      "time-range-picker-label": "",
+      "time-range-picker-label-desc": ""
+    },
+    "settings-summary": {
+      "annotations-hide-text": "",
+      "annotations-show-text": "",
+      "time-range-picker-disabled-text": "",
+      "time-range-picker-enabled-text": "",
+      "time-range-text": ""
+    }
+  },
+  "public-dashboard-list": {
+    "button": {
+      "config-button-tooltip": "",
+      "revoke-button-text": "",
+      "revoke-button-tooltip": "",
+      "view-button-tooltip": ""
+    },
+    "dashboard-title": {
+      "orphaned-title": "",
+      "orphaned-tooltip": ""
+    },
+    "toggle": {
+      "pause-sharing-toggle-text": ""
+    }
+  },
+  "public-dashboard-users-access-list": {
+    "dashboard-modal": {
+      "loading-text": "",
+      "open-dashboard-list-text": "",
+      "public-dashboard-link": "",
+      "public-dashboard-setting": ""
+    },
+    "delete-user-modal": {
+      "delete-user-button-text": "",
+      "delete-user-cancel-button": "",
+      "delete-user-revoke-access-button": "",
+      "revoke-access-title": "",
+      "revoke-user-access-modal-desc-line1": "",
+      "revoke-user-access-modal-desc-line2": ""
+    },
+    "modal": {
+      "dashboard-modal-title": ""
+    },
+    "table-header": {
+      "activated-label": "",
+      "activated-tooltip": "",
+      "email-label": "",
+      "last-active-label": "",
+      "origin-label": "",
+      "role-label": ""
+    }
+  },
   "query-operation": {
     "header": {
       "collapse-row": "Contraer la fila de la consulta",
@@ -1111,6 +1235,12 @@
       "interval-selected": "Establecer intervalo de actualización automática",
       "turned-off": "Actualización automática desactivada"
     }
+  },
+  "return-to-previous": {
+    "button": {
+      "label": ""
+    },
+    "dismissable-button": ""
   },
   "search": {
     "actions": {
@@ -1206,6 +1336,7 @@
       "link": "Enlace",
       "panel-embed": "Incrustar",
       "public-dashboard": "Tablero público",
+      "public-dashboard-title": "",
       "snapshot": "Instantánea"
     },
     "theme-picker": {
@@ -1284,6 +1415,13 @@
       "empty-recent-list-info": "Parece que no ha utilizado antes este selector de tiempo. En cuanto introduzca algún intervalo de tiempo, los intervalos que haya usado recientemente aparecerán aquí.",
       "filter-placeholder": "Buscar intervalos rápidos"
     },
+    "copy-paste": {
+      "copy-success-message": "",
+      "default-error-message": "",
+      "default-error-title": "",
+      "tooltip-copy": "",
+      "tooltip-paste": ""
+    },
     "footer": {
       "change-settings-button": "Cambiar ajustes de tiempo",
       "fiscal-year-option": "Ejercicio fiscal",
@@ -1353,6 +1491,11 @@
   },
   "user-sessions": {
     "loading": "Cargando sesiones..."
+  },
+  "users-access-list": {
+    "tabs": {
+      "public-dashboard-users-tab-title": ""
+    }
   },
   "variable": {
     "adhoc": {

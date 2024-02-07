@@ -114,7 +114,7 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 		}
 
 		// register a new proxy driver if the secure socks proxy is enabled
-		proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo)
+		proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo, settings.Name, settings.Type)
 		if sdkproxy.New(proxyOpts).SecureSocksProxyEnabled() {
 			URL, err := ParseURL(dsInfo.URL, logger)
 			if err != nil {
@@ -282,7 +282,7 @@ func (t *mssqlQueryResultTransformer) TransformQueryError(logger log.Logger, err
 	// ref https://github.com/denisenkom/go-mssqldb/blob/045585d74f9069afe2e115b6235eb043c8047043/tds.go#L904
 	if strings.HasPrefix(strings.ToLower(err.Error()), "unable to open tcp connection with host") {
 		logger.Error("Query error", "error", err)
-		return sqleng.ErrConnectionFailed.Errorf("failed to connect to server - %s", t.userError)
+		return fmt.Errorf("failed to connect to server - %s", t.userError)
 	}
 
 	return err

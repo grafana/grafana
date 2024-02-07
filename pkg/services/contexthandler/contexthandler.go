@@ -25,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, features *featuremgmt.FeatureManager, authnService authn.Service,
+func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, features featuremgmt.FeatureToggles, authnService authn.Service,
 ) *ContextHandler {
 	return &ContextHandler{
 		Cfg:          cfg,
@@ -39,7 +39,7 @@ func ProvideService(cfg *setting.Cfg, tracer tracing.Tracer, features *featuremg
 type ContextHandler struct {
 	Cfg          *setting.Cfg
 	tracer       tracing.Tracer
-	features     *featuremgmt.FeatureManager
+	features     featuremgmt.FeatureToggles
 	authnService authn.Service
 }
 
@@ -208,6 +208,9 @@ func WithAuthHTTPHeaders(ctx context.Context, cfg *setting.Cfg) context.Context 
 
 	// used by basic auth, api keys and potentially jwt auth
 	list.Items = append(list.Items, "Authorization")
+
+	// remove X-Grafana-Device-Id as it is only used for auth in authn clients.
+	list.Items = append(list.Items, "X-Grafana-Device-Id")
 
 	// if jwt is enabled we add it to the list. We can ignore in case it is set to Authorization
 	if cfg.JWTAuthEnabled && cfg.JWTAuthHeaderName != "" && cfg.JWTAuthHeaderName != "Authorization" {

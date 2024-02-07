@@ -382,7 +382,7 @@ func createService(t testing.TB, cfg *setting.Cfg, store db.DB, statsService sta
 		store,
 		&mockSocial{},
 		&pluginstore.FakePluginStore{},
-		featuremgmt.WithFeatures("feature1", "feature2"),
+		featuremgmt.WithManager("feature1", "feature2"),
 		o.datasources,
 		httpclient.NewProvider(sdkhttpclient.ProviderOptions{Middlewares: []sdkhttpclient.Middleware{}}),
 	)

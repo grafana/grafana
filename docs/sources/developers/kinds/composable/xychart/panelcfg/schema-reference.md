@@ -192,10 +192,12 @@ TODO docs
 
 TODO docs
 
-| Property | Type   | Required | Default | Description                                                   |
-|----------|--------|----------|---------|---------------------------------------------------------------|
-| `mode`   | string | **Yes**  |         | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
-| `sort`   | string | **Yes**  |         | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
+| Property    | Type   | Required | Default | Description                                                   |
+|-------------|--------|----------|---------|---------------------------------------------------------------|
+| `mode`      | string | **Yes**  |         | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
+| `sort`      | string | **Yes**  |         | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
+| `maxHeight` | number | No       |         |                                                               |
+| `maxWidth`  | number | No       |         |                                                               |
 
 ### ScatterSeriesConfig
 
@@ -212,6 +214,7 @@ It extends [FieldConfig](#fieldconfig).
 | `axisSoftMax`       | number                                              | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
 | `axisSoftMin`       | number                                              | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
 | `axisWidth`         | number                                              | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
+| `frame`             | number                                              | No       |         |                                                                                                                                           |
 | `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>TODO docs                                                                              |
 | `labelValue`        | [TextDimensionConfig](#textdimensionconfig)         | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*                                                                                            |
 | `label`             | string                                              | No       |         | *(Inherited from [FieldConfig](#fieldconfig))*<br/>TODO docs<br/>Possible values are: `auto`, `never`, `always`.                          |

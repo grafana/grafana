@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
 
 import PromQueryField from '../../components/PromQueryField';
@@ -18,7 +19,10 @@ export function PromQueryCodeEditor(props: Props) {
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.wrapper}>
+    <div
+      data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.queryField}
+      className={styles.wrapper}
+    >
       <PromQueryField
         datasource={datasource}
         query={query}

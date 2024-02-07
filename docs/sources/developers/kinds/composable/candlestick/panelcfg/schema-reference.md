@@ -210,17 +210,18 @@ TODO docs
 
 ### Options
 
-It extends [OptionsWithLegend](#optionswithlegend).
+It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#optionswithtooltip).
 
-| Property           | Type                                    | Required | Default | Description                                                              |
-|--------------------|-----------------------------------------|----------|---------|--------------------------------------------------------------------------|
-| `candleStyle`      | string                                  | **Yes**  |         | Sets the style of the candlesticks                                       |
-| `colorStrategy`    | string                                  | **Yes**  |         | Sets the color strategy for the candlesticks                             |
-| `colors`           | [CandlestickColors](#candlestickcolors) | **Yes**  |         |                                                                          |
-| `fields`           | [object](#fields)                       | **Yes**  | `map[]` | Map fields to appropriate dimension                                      |
-| `legend`           | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs |
-| `mode`             | string                                  | **Yes**  |         | Sets which dimensions are used for the visualization                     |
-| `includeAllFields` | boolean                                 | No       | `false` | When enabled, all fields will be sent to the graph                       |
+| Property           | Type                                    | Required | Default | Description                                                                |
+|--------------------|-----------------------------------------|----------|---------|----------------------------------------------------------------------------|
+| `candleStyle`      | string                                  | **Yes**  |         | Sets the style of the candlesticks                                         |
+| `colorStrategy`    | string                                  | **Yes**  |         | Sets the color strategy for the candlesticks                               |
+| `colors`           | [CandlestickColors](#candlestickcolors) | **Yes**  |         |                                                                            |
+| `fields`           | [object](#fields)                       | **Yes**  | `map[]` | Map fields to appropriate dimension                                        |
+| `legend`           | [VizLegendOptions](#vizlegendoptions)   | **Yes**  |         | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs   |
+| `mode`             | string                                  | **Yes**  |         | Sets which dimensions are used for the visualization                       |
+| `tooltip`          | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | *(Inherited from [OptionsWithTooltip](#optionswithtooltip))*<br/>TODO docs |
+| `includeAllFields` | boolean                                 | No       | `false` | When enabled, all fields will be sent to the graph                         |
 
 ### OptionsWithLegend
 
@@ -245,6 +246,25 @@ TODO docs
 | `sortBy`      | string   | No       |         |                                                                                                                                         |
 | `sortDesc`    | boolean  | No       |         |                                                                                                                                         |
 | `width`       | number   | No       |         |                                                                                                                                         |
+
+### OptionsWithTooltip
+
+TODO docs
+
+| Property  | Type                                    | Required | Default | Description |
+|-----------|-----------------------------------------|----------|---------|-------------|
+| `tooltip` | [VizTooltipOptions](#viztooltipoptions) | **Yes**  |         | TODO docs   |
+
+### VizTooltipOptions
+
+TODO docs
+
+| Property    | Type   | Required | Default | Description                                                   |
+|-------------|--------|----------|---------|---------------------------------------------------------------|
+| `mode`      | string | **Yes**  |         | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
+| `sort`      | string | **Yes**  |         | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
+| `maxHeight` | number | No       |         |                                                               |
+| `maxWidth`  | number | No       |         |                                                               |
 
 ### Fields
 

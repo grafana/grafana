@@ -133,10 +133,8 @@ export function getConfig(opts: TimelineCoreOptions) {
     value: number | null,
     discrete: boolean
   ) {
-    // do not render super small boxes
-    if (boxWidth < 1) {
-      return;
-    }
+    // clamp width to allow small boxes to be rendered
+    boxWidth = Math.max(1, boxWidth);
 
     const valueColor = getValueColor(seriesIdx + 1, value);
     const fieldConfig = getFieldConfig(seriesIdx);

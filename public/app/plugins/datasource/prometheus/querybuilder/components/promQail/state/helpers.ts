@@ -274,8 +274,8 @@ function guessMetricFamily(metric: string): string {
 export async function isLLMPluginEnabled(): Promise<boolean> {
   // Check if the LLM plugin is enabled.
   // If not, we won't be able to make requests, so return early.
-  const openaiEnabled = llms.openai.enabled().then((response) => response.ok);
-  const vectorEnabled = llms.vector.enabled().then((response) => response.ok);
+  const openaiEnabled = llms.openai.health().then((response) => response.ok);
+  const vectorEnabled = llms.vector.health().then((response) => response.ok);
   // combine 2 promises
   return Promise.all([openaiEnabled, vectorEnabled]).then((results) => {
     return results.every((result) => result);
@@ -346,7 +346,7 @@ export async function promQailSuggest(
     };
 
     // get all available labels
-    const metricLabels = await datasource.languageProvider.fetchSeriesLabelsMatch(query.metric);
+    const metricLabels = await datasource.languageProvider.fetchLabelsWithMatch(query.metric);
 
     let feedTheAI: SuggestionBody = {
       metric: query.metric,

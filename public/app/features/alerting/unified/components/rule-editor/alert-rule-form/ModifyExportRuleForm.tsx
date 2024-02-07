@@ -97,10 +97,10 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
                 />
 
                 {/* Step 4 & 5 */}
-                {/* Annotations only for cloud and Grafana */}
-                <AnnotationsStep />
                 {/* Notifications step*/}
                 <NotificationsStep alertUid={alertUid} />
+                {/* Annotations only for cloud and Grafana */}
+                <AnnotationsStep />
               </Stack>
             </CustomScrollbar>
           </div>
@@ -111,14 +111,14 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
   );
 }
 
-const useGetGroup = (nameSpace: string, group: string) => {
+const useGetGroup = (nameSpaceUID: string, group: string) => {
   const { dsFeatures } = useDataSourceFeatures(GRAFANA_RULES_SOURCE_NAME);
 
   const rulerConfig = dsFeatures?.rulerConfig;
 
   const targetGroup = useAsync(async () => {
-    return rulerConfig ? await fetchRulerRulesGroup(rulerConfig, nameSpace, group) : undefined;
-  }, [rulerConfig, nameSpace, group]);
+    return rulerConfig ? await fetchRulerRulesGroup(rulerConfig, nameSpaceUID, group) : undefined;
+  }, [rulerConfig, nameSpaceUID, group]);
 
   return targetGroup;
 };
@@ -166,7 +166,7 @@ export const getPayloadToExport = (
 };
 
 const useGetPayloadToExport = (values: RuleFormValues, uid: string) => {
-  const rulerGroupDto = useGetGroup(values.folder?.title ?? '', values.group);
+  const rulerGroupDto = useGetGroup(values.folder?.uid ?? '', values.group);
   const payload: ModifyExportPayload = useMemo(() => {
     return getPayloadToExport(uid, values, rulerGroupDto?.value);
   }, [uid, rulerGroupDto, values]);
@@ -182,11 +182,11 @@ const GrafanaRuleDesignExportPreview = ({
   const [getExport, exportData] = alertRuleApi.endpoints.exportModifiedRuleGroup.useMutation();
   const { loadingGroup, payload } = useGetPayloadToExport(exportValues, uid);
 
-  const nameSpace = exportValues.folder?.title ?? '';
+  const nameSpaceUID = exportValues.folder?.uid ?? '';
 
   useEffect(() => {
-    !loadingGroup && getExport({ payload, format: exportFormat, nameSpace: nameSpace });
-  }, [nameSpace, exportFormat, payload, getExport, loadingGroup]);
+    !loadingGroup && getExport({ payload, format: exportFormat, nameSpaceUID });
+  }, [nameSpaceUID, exportFormat, payload, getExport, loadingGroup]);
 
   if (exportData.isLoading) {
     return <LoadingPlaceholder text="Loading...." />;
