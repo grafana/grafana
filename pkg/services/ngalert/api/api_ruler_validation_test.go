@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"path"
 	"strconv"
 	"testing"
 	"time"
@@ -84,9 +85,10 @@ func validGroup(cfg *setting.UnifiedAlertingSettings, rules ...apimodels.Postabl
 }
 
 func randFolder() *folder.Folder {
+	title := "TEST-FOLDER-" + util.GenerateShortUID()
 	return &folder.Folder{
 		UID:   util.GenerateShortUID(),
-		Title: "TEST-FOLDER-" + util.GenerateShortUID(),
+		Title: title,
 		// URL:       "",
 		// Version:   0,
 		Created: time.Time{},
@@ -94,6 +96,8 @@ func randFolder() *folder.Folder {
 		// UpdatedBy: 0,
 		// CreatedBy: 0,
 		// HasACL:    false,
+		ParentUID: uuid.NewString(),
+		Fullpath:  path.Join("parent-folder", title),
 	}
 }
 

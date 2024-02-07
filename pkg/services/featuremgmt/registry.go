@@ -204,14 +204,6 @@ var (
 			Created:     time.Date(2022, time.June, 20, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:         "dockedMegaMenu",
-			Description:  "Enable support for a persistent (docked) navigation menu",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaFrontendPlatformSquad,
-			Created:      time.Date(2023, time.September, 18, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:         "returnToPrevious",
 			Description:  "Enables the return to previous context functionality",
 			Stage:        FeatureStageExperimental,
@@ -510,17 +502,6 @@ var (
 			Created:        time.Date(2023, time.April, 14, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:              "advancedDataSourcePicker",
-			Description:       "Enable a new data source picker with contextual information, recently used order and advanced mode",
-			Stage:             FeatureStageGeneralAvailability,
-			FrontendOnly:      true,
-			Expression:        "true", // enabled by default
-			Owner:             grafanaDashboardsSquad,
-			AllowSelfServe:    false,
-			HideFromAdminPage: true,
-			Created:           time.Date(2023, time.April, 14, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:         "faroDatasourceSelector",
 			Description:  "Enable the data source selector within the Frontend Apps section of the Frontend Observability",
 			Stage:        FeatureStagePublicPreview,
@@ -731,7 +712,7 @@ var (
 		{
 			Name:              "splitScopes",
 			Description:       "Support faster dashboard and folder search by splitting permission scopes into parts",
-			Stage:             FeatureStageGeneralAvailability,
+			Stage:             FeatureStageDeprecated,
 			FrontendOnly:      false,
 			Expression:        "true", // enabled by default
 			Owner:             identityAccessTeam,
@@ -819,14 +800,6 @@ var (
 			Created:     time.Date(2023, time.September, 7, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:         "requestInstrumentationStatusSource",
-			Description:  "Include a status source label for request metrics and logs",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaPluginsPlatformSquad,
-			Created:      time.Date(2023, time.September, 11, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:            "libraryPanelRBAC",
 			Description:     "Enables RBAC support for library panels",
 			Stage:           FeatureStageExperimental,
@@ -878,15 +851,6 @@ var (
 			Created:      time.Date(2023, time.September, 21, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:            "httpSLOLevels",
-			Description:     "Adds SLO level to http request metrics",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           hostedGrafanaTeam,
-			RequiresRestart: true,
-			Created:         time.Date(2023, time.September, 22, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:        "idForwarding",
 			Description: "Generate signed id token for identity that can be forwarded to plugins and external services",
 			Stage:       FeatureStageExperimental,
@@ -903,11 +867,12 @@ var (
 			Created:        time.Date(2023, time.September, 27, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:        "externalServiceAccounts",
-			Description: "Automatic service account and token setup for plugins",
-			Stage:       FeatureStagePrivatePreview,
-			Owner:       identityAccessTeam,
-			Created:     time.Date(2023, time.September, 28, 12, 0, 0, 0, time.UTC),
+			Name:              "externalServiceAccounts",
+			Description:       "Automatic service account and token setup for plugins",
+			HideFromAdminPage: true,
+			Stage:             FeatureStagePublicPreview,
+			Owner:             identityAccessTeam,
+			Created:           time.Date(2023, time.September, 28, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "panelMonitoring",
@@ -951,7 +916,7 @@ var (
 		},
 		{
 			Name:            "kubernetesSnapshots",
-			Description:     "Use the kubernetes API in the frontend to support playlists",
+			Description:     "Routes snapshot requests from /api to the /apis endpoint",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing

@@ -513,8 +513,7 @@ func GetRuleExtraLabels(l log.Logger, rule *models.AlertRule, folderTitle string
 	extraLabels[alertingModels.RuleUIDLabel] = rule.UID
 
 	if includeFolder {
-		// TODO remove when title will contain the full path https://github.com/grafana/grafana/issues/80324
-		extraLabels[models.FolderTitleLabel] = models.GetNamespaceTitleFromKey(folderTitle)
+		extraLabels[models.FolderTitleLabel] = folderTitle
 	}
 
 	if len(rule.NotificationSettings) > 0 {

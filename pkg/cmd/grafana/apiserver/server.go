@@ -6,22 +6,17 @@ import (
 	"net"
 	"path"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/client-go/tools/clientcmd"
 	netutils "k8s.io/utils/net"
 
-	"github.com/grafana/grafana/pkg/registry/apis/example"
-	"github.com/grafana/grafana/pkg/registry/apis/featuretoggle"
-	"github.com/grafana/grafana/pkg/registry/apis/query"
-	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
-	"github.com/grafana/grafana/pkg/server"
 	grafanaAPIServer "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -31,6 +26,7 @@ const (
 
 // APIServerOptions contains the state for the apiserver
 type APIServerOptions struct {
+	factory            standalone.APIServerFactory
 	builders           []builder.APIGroupBuilder
 	RecommendedOptions *options.RecommendedOptions
 	AlternateDNS       []string
@@ -46,36 +42,18 @@ func newAPIServerOptions(out, errOut io.Writer) *APIServerOptions {
 	}
 }
 
-func (o *APIServerOptions) loadAPIGroupBuilders(args []string) error {
+func (o *APIServerOptions) loadAPIGroupBuilders(apis []schema.GroupVersion) error {
 	o.builders = []builder.APIGroupBuilder{}
-	for _, g := range args {
-		switch g {
-		// No dependencies for testing
-		case "example.grafana.app":
-			o.builders = append(o.builders, example.NewTestingAPIBuilder())
-		// Only works with testdata
-		case "query.grafana.app":
-			o.builders = append(o.builders, query.NewQueryAPIBuilder(
-				featuremgmt.WithFeatures(),
-				runner.NewDummyTestRunner(),
-				runner.NewDummyRegistry(),
-			))
-		case "featuretoggle.grafana.app":
-			features := featuremgmt.WithFeatureManager(setting.FeatureMgmtSettings{}, nil) // none... for now
-			o.builders = append(o.builders, featuretoggle.NewFeatureFlagAPIBuilder(features))
-		case "testdata.datasource.grafana.app":
-			ds, err := server.InitializeDataSourceAPIServer(g)
-			if err != nil {
-				return err
-			}
-			o.builders = append(o.builders, ds)
-		default:
-			return fmt.Errorf("unknown group: %s", g)
+	for _, gv := range apis {
+		api, err := o.factory.MakeAPIServer(gv)
+		if err != nil {
+			return err
 		}
+		o.builders = append(o.builders, api)
 	}
 
 	if len(o.builders) < 1 {
-		return fmt.Errorf("expected group name(s) in the command line arguments")
+		return fmt.Errorf("no apis matched ")
 	}
 
 	// Install schemas

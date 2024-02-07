@@ -4511,7 +4511,6 @@
    "type": "object"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -4535,7 +4534,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -4695,13 +4693,13 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4750,6 +4748,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -4900,7 +4899,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -5057,61 +5055,6 @@
   "version": "1.1.0"
  },
  "paths": {
-  "/v1/notifications/time-intervals": {
-   "get": {
-    "description": "Get all the time intervals",
-    "operationId": "RouteNotificationsGetTimeIntervals",
-    "responses": {
-     "200": {
-      "$ref": "#/responses/GetAllIntervalsResponse"
-     },
-     "403": {
-      "description": "ForbiddenError",
-      "schema": {
-       "$ref": "#/definitions/ForbiddenError"
-      }
-     }
-    },
-    "tags": [
-     "notifications"
-    ]
-   }
-  },
-  "/v1/notifications/time-intervals/{name}": {
-   "get": {
-    "operationId": "RouteNotificationsGetTimeInterval",
-    "parameters": [
-     {
-      "description": "Time interval name",
-      "in": "path",
-      "name": "name",
-      "required": true,
-      "type": "string"
-     }
-    ],
-    "responses": {
-     "200": {
-      "$ref": "#/responses/GetIntervalsByNameResponse"
-     },
-     "403": {
-      "description": "ForbiddenError",
-      "schema": {
-       "$ref": "#/definitions/ForbiddenError"
-      }
-     },
-     "404": {
-      "description": "NotFound",
-      "schema": {
-       "$ref": "#/definitions/NotFound"
-      }
-     }
-    },
-    "summary": "Get a time interval by name.",
-    "tags": [
-     "notifications"
-    ]
-   }
-  },
   "/v1/provisioning/alert-rules": {
    "get": {
     "operationId": "RouteGetAlertRules",
@@ -6166,6 +6109,21 @@
    "description": "",
    "schema": {
     "$ref": "#/definitions/GettableTimeIntervals"
+   }
+  },
+  "GetReceiverResponse": {
+   "description": "",
+   "schema": {
+    "$ref": "#/definitions/GettableApiReceiver"
+   }
+  },
+  "GetReceiversResponse": {
+   "description": "",
+   "schema": {
+    "items": {
+     "$ref": "#/definitions/GettableApiReceiver"
+    },
+    "type": "array"
    }
   },
   "GettableHistoricUserConfigs": {
