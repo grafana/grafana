@@ -7,7 +7,7 @@ export interface Props {}
 
 export const EmptyState = ({}: Props) => {
   return (
-    <Box paddingTop={8} paddingBottom={8}>
+    <Box paddingY={8}>
       <Stack direction="column" alignItems="center">
         <img src={'public/img/grot-not-found.svg'} width="200px" alt="grot" />
         <Text variant="h5">
