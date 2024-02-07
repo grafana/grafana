@@ -2,23 +2,27 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
 
 import { DismissableButton } from './DismissableButton';
 
 export interface ReturnToPreviousProps {
-  href: string;
   title: string;
+  href: string;
 }
 
 export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
   const styles = useStyles2(getStyles);
+  const { chrome } = useGrafana();
   const handleOnClick = () => {
-    console.log('Going to...', href);
+    locationService.push(href);
+    chrome.clearReturnToPrevious();
   };
   const handleOnDismiss = () => {
-    console.log('Closing button');
+    chrome.clearReturnToPrevious();
   };
 
   return (
@@ -41,6 +45,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     zIndex: theme.zIndex.portal,
     position: 'fixed',
     bottom: theme.spacing.x4,
+    boxShadow: theme.shadows.z3,
   }),
 });
 

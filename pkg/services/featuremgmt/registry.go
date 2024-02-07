@@ -59,7 +59,6 @@ var (
 			Name:              "publicDashboardsEmailSharing",
 			Description:       "Enables public dashboard sharing to be restricted to only allowed emails",
 			Stage:             FeatureStagePublicPreview,
-			RequiresLicense:   true,
 			Owner:             grafanaSharingSquad,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
@@ -205,14 +204,6 @@ var (
 			Created:     time.Date(2022, time.June, 20, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:         "dockedMegaMenu",
-			Description:  "Enable support for a persistent (docked) navigation menu",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaFrontendPlatformSquad,
-			Created:      time.Date(2023, time.September, 18, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:         "returnToPrevious",
 			Description:  "Enables the return to previous context functionality",
 			Stage:        FeatureStageExperimental,
@@ -266,15 +257,6 @@ var (
 			Created:        time.Date(2022, time.August, 27, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:           "cloudwatchNewRegionsHandler",
-			Description:    "Refactor of /regions endpoint, no user-facing changes",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true", // enabled by default
-			Owner:          awsDatasourcesSquad,
-			AllowSelfServe: true,
-			Created:        time.Date(2023, time.September, 25, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:        "showDashboardValidationWarnings",
 			Description: "Show warnings when dashboards do not validate against the schema",
 			Stage:       FeatureStageExperimental,
@@ -312,14 +294,6 @@ var (
 			Expression:     "true", // enabled by default
 			AllowSelfServe: true,
 			Created:        time.Date(2023, time.July, 24, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:           "disablePrometheusExemplarSampling",
-			Description:    "Disable Prometheus exemplar sampling",
-			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaObservabilityMetricsSquad,
-			AllowSelfServe: true,
-			Created:        time.Date(2022, time.December, 19, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "alertingBacktesting",
@@ -406,6 +380,14 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaObservabilityMetricsSquad,
 			Created:     time.Date(2023, time.November, 29, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "influxdbRunQueriesInParallel",
+			Description:  "Enables running InfluxDB Influxql queries in parallel",
+			Stage:        FeatureStagePrivatePreview,
+			FrontendOnly: false,
+			Owner:        grafanaObservabilityMetricsSquad,
+			Created:      time.Date(2024, time.January, 29, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:           "clientTokenRotation",
@@ -518,17 +500,6 @@ var (
 			Expression:     "true", // enabled by default
 			AllowSelfServe: true,
 			Created:        time.Date(2023, time.April, 14, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:              "advancedDataSourcePicker",
-			Description:       "Enable a new data source picker with contextual information, recently used order and advanced mode",
-			Stage:             FeatureStageGeneralAvailability,
-			FrontendOnly:      true,
-			Expression:        "true", // enabled by default
-			Owner:             grafanaDashboardsSquad,
-			AllowSelfServe:    false,
-			HideFromAdminPage: true,
-			Created:           time.Date(2023, time.April, 14, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "faroDatasourceSelector",
@@ -741,7 +712,7 @@ var (
 		{
 			Name:              "splitScopes",
 			Description:       "Support faster dashboard and folder search by splitting permission scopes into parts",
-			Stage:             FeatureStageGeneralAvailability,
+			Stage:             FeatureStageDeprecated,
 			FrontendOnly:      false,
 			Expression:        "true", // enabled by default
 			Owner:             identityAccessTeam,
@@ -829,14 +800,6 @@ var (
 			Created:     time.Date(2023, time.September, 7, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:         "requestInstrumentationStatusSource",
-			Description:  "Include a status source label for request metrics and logs",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaPluginsPlatformSquad,
-			Created:      time.Date(2023, time.September, 11, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:            "libraryPanelRBAC",
 			Description:     "Enables RBAC support for library panels",
 			Stage:           FeatureStageExperimental,
@@ -888,15 +851,6 @@ var (
 			Created:      time.Date(2023, time.September, 21, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:            "httpSLOLevels",
-			Description:     "Adds SLO level to http request metrics",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           hostedGrafanaTeam,
-			RequiresRestart: true,
-			Created:         time.Date(2023, time.September, 22, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:        "idForwarding",
 			Description: "Generate signed id token for identity that can be forwarded to plugins and external services",
 			Stage:       FeatureStageExperimental,
@@ -913,11 +867,12 @@ var (
 			Created:        time.Date(2023, time.September, 27, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:        "externalServiceAccounts",
-			Description: "Automatic service account and token setup for plugins",
-			Stage:       FeatureStagePrivatePreview,
-			Owner:       identityAccessTeam,
-			Created:     time.Date(2023, time.September, 28, 12, 0, 0, 0, time.UTC),
+			Name:              "externalServiceAccounts",
+			Description:       "Automatic service account and token setup for plugins",
+			HideFromAdminPage: true,
+			Stage:             FeatureStagePublicPreview,
+			Owner:             identityAccessTeam,
+			Created:           time.Date(2023, time.September, 28, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "panelMonitoring",
@@ -961,11 +916,20 @@ var (
 		},
 		{
 			Name:            "kubernetesSnapshots",
-			Description:     "Use the kubernetes API in the frontend to support playlists",
+			Description:     "Routes snapshot requests from /api to the /apis endpoint",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
 			Created:         time.Date(2023, time.December, 4, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:            "kubernetesQueryServiceRewrite",
+			Description:     "Rewrite requests targeting /ds/query to the query service",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true, // changes the API routing
+			RequiresDevMode: true,
+			Created:         time.Date(2024, time.January, 28, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "cloudWatchBatchQueries",
@@ -1003,7 +967,7 @@ var (
 		{
 			Name:         "awsDatasourcesNewFormStyling",
 			Description:  "Applies new form styling for configuration and query editors in AWS plugins",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        awsDatasourcesSquad,
 			Created:      time.Date(2023, time.October, 12, 12, 0, 0, 0, time.UTC),
@@ -1330,6 +1294,21 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
 			Created:      time.Date(2024, time.January, 22, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:        "promQLScope",
+			Description: "In-development feature that will allow injection of labels into prometheus queries.",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaObservabilityMetricsSquad,
+			Created:     time.Date(2024, time.January, 29, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "nodeGraphDotLayout",
+			Description:  "Changed the layout algorithm for the node graph",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
+			Created:      time.Date(2024, time.January, 2, 12, 0, 0, 0, time.UTC),
 		},
 	}
 )

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -488,6 +487,13 @@ func (alertRule *AlertRule) ResourceOrgID() int64 {
 	return alertRule.OrgID
 }
 
+func (alertRule *AlertRule) GetFolderKey() FolderKey {
+	return FolderKey{
+		OrgID: alertRule.OrgID,
+		UID:   alertRule.NamespaceUID,
+	}
+}
+
 // AlertRuleVersion is the model for alert rule versions in unified alerting.
 type AlertRuleVersion struct {
 	ID               int64  `xorm:"pk autoincr 'id'"`
@@ -546,13 +552,22 @@ type CountAlertRulesQuery struct {
 	NamespaceUID string
 }
 
+type FolderKey struct {
+	OrgID int64
+	UID   string
+}
+
+func (f FolderKey) String() string {
+	return fmt.Sprintf("%d:%s", f.OrgID, f.UID)
+}
+
 type GetAlertRulesForSchedulingQuery struct {
 	PopulateFolders bool
 	RuleGroups      []string
 
 	ResultRules []*AlertRule
 	// A map of folder UID to folder Title in NamespaceKey format (see GetNamespaceKey)
-	ResultFoldersTitles map[string]string
+	ResultFoldersTitles map[FolderKey]string
 }
 
 // ListNamespaceAlertRulesQuery is the query for listing namespace alert rules
@@ -688,30 +703,4 @@ func GroupByAlertRuleGroupKey(rules []*AlertRule) map[AlertRuleGroupKey]RulesGro
 		group.SortByGroupIndex()
 	}
 	return result
-}
-
-// GetNamespaceKey concatenates two strings with / as separator. If the latter string contains '/' it gets escaped with \/
-func GetNamespaceKey(parentUID, title string) string {
-	if parentUID == "" {
-		return title
-	}
-	b, err := json.Marshal([]string{parentUID, title})
-	if err != nil {
-		return title // this should not really happen
-	}
-	return string(b)
-}
-
-// GetNamespaceTitleFromKey extracts the latter part from the string produced by GetNamespaceKey
-func GetNamespaceTitleFromKey(ns string) string {
-	// the expected format of the string is a JSON array ["parentUID","title"]
-	if !strings.HasPrefix(ns, "[") {
-		return ns
-	}
-	var arr []string
-	err := json.Unmarshal([]byte(ns), &arr)
-	if err != nil || len(arr) != 2 {
-		return ns
-	}
-	return arr[1]
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -105,14 +106,17 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 	if s.cfg.GrafanaAppURL != "" {
 		m[backend.AppURL] = s.cfg.GrafanaAppURL
 	}
+	if s.cfg.ConcurrentQueryCount != 0 {
+		m[backend.ConcurrentQueryCount] = strconv.Itoa(s.cfg.ConcurrentQueryCount)
+	}
 
 	// TODO add support via plugin SDK
-	//if externalService != nil {
+	// if externalService != nil {
 	//	m[oauthtokenretriever.AppURL] = s.cfg.GrafanaAppURL
 	//	m[oauthtokenretriever.AppClientID] = externalService.ClientID
 	//	m[oauthtokenretriever.AppClientSecret] = externalService.ClientSecret
 	//	m[oauthtokenretriever.AppPrivateKey] = externalService.PrivateKey
-	//}
+	// }
 
 	if s.cfg.Features != nil {
 		enabledFeatures := s.cfg.Features.GetEnabled(ctx)
@@ -125,16 +129,24 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 			m[featuretoggles.EnabledFeatures] = strings.Join(features, ",")
 		}
 	}
-	// TODO add support via plugin SDK
-	//if s.cfg.AWSAssumeRoleEnabled {
-	//	m[awsds.AssumeRoleEnabledEnvVarKeyName] = "true"
-	//}
-	//if len(s.cfg.AWSAllowedAuthProviders) > 0 {
-	//	m[awsds.AllowedAuthProvidersEnvVarKeyName] = strings.Join(s.cfg.AWSAllowedAuthProviders, ",")
-	//}
-	//if s.cfg.AWSExternalId != "" {
-	//	m[awsds.GrafanaAssumeRoleExternalIdKeyName] = s.cfg.AWSExternalId
-	//}
+
+	if slices.Contains[[]string, string](s.cfg.AWSForwardSettingsPlugins, pluginID) {
+		if !s.cfg.AWSAssumeRoleEnabled {
+			m[awsds.AssumeRoleEnabledEnvVarKeyName] = "false"
+		}
+		if len(s.cfg.AWSAllowedAuthProviders) > 0 {
+			m[awsds.AllowedAuthProvidersEnvVarKeyName] = strings.Join(s.cfg.AWSAllowedAuthProviders, ",")
+		}
+		if s.cfg.AWSExternalId != "" {
+			m[awsds.GrafanaAssumeRoleExternalIdKeyName] = s.cfg.AWSExternalId
+		}
+		if s.cfg.AWSSessionDuration != "" {
+			m[awsds.SessionDurationEnvVarKeyName] = s.cfg.AWSSessionDuration
+		}
+		if s.cfg.AWSListMetricsPageLimit != "" {
+			m[awsds.ListMetricsPageLimitKeyName] = s.cfg.AWSListMetricsPageLimit
+		}
+	}
 
 	if s.cfg.ProxySettings.Enabled {
 		m[proxy.PluginSecureSocksProxyEnabled] = "true"
@@ -147,6 +159,9 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 	}
 
 	// Settings here will be extracted by grafana-azure-sdk-go from the plugin context
+	if s.cfg.AzureAuthEnabled {
+		m[azsettings.AzureAuthEnabled] = strconv.FormatBool(s.cfg.AzureAuthEnabled)
+	}
 	azureSettings := s.cfg.Azure
 	if azureSettings != nil && slices.Contains[[]string, string](azureSettings.ForwardSettingsPlugins, pluginID) {
 		if azureSettings.Cloud != "" {
@@ -198,10 +213,10 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 	}
 
 	// TODO add support via plugin SDK
-	//ps := getPluginSettings(pluginID, s.cfg)
-	//for k, v := range ps {
+	// ps := getPluginSettings(pluginID, s.cfg)
+	// for k, v := range ps {
 	//	m[fmt.Sprintf("%s_%s", customConfigPrefix, strings.ToUpper(k))] = v
-	//}
+	// }
 
 	return m
 }
@@ -250,14 +265,20 @@ func (s *Service) featureToggleEnableVar(ctx context.Context) []string {
 
 func (s *Service) awsEnvVars() []string {
 	var variables []string
-	if s.cfg.AWSAssumeRoleEnabled {
-		variables = append(variables, awsds.AssumeRoleEnabledEnvVarKeyName+"=true")
+	if !s.cfg.AWSAssumeRoleEnabled {
+		variables = append(variables, awsds.AssumeRoleEnabledEnvVarKeyName+"=false")
 	}
 	if len(s.cfg.AWSAllowedAuthProviders) > 0 {
 		variables = append(variables, awsds.AllowedAuthProvidersEnvVarKeyName+"="+strings.Join(s.cfg.AWSAllowedAuthProviders, ","))
 	}
 	if s.cfg.AWSExternalId != "" {
 		variables = append(variables, awsds.GrafanaAssumeRoleExternalIdKeyName+"="+s.cfg.AWSExternalId)
+	}
+	if s.cfg.AWSSessionDuration != "" {
+		variables = append(variables, awsds.SessionDurationEnvVarKeyName+"="+s.cfg.AWSSessionDuration)
+	}
+	if s.cfg.AWSListMetricsPageLimit != "" {
+		variables = append(variables, awsds.ListMetricsPageLimitKeyName+"="+s.cfg.AWSListMetricsPageLimit)
 	}
 
 	return variables

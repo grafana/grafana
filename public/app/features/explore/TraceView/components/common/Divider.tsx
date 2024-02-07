@@ -26,7 +26,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: block;
       height: 1px;
       width: 100%;
-      margin: 24px 0;
+      margin-top: ${theme.spacing(2)};
+      margin-bottom: ${theme.spacing(0.5)};
       clear: both;
       vertical-align: middle;
       position: relative;
