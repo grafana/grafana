@@ -30,7 +30,7 @@ const (
 	defaultPassword  = "password"
 )
 
-var updateSnapshotFlag = true
+var updateSnapshotFlag = false
 
 func TestIntegrationPlugins(t *testing.T) {
 	if testing.Short() {
