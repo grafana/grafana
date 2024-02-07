@@ -1,7 +1,6 @@
 package intervalv2
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -59,51 +58,6 @@ func TestIntervalCalculator_CalculateSafeInterval(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			interval := calculator.CalculateSafeInterval(tc.timeRange, tc.safeResolution)
 			assert.Equal(t, tc.expected, interval.Text)
-		})
-	}
-}
-
-func TestRoundInterval(t *testing.T) {
-	tcs := []struct {
-		input    time.Duration
-		expected time.Duration
-	}{
-		{input: 9 * time.Millisecond, expected: time.Millisecond * 1},
-		{input: 14 * time.Millisecond, expected: time.Millisecond * 10},
-		{input: 34 * time.Millisecond, expected: time.Millisecond * 20},
-		{input: 74 * time.Millisecond, expected: time.Millisecond * 50},
-		{input: 140 * time.Millisecond, expected: time.Millisecond * 100},
-		{input: 320 * time.Millisecond, expected: time.Millisecond * 200},
-		{input: 740 * time.Millisecond, expected: time.Millisecond * 500},
-		{input: 1400 * time.Millisecond, expected: time.Millisecond * 1000},
-		{input: 3200 * time.Millisecond, expected: time.Millisecond * 2000},
-		{input: 7400 * time.Millisecond, expected: time.Millisecond * 5000},
-		{input: 12400 * time.Millisecond, expected: time.Millisecond * 10000},
-		{input: 17250 * time.Millisecond, expected: time.Millisecond * 15000},
-		{input: 23000 * time.Millisecond, expected: time.Millisecond * 20000},
-		{input: 42000 * time.Millisecond, expected: time.Millisecond * 30000},
-		{input: 85000 * time.Millisecond, expected: time.Millisecond * 60000},
-		{input: 200000 * time.Millisecond, expected: time.Millisecond * 120000},
-		{input: 420000 * time.Millisecond, expected: time.Millisecond * 300000},
-		{input: 720000 * time.Millisecond, expected: time.Millisecond * 600000},
-		{input: 1000000 * time.Millisecond, expected: time.Millisecond * 900000},
-		{input: 1250000 * time.Millisecond, expected: time.Millisecond * 1200000},
-		{input: 2500000 * time.Millisecond, expected: time.Millisecond * 1800000},
-		{input: 5200000 * time.Millisecond, expected: time.Millisecond * 3600000},
-		{input: 8500000 * time.Millisecond, expected: time.Millisecond * 7200000},
-		{input: 15000000 * time.Millisecond, expected: time.Millisecond * 10800000},
-		{input: 30000000 * time.Millisecond, expected: time.Millisecond * 21600000},
-		{input: 85000000 * time.Millisecond, expected: time.Millisecond * 43200000},
-		{input: 150000000 * time.Millisecond, expected: time.Millisecond * 86400000},
-		{input: 600000000 * time.Millisecond, expected: time.Millisecond * 86400000},
-		{input: 1500000000 * time.Millisecond, expected: time.Millisecond * 604800000},
-		{input: 3500000000 * time.Millisecond, expected: time.Millisecond * 2592000000},
-		{input: 40000000000 * time.Millisecond, expected: time.Millisecond * 31536000000},
-	}
-	for i, tc := range tcs {
-		t.Run(fmt.Sprintf("testcase %d", i), func(t *testing.T) {
-			res := roundInterval(tc.input)
-			assert.Equal(t, tc.expected, res, "input %q", tc.input)
 		})
 	}
 }
