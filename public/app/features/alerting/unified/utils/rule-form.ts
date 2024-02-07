@@ -13,9 +13,15 @@ import {
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { DataSourceJsonData } from '@grafana/schema';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import {
+  getDashboardSceneFor,
+  getPanelIdForVizPanel,
+  getQueryRunnerFor,
+} from 'app/features/dashboard-scene/utils/utils';
 import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
@@ -482,7 +488,7 @@ const dataQueriesToGrafanaQueries = async (
     };
 
     const interpolatedTarget = datasource.interpolateVariablesInQueries
-      ? await datasource.interpolateVariablesInQueries([target], queryVariables)[0]
+      ? datasource.interpolateVariablesInQueries([target], queryVariables)[0]
       : target;
 
     // expressions
@@ -573,6 +579,77 @@ export const panelToRuleFormValues = async (
       {
         key: Annotation.panelID,
         value: String(panel.id),
+      },
+    ],
+  };
+  return formValues;
+};
+
+export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<Partial<RuleFormValues> | undefined> => {
+  if (!vizPanel.state.key) {
+    return undefined;
+  }
+
+  const timeRange = sceneGraph.getTimeRange(vizPanel);
+  const queryRunner = getQueryRunnerFor(vizPanel);
+  if (!queryRunner) {
+    return undefined;
+  }
+  const { queries, datasource, maxDataPoints, minInterval } = queryRunner.state;
+
+  const dashboard = getDashboardSceneFor(vizPanel);
+  if (!dashboard || !dashboard.state.uid) {
+    return undefined;
+  }
+
+  const grafanaQueries = await dataQueriesToGrafanaQueries(
+    queries,
+    rangeUtil.timeRangeToRelative(rangeUtil.convertRawToRange(timeRange.state.value.raw)),
+    { __sceneObject: { value: vizPanel } },
+    datasource,
+    maxDataPoints,
+    minInterval
+  );
+
+  // if no alerting capable queries are found, can't create a rule
+  if (!grafanaQueries.length || !grafanaQueries.find((query) => query.datasourceUid !== ExpressionDatasourceUID)) {
+    return undefined;
+  }
+
+  if (!grafanaQueries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
+    const [reduceExpression, _thresholdExpression] = getDefaultExpressions(getNextRefIdChar(grafanaQueries), '-');
+    grafanaQueries.push(reduceExpression);
+
+    const [_reduceExpression, thresholdExpression] = getDefaultExpressions(
+      reduceExpression.refId,
+      getNextRefIdChar(grafanaQueries)
+    );
+    grafanaQueries.push(thresholdExpression);
+  }
+
+  const { folderTitle, folderUid } = dashboard.state.meta;
+
+  const formValues = {
+    type: RuleFormType.grafana,
+    folder:
+      folderUid && folderTitle
+        ? {
+            uid: folderUid,
+            title: folderTitle,
+          }
+        : undefined,
+    queries: grafanaQueries,
+    name: vizPanel.state.title,
+    condition: grafanaQueries[grafanaQueries.length - 1].refId,
+    annotations: [
+      {
+        key: Annotation.dashboardUID,
+        value: dashboard.state.uid,
+      },
+      {
+        key: Annotation.panelID,
+
+        value: String(getPanelIdForVizPanel(vizPanel)),
       },
     ],
   };
