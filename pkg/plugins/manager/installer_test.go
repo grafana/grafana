@@ -85,7 +85,6 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		})
 
 		t.Run("Update plugin to different version", func(t *testing.T) {
-
 			// mock a plugin to be returned automatically by the plugin loader
 			pluginV2 := createPlugin(t, pluginID, plugins.ClassExternal, true, true, func(plugin *plugins.Plugin) {
 				plugin.Info.Version = v2

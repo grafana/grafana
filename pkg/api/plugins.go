@@ -481,8 +481,12 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 
 func (hs *HTTPServer) UninstallPlugin(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
+	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
+	if !exists {
+		return response.Error(http.StatusNotFound, "Plugin not installed", nil)
+	}
 
-	err := hs.pluginInstaller.Remove(c.Req.Context(), pluginID)
+	err := hs.pluginInstaller.Remove(c.Req.Context(), pluginID, plugin.Info.Version)
 	if err != nil {
 		if errors.Is(err, plugins.ErrPluginNotInstalled) {
 			return response.Error(http.StatusNotFound, "Plugin not installed", err)
