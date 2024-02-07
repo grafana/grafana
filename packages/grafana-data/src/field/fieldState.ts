@@ -47,7 +47,7 @@ export function getFrameDisplayName(frame: DataFrame, index?: number, singleLabe
       }
     }
     if (commonLabelValue && labelValue !== '') {
-      return `${singleLabelName}: ${labelValue}`;
+      return labelValue;
     }
   }
 
