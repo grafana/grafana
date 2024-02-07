@@ -95,6 +95,7 @@ func (b *FeatureFlagAPIBuilder) handleCurrentStatus(w http.ResponseWriter, r *ht
 	}
 
 	state := b.getResolvedToggleState(r.Context())
+	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(state)
 }
 
@@ -102,7 +103,8 @@ func (b *FeatureFlagAPIBuilder) handleCurrentStatus(w http.ResponseWriter, r *ht
 func (b *FeatureFlagAPIBuilder) handlePatchCurrent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if !b.features.IsFeatureEditingAllowed() {
-		errhttp.Write(ctx, fmt.Errorf("feature editing is not enabled"), w)
+		err := errutil.Forbidden("featuretoggle.disabled", errutil.WithPublicMessage("feature toggles are read-only")).Errorf("feature toggles are not writeable due to missing configuration")
+		errhttp.Write(ctx, err, w)
 		return
 	}
 
@@ -113,8 +115,7 @@ func (b *FeatureFlagAPIBuilder) handlePatchCurrent(w http.ResponseWriter, r *htt
 	}
 
 	if !b.userCanWrite(ctx, user) {
-		err = errutil.Unauthorized("featuretoggle.canNotWrite",
-			errutil.WithPublicMessage("missing write permission"))
+		err = errutil.Unauthorized("featuretoggle.canNotWrite", errutil.WithPublicMessage("missing write permission")).Errorf("user %s does not have write permissions", user.Login)
 		errhttp.Write(ctx, err, w)
 		return
 	}
@@ -127,8 +128,7 @@ func (b *FeatureFlagAPIBuilder) handlePatchCurrent(w http.ResponseWriter, r *htt
 	}
 
 	if len(request.Toggles) > 0 {
-		err = errutil.BadRequest("featuretoggle.badRequest",
-			errutil.WithPublicMessage("can only path the enabled section"))
+		err = errutil.BadRequest("featuretoggle.badRequest", errutil.WithPublicMessage("can only patch the enabled section"))
 		errhttp.Write(ctx, err, w)
 		return
 	}
