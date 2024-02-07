@@ -1,13 +1,18 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObjectBase, SceneComponentProps } from '@grafana/scenes';
-import { Alert, LoadingPlaceholder, Tab } from '@grafana/ui';
+import { Alert, LoadingPlaceholder, Tab, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { RulesTable } from 'app/features/alerting/unified/components/rules/RulesTable';
 import { usePanelCombinedRules } from 'app/features/alerting/unified/hooks/usePanelCombinedRules';
+import { getRulesPermissions } from 'app/features/alerting/unified/utils/access-control';
 
 import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../utils/utils';
 import { VizPanelManager } from '../VizPanelManager';
 
+import { ScenesNewRuleFromPanelButton } from './NewAlertRuleButton';
 import { PanelDataPaneTabState, PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
 
 export class PanelDataAlertingTab extends SceneObjectBase<PanelDataPaneTabState> implements PanelDataPaneTab {
@@ -22,31 +27,46 @@ export class PanelDataAlertingTab extends SceneObjectBase<PanelDataPaneTabState>
     this.TabComponent = (props: PanelDataTabHeaderProps) => AlertingTab({ ...props, model: this });
     this._panelManager = panelManager;
   }
+
   getTabLabel() {
     return 'Alert';
   }
 
   getDashboardUID() {
-    const dashboard = getDashboardSceneFor(this._panelManager);
+    const dashboard = this.getDashboard();
     return dashboard.state.uid!;
   }
 
-  getPanelId() {
+  getDashboard() {
+    return getDashboardSceneFor(this._panelManager);
+  }
+
+  getLegacyPanelId() {
     return getPanelIdForVizPanel(this._panelManager.state.panel);
+  }
+
+  getCanCreateRules() {
+    const rulesPermissions = getRulesPermissions('grafana');
+    return this.getDashboard().state.meta.canSave && contextSrv.hasPermission(rulesPermissions.create);
   }
 
   get panelManager() {
     return this._panelManager;
   }
+
+  get panel() {
+    return this._panelManager.state.panel;
+  }
 }
 
-function PanelDataAlertingTabRendered(props: SceneComponentProps<PanelDataAlertingTab>) {
+export function PanelDataAlertingTabRendered(props: SceneComponentProps<PanelDataAlertingTab>) {
   const { model } = props;
+
+  const styles = useStyles2(getStyles);
 
   const { errors, loading, rules } = usePanelCombinedRules({
     dashboardUID: model.getDashboardUID(),
-    panelId: model.getPanelId(),
-    poll: true,
+    panelId: model.getLegacyPanelId(),
   });
 
   const alert = errors.length ? (
@@ -66,19 +86,36 @@ function PanelDataAlertingTabRendered(props: SceneComponentProps<PanelDataAlerti
     );
   }
 
+  const { panel } = model;
+  const canCreateRules = model.getCanCreateRules();
+
   if (rules.length) {
-    return <RulesTable rules={rules} />;
+    return (
+      <>
+        <RulesTable rules={rules} />
+        {canCreateRules && <ScenesNewRuleFromPanelButton className={styles.newButton} panel={panel} />}
+      </>
+    );
   }
 
-  // TODO: this is the tricky part, converting queries and such to pre populate the new alert form when clicking the button
   return (
-    <div>
+    <div className={styles.noRulesWrapper}>
       <p>There are no alert rules linked to this panel.</p>
-      <button>New alert placeholder</button>
+      {canCreateRules && <ScenesNewRuleFromPanelButton panel={panel}></ScenesNewRuleFromPanelButton>}
     </div>
   );
 }
 
+const getStyles = (theme: GrafanaTheme2) => ({
+  newButton: css({
+    marginTop: theme.spacing(3),
+  }),
+  noRulesWrapper: css({
+    margin: theme.spacing(2),
+    backgroundColor: theme.colors.background.secondary,
+    padding: theme.spacing(3),
+  }),
+});
 interface PanelDataAlertingTabHeaderProps extends PanelDataTabHeaderProps {
   model: PanelDataAlertingTab;
 }
@@ -88,7 +125,7 @@ function AlertingTab(props: PanelDataAlertingTabHeaderProps) {
 
   const { rules } = usePanelCombinedRules({
     dashboardUID: model.getDashboardUID(),
-    panelId: model.getPanelId(),
+    panelId: model.getLegacyPanelId(),
     poll: false,
   });
 

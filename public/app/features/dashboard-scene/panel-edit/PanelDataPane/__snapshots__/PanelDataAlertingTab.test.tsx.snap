@@ -1,0 +1,113 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`PanelAlertTabContent Will render alerts belonging to panel and a button to create alert from panel queries 1`] = `
+{
+  "annotations": [
+    {
+      "key": "__dashboardUid__",
+      "value": "12",
+    },
+    {
+      "key": "__panelId__",
+      "value": "34",
+    },
+  ],
+  "condition": "C",
+  "name": "mypanel",
+  "queries": [
+    {
+      "datasourceUid": "mock-ds-2",
+      "model": {
+        "datasource": {
+          "type": "prometheus",
+          "uid": "mock-ds-2",
+        },
+        "expr": "sum(some_metric [15s])) by (app)",
+        "interval": "",
+        "intervalMs": 15000,
+        "refId": "A",
+      },
+      "queryType": "",
+      "refId": "A",
+      "relativeTimeRange": {
+        "from": 21600,
+        "to": 0,
+      },
+    },
+    {
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [],
+              "type": "gt",
+            },
+            "operator": {
+              "type": "and",
+            },
+            "query": {
+              "params": [
+                "B",
+              ],
+            },
+            "reducer": {
+              "params": [],
+              "type": "last",
+            },
+            "type": "query",
+          },
+        ],
+        "datasource": {
+          "type": "__expr__",
+          "uid": "__expr__",
+        },
+        "expression": "A",
+        "reducer": "last",
+        "refId": "B",
+        "type": "reduce",
+      },
+      "queryType": "",
+      "refId": "B",
+    },
+    {
+      "datasourceUid": "__expr__",
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                0,
+              ],
+              "type": "gt",
+            },
+            "operator": {
+              "type": "and",
+            },
+            "query": {
+              "params": [
+                "C",
+              ],
+            },
+            "reducer": {
+              "params": [],
+              "type": "last",
+            },
+            "type": "query",
+          },
+        ],
+        "datasource": {
+          "type": "__expr__",
+          "uid": "__expr__",
+        },
+        "expression": "B",
+        "refId": "C",
+        "type": "threshold",
+      },
+      "queryType": "",
+      "refId": "C",
+    },
+  ],
+  "type": "grafana",
+}
+`;
