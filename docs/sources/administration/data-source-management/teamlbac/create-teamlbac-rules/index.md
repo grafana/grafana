@@ -65,7 +65,7 @@ We have two teams, Team A and Team B. Loki access is setup with `Admin` roles ha
 
 - Team A has rule `cluster="us-west-0", namespace=~"dev|prod"` configured.
 
-- Team B has rule `cluster="us-west-0", namespace="!prod"` configured.
+- Team B has rule `cluster="us-west-0", namespace!="prod"` configured.
 
 A user that is only part of Team A will have access to logs that match `cluster="us-west-0" AND (namespace="dev" OR namespace="prod")`.
 
