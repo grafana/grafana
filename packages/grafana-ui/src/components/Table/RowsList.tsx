@@ -44,6 +44,7 @@ interface RowsListProps {
   onCellFilterAdded?: TableFilterActionCallback;
   timeRange?: TimeRange;
   footerPaginationEnabled: boolean;
+  rowBackgroundColors: Record<number, string>;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -66,6 +67,7 @@ export const RowsList = (props: RowsListProps) => {
     listHeight,
     listRef,
     enableSharedCrosshair = false,
+    rowBackgroundColors = {},
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(undefined);
@@ -210,6 +212,9 @@ export const RowsList = (props: RowsListProps) => {
 
       if (rowHighlightIndex !== undefined && row.index === rowHighlightIndex) {
         style = { ...style, backgroundColor: theme.components.table.rowHoverBackground };
+      }
+      if (rowBackgroundColors[row.index]) {
+        style = { ...style, backgroundColor: rowBackgroundColors[row.index] };
       }
 
       return (
