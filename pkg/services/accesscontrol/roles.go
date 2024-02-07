@@ -384,7 +384,7 @@ func (m *RegistrationList) Range(f func(registration RoleRegistration) bool) {
 func (m *RegistrationList) Slice() []RoleRegistration {
 	m.mx.RLock()
 	defer m.mx.RUnlock()
-	out := make([]RoleRegistration, 0, len(m.registrations))
+	out := make([]RoleRegistration, len(m.registrations))
 	copy(out, m.registrations)
 	return out
 }
