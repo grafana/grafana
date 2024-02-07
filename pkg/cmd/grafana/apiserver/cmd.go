@@ -28,7 +28,7 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 		Short: "Run the grafana apiserver",
 		Long: "Run a standalone kubernetes based apiserver that can be aggregated by a root apiserver. " +
 			devAcknowledgementNotice,
-		Example: "grafana apiserver example.grafana.app",
+		Example: "grafana apiserver --runtime-config=example.grafana.app/v0alpha1=true",
 		RunE: func(c *cobra.Command, args []string) error {
 			runtime, err := standalone.ReadRuntimeConfig(runtimeConfig)
 			if err != nil {

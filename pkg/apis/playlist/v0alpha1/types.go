@@ -36,12 +36,16 @@ type Spec struct {
 	Items []Item `json:"items,omitempty"`
 }
 
+// Type of the item.
+// +enum
+type ItemType string
+
 // Defines values for ItemType.
 const (
 	ItemTypeDashboardByTag ItemType = "dashboard_by_tag"
 	ItemTypeDashboardByUid ItemType = "dashboard_by_uid"
 
-	// deprecated -- should use UID
+	// Deprecated -- should use UID
 	ItemTypeDashboardById ItemType = "dashboard_by_id"
 )
 
@@ -60,6 +64,3 @@ type Item struct {
 	//  - dashboard_by_uid: The value is the dashboard UID
 	Value string `json:"value"`
 }
-
-// Type of the item.
-type ItemType string

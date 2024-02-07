@@ -12,6 +12,7 @@ import (
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 	grafanarequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	grafanaregistry "github.com/grafana/grafana/pkg/services/apiserver/registry/generic"
@@ -93,7 +94,11 @@ func (s *dummyStorage) Get(ctx context.Context, name string, options *metav1.Get
 			CreationTimestamp: s.creationTimestamp,
 			ResourceVersion:   "1",
 		},
-		Spec: fmt.Sprintf("dummy: %s", name),
+		Spec: common.Unstructured{
+			Object: map[string]any{
+				"Dummy": name,
+			},
+		},
 	}, nil
 }
 
@@ -112,7 +117,11 @@ func (s *dummyStorage) List(ctx context.Context, options *internalversion.ListOp
 				CreationTimestamp: s.creationTimestamp,
 				ResourceVersion:   "1",
 			},
-			Spec: fmt.Sprintf("dummy: %s", name),
+			Spec: common.Unstructured{
+				Object: map[string]any{
+					"Dummy": name,
+				},
+			},
 		})
 	}
 	return res, nil
