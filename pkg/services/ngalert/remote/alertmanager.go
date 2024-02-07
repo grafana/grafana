@@ -221,7 +221,12 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 	return nil
 }
 
+// This method is called when the org is found in the database but no configuration is found for that org,
+// or when a user deletes their Alertmanager configuration.
+// If this method is called just log a warning, the remote Alertmanager will eventually receive a configuration.
+// TODO: could it be better to just send the default Grafana Alertmanager configuration?
 func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
+	am.log.Warn("SaveAndApplyDefaultConfig called in the remote alertmanager")
 	return nil
 }
 

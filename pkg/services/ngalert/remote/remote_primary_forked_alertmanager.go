@@ -92,8 +92,8 @@ func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Conte
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	fmt.Println("forked.SaveAndApplyDefaultConfig()")
-	return nil
+	// Do nothing on the remote Alertmanager side, it will receive a configuration on startup or config change.
+	return fam.internal.SaveAndApplyDefaultConfig(ctx)
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) GetStatus() apimodels.GettableStatus {
