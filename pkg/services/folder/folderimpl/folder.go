@@ -249,8 +249,8 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 	f.ID = dashFolder.ID
 	f.Version = dashFolder.Version
 
-	if q.WithFullpath == false {
-		f.Fullpath = f.Title // and fix the full path with folder title (unescaped)
+	if !q.WithFullpath {
+		f.Fullpath = f.Title // set full path to the folder title (unescaped)
 	}
 
 	return f, err
