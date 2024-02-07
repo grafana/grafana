@@ -1,4 +1,12 @@
-import { SceneTimePicker, SceneRefreshPicker, VizPanel, SceneGridItem, SceneGridRow } from '@grafana/scenes';
+import {
+  SceneTimePicker,
+  SceneRefreshPicker,
+  VizPanel,
+  SceneGridItem,
+  SceneGridRow,
+  SceneDataLayers,
+  sceneGraph,
+} from '@grafana/scenes';
 
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -71,10 +79,21 @@ function getVizPanels(scene: DashboardScene): VizPanel[] {
   return panels;
 }
 
+function getDataLayers(scene: DashboardScene): SceneDataLayers {
+  const data = sceneGraph.getData(scene);
+
+  if (!(data instanceof SceneDataLayers)) {
+    throw new Error('SceneDataLayers not found');
+  }
+
+  return data;
+}
+
 export const dashboardSceneGraph = {
   getTimePicker,
   getRefreshPicker,
   getDashboardControls,
   getPanelLinks,
   getVizPanels,
+  getDataLayers,
 };

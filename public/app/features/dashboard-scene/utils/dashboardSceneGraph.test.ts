@@ -1,4 +1,5 @@
 import {
+  SceneDataLayers,
   SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
@@ -9,6 +10,8 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 
+import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
+import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardLinksControls } from '../scene/DashboardLinksControls';
 import { DashboardScene, DashboardSceneState } from '../scene/DashboardScene';
@@ -122,6 +125,29 @@ describe('dashboardSceneGraph', () => {
       expect(vizPanels.length).toBe(0);
     });
   });
+
+  describe('getDataLayers', () => {
+    let scene: DashboardScene;
+
+    beforeEach(async () => {
+      scene = buildTestScene();
+    });
+
+    it('should return the scene data layers', () => {
+      const dataLayers = dashboardSceneGraph.getDataLayers(scene);
+
+      expect(dataLayers).toBeInstanceOf(SceneDataLayers);
+      expect(dataLayers?.state.layers.length).toBe(2);
+    });
+
+    it('should throw if there are no scene data layers', () => {
+      scene.setState({
+        $data: undefined,
+      });
+
+      expect(() => dashboardSceneGraph.getDataLayers(scene)).toThrow('SceneDataLayers not found');
+    });
+  });
 });
 
 function buildTestScene(overrides?: Partial<DashboardSceneState>) {
@@ -141,6 +167,26 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
         ],
       }),
     ],
+    $data: new SceneDataLayers({
+      layers: [
+        new DashboardAnnotationsDataLayer({
+          key: `annotation`,
+          query: {
+            enable: true,
+            hide: false,
+            iconColor: 'red',
+            name: 'a',
+          },
+          name: 'a',
+          isEnabled: true,
+          isHidden: false,
+        }),
+        new AlertStatesDataLayer({
+          key: 'alert-states',
+          name: 'Alert States',
+        }),
+      ],
+    }),
     body: new SceneGridLayout({
       children: [
         new SceneGridItem({

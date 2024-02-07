@@ -6,6 +6,7 @@ import { SceneDataLayers, SceneGridItem, SceneGridLayout, SceneTimeRange, dataLa
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardScene } from '../scene/DashboardScene';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { AnnotationsEditView, MoveDirection } from './AnnotationsEditView';
@@ -58,21 +59,6 @@ describe('AnnotationsEditView', () => {
       expect(annotationsView.getUrlKey()).toBe('annotations');
     });
 
-    it('should return the scene data layers', () => {
-      const dataLayers = annotationsView.getSceneDataLayers();
-
-      expect(dataLayers).toBeInstanceOf(SceneDataLayers);
-      expect(dataLayers?.state.layers.length).toBe(2);
-    });
-
-    it('should throw if there are no scene data layers', () => {
-      dashboardScene.setState({
-        $data: undefined,
-      });
-
-      expect(annotationsView.getSceneDataLayers).toThrow('SceneDataLayers not found');
-    });
-
     it('should return the annotations length', () => {
       expect(annotationsView.getAnnotationsLength()).toBe(1);
     });
@@ -86,7 +72,7 @@ describe('AnnotationsEditView', () => {
     });
 
     it('should add a new annotation and group it with the other annotations', () => {
-      const dataLayers = annotationsView.getSceneDataLayers();
+      const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
 
       expect(dataLayers?.state.layers.length).toBe(2);
 
@@ -98,7 +84,7 @@ describe('AnnotationsEditView', () => {
     });
 
     it('should move an annotation up one position', () => {
-      const dataLayers = annotationsView.getSceneDataLayers();
+      const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
 
       annotationsView.onNew();
 
@@ -112,7 +98,7 @@ describe('AnnotationsEditView', () => {
     });
 
     it('should move an annotation down one position', () => {
-      const dataLayers = annotationsView.getSceneDataLayers();
+      const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
 
       annotationsView.onNew();
 
@@ -126,7 +112,7 @@ describe('AnnotationsEditView', () => {
     });
 
     it('should delete annotation at index', () => {
-      const dataLayers = annotationsView.getSceneDataLayers();
+      const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
 
       expect(dataLayers?.state.layers.length).toBe(2);
 
@@ -137,7 +123,7 @@ describe('AnnotationsEditView', () => {
     });
 
     it('should update an annotation at index', () => {
-      const dataLayers = annotationsView.getSceneDataLayers();
+      const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
 
       expect(dataLayers?.state.layers[0].state.name).toBe('test');
 

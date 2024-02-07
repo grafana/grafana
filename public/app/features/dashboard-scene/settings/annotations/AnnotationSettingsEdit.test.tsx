@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { of } from 'rxjs';
@@ -78,9 +78,8 @@ describe('AnnotationSettingsEdit', () => {
   const mockOnUpdate = jest.fn();
   const mockGoBackToList = jest.fn();
   const mockOnDelete = jest.fn();
-  const mockOnPreview = jest.fn();
 
-  function setup() {
+  async function setup() {
     const annotationQuery: AnnotationQuery = {
       name: 'test',
       datasource: defaultDatasource,
@@ -96,12 +95,11 @@ describe('AnnotationSettingsEdit', () => {
       panels: [],
       onBackToList: mockGoBackToList,
       onDelete: mockOnDelete,
-      onPreview: mockOnPreview,
     };
 
     return {
       anno: annotationQuery,
-      renderer: render(<AnnotationSettingsEdit {...props} />),
+      renderer: await act(async () => render(<AnnotationSettingsEdit {...props} />)),
       user: userEvent.setup(),
     };
   }
@@ -113,38 +111,34 @@ describe('AnnotationSettingsEdit', () => {
   it('should render', async () => {
     const {
       renderer: { getByTestId },
-    } = setup();
+    } = await setup();
 
-    await waitFor(() => {
-      const nameInput = getByTestId(selectors.pages.Dashboard.Settings.Annotations.Settings.name);
-      const dataSourceSelect = getByTestId(selectors.components.DataSourcePicker.container);
-      const enableToggle = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.enable);
-      const hideToggle = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.hide);
-      const iconColorToggle = getByTestId(selectors.components.ColorSwatch.name);
-      const panelSelect = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel);
-      const deleteAnno = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.delete);
-      const apply = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.apply);
+    const nameInput = getByTestId(selectors.pages.Dashboard.Settings.Annotations.Settings.name);
+    const dataSourceSelect = getByTestId(selectors.components.DataSourcePicker.container);
+    const enableToggle = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.enable);
+    const hideToggle = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.hide);
+    const iconColorToggle = getByTestId(selectors.components.ColorSwatch.name);
+    const panelSelect = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel);
+    const deleteAnno = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.delete);
+    const apply = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.apply);
 
-      expect(nameInput).toBeInTheDocument();
-      expect(dataSourceSelect).toBeInTheDocument();
-      expect(enableToggle).toBeInTheDocument();
-      expect(hideToggle).toBeInTheDocument();
-      expect(iconColorToggle).toBeInTheDocument();
-      expect(panelSelect).toBeInTheDocument();
-      expect(deleteAnno).toBeInTheDocument();
-      expect(apply).toBeInTheDocument();
-    });
+    expect(nameInput).toBeInTheDocument();
+    expect(dataSourceSelect).toBeInTheDocument();
+    expect(enableToggle).toBeInTheDocument();
+    expect(hideToggle).toBeInTheDocument();
+    expect(iconColorToggle).toBeInTheDocument();
+    expect(panelSelect).toBeInTheDocument();
+    expect(deleteAnno).toBeInTheDocument();
+    expect(apply).toBeInTheDocument();
   });
 
   it('should update annotation name on change', async () => {
     const {
       renderer: { getByTestId },
       user,
-    } = setup();
+    } = await setup();
 
-    await waitFor(async () => {
-      await user.type(getByTestId(selectors.pages.Dashboard.Settings.Annotations.Settings.name), 'new name');
-    });
+    await user.type(getByTestId(selectors.pages.Dashboard.Settings.Annotations.Settings.name), 'new name');
 
     expect(mockOnUpdate).toHaveBeenCalled();
   });
@@ -154,7 +148,7 @@ describe('AnnotationSettingsEdit', () => {
       renderer: { getByTestId },
       user,
       anno,
-    } = setup();
+    } = await setup();
 
     const annoArg = {
       ...anno,
@@ -165,10 +159,9 @@ describe('AnnotationSettingsEdit', () => {
     };
 
     const dataSourcePicker = getByTestId(selectors.components.DataSourcePicker.inputV2);
-    await waitFor(async () => {
-      await user.click(dataSourcePicker); // open the select
-      await userEvent.tab();
-    });
+
+    await user.click(dataSourcePicker); // open the select
+    await userEvent.tab();
 
     expect(mockOnUpdate).toHaveBeenCalledTimes(1);
     expect(mockOnUpdate).toHaveBeenCalledWith(annoArg, 1);
@@ -179,7 +172,7 @@ describe('AnnotationSettingsEdit', () => {
       renderer: { getByTestId },
       user,
       anno,
-    } = setup();
+    } = await setup();
 
     const annoArg = {
       ...anno,
@@ -187,9 +180,8 @@ describe('AnnotationSettingsEdit', () => {
     };
 
     const enableToggle = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.enable);
-    await waitFor(async () => {
-      await user.click(enableToggle);
-    });
+
+    await user.click(enableToggle);
 
     expect(mockOnUpdate).toHaveBeenCalledTimes(1);
     expect(mockOnUpdate).toHaveBeenCalledWith(annoArg, 1);
@@ -200,7 +192,7 @@ describe('AnnotationSettingsEdit', () => {
       renderer: { getByTestId },
       user,
       anno,
-    } = setup();
+    } = await setup();
 
     const annoArg = {
       ...anno,
@@ -208,9 +200,8 @@ describe('AnnotationSettingsEdit', () => {
     };
 
     const hideToggle = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.hide);
-    await waitFor(async () => {
-      await user.click(hideToggle);
-    });
+
+    await user.click(hideToggle);
 
     expect(mockOnUpdate).toHaveBeenCalledTimes(1);
     expect(mockOnUpdate).toHaveBeenCalledWith(annoArg, 1);
@@ -220,13 +211,12 @@ describe('AnnotationSettingsEdit', () => {
     const {
       renderer: { getByTestId },
       user,
-    } = setup();
+    } = await setup();
 
     const panelSelect = getByTestId(selectors.components.Annotations.annotationsTypeInput);
-    await waitFor(async () => {
-      await user.click(panelSelect);
-      await user.tab();
-    });
+
+    await user.click(panelSelect);
+    await user.tab();
 
     expect(mockOnUpdate).toHaveBeenCalledTimes(1);
     expect(mockOnUpdate).toHaveBeenCalledWith(expect.objectContaining({ filter: undefined }), 1);
@@ -236,12 +226,11 @@ describe('AnnotationSettingsEdit', () => {
     const {
       renderer: { getByTestId },
       user,
-    } = setup();
+    } = await setup();
 
     const deleteAnno = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.delete);
-    await waitFor(async () => {
-      await user.click(deleteAnno);
-    });
+
+    await user.click(deleteAnno);
 
     expect(mockOnDelete).toHaveBeenCalledTimes(1);
   });
@@ -250,12 +239,11 @@ describe('AnnotationSettingsEdit', () => {
     const {
       renderer: { getByTestId },
       user,
-    } = setup();
+    } = await setup();
 
     const goBack = getByTestId(selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.apply);
-    await waitFor(async () => {
-      await user.click(goBack);
-    });
+
+    await user.click(goBack);
 
     expect(mockGoBackToList).toHaveBeenCalledTimes(1);
   });

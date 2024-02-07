@@ -1,15 +1,8 @@
 import React from 'react';
 
 import { AnnotationQuery, DataTopic, NavModel, NavModelItem, PageLayoutType, getDataSourceRef } from '@grafana/data';
-import { getDataSourceSrv, locationService } from '@grafana/runtime';
-import {
-  SceneComponentProps,
-  SceneDataLayers,
-  SceneObjectBase,
-  VizPanel,
-  dataLayers,
-  sceneGraph,
-} from '@grafana/scenes';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { SceneComponentProps, SceneObjectBase, VizPanel, dataLayers } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
@@ -45,18 +38,8 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     return getDashboardSceneFor(this);
   }
 
-  public getSceneDataLayers(): SceneDataLayers {
-    const data = sceneGraph.getData(this);
-
-    if (!(data instanceof SceneDataLayers)) {
-      throw new Error('SceneDataLayers not found');
-    }
-
-    return data;
-  }
-
   public getDataLayer(editIndex: number): dataLayers.AnnotationsDataLayer {
-    const data = this.getSceneDataLayers();
+    const data = dashboardSceneGraph.getDataLayers(this._dashboard);
     const layer = data.state.layers[editIndex];
 
     if (!(layer instanceof dataLayers.AnnotationsDataLayer)) {
@@ -67,7 +50,9 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
   }
 
   public getAnnotationsLength(): number {
-    return this.getSceneDataLayers().state.layers.filter((layer) => layer.topic === DataTopic.Annotations).length;
+    return dashboardSceneGraph
+      .getDataLayers(this._dashboard)
+      .state.layers.filter((layer) => layer.topic === DataTopic.Annotations).length;
   }
 
   public getDashboard(): DashboardScene {
@@ -90,7 +75,7 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
       isHidden: Boolean(newAnnotationQuery.hide),
     });
 
-    const data = this.getSceneDataLayers();
+    const data = dashboardSceneGraph.getDataLayers(this._dashboard);
 
     const layers = [...data.state.layers];
 
@@ -102,6 +87,7 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     });
 
     newAnnotation.activate();
+
     this.setState({ editIndex: this.getAnnotationsLength() - 1 });
   };
 
@@ -113,18 +99,8 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
     this.setState({ editIndex: undefined });
   };
 
-  public onPreview = () => {
-    this.setState({ editIndex: undefined });
-
-    this._dashboard.stopUrlSync();
-
-    locationService.partial({ editview: null });
-
-    this._dashboard.startUrlSync();
-  };
-
   public onMove = (idx: number, direction: MoveDirection) => {
-    const data = this.getSceneDataLayers();
+    const data = dashboardSceneGraph.getDataLayers(this._dashboard);
 
     const layers = [...data.state.layers];
     const [layer] = layers.splice(idx, 1);
@@ -136,7 +112,7 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
   };
 
   public onDelete = (idx: number) => {
-    const data = this.getSceneDataLayers();
+    const data = dashboardSceneGraph.getDataLayers(this._dashboard);
 
     const layers = [...data.state.layers];
     layers.splice(idx, 1);
@@ -165,7 +141,7 @@ export class AnnotationsEditView extends SceneObjectBase<AnnotationsEditViewStat
 
 function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditView>) {
   const dashboard = model.getDashboard();
-  const { layers } = model.getSceneDataLayers().useState();
+  const { layers } = dashboardSceneGraph.getDataLayers(dashboard).useState();
   const { navModel, pageNav } = useDashboardEditPageNav(dashboard, model.getUrlKey());
   const { editIndex } = model.useState();
   const panels = dashboardSceneGraph.getVizPanels(dashboard);
@@ -183,7 +159,6 @@ function AnnotationsSettingsView({ model }: SceneComponentProps<AnnotationsEditV
         dashboard={dashboard}
         onUpdate={model.onUpdate}
         onBackToList={model.onBackToList}
-        onPreview={model.onPreview}
         onDelete={model.onDelete}
       />
     );
@@ -212,7 +187,6 @@ interface AnnotationsSettingsEditViewProps {
   dashboard: DashboardScene;
   onUpdate: (annotation: AnnotationQuery, editIndex: number) => void;
   onBackToList: () => void;
-  onPreview: () => void;
   onDelete: (idx: number) => void;
 }
 
@@ -225,7 +199,6 @@ function AnnotationsSettingsEditView({
   dashboard,
   onUpdate,
   onBackToList,
-  onPreview,
   onDelete,
 }: AnnotationsSettingsEditViewProps) {
   const parentTab = pageNav.children!.find((p) => p.active)!;
@@ -247,7 +220,6 @@ function AnnotationsSettingsEditView({
         onUpdate={onUpdate}
         onBackToList={onBackToList}
         onDelete={onDelete}
-        onPreview={onPreview}
       />
     </Page>
   );

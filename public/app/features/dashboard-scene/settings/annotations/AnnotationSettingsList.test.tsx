@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -28,7 +28,7 @@ describe('AnnotationSettingsEdit', () => {
   const mockOnMove = jest.fn();
   const mockOnDelete = jest.fn();
 
-  function setup(emptyList = false) {
+  async function setup(emptyList = false) {
     const annotationQuery1: AnnotationQuery = {
       name: 'test1',
       datasource: defaultDatasource,
@@ -54,7 +54,7 @@ describe('AnnotationSettingsEdit', () => {
     };
 
     return {
-      renderer: render(<AnnotationSettingsList {...props} />),
+      renderer: await act(async () => render(<AnnotationSettingsList {...props} />)),
       user: userEvent.setup(),
     };
   }
@@ -63,10 +63,10 @@ describe('AnnotationSettingsEdit', () => {
     jest.clearAllMocks();
   });
 
-  it('should render with empty list message', () => {
+  it('should render with empty list message', async () => {
     const {
       renderer: { getByTestId },
-    } = setup(true);
+    } = await setup(true);
 
     const emptyListBtn = getByTestId(selectors.components.CallToActionCard.buttonV2(BUTTON_TITLE));
 
@@ -77,12 +77,11 @@ describe('AnnotationSettingsEdit', () => {
     const {
       renderer: { getByTestId },
       user,
-    } = setup(true);
+    } = await setup(true);
 
     const emptyListBtn = getByTestId(selectors.components.CallToActionCard.buttonV2(BUTTON_TITLE));
-    await waitFor(async () => {
-      await user.click(emptyListBtn);
-    });
+
+    await user.click(emptyListBtn);
 
     expect(mockOnNew).toHaveBeenCalledTimes(1);
   });
@@ -90,7 +89,7 @@ describe('AnnotationSettingsEdit', () => {
   it('should render annotation list', async () => {
     const {
       renderer: { getByTestId },
-    } = setup();
+    } = await setup();
 
     const list = getByTestId(selectors.pages.Dashboard.Settings.Annotations.List.annotations);
 
@@ -101,13 +100,11 @@ describe('AnnotationSettingsEdit', () => {
     const {
       renderer: { getAllByRole },
       user,
-    } = setup();
+    } = await setup();
 
     const gridCells = getAllByRole('gridcell');
 
-    await waitFor(async () => {
-      await user.click(gridCells[0]);
-    });
+    await user.click(gridCells[0]);
 
     expect(mockOnEdit).toHaveBeenCalledTimes(1);
   });
@@ -116,12 +113,11 @@ describe('AnnotationSettingsEdit', () => {
     const {
       renderer: { getAllByLabelText },
       user,
-    } = setup();
+    } = await setup();
 
     const moveBtns = getAllByLabelText('Move up');
-    await waitFor(async () => {
-      await user.click(moveBtns[0]);
-    });
+
+    await user.click(moveBtns[0]);
 
     expect(mockOnMove).toHaveBeenCalledTimes(1);
     expect(mockOnMove).toHaveBeenCalledWith(expect.anything(), MoveDirection.UP);
@@ -131,12 +127,11 @@ describe('AnnotationSettingsEdit', () => {
     const {
       renderer: { getAllByLabelText },
       user,
-    } = setup();
+    } = await setup();
 
     const moveBtns = getAllByLabelText('Move down');
-    await waitFor(async () => {
-      await user.click(moveBtns[0]);
-    });
+
+    await user.click(moveBtns[0]);
 
     expect(mockOnMove).toHaveBeenCalledTimes(1);
     expect(mockOnMove).toHaveBeenCalledWith(expect.anything(), MoveDirection.DOWN);

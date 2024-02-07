@@ -40,20 +40,11 @@ type Props = {
   onUpdate: (annotation: AnnotationQuery, editIndex: number) => void;
   onBackToList: () => void;
   onDelete: (index: number) => void;
-  onPreview: () => void;
 };
 
 export const newAnnotationName = 'New annotation';
 
-export const AnnotationSettingsEdit = ({
-  annotation,
-  editIndex,
-  panels,
-  onUpdate,
-  onBackToList,
-  onDelete,
-  onPreview,
-}: Props) => {
+export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate, onBackToList, onDelete }: Props) => {
   const styles = useStyles2(getStyles);
 
   const panelFilter = useMemo(() => {
