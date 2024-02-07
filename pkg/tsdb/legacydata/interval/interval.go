@@ -15,8 +15,6 @@ import (
 var (
 	DefaultRes         int64 = 1500
 	defaultMinInterval       = time.Millisecond * 1
-	year                     = time.Hour * 24 * 365
-	day                      = time.Hour * 24
 )
 
 type Interval struct {
