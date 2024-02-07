@@ -63,7 +63,7 @@ A user that is part of Team B will have access to logs that match `namespace="pr
 
 We have two teams, Team A and Team B. Loki access is setup with `Admin` roles having `Admin` permission.
 
-- Team A has rule `cluster="us-west-0", namespace="dev|prod"` configured.
+- Team A has rule `cluster="us-west-0", namespace=~"dev|prod"` configured.
 
 - Team B has rule `cluster="us-west-0", namespace="!prod"` configured.
 
