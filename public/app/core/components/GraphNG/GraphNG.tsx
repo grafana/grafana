@@ -140,7 +140,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
 
   handleCursorUpdate(evt: DataHoverEvent | LegacyGraphHoverEvent) {
     // ignore uplot-emitted events, since we already use uPlot's sync
-    if (evt.publisher === 'uplot') {
+    if (evt.tags?.has('uplot')) {
       return;
     }
 

@@ -173,11 +173,8 @@ export function prepConfig(opts: PrepConfigOpts) {
     data: dataRef.current?.heatmap,
   };
 
-  const hoverEvent = new DataHoverEvent(payload);
-  hoverEvent.publisher = 'uplot';
-
-  const clearEvent = new DataHoverClearEvent();
-  clearEvent.publisher = 'uplot';
+  const hoverEvent = new DataHoverEvent(payload).setTags(['uplot']);
+  const clearEvent = new DataHoverClearEvent().setTags(['uplot']);
 
   let pendingOnleave: ReturnType<typeof setTimeout> | 0;
 
