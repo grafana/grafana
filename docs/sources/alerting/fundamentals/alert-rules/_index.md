@@ -20,7 +20,7 @@ An alert rule is a set of evaluation criteria for when an alert rule should fire
 
 While queries and expressions select the data set to evaluate, a condition sets the threshold that an alert must meet or exceed to create an alert.
 
-An interval specifies how frequently an alerting rule is evaluated. Duration, when configured, indicates how long a condition must be met. The alert rules can also define alerting behavior in the absence of data.
+An interval specifies how frequently an alert rule is evaluated. Duration, when configured, indicates how long a condition must be met. The alert rules can also define alerting behavior in the absence of data.
 
 - [Alert rule types][alert-rule-types]
 - [Alert instances][alert-instances]
