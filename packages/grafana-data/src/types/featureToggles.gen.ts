@@ -174,4 +174,5 @@ export interface FeatureToggles {
   promQLScope?: boolean;
   nodeGraphDotLayout?: boolean;
   groupToNestedTableTransformation?: boolean;
+  newPDFRendering?: boolean;
 }

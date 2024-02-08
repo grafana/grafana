@@ -143,6 +143,7 @@ type Cfg struct {
 	// Rendering
 	ImagesDir                      string
 	CSVsDir                        string
+	PDFsDir                        string
 	RendererUrl                    string
 	RendererCallbackUrl            string
 	RendererAuthToken              string
@@ -1765,6 +1766,7 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	cfg.RendererRenderKeyLifeTime = renderSec.Key("render_key_lifetime").MustDuration(5 * time.Minute)
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
+	cfg.PDFsDir = filepath.Join(cfg.DataPath, "pdf")
 
 	return nil
 }

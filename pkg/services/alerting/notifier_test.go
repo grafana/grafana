@@ -355,7 +355,7 @@ func (s *testRenderService) IsAvailable(ctx context.Context) bool {
 	return true
 }
 
-func (s *testRenderService) Render(ctx context.Context, opts rendering.Opts, session rendering.Session) (*rendering.RenderResult, error) {
+func (s *testRenderService) Render(ctx context.Context, _ rendering.RenderType, opts rendering.Opts, _ rendering.Session) (*rendering.RenderResult, error) {
 	if s.renderProvider != nil {
 		return s.renderProvider(ctx, opts)
 	}
