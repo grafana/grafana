@@ -30,6 +30,10 @@ import { getColumns, sortCaseInsensitive, sortNumber, getFooterItems, createFoot
 const COLUMN_MIN_WIDTH = 150;
 const FOOTER_ROW_HEIGHT = 36;
 
+export interface RowToColor {
+  [key: number]: string;
+}
+
 export const Table = memo((props: Props) => {
   const {
     ariaLabel,
@@ -79,17 +83,17 @@ export const Table = memo((props: Props) => {
     return EXTENDED_ROW_HEIGHT;
   }, [footerItems]);
 
+  // Create a color map to color by row
+  const colorMap: RowToColor = {};
+
   data.fields.map((field) => {
+    // Get threshold configurations for this field
     const { thresholds } = field.config;
 
-    console.log(thresholds);
-
+    // If we have no thresholds we have nothing to do
     if (thresholds === undefined) {
       return;
     }
-
-    // Get threshold configurations for this field
-
 
     for(let i = 0; i < field.values.length; i++) {
       const value = field.values[i];
@@ -100,11 +104,22 @@ export const Table = memo((props: Props) => {
         continue;
       }
 
-      for (let i = (thresholds.steps.length - 1); i >= 0; i--) {
-
+      for (let j = (thresholds.steps.length - 1); j >= 0; j--) {
+        const threshold = thresholds.steps[j];
+    
+        // TODO: Currently works when there's one numeric field, need
+        // to consider the case of multiple numeric fields, may 
+        // need to use field overrides but 
+        // not sure about the feasability of that approach
+        if (value >= threshold.value && threshold.value !== (-Infinity)) {
+          if (colorMap[i] === undefined) {
+            colorMap[i] = threshold.color;
+            break;
+          }
+        }  
       }
       
-      // We have five distinct cases (and assuming)
+      // We have four distinct cases (and assuming)
       // that the field is numeric
       // 
       // 1. Absolute Threshold applied to rows
@@ -339,6 +354,7 @@ export const Table = memo((props: Props) => {
           {itemCount > 0 ? (
             <div data-testid={selectors.components.Panels.Visualization.Table.body} ref={variableSizeListScrollbarRef}>
               <RowsList
+                colorMap={colorMap}
                 data={data}
                 rows={rows}
                 width={width}

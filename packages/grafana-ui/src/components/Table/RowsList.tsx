@@ -20,10 +20,12 @@ import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 import { usePanelContext } from '../PanelChrome';
 
 import { ExpandedRow, getExpandedRowHeight } from './ExpandedRow';
+import { RowToColor } from './Table';
 import { TableCell } from './TableCell';
 import { TableStyles } from './styles';
 import { TableFilterActionCallback } from './types';
 import { calculateAroundPointThreshold, isPointTimeValAroundTableTimeVal } from './utils';
+
 
 interface RowsListProps {
   data: DataFrame;
@@ -44,6 +46,7 @@ interface RowsListProps {
   onCellFilterAdded?: TableFilterActionCallback;
   timeRange?: TimeRange;
   footerPaginationEnabled: boolean;
+  colorMap?: RowToColor;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -66,6 +69,7 @@ export const RowsList = (props: RowsListProps) => {
     listHeight,
     listRef,
     enableSharedCrosshair = false,
+    colorMap
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(undefined);
@@ -208,6 +212,17 @@ export const RowsList = (props: RowsListProps) => {
 
       const expandedRowStyle = tableState.expanded[row.id] ? css({ '&:hover': { background: 'inherit' } }) : {};
 
+      // If there's a threshold format then
+      // we set the row's background color
+      // TODO: depending on light/dark measure appropriately set 
+      // text color as well
+      // TODO: may need to handle conversion from Grafana color
+      // code to hex color
+      let rowFormatStyle = null;
+      if (colorMap !== undefined && colorMap[index] !== undefined) {
+        rowFormatStyle = css({backgroundColor: colorMap[index]});
+      }
+
       if (rowHighlightIndex !== undefined && row.index === rowHighlightIndex) {
         style = { ...style, backgroundColor: theme.components.table.rowHoverBackground };
       }
@@ -215,7 +230,7 @@ export const RowsList = (props: RowsListProps) => {
       return (
         <div
           {...row.getRowProps({ style })}
-          className={cx(tableStyles.row, expandedRowStyle)}
+          className={cx(tableStyles.row, expandedRowStyle, rowFormatStyle)}
           onMouseEnter={() => onRowHover(index, data)}
           onMouseLeave={onRowLeave}
         >
@@ -259,6 +274,7 @@ export const RowsList = (props: RowsListProps) => {
       theme.components.table.rowHoverBackground,
       timeRange,
       width,
+      colorMap
     ]
   );
 
