@@ -26,11 +26,12 @@ Grafana Pyroscope is a horizontally scalable, highly available, multi-tenant, OS
 
 To learn more about profiling and Pyroscope, refer to the [Introduction to Pyroscope](/docs/pyroscope/introduction/).
 
-For information on configuring the Pyroscope data source, refer to the [Configure the Grafana Pyroscope data source](./configure-pyroscope-data-source) documentation.
+For information on configuring the Pyroscope data source, refer to [Configure the Grafana Pyroscope data source](./configure-pyroscope-data-source).
 
 ## Integrate profiles into dashboards
 
-Using the Pyroscope data source, you can integrate profiles into your dashboards. In this case, the screenshot shows memory profiles alongside panels for logs and metrics to be able to debug OOM errors alongside the associated logs and metrics.
+Using the Pyroscope data source, you can integrate profiles into your dashboards.
+In this case, the screenshot shows memory profiles alongside panels for logs and metrics to be able to debug out of memory (OOM) errors alongside the associated logs and metrics.
 
 ![dashboard](https://grafana.com/static/img/pyroscope/grafana-pyroscope-dashboard-2023-11-30.png)
 
@@ -48,7 +49,8 @@ For more information, refer to the [Traces to profile section][configure-tempo-d
 
 ## Provision the Grafana Pyroscope data source
 
-You can modify the Grafana configuration files to provision the Grafana Pyroscope data source. To learn more, and to view the available provisioning settings, see [provisioning documentation][provisioning-data-sources].
+You can modify the Grafana configuration files to provision the Grafana Pyroscope data source.
+To learn more, and to view the available provisioning settings, refer to [provisioning documentation][provisioning-data-sources].
 
 Here is an example configuration:
 
