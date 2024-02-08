@@ -28,7 +28,6 @@ import {
   SHOULD_INCLUDE_PIPELINE_OPERATIONS,
 } from '../LogContextProvider';
 import { escapeLabelValueInSelector } from '../languageUtils';
-import { isQueryWithParser } from '../queryUtils';
 import { lokiGrammar } from '../syntax';
 import { ContextFilter, LokiQuery } from '../types';
 
@@ -253,8 +252,8 @@ export function LokiContextUi(props: LokiContextUiProps) {
     };
   }, []);
 
-  // Currently we support adding of parser and showing parsed labels only if there is 1 parser
-  const showParsedLabels = origQuery && isQueryWithParser(origQuery.expr).parserCount === 1 && parsedLabels.length > 0;
+  // If there's any "parsedLabel", that also includes structured metadata, we show the parsed labels input
+  const showParsedLabels = parsedLabels.length > 0;
 
   let queryExpr = logContextProvider.prepareExpression(
     contextFilters.filter(({ enabled }) => enabled),
