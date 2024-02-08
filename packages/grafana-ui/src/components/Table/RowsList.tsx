@@ -44,6 +44,7 @@ interface RowsListProps {
   onCellFilterAdded?: TableFilterActionCallback;
   timeRange?: TimeRange;
   footerPaginationEnabled: boolean;
+  scrollToRowIndex?: number;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -66,6 +67,7 @@ export const RowsList = (props: RowsListProps) => {
     listHeight,
     listRef,
     enableSharedCrosshair = false,
+    scrollToRowIndex = undefined,
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(undefined);
@@ -212,6 +214,10 @@ export const RowsList = (props: RowsListProps) => {
         style = { ...style, backgroundColor: theme.components.table.rowHoverBackground };
       }
 
+      if (index === props.scrollToRowIndex) {
+        style = { ...style, backgroundColor: theme.colors.background.secondary };
+      }
+
       return (
         <div
           {...row.getRowProps({ style })}
@@ -259,6 +265,7 @@ export const RowsList = (props: RowsListProps) => {
       theme.components.table.rowHoverBackground,
       timeRange,
       width,
+      scrollToRowIndex,
     ]
   );
 
@@ -282,7 +289,13 @@ export const RowsList = (props: RowsListProps) => {
 
   return (
     <>
-      <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true} scrollTop={scrollTop}>
+      <CustomScrollbar
+        height={rowHeight}
+        scrollToRowIndex={scrollToRowIndex}
+        onScroll={handleScroll}
+        hideHorizontalTrack={true}
+        scrollTop={scrollTop}
+      >
         <VariableSizeList
           // This component needs an unmount/remount when row height or page changes
           key={rowHeight + pageIndex}

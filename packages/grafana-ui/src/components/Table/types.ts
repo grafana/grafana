@@ -97,6 +97,8 @@ export interface Props {
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
+  // Index of the row to scroll to
+  scrollToRowIndex?: number;
 }
 
 /**
