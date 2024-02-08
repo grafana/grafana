@@ -73,6 +73,7 @@ func RenderTemplate(qt QueryTemplate, selectedValues map[string][]string) ([]Tar
 	return targets, nil
 }
 
+// +k8s:openapi-gen=false
 type replacement struct {
 	*Position
 	*TemplateVariable

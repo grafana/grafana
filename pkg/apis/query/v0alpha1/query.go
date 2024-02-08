@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
@@ -46,6 +47,9 @@ type GenericDataQuery struct {
 	// RefID is the unique identifier of the query, set by the frontend call.
 	RefID string `json:"refId"`
 
+	// Optionally specify the required result type and version
+	ResponseContract *ResultDataContract `json:"resultDataContract,omitempty"`
+
 	// TimeRange represents the query range
 	// NOTE: unlike generic /ds/query, we can now send explicit time values in each query
 	TimeRange *TimeRange `json:"timeRange,omitempty"`
@@ -73,6 +77,15 @@ type GenericDataQuery struct {
 
 	// Additional Properties (that live at the root)
 	props map[string]any `json:"-"`
+}
+
+type ResultDataContract struct {
+	// Type asserts that the frame matches a known type structure.
+	Type data.FrameType `json:"type,omitempty"`
+
+	// TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane
+	// contract documentation https://grafana.github.io/dataplane/contract/.
+	TypeVersion data.FrameTypeVersion `json:"typeVersion"`
 }
 
 func NewGenericDataQuery(vals map[string]any) GenericDataQuery {

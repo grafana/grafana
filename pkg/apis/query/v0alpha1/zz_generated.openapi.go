@@ -22,6 +22,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery":             schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericQueryRequest":          schema_pkg_apis_query_v0alpha1_GenericQueryRequest(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataResponse":            QueryDataResponse{}.OpenAPIDefinition(),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.ResultDataContract":           schema_pkg_apis_query_v0alpha1_ResultDataContract(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange":                    schema_pkg_apis_query_v0alpha1_TimeRange(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.Position":            schema_apis_query_v0alpha1_template_Position(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.QueryTemplate":       schema_apis_query_v0alpha1_template_QueryTemplate(ref),
@@ -197,6 +198,12 @@ func schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref common.ReferenceCallbac
 							Format:      "",
 						},
 					},
+					"resultDataContract": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optionally specify the required result type and version",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.ResultDataContract"),
+						},
+					},
 					"timeRange": {
 						SchemaProps: spec.SchemaProps{
 							Description: "TimeRange represents the query range NOTE: unlike generic /ds/query, we can now send explicit time values in each query",
@@ -249,7 +256,7 @@ func schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef", "github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange"},
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef", "github.com/grafana/grafana/pkg/apis/query/v0alpha1.ResultDataContract", "github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange"},
 	}
 }
 
@@ -314,6 +321,41 @@ func schema_pkg_apis_query_v0alpha1_GenericQueryRequest(ref common.ReferenceCall
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery"},
+	}
+}
+
+func schema_pkg_apis_query_v0alpha1_ResultDataContract(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Type asserts that the frame matches a known type structure.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"typeVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane contract documentation https://grafana.github.io/dataplane/contract/.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: 0,
+										Type:    []string{"integer"},
+										Format:  "int32",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"typeVersion"},
+			},
+		},
 	}
 }
 
@@ -453,13 +495,6 @@ func schema_apis_query_v0alpha1_template_Target(ref common.ReferenceCallback) co
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"dataType": {
-						SchemaProps: spec.SchemaProps{
-							Description: "DataType is the returned Dataplane type from the query.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"variables": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Variables that will be replaced in the query",

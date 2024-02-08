@@ -1,8 +1,6 @@
 package template
 
 import (
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
@@ -25,13 +23,6 @@ type QueryTemplate struct {
 }
 
 type Target struct {
-	// DataType is the returned Dataplane type from the query.
-	DataType data.FrameType `json:"dataType,omitempty"`
-
-	// DataTypeVersion is the version for the Dataplane type.
-	// TODO 2[uint] seems to panic, maybe implement DeepCopy on data.FrameTypeVersion?
-	// DataTypeVersion data.FrameTypeVersion `json:"dataTypeVersion,omitempty"`
-
 	// Variables that will be replaced in the query
 	Variables map[string][]VariableReplacement `json:"variables"`
 
