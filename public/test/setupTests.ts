@@ -22,5 +22,6 @@ i18next.use(initReactI18next).init({
   lng: 'en-US', // this should be the locale of the phrases in our source JSX
 });
 
-// Increase testing-library "waitFor" methods timeout from 1000ms
+// our tests are heavy in CI due to parallelisation and monaco and kusto
+// so we increase the default timeout to 2secs to avoid flakiness
 configure({ asyncUtilTimeout: 2000 });
