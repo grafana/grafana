@@ -42,32 +42,27 @@ Set how series data is mapped in the visualization.
 - **Auto** - Automatically generates series based on field selection across multiple data frames.
 - **Manual** - Construct values from any result. You can explicitly define multiple series for which you'll set the **X-field** and **Y-field** options, as well as the **Point color** and **Point size** rules
 
-### Data
+Depending on your series mapping selection, the rest of the **XY chart** options differ. Expand the sections below for options based on your mapping mode.
 
-<!--what is the scenario where you need to choose a data set?-->
+### Auto series mapping options
 
-Select your data set. This option is only available when you set **Series mapping** to **Manual** mode.
+{{< collapse title="Options" >}}
 
-### X-field
+#### X-field
 
 Select which field the x-axis represents.
 
 <!--can we make clear here how this is different when you map your series by table or manual; there seem to be more fields to choose from on manual mode-->
 
-### Y-fields
+#### Y-fields
 
 Select which fields the y-axis represents.
 
-**Table** mode - When you set the series mapping to **Table** mode, you can only update the x-field and the y-fields are automatically assigned based on that selection. In this mode you can enable and disable the **Y-field**.
+In **Auto** mode, you can only update the x-field and the y-fields are automatically assigned based on that selection. In this mode you can enable and disable the **Y-field**.
 
-For example, if your data source is a table with five columns, you may want to disable one or more of the columns so that they're not included in the visualization.
+For example, if your data source has a table with five columns, you may want to disable one or more of the columns so that they're not included in the visualization.
 
-
-**Manual** mode - When you set series mapping to **Manual**, you can control both the **X-field** and **Y-field** options.
-
-<!--can we make clearer here how this is different when you map your series by table or manual; there seem to be more fields to choose from on manual mode-->
-
-### Show
+#### Show
 
 Set how values are represented in the visualization.
 
@@ -75,13 +70,11 @@ Set how values are represented in the visualization.
 - **Lines** - Display values as lines. When you select this option, the [line style](#line-style) and [line width](#line-width) options are also displayed.
 - **Both** - Display values as both points and lines.
 
-### Point size
-
-<!--how do we differentiate this setting from the one that's displayed when you set the series mapping to manual-->
+#### Point size
 
 Set the size of the points, from 1 to 40 pixels in diameter.
 
-### Line style
+#### Line style
 
 Set the style of the line. To change the color, use the standard [color scheme][] field option.
 
@@ -91,9 +84,71 @@ Set the style of the line. To change the color, use the standard [color scheme][
 - **Dash:** Display a dashed line. When you choose this option, a list appears for you to select the length and gap (length, gap) for the line dashes. Dash spacing set to 10, 10 (default).
 - **Dots:** Display dotted lines. When you choose this option, a list appears for you to select the gap (length = 0, gap) for the dot spacing. Dot spacing set to 0, 10 (default)
 
-### Line width
+#### Line width
 
 Set the width of the lines, from 1 to 10 pixels.
+
+{{< /collapse >}}
+
+### Manual series mapping options
+
+{{< collapse title="Options" >}}
+
+#### Data
+
+<!--what is the scenario where you need to choose a data set?-->
+
+Select your data set. This option is only available when you set **Series mapping** to **Manual** mode.
+
+#### Add series
+
+Select the series that you want to include in the visualization.
+
+#### X-field
+
+Select which field the x-axis represents.
+
+#### Y-fields
+
+Select which fields the y-axis represents.
+
+In **Manual** mode, you can control both the **X-field** and **Y-field** options.
+
+#### Point color
+
+Explicitly define the **Point color** rules. Select from **Fixed color** or a field.
+
+#### Point size (Manual mode)
+
+Explicitly define the **Point size** rules. This option is specific to when you're defining fields in manual mode and not the same as the general [Point size option](#point-size) for the visualization. Select from **Fixed value** or a field.
+
+#### Show
+
+Set how values are represented in the visualization.
+
+- **Points** - Display values as points. When you select this option, the [Point size](#point-size) option is also displayed.
+- **Lines** - Display values as lines. When you select this option, the [line style](#line-style) and [line width](#line-width) options are also displayed.
+- **Both** - Display values as both points and lines.
+
+#### Point size
+
+Set the size of the points, from 1 to 40 pixels in diameter.
+
+#### Line style
+
+Set the style of the line. To change the color, use the standard [color scheme][] field option.
+
+![Line style option](/static/img/docs/time-series-panel/line-style-option-v9.png)
+
+- **Solid:** Display a solid line. This is the default setting.
+- **Dash:** Display a dashed line. When you choose this option, a list appears for you to select the length and gap (length, gap) for the line dashes. Dash spacing set to 10, 10 (default).
+- **Dots:** Display dotted lines. When you choose this option, a list appears for you to select the gap (length = 0, gap) for the dot spacing. Dot spacing set to 0, 10 (default)
+
+#### Line width
+
+Set the width of the lines, from 1 to 10 pixels.
+
+{{< /collapse >}}
 
 ## Tooltip options
 
