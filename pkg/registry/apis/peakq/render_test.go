@@ -163,14 +163,14 @@ var multiVarRenderedTargets = []template.Target{
 }
 
 func TestMultiVarTemplate(t *testing.T) {
-	rT, err := Render(multiVarTemplate, map[string][]string{
+	rT, err := template.RenderTemplate(multiVarTemplate, map[string][]string{
 		"metricName":    {"up"},
 		"anotherMetric": {"sloths_do_like_a_good_nap"},
 	})
 	require.NoError(t, err)
 	require.Equal(t,
 		multiVarRenderedTargets,
-		rT.Targets,
+		rT,
 	)
 }
 
@@ -205,8 +205,8 @@ func TestRenderWithRune(t *testing.T) {
 		"name": {"🦥"},
 	}
 
-	rq, err := Render(qt, selectedValues)
+	rq, err := template.RenderTemplate(qt, selectedValues)
 	require.NoError(t, err)
 
-	require.Equal(t, "🐦 🦥!", rq.Targets[0].Properties.AdditionalProperties()["message"])
+	require.Equal(t, "🐦 🦥!", rq[0].Properties.AdditionalProperties()["message"])
 }
