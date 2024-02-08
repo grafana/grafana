@@ -143,7 +143,7 @@ regressionTransformation,preview,@grafana/grafana-bi-squad,2023-11-24,false,fals
 displayAnonymousStats,GA,@grafana/identity-access-team,2023-11-29,false,false,true
 lokiQueryHints,GA,@grafana/observability-logs,2023-12-18,false,false,true
 kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad,2023-12-22,false,false,true
-alertingPreviewUpgrade,preview,@grafana/alerting-squad,2024-01-03,false,true,false
+alertingPreviewUpgrade,GA,@grafana/alerting-squad,2024-01-03,false,true,false
 enablePluginsTracingByDefault,experimental,@grafana/plugins-platform-backend,2024-01-09,false,true,false
 cloudRBACRoles,experimental,@grafana/identity-access-team,2024-01-10,false,true,false
 alertingQueryOptimization,GA,@grafana/alerting-squad,2024-01-10,false,false,false
