@@ -25,11 +25,15 @@ Arrange your files in a directory in a way that best suits your use case. For ex
 
 Details on how to set up the files and which fields are required for each object are listed below depending on which resource you are provisioning.
 
+For a complete guide about how Grafana provisions resources, refer to [Provision Grafana][provisioning].
+
 **Notes:**
 
-You cannot edit provisioned resources from files in Grafana. You can only change the resource properties by changing the provisioning file and restarting Grafana or carrying out a hot reload. This prevents changes being made to the resource that would be overwritten if a file is provisioned again or a hot reload is carried out.
+- You cannot edit provisioned resources from files in Grafana. You can only change the resource properties by changing the provisioning file and restarting Grafana or carrying out a hot reload. This prevents changes being made to the resource that would be overwritten if a file is provisioned again or a hot reload is carried out.
 
-Importing takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Admin API][reload-provisioning-configurations].
+- Importing takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Admin API][reload-provisioning-configurations].
+
+- Importing an existing alerting resource results in a conflict. First, when present, remove the resources you plan to import.
 
 ## Import alert rules
 
@@ -37,16 +41,11 @@ Create or delete alert rules in your Grafana instance(s).
 
 1. Create alert rules in Grafana.
 1. [Export][alerting_export] and download a provisioning file for your alert rules.
-1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
+1. Copy the contents into a YAML or JSON configuration file in the `provisioning/alerting` directory.
 
    Example configuration files can be found below.
 
-1. Ensure that your files are in the right directory on the node running the Grafana server, so that they deploy alongside your Grafana instance(s).
-1. Delete the alert rules in Grafana that are going to be imported.
-
-   **Note:**
-
-   If you do not delete the alert rule, it will clash with the imported alert rule once uploaded.
+1. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
 
 Here is an example of a configuration file for creating alert rules.
 
@@ -141,11 +140,11 @@ Create or delete contact points in your Grafana instance(s).
 
 1. Create a contact point in Grafana.
 1. [Export][alerting_export] and download a provisioning file for your contact point.
-1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
+1. Copy the contents into a YAML or JSON configuration file in the `provisioning/alerting` directory.
 
    Example configuration files can be found below.
 
-1. Ensure that your files are in the right directory on the node running the Grafana server, so that they deploy alongside your Grafana instance(s).
+1. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
 
 Here is an example of a configuration file for creating contact points.
 
@@ -190,6 +189,8 @@ deleteContactPoints:
 Here are some examples of settings you can use for the different
 contact point integrations.
 
+{{< collapse title="Alertmanager" >}}
+
 #### Alertmanager
 
 ```yaml
@@ -202,6 +203,10 @@ settings:
   # <string>
   basicAuthPassword: abc123
 ```
+
+{{< /collapse >}}
+
+{{< collapse title="DingDing" >}}
 
 #### DingDing
 
@@ -216,6 +221,10 @@ settings:
   message: |
     {{ template "default.message" . }}
 ```
+
+{{< /collapse >}}
+
+{{< collapse title="Discord" >}}
 
 #### Discord
 
@@ -233,6 +242,10 @@ settings:
     {{ template "default.message" . }}
 ```
 
+{{< /collapse >}}
+
+{{< collapse title="E-Mail" >}}
+
 #### E-Mail
 
 ```yaml
@@ -249,6 +262,10 @@ settings:
     {{ template "default.title" . }}
 ```
 
+{{< /collapse >}}
+
+{{< collapse title="Google Chat" >}}
+
 #### Google Chat
 
 ```yaml
@@ -261,6 +278,10 @@ settings:
     {{ template "default.message" . }}
 ```
 
+{{< /collapse >}}
+
+{{< collapse title="Kafka" >}}
+
 #### Kafka
 
 ```yaml
@@ -272,6 +293,10 @@ settings:
   kafkaTopic: topic1
 ```
 
+{{< /collapse >}}
+
+{{< collapse title="LINE" >}}
+
 #### LINE
 
 ```yaml
@@ -280,6 +305,10 @@ settings:
   # <string, required>
   token: xxx
 ```
+
+{{< /collapse >}}
+
+{{< collapse title="Microsoft Teams" >}}
 
 #### Microsoft Teams
 
@@ -297,6 +326,10 @@ settings:
   message: |
     {{ template "default.message" . }}
 ```
+
+{{< /collapse >}}
+
+{{< collapse title="OpsGenie" >}}
 
 #### OpsGenie
 
@@ -320,6 +353,10 @@ settings:
   sendTagsAs: both
 ```
 
+{{< /collapse >}}
+
+{{< collapse title="PagerDuty" >}}
+
 #### PagerDuty
 
 ```yaml
@@ -339,6 +376,10 @@ settings:
   summary: |
     {{ template "default.message" . }}
 ```
+
+{{< /collapse >}}
+
+{{< collapse title="Pushover" >}}
 
 #### Pushover
 
@@ -367,6 +408,10 @@ settings:
   message: |
     {{ template "default.message" . }}
 ```
+
+{{< /collapse >}}
+
+{{< collapse title="Slack" >}}
 
 #### Slack
 
@@ -400,6 +445,10 @@ settings:
     {{ template "slack.default.text" . }}
 ```
 
+{{< /collapse >}}
+
+{{< collapse title="Sensu Go" >}}
+
 #### Sensu Go
 
 ```yaml
@@ -422,6 +471,10 @@ settings:
     {{ template "default.message" . }}
 ```
 
+{{< /collapse >}}
+
+{{< collapse title="Telegram" >}}
+
 #### Telegram
 
 ```yaml
@@ -436,6 +489,10 @@ settings:
     {{ template "default.message" . }}
 ```
 
+{{< /collapse >}}
+
+{{< collapse title="Threema Gateway" >}}
+
 #### Threema Gateway
 
 ```yaml
@@ -449,6 +506,10 @@ settings:
   recipient_id: A9R4KL4S
 ```
 
+{{< /collapse >}}
+
+{{< collapse title="VictorOps" >}}
+
 #### VictorOps
 
 ```yaml
@@ -459,6 +520,10 @@ settings:
   # <string> options: CRITICAL, WARNING
   messageType: CRITICAL
 ```
+
+{{< /collapse >}}
+
+{{< collapse title="Webhook" >}}
 
 #### Webhook
 
@@ -481,6 +546,10 @@ settings:
   maxAlerts: '10'
 ```
 
+{{< /collapse >}}
+
+{{< collapse title="WeCom" >}}
+
 #### WeCom
 
 ```yaml
@@ -496,17 +565,19 @@ settings:
     {{ template "default.title" . }}
 ```
 
+{{< /collapse >}}
+
 ## Import notification policies
 
 Create or reset the notification policy tree in your Grafana instance(s).
 
 1. Create a notification policy in Grafana.
 1. [Export][alerting_export] and download a provisioning file for your notification policy.
-1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
+1. Copy the contents into a YAML or JSON configuration file in the `provisioning/alerting` directory.
 
    Example configuration files can be found below.
 
-1. Ensure that your files are in the right directory on the node running the Grafana server, so that they deploy alongside your Grafana instance(s).
+1. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
 
 Here is an example of a configuration file for creating notification policies.
 
@@ -683,58 +754,64 @@ If you are a Kubernetes user, you can leverage file provisioning using Kubernete
 
 1. Create one or more configuration maps as follows.
 
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: grafana-alerting
-data:
-  provisioning.yaml: |
-    templates:
-    - name: my_first_template
-      template: the content for my template
-```
+   ```yaml
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: grafana-alerting
+   data:
+     provisioning.yaml: |
+       templates:
+       - name: my_first_template
+         template: the content for my template
+   ```
 
 2. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: grafana
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: grafana
-  template:
-    metadata:
-      name: grafana
-      labels:
-        app: grafana
-    spec:
-      containers:
-        - name: grafana
-          image: grafana/grafana:latest
-          ports:
-            - name: grafana
-              containerPort: 3000
-          volumeMounts:
-            - mountPath: /etc/grafana/provisioning/alerting
-              name: grafana-alerting
-              readOnly: false
-      volumes:
-        - name: grafana-alerting
-          configMap:
-            defaultMode: 420
-            name: grafana-alerting
-```
+   ```yaml
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: grafana
+   spec:
+     replicas: 1
+     selector:
+       matchLabels:
+         app: grafana
+     template:
+       metadata:
+         name: grafana
+         labels:
+           app: grafana
+       spec:
+         containers:
+           - name: grafana
+             image: grafana/grafana:latest
+             ports:
+               - name: grafana
+                 containerPort: 3000
+             volumeMounts:
+               - mountPath: /etc/grafana/provisioning/alerting
+                 name: grafana-alerting
+                 readOnly: false
+         volumes:
+           - name: grafana-alerting
+             configMap:
+               defaultMode: 420
+               name: grafana-alerting
+   ```
 
 This eliminates the need for a persistent database to use Grafana Alerting in Kubernetes; all your provisioned resources appear after each restart or re-deployment. Grafana still requires a database for normal operation, you do not need to persist the contents of the database between restarts if all objects are provisioned using files.
+
+**Useful Links:**
+
+[Grafana provisioning][provisioning]
 
 {{% docs/reference %}}
 [alerting_export]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources"
 [alerting_export]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources"
 [reload-provisioning-configurations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/admin#reload-provisioning-configurations"
 [reload-provisioning-configurations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/admin#reload-provisioning-configurations"
+[provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning"
+[provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning"
 {{% /docs/reference %}}
