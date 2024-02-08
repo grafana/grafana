@@ -3970,7 +3970,6 @@ __metadata:
     react-use: "npm:17.5.0"
     react-window: "npm:1.8.10"
     rollup: "npm:2.79.1"
-    rollup-plugin-copy: "npm:3.5.0"
     rollup-plugin-dts: "npm:^5.0.0"
     rollup-plugin-esbuild: "npm:5.0.0"
     rollup-plugin-node-externals: "npm:^5.0.0"

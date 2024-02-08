@@ -1,32 +1,16 @@
 import image from '@rollup/plugin-image';
 import resolve from '@rollup/plugin-node-resolve';
 import path from 'path';
-import copy from 'rollup-plugin-copy';
 import dts from 'rollup-plugin-dts';
 import esbuild from 'rollup-plugin-esbuild';
 import { externals } from 'rollup-plugin-node-externals';
 
-const icons = require('../../public/app/core/icons/cached.json');
-
 const pkg = require('./package.json');
-
-const iconSrcPaths = icons.map((iconSubPath) => {
-  return `../../public/img/icons/${iconSubPath}.svg`;
-});
 
 export default [
   {
     input: 'src/index.ts',
-    plugins: [
-      externals({ deps: true, packagePath: './package.json' }),
-      resolve(),
-      copy({
-        targets: [{ src: iconSrcPaths, dest: './dist/public/' }],
-        flatten: false,
-      }),
-      esbuild(),
-      image(),
-    ],
+    plugins: [externals({ deps: true, packagePath: './package.json' }), resolve(), esbuild(), image()],
     output: [
       {
         format: 'cjs',
