@@ -64,10 +64,11 @@ const decodeGrafanaNamespace = (namespace: CombinedRuleNamespace): DecodedNamesp
     };
   }
 
+  // try to parse the folder as a nested folder, if it fails fall back to returning the folder name as-is.
   try {
     const folderParts: string[] = JSON.parse(namespaceName);
     if (!Array.isArray(folderParts)) {
-      throw new Error('Failed to parse Grafana folder');
+      throw new Error('not a nested Grafana folder');
     }
 
     const name = last(folderParts) ?? namespaceName;
