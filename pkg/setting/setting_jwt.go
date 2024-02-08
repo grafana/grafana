@@ -42,6 +42,7 @@ func (cfg *Cfg) readAuthJWTSettings() {
 	jwtSettings.RoleAttributeStrict = authJWT.Key("role_attribute_strict").MustBool(false)
 	jwtSettings.AllowAssignGrafanaAdmin = authJWT.Key("allow_assign_grafana_admin").MustBool(false)
 	jwtSettings.SkipOrgRoleSync = authJWT.Key("skip_org_role_sync").MustBool(false)
+	jwtSettings.GroupsAttributePath = valueAsString(authJWT, "groups_attribute_path", "")
 
 	cfg.JWTAuth = jwtSettings
 }
