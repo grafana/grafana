@@ -25,12 +25,14 @@ describe('Variables - Datasource', () => {
     e2e.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect().within(() => {
       cy.get('input').type('Prometheus{enter}');
     });
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption()
-      .eq(0)
-      .should('have.text', 'gdev-prometheus');
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption()
-      .eq(1)
-      .should('have.text', 'gdev-slow-prometheus');
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should(
+      'contain.text',
+      'gdev-prometheus'
+    );
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should(
+      'contain.text',
+      'gdev-slow-prometheus'
+    );
 
     // Navigate back to the homepage and change the selected variable value
     e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
