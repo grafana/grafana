@@ -48,7 +48,7 @@ import {
   getPrometheusTime,
   getRangeSnapInterval,
 } from './language_utils';
-import PrometheusMetricFindQuery from './metric_find_query';
+import { PrometheusMetricFindQuery } from './metric_find_query';
 import { getInitHints, getQueryHints } from './query_hints';
 import { promQueryModeller } from './querybuilder/PromQueryModeller';
 import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';

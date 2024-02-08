@@ -51,15 +51,31 @@ export { QueryPreview } from './querybuilder/components/QueryPreview';
 export { MetricsModal } from './querybuilder/components/metrics-modal/MetricsModal';
 export { PromQail } from './querybuilder/components/promQail/PromQail';
 
-export * from './add_label_to_query';
-export * from './dataquery.gen';
-export * from './datasource';
-export * from './language_provider';
-export * from './language_utils';
-export * from './metric_find_query';
-export * from './promql';
-export * from './query_hints';
-export * from './result_transformer';
-export * from './tracking';
-export * from './types';
-export * from './variables';
+// SRC/
+// Main export
+export { PrometheusDatasource } from './datasource';
+// The parts
+export { addLabelToQuery } from './add_label_to_query';
+export { type QueryEditorMode, type PromQueryFormat, type Prometheus } from './dataquery.gen';
+export { PrometheusMetricFindQuery } from './metric_find_query';
+export { promqlGrammar } from './promql';
+export { getQueryHints, getInitHints } from './query_hints';
+export { transformV2, transformDFToTable } from './result_transformer';
+export {
+  type PromQuery,
+  type PrometheusCacheLevel,
+  type PromApplication,
+  type PromOptions,
+  type ExemplarTraceIdDestination,
+  type PromQueryRequest,
+  type PromMetricsMetadataItem,
+  type PromMetricsMetadata,
+  type PromValue,
+  type PromMetric,
+  type PromBuildInfoResponse,
+  type LegendFormatMode,
+  type PromVariableQueryType,
+  type PromVariableQuery,
+  type StandardPromVariableQuery,
+} from './types';
+export { PrometheusVariableSupport } from './variables';

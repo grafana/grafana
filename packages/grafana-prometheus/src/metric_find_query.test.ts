@@ -6,7 +6,7 @@ import { BackendDataSourceResponse, BackendSrvRequest, FetchResponse, TemplateSr
 
 import { PrometheusDatasource } from './datasource';
 import { getPrometheusTime } from './language_utils';
-import PrometheusMetricFindQuery from './metric_find_query';
+import { PrometheusMetricFindQuery } from './metric_find_query';
 import { PromApplication, PromOptions } from './types';
 
 const fetchMock = jest.fn((options: BackendSrvRequest): Observable<FetchResponse<BackendDataSourceResponse>> => {
