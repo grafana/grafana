@@ -58,9 +58,10 @@ export function AppChrome({ children }: Props) {
   const shouldShowReturnToPrevious =
     config.featureToggles.returnToPrevious && state.returnToPrevious && url !== state.returnToPrevious.href;
 
+  // Clear returnToPrevious when the page is manually navigated to
   useEffect(() => {
     if (state.returnToPrevious && url === state.returnToPrevious.href) {
-      chrome.clearReturnToPrevious();
+      chrome.clearReturnToPrevious('auto_dismissed');
     }
     // We only want to pay attention when the location changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
