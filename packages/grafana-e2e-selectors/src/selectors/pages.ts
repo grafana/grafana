@@ -177,6 +177,9 @@ export const Pages = {
             stepCountIntervalSelect: 'data-testid interval variable step count input',
             minIntervalInput: 'data-testid interval variable mininum interval input',
           },
+          GroupByVariable: {
+            infoText: 'data-testid group by variable info text',
+          },
         },
       },
     },
