@@ -174,7 +174,7 @@ func (ng *AlertNG) init() error {
 	// using the UTF-8 parser and then fallsback to the classic parser on error.
 	// UTF-8 is permitted in label names. This should be removed when the compat package
 	// is removed from Alertmanager.
-	compat.InitFromFlags(ng.Log, compat.RegisteredMetrics, featurecontrol.NoopFlags{})
+	compat.InitFromFlags(ng.Log, featurecontrol.NoopFlags{})
 
 	// If enabled, configure the remote Alertmanager.
 	// - If several toggles are enabled, the order of precedence is RemoteOnly, RemotePrimary, RemoteSecondary
