@@ -205,6 +205,7 @@ export const RowsList = (props: RowsListProps) => {
     ({ index, style, rowHighlightIndex }: { index: number; style: CSSProperties; rowHighlightIndex?: number }) => {
       const indexForPagination = rowIndexForPagination(index);
       const row = rows[indexForPagination];
+      let additionalProps: React.HTMLAttributes<HTMLDivElement> = {};
 
       prepareRow(row);
 
@@ -212,10 +213,13 @@ export const RowsList = (props: RowsListProps) => {
 
       if (rowHighlightIndex !== undefined && row.index === rowHighlightIndex) {
         style = { ...style, backgroundColor: theme.components.table.rowHoverBackground };
+        additionalProps = {
+          'aria-selected': 'true',
+        };
       }
       return (
         <div
-          {...row.getRowProps({ style })}
+          {...row.getRowProps({ style, ...additionalProps })}
           className={cx(tableStyles.row, expandedRowStyle)}
           onMouseEnter={() => onRowHover(index, data)}
           onMouseLeave={onRowLeave}
