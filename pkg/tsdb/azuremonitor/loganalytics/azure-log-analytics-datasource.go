@@ -326,12 +326,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		return &dataResponse, nil
 	}
 
-	azurePortalBaseUrl, err := GetAzurePortalUrl(dsInfo.Cloud)
-	if err != nil {
-		return nil, err
-	}
-
-	queryUrl, err := getQueryUrl(query.Query, query.Resources, azurePortalBaseUrl, query.TimeRange)
+	queryUrl, err := getQueryUrl(query.Query, query.Resources, dsInfo.Routes["Azure Portal"].URL, query.TimeRange)
 	if err != nil {
 		return nil, err
 	}
@@ -365,7 +360,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 	}
 
 	// Use the parent span query for the parent span data link
-	err = addDataLinksToFields(query, azurePortalBaseUrl, frame, dsInfo, queryUrl)
+	err = addDataLinksToFields(query, dsInfo.Routes["Azure Portal"].URL, frame, dsInfo, queryUrl)
 	if err != nil {
 		return nil, err
 	}
