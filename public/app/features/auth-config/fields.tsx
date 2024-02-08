@@ -5,6 +5,7 @@ import { TextLink } from '@grafana/ui';
 
 import { FieldData, SSOProvider, SSOSettingsField } from './types';
 import { isSelectableValue } from './utils/guards';
+import { isUrlValid } from './utils/url';
 
 /** Map providers to their settings */
 export const fields: Record<SSOProvider['provider'], Array<keyof SSOProvider['settings']>> = {
@@ -137,7 +138,13 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'text',
       description: 'The authorization endpoint of your OAuth2 provider.',
       validation: {
-        required: false,
+        required: true,
+        validate: (value) => {
+          if (typeof value !== 'string') {
+            return false;
+          }
+          return isUrlValid(value);
+        },
       },
     },
     authStyle: {
@@ -157,7 +164,13 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'text',
       description: 'The token endpoint of your OAuth2 provider.',
       validation: {
-        required: false,
+        required: true,
+        validate: (value) => {
+          if (typeof value !== 'string') {
+            return false;
+          }
+          return isUrlValid(value);
+        },
       },
     },
     scopes: {

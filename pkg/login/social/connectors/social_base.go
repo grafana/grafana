@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/url"
 	"regexp"
 	"strings"
 	"sync"
@@ -225,9 +226,25 @@ func validateInfo(info *social.OAuthInfo) error {
 		return ssosettings.ErrInvalidOAuthConfig("ClientId is empty")
 	}
 
+	if info.AuthUrl == "" || !isValidUrl(info.AuthUrl) {
+		return ssosettings.ErrInvalidOAuthConfig("AuthUrl is invalid")
+	}
+
+	if info.TokenUrl == "" || !isValidUrl(info.TokenUrl) {
+		return ssosettings.ErrInvalidOAuthConfig("TokenUrl is invalid")
+	}
+
 	if info.AllowAssignGrafanaAdmin && info.SkipOrgRoleSync {
 		return ssosettings.ErrInvalidOAuthConfig("Allow assign Grafana Admin and Skip org role sync are both set thus Grafana Admin role will not be synced. Consider setting one or the other.")
 	}
 
 	return nil
+}
+
+func isValidUrl(actual string) bool {
+	parsed, err := url.ParseRequestURI(actual)
+	if err != nil {
+		return false
+	}
+	return strings.HasPrefix(parsed.Scheme, "http") && parsed.Host != ""
 }
