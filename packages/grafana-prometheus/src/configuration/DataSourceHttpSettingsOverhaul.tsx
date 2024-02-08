@@ -8,13 +8,13 @@ import { PromOptions } from '../types';
 
 import { docsTip, overhaulStyles } from './ConfigEditor';
 
-export type DataSourcehttpSettingsProps = {
+export type DataSourceHttpSettingsProps = {
   options: DataSourceSettings<PromOptions, {}>;
   onOptionsChange: (options: DataSourceSettings<PromOptions, {}>) => void;
   secureSocksDSProxyEnabled: boolean;
 };
 
-export const DataSourcehttpSettingsOverhaul = (props: DataSourcehttpSettingsProps) => {
+export const DataSourceHttpSettingsOverhaul = (props: DataSourceHttpSettingsProps) => {
   const { options, onOptionsChange, secureSocksDSProxyEnabled } = props;
 
   const newAuthProps = convertLegacyAuthProps({

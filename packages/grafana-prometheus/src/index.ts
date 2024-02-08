@@ -16,7 +16,17 @@ export { PromQueryEditorForAlerting } from './components/PromQueryEditorForAlert
 export { PromQueryField } from './components/PromQueryField';
 export { PromVariableQueryEditor } from './components/VariableQueryEditor';
 
-export * from './configuration';
+// CONFIGURATION/
+// Main export
+export { ConfigEditor } from './configuration/ConfigEditor';
+// The parts
+export { AlertingSettingsOverhaul } from './configuration/AlertingSettingsOverhaul';
+export { DataSourceHttpSettingsOverhaul } from './configuration/DataSourceHttpSettingsOverhaul';
+export { ExemplarSetting } from './configuration/ExemplarSetting';
+export { ExemplarsSettings } from './configuration/ExemplarsSettings';
+export { PromFlavorVersions } from './configuration/PromFlavorVersions';
+export { PromSettings } from './configuration/PromSettings';
+
 export * from './querybuilder';
 
 export * from './add_label_to_query';
