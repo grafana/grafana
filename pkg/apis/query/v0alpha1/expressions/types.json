@@ -2,7 +2,7 @@
   "kind": "QueryTypeDefinitionList",
   "apiVersion": "query.grafana.app/v0alpha1",
   "metadata": {
-    "resourceVersion": "1707369146982"
+    "resourceVersion": "1707370596305"
   },
   "items": [
     {
@@ -139,8 +139,11 @@
       "kind": "QueryTypeDefinition",
       "metadata": {
         "name": "reduce",
-        "resourceVersion": "1707369146982",
-        "creationTimestamp": "2024-02-08T05:12:26Z"
+        "resourceVersion": "1707370596305",
+        "creationTimestamp": "2024-02-08T05:12:26Z",
+        "annotations": {
+          "grafana.app/modifiedTime": "2024-02-08T05:36:36Z"
+        }
       },
       "spec": {
         "description": "reduce function",
@@ -156,7 +159,7 @@
                 },
                 "reducer": {
                   "default": "",
-                  "description": "The reducer\n\nPossible enum values:\n - `\"count\"`\n - `\"last\"`\n - `\"max\"`\n - `\"mean\"`\n - `\"min\"`\n - `\"sum\"`",
+                  "description": "The reducerXX\n\nPossible enum values:\n - `\"count\"`\n - `\"last\"`\n - `\"max\"`\n - `\"mean\"`\n - `\"min\"`\n - `\"sum\"`",
                   "enum": [
                     "count",
                     "last",

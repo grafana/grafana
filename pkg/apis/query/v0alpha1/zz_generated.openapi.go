@@ -640,7 +640,7 @@ func schema_apis_query_v0alpha1_expressions_ReduceQueryTypeProperties(ref common
 					},
 					"reducer": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The reducer\n\nPossible enum values:\n - `\"count\"`\n - `\"last\"`\n - `\"max\"`\n - `\"mean\"`\n - `\"min\"`\n - `\"sum\"`",
+							Description: "The reducerXX\n\nPossible enum values:\n - `\"count\"`\n - `\"last\"`\n - `\"max\"`\n - `\"mean\"`\n - `\"min\"`\n - `\"sum\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",

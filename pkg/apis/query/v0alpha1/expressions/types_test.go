@@ -1,6 +1,7 @@
 package expressions
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -15,21 +16,48 @@ import (
 
 func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 	typesFile := "types.json"
-	byType := GetQueryTypeDefinitions()
+	current := GetQueryTypeDefinitions()
 
-	created := time.Now()
+	created := time.Now().UTC()
 	resourceVersion := fmt.Sprintf("%d", created.UnixMilli())
-
 	defs := query.QueryTypeDefinitionList{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "QueryTypeDefinitionList",
 			APIVersion: query.APIVERSION,
 		},
-		ListMeta: v1.ListMeta{
-			ResourceVersion: resourceVersion,
-		},
 	}
-	for k, v := range byType {
+	existing := query.QueryTypeDefinitionList{}
+	body, err := os.ReadFile(typesFile)
+	if err == nil {
+		_ = json.Unmarshal(body, &existing)
+		defs.ListMeta = existing.ListMeta
+	}
+
+	// Check for changes in any existing values
+	for _, item := range existing.Items {
+		v, ok := current[item.Name]
+		if ok {
+			delete(current, item.Name)
+			a, e1 := json.Marshal(v)
+			b, e2 := json.Marshal(item.Spec)
+			if e1 != nil || e2 != nil || !bytes.Equal(a, b) {
+				item.ResourceVersion = resourceVersion
+				defs.ListMeta.ResourceVersion = resourceVersion
+				if item.Annotations == nil {
+					item.Annotations = make(map[string]string)
+				}
+				item.Annotations["grafana.app/modifiedTime"] = created.Format(time.RFC3339)
+				item.Spec = v // the current value
+			}
+			defs.Items = append(defs.Items, item)
+		} else {
+			defs.ListMeta.ResourceVersion = resourceVersion
+		}
+	}
+
+	// New items added to the list
+	for k, v := range current {
+		defs.ListMeta.ResourceVersion = resourceVersion
 		defs.Items = append(defs.Items, query.QueryTypeDefinition{
 			TypeMeta: v1.TypeMeta{
 				Kind: "QueryTypeDefinition",
