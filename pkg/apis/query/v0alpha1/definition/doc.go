@@ -3,4 +3,4 @@
 // +k8s:defaulter-gen=TypeMeta
 // +groupName=query.grafana.app
 
-package expressions // import "github.com/grafana/grafana/pkg/apis/query/v0alpha1/expressions"
+package definition // import "github.com/grafana/grafana/pkg/apis/query/v0alpha1/definition"

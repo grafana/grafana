@@ -5,6 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/definition"
 )
 
 const (
@@ -21,8 +22,8 @@ var DataSourceApiServerResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 
 var QueryTypeDefinitionResourceInfo = common.NewResourceInfo(GROUP, VERSION,
 	"querytypedefinitions", "querytypedefinition", "QueryTypeDefinition",
-	func() runtime.Object { return &QueryTypeDefinition{} },
-	func() runtime.Object { return &QueryTypeDefinitionList{} },
+	func() runtime.Object { return &definition.QueryTypeDefinition{} },
+	func() runtime.Object { return &definition.QueryTypeDefinitionList{} },
 )
 
 var (
