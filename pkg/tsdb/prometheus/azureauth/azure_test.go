@@ -118,15 +118,13 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 }
 
 func TestGetPrometheusScopes(t *testing.T) {
-	cfg := &setting.Cfg{
-		Azure: &azsettings.AzureSettings{
-			Cloud: azsettings.AzureUSGovernment,
-		},
+	azureSettings := &azsettings.AzureSettings{
+		Cloud: azsettings.AzureUSGovernment,
 	}
 
 	t.Run("should return scopes for cloud from settings with MSI credentials", func(t *testing.T) {
 		credentials := &azcredentials.AzureManagedIdentityCredentials{}
-		scopes, err := getPrometheusScopes(cfg.Azure, credentials)
+		scopes, err := getPrometheusScopes(azureSettings, credentials)
 		require.NoError(t, err)
 
 		assert.NotNil(t, scopes)
@@ -136,7 +134,7 @@ func TestGetPrometheusScopes(t *testing.T) {
 
 	t.Run("should return scopes for cloud from client secret credentials", func(t *testing.T) {
 		credentials := &azcredentials.AzureClientSecretCredentials{AzureCloud: azsettings.AzureChina}
-		scopes, err := getPrometheusScopes(cfg.Azure, credentials)
+		scopes, err := getPrometheusScopes(azureSettings, credentials)
 		require.NoError(t, err)
 
 		assert.NotNil(t, scopes)
