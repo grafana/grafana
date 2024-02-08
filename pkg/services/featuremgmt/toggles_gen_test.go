@@ -48,10 +48,6 @@ func TestFeatureToggleFiles(t *testing.T) {
 			if flag.AllowSelfServe && flag.Stage != FeatureStageGeneralAvailability {
 				t.Errorf("only allow self-serving GA toggles")
 			}
-			if flag.Created.Year() < 2021 {
-				t.Errorf("flag requires a reasonable created date.  See: %s (%s)",
-					flag.Name, flag.Created.Format(time.DateOnly))
-			}
 		}
 	})
 
@@ -122,42 +118,42 @@ func TestFeatureToggleFiles(t *testing.T) {
 				// EnabledVersion: ???,
 			}
 
-			current.Items = append(current.Items, featuretoggleapi.Feature{
-				ObjectMeta: v1.ObjectMeta{
-					Name:              flag.Name,
-					CreationTimestamp: v1.NewTime(flag.Created),
-					ResourceVersion:   fmt.Sprintf("%d", flag.Created.UnixMilli()),
-				},
-				Spec: lookup[flag.Name],
-			})
-			current.ListMeta.ResourceVersion = resourceVersion
+			// Replace them all
+			// current.Items = append(current.Items, featuretoggleapi.Feature{
+			// 	ObjectMeta: v1.ObjectMeta{
+			// 		Name:              flag.Name,
+			// 		CreationTimestamp: v1.NewTime(flag.Created),
+			// 		ResourceVersion:   fmt.Sprintf("%d", flag.Created.UnixMilli()),
+			// 	},
+			// 	Spec: lookup[flag.Name],
+			// })
+			// current.ListMeta.ResourceVersion = resourceVersion
 		}
 
-		// // Check for changes in any existing values
-		// for _, item := range existing.Items {
-		// 	v, ok := lookup[item.Name]
-		// 	if ok {
-		// 		delete(lookup, item.Name)
-		// 		a, e1 := json.Marshal(v)
-		// 		b, e2 := json.Marshal(item.Spec)
-		// 		if e1 != nil || e2 != nil || !bytes.Equal(a, b) {
-		// 			item.ResourceVersion = resourceVersion
-		// 			current.ListMeta.ResourceVersion = resourceVersion
-		// 			if item.Annotations == nil {
-		// 				item.Annotations = make(map[string]string)
-		// 			}
-		// 			item.Annotations["grafana.app/modifiedTime"] = created.Format(time.RFC3339)
-		// 			item.Spec = v // the current value
-		// 		}
-		// 		current.Items = append(current.Items, item)
-		// 	} else {
-		// 		current.ListMeta.ResourceVersion = resourceVersion
-		// 	}
-		// }
+		// Check for changes in any existing values
+		for _, item := range existing.Items {
+			v, ok := lookup[item.Name]
+			if ok {
+				delete(lookup, item.Name)
+				a, e1 := json.Marshal(v)
+				b, e2 := json.Marshal(item.Spec)
+				if e1 != nil || e2 != nil || !bytes.Equal(a, b) {
+					item.ResourceVersion = resourceVersion
+					current.ListMeta.ResourceVersion = resourceVersion
+					if item.Annotations == nil {
+						item.Annotations = make(map[string]string)
+					}
+					item.Annotations["grafana.app/modifiedTime"] = created.Format(time.RFC3339)
+					item.Spec = v // the current value
+				}
+				current.Items = append(current.Items, item)
+			} else {
+				current.ListMeta.ResourceVersion = resourceVersion
+			}
+		}
 
 		out, err := json.MarshalIndent(current, "", "  ")
 		require.NoError(t, err)
-		fmt.Printf("%s\n", out)
 
 		err = os.WriteFile(featuresFile, []byte(out), 0644)
 		require.NoError(t, err, "error writing file")
@@ -291,9 +287,8 @@ func generateCSV() string {
 	w := csv.NewWriter(&buf)
 	if err := w.Write([]string{
 		"Name",
-		"Stage", //flag.Stage.String(),
-		"Owner", //string(flag.Owner),
-		"Created",
+		"Stage",           //flag.Stage.String(),
+		"Owner",           //string(flag.Owner),
 		"requiresDevMode", //strconv.FormatBool(flag.RequiresDevMode),
 		"RequiresRestart", //strconv.FormatBool(flag.RequiresRestart),
 		"FrontendOnly",    //strconv.FormatBool(flag.FrontendOnly),
@@ -301,19 +296,11 @@ func generateCSV() string {
 		log.Fatalln("error writing record to csv:", err)
 	}
 
-	dateFormatter := func(t time.Time) string {
-		if t.Year() < 2020 { // fake year
-			return ""
-		}
-		return t.Format(time.DateOnly)
-	}
-
 	for _, flag := range standardFeatureFlags {
 		if err := w.Write([]string{
 			flag.Name,
 			flag.Stage.String(),
 			string(flag.Owner),
-			dateFormatter(flag.Created),
 			strconv.FormatBool(flag.RequiresDevMode),
 			strconv.FormatBool(flag.RequiresRestart),
 			strconv.FormatBool(flag.FrontendOnly),

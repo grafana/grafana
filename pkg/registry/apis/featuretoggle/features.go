@@ -83,43 +83,22 @@ func (s *featuresStorage) ConvertToTable(ctx context.Context, object runtime.Obj
 }
 
 func (s *featuresStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	flags := &v0alpha1.FeatureList{
-		ListMeta: metav1.ListMeta{
-			ResourceVersion: fmt.Sprintf("%d", s.startup),
-		},
+	flags, err := featuremgmt.GetFeatureFlags()
+	if err != nil {
+		return nil, err
 	}
-	for _, flag := range s.features {
-		flags.Items = append(flags.Items, toK8sForm(flag))
-	}
-	return flags, nil
+	return &flags, nil
 }
 
 func (s *featuresStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	for _, flag := range s.features {
-		if name == flag.Name {
-			obj := toK8sForm(flag)
-			return &obj, nil
+	flags, err := featuremgmt.GetFeatureFlags()
+	if err != nil {
+		return nil, err
+	}
+	for idx, flag := range flags.Items {
+		if flag.Name == name {
+			return &flags.Items[idx], nil
 		}
 	}
 	return nil, fmt.Errorf("not found")
-}
-
-func toK8sForm(flag featuremgmt.FeatureFlag) v0alpha1.Feature {
-	return v0alpha1.Feature{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              flag.Name,
-			CreationTimestamp: metav1.NewTime(flag.Created),
-		},
-		Spec: v0alpha1.FeatureSpec{
-			Description:       flag.Description,
-			Stage:             flag.Stage.String(),
-			Owner:             string(flag.Owner),
-			AllowSelfServe:    flag.AllowSelfServe,
-			HideFromAdminPage: flag.HideFromAdminPage,
-			HideFromDocs:      flag.HideFromDocs,
-			FrontendOnly:      flag.FrontendOnly,
-			RequiresDevMode:   flag.RequiresDevMode,
-			RequiresRestart:   flag.RequiresRestart,
-		},
-	}
 }
