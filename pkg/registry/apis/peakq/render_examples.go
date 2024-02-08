@@ -3,34 +3,34 @@ package peakq
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template"
 )
 
-var basicTemplateSpec = peakq.QueryTemplateSpec{
+var basicTemplateSpec = template.QueryTemplate{
 	Title: "Test",
-	Variables: []peakq.TemplateVariable{
+	Variables: []template.TemplateVariable{
 		{
 			Key:           "metricName",
 			DefaultValues: []string{`down`},
 		},
 	},
-	Targets: []peakq.Target{
+	Targets: []template.Target{
 		{
 			DataType: data.FrameTypeUnknown,
 			//DataTypeVersion: data.FrameTypeVersion{0, 0},
-			Variables: map[string][]peakq.VariableReplacement{
+			Variables: map[string][]template.VariableReplacement{
 				"metricName": {
 					{
 						Path: "$.expr",
-						Position: &peakq.Position{
+						Position: &template.Position{
 							Start: 0,
 							End:   10,
 						},
 					},
 					{
 						Path: "$.expr",
-						Position: &peakq.Position{
+						Position: &template.Position{
 							Start: 13,
 							End:   23,
 						},
@@ -54,7 +54,7 @@ var basicTemplateSpec = peakq.QueryTemplateSpec{
 	},
 }
 
-var basicTemplateRenderedTargets = []peakq.Target{
+var basicTemplateRenderedTargets = []template.Target{
 	{
 		DataType: data.FrameTypeUnknown,
 		//DataTypeVersion: data.FrameTypeVersion{0, 0},
