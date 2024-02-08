@@ -9,7 +9,7 @@ import (
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 
-// RenderTemplate will
+// RenderTemplate applies selected values into a query template
 func RenderTemplate(qt QueryTemplate, selectedValues map[string][]string) ([]Target, error) {
 	targets := qt.DeepCopy().Targets
 

@@ -1,4 +1,4 @@
-package peakq
+package template
 
 import (
 	"testing"
@@ -7,26 +7,25 @@ import (
 	"github.com/stretchr/testify/require"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template"
 )
 
-var nestedFieldRender = template.QueryTemplate{
+var nestedFieldRender = QueryTemplate{
 	Title: "Test",
-	Variables: []template.TemplateVariable{
+	Variables: []TemplateVariable{
 		{
 			Key: "metricName",
 		},
 	},
-	Targets: []template.Target{
+	Targets: []Target{
 		{
 			DataType: data.FrameTypeUnknown,
 			//DataTypeVersion: data.FrameTypeVersion{0, 0},
 
-			Variables: map[string][]template.VariableReplacement{
+			Variables: map[string][]VariableReplacement{
 				"metricName": {
 					{
 						Path: "$.nestedObject.anArray[0]",
-						Position: &template.Position{
+						Position: &Position{
 							Start: 0,
 							End:   3,
 						},
@@ -42,14 +41,14 @@ var nestedFieldRender = template.QueryTemplate{
 	},
 }
 
-var nestedFieldRenderedTargets = []template.Target{
+var nestedFieldRenderedTargets = []Target{
 	{
 		DataType: data.FrameTypeUnknown,
-		Variables: map[string][]template.VariableReplacement{
+		Variables: map[string][]VariableReplacement{
 			"metricName": {
 				{
 					Path: "$.nestedObject.anArray[0]",
-					Position: &template.Position{
+					Position: &Position{
 						Start: 0,
 						End:   3,
 					},
@@ -67,7 +66,7 @@ var nestedFieldRenderedTargets = []template.Target{
 }
 
 func TestNestedFieldRender(t *testing.T) {
-	rT, err := template.RenderTemplate(nestedFieldRender, map[string][]string{"metricName": {"up"}})
+	rT, err := RenderTemplate(nestedFieldRender, map[string][]string{"metricName": {"up"}})
 	require.NoError(t, err)
 	require.Equal(t,
 		nestedFieldRenderedTargets,
@@ -75,9 +74,9 @@ func TestNestedFieldRender(t *testing.T) {
 	)
 }
 
-var multiVarTemplate = template.QueryTemplate{
+var multiVarTemplate = QueryTemplate{
 	Title: "Test",
-	Variables: []template.TemplateVariable{
+	Variables: []TemplateVariable{
 		{
 			Key: "metricName",
 		},
@@ -85,23 +84,23 @@ var multiVarTemplate = template.QueryTemplate{
 			Key: "anotherMetric",
 		},
 	},
-	Targets: []template.Target{
+	Targets: []Target{
 		{
 			DataType: data.FrameTypeUnknown,
 			//DataTypeVersion: data.FrameTypeVersion{0, 0},
 
-			Variables: map[string][]template.VariableReplacement{
+			Variables: map[string][]VariableReplacement{
 				"metricName": {
 					{
 						Path: "$.expr",
-						Position: &template.Position{
+						Position: &Position{
 							Start: 4,
 							End:   14,
 						},
 					},
 					{
 						Path: "$.expr",
-						Position: &template.Position{
+						Position: &Position{
 							Start: 37,
 							End:   47,
 						},
@@ -110,7 +109,7 @@ var multiVarTemplate = template.QueryTemplate{
 				"anotherMetric": {
 					{
 						Path: "$.expr",
-						Position: &template.Position{
+						Position: &Position{
 							Start: 21,
 							End:   34,
 						},
@@ -125,21 +124,21 @@ var multiVarTemplate = template.QueryTemplate{
 	},
 }
 
-var multiVarRenderedTargets = []template.Target{
+var multiVarRenderedTargets = []Target{
 	{
 		DataType: data.FrameTypeUnknown,
-		Variables: map[string][]template.VariableReplacement{
+		Variables: map[string][]VariableReplacement{
 			"metricName": {
 				{
 					Path: "$.expr",
-					Position: &template.Position{
+					Position: &Position{
 						Start: 4,
 						End:   14,
 					},
 				},
 				{
 					Path: "$.expr",
-					Position: &template.Position{
+					Position: &Position{
 						Start: 37,
 						End:   47,
 					},
@@ -148,7 +147,7 @@ var multiVarRenderedTargets = []template.Target{
 			"anotherMetric": {
 				{
 					Path: "$.expr",
-					Position: &template.Position{
+					Position: &Position{
 						Start: 21,
 						End:   34,
 					},
@@ -163,7 +162,7 @@ var multiVarRenderedTargets = []template.Target{
 }
 
 func TestMultiVarTemplate(t *testing.T) {
-	rT, err := template.RenderTemplate(multiVarTemplate, map[string][]string{
+	rT, err := RenderTemplate(multiVarTemplate, map[string][]string{
 		"metricName":    {"up"},
 		"anotherMetric": {"sloths_do_like_a_good_nap"},
 	})
@@ -175,22 +174,22 @@ func TestMultiVarTemplate(t *testing.T) {
 }
 
 func TestRenderWithRune(t *testing.T) {
-	qt := template.QueryTemplate{
-		Variables: []template.TemplateVariable{
+	qt := QueryTemplate{
+		Variables: []TemplateVariable{
 			{
 				Key: "name",
 			},
 		},
-		Targets: []template.Target{
+		Targets: []Target{
 			{
 				Properties: query.NewGenericDataQuery(map[string]any{
 					"message": "🐦 name!",
 				}),
-				Variables: map[string][]template.VariableReplacement{
+				Variables: map[string][]VariableReplacement{
 					"name": {
 						{
 							Path: "$.message",
-							Position: &template.Position{
+							Position: &Position{
 								Start: 2,
 								End:   6,
 							},
@@ -205,7 +204,7 @@ func TestRenderWithRune(t *testing.T) {
 		"name": {"🦥"},
 	}
 
-	rq, err := template.RenderTemplate(qt, selectedValues)
+	rq, err := RenderTemplate(qt, selectedValues)
 	require.NoError(t, err)
 
 	require.Equal(t, "🐦 🦥!", rq[0].Properties.AdditionalProperties()["message"])
