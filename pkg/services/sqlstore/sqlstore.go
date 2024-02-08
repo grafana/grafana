@@ -474,6 +474,8 @@ func initTestDB(testCfg *setting.Cfg,
 	if !testSQLStoreSetup {
 		fmt.Printf(`ERROR: Test DB not set up, are you missing TestMain?
 
+https://github.com/grafana/grafana/blob/main/contribute/backend/style-guide.md
+
 Example:
 
 package mypkg
