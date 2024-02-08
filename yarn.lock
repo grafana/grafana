@@ -3057,7 +3057,7 @@ __metadata:
     "@types/react": "npm:18.2.55"
     "@types/testing-library__jest-dom": "npm:5.14.9"
     fast-deep-equal: "npm:^3.1.3"
-    i18next: "npm:^22.0.0"
+    i18next: "npm:^23.0.0"
     immer: "npm:10.0.3"
     lodash: "npm:4.17.21"
     monaco-editor: "npm:0.34.0"
@@ -3101,7 +3101,7 @@ __metadata:
     "@types/testing-library__jest-dom": "npm:5.14.9"
     debounce-promise: "npm:3.1.2"
     fast-deep-equal: "npm:^3.1.3"
-    i18next: "npm:^22.0.0"
+    i18next: "npm:^23.0.0"
     immer: "npm:10.0.3"
     lodash: "npm:4.17.21"
     monaco-editor: "npm:0.34.0"
@@ -3281,7 +3281,7 @@ __metadata:
     buffer: "npm:6.0.3"
     events: "npm:3.3.0"
     glob: "npm:10.3.10"
-    i18next: "npm:^22.0.0"
+    i18next: "npm:^23.0.0"
     lodash: "npm:4.17.21"
     lru-cache: "npm:10.2.0"
     monaco-editor: "npm:0.34.0"
@@ -4021,7 +4021,7 @@ __metadata:
     esbuild: "npm:0.18.12"
     expose-loader: "npm:5.0.0"
     hoist-non-react-statics: "npm:3.3.2"
-    i18next: "npm:^22.0.0"
+    i18next: "npm:^23.0.0"
     i18next-browser-languagedetector: "npm:^7.0.2"
     immutable: "npm:4.3.5"
     is-hotkey: "npm:0.2.0"
@@ -17953,7 +17953,7 @@ __metadata:
     html-loader: "npm:5.0.0"
     html-webpack-plugin: "npm:5.6.0"
     http-server: "npm:14.1.1"
-    i18next: "npm:^22.0.0"
+    i18next: "npm:^23.0.0"
     i18next-browser-languagedetector: "npm:^7.0.2"
     i18next-parser: "npm:6.6.0"
     immer: "npm:10.0.3"
@@ -18834,12 +18834,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"i18next@npm:^22.0.0":
-  version: 22.0.4
-  resolution: "i18next@npm:22.0.4"
+"i18next@npm:^23.0.0":
+  version: 23.8.2
+  resolution: "i18next@npm:23.8.2"
   dependencies:
-    "@babel/runtime": "npm:^7.17.2"
-  checksum: 10/a266b6b0afb46cb85f1426d8157856cfbf9ebc3b8b115572b23a560c30f3ef068e64b4d402275903782a9c0c404a6aa2adecb7855268c766c2d686b101b4a220
+    "@babel/runtime": "npm:^7.23.2"
+  checksum: 10/594c4d5bafd9ac0073a5f2c0ccb40b157571857d43f7f22949a5ab6ea07e6e6f7e39058ddee6e7396369b54d5d741e76cba59c0d5c23ce0ab99e06b249c66f5e
   languageName: node
   linkType: hard
 

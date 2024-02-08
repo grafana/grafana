@@ -312,7 +312,7 @@
     "framework-utils": "^1.1.0",
     "history": "4.10.1",
     "hoist-non-react-statics": "3.3.2",
-    "i18next": "^22.0.0",
+    "i18next": "^23.0.0",
     "i18next-browser-languagedetector": "^7.0.2",
     "immer": "10.0.3",
     "immutable": "4.3.5",
