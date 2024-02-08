@@ -96,8 +96,6 @@ func (d *DualWriter) Create(ctx context.Context, obj runtime.Object, createValid
 
 		accessorO.SetName(accessorC.GetName())
 		accessorO.SetCreationTimestamp(accessorC.GetCreationTimestamp())
-		// #TODO figure out what other properties need to be set and how to get/set them properties
-		// based on that decide where it's better to pass "obj" or "created" to the next Create call
 
 		rsp, err := d.Storage.Create(ctx, obj, createValidation, options)
 		if err != nil {
@@ -117,13 +115,13 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 		if err != nil {
 			return nil, false, err
 		}
-		accessor, err := meta.Accessor(old)
+		accessorO, err := meta.Accessor(old)
 		if err != nil {
 			return nil, false, err
 		}
 		// Hold on to the RV+UID for the dual write
-		theRV := accessor.GetResourceVersion()
-		theUID := accessor.GetUID()
+		theRV := accessorO.GetResourceVersion()
+		theUID := accessorO.GetUID()
 
 		// Changes applied within new storage
 		// will fail if RV is out of sync
@@ -132,12 +130,12 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 			return nil, false, err
 		}
 
-		accessor, err = meta.Accessor(updated)
+		accessorU, err := meta.Accessor(updated)
 		if err != nil {
 			return nil, false, err
 		}
-		accessor.SetUID("")             // clear it
-		accessor.SetResourceVersion("") // remove it so it is not a constraint
+		accessorU.SetUID("")             // clear it
+		accessorU.SetResourceVersion("") // remove it so it is not a constraint
 		obj, created, err := legacy.Update(ctx, name, &updateWrapper{
 			upstream: objInfo,
 			updated:  updated, // returned as the object that will be updated
@@ -146,15 +144,12 @@ func (d *DualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 			return obj, created, err
 		}
 
-		accessor, err = meta.Accessor(obj)
-		if err != nil {
-			return nil, false, err
-		}
-		accessor.SetResourceVersion(theRV) // the original RV
-		accessor.SetUID(theUID)
+		accessorU.SetResourceVersion(theRV)
+		accessorU.SetUID(theUID)
 		objInfo = &updateWrapper{
 			upstream: objInfo,
-			updated:  obj, // returned as the object that will be updated
+			// #TODO: does the comment below still apply?
+			updated: updated, // returned as the object that will be updated
 		}
 	}
 
