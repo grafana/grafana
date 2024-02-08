@@ -134,6 +134,7 @@ func (srv *CleanUpService) cleanUpTmpFiles(ctx context.Context) {
 	folders := []string{
 		srv.Cfg.ImagesDir,
 		srv.Cfg.CSVsDir,
+		srv.Cfg.PDFsDir,
 	}
 
 	for _, f := range folders {

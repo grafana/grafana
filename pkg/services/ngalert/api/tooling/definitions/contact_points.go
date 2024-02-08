@@ -188,8 +188,9 @@ type SlackIntegration struct {
 type TelegramIntegration struct {
 	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
 
-	BotToken Secret `json:"bottoken" yaml:"bottoken" hcl:"token"`
-	ChatID   string `json:"chatid,omitempty" yaml:"chatid,omitempty" hcl:"chat_id"`
+	BotToken        Secret `json:"bottoken" yaml:"bottoken" hcl:"token"`
+	ChatID          string `json:"chatid,omitempty" yaml:"chatid,omitempty" hcl:"chat_id"`
+	MessageThreadID string `json:"message_thread_id,omitempty" yaml:"message_thread_id,omitempty" hcl:"message_thread_id"`
 
 	Message               *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
 	ParseMode             *string `json:"parse_mode,omitempty" yaml:"parse_mode,omitempty" hcl:"parse_mode"`
