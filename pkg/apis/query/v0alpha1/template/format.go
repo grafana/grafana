@@ -1,15 +1,13 @@
-package peakq
+package template
 
 import (
 	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"strings"
-
-	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
 )
 
-func formatVariables(fmt peakq.VariableFormat, input []string) string {
+func FormatVariables(fmt VariableFormat, input []string) string {
 	if len(input) < 1 {
 		return ""
 	}
@@ -17,11 +15,11 @@ func formatVariables(fmt peakq.VariableFormat, input []string) string {
 	// MultiValued formats
 	// nolint: exhaustive
 	switch fmt {
-	case peakq.FormatJSON:
+	case FormatJSON:
 		v, _ := json.Marshal(input)
 		return string(v)
 
-	case peakq.FormatDoubleQuote:
+	case FormatDoubleQuote:
 		sb := bytes.NewBufferString("")
 		for idx, val := range input {
 			if idx > 0 {
@@ -33,7 +31,7 @@ func formatVariables(fmt peakq.VariableFormat, input []string) string {
 		}
 		return sb.String()
 
-	case peakq.FormatSingleQuote:
+	case FormatSingleQuote:
 		sb := bytes.NewBufferString("")
 		for idx, val := range input {
 			if idx > 0 {
@@ -45,7 +43,7 @@ func formatVariables(fmt peakq.VariableFormat, input []string) string {
 		}
 		return sb.String()
 
-	case peakq.FormatCSV:
+	case FormatCSV:
 		sb := bytes.NewBufferString("")
 		w := csv.NewWriter(sb)
 		_ = w.Write(input)
@@ -61,7 +59,7 @@ func formatVariables(fmt peakq.VariableFormat, input []string) string {
 
 	// nolint: exhaustive
 	switch fmt {
-	case peakq.FormatPipe:
+	case FormatPipe:
 		return strings.Join(input, "|")
 	}
 
