@@ -60,7 +60,7 @@ describe('PanelDataTransformationsModel', () => {
   });
 });
 
-describe.skip('PanelDataTransformationsTab', () => {
+describe('PanelDataTransformationsTab', () => {
   standardTransformersRegistry.setInit(getStandardTransformers);
 
   it('renders empty message when there are no transformations', async () => {
