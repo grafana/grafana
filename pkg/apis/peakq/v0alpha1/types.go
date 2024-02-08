@@ -130,6 +130,9 @@ type QueryTemplateList struct {
 type RenderedQuery struct {
 	metav1.TypeMeta `json:",inline"`
 
+	// The name of the stored query template used to render the targets
+	TemplateName string `json:"templateName,omitempty"`
+
 	// +listType=atomic
 	Targets []Target `json:"targets,omitempty"`
 }

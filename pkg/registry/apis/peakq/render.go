@@ -55,7 +55,7 @@ func (r *renderREST) Connect(ctx context.Context, name string, opts runtime.Obje
 			responder.Error(err)
 			return
 		}
-		rq, err := Render(template.Spec, input)
+		rq, err := Render(template.Spec, input, template.Name)
 		if err != nil {
 			responder.Error(fmt.Errorf("failed to render: %w", err))
 			return
@@ -79,7 +79,7 @@ func renderPOSTHandler(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(500)
 		return
 	}
-	results, err := Render(qT.Spec, input)
+	results, err := Render(qT.Spec, input, "")
 	if err != nil {
 		_, _ = w.Write([]byte("ERROR: " + err.Error()))
 		w.WriteHeader(500)
@@ -146,7 +146,7 @@ func getReplacementMap(qt peakq.QueryTemplateSpec) map[int]map[string][]replacem
 	return byTargetPath
 }
 
-func Render(qt peakq.QueryTemplateSpec, selectedValues map[string][]string) (*peakq.RenderedQuery, error) {
+func Render(qt peakq.QueryTemplateSpec, selectedValues map[string][]string, name string) (*peakq.RenderedQuery, error) {
 	targets := qt.DeepCopy().Targets
 
 	rawTargetObjects := make([]*ajson.Node, len(qt.Targets))
@@ -207,6 +207,7 @@ func Render(qt peakq.QueryTemplateSpec, selectedValues map[string][]string) (*pe
 	}
 
 	return &peakq.RenderedQuery{
-		Targets: targets,
+		TemplateName: name,
+		Targets:      targets,
 	}, nil
 }
