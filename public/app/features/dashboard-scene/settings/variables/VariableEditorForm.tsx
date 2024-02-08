@@ -1,18 +1,18 @@
-import React, { FormEvent } from 'react';
+import React, { FormEvent, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
 import { VariableHide, defaultVariableModel } from '@grafana/schema';
-import { HorizontalGroup, Button, LoadingPlaceholder } from '@grafana/ui';
+import { HorizontalGroup, Button, LoadingPlaceholder, ConfirmModal } from '@grafana/ui';
 import { VariableHideSelect } from 'app/features/dashboard-scene/settings/variables/components/VariableHideSelect';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextAreaField';
 import { VariableTextField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextField';
 import { VariableValuesPreview } from 'app/features/dashboard-scene/settings/variables/components/VariableValuesPreview';
-import { ConfirmDeleteModal } from 'app/features/variables/editor/ConfirmDeleteModal';
 import { VariableNameConstraints } from 'app/features/variables/editor/types';
 
 import { VariableTypeSelect } from './components/VariableTypeSelect';
@@ -22,10 +22,17 @@ interface VariableEditorFormProps {
   variable: SceneVariable;
   onTypeChange: (type: EditableVariableType) => void;
   onGoBack: () => void;
+  onDelete: (variableName: string) => void;
 }
 
-export function VariableEditorForm({ variable, onTypeChange, onGoBack }: VariableEditorFormProps) {
+export function VariableEditorForm({
+  variable,
+  onTypeChange,
+  onGoBack,
+  onDelete: propsOnDelete,
+}: VariableEditorFormProps) {
   const { name, type, label, description, hide } = variable.useState();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const EditorToRender = isEditableVariableType(type) ? getVariableEditor(type) : undefined;
   const [runQueryState, onRunQuery] = useAsyncFn(async () => {
     await lastValueFrom(variable.validateAndUpdate!());
@@ -43,6 +50,15 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack }: Variabl
     variable.setState({ description: e.currentTarget.value });
   const onHideChange = (hide: VariableHide) => variable.setState({ hide });
   const isHasVariableOptions = hasVariableOptions(variable);
+
+  const onDeleteVariable = () => {
+    reportInteraction('Delete variable');
+    propsOnDelete(name);
+  };
+
+  const handleDeleteVariableModal = (show: boolean) => () => {
+    setShowDeleteModal(show);
+  };
 
   return (
     <>
@@ -84,9 +100,15 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack }: Variabl
 
         <div style={{ marginTop: '16px' }}>
           <HorizontalGroup spacing="md" height="inherit">
-            {/* <Button variant="destructive" fill="outline" onClick={onModalOpen}>
+            <Button
+              variant="destructive"
+              fill="outline"
+              onClick={() => {
+                setShowDeleteModal(true);
+              }}
+            >
               Delete
-            </Button> */}
+            </Button>
             <Button
               variant="secondary"
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
@@ -108,11 +130,13 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack }: Variabl
           </HorizontalGroup>
         </div>
       </form>
-      <ConfirmDeleteModal
-        isOpen={false}
-        varName={variable.state.name}
-        onConfirm={() => console.log('needs implementation')}
-        onDismiss={() => console.log('needs implementation')}
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        title="Delete variable"
+        body={`Are you sure you want to delete: ${name}?`}
+        confirmText="Delete variable"
+        onConfirm={onDeleteVariable}
+        onDismiss={handleDeleteVariableModal(false)}
       />
     </>
   );
