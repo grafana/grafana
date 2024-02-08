@@ -27,7 +27,29 @@ export { ExemplarsSettings } from './configuration/ExemplarsSettings';
 export { PromFlavorVersions } from './configuration/PromFlavorVersions';
 export { PromSettings } from './configuration/PromSettings';
 
-export * from './querybuilder';
+// QUERYBUILDER/
+// The parts (The query builder is imported into PromQueryEditorByApp)
+export { QueryPattern } from './querybuilder/QueryPattern';
+export { QueryPatternsModal } from './querybuilder/QueryPatternsModal';
+
+// QUERYBUILDER/COMPONENTS/
+export { LabelFilterItem } from './querybuilder/components/LabelFilterItem';
+export { LabelFilters } from './querybuilder/components/LabelFilters';
+export { LabelParamEditor } from './querybuilder/components/LabelParamEditor';
+export { MetricSelect } from './querybuilder/components/MetricSelect';
+export { MetricsLabelsSection } from './querybuilder/components/MetricsLabelsSection';
+export { NestedQuery } from './querybuilder/components/NestedQuery';
+export { NestedQueryList } from './querybuilder/components/NestedQueryList';
+export { PromQueryBuilder } from './querybuilder/components/PromQueryBuilder';
+export { PromQueryBuilderContainer } from './querybuilder/components/PromQueryBuilderContainer';
+export { PromQueryBuilderExplained } from './querybuilder/components/PromQueryBuilderExplained';
+export { PromQueryBuilderOptions } from './querybuilder/components/PromQueryBuilderOptions';
+export { PromQueryCodeEditor } from './querybuilder/components/PromQueryCodeEditor';
+export { PromQueryEditorSelector } from './querybuilder/components/PromQueryEditorSelector';
+export { PromQueryLegendEditor } from './querybuilder/components/PromQueryLegendEditor';
+export { QueryPreview } from './querybuilder/components/QueryPreview';
+export { MetricsModal } from './querybuilder/components/metrics-modal/MetricsModal';
+export { PromQail } from './querybuilder/components/promQail/PromQail';
 
 export * from './add_label_to_query';
 export * from './dataquery.gen';
