@@ -1395,14 +1395,14 @@
     {
       "metadata": {
         "name": "kubernetesSnapshots",
-        "resourceVersion": "1707374083381",
+        "resourceVersion": "1707374669879",
         "creationTimestamp": "2023-12-04T12:00:00Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-02-08T06:34:43Z"
+          "grafana.app/updatedTimestamp": "2024-02-08 06:44:29.879787 +0000 UTC"
         }
       },
       "spec": {
-        "description": "Use the kubernetes API in the frontend, and routes snapshot requests from /api to the /apis endpoint",
+        "description": "Routes snapshot requests from /api to the /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true

@@ -440,7 +440,7 @@ const (
 	FlagKubernetesPlaylists = "kubernetesPlaylists"
 
 	// FlagKubernetesSnapshots
-	// Use the kubernetes API in the frontend, and routes snapshot requests from /api to the /apis endpoint
+	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
 
 	// FlagKubernetesQueryServiceRewrite

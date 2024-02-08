@@ -811,7 +811,7 @@ var (
 		},
 		{
 			Name:            "kubernetesSnapshots",
-			Description:     "Use the kubernetes API in the frontend, and routes snapshot requests from /api to the /apis endpoint",
+			Description:     "Routes snapshot requests from /api to the /apis endpoint",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
