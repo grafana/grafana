@@ -284,6 +284,7 @@ type Cfg struct {
 	JWTAuthRoleAttributeStrict     bool
 	JWTAuthAllowAssignGrafanaAdmin bool
 	JWTAuthSkipOrgRoleSync         bool
+	JWTAuthGroupsAttributePath     string
 
 	// Extended JWT Auth
 	ExtendedJWTAuthEnabled    bool
