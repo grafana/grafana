@@ -15,8 +15,8 @@ type InMemory struct {
 	mu    sync.RWMutex
 }
 
-func ProvideService() *MultiPluginVersion {
-	return NewMultiPluginVersion()
+func ProvideService() *InMemory {
+	return NewInMemory()
 }
 
 func NewInMemory() *InMemory {
