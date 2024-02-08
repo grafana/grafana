@@ -109,7 +109,7 @@ describe('<NextPrevResult>', () => {
     const theme = createTheme();
     const tooltip = container.querySelector('.' + getStyles(theme, true).tooltip);
     expect(screen.getByText('0 matches')).toBeDefined();
-    userEvent.hover(tooltip!);
+    await user.hover(tooltip!);
     jest.advanceTimersByTime(1000);
     await waitFor(() => {
       expect(screen.getByText(/0 span matches for the filters selected/)).toBeDefined();
@@ -120,7 +120,7 @@ describe('<NextPrevResult>', () => {
     const { container } = render(<NextPrevResultWithProps matches={['264afda25df92413', '364afda25df92413']} />);
     const theme = createTheme();
     const tooltip = container.querySelector('.' + getStyles(theme, true).tooltip);
-    userEvent.hover(tooltip!);
+    await user.hover(tooltip!);
     jest.advanceTimersByTime(1000);
     await waitFor(() => {
       expect(screen.getByText(/Services: 2\/3/)).toBeDefined();

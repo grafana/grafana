@@ -51,11 +51,11 @@ const rulesSource = {
 };
 
 describe('Expression', () => {
-  it('Should not allow to edit the text in the editor', () => {
+  it('Should not allow to edit the text in the editor', async () => {
     render(<Expression expression={expression} rulesSource={rulesSource} />);
 
     const editor = screen.getByTestId('expression-editor');
-    userEvent.type(editor, 'something else');
+    await userEvent.type(editor, 'something else');
 
     expect(editor).toHaveTextContent(expression);
     expect(editor).not.toHaveTextContent('something else');
