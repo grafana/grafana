@@ -246,7 +246,7 @@
     "@grafana/o11y-ds-frontend": "workspace:*",
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "2.6.3",
+    "@grafana/scenes": "2.6.6",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
