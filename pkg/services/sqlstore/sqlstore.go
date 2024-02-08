@@ -92,7 +92,7 @@ func ProvideService(cfg *setting.Cfg,
 }
 
 func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator) (*SQLStore, error) {
-	return initTestDB(cfg, features, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
+	return initTestDB(t, cfg, features, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
 }
 
 func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine,
@@ -399,7 +399,7 @@ type InitTestDBOpt struct {
 func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
-	store, err := initTestDB(setting.NewCfg(), features, migration, opts...)
+	store, err := initTestDB(t, setting.NewCfg(), features, migration, opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -411,7 +411,7 @@ func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
 
-	store, err := initTestDB(setting.NewCfg(), features, migrations.ProvideOSSMigrations(features), opts...)
+	store, err := initTestDB(t, setting.NewCfg(), features, migrations.ProvideOSSMigrations(features), opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -465,14 +465,16 @@ func getFeaturesForTesting(opts ...InitTestDBOpt) featuremgmt.FeatureToggles {
 }
 
 //nolint:gocyclo
-func initTestDB(testCfg *setting.Cfg,
+func initTestDB(t sqlutil.ITestDB, testCfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	migration registry.DatabaseMigrator,
 	opts ...InitTestDBOpt) (*SQLStore, error) {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
 	if !testSQLStoreSetup {
-		fmt.Printf(`ERROR: Test DB not set up, are you missing TestMain?
+		t.Fatalf(`
+
+ERROR: Test DB not set up, are you missing TestMain?
 
 https://github.com/grafana/grafana/blob/main/contribute/backend/style-guide.md
 
