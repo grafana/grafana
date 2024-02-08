@@ -9,6 +9,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { AlertRuleProvider } from './components/rule-viewer/v2/RuleContext';
 import { useCombinedRule } from './hooks/useCombinedRule';
+import { stringifyErrorLike } from './utils/misc';
 import { getRuleIdFromPathname, parse as parseRuleId } from './utils/rule-id';
 
 const DetailViewV1 = SafeDynamicImport(() => import('./components/rule-viewer/RuleViewer.v1'));
@@ -19,7 +20,7 @@ type RuleViewerProps = GrafanaRouteComponentProps<{
   sourceName: string;
 }>;
 
-const newAlertDetailView = Boolean(config.featureToggles.alertingDetailsViewV2) === true;
+const newAlertDetailView = Boolean(config.featureToggles?.alertingDetailsViewV2) === true;
 
 const RuleViewer = (props: RuleViewerProps): JSX.Element => {
   return newAlertDetailView ? <RuleViewerV2Wrapper {...props} /> : <RuleViewerV1Wrapper {...props} />;
@@ -48,13 +49,12 @@ const RuleViewerV2Wrapper = (props: RuleViewerProps) => {
   // we then fetch the rule from the correct API endpoint(s)
   const { loading, error, result: rule } = useCombinedRule({ ruleIdentifier: identifier });
 
-  // TODO improve error handling here
   if (error) {
-    if (typeof error === 'string') {
-      return error;
-    }
-
-    return <Alert title={'Uh-oh'}>Something went wrong loading the rule</Alert>;
+    return (
+      <AlertingPageWrapper pageNav={defaultPageNav} navId="alert-list">
+        <Alert title={'Something went wrong loading the rule'}>{stringifyErrorLike(error)}</Alert>
+      </AlertingPageWrapper>
+    );
   }
 
   if (loading) {

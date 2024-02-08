@@ -147,11 +147,6 @@ func ProvideService(
 				req.URL.Path = "/"
 			}
 
-			// TODO: add support for the existing MetricsEndpointBasicAuth config option
-			if req.URL.Path == "/apiserver-metrics" {
-				req.URL.Path = "/metrics"
-			}
-
 			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
 			s.handler.ServeHTTP(resp, req)
 		}
@@ -245,10 +240,12 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 
-		store, err := sqlstash.ProvideSQLEntityServer(eDB)
+		storeServer, err := sqlstash.ProvideSQLEntityServer(eDB)
 		if err != nil {
 			return err
 		}
+
+		store := entity.NewEntityStoreClientLocal(storeServer)
 
 		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.RecommendedOptions.Etcd.StorageConfig.Codec)
 
@@ -264,7 +261,7 @@ func (s *service) start(ctx context.Context) error {
 		// defer conn.Close()
 
 		// Create a client instance
-		store := entity.NewEntityStoreClientWrapper(conn)
+		store := entity.NewEntityStoreClientGRPC(conn)
 
 		serverConfig.Config.RESTOptionsGetter = entitystorage.NewRESTOptionsGetter(s.cfg, store, o.RecommendedOptions.Etcd.StorageConfig.Codec)
 
@@ -276,12 +273,6 @@ func (s *service) start(ctx context.Context) error {
 
 	// Add OpenAPI specs for each group+version
 	err := builder.SetupConfig(Scheme, serverConfig, builders)
-	if err != nil {
-		return err
-	}
-
-	// support folder selection
-	err = entitystorage.RegisterFieldSelectorSupport(Scheme)
 	if err != nil {
 		return err
 	}

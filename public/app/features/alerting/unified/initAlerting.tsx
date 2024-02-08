@@ -10,9 +10,9 @@ const AlertRulesToolbarButton = React.lazy(
 
 export function initAlerting() {
   addCustomRightAction({
-    show: () => config.unifiedAlertingEnabled,
+    show: () => config.unifiedAlertingEnabled || (config.featureToggles.alertingPreviewUpgrade ?? false),
     component: ({ dashboard }) => (
-      <React.Suspense fallback={null}>
+      <React.Suspense fallback={null} key="alert-rules-button">
         {dashboard && <AlertRulesToolbarButton dashboardUid={dashboard.uid} />}
       </React.Suspense>
     ),
