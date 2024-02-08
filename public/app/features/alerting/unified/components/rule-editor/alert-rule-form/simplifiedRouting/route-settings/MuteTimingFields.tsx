@@ -21,7 +21,7 @@ export function MuteTimingFields({ alertManager }: MuteTimingFieldsProps) {
     formState: { errors },
   } = useFormContext<RuleFormValues>();
 
-  const muteTimingOptions = getMuteTimings();
+  const muteTimingOptions = useGetMuteTimings();
   return (
     <Field
       label="Mute timings"
@@ -47,7 +47,7 @@ export function MuteTimingFields({ alertManager }: MuteTimingFieldsProps) {
   );
 }
 
-function getMuteTimings(): Array<SelectableValue<string>> {
+function useGetMuteTimings(): Array<SelectableValue<string>> {
   const fetchGrafanaMuteTimings = alertmanagerApi.endpoints.getMuteTimingList.useQuery(undefined, {
     refetchOnFocus: true,
     refetchOnReconnect: true,

@@ -105,9 +105,11 @@ export function useContactPointsWithStatus(getPoliciesCount = true) {
   });
 
   // we will fail silently for fetching OnCall plugin status and integrations
-  const error = fetchAlertmanagerConfiguration.error ?? fetchContactPointsStatus.error;
+  const error =
+    fetchAlertmanagerConfiguration.error || fetchGrafanaContactPoints.error || fetchContactPointsStatus.error;
   const isLoading =
     fetchAlertmanagerConfiguration.isLoading ||
+    fetchGrafanaContactPoints.isLoading ||
     fetchContactPointsStatus.isLoading ||
     onCallPluginStatusLoading ||
     onCallPluginIntegrationsLoading;
