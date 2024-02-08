@@ -10,9 +10,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/helper"
 )
 
-var _ query.QueryTypeSupport[query.ExpressionQuery] = (*ReduceExpressionSupport)(nil)
+var _ helper.QueryTypeSupport[query.ExpressionQuery] = (*ReduceExpressionSupport)(nil)
 var _ query.ExpressionQuery = (*ReduceQuery)(nil)
 
 type ReduceExpressionSupport struct{}
@@ -31,13 +32,17 @@ func (*ReduceExpressionSupport) Versions() []query.QueryTypeDefinition {
 			},
 			Spec: query.QueryTypeSpec{
 				Description: "reduce query results",
-				Schema: v0alpha1.Unstructured{
-					Object: map[string]any{
-						"TODO": "JSONSchema",
+				Versions: []query.QueryTypeVersion{
+					{
+						Schema: v0alpha1.Unstructured{
+							Object: map[string]any{
+								"TODO": "JSONSchema",
+							},
+						},
+						Changelog: []string{
+							"migrate from untyped",
+						},
 					},
-				},
-				Changelog: []string{
-					"migrate from untyped",
 				},
 			},
 		},
@@ -46,7 +51,7 @@ func (*ReduceExpressionSupport) Versions() []query.QueryTypeDefinition {
 
 // ReadQuery implements v0alpha1.QueryTypeSupport.
 func (*ReduceExpressionSupport) ReadQuery(generic query.GenericDataQuery, version string) (query.ExpressionQuery, error) {
-	return nil, fmt.Errorf("TODO!!!")
+	return nil, fmt.Errorf("not implemented yet")
 }
 
 type ReduceQuery struct {

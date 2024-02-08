@@ -10,9 +10,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/helper"
 )
 
-var _ query.QueryTypeSupport[query.ExpressionQuery] = (*MathExpressionSupport)(nil)
+var _ helper.QueryTypeSupport[query.ExpressionQuery] = (*MathExpressionSupport)(nil)
 var _ query.ExpressionQuery = (*MathQuery)(nil)
 
 type MathExpressionSupport struct{}
@@ -31,13 +32,17 @@ func (*MathExpressionSupport) Versions() []query.QueryTypeDefinition {
 			},
 			Spec: query.QueryTypeSpec{
 				Description: "execute math expression",
-				Schema: v0alpha1.Unstructured{
-					Object: map[string]any{
-						"TODO": "JSONSchema",
+				Versions: []query.QueryTypeVersion{
+					{
+						Schema: v0alpha1.Unstructured{
+							Object: map[string]any{
+								"TODO": "JSONSchema",
+							},
+						},
+						Changelog: []string{
+							"migrate from untyped",
+						},
 					},
-				},
-				Changelog: []string{
-					"migrate from untyped",
 				},
 			},
 		},

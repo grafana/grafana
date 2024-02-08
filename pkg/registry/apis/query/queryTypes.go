@@ -14,6 +14,7 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/helper"
 )
 
 var (
@@ -29,15 +30,15 @@ type QueryTypeRegistry[Q any] struct {
 	tableConverter rest.TableConvertor
 	defs           *query.QueryTypeDefinitionList
 
-	types   map[string]query.QueryTypeSupport[Q]
+	types   map[string]helper.QueryTypeSupport[Q]
 	creator func() Q
 }
 
-func NewQueryTypeRegistry[Q any](vals []query.QueryTypeSupport[Q], creator func() Q) (*QueryTypeRegistry[Q], error) {
+func NewQueryTypeRegistry[Q any](vals []helper.QueryTypeSupport[Q], creator func() Q) (*QueryTypeRegistry[Q], error) {
 	var resourceInfo = query.QueryTypeDefinitionResourceInfo
-	keys := make(map[string]query.QueryTypeSupport[Q], len(vals))
+	keys := make(map[string]helper.QueryTypeSupport[Q], len(vals))
 	reg := &QueryTypeRegistry[Q]{
-		types:          make(map[string]query.QueryTypeSupport[Q], len(vals)),
+		types:          make(map[string]helper.QueryTypeSupport[Q], len(vals)),
 		creator:        creator,
 		resourceInfo:   &resourceInfo,
 		tableConverter: rest.NewDefaultTableConvertor(resourceInfo.GroupResource()),

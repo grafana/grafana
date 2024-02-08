@@ -17,6 +17,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/helper"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/query/expr"
@@ -127,7 +128,7 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 	// exprstrorage := newQueryTypeStorage(exprs)
 
 	exprs, err := NewQueryTypeRegistry[v0alpha1.ExpressionQuery](
-		[]v0alpha1.QueryTypeSupport[v0alpha1.ExpressionQuery]{
+		[]helper.QueryTypeSupport[v0alpha1.ExpressionQuery]{
 			&expr.MathExpressionSupport{},
 			&expr.ReduceExpressionSupport{},
 		},
