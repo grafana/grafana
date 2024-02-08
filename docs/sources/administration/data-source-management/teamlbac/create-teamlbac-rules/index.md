@@ -42,6 +42,7 @@ For validating the rules, we recommend testing the rules in the Loki Explore vie
 #### Tasks
 
 ### Task 1: One rule setup for each team
+One common use case for creating an LBAC policy is to have specific access to logs that have a specific label. For example, you can create a label policy that includes all log lines with the label.
 
 We have two teams, Team A and Team B with `Query` permissions. Loki access is setup with `Admin` roles to have `Admin` permission only.
 
@@ -55,7 +56,17 @@ A user that is part of Team B will have access to logs that match `namespace="pr
 
 A user that is part of Team A and Team B will have access to logs that match `namespace="dev"` OR `namespace="prod"`.
 
-### Task 2: Multiple rules setup for one team
+### Task 2: One rule setup for a team Exclude a label
+
+One common use case for creating an LBAC policy is to exclude logs that have a specific label. For example, you can create a label policy that excludes all log lines with the label secret=true by adding a selector with `secret!="true"` when you create an access policy:
+
+We have one team, Team A `Query` permissions. Loki access is setup with `Admin` roles to have `Admin` permission only.
+
+- Team A has a rule `secret!="true"`.
+
+A user that is part of Team A will **NOT** have access to logs that match `secret!="true"`.
+
+### Task 3: Multiple rules setup for one team
 
 We have two teams, Team A and Team B with `Query` permissions. Loki access is setup with `Admin` roles having `Admin` permission.
 
@@ -77,7 +88,7 @@ A `Admin` user that is part of a Team with will only have access to that teams l
 
 A `Admin` user that is not part of any Team with `Admin` role will have access to all logs
 
-### Task 3: Rules that overlap
+### Task 4: Rules that overlap
 
 We have two teams, Team A and Team B.
 
@@ -91,7 +102,7 @@ A user in Team B will have access to logs that match `namespace!="dev"`.
 
 > _NOTE:_ A user that is part of Team A and Team B will have access to all logs that match `namespace="dev"` `OR` `namespace!="dev"`.
 
-### Task 4: One rule setup for a Team
+### Task 5: One rule setup for a Team
 
 We have two teams, Team A and Team B. Loki access is setup with `Editor`, `Viewer` roles to have `Query` permission.
 
