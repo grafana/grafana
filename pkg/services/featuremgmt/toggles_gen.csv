@@ -154,3 +154,4 @@ onPremToCloudMigrations,experimental,@grafana/grafana-operator-experience-squad,
 alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,2024-01-22,false,false,false
 promQLScope,experimental,@grafana/observability-metrics,2024-01-29,false,false,false
 nodeGraphDotLayout,experimental,@grafana/observability-traces-and-profiling,2024-01-02,false,false,true
+groupToNestedTableTransformation,preview,@grafana/dataviz-squad,2024-02-05,false,false,true

@@ -209,6 +209,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
               staticTags={staticTags}
               isTagsLoading={isTagsLoading}
               query={traceQlQuery}
+              requireTagAndValue={true}
             />
           </InlineSearchField>
           {config.featureToggles.metricsSummary && (
