@@ -39,6 +39,17 @@ To import a dashboard, follow these steps:
 1. Click **Import**.
 1. Save the dashboard.
 
+## Copy an existing dashboard
+
+To copy an existing dashboard, follow these steps:
+
+1. Open the Dashboard to be copied.
+2. Go to **Settings** of the Dashboard.
+3. Click on **Save As**
+4. Specify the name and folder for the copied dashboard.
+
+The original dashboard will not be deleted.
+
 ## Discover dashboards on grafana.com
 
 The [Dashboards page](https://grafana.com/grafana/dashboards/) on grafana.com provides you with dashboards for common server applications. Browse our library of official and community-built dashboards and import them to quickly get up and running.
