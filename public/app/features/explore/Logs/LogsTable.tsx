@@ -39,6 +39,13 @@ interface Props {
   logsFrame: LogsFrame | null;
 }
 
+function getInitialFieldWidth(field: Field, bodyFieldName?: string): number | undefined {
+  if (field.type === FieldType.time) {
+    return 200;
+  }
+  return undefined;
+}
+
 export function LogsTable(props: Props) {
   const { timeZone, splitOpen, range, logsSortOrder, width, dataFrame, columnsWithMeta, logsFrame } = props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
@@ -80,6 +87,7 @@ export function LogsTable(props: Props) {
           custom: {
             inspect: true,
             filterable: true, // This sets the columns to be filterable
+            width: getInitialFieldWidth(field),
             ...field.config.custom,
           },
           // This sets the individual field value as filterable
@@ -164,6 +172,7 @@ export function LogsTable(props: Props) {
 
   return (
     <Table
+      autoColumnSpacing={true}
       data={tableFrame}
       width={width}
       onCellFilterAdded={props.onClickFilterLabel && props.onClickFilterOutLabel ? onCellFilterAdded : undefined}
