@@ -24,7 +24,7 @@ export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
   }, [href, chrome]);
 
   const handleOnDismiss = useCallback(() => {
-    reportInteraction('grafana_return_to_previous_button_dissmissed', { action: 'dismissed', page: href });
+    reportInteraction('grafana_return_to_previous_button_dismissed', { action: 'dismissed', page: href });
     chrome.clearReturnToPrevious('dismissed');
   }, [href, chrome]);
 

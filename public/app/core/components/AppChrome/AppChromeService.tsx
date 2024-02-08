@@ -103,7 +103,7 @@ export class AppChromeService {
   public clearReturnToPrevious = (interactionAction: 'clicked' | 'dismissed' | 'auto_dismissed') => {
     const existingRtp = this.state.getValue().returnToPrevious;
     if (existingRtp) {
-      reportInteraction('grafana_return_to_previous_button_dissmissed', {
+      reportInteraction('grafana_return_to_previous_button_dismissed', {
         action: interactionAction,
         page: existingRtp.href,
       });
