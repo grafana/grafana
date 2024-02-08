@@ -175,7 +175,7 @@ describe('LinksSettings', () => {
     expect(screen.queryByText('Type')).toBeInTheDocument();
     expect(screen.queryByText('Title')).toBeInTheDocument();
     expect(screen.queryByText('With tags')).toBeInTheDocument();
-    expect(screen.queryByText('Apply')).toBeInTheDocument();
+    expect(screen.queryByText('Back to list')).toBeInTheDocument();
 
     expect(screen.queryByText('Url')).not.toBeInTheDocument();
     expect(screen.queryByText('Tooltip')).not.toBeInTheDocument();
@@ -194,7 +194,7 @@ describe('LinksSettings', () => {
     await userEvent.clear(screen.getByRole('textbox', { name: /title/i }));
     await userEvent.type(screen.getByRole('textbox', { name: /title/i }), 'New Dashboard Link');
 
-    await userEvent.click(screen.getByRole('button', { name: /Apply/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Back to list/i }));
 
     expect(getTableBodyRows().length).toBe(4);
     expect(within(getTableBody()).queryByText('New Dashboard Link')).toBeInTheDocument();
@@ -203,7 +203,7 @@ describe('LinksSettings', () => {
     await userEvent.clear(screen.getByRole('textbox', { name: /title/i }));
     await userEvent.type(screen.getByRole('textbox', { name: /title/i }), 'The first dashboard link');
 
-    await userEvent.click(screen.getByRole('button', { name: /Apply/i }));
+    await userEvent.click(screen.getByRole('button', { name: /Back to list/i }));
 
     expect(within(getTableBody()).queryByText(originalLinks[0].title)).not.toBeInTheDocument();
     expect(within(getTableBody()).queryByText('The first dashboard link')).toBeInTheDocument();
