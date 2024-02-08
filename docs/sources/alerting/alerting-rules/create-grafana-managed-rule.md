@@ -144,7 +144,7 @@ Complete the following steps to set up labels and notifications.
    1. You can also optionally select a mute timing as well as groupings and timings to define when not to send notifications.
 
       {{% admonition type="note" %}}
-   An auto-generated notification policy is generated. Only admins can view these auto-generated policies from the **Notification policies** list view. Any changes have to be made in the alert rules form. {{% /admonition %}}
+      An auto-generated notification policy is generated. Only admins can view these auto-generated policies from the **Notification policies** list view. Any changes have to be made in the alert rules form. {{% /admonition %}}
 
    **Use notification policy**
 
@@ -152,7 +152,7 @@ Complete the following steps to set up labels and notifications.
 
       {{% admonition type="note" %}}
       All alert rules and instances, irrespective of their labels, match the default notification policy. If there are no nested policies, or no nested policies match the labels in the alert rule or alert instance, then the default notification policy is the matching policy.
-   {{% /admonition %}}
+      {{% /admonition %}}
 
    1. Preview your alert instance routing set up.
 
