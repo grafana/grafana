@@ -133,27 +133,27 @@ func TestFeatureToggleFiles(t *testing.T) {
 			current.ListMeta.ResourceVersion = resourceVersion
 		}
 
-		// Check for changes in any existing values
-		for _, item := range existing.Items {
-			v, ok := lookup[item.Name]
-			if ok {
-				delete(lookup, item.Name)
-				a, e1 := json.Marshal(v)
-				b, e2 := json.Marshal(item.Spec)
-				if e1 != nil || e2 != nil || !bytes.Equal(a, b) {
-					item.ResourceVersion = resourceVersion
-					current.ListMeta.ResourceVersion = resourceVersion
-					if item.Annotations == nil {
-						item.Annotations = make(map[string]string)
-					}
-					item.Annotations["grafana.app/modifiedTime"] = created.Format(time.RFC3339)
-					item.Spec = v // the current value
-				}
-				current.Items = append(current.Items, item)
-			} else {
-				current.ListMeta.ResourceVersion = resourceVersion
-			}
-		}
+		// // Check for changes in any existing values
+		// for _, item := range existing.Items {
+		// 	v, ok := lookup[item.Name]
+		// 	if ok {
+		// 		delete(lookup, item.Name)
+		// 		a, e1 := json.Marshal(v)
+		// 		b, e2 := json.Marshal(item.Spec)
+		// 		if e1 != nil || e2 != nil || !bytes.Equal(a, b) {
+		// 			item.ResourceVersion = resourceVersion
+		// 			current.ListMeta.ResourceVersion = resourceVersion
+		// 			if item.Annotations == nil {
+		// 				item.Annotations = make(map[string]string)
+		// 			}
+		// 			item.Annotations["grafana.app/modifiedTime"] = created.Format(time.RFC3339)
+		// 			item.Spec = v // the current value
+		// 		}
+		// 		current.Items = append(current.Items, item)
+		// 	} else {
+		// 		current.ListMeta.ResourceVersion = resourceVersion
+		// 	}
+		// }
 
 		out, err := json.MarshalIndent(current, "", "  ")
 		require.NoError(t, err)
