@@ -3,6 +3,7 @@ package featuremgmt
 import (
 	"bytes"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log"
@@ -16,7 +17,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/olekukonko/tablewriter"
 	"github.com/stretchr/testify/require"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	featuretoggleapi "github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt/strcase"
 )
 
@@ -84,6 +87,80 @@ func TestFeatureToggleFiles(t *testing.T) {
 			"toggles_gen.csv",
 			generateCSV(),
 		)
+	})
+
+	t.Run("update k8s resource list", func(t *testing.T) {
+		created := time.Now().UTC()
+		resourceVersion := fmt.Sprintf("%d", created.UnixMilli())
+
+		featuresFile := "toggles_gen.json"
+		current := featuretoggleapi.FeatureList{
+			TypeMeta: v1.TypeMeta{
+				Kind:       "FeatureList",
+				APIVersion: featuretoggleapi.APIVERSION,
+			},
+		}
+		existing := featuretoggleapi.FeatureList{}
+		body, err := os.ReadFile(featuresFile)
+		if err == nil {
+			_ = json.Unmarshal(body, &existing)
+			current.ListMeta = existing.ListMeta
+		}
+
+		lookup := map[string]featuretoggleapi.FeatureSpec{}
+		for _, flag := range standardFeatureFlags {
+			lookup[flag.Name] = featuretoggleapi.FeatureSpec{
+				Description:       flag.Description,
+				Stage:             flag.Stage.String(),
+				Owner:             string(flag.Owner),
+				RequiresDevMode:   flag.RequiresDevMode,
+				FrontendOnly:      flag.FrontendOnly,
+				RequiresRestart:   flag.RequiresRestart,
+				AllowSelfServe:    flag.AllowSelfServe,
+				HideFromAdminPage: flag.HideFromAdminPage,
+				HideFromDocs:      flag.HideFromDocs,
+				// EnabledVersion: ???,
+			}
+
+			current.Items = append(current.Items, featuretoggleapi.Feature{
+				ObjectMeta: v1.ObjectMeta{
+					Name:              flag.Name,
+					CreationTimestamp: v1.NewTime(flag.Created),
+					ResourceVersion:   fmt.Sprintf("%d", flag.Created.UnixMilli()),
+				},
+				Spec: lookup[flag.Name],
+			})
+			current.ListMeta.ResourceVersion = resourceVersion
+		}
+
+		// Check for changes in any existing values
+		for _, item := range existing.Items {
+			v, ok := lookup[item.Name]
+			if ok {
+				delete(lookup, item.Name)
+				a, e1 := json.Marshal(v)
+				b, e2 := json.Marshal(item.Spec)
+				if e1 != nil || e2 != nil || !bytes.Equal(a, b) {
+					item.ResourceVersion = resourceVersion
+					current.ListMeta.ResourceVersion = resourceVersion
+					if item.Annotations == nil {
+						item.Annotations = make(map[string]string)
+					}
+					item.Annotations["grafana.app/modifiedTime"] = created.Format(time.RFC3339)
+					item.Spec = v // the current value
+				}
+				current.Items = append(current.Items, item)
+			} else {
+				current.ListMeta.ResourceVersion = resourceVersion
+			}
+		}
+
+		out, err := json.MarshalIndent(current, "", "  ")
+		require.NoError(t, err)
+		fmt.Printf("%s\n", out)
+
+		err = os.WriteFile(featuresFile, []byte(out), 0644)
+		require.NoError(t, err, "error writing file")
 	})
 
 	t.Run("check feature naming convention", func(t *testing.T) {
