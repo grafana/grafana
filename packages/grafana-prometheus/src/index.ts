@@ -1,4 +1,21 @@
-export * from './components';
+// The Grafana Prometheus library exports a number of components.
+// There are main components that can be imported directly into your plugin module.ts file.
+// There are also more granular components that can be used to build components, for example, the config section can be built with granular parts to allow for custom auths.
+
+// COMPONENTS/
+// Main export
+export { PromQueryEditorByApp } from './components/PromQueryEditorByApp';
+// The parts
+export { MonacoQueryFieldLazy } from './components/monaco-query-field/MonacoQueryFieldLazy';
+export { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
+export { PromCheatSheet } from './components/PromCheatSheet';
+export { PrometheusMetricsBrowser } from './components/PrometheusMetricsBrowser';
+export { PromExemplarField } from './components/PromExemplarField';
+export { PromExploreExtraField } from './components/PromExploreExtraField';
+export { PromQueryEditorForAlerting } from './components/PromQueryEditorForAlerting';
+export { PromQueryField } from './components/PromQueryField';
+export { PromVariableQueryEditor } from './components/VariableQueryEditor';
+
 export * from './configuration';
 export * from './querybuilder';
 
