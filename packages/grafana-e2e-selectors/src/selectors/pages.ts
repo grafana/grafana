@@ -203,7 +203,7 @@ export const Pages = {
     save: 'Save dashboard button',
   },
   SaveDashboardModal: {
-    save: 'Dashboard settings Save Dashboard Modal Save button',
+    save: 'data-testid Dashboard settings Save Dashboard Modal Save button',
     saveVariables: 'data-testid Dashboard settings Save Dashboard Modal Save variables checkbox',
     saveTimerange: 'data-testid Dashboard settings Save Dashboard Modal Save timerange checkbox',
   },

@@ -57,7 +57,7 @@ const renderAndSubmitForm = async (dashboard: DashboardModel, submitSpy: jest.Mo
     />
   );
 
-  const button = screen.getByRole('button', { name: 'Dashboard settings Save Dashboard Modal Save button' });
+  const button = screen.getByRole('button', { name: 'Save' });
   await userEvent.click(button);
 };
 describe('SaveDashboardAsForm', () => {
