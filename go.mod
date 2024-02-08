@@ -486,9 +486,14 @@ require github.com/spyzhov/ajson v0.9.0 // @grafana/grafana-app-platform-squad
 
 require github.com/fullstorydev/grpchan v1.1.1 // @grafana/backend-platform
 
+require github.com/jackc/pgx/v5 v5.5.3 // @grafana/oss-big-tent
+
 require (
 	github.com/bufbuild/protocompile v0.4.0 // indirect
 	github.com/grafana/sqlds/v3 v3.2.0 // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
+	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jhump/protoreflect v1.15.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mithrandie/csvq v1.17.10 // indirect
