@@ -2023,6 +2023,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad"
       }
+    },
+    {
+      "metadata": {
+        "name": "autoMigrateGraphPanel",
+        "resourceVersion": "1707433170195",
+        "creationTimestamp": "2024-02-08T22:59:30Z"
+      },
+      "spec": {
+        "description": "Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking",
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true
+      }
     }
   ]
 }
