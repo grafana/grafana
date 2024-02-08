@@ -193,36 +193,48 @@ func (nsV1 *NotificationSettingsV1) mapToModel() (models.NotificationSettings, e
 		return models.NotificationSettings{}, fmt.Errorf("receiver must not be empty")
 	}
 	var gw, gi, ri *model.Duration
-	dur, err := model.ParseDuration(nsV1.GroupWait.Value())
-	if err != nil {
-		return models.NotificationSettings{}, fmt.Errorf("failed to parse group wait: %w", err)
-	}
-	gw = util.Pointer(dur)
-	dur, err = model.ParseDuration(nsV1.GroupInterval.Value())
-	if err != nil {
-		return models.NotificationSettings{}, fmt.Errorf("failed to parse group interval: %w", err)
-	}
-	gi = util.Pointer(dur)
-	dur, err = model.ParseDuration(nsV1.RepeatInterval.Value())
-	if err != nil {
-		return models.NotificationSettings{}, fmt.Errorf("failed to parse repeat interval: %w", err)
-	}
-	ri = util.Pointer(dur)
-
-	groupBy := make([]string, 0, len(nsV1.GroupBy))
-	for _, value := range nsV1.GroupBy {
-		if value.Value() == "" {
-			continue
+	if nsV1.GroupWait.Value() != "" {
+		dur, err := model.ParseDuration(nsV1.GroupWait.Value())
+		if err != nil {
+			return models.NotificationSettings{}, fmt.Errorf("failed to parse group wait: %w", err)
 		}
-		groupBy = append(groupBy, value.Value())
+		gw = util.Pointer(dur)
+	}
+	if nsV1.GroupInterval.Value() != "" {
+		dur, err := model.ParseDuration(nsV1.GroupInterval.Value())
+		if err != nil {
+			return models.NotificationSettings{}, fmt.Errorf("failed to parse group interval: %w", err)
+		}
+		gi = util.Pointer(dur)
+	}
+	if nsV1.RepeatInterval.Value() != "" {
+		dur, err := model.ParseDuration(nsV1.RepeatInterval.Value())
+		if err != nil {
+			return models.NotificationSettings{}, fmt.Errorf("failed to parse repeat interval: %w", err)
+		}
+		ri = util.Pointer(dur)
 	}
 
-	mute := make([]string, 0, len(nsV1.MuteTimeIntervals))
-	for _, value := range nsV1.MuteTimeIntervals {
-		if value.Value() == "" {
-			continue
+	var groupBy []string
+	if len(nsV1.GroupBy) > 0 {
+		groupBy = make([]string, 0, len(nsV1.GroupBy))
+		for _, value := range nsV1.GroupBy {
+			if value.Value() == "" {
+				continue
+			}
+			groupBy = append(groupBy, value.Value())
 		}
-		mute = append(mute, value.Value())
+	}
+
+	var mute []string
+	if len(nsV1.MuteTimeIntervals) > 0 {
+		mute = make([]string, 0, len(nsV1.MuteTimeIntervals))
+		for _, value := range nsV1.MuteTimeIntervals {
+			if value.Value() == "" {
+				continue
+			}
+			mute = append(mute, value.Value())
+		}
 	}
 
 	return models.NotificationSettings{
