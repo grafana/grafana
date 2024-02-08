@@ -4,8 +4,10 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginSignatureStatus } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { configureStore } from 'app/store/configureStore';
 
-import { CatalogPlugin, PluginStatus } from '../../types';
+import { getPluginsStateMock } from '../../__mocks__';
+import { CatalogPlugin, PluginStatus, RequestStatus } from '../../types';
 
 import { InstallControlsButton } from './InstallControlsButton';
 
@@ -89,5 +91,80 @@ describe('InstallControlsButton', () => {
       </TestProvider>
     );
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  describe('update button on prem', () => {
+    const store = configureStore({
+      plugins: getPluginsStateMock([]),
+    });
+
+    it('should be disable when is Installing', () => {
+      store.dispatch({ type: 'plugins/install/pending' });
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton plugin={{ ...plugin }} pluginStatus={PluginStatus.UPDATE} />
+        </TestProvider>
+      );
+      const button = screen.getByText('Updating').closest('button');
+      expect(button).toBeDisabled();
+    });
+
+    it('should be enabled when not is Installing', () => {
+      store.dispatch({ type: 'plugins/install/fulfilled', payload: { id: '', changes: {} } });
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton plugin={{ ...plugin }} pluginStatus={PluginStatus.UPDATE} />
+        </TestProvider>
+      );
+      const button = screen.getByText('Update').closest('button');
+      expect(button).toBeEnabled();
+    });
+  });
+
+  describe('update button on manage instance', () => {
+    const oldFeatureTogglesManagedPluginsInstall = config.featureToggles.managedPluginsInstall;
+    const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+
+    beforeAll(() => {
+      config.featureToggles.managedPluginsInstall = true;
+      config.pluginAdminExternalManageEnabled = true;
+    });
+
+    afterAll(() => {
+      config.featureToggles.managedPluginsInstall = oldFeatureTogglesManagedPluginsInstall;
+      config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+    });
+
+    const store = configureStore({
+      plugins: getPluginsStateMock([]),
+    });
+
+    it('should be disabled when is Installing=false but isUpdatingFromInstance=true', () => {
+      store.dispatch({ type: 'plugins/install/fulfilled', payload: { id: '', changes: {} } });
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton
+            plugin={{ ...plugin, isUpdatingFromInstance: true }}
+            pluginStatus={PluginStatus.UPDATE}
+          />
+        </TestProvider>
+      );
+      const button = screen.getByText('Update').closest('button');
+      expect(button).toBeDisabled();
+    });
+
+    it('should be disabled when is Installing=false but isUpdatingFromInstance=false', () => {
+      store.dispatch({ type: 'plugins/install/fulfilled', payload: { id: '', changes: {} } });
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton
+            plugin={{ ...plugin, isUpdatingFromInstance: false }}
+            pluginStatus={PluginStatus.UPDATE}
+          />
+        </TestProvider>
+      );
+      const button = screen.getByText('Update').closest('button');
+      expect(button).toBeEnabled();
+    });
   });
 });
