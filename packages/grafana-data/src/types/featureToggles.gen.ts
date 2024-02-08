@@ -34,6 +34,9 @@ export interface FeatureToggles {
   traceToMetrics?: boolean;
   autoMigrateOldPanels?: boolean;
   autoMigrateGraphPanel?: boolean;
+  autoMigrateTablePanel?: boolean;
+  autoMigratePiechartPanel?: boolean;
+  autoMigrateWorldmapPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
   newVizTooltips?: boolean;
