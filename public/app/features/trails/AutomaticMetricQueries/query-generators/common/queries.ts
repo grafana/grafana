@@ -11,19 +11,44 @@ export function getGeneralBaseQuery(rate: boolean) {
   return rate ? GENERAL_RATE_BASE_QUERY : GENERAL_BASE_QUERY;
 }
 
+const aggLabels: Record<string, string> = {
+  avg: 'average',
+  sum: 'sum',
+};
+
+function getAggLabel(agg: string) {
+  return aggLabels[agg] || agg;
+}
+
 export function generateQueries({ agg, rate, unit }: AutoQueryParameters): AutoQueryInfo {
   const baseQuery = getGeneralBaseQuery(rate);
+
+  const description = rate ? `${getAggLabel(agg)} of rates per second` : `${getAggLabel(agg)}`;
 
   const common = {
     title: `${VAR_METRIC_EXPR}`,
     unit,
-    variant: 'graph',
+    variant: description,
+  };
+
+  const mainQuery = {
+    refId: 'A',
+    expr: `${agg}(${baseQuery})`,
+    legendFormat: `${VAR_METRIC_EXPR} (${description})`,
   };
 
   const main = {
     ...common,
-    queries: [{ refId: 'A', expr: `${agg}(${baseQuery})` }],
-    vizBuilder: () => simpleGraphBuilder(main),
+    title: `${VAR_METRIC_EXPR} (${description})`,
+    queries: [mainQuery],
+    vizBuilder: () => simpleGraphBuilder({ ...main }),
+  };
+
+  const preview = {
+    ...main,
+    title: `${VAR_METRIC_EXPR}`,
+    queries: [{ ...mainQuery, legendFormat: description }],
+    vizBuilder: () => simpleGraphBuilder(preview),
   };
 
   const breakdown = {
@@ -38,5 +63,5 @@ export function generateQueries({ agg, rate, unit }: AutoQueryParameters): AutoQ
     vizBuilder: () => simpleGraphBuilder(breakdown),
   };
 
-  return { preview: main, main: main, breakdown: breakdown, variants: [] };
+  return { preview, main, breakdown, variants: [] };
 }
