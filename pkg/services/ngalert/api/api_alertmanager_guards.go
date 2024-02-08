@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -137,7 +138,14 @@ func checkMuteTimes(currentConfig apimodels.GettableUserConfig, newConfig apimod
 			return fmt.Errorf("cannot delete provisioned mute time '%s'", muteTime.Name)
 		}
 		reporter := cmputil.DiffReporter{}
-		options := []cmp.Option{cmp.Reporter(&reporter), cmpopts.EquateEmpty()}
+		options := []cmp.Option{
+			cmp.Reporter(&reporter),
+			cmp.Comparer(func(a, b *time.Location) bool {
+				// Check if both are nil or both have the same string representation
+				return (a == nil && b == nil) || (a != nil && b != nil && a.String() == b.String())
+			}),
+			cmpopts.EquateEmpty(),
+		}
 		timesEqual := cmp.Equal(muteTime.TimeIntervals, postedMT.TimeIntervals, options...)
 		if !timesEqual {
 			return fmt.Errorf("cannot save provisioned mute time '%s'", muteTime.Name)
