@@ -108,11 +108,17 @@ export const normalizeMatchers = (route: Route): ObjectMatcher[] => {
   return matchers;
 };
 
+/**
+ * Quotes string and escapes double quote and backslash characters
+ */
 export function quoteWithEscape(input: string) {
   const escaped = input.replace(/[\\"]/g, (c) => `\\${c}`);
   return `"${escaped}"`;
 }
 
+/**
+ * Unquotes and unescapes a string **if it has been quoted**
+ */
 export function unquoteWithUnescape(input: string) {
   if (!/^"(.*)"$/.test(input)) {
     return input;
@@ -128,7 +134,7 @@ export const matcherFormatter = {
   default: ([name, operator, value]: ObjectMatcher): string => {
     return `${name} ${operator} ${value}`;
   },
-  cloud: ([name, operator, value]: ObjectMatcher): string => {
+  unquote: ([name, operator, value]: ObjectMatcher): string => {
     return `${name} ${operator} ${unquoteWithUnescape(value)}`;
   },
 } as const;

@@ -183,7 +183,7 @@ export function combineMatcherStrings(...matcherStrings: string[]): string {
 }
 
 export function getAmMatcherFormatter(alertmanagerSourceName?: string): MatcherFormatter {
-  return alertmanagerSourceName === GRAFANA_RULES_SOURCE_NAME ? 'default' : 'cloud';
+  return alertmanagerSourceName === GRAFANA_RULES_SOURCE_NAME ? 'default' : 'unquote';
 }
 
 export function getAllAlertmanagerDataSources() {
