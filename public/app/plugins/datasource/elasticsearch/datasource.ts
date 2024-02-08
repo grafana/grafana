@@ -38,6 +38,7 @@ import {
   AdHocVariableFilter,
   DataSourceWithQueryModificationSupport,
   AdHocVariableModel,
+  TypedVariableModel,
 } from '@grafana/data';
 import {
   DataSourceWithBackend,
@@ -47,7 +48,6 @@ import {
   TemplateSrv,
   getTemplateSrv,
 } from '@grafana/runtime';
-import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { IndexPattern, intervalMap } from './IndexPattern';
 import LanguageProvider from './LanguageProvider';
@@ -264,7 +264,8 @@ export class ElasticDatasource
 
   private prepareAnnotationRequest(options: {
     annotation: ElasticsearchAnnotationQuery;
-    dashboard: DashboardModel;
+    // Should be DashboardModel but cannot import that here from the main app. This is a temporary solution as we need to move from deprecated annotations.
+    dashboard: { getVariables: () => TypedVariableModel[] };
     range: TimeRange;
   }) {
     const annotation = options.annotation;
@@ -804,7 +805,7 @@ export class ElasticDatasource
 
     return termsObservable.pipe(
       map((res) => {
-        if (!res.responses[0].aggregations) {
+        if (!res?.responses?.length || !res.responses[0].aggregations) {
           return [];
         }
 
