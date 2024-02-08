@@ -1,5 +1,5 @@
 {
-  "_comment": "Este archivo es la fuente de información para las cadenas en inglés. Edítelo para cambiar los plurales y otras frases de la interfaz de usuario.",
+  "_comment": "",
   "access-control": {
     "add-permission": {
       "role-label": "Rol",
@@ -49,19 +49,14 @@
     },
     "counts": {
       "alertRule_one": "{{count}} regla de alerta",
-      "alertRule_many": "",
       "alertRule_other": "{{count}} reglas de alerta",
       "dashboard_one": "{{count}} panel de control",
-      "dashboard_many": "",
       "dashboard_other": "{{count}} paneles de control",
       "folder_one": "{{count}} carpeta",
-      "folder_many": "",
       "folder_other": "{{count}} carpetas",
       "libraryPanel_one": "{{count}} panel de librería",
-      "libraryPanel_many": "",
       "libraryPanel_other": "{{count}} paneles de librería",
       "total_one": "{{count}} elemento",
-      "total_many": "",
       "total_other": "{{count}} elementos"
     },
     "dashboards-tree": {
@@ -112,6 +107,9 @@
       "change-theme": "Cambiar tema...",
       "dark-theme": "Oscuro",
       "light-theme": "Claro"
+    },
+    "empty-state": {
+      "title": ""
     },
     "search-box": {
       "placeholder": "Buscar o saltar a..."
@@ -546,7 +544,7 @@
       "copy-link-abs-time": "",
       "copy-links-absolute-category": "",
       "copy-links-normal-category": "",
-      "copy-shortened-link": "Copiar enlace acortado",
+      "copy-shortened-link": "",
       "copy-shortened-link-abs-time": "",
       "copy-shortened-link-menu": "",
       "refresh-picker-cancel": "Cancelar",
@@ -654,16 +652,15 @@
   },
   "library-panels": {
     "modal": {
-      "body_one": "Este panel se está utilizando en {{count}} tablero. Por favor, elija qué tablero quiere ver en el panel:",
-      "body_many": "",
-      "body_other": "Este panel se está utilizando en {{count}} paneles de control. Elija qué panel quiere ver en el panel de control:",
       "button-cancel": "<0>Cancelar</0>",
       "button-view-panel1": "Ver panel en {{label}}...",
       "button-view-panel2": "Ver panel en el panel de control...",
       "panel-not-linked": "El panel no está vinculado a un panel de control. Añádalo a un panel de control y vuelva a intentarlo.",
       "select-no-options-message": "No se ha encontrado ningún tablero",
       "select-placeholder": "Empezar a escribir para buscar el panel de control",
-      "title": "Ver el panel en el tablero"
+      "title": "Ver el panel en el tablero",
+      "body_one": "Este panel se está utilizando en {{count}} tablero. Por favor, elija qué tablero quiere ver en el panel:",
+      "body_other": "Este panel se está utilizando en {{count}} paneles de control. Elija qué panel quiere ver en el panel de control:"
     },
     "save": {
       "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
@@ -676,6 +673,22 @@
       "invalid-user-or-password": "Nombre de usuario o contraseña no válidos",
       "title": "Error al iniciar sesión",
       "unknown": "Se ha producido un error desconocido"
+    },
+    "forgot-password": "",
+    "form": {
+      "password-label": "",
+      "password-required": "",
+      "submit-label": "",
+      "submit-loading-label": "",
+      "username-label": "",
+      "username-required": ""
+    },
+    "services": {
+      "sing-in-with-prefix": ""
+    },
+    "signup": {
+      "button-label": "",
+      "new-to-question": ""
     }
   },
   "nav": {
@@ -747,6 +760,9 @@
     "authentication": {
       "title": "Autenticación"
     },
+    "collector": {
+      "title": ""
+    },
     "config": {
       "title": "Administración"
     },
@@ -811,7 +827,7 @@
       "title": "Interfaz"
     },
     "frontend-app": {
-      "title": "Interfaz"
+      "title": ""
     },
     "global-orgs": {
       "subtitle": "Instancias aisladas de Grafana ejecutándose en el mismo servidor",
@@ -842,7 +858,7 @@
       "title": ""
     },
     "integrations": {
-      "title": "Integraciones"
+      "title": ""
     },
     "k6": {
       "title": ""
@@ -883,9 +899,6 @@
       "subtitle": "Gestionar las preferencias en una organización",
       "title": "Preferencias por defecto"
     },
-    "performance-testing": {
-      "title": "Pruebas de rendimiento"
-    },
     "playlists": {
       "subtitle": "Grupos de paneles de control que se muestran en una secuencia",
       "title": "Listas de reproducción"
@@ -893,6 +906,10 @@
     "plugins": {
       "subtitle": "Amplíe la experiencia de Grafana con los complementos",
       "title": "Complementos"
+    },
+    "private-data-source-connections": {
+      "subtitle": "",
+      "title": ""
     },
     "profile/notifications": {
       "title": "Historial de notificaciones"
@@ -1479,7 +1496,7 @@
       "username-label": "Nombre de usuario"
     },
     "tabs": {
-      "general": "General"
+      "general": ""
     }
   },
   "user-session": {
