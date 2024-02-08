@@ -143,7 +143,7 @@ Complete the following steps to set up labels and notifications.
 
    1. You can also optionally select a mute timing as well as groupings and timings to define when not to send notifications.
 
-   {{% admonition type="note" %}}
+      {{% admonition type="note" %}}
    An auto-generated notification policy is generated. Only admins can view these auto-generated policies from the **Notification policies** list view. Any changes have to be made in the alert rules form. {{% /admonition %}}
 
    **Use notification policy**
