@@ -37,7 +37,7 @@ export interface SelectCommonProps<T> {
   filterOption?: (option: SelectableValue<T>, searchQuery: string) => boolean;
   formatOptionLabel?: (item: SelectableValue<T>, formatOptionMeta: FormatOptionLabelMeta<T>) => React.ReactNode;
   /** Function for formatting the text that is displayed when creating a new value*/
-  formatCreateLabel?: (input: string) => string;
+  formatCreateLabel?: (input: string) => React.ReactNode;
   getOptionLabel?: (item: SelectableValue<T>) => React.ReactNode;
   getOptionValue?: (item: SelectableValue<T>) => T | undefined;
   hideSelectedOptions?: boolean;
