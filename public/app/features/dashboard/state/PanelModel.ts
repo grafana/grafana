@@ -130,6 +130,8 @@ const defaults: any = {
   title: '',
 };
 
+export const explicitlyControlledMigrationPanels = ['graph'];
+
 export const autoMigrateAngular: Record<string, string> = {
   graph: 'timeseries',
   'table-old': 'table',

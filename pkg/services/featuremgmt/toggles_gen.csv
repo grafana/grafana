@@ -14,6 +14,7 @@ exploreContentOutline,GA,@grafana/explore-squad,2023-11-03,false,false,true
 datasourceQueryMultiStatus,experimental,@grafana/plugins-platform-backend,2022-05-03,false,false,false
 traceToMetrics,experimental,@grafana/observability-traces-and-profiling,2022-03-07,false,false,true
 autoMigrateOldPanels,preview,@grafana/dataviz-squad,2022-06-11,false,false,true
+autoMigrateGraphPanel,preview,@grafana/dataviz-squad,2023-12-11,false,false,true
 disableAngular,preview,@grafana/dataviz-squad,2023-03-23,false,false,true
 canvasPanelNesting,experimental,@grafana/dataviz-squad,2022-05-31,false,false,true
 newVizTooltips,preview,@grafana/dataviz-squad,2023-11-03,false,false,true
