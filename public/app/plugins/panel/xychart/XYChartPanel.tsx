@@ -32,12 +32,20 @@ import { TooltipView } from './TooltipView';
 import { XYChartTooltip } from './XYChartTooltip';
 import { Options, SeriesMapping } from './panelcfg.gen';
 import { prepData, prepScatter, ScatterPanelInfo } from './scatter';
+import { autoOpts, manualOpts } from './testProps';
 import { ScatterHoverEvent, ScatterSeries } from './types';
+import { prepXYSeries } from './utils';
+
+export const XYChartPanel = (props: Props) => {
+  let frames = props.data.series;
+  console.log(prepXYSeries(autoOpts, frames));
+  console.log(prepXYSeries(manualOpts, frames));
+};
 
 type Props = PanelProps<Options>;
 const TOOLTIP_OFFSET = 10;
 
-export const XYChartPanel = (props: Props) => {
+export const XYChartPanel2 = (props: Props) => {
   const [error, setError] = useState<string | undefined>();
   const [series, setSeries] = useState<ScatterSeries[]>([]);
   const [builder, setBuilder] = useState<UPlotConfigBuilder | undefined>();
