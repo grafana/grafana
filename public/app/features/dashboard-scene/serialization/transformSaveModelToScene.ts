@@ -27,6 +27,7 @@ import {
   AdHocFilterSet,
   TextBoxVariable,
   UserActionEvent,
+  GroupByVariable,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
@@ -302,13 +303,14 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   const commonProperties = {
     name: variable.name,
     label: variable.label,
+    description: variable.description,
   };
   if (variable.type === 'custom') {
     return new CustomVariable({
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
-      description: variable.description,
+
       query: variable.query,
       isMulti: variable.multi,
       allValue: variable.allValue || undefined,
@@ -322,7 +324,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
-      description: variable.description,
+
       query: variable.query,
       datasource: variable.datasource,
       sort: variable.sort,
@@ -341,7 +343,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
-      description: variable.description,
       regex: variable.regex,
       pluginId: variable.query,
       allValue: variable.allValue || undefined,
@@ -357,7 +358,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     return new IntervalVariable({
       ...commonProperties,
       value: currentInterval,
-      description: variable.description,
       intervals: intervals,
       autoEnabled: variable.auto,
       autoStepCount: variable.auto_count,
@@ -369,7 +369,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else if (variable.type === 'constant') {
     return new ConstantVariable({
       ...commonProperties,
-      description: variable.description,
       value: variable.query,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
@@ -377,10 +376,20 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else if (variable.type === 'textbox') {
     return new TextBoxVariable({
       ...commonProperties,
-      description: variable.description,
       value: variable.query,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
+    });
+  } else if (variable.type === 'groupby') {
+    return new GroupByVariable({
+      ...commonProperties,
+      datasource: variable.datasource,
+      value: variable.current?.value || [],
+      text: variable.current?.text || [],
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+      // @ts-expect-error
+      defaultOptions: variable.options,
     });
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.type}`);

@@ -104,6 +104,22 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
         },
         query: variable.state.value,
       });
+    } else if (sceneUtils.isGroupByVariable(variable)) {
+      variables.push({
+        ...commonProperties,
+        datasource: variable.state.datasource,
+        // Only persist the statically defined options
+        options: variable.state.defaultOptions?.map((option) => ({
+          text: option.text,
+          value: String(option.value),
+        })),
+        current: {
+          // @ts-expect-error
+          text: variable.state.text,
+          // @ts-expect-error
+          value: variable.state.value,
+        },
+      });
     } else {
       throw new Error('Unsupported variable type');
     }
