@@ -16,14 +16,15 @@ weight: 250
 Team LBAC is available in private preview on Grafana Cloud for Loki created with basic authentication. Loki datasources for Team LBAC can only be created, provisioning is currently not available.
 
 ## Before you begin
+
 To be able to use Team LBAC rules, you need to enable the feature toggle `teamHTTPHeaders` on your Grafana instance. Contact support to enable the feature toggle for you.
 
 - Be sure that you have the permission setup to create a loki tenant in Grafana Cloud
 - Be sure that you have admin data source permissions for Grafana.
 
 ### Permissions
-We recommend that you remove all permissions for roles and teams that are not required to access the data source. This will help to ensure that only the required teams have access to the data source. The recommended permissions are `Admin` permission and only add the teams `Query` permissions that you want to add Team LBAC rules for.
 
+We recommend that you remove all permissions for roles and teams that are not required to access the data source. This will help to ensure that only the required teams have access to the data source. The recommended permissions are `Admin` permission and only add the teams `Query` permissions that you want to add Team LBAC rules for.
 
 ## Task 1: Configure Team LBAC for a new Loki data source
 
