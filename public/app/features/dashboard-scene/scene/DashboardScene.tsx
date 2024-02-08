@@ -344,7 +344,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
           this.setIsDirty();
         }
         if (event.payload.changedObject instanceof dataLayers.AnnotationsDataLayer) {
-          if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'query')) {
+          if (!Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'data')) {
             this.setIsDirty();
           }
         }
