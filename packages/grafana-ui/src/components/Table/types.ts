@@ -97,8 +97,8 @@ export interface Props {
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
-  // Index of the row to scroll to
-  scrollToRowIndex?: number;
+  // The index of the field value that the table will initialize scrolled to
+  initialRowIndex?: number;
 }
 
 /**

@@ -48,7 +48,7 @@ export const Table = memo((props: Props) => {
     cellHeight = TableCellHeight.Sm,
     timeRange,
     enableSharedCrosshair = false,
-    scrollToRowIndex = undefined,
+    initialRowIndex = undefined,
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
@@ -308,7 +308,7 @@ export const Table = memo((props: Props) => {
                 tableStyles={tableStyles}
                 footerPaginationEnabled={Boolean(enablePagination)}
                 enableSharedCrosshair={enableSharedCrosshair}
-                scrollToRowIndex={scrollToRowIndex}
+                initialRowIndex={initialRowIndex}
               />
             </div>
           ) : (

@@ -44,7 +44,7 @@ interface RowsListProps {
   onCellFilterAdded?: TableFilterActionCallback;
   timeRange?: TimeRange;
   footerPaginationEnabled: boolean;
-  scrollToRowIndex?: number;
+  initialRowIndex?: number;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -67,10 +67,10 @@ export const RowsList = (props: RowsListProps) => {
     listHeight,
     listRef,
     enableSharedCrosshair = false,
-    scrollToRowIndex = undefined,
+    initialRowIndex = undefined,
   } = props;
 
-  const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(scrollToRowIndex);
+  const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
