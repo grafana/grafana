@@ -1,14 +1,22 @@
-
-
-
+---
+description: Use the query editor to explore your Pyroscope data.
+keywords:
+  - query
+  - profiling
+  - pyroscope
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
+title: Query profile data
+menuTitle: Query profile data
+weight: 300
+---
 
 # Query profile data
 
-You can query your profiling data using the query editor.
-
-## Query editor
-
-The Pyroscope daata source query editor gives you access to a profile type selector, a label selector, and collapsible options.
+The Pyroscope data source query editor gives you access to a profile type selector, a label selector, and collapsible options.
 
 ![Query editor](/media/docs/pyroscope/query-editor/query-editor.png 'Query editor')
 

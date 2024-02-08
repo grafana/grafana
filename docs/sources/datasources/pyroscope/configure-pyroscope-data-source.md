@@ -2,8 +2,6 @@
 description: Configure your Pyroscope data source for Grafana.
 keywords:
   - configure
-  - phlare
-  - guide
   - profiling
   - pyroscope
 labels:
@@ -13,7 +11,7 @@ labels:
     - oss
 title: Configure the Grafana Pyroscope data source
 menuTitle: Configure Pyroscope
-weight: 1150
+weight: 200
 ---
 
 # Configure the Grafana Pyroscope data source
