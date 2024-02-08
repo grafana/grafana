@@ -20,7 +20,7 @@ const (
 )
 
 var (
-	telegramAPIURL = "https://api.telegram.org/bot%s/%s"
+	defaultTelegramAPIURL = "https://api.telegram.org/"
 )
 
 func init() {
@@ -48,6 +48,15 @@ func init() {
 				PropertyName: "chatid",
 				Required:     true,
 			},
+			{
+				Label:          "API URL",
+				Element:        alerting.ElementTypeInput,
+				InputType:      alerting.InputTypeText,
+				Description:    "Custom URL for telegram api",
+				Placeholder:    "https://api.telegram.org/",
+				PropertyName:   "apiurl",
+				Required:       false,
+			},
 		},
 	})
 }
@@ -59,6 +68,7 @@ type TelegramNotifier struct {
 	BotToken    string
 	ChatID      string
 	UploadImage bool
+	APIURL      string
 	log         log.Logger
 }
 
@@ -71,6 +81,7 @@ func NewTelegramNotifier(cfg *setting.Cfg, model *models.AlertNotification, fn a
 	botToken := fn(context.Background(), model.SecureSettings, "bottoken", model.Settings.Get("bottoken").MustString(), cfg.SecretKey)
 	chatID := model.Settings.Get("chatid").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool()
+	apiUrl := model.Settings.Get("apiurl").MustString()
 
 	if botToken == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find Bot Token in settings"}
@@ -80,11 +91,16 @@ func NewTelegramNotifier(cfg *setting.Cfg, model *models.AlertNotification, fn a
 		return nil, alerting.ValidationError{Reason: "Could not find Chat Id in settings"}
 	}
 
+	if APIURL == "" {
+		apiUrl := defaultTelegramAPIURL
+	}
+
 	return &TelegramNotifier{
 		NotifierBase: NewNotifierBase(model, ns),
 		BotToken:     botToken,
 		ChatID:       chatID,
 		UploadImage:  uploadImage,
+		APIURL:       apiUrl,
 		log:          log.New("alerting.notifier.telegram"),
 	}, nil
 }
@@ -200,8 +216,10 @@ func (tn *TelegramNotifier) generateTelegramCmd(message string, messageField str
 		return nil, err
 	}
 
+	apiUrlPattern := tn.APIURL + "bot%s/%s"
+
 	tn.log.Info("Sending telegram notification", "chat_id", tn.ChatID, "bot_token", tn.BotToken, "apiAction", apiAction)
-	url := fmt.Sprintf(telegramAPIURL, tn.BotToken, apiAction)
+	url := fmt.Sprintf(apiUrlPattern, tn.BotToken, apiAction)
 
 	cmd := &notifications.SendWebhookSync{
 		Url:        url,
