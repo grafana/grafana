@@ -14,8 +14,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 
 type renderREST struct {
@@ -198,7 +198,7 @@ func Render(qt peakq.QueryTemplateSpec, selectedValues map[string][]string) (*pe
 		if err != nil {
 			return nil, err
 		}
-		u := common.Unstructured{}
+		u := query.GenericDataQuery{}
 		err = u.UnmarshalJSON(raw)
 		if err != nil {
 			return nil, err

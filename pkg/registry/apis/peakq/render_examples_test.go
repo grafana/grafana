@@ -11,7 +11,9 @@ import (
 func TestRender(t *testing.T) {
 	rT, err := Render(basicTemplateSpec, map[string][]string{"metricName": {"up"}})
 	require.NoError(t, err)
-	require.Equal(t, basicTemplateRenderedTargets[0].Properties.Object["expr"], rT.Targets[0].Properties.Object["expr"])
+	require.Equal(t,
+		basicTemplateRenderedTargets[0].Properties.AdditionalProperties()["expr"],
+		rT.Targets[0].Properties.AdditionalProperties()["expr"])
 	b, _ := json.MarshalIndent(basicTemplateSpec, "", " ")
 	fmt.Println(string(b))
 }
