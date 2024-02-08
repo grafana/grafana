@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import leven from 'leven';
+import { debounce } from 'lodash';
 import React, { useCallback } from 'react';
 
 import { GrafanaTheme2, VariableRefresh } from '@grafana/data';
@@ -288,18 +289,26 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     }
   };
 
-  public onSearchChange = (evt: React.SyntheticEvent<HTMLInputElement>) => {
+  public onSearchQueryChange = (evt: React.SyntheticEvent<HTMLInputElement>) => {
     this.setState({ searchQuery: evt.currentTarget.value });
+    this.searchQueryChangedDebounced();
+  };
+
+  private searchQueryChangedDebounced = debounce(() => {
     this.updateMetrics(); // Need to repeat entire pipeline
     this.buildLayout();
-  };
+  }, 500);
 
   public onPrefixFilterChange = (prefixFilter: string | undefined) => {
     this.setState({ prefixFilter });
+    this.prefixFilterChangedDebounced();
+  };
+
+  private prefixFilterChangedDebounced = debounce(() => {
     this.applyMetricPrefixFilter();
     this.updateMetrics(false); // Only needed to applyMetricPrefixFilter
     this.buildLayout();
-  };
+  }, 1000);
 
   public onTogglePreviews = () => {
     this.setState({ showPreviews: !this.state.showPreviews });
@@ -339,7 +348,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
               placeholder="Search metrics"
               prefix={<Icon name={'search'} />}
               value={searchQuery}
-              onChange={model.onSearchChange}
+              onChange={model.onSearchQueryChange}
               disabled={disableSearch}
             />
           </Field>
