@@ -14,6 +14,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -21,18 +22,22 @@ import (
 var _ builder.APIGroupBuilder = (*PeakQAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
-type PeakQAPIBuilder struct{}
-
-func NewPeakQAPIBuilder() *PeakQAPIBuilder {
-	return &PeakQAPIBuilder{}
+type PeakQAPIBuilder struct {
+	runner v0alpha1.QueryRunner
 }
 
-func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *PeakQAPIBuilder {
+func NewPeakQAPIBuilder(runner v0alpha1.QueryRunner) *PeakQAPIBuilder {
+	return &PeakQAPIBuilder{
+		runner: runner,
+	}
+}
+
+func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar, runner v0alpha1.QueryRunner) *PeakQAPIBuilder {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
 		return nil // skip registration unless opting into experimental apis
 	}
-	builder := NewPeakQAPIBuilder()
-	apiregistration.RegisterAPI(NewPeakQAPIBuilder())
+	builder := NewPeakQAPIBuilder(runner)
+	apiregistration.RegisterAPI(builder)
 	return builder
 }
 
