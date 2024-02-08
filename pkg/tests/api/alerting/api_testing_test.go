@@ -51,6 +51,8 @@ func TestGrafanaRuleConfig(t *testing.T) {
 
 	apiCli := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
 
+	apiCli.CreateFolder(t, "NamespaceUID", "NamespaceTitle")
+
 	dsCmd := &datasources.AddDataSourceCommand{
 		Name:   "TestDatasource",
 		Type:   "testdata",
