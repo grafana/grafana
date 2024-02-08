@@ -51,6 +51,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   constructor(panelMgr: VizPanelManager) {
     super({
       tab: TabId.Queries,
+      tabs: [],
     });
 
     this.panelManager = panelMgr;
@@ -97,6 +98,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   private buildTabs() {
     const panelManager = this.panelManager;
     const panel = panelManager.state.panel;
+
     const runner = this.panelManager.queryRunner;
     const tabs: PanelDataPaneTab[] = [];
 
@@ -104,7 +106,6 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
       const plugin = panel.getPlugin();
 
       if (!plugin) {
-        this.setState({ tabs });
         return;
       }
 

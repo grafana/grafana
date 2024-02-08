@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
@@ -441,7 +440,7 @@ func setup() (*testContext, error) {
 		JSONData: json.RawMessage(`{"timeInterval": "15s"}`),
 	}
 
-	opts, err := client.CreateTransportOptions(context.Background(), settings, &setting.Cfg{}, log.New())
+	opts, err := client.CreateTransportOptions(context.Background(), settings, log.New())
 	if err != nil {
 		return nil, err
 	}

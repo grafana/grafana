@@ -14,6 +14,8 @@ import (
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var netTransport = &http.Transport{
@@ -36,8 +38,16 @@ var (
 	remoteVersionRefreshInterval               = time.Minute * 15
 )
 
-func (rs *RenderingService) renderViaHTTP(ctx context.Context, renderKey string, opts Opts) (*RenderResult, error) {
-	filePath, err := rs.getNewFilePath(RenderPNG)
+func (rs *RenderingService) renderViaHTTP(ctx context.Context, renderType RenderType, renderKey string, opts Opts) (*RenderResult, error) {
+	if renderType == RenderPDF {
+		if !rs.features.IsEnabled(ctx, featuremgmt.FlagNewPDFRendering) {
+			return nil, fmt.Errorf("feature 'newPDFRendering' disabled")
+		}
+
+		opts.Encoding = "pdf"
+	}
+
+	filePath, err := rs.getNewFilePath(renderType)
 	if err != nil {
 		return nil, err
 	}

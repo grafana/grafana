@@ -14,7 +14,7 @@ import { DashboardSavedEvent } from 'app/types/events';
 import { updateDashboardUidLastUsedDatasource } from '../../dashboard/utils/dashboard';
 import { DashboardScene } from '../scene/DashboardScene';
 
-export function useDashboardSave(isCopy = false) {
+export function useSaveDashboard(isCopy = false) {
   const dispatch = useDispatch();
   const notifyApp = useAppNotification();
   const [saveDashboardRtkQuery] = useSaveDashboardMutation();
@@ -60,7 +60,12 @@ export function useDashboardSave(isCopy = false) {
         const newUrl = locationUtil.stripBaseFromUrl(resultData.url);
 
         if (newUrl !== currentLocation.pathname) {
-          setTimeout(() => locationService.replace({ pathname: newUrl, search: currentLocation.search }));
+          setTimeout(() => {
+            // Because the path changes we need to stop and restart url sync
+            scene.stopUrlSync();
+            locationService.push({ pathname: newUrl, search: currentLocation.search });
+            scene.startUrlSync();
+          });
         }
 
         if (scene.state.meta.isStarred) {

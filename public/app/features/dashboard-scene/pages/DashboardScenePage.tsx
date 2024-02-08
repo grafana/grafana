@@ -19,16 +19,28 @@ export function DashboardScenePage({ match, route, queryParams, history }: Props
   const routeReloadCounter = (history.location.state as any)?.routeReloadCounter;
 
   useEffect(() => {
-    stateManager.loadDashboard({
-      uid: match.params.uid ?? '',
-      route: route.routeName as DashboardRoutes,
-      urlFolderUid: queryParams.folderUid,
-    });
+    if (route.routeName === DashboardRoutes.Normal && match.params.type === 'snapshot') {
+      stateManager.loadSnapshot(match.params.slug!);
+    } else {
+      stateManager.loadDashboard({
+        uid: match.params.uid ?? '',
+        route: route.routeName as DashboardRoutes,
+        urlFolderUid: queryParams.folderUid,
+      });
+    }
 
     return () => {
       stateManager.clearState();
     };
-  }, [stateManager, match.params.uid, route.routeName, queryParams.folderUid, routeReloadCounter]);
+  }, [
+    stateManager,
+    match.params.uid,
+    route.routeName,
+    queryParams.folderUid,
+    routeReloadCounter,
+    match.params.slug,
+    match.params.type,
+  ]);
 
   if (!dashboard) {
     return (

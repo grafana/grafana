@@ -9,14 +9,10 @@ import (
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestConfigureAzureAuthentication(t *testing.T) {
-	cfg := &setting.Cfg{
-		Azure: &azsettings.AzureSettings{},
-	}
+	cfgAzure := &azsettings.AzureSettings{}
 
 	t.Run("should set Azure middleware when JsonData contains valid credentials", func(t *testing.T) {
 		settings := backend.DataSourceInstanceSettings{
@@ -30,7 +26,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 
 		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
-		err := ConfigureAzureAuthentication(settings, cfg.Azure, opts)
+		err := ConfigureAzureAuthentication(settings, cfgAzure, opts)
 		require.NoError(t, err)
 
 		require.NotNil(t, opts.Middlewares)
@@ -44,7 +40,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 
 		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
-		err := ConfigureAzureAuthentication(settings, cfg.Azure, opts)
+		err := ConfigureAzureAuthentication(settings, cfgAzure, opts)
 		require.NoError(t, err)
 
 		assert.NotContains(t, opts.CustomOptions, "_azureCredentials")
@@ -59,7 +55,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 		}
 
 		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
-		err := ConfigureAzureAuthentication(settings, cfg.Azure, opts)
+		err := ConfigureAzureAuthentication(settings, cfgAzure, opts)
 		assert.Error(t, err)
 	})
 
@@ -75,7 +71,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 		}
 		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
-		err := ConfigureAzureAuthentication(settings, cfg.Azure, opts)
+		err := ConfigureAzureAuthentication(settings, cfgAzure, opts)
 		require.NoError(t, err)
 
 		require.NotNil(t, opts.Middlewares)
@@ -91,7 +87,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 		}
 		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
-		err := ConfigureAzureAuthentication(settings, cfg.Azure, opts)
+		err := ConfigureAzureAuthentication(settings, cfgAzure, opts)
 		require.NoError(t, err)
 
 		if opts.Middlewares != nil {
@@ -112,7 +108,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 
 		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
-		err := ConfigureAzureAuthentication(settings, cfg.Azure, opts)
+		err := ConfigureAzureAuthentication(settings, cfgAzure, opts)
 		assert.Error(t, err)
 	})
 }
