@@ -12,7 +12,7 @@ import (
 )
 
 func TestConfigureAzureAuthentication(t *testing.T) {
-	cfgAzure := &azsettings.AzureSettings{}
+	azureSettings := &azsettings.AzureSettings{}
 
 	t.Run("should set Azure middleware when JsonData contains valid credentials", func(t *testing.T) {
 		settings := backend.DataSourceInstanceSettings{
@@ -26,7 +26,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 
 		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
-		err := ConfigureAzureAuthentication(settings, cfgAzure, opts)
+		err := ConfigureAzureAuthentication(settings, azureSettings, opts)
 		require.NoError(t, err)
 
 		require.NotNil(t, opts.Middlewares)
@@ -40,7 +40,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 
 		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
-		err := ConfigureAzureAuthentication(settings, cfgAzure, opts)
+		err := ConfigureAzureAuthentication(settings, azureSettings, opts)
 		require.NoError(t, err)
 
 		assert.NotContains(t, opts.CustomOptions, "_azureCredentials")
@@ -55,7 +55,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 		}
 
 		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
-		err := ConfigureAzureAuthentication(settings, cfgAzure, opts)
+		err := ConfigureAzureAuthentication(settings, azureSettings, opts)
 		assert.Error(t, err)
 	})
 
@@ -71,7 +71,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 		}
 		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
-		err := ConfigureAzureAuthentication(settings, cfgAzure, opts)
+		err := ConfigureAzureAuthentication(settings, azureSettings, opts)
 		require.NoError(t, err)
 
 		require.NotNil(t, opts.Middlewares)
@@ -87,7 +87,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 		}
 		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
-		err := ConfigureAzureAuthentication(settings, cfgAzure, opts)
+		err := ConfigureAzureAuthentication(settings, azureSettings, opts)
 		require.NoError(t, err)
 
 		if opts.Middlewares != nil {
@@ -108,7 +108,7 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 
 		var opts = &sdkhttpclient.Options{CustomOptions: map[string]any{}}
 
-		err := ConfigureAzureAuthentication(settings, cfgAzure, opts)
+		err := ConfigureAzureAuthentication(settings, azureSettings, opts)
 		assert.Error(t, err)
 	})
 }
