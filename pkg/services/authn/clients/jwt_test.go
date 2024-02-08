@@ -261,23 +261,24 @@ func TestJWTClaimConfig(t *testing.T) {
 					cfg.JWTAuth.UsernameClaim = "preferred_username"
 				}
 			}
+
+			httpReq := &http.Request{
+				URL: &url.URL{RawQuery: "auth_token=" + token},
+				Header: map[string][]string{
+					jwtHeaderName: {token}},
+			}
+			jwtClient := ProvideJWT(jwtService, cfg)
+			_, err := jwtClient.Authenticate(context.Background(), &authn.Request{
+				OrgID:       1,
+				HTTPRequest: httpReq,
+				Resp:        nil,
+			})
+			if tc.valid {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+			}
 		})
-		httpReq := &http.Request{
-			URL: &url.URL{RawQuery: "auth_token=" + token},
-			Header: map[string][]string{
-				jwtHeaderName: {token}},
-		}
-		jwtClient := ProvideJWT(jwtService, cfg)
-		_, err := jwtClient.Authenticate(context.Background(), &authn.Request{
-			OrgID:       1,
-			HTTPRequest: httpReq,
-			Resp:        nil,
-		})
-		if tc.valid {
-			require.NoError(t, err)
-		} else {
-			require.Error(t, err)
-		}
 	}
 }
 
