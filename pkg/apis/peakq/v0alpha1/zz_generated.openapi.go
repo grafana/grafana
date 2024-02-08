@@ -291,8 +291,8 @@ func schema_pkg_apis_peakq_v0alpha1_Target(ref common.ReferenceCallback) common.
 					},
 					"properties": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The raw query: TODO, should be query.GenericQuery",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"),
+							Description: "Query target",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery"),
 						},
 					},
 				},
@@ -300,7 +300,7 @@ func schema_pkg_apis_peakq_v0alpha1_Target(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured", "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.VariableReplacement"},
+			"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.VariableReplacement", "github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery"},
 	}
 }
 
