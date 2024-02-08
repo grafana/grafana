@@ -20,6 +20,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	featuretoggleapi "github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt/strcase"
 )
 
@@ -86,7 +87,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 	})
 
 	t.Run("update k8s resource list", func(t *testing.T) {
-		created := time.Now().UTC()
+		created := v1.NewTime(time.Now().UTC())
 		resourceVersion := fmt.Sprintf("%d", created.UnixMilli())
 
 		featuresFile := "toggles_gen.json"
@@ -139,17 +140,29 @@ func TestFeatureToggleFiles(t *testing.T) {
 				b, e2 := json.Marshal(item.Spec)
 				if e1 != nil || e2 != nil || !bytes.Equal(a, b) {
 					item.ResourceVersion = resourceVersion
-					current.ListMeta.ResourceVersion = resourceVersion
 					if item.Annotations == nil {
 						item.Annotations = make(map[string]string)
 					}
-					item.Annotations["grafana.app/modifiedTime"] = created.Format(time.RFC3339)
+					item.Annotations[utils.AnnoKeyUpdatedTimestamp] = created.String()
 					item.Spec = v // the current value
 				}
-				current.Items = append(current.Items, item)
 			} else {
-				current.ListMeta.ResourceVersion = resourceVersion
+				item.DeletionTimestamp = &created
+				fmt.Printf("mark feature as deleted")
 			}
+			current.Items = append(current.Items, item)
+		}
+
+		// New flags not in the existing list
+		for k, v := range lookup {
+			current.Items = append(current.Items, featuretoggleapi.Feature{
+				ObjectMeta: v1.ObjectMeta{
+					Name:              k,
+					CreationTimestamp: created,
+					ResourceVersion:   fmt.Sprintf("%d", created.UnixMilli()),
+				},
+				Spec: v,
+			})
 		}
 
 		out, err := json.MarshalIndent(current, "", "  ")

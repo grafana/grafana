@@ -811,7 +811,7 @@ var (
 		},
 		{
 			Name:            "kubernetesSnapshots",
-			Description:     "Routes snapshot requests from /api to the /apis endpoint",
+			Description:     "Use the kubernetes API in the frontend, and routes snapshot requests from /api to the /apis endpoint",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true, // changes the API routing
@@ -1171,7 +1171,8 @@ var (
 //go:embed toggles_gen.json
 var f embed.FS
 
-func GetFeatureFlags() (featuretoggle.FeatureList, error) {
+// Get the cached feature list (exposed as a k8s resource)
+func GetFeatureList() (featuretoggle.FeatureList, error) {
 	features := featuretoggle.FeatureList{}
 	body, err := f.ReadFile("toggles_gen.json")
 	if err == nil {

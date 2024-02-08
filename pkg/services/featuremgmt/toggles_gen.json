@@ -1,9 +1,7 @@
 {
   "kind": "FeatureList",
   "apiVersion": "featuretoggle.grafana.app/v0alpha1",
-  "metadata": {
-    "resourceVersion": "1707372438380"
-  },
+  "metadata": {},
   "items": [
     {
       "metadata": {
@@ -1397,11 +1395,14 @@
     {
       "metadata": {
         "name": "kubernetesSnapshots",
-        "resourceVersion": "1701691200000",
-        "creationTimestamp": "2023-12-04T12:00:00Z"
+        "resourceVersion": "1707374083381",
+        "creationTimestamp": "2023-12-04T12:00:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-08T06:34:43Z"
+        }
       },
       "spec": {
-        "description": "Routes snapshot requests from /api to the /apis endpoint",
+        "description": "Use the kubernetes API in the frontend, and routes snapshot requests from /api to the /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
