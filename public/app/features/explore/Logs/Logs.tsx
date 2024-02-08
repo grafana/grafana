@@ -311,7 +311,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
       this.setState({
         showLabels,
       });
-      this.props.logsFrames;
       store.set(SETTINGS_KEYS.showLabels, showLabels);
     }
   };
