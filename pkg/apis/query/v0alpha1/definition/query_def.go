@@ -4,7 +4,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -40,7 +39,7 @@ type QueryTypeVersion struct {
 	Schema common.Unstructured `json:"schema"`
 
 	// Examples (include a wrapper)
-	Examples []template.QueryTemplate `json:"examples,omitempty"`
+	Examples []common.Unstructured `json:"examples,omitempty"`
 
 	// What changed from the previous version
 	// for the full history see git!

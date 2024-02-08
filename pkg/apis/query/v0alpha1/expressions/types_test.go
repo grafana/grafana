@@ -12,6 +12,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/definition"
 )
 
 func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
@@ -20,13 +21,13 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 
 	created := time.Now().UTC()
 	resourceVersion := fmt.Sprintf("%d", created.UnixMilli())
-	defs := query.QueryTypeDefinitionList{
+	defs := definition.QueryTypeDefinitionList{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "QueryTypeDefinitionList",
 			APIVersion: query.APIVERSION,
 		},
 	}
-	existing := query.QueryTypeDefinitionList{}
+	existing := definition.QueryTypeDefinitionList{}
 	body, err := os.ReadFile(typesFile)
 	if err == nil {
 		_ = json.Unmarshal(body, &existing)
@@ -58,7 +59,7 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 	// New items added to the list
 	for k, v := range current {
 		defs.ListMeta.ResourceVersion = resourceVersion
-		defs.Items = append(defs.Items, query.QueryTypeDefinition{
+		defs.Items = append(defs.Items, definition.QueryTypeDefinition{
 			TypeMeta: v1.TypeMeta{
 				Kind: "QueryTypeDefinition",
 			},

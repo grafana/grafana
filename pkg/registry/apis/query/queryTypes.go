@@ -14,6 +14,7 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/definition"
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/helper"
 )
 
@@ -28,7 +29,7 @@ var (
 type QueryTypeRegistry[Q any] struct {
 	resourceInfo   *common.ResourceInfo
 	tableConverter rest.TableConvertor
-	defs           *query.QueryTypeDefinitionList
+	defs           *definition.QueryTypeDefinitionList
 
 	types   map[string]helper.QueryTypeSupport[Q]
 	creator func() Q
@@ -42,7 +43,7 @@ func NewQueryTypeRegistry[Q any](vals []helper.QueryTypeSupport[Q], creator func
 		creator:        creator,
 		resourceInfo:   &resourceInfo,
 		tableConverter: rest.NewDefaultTableConvertor(resourceInfo.GroupResource()),
-		defs: &query.QueryTypeDefinitionList{
+		defs: &definition.QueryTypeDefinitionList{
 			ListMeta: metav1.ListMeta{
 				ResourceVersion: fmt.Sprintf("%d", time.Now().UnixMilli()),
 			},
@@ -100,7 +101,7 @@ func (r *QueryTypeRegistry[Q]) Get(ctx context.Context, name string, options *me
 }
 
 // Get a query type from registered name
-func (r *QueryTypeRegistry[Q]) GetByName(name string) (*query.QueryTypeDefinition, error) {
+func (r *QueryTypeRegistry[Q]) GetByName(name string) (*definition.QueryTypeDefinition, error) {
 	for idx, v := range r.defs.Items {
 		if v.Name == name {
 			return &r.defs.Items[idx], nil
@@ -125,8 +126,8 @@ func (r *QueryTypeRegistry[Q]) ReadQuery(generic query.GenericDataQuery) (Q, err
 	return qt.ReadQuery(generic, version)
 }
 
-func (r *QueryTypeRegistry[Q]) Definitions() query.QueryTypeDefinitionList {
-	all := query.QueryTypeDefinitionList{}
+func (r *QueryTypeRegistry[Q]) Definitions() definition.QueryTypeDefinitionList {
+	all := definition.QueryTypeDefinitionList{}
 	for _, qt := range r.types {
 		all.Items = append(all.Items, qt.Versions()...)
 	}

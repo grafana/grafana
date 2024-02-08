@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/definition"
 )
 
 // +k8s:deepcopy-gen=false
@@ -15,7 +16,7 @@ type QueryTypeSupport[Q any] interface {
 	QueryType() string
 
 	// Possible query type versions
-	Versions() []query.QueryTypeDefinition
+	Versions() []definition.QueryTypeDefinition
 
 	// Parse and validate the raw query
 	// When the input queryType includes a version suffix, it will be
@@ -47,8 +48,8 @@ func (r *QueryTypeRegistry[Q]) ReadQuery(generic query.GenericDataQuery) (Q, err
 	return qt.ReadQuery(generic, version)
 }
 
-func (r *QueryTypeRegistry[Q]) Definitions() query.QueryTypeDefinitionList {
-	all := query.QueryTypeDefinitionList{}
+func (r *QueryTypeRegistry[Q]) Definitions() definition.QueryTypeDefinitionList {
+	all := definition.QueryTypeDefinitionList{}
 	for _, qt := range r.types {
 		all.Items = append(all.Items, qt.Versions()...)
 	}

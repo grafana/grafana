@@ -8,7 +8,7 @@
 package definition
 
 import (
-	template "github.com/grafana/grafana/pkg/apis/query/v0alpha1/template"
+	v0alpha1 "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -101,7 +101,7 @@ func (in *QueryTypeVersion) DeepCopyInto(out *QueryTypeVersion) {
 	in.Schema.DeepCopyInto(&out.Schema)
 	if in.Examples != nil {
 		in, out := &in.Examples, &out.Examples
-		*out = make([]template.QueryTemplate, len(*in))
+		*out = make([]v0alpha1.Unstructured, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}

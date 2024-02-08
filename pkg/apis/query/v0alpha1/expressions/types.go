@@ -8,6 +8,7 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/definition"
 )
 
 const QueryTypeMath = "math"
@@ -16,25 +17,25 @@ const QueryTypeResample = "resample"
 const QueryTypeClassic = "classic"
 const QueryTypeThreshold = "threshold"
 
-func GetQueryTypeDefinitions() map[string]query.QueryTypeSpec {
+func GetQueryTypeDefinitions() map[string]definition.QueryTypeSpec {
 	ref := func(path string) spec.Ref {
 		return spec.Ref{}
 	}
-	return map[string]query.QueryTypeSpec{
+	return map[string]definition.QueryTypeSpec{
 		QueryTypeMath: {
 			Description: "execute math commands",
-			Versions: []query.QueryTypeVersion{
+			Versions: []definition.QueryTypeVersion{
 				{
 					Schema: getPropsJSONSchema("github.com/grafana/grafana/pkg/apis/query/v0alpha1/expressions.MathQueryTypeProperties", ref),
-					Examples: []query.ExampleInfo{
-						{
-							Name:        "simple example",
-							Description: "adding two series",
-							Query: query.GenericDataQuery{
-								QueryType: "TODO.... use the map to set something reasonable",
-							},
-						},
-					},
+					// Examples: []definition.ExampleInfo{
+					// 	{
+					// 		Name:        "simple example",
+					// 		Description: "adding two series",
+					// 		Query: query.GenericDataQuery{
+					// 			QueryType: "TODO.... use the map to set something reasonable",
+					// 		},
+					// 	},
+					// },
 					Changelog: []string{
 						"initial version",
 					},
@@ -43,18 +44,18 @@ func GetQueryTypeDefinitions() map[string]query.QueryTypeSpec {
 		},
 		QueryTypeReduce: {
 			Description: "reduce function",
-			Versions: []query.QueryTypeVersion{
+			Versions: []definition.QueryTypeVersion{
 				{
 					Schema: getPropsJSONSchema("github.com/grafana/grafana/pkg/apis/query/v0alpha1/expressions.ReduceQueryTypeProperties", ref),
-					Examples: []query.ExampleInfo{
-						{
-							Name:        "simple example",
-							Description: "adding two series",
-							Query: query.GenericDataQuery{
-								QueryType: "TODO.... use the map to set something reasonable",
-							},
-						},
-					},
+					// Examples: []definition.ExampleInfo{
+					// 	{
+					// 		Name:        "simple example",
+					// 		Description: "adding two series",
+					// 		Query: query.GenericDataQuery{
+					// 			QueryType: "TODO.... use the map to set something reasonable",
+					// 		},
+					// 	},
+					// },
 					Changelog: []string{
 						"initial version",
 					},
@@ -63,18 +64,18 @@ func GetQueryTypeDefinitions() map[string]query.QueryTypeSpec {
 		},
 		QueryTypeResample: {
 			Description: "resample function",
-			Versions: []query.QueryTypeVersion{
+			Versions: []definition.QueryTypeVersion{
 				{
 					Schema: getPropsJSONSchema("github.com/grafana/grafana/pkg/apis/query/v0alpha1/expressions.ResampleQueryTypeProperties", ref),
-					Examples: []query.ExampleInfo{
-						{
-							Name:        "simple example",
-							Description: "adding two series",
-							Query: query.GenericDataQuery{
-								QueryType: "TODO.... use the map to set something reasonable",
-							},
-						},
-					},
+					// Examples: []definition.ExampleInfo{
+					// 	{
+					// 		Name:        "simple example",
+					// 		Description: "adding two series",
+					// 		Query: query.GenericDataQuery{
+					// 			QueryType: "TODO.... use the map to set something reasonable",
+					// 		},
+					// 	},
+					// },
 					Changelog: []string{
 						"initial version",
 					},
@@ -83,18 +84,18 @@ func GetQueryTypeDefinitions() map[string]query.QueryTypeSpec {
 		},
 		QueryTypeThreshold: {
 			Description: "threshold function",
-			Versions: []query.QueryTypeVersion{
+			Versions: []definition.QueryTypeVersion{
 				{
 					Schema: getPropsJSONSchema("github.com/grafana/grafana/pkg/apis/query/v0alpha1/expressions.ThresholdQueryTypeProperties", ref),
-					Examples: []query.ExampleInfo{
-						{
-							Name:        "simple example",
-							Description: "adding two series",
-							Query: query.GenericDataQuery{
-								QueryType: "TODO.... use the map to set something reasonable",
-							},
-						},
-					},
+					// Examples: []definition.ExampleInfo{
+					// 	{
+					// 		Name:        "simple example",
+					// 		Description: "adding two series",
+					// 		Query: query.GenericDataQuery{
+					// 			QueryType: "TODO.... use the map to set something reasonable",
+					// 		},
+					// 	},
+					// },
 					Changelog: []string{
 						"initial version",
 					},
@@ -103,18 +104,18 @@ func GetQueryTypeDefinitions() map[string]query.QueryTypeSpec {
 		},
 		QueryTypeClassic: {
 			Description: "classic function",
-			Versions: []query.QueryTypeVersion{
+			Versions: []definition.QueryTypeVersion{
 				{
 					Schema: getPropsJSONSchema("github.com/grafana/grafana/pkg/apis/query/v0alpha1/expressions.ClassicQueryTypeProperties", ref),
-					Examples: []query.ExampleInfo{
-						{
-							Name:        "simple example",
-							Description: "adding two series",
-							Query: query.GenericDataQuery{
-								QueryType: "TODO.... use the map to set something reasonable",
-							},
-						},
-					},
+					// Examples: []query.ExampleInfo{
+					// 	{
+					// 		Name:        "simple example",
+					// 		Description: "adding two series",
+					// 		Query: query.GenericDataQuery{
+					// 			QueryType: "TODO.... use the map to set something reasonable",
+					// 		},
+					// 	},
+					// },
 					Changelog: []string{
 						"initial version",
 					},
