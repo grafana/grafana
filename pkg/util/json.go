@@ -29,6 +29,9 @@ var (
 		"json-failed-to-search", errutil.WithPublicMessage("Failed to search JSON with provided path"))
 )
 
+// SearchJSONForGroups searches for groups in a JSON object and returns a string slice.
+// The attributePath parameter is a string that specifies the path to the attribute.
+// The data parameter is the JSON object that we're searching. It can be a byte slice or a go type.
 func SearchJSONForStringSliceAttr(attributePath string, data any) ([]string, error) {
 	val, err := searchJSONForAttr(attributePath, data)
 	if err != nil {
@@ -50,6 +53,9 @@ func SearchJSONForStringSliceAttr(attributePath string, data any) ([]string, err
 	return result, nil
 }
 
+// SearchJSONForStringAttr searches for a specific attribute in a JSON object and returns a string.
+// The attributePath parameter is a string that specifies the path to the attribute.
+// The data parameter is the JSON object that we're searching. It can be a byte slice or a go type.
 func SearchJSONForStringAttr(attributePath string, data any) (string, error) {
 	val, err := searchJSONForAttr(attributePath, data)
 	if err != nil {
