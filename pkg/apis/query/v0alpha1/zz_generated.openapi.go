@@ -16,22 +16,24 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServer":                     schema_pkg_apis_query_v0alpha1_DataSourceApiServer(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServerList":                 schema_pkg_apis_query_v0alpha1_DataSourceApiServerList(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef":                           schema_pkg_apis_query_v0alpha1_DataSourceRef(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.ExampleInfo":                             schema_pkg_apis_query_v0alpha1_ExampleInfo(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery":                        schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericQueryRequest":                     schema_pkg_apis_query_v0alpha1_GenericQueryRequest(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataResponse":                       QueryDataResponse{}.OpenAPIDefinition(),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinition":                     schema_pkg_apis_query_v0alpha1_QueryTypeDefinition(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinitionList":                 schema_pkg_apis_query_v0alpha1_QueryTypeDefinitionList(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeSpec":                           schema_pkg_apis_query_v0alpha1_QueryTypeSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeVersion":                        schema_pkg_apis_query_v0alpha1_QueryTypeVersion(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange":                               schema_pkg_apis_query_v0alpha1_TimeRange(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/expressions.MathQueryTypeProperties":     schema_apis_query_v0alpha1_expressions_MathQueryTypeProperties(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/expressions.ReduceQueryTypeProperties":   schema_apis_query_v0alpha1_expressions_ReduceQueryTypeProperties(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/expressions.ReduceSettings":              schema_apis_query_v0alpha1_expressions_ReduceSettings(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/expressions.ResampleQueryTypeProperties": schema_apis_query_v0alpha1_expressions_ResampleQueryTypeProperties(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServer":                      schema_pkg_apis_query_v0alpha1_DataSourceApiServer(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServerList":                  schema_pkg_apis_query_v0alpha1_DataSourceApiServerList(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef":                            schema_pkg_apis_query_v0alpha1_DataSourceRef(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.ExampleInfo":                              schema_pkg_apis_query_v0alpha1_ExampleInfo(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery":                         schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericQueryRequest":                      schema_pkg_apis_query_v0alpha1_GenericQueryRequest(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataResponse":                        QueryDataResponse{}.OpenAPIDefinition(),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinition":                      schema_pkg_apis_query_v0alpha1_QueryTypeDefinition(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinitionList":                  schema_pkg_apis_query_v0alpha1_QueryTypeDefinitionList(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeSpec":                            schema_pkg_apis_query_v0alpha1_QueryTypeSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeVersion":                         schema_pkg_apis_query_v0alpha1_QueryTypeVersion(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange":                                schema_pkg_apis_query_v0alpha1_TimeRange(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/expressions.ClassicQueryTypeProperties":   schema_apis_query_v0alpha1_expressions_ClassicQueryTypeProperties(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/expressions.MathQueryTypeProperties":      schema_apis_query_v0alpha1_expressions_MathQueryTypeProperties(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/expressions.ReduceQueryTypeProperties":    schema_apis_query_v0alpha1_expressions_ReduceQueryTypeProperties(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/expressions.ReduceSettings":               schema_apis_query_v0alpha1_expressions_ReduceSettings(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/expressions.ResampleQueryTypeProperties":  schema_apis_query_v0alpha1_expressions_ResampleQueryTypeProperties(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/expressions.ThresholdQueryTypeProperties": schema_apis_query_v0alpha1_expressions_ThresholdQueryTypeProperties(ref),
 	}
 }
 
@@ -570,6 +572,35 @@ func schema_pkg_apis_query_v0alpha1_TimeRange(ref common.ReferenceCallback) comm
 	}
 }
 
+func schema_apis_query_v0alpha1_expressions_ClassicQueryTypeProperties(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "QueryType = classic",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"conditions": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/expr/classic.ConditionJSON"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"conditions"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/expr/classic.ConditionJSON"},
+	}
+}
+
 func schema_apis_query_v0alpha1_expressions_MathQueryTypeProperties(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -609,10 +640,11 @@ func schema_apis_query_v0alpha1_expressions_ReduceQueryTypeProperties(ref common
 					},
 					"reducer": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The reducer",
+							Description: "The reducer\n\nPossible enum values:\n - `\"count\"`\n - `\"last\"`\n - `\"max\"`\n - `\"mean\"`\n - `\"min\"`\n - `\"sum\"`",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
+							Enum:        []interface{}{"count", "last", "max", "mean", "min", "sum"},
 						},
 					},
 					"settings": {
@@ -639,10 +671,11 @@ func schema_apis_query_v0alpha1_expressions_ReduceSettings(ref common.ReferenceC
 				Properties: map[string]spec.Schema{
 					"mode": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Non-number reduce behavior",
+							Description: "Non-number reduce behavior\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
+							Enum:        []interface{}{"dropNN", "replaceNN"},
 						},
 					},
 					"replaceWithValue": {
@@ -702,5 +735,41 @@ func schema_apis_query_v0alpha1_expressions_ResampleQueryTypeProperties(ref comm
 				Required: []string{"expression", "window", "downsampler", "upsampler"},
 			},
 		},
+	}
+}
+
+func schema_apis_query_v0alpha1_expressions_ThresholdQueryTypeProperties(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "QueryType = threshold",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"expression": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"conditions": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/expr.ThresholdConditionJSON"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"expression", "conditions"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/expr.ThresholdConditionJSON"},
 	}
 }

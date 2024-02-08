@@ -6,7 +6,7 @@ type ReduceQueryTypeProperties struct {
 	Expression string `json:"expression"`
 
 	// The reducer
-	Reducer string `json:"reducer"`
+	Reducer ReducerID `json:"reducer"`
 
 	// Reducer Options
 	Settings ReduceSettings `json:"settings"`
@@ -20,7 +20,21 @@ type ReduceSettings struct {
 	ReplaceWithValue *float64 `json:"replaceWithValue,omitempty"`
 }
 
+// The reducer function
+// +enum
+type ReducerID string
+
+const (
+	ReducerSum   ReducerID = "sum"
+	ReducerMean  ReducerID = "mean"
+	ReducerMin   ReducerID = "min"
+	ReducerMax   ReducerID = "max"
+	ReducerCount ReducerID = "count"
+	ReducerLast  ReducerID = "last"
+)
+
 // Non-Number behavior mode
+// +enum
 type ReduceMode string
 
 const (

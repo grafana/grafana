@@ -14,6 +14,8 @@ import (
 const QueryTypeMath = "math"
 const QueryTypeReduce = "reduce"
 const QueryTypeResample = "resample"
+const QueryTypeClassic = "resample"
+const QueryTypeThreshold = "threshold"
 
 func GetQueryTypeDefinitionList() query.QueryTypeDefinitionList {
 	ref := func(path string) spec.Ref {
@@ -83,6 +85,56 @@ func GetQueryTypeDefinitionList() query.QueryTypeDefinitionList {
 							Examples: []query.ExampleInfo{
 								{
 									Name:        "resample example",
+									Description: "adding two series",
+									Query: query.GenericDataQuery{
+										QueryType: "TODO.... use the map to set something reasonable",
+									},
+								},
+							},
+							Changelog: []string{
+								"initial version",
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: v1.ObjectMeta{
+					Name: QueryTypeClassic,
+				},
+				Spec: query.QueryTypeSpec{
+					Description: "classic",
+					Versions: []query.QueryTypeVersion{
+						{
+							Schema: getPropsJSONSchema("github.com/grafana/grafana/pkg/apis/query/v0alpha1/expressions.ClassicQueryTypeProperties", ref),
+							Examples: []query.ExampleInfo{
+								{
+									Name:        "resample example",
+									Description: "adding two series",
+									Query: query.GenericDataQuery{
+										QueryType: "TODO.... use the map to set something reasonable",
+									},
+								},
+							},
+							Changelog: []string{
+								"initial version",
+							},
+						},
+					},
+				},
+			},
+			{
+				ObjectMeta: v1.ObjectMeta{
+					Name: QueryTypeThreshold,
+				},
+				Spec: query.QueryTypeSpec{
+					Description: "classic",
+					Versions: []query.QueryTypeVersion{
+						{
+							Schema: getPropsJSONSchema("github.com/grafana/grafana/pkg/apis/query/v0alpha1/expressions.ThresholdQueryTypeProperties", ref),
+							Examples: []query.ExampleInfo{
+								{
+									Name:        "threshold example",
 									Description: "adding two series",
 									Query: query.GenericDataQuery{
 										QueryType: "TODO.... use the map to set something reasonable",
