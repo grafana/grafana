@@ -3,6 +3,7 @@ package v0alpha1
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -151,6 +152,9 @@ func (g GenericDataQuery) MarshalJSON() ([]byte, error) {
 	if g.MaxDataPoints > 0 {
 		vals["maxDataPoints"] = g.MaxDataPoints
 	}
+	if g.ResponseContract != nil {
+		vals["resultDataContract"] = g.ResponseContract
+	}
 	return json.Marshal(vals)
 }
 
@@ -234,6 +238,54 @@ func (g *GenericDataQuery) unmarshal(vals map[string]any) error {
 		delete(vals, key)
 	}
 
+	key = "resultDataContract"
+	v, ok = vals[key]
+	if ok {
+		obj, ok := v.(map[string]any)
+		if !ok {
+			return fmt.Errorf("expected resultDataContract as map (got: %t)", v)
+		}
+		g.ResponseContract = &ResultDataContract{}
+		t, ok := obj["type"].(string)
+		if !ok {
+			return fmt.Errorf("expected resultDataContract.type as string (got: %t)", obj["type"])
+		}
+		g.ResponseContract.Type = data.FrameType(t)
+
+		tv, ok := obj["typeVersion"]
+		if ok {
+			items := reflect.ValueOf(tv)
+			if items.Len() != 2 {
+				return fmt.Errorf("expected resultDataContract.typeVersion length two (got: %v)", obj["typeVersion"])
+			}
+
+			var e0, e1 error
+			items = items.Slice(0, 2)
+			g.ResponseContract.TypeVersion[0], e0 = valueAsUint(items.Index(0))
+			g.ResponseContract.TypeVersion[1], e1 = valueAsUint(items.Index(1))
+			if e0 != nil {
+				return e0
+			}
+			if e1 != nil {
+				return e1
+			}
+		}
+		delete(vals, key)
+	}
+
 	g.props = vals
 	return nil
+}
+
+func valueAsUint(v reflect.Value) (uint, error) {
+	if v.Kind() == reflect.Interface {
+		v = v.Elem()
+	}
+	if v.CanFloat() {
+		return uint(v.Float()), nil
+	}
+	if v.CanUint() {
+		return uint(v.Uint()), nil
+	}
+	return uint(0), fmt.Errorf("expected uint, found: %s/%v", v.Kind(), v)
 }

@@ -17,7 +17,6 @@ var basicTemplateSpec = template.QueryTemplate{
 	},
 	Targets: []template.Target{
 		{
-			DataType: data.FrameTypeUnknown,
 			//DataTypeVersion: data.FrameTypeVersion{0, 0},
 			Variables: map[string][]template.VariableReplacement{
 				"metricName": {
@@ -56,13 +55,15 @@ var basicTemplateSpec = template.QueryTemplate{
 
 var basicTemplateRenderedTargets = []template.Target{
 	{
-		DataType: data.FrameTypeUnknown,
 		//DataTypeVersion: data.FrameTypeVersion{0, 0},
 		Properties: query.NewGenericDataQuery(map[string]any{
 			"refId": "A", // TODO: Set when Where?
 			"datasource": map[string]any{
 				"type": "prometheus",
 				"uid":  "foo", // TODO: Probably a default templating thing to set this.
+			},
+			"resultDataContract": query.ResultDataContract{
+				Type: data.FrameTypeUnknown,
 			},
 			"editorMode": "builder",
 			"expr":       "up + up + 42",

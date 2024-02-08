@@ -3,7 +3,6 @@ package template
 import (
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
@@ -18,9 +17,6 @@ var nestedFieldRender = QueryTemplate{
 	},
 	Targets: []Target{
 		{
-			DataType: data.FrameTypeUnknown,
-			//DataTypeVersion: data.FrameTypeVersion{0, 0},
-
 			Variables: map[string][]VariableReplacement{
 				"metricName": {
 					{
@@ -43,7 +39,6 @@ var nestedFieldRender = QueryTemplate{
 
 var nestedFieldRenderedTargets = []Target{
 	{
-		DataType: data.FrameTypeUnknown,
 		Variables: map[string][]VariableReplacement{
 			"metricName": {
 				{
@@ -86,9 +81,6 @@ var multiVarTemplate = QueryTemplate{
 	},
 	Targets: []Target{
 		{
-			DataType: data.FrameTypeUnknown,
-			//DataTypeVersion: data.FrameTypeVersion{0, 0},
-
 			Variables: map[string][]VariableReplacement{
 				"metricName": {
 					{
@@ -126,7 +118,6 @@ var multiVarTemplate = QueryTemplate{
 
 var multiVarRenderedTargets = []Target{
 	{
-		DataType: data.FrameTypeUnknown,
 		Variables: map[string][]VariableReplacement{
 			"metricName": {
 				{
@@ -154,7 +145,6 @@ var multiVarRenderedTargets = []Target{
 				},
 			},
 		},
-		//DataTypeVersion: data.FrameTypeVersion{0, 0},
 		Properties: query.NewGenericDataQuery(map[string]any{
 			"expr": "1 + up + 1 + sloths_do_like_a_good_nap + up",
 		}),

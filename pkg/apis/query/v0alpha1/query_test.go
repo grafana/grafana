@@ -6,11 +6,15 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 
 func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
-	request := []byte(`{
+
+	t.Run("basic read/write", func(t *testing.T) {
+		request := []byte(`{
 		"queries": [
 			{
 				"refId": "A",
@@ -38,29 +42,29 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 		"to": "1692646267389"
 	}`)
 
-	req := &v0alpha1.GenericQueryRequest{}
-	err := json.Unmarshal(request, req)
-	require.NoError(t, err)
+		req := &v0alpha1.GenericQueryRequest{}
+		err := json.Unmarshal(request, req)
+		require.NoError(t, err)
 
-	require.Len(t, req.Queries, 2)
-	require.Equal(t, "b1808c48-9fc9-4045-82d7-081781f8a553", req.Queries[0].Datasource.UID)
-	require.Equal(t, "spreadsheetID", req.Queries[0].AdditionalProperties()["spreadsheet"])
+		require.Len(t, req.Queries, 2)
+		require.Equal(t, "b1808c48-9fc9-4045-82d7-081781f8a553", req.Queries[0].Datasource.UID)
+		require.Equal(t, "spreadsheetID", req.Queries[0].AdditionalProperties()["spreadsheet"])
 
-	// Write the query (with additional spreadsheetID) to JSON
-	out, err := json.MarshalIndent(req.Queries[0], "", "  ")
-	require.NoError(t, err)
+		// Write the query (with additional spreadsheetID) to JSON
+		out, err := json.MarshalIndent(req.Queries[0], "", "  ")
+		require.NoError(t, err)
 
-	// And read it back with standard JSON marshal functions
-	query := &v0alpha1.GenericDataQuery{}
-	err = json.Unmarshal(out, query)
-	require.NoError(t, err)
-	require.Equal(t, "spreadsheetID", query.AdditionalProperties()["spreadsheet"])
+		// And read it back with standard JSON marshal functions
+		query := &v0alpha1.GenericDataQuery{}
+		err = json.Unmarshal(out, query)
+		require.NoError(t, err)
+		require.Equal(t, "spreadsheetID", query.AdditionalProperties()["spreadsheet"])
 
-	// The second query has an explicit time range, and legacy datasource name
-	out, err = json.MarshalIndent(req.Queries[1], "", "  ")
-	require.NoError(t, err)
-	// fmt.Printf("%s\n", string(out))
-	require.JSONEq(t, `{
+		// The second query has an explicit time range, and legacy datasource name
+		out, err = json.MarshalIndent(req.Queries[1], "", "  ")
+		require.NoError(t, err)
+		// fmt.Printf("%s\n", string(out))
+		require.JSONEq(t, `{
 		"datasource": {
 		  "type": "", ` /* NOTE! this implies legacy naming */ +`
 		  "uid": "old"
@@ -72,4 +76,28 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 		  "to": "200"
 		}
 	  }`, string(out))
+
+	})
+
+	t.Run("read write data frame contracts", func(t *testing.T) {
+		q := v0alpha1.GenericDataQuery{
+			RefID: "A",
+			ResponseContract: &v0alpha1.ResultDataContract{
+				Type:        data.FrameTypeLogLines,
+				TypeVersion: data.FrameTypeVersion{5, 6},
+			},
+			QueryType: "hello",
+		}
+
+		out, err := json.Marshal(q)
+		require.NoError(t, err)
+
+		copy := &v0alpha1.GenericDataQuery{}
+		err = json.Unmarshal(out, copy)
+		require.NoError(t, err)
+
+		require.Equal(t, uint(5), copy.ResponseContract.TypeVersion[0])
+		require.Equal(t, uint(6), copy.ResponseContract.TypeVersion[1])
+		require.Equal(t, q.ResponseContract.TypeVersion, copy.ResponseContract.TypeVersion)
+	})
 }
