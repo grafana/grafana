@@ -27,7 +27,13 @@ const RECEIVER_STATUS_POLLING_INTERVAL = 10 * 1000; // 10 seconds
  * 3. (if available) additional metadata about Grafana Managed contact points
  * 4. (if available) the OnCall plugin metadata
  */
-export function useContactPointsWithStatus(getPoliciesCount = true) {
+interface UseContactPointsWithStatusOptions {
+  includePoliciesCount: boolean;
+}
+
+export function useContactPointsWithStatus(
+  { includePoliciesCount }: UseContactPointsWithStatusOptions = { includePoliciesCount: true }
+) {
   const { selectedAlertmanager, isGrafanaAlertmanager } = useAlertmanager();
   const { installed: onCallPluginInstalled, loading: onCallPluginStatusLoading } = usePluginBridge(
     SupportedPlugin.OnCall
@@ -81,7 +87,7 @@ export function useContactPointsWithStatus(getPoliciesCount = true) {
             )
           : [],
       }),
-      skip: !getPoliciesCount,
+      skip: !includePoliciesCount,
     }
   );
 
@@ -101,7 +107,7 @@ export function useContactPointsWithStatus(getPoliciesCount = true) {
           )
         : [],
     }),
-    skip: getPoliciesCount || !isGrafanaAlertmanager,
+    skip: includePoliciesCount || !isGrafanaAlertmanager,
   });
 
   // we will fail silently for fetching OnCall plugin status and integrations
@@ -114,7 +120,7 @@ export function useContactPointsWithStatus(getPoliciesCount = true) {
     onCallPluginStatusLoading ||
     onCallPluginIntegrationsLoading;
 
-  if (getPoliciesCount) {
+  if (includePoliciesCount) {
     const contactPoints = fetchAlertmanagerConfiguration.contactPoints.sort((a, b) => a.name.localeCompare(b.name));
     return {
       error,
