@@ -259,7 +259,7 @@ function usePageNav(rule: CombinedRule) {
   const isAlertType = isAlertingRule(promRule);
   const numberOfInstance = isAlertType ? (promRule.alerts ?? []).length : undefined;
 
-  const namespaceName = decodeGrafanaNamespace(rule.namespace);
+  const namespaceName = decodeGrafanaNamespace(rule.namespace).name;
   const groupName = rule.group.name;
 
   const isGrafanaAlertRule = isGrafanaRulerRule(rule.rulerRule) && isAlertType;
@@ -309,6 +309,7 @@ function usePageNav(rule: CombinedRule) {
         ['namespace', namespaceName],
         ['group', groupName],
       ]),
+      // @TODO support nested folders here
       parentItem: {
         text: namespaceName,
         url: createListFilterLink([['namespace', namespaceName]]),
