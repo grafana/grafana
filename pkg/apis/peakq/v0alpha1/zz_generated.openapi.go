@@ -291,8 +291,8 @@ func schema_pkg_apis_peakq_v0alpha1_Target(ref common.ReferenceCallback) common.
 					},
 					"properties": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The raw query: TODO, should be query.GenericQuery",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured"),
+							Description: "Query target",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery"),
 						},
 					},
 				},
@@ -300,7 +300,7 @@ func schema_pkg_apis_peakq_v0alpha1_Target(ref common.ReferenceCallback) common.
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/common/v0alpha1.Unstructured", "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.VariableReplacement"},
+			"github.com/grafana/grafana/pkg/apis/peakq/v0alpha1.VariableReplacement", "github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery"},
 	}
 }
 
@@ -377,7 +377,7 @@ func schema_pkg_apis_peakq_v0alpha1_VariableReplacement(ref common.ReferenceCall
 					},
 					"format": {
 						SchemaProps: spec.SchemaProps{
-							Description: "How values should be interpolated See: NOTE: the format parameter is not yet supported!\n\nPossible enum values:\n - `\"csv\"` Formats variables with multiple values as a comma-separated string.\n - `\"doublequote\"` Formats single- and multi-valued variables into a comma-separated string\n - `\"json\"` Formats variables with multiple values as a comma-separated string.\n - `\"pipe\"` Formats variables with multiple values into a pipe-separated string.\n - `\"raw\"` Formats variables with multiple values into comma-separated string. This is the default behavior when no format is specified\n - `\"singlequote\"` Formats single- and multi-valued variables into a comma-separated string",
+							Description: "How values should be interpolated\n\nPossible enum values:\n - `\"csv\"` Formats variables with multiple values as a comma-separated string.\n - `\"doublequote\"` Formats single- and multi-valued variables into a comma-separated string\n - `\"json\"` Formats variables with multiple values as a comma-separated string.\n - `\"pipe\"` Formats variables with multiple values into a pipe-separated string.\n - `\"raw\"` Formats variables with multiple values into comma-separated string. This is the default behavior when no format is specified\n - `\"singlequote\"` Formats single- and multi-valued variables into a comma-separated string",
 							Type:        []string{"string"},
 							Format:      "",
 							Enum:        []interface{}{"csv", "doublequote", "json", "pipe", "raw", "singlequote"},
