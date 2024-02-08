@@ -29,7 +29,7 @@ import {
   isQueryWithParser,
 } from './queryUtils';
 import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
-import { ContextFilter, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
+import { ContextFilter, LabelType, LokiQuery, LokiQueryDirection, LokiQueryType } from './types';
 
 export const LOKI_LOG_CONTEXT_PRESERVED_LABELS = 'lokiLogContextPreservedLabels';
 export const SHOULD_INCLUDE_PIPELINE_OPERATIONS = 'lokiLogContextShouldIncludePipelineOperations';
@@ -246,6 +246,14 @@ export class LogContextProvider {
           if (parsedLabel.enabled) {
             expr = addLabelToQuery(expr, parsedLabel.label, '=', parsedLabel.value);
           }
+        }
+      }
+    } else if (query && isQueryWithParser(query.expr).parserCount === 0) {
+      // this case handles labels added from structured metadata, because the label is `fromParser` but the query does not contain a parser
+      const parsedLabels = contextFilters.filter((filter) => filter.fromParser && filter.enabled);
+      for (const parsedLabel of parsedLabels) {
+        if (parsedLabel.enabled) {
+          expr = addLabelToQuery(expr, parsedLabel.label, '=', parsedLabel.value, LabelType.StructuredMetadata);
         }
       }
     }

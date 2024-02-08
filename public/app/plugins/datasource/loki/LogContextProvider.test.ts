@@ -158,7 +158,7 @@ describe('LogContextProvider', () => {
         expect(result.query.expr).toEqual('{}');
       });
 
-      it('should not apply parsed labels', async () => {
+      it('should apply parsed label as structured metadata', async () => {
         logContextProvider.cachedContextFilters = [
           { value: 'baz', enabled: true, fromParser: false, label: 'bar' },
           { value: 'abc', enabled: true, fromParser: false, label: 'xyz' },
@@ -171,7 +171,7 @@ describe('LogContextProvider', () => {
           query
         );
 
-        expect(contextQuery.query.expr).toEqual('{bar="baz",xyz="abc"}');
+        expect(contextQuery.query.expr).toEqual('{bar="baz",xyz="abc"} | foo=`uniqueParsedLabel`');
       });
     });
 
