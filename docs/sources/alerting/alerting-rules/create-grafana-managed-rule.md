@@ -137,30 +137,30 @@ Complete the following steps to set up labels and notifications.
 
    **Select contact point**
 
-   Choose this option to select an existing contact point.
+   1. Choose this option to select an existing contact point.
 
-   All notifications for this alert rule are sent to this contact point automatically and notification policies are not used.
+      All notifications for this alert rule are sent to this contact point automatically and notification policies are not used.
 
-   You can also optionally select a mute timing as well as groupings and timings to define when not to send notifications.
+   1. You can also optionally select a mute timing as well as groupings and timings to define when not to send notifications.
 
    {{% admonition type="note" %}}
    An auto-generated notification policy is generated. Only admins can view these auto-generated policies from the **Notification policies** list view. Any changes have to be made in the alert rules form. {{% /admonition %}}
 
    **Use notification policy**
 
-   Choose this option to use the notification policy tree to direct your notifications.
+   1. Choose this option to use the notification policy tree to direct your notifications.
 
-   {{% admonition type="note" %}}
-   All alert rules and instances, irrespective of their labels, match the default notification policy. If there are no nested policies, or no nested policies match the labels in the alert rule or alert instance, then the default notification policy is the matching policy.
+      {{% admonition type="note" %}}
+      All alert rules and instances, irrespective of their labels, match the default notification policy. If there are no nested policies, or no nested policies match the labels in the alert rule or alert instance, then the default notification policy is the matching policy.
    {{% /admonition %}}
 
-1. If you chose **Use notification policy**, you can preview your alert instance routing set up.
+   1. Preview your alert instance routing set up:
 
-   Based on the labels added, alert instances are routed to the following notification policies displayed.
+      Based on the labels added, alert instances are routed to the following notification policies displayed.
 
-   Expand each notification policy below to view more details.
+   1. Expand each notification policy below to view more details.
 
-1. Click **See details** to view alert routing details and an email preview.
+   1. Click **See details** to view alert routing details and an email preview.
 
 ## Add annotations
 
