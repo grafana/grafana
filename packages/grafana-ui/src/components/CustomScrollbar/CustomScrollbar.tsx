@@ -26,8 +26,6 @@ interface Props {
   autoHeightMin?: number | string;
   updateAfterMountMs?: number;
   onScroll?: React.UIEventHandler;
-  scrollToRowIndex?: number;
-  height?: number;
 }
 
 /**
@@ -50,8 +48,6 @@ export const CustomScrollbar = ({
   scrollTop,
   onScroll,
   children,
-  height = undefined,
-  scrollToRowIndex = undefined,
 }: React.PropsWithChildren<Props>) => {
   const ref = useRef<Scrollbars & { view: HTMLDivElement; update: () => void }>(null);
   const styles = useStyles2(getStyles);
@@ -67,12 +63,6 @@ export const CustomScrollbar = ({
       ref.current.scrollTop(scrollTop);
     }
   }, [scrollTop]);
-
-  useEffect(() => {
-    if (ref.current && scrollToRowIndex != null && height) {
-      ref.current.scrollTop(scrollToRowIndex * height);
-    }
-  }, [scrollToRowIndex, height]);
 
   /**
    * Special logic for doing a update a few milliseconds after mount to check for

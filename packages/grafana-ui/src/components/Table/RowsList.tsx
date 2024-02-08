@@ -70,7 +70,7 @@ export const RowsList = (props: RowsListProps) => {
     scrollToRowIndex = undefined,
   } = props;
 
-  const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(undefined);
+  const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(scrollToRowIndex);
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
@@ -213,11 +213,6 @@ export const RowsList = (props: RowsListProps) => {
       if (rowHighlightIndex !== undefined && row.index === rowHighlightIndex) {
         style = { ...style, backgroundColor: theme.components.table.rowHoverBackground };
       }
-
-      if (index === props.scrollToRowIndex) {
-        style = { ...style, backgroundColor: theme.colors.background.secondary };
-      }
-
       return (
         <div
           {...row.getRowProps({ style })}
@@ -265,7 +260,6 @@ export const RowsList = (props: RowsListProps) => {
       theme.components.table.rowHoverBackground,
       timeRange,
       width,
-      scrollToRowIndex,
     ]
   );
 
@@ -289,13 +283,7 @@ export const RowsList = (props: RowsListProps) => {
 
   return (
     <>
-      <CustomScrollbar
-        height={rowHeight}
-        scrollToRowIndex={scrollToRowIndex}
-        onScroll={handleScroll}
-        hideHorizontalTrack={true}
-        scrollTop={scrollTop}
-      >
+      <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true} scrollTop={scrollTop}>
         <VariableSizeList
           // This component needs an unmount/remount when row height or page changes
           key={rowHeight + pageIndex}
