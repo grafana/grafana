@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useState } from 'react';
 
@@ -109,26 +109,22 @@ describe('<NextPrevResult>', () => {
     const theme = createTheme();
     const tooltip = container.querySelector('.' + getStyles(theme, true).tooltip);
     expect(screen.getByText('0 matches')).toBeDefined();
+
     await user.hover(tooltip!);
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-    await waitFor(() => {
-      expect(screen.getByText(/0 span matches for the filters selected/)).toBeDefined();
-    });
+    jest.advanceTimersByTime(1000);
+
+    expect(await screen.findByText(/0 span matches for the filters selected/)).toBeDefined();
   });
 
   it('renders services, depth correctly', async () => {
     const { container } = render(<NextPrevResultWithProps matches={['264afda25df92413', '364afda25df92413']} />);
     const theme = createTheme();
     const tooltip = container.querySelector('.' + getStyles(theme, true).tooltip);
+
     await user.hover(tooltip!);
-    act(() => {
-      jest.advanceTimersByTime(1000);
-    });
-    await waitFor(() => {
-      expect(screen.getByText(/Services: 2\/3/)).toBeDefined();
-      expect(screen.getByText(/Depth: 1/)).toBeDefined();
-    });
+    jest.advanceTimersByTime(1000);
+
+    expect(await screen.findByText(/Services: 2\/3/)).toBeDefined();
+    expect(await screen.findByText(/Depth: 1/)).toBeDefined();
   });
 });
