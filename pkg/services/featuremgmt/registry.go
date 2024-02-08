@@ -1217,10 +1217,11 @@ var (
 			Name:            "alertingPreviewUpgrade",
 			Description:     "Show Unified Alerting preview and upgrade page in legacy alerting",
 			FrontendOnly:    false,
-			Stage:           FeatureStagePublicPreview,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 			Created:         time.Date(2024, time.January, 3, 12, 0, 0, 0, time.UTC),
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:            "enablePluginsTracingByDefault",

@@ -53,6 +53,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `logRowsPopoverMenu`                 | Enable filtering menu displayed when text of a log line is selected                                                                                                                                                          | Yes                |
 | `displayAnonymousStats`              | Enables anonymous stats to be shown in the UI for Grafana                                                                                                                                                                    | Yes                |
 | `lokiQueryHints`                     | Enables query hints for Loki                                                                                                                                                                                                 | Yes                |
+| `alertingPreviewUpgrade`             | Show Unified Alerting preview and upgrade page in legacy alerting                                                                                                                                                            | Yes                |
 | `alertingQueryOptimization`          | Optimizes eligible queries in order to reduce load on datasources                                                                                                                                                            |                    |
 | `jitterAlertRules`                   | Distributes alert rule evaluations more evenly over time, by rule group                                                                                                                                                      |                    |
 
@@ -86,7 +87,6 @@ Some features are enabled by default. You can disable these feature by setting t
 | `pdfTables`                            | Enables generating table data as PDF in reporting                                                                                                                                            |
 | `canvasPanelPanZoom`                   | Allow pan and zoom in canvas panel                                                                                                                                                           |
 | `regressionTransformation`             | Enables regression analysis transformation                                                                                                                                                   |
-| `alertingPreviewUpgrade`               | Show Unified Alerting preview and upgrade page in legacy alerting                                                                                                                            |
 | `groupToNestedTableTransformation`     | Enables the group to nested table transformation                                                                                                                                             |
 
 ## Experimental feature toggles
