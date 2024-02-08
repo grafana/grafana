@@ -17,9 +17,6 @@ import (
 
 const (
 	captionLengthLimit = 1024
-)
-
-var (
 	defaultTelegramAPIURL = "https://api.telegram.org/"
 )
 
@@ -218,7 +215,7 @@ func (tn *TelegramNotifier) generateTelegramCmd(message string, messageField str
 
 	apiUrlPattern := tn.APIURL + "bot%s/%s"
 
-	tn.log.Info("Sending telegram notification", "chat_id", tn.ChatID, "bot_token", tn.BotToken, "apiAction", apiAction)
+	tn.log.Info("Sending telegram notification", "chat_id", tn.ChatID, "bot_token", tn.BotToken, "apiAction", apiAction, "apiUrl", tn.APIURL)
 	url := fmt.Sprintf(apiUrlPattern, tn.BotToken, apiAction)
 
 	cmd := &notifications.SendWebhookSync{

@@ -33,6 +33,20 @@ func TestTelegramNotifier(t *testing.T) {
 			require.Error(t, err)
 		})
 
+		t.Run("Empty APIURL should set default APIURL", func(t *testing.T) {
+			json := `{ }`
+
+			settingsJSON, _ := simplejson.NewJson([]byte(json))
+			model := &models.AlertNotification{
+				Name:     "telegram_testing",
+				Type:     "telegram",
+				Settings: settingsJSON,
+			}
+
+			telegramNotifier, err := NewTelegramNotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, nil)
+			require.Equal(t, "https://api.telegram.org/", telegramNotifier.APIURL)
+		})
+
 		t.Run("settings should trigger incident", func(t *testing.T) {
 			json := `
 				{
