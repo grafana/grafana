@@ -64,7 +64,6 @@ Metrics results represent the aggregated sum value over time of the selected pro
 
 This allows you to quickly see any spikes in the value of the scraped profiles and zoom in to a particular time range.
 
-
 {{% docs/reference %}}
 [explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
 [explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"

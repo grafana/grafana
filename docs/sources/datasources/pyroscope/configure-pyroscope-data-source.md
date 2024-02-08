@@ -35,7 +35,6 @@ To configure basic settings for the data source, complete the following steps:
    | `Password`     | Password for basic authentication.                                                                                                                                                                                                                                                                           |
    | `Minimal step` | Used for queries returning timeseries data. The Pyroscope backend, similar to Prometheus, scrapes profiles at certain intervals. To prevent querying at smaller interval, use Minimal step same or higher than your Pyroscope scrape interval. This prevents returning too many data points to the frontend. |
 
-
 {{% docs/reference %}}
 [explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
 [explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
