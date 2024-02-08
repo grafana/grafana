@@ -143,7 +143,7 @@ regressionTransformation,preview,@grafana/grafana-bi-squad,false,false,true
 displayAnonymousStats,GA,@grafana/identity-access-team,false,false,true
 lokiQueryHints,GA,@grafana/observability-logs,false,false,true
 kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad,false,false,true
-alertingPreviewUpgrade,preview,@grafana/alerting-squad,false,true,false
+alertingPreviewUpgrade,GA,@grafana/alerting-squad,false,true,false
 enablePluginsTracingByDefault,experimental,@grafana/plugins-platform-backend,false,true,false
 cloudRBACRoles,experimental,@grafana/identity-access-team,false,true,false
 alertingQueryOptimization,GA,@grafana/alerting-squad,false,false,false
@@ -155,3 +155,4 @@ alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,false,false,fal
 promQLScope,experimental,@grafana/observability-metrics,false,false,false
 nodeGraphDotLayout,experimental,@grafana/observability-traces-and-profiling,false,false,true
 groupToNestedTableTransformation,preview,@grafana/dataviz-squad,false,false,true
+newPDFRendering,experimental,@grafana/sharing-squad,false,false,false

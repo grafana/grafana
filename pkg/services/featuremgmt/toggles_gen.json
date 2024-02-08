@@ -1858,12 +1858,15 @@
     {
       "metadata": {
         "name": "alertingPreviewUpgrade",
-        "resourceVersion": "1704283200000",
-        "creationTimestamp": "2024-01-03T12:00:00Z"
+        "resourceVersion": "1707425412785",
+        "creationTimestamp": "2024-01-03T12:00:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-08 20:50:12.785364 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Show Unified Alerting preview and upgrade page in legacy alerting",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true
       }
@@ -2007,6 +2010,18 @@
         "stage": "preview",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "newPDFRendering",
+        "resourceVersion": "1707425412785",
+        "creationTimestamp": "2024-02-08T20:50:12Z"
+      },
+      "spec": {
+        "description": "New implementation for the dashboard to PDF rendering",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad"
       }
     }
   ]

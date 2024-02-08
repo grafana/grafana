@@ -381,6 +381,14 @@ func (m *RegistrationList) Range(f func(registration RoleRegistration) bool) {
 	}
 }
 
+func (m *RegistrationList) Slice() []RoleRegistration {
+	m.mx.RLock()
+	defer m.mx.RUnlock()
+	out := make([]RoleRegistration, len(m.registrations))
+	copy(out, m.registrations)
+	return out
+}
+
 func BuildBasicRoleDefinitions() map[string]*RoleDTO {
 	return map[string]*RoleDTO{
 		string(org.RoleAdmin): {

@@ -150,7 +150,7 @@ export function makeFolderAlertsLink(folderUID: string, title: string): string {
 }
 
 export function makeFolderSettingsLink(folder: FolderDTO): string {
-  return createUrl(`/dashboards/f/${folder.uid}/${folder.title}/settings`);
+  return createUrl(`/dashboards/f/${folder.uid}/settings`);
 }
 
 export function makeDashboardLink(dashboardUID: string): string {
