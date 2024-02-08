@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-import { VizPanel, SceneObject, SceneGridRow } from '@grafana/scenes';
+import { VizPanel, SceneObject, SceneGridRow, getUrlSyncManager } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
@@ -13,7 +13,7 @@ export function useSoloPanel(dashboard: DashboardScene, panelId: string): [VizPa
   const [error, setError] = useState<string | undefined>();
 
   useEffect(() => {
-    dashboard.startUrlSync();
+    getUrlSyncManager().initSync(dashboard);
 
     const cleanUp = dashboard.activate();
 

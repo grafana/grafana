@@ -35,7 +35,7 @@ describe('Solo Route', () => {
   it('Can view solo in repeaterd row and panel in scenes', () => {
     // open Panel Tests - Graph NG
     e2e.pages.SoloPanel.visit(
-      'Repeating-rows-uid?orgId=1&var-server=A&var-server=B&var-server=D&var-pod=1&var-pod=2&var-pod=3&panelId=panel-2-row-2-clone-2&__feature.dashboardScene=true'
+      'Repeating-rows-uid/repeating-rows?orgId=1&var-server=A&var-server=B&var-server=D&var-pod=1&var-pod=2&var-pod=3&panelId=panel-2-row-2-clone-2&__feature.dashboardScene=true'
     );
 
     e2e.components.Panels.Panel.title('server = D, pod = 3').should('exist');
