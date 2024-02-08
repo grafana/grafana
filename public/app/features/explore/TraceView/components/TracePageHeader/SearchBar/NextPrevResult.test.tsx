@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { useState } from 'react';
 
@@ -111,7 +111,9 @@ describe('<NextPrevResult>', () => {
     expect(screen.getByText('0 matches')).toBeDefined();
 
     await user.hover(tooltip!);
-    jest.advanceTimersByTime(1000);
+    await act(async () => {
+      jest.advanceTimersByTime(1000);
+    });
 
     expect(await screen.findByText(/0 span matches for the filters selected/)).toBeDefined();
   });
@@ -122,7 +124,9 @@ describe('<NextPrevResult>', () => {
     const tooltip = container.querySelector('.' + getStyles(theme, true).tooltip);
 
     await user.hover(tooltip!);
-    jest.advanceTimersByTime(1000);
+    await act(async () => {
+      jest.advanceTimersByTime(1000);
+    });
 
     expect(await screen.findByText(/Services: 2\/3/)).toBeDefined();
     expect(await screen.findByText(/Depth: 1/)).toBeDefined();
