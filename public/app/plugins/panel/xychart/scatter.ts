@@ -672,6 +672,14 @@ const prepConfig = (
 
   // why does this fall back to '' instead of null or undef?
   let xAxisLabel = customConfig.axisLabel;
+  // If a shared common label exists across multiple frames, strip from axis label
+  const fieldDisplayName = getFieldDisplayName(xField, scatterSeries[0].frame(frames), frames);
+  if (xField.labels) {
+    const singleLabelName = getSingleLabelName(frames);
+    if (singleLabelName) {
+      xAxisLabel = fieldDisplayName.replace(xField.labels[singleLabelName], '');
+    }
+  }
 
   builder.addAxis({
     scaleKey: 'x',
@@ -680,10 +688,7 @@ const prepConfig = (
     grid: { show: customConfig?.axisGridShow },
     border: { show: customConfig?.axisBorderShow },
     theme,
-    label:
-      xAxisLabel == null || xAxisLabel === ''
-        ? getFieldDisplayName(xField, scatterSeries[0].frame(frames), frames)
-        : xAxisLabel,
+    label: xAxisLabel == null || xAxisLabel === '' ? fieldDisplayName : xAxisLabel,
     formatValue: (v, decimals) => formattedValueToString(xField.display!(v, decimals)),
   });
 
@@ -718,6 +723,14 @@ const prepConfig = (
 
     // why does this fall back to '' instead of null or undef?
     let yAxisLabel = customConfig?.axisLabel;
+    // If a shared common label exists across multiple frames, strip from axis label
+    const fieldDisplayName = getFieldDisplayName(field, scatterSeries[si].frame(frames), frames);
+    if (field.labels) {
+      const singleLabelName = getSingleLabelName(frames);
+      if (singleLabelName) {
+        yAxisLabel = fieldDisplayName.replace(field.labels[singleLabelName], '');
+      }
+    }
 
     builder.addAxis({
       scaleKey,
@@ -727,10 +740,7 @@ const prepConfig = (
       grid: { show: customConfig?.axisGridShow },
       border: { show: customConfig?.axisBorderShow },
       size: customConfig?.axisWidth,
-      label:
-        yAxisLabel == null || yAxisLabel === ''
-          ? getFieldDisplayName(field, scatterSeries[si].frame(frames), frames)
-          : yAxisLabel,
+      label: yAxisLabel == null || yAxisLabel === '' ? fieldDisplayName : yAxisLabel,
       formatValue: (v, decimals) => formattedValueToString(field.display!(v, decimals)),
     });
 
