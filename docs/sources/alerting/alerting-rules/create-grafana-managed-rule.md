@@ -123,15 +123,38 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
 ## Configure notifications
 
-Add labels to your alert rules to set which notification policy should handle your firing alert instances.
+In the **Labels** section, you can optionally choose whether to add labels to organize your alert rules, make searching easier, as well as set which notification policy should handle your firing alert instance.
 
-All alert rules and instances, irrespective of their labels, match the default notification policy. If there are no nested policies, or no nested policies match the labels in the alert rule or alert instance, then the default notification policy is the matching policy.
+In the **Configure notifications** section, you can choose to select a contact point directly from the alert rule form or choose to use notification policy routing as well as set up mute timings and groupings.
 
-1. Add labels if you want to change the way your notifications are routed.
+Complete the following steps to set up labels and notifications.
+
+1. Add labels, if required.
 
    Add custom labels by selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
 
-1. Preview your alert instance routing set up.
+1. Configure who receives a notification when an alert rule fires by either choosing **Select contact point** or **Use notification policy**.
+
+   **Select contact point**
+
+   Choose this option to select an existing contact point.
+
+   All notifications for this alert rule are sent to this contact point automatically and notification policies are not used.
+
+   You can also optionally select a mute timing as well as groupings and timings to define when not to send notifications.
+
+   {{% admonition type="note" %}}
+   An auto-generated notification policy is generated. Only admins can view these auto-generated policies from the **Notification policies** list view. Any changes have to be made in the alert rules form. {{% /admonition %}}
+
+   **Use notification policy**
+
+   Choose this option to use the notification policy tree to direct your notifications.
+
+   {{% admonition type="note" %}}
+   All alert rules and instances, irrespective of their labels, match the default notification policy. If there are no nested policies, or no nested policies match the labels in the alert rule or alert instance, then the default notification policy is the matching policy.
+   {{% /admonition %}}
+
+1. If you added labels, you can preview your alert instance routing set up.
 
    Based on the labels added, alert instances are routed to the following notification policies displayed.
 
