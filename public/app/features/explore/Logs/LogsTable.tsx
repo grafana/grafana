@@ -39,7 +39,7 @@ interface Props {
   logsFrame: LogsFrame | null;
 }
 
-function getInitialFieldWidth(field: Field, bodyFieldName?: string): number | undefined {
+function getInitialFieldWidth(field: Field): number | undefined {
   if (field.type === FieldType.time) {
     return 200;
   }
@@ -172,7 +172,6 @@ export function LogsTable(props: Props) {
 
   return (
     <Table
-      autoColumnSpacing={true}
       data={tableFrame}
       width={width}
       onCellFilterAdded={props.onClickFilterLabel && props.onClickFilterOutLabel ? onCellFilterAdded : undefined}
