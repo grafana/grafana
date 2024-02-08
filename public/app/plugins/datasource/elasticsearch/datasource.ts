@@ -805,7 +805,7 @@ export class ElasticDatasource
 
     return termsObservable.pipe(
       map((res) => {
-        if (!res?.responses?.length || !res.responses[0].aggregations) {
+        if (!res.responses[0].aggregations) {
           return [];
         }
 
