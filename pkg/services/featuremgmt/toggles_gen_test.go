@@ -168,7 +168,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 		out, err := json.MarshalIndent(current, "", "  ")
 		require.NoError(t, err)
 
-		err = os.WriteFile(featuresFile, []byte(out), 0644)
+		err = os.WriteFile(featuresFile, out, 0644)
 		require.NoError(t, err, "error writing file")
 	})
 

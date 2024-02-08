@@ -1172,7 +1172,7 @@ var (
 var f embed.FS
 
 // Get the cached feature list (exposed as a k8s resource)
-func GetFeatureList() (featuretoggle.FeatureList, error) {
+func GetEmbeddedFeatureList() (featuretoggle.FeatureList, error) {
 	features := featuretoggle.FeatureList{}
 	body, err := f.ReadFile("toggles_gen.json")
 	if err == nil {

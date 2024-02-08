@@ -3,7 +3,7 @@ package featuretoggle
 import (
 	"context"
 	"fmt"
-	"time"
+	"sync"
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -27,18 +27,16 @@ var (
 type featuresStorage struct {
 	resource       *common.ResourceInfo
 	tableConverter rest.TableConvertor
-	features       []featuremgmt.FeatureFlag
-	startup        int64
+	features       *v0alpha1.FeatureList
+	featuresOnce   sync.Once
 }
 
 // NOTE! this does not depend on config or any system state!
 // In the future, the existence of features (and their properties) can be defined dynamically
-func NewFeaturesStorage(features []featuremgmt.FeatureFlag) *featuresStorage {
+func NewFeaturesStorage() *featuresStorage {
 	resourceInfo := v0alpha1.FeatureResourceInfo
 	return &featuresStorage{
-		startup:  time.Now().UnixMilli(),
 		resource: &resourceInfo,
-		features: features,
 		tableConverter: utils.NewTableConverter(
 			resourceInfo.GroupResource(),
 			[]metav1.TableColumnDefinition{
@@ -82,22 +80,34 @@ func (s *featuresStorage) ConvertToTable(ctx context.Context, object runtime.Obj
 	return s.tableConverter.ConvertToTable(ctx, object, tableOptions)
 }
 
+func (s *featuresStorage) init() {
+	s.featuresOnce.Do(func() {
+		rv := "1"
+		features, _ := featuremgmt.GetEmbeddedFeatureList()
+		for _, feature := range features.Items {
+			if feature.ResourceVersion > rv {
+				rv = feature.ResourceVersion
+			}
+		}
+		features.ResourceVersion = rv
+		s.features = &features
+	})
+}
+
 func (s *featuresStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	flags, err := featuremgmt.GetFeatureFlags()
-	if err != nil {
-		return nil, err
+	s.init()
+	if s.features == nil {
+		return nil, fmt.Errorf("error loading embedded features")
 	}
-	return &flags, nil
+	return s.features, nil
 }
 
 func (s *featuresStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	flags, err := featuremgmt.GetFeatureFlags()
-	if err != nil {
-		return nil, err
-	}
-	for idx, flag := range flags.Items {
+	s.init()
+
+	for idx, flag := range s.features.Items {
 		if flag.Name == name {
-			return &flags.Items[idx], nil
+			return &s.features.Items[idx], nil
 		}
 	}
 	return nil, fmt.Errorf("not found")
