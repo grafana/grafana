@@ -48,6 +48,7 @@ export interface AmRoutesExpandedFormProps {
   actionButtons: ReactNode;
   defaults?: Partial<FormAmRoute>;
 }
+
 export const AmRoutesExpandedForm = ({
   actionButtons,
   receivers,
@@ -104,9 +105,7 @@ export const AmRoutesExpandedForm = ({
                               error={errors.object_matchers?.[index]?.name?.message}
                             >
                               <Input
-                                {...register(`object_matchers.${index}.name`, {
-                                  required: 'Field is required',
-                                })}
+                                {...register(`object_matchers.${index}.name`, { required: 'Field is required' })}
                                 defaultValue={field.name}
                                 placeholder="label"
                                 autoFocus
