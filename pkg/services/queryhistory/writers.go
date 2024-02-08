@@ -10,20 +10,20 @@ import (
 
 func writeStarredSQL(query SearchInQueryHistoryQuery, sqlStore db.DB, builder *db.SQLBuilder, isCount bool) {
 	var sql bytes.Buffer
-	if (isCount) {
+	if isCount {
 		sql.WriteString(`COUNT(`)
 	}
-	if (query.OnlyStarred) {
+	if query.OnlyStarred {
 		sql.WriteString(sqlStore.GetDialect().BooleanStr(true))
 	} else {
 		sql.WriteString(`CASE WHEN query_history_star.query_uid IS NULL THEN ` + sqlStore.GetDialect().BooleanStr(false) + ` ELSE ` + sqlStore.GetDialect().BooleanStr(true) + ` END`)
 	}
-	if(isCount) {
+	if isCount {
 		sql.WriteString(`)`)
 	}
 	sql.WriteString(` AS starred FROM query_history `)
 
-	if (query.OnlyStarred) {
+	if query.OnlyStarred {
 		sql.WriteString(`INNER`)
 	} else {
 		sql.WriteString(`LEFT`)
