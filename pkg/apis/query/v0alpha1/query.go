@@ -44,7 +44,7 @@ type DataSourceRef struct {
 // GenericDataQuery is a replacement for `dtos.MetricRequest` that provides more explicit types
 type GenericDataQuery struct {
 	// RefID is the unique identifier of the query, set by the frontend call.
-	RefID string `json:"refId"`
+	RefID string `json:"refId,omitempty"`
 
 	// TimeRange represents the query range
 	// NOTE: unlike generic /ds/query, we can now send explicit time values in each query
@@ -120,7 +120,7 @@ func (g GenericDataQuery) MarshalJSON() ([]byte, error) {
 	}
 
 	vals["refId"] = g.RefID
-	if g.Datasource.Type != "" || g.Datasource.UID != "" {
+	if g.Datasource != nil && (g.Datasource.Type != "" || g.Datasource.UID != "") {
 		vals["datasource"] = g.Datasource
 	}
 	if g.DatasourceId > 0 {

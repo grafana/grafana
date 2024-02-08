@@ -227,7 +227,6 @@ func schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref common.ReferenceCallbac
 					"refId": {
 						SchemaProps: spec.SchemaProps{
 							Description: "RefID is the unique identifier of the query, set by the frontend call.",
-							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -280,7 +279,6 @@ func schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref common.ReferenceCallbac
 						},
 					},
 				},
-				Required: []string{"refId"},
 			},
 		},
 		Dependencies: []string{
