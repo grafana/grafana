@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
@@ -209,4 +210,8 @@ func Render(qt peakq.QueryTemplateSpec, selectedValues map[string][]string) (*pe
 	return &peakq.RenderedQuery{
 		Targets: targets,
 	}, nil
+}
+
+func runQuery(rq peakq.RenderedQuery) (*backend.QueryDataResponse, error) {
+	return nil, nil
 }
