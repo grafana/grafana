@@ -38,7 +38,8 @@ jobs:
                 - No changes in the English file. The source of truth is in the main branch, NOT in Crowdin.
                 - Translations maybe be removed if the English phrase was removed, but there should not be many of these
                 - Anything else that looks 'funky'. Ask if you're not sure.
-              2. Approve & (Auto-)merge. :tada:
+              2. Add a milestone
+              3. Approve & (Auto-)merge. :tada:
 
             If there's a conflict, close the pull request and **delete the branch**. A GH action will recreate the pull request.
             Remember, the longer this pull request is open, the more likely it is that it'll get conflicts.
