@@ -42,6 +42,7 @@ For validating the rules, we recommend testing the rules in the Loki Explore vie
 #### Tasks
 
 ### Task 1: One rule setup for each team
+
 One common use case for creating an LBAC policy is to have specific access to logs that have a specific label. For example, you can create a label policy that includes all log lines with the label.
 
 We have two teams, Team A and Team B with `Query` permissions. Loki access is setup with `Admin` roles to have `Admin` permission only.
