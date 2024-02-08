@@ -80,15 +80,18 @@ func getPrometheusScopes(settings *azsettings.AzureSettings, credentials azcrede
 	}
 
 	// Get scopes for the given cloud
-	resourceIdStr, ok := cloudSettings.Properties["prometheusResourceId"]
+	resourceIdS, ok := cloudSettings.Properties["prometheusResourceId"]
 	if !ok {
 		err := fmt.Errorf("the Azure cloud '%s' doesn't have configuration for Prometheus", azureCloud)
 		return nil, err
 	}
+	return audienceToScopes(resourceIdS)
+}
 
-	resourceId, err := url.Parse(resourceIdStr)
+func audienceToScopes(audience string) ([]string, error) {
+	resourceId, err := url.Parse(audience)
 	if err != nil || resourceId.Scheme == "" || resourceId.Host == "" {
-		err = fmt.Errorf("endpoint resource ID (audience) '%s' invalid", resourceIdStr)
+		err = fmt.Errorf("endpoint resource ID (audience) '%s' invalid", audience)
 		return nil, err
 	}
 

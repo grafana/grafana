@@ -3,6 +3,7 @@ package azureauth
 import (
 	"testing"
 
+	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -113,5 +114,33 @@ func TestConfigureAzureAuthentication(t *testing.T) {
 
 		err := ConfigureAzureAuthentication(settings, cfg.Azure, opts)
 		assert.Error(t, err)
+	})
+}
+
+func TestGetPrometheusScopes(t *testing.T) {
+	cfg := &setting.Cfg{
+		Azure: &azsettings.AzureSettings{
+			Cloud: azsettings.AzureUSGovernment,
+		},
+	}
+
+	t.Run("should return scopes for cloud from settings with MSI credentials", func(t *testing.T) {
+		credentials := &azcredentials.AzureManagedIdentityCredentials{}
+		scopes, err := getPrometheusScopes(cfg.Azure, credentials)
+		require.NoError(t, err)
+
+		assert.NotNil(t, scopes)
+		assert.Len(t, scopes, 1)
+		assert.Equal(t, "https://prometheus.monitor.azure.us/.default", scopes[0])
+	})
+
+	t.Run("should return scopes for cloud from client secret credentials", func(t *testing.T) {
+		credentials := &azcredentials.AzureClientSecretCredentials{AzureCloud: azsettings.AzureChina}
+		scopes, err := getPrometheusScopes(cfg.Azure, credentials)
+		require.NoError(t, err)
+
+		assert.NotNil(t, scopes)
+		assert.Len(t, scopes, 1)
+		assert.Equal(t, "https://prometheus.monitor.azure.cn/.default", scopes[0])
 	})
 }
