@@ -63,7 +63,7 @@ func (e *cloudWatchExecutor) handleGetRegions(ctx context.Context, pluginCtx bac
 	ec2Regions, err := client.DescribeRegionsWithContext(ctx, &ec2.DescribeRegionsInput{})
 	if err != nil {
 		// ignore error for backward compatibility
-		logger.Error("Failed to get regions", "error", err)
+		e.logger.FromContext(ctx).Error("Failed to get regions", "error", err)
 	} else {
 		mergeEC2RegionsAndConstantRegions(regions, ec2Regions.Regions)
 	}

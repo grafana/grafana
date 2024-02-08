@@ -20,15 +20,16 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
-var _ grafanaapiserver.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
+var _ builder.APIGroupBuilder = (*DataSourceAPIBuilder)(nil)
 
 // DataSourceAPIBuilder is used just so wire has something unique to return
 type DataSourceAPIBuilder struct {
@@ -43,7 +44,7 @@ type DataSourceAPIBuilder struct {
 
 func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
-	apiRegistrar grafanaapiserver.APIRegistrar,
+	apiRegistrar builder.APIRegistrar,
 	pluginClient plugins.Client, // access to everything
 	datasources PluginDatasourceProvider,
 	contextProvider PluginContextWrapper,
@@ -112,7 +113,8 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&v0alpha1.DataSourceConnectionList{},
 		&v0alpha1.HealthCheckResult{},
 		&unstructured.Unstructured{},
-		// Added for subresource stubs
+		// Query handler
+		&query.QueryDataResponse{},
 		&metav1.Status{},
 	)
 }
@@ -138,7 +140,7 @@ func (b *DataSourceAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 }
 
 func resourceFromPluginID(pluginID string) (common.ResourceInfo, error) {
-	group, err := getDatasourceGroupNameFromPluginID(pluginID)
+	group, err := plugins.GetDatasourceGroupNameFromPluginID(pluginID)
 	if err != nil {
 		return common.ResourceInfo{}, err
 	}
@@ -149,6 +151,7 @@ func (b *DataSourceAPIBuilder) GetAPIGroupInfo(
 	scheme *runtime.Scheme,
 	codecs serializer.CodecFactory, // pointer?
 	_ generic.RESTOptionsGetter,
+	_ bool,
 ) (*genericapiserver.APIGroupInfo, error) {
 	storage := map[string]rest.Storage{}
 
@@ -207,10 +210,16 @@ func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string)
 }
 
 func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {
-	return v0alpha1.GetOpenAPIDefinitions
+	return func(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
+		defs := query.GetOpenAPIDefinitions(ref) // required when running standalone
+		for k, v := range v0alpha1.GetOpenAPIDefinitions(ref) {
+			defs[k] = v
+		}
+		return defs
+	}
 }
 
 // Register additional routes with the server
-func (b *DataSourceAPIBuilder) GetAPIRoutes() *grafanaapiserver.APIRoutes {
+func (b *DataSourceAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 	return nil
 }

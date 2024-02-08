@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/osutil"
 )
 
 type Scheme string
@@ -142,6 +143,7 @@ type Cfg struct {
 	// Rendering
 	ImagesDir                      string
 	CSVsDir                        string
+	PDFsDir                        string
 	RendererUrl                    string
 	RendererCallbackUrl            string
 	RendererAuthToken              string
@@ -239,10 +241,12 @@ type Cfg struct {
 	AuthConfigUIAdminAccess bool
 
 	// AWS Plugin Auth
-	AWSAllowedAuthProviders []string
-	AWSAssumeRoleEnabled    bool
-	AWSListMetricsPageLimit int
-	AWSExternalId           string
+	AWSAllowedAuthProviders   []string
+	AWSAssumeRoleEnabled      bool
+	AWSSessionDuration        string
+	AWSExternalId             string
+	AWSListMetricsPageLimit   int
+	AWSForwardSettingsPlugins []string
 
 	// Azure Cloud settings
 	Azure *azsettings.AzureSettings
@@ -348,18 +352,25 @@ type Cfg struct {
 	// Number of queries to be executed concurrently. Only for the datasource supports concurrency.
 	ConcurrentQueryCount int
 
+	// IP range access control
+	IPRangeACEnabled     bool
+	IPRangeACAllowedURLs []string
+	IPRangeACSecretKey   string
+
 	// SQL Data sources
 	SqlDatasourceMaxOpenConnsDefault    int
 	SqlDatasourceMaxIdleConnsDefault    int
 	SqlDatasourceMaxConnLifetimeDefault int
 
 	// Snapshots
-	SnapshotEnabled       bool
-	ExternalSnapshotUrl   string
-	ExternalSnapshotName  string
-	ExternalEnabled       bool
+	SnapshotEnabled      bool
+	ExternalSnapshotUrl  string
+	ExternalSnapshotName string
+	ExternalEnabled      bool
+	// Deprecated: setting this to false adds deprecation warnings at runtime
 	SnapShotRemoveExpired bool
 
+	// Only used in https://snapshots.raintank.io/
 	SnapshotPublicMode bool
 
 	ErrTemplateName string
@@ -582,6 +593,7 @@ func RedactedValue(key, value string) string {
 		"ENCRYPTION_KEY",
 		"VAULT_TOKEN",
 		"CLIENT_SECRET",
+		"ENTERPRISE_LICENSE",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
@@ -814,6 +826,9 @@ func (cfg *Cfg) loadSpecifiedConfigFile(configFile string, masterFile *ini.File)
 		return fmt.Errorf("failed to parse %q: %w", configFile, err)
 	}
 
+	// micro-optimization since we don't need to share this ini file. In
+	// general, prefer to leave this flag as true as it is by default to prevent
+	// data races
 	userConfig.BlockMode = false
 
 	for _, section := range userConfig.Sections() {
@@ -856,8 +871,6 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 		os.Exit(1)
 		return nil, err
 	}
-
-	parsedFile.BlockMode = false
 
 	// command line props
 	commandLineProps := cfg.getCommandLineProperties(args.Args)
@@ -978,8 +991,6 @@ func NewCfgFromBytes(bytes []byte) (*Cfg, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse bytes as INI file: %w", err)
 	}
-
-	parsedFile.BlockMode = false
 
 	return NewCfgFromINIFile(parsedFile)
 }
@@ -1200,6 +1211,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	}
 
 	cfg.readDataSourcesSettings()
+	cfg.readDataSourceSecuritySettings()
 	cfg.readSqlDataSourceSettings()
 
 	cfg.Storage = readStorageSettings(iniFile)
@@ -1316,6 +1328,10 @@ func (cfg *Cfg) handleAWSConfig() {
 		}
 	}
 	cfg.AWSListMetricsPageLimit = awsPluginSec.Key("list_metrics_page_limit").MustInt(500)
+	cfg.AWSExternalId = awsPluginSec.Key("external_id").Value()
+	cfg.AWSSessionDuration = awsPluginSec.Key("session_duration").Value()
+	cfg.AWSForwardSettingsPlugins = util.SplitString(awsPluginSec.Key("forward_settings_to_plugins").String())
+
 	// Also set environment variables that can be used by core plugins
 	err := os.Setenv(awsds.AssumeRoleEnabledEnvVarKeyName, strconv.FormatBool(cfg.AWSAssumeRoleEnabled))
 	if err != nil {
@@ -1327,10 +1343,19 @@ func (cfg *Cfg) handleAWSConfig() {
 		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AllowedAuthProvidersEnvVarKeyName), err)
 	}
 
-	cfg.AWSExternalId = awsPluginSec.Key("external_id").Value()
+	err = os.Setenv(awsds.ListMetricsPageLimitKeyName, strconv.Itoa(cfg.AWSListMetricsPageLimit))
+	if err != nil {
+		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.ListMetricsPageLimitKeyName), err)
+	}
+
 	err = os.Setenv(awsds.GrafanaAssumeRoleExternalIdKeyName, cfg.AWSExternalId)
 	if err != nil {
 		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.GrafanaAssumeRoleExternalIdKeyName), err)
+	}
+
+	err = os.Setenv(awsds.SessionDurationEnvVarKeyName, cfg.AWSSessionDuration)
+	if err != nil {
+		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.SessionDurationEnvVarKeyName), err)
 	}
 }
 
@@ -1389,13 +1414,14 @@ func (cfg *Cfg) LogConfigSources() {
 type DynamicSection struct {
 	section *ini.Section
 	Logger  log.Logger
+	env     osutil.Env
 }
 
 // Key dynamically overrides keys with environment variables.
 // As a side effect, the value of the setting key will be updated if an environment variable is present.
 func (s *DynamicSection) Key(k string) *ini.Key {
 	envKey := EnvKey(s.section.Name(), k)
-	envValue := os.Getenv(envKey)
+	envValue := s.env.Getenv(envKey)
 	key := s.section.Key(k)
 
 	if len(envValue) == 0 {
@@ -1412,7 +1438,7 @@ func (s *DynamicSection) KeysHash() map[string]string {
 	hash := s.section.KeysHash()
 	for k := range hash {
 		envKey := EnvKey(s.section.Name(), k)
-		envValue := os.Getenv(envKey)
+		envValue := s.env.Getenv(envKey)
 		if len(envValue) > 0 {
 			hash[k] = envValue
 		}
@@ -1423,7 +1449,11 @@ func (s *DynamicSection) KeysHash() map[string]string {
 // SectionWithEnvOverrides dynamically overrides keys with environment variables.
 // As a side effect, the value of the setting key will be updated if an environment variable is present.
 func (cfg *Cfg) SectionWithEnvOverrides(s string) *DynamicSection {
-	return &DynamicSection{cfg.Raw.Section(s), cfg.Logger}
+	return &DynamicSection{
+		section: cfg.Raw.Section(s),
+		Logger:  cfg.Logger,
+		env:     osutil.RealEnv{},
+	}
 }
 
 func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
@@ -1736,6 +1766,7 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	cfg.RendererRenderKeyLifeTime = renderSec.Key("render_key_lifetime").MustDuration(5 * time.Minute)
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
+	cfg.PDFsDir = filepath.Join(cfg.DataPath, "pdf")
 
 	return nil
 }
@@ -1936,6 +1967,14 @@ func (cfg *Cfg) readDataSourcesSettings() {
 	datasources := cfg.Raw.Section("datasources")
 	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
 	cfg.ConcurrentQueryCount = datasources.Key("concurrent_query_count").MustInt(10)
+}
+
+func (cfg *Cfg) readDataSourceSecuritySettings() {
+	datasources := cfg.Raw.Section("datasources.ip_range_security")
+	cfg.IPRangeACEnabled = datasources.Key("enabled").MustBool(false)
+	cfg.IPRangeACSecretKey = datasources.Key("secret_key").MustString("")
+	allowedURLString := datasources.Key("allow_list").MustString("")
+	cfg.IPRangeACAllowedURLs = util.SplitString(allowedURLString)
 }
 
 func (cfg *Cfg) readSqlDataSourceSettings() {

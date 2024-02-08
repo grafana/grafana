@@ -10,8 +10,8 @@ import { t } from 'app/core/internationalization';
 import { DismissableButton } from './DismissableButton';
 
 export interface ReturnToPreviousProps {
-  href: string;
   title: string;
+  href: string;
 }
 
 export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
@@ -45,6 +45,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     zIndex: theme.zIndex.portal,
     position: 'fixed',
     bottom: theme.spacing.x4,
+    boxShadow: theme.shadows.z3,
   }),
 });
 

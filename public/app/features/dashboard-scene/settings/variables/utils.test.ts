@@ -7,7 +7,9 @@ import {
   QueryVariable,
   DataSourceVariable,
   AdHocFiltersVariable,
+  GroupByVariable,
   TextBoxVariable,
+  SceneVariableSet,
 } from '@grafana/scenes';
 import { DataQuery, DataSourceJsonData, VariableType } from '@grafana/schema';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
@@ -17,6 +19,7 @@ import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor
 import { ConstantVariableEditor } from './editors/ConstantVariableEditor';
 import { CustomVariableEditor } from './editors/CustomVariableEditor';
 import { DataSourceVariableEditor } from './editors/DataSourceVariableEditor';
+import { GroupByVariableEditor } from './editors/GroupByVariableEditor';
 import { IntervalVariableEditor } from './editors/IntervalVariableEditor';
 import { QueryVariableEditor } from './editors/QueryVariableEditor';
 import { TextBoxVariableEditor } from './editors/TextBoxVariableEditor';
@@ -31,6 +34,8 @@ import {
   EditableVariableType,
   getDefinition,
   getOptionDataSourceTypes,
+  getNextAvailableId,
+  getVariableDefault,
 } from './utils';
 
 const templateSrv = {
@@ -70,7 +75,16 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('isEditableVariableType', () => {
   it('should return true for editable variable types', () => {
-    const editableTypes: VariableType[] = ['custom', 'query', 'constant', 'interval', 'datasource', 'adhoc', 'textbox'];
+    const editableTypes: VariableType[] = [
+      'custom',
+      'query',
+      'constant',
+      'interval',
+      'datasource',
+      'adhoc',
+      'groupby',
+      'textbox',
+    ];
     editableTypes.forEach((type) => {
       expect(isEditableVariableType(type)).toBe(true);
     });
@@ -96,7 +110,7 @@ describe('getVariableTypeSelectOptions', () => {
 
   it('should return an array of selectable values for editable variable types', () => {
     const options = getVariableTypeSelectOptions();
-    expect(options).toHaveLength(7);
+    expect(options).toHaveLength(8);
 
     options.forEach((option, index) => {
       const editableType = EDITABLE_VARIABLES_SELECT_ORDER[index];
@@ -129,6 +143,7 @@ describe('getVariableEditor', () => {
     ['interval', IntervalVariableEditor],
     ['datasource', DataSourceVariableEditor],
     ['adhoc', AdHocFiltersVariableEditor],
+    ['groupby', GroupByVariableEditor],
     ['textbox', TextBoxVariableEditor],
   ])('should return the correct editor for variable type "%s"', (type, ExpectedVariableEditor) => {
     expect(getVariableEditor(type as EditableVariableType)).toBe(ExpectedVariableEditor);
@@ -155,6 +170,7 @@ describe('getVariableScene', () => {
     ['interval', IntervalVariable],
     ['datasource', DataSourceVariable],
     ['adhoc', AdHocFiltersVariable],
+    ['groupby', GroupByVariable],
     ['textbox', TextBoxVariable],
   ])('should return the scene variable instance for the given editable variable type', () => {
     const initialState = { name: 'MyVariable' };
@@ -247,5 +263,49 @@ describe('getOptionDataSourceTypes', () => {
     // in the old code we always had an empty option
     expect(optionTypes[0].value).toBe('');
     expect(optionTypes[1].label).toBe('ds1');
+  });
+});
+
+describe('getNextAvailableId', () => {
+  it('should return the initial ID for an empty array', () => {
+    const sceneVariables = new SceneVariableSet({
+      variables: [],
+    });
+
+    expect(getNextAvailableId('query', sceneVariables.state.variables)).toBe('query0');
+  });
+
+  it('should return a non-conflicting ID for a non-empty array', () => {
+    const variable = new QueryVariable({
+      name: 'query0',
+      label: 'test-label',
+      description: 'test-desc',
+      value: ['selected-value'],
+      text: ['selected-value-text'],
+      datasource: { uid: 'fake-std', type: 'fake-std' },
+      query: 'query',
+      includeAll: true,
+      allValue: 'test-all',
+      isMulti: true,
+    });
+
+    const sceneVariables = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    expect(getNextAvailableId('query', sceneVariables.state.variables)).toBe('query1');
+  });
+});
+
+describe('getVariableDefault', () => {
+  it('should return a QueryVariable instance with the correct name', () => {
+    const sceneVariables = new SceneVariableSet({
+      variables: [],
+    });
+
+    const defaultVariable = getVariableDefault(sceneVariables.state.variables);
+
+    expect(defaultVariable).toBeInstanceOf(QueryVariable);
+    expect(defaultVariable.state.name).toBe('query0');
   });
 });
