@@ -156,7 +156,7 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 					builder.WriteString(" AND action = ?")
 					args = append(args, toCheck[0])
 				} else {
-					builder.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope HAVING COUNT(action) = ?")
+					builder.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope, identifier HAVING COUNT(action) = ?")
 					args = append(args, toCheck...)
 					args = append(args, len(toCheck))
 				}
@@ -186,7 +186,7 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 					permSelector.WriteString(" AND action = ?")
 					permSelectorArgs = append(permSelectorArgs, toCheck[0])
 				} else {
-					permSelector.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope HAVING COUNT(action) = ?")
+					permSelector.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope, identifier HAVING COUNT(action) = ?")
 					permSelectorArgs = append(permSelectorArgs, toCheck...)
 					permSelectorArgs = append(permSelectorArgs, len(toCheck))
 				}
@@ -265,7 +265,7 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 					permSelector.WriteString(" AND action = ?")
 					permSelectorArgs = append(permSelectorArgs, toCheck[0])
 				} else {
-					permSelector.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope HAVING COUNT(action) = ?")
+					permSelector.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope, identifier HAVING COUNT(action) = ?")
 					permSelectorArgs = append(permSelectorArgs, toCheck...)
 					permSelectorArgs = append(permSelectorArgs, len(toCheck))
 				}
