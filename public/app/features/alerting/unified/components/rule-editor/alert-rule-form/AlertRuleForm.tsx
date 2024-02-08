@@ -113,7 +113,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     if (values.manualRouting) {
       localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
     } else {
-      localStorage.removeItem(MANUAL_ROUTING_KEY);
+      localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
     }
 
     dispatch(
