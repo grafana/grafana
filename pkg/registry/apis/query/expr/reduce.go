@@ -55,7 +55,7 @@ func (*ReduceExpressionSupport) ReadQuery(generic query.GenericDataQuery, versio
 }
 
 type ReduceQuery struct {
-	raw string
+	// raw string
 }
 
 func (s *ReduceQuery) Variables() []string {

@@ -75,6 +75,6 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 	require.NoError(t, err)
 	fmt.Printf("%s\n", out)
 
-	err = os.WriteFile(typesFile, []byte(out), 0644)
+	err = os.WriteFile(typesFile, out, 0644)
 	require.NoError(t, err, "error writing file")
 }
