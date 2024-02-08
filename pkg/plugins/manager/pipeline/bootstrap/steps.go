@@ -33,7 +33,7 @@ func DefaultDecorateFuncs(cfg *config.Cfg) []DecorateFunc {
 	return []DecorateFunc{
 		AppDefaultNavURLDecorateFunc,
 		TemplateDecorateFunc,
-		AppChildDecorateFunc(cfg),
+		AppChildDecorateFunc(),
 		SkipHostEnvVarsDecorateFunc(cfg),
 	}
 }
@@ -133,27 +133,28 @@ func setDefaultNavURL(p *plugins.Plugin) {
 }
 
 // AppChildDecorateFunc is a DecorateFunc that configures child plugins of app plugins.
-func AppChildDecorateFunc(cfg *config.Cfg) DecorateFunc {
+func AppChildDecorateFunc() DecorateFunc {
 	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 		if p.Parent != nil && p.Parent.IsApp() {
-			configureAppChildPlugin(cfg, p.Parent, p)
+			configureAppChildPlugin(p.Parent, p)
 		}
 		return p, nil
 	}
 }
 
-func configureAppChildPlugin(cfg *config.Cfg, parent *plugins.Plugin, child *plugins.Plugin) {
+func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 	if !parent.IsApp() {
 		return
 	}
 	child.IncludedInAppID = parent.ID
 	child.BaseURL = parent.BaseURL
 
+	// TODO move this logic within assetpath package
 	appSubPath := strings.ReplaceAll(strings.Replace(child.FS.Base(), parent.FS.Base(), "", 1), "\\", "/")
 	if parent.IsCorePlugin() {
 		child.Module = path.Join("core:plugin", parent.ID, appSubPath)
 	} else {
-		child.Module = path.Join("/", cfg.GrafanaAppSubURL, "/public/plugins", parent.ID, appSubPath, "module.js")
+		child.Module = path.Join("public/plugins", parent.ID, appSubPath, "module.js")
 	}
 }
 

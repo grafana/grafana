@@ -2,7 +2,7 @@ import { PluginMeta, patchArrayVectorProrotypeMethods } from '@grafana/data';
 
 import { transformPluginSourceForCDN } from '../cdn/utils';
 import { resolveWithCache } from '../loader/cache';
-import { isHostedOnCDN } from '../loader/utils';
+import { isHostedOnCDN, resolveModulePath } from '../loader/utils';
 
 import { SandboxEnvironment } from './types';
 
@@ -60,9 +60,10 @@ export async function getPluginCode(meta: PluginMeta): Promise<string> {
     });
     return pluginCode;
   } else {
-    // local plugin. resolveWithCache will append a query parameter with its version
-    // to ensure correct cached version is served
-    const pluginCodeUrl = resolveWithCache(meta.module);
+    let modulePath = resolveModulePath(meta.module);
+    // resolveWithCache will append a query parameter with its version
+    // to ensure correct cached version is served for local plugins
+    const pluginCodeUrl = resolveWithCache(modulePath);
     const response = await fetch(pluginCodeUrl);
     let pluginCode = await response.text();
     pluginCode = transformPluginSourceForCDN({

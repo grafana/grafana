@@ -69,11 +69,11 @@ func TestService(t *testing.T) {
 
 				base, err = svc.Base(NewPluginInfo(jsonData["two"], plugins.ClassExternal, extPath("two")))
 				require.NoError(t, err)
-				require.Equal(t, "/public/plugins/two", base)
+				require.Equal(t, "public/plugins/two", base)
 
 				base, err = svc.Base(NewPluginInfo(jsonData["table-old"], plugins.ClassCore, tableOldFS))
 				require.NoError(t, err)
-				require.Equal(t, "/public/app/plugins/table-old", base)
+				require.Equal(t, "public/app/plugins/table-old", base)
 			})
 
 			t.Run("Module", func(t *testing.T) {
@@ -86,7 +86,7 @@ func TestService(t *testing.T) {
 
 				module, err = svc.Module(NewPluginInfo(jsonData["two"], plugins.ClassExternal, extPath("two")))
 				require.NoError(t, err)
-				require.Equal(t, "/public/plugins/two/module.js", module)
+				require.Equal(t, "public/plugins/two/module.js", module)
 
 				module, err = svc.Module(NewPluginInfo(jsonData["table-old"], plugins.ClassCore, tableOldFS))
 				require.NoError(t, err)
@@ -116,16 +116,16 @@ func TestService(t *testing.T) {
 
 				u, err = svc.RelativeURL(NewPluginInfo(pluginsMap["two"].JSONData, plugins.ClassExternal, extPath("two")), "path/to/file.txt")
 				require.NoError(t, err)
-				require.Equal(t, "/public/plugins/two/path/to/file.txt", u)
+				require.Equal(t, "public/plugins/two/path/to/file.txt", u)
 
 				u, err = svc.RelativeURL(NewPluginInfo(pluginsMap["two"].JSONData, plugins.ClassExternal, extPath("two")), "default")
 				require.NoError(t, err)
-				require.Equal(t, "/public/plugins/two/default", u)
+				require.Equal(t, "public/plugins/two/default", u)
 			})
 		})
 	}
 
-	t.Run("With App Sub URL", func(t *testing.T) {
+	t.Run("App Sub URL has no effect on the path", func(t *testing.T) {
 		for _, tc := range []struct {
 			appSubURL string
 		}{
@@ -151,15 +151,15 @@ func TestService(t *testing.T) {
 
 			base, err := svc.Base(NewPluginInfo(p, plugins.ClassExternal, fs))
 			require.NoError(t, err)
-			require.Equal(t, "/grafana/public/plugins/test-datasource", base)
+			require.Equal(t, "public/plugins/test-datasource", base)
 
 			mod, err := svc.Module(NewPluginInfo(p, plugins.ClassExternal, fs))
 			require.NoError(t, err)
-			require.Equal(t, "/grafana/public/plugins/test-datasource/module.js", mod)
+			require.Equal(t, "public/plugins/test-datasource/module.js", mod)
 
 			base, err = svc.Base(NewPluginInfo(p, plugins.ClassCore, fs))
 			require.NoError(t, err)
-			require.Equal(t, "/grafana/public/app/plugins/test-datasource", base)
+			require.Equal(t, "public/app/plugins/test-datasource", base)
 
 			mod, err = svc.Module(NewPluginInfo(p, plugins.ClassCore, fs))
 			require.NoError(t, err)
