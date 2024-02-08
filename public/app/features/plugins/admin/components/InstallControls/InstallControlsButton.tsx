@@ -142,7 +142,7 @@ export function InstallControlsButton({
   if (pluginStatus === PluginStatus.UPDATE) {
     const disableUpdate =
       config.pluginAdminExternalManageEnabled && configCore.featureToggles.managedPluginsInstall
-        ? plugin.isUpdating
+        ? plugin.isUpdatingFromInstance
         : isInstalling;
 
     return (

@@ -54,7 +54,7 @@ export function mergeLocalsAndRemotes({
         catalogPlugin.isInstalled = instancesMap.has(remotePlugin.slug) || catalogPlugin.isInstalled;
 
         const instancePlugin = instancesMap.get(remotePlugin.slug);
-        catalogPlugin.isUpdating =
+        catalogPlugin.isUpdatingFromInstance =
           instancesMap.has(remotePlugin.slug) &&
           catalogPlugin.hasUpdate &&
           catalogPlugin.installedVersion !== instancePlugin?.version;
