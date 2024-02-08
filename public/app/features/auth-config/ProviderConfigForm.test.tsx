@@ -103,6 +103,7 @@ describe('ProviderConfigForm', () => {
         {
           ...testConfig,
           settings: {
+            name: 'GitHub',
             allowedOrganizations: 'test-org1,test-org2',
             clientId: 'test-client-id',
             clientSecret: 'test-client-secret',

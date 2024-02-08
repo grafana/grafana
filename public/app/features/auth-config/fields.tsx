@@ -8,11 +8,12 @@ import { isSelectableValue } from './utils/guards';
 
 /** Map providers to their settings */
 export const fields: Record<SSOProvider['provider'], Array<keyof SSOProvider['settings']>> = {
-  github: ['clientId', 'clientSecret', 'teamIds', 'allowedOrganizations'],
-  google: ['clientId', 'clientSecret', 'allowedDomains'],
-  gitlab: ['clientId', 'clientSecret', 'allowedOrganizations', 'teamIds'],
-  azuread: ['clientId', 'clientSecret', 'authUrl', 'tokenUrl', 'scopes', 'allowedGroups', 'allowedDomains'],
+  github: ['name', 'clientId', 'clientSecret', 'teamIds', 'allowedOrganizations'],
+  google: ['name', 'clientId', 'clientSecret', 'allowedDomains'],
+  gitlab: ['name', 'clientId', 'clientSecret', 'allowedOrganizations', 'teamIds'],
+  azuread: ['name', 'clientId', 'clientSecret', 'authUrl', 'tokenUrl', 'scopes', 'allowedGroups', 'allowedDomains'],
   okta: [
+    'name',
     'clientId',
     'clientSecret',
     'authUrl',
@@ -221,7 +222,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     },
     name: {
       label: 'Display name',
-      description: 'Helpful if you use more than one identity providers or SSO protocols.',
+      description:
+        'Will be displayed on the login page as "Sign in with ...". Helpful if you use more than one identity providers or SSO protocols.',
       type: 'text',
     },
     allowSignUp: {
@@ -313,17 +315,17 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     },
     tlsClientCa: {
       label: 'TLS client ca',
-      description: 'The path to the trusted certificate authority list. Is not applicable on Grafana Cloud.',
+      description: 'The file path to the trusted certificate authority list. Is not applicable on Grafana Cloud.',
       type: 'text',
     },
     tlsClientCert: {
       label: 'TLS client cert',
-      description: 'The path to the certificate. Is not applicable on Grafana Cloud.',
+      description: 'The file path to the certificate. Is not applicable on Grafana Cloud.',
       type: 'text',
     },
     tlsClientKey: {
       label: 'TLS client key',
-      description: 'The path to the key. Is not applicable on Grafana Cloud.',
+      description: 'The file path to the key. Is not applicable on Grafana Cloud.',
       type: 'text',
     },
     tlsSkipVerifyInsecure: {

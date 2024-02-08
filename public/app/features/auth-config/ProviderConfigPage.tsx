@@ -8,6 +8,7 @@ import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { StoreState } from '../../types';
 
 import { ProviderConfigForm } from './ProviderConfigForm';
+import { UIMap } from './constants';
 import { loadProviders } from './state/actions';
 import { SSOProvider } from './types';
 
@@ -21,9 +22,11 @@ const getPageNav = (config?: SSOProvider): NavModelItem => {
     };
   }
 
+  const providerDisplayName = UIMap[config.provider][1] || config.provider.toUpperCase();
+
   return {
-    text: config.settings.name || '',
-    subTitle: `To configure ${config.settings.name} OAuth2 you must register your application with ${config.settings.name}. ${config.settings.name} will generate a Client ID and Client Secret for you to use.`,
+    text: providerDisplayName || '',
+    subTitle: `To configure ${providerDisplayName} OAuth2 you must register your application with ${providerDisplayName}. The provider will generate a Client ID and Client Secret for you to use.`,
     icon: config.settings.icon || 'shield',
     id: config.provider,
   };
