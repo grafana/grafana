@@ -559,7 +559,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   builder.scaleKeys = [xScaleKey, yScaleKey];
 
   // if hovered value is null, how far we may scan left/right to hover nearest non-null
-  const hoverNullProximityPx = 15;
+  const DEFAULT_HOVER_NULL_PROXIMITY = 15;
 
   let cursor: Partial<uPlot.Cursor> = {
     hover: {
@@ -570,7 +570,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
         const yVal = self.data[seriesIdx][hoveredIdx];
         if (yVal === null) {
-          return hoverNullProximityPx;
+          return DEFAULT_HOVER_NULL_PROXIMITY;
         }
 
         return null;
