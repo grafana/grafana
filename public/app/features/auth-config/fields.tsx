@@ -147,7 +147,6 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       description: 'It determines how client_id and client_secret are sent to Oauth2 provider. Default is AutoDetect.',
       multi: false,
       options: [
-        { value: '', label: ''},
         { value: 'AutoDetect', label: 'AutoDetect' },
         { value: 'InParams', label: 'InParams' },
         { value: 'InHeader', label: 'InHeader' },
@@ -223,7 +222,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     },
     name: {
       label: 'Display name',
-      description: 'Will be displayed on the login page as "Sign in with ...". Helpful if you use more than one identity providers or SSO protocols.',
+      description:
+        'Will be displayed on the login page as "Sign in with ...". Helpful if you use more than one identity providers or SSO protocols.',
       type: 'text',
     },
     allowSignUp: {
