@@ -26,7 +26,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 
   static Component = ({ model }: SceneComponentProps<PanelOptionsPane>) => {
     const { panelManager } = model;
-    const { panel } = panelManager.state;
+    const { panel } = panelManager.useState();
     const dataObject = sceneGraph.getData(panel);
     const rawData = dataObject.useState();
     const dataWithFieldConfig = panel.applyFieldConfig(rawData.data!);

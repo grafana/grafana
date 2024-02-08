@@ -44,17 +44,12 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   public constructor(state: PanelEditorState) {
     super(state);
 
-    const panelManager = state.panelRef.resolve();
-    const panel = panelManager.state.panel;
-    if (panel.parent instanceof PanelRepeaterGridItem) {
-      const { variableName: repeat, repeatDirection, maxPerRow } = panel.parent.state;
-
-      this._initialRepeatOptions = {
-        repeat,
-        repeatDirection,
-        maxPerRow,
-      };
-    }
+    const { repeat, repeatDirection, maxPerRow } = state.panelRef.resolve().state;
+    this._initialRepeatOptions = {
+      repeat,
+      repeatDirection,
+      maxPerRow,
+    };
   }
 
   public getUrlKey() {
@@ -179,6 +174,15 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 export function buildPanelEditScene(panel: VizPanel): PanelEditor {
   const panelClone = panel.clone();
   const vizPanelMgr = new VizPanelManager(panelClone);
+  if (panel.parent instanceof PanelRepeaterGridItem) {
+    const { variableName: repeat, repeatDirection, maxPerRow } = panel.parent.state;
+
+    vizPanelMgr.setState({
+      repeat,
+      repeatDirection,
+      maxPerRow,
+    });
+  }
 
   return new PanelEditor({
     panelId: getPanelIdForVizPanel(panel),
