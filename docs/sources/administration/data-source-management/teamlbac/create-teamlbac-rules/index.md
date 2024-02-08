@@ -33,9 +33,9 @@ Team LBAC is available on Cloud for data sources created with basic authenticati
 
 #### Best practices
 
-We recommend you only add team LBAC permissions for teams that should use the data source and remove default `Viewer` and `Editor` query permissions.
+We recommend you only add `query` permissions for teams that should use the data source and only `Admin` have `Admin` permissions.
 
-We recommend for a first setup, setting up as few rules for each team as possible and make them additive and not negated.
+We recommend for a first setup, setting up as few rules as possible for each team and make them additive for simplicity.
 
 For validating the rules, we recommend testing the rules in the Loki Explore view. This will allow you to see the logs that would be returned for the rule.
 
@@ -43,7 +43,7 @@ For validating the rules, we recommend testing the rules in the Loki Explore vie
 
 ### Task 1: One rule setup for each team
 
-We have two teams, Team A and Team B. Loki access is setup with `Admin` roles to have `Admin` permission only.
+We have two teams, Team A and Team B with `Query` permissions. Loki access is setup with `Admin` roles to have `Admin` permission only.
 
 - Team A has a rule `namespace="dev"`.
 
@@ -53,9 +53,11 @@ A user that is part of Team A will have access to logs that match `namespace="de
 
 A user that is part of Team B will have access to logs that match `namespace="prod"`.
 
+A user that is part of Team A and Team B will have access to logs that match `namespace="dev"` OR `namespace="prod"`.
+
 ### Task 2: Multiple rules setup for one team
 
-We have two teams, Team A and Team B. Loki access is setup with `Admin` roles having `Admin` permission.
+We have two teams, Team A and Team B with `Query` permissions. Loki access is setup with `Admin` roles having `Admin` permission.
 
 - Team A has rule `cluster="us-west-0", namespace=~"dev|prod"` configured.
 
