@@ -29,7 +29,7 @@ XY charts provide a way to visualize...
 
 ## Supported data formats
 
-TBA
+You can use any type of tabular data in an xy chart. This type of visualization doesn't require time data.
 
 ## XY chart options
 
@@ -37,16 +37,16 @@ TBA
 
 Set how series data is mapped in the visualization.
 
-<!--i don't understand these descriptions-->
+<!--to be refined maybe post-GA-->
 
-- **Table** - Plot values within a single table result.
-- **Manual** - Construct values from any result. You can add multiple series for which you'll set the **X-field** and **Y-field** options. When you choose this option, the **Point color** and **Point size** fields are also displayed.
+- **Auto** - Automatically generates series based on field selection across multiple data frames.
+- **Manual** - Construct values from any result. You can explicitly define multiple series for which you'll set the **X-field** and **Y-field** options, as well as the **Point color** and **Point size** rules
 
 ### Data
 
 <!--what is the scenario where you need to choose a data set?-->
 
-Select your data set. This option is only available when you set **Series mapping** to **Table** mode.
+Select your data set. This option is only available when you set **Series mapping** to **Manual** mode.
 
 ### X-field
 
@@ -60,7 +60,8 @@ Select which fields the y-axis represents.
 
 **Table** mode - When you set the series mapping to **Table** mode, you can only update the x-field and the y-fields are automatically assigned based on that selection. In this mode you can enable and disable the **Y-field**.
 
-<!--why would you want to disable the y-field-->
+For example, if your data source is a table with five columns, you may want to disable one or more of the columns so that they're not included in the visualization.
+
 
 **Manual** mode - When you set series mapping to **Manual**, you can control both the **X-field** and **Y-field** options.
 
