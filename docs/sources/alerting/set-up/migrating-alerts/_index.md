@@ -37,8 +37,8 @@ When upgrading with either method, your legacy dashboard alerts and notification
 | **Stakeholder Involvement** | ☑️ Collaboration and review of adjusted alerts                                      | ❌ Review only available after upgrade               |
 | **Provisioning Support**    | ☑️ Configure new as-code before upgrading, simultaneous provisioning                | ❌ No built-in provisioning support                  |
 | **Simplicity**              | ❌ May take longer to complete                                                      | ☑️ Fast, one-step process                            |
-| **Technical Requirements**  | Feature flag enabled, Grafana v10.3.0+                                              | Grafana v9.0.0+                                      |
 | **Suited for:**             | ☑️ Complex setups, risk-averse environments, collaborative teams, heavy as-code use | ☑️ Simple setups, testing environments, large fleets |
+| **Version**                 | Grafana v10.3.0+                                                                    | Grafana v9.0.0+                                      |
 
 ## Upgrade with Preview (Recommended)
 
@@ -46,7 +46,7 @@ When upgrading with either method, your legacy dashboard alerts and notification
 
 - Grafana `v10.3.0 or later`.
 - Grafana administrator access.
-- Enable `alertingPreviewUpgrade` [feature toggle]({{< relref "../../../setup-grafana/configure-grafana/feature-toggles" >}}).
+- Enable `alertingPreviewUpgrade` [feature toggle]({{< relref "../../../setup-grafana/configure-grafana/feature-toggles" >}}) (enabled by default in v10.4.0 or later).
 
 ### Suited for
 

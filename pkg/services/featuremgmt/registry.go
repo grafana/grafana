@@ -1217,10 +1217,11 @@ var (
 			Name:            "alertingPreviewUpgrade",
 			Description:     "Show Unified Alerting preview and upgrade page in legacy alerting",
 			FrontendOnly:    false,
-			Stage:           FeatureStagePublicPreview,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 			Created:         time.Date(2024, time.January, 3, 12, 0, 0, 0, time.UTC),
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:            "enablePluginsTracingByDefault",
@@ -1309,6 +1310,21 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			Created:      time.Date(2024, time.January, 2, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "groupToNestedTableTransformation",
+			Description:  "Enables the group to nested table transformation",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Created:      time.Date(2024, time.February, 5, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:        "newPDFRendering",
+			Description: "New implementation for the dashboard to PDF rendering",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Created:     time.Date(2024, time.February, 8, 9, 51, 00, 00, time.UTC),
 		},
 	}
 )
