@@ -67,7 +67,7 @@ var nestedFieldRenderedTargets = []peakq.Target{
 }
 
 func TestNestedFieldRender(t *testing.T) {
-	rT, err := Render(nestedFieldRender, map[string][]string{"metricName": {"up"}})
+	rT, err := Render(nestedFieldRender, map[string][]string{"metricName": {"up"}}, "")
 	require.NoError(t, err)
 	require.Equal(t,
 		nestedFieldRenderedTargets,
@@ -166,7 +166,7 @@ func TestMultiVarTemplate(t *testing.T) {
 	rT, err := Render(multiVarTemplate, map[string][]string{
 		"metricName":    {"up"},
 		"anotherMetric": {"sloths_do_like_a_good_nap"},
-	})
+	}, "")
 	require.NoError(t, err)
 	require.Equal(t,
 		multiVarRenderedTargets,
@@ -205,7 +205,7 @@ func TestRenderWithRune(t *testing.T) {
 		"name": {"🦥"},
 	}
 
-	rq, err := Render(qt, selectedValues)
+	rq, err := Render(qt, selectedValues, "")
 	require.NoError(t, err)
 
 	require.Equal(t, "🐦 🦥!", rq.Targets[0].Properties.AdditionalProperties()["message"])

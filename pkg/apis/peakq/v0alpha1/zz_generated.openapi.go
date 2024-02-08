@@ -228,6 +228,13 @@ func schema_pkg_apis_peakq_v0alpha1_RenderedQuery(ref common.ReferenceCallback) 
 							Format:      "",
 						},
 					},
+					"templateName": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The name of the stored query template used to render the targets",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"targets": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{

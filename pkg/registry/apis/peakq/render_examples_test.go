@@ -9,7 +9,7 @@ import (
 )
 
 func TestRender(t *testing.T) {
-	rT, err := Render(basicTemplateSpec, map[string][]string{"metricName": {"up"}})
+	rT, err := Render(basicTemplateSpec, map[string][]string{"metricName": {"up"}}, "")
 	require.NoError(t, err)
 	require.Equal(t,
 		basicTemplateRenderedTargets[0].Properties.AdditionalProperties()["expr"],
