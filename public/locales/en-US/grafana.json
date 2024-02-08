@@ -1022,6 +1022,10 @@
     "starred-dashboard": "Dashboard starred",
     "unstarred-dashboard": "Dashboard unstarred"
   },
+  "outside-range": {
+    "data": "Data outside of time range",
+    "zoom": "Zoom to data"
+  },
   "panel": {
     "header-menu": {
       "copy": "Copy",

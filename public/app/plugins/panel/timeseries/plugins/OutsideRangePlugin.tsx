@@ -3,6 +3,7 @@ import uPlot, { TypedArray, Scale } from 'uplot';
 
 import { AbsoluteTimeRange } from '@grafana/data';
 import { UPlotConfigBuilder, Button } from '@grafana/ui';
+import { Trans } from '@grafana/ui/src/utils/i18n';
 
 interface ThresholdControlsPluginProps {
   config: UPlotConfigBuilder;
@@ -25,37 +26,41 @@ export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdContr
     });
   }, [config]);
 
+  // If we don't have enough time values or if we can't
+  // change the time range then we don't display zoom to data
   if (timevalues.length < 2 || !onChangeTimeRange) {
     return null;
   }
 
+  // If we don't have an appropriate time range then we don't know if data is
+  // being displayed
   if (!timeRange || !timeRange.time || !timeRange.min || !timeRange.max!) {
     return null;
   }
 
   // Time values are always sorted for uPlot to work
-  let i = 0,
-    j = timevalues.length - 1;
+  let i = 0;
+  let j = timevalues.length - 1;
 
-  while (i <= j && timevalues[i] == null) {
-    i++;
-  }
+  // Increment i until we get the last non-null value
+  for (; i < timevalues.length && timevalues[i] == null; i++) {}
 
-  while (j >= 0 && timevalues[j] == null) {
-    j--;
-  }
+  // Decrement j until we get the first non-null-value
+  for (; j >= 0 && timevalues[j] == null; j--) {}
 
-  const first = timevalues[i];
-  const last = timevalues[j];
-  const fromX = timeRange.min;
-  const toX = timeRange.max;
+  // Grab the first and last time values
+  const last = timevalues[i];
+  const first = timevalues[j];
 
+  // If we only have null data then there's no data to zoom
   if (first == null || last == null) {
     return null;
   }
 
-  // (StartA <= EndB) and (EndA >= StartB)
-  if (first <= toX && last >= fromX) {
+  // If the first time is less than or equal to the top of time in the range
+  // or the last time is greater than or equal to the bottom of the time range
+  // then there is data to be displayed so we return null
+  if (first <= timeRange.max || last >= timeRange.min) {
     return null;
   }
 
@@ -70,13 +75,15 @@ export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdContr
       }}
     >
       <div>
-        <div>Data outside time range</div>
+        <div>
+          <Trans i18nKey="outside-range.data">Data outside of time range</Trans>
+        </div>
         <Button
           onClick={(v) => onChangeTimeRange({ from: first, to: last })}
           variant="secondary"
           data-testid="time-series-zoom-to-data"
         >
-          Zoom to data
+          <Trans i18nKey="outside-range.zoom">Zoom to data</Trans>
         </Button>
       </div>
     </div>
