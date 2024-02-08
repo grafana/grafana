@@ -18,11 +18,6 @@ OPENAPI_VIOLATION_EXCEPTIONS_FILENAME="zz_generated.openapi_violation_exceptions
 source "${CODEGEN_PKG}/kube_codegen.sh"
 source "$(dirname "${BASH_SOURCE[0]}")/openapi-codegen.sh"
 
-# kube::codegen::gen_helpers \
-#    --input-pkg-root github.com/grafana/grafana/pkg/apis \
-#    --output-base "${OUTDIR}" \
-#    --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt"
-
 
 for api_pkg in $(ls ./pkg/apis); do
   if [[ "${1-}" != "" && ${api_pkg} != $1 ]]; then
