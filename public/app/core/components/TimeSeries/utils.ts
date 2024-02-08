@@ -583,7 +583,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       data: frame,
     };
 
-    const hoverEvent = new DataHoverEvent(payload);
+    const hoverEvent = new DataHoverEvent(payload).setTags(['uplot']);
+    const clearEvent = new DataHoverClearEvent().setTags(['uplot']);
+
     cursor.sync = {
       key: eventsScope,
       filters: {
@@ -594,9 +596,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
           payload.rowIndex = dataIdx;
           if (x < 0 && y < 0) {
-            payload.point[xScaleUnit] = null;
-            payload.point[yScaleKey] = null;
-            eventBus.publish(new DataHoverClearEvent());
+            eventBus.publish(clearEvent);
           } else {
             // convert the points
             payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);

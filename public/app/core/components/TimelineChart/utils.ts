@@ -180,6 +180,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     data: frame,
   };
 
+  const hoverEvent = new DataHoverEvent(payload).setTags(['uplot']);
+  const clearEvent = new DataHoverClearEvent().setTags(['uplot']);
+
   builder.addHook('init', coreConfig.init);
   builder.addHook('drawClear', coreConfig.drawClear);
 
@@ -293,14 +296,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
           }
           payload.rowIndex = dataIdx;
           if (x < 0 && y < 0) {
-            payload.point[xScaleUnit] = null;
-            payload.point[FIXED_UNIT] = null;
-            eventBus.publish(new DataHoverClearEvent());
+            eventBus.publish(clearEvent);
           } else {
             payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
             payload.point.panelRelY = y > 0 ? y / h : 1; // used for old graph panel to position tooltip
             payload.down = undefined;
-            eventBus.publish(new DataHoverEvent(payload));
+            eventBus.publish(hoverEvent);
           }
           return true;
         },

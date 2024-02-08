@@ -139,6 +139,11 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   }
 
   handleCursorUpdate(evt: DataHoverEvent | LegacyGraphHoverEvent) {
+    // ignore uplot-emitted events, since we already use uPlot's sync
+    if (evt.tags?.has('uplot')) {
+      return;
+    }
+
     const time = evt.payload?.point?.time;
     const u = this.plotInstance.current;
     if (u && time) {
