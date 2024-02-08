@@ -352,6 +352,20 @@ func schema_pkg_apis_query_v0alpha1_ResultDataContract(ref common.ReferenceCallb
 							},
 						},
 					},
+					"maxBytes": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Maximum bytes that can be read -- if the query planning expects more then this, the query may fail fast",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"maxLabels": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Maximum labels to expand -- if the query planning expects more then this, the query may fail fast",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 				},
 				Required: []string{"typeVersion"},
 			},

@@ -87,6 +87,12 @@ type ResultDataContract struct {
 	// TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane
 	// contract documentation https://grafana.github.io/dataplane/contract/.
 	TypeVersion data.FrameTypeVersion `json:"typeVersion"`
+
+	// Maximum bytes that can be read -- if the query planning expects more then this, the query may fail fast
+	MaxBytes int64 `json:"maxBytes,omitempty"`
+
+	// Maximum labels to expand -- if the query planning expects more then this, the query may fail fast
+	MaxLabels int64 `json:"maxLabels,omitempty"`
 }
 
 func NewGenericDataQuery(vals map[string]any) GenericDataQuery {
