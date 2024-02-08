@@ -1,0 +1,258 @@
+{
+  "kind": "QueryTypeDefinitionList",
+  "apiVersion": "query.grafana.app/v0alpha1",
+  "metadata": {
+    "resourceVersion": "1707369146982"
+  },
+  "items": [
+    {
+      "kind": "QueryTypeDefinition",
+      "metadata": {
+        "name": "threshold",
+        "resourceVersion": "1707369146982",
+        "creationTimestamp": "2024-02-08T05:12:26Z"
+      },
+      "spec": {
+        "description": "threshold function",
+        "versions": [
+          {
+            "schema": {
+              "description": "QueryType = threshold",
+              "properties": {
+                "conditions": {
+                  "items": {
+                    "default": {}
+                  },
+                  "type": "array"
+                },
+                "expression": {
+                  "default": "",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "expression",
+                "conditions"
+              ],
+              "type": "object"
+            },
+            "examples": [
+              {
+                "name": "simple example",
+                "description": "adding two series",
+                "query": {
+                  "refId": ""
+                }
+              }
+            ],
+            "changelog": [
+              "initial version"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "kind": "QueryTypeDefinition",
+      "metadata": {
+        "name": "classic",
+        "resourceVersion": "1707369146982",
+        "creationTimestamp": "2024-02-08T05:12:26Z"
+      },
+      "spec": {
+        "description": "classic function",
+        "versions": [
+          {
+            "schema": {
+              "description": "QueryType = classic",
+              "properties": {
+                "conditions": {
+                  "items": {
+                    "default": {}
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "conditions"
+              ],
+              "type": "object"
+            },
+            "examples": [
+              {
+                "name": "simple example",
+                "description": "adding two series",
+                "query": {
+                  "refId": ""
+                }
+              }
+            ],
+            "changelog": [
+              "initial version"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "kind": "QueryTypeDefinition",
+      "metadata": {
+        "name": "math",
+        "resourceVersion": "1707369146982",
+        "creationTimestamp": "2024-02-08T05:12:26Z"
+      },
+      "spec": {
+        "description": "execute math commands",
+        "versions": [
+          {
+            "schema": {
+              "description": "QueryType = math",
+              "properties": {
+                "expression": {
+                  "default": "",
+                  "description": "General math expression",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "expression"
+              ],
+              "type": "object"
+            },
+            "examples": [
+              {
+                "name": "simple example",
+                "description": "adding two series",
+                "query": {
+                  "refId": ""
+                }
+              }
+            ],
+            "changelog": [
+              "initial version"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "kind": "QueryTypeDefinition",
+      "metadata": {
+        "name": "reduce",
+        "resourceVersion": "1707369146982",
+        "creationTimestamp": "2024-02-08T05:12:26Z"
+      },
+      "spec": {
+        "description": "reduce function",
+        "versions": [
+          {
+            "schema": {
+              "description": "QueryType = reduce",
+              "properties": {
+                "expression": {
+                  "default": "",
+                  "description": "Reference to other query results",
+                  "type": "string"
+                },
+                "reducer": {
+                  "default": "",
+                  "description": "The reducer\n\nPossible enum values:\n - `\"count\"`\n - `\"last\"`\n - `\"max\"`\n - `\"mean\"`\n - `\"min\"`\n - `\"sum\"`",
+                  "enum": [
+                    "count",
+                    "last",
+                    "max",
+                    "mean",
+                    "min",
+                    "sum"
+                  ],
+                  "type": "string"
+                },
+                "settings": {
+                  "default": {},
+                  "description": "Reducer Options"
+                }
+              },
+              "required": [
+                "expression",
+                "reducer",
+                "settings"
+              ],
+              "type": "object"
+            },
+            "examples": [
+              {
+                "name": "simple example",
+                "description": "adding two series",
+                "query": {
+                  "refId": ""
+                }
+              }
+            ],
+            "changelog": [
+              "initial version"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "kind": "QueryTypeDefinition",
+      "metadata": {
+        "name": "resample",
+        "resourceVersion": "1707369146982",
+        "creationTimestamp": "2024-02-08T05:12:26Z"
+      },
+      "spec": {
+        "description": "resample function",
+        "versions": [
+          {
+            "schema": {
+              "description": "QueryType = resample",
+              "properties": {
+                "downsampler": {
+                  "default": "",
+                  "description": "The reducer",
+                  "type": "string"
+                },
+                "expression": {
+                  "default": "",
+                  "description": "The math expression",
+                  "type": "string"
+                },
+                "upsampler": {
+                  "default": "",
+                  "description": "The reducer",
+                  "type": "string"
+                },
+                "window": {
+                  "default": "",
+                  "description": "The math expression",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "expression",
+                "window",
+                "downsampler",
+                "upsampler"
+              ],
+              "type": "object"
+            },
+            "examples": [
+              {
+                "name": "simple example",
+                "description": "adding two series",
+                "query": {
+                  "refId": ""
+                }
+              }
+            ],
+            "changelog": [
+              "initial version"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
