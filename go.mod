@@ -291,6 +291,8 @@ require github.com/grafana/pyroscope/api v0.3.0 // @grafana/observability-traces
 
 require github.com/grafana/pyroscope-go/godeltaprof v0.1.6 // @grafana/observability-traces-and-profiling
 
+require github.com/apache/arrow/go/v15 v15.0.0 // @grafana/observability-metrics
+
 require (
 	cloud.google.com/go v0.111.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
@@ -483,8 +485,6 @@ require k8s.io/code-generator v0.29.1 // @grafana/grafana-app-platform-squad
 require github.com/spyzhov/ajson v0.9.0 // @grafana/grafana-app-platform-squad
 
 require github.com/fullstorydev/grpchan v1.1.1 // @grafana/backend-platform
-
-require github.com/apache/arrow/go/v15 v15.0.0
 
 require (
 	github.com/bufbuild/protocompile v0.4.0 // indirect
