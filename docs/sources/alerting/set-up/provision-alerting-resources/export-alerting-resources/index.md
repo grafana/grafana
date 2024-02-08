@@ -14,14 +14,14 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Export alerting resources
-title: Export alerting resources
-weight: 400
+menuTitle: Export resources to provision
+title: Export alerting resources to provision
+weight: 300
 ---
 
-# Export alerting resources
+# Export alerting resources to provision
 
-Export your alerting resources, such as alert rules, contact points, and notification policies in JSON, YAML, or Terraform format. You can export all Grafana-managed alert rules, single folders, and single groups.
+Export your alerting resources, such as alert rules, contact points, and notification policies in JSON, YAML, or Terraform format for provisioning. You can export all Grafana-managed alert rules, single folders, and single groups.
 
 ## Export alert rules
 
@@ -67,7 +67,9 @@ To export a modified alert rule without saving the modifications, complete the f
 
 ## Export API endpoints
 
-You can also use the [Alerting provisioning API][alerting_http_provisioning] to export alerting resources in YAML or JSON formats.
+You can also use the **Alerting provisioning HTTP API** to export alerting resources in YAML or JSON formats for provisioning.
+
+Note that most Alerting endpoints return a JSON format that is not compatible for provisioning via configuration files, except the ones listed below.
 
 | Method | URI                                                              | Summary                                                                                  |
 | ------ | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
@@ -77,7 +79,7 @@ You can also use the [Alerting provisioning API][alerting_http_provisioning] to 
 | GET    | /api/v1/provisioning/contact-points/export                       | [Export all contact points in provisioning file format.][export_contacts]                |
 | GET    | /api/v1/provisioning/policies/export                             | [Export the notification policy tree in provisioning file format.][export_notifications] |
 
-By enabling the `download` parameter, you can download a file containing the exported resources.
+These endpoints accept a `download` parameter to download a file containing the exported resources.
 
 {{% docs/reference %}}
 [alerting_http_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning"

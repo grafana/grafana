@@ -13,6 +13,7 @@ labels:
   products:
     - enterprise
     - oss
+menuTitle: Use config files to provision
 title: Use configuration files to provision alerting resources
 weight: 100
 ---

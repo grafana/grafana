@@ -11,10 +11,10 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Use the HTTP API to provision alerting resources
-weight: 300
+title: Use the HTTP API to manage alerting resources
+weight: 400
 ---
 
-# Use the HTTP API to provision alerting resources
+# Use the HTTP API to manage alerting resources
 
 {{< docs/shared lookup="alerts/alerting_provisioning.md" source="grafana" version="latest" >}}

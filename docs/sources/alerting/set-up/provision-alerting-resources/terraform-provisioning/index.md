@@ -14,11 +14,12 @@ labels:
     - cloud
     - enterprise
     - oss
+menuTitle: Use Terraform to provision
 title: Use Terraform to provision alerting resources
 weight: 200
 ---
 
-# Use Terraform to manage alerting resources
+# Use Terraform to provision alerting resources
 
 Use Terraform’s Grafana Provider to manage your alerting resources and provision them into your Grafana system. Terraform provider support for Grafana Alerting makes it easy to create, manage, and maintain your entire Grafana Alerting stack as code.
 
@@ -29,11 +30,15 @@ Complete the following tasks to create and manage your alerting resources using 
 1. Create an API key for provisioning.
 2. Configure the Terraform provider.
 3. Define your alerting resources in Terraform.
+
+   - Refer to the [Terraform Alerting resources](https://registry.terraform.io/providers/grafana/grafana/latest/docs) or
+   - [Export alerting resources in Terraform format](testdata).
+
 4. Run `terraform apply` to provision your alerting resources.
 
 **Notes:**
 
-- By default, you cannot edit resources provisioned from Terraform from the UI. This ensures that your alerting stack always stays in sync with your code. To change the default behaviour, refer to [Edit resources in the Grafana UI](#edit-resources-in-the-grafana-ui).
+- By default, you cannot edit resources provisioned from Terraform from the UI. This ensures that your alerting stack always stays in sync with your code. To change the default behaviour, refer to [Edit provisioned resources in the Grafana UI](#edit-resources-in-the-grafana-ui).
 
 - Before you begin, ensure you have the [Grafana Terraform Provider](https://registry.terraform.io/providers/grafana/grafana/) 1.27.0 or higher, and are using Grafana 9.1 or higher.
 
@@ -74,7 +79,7 @@ provider "grafana" {
 }
 ```
 
-## Provision contact points and templates
+## Import contact points and templates
 
 Contact points connect an alerting stack to the outside world. They tell Grafana how to connect to your external systems and where to deliver notifications.
 
@@ -154,7 +159,7 @@ EOT
 }
 ```
 
-## Provision notification policies and routing
+## Import notification policies and routing
 
 Notification policies tell Grafana how to route alert instances to your contact points. They connect firing alerts to your previously defined contact points using a system of labels and matchers.
 
@@ -210,7 +215,7 @@ To provision notification policies and routing, refer to the [grafana_notificati
 
 5. Click **Test** to verify that the notification point is working correctly.
 
-## Provision mute timings
+## Import mute timings
 
 Mute timings provide the ability to mute alert notifications for defined time periods.
 
@@ -243,7 +248,7 @@ To provision mute timings, refer to the [grafana_mute_timing schema](https://reg
 
 5. Click **Test** to verify that the mute timing is working correctly.
 
-## Provision alert rules
+## Import alert rules
 
 [Alert rules][alerting-rules] enable you to alert against any Grafana data source. This can be a data source that you already have configured, or you can [define your data sources in Terraform](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source) alongside your alert rules.
 
@@ -346,7 +351,7 @@ When the alert fires, Grafana routes a notification through the policy you defin
 
 For example, if you chose Slack as a contact point, Grafana’s embedded [Alertmanager](https://github.com/prometheus/alertmanager) automatically posts a message to Slack.
 
-## Edit resources in the Grafana UI
+## Edit provisioned resources in the Grafana UI
 
 By default, you cannot edit resources provisioned via Terraform in Grafana. To enable editing these resources in the Grafana UI, use the `disable_provenance` attribute on alerting resources:
 
