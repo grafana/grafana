@@ -343,9 +343,10 @@
 /packages/grafana-o11y-ds-frontend/ @grafana/observability-logs @grafana/observability-traces-and-profiling
 /packages/grafana-sql/ @grafana/partner-datasources @grafana/oss-big-tent
 
-# root files, mostly frontend 
+# root files, mostly frontend
 /.browserslistrc @grafana/frontend-ops
 /package.json @grafana/frontend-ops
+/nx.json @grafana/frontend-ops
 /tsconfig.json @grafana/frontend-ops
 /.editorconfig @grafana/frontend-ops
 /.eslintignore @grafana/frontend-ops
