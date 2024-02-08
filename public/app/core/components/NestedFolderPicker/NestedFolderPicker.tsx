@@ -10,23 +10,22 @@ import { t } from 'app/core/internationalization';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import {
-  childrenByParentUIDSelector,
   createFlatTree,
   fetchNextChildrenPage,
-  rootItemsSelector,
   useBrowseLoadingStatus,
+  useChildrenCollectionsState,
   useLoadNextChildrenPage,
 } from 'app/features/browse-dashboards/state';
-import { getPaginationPlaceholders } from 'app/features/browse-dashboards/state/utils';
 import { DashboardViewItemCollection } from 'app/features/browse-dashboards/types';
 import { QueryResponse, getGrafanaSearcher } from 'app/features/search/service';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
-import { useDispatch, useSelector } from 'app/types/store';
+import { useDispatch } from 'app/types/store';
 
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
 import { useTreeInteractions } from './hooks';
+import { EXCLUDED_KINDS } from './utils';
 
 export interface NestedFolderPickerProps {
   /* Folder UID to show as selected */
@@ -47,8 +46,6 @@ export interface NestedFolderPickerProps {
   /* Whether the picker should be clearable */
   clearable?: boolean;
 }
-
-const EXCLUDED_KINDS = ['empty-folder' as const, 'dashboard' as const];
 
 const debouncedSearch = debounce(getSearchResults, 300);
 
@@ -87,12 +84,14 @@ export function NestedFolderPicker({
   const overlayId = useId();
   const [error] = useState<Error | undefined>(undefined); // TODO: error not populated anymore
   const lastSearchTimestamp = useRef<number>(0);
+  const childrenCollections = useChildrenCollectionsState();
 
   useEffect(() => {
     if (!search) {
       setSearchResults(null);
       return;
     }
+
     const timestamp = Date.now();
     setIsFetchingSearchResults(true);
     debouncedSearch(search).then((queryResponse) => {
@@ -108,9 +107,6 @@ export function NestedFolderPicker({
       }
     });
   }, [search]);
-
-  const rootCollection = useSelector(rootItemsSelector);
-  const childrenCollections = useSelector(childrenByParentUIDSelector);
 
   // the order of middleware is important!
   const middleware = [
@@ -178,6 +174,7 @@ export function NestedFolderPicker({
   const baseHandleLoadMore = useLoadNextChildrenPage(EXCLUDED_KINDS);
   const handleLoadMore = useCallback(
     (folderUID: string | undefined) => {
+      console.log('handleLoadMore', { search, folderUID });
       if (search) {
         return;
       }
@@ -197,22 +194,16 @@ export function NestedFolderPicker({
         items: searchResults.items ?? [],
       };
 
-      return createFlatTree(undefined, searchCollection, childrenCollections, {}, 0, EXCLUDED_KINDS, excludeUIDs);
+      // TODO: searchCollection isn't passed into createFlatTree any more, so it's not used
+
+      return createFlatTree(undefined, childrenCollections, {}, 0, EXCLUDED_KINDS, excludeUIDs);
     }
 
     const allExcludedUIDs = config.sharedWithMeFolderUID
       ? [...(excludeUIDs || []), config.sharedWithMeFolderUID]
       : excludeUIDs;
 
-    let flatTree = createFlatTree(
-      undefined,
-      rootCollection,
-      childrenCollections,
-      folderOpenState,
-      0,
-      EXCLUDED_KINDS,
-      allExcludedUIDs
-    );
+    let flatTree = createFlatTree(undefined, childrenCollections, folderOpenState, 0, EXCLUDED_KINDS, allExcludedUIDs);
 
     if (showRootFolder) {
       // Increase the level of each item to 'make way' for the fake root Dashboards item
@@ -231,13 +222,14 @@ export function NestedFolderPicker({
       });
     }
 
-    // If the root collection hasn't loaded yet, create loading placeholders
-    if (!rootCollection) {
-      flatTree = flatTree.concat(getPaginationPlaceholders(PAGE_SIZE, undefined, 0));
-    }
+    // TODO: restore loading placeholders
+    // // If the root collection hasn't loaded yet, create loading placeholders
+    // if (!rootCollection) {
+    //   flatTree = flatTree.concat(getPaginationPlaceholders(PAGE_SIZE, undefined, 0));
+    // }
 
     return flatTree;
-  }, [search, searchResults, rootCollection, childrenCollections, folderOpenState, excludeUIDs, showRootFolder]);
+  }, [search, searchResults, childrenCollections, folderOpenState, excludeUIDs, showRootFolder]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {
@@ -253,6 +245,7 @@ export function NestedFolderPicker({
     [flatTree]
   );
 
+  // JOSH TODO: this is always loading now?
   const isLoading = rootStatus === 'pending' || isFetchingSearchResults;
 
   const { focusedItemIndex, handleKeyDown } = useTreeInteractions({

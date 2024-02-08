@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -10,7 +10,8 @@ import { t } from 'app/core/internationalization';
 import { getIconForItem } from 'app/features/search/service/utils';
 
 import { Indent } from '../../../core/components/Indent/Indent';
-import { useChildrenByParentUIDState } from '../state';
+import { useChildrenCollectionsState } from '../state';
+import { getChildrenStateKey } from '../state/utils';
 import { DashboardsTreeCellProps } from '../types';
 
 import { makeRowID } from './utils';
@@ -25,8 +26,13 @@ type NameCellProps = DashboardsTreeCellProps & {
 export function NameCell({ row: { original: data }, onFolderClick, treeID }: NameCellProps) {
   const styles = useStyles2(getStyles);
   const { item, level, isOpen } = data;
-  const childrenByParentUID = useChildrenByParentUIDState();
-  const isLoading = isOpen && !childrenByParentUID[item.uid];
+  const childrenCollections = useChildrenCollectionsState();
+
+  const isLoading = useMemo(() => {
+    const stateKey = getChildrenStateKey({ parentUID: item.uid });
+    return isOpen && !childrenCollections[stateKey];
+  }, [item.uid, isOpen, childrenCollections]);
+
   const iconName = getIconForItem(data.item, isOpen);
 
   if (item.kind === 'ui') {

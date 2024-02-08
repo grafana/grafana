@@ -3,18 +3,12 @@ import { DashboardViewItem } from 'app/features/search/types';
 import { BrowseDashboardsState } from '../types';
 
 export function findItem(
-  rootItems: DashboardViewItem[],
-  childrenByUID: BrowseDashboardsState['childrenByParentUID'],
+  childrenCollection: BrowseDashboardsState['children'],
   uid: string
 ): DashboardViewItem | undefined {
-  for (const item of rootItems) {
-    if (item.uid === uid) {
-      return item;
-    }
-  }
+  for (const key in childrenCollection) {
+    const children = childrenCollection[key];
 
-  for (const parentUID in childrenByUID) {
-    const children = childrenByUID[parentUID];
     if (!children) {
       continue;
     }
@@ -41,5 +35,17 @@ export function getPaginationPlaceholders(amount: number, parentUID: string | un
         uid: `${parentUID}-pagination-${index}`,
       },
     };
+  });
+}
+
+type KeyableArgs = {
+  parentUID: string | undefined;
+  excludeKinds?: string[];
+};
+
+export function getChildrenStateKey({ parentUID, excludeKinds }: KeyableArgs) {
+  return JSON.stringify({
+    parentUID: parentUID ?? '$$special_uid_for_grafana_root_folder', // JOSH TODO: we probably don't need to set a root folder uid, and just rely on it being undefined
+    excludeKinds: excludeKinds ?? [],
   });
 }

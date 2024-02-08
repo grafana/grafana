@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 
 import { CallToActionCard } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { DashboardViewItem } from 'app/features/search/types';
+import { DashboardViewItem, DashboardViewItemKind } from 'app/features/search/types';
 import { useDispatch } from 'app/types';
 
 import { PAGE_SIZE } from '../api/services';
@@ -11,12 +11,13 @@ import {
   useCheckboxSelectionState,
   setFolderOpenState,
   setItemSelectionState,
-  useChildrenByParentUIDState,
+  useChildrenCollectionsState,
   setAllSelection,
   useBrowseLoadingStatus,
   useLoadNextChildrenPage,
   fetchNextChildrenPage,
 } from '../state';
+import { getChildrenStateKey } from '../state/utils';
 import { BrowseDashboardsState, DashboardTreeSelection, SelectionState } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
@@ -28,12 +29,14 @@ interface BrowseViewProps {
   canSelect: boolean;
 }
 
+const EXCLUDED_KINDS: DashboardViewItemKind[] = [];
+
 export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewProps) {
   const status = useBrowseLoadingStatus(folderUID);
   const dispatch = useDispatch();
   const flatTree = useFlatTreeState(folderUID);
   const selectedItems = useCheckboxSelectionState();
-  const childrenByParentUID = useChildrenByParentUIDState();
+  const childrenCollections = useChildrenCollectionsState();
 
   const handleFolderClick = useCallback(
     (clickedFolderUID: string, isOpen: boolean) => {
@@ -48,7 +51,7 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
 
   const handleItemSelectionChange = useCallback(
     (item: DashboardViewItem, isSelected: boolean) => {
-      dispatch(setItemSelectionState({ item, isSelected }));
+      dispatch(setItemSelectionState({ item, isSelected, excludeKinds: EXCLUDED_KINDS }));
     },
     [dispatch]
   );
@@ -87,14 +90,14 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
 
       // Because if _all_ children, then the parent is selected (and bailed in the previous check),
       // this .some check will only return true if the children are partially selected
-      const isMixed = hasSelectedDescendants(item, childrenByParentUID, selectedItems);
+      const isMixed = hasSelectedDescendants(item, childrenCollections, selectedItems);
       if (isMixed) {
         return SelectionState.Mixed;
       }
 
       return SelectionState.Unselected;
     },
-    [selectedItems, childrenByParentUID]
+    [selectedItems, childrenCollections]
   );
 
   const isItemLoaded = useCallback(
@@ -142,7 +145,9 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
       height={height}
       isSelected={isSelected}
       onFolderClick={handleFolderClick}
-      onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState, folderUID }))}
+      onAllSelectionChange={(newState) =>
+        dispatch(setAllSelection({ isSelected: newState, folderUID, excludeKinds: EXCLUDED_KINDS }))
+      }
       onItemSelectionChange={handleItemSelectionChange}
       isItemLoaded={isItemLoaded}
       requestLoadMore={handleLoadMore}
@@ -152,10 +157,12 @@ export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewPr
 
 function hasSelectedDescendants(
   item: DashboardViewItem,
-  childrenByParentUID: BrowseDashboardsState['childrenByParentUID'],
+  childrenCollections: BrowseDashboardsState['children'],
   selectedItems: DashboardTreeSelection
 ): boolean {
-  const collection = childrenByParentUID[item.uid];
+  const childrenStateKey = getChildrenStateKey({ parentUID: item.uid, excludeKinds: EXCLUDED_KINDS });
+
+  const collection = childrenCollections[childrenStateKey];
   if (!collection) {
     return false;
   }
@@ -166,6 +173,6 @@ function hasSelectedDescendants(
       return thisIsSelected;
     }
 
-    return hasSelectedDescendants(v, childrenByParentUID, selectedItems);
+    return hasSelectedDescendants(v, childrenCollections, selectedItems);
   });
 }

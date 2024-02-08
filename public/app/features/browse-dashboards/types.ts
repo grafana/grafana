@@ -19,8 +19,8 @@ export type DashboardViewItemCollection = {
 };
 
 export interface BrowseDashboardsState {
-  rootItems: DashboardViewItemCollection | undefined;
-  childrenByParentUID: Record<string, DashboardViewItemCollection | undefined>;
+  children: Record<string, DashboardViewItemCollection | undefined>;
+
   selectedItems: DashboardTreeSelection;
 
   // Only folders can ever be open or closed, so no need to seperate this by kind

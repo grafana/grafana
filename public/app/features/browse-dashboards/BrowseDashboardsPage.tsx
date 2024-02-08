@@ -12,6 +12,7 @@ import { useDispatch } from 'app/types';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
+import { DashboardViewItemKind } from '../search/types';
 
 import { skipToken, useGetFolderQuery, useSaveFolderMutation } from './api/browseDashboardsAPI';
 import { BrowseActions } from './components/BrowseActions/BrowseActions';
@@ -27,6 +28,8 @@ export interface BrowseDashboardsPageRouteParams {
   uid?: string;
   slug?: string;
 }
+
+const EXCLUDED_KINDS: DashboardViewItemKind[] = [];
 
 export interface Props extends GrafanaRouteComponentProps<BrowseDashboardsPageRouteParams> {}
 
@@ -48,6 +51,7 @@ const BrowseDashboardsPage = memo(({ match }: Props) => {
       setAllSelection({
         isSelected: false,
         folderUID: undefined,
+        excludeKinds: EXCLUDED_KINDS,
       })
     );
   }, [dispatch, folderUID, stateManager]);

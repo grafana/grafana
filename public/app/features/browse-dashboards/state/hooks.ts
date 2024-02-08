@@ -15,20 +15,18 @@ import {
 } from '../types';
 
 import { fetchNextChildrenPage } from './actions';
-import { getPaginationPlaceholders } from './utils';
+import { getChildrenStateKey, getPaginationPlaceholders } from './utils';
 
-export const rootItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.rootItems;
-export const childrenByParentUIDSelector = (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID;
+export const childrenCollectionsSelection = (wholeState: StoreState) => wholeState.browseDashboards.children;
 export const openFoldersSelector = (wholeState: StoreState) => wholeState.browseDashboards.openFolders;
 export const selectedItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.selectedItems;
 
 const flatTreeSelector = createSelector(
-  rootItemsSelector,
-  childrenByParentUIDSelector,
+  childrenCollectionsSelection,
   openFoldersSelector,
   (wholeState: StoreState, rootFolderUID: string | undefined) => rootFolderUID,
-  (rootItems, childrenByParentUID, openFolders, folderUID) => {
-    return createFlatTree(folderUID, rootItems, childrenByParentUID, openFolders);
+  (childrenCollections, openFolders, folderUID) => {
+    return createFlatTree(folderUID, childrenCollections, openFolders);
   }
 );
 
@@ -43,8 +41,8 @@ const hasSelectionSelector = createSelector(selectedItemsSelector, (selectedItem
 // In this case, we only need to move/delete the parent folder and it will cascade to the children.
 const selectedItemsForActionsSelector = createSelector(
   selectedItemsSelector,
-  childrenByParentUIDSelector,
-  (selectedItems, childrenByParentUID) => {
+  childrenCollectionsSelection,
+  (selectedItems, childrenCollections) => {
     // Take a copy of the selected items to work with
     // We don't care about panels here, only dashboards and folders can be moved or deleted
     const result: Omit<DashboardTreeSelection, 'panel' | '$all'> = {
@@ -57,7 +55,7 @@ const selectedItemsForActionsSelector = createSelector(
       const isSelected = selectedItems.folder[folderUID];
       if (isSelected) {
         // Unselect any children in the output
-        const collection = childrenByParentUID[folderUID];
+        const collection = childrenCollections[folderUID]; // JOSH TODO: this is wrong
         if (collection) {
           for (const child of collection.items) {
             if (child.kind === 'dashboard') {
@@ -75,12 +73,15 @@ const selectedItemsForActionsSelector = createSelector(
   }
 );
 
-export function useBrowseLoadingStatus(folderUID: string | undefined): 'pending' | 'fulfilled' {
+// TODO: excludeKinds should be a DashboardUIKind or string array?
+export function useBrowseLoadingStatus(
+  folderUID: string | undefined,
+  excludeKinds?: string[]
+): 'pending' | 'fulfilled' {
   return useSelector((wholeState) => {
-    const children = folderUID
-      ? wholeState.browseDashboards.childrenByParentUID[folderUID]
-      : wholeState.browseDashboards.rootItems;
+    const stateKey = getChildrenStateKey({ parentUID: folderUID, excludeKinds });
 
+    const children = wholeState.browseDashboards.children[stateKey];
     return children ? 'fulfilled' : 'pending';
   });
 }
@@ -97,8 +98,8 @@ export function useCheckboxSelectionState() {
   return useSelector(selectedItemsSelector);
 }
 
-export function useChildrenByParentUIDState() {
-  return useSelector((wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID);
+export function useChildrenCollectionsState() {
+  return useSelector((wholeState: StoreState) => wholeState.browseDashboards.children);
 }
 
 export function useActionSelectionState() {
@@ -141,8 +142,7 @@ export function useLoadNextChildrenPage(
  */
 export function createFlatTree(
   folderUID: string | undefined,
-  rootCollection: BrowseDashboardsState['rootItems'],
-  childrenByUID: BrowseDashboardsState['childrenByParentUID'],
+  childrenCollections: BrowseDashboardsState['children'],
   openFolders: Record<string, boolean>,
   level = 0,
   excludeKinds: Array<DashboardViewItemWithUIItems['kind'] | UIDashboardViewItem['uiKind']> = [],
@@ -155,16 +155,18 @@ export function createFlatTree(
 
     const mappedChildren = createFlatTree(
       item.uid,
-      rootCollection,
-      childrenByUID,
+      childrenCollections,
       openFolders,
       level + 1,
       excludeKinds,
       excludeUIDs
     );
 
+    const childrenStateKey = getChildrenStateKey({ parentUID: item.uid, excludeKinds });
+
     const isOpen = Boolean(openFolders[item.uid]);
-    const emptyFolder = childrenByUID[item.uid]?.items.length === 0;
+    const emptyFolder = childrenCollections[childrenStateKey]?.items.length === 0;
+
     if (isOpen && emptyFolder && !excludeKinds.includes('empty-folder')) {
       mappedChildren.push({
         isOpen: false,
@@ -199,9 +201,9 @@ export function createFlatTree(
     return items;
   }
 
+  const stateKey = getChildrenStateKey({ parentUID: folderUID, excludeKinds });
+  const collection = childrenCollections[stateKey];
   const isOpen = (folderUID && openFolders[folderUID]) || level === 0;
-
-  const collection = folderUID ? childrenByUID[folderUID] : rootCollection;
 
   const items = folderUID
     ? isOpen && collection?.items // keep seperate lines

@@ -9,10 +9,13 @@ import { IconButton, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 import { Indent } from 'app/core/components/Indent/Indent';
 import { Trans } from 'app/core/internationalization';
-import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state';
+import { useChildrenCollectionsState } from 'app/features/browse-dashboards/state';
+import { getChildrenStateKey } from 'app/features/browse-dashboards/state/utils';
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useSelector } from 'app/types';
+
+import { EXCLUDED_KINDS } from './utils';
 
 const ROW_HEIGHT = 40;
 const CHEVRON_SIZE = 'md';
@@ -121,13 +124,19 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   const { item, isOpen, level, parentUID } = items[index];
   const rowRef = useRef<HTMLDivElement>(null);
   const labelId = useId();
-  const rootCollection = useSelector(rootItemsSelector);
-  const childrenCollections = useSelector(childrenByParentUIDSelector);
-  const children = (item.uid ? childrenCollections[item.uid] : rootCollection)?.items ?? [];
+
+  const childrenCollections = useChildrenCollectionsState();
+
+  const stateKey = getChildrenStateKey({ parentUID: item.uid, excludeKinds: EXCLUDED_KINDS });
+  const children = childrenCollections[stateKey]?.items ?? [];
+
   let siblings: DashboardViewItem[] = [];
   // only look for siblings if we're not at the root
   if (item.uid) {
-    siblings = (parentUID ? childrenCollections[parentUID] : rootCollection)?.items ?? [];
+    // JOSH TODO: type parentUID of says its always string, but there's a check to check if it's falsy
+    // maybe it can be empty string? or the type just isn't that accurate?
+    const siblingStateKey = getChildrenStateKey({ parentUID, excludeKinds: EXCLUDED_KINDS });
+    siblings = childrenCollections[siblingStateKey]?.items ?? [];
   }
 
   const styles = useStyles2(getStyles);

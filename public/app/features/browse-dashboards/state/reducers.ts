@@ -6,14 +6,13 @@ import { isSharedWithMe } from '../components/utils';
 import { BrowseDashboardsState } from '../types';
 
 import { fetchNextChildrenPage, refetchChildren } from './actions';
-import { findItem } from './utils';
+import { findItem, getChildrenStateKey } from './utils';
 
 type FetchNextChildrenPageFulfilledAction = ReturnType<typeof fetchNextChildrenPage.fulfilled>;
 type RefetchChildrenFulfilledAction = ReturnType<typeof refetchChildren.fulfilled>;
 
 export function refetchChildrenFulfilled(state: BrowseDashboardsState, action: RefetchChildrenFulfilledAction) {
   const { children, page, kind, lastPageOfKind } = action.payload;
-  const { parentUID } = action.meta.arg;
 
   const newCollection = {
     items: children,
@@ -23,11 +22,8 @@ export function refetchChildrenFulfilled(state: BrowseDashboardsState, action: R
     isFullyLoaded: kind === 'dashboard' && lastPageOfKind,
   };
 
-  if (parentUID) {
-    state.childrenByParentUID[parentUID] = newCollection;
-  } else {
-    state.rootItems = newCollection;
-  }
+  const stateKey = getChildrenStateKey(action.meta.arg);
+  state.children[stateKey] = newCollection;
 }
 
 export function fetchNextChildrenPageFulfilled(
@@ -43,7 +39,8 @@ export function fetchNextChildrenPageFulfilled(
   const { children, page, kind, lastPageOfKind } = payload;
   const { parentUID, excludeKinds = [] } = action.meta.arg;
 
-  const collection = parentUID ? state.childrenByParentUID[parentUID] : state.rootItems;
+  const stateKey = getChildrenStateKey(action.meta.arg);
+  const collection = state.children[stateKey];
   const prevItems = collection?.items ?? [];
 
   const newCollection = {
@@ -54,18 +51,15 @@ export function fetchNextChildrenPageFulfilled(
     isFullyLoaded: !excludeKinds.includes('dashboard') ? kind === 'dashboard' && lastPageOfKind : lastPageOfKind,
   };
 
-  if (!parentUID) {
-    state.rootItems = newCollection;
-    return;
-  }
+  state.children[stateKey] = newCollection;
 
-  state.childrenByParentUID[parentUID] = newCollection;
-
-  // If the parent of the items we've loaded are selected, we must select all these items also
-  const parentIsSelected = state.selectedItems.folder[parentUID];
-  if (parentIsSelected) {
-    for (const child of children) {
-      state.selectedItems[child.kind][child.uid] = true;
+  if (parentUID) {
+    // If the parent of the items we've loaded are selected, we must select all these items also
+    const parentIsSelected = state.selectedItems.folder[parentUID];
+    if (parentIsSelected) {
+      for (const child of children) {
+        state.selectedItems[child.kind][child.uid] = true;
+      }
     }
   }
 }
@@ -78,14 +72,20 @@ export function setFolderOpenState(
   state.openFolders[folderUID] = isOpen;
 }
 
+interface SetItemSelectionStatePayload {
+  item: Pick<DashboardViewItem, 'kind' | 'uid' | 'parentUID'>;
+  isSelected: boolean;
+  excludeKinds: DashboardViewItemKind[];
+}
+
 export function setItemSelectionState(
   state: BrowseDashboardsState,
 
   // SearchView doesn't use DashboardViewItemKind (yet), so we pick just the specific properties
   // we're interested in
-  action: PayloadAction<{ item: Pick<DashboardViewItem, 'kind' | 'uid' | 'parentUID'>; isSelected: boolean }>
+  action: PayloadAction<SetItemSelectionStatePayload>
 ) {
-  const { item, isSelected } = action.payload;
+  const { item, isSelected, excludeKinds } = action.payload;
 
   // UI shouldn't allow it, but also prevent sharedwithme from being selected
   if (isSharedWithMe(item.uid)) {
@@ -95,13 +95,14 @@ export function setItemSelectionState(
   // Selecting a folder selects all children, and unselecting a folder deselects all children
   // so propagate the new selection state to all descendants
   function markChildren(kind: DashboardViewItemKind, uid: string) {
+    const stateKey = getChildrenStateKey({ parentUID: uid, excludeKinds });
     state.selectedItems[kind][uid] = isSelected;
 
     if (kind !== 'folder') {
       return;
     }
 
-    let collection = state.childrenByParentUID[uid];
+    let collection = state.children[stateKey];
     for (const child of collection?.items ?? []) {
       markChildren(child.kind, child.uid);
     }
@@ -114,7 +115,7 @@ export function setItemSelectionState(
     let nextParentUID = item.parentUID;
 
     while (nextParentUID) {
-      const parent = findItem(state.rootItems?.items ?? [], state.childrenByParentUID, nextParentUID);
+      const parent = findItem(state.children, nextParentUID);
 
       // This case should not happen, but a find can theortically return undefined, and it
       // helps limit infinite loops
@@ -130,14 +131,19 @@ export function setItemSelectionState(
   }
 
   // Check to see if we should mark the header checkbox selected if all root items are selected
-  state.selectedItems.$all = state.rootItems?.items?.every((v) => state.selectedItems[v.kind][v.uid]) ?? false;
+  const rootStateKey = getChildrenStateKey({ parentUID: undefined, excludeKinds: action.payload.excludeKinds });
+  state.selectedItems.$all =
+    state.children[rootStateKey]?.items?.every((v) => state.selectedItems[v.kind][v.uid]) ?? false;
 }
 
-export function setAllSelection(
-  state: BrowseDashboardsState,
-  action: PayloadAction<{ isSelected: boolean; folderUID: string | undefined }>
-) {
-  const { isSelected, folderUID: folderUIDArg } = action.payload;
+interface SetAllSelectionPayload {
+  isSelected: boolean;
+  folderUID: string | undefined;
+  excludeKinds: DashboardViewItemKind[];
+}
+
+export function setAllSelection(state: BrowseDashboardsState, action: PayloadAction<SetAllSelectionPayload>) {
+  const { isSelected, folderUID: folderUIDArg, excludeKinds } = action.payload;
 
   // If we're in the folder view for sharedwith me (currently not supported)
   // bail and don't select anything
@@ -161,7 +167,8 @@ export function setAllSelection(
         return;
       }
 
-      const collection = folderUID ? state.childrenByParentUID[folderUID] : state.rootItems;
+      const stateKey = getChildrenStateKey({ parentUID: folderUID, excludeKinds });
+      const collection = state.children[stateKey];
 
       // Bail early if the collection isn't found (not loaded yet)
       if (!collection) {

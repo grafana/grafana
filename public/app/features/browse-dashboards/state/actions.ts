@@ -5,7 +5,7 @@ import { createAsyncThunk } from 'app/types';
 import { listDashboards, listFolders, PAGE_SIZE } from '../api/services';
 import { DashboardViewItemWithUIItems, UIDashboardViewItem } from '../types';
 
-import { findItem } from './utils';
+import { findItem, getChildrenStateKey } from './utils';
 
 interface FetchNextChildrenPageArgs {
   parentUID: string | undefined;
@@ -38,12 +38,12 @@ export const refreshParents = createAsyncThunk(
   'browseDashboards/refreshParents',
   async (uids: string[], { getState, dispatch }) => {
     const { browseDashboards } = getState();
-    const { rootItems, childrenByParentUID } = browseDashboards;
+    const { children } = browseDashboards;
     const parentsToRefresh = new Set<string | undefined>();
 
     for (const uid of uids) {
       // find the parent folder uid
-      const item = findItem(rootItems?.items ?? [], childrenByParentUID, uid);
+      const item = findItem(children, uid);
       parentsToRefresh.add(item?.parentUID);
     }
 
@@ -100,7 +100,9 @@ export const fetchNextChildrenPage = createAsyncThunk(
     const uid = parentUID === GENERAL_FOLDER_UID ? undefined : parentUID;
 
     const state = thunkAPI.getState().browseDashboards;
-    const collection = uid ? state.childrenByParentUID[uid] : state.rootItems;
+
+    const stateKey = getChildrenStateKey({ parentUID: uid, excludeKinds });
+    const collection = state.children[stateKey];
 
     let page = 1;
     let fetchKind: DashboardViewItemKind | undefined = undefined;

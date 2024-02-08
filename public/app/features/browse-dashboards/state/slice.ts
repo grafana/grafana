@@ -8,8 +8,11 @@ import * as allReducers from './reducers';
 const { fetchNextChildrenPageFulfilled, refetchChildrenFulfilled, ...baseReducers } = allReducers;
 
 const initialState: BrowseDashboardsState = {
-  rootItems: undefined,
-  childrenByParentUID: {},
+  children: {},
+
+  // rootItems: undefined, // deprecated, moving to children
+  // childrenByParentUID: {}, // deprecated, moving to children
+
   openFolders: {},
   selectedItems: {
     dashboard: {},
