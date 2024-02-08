@@ -55,8 +55,12 @@ func (o *Options) Validate() []error {
 		return errs
 	}
 
-	if errs := o.RecommendedOptions.Authentication.Validate(); len(errs) != 0 {
-		return errs
+	if o.ExtraOptions.DevMode {
+		// NOTE: Only consider authn for dev mode - resolves the failure due to missing extension apiserver auth-config
+		// in parent k8s
+		if errs := o.RecommendedOptions.Authentication.Validate(); len(errs) != 0 {
+			return errs
+		}
 	}
 
 	if o.StorageOptions.StorageType == StorageTypeEtcd {
@@ -83,8 +87,12 @@ func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) erro
 		return err
 	}
 
-	if err := o.RecommendedOptions.Authentication.ApplyTo(&serverConfig.Authentication, serverConfig.SecureServing, serverConfig.OpenAPIConfig); err != nil {
-		return err
+	if o.ExtraOptions.DevMode {
+		// NOTE: Only consider authn for dev mode - resolves the failure due to missing extension apiserver auth-config
+		// in parent k8s
+		if err := o.RecommendedOptions.Authentication.ApplyTo(&serverConfig.Authentication, serverConfig.SecureServing, serverConfig.OpenAPIConfig); err != nil {
+			return err
+		}
 	}
 
 	if !o.ExtraOptions.DevMode {
