@@ -73,21 +73,6 @@ func (v *NotificationSettingsValidationService) Validator(ctx context.Context, o
 	return NewNotificationSettingsValidator(&cfg.AlertmanagerConfig), nil
 }
 
-// Validate checks that the given NotificationSettings are valid for the given orgID.
-func (v *NotificationSettingsValidationService) Validate(ctx context.Context, orgID int64, settings []models.NotificationSettings) error {
-	validator, err := v.Validator(ctx, orgID)
-	if err != nil {
-		return err
-	}
-	var errs []error
-	for _, setting := range settings {
-		if err := validator.Validate(setting); err != nil {
-			errs = append(errs, err)
-		}
-	}
-	return errors.Join(errs...)
-}
-
 type CachedNotificationSettingsValidationService struct {
 	srv        *NotificationSettingsValidationService
 	mtx        sync.Mutex
