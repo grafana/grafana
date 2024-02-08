@@ -86,10 +86,10 @@ describe('SaveDashboardAsForm', () => {
       );
 
       const variablesCheckbox = screen.getByRole('checkbox', {
-        name: 'Dashboard settings Save Dashboard Modal Save variables checkbox',
+        name: 'Save current variable values as dashboard default',
       });
       const timeRangeCheckbox = screen.getByRole('checkbox', {
-        name: 'Dashboard settings Save Dashboard Modal Save timerange checkbox',
+        name: 'Save current time range as dashboard default',
       });
 
       expect(variablesCheckbox).toBeInTheDocument();

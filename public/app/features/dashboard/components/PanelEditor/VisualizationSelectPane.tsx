@@ -98,7 +98,7 @@ export const VisualizationSelectPane = ({ panel, data }: Props) => {
             variant="secondary"
             icon="angle-up"
             className={styles.closeButton}
-            aria-label={selectors.components.PanelEditor.toggleVizPicker}
+            data-testid={selectors.components.PanelEditor.toggleVizPicker}
             onClick={onCloseVizPicker}
           />
         </div>
