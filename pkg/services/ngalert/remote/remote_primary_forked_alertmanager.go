@@ -48,13 +48,14 @@ func NewRemotePrimaryForkedAlertmanager(cfg RemotePrimaryConfig, internal notifi
 	}, nil
 }
 
+// ApplyConfig calls ApplyConfig on the remote Alertmanager in case it hasn't been marked as "ready" yet.
+// This is how we make sure we send the configuration on startup.
+// It then calls ApplyConfig on the internal Alertmanager.
 func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
-	fmt.Println("forked.ApplyConfig()")
-	// If the Alertmanager has not been marked as "ready" yet, delegate the call to the remote Alertmanager.
-	// This will perform a readiness check and sync the Alertmanagers.
 	if !fam.remote.Ready() {
+		// ApplyConfig will perform a readiness check and sync the Alertmanagers.
 		if err := fam.remote.ApplyConfig(ctx, config); err != nil {
-			// In remote primary mode, we care about errors in the remote Alertmanager.
+			// In remote primary mode we care about errors in the remote Alertmanager.
 			return fmt.Errorf("failed to apply config to the remote Alertmanager: %w", err)
 		}
 	}
@@ -63,7 +64,6 @@ func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, con
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
-	fmt.Println("forked.SaveAndApplyConfig()")
 	rawConfig, err := json.Marshal(config)
 	if err != nil {
 		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
@@ -102,7 +102,6 @@ func (fam *RemotePrimaryForkedAlertmanager) GetStatus() apimodels.GettableStatus
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) CreateSilence(ctx context.Context, silence *apimodels.PostableSilence) (string, error) {
-	fmt.Println("forked.CreateSilence()")
 	// Create que silence in the remote Alertmanager.
 	_, err := fam.remote.CreateSilence(ctx, silence)
 	if err != nil {
@@ -115,7 +114,6 @@ func (fam *RemotePrimaryForkedAlertmanager) CreateSilence(ctx context.Context, s
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) DeleteSilence(ctx context.Context, id string) error {
-	fmt.Println("forked.DeleteSilence()")
 	if err := fam.remote.DeleteSilence(ctx, id); err != nil {
 		return fmt.Errorf("failed to delete silence in the remote Alertmanager: %w", err)
 	}
