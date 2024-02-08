@@ -595,37 +595,37 @@ func init() {
 	})
 
 	MAccessPermissionsSummary = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Name:    "access_permissions_duration",
+		Name:    "access_permissions_duration_seconds",
 		Help:    "Histogram for the runtime of permissions check function.",
 		Buckets: prometheus.ExponentialBuckets(0.00001, 4, 10),
 	})
 
 	MAccessEvaluationsSummary = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Name:    "access_evaluation_duration",
+		Name:    "access_evaluation_duration_seconds",
 		Help:    "Histogram for the runtime of evaluation function.",
 		Buckets: prometheus.ExponentialBuckets(0.00001, 4, 10),
 	})
 
 	MAccessEvaluationCount = prometheus.NewCounter(prometheus.CounterOpts{
-		Name:      "access_evaluation_count",
+		Name:      "access_evaluation_total",
 		Help:      "number of evaluation calls",
 		Namespace: ExporterName,
 	})
 
 	MAccessSearchPermissionsSummary = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Name:    "access_search_permissions_duration",
+		Name:    "access_search_permissions_duration_seconds",
 		Help:    "Histogram for the runtime of permissions search function",
 		Buckets: prometheus.ExponentialBuckets(0.001, 10, 6),
 	})
 
 	MAccessPermissionsCacheUsage = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
-		Name:      "access_permissions_cache_usage",
+		Name:      "access_permissions_cache_usage_total",
 		Help:      "access control permissions cache hit/miss",
 		Namespace: ExporterName,
 	}, []string{"status"}, map[string][]string{"status": accesscontrol.CacheUsageStatuses})
 
 	MAccessSearchUserPermissionsCacheUsage = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
-		Name:      "access_search_user_permissions_cache_usage",
+		Name:      "access_search_user_permissions_cache_usage_total",
 		Help:      "access control search user permissions cache hit/miss",
 		Namespace: ExporterName,
 	}, []string{"status"}, map[string][]string{"status": accesscontrol.CacheUsageStatuses})
