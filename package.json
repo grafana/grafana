@@ -410,7 +410,7 @@
   "resolutions": {
     "underscore": "1.13.6",
     "@types/slate": "0.47.11",
-    "ngtemplate-loader/loader-utils": "^2.0.0",
+    "ngtemplate-loader/loader-utils": "^3.0.0",
     "semver@~7.0.0": "7.5.4",
     "semver@7.3.4": "7.5.4",
     "debug@npm:^0.7.2": "2.6.9",
