@@ -117,7 +117,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     flexDirection: 'column',
     listStyleType: 'none',
-    padding: theme.spacing(1),
+    padding: theme.spacing(1, 1, 2, 1),
     [theme.breakpoints.up('md')]: {
       width: MENU_WIDTH,
     },
