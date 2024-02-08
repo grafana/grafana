@@ -530,10 +530,14 @@ func (ss *sqlStore) GetDescendants(ctx context.Context, orgID int64, ancestor_ui
 }
 
 func getFullpathSQL(dialect migrator.Dialect) string {
+	escaped := "\\/"
+	if dialect.DriverName() == migrator.MySQL {
+		escaped = "\\\\/"
+	}
 	concatCols := make([]string, 0, folder.MaxNestedFolderDepth)
-	concatCols = append(concatCols, "COALESCE(REPLACE(f0.title, '/', '\\/'), '')")
+	concatCols = append(concatCols, fmt.Sprintf("COALESCE(REPLACE(f0.title, '/', '%s'), '')", escaped))
 	for i := 1; i <= folder.MaxNestedFolderDepth; i++ {
-		concatCols = append([]string{fmt.Sprintf("COALESCE(REPLACE(f%d.title, '/', '\\/'), '')", i), "'/'"}, concatCols...)
+		concatCols = append([]string{fmt.Sprintf("COALESCE(REPLACE(f%d.title, '/', '%s'), '')", i, escaped), "'/'"}, concatCols...)
 	}
 	return dialect.Concat(concatCols...)
 }
