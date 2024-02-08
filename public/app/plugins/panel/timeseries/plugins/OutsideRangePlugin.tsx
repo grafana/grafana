@@ -46,7 +46,7 @@ export const OutsideRangePlugin = ({ config, onChangeTimeRange }: ThresholdContr
   for (; i < timevalues.length && timevalues[i] == null; i++) {}
 
   // Decrement j until we get the first non-null-value
-  for (; j >= 0 && timevalues[j] == null; j--) {}
+  for (; j >= i && timevalues[j] == null; j--) {}
 
   // Grab the first and last time values
   const last = timevalues[i];
