@@ -288,7 +288,7 @@ func TestDataSourceQueryError(t *testing.T) {
 			})
 			srv := SetupAPITestServer(t, func(hs *HTTPServer) {
 				cfg := setting.NewCfg()
-				r := registry.NewSinglePluginVersionRegistry()
+				r := registry.NewInMemory()
 				err := r.Add(context.Background(), p)
 				require.NoError(t, err)
 				ds := &fakeDatasources.FakeDataSourceService{}

@@ -198,24 +198,24 @@ func (c *AsExternal) Filter(cl plugins.Class, bundles []*plugins.FoundBundle) ([
 	return bundles, nil
 }
 
-// DuplicatePluginValidation is a filter step that will filter out any plugins that are already registered with the same
+// DuplicatePluginIDValidation is a filter step that will filter out any plugins that are already registered with the same
 // plugin ID. This includes both the primary plugin and child plugins, which are matched using the plugin.json plugin
 // ID field.
-type DuplicatePluginValidation struct {
+type DuplicatePluginIDValidation struct {
 	registry registry.Service
 	log      log.Logger
 }
 
-// NewDuplicatePluginFilterStep returns a new DuplicatePluginValidation.
-func NewDuplicatePluginFilterStep(registry registry.Service) *DuplicatePluginValidation {
-	return &DuplicatePluginValidation{
+// NewDuplicatePluginIDFilterStep returns a new DuplicatePluginIDValidation.
+func NewDuplicatePluginIDFilterStep(registry registry.Service) *DuplicatePluginIDValidation {
+	return &DuplicatePluginIDValidation{
 		registry: registry,
 		log:      log.New("plugins.dedupe"),
 	}
 }
 
 // Filter will filter out any plugins that have already been registered under the same plugin ID.
-func (d *DuplicatePluginValidation) Filter(ctx context.Context, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
+func (d *DuplicatePluginIDValidation) Filter(ctx context.Context, bundles []*plugins.FoundBundle) ([]*plugins.FoundBundle, error) {
 	res := make([]*plugins.FoundBundle, 0, len(bundles))
 
 	var matchesPluginIDFunc = func(fp plugins.FoundPlugin) func(p *plugins.Plugin) bool {

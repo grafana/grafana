@@ -17,9 +17,9 @@ const (
 	v2       = "2.0.0"
 )
 
-func TestSinglePluginVersion(t *testing.T) {
+func TestInMemory(t *testing.T) {
 	t.Run("Test mix of registry operations", func(t *testing.T) {
-		i := NewSinglePluginVersionRegistry()
+		i := NewInMemory()
 		ctx := context.Background()
 
 		p, exists := i.Plugin(ctx, pluginID, v1)
@@ -53,7 +53,7 @@ func TestSinglePluginVersion(t *testing.T) {
 	})
 }
 
-func TestSinglePluginVersion_Add(t *testing.T) {
+func TestInMemory_Add(t *testing.T) {
 	type mocks struct {
 		store map[string]*plugins.Plugin
 	}
@@ -124,7 +124,7 @@ func TestSinglePluginVersion_Add(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &SinglePluginVersion{
+			i := &InMemory{
 				store: tt.mocks.store,
 			}
 			err := i.Add(context.Background(), tt.args.p)
@@ -133,7 +133,7 @@ func TestSinglePluginVersion_Add(t *testing.T) {
 	}
 }
 
-func TestSinglePluginVersion_Plugin(t *testing.T) {
+func TestInMemory_Plugin(t *testing.T) {
 	type mocks struct {
 		store map[string]*plugins.Plugin
 	}
@@ -182,7 +182,7 @@ func TestSinglePluginVersion_Plugin(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &SinglePluginVersion{
+			i := &InMemory{
 				store: tt.mocks.store,
 			}
 			p, exists := i.Plugin(context.Background(), tt.args.pluginID, "")
@@ -194,7 +194,7 @@ func TestSinglePluginVersion_Plugin(t *testing.T) {
 	}
 }
 
-func TestSinglePluginVersion_Plugins(t *testing.T) {
+func TestInMemory_Plugins(t *testing.T) {
 	type mocks struct {
 		store map[string]*plugins.Plugin
 	}
@@ -242,7 +242,7 @@ func TestSinglePluginVersion_Plugins(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &SinglePluginVersion{
+			i := &InMemory{
 				store: tt.mocks.store,
 			}
 			result := i.Plugins(context.Background())
@@ -256,7 +256,7 @@ func TestSinglePluginVersion_Plugins(t *testing.T) {
 	}
 }
 
-func TestSinglePluginVersion_Remove(t *testing.T) {
+func TestInMemory_Remove(t *testing.T) {
 	type mocks struct {
 		store map[string]*plugins.Plugin
 	}
@@ -296,7 +296,7 @@ func TestSinglePluginVersion_Remove(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			i := &SinglePluginVersion{
+			i := &InMemory{
 				store: tt.mocks.store,
 			}
 			err := i.Remove(context.Background(), tt.args.pluginID, "")
@@ -307,7 +307,7 @@ func TestSinglePluginVersion_Remove(t *testing.T) {
 
 func TestAliasSupport(t *testing.T) {
 	t.Run("Test alias operations", func(t *testing.T) {
-		i := NewSinglePluginVersionRegistry()
+		i := NewInMemory()
 		ctx := context.Background()
 
 		pluginIdNew := "plugin-new"

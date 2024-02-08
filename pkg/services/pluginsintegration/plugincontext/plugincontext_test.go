@@ -30,7 +30,7 @@ func TestGet(t *testing.T) {
 		alias    = "alias"
 	)
 
-	preg := registry.NewSinglePluginVersionRegistry()
+	preg := registry.NewInMemory()
 	require.NoError(t, preg.Add(context.Background(), &plugins.Plugin{
 		JSONData: plugins.JSONData{
 			ID:       pluginID,
