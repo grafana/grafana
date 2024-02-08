@@ -22,7 +22,7 @@ const getPageNav = (config?: SSOProvider): NavModelItem => {
     };
   }
 
-  const [_, providerDisplayName] = UIMap[config.provider] || ['lock', config.provider.toUpperCase()];
+  const providerDisplayName = UIMap[config.provider][1] || config.provider.toUpperCase();
 
   return {
     text: providerDisplayName || '',
