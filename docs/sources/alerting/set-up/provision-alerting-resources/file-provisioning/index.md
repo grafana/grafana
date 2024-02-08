@@ -17,7 +17,7 @@ title: Use configuration files to provision alerting resources
 weight: 100
 ---
 
-# Use file provisioning to manage alerting resources
+# Use configuration files to provision alerting resources
 
 Manage your alerting resources using files from disk. When you start Grafana, the data from these files is created in your Grafana system. Grafana adds any new resources you created, updates any that you changed, and deletes old ones.
 
@@ -25,7 +25,7 @@ Arrange your files in a directory in a way that best suits your use case. For ex
 
 Details on how to set up the files and which fields are required for each object are listed below depending on which resource you are provisioning.
 
-**Note:**
+**Notes:**
 
 You cannot edit provisioned resources from files in Grafana. You can only change the resource properties by changing the provisioning file and restarting Grafana or carrying out a hot reload. This prevents changes being made to the resource that would be overwritten if a file is provisioned again or a hot reload is carried out.
 
@@ -36,7 +36,7 @@ Importing takes place during the initial set up of your Grafana system, but you 
 Create or delete alert rules in your Grafana instance(s).
 
 1. Create alert rules in Grafana.
-1. Use the [Alerting provisioning API][alerting_provisioning] export endpoints to download a provisioning file for your alert rules.
+1. [Export][alerting_export] and download a provisioning file for your alert rules.
 1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.
@@ -140,7 +140,7 @@ deleteRules:
 Create or delete contact points in your Grafana instance(s).
 
 1. Create a contact point in Grafana.
-1. Use the [Alerting provisioning API][alerting_provisioning] export endpoints to download a provisioning file for your contact point.
+1. [Export][alerting_export] and download a provisioning file for your contact point.
 1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.
@@ -501,7 +501,7 @@ settings:
 Create or reset the notification policy tree in your Grafana instance(s).
 
 1. Create a notification policy in Grafana.
-1. Use the [Alerting provisioning API][alerting_provisioning] export endpoints to download a provisioning file for your notification policy.
+1. [Export][alerting_export] and download a provisioning file for your notification policy.
 1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.
@@ -733,9 +733,8 @@ spec:
 This eliminates the need for a persistent database to use Grafana Alerting in Kubernetes; all your provisioned resources appear after each restart or re-deployment. Grafana still requires a database for normal operation, you do not need to persist the contents of the database between restarts if all objects are provisioned using files.
 
 {{% docs/reference %}}
-[alerting_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/alerting_provisioning"
-[alerting_provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/alerting_provisioning"
-
+[alerting_export]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources"
+[alerting_export]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources"
 [reload-provisioning-configurations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/admin#reload-provisioning-configurations"
 [reload-provisioning-configurations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/admin#reload-provisioning-configurations"
 {{% /docs/reference %}}
