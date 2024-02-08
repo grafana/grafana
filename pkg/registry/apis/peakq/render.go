@@ -16,6 +16,7 @@ import (
 
 	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template"
 )
 
 type renderREST struct {
@@ -44,7 +45,7 @@ func (r *renderREST) Connect(ctx context.Context, name string, opts runtime.Obje
 	if err != nil {
 		return nil, err
 	}
-	template, ok := obj.(*peakq.QueryTemplate)
+	t, ok := obj.(*peakq.QueryTemplate)
 	if !ok {
 		return nil, fmt.Errorf("expected template")
 	}
@@ -55,12 +56,14 @@ func (r *renderREST) Connect(ctx context.Context, name string, opts runtime.Obje
 			responder.Error(err)
 			return
 		}
-		rq, err := Render(template.Spec, input)
+		out, err := template.RenderTemplate(t.Spec, input)
 		if err != nil {
 			responder.Error(fmt.Errorf("failed to render: %w", err))
 			return
 		}
-		responder.Object(http.StatusOK, rq)
+		responder.Object(http.StatusOK, &peakq.RenderedQuery{
+			Targets: out,
+		})
 	}), nil
 }
 
@@ -105,15 +108,15 @@ func makeVarMapFromParams(v url.Values) (map[string][]string, error) {
 }
 
 type replacement struct {
-	*peakq.Position
-	*peakq.TemplateVariable
-	format peakq.VariableFormat
+	*template.Position
+	*template.TemplateVariable
+	format template.VariableFormat
 }
 
-func getReplacementMap(qt peakq.QueryTemplateSpec) map[int]map[string][]replacement {
+func getReplacementMap(qt template.QueryTemplate) map[int]map[string][]replacement {
 	byTargetPath := make(map[int]map[string][]replacement)
 
-	varMap := make(map[string]*peakq.TemplateVariable, len(qt.Variables))
+	varMap := make(map[string]*template.TemplateVariable, len(qt.Variables))
 	for i, v := range qt.Variables {
 		varMap[v.Key] = &qt.Variables[i]
 	}
@@ -146,7 +149,7 @@ func getReplacementMap(qt peakq.QueryTemplateSpec) map[int]map[string][]replacem
 	return byTargetPath
 }
 
-func Render(qt peakq.QueryTemplateSpec, selectedValues map[string][]string) (*peakq.RenderedQuery, error) {
+func Render(qt template.QueryTemplate, selectedValues map[string][]string) (*peakq.RenderedQuery, error) {
 	targets := qt.DeepCopy().Targets
 
 	rawTargetObjects := make([]*ajson.Node, len(qt.Targets))
@@ -180,7 +183,7 @@ func Render(qt peakq.QueryTemplateSpec, selectedValues map[string][]string) (*pe
 			s = s[1 : len(s)-1]
 			var offSet int64
 			for _, r := range reps {
-				value := []rune(formatVariables(r.format, selectedValues[r.Key]))
+				value := []rune(template.FormatVariables(r.format, selectedValues[r.Key]))
 				if r.Position == nil {
 					return nil, fmt.Errorf("nil position not support yet, will be full replacement")
 				}

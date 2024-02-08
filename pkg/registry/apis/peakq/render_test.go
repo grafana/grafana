@@ -6,27 +6,27 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
-	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template"
 )
 
-var nestedFieldRender = peakq.QueryTemplateSpec{
+var nestedFieldRender = template.QueryTemplate{
 	Title: "Test",
-	Variables: []peakq.TemplateVariable{
+	Variables: []template.TemplateVariable{
 		{
 			Key: "metricName",
 		},
 	},
-	Targets: []peakq.Target{
+	Targets: []template.Target{
 		{
 			DataType: data.FrameTypeUnknown,
 			//DataTypeVersion: data.FrameTypeVersion{0, 0},
 
-			Variables: map[string][]peakq.VariableReplacement{
+			Variables: map[string][]template.VariableReplacement{
 				"metricName": {
 					{
 						Path: "$.nestedObject.anArray[0]",
-						Position: &peakq.Position{
+						Position: &template.Position{
 							Start: 0,
 							End:   3,
 						},
@@ -42,14 +42,14 @@ var nestedFieldRender = peakq.QueryTemplateSpec{
 	},
 }
 
-var nestedFieldRenderedTargets = []peakq.Target{
+var nestedFieldRenderedTargets = []template.Target{
 	{
 		DataType: data.FrameTypeUnknown,
-		Variables: map[string][]peakq.VariableReplacement{
+		Variables: map[string][]template.VariableReplacement{
 			"metricName": {
 				{
 					Path: "$.nestedObject.anArray[0]",
-					Position: &peakq.Position{
+					Position: &template.Position{
 						Start: 0,
 						End:   3,
 					},
@@ -67,17 +67,17 @@ var nestedFieldRenderedTargets = []peakq.Target{
 }
 
 func TestNestedFieldRender(t *testing.T) {
-	rT, err := Render(nestedFieldRender, map[string][]string{"metricName": {"up"}})
+	rT, err := template.RenderTemplate(nestedFieldRender, map[string][]string{"metricName": {"up"}})
 	require.NoError(t, err)
 	require.Equal(t,
 		nestedFieldRenderedTargets,
-		rT.Targets,
+		rT,
 	)
 }
 
-var multiVarTemplate = peakq.QueryTemplateSpec{
+var multiVarTemplate = template.QueryTemplate{
 	Title: "Test",
-	Variables: []peakq.TemplateVariable{
+	Variables: []template.TemplateVariable{
 		{
 			Key: "metricName",
 		},
@@ -85,23 +85,23 @@ var multiVarTemplate = peakq.QueryTemplateSpec{
 			Key: "anotherMetric",
 		},
 	},
-	Targets: []peakq.Target{
+	Targets: []template.Target{
 		{
 			DataType: data.FrameTypeUnknown,
 			//DataTypeVersion: data.FrameTypeVersion{0, 0},
 
-			Variables: map[string][]peakq.VariableReplacement{
+			Variables: map[string][]template.VariableReplacement{
 				"metricName": {
 					{
 						Path: "$.expr",
-						Position: &peakq.Position{
+						Position: &template.Position{
 							Start: 4,
 							End:   14,
 						},
 					},
 					{
 						Path: "$.expr",
-						Position: &peakq.Position{
+						Position: &template.Position{
 							Start: 37,
 							End:   47,
 						},
@@ -110,7 +110,7 @@ var multiVarTemplate = peakq.QueryTemplateSpec{
 				"anotherMetric": {
 					{
 						Path: "$.expr",
-						Position: &peakq.Position{
+						Position: &template.Position{
 							Start: 21,
 							End:   34,
 						},
@@ -125,21 +125,21 @@ var multiVarTemplate = peakq.QueryTemplateSpec{
 	},
 }
 
-var multiVarRenderedTargets = []peakq.Target{
+var multiVarRenderedTargets = []template.Target{
 	{
 		DataType: data.FrameTypeUnknown,
-		Variables: map[string][]peakq.VariableReplacement{
+		Variables: map[string][]template.VariableReplacement{
 			"metricName": {
 				{
 					Path: "$.expr",
-					Position: &peakq.Position{
+					Position: &template.Position{
 						Start: 4,
 						End:   14,
 					},
 				},
 				{
 					Path: "$.expr",
-					Position: &peakq.Position{
+					Position: &template.Position{
 						Start: 37,
 						End:   47,
 					},
@@ -148,7 +148,7 @@ var multiVarRenderedTargets = []peakq.Target{
 			"anotherMetric": {
 				{
 					Path: "$.expr",
-					Position: &peakq.Position{
+					Position: &template.Position{
 						Start: 21,
 						End:   34,
 					},
@@ -175,22 +175,22 @@ func TestMultiVarTemplate(t *testing.T) {
 }
 
 func TestRenderWithRune(t *testing.T) {
-	qt := peakq.QueryTemplateSpec{
-		Variables: []peakq.TemplateVariable{
+	qt := template.QueryTemplate{
+		Variables: []template.TemplateVariable{
 			{
 				Key: "name",
 			},
 		},
-		Targets: []peakq.Target{
+		Targets: []template.Target{
 			{
 				Properties: query.NewGenericDataQuery(map[string]any{
 					"message": "🐦 name!",
 				}),
-				Variables: map[string][]peakq.VariableReplacement{
+				Variables: map[string][]template.VariableReplacement{
 					"name": {
 						{
 							Path: "$.message",
-							Position: &peakq.Position{
+							Position: &template.Position{
 								Start: 2,
 								End:   6,
 							},
