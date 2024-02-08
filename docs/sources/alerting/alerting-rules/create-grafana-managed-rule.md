@@ -154,7 +154,7 @@ Complete the following steps to set up labels and notifications.
       All alert rules and instances, irrespective of their labels, match the default notification policy. If there are no nested policies, or no nested policies match the labels in the alert rule or alert instance, then the default notification policy is the matching policy.
    {{% /admonition %}}
 
-   1. Preview your alert instance routing set up:
+   1. Preview your alert instance routing set up.
 
       Based on the labels added, alert instances are routed to the following notification policies displayed.
 
