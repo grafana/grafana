@@ -70,16 +70,16 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 			SyncUser:        true,
 			FetchSyncedUser: true,
 			SyncPermissions: true,
-			SyncOrgRoles:    !s.cfg.JWTAuthSkipOrgRoleSync,
-			AllowSignUp:     s.cfg.JWTAuthAutoSignUp,
-			SyncTeams:       s.cfg.JWTAuthGroupsAttributePath != "",
+			SyncOrgRoles:    !s.cfg.JWTAuth.SkipOrgRoleSync,
+			AllowSignUp:     s.cfg.JWTAuth.AutoSignUp,
+			SyncTeams:       s.cfg.JWTAuth.GroupsAttributePath != "",
 		}}
 
-	if key := s.cfg.JWTAuthUsernameClaim; key != "" {
+	if key := s.cfg.JWTAuth.UsernameClaim; key != "" {
 		id.Login, _ = claims[key].(string)
 		id.ClientParams.LookUpParams.Login = &id.Login
 	}
-	if key := s.cfg.JWTAuthEmailClaim; key != "" {
+	if key := s.cfg.JWTAuth.EmailClaim; key != "" {
 		id.Email, _ = claims[key].(string)
 		id.ClientParams.LookUpParams.Email = &id.Email
 	}
@@ -89,16 +89,16 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	}
 
 	orgRoles, isGrafanaAdmin, err := getRoles(s.cfg, func() (org.RoleType, *bool, error) {
-		if s.cfg.JWTAuthSkipOrgRoleSync {
+		if s.cfg.JWTAuth.SkipOrgRoleSync {
 			return "", nil, nil
 		}
 
 		role, grafanaAdmin := s.extractRoleAndAdmin(claims)
-		if s.cfg.JWTAuthRoleAttributeStrict && !role.IsValid() {
+		if s.cfg.JWTAuth.RoleAttributeStrict && !role.IsValid() {
 			return "", nil, errJWTInvalidRole.Errorf("invalid role claim in JWT: %s", role)
 		}
 
-		if !s.cfg.JWTAuthAllowAssignGrafanaAdmin {
+		if !s.cfg.JWTAuth.AllowAssignGrafanaAdmin {
 			return role, nil, nil
 		}
 
@@ -112,7 +112,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	id.OrgRoles = orgRoles
 	id.IsGrafanaAdmin = isGrafanaAdmin
 
-	if s.cfg.JWTAuthGroupsAttributePath != "" {
+	if s.cfg.JWTAuth.GroupsAttributePath != "" {
 		groups, err := s.extractGroups(claims)
 		if err != nil {
 			return nil, err
@@ -132,7 +132,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 // remove sensitive query param
 // avoid JWT URL login passing auth_token in URL
 func (s *JWT) stripSensitiveParam(httpRequest *http.Request) {
-	if s.cfg.JWTAuthURLLogin {
+	if s.cfg.JWTAuth.URLLogin {
 		params := httpRequest.URL.Query()
 		if params.Has(authQueryParamName) {
 			params.Del(authQueryParamName)
@@ -143,8 +143,8 @@ func (s *JWT) stripSensitiveParam(httpRequest *http.Request) {
 
 // retrieveToken retrieves the JWT token from the request.
 func (s *JWT) retrieveToken(httpRequest *http.Request) string {
-	jwtToken := httpRequest.Header.Get(s.cfg.JWTAuthHeaderName)
-	if jwtToken == "" && s.cfg.JWTAuthURLLogin {
+	jwtToken := httpRequest.Header.Get(s.cfg.JWTAuth.HeaderName)
+	if jwtToken == "" && s.cfg.JWTAuth.URLLogin {
 		jwtToken = httpRequest.URL.Query().Get("auth_token")
 	}
 	// Strip the 'Bearer' prefix if it exists.
@@ -152,7 +152,7 @@ func (s *JWT) retrieveToken(httpRequest *http.Request) string {
 }
 
 func (s *JWT) Test(ctx context.Context, r *authn.Request) bool {
-	if !s.cfg.JWTAuthEnabled || s.cfg.JWTAuthHeaderName == "" {
+	if !s.cfg.JWTAuth.Enabled || s.cfg.JWTAuth.HeaderName == "" {
 		return false
 	}
 
@@ -177,11 +177,11 @@ func (s *JWT) Priority() uint {
 const roleGrafanaAdmin = "GrafanaAdmin"
 
 func (s *JWT) extractRoleAndAdmin(claims map[string]any) (org.RoleType, bool) {
-	if s.cfg.JWTAuthRoleAttributePath == "" {
+	if s.cfg.JWTAuth.RoleAttributePath == "" {
 		return "", false
 	}
 
-	role, err := util.SearchJSONForStringAttr(s.cfg.JWTAuthRoleAttributePath, claims)
+	role, err := util.SearchJSONForStringAttr(s.cfg.JWTAuth.RoleAttributePath, claims)
 	if err != nil || role == "" {
 		return "", false
 	}
@@ -193,9 +193,9 @@ func (s *JWT) extractRoleAndAdmin(claims map[string]any) (org.RoleType, bool) {
 }
 
 func (s *JWT) extractGroups(claims map[string]any) ([]string, error) {
-	if s.cfg.JWTAuthGroupsAttributePath == "" {
+	if s.cfg.JWTAuth.GroupsAttributePath == "" {
 		return []string{}, nil
 	}
 
-	return util.SearchJSONForStringSliceAttr(s.cfg.JWTAuthGroupsAttributePath, claims)
+	return util.SearchJSONForStringSliceAttr(s.cfg.JWTAuth.GroupsAttributePath, claims)
 }

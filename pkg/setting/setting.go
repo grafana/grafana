@@ -267,7 +267,7 @@ type Cfg struct {
 	OAuthCookieMaxAge             int
 	OAuthAllowInsecureEmailLookup bool
 
-	AuthJWTSettings *AuthJWTSettings
+	JWTAuth AuthJWTSettings
 	// Extended JWT Auth
 	ExtendedJWTAuthEnabled    bool
 	ExtendedJWTExpectIssuer   string

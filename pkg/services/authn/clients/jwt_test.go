@@ -62,14 +62,16 @@ func TestAuthenticateJWT(t *testing.T) {
 	}
 
 	cfg := &setting.Cfg{
-		JWTAuthEnabled:                 true,
-		JWTAuthHeaderName:              jwtHeaderName,
-		JWTAuthEmailClaim:              "email",
-		JWTAuthUsernameClaim:           "preferred_username",
-		JWTAuthAutoSignUp:              true,
-		JWTAuthAllowAssignGrafanaAdmin: true,
-		JWTAuthRoleAttributeStrict:     true,
-		JWTAuthRoleAttributePath:       "roles",
+		JWTAuth: setting.AuthJWTSettings{
+			Enabled:                 true,
+			HeaderName:              jwtHeaderName,
+			EmailClaim:              "email",
+			UsernameClaim:           "preferred_username",
+			AutoSignUp:              true,
+			AllowAssignGrafanaAdmin: true,
+			RoleAttributeStrict:     true,
+			RoleAttributePath:       "roles",
+		},
 	}
 	jwtClient := ProvideJWT(jwtService, cfg)
 	validHTTPReq := &http.Request{
@@ -103,12 +105,14 @@ func TestJWTClaimConfig(t *testing.T) {
 	jwtHeaderName := "X-Forwarded-User"
 
 	cfg := &setting.Cfg{
-		JWTAuthEnabled:                 true,
-		JWTAuthHeaderName:              jwtHeaderName,
-		JWTAuthAutoSignUp:              true,
-		JWTAuthAllowAssignGrafanaAdmin: true,
-		JWTAuthRoleAttributeStrict:     true,
-		JWTAuthRoleAttributePath:       "roles",
+		JWTAuth: setting.AuthJWTSettings{
+			Enabled:                 true,
+			HeaderName:              jwtHeaderName,
+			AutoSignUp:              true,
+			AllowAssignGrafanaAdmin: true,
+			RoleAttributeStrict:     true,
+			RoleAttributePath:       "roles",
+		},
 	}
 
 	// #nosec G101 -- This is a dummy/test token
@@ -168,14 +172,14 @@ func TestJWTClaimConfig(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, claims := range tc.claimsConfigurations {
-				cfg.JWTAuthEmailClaim = ""
-				cfg.JWTAuthUsernameClaim = ""
+				cfg.JWTAuth.EmailClaim = ""
+				cfg.JWTAuth.UsernameClaim = ""
 
 				if claims["JWTAuthEmailClaim"] == true {
-					cfg.JWTAuthEmailClaim = "email"
+					cfg.JWTAuth.EmailClaim = "email"
 				}
 				if claims["JWTAuthUsernameClaim"] == true {
-					cfg.JWTAuthUsernameClaim = "preferred_username"
+					cfg.JWTAuth.UsernameClaim = "preferred_username"
 				}
 			}
 		})
@@ -282,12 +286,14 @@ func TestJWTTest(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			cfg := &setting.Cfg{
-				JWTAuthEnabled:                 true,
-				JWTAuthURLLogin:                tc.urlLogin,
-				JWTAuthHeaderName:              tc.cfgHeaderName,
-				JWTAuthAutoSignUp:              true,
-				JWTAuthAllowAssignGrafanaAdmin: true,
-				JWTAuthRoleAttributeStrict:     true,
+				JWTAuth: setting.AuthJWTSettings{
+					Enabled:                 true,
+					URLLogin:                tc.urlLogin,
+					HeaderName:              tc.cfgHeaderName,
+					AutoSignUp:              true,
+					AllowAssignGrafanaAdmin: true,
+					RoleAttributeStrict:     true,
+				},
 			}
 			jwtClient := ProvideJWT(jwtService, cfg)
 			httpReq := &http.Request{
@@ -323,15 +329,17 @@ func TestJWTStripParam(t *testing.T) {
 	jwtHeaderName := "X-Forwarded-User"
 
 	cfg := &setting.Cfg{
-		JWTAuthEnabled:                 true,
-		JWTAuthHeaderName:              jwtHeaderName,
-		JWTAuthAutoSignUp:              true,
-		JWTAuthAllowAssignGrafanaAdmin: true,
-		JWTAuthURLLogin:                true,
-		JWTAuthRoleAttributeStrict:     false,
-		JWTAuthRoleAttributePath:       "roles",
-		JWTAuthEmailClaim:              "email",
-		JWTAuthUsernameClaim:           "preferred_username",
+		JWTAuth: setting.AuthJWTSettings{
+			Enabled:                 true,
+			HeaderName:              jwtHeaderName,
+			AutoSignUp:              true,
+			AllowAssignGrafanaAdmin: true,
+			URLLogin:                true,
+			RoleAttributeStrict:     false,
+			RoleAttributePath:       "roles",
+			EmailClaim:              "email",
+			UsernameClaim:           "preferred_username",
+		},
 	}
 
 	// #nosec G101 -- This is a dummy/test token

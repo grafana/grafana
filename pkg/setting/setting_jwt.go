@@ -24,7 +24,7 @@ type AuthJWTSettings struct {
 }
 
 func (cfg *Cfg) readAuthJWTSettings() {
-	jwtSettings := &AuthJWTSettings{}
+	jwtSettings := AuthJWTSettings{}
 	authJWT := cfg.Raw.Section("auth.jwt")
 	jwtSettings.Enabled = authJWT.Key("enabled").MustBool(false)
 	jwtSettings.HeaderName = valueAsString(authJWT, "header_name", "")
@@ -43,5 +43,5 @@ func (cfg *Cfg) readAuthJWTSettings() {
 	jwtSettings.AllowAssignGrafanaAdmin = authJWT.Key("allow_assign_grafana_admin").MustBool(false)
 	jwtSettings.SkipOrgRoleSync = authJWT.Key("skip_org_role_sync").MustBool(false)
 
-	cfg.AuthJWTSettings = jwtSettings
+	cfg.JWTAuth = jwtSettings
 }
