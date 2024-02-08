@@ -25,7 +25,7 @@ Arrange your files in a directory in a way that best suits your use case. For ex
 
 Details on how to set up the files and which fields are required for each object are listed below depending on which resource you are provisioning.
 
-For a complete guide about how Grafana provisions resources, refer to [Provision Grafana][provisioning].
+For a complete guide about how Grafana provisions resources, refer to the [Provision Grafana][provisioning] documentation.
 
 **Notes:**
 
