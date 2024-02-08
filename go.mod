@@ -63,7 +63,7 @@ require (
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.23.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.12.0 // @grafana/partner-datasources
-	github.com/grafana/grafana-plugin-sdk-go v0.207.0 // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.208.0 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.6.2 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-plugin v1.6.0 // @grafana/plugins-platform-backend
@@ -484,8 +484,12 @@ require k8s.io/code-generator v0.29.1 // @grafana/grafana-app-platform-squad
 
 require github.com/spyzhov/ajson v0.9.0 // @grafana/grafana-app-platform-squad
 
+require github.com/fullstorydev/grpchan v1.1.1 // @grafana/backend-platform
+
 require (
+	github.com/bufbuild/protocompile v0.4.0 // indirect
 	github.com/grafana/sqlds/v3 v3.2.0 // indirect
+	github.com/jhump/protoreflect v1.15.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mithrandie/csvq v1.17.10 // indirect
 	github.com/mithrandie/csvq-driver v1.6.8 // indirect
