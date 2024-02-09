@@ -94,11 +94,11 @@ func TestParseNamespace(t *testing.T) {
 		},
 		{
 			name:      "invalid stack id (too short)",
-			namespace: "stack-1",
+			namespace: "stack-",
 			expectErr: true,
 			expected: request.NamespaceInfo{
 				OrgID:   -1,
-				StackID: "1",
+				StackID: "",
 			},
 		},
 		{
