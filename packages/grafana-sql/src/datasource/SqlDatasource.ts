@@ -210,17 +210,17 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
       format: QueryFormat.Table,
     };
 
-    try{
+    try {
       const response = await this.runMetaQuery(interpolatedQuery, range);
       return this.getResponseParser().transformMetricFindResponse(response);
-    }catch (error){
-      let response  = error as FetchResponse<BackendDataSourceResponse>
+    } catch (error) {
+      let response = error as FetchResponse<BackendDataSourceResponse>;
       // Publish the error info to notify users
       appEvents.publish({
         type: AppEvents.alertError.name,
         payload: [`Fail to load values of the variable ${refId}`, response.data.results?.[refId]?.error],
       });
-      throw error
+      throw error;
     }
   }
 
