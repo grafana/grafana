@@ -120,6 +120,7 @@ export type Scope = {
   tags: string[];
 };
 
+// Maps to QueryRangeResponse of tempopb https://github.com/grafana/tempo/blob/cfda98fc5cb0777963f41e0949b9ad2d24b4b5b8/pkg/tempopb/tempo.proto#L360
 export type TraceqlMetricsResponse = {
   series: MetricsSeries[];
   metrics: SearchMetrics;
@@ -133,11 +134,14 @@ export type MetricsSeries = {
 
 export type MetricsSeriesLabel = {
   key: string;
-  value: {
-    stringValue?: string;
-    intValue?: string;
-    doubleValue?: string;
-  };
+  value: ProtoValue;
+};
+
+export type ProtoValue = {
+  stringValue?: string;
+  intValue?: string;
+  boolValue?: boolean;
+  doubleValue?: string;
 };
 
 export type MetricsSeriesSample = {

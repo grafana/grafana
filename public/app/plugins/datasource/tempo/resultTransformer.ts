@@ -29,7 +29,15 @@ import { getDataSourceSrv } from '@grafana/runtime';
 
 import { SearchTableType } from './dataquery.gen';
 import { createGraphFrames } from './graphTransform';
-import { Span, SpanAttributes, Spanset, TempoJsonData, TraceqlMetricsResponse, TraceSearchMetadata } from './types';
+import {
+  ProtoValue,
+  Span,
+  SpanAttributes,
+  Spanset,
+  TempoJsonData,
+  TraceqlMetricsResponse,
+  TraceSearchMetadata,
+} from './types';
 
 export function createTableFrame(
   logsFrame: DataFrame | DataFrameDTO,
@@ -624,20 +632,27 @@ function transformToTraceData(data: TraceSearchMetadata) {
   };
 }
 
+const metricsValueToString = (value: ProtoValue): string => {
+  return '' + (value.stringValue || value.intValue || value.doubleValue || value.boolValue || '');
+};
+
 export function formatTraceQLMetrics(data: TraceqlMetricsResponse) {
   const frames = data.series.map((series) => {
-    const timeValues: number[] = series.samples.map((sample) => parseInt(sample.timestampMs, 10));
     const labels: Labels = {};
     series.labels.forEach((label) => {
-      labels[label.key] = label.value.stringValue || label.value.intValue || label.value.doubleValue || '';
+      labels[label.key] = metricsValueToString(label.value);
     });
+    const displayName =
+      series.labels.length === 1
+        ? metricsValueToString(series.labels[0].value)
+        : `{${series.labels.map((label) => `${label.key}=${metricsValueToString(label.value)}`).join(',')}}`;
     return createDataFrame({
       refId: series.promLabels,
       fields: [
         {
           name: 'time',
           type: FieldType.time,
-          values: timeValues,
+          values: series.samples.map((sample) => parseInt(sample.timestampMs, 10)),
         },
         {
           name: series.promLabels,
@@ -645,7 +660,7 @@ export function formatTraceQLMetrics(data: TraceqlMetricsResponse) {
           type: FieldType.number,
           values: series.samples.map((sample) => sample.value),
           config: {
-            displayNameFromDS: series.promLabels,
+            displayNameFromDS: displayName,
           },
         },
       ],
@@ -920,10 +935,6 @@ export function createTableFrameFromTraceQlQueryAsSpans(
  * @returns the spansets of the trace, if existing
  */
 const getSpanSets = (trace: TraceSearchMetadata): Spanset[] => {
-  if (trace.spanSets && trace.spanSet) {
-    console.warn('Both `spanSets` and `spanSet` are set. `spanSet` will be ignored');
-  }
-
   return trace.spanSets || (trace.spanSet ? [trace.spanSet] : []);
 };
 
