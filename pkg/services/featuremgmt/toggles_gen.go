@@ -67,6 +67,10 @@ const (
 	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
 	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
 
+	// FlagAutoMigrateGraphPanel
+	// Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking
+	FlagAutoMigrateGraphPanel = "autoMigrateGraphPanel"
+
 	// FlagDisableAngular
 	// Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
 	FlagDisableAngular = "disableAngular"
