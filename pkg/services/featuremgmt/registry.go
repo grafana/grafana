@@ -315,7 +315,7 @@ var (
 			Description:  "Enables drag and drop for CSV and Excel files",
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 			Created:      time.Date(2022, time.December, 20, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -522,7 +522,7 @@ var (
 			Description:  "Enables the edit functionality in the datagrid panel",
 			FrontendOnly: true,
 			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 			Created:      time.Date(2023, time.April, 24, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -570,7 +570,7 @@ var (
 			Description:       "Enables previous SQL data source dataset dropdown behavior",
 			FrontendOnly:      true,
 			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaBiSquad,
+			Owner:             grafanaDatavizSquad,
 			HideFromAdminPage: true,
 			Created:           time.Date(2023, time.June, 6, 12, 0, 0, 0, time.UTC),
 		},
@@ -903,7 +903,7 @@ var (
 			Description:  "Enable format string transformer",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 			Created:      time.Date(2023, time.October, 13, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -911,7 +911,7 @@ var (
 			Description:  "Allows using variables in transformations",
 			FrontendOnly: true,
 			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 			Created:      time.Date(2023, time.October, 4, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -1025,7 +1025,7 @@ var (
 			Description:  "Add cumulative and window functions to the add field from calculation transformation",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 			Created:      time.Date(2023, time.November, 3, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -1062,7 +1062,7 @@ var (
 			Description:  "Make sure extracted field names are unique in the dataframe",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 			Created:      time.Date(2023, time.November, 2, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -1179,7 +1179,7 @@ var (
 			Description:  "Enables shared crosshair in table panel",
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 			Created:      time.Date(2023, time.December, 12, 12, 0, 0, 0, time.UTC),
 		},
 		{
@@ -1187,7 +1187,7 @@ var (
 			Description:  "Enables regression analysis transformation",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 			Created:      time.Date(2023, time.November, 24, 12, 0, 0, 0, time.UTC),
 		},
 		{
