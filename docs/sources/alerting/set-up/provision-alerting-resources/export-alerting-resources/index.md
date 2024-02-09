@@ -14,12 +14,11 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Export resources to provision
-title: Export alerting resources to provision
+title: Export alerting resources
 weight: 300
 ---
 
-# Export alerting resources to provision
+# Export alerting resources
 
 Export your alerting resources, such as alert rules, contact points, and notification policies in JSON, YAML, or Terraform format for provisioning. You can export all Grafana-managed alert rules, single folders, and single groups.
 
