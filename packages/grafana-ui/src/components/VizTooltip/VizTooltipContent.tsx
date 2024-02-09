@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { CSSProperties, ReactElement } from 'react';
 
-import { GrafanaTheme2, arrayUtils } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { SortOrder } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes';
@@ -17,6 +17,8 @@ interface Props {
   sortOrder?: SortOrder;
 }
 
+const stringCmp = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' }).compare;
+
 export const VizTooltipContent = ({
   contentLabelValue,
   customContent,
@@ -26,10 +28,9 @@ export const VizTooltipContent = ({
 }: Props) => {
   const styles = useStyles2(getStyles);
 
-  if (sortOrder !== SortOrder.None) {
-    const sortFn = arrayUtils.sortValues(sortOrder);
+  if (sortOrder !== SortOrder.None && contentLabelValue.length > 1) {
     // mutates!
-    contentLabelValue.sort((a, b) => sortFn(a.value, b.value));
+    contentLabelValue.sort((a, b) => stringCmp(a.value, b.value));
   }
 
   const scrollableStyle: CSSProperties = scrollable
