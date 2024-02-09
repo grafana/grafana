@@ -29,8 +29,9 @@ export function MathExpressionQueryField({ expression: query, onChange, datasour
       // We may wish to consider abstracting it into the grafana/ui repo in the future
       const updateElementHeight = () => {
         const containerDiv = containerRef.current;
-        if (containerDiv !== null && editor.getContentHeight() < 200) {
-          const pixelHeight = Math.max(32, editor.getContentHeight());
+        if (containerDiv !== null) {
+          const maxPixelHeight = Math.min(200, editor.getContentHeight());
+          const pixelHeight = Math.max(32, maxPixelHeight);
           containerDiv.style.height = `${pixelHeight}px`;
           containerDiv.style.width = '100%';
           const pixelWidth = containerDiv.clientWidth;
