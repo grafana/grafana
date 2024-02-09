@@ -3,8 +3,12 @@ import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
 import { ButtonGroup, FilterInput, RadioButtonGroup, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { OptionFilter, RenderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
+import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
+import { getPanelFrameCategory2 } from 'app/features/dashboard/components/PanelEditor/getPanelFrameOptions';
+import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 
 import { PanelVizTypePicker } from './PanelVizTypePicker';
@@ -24,9 +28,81 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
   static Component = ({ model }: SceneComponentProps<PanelOptionsPane>) => {
     const { panelManager } = model;
     const { panel } = panelManager.state;
-    const { pluginId } = panel.useState();
+    const dataObject = sceneGraph.getData(panel);
+    const rawData = dataObject.useState();
+    const dataWithFieldConfig = panel.applyFieldConfig(rawData.data!);
+    const { pluginId, options, fieldConfig } = panel.useState();
     const styles = useStyles2(getStyles);
     const [isVizPickerOpen, setVizPickerOpen] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const panelFrameOptions = useMemo(() => getPanelFrameCategory2(panel), [panel]);
+    const [listMode, setListMode] = useState(OptionFilter.All);
+
+    const visualizationOptions = useMemo(() => {
+      const plugin = panel.getPlugin();
+      if (!plugin) {
+        return undefined;
+      }
+
+      return getVisualizationOptions2({
+        panel,
+        plugin: plugin,
+        eventBus: panel.getPanelContext().eventBus,
+        instanceState: panel.getPanelContext().instanceState!,
+      });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [panel, options, fieldConfig]);
+
+    const justOverrides = useMemo(
+      () =>
+        getFieldOverrideCategories(
+          fieldConfig,
+          panel.getPlugin()?.fieldConfigRegistry!,
+          dataWithFieldConfig.series,
+          searchQuery,
+          (newConfig) => {
+            panel.setState({
+              fieldConfig: newConfig,
+            });
+          }
+        ),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [searchQuery, panel, fieldConfig]
+    );
+
+    const isSearching = searchQuery.length > 0;
+    const mainBoxElements: React.ReactNode[] = [];
+
+    if (isSearching) {
+      mainBoxElements.push(
+        <RenderSearchHits
+          allOptions={[panelFrameOptions, ...(visualizationOptions ?? [])]}
+          overrides={justOverrides}
+          searchQuery={searchQuery}
+          key="render-search-hits"
+        />
+      );
+    } else {
+      switch (listMode) {
+        case OptionFilter.All:
+          mainBoxElements.push(<panelFrameOptions.Render key="panel-frame-options" />);
+
+          for (const item of visualizationOptions ?? []) {
+            mainBoxElements.push(<item.Render key={item.props.id} />);
+          }
+
+          for (const item of justOverrides) {
+            mainBoxElements.push(<item.Render key={item.props.id} />);
+          }
+          break;
+        case OptionFilter.Overrides:
+          for (const item of justOverrides) {
+            mainBoxElements.push(<item.Render key={item.props.id} />);
+          }
+        default:
+          break;
+      }
+    }
 
     return (
       <div className={styles.wrapper}>
@@ -44,18 +120,26 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
           )}
           {!isVizPickerOpen && (
             <>
-              <FilterInput value={''} placeholder="Search options" onChange={() => {}} />
-              <RadioButtonGroup
-                options={[
-                  { label: 'All', value: 'All' },
-                  { label: 'Overrides', value: 'Overrides' },
-                ]}
-                value={'All'}
-                fullWidth
-              ></RadioButtonGroup>
-              {/* <OptionsPaneCategory id="test" title="Panel options">
-                Placeholder
-              </OptionsPaneCategory> */}
+              <div className={styles.top}>
+                <FilterInput
+                  className={styles.searchOptions}
+                  value={searchQuery}
+                  placeholder="Search options"
+                  onChange={setSearchQuery}
+                />
+                {!isSearching && (
+                  <RadioButtonGroup
+                    options={[
+                      { label: 'All', value: OptionFilter.All },
+                      { label: 'Overrides', value: OptionFilter.Overrides },
+                    ]}
+                    value={listMode}
+                    onChange={setListMode}
+                    fullWidth
+                  ></RadioButtonGroup>
+                )}
+              </div>
+              <div className={styles.mainBox}>{mainBoxElements}</div>
             </>
           )}
         </div>
@@ -66,20 +150,38 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    top: css({
+      display: 'flex',
+      flexDirection: 'column',
+      padding: theme.spacing(1),
+      gap: theme.spacing(1),
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderBottom: 'none',
+      borderTopLeftRadius: theme.shape.radius.default,
+      background: theme.colors.background.primary,
+    }),
     box: css({
       display: 'flex',
       flexDirection: 'column',
       flexGrow: '1',
-      padding: theme.spacing(1),
       background: theme.colors.background.primary,
-      border: `1px solid ${theme.colors.border.weak}`,
-      gap: theme.spacing(1),
+      overflow: 'hidden',
     }),
     wrapper: css({
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(2),
       flexGrow: '1',
+      gap: theme.spacing(2),
+    }),
+    mainBox: css({
+      flexGrow: 1,
+      background: theme.colors.background.primary,
+      border: `1px solid ${theme.components.panel.borderColor}`,
+      borderTop: 'none',
+      overflow: 'auto',
+    }),
+    searchOptions: css({
+      minHeight: theme.spacing(4),
     }),
   };
 }

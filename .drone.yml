@@ -123,6 +123,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -224,6 +225,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -248,7 +250,6 @@ steps:
     \"\nTranslation extraction has not been committed. Please run 'yarn i18n:extract',
     commit the changes and push again.\"\n                exit 1\n            fi\n
     \           "
-  - yarn run i18n:compile
   depends_on:
   - yarn-install
   failure: ignore
@@ -536,6 +537,7 @@ steps:
   image: golang:1.21.6-alpine
   name: wire-install
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -570,6 +572,9 @@ steps:
     --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
   depends_on:
   - yarn-install
+  environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
   image: grafana/grafana-build:main
   name: rgm-package
   pull: always
@@ -743,12 +748,15 @@ steps:
   - /src/grafana-build artifacts -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
     -a docker:grafana:linux/arm/v7:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
-    --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.18.5 --tag-format='{{ .version_base
-    }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD --ubuntu-tag-format='{{ .version_base
-    }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
+    --go-version=1.21.6 --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.18.5 --tag-format='{{
+    .version_base }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD --ubuntu-tag-format='{{
+    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - yarn-install
+  environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
   image: grafana/grafana-build:main
   name: rgm-build-docker
   pull: always
@@ -1077,6 +1085,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1436,6 +1445,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1512,6 +1522,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1570,6 +1581,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1594,7 +1606,6 @@ steps:
     \"\nTranslation extraction has not been committed. Please run 'yarn i18n:extract',
     commit the changes and push again.\"\n                exit 1\n            fi\n
     \           "
-  - yarn run i18n:compile
   depends_on:
   - yarn-install
   failure: ignore
@@ -1833,6 +1844,7 @@ steps:
   image: golang:1.21.6-alpine
   name: wire-install
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1866,6 +1878,9 @@ steps:
     --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
   depends_on:
   - update-package-json-version
+  environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
   image: grafana/grafana-build:main
   name: rgm-package
   pull: always
@@ -2075,12 +2090,15 @@ steps:
   - /src/grafana-build artifacts -a docker:grafana:linux/amd64 -a docker:grafana:linux/amd64:ubuntu
     -a docker:grafana:linux/arm64 -a docker:grafana:linux/arm64:ubuntu -a docker:grafana:linux/arm/v7
     -a docker:grafana:linux/arm/v7:ubuntu --yarn-cache=$$YARN_CACHE_FOLDER --build-id=$$DRONE_BUILD_NUMBER
-    --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.18.5 --tag-format='{{ .version_base
-    }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD --ubuntu-tag-format='{{ .version_base
-    }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
+    --go-version=1.21.6 --ubuntu-base=ubuntu:22.04 --alpine-base=alpine:3.18.5 --tag-format='{{
+    .version_base }}-{{ .buildID }}-{{ .arch }}' --grafana-dir=$$PWD --ubuntu-tag-format='{{
+    .version_base }}-{{ .buildID }}-ubuntu-{{ .arch }}' > docker.txt
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - update-package-json-version
+  environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
   image: grafana/grafana-build:main
   name: rgm-build-docker
   pull: always
@@ -2780,6 +2798,7 @@ steps:
   image: golang:1.21.6-alpine
   name: compile-build-cmd
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -3053,6 +3072,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -3476,6 +3496,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -4843,6 +4864,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 497126227c021ccca8764f92ec19be81527cbb11e2b8929f9879d631a9f1ee1a
+hmac: 3935b36384292a026eba16c691add89af37d61fd890a973323333735c3d2eb57
 
 ...

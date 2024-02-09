@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 
-	pb "github.com/prometheus/alertmanager/silence/silencepb"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
@@ -21,8 +19,9 @@ type OrgMigration struct {
 	migrationStore    migrationStore.Store
 	encryptionService secrets.Service
 
-	orgID    int64
-	silences []*pb.MeshSilence
+	orgID int64
+
+	silences *silenceHandler
 }
 
 // newOrgMigration creates a new OrgMigration for the given orgID.
@@ -33,9 +32,9 @@ func (ms *migrationService) newOrgMigration(orgID int64) *OrgMigration {
 
 		migrationStore:    ms.migrationStore,
 		encryptionService: ms.encryptionService,
+		silences:          ms.silences,
 
-		orgID:    orgID,
-		silences: make([]*pb.MeshSilence, 0),
+		orgID: orgID,
 	}
 }
 

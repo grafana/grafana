@@ -44,15 +44,6 @@ func TestSocialService_ProvideService(t *testing.T) {
 			expectedSocialMapLength:             7,
 			expectedGenericOAuthSkipOrgRoleSync: false,
 		},
-		{
-			name: "should load Enabled and SkipOrgRoleSync parameters from environment variables when ssoSettingsApi is disabled",
-			setup: func(t *testing.T, env *testEnv) {
-				t.Setenv("GF_AUTH_GENERIC_OAUTH_ENABLED", "true")
-				t.Setenv("GF_AUTH_GENERIC_OAUTH_SKIP_ORG_ROLE_SYNC", "true")
-			},
-			expectedSocialMapLength:             2,
-			expectedGenericOAuthSkipOrgRoleSync: true,
-		},
 	}
 	iniContent := `
 	[auth.azuread]
@@ -73,7 +64,7 @@ func TestSocialService_ProvideService(t *testing.T) {
 	accessControl := acimpl.ProvideAccessControl(cfg)
 	sqlStore := db.InitTestDB(t)
 
-	ssoSettingsSvc := ssosettingsimpl.ProvideService(cfg, sqlStore, accessControl, routing.NewRouteRegister(), featuremgmt.WithFeatures(), secrets)
+	ssoSettingsSvc := ssosettingsimpl.ProvideService(cfg, sqlStore, accessControl, routing.NewRouteRegister(), featuremgmt.WithFeatures(), secrets, &usagestats.UsageStatsMock{}, nil)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {

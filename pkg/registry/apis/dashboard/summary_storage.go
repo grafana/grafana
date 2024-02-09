@@ -10,7 +10,7 @@ import (
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/access"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
 var (

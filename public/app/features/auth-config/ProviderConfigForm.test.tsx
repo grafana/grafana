@@ -2,14 +2,19 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { JSX } from 'react';
 
+import { reportInteraction } from '@grafana/runtime';
+
 import { ProviderConfigForm } from './ProviderConfigForm';
 import { SSOProvider } from './types';
 import { emptySettings } from './utils/data';
 
 const putMock = jest.fn(() => Promise.resolve({}));
+const deleteMock = jest.fn(() => Promise.resolve({}));
+
 jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => ({
     put: putMock,
+    delete: deleteMock,
   }),
   config: {
     panels: {
@@ -26,7 +31,10 @@ jest.mock('@grafana/runtime', () => ({
   locationService: {
     push: jest.fn(),
   },
+  reportInteraction: jest.fn(),
 }));
+
+const reportInteractionMock = jest.mocked(reportInteraction);
 
 // Mock the FormPrompt component as it requires Router setup to work
 jest.mock('app/core/components/FormPrompt/FormPrompt', () => ({
@@ -90,15 +98,25 @@ describe('ProviderConfigForm', () => {
     await user.click(screen.getByRole('button', { name: /Save/i }));
 
     await waitFor(() => {
-      expect(putMock).toHaveBeenCalledWith('/api/v1/sso-settings/github', {
-        ...testConfig,
-        settings: {
-          allowedOrganizations: 'test-org1,test-org2',
-          clientId: 'test-client-id',
-          clientSecret: 'test-client-secret',
-          teamIds: '12324',
-          enabled: true,
+      expect(putMock).toHaveBeenCalledWith(
+        '/api/v1/sso-settings/github',
+        {
+          ...testConfig,
+          settings: {
+            name: 'GitHub',
+            allowedOrganizations: 'test-org1,test-org2',
+            clientId: 'test-client-id',
+            clientSecret: 'test-client-secret',
+            teamIds: '12324',
+            enabled: true,
+          },
         },
+        { showErrorAlert: false }
+      );
+
+      expect(reportInteractionMock).toHaveBeenCalledWith('grafana_authentication_ssosettings_saved', {
+        provider: 'github',
+        enabled: true,
       });
     });
   });
@@ -109,5 +127,22 @@ describe('ProviderConfigForm', () => {
 
     // Should show an alert for empty client ID
     expect(await screen.findAllByRole('alert')).toHaveLength(1);
+  });
+
+  it('should delete the current config', async () => {
+    const { user } = setup(<ProviderConfigForm config={emptyConfig} provider={emptyConfig.provider} />);
+    await user.click(screen.getByRole('button', { name: /Reset/i }));
+
+    expect(screen.getByRole('dialog', { name: /Reset/i })).toBeInTheDocument();
+
+    await user.click(screen.getByTestId('data-testid Confirm Modal Danger Button'));
+
+    await waitFor(() => {
+      expect(deleteMock).toHaveBeenCalledWith('/api/v1/sso-settings/github', undefined, { showSuccessAlert: false });
+
+      expect(reportInteractionMock).toHaveBeenCalledWith('grafana_authentication_ssosettings_removed', {
+        provider: 'github',
+      });
+    });
   });
 });
