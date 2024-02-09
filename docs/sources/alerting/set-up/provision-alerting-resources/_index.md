@@ -42,7 +42,7 @@ Choose from the options below to import (or provision) your Grafana Alerting res
 
    **Note:**
 
-   The JSON output from Alerting HTTP endpoints is not compatible for provisioning via configuration files. Instead, use the [Export Alerting endpoints][alerting_export_http] to return the alerting resources in provisioning format.
+   The JSON output from the majority of Alerting HTTP endpoints is not compatible for provisioning via configuration files. Instead, use the [Export Alerting endpoints][alerting_export_http] to return or download the alerting resources in provisioning format.
 
 ## Export alerting resources
 
