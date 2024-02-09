@@ -211,15 +211,7 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		return err
 	}
 
-	resourcePath, err := url.Parse(req.Path)
-	if err != nil {
-		logger.Error("Failed to parse data source path", "error", err, "url", req.Path)
-		return err
-	}
-
-	// We take the path and the query-string only
-	esUrl.RawQuery = resourcePath.RawQuery
-	esUrl.Path = path.Join(esUrl.Path, resourcePath.Path)
+	esUrl.Path = path.Join(esUrl.Path, req.Path)
 	request, err := http.NewRequestWithContext(ctx, req.Method, esUrl.String(), bytes.NewBuffer(req.Body))
 	if err != nil {
 		logger.Error("Failed to create request", "error", err, "url", esUrl.String())
