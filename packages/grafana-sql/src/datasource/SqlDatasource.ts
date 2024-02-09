@@ -28,8 +28,8 @@ import {
   toDataQueryResponse,
   TemplateSrv,
   reportInteraction,
+  getAppEvents,
 } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
 
 import { ResponseParser } from '../ResponseParser';
 import { SqlQueryEditor } from '../components/QueryEditor';
@@ -216,7 +216,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
     } catch (error) {
       let response = error as FetchResponse<BackendDataSourceResponse>;
       // Publish the error info to notify users
-      appEvents.publish({
+      getAppEvents().publish({
         type: AppEvents.alertError.name,
         payload: [`Fail to load values of the variable ${refId}`, response.data.results?.[refId]?.error],
       });
