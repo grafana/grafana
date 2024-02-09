@@ -16,6 +16,7 @@ import {
   LegacyMetricFindQueryOptions,
   VariableWithMultiSupport,
   TimeRange,
+  AppEvents,
 } from '@grafana/data';
 import { EditorMode } from '@grafana/experimental';
 import {
@@ -28,6 +29,7 @@ import {
   TemplateSrv,
   reportInteraction,
 } from '@grafana/runtime';
+import appEvents from 'app/core/app_events';
 
 import { ResponseParser } from '../ResponseParser';
 import { SqlQueryEditor } from '../components/QueryEditor';
@@ -208,8 +210,18 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
       format: QueryFormat.Table,
     };
 
-    const response = await this.runMetaQuery(interpolatedQuery, range);
-    return this.getResponseParser().transformMetricFindResponse(response);
+    try{
+      const response = await this.runMetaQuery(interpolatedQuery, range);
+      return this.getResponseParser().transformMetricFindResponse(response);
+    }catch (error){
+      let response  = error as FetchResponse<BackendDataSourceResponse>
+      // Publish the error info to notify users
+      appEvents.publish({
+        type: AppEvents.alertError.name,
+        payload: [`Fail to load values of the variable ${refId}`, response.data.results?.[refId]?.error],
+      });
+      throw error
+    }
   }
 
   // NOTE: this always runs with the `@grafana/data/getDefaultTimeRange` time range
