@@ -14,6 +14,7 @@ exploreContentOutline,GA,@grafana/explore-squad,2023-11-03,false,false,true
 datasourceQueryMultiStatus,experimental,@grafana/plugins-platform-backend,2022-05-03,false,false,false
 traceToMetrics,experimental,@grafana/observability-traces-and-profiling,2022-03-07,false,false,true
 autoMigrateOldPanels,preview,@grafana/dataviz-squad,2022-06-11,false,false,true
+autoMigrateGraphPanel,preview,@grafana/dataviz-squad,2023-12-11,false,false,true
 disableAngular,preview,@grafana/dataviz-squad,2023-03-23,false,false,true
 canvasPanelNesting,experimental,@grafana/dataviz-squad,2022-05-31,false,false,true
 newVizTooltips,preview,@grafana/dataviz-squad,2023-11-03,false,false,true
@@ -22,7 +23,6 @@ disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,2022-07-13
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,2022-06-10,false,false,false
 dataConnectionsConsole,GA,@grafana/plugins-platform-backend,2022-06-01,false,false,false
 topnav,deprecated,@grafana/grafana-frontend-platform,2022-06-20,false,false,false
-dockedMegaMenu,experimental,@grafana/grafana-frontend-platform,2023-09-18,false,false,true
 returnToPrevious,experimental,@grafana/grafana-frontend-platform,2024-01-09,false,false,true
 grpcServer,preview,@grafana/grafana-app-platform-squad,2022-09-27,false,false,false
 unifiedStorage,experimental,@grafana/grafana-app-platform-squad,2022-12-01,true,true,false
@@ -59,7 +59,6 @@ renderAuthJWT,preview,@grafana/grafana-as-code,2023-04-03,false,false,false
 externalServiceAuth,experimental,@grafana/identity-access-team,2023-04-11,true,false,false
 refactorVariablesTimeRange,preview,@grafana/dashboards-squad,2023-06-06,false,false,false
 enableElasticsearchBackendQuerying,GA,@grafana/observability-logs,2023-04-14,false,false,false
-advancedDataSourcePicker,GA,@grafana/dashboards-squad,2023-04-14,false,false,true
 faroDatasourceSelector,preview,@grafana/app-o11y,2023-05-04,false,false,true
 enableDatagridEditing,preview,@grafana/grafana-bi-squad,2023-04-24,false,false,true
 extraThemes,experimental,@grafana/grafana-frontend-platform,2023-05-10,false,false,true
@@ -85,7 +84,7 @@ grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-
 grafanaAPIServerEnsureKubectlAccess,experimental,@grafana/grafana-app-platform-squad,2023-12-06,true,true,false
 featureToggleAdminPage,experimental,@grafana/grafana-operator-experience-squad,2023-07-18,false,true,false
 awsAsyncQueryCaching,GA,@grafana/aws-datasources,2023-07-21,false,false,false
-splitScopes,GA,@grafana/identity-access-team,2023-07-21,false,true,false
+splitScopes,deprecated,@grafana/identity-access-team,2023-07-21,false,true,false
 permissionsFilterRemoveSubquery,experimental,@grafana/backend-platform,2023-08-02,false,false,false
 prometheusConfigOverhaulAuth,GA,@grafana/observability-metrics,2023-07-21,false,false,false
 configurableSchedulerTick,experimental,@grafana/alerting-squad,2023-07-26,false,true,false
@@ -95,14 +94,12 @@ angularDeprecationUI,experimental,@grafana/plugins-platform-backend,2023-08-29,f
 dashgpt,preview,@grafana/dashboards-squad,2023-11-17,false,false,true
 reportingRetries,preview,@grafana/sharing-squad,2023-08-31,false,true,false
 sseGroupByDatasource,experimental,@grafana/observability-metrics,2023-09-07,false,false,false
-requestInstrumentationStatusSource,experimental,@grafana/plugins-platform-backend,2023-09-11,false,false,false
 libraryPanelRBAC,experimental,@grafana/dashboards-squad,2023-10-11,false,true,false
 lokiRunQueriesInParallel,privatePreview,@grafana/observability-logs,2023-09-19,false,false,false
 wargamesTesting,experimental,@grafana/hosted-grafana-team,2023-09-13,false,false,false
 alertingInsights,GA,@grafana/alerting-squad,2023-09-14,false,false,true
 externalCorePlugins,experimental,@grafana/plugins-platform-backend,2023-09-22,false,false,false
 pluginsAPIMetrics,experimental,@grafana/plugins-platform-backend,2023-09-21,false,false,true
-httpSLOLevels,experimental,@grafana/hosted-grafana-team,2023-09-22,false,true,false
 idForwarding,experimental,@grafana/identity-access-team,2023-09-25,false,false,false
 cloudWatchWildCardDimensionValues,GA,@grafana/aws-datasources,2023-09-27,false,false,false
 externalServiceAccounts,preview,@grafana/identity-access-team,2023-09-28,false,false,false
@@ -147,7 +144,7 @@ regressionTransformation,preview,@grafana/grafana-bi-squad,2023-11-24,false,fals
 displayAnonymousStats,GA,@grafana/identity-access-team,2023-11-29,false,false,true
 lokiQueryHints,GA,@grafana/observability-logs,2023-12-18,false,false,true
 kubernetesFeatureToggles,experimental,@grafana/grafana-operator-experience-squad,2023-12-22,false,false,true
-alertingPreviewUpgrade,preview,@grafana/alerting-squad,2024-01-03,false,true,false
+alertingPreviewUpgrade,GA,@grafana/alerting-squad,2024-01-03,false,true,false
 enablePluginsTracingByDefault,experimental,@grafana/plugins-platform-backend,2024-01-09,false,true,false
 cloudRBACRoles,experimental,@grafana/identity-access-team,2024-01-10,false,true,false
 alertingQueryOptimization,GA,@grafana/alerting-squad,2024-01-10,false,false,false
@@ -158,3 +155,5 @@ onPremToCloudMigrations,experimental,@grafana/grafana-operator-experience-squad,
 alertingSaveStatePeriodic,privatePreview,@grafana/alerting-squad,2024-01-22,false,false,false
 promQLScope,experimental,@grafana/observability-metrics,2024-01-29,false,false,false
 nodeGraphDotLayout,experimental,@grafana/observability-traces-and-profiling,2024-01-02,false,false,true
+groupToNestedTableTransformation,preview,@grafana/dataviz-squad,2024-02-05,false,false,true
+newPDFRendering,experimental,@grafana/sharing-squad,2024-02-08,false,false,false

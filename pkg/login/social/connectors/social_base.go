@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -220,9 +221,13 @@ func getRoleFromSearch(role string) (org.RoleType, bool) {
 	return org.RoleType(cases.Title(language.Und).String(role)), false
 }
 
-func validateInfo(info *social.OAuthInfo) error {
+func validateInfo(info *social.OAuthInfo, requester identity.Requester) error {
 	if info.ClientId == "" {
-		return ssosettings.ErrInvalidOAuthConfig("ClientId is empty")
+		return ssosettings.ErrInvalidOAuthConfig("Client Id is empty.")
+	}
+
+	if info.AllowAssignGrafanaAdmin && !requester.GetIsGrafanaAdmin() {
+		return ssosettings.ErrInvalidOAuthConfig("Allow assign Grafana Admin can only be updated by Grafana Server Admins.")
 	}
 
 	if info.AllowAssignGrafanaAdmin && info.SkipOrgRoleSync {

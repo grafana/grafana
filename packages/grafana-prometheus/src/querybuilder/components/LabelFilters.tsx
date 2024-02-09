@@ -12,7 +12,7 @@ import { LabelFilterItem } from './LabelFilterItem';
 
 export const MISSING_LABEL_FILTER_ERROR_MESSAGE = 'Select at least 1 label filter (label and value)';
 
-export interface Props {
+export interface LabelFiltersProps {
   labelsFilters: QueryBuilderLabelFilter[];
   onChange: (labelFilters: Array<Partial<QueryBuilderLabelFilter>>) => void;
   onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
@@ -33,7 +33,7 @@ export function LabelFilters({
   getLabelValuesAutofillSuggestions,
   debounceDuration,
   variableEditor,
-}: Props) {
+}: LabelFiltersProps) {
   const defaultOp = '=';
   const [items, setItems] = useState<Array<Partial<QueryBuilderLabelFilter>>>([{ op: defaultOp }]);
 

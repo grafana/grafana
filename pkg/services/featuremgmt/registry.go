@@ -135,6 +135,14 @@ var (
 			Created:      time.Date(2022, time.June, 11, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:         "autoMigrateGraphPanel",
+			Description:  "Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Created:      time.Date(2023, time.December, 11, 7, 0, 0, 0, time.UTC),
+		},
+		{
 			Name:              "disableAngular",
 			Description:       "Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.",
 			Stage:             FeatureStagePublicPreview,
@@ -202,14 +210,6 @@ var (
 			Expression:  "true", // enabled by default
 			Owner:       grafanaFrontendPlatformSquad,
 			Created:     time.Date(2022, time.June, 20, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:         "dockedMegaMenu",
-			Description:  "Enable support for a persistent (docked) navigation menu",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaFrontendPlatformSquad,
-			Created:      time.Date(2023, time.September, 18, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "returnToPrevious",
@@ -510,17 +510,6 @@ var (
 			Created:        time.Date(2023, time.April, 14, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:              "advancedDataSourcePicker",
-			Description:       "Enable a new data source picker with contextual information, recently used order and advanced mode",
-			Stage:             FeatureStageGeneralAvailability,
-			FrontendOnly:      true,
-			Expression:        "true", // enabled by default
-			Owner:             grafanaDashboardsSquad,
-			AllowSelfServe:    false,
-			HideFromAdminPage: true,
-			Created:           time.Date(2023, time.April, 14, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:         "faroDatasourceSelector",
 			Description:  "Enable the data source selector within the Frontend Apps section of the Frontend Observability",
 			Stage:        FeatureStagePublicPreview,
@@ -731,7 +720,7 @@ var (
 		{
 			Name:              "splitScopes",
 			Description:       "Support faster dashboard and folder search by splitting permission scopes into parts",
-			Stage:             FeatureStageGeneralAvailability,
+			Stage:             FeatureStageDeprecated,
 			FrontendOnly:      false,
 			Expression:        "true", // enabled by default
 			Owner:             identityAccessTeam,
@@ -819,14 +808,6 @@ var (
 			Created:     time.Date(2023, time.September, 7, 12, 0, 0, 0, time.UTC),
 		},
 		{
-			Name:         "requestInstrumentationStatusSource",
-			Description:  "Include a status source label for request metrics and logs",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        grafanaPluginsPlatformSquad,
-			Created:      time.Date(2023, time.September, 11, 12, 0, 0, 0, time.UTC),
-		},
-		{
 			Name:            "libraryPanelRBAC",
 			Description:     "Enables RBAC support for library panels",
 			Stage:           FeatureStageExperimental,
@@ -876,15 +857,6 @@ var (
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaPluginsPlatformSquad,
 			Created:      time.Date(2023, time.September, 21, 12, 0, 0, 0, time.UTC),
-		},
-		{
-			Name:            "httpSLOLevels",
-			Description:     "Adds SLO level to http request metrics",
-			Stage:           FeatureStageExperimental,
-			FrontendOnly:    false,
-			Owner:           hostedGrafanaTeam,
-			RequiresRestart: true,
-			Created:         time.Date(2023, time.September, 22, 12, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:        "idForwarding",
@@ -1253,10 +1225,11 @@ var (
 			Name:            "alertingPreviewUpgrade",
 			Description:     "Show Unified Alerting preview and upgrade page in legacy alerting",
 			FrontendOnly:    false,
-			Stage:           FeatureStagePublicPreview,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 			Created:         time.Date(2024, time.January, 3, 12, 0, 0, 0, time.UTC),
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:            "enablePluginsTracingByDefault",
@@ -1345,6 +1318,21 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			Created:      time.Date(2024, time.January, 2, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "groupToNestedTableTransformation",
+			Description:  "Enables the group to nested table transformation",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Created:      time.Date(2024, time.February, 5, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:        "newPDFRendering",
+			Description: "New implementation for the dashboard to PDF rendering",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Created:     time.Date(2024, time.February, 8, 9, 51, 00, 00, time.UTC),
 		},
 	}
 )

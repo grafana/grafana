@@ -1,8 +1,9 @@
 import React from 'react';
 
-import { IconName, isIconName } from '@grafana/data';
+import { isIconName } from '@grafana/data';
 import { Badge, Card, Icon } from '@grafana/ui';
 
+import { UIMap } from '../constants';
 import { getProviderUrl } from '../utils/url';
 
 type Props = {
@@ -11,17 +12,6 @@ type Props = {
   configPath?: string;
   authType?: string;
   onClick?: () => void;
-};
-
-// TODO Remove when this is available from API
-const UIMap: Record<string, [IconName, string]> = {
-  github: ['github', 'GitHub'],
-  gitlab: ['gitlab', 'GitLab'],
-  google: ['google', 'Google'],
-  generic_oauth: ['lock', 'Generic OAuth'],
-  grafana_com: ['grafana', 'Grafana.com'],
-  azuread: ['microsoft', 'Azure AD'],
-  okta: ['okta', 'Okta'],
 };
 
 export function ProviderCard({ providerId, enabled, configPath, authType, onClick }: Props) {
