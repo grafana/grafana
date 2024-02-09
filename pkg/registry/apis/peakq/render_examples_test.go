@@ -14,7 +14,7 @@ func TestRender(t *testing.T) {
 	rT, err := template.RenderTemplate(basicTemplateSpec, map[string][]string{"metricName": {"up"}})
 	require.NoError(t, err)
 	require.Equal(t,
-		basicTemplateRenderedTargets[0].Properties.AdditionalProperties()["expr"],
+		"up + up + 42",
 		rT[0].Properties.AdditionalProperties()["expr"])
 	b, _ := json.MarshalIndent(basicTemplateSpec, "", " ")
 	fmt.Println(string(b))

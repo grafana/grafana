@@ -12,7 +12,6 @@ import (
 )
 
 func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
-
 	t.Run("basic read/write", func(t *testing.T) {
 		request := []byte(`{
 		"queries": [
@@ -76,7 +75,6 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 		  "to": "200"
 		}
 	  }`, string(out))
-
 	})
 
 	t.Run("read write data frame contracts", func(t *testing.T) {
