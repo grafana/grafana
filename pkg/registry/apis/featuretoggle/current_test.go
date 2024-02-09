@@ -13,8 +13,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apis/featuretoggle/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -186,8 +188,8 @@ func TestSetFeatureToggles(t *testing.T) {
 			AllowEditing: true,
 		}
 		b := newTestAPIBuilder(t, nil, []string{}, s)
-		msg := callPatchWith(t, b, v0alpha1.ResolvedToggleState{}, http.StatusInternalServerError)
-		assert.Equal(t, "feature toggles service is misconfigured", msg)
+		msg := callPatchWith(t, b, v0alpha1.ResolvedToggleState{}, http.StatusForbidden)
+		assert.Equal(t, "feature toggles are read-only", msg)
 	})
 
 	t.Run("fails with non-existent toggle", func(t *testing.T) {
@@ -202,11 +204,8 @@ func TestSetFeatureToggles(t *testing.T) {
 		}
 		disabled := []string{"toggle2"}
 		update := v0alpha1.ResolvedToggleState{
-			Toggles: []v0alpha1.ToggleStatus{
-				{
-					Name:    "toggle3",
-					Enabled: true,
-				},
+			Enabled: map[string]bool{
+				"toggle3": true,
 			},
 		}
 
@@ -244,25 +243,18 @@ func TestSetFeatureToggles(t *testing.T) {
 
 		t.Run("because it is the feature toggle admin page toggle", func(t *testing.T) {
 			update := v0alpha1.ResolvedToggleState{
-				Toggles: []v0alpha1.ToggleStatus{
-					{
-						Name:    featuremgmt.FlagFeatureToggleAdminPage,
-						Enabled: true,
-					},
+				Enabled: map[string]bool{
+					featuremgmt.FlagFeatureToggleAdminPage: true,
 				},
 			}
 			b := newTestAPIBuilder(t, features, disabled, s)
-			msg := callPatchWith(t, b, update, http.StatusBadRequest)
-			assert.Equal(t, "invalid toggle passed in", msg)
+			callPatchWith(t, b, update, http.StatusNotModified)
 		})
 
 		t.Run("because it is not GA or Deprecated", func(t *testing.T) {
 			update := v0alpha1.ResolvedToggleState{
-				Toggles: []v0alpha1.ToggleStatus{
-					{
-						Name:    "toggle2",
-						Enabled: true,
-					},
+				Enabled: map[string]bool{
+					"toggle2": true,
 				},
 			}
 			b := newTestAPIBuilder(t, features, disabled, s)
@@ -272,11 +264,8 @@ func TestSetFeatureToggles(t *testing.T) {
 
 		t.Run("because it is configured to be read-only", func(t *testing.T) {
 			update := v0alpha1.ResolvedToggleState{
-				Toggles: []v0alpha1.ToggleStatus{
-					{
-						Name:    "toggle2",
-						Enabled: true,
-					},
+				Enabled: map[string]bool{
+					"toggle2": true,
 				},
 			}
 			b := newTestAPIBuilder(t, features, disabled, s)
@@ -306,7 +295,7 @@ func TestSetFeatureToggles(t *testing.T) {
 				AllowSelfServe: true,
 			},
 		}
-		disabled := []string{"toggle2", "toggle3", "toggle4", "toggle5"}
+		disabled := []string{"toggle2", "toggle3", "toggle4"}
 
 		s := setting.FeatureMgmtSettings{
 			AllowEditing:       true,
@@ -316,19 +305,11 @@ func TestSetFeatureToggles(t *testing.T) {
 				"toggle3": {},
 			},
 		}
-		// b := newTestAPIBuilder(t, features, disabled, s)
-		// msg := callPatchWith(t, b, update, http.StatusBadRequest)
-		// assert.Equal(t, "invalid toggle passed in", msg)
 
 		update := v0alpha1.ResolvedToggleState{
-			Toggles: []v0alpha1.ToggleStatus{
-				{
-					Name:    "toggle4",
-					Enabled: true,
-				}, {
-					Name:    "toggle5",
-					Enabled: false,
-				},
+			Enabled: map[string]bool{
+				"toggle4": true,
+				"toggle5": false,
 			},
 		}
 		t.Run("fail when webhook request is not successful", func(t *testing.T) {
@@ -339,8 +320,8 @@ func TestSetFeatureToggles(t *testing.T) {
 			s.UpdateWebhook = webhookServer.URL
 
 			b := newTestAPIBuilder(t, features, disabled, s)
-			msg := callPatchWith(t, b, update, http.StatusBadRequest)
-			assert.Equal(t, "SendWebhookUpdate failed with status", msg)
+			msg := callPatchWith(t, b, update, http.StatusInternalServerError)
+			assert.Equal(t, "an error occurred while updating feeature toggles", msg)
 		})
 
 		t.Run("succeed when webhook request is successful", func(t *testing.T) {
@@ -377,7 +358,13 @@ func findResult(t *testing.T, result v0alpha1.ResolvedToggleState, name string) 
 
 func callGetWith(t *testing.T, b *FeatureFlagAPIBuilder, expectedCode int) v0alpha1.ResolvedToggleState {
 	w := response.CreateNormalResponse(http.Header{}, []byte{}, 0)
-	b.handleCurrentStatus(w, &http.Request{Method: "GET"})
+	req := &http.Request{
+		Method: "GET",
+		Header: http.Header{},
+	}
+	req.Header.Add("content-type", "application/json")
+	req = req.WithContext(appcontext.WithUser(req.Context(), &user.SignedInUser{}))
+	b.handleCurrentStatus(w, req)
 
 	rts := v0alpha1.ResolvedToggleState{}
 	require.NoError(t, json.Unmarshal(w.Body(), &rts))
@@ -402,7 +389,10 @@ func callPatchWith(t *testing.T, b *FeatureFlagAPIBuilder, update v0alpha1.Resol
 	req := &http.Request{
 		Method: "PATCH",
 		Body:   io.NopCloser(bytes.NewReader(body)),
+		Header: http.Header{},
 	}
+	req.Header.Add("content-type", "application/json")
+	req = req.WithContext(appcontext.WithUser(req.Context(), &user.SignedInUser{}))
 	b.handleCurrentStatus(w, req)
 
 	require.NotNil(t, w.Body())
@@ -432,5 +422,5 @@ func newTestAPIBuilder(
 		Stage: featuremgmt.FeatureStageGeneralAvailability,
 	}}, serverFeatures...), disabled...)
 
-	return NewFeatureFlagAPIBuilder(features, actest.FakeAccessControl{})
+	return NewFeatureFlagAPIBuilder(features, actest.FakeAccessControl{ExpectedEvaluate: true})
 }
