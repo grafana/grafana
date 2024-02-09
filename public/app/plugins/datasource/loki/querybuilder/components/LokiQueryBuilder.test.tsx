@@ -65,7 +65,28 @@ describe('LokiQueryBuilder', () => {
     await waitFor(() => expect(screen.getByText('job')).toBeInTheDocument());
   });
 
-  it('does refetch label values with the correct timerange', async () => {
+  it('uses fetchLabelValues if no labels in stream selector have equality matcher', async () => {
+    const props = createDefaultProps();
+    props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
+    props.datasource.languageProvider.fetchSeriesLabels = jest.fn();
+    props.datasource.languageProvider.fetchLabelValues = jest.fn().mockReturnValue(['a', 'b']);
+
+    const query: LokiVisualQuery = {
+      labels: [
+        { op: '!=', label: 'cluster', value: 'cluster1' },
+        { op: '=', label: 'job', value: 'grafana' },
+      ],
+      operations: [],
+    };
+    render(<LokiQueryBuilder {...props} query={query} />);
+    const labels = screen.getByText(/Label filters/);
+    const selects = getAllByRole(getSelectParent(labels)!, 'combobox');
+    await userEvent.click(selects[5]);
+    expect(props.datasource.languageProvider.fetchLabelValues).toBeCalledWith('job', { timeRange: mockTimeRange });
+    expect(props.datasource.languageProvider.fetchSeriesLabels).not.toBeCalled();
+  });
+
+  it('does refetch label values with the correct time range', async () => {
     const props = createDefaultProps();
     props.datasource.getDataSamples = jest.fn().mockResolvedValue([]);
     props.datasource.languageProvider.fetchSeriesLabels = jest
