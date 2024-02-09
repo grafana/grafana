@@ -122,9 +122,9 @@ export function buildImageUrl(
   let imageUrl = soloUrl.replace(config.appSubUrl + '/dashboard-solo/', config.appSubUrl + '/render/dashboard-solo/');
   imageUrl = imageUrl.replace(config.appSubUrl + '/d-solo/', config.appSubUrl + '/render/d-solo/');
   imageUrl +=
-    `&width=${config.rendererImageWidth}` +
-    `&height=${config.rendererImageHeight}` +
-    `&scale=${config.rendererImageScale}` +
+    `&width=${config.rendererDefaultImageWidth}` +
+    `&height=${config.rendererDefaultImageHeight}` +
+    `&scale=${config.rendererDefaultImageScale}` +
     getLocalTimeZone();
 
   return imageUrl;
