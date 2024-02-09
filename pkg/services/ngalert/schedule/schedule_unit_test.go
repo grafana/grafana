@@ -395,7 +395,10 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	}
 
 	for _, evalState := range normalStates {
-		evalState := evalState // make a local copy to allow parallel tests
+		// Make a local copy to allow parallel tests. TODO: remove when we move to Go 1.22:
+		//	https://go.dev/blog/loopvar-preview
+		evalState := evalState
+
 		setupNormalStatesTest := func(t *testing.T) normalStatesSetup {
 			evalChan := make(chan *evaluation)
 			evalAppliedChan := make(chan time.Time)
