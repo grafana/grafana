@@ -283,7 +283,7 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		ps.log, notifier.NewCachedNotificationSettingsValidationService(&st))
 	receiverSvc := notifier.NewReceiverService(ps.ac, &st, st, ps.secretService, ps.SQLStore, ps.log)
 	contactPointService := provisioning.NewContactPointService(&st, ps.secretService,
-		st, ps.SQLStore, receiverSvc, ps.log)
+		st, ps.SQLStore, receiverSvc, ps.log, &st)
 	notificationPolicyService := provisioning.NewNotificationPolicyService(&st,
 		st, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.log)
 	mutetimingsService := provisioning.NewMuteTimingService(&st, st, &st, ps.log)

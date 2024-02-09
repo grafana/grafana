@@ -688,3 +688,31 @@ func (st DBstore) ListNotificationSettings(ctx context.Context, orgID int64) (ma
 	}
 	return result, nil
 }
+
+func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error) {
+	// fetch entire rules because Update method requires it because it copies rules to version table
+	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
+		OrgID:        orgID,
+		ReceiverName: oldReceiver,
+	})
+	if err != nil {
+		return 0, err
+	}
+	if len(rules) == 0 {
+		return 0, nil
+	}
+	var updates []ngmodels.UpdateRule
+	for _, rule := range rules {
+		r := ngmodels.CopyRule(rule)
+		for idx := range r.NotificationSettings {
+			if r.NotificationSettings[idx].Receiver == oldReceiver {
+				r.NotificationSettings[idx].Receiver = newReceiver
+			}
+		}
+		updates = append(updates, ngmodels.UpdateRule{
+			Existing: rule,
+			New:      *r,
+		})
+	}
+	return len(updates), st.UpdateAlertRules(ctx, updates)
+}

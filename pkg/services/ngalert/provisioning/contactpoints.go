@@ -22,13 +22,18 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type AlertRuleNotificationSettingsStore interface {
+	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error)
+}
+
 type ContactPointService struct {
-	configStore       *alertmanagerConfigStoreImpl
-	encryptionService secrets.Service
-	provenanceStore   ProvisioningStore
-	xact              TransactionManager
-	receiverService   receiverService
-	log               log.Logger
+	configStore               *alertmanagerConfigStoreImpl
+	encryptionService         secrets.Service
+	provenanceStore           ProvisioningStore
+	notificationSettingsStore AlertRuleNotificationSettingsStore
+	xact                      TransactionManager
+	receiverService           receiverService
+	log                       log.Logger
 }
 
 type receiverService interface {
@@ -36,16 +41,18 @@ type receiverService interface {
 }
 
 func NewContactPointService(store AMConfigStore, encryptionService secrets.Service,
-	provenanceStore ProvisioningStore, xact TransactionManager, receiverService receiverService, log log.Logger) *ContactPointService {
+	provenanceStore ProvisioningStore, xact TransactionManager, receiverService receiverService, log log.Logger,
+	nsStore AlertRuleNotificationSettingsStore) *ContactPointService {
 	return &ContactPointService{
 		configStore: &alertmanagerConfigStoreImpl{
 			store: store,
 		},
-		receiverService:   receiverService,
-		encryptionService: encryptionService,
-		provenanceStore:   provenanceStore,
-		xact:              xact,
-		log:               log,
+		receiverService:           receiverService,
+		encryptionService:         encryptionService,
+		provenanceStore:           provenanceStore,
+		xact:                      xact,
+		log:                       log,
+		notificationSettingsStore: nsStore,
 	}
 }
 
@@ -285,6 +292,15 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := ecp.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
+		}
+		if renamedReceiver != "" && renamedReceiver != mergedReceiver.Name {
+			affected, err := ecp.notificationSettingsStore.RenameReceiverInNotificationSettings(ctx, orgID, renamedReceiver, mergedReceiver.Name)
+			if err != nil {
+				return err
+			}
+			if affected > 0 {
+				ecp.log.Info("Renamed receiver in notification settings", "oldName", renamedReceiver, "newName", mergedReceiver.Name, "affectedSettings", affected)
+			}
 		}
 		return ecp.provenanceStore.SetProvenance(ctx, &contactPoint, orgID, provenance)
 	})

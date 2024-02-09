@@ -705,6 +705,34 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 			assert.Contains(t, expectedUIDs, rule.UID)
 		}
 	})
+
+	t.Run("RenameReceiverInNotificationSettings should update all rules that refer to the old receiver", func(t *testing.T) {
+		newName := "new-receiver"
+		affected, err := store.RenameReceiverInNotificationSettings(context.Background(), 1, receiverName, newName)
+		require.NoError(t, err)
+		require.Equal(t, len(receiveRules), affected)
+
+		expectedUIDs := map[string]struct{}{}
+		for _, rule := range receiveRules {
+			expectedUIDs[rule.UID] = struct{}{}
+		}
+		actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID:        1,
+			ReceiverName: newName,
+		})
+		require.NoError(t, err)
+		assert.Len(t, actual, len(expectedUIDs))
+		for _, rule := range actual {
+			assert.Contains(t, expectedUIDs, rule.UID)
+		}
+
+		actual, err = store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID:        1,
+			ReceiverName: receiverName,
+		})
+		require.NoError(t, err)
+		require.Empty(t, actual)
+	})
 }
 
 func TestIntegrationListNotificationSettings(t *testing.T) {
