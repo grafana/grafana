@@ -28,8 +28,8 @@ Refer to [Grafana Provider](https://registry.terraform.io/providers/grafana/graf
 Complete the following tasks to create and manage your alerting resources using Terraform.
 
 1. Create an API key for provisioning.
-2. Configure the Terraform provider.
-3. Define your alerting resources in Terraform. [Export alerting resources][alerting_export] in Terraform format, or implement the [Terraform Alerting schemas](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
+1. Configure the Terraform provider.
+1. Define your alerting resources in Terraform. [Export alerting resources][alerting_export] in Terraform format, or implement the [Terraform Alerting schemas](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 
 4. Run `terraform apply` to provision your alerting resources.
 
