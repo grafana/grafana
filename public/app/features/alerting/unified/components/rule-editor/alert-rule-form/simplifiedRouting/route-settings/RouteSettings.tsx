@@ -53,13 +53,14 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
   const { groupIntervalValue, groupWaitValue, repeatIntervalValue } = DEFAULTS_TIMINGS;
   const overrideGrouping = watch(`contactPoints.${alertManager}.overrideGrouping`);
   const overrideTimings = watch(`contactPoints.${alertManager}.overrideTimings`);
+  const groupByCount = getValues(`contactPoints.${alertManager}.groupBy`)?.length ?? 0;
 
   const styles = useStyles2(getStyles);
   useEffect(() => {
-    if (overrideGrouping && getValues(`contactPoints.${alertManager}.groupBy`)?.length === 0) {
+    if (overrideGrouping && groupByCount === 0) {
       setValue(`contactPoints.${alertManager}.groupBy`, REQUIRED_FIELDS_IN_GROUPBY);
     }
-  }, [overrideGrouping, setValue, alertManager, watch, getValues]);
+  }, [overrideGrouping, setValue, alertManager, groupByCount]);
 
   return (
     <Stack direction="column">
