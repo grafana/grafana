@@ -29,7 +29,7 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 		width = hs.Cfg.RendererDefaultImageWidth
 	}
 
-	height := c.QueryInt("width")
+	height := c.QueryInt("height")
 	if height == 0 {
 		height = hs.Cfg.RendererDefaultImageHeight
 	}
