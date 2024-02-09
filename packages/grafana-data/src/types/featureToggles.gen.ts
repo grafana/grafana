@@ -168,7 +168,6 @@ export interface FeatureToggles {
   cloudRBACRoles?: boolean;
   alertingQueryOptimization?: boolean;
   newFolderPicker?: boolean;
-  jitterAlertRules?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
   alertingSaveStatePeriodic?: boolean;
