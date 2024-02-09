@@ -1,10 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
-
-import { DateHistogram } from 'app/plugins/datasource/elasticsearch/types';
+import { select } from 'react-select-event';
 
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
+import { DateHistogram } from '../../../../types';
 
 import { DateHistogramSettingsEditor } from './DateHistogramSettingsEditor';
 
@@ -63,7 +62,7 @@ describe('DateHistogramSettingsEditor', () => {
       expect(await screen.findByText('Calendar interval')).toBeInTheDocument();
       expect(await screen.findByText('1w')).toBeInTheDocument();
 
-      await selectOptionInTest(screen.getByLabelText('Calendar interval'), '10s');
+      await select(screen.getByLabelText('Calendar interval'), '10s', { container: document.body });
 
       expect(dispatch).toHaveBeenCalledTimes(1);
     });
@@ -79,7 +78,7 @@ describe('DateHistogramSettingsEditor', () => {
       expect(await screen.findByText('Fixed interval')).toBeInTheDocument();
       expect(await screen.findByText('1m')).toBeInTheDocument();
 
-      await selectOptionInTest(screen.getByLabelText('Fixed interval'), '1q');
+      await select(screen.getByLabelText('Fixed interval'), '1q', { container: document.body });
 
       expect(dispatch).toHaveBeenCalledTimes(1);
     });

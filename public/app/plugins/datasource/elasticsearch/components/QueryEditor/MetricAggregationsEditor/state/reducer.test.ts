@@ -1,9 +1,6 @@
-import { reducerTester } from 'test/core/redux/reducerTester';
-
-import { ElasticsearchQuery } from 'app/plugins/datasource/elasticsearch/types';
-
 import { defaultMetricAgg } from '../../../../queryDef';
-import { Derivative, ExtendedStats, MetricAggregation } from '../../../../types';
+import { Derivative, ElasticsearchQuery, ExtendedStats, MetricAggregation } from '../../../../types';
+import { reducerTester } from '../../../reducerTester';
 import { initQuery } from '../../state';
 import { metricAggregationConfig } from '../utils';
 
