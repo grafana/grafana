@@ -20,7 +20,9 @@ weight: 300
 
 # Export alerting resources
 
-Export your alerting resources, such as alert rules, contact points, and notification policies in JSON, YAML, or Terraform format for provisioning. You can export all Grafana-managed alert rules, single folders, and single groups.
+Export your alerting resources, such as alert rules, contact points, and notification policies for provisioning, automatically importing single folders and single groups.
+
+The export options listed below enable you to download resources in JSON, YAML, or Terraform format, facilitating their provisioning through [configuration files](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning) or [Terraform][alerting_tf_provisioning].
 
 ## Export alert rules
 
@@ -81,6 +83,9 @@ Note that most Alerting endpoints return a JSON format that is not compatible fo
 These endpoints accept a `download` parameter to download a file containing the exported resources.
 
 {{% docs/reference %}}
+[alerting_tf_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning"
+[alerting_tf_provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning"
+
 [alerting_http_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning"
 [alerting_http_provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning"
 
