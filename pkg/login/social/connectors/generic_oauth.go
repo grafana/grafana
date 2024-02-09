@@ -79,12 +79,21 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, settings ssoModels.SS
 		return err
 	}
 
+	err = validateURLs(info)
+	if err != nil {
+		return err
+	}
+
 	if info.Extra[teamIdsKey] != "" && (info.TeamIdsAttributePath == "" || info.TeamsUrl == "") {
 		return ssosettings.ErrInvalidOAuthConfig("If Team Ids are configured then Team Ids attribute path and Teams URL must be configured.")
 	}
 
+	if info.TeamsUrl == "" || !isValidUrl(info.TeamsUrl) {
+		return ssosettings.ErrInvalidOAuthConfig("Teams URL is invalid")
+	}
+
 	if info.AllowedGroups != nil && len(info.AllowedGroups) > 0 && info.GroupsAttributePath == "" {
-		return ssosettings.ErrInvalidOAuthConfig("If Allowed groups are configured then Groups attribute path must be configured.")
+		return ssosettings.ErrInvalidOAuthConfig("If Allowed groups is configured then Groups attribute path must be configured.")
 	}
 
 	return nil

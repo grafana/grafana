@@ -231,16 +231,20 @@ func validateInfo(info *social.OAuthInfo, requester identity.Requester) error {
 		return ssosettings.ErrInvalidOAuthConfig("Allow assign Grafana Admin can only be updated by Grafana Server Admins.")
 	}
 
+	if info.AllowAssignGrafanaAdmin && info.SkipOrgRoleSync {
+		return ssosettings.ErrInvalidOAuthConfig("Allow assign Grafana Admin and Skip org role sync are both set thus Grafana Admin role will not be synced. Consider setting one or the other.")
+	}
+
+	return nil
+}
+
+func validateURLs(info *social.OAuthInfo) error {
 	if info.AuthUrl == "" || !isValidUrl(info.AuthUrl) {
-		return ssosettings.ErrInvalidOAuthConfig("AuthUrl is invalid")
+		return ssosettings.ErrInvalidOAuthConfig("Auth URL is invalid")
 	}
 
 	if info.TokenUrl == "" || !isValidUrl(info.TokenUrl) {
-		return ssosettings.ErrInvalidOAuthConfig("TokenUrl is invalid")
-	}
-
-	if info.AllowAssignGrafanaAdmin && info.SkipOrgRoleSync {
-		return ssosettings.ErrInvalidOAuthConfig("Allow assign Grafana Admin and Skip org role sync are both set thus Grafana Admin role will not be synced. Consider setting one or the other.")
+		return ssosettings.ErrInvalidOAuthConfig("Token URL is invalid")
 	}
 
 	return nil

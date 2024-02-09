@@ -197,6 +197,11 @@ func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSett
 		return err
 	}
 
+	err = validateURLs(info)
+	if err != nil {
+		return err
+	}
+
 	for _, groupId := range info.AllowedGroups {
 		_, err := uuid.Parse(groupId)
 		if err != nil {

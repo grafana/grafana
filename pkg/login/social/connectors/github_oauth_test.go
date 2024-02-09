@@ -359,6 +359,8 @@ func TestSocialGitHub_Validate(t *testing.T) {
 				Settings: map[string]any{
 					"client_id":                  "client-id",
 					"allow_assign_grafana_admin": "true",
+					"auth_url":                   "https://example.com/auth",
+					"token_url":                  "https://example.com/token",
 				},
 			},
 			requester: &user.SignedInUser{IsGrafanaAdmin: true},
@@ -395,6 +397,8 @@ func TestSocialGitHub_Validate(t *testing.T) {
 				Settings: map[string]any{
 					"client_id": "client-id",
 					"team_ids":  "abc1234,5678,def",
+					"auth_url":  "https://example.com/auth",
+					"token_url": "https://example.com/token",
 				},
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
@@ -406,9 +410,12 @@ func TestSocialGitHub_Validate(t *testing.T) {
 					"client_id":                  "client-id",
 					"allow_assign_grafana_admin": "true",
 					"skip_org_role_sync":         "true",
+					"auth_url":                   "https://example.com/auth",
+					"token_url":                  "https://example.com/token",
 				},
 			},
-			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+			requester: &user.SignedInUser{IsGrafanaAdmin: true},
+			wantErr:   ssosettings.ErrBaseInvalidOAuthConfig,
 		},
 		{
 			name: "fails if the user is not allowed to update allow assign grafana admin",
@@ -419,7 +426,52 @@ func TestSocialGitHub_Validate(t *testing.T) {
 				Settings: map[string]any{
 					"client_id":                  "client-id",
 					"allow_assign_grafana_admin": "true",
-					"skip_org_role_sync":         "true",
+					"auth_url":                   "https://example.com/auth",
+					"token_url":                  "https://example.com/token",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if auth url is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "",
+					"token_url": "https://example.com/token",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if token url is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "https://example.com/auth",
+					"token_url": "",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if auth url is invalid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "invalid_url",
+					"token_url": "https://example.com/token",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if token url is invalid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "https://example.com/auth",
+					"token_url": "/path",
 				},
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,

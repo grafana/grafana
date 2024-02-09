@@ -64,7 +64,9 @@ func (s *SocialGrafanaCom) Validate(ctx context.Context, settings ssoModels.SSOS
 		return err
 	}
 
-	// add specific validation rules for GrafanaCom
+	if info.AuthUrl != "" || info.TokenUrl != "" || info.TeamsUrl != "" {
+		return ssosettings.ErrInvalidSettings.Errorf("Auth URL, Token URL and Teams URL are not allowed to be set")
+	}
 
 	return nil
 }

@@ -86,6 +86,11 @@ func (s *SocialGithub) Validate(ctx context.Context, settings ssoModels.SSOSetti
 		return err
 	}
 
+	err = validateURLs(info)
+	if err != nil {
+		return err
+	}
+
 	teamIdsSplitted := util.SplitString(info.Extra[teamIdsKey])
 	teamIds := mustInts(teamIdsSplitted)
 

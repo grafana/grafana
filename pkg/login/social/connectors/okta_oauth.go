@@ -72,7 +72,10 @@ func (s *SocialOkta) Validate(ctx context.Context, settings ssoModels.SSOSetting
 		return err
 	}
 
-	// add specific validation rules for Okta
+	err = validateURLs(info)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
