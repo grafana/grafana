@@ -16,15 +16,7 @@ func TestResponseAdapter(t *testing.T) {
 		client := &http.Client{
 			Transport: &roundTripperFunc{
 				ready: make(chan struct{}),
-				fn: func(req *http.Request) (*http.Response, error) {
-					w := grafanaresponsewriter.NewAdapter(req)
-					go func() {
-						syncHandler(w, req)
-						w.CloseWriter()
-					}()
-					r := w.Response()
-					return r, nil
-				},
+				fn:    grafanaresponsewriter.WrapHandler(http.HandlerFunc(syncHandler)),
 			},
 		}
 		close(client.Transport.(*roundTripperFunc).ready)
@@ -34,7 +26,11 @@ func TestResponseAdapter(t *testing.T) {
 		resp, err := client.Do(req)
 		require.NoError(t, err)
 
-		defer resp.Body.Close()
+		defer func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		}()
+
 		bodyBytes, err := io.ReadAll(resp.Body)
 		require.NoError(t, err)
 		require.Equal(t, "OK", string(bodyBytes))
@@ -45,14 +41,7 @@ func TestResponseAdapter(t *testing.T) {
 		client := &http.Client{
 			Transport: &roundTripperFunc{
 				ready: make(chan struct{}),
-				fn: func(req *http.Request) (*http.Response, error) {
-					w := grafanaresponsewriter.NewAdapter(req)
-					go func() {
-						asyncHandler(w, req)
-						w.CloseWriter()
-					}()
-					return w.Response(), nil
-				},
+				fn:    grafanaresponsewriter.WrapHandler(http.HandlerFunc(asyncHandler)),
 			},
 		}
 		close(client.Transport.(*roundTripperFunc).ready)
@@ -61,7 +50,11 @@ func TestResponseAdapter(t *testing.T) {
 
 		resp, err := client.Do(req)
 		require.NoError(t, err)
-		defer resp.Body.Close()
+
+		defer func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		}()
 
 		// ensure that watch request is a 200
 		require.Equal(t, http.StatusOK, resp.StatusCode)
@@ -91,7 +84,7 @@ func TestResponseAdapter(t *testing.T) {
 
 func syncHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
+	_, _ = w.Write([]byte("OK"))
 }
 
 func asyncHandler(w http.ResponseWriter, r *http.Request) {
@@ -99,7 +92,7 @@ func asyncHandler(w http.ResponseWriter, r *http.Request) {
 	for _, s := range randomStrings {
 		time.Sleep(100 * time.Millisecond)
 		// write the current iteration
-		w.Write([]byte(s))
+		_, _ = w.Write([]byte(s))
 		w.(http.Flusher).Flush()
 	}
 }

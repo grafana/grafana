@@ -28,7 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	apiserverTransport "github.com/grafana/grafana/pkg/services/apiserver/endpoints/responsewriter"
+	grafanaresponsewriter "github.com/grafana/grafana/pkg/services/apiserver/endpoints/responsewriter"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	entitystorage "github.com/grafana/grafana/pkg/services/apiserver/storage/entity"
 	filestorage "github.com/grafana/grafana/pkg/services/apiserver/storage/file"
@@ -337,18 +337,10 @@ func (s *service) startCoreServer(
 	server *genericapiserver.GenericAPIServer,
 ) (*genericapiserver.GenericAPIServer, error) {
 	// setup the loopback transport and signal that it's ready
-	transport.fn = func(req *http.Request) (*http.Response, error) {
-		w := apiserverTransport.NewAdapter(req)
-		go func() {
-			server.Handler.ServeHTTP(w, req)
-			w.CloseWriter()
-		}()
-		return w.Response(), nil
-	}
+	transport.fn = grafanaresponsewriter.WrapHandler(server.Handler)
 	close(transport.ready)
 
 	prepared := server.PrepareRun()
-
 	go func() {
 		s.stoppedCh <- prepared.Run(s.stopCh)
 	}()
@@ -372,14 +364,7 @@ func (s *service) startAggregator(
 	}
 
 	// setup the loopback transport for the aggregator server and signal that it's ready
-	transport.fn = func(req *http.Request) (*http.Response, error) {
-		w := apiserverTransport.NewAdapter(req)
-		go func() {
-			aggregatorServer.GenericAPIServer.Handler.ServeHTTP(w, req)
-			w.CloseWriter()
-		}()
-		return w.Response(), nil
-	}
+	transport.fn = grafanaresponsewriter.WrapHandler(aggregatorServer.GenericAPIServer.Handler)
 	close(transport.ready)
 
 	prepared, err := aggregatorServer.PrepareRun()
@@ -399,12 +384,8 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 		Transport: &roundTripperFunc{
 			fn: func(req *http.Request) (*http.Response, error) {
 				ctx := appcontext.WithUser(req.Context(), c.SignedInUser)
-				w := apiserverTransport.NewAdapter(req)
-				go func() {
-					s.handler.ServeHTTP(w, req.WithContext(ctx))
-					w.CloseWriter()
-				}()
-				return w.Response(), nil
+				wrapped := grafanaresponsewriter.WrapHandler(s.handler)
+				return wrapped(req.WithContext(ctx))
 			},
 		},
 	}

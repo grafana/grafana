@@ -14,6 +14,20 @@ var _ responsewriter.CloseNotifierFlusher = (*ResponseAdapter)(nil)
 var _ http.ResponseWriter = (*ResponseAdapter)(nil)
 var _ io.ReadCloser = (*ResponseAdapter)(nil)
 
+func WrapHandler(handler http.Handler) func(req *http.Request) (*http.Response, error) {
+	return func(req *http.Request) (*http.Response, error) {
+		w := NewAdapter(req)
+		go func() {
+			handler.ServeHTTP(w, req)
+			err := w.CloseWriter()
+			if err != nil {
+				klog.Errorf("error closing writer: %v", err)
+			}
+		}()
+		return w.Response(), nil
+	}
+}
+
 // ResponseAdapter is an implementation of [http.ResponseWriter] that allows conversion to a [http.Response].
 type ResponseAdapter struct {
 	req      *http.Request
