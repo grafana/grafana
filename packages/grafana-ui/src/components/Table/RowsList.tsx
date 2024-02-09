@@ -217,7 +217,7 @@ export const RowsList = (props: RowsListProps) => {
       // TODO: depending on light/dark measure appropriately set 
       // text color as well
       // TODO: may need to handle conversion from Grafana color
-      // code to hex color
+      // code to hex color  
       let rowFormatStyle = null;
       if (colorMap !== undefined && colorMap[index] !== undefined) {
         rowFormatStyle = css({backgroundColor: colorMap[index]});
