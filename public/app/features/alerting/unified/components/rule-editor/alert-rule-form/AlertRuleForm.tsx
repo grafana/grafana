@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
-import { FormProvider, SubmitErrorHandler, useForm, UseFormWatch } from 'react-hook-form';
+import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-hook-form';
 import { Link, useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, ConfirmModal, CustomScrollbar, HorizontalGroup, Spinner, useStyles2, Stack } from '@grafana/ui';
+import { Button, ConfirmModal, CustomScrollbar, HorizontalGroup, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
@@ -14,17 +14,18 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
-import { logInfo, LogMessages, trackNewAlerRuleFormError } from '../../../Analytics';
+import { LogMessages, logInfo, trackNewAlerRuleFormError } from '../../../Analytics';
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { deleteRuleAction, saveRuleFormAction } from '../../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { initialAsyncRequestState } from '../../../utils/redux';
 import {
+  MANUAL_ROUTING_KEY,
+  MINUTE,
   formValuesFromExistingRule,
   getDefaultFormValues,
   getDefaultQueries,
   ignoreHiddenQueries,
-  MINUTE,
   normalizeDefaultAnnotations,
 } from '../../../utils/rule-form';
 import * as ruleId from '../../../utils/rule-id';
@@ -107,6 +108,14 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
     if (conditionErrorMsg !== '') {
       notifyApp.error(conditionErrorMsg);
       return;
+    }
+    // when creating a new rule, we save the manual routing setting in local storage
+    if (!existing) {
+      if (values.manualRouting) {
+        localStorage.setItem(MANUAL_ROUTING_KEY, 'true');
+      } else {
+        localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
+      }
     }
 
     dispatch(
