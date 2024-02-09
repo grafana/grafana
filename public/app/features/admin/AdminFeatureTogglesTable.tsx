@@ -168,7 +168,10 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
               </div>
             }
             confirmText="Save changes"
-            onConfirm={handleSaveChanges}
+            onConfirm={async () => {
+              showSaveChangesModal(false)();
+              handleSaveChanges();
+            }}
             onDismiss={showSaveChangesModal(false)}
           />
         </div>
