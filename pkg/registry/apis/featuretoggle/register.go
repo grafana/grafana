@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ builder.APIGroupBuilder = (*FeatureFlagAPIBuilder)(nil)
@@ -27,17 +28,19 @@ var gv = v0alpha1.SchemeGroupVersion
 type FeatureFlagAPIBuilder struct {
 	features      *featuremgmt.FeatureManager
 	accessControl accesscontrol.AccessControl
+	cfg           *setting.Cfg
 }
 
-func NewFeatureFlagAPIBuilder(features *featuremgmt.FeatureManager, accessControl accesscontrol.AccessControl) *FeatureFlagAPIBuilder {
-	return &FeatureFlagAPIBuilder{features, accessControl}
+func NewFeatureFlagAPIBuilder(features *featuremgmt.FeatureManager, accessControl accesscontrol.AccessControl, cfg *setting.Cfg) *FeatureFlagAPIBuilder {
+	return &FeatureFlagAPIBuilder{features, accessControl, cfg}
 }
 
 func RegisterAPIService(features *featuremgmt.FeatureManager,
 	accessControl accesscontrol.AccessControl,
 	apiregistration builder.APIRegistrar,
+	cfg *setting.Cfg,
 ) *FeatureFlagAPIBuilder {
-	builder := NewFeatureFlagAPIBuilder(features, accessControl)
+	builder := NewFeatureFlagAPIBuilder(features, accessControl, cfg)
 	apiregistration.RegisterAPI(builder)
 	return builder
 }

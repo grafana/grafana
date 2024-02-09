@@ -135,6 +135,14 @@ var (
 			Created:      time.Date(2022, time.June, 11, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:         "autoMigrateGraphPanel",
+			Description:  "Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Created:      time.Date(2023, time.December, 11, 7, 0, 0, 0, time.UTC),
+		},
+		{
 			Name:              "disableAngular",
 			Description:       "Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.",
 			Stage:             FeatureStagePublicPreview,
@@ -1217,10 +1225,11 @@ var (
 			Name:            "alertingPreviewUpgrade",
 			Description:     "Show Unified Alerting preview and upgrade page in legacy alerting",
 			FrontendOnly:    false,
-			Stage:           FeatureStagePublicPreview,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 			Created:         time.Date(2024, time.January, 3, 12, 0, 0, 0, time.UTC),
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:            "enablePluginsTracingByDefault",
