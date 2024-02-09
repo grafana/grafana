@@ -277,7 +277,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return err
 	}
 
-	configModified := stitchReceiver(revision.cfg, mergedReceiver)
+	configModified, renamedReceiver := stitchReceiver(revision.cfg, mergedReceiver)
 	if !configModified {
 		return fmt.Errorf("contact point with uid '%s' not found", mergedReceiver.UID)
 	}
@@ -383,10 +383,12 @@ func (ecp *ContactPointService) encryptValue(value string) (string, error) {
 
 // stitchReceiver modifies a receiver, target, in an alertmanager configStore. It modifies the given configStore in-place.
 // Returns true if the configStore was altered in any way, and false otherwise.
-func stitchReceiver(cfg *apimodels.PostableUserConfig, target *apimodels.PostableGrafanaReceiver) bool {
+// If integration was moved to another group and it was the last in the previous group, the second parameter contains the name of the old group that is gone
+func stitchReceiver(cfg *apimodels.PostableUserConfig, target *apimodels.PostableGrafanaReceiver) (bool, string) {
 	// Algorithm to fix up receivers. Receivers are very complex and depend heavily on internal consistency.
 	// All receivers in a given receiver group have the same name. We must maintain this across renames.
 	configModified := false
+	renamedReceiver := ""
 groupLoop:
 	for groupIdx, receiverGroup := range cfg.AlertmanagerConfig.Receivers {
 		// Does the current group contain the grafana receiver we're interested in?
@@ -411,6 +413,7 @@ groupLoop:
 					replaceReferences(receiverGroup.Name, target.Name, cfg.AlertmanagerConfig.Route)
 					receiverGroup.Name = target.Name
 					receiverGroup.GrafanaManagedReceivers[i] = target
+					renamedReceiver = receiverGroup.Name
 				}
 
 				// Otherwise, we only want to rename the receiver we are touching... NOT all of them.
@@ -452,7 +455,7 @@ groupLoop:
 		}
 	}
 
-	return configModified
+	return configModified, renamedReceiver
 }
 
 func replaceReferences(oldName, newName string, routes ...*apimodels.Route) {
