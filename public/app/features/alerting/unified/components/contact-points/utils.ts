@@ -110,12 +110,11 @@ export function enhanceContactPointsWithMetadata(
   contactPoints: Receiver[],
   alertmanagerConfiguration?: AlertManagerCortexConfig
 ): ContactPointWithMetadata[] {
-  const fullyInheritedTree = alertmanagerConfiguration
-    ? computeInheritedTree(alertmanagerConfiguration?.alertmanager_config?.route ?? {})
-    : undefined;
-  const usedContactPoints =
-    alertmanagerConfiguration && fullyInheritedTree ? getUsedContactPoints(fullyInheritedTree) : undefined;
-  const usedContactPointsByName = alertmanagerConfiguration ? countBy(usedContactPoints) : undefined;
+  // compute the entire inherited tree before finding what notification policies are using a particular contact point
+  const fullyInheritedTree = computeInheritedTree(alertmanagerConfiguration?.alertmanager_config?.route ?? {});
+  const usedContactPoints = getUsedContactPoints(fullyInheritedTree);
+  const usedContactPointsByName = countBy(usedContactPoints);
+
   const contactPointsList = alertmanagerConfiguration
     ? alertmanagerConfiguration?.alertmanager_config.receivers ?? []
     : contactPoints ?? [];

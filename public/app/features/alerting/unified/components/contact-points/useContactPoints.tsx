@@ -121,7 +121,9 @@ export function useContactPointsWithStatus(
     onCallPluginStatusLoading ||
     onCallPluginIntegrationsLoading;
 
-  const unsortedContactPoints = fetchAlertmanagerConfiguration.contactPoints ?? fetchGrafanaContactPoints.contactPoints;
+  const unsortedContactPoints = includePoliciesCount
+    ? fetchAlertmanagerConfiguration.contactPoints
+    : fetchGrafanaContactPoints.contactPoints;
   const contactPoints = unsortedContactPoints.sort((a, b) => a.name.localeCompare(b.name));
   return {
     error,
