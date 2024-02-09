@@ -11,7 +11,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"golang.org/x/exp/slices"
 
-	"github.com/grafana/grafana/pkg/util/converter/jsonitere"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/converter/jsonitere"
 )
 
 // helpful while debugging all the options that may appear

@@ -9,10 +9,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 )
 
 const update = false
