@@ -22,7 +22,7 @@ weight: 300
 
 Export your alerting resources, such as alert rules, contact points, and notification policies for provisioning, automatically importing single folders and single groups.
 
-The export options listed below enable you to download resources in JSON, YAML, or Terraform format, facilitating their provisioning through [configuration files](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning) or [Terraform][alerting_tf_provisioning].
+The export options listed below enable you to download resources in YAML, JSON, or Terraform format, facilitating their provisioning through [configuration files](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning) or [Terraform][alerting_tf_provisioning].
 
 ## Export alert rules
 
