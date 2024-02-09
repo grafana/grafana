@@ -45,3 +45,52 @@ live under that instead.
 `service.grafana.app`) and `data/grafana-apiextensions` (`apiextensions.k8s.io`).
 2. Since `grafana-aggregator` outputs configuration (TLS and kubeconfig) that is used in the invocation of aggregated
   servers, ensure you start the aggregated service after launching the aggregator during local development.
+
+## How to get started
+
+1. Generate the PKI using `openssl` (for development purposes, we will use the CN of `system:masters`):
+  ```shell
+  ./hack/make-aggregator-pki.sh
+  ```
+1. Configure the aggregator:
+  ```ini
+  [feature_toggles]
+  grafanaAPIServerEnsureKubectlAccess = true
+  kubernetesAggregator = true
+
+  [grafana-apiserver]
+  proxy_client_cert_file = ./data/grafana-aggregator/client.crt
+  proxy_client_key_file = ./data/grafana-aggregator/client.key
+  ```
+1. Start the server
+  ```shell
+  make run
+  ```
+1. Apply the manifests: 
+  ```shell
+  export KUBECONFIG=$PWD/data/grafana-apiserver/grafana.kubeconfig
+  kubectl apply -f ./pkg/services/apiserver/aggregator/examples/
+  # SAMPLE OUTPUT
+  # apiservice.apiregistration.k8s.io/v0alpha1.example.grafana.app created
+  # externalname.service.grafana.app/example-apiserver created
+  
+  kubectl get apiservice
+  # SAMPLE OUTPUT
+  # NAME                           SERVICE                     AVAILABLE                      AGE
+  # v0alpha1.example.grafana.app   grafana/example-apiserver   False (FailedDiscoveryCheck)   29m
+  ```
+1. In another tab, start the example microservice that will be aggregated by the parent apiserver:
+  ```shell
+  go run ./pkg/cmd/grafana apiserver \
+    --runtime-config=example.grafana.app/v0alpha1=true \
+    --secure-port 7443 \
+    --client-ca-file=$PWD/data/grafana-aggregator/ca.crt
+  ```
+1. Check `APIService` again:
+  ```shell
+  export KUBECONFIG=$PWD/data/grafana-apiserver/grafana.kubeconfig
+  kubectl get apiservice
+  # SAMPLE OUTPUT
+  # NAME                           SERVICE                     AVAILABLE      AGE
+  # v0alpha1.example.grafana.app   grafana/example-apiserver   True           30m
+  ```
