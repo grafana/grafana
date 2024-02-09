@@ -13,11 +13,13 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -920,17 +922,20 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 
 func TestSocialGenericOAuth_Validate(t *testing.T) {
 	testCases := []struct {
-		name     string
-		settings ssoModels.SSOSettings
-		wantErr  error
+		name      string
+		settings  ssoModels.SSOSettings
+		requester identity.Requester
+		wantErr   error
 	}{
 		{
 			name: "SSOSettings is valid",
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{
-					"client_id": "client-id",
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
 				},
 			},
+			requester: &user.SignedInUser{IsGrafanaAdmin: true},
 		},
 		{
 			name: "fails if settings map contains an invalid field",
@@ -969,13 +974,30 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
+		{
+			name: "fails if the user is not allowed to update allow assign grafana admin",
+			requester: &user.SignedInUser{
+				IsGrafanaAdmin: false,
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
+					"skip_org_role_sync":         "true",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := NewGenericOAuthProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
-			err := s.Validate(context.Background(), tc.settings)
+			if tc.requester == nil {
+				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
+			}
+			err := s.Validate(context.Background(), tc.settings, tc.requester)
 			if tc.wantErr != nil {
 				require.ErrorIs(t, err, tc.wantErr)
 				return

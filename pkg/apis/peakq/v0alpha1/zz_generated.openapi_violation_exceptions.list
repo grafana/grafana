@@ -1,2 +1,0 @@
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/peakq/v0alpha1,QueryTemplateSpec,Variables
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/peakq/v0alpha1,TemplateVariable,DefaultValues

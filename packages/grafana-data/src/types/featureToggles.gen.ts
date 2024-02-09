@@ -33,6 +33,7 @@ export interface FeatureToggles {
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   autoMigrateOldPanels?: boolean;
+  autoMigrateGraphPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
   newVizTooltips?: boolean;
@@ -175,4 +176,5 @@ export interface FeatureToggles {
   promQLScope?: boolean;
   nodeGraphDotLayout?: boolean;
   groupToNestedTableTransformation?: boolean;
+  newPDFRendering?: boolean;
 }
