@@ -118,7 +118,7 @@ func GetIntervalFrom(dsInfo *datasources.DataSource, queryModel *simplejson.Json
 func roundInterval(interval time.Duration) time.Duration {
 	// 0.015s
 	if interval <= 15*time.Millisecond {
-		return time.Millisecond * 10
+		return time.Millisecond * 10 // 0.01s
 	}
 	return gtime.RoundInterval(interval)
 }
