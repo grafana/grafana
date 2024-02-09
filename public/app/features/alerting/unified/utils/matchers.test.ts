@@ -73,7 +73,7 @@ describe('quoteWithEscape', () => {
     ['bar', '"bar"'],
     ['b"ar"', '"b\\"ar\\""'],
     ['b\\ar\\', '"b\\\\ar\\\\"'],
-    ['wa{r}ni$g!', '"wa{r}ni$ng!"'],
+    ['wa{r}ni$ng!', '"wa{r}ni$ng!"'],
   ];
 
   it.each(samples)('should escape and quote %s to %s', (raw, quoted) => {
