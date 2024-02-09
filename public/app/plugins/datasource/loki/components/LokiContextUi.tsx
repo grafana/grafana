@@ -253,7 +253,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
   }, []);
 
   // If there's any "parsedLabel", that also includes structured metadata, we show the parsed labels input
-  const showParsedLabels = parsedLabels.length > 0;
+  const showNonIndexedLabels = parsedLabels.length > 0;
 
   let queryExpr = logContextProvider.prepareExpression(
     contextFilters.filter(({ enabled }) => enabled),
@@ -366,7 +366,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
               );
             }}
           />
-          {showParsedLabels && (
+          {showNonIndexedLabels && (
             <>
               <Label
                 className={styles.label}
