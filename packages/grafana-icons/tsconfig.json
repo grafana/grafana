@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "baseUrl": "./",
     "declarationDir": "./compiled",
     "emitDeclarationOnly": true,
     "isolatedModules": true,

@@ -1,26 +1,23 @@
-import resolve from "@rollup/plugin-node-resolve";
-import path from "path";
-import dts from "rollup-plugin-dts";
-import esbuild from "rollup-plugin-esbuild";
-import externals from "rollup-plugin-node-externals";
-import pkg from "./package.json" assert { type: "json" };
+import resolve from '@rollup/plugin-node-resolve';
+import path from 'path';
+import dts from 'rollup-plugin-dts';
+import esbuild from 'rollup-plugin-esbuild';
+import externals from 'rollup-plugin-node-externals';
+
+import pkg from './package.json' assert { type: 'json' };
 
 export default [
   {
-    input: "src/index.ts",
-    plugins: [
-      externals({ deps: true, packagePath: "./package.json" }),
-      resolve(),
-      esbuild(),
-    ],
+    input: 'src/index.ts',
+    plugins: [externals({ deps: true, packagePath: './package.json' }), resolve(), esbuild()],
     output: [
       {
-        format: "cjs",
+        format: 'cjs',
         sourcemap: true,
         dir: path.dirname(pkg.publishConfig.main),
       },
       {
-        format: "esm",
+        format: 'esm',
         sourcemap: true,
         dir: path.dirname(pkg.publishConfig.module),
         preserveModules: true,
@@ -28,11 +25,11 @@ export default [
     ],
   },
   {
-    input: "./compiled/index.d.ts",
+    input: './compiled/index.d.ts',
     plugins: [dts()],
     output: {
       file: pkg.publishConfig.types,
-      format: "es",
+      format: 'es',
     },
   },
 ];
