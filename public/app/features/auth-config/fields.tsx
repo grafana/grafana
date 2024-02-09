@@ -2,6 +2,7 @@ import React from 'react';
 import { validate as uuidValidate } from 'uuid';
 
 import { TextLink } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 
 import { FieldData, SSOProvider, SSOSettingsField } from './types';
 import { isSelectableValue } from './utils/guards';
@@ -280,6 +281,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       label: 'Allow assign Grafana admin',
       description: 'If enabled, it will automatically sync the Grafana server administrator role.',
       type: 'switch',
+      hidden: !contextSrv.isGrafanaAdmin,
     },
     skipOrgRoleSync: {
       label: 'Skip organization role sync',

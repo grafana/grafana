@@ -10,9 +10,11 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -139,6 +141,7 @@ func TestSocialGrafanaCom_Validate(t *testing.T) {
 	testCases := []struct {
 		name        string
 		settings    ssoModels.SSOSettings
+		requester   identity.Requester
 		expectError bool
 	}{
 		{
@@ -176,13 +179,31 @@ func TestSocialGrafanaCom_Validate(t *testing.T) {
 			},
 			expectError: true,
 		},
+		{
+			name: "fails if the user are not allowed to update allow assign grafana admin",
+			requester: &user.SignedInUser{
+				IsGrafanaAdmin: false,
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
+					"skip_org_role_sync":         "true",
+				},
+			},
+			expectError: true,
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := NewGrafanaComProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
-			err := s.Validate(context.Background(), tc.settings)
+			if tc.requester == nil {
+				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
+			}
+
+			err := s.Validate(context.Background(), tc.settings, tc.requester)
 			if tc.expectError {
 				require.Error(t, err)
 			} else {

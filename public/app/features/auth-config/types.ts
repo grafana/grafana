@@ -114,6 +114,7 @@ export type FieldData = {
   options?: Array<SelectableValue<string>>;
   placeholder?: string;
   defaultValue?: string;
+  hidden?: boolean;
 };
 
 export type SSOSettingsField =
