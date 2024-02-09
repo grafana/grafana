@@ -3,8 +3,9 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
+import { AngleRight } from '@grafana/icons';
 import { reportInteraction } from '@grafana/runtime';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { Breadcrumb } from './types';
 
@@ -44,7 +45,7 @@ export function BreadcrumbItem({ href, isCurrent, text, index, flexGrow }: Props
             {text}
           </a>
           <div className={styles.separator} aria-hidden={true}>
-            <Icon name="angle-right" />
+            <AngleRight />
           </div>
         </>
       )}
