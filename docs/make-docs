@@ -6,6 +6,16 @@
 # [Semantic versioning](https://semver.org/) is used to help the reader identify the significance of changes.
 # Changes are relevant to this script and the support docs.mk GNU Make interface.
 #
+#
+# ## 5.3.0 (2024-02-08)
+#
+# ### Changed
+#
+# - Updated support for plugins monorepo now that multiple projects have been moved into it.
+# - Use `printf` instead of `echo` for better portability of output.
+#
+#   https://www.in-ulm.de/~mascheck/various/echo+printf/
+#
 # ## 5.2.0 (2024-01-18)
 #
 # ### Changed
@@ -270,10 +280,7 @@ SOURCES_helm_charts_mimir_distributed='mimir'
 SOURCES_helm_charts_tempo_distributed='tempo'
 SOURCES_opentelemetry='opentelemetry-docs'
 SOURCES_plugins_grafana_datadog_datasource='datadog-datasource'
-SOURCES_plugins_grafana_jira_datasource='jira-datasource'
-SOURCES_plugins_grafana_mongodb_datasource='mongodb-datasource'
 SOURCES_plugins_grafana_oracle_datasource='oracle-datasource'
-SOURCES_plugins_grafana_splunk_datasource='splunk-datasource'
 
 VERSIONS_as_code='UNVERSIONED'
 VERSIONS_grafana_cloud='UNVERSIONED'
@@ -284,10 +291,7 @@ VERSIONS_grafana_cloud_data_configuration_integrations='UNVERSIONED'
 VERSIONS_grafana_cloud_frontend_observability_faro_web_sdk='UNVERSIONED'
 VERSIONS_opentelemetry='UNVERSIONED'
 VERSIONS_plugins_grafana_datadog_datasource='latest'
-VERSIONS_plugins_grafana_jira_datasource='latest'
-VERSIONS_plugins_grafana_mongodb_datasource='latest'
 VERSIONS_plugins_grafana_oracle_datasource='latest'
-VERSIONS_plugins_grafana_splunk_datasource='latest'
 VERSIONS_technical_documentation='UNVERSIONED'
 VERSIONS_website='UNVERSIONED'
 VERSIONS_writers_toolkit='UNVERSIONED'
@@ -297,10 +301,7 @@ PATHS_helm_charts_mimir_distributed='docs/sources/helm-charts/mimir-distributed'
 PATHS_helm_charts_tempo_distributed='docs/sources/helm-charts/tempo-distributed'
 PATHS_mimir='docs/sources/mimir'
 PATHS_plugins_grafana_datadog_datasource='docs/sources'
-PATHS_plugins_grafana_jira_datasource='docs/sources'
-PATHS_plugins_grafana_mongodb_datasource='docs/sources'
 PATHS_plugins_grafana_oracle_datasource='docs/sources'
-PATHS_plugins_grafana_splunk_datasource='docs/sources'
 PATHS_tempo='docs/sources/tempo'
 PATHS_website='content'
 
@@ -590,8 +591,7 @@ await_build() {
     i=$((i + 1))
 
     if ${req} "${url}"; then
-      echo
-      echo "View documentation locally:"
+      printf '\r\nView documentation locally:\r\n'
       for x in ${url_src_dst_vers}; do
         IFS='^' read -r url _ _ <<POSIX_HERESTRING
 $x
@@ -599,19 +599,18 @@ POSIX_HERESTRING
 
         if [ -n "${url}" ]; then
           if [ "${_url}" != "arbitrary" ]; then
-            echo "  ${url}"
+            printf '\r  %s\r\n' "${url}"
           fi
         fi
       done
-      echo
-      echo 'Press Ctrl+C to stop the server'
+      printf '\r\nPress Ctrl+C to stop the server\r\n'
 
       unset i max req url
       return
     fi
   done
 
-  echo
+  printf '\r\n'
   errr 'The build was interrupted or a build error occurred, check the previous logs for possible causes.'
   note 'You might need to use Ctrl+C to end the process.'
 
@@ -620,16 +619,16 @@ POSIX_HERESTRING
 
 debg() {
   if [ -n "${DEBUG}" ]; then
-    echo "DEBG: $1" >&2
+    printf 'DEBG: %s\r\n' "$1" >&2
   fi
 }
 
 errr() {
-  echo "ERRR: $1" >&2
+  printf 'ERRR: %s\r\n' "$1" >&2
 }
 
 note() {
-  echo "NOTE: $1" >&2
+  printf 'NOTE: %s\r\n' "$1" >&2
 }
 
 url_src_dst_vers="$(url_src_dst_vers "$@")"
@@ -690,7 +689,7 @@ POSIX_HERESTRING
 case "${image}" in
   'grafana/doc-validator')
     proj="$(new_proj "$1")"
-    echo
+    printf '\r\n'
     "${PODMAN}" run \
                 --init \
                 --interactive \
@@ -706,7 +705,7 @@ case "${image}" in
     ;;
   'grafana/vale')
     proj="$(new_proj "$1")"
-    echo
+    printf '\r\n'
     "${PODMAN}" run \
                 --init \
                 --interactive \
