@@ -26,12 +26,7 @@ interface VariableEditorFormProps {
   onDelete: (variableName: string) => void;
 }
 
-export function VariableEditorForm({
-  variable,
-  onTypeChange,
-  onGoBack,
-  onDelete: propsOnDelete,
-}: VariableEditorFormProps) {
+export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete }: VariableEditorFormProps) {
   const styles = useStyles2(getStyles);
   const { name, type, label, description, hide } = variable.useState();
   const EditorToRender = isEditableVariableType(type) ? getVariableEditor(type) : undefined;
@@ -55,7 +50,7 @@ export function VariableEditorForm({
 
   const onDeleteVariable = (hideModal: () => void) => () => {
     reportInteraction('Delete variable');
-    propsOnDelete(name);
+    onDelete(name);
     hideModal();
   };
 
