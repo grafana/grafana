@@ -83,6 +83,7 @@ export const availableIconsIndex = {
   dashboard: true,
   database: true,
   'dice-three': true,
+  docker: true,
   'document-info': true,
   'download-alt': true,
   draggabledots: true,
