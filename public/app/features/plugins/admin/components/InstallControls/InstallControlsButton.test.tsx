@@ -8,6 +8,8 @@ import { config } from '@grafana/runtime';
 import { CatalogPlugin, PluginStatus } from '../../types';
 
 import { InstallControlsButton } from './InstallControlsButton';
+import { configureStore } from 'app/store/configureStore';
+import { getPluginsStateMock } from '../../__mocks__';
 
 const plugin: CatalogPlugin = {
   description: 'The test plugin',
@@ -89,5 +91,81 @@ describe('InstallControlsButton', () => {
       </TestProvider>
     );
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+
+  describe('uninstall button on prem', () => {
+    const store = configureStore({
+      plugins: getPluginsStateMock([]),
+    });
+
+    it('should be disable when is Installing', () => {
+      store.dispatch({ type: 'plugins/uninstall/pending' });
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton plugin={{ ...plugin }} pluginStatus={PluginStatus.UNINSTALL} />
+        </TestProvider>
+      );
+      const button = screen.getByText('Uninstalling').closest('button');
+      expect(button).toBeDisabled();
+    });
+
+    it('should be enabled when not is Installing', () => {
+      store.dispatch({ type: 'plugins/uninstall/fulfilled', payload: { id: '', changes: {} } });
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton plugin={{ ...plugin }} pluginStatus={PluginStatus.UNINSTALL} />
+        </TestProvider>
+      );
+      const button = screen.getByText('Uninstall').closest('button');
+      expect(button).toBeEnabled();
+    });
+  });
+
+  describe('uninstall button on manage instance', () => {
+    const oldFeatureTogglesManagedPluginsInstall = config.featureToggles.managedPluginsInstall;
+    const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+
+    beforeAll(() => {
+      config.featureToggles.managedPluginsInstall = true;
+      config.pluginAdminExternalManageEnabled = true;
+    });
+
+    afterAll(() => {
+      config.featureToggles.managedPluginsInstall = oldFeatureTogglesManagedPluginsInstall;
+      config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+    });
+
+    const store = configureStore({
+      plugins: getPluginsStateMock([]),
+    });
+
+    it('should be disabled when is Installing=false but isUninstallingFromInstance=true', () => {
+      store.dispatch({ type: 'plugins/uninstall/fulfilled', payload: { id: '', changes: {} } });
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton
+            plugin={{ ...plugin, isUninstallingFromInstance: true }}
+            pluginStatus={PluginStatus.UNINSTALL}
+          />
+        </TestProvider>
+      );
+      const button = screen.getByText('Uninstall').closest('button');
+      expect(button).toBeDisabled();
+    });
+
+    it('should be disabled when is Installing=false but isUninstallingFromInstance=false', () => {
+      store.dispatch({ type: 'plugins/uninstall/fulfilled', payload: { id: '', changes: {} } });
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton
+            plugin={{ ...plugin, isUninstallingFromInstance: false }}
+            pluginStatus={PluginStatus.UNINSTALL}
+          />
+        </TestProvider>
+      );
+      const button = screen.getByText('Uninstall').closest('button');
+      expect(button).toBeEnabled();
+    });
   });
 });
