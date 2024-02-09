@@ -1,4 +1,4 @@
 {
   "extends": "@grafana/plugin-configs/tsconfig.json",
-  "include": ["."],
+  "include": ["."]
 }
