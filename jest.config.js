@@ -14,7 +14,7 @@ const esModules = [
   'robust-predicates',
   'leven',
   'nanoid',
-  'monaco-promql'
+  'monaco-promql',
 ].join('|');
 
 module.exports = {

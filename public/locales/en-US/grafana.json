@@ -108,6 +108,9 @@
       "dark-theme": "Dark",
       "light-theme": "Light"
     },
+    "empty-state": {
+      "title": "No results found"
+    },
     "search-box": {
       "placeholder": "Search or jump to..."
     },
@@ -879,9 +882,6 @@
     "org-settings": {
       "subtitle": "Manage preferences across an organization",
       "title": "Default preferences"
-    },
-    "performance-testing": {
-      "title": "Performance testing"
     },
     "playlists": {
       "subtitle": "Groups of dashboards that are displayed in a sequence",
