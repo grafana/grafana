@@ -29,8 +29,9 @@ export const VizTooltipContent = ({
   const styles = useStyles2(getStyles);
 
   if (sortOrder !== SortOrder.None && contentLabelValue.length > 1) {
+    let mult = sortOrder === SortOrder.Descending ? -1 : 1;
     // mutates!
-    contentLabelValue.sort((a, b) => stringCmp(a.value, b.value));
+    contentLabelValue.sort((a, b) => mult * stringCmp(a.value, b.value));
   }
 
   const scrollableStyle: CSSProperties = scrollable
