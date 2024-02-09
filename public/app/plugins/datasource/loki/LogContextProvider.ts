@@ -237,23 +237,26 @@ export class LogContextProvider {
 
     // We need to have original query to get parser and include parsed labels
     // We only add parser and parsed labels if there is only one parser in query
-    if (query && isQueryWithParser(query.expr).parserCount === 1) {
-      const parser = getParserFromQuery(query.expr);
-      if (parser) {
-        expr = addParserToQuery(expr, parser);
-        const parsedLabels = contextFilters.filter((filter) => filter.nonIndexed && filter.enabled);
-        for (const parsedLabel of parsedLabels) {
-          if (parsedLabel.enabled) {
-            expr = addLabelToQuery(expr, parsedLabel.label, '=', parsedLabel.value);
-          }
+    if (query) {
+      let hasParser = false;
+      if (isQueryWithParser(query.expr).parserCount === 1) {
+        hasParser = true;
+        const parser = getParserFromQuery(query.expr);
+        if (parser) {
+          expr = addParserToQuery(expr, parser);
         }
       }
-    } else if (query && isQueryWithParser(query.expr).parserCount === 0) {
-      // this case handles labels added from structured metadata, because the label is `fromParser` but the query does not contain a parser
+
       const parsedLabels = contextFilters.filter((filter) => filter.nonIndexed && filter.enabled);
       for (const parsedLabel of parsedLabels) {
         if (parsedLabel.enabled) {
-          expr = addLabelToQuery(expr, parsedLabel.label, '=', parsedLabel.value, LabelType.StructuredMetadata);
+          expr = addLabelToQuery(
+            expr,
+            parsedLabel.label,
+            '=',
+            parsedLabel.value,
+            hasParser ? LabelType.Parsed : LabelType.StructuredMetadata
+          );
         }
       }
     }
