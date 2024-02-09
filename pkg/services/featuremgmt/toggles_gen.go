@@ -626,4 +626,8 @@ const (
 	// FlagNodeGraphDotLayout
 	// Changed the layout algorithm for the node graph
 	FlagNodeGraphDotLayout = "nodeGraphDotLayout"
+
+	// FlagPasswordPolicy
+	// Enables password policy for Grafana basic auth users.
+	FlagPasswordPolicy = "passwordPolicy"
 )

@@ -1310,5 +1310,13 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			Created:      time.Date(2024, time.January, 2, 12, 0, 0, 0, time.UTC),
 		},
+		{
+			Name:         "passwordPolicy",
+			Description:  "Enables password policy for Grafana basic auth users.",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        identityAccessTeam,
+			Created:      time.Date(2024, time.February, 1, 12, 0, 0, 0, time.UTC),
+		},
 	}
 )

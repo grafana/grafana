@@ -170,6 +170,7 @@ Experimental features might be changed or removed without prior notice.
 | `onPremToCloudMigrations`                   | In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.                                                                                                                                                                  |
 | `promQLScope`                               | In-development feature that will allow injection of labels into prometheus queries.                                                                                                                                                                                               |
 | `nodeGraphDotLayout`                        | Changed the layout algorithm for the node graph                                                                                                                                                                                                                                   |
+| `passwordPolicy`                            | Enables password policy for Grafana basic auth users.                                                                                                                                                                                                                             |
 
 ## Development feature toggles
 
