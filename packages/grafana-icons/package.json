@@ -1,0 +1,50 @@
+{
+  "name": "@grafana/icons",
+  "version": "1.0.0",
+  "description": "Icons for Grafana",
+  "repository": "https://github.com/grafana/icons.git",
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
+  "scripts": {
+    "icons:clean": "rm -rf ./src/icons",
+    "icons:create": "npx @svgr/cli ./svg",
+    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin typescript"
+  },
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "publishConfig": {
+    "main": "dist/index.js",
+    "module": "dist/esm/index.js",
+    "types": "dist/index.d.ts",
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "./README.md",
+    "./CHANGELOG.md",
+    "LICENSE_APACHE2"
+  ],
+  "devDependencies": {
+    "@grafana/tsconfig": "^1.3.0-rc1",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@svgr/cli": "^8.1.0",
+    "@svgr/plugin-jsx": "^8.1.0",
+    "@svgr/plugin-prettier": "^8.1.0",
+    "@svgr/plugin-svgo": "^8.1.0",
+    "@types/node": "^20.11.10",
+    "@types/react": "^18.2.48",
+    "esbuild": "^0.20.0",
+    "prettier": "^3.2.4",
+    "rollup": "^4.9.6",
+    "rollup-plugin-dts": "^6.1.0",
+    "rollup-plugin-esbuild": "^6.1.1",
+    "rollup-plugin-node-externals": "^7.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}
