@@ -1,4 +1,4 @@
-import { betterer } from '@betterer/betterer';
+import { BettererFileIssue, betterer } from '@betterer/betterer';
 import { writeFile } from 'fs/promises';
 
 interface Issue {
@@ -28,7 +28,7 @@ async function main() {
         }
         fileIssues.push({
           message: issue.message,
-          count: details.filter((i) => i.message === issue.message).length,
+          count: details.filter((i: BettererFileIssue) => i.message === issue.message).length,
         });
       }
       const relativePath = file.replace(process.cwd(), '');
