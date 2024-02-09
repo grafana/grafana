@@ -36,9 +36,9 @@ Choose from the options below to import (or provision) your Grafana Alerting res
 
    File provisioning is not available in Grafana Cloud instances.
 
-2. Use [Terraform to provision alerting resources][alerting_tf_provisioning].
+1. Use [Terraform to provision alerting resources][alerting_tf_provisioning].
 
-3. Use the [Alerting provisioning HTTP API][alerting_http_provisioning] to manage alerting resources.
+1. Use the [Alerting provisioning HTTP API][alerting_http_provisioning] to manage alerting resources.
 
    **Note:**
 

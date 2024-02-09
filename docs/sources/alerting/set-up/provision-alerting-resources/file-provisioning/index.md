@@ -668,7 +668,7 @@ Create or delete templates in your Grafana instance(s).
 
    Example configuration files can be found below.
 
-2. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
+1. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
 
 Here is an example of a configuration file for creating templates.
 
@@ -767,7 +767,7 @@ If you are a Kubernetes user, you can leverage file provisioning using Kubernete
          template: the content for my template
    ```
 
-2. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
+1. Add the file(s) to your GitOps workflow, so that they deploy alongside your Grafana instance(s).
 
    ```yaml
    apiVersion: apps/v1
