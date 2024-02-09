@@ -1,9 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
 import { TestProvider } from 'test/helpers/TestProvider';
-
-import 'whatwg-fetch';
 
 import { DataSourceSettings } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
@@ -215,8 +213,8 @@ function setupAlertmanagerDataSource(
   };
 
   server.use(
-    rest.get('/api/datasources', (_req, res, ctx) => {
-      return res(ctx.json([dsSettings]));
+    http.get('/api/datasources', () => {
+      return HttpResponse.json([dsSettings]);
     })
   );
 }

@@ -1,4 +1,4 @@
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { SetupServer } from 'msw/lib/node';
 
 import { PluginMeta } from '@grafana/data';
@@ -7,8 +7,11 @@ import { SupportedPlugin } from '../types/pluginBridges';
 
 export function mockPluginSettings(server: SetupServer, plugin: SupportedPlugin, response?: PluginMeta) {
   server.use(
-    rest.get(`/api/plugins/${plugin}/settings`, (_req, res, ctx) => {
-      return response ? res(ctx.status(200), ctx.json(response)) : res(ctx.status(404));
+    http.get(`/api/plugins/${plugin}/settings`, () => {
+      if (response) {
+        return HttpResponse.json(response);
+      }
+      return HttpResponse.json(undefined, { status: 404 });
     })
   );
 }

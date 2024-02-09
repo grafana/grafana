@@ -1,8 +1,7 @@
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { SetupServer } from 'msw/node';
 
-import { AlertmanagerChoice, AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
-import { ReceiversStateDTO } from 'app/types';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { mockApi } from '../../../mockApi';
 import { mockAlertmanagerChoiceResponse } from '../../../mocks/alertmanagerApi';
@@ -14,15 +13,11 @@ import receiversMock from './receivers.mock.json';
 export default (server: SetupServer) => {
   server.use(
     // this endpoint is a grafana built-in alertmanager
-    rest.get('/api/alertmanager/grafana/config/api/v1/alerts', (_req, res, ctx) =>
-      res(ctx.json<AlertManagerCortexConfig>(alertmanagerMock))
-    ),
+    http.get('/api/alertmanager/grafana/config/api/v1/alerts', () => HttpResponse.json(alertmanagerMock)),
     // this endpoint is only available for the built-in alertmanager
-    rest.get('/api/alertmanager/grafana/config/api/v1/receivers', (_req, res, ctx) =>
-      res(ctx.json<ReceiversStateDTO[]>(receiversMock))
-    ),
+    http.get('/api/alertmanager/grafana/config/api/v1/receivers', () => HttpResponse.json(receiversMock)),
     // this endpoint will respond if the OnCall plugin is installed
-    rest.get('/api/plugins/grafana-oncall-app/settings', (_req, res, ctx) => res(ctx.status(404)))
+    http.get('/api/plugins/grafana-oncall-app/settings', () => HttpResponse.json(undefined, { status: 404 }))
   );
 
   // this endpoint is for rendering the "additional AMs to configure" warning
@@ -41,12 +36,20 @@ export const setupTestEndpointMock = (server: SetupServer) => {
   const mock = jest.fn();
 
   server.use(
-    rest.post('/api/alertmanager/grafana/config/api/v1/receivers/test', async (req, res, ctx) => {
-      const requestBody = await req.json();
-      mock(requestBody);
+    http.post(
+      '/api/alertmanager/grafana/config/api/v1/receivers/test',
+      async ({ request }) => {
+        const requestBody = await request.json();
+        mock(requestBody);
 
-      return res.once(ctx.status(200));
-    })
+        return HttpResponse.json(undefined, {
+          status: 200,
+        });
+      },
+      {
+        once: true,
+      }
+    )
   );
 
   return mock;
@@ -56,12 +59,20 @@ export const setupSaveEndpointMock = (server: SetupServer) => {
   const mock = jest.fn();
 
   server.use(
-    rest.post('/api/alertmanager/grafana/config/api/v1/alerts', async (req, res, ctx) => {
-      const requestBody = await req.json();
-      mock(requestBody);
+    http.post(
+      '/api/alertmanager/grafana/config/api/v1/alerts',
+      async ({ request }) => {
+        const requestBody = await request.json();
+        mock(requestBody);
 
-      return res.once(ctx.status(200));
-    })
+        return HttpResponse.json(undefined, {
+          status: 200,
+        });
+      },
+      {
+        once: true,
+      }
+    )
   );
 
   return mock;

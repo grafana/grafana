@@ -6,8 +6,6 @@ import { Props } from 'react-virtualized-auto-sizer';
 
 import { configureStore } from 'app/store/configureStore';
 
-import 'whatwg-fetch';
-
 import { PayloadEditor, RESET_TO_DEFAULT } from './PayloadEditor';
 
 const DEFAULT_PAYLOAD = `[

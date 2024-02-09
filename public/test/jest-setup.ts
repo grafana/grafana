@@ -9,6 +9,7 @@ import { EventBusSrv } from '@grafana/data';
 import { GrafanaBootConfig } from '@grafana/runtime';
 import { initIconCache } from 'app/core/icons/iconBundle';
 
+import 'whatwg-fetch'; // fetch polyfill
 import 'blob-polyfill';
 import 'mutationobserver-shim';
 import './mocks/workers';
