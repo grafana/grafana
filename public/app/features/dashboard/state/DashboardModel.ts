@@ -170,7 +170,16 @@ export class DashboardModel implements TimeModel {
     this.updateSchema(data);
 
     // Auto-migrate old angular panels
-    if (options?.autoMigrateOldPanels || !config.angularSupportEnabled || config.featureToggles.autoMigrateOldPanels) {
+    const shouldMigrateAllAngularPanels =
+      options?.autoMigrateOldPanels || !config.angularSupportEnabled || config.featureToggles.autoMigrateOldPanels;
+
+    const shouldMigrateExplicitAngularPanels =
+      config.featureToggles.autoMigrateGraphPanel ||
+      config.featureToggles.autoMigrateTablePanel ||
+      config.featureToggles.autoMigratePiechartPanel ||
+      config.featureToggles.autoMigrateWorldmapPanel;
+
+    if (shouldMigrateAllAngularPanels) {
       for (const p of this.panelIterator()) {
         const newType = autoMigrateAngular[p.type];
 
@@ -186,17 +195,38 @@ export class DashboardModel implements TimeModel {
       }
     }
 
-    // Explicit handling of graph -> time series migration (and eventually others)
-    if (
-      options?.autoMigrateOldPanels ||
-      !config.angularSupportEnabled ||
-      config.featureToggles.autoMigrateOldPanels ||
-      config.featureToggles.autoMigrateGraphPanel
-    ) {
+    // Explicit handling of migration for graph -> time series, table (old) -> table, grafana-piechart-panel -> piechart, and worldmap -> geomap
+    if (shouldMigrateAllAngularPanels || shouldMigrateExplicitAngularPanels) {
       for (const p of this.panelIterator()) {
-        if (!p.autoMigrateFrom && p.type === 'graph') {
+        if (
+          !p.autoMigrateFrom &&
+          p.type === 'graph' &&
+          (config.featureToggles.autoMigrateGraphPanel || shouldMigrateAllAngularPanels)
+        ) {
           p.autoMigrateFrom = p.type;
           p.type = 'timeseries';
+        } else if (
+          !p.autoMigrateFrom &&
+          p.type === 'table-old' &&
+          (config.featureToggles.autoMigrateTablePanel || shouldMigrateAllAngularPanels)
+        ) {
+          p.autoMigrateFrom = p.type;
+          p.type = 'table';
+        } else if (
+          !p.autoMigrateFrom &&
+          p.type === 'grafana-piechart-panel' &&
+          (config.featureToggles.autoMigratePiechartPanel || shouldMigrateAllAngularPanels)
+        ) {
+          p.autoMigrateFrom = p.type;
+          p.type = 'piechart';
+        } else if (
+          !p.autoMigrateFrom &&
+          p.type === 'grafana-worldmap-panel' &&
+          (config.featureToggles.autoMigrateWorldmapPanel || shouldMigrateAllAngularPanels)
+        ) {
+          console.log('is this happening????');
+          p.autoMigrateFrom = p.type;
+          p.type = 'geomap';
         }
       }
     }

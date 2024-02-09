@@ -50,6 +50,78 @@
       "keepTime": false,
       "tags": [],
       "targetBlank": true,
+      "title": "Auto migrate table (old) panel (TRUE)",
+      "tooltip": "",
+      "type": "link",
+      "url": " /d/cdd412c4/?__feature.autoMigrateTablePanel=true"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "Auto migrate table (old) panel (FALSE)",
+      "tooltip": "",
+      "type": "link",
+      "url": " /d/cdd412c4/?__feature.autoMigrateTablePanel=false"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "Auto migrate piechart panel (TRUE)",
+      "tooltip": "",
+      "type": "link",
+      "url": " /d/cdd412c4/?__feature.autoMigratePiechartPanel=true"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "Auto migrate piechart panel (FALSE)",
+      "tooltip": "",
+      "type": "link",
+      "url": " /d/cdd412c4/?__feature.autoMigratePiechartPanel=false"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "Auto migrate worldmap panel (TRUE)",
+      "tooltip": "",
+      "type": "link",
+      "url": " /d/cdd412c4/?__feature.autoMigrateWorldmapPanel=true"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "Auto migrate worldmap panel (FALSE)",
+      "tooltip": "",
+      "type": "link",
+      "url": " /d/cdd412c4/?__feature.autoMigrateWorldmapPanel=false"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
       "title": "Auto migrate (TRUE)",
       "tooltip": "",
       "type": "link",
@@ -95,10 +167,6 @@
   "liveNow": false,
   "panels": [
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
       "datasource": {
         "type": "testdata",
         "uid": "PD8C576611E62080A"
@@ -154,35 +222,18 @@
               }
             ]
           },
-          "unit": "short",
-          "unitScale": true
+          "unit": "short"
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 11,
         "w": 16,
         "x": 0,
         "y": 0
       },
-      "hiddenSeries": false,
       "id": 4,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true,
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -194,15 +245,7 @@
           "sort": "none"
         }
       },
-      "percentage": false,
-      "pluginVersion": "9.5.0-pre",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      "pluginVersion": "10.4.0-pre",
       "targets": [
         {
           "datasource": {
@@ -214,35 +257,8 @@
           "seriesCount": 3
         }
       ],
-      "thresholds": [],
-      "timeRegions": [],
       "title": "Flot graph",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "mode": "time",
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "short",
-          "logBase": 1,
-          "show": true
-        },
-        {
-          "format": "short",
-          "logBase": 1,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false
-      }
+      "type": "graph"
     },
     {
       "datasource": {
@@ -265,7 +281,7 @@
         "content": "# Graph panel >> Timeseries panel\n\nKnown issues:\n* hiding null/empty series\n* time regions",
         "mode": "markdown"
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "10.4.0-pre",
       "targets": [
         {
           "datasource": {
@@ -377,7 +393,7 @@
         "content": "# Table (old) >> Table\n\nKnown issues:\n* wrapping text\n* style changes",
         "mode": "markdown"
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "10.4.0-pre",
       "targets": [
         {
           "datasource": {
@@ -417,7 +433,6 @@
         "y": 21
       },
       "id": 9,
-      "links": [],
       "mappingType": 1,
       "mappingTypes": [
         {
@@ -498,7 +513,6 @@
         "y": 21
       },
       "id": 23,
-      "links": [],
       "mappingType": 1,
       "mappingTypes": [
         {
@@ -574,7 +588,7 @@
         "content": "# Singlestat >> Stat\n\nKnown issues:\n* limited options",
         "mode": "markdown"
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "10.4.0-pre",
       "targets": [
         {
           "datasource": {
@@ -661,7 +675,7 @@
         "content": "# grafana-piechart-panel >> piechart\n\nKnown issues:\n* TBD",
         "mode": "markdown"
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "10.4.0-pre",
       "targets": [
         {
           "datasource": {
@@ -675,38 +689,54 @@
       "type": "text"
     },
     {
-      "circleMaxSize": 30,
-      "circleMinSize": 2,
-      "colors": [
-        "rgba(245, 54, 54, 0.9)",
-        "rgba(237, 129, 40, 0.89)",
-        "rgba(50, 172, 45, 0.97)"
-      ],
       "datasource": {
         "type": "grafana-testdata-datasource",
         "uid": "PD8C576611E62080A"
       },
-      "decimals": 0,
-      "esMetric": "Count",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "rgba(245, 54, 54, 0.9)"
+              },
+              {
+                "color": "rgba(237, 129, 40, 0.89)",
+                "value": 0
+              },
+              {
+                "color": "rgba(50, 172, 45, 0.97)",
+                "value": 10
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 10,
         "w": 16,
         "x": 0,
         "y": 39
       },
-      "hideEmpty": false,
-      "hideZero": false,
       "id": 26,
-      "initialZoom": 1,
-      "locationData": "countries",
-      "mapCenter": "(0°, 0°)",
-      "mapCenterLatitude": 0,
-      "mapCenterLongitude": 0,
       "maxDataPoints": 1,
-      "mouseWheelZoom": false,
       "options": {
+        "basemap": {
+          "name": "Basemap",
+          "type": "default"
+        },
         "controls": {
-          "mouseWheelZoom": true,
+          "mouseWheelZoom": false,
           "showAttribution": true,
           "showDebug": false,
           "showMeasure": false,
@@ -730,7 +760,7 @@
                 },
                 "size": {
                   "fixed": 5,
-                  "max": 15,
+                  "max": 30,
                   "min": 2
                 },
                 "symbol": {
@@ -751,9 +781,10 @@
               }
             },
             "location": {
-              "mode": "auto"
+              "gazetteer": "public/gazetteer/countries.json",
+              "mode": "lookup"
             },
-            "name": "Layer 1",
+            "name": "Layer 0",
             "tooltip": true,
             "type": "markers"
           }
@@ -769,16 +800,7 @@
           "zoom": 1
         }
       },
-      "pluginVersion": "10.3.0-pre",
-      "showLegend": true,
-      "stickyLabels": false,
-      "tableQueryOptions": {
-        "geohashField": "geohash",
-        "latitudeField": "latitude",
-        "longitudeField": "longitude",
-        "metricField": "metric",
-        "queryType": "geohash"
-      },
+      "pluginVersion": "10.4.0-pre",
       "targets": [
         {
           "csvFileName": "flight_info_by_state.csv",
@@ -790,7 +812,6 @@
           "scenarioId": "csv_file"
         }
       ],
-      "thresholds": "0,10",
       "title": "grafana-worldmap-panel",
       "transformations": [
         {
@@ -798,12 +819,17 @@
           "options": {
             "reducers": []
           }
+        },
+        {
+          "id": "reduce",
+          "options": {
+            "reducers": [
+              "sum"
+            ]
+          }
         }
       ],
-      "type": "grafana-worldmap-panel",
-      "unitPlural": "",
-      "unitSingle": "",
-      "valueName": "total"
+      "type": "grafana-worldmap-panel"
     },
     {
       "datasource": {
@@ -826,7 +852,7 @@
         "content": "# grafana-worldmap-panel >> geomap\n\nKnown issues:\n* TBD",
         "mode": "markdown"
       },
-      "pluginVersion": "10.3.0-pre",
+      "pluginVersion": "10.4.0-pre",
       "targets": [
         {
           "datasource": {
@@ -858,6 +884,6 @@
   "timezone": "",
   "title": "Devenv - Panel migrations",
   "uid": "cdd412c4",
-  "version": 34,
+  "version": 63,
   "weekStart": ""
 }

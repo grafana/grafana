@@ -130,7 +130,12 @@ const defaults: any = {
   title: '',
 };
 
-export const explicitlyControlledMigrationPanels = ['graph'];
+export const explicitlyControlledMigrationPanels = [
+  'graph',
+  'table-old',
+  'grafana-piechart-panel',
+  'grafana-worldmap-panel',
+];
 
 export const autoMigrateAngular: Record<string, string> = {
   graph: 'timeseries',
