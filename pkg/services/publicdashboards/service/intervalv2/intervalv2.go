@@ -1,7 +1,4 @@
-// Copied from https://github.com/grafana/grafana/blob/main/pkg/tsdb/intervalv2/intervalv2.go
-// We're copying this to not block ourselves from decoupling until the conversation here is resolved
-// https://raintank-corp.slack.com/archives/C05QFJUHUQ6/p1700064431005089
-package time
+package intervalv2
 
 import (
 	"time"
@@ -45,6 +42,10 @@ func NewCalculator(opts ...CalculatorOptions) *intervalCalculator {
 	}
 
 	return calc
+}
+
+func (i *Interval) Milliseconds() int64 {
+	return i.Value.Nanoseconds() / int64(time.Millisecond)
 }
 
 func (ic *intervalCalculator) Calculate(timerange backend.TimeRange, minInterval time.Duration, maxDataPoints int64) Interval {
