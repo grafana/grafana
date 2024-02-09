@@ -77,6 +77,17 @@ func (b *FeatureFlagAPIBuilder) getResolvedToggleState(ctx context.Context) v0al
 	return state
 }
 
+func (b *FeatureFlagAPIBuilder) userCanRead(ctx context.Context, u *user.SignedInUser) bool {
+	if u == nil {
+		u, _ = appcontext.User(ctx)
+		if u == nil {
+			return false
+		}
+	}
+	ok, err := b.accessControl.Evaluate(ctx, u, ac.EvalPermission(ac.ActionFeatureManagementRead))
+	return ok && err == nil
+}
+
 func (b *FeatureFlagAPIBuilder) userCanWrite(ctx context.Context, u *user.SignedInUser) bool {
 	if u == nil {
 		u, _ = appcontext.User(ctx)
@@ -94,6 +105,22 @@ func (b *FeatureFlagAPIBuilder) handleCurrentStatus(w http.ResponseWriter, r *ht
 		return
 	}
 
+	// Check if the user can access toggle info
+	ctx := r.Context()
+	user, err := appcontext.User(ctx)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	if !b.userCanRead(ctx, user) {
+		err = errutil.Unauthorized("featuretoggle.canNotRead",
+			errutil.WithPublicMessage("missing read permission")).Errorf("user %s does not have read permissions", user.Login)
+		errhttp.Write(ctx, err, w)
+		return
+	}
+
+	// Write the state to the response body
 	state := b.getResolvedToggleState(r.Context())
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(state)

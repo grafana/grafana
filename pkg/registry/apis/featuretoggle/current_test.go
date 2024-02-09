@@ -21,6 +21,18 @@ import (
 )
 
 func TestGetFeatureToggles(t *testing.T) {
+	t.Run("fails without adequate permissions", func(t *testing.T) {
+		features := featuremgmt.WithFeatureManager(setting.FeatureMgmtSettings{}, []*featuremgmt.FeatureFlag{{
+			// Add this here to ensure the feature works as expected during tests
+			Name:  featuremgmt.FlagFeatureToggleAdminPage,
+			Stage: featuremgmt.FeatureStageGeneralAvailability,
+		}})
+
+		b := NewFeatureFlagAPIBuilder(features, actest.FakeAccessControl{ExpectedEvaluate: false})
+
+		callGetWith(t, b, http.StatusUnauthorized)
+	})
+
 	t.Run("should be able to get feature toggles", func(t *testing.T) {
 		features := []*featuremgmt.FeatureFlag{
 			{
@@ -177,10 +189,20 @@ func TestGetFeatureToggles(t *testing.T) {
 }
 
 func TestSetFeatureToggles(t *testing.T) {
-	t.Run("fails when toggle editing is not enabled", func(t *testing.T) {
-		b := newTestAPIBuilder(t, nil, []string{}, setting.FeatureMgmtSettings{})
-		msg := callPatchWith(t, b, v0alpha1.ResolvedToggleState{}, http.StatusForbidden)
-		assert.Equal(t, "feature toggles are read-only", msg)
+	t.Run("fails when the user doesn't have write permissions", func(t *testing.T) {
+		s := setting.FeatureMgmtSettings{
+			AllowEditing:  true,
+			UpdateWebhook: "random",
+		}
+		features := featuremgmt.WithFeatureManager(s, []*featuremgmt.FeatureFlag{{
+			// Add this here to ensure the feature works as expected during tests
+			Name:  featuremgmt.FlagFeatureToggleAdminPage,
+			Stage: featuremgmt.FeatureStageGeneralAvailability,
+		}})
+
+		b := NewFeatureFlagAPIBuilder(features, actest.FakeAccessControl{ExpectedEvaluate: false})
+		msg := callPatchWith(t, b, v0alpha1.ResolvedToggleState{}, http.StatusUnauthorized)
+		assert.Equal(t, "missing write permission", msg)
 	})
 
 	t.Run("fails when update toggle url is not set", func(t *testing.T) {
