@@ -1,8 +1,8 @@
 ---
 aliases:
-  - ../features/datasources/phlare/
-  - ../features/datasources/grafana-pyroscope/
-  - ../datasources/grafana-pyroscope/
+  - ../features/datasources/phlare/ # /docs/grafana/<GRAFANA_VERSION>/features/datasources/phlare/
+  - ../features/datasources/grafana-pyroscope/ # /docs/grafana/<GRAFANA_VERSION>/features/datasources/grafana-pyroscope/
+  - ../datasources/grafana-pyroscope/ # /docs/grafana/<GRAFANA_VERSION>/datasources/grafana-pyroscope/
 description: Horizontally-scalable, highly-available, multi-tenant continuous profiling
   aggregation system. OSS profiling solution from Grafana Labs.
 keywords:

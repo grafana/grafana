@@ -42,7 +42,7 @@ To access the query editor:
 1. Expand the **Options** section to view **Query Type** and **Group by**.
    ![Options section](/media/docs/pyroscope/query-editor/options-section.png 'Options section')
 
-1. Select a query type to return the profile data. Data is shown in the [Flame Graph][flame-graph], metric data visualized in a graph, or both. You can only select both options in a dashboard, because panels allow only one visualization.
+1. Select a query type to return the profile data. Data is shown in the [Flame Graph][flame-graph], metric data visualized in a graph, or both. You can only select both options in Explore. The panels used on dashboards allow only one visualization.
 
 **Group by** allows you to group metric data by a specified label. Without any **Group by** label, metric data is aggregated over all the labels into single time series. You can use multiple labels to group by. Group by has only an effect on the metric data and doesn't change the profile data results.
 
