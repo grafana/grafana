@@ -71,14 +71,14 @@ func TestIntegrationPluginManager(t *testing.T) {
 
 	hcp := httpclient.NewProvider()
 	am := azuremonitor.ProvideService(hcp)
-	cw := cloudwatch.ProvideService(cfg, hcp)
+	cw := cloudwatch.ProvideService(hcp)
 	cm := cloudmonitoring.ProvideService(hcp)
 	es := elasticsearch.ProvideService(hcp, tracer)
 	grap := graphite.ProvideService(hcp, tracer)
 	idb := influxdb.ProvideService(hcp, features)
 	lk := loki.ProvideService(hcp, features, tracer)
 	otsdb := opentsdb.ProvideService(hcp)
-	pr := prometheus.ProvideService(hcp, cfg, features)
+	pr := prometheus.ProvideService(hcp)
 	tmpo := tempo.ProvideService(hcp)
 	td := testdatasource.ProvideService()
 	pg := postgres.ProvideService(cfg)
@@ -165,29 +165,29 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 	}
 
 	expDataSources := map[string]struct{}{
-		"cloudwatch":                          {},
-		"grafana-azure-monitor-datasource":    {},
-		"grafana-cloud-monitoring-datasource": {},
-		"elasticsearch":                       {},
-		"graphite":                            {},
-		"influxdb":                            {},
-		"loki":                                {},
-		"opentsdb":                            {},
-		"prometheus":                          {},
-		"tempo":                               {},
-		"grafana-testdata-datasource":         {},
-		"grafana-postgresql-datasource":       {},
-		"mysql":                               {},
-		"mssql":                               {},
-		"grafana":                             {},
-		"alertmanager":                        {},
-		"dashboard":                           {},
-		"input":                               {},
-		"jaeger":                              {},
-		"mixed":                               {},
-		"zipkin":                              {},
-		"grafana-pyroscope-datasource":        {},
-		"parca":                               {},
+		"cloudwatch":                       {},
+		"grafana-azure-monitor-datasource": {},
+		"stackdriver":                      {},
+		"elasticsearch":                    {},
+		"graphite":                         {},
+		"influxdb":                         {},
+		"loki":                             {},
+		"opentsdb":                         {},
+		"prometheus":                       {},
+		"tempo":                            {},
+		"grafana-testdata-datasource":      {},
+		"grafana-postgresql-datasource":    {},
+		"mysql":                            {},
+		"mssql":                            {},
+		"grafana":                          {},
+		"alertmanager":                     {},
+		"dashboard":                        {},
+		"input":                            {},
+		"jaeger":                           {},
+		"mixed":                            {},
+		"zipkin":                           {},
+		"grafana-pyroscope-datasource":     {},
+		"parca":                            {},
 	}
 
 	expApps := map[string]struct{}{

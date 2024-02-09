@@ -82,6 +82,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		}
 		usr, err := userSvc.Create(context.Background(), &createUserCmd)
 		require.NoError(t, err)
+		theUserUID := usr.UID
 
 		sc.handlerFunc = hs.GetUserByID
 
@@ -108,6 +109,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 
 		expected := user.UserProfileDTO{
 			ID:             1,
+			UID:            theUserUID, // from original request
 			Email:          "user@test.com",
 			Name:           "user",
 			Login:          "loginuser",
