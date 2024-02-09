@@ -114,9 +114,11 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     }
   }
 
-  for (const behavior of state.$behaviors!) {
-    if (behavior instanceof behaviors.CursorSync) {
-      graphTooltip = behavior.state.sync;
+  if (state.$behaviors) {
+    for (const behavior of state.$behaviors!) {
+      if (behavior instanceof behaviors.CursorSync) {
+        graphTooltip = behavior.state.sync;
+      }
     }
   }
 
