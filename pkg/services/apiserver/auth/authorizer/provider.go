@@ -5,6 +5,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
 	"k8s.io/apiserver/pkg/authorization/union"
 
 	orgsvc "github.com/grafana/grafana/pkg/services/org"
@@ -21,6 +22,7 @@ type GrafanaAuthorizer struct {
 func NewGrafanaAuthorizer(cfg *setting.Cfg, orgService orgsvc.Service) *GrafanaAuthorizer {
 	authorizers := []authorizer.Authorizer{
 		&impersonationAuthorizer{},
+		authorizerfactory.NewPrivilegedGroups("system:masters"),
 	}
 
 	// In Hosted grafana, the StackID replaces the orgID as a valid namespace

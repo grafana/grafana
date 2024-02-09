@@ -4,7 +4,6 @@
 
 ```ini
 [feature_toggles]
-grafanaAPIServer = true
 kubernetesPlaylists = true
 ```
 
@@ -49,6 +48,13 @@ data/grafana-apiserver
     └── playlists
         └── default
             └── hi.json
+```
+
+## Enable aggregation
+
+```ini
+[feature_toggles]
+kubernetesAggregator = true
 ```
 
 ### `kubectl` access

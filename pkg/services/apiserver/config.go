@@ -29,7 +29,9 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 
 	host := fmt.Sprintf("%s:%d", ip, port)
 
-	o.RecommendedOptions.Etcd.StorageConfig.Transport.ServerList = cfg.SectionWithEnvOverrides("grafana-apiserver").Key("etcd_servers").Strings(",")
+	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
+
+	o.RecommendedOptions.Etcd.StorageConfig.Transport.ServerList = apiserverCfg.Key("etcd_servers").Strings(",")
 
 	o.RecommendedOptions.SecureServing.BindAddress = ip
 	o.RecommendedOptions.SecureServing.BindPort = port
@@ -39,10 +41,10 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	o.RecommendedOptions.Admission = nil
 	o.RecommendedOptions.CoreAPI = nil
 
-	o.StorageOptions.StorageType = options.StorageType(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("storage_type").MustString(string(options.StorageTypeLegacy)))
+	o.StorageOptions.StorageType = options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeLegacy)))
 	o.StorageOptions.DataPath = filepath.Join(cfg.DataPath, "grafana-apiserver")
 	o.ExtraOptions.DevMode = features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerEnsureKubectlAccess)
 	o.ExtraOptions.ExternalAddress = host
 	o.ExtraOptions.APIURL = apiURL
-	o.ExtraOptions.Verbosity = defaultLogLevel
+	o.ExtraOptions.Verbosity = apiserverCfg.Key("log_level").MustInt(defaultLogLevel)
 }
