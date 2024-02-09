@@ -95,6 +95,7 @@ func TestAuthenticateJWT(t *testing.T) {
 				OrgRoles:        map[int64]roletype.RoleType{1: roletype.RoleAdmin},
 				ID:              "",
 				Login:           "eai-doe",
+				Groups:          []string{},
 				Name:            "Eai Doe",
 				Email:           "eai.doe@cor.po",
 				IsGrafanaAdmin:  boolPtr(false),
@@ -183,17 +184,6 @@ func TestJWTClaimConfig(t *testing.T) {
 
 	jwtHeaderName := "X-Forwarded-User"
 
-	cfg := &setting.Cfg{
-		JWTAuth: setting.AuthJWTSettings{
-			Enabled:                 true,
-			HeaderName:              jwtHeaderName,
-			AutoSignUp:              true,
-			AllowAssignGrafanaAdmin: true,
-			RoleAttributeStrict:     true,
-			RoleAttributePath:       "roles",
-		},
-	}
-
 	// #nosec G101 -- This is a dummy/test token
 	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.XbPfbIHMI6arZ3Y922BhjWgQzWXcXNrz0ogtVhfEd2o"
 
@@ -250,6 +240,16 @@ func TestJWTClaimConfig(t *testing.T) {
 		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			t.Parallel()
+			cfg := &setting.Cfg{
+				JWTAuth: setting.AuthJWTSettings{
+					Enabled:                 true,
+					HeaderName:              jwtHeaderName,
+					AutoSignUp:              true,
+					AllowAssignGrafanaAdmin: true,
+					RoleAttributeStrict:     true,
+					RoleAttributePath:       "roles",
+				},
+			}
 			for _, claims := range tc.claimsConfigurations {
 				cfg.JWTAuth.EmailClaim = ""
 				cfg.JWTAuth.UsernameClaim = ""
