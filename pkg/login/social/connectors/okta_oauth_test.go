@@ -148,9 +148,11 @@ func TestSocialOkta_Validate(t *testing.T) {
 			name: "SSOSettings is valid",
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{
-					"client_id": "client-id",
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
 				},
 			},
+			requester: &user.SignedInUser{IsGrafanaAdmin: true},
 		},
 		{
 			name: "fails if settings map contains an invalid field",
@@ -190,7 +192,7 @@ func TestSocialOkta_Validate(t *testing.T) {
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
 		{
-			name: "fails if the user are not allowed to update allow assign grafana admin",
+			name: "fails if the user is not allowed to update allow assign grafana admin",
 			requester: &user.SignedInUser{
 				IsGrafanaAdmin: false,
 			},

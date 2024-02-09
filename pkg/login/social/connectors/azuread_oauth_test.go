@@ -1056,7 +1056,7 @@ func TestSocialAzureAD_Validate(t *testing.T) {
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
 		{
-			name: "fails if the user are not allowed to update allow assign grafana admin",
+			name: "fails if the user is not allowed to update allow assign grafana admin",
 			requester: &user.SignedInUser{
 				IsGrafanaAdmin: false,
 			},
