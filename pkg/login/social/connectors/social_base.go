@@ -223,11 +223,11 @@ func getRoleFromSearch(role string) (org.RoleType, bool) {
 
 func validateInfo(info *social.OAuthInfo, requester identity.Requester) error {
 	if info.ClientId == "" {
-		return ssosettings.ErrInvalidOAuthConfig("ClientId is empty")
+		return ssosettings.ErrInvalidOAuthConfig("Client Id is empty.")
 	}
 
 	if info.AllowAssignGrafanaAdmin && !requester.GetIsGrafanaAdmin() {
-		return ssosettings.ErrInvalidOAuthConfig("Allow assign Grafana Admin is set but requester is not Grafana Admin")
+		return ssosettings.ErrInvalidOAuthConfig("Allow assign Grafana Admin can only be updated by Grafana Server Admins.")
 	}
 
 	if info.AllowAssignGrafanaAdmin && info.SkipOrgRoleSync {
