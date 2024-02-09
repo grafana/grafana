@@ -1766,13 +1766,9 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 
 	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
 	cfg.RendererRenderKeyLifeTime = renderSec.Key("render_key_lifetime").MustDuration(5 * time.Minute)
-	cfg.RendererImageWidth = valueAsString(renderSec, "image_width", "1000")
-	cfg.RendererImageHeight = valueAsString(renderSec, "image_height", "500")
-	cfg.RendererImageScale = valueAsString(renderSec, "image_scale", "1")
-
-	// cfg.RendererImageHeight = renderSec.Key("image_height").MustInt(500)
-	// cfg.RendererImageScale = renderSec.Key("image_scale").MustInt(1)
-
+	cfg.RendererDefaultImageWidth = renderSec.Key("default_image_width").MustInt(1000)
+	cfg.RendererDefaultImageHeight = renderSec.Key("default_image_height").MustInt(500)
+	cfg.RendererDefaultImageScale = renderSec.Key("default_image_scale").MustInt(1)
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 
