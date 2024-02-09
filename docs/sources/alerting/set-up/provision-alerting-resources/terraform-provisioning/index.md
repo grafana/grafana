@@ -23,7 +23,7 @@ weight: 200
 
 Use Terraform’s Grafana Provider to manage your alerting resources and provision them into your Grafana system. Terraform provider support for Grafana Alerting makes it easy to create, manage, and maintain your entire Grafana Alerting stack as code.
 
-For more examples and information about the Terraform Alerting schemas, refer to the [Grafana Provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) documentation.
+Refer to [Grafana Provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) documentation for more examples and information on Terraform Alerting schemas.
 
 Complete the following tasks to create and manage your alerting resources using Terraform.
 
