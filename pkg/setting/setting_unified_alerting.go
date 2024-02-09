@@ -301,6 +301,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	uaCfg.BaseInterval = SchedulerBaseInterval
 
+	// TODO: This was promoted from a feature toggle and is now the default behavior.
+	// We can consider removing the knob entirely in a release after 10.4.
 	uaCfg.DisableJitter = ua.Key("disable_jitter").MustBool(false)
 
 	// The base interval of the scheduler for evaluating alerts.
