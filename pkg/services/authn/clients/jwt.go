@@ -112,12 +112,9 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	id.OrgRoles = orgRoles
 	id.IsGrafanaAdmin = isGrafanaAdmin
 
-	if s.cfg.JWTAuth.GroupsAttributePath != "" {
-		groups, err := s.extractGroups(claims)
-		if err != nil {
-			return nil, err
-		}
-		id.Groups = groups
+	id.Groups, err = s.extractGroups(claims)
+	if err != nil {
+		return nil, err
 	}
 
 	if id.Login == "" && id.Email == "" {
