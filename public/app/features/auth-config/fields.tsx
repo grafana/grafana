@@ -173,10 +173,13 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     allowedGroups: {
       label: 'Allowed groups',
       type: 'select',
-      description:
-        'List of comma- or space-separated groups. The user should be a member of \n' +
-        'at least one group to log in. If you configure allowed_groups, you must also configure \n' +
-        'groups_attribute_path.',
+      description: (
+        <>
+          List of comma- or space-separated groups. The user should be a member of at least one group to log in.{' '}
+          {provider === 'generic_oauth' &&
+            'If you configure allowed_groups, you must also configure groups_attribute_path.'}
+        </>
+      ),
       multi: true,
       allowCustomValue: true,
       options: [],
