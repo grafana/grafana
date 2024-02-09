@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"time"
 )
 
 type FeatureToggles interface {
@@ -115,8 +114,7 @@ type FeatureFlag struct {
 	Name        string           `json:"name" yaml:"name"` // Unique name
 	Description string           `json:"description"`
 	Stage       FeatureFlagStage `json:"stage,omitempty"`
-	Created     time.Time        `json:"created,omitempty"` // when the flag was introduced
-	Owner       codeowner        `json:"-"`                 // Owner person or team that owns this feature flag
+	Owner       codeowner        `json:"-"` // Owner person or team that owns this feature flag
 
 	// Recommended properties - control behavior of the feature toggle management page in the UI
 	AllowSelfServe    bool `json:"allowSelfServe,omitempty"`    // allow users with the right privileges to toggle this from the UI (GeneralAvailability, PublicPreview, and Deprecated toggles only)
