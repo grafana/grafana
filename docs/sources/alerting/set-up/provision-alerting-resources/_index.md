@@ -26,7 +26,7 @@ You can import alert rules, contact points, notification policies, mute timings,
 
 You cannot edit imported alerting resources in the Grafana UI in the same way as alerting resources that were not imported. You can only edit imported contact points, notification policies, templates, and mute timings in the source where they were created. For example, if you manage your alerting resources using files from disk, you cannot edit the data in Terraform or from within Grafana.
 
-## Import alerting resouces
+## Import alerting resources
 
 Choose from the options below to import (or provision) your Grafana Alerting resources.
 
