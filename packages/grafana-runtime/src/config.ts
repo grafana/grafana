@@ -99,9 +99,9 @@ export class GrafanaBootConfig implements GrafanaConfig {
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
   rendererVersion = '';
-  rendererImageWidth = 1000;
-  rendererImageHeight = 500;
-  rendererImageScale = 1;
+  rendererDefaultImageWidth = 1000;
+  rendererDefaultImageHeight = 500;
+  rendererDefaultImageScale = 1;
   secretsManagerPluginEnabled = false;
   supportBundlesEnabled = false;
   http2Enabled = false;
