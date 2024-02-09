@@ -15,6 +15,7 @@ import {
 import { backendSrv } from '../../../core/services/backend_srv';
 import {
   AlertmanagerConfig,
+  AlertManagerCortexConfig,
   AlertmanagerReceiver,
   EmailConfig,
   GrafanaManagedReceiverConfig,
@@ -190,7 +191,7 @@ export function mockApi(server: SetupServer) {
 
       server.use(
         http.get(`api/alertmanager/${amName}/config/api/v1/alerts`, () =>
-          HttpResponse.json({
+          HttpResponse.json<AlertManagerCortexConfig>({
             alertmanager_config: builder.build(),
             template_files: {},
           })
@@ -219,7 +220,7 @@ export function mockApi(server: SetupServer) {
       getOnCallIntegrations: (response: OnCallIntegrationDTO[]) => {
         server.use(
           http.get(`api/plugin-proxy/grafana-oncall-app/api/internal/v1/alert_receive_channels`, () =>
-            HttpResponse.json(response)
+            HttpResponse.json<OnCallIntegrationDTO[]>(response)
           )
         );
       },
@@ -268,7 +269,9 @@ export function mockApi(server: SetupServer) {
 export function mockAlertRuleApi(server: SetupServer) {
   return {
     prometheusRuleNamespaces: (dsName: string, response: PromRulesResponse) => {
-      server.use(http.get(`api/prometheus/${dsName}/api/v1/rules`, () => HttpResponse.json(response)));
+      server.use(
+        http.get(`api/prometheus/${dsName}/api/v1/rules`, () => HttpResponse.json<PromRulesResponse>(response))
+      );
     },
     rulerRules: (dsName: string, response: RulerRulesConfigDTO) => {
       server.use(http.get(`/api/ruler/${dsName}/api/v1/rules`, () => HttpResponse.json(response)));
@@ -333,7 +336,7 @@ export function mockExportApi(server: SetupServer) {
             return HttpResponse.text(response[format]);
           }
 
-          return HttpResponse.text('', { status: 500 });
+          return HttpResponse.text(undefined, { status: 500 });
         })
       );
     },
@@ -347,7 +350,7 @@ export function mockExportApi(server: SetupServer) {
             return HttpResponse.text(response[format]);
           }
 
-          return HttpResponse.text('', { status: 500 });
+          return HttpResponse.text(undefined, { status: 500 });
         })
       );
     },
@@ -361,7 +364,7 @@ export function mockExportApi(server: SetupServer) {
             return HttpResponse.text(response[format]);
           }
 
-          return HttpResponse.text('', { status: 500 });
+          return HttpResponse.text(undefined, { status: 500 });
         })
       );
     },

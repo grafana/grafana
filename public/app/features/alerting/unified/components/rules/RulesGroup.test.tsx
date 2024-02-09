@@ -111,6 +111,7 @@ describe('Rules group tests', () => {
     it('Should hide delete and edit group buttons', () => {
       // Act
       mockUseHasRuler(true, true);
+      mockFolderApi(server).folder('cpu-usage', mockFolder({ uid: 'cpu-usage' }));
       renderRulesGroup(namespace, group);
 
       // Assert

@@ -1,6 +1,8 @@
 import { http, HttpResponse } from 'msw';
 import { SetupServer } from 'msw/lib/node';
 
+import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+
 import mimirAlertmanagerMock from './alertmanager.mimir.config.mock.json';
 
 // this one emulates a mimir server setup
@@ -12,7 +14,7 @@ export default (server: SetupServer) => {
       HttpResponse.json(mimirAlertmanagerMock)
     ),
     http.get(`/api/datasources/proxy/uid/${MIMIR_DATASOURCE_UID}/api/v1/status/buildinfo`, () =>
-      HttpResponse.json(undefined, { status: 404 })
+      HttpResponse.json<AlertManagerCortexConfig>(undefined, { status: 404 })
     ),
     // this endpoint will respond if the OnCall plugin is installed
     http.get('/api/plugins/grafana-oncall-app/settings', () => HttpResponse.json(undefined, { status: 404 }))
