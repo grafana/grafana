@@ -6,6 +6,7 @@ import (
 	"net"
 	"path"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana/apiserver/auth"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -101,11 +102,17 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 		return nil, fmt.Errorf("failed to apply options to server config: %w", err)
 	}
 
+	validator, err := auth.NewValidator()
+	if err != nil {
+		return nil, err
+	}
+	serverConfig.Authentication.Authenticator = auth.NewTokenAuthenticator(validator)
+	serverConfig.Authorization.Authorizer = auth.NewTokenAuthorizer()
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("generic-apiserver-start-informers")
 	serverConfig.DisabledPostStartHooks = serverConfig.DisabledPostStartHooks.Insert("priority-and-fairness-config-consumer")
 
 	// Add OpenAPI specs for each group+version
-	err := builder.SetupConfig(
+	err = builder.SetupConfig(
 		grafanaAPIServer.Scheme,
 		serverConfig,
 		o.builders,
