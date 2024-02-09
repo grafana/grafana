@@ -33,7 +33,7 @@ func newService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache) *AuthSer
 }
 
 func (s *AuthService) init() error {
-	if !s.Cfg.JWTAuthEnabled {
+	if !s.Cfg.JWTAuth.Enabled {
 		return nil
 	}
 

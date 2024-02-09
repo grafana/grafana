@@ -10,7 +10,7 @@ import (
 )
 
 func (s *AuthService) initClaimExpectations() error {
-	if err := json.Unmarshal([]byte(s.Cfg.JWTAuthExpectClaims), &s.expect); err != nil {
+	if err := json.Unmarshal([]byte(s.Cfg.JWTAuth.ExpectClaims), &s.expect); err != nil {
 		return err
 	}
 

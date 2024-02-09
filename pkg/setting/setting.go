@@ -267,24 +267,7 @@ type Cfg struct {
 	OAuthCookieMaxAge             int
 	OAuthAllowInsecureEmailLookup bool
 
-	// JWT Auth
-	JWTAuthEnabled                 bool
-	JWTAuthHeaderName              string
-	JWTAuthURLLogin                bool
-	JWTAuthEmailClaim              string
-	JWTAuthUsernameClaim           string
-	JWTAuthExpectClaims            string
-	JWTAuthJWKSetURL               string
-	JWTAuthCacheTTL                time.Duration
-	JWTAuthKeyFile                 string
-	JWTAuthKeyID                   string
-	JWTAuthJWKSetFile              string
-	JWTAuthAutoSignUp              bool
-	JWTAuthRoleAttributePath       string
-	JWTAuthRoleAttributeStrict     bool
-	JWTAuthAllowAssignGrafanaAdmin bool
-	JWTAuthSkipOrgRoleSync         bool
-
+	JWTAuth AuthJWTSettings
 	// Extended JWT Auth
 	ExtendedJWTAuthEnabled    bool
 	ExtendedJWTExpectIssuer   string
@@ -1195,6 +1178,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.readLDAPConfig()
 	cfg.handleAWSConfig()
 	cfg.readAzureSettings()
+	cfg.readAuthJWTSettings()
 	cfg.readSessionConfig()
 	if err := cfg.readSmtpSettings(); err != nil {
 		return err
@@ -1607,25 +1591,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
 	cfg.BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
-
-	// JWT auth
-	authJWT := iniFile.Section("auth.jwt")
-	cfg.JWTAuthEnabled = authJWT.Key("enabled").MustBool(false)
-	cfg.JWTAuthHeaderName = valueAsString(authJWT, "header_name", "")
-	cfg.JWTAuthURLLogin = authJWT.Key("url_login").MustBool(false)
-	cfg.JWTAuthEmailClaim = valueAsString(authJWT, "email_claim", "")
-	cfg.JWTAuthUsernameClaim = valueAsString(authJWT, "username_claim", "")
-	cfg.JWTAuthExpectClaims = valueAsString(authJWT, "expect_claims", "{}")
-	cfg.JWTAuthJWKSetURL = valueAsString(authJWT, "jwk_set_url", "")
-	cfg.JWTAuthCacheTTL = authJWT.Key("cache_ttl").MustDuration(time.Minute * 60)
-	cfg.JWTAuthKeyFile = valueAsString(authJWT, "key_file", "")
-	cfg.JWTAuthKeyID = authJWT.Key("key_id").MustString("")
-	cfg.JWTAuthJWKSetFile = valueAsString(authJWT, "jwk_set_file", "")
-	cfg.JWTAuthAutoSignUp = authJWT.Key("auto_sign_up").MustBool(false)
-	cfg.JWTAuthRoleAttributePath = valueAsString(authJWT, "role_attribute_path", "")
-	cfg.JWTAuthRoleAttributeStrict = authJWT.Key("role_attribute_strict").MustBool(false)
-	cfg.JWTAuthAllowAssignGrafanaAdmin = authJWT.Key("allow_assign_grafana_admin").MustBool(false)
-	cfg.JWTAuthSkipOrgRoleSync = authJWT.Key("skip_org_role_sync").MustBool(false)
 
 	// Extended JWT auth
 	authExtendedJWT := cfg.SectionWithEnvOverrides("auth.extended_jwt")
