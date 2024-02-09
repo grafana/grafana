@@ -152,7 +152,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         { value: 'InParams', label: 'InParams' },
         { value: 'InHeader', label: 'InHeader' },
       ],
-      defaultValue: 'AutoDetect',
+      defaultValue: { value: 'AutoDetect', label: 'AutoDetect' },
     },
     tokenUrl: {
       label: 'Token URL',

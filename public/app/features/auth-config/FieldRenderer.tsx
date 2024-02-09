@@ -61,7 +61,7 @@ export const FieldRenderer = ({
     error: fieldData.validation?.message,
     key: name,
     description: fieldData.description,
-    defaultValue: fieldData.defaultValue,
+    defaultValue: fieldData.defaultValue?.value,
   };
 
   switch (fieldData.type) {
