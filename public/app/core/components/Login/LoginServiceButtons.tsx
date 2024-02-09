@@ -5,6 +5,7 @@ import React from 'react';
 import { GrafanaTheme2, DEFAULT_SAML_NAME } from '@grafana/data';
 import { Icon, IconName, LinkButton, useStyles2, useTheme2, VerticalGroup } from '@grafana/ui';
 import config from 'app/core/config';
+import { Trans } from 'app/core/internationalization';
 
 export interface LoginService {
   bgColor: string;
@@ -150,18 +151,21 @@ export const LoginServiceButtons = () => {
     return (
       <VerticalGroup>
         <LoginDivider />
-        {Object.entries(enabledServices).map(([key, service]) => (
-          <LinkButton
-            key={key}
-            className={getButtonStyleFor(service, styles, theme)}
-            href={`login/${service.hrefName ? service.hrefName : key}`}
-            target="_self"
-            fullWidth
-          >
-            <Icon className={styles.buttonIcon} name={service.icon} />
-            Sign in with {service.name}
-          </LinkButton>
-        ))}
+        {Object.entries(enabledServices).map(([key, service]) => {
+          const serviceName = service.name;
+          return (
+            <LinkButton
+              key={key}
+              className={getButtonStyleFor(service, styles, theme)}
+              href={`login/${service.hrefName ? service.hrefName : key}`}
+              target="_self"
+              fullWidth
+            >
+              <Icon className={styles.buttonIcon} name={service.icon} />
+              <Trans i18nKey="login.services.sing-in-with-prefix">Sign in with {{ serviceName }}</Trans>
+            </LinkButton>
+          );
+        })}
       </VerticalGroup>
     );
   }

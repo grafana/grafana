@@ -9,10 +9,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql/parser"
 
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
 )
 
@@ -194,7 +195,7 @@ func calculatePrometheusInterval(
 		queryInterval = ""
 	}
 
-	minInterval, err := intervalv2.GetIntervalFrom(dsScrapeInterval, queryInterval, intervalMs, 15*time.Second)
+	minInterval, err := gtime.GetIntervalFrom(dsScrapeInterval, queryInterval, intervalMs, 15*time.Second)
 	if err != nil {
 		return time.Duration(0), err
 	}
@@ -233,7 +234,7 @@ func calculateRateInterval(
 		scrape = "15s"
 	}
 
-	scrapeIntervalDuration, err := intervalv2.ParseIntervalStringToTimeDuration(scrape)
+	scrapeIntervalDuration, err := gtime.ParseIntervalStringToTimeDuration(scrape)
 	if err != nil {
 		return time.Duration(0)
 	}
@@ -274,7 +275,7 @@ func interpolateVariables(
 	}
 
 	expr = strings.ReplaceAll(expr, varIntervalMs, strconv.FormatInt(int64(calculatedStep/time.Millisecond), 10))
-	expr = strings.ReplaceAll(expr, varInterval, intervalv2.FormatDuration(calculatedStep))
+	expr = strings.ReplaceAll(expr, varInterval, gtime.FormatInterval(calculatedStep))
 	expr = strings.ReplaceAll(expr, varRangeMs, strconv.FormatInt(rangeMs, 10))
 	expr = strings.ReplaceAll(expr, varRangeS, strconv.FormatInt(rangeSRounded, 10))
 	expr = strings.ReplaceAll(expr, varRange, strconv.FormatInt(rangeSRounded, 10)+"s")
@@ -283,7 +284,7 @@ func interpolateVariables(
 
 	// Repetitive code, we should have functionality to unify these
 	expr = strings.ReplaceAll(expr, varIntervalMsAlt, strconv.FormatInt(int64(calculatedStep/time.Millisecond), 10))
-	expr = strings.ReplaceAll(expr, varIntervalAlt, intervalv2.FormatDuration(calculatedStep))
+	expr = strings.ReplaceAll(expr, varIntervalAlt, gtime.FormatInterval(calculatedStep))
 	expr = strings.ReplaceAll(expr, varRangeMsAlt, strconv.FormatInt(rangeMs, 10))
 	expr = strings.ReplaceAll(expr, varRangeSAlt, strconv.FormatInt(rangeSRounded, 10))
 	expr = strings.ReplaceAll(expr, varRangeAlt, strconv.FormatInt(rangeSRounded, 10)+"s")
@@ -303,7 +304,7 @@ func isVariableInterval(interval string) bool {
 	return false
 }
 
-// This function aligns query range to step and handles the time offset.
+// AlignTimeRange aligns query range to step and handles the time offset.
 // It rounds start and end down to a multiple of step.
 // Prometheus caching is dependent on the range being aligned with the step.
 // Rounding to the step can significantly change the start and end of the range for larger steps, i.e. a week.

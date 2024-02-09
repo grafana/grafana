@@ -24,11 +24,11 @@ var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 
 type RESTOptionsGetter struct {
 	cfg   *setting.Cfg
-	store entityStore.EntityStoreServer
+	store entityStore.EntityStoreClient
 	Codec runtime.Codec
 }
 
-func NewRESTOptionsGetter(cfg *setting.Cfg, store entityStore.EntityStoreServer, codec runtime.Codec) *RESTOptionsGetter {
+func NewRESTOptionsGetter(cfg *setting.Cfg, store entityStore.EntityStoreClient, codec runtime.Codec) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
 		cfg:   cfg,
 		store: store,
