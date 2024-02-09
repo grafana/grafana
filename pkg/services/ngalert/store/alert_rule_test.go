@@ -652,6 +652,61 @@ func TestIntegrationInsertAlertRules(t *testing.T) {
 	require.ErrorContains(t, err, deref[0].NamespaceUID)
 }
 
+func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	sqlStore := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting.BaseInterval = 1 * time.Second
+	store := &DBstore{
+		SQLStore:      sqlStore,
+		FolderService: setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures()),
+		Logger:        log.New("test-dbstore"),
+		Cfg:           cfg.UnifiedAlerting,
+	}
+
+	uniqueUids := &sync.Map{}
+	receiverName := "receiver\"-" + uuid.NewString()
+	rules := models.GenerateAlertRules(3, models.AlertRuleGen(models.WithOrgID(1), withIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueUID(uniqueUids)))
+	receiveRules := models.GenerateAlertRules(3,
+		models.AlertRuleGen(
+			models.WithOrgID(1),
+			withIntervalMatching(store.Cfg.BaseInterval),
+			models.WithUniqueUID(uniqueUids),
+			models.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(receiverName)))))
+	noise := models.GenerateAlertRules(3,
+		models.AlertRuleGen(
+			models.WithOrgID(1),
+			withIntervalMatching(store.Cfg.BaseInterval),
+			models.WithUniqueUID(uniqueUids),
+			models.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithMuteTimeIntervals(receiverName))))) // simulate collision of names of receiver and mute timing
+	deref := make([]models.AlertRule, 0, len(rules)+len(receiveRules)+len(noise))
+	for _, rule := range append(append(rules, receiveRules...), noise...) {
+		deref = append(deref, *rule)
+	}
+
+	_, err := store.InsertAlertRules(context.Background(), deref)
+	require.NoError(t, err)
+
+	t.Run("should find rules by receiver name", func(t *testing.T) {
+		expectedUIDs := map[string]struct{}{}
+		for _, rule := range receiveRules {
+			expectedUIDs[rule.UID] = struct{}{}
+		}
+		actual, err := store.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID:        1,
+			ReceiverName: receiverName,
+		})
+		require.NoError(t, err)
+		assert.Len(t, actual, len(expectedUIDs))
+		for _, rule := range actual {
+			assert.Contains(t, expectedUIDs, rule.UID)
+		}
+	})
+}
+
 func TestIntegrationListNotificationSettings(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")

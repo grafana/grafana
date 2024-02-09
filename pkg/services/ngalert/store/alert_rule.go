@@ -2,12 +2,14 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
 	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -367,6 +369,15 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 			q = q.Where("rule_group = ?", query.RuleGroup)
 		}
 
+		if query.ReceiverName != "" {
+			// marshall string according to JSON rules so we follow escaping rules.
+			b, err := json.Marshal(query.ReceiverName)
+			if err != nil {
+				return fmt.Errorf("failed to marshall receiver name query: %w", err)
+			}
+			q = q.Where("notification_settings LIKE ?", fmt.Sprintf(`%%%s%%`, string(b)))
+		}
+
 		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
 
 		alertRules := make([]*ngmodels.AlertRule, 0)
@@ -386,6 +397,13 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 			if err != nil {
 				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "ListAlertRules", "error", err)
 				continue
+			}
+			if query.ReceiverName != "" { // remove false-positive hits from the result
+				if !slices.ContainsFunc(rule.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
+					return settings.Receiver == query.ReceiverName
+				}) {
+					continue
+				}
 			}
 			alertRules = append(alertRules, rule)
 		}
