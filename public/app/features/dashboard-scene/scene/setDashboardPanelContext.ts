@@ -1,13 +1,5 @@
 import { AnnotationChangeEvent, AnnotationEventUIModel, CoreApp, DataFrame } from '@grafana/data';
-import {
-  AdHocFilterSet,
-  AdHocFiltersVariable,
-  dataLayers,
-  SceneDataLayers,
-  sceneGraph,
-  sceneUtils,
-  VizPanel,
-} from '@grafana/scenes';
+import { AdHocFiltersVariable, dataLayers, SceneDataLayers, sceneGraph, sceneUtils, VizPanel } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 import { AdHocFilterItem, PanelContext } from '@grafana/ui';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from 'app/features/annotations/api';
@@ -162,7 +154,7 @@ export function getAdHocFilterSetFor(scene: DashboardScene, ds: DataSourceRef | 
 
   for (const variable of variables.state.variables) {
     if (sceneUtils.isAdHocVariable(variable)) {
-      const filtersDs = variable.state.set.state.datasource;
+      const filtersDs = variable.state.datasource;
       if (filtersDs === ds || filtersDs?.uid === ds?.uid) {
         return variable;
       }
@@ -171,8 +163,7 @@ export function getAdHocFilterSetFor(scene: DashboardScene, ds: DataSourceRef | 
 
   const newVariable = new AdHocFiltersVariable({
     name: 'Filters',
-    type: 'adhoc',
-    set: new AdHocFilterSet({ datasource: ds }),
+    datasource: ds,
   });
 
   // Add it to the scene
@@ -184,12 +175,11 @@ export function getAdHocFilterSetFor(scene: DashboardScene, ds: DataSourceRef | 
 }
 
 function updateAdHocFilterSet(filterSetVariable: AdHocFiltersVariable, newFilter: AdHocFilterItem) {
-  const filterSet = filterSetVariable.state.set;
   // Check if we need to update an existing filter
-  for (const filter of filterSet.state.filters) {
+  for (const filter of filterSetVariable.state.filters) {
     if (filter.key === newFilter.key) {
-      filterSet.setState({
-        filters: filterSet.state.filters.map((f) => {
+      filterSetVariable.setState({
+        filters: filterSetVariable.state.filters.map((f) => {
           if (f.key === newFilter.key) {
             return newFilter;
           }
@@ -201,7 +191,7 @@ function updateAdHocFilterSet(filterSetVariable: AdHocFiltersVariable, newFilter
   }
 
   // Add new filter
-  filterSet.setState({
-    filters: [...filterSet.state.filters, newFilter],
+  filterSetVariable.setState({
+    filters: [...filterSetVariable.state.filters, newFilter],
   });
 }

@@ -825,11 +825,10 @@ describe('transformSaveModelToScene', () => {
       };
 
       const migrated = createSceneVariableFromVariableModel(variable) as AdHocFiltersVariable;
-      const { set, ...variableState } = migrated.state;
-      const filterSetState = set.state;
+      const filterSetState = migrated.state;
 
       expect(migrated).toBeInstanceOf(AdHocFiltersVariable);
-      expect(variableState).toEqual({
+      expect(filterSetState).toEqual({
         key: expect.any(String),
         description: 'Adhoc Description',
         hide: 0,
@@ -838,10 +837,6 @@ describe('transformSaveModelToScene', () => {
         skipUrlSync: false,
         type: 'adhoc',
         filterExpression: 'filterTest="test"',
-      });
-      expect(filterSetState).toEqual({
-        key: expect.any(String),
-        name: 'adhoc',
         filters: [{ key: 'filterTest', operator: '=', value: 'test' }],
         baseFilters: [{ key: 'baseFilterTest', operator: '=', value: 'test' }],
         datasource: { uid: 'gdev-prometheus', type: 'prometheus' },

@@ -24,7 +24,6 @@ import {
   SceneDataLayers,
   SceneDataLayerProvider,
   SceneDataLayerControls,
-  AdHocFilterSet,
   TextBoxVariable,
   UserActionEvent,
   AdHocFiltersVariable,
@@ -299,14 +298,10 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       description: variable.description,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
-      set: new AdHocFilterSet({
-        name: variable.name ?? 'filters',
-        hide: variable.hide,
-        datasource: variable.datasource,
-        filters: variable.filters ?? [],
-        baseFilters: variable.baseFilters ?? [],
-        applyMode: 'same-datasource',
-      }),
+      datasource: variable.datasource,
+      applyMode: 'auto',
+      filters: variable.filters ?? [],
+      baseFilters: variable.baseFilters ?? [],
     });
   }
   if (variable.type === 'custom') {

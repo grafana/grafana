@@ -3,7 +3,7 @@ import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { AdHocFilterSet, AdHocFiltersVariable } from '@grafana/scenes';
+import { AdHocFiltersVariable } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
 
 import { AdHocVariableForm } from '../components/AdHocVariableForm';
@@ -15,8 +15,7 @@ interface AdHocFiltersVariableEditorProps {
 
 export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProps) {
   const { variable } = props;
-  const { set: filterSet } = variable.useState();
-  const datasourceRef = filterSet.useState().datasource ?? undefined;
+  const datasourceRef = variable.useState().datasource ?? undefined;
 
   const { value: datasourceSettings } = useAsync(async () => {
     return await getDataSourceSrv().get(datasourceRef);
@@ -33,10 +32,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     };
 
     variable.setState({
-      set: new AdHocFilterSet({
-        ...variable.state.set.clone().state,
-        datasource: dsRef,
-      }),
+      datasource: dsRef,
     });
   };
 

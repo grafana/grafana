@@ -17,7 +17,6 @@ import {
   SceneGridLayout,
   VizPanel,
   AdHocFiltersVariable,
-  AdHocFilterSet,
 } from '@grafana/scenes';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
@@ -282,15 +281,13 @@ async function buildTestScene() {
         new AdHocFiltersVariable({
           type: 'adhoc',
           name: 'adhoc',
-          set: new AdHocFilterSet({
-            filters: [
-              {
-                key: 'test',
-                operator: '=',
-                value: 'testValue',
-              },
-            ],
-          }),
+          filters: [
+            {
+              key: 'test',
+              operator: '=',
+              value: 'testValue',
+            },
+          ],
         }),
       ],
     }),

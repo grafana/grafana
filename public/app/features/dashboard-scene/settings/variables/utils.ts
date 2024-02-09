@@ -9,7 +9,6 @@ import {
   IntervalVariable,
   TextBoxVariable,
   QueryVariable,
-  AdHocFilterSet,
   GroupByVariable,
   SceneVariable,
   MultiValueVariable,
@@ -125,13 +124,7 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
     case 'datasource':
       return new DataSourceVariable(initialState);
     case 'adhoc':
-      return new AdHocFiltersVariable({
-        ...initialState,
-        type: 'adhoc',
-        set: new AdHocFilterSet({
-          name: initialState.name,
-        }),
-      });
+      return new AdHocFiltersVariable(initialState);
     case 'groupby':
       return new GroupByVariable(initialState);
     case 'textbox':

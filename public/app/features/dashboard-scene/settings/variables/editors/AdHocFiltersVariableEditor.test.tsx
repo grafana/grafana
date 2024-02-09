@@ -13,7 +13,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setRunRequest } from '@grafana/runtime/src';
-import { AdHocFilterSet, AdHocFiltersVariable } from '@grafana/scenes';
+import { AdHocFiltersVariable } from '@grafana/scenes';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
@@ -84,7 +84,7 @@ describe('AdHocFiltersVariableEditor', () => {
     await user.click(renderer.getByTestId(selectors.components.DataSourcePicker.inputV2));
     await user.click(renderer.getByText(/prom/i));
 
-    expect(variable.state.set.state.datasource).toEqual({ uid: 'prometheus', type: 'prometheus' });
+    expect(variable.state.datasource).toEqual({ uid: 'prometheus', type: 'prometheus' });
   });
 });
 
@@ -95,23 +95,21 @@ async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEdi
     type: 'adhoc',
     label: 'Ad hoc filters',
     description: 'Ad hoc filters are applied automatically to all queries that target this data source',
-    set: new AdHocFilterSet({
-      datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
-      filters: [
-        {
-          key: 'test',
-          operator: '=',
-          value: 'testValue',
-        },
-      ],
-      baseFilters: [
-        {
-          key: 'baseTest',
-          operator: '=',
-          value: 'baseTestValue',
-        },
-      ],
-    }),
+    datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
+    filters: [
+      {
+        key: 'test',
+        operator: '=',
+        value: 'testValue',
+      },
+    ],
+    baseFilters: [
+      {
+        key: 'baseTest',
+        operator: '=',
+        value: 'baseTestValue',
+      },
+    ],
   });
   return {
     renderer: await act(() =>

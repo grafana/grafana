@@ -134,25 +134,24 @@ describe('setDashboardPanelContext', () => {
 
       const variable = getAdHocFilterSetFor(scene, { uid: 'my-ds-uid' });
 
-      expect(variable.state.set.state.filters).toEqual([{ key: 'hello', value: 'world', operator: '=' }]);
+      expect(variable.state.filters).toEqual([{ key: 'hello', value: 'world', operator: '=' }]);
     });
 
     it('Should update and add filter to existing set', () => {
       const { scene, context } = buildTestScene({ existingFilterSet: true });
 
       const variable = getAdHocFilterSetFor(scene, { uid: 'my-ds-uid' });
-      const set = variable.state.set;
 
-      set.setState({ filters: [{ key: 'existing', value: 'world', operator: '=' }] });
+      variable.setState({ filters: [{ key: 'existing', value: 'world', operator: '=' }] });
 
       context.onAddAdHocFilter!({ key: 'hello', value: 'world', operator: '=' });
 
-      expect(set.state.filters.length).toBe(2);
+      expect(variable.state.filters.length).toBe(2);
 
       // Can update existing filter value without adding a new filter
       context.onAddAdHocFilter!({ key: 'hello', value: 'world2', operator: '=' });
       // Verify existing filter value updated
-      expect(set.state.filters[1].value).toBe('world2');
+      expect(variable.state.filters[1].value).toBe('world2');
     });
   });
 });

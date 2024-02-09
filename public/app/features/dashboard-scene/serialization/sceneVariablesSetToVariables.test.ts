@@ -13,7 +13,6 @@ import {
 } from '@grafana/data';
 import { setRunRequest } from '@grafana/runtime';
 import {
-  AdHocFilterSet,
   AdHocFiltersVariable,
   ConstantVariable,
   CustomVariable,
@@ -353,24 +352,21 @@ describe('sceneVariablesSetToVariables', () => {
       label: 'test-label',
       description: 'test-desc',
       type: 'adhoc',
-      set: new AdHocFilterSet({
-        datasource: { uid: 'fake-std', type: 'fake-std' },
-        name: 'test',
-        filters: [
-          {
-            key: 'filterTest',
-            operator: '=',
-            value: 'test',
-          },
-        ],
-        baseFilters: [
-          {
-            key: 'baseFilterTest',
-            operator: '=',
-            value: 'test',
-          },
-        ],
-      }),
+      datasource: { uid: 'fake-std', type: 'fake-std' },
+      filters: [
+        {
+          key: 'filterTest',
+          operator: '=',
+          value: 'test',
+        },
+      ],
+      baseFilters: [
+        {
+          key: 'baseFilterTest',
+          operator: '=',
+          value: 'test',
+        },
+      ],
     });
     const set = new SceneVariableSet({
       variables: [variable],
