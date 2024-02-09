@@ -29,16 +29,13 @@ Complete the following tasks to create and manage your alerting resources using 
 
 1. Create an API key for provisioning.
 2. Configure the Terraform provider.
-3. Define your alerting resources in Terraform.
-
-   - Refer to the [Terraform Alerting resources](https://registry.terraform.io/providers/grafana/grafana/latest/docs) or
-   - [Export alerting resources in Terraform format](testdata).
+3. Define your alerting resources in Terraform. [Export alerting resources][alerting_export] in Terraform format, or implement the [Terraform Alerting schemas](https://registry.terraform.io/providers/grafana/grafana/latest/docs).
 
 4. Run `terraform apply` to provision your alerting resources.
 
 **Notes:**
 
-- By default, you cannot edit resources provisioned from Terraform from the UI. This ensures that your alerting stack always stays in sync with your code. To change the default behaviour, refer to [Edit provisioned resources in the Grafana UI](#edit-resources-in-the-grafana-ui).
+- By default, you cannot edit resources provisioned from Terraform from the UI. This ensures that your alerting stack always stays in sync with your code. To change the default behaviour, refer to [Edit provisioned resources in the Grafana UI](#edit-provisioned-resources-in-the-grafana-ui).
 
 - Before you begin, ensure you have the [Grafana Terraform Provider](https://registry.terraform.io/providers/grafana/grafana/) 1.27.0 or higher, and are using Grafana 9.1 or higher.
 
@@ -375,6 +372,9 @@ resource "grafana_mute_timing" "mute_all" {
 {{% docs/reference %}}
 [alerting-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules"
 [alerting-rules]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules"
+
+[alerting_export]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources"
+[alerting_export]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources"
 
 [alerting_http_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning"
 [alerting_http_provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning"

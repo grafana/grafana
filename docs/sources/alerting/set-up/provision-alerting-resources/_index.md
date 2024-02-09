@@ -14,11 +14,11 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Provision alerting resources
+title: Provision Alerting resources
 weight: 300
 ---
 
-# Provision Grafana Alerting resources
+# Provision Alerting resources
 
 Alerting infrastructure is often complex, with many pieces of the pipeline that often live in different places. Scaling this across multiple teams and organizations is an especially challenging task. Importing and exporting (or provisioning) your alerting resources in Grafana Alerting makes this process easier by enabling you to create, manage, and maintain your alerting data in a way that best suits your organization.
 
