@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -28,6 +28,14 @@ import { TIMING_OPTIONS_DEFAULTS } from '../../../../notification-policies/timin
 
 import { RouteTimings } from './RouteTimings';
 
+const REQUIRED_FIELDS_IN_GROUPBY = ['grafana_folder', 'alertname'];
+
+const DEFAULTS_TIMINGS = {
+  groupWaitValue: TIMING_OPTIONS_DEFAULTS.group_wait,
+  groupIntervalValue: TIMING_OPTIONS_DEFAULTS.group_interval,
+  repeatIntervalValue: TIMING_OPTIONS_DEFAULTS.repeat_interval,
+};
+
 export interface RoutingSettingsProps {
   alertManager: string;
 }
@@ -38,19 +46,20 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
     watch,
     register,
     setValue,
+    getValues,
     formState: { errors },
   } = useFormContext<RuleFormValues>();
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues([]));
-  const { groupIntervalValue, groupWaitValue, repeatIntervalValue } = getDefaultsForRoutingSettings();
+  const { groupIntervalValue, groupWaitValue, repeatIntervalValue } = DEFAULTS_TIMINGS;
   const overrideGrouping = watch(`contactPoints.${alertManager}.overrideGrouping`);
   const overrideTimings = watch(`contactPoints.${alertManager}.overrideTimings`);
-  const requiredFieldsInGroupBy = useMemo(() => ['grafana_folder', 'alertname'], []);
+
   const styles = useStyles2(getStyles);
   useEffect(() => {
-    if (overrideGrouping && watch(`contactPoints.${alertManager}.groupBy`)?.length === 0) {
-      setValue(`contactPoints.${alertManager}.groupBy`, requiredFieldsInGroupBy);
+    if (overrideGrouping && getValues(`contactPoints.${alertManager}.groupBy`)?.length === 0) {
+      setValue(`contactPoints.${alertManager}.groupBy`, REQUIRED_FIELDS_IN_GROUPBY);
     }
-  }, [overrideGrouping, requiredFieldsInGroupBy, setValue, alertManager, watch]);
+  }, [overrideGrouping, setValue, alertManager, watch, getValues]);
 
   return (
     <Stack direction="column">
@@ -60,7 +69,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
         </InlineField>
         {!overrideGrouping && (
           <Text variant="body" color="secondary">
-            Grouping: <strong>{requiredFieldsInGroupBy.join(', ')}</strong>
+            Grouping: <strong>{REQUIRED_FIELDS_IN_GROUPBY.join(', ')}</strong>
           </Text>
         )}
       </Stack>
@@ -138,13 +147,6 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
   );
 };
 
-function getDefaultsForRoutingSettings() {
-  return {
-    groupWaitValue: TIMING_OPTIONS_DEFAULTS.group_wait,
-    groupIntervalValue: TIMING_OPTIONS_DEFAULTS.group_interval,
-    repeatIntervalValue: TIMING_OPTIONS_DEFAULTS.repeat_interval,
-  };
-}
 const getStyles = (theme: GrafanaTheme2) => ({
   switchElement: css({
     flexFlow: 'row-reverse',
