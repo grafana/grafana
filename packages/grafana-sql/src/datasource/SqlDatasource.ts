@@ -213,7 +213,7 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
       response = await this.runMetaQuery(interpolatedQuery, range);
     } catch (error) {
       console.error(error);
-      throw new Error(`error when executing the sql query`);
+      throw new Error("error when executing the sql query");
     }
     return this.getResponseParser().transformMetricFindResponse(response);
   }
