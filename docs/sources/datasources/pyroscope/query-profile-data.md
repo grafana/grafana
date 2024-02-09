@@ -44,7 +44,9 @@ To access the query editor:
 
 1. Select a query type to return the profile data. Data is shown in the [Flame Graph][flame-graph], metric data visualized in a graph, or both. You can only select both options in Explore. The panels used on dashboards allow only one visualization.
 
-**Group by** allows you to group metric data by a specified label. Without any **Group by** label, metric data is aggregated over all the labels into single time series. You can use multiple labels to group by. Group by has only an effect on the metric data and doesn't change the profile data results.
+Using **Group by**, you can group metric data by a specified label.
+Without any **Group by** label, metric data aggregates over all the labels into single time series.
+You can use multiple labels to group by. Group by only effects the metric data and doesn't change the profile data results.
 
 ## Profiles query results
 
