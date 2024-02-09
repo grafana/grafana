@@ -7,7 +7,6 @@ import (
 	pCfg "github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, features featuremgmt.FeatureToggles) (*pCfg.Cfg, error) {
@@ -15,20 +14,6 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, fe
 	allowedUnsigned := grafanaCfg.PluginsAllowUnsigned
 	if len(plugins.KeyValue("allow_loading_unsigned_plugins").Value()) > 0 {
 		allowedUnsigned = strings.Split(plugins.KeyValue("allow_loading_unsigned_plugins").Value(), ",")
-	}
-
-	// Get aws settings from settingProvider instead of grafanaCfg
-	aws := settingProvider.Section("aws")
-	allowedAuth := grafanaCfg.AWSAllowedAuthProviders
-	if len(aws.KeyValue("allowed_auth_providers").Value()) > 0 {
-		allowedAuth = util.SplitString(aws.KeyValue("allowed_auth_providers").Value())
-	}
-	if len(allowedAuth) > 0 {
-		allowedUnsigned = strings.Split(settingProvider.KeyValue("plugins", "allow_loading_unsigned_plugins").Value(), ",")
-	}
-	awsForwardSettingsPlugins := grafanaCfg.AWSForwardSettingsPlugins
-	if len(aws.KeyValue("forward_settings_to_plugins").Value()) > 0 {
-		awsForwardSettingsPlugins = util.SplitString(aws.KeyValue("forward_settings_to_plugins").Value())
 	}
 
 	tracingCfg, err := newTracingCfg(grafanaCfg)
@@ -41,15 +26,6 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, fe
 		grafanaCfg.PluginsPath,
 		extractPluginSettings(settingProvider),
 		allowedUnsigned,
-		allowedAuth,
-		aws.KeyValue("assume_role_enabled").MustBool(grafanaCfg.AWSAssumeRoleEnabled),
-		aws.KeyValue("external_id").Value(),
-		aws.KeyValue("session_duration").Value(),
-		aws.KeyValue("list_metrics_page_limit").Value(),
-		awsForwardSettingsPlugins,
-		grafanaCfg.Azure,
-		grafanaCfg.SecureSocksDSProxy,
-		grafanaCfg.BuildVersion,
 		grafanaCfg.PluginLogBackendRequests,
 		grafanaCfg.PluginsCDNURLTemplate,
 		grafanaCfg.AppURL,
@@ -61,8 +37,6 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg, fe
 		grafanaCfg.DisablePlugins,
 		grafanaCfg.HideAngularDeprecation,
 		grafanaCfg.ForwardHostEnvVars,
-		grafanaCfg.ConcurrentQueryCount,
-		grafanaCfg.AzureAuthEnabled,
 	), nil
 }
 

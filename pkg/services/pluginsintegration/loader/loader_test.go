@@ -508,7 +508,6 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 		cfg := &config.Cfg{
 			Features:             featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
 			PluginsAllowUnsigned: []string{"grafana-test-datasource"},
-			AWSAssumeRoleEnabled: true,
 		}
 		pluginPaths := []string{filepath.Join(testDataDir(t), "oauth-external-registration")}
 		expected := []*plugins.Plugin{
@@ -610,7 +609,6 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 		cfg := &config.Cfg{
 			Features:             featuremgmt.WithFeatures(featuremgmt.FlagExternalServiceAuth),
 			PluginsAllowUnsigned: []string{"grafana-test-datasource"},
-			AWSAssumeRoleEnabled: true,
 		}
 		pluginPaths := []string{filepath.Join(testDataDir(t), "external-registration")}
 		expected := []*plugins.Plugin{
@@ -1614,7 +1612,6 @@ type loaderDepOpts struct {
 func newLoader(t *testing.T, cfg *config.Cfg, reg registry.Service, proc process.Manager,
 	backendFactory plugins.BackendFactoryProvider, sigErrTracker pluginerrs.SignatureErrorTracker) *Loader {
 	assets := assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg))
-	lic := fakes.NewFakeLicensingService()
 	angularInspector := angularinspector.NewStaticInspector()
 
 	terminate, err := pipeline.ProvideTerminationStage(cfg, reg, proc)
@@ -1624,13 +1621,12 @@ func newLoader(t *testing.T, cfg *config.Cfg, reg registry.Service, proc process
 		finder.NewLocalFinder(false, featuremgmt.WithFeatures()), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector, sigErrTracker),
-		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry()),
+		pipeline.ProvideInitializationStage(cfg, reg, backendFactory, proc, &fakes.FakeAuthService{}, fakes.NewFakeRoleRegistry(), fakes.NewFakePluginEnvProvider()),
 		terminate)
 }
 
 func newLoaderWithOpts(t *testing.T, cfg *config.Cfg, opts loaderDepOpts) *Loader {
 	assets := assetpath.ProvideService(cfg, pluginscdn.ProvideService(cfg))
-	lic := fakes.NewFakeLicensingService()
 	reg := fakes.NewFakePluginRegistry()
 	proc := fakes.NewFakeProcessManager()
 
@@ -1657,7 +1653,7 @@ func newLoaderWithOpts(t *testing.T, cfg *config.Cfg, opts loaderDepOpts) *Loade
 		finder.NewLocalFinder(false, featuremgmt.WithFeatures()), reg),
 		pipeline.ProvideBootstrapStage(cfg, signature.DefaultCalculator(cfg), assets),
 		pipeline.ProvideValidationStage(cfg, signature.NewValidator(signature.NewUnsignedAuthorizer(cfg)), angularInspector, sigErrTracker),
-		pipeline.ProvideInitializationStage(cfg, reg, lic, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry()),
+		pipeline.ProvideInitializationStage(cfg, reg, backendFactoryProvider, proc, authServiceRegistry, fakes.NewFakeRoleRegistry(), fakes.NewFakePluginEnvProvider()),
 		terminate)
 }
 

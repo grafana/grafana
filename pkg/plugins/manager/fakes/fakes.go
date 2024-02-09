@@ -255,6 +255,21 @@ func (s *FakePluginStorage) Extract(ctx context.Context, pluginID string, dirNam
 	return &storage.ExtractedPluginArchive{}, nil
 }
 
+type FakePluginEnvProvider struct {
+	PluginEnvVarsFunc func(ctx context.Context, plugin *plugins.Plugin) []string
+}
+
+func NewFakePluginEnvProvider() *FakePluginEnvProvider {
+	return &FakePluginEnvProvider{}
+}
+
+func (p *FakePluginEnvProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plugin) []string {
+	if p.PluginEnvVarsFunc != nil {
+		return p.PluginEnvVarsFunc(ctx, plugin)
+	}
+	return []string{}
+}
+
 type FakeProcessManager struct {
 	StartFunc func(_ context.Context, p *plugins.Plugin) error
 	StopFunc  func(_ context.Context, p *plugins.Plugin) error
