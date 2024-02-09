@@ -5,8 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
@@ -16,6 +14,8 @@ import (
 	saAPI "github.com/grafana/grafana/pkg/services/serviceaccounts/api"
 	saTests "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
+	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -53,7 +53,7 @@ func createServiceAccountAdminToken(t *testing.T, env *server.TestEnv) (string, 
 
 type testContext struct {
 	authToken string
-	client    entity.EntityStoreClient
+	client    entity.EntityStoreServer
 	user      *user.SignedInUser
 	ctx       context.Context
 }
@@ -74,17 +74,18 @@ func createTestContext(t *testing.T) testContext {
 
 	authToken, serviceAccountUser := createServiceAccountAdminToken(t, env)
 
-	conn, err := grpc.Dial(
-		env.GRPCServer.GetAddress(),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
+	eDB, err := dbimpl.ProvideEntityDB(env.SQLStore, env.SQLStore.Cfg, env.FeatureToggles)
 	require.NoError(t, err)
 
-	client := entity.NewEntityStoreClient(conn)
+	err = eDB.Init()
+	require.NoError(t, err)
+
+	store, err := sqlstash.ProvideSQLEntityServer(eDB)
+	require.NoError(t, err)
 
 	return testContext{
 		authToken: authToken,
-		client:    client,
+		client:    store,
 		user:      serviceAccountUser,
 		ctx:       appcontext.WithUser(context.Background(), serviceAccountUser),
 	}

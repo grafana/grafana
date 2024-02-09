@@ -215,7 +215,7 @@ describe('DashboardLinksEditView', () => {
       const { getByText } = render(<settings.Component model={settings} />);
 
       expect(getByText('Edit link')).toBeInTheDocument();
-      expect(getByText('Apply')).toBeInTheDocument();
+      expect(getByText('Back to list')).toBeInTheDocument();
     });
   });
 });
