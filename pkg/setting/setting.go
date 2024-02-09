@@ -148,9 +148,9 @@ type Cfg struct {
 	RendererAuthToken              string
 	RendererConcurrentRequestLimit int
 	RendererRenderKeyLifeTime      time.Duration
-	RendererImageWidth             string
-	RendererImageHeight            string
-	RendererImageScale             string
+	RendererDefaultImageWidth             int
+	RendererDefaultImageHeight            int
+	RendererDefaultImageScale             int
 
 	// Security
 	DisableInitAdminCreation          bool
