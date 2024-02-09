@@ -6,12 +6,13 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { getTagColorsFromName, useStyles2, Stack } from '@grafana/ui';
 import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
+import { MatcherFormatter, matcherFormatter } from '../../utils/matchers';
 import { HoverCard } from '../HoverCard';
 
-type MatchersProps = { matchers: ObjectMatcher[] };
+type MatchersProps = { matchers: ObjectMatcher[]; formatter?: MatcherFormatter };
 
 // renders the first N number of matchers
-const Matchers: FC<MatchersProps> = ({ matchers }) => {
+const Matchers: FC<MatchersProps> = ({ matchers, formatter = 'default' }) => {
   const styles = useStyles2(getStyles);
 
   const NUM_MATCHERS = 5;
@@ -24,7 +25,7 @@ const Matchers: FC<MatchersProps> = ({ matchers }) => {
     <span data-testid="label-matchers">
       <Stack direction="row" gap={1} alignItems="center" wrap={'wrap'}>
         {firstFew.map((matcher) => (
-          <MatcherBadge key={uniqueId()} matcher={matcher} />
+          <MatcherBadge key={uniqueId()} matcher={matcher} formatter={formatter} />
         ))}
         {/* TODO hover state to show all matchers we're not showing */}
         {hasMoreMatchers && (
@@ -51,15 +52,16 @@ const Matchers: FC<MatchersProps> = ({ matchers }) => {
 
 interface MatcherBadgeProps {
   matcher: ObjectMatcher;
+  formatter?: MatcherFormatter;
 }
 
-const MatcherBadge: FC<MatcherBadgeProps> = ({ matcher: [label, operator, value] }) => {
+const MatcherBadge: FC<MatcherBadgeProps> = ({ matcher, formatter = 'default' }) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.matcher(label).wrapper}>
+    <div className={styles.matcher(matcher[0]).wrapper}>
       <Stack direction="row" gap={0} alignItems="baseline">
-        {label} {operator} {value}
+        {matcherFormatter[formatter](matcher)}
       </Stack>
     </div>
   );

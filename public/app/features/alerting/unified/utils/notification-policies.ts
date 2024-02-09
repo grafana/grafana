@@ -9,7 +9,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 
-import { Label, normalizeMatchers } from './matchers';
+import { Label, normalizeMatchers, unquoteWithUnescape } from './matchers';
 
 // If a policy has no matchers it still can be a match, hence matchers can be empty and match can be true
 // So we cannot use null as an indicator of no match
@@ -122,6 +122,20 @@ export function normalizeRoute(rootRoute: RouteWithID): RouteWithID {
   normalizeRoute(normalizedRootRoute);
 
   return normalizedRootRoute;
+}
+
+export function unquoteRouteMatchers(route: RouteWithID): RouteWithID {
+  function unquoteRoute(route: RouteWithID) {
+    route.object_matchers = route.object_matchers?.map(([name, operator, value]) => {
+      return [name, operator, unquoteWithUnescape(value)];
+    });
+    route.routes?.forEach(unquoteRoute);
+  }
+
+  const unwrappedRootRoute = structuredClone(route);
+  unquoteRoute(unwrappedRootRoute);
+
+  return unwrappedRootRoute;
 }
 
 /**

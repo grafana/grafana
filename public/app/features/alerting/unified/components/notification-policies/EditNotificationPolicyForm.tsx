@@ -134,7 +134,7 @@ export const AmRoutesExpandedForm = ({
                               error={errors.object_matchers?.[index]?.value?.message}
                             >
                               <Input
-                                {...register(`object_matchers.${index}.value`, { required: 'Field is required' })}
+                                {...register(`object_matchers.${index}.value`)}
                                 defaultValue={field.value}
                                 placeholder="value"
                               />

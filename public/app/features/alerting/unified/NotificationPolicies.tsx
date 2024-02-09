@@ -54,8 +54,8 @@ const AmRoutes = () => {
   const [contactPointFilter, setContactPointFilter] = useState<string | undefined>();
   const [labelMatchersFilter, setLabelMatchersFilter] = useState<ObjectMatcher[]>([]);
 
+  const { selectedAlertmanager, hasConfigurationAPI, isGrafanaAlertmanager } = useAlertmanager();
   const { getRouteGroupsMap } = useRouteGroupsMatcher();
-  const { selectedAlertmanager, hasConfigurationAPI } = useAlertmanager();
 
   const contactPointsState = useGetContactPointsState(selectedAlertmanager ?? '');
 
@@ -93,9 +93,9 @@ const AmRoutes = () => {
 
   useEffect(() => {
     if (rootRoute && alertGroups) {
-      triggerGetRouteGroupsMap(rootRoute, alertGroups);
+      triggerGetRouteGroupsMap(rootRoute, alertGroups, { unquoteMatchers: !isGrafanaAlertmanager });
     }
-  }, [rootRoute, alertGroups, triggerGetRouteGroupsMap]);
+  }, [rootRoute, alertGroups, triggerGetRouteGroupsMap, isGrafanaAlertmanager]);
 
   // these are computed from the contactPoint and labels matchers filter
   const routesMatchingFilters = useMemo(() => {
