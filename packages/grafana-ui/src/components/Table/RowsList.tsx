@@ -44,6 +44,7 @@ interface RowsListProps {
   onCellFilterAdded?: TableFilterActionCallback;
   timeRange?: TimeRange;
   footerPaginationEnabled: boolean;
+  initialRowIndex?: number;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -66,9 +67,10 @@ export const RowsList = (props: RowsListProps) => {
     listHeight,
     listRef,
     enableSharedCrosshair = false,
+    initialRowIndex = undefined,
   } = props;
 
-  const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(undefined);
+  const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
@@ -203,6 +205,7 @@ export const RowsList = (props: RowsListProps) => {
     ({ index, style, rowHighlightIndex }: { index: number; style: CSSProperties; rowHighlightIndex?: number }) => {
       const indexForPagination = rowIndexForPagination(index);
       const row = rows[indexForPagination];
+      let additionalProps: React.HTMLAttributes<HTMLDivElement> = {};
 
       prepareRow(row);
 
@@ -210,11 +213,13 @@ export const RowsList = (props: RowsListProps) => {
 
       if (rowHighlightIndex !== undefined && row.index === rowHighlightIndex) {
         style = { ...style, backgroundColor: theme.components.table.rowHoverBackground };
+        additionalProps = {
+          'aria-selected': 'true',
+        };
       }
-
       return (
         <div
-          {...row.getRowProps({ style })}
+          {...row.getRowProps({ style, ...additionalProps })}
           className={cx(tableStyles.row, expandedRowStyle)}
           onMouseEnter={() => onRowHover(index, data)}
           onMouseLeave={onRowLeave}
