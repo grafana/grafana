@@ -135,6 +135,14 @@ var (
 			Created:      time.Date(2022, time.June, 11, 12, 0, 0, 0, time.UTC),
 		},
 		{
+			Name:         "autoMigrateGraphPanel",
+			Description:  "Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Created:      time.Date(2023, time.December, 11, 7, 0, 0, 0, time.UTC),
+		},
+		{
 			Name:              "disableAngular",
 			Description:       "Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.",
 			Stage:             FeatureStagePublicPreview,
@@ -1217,10 +1225,11 @@ var (
 			Name:            "alertingPreviewUpgrade",
 			Description:     "Show Unified Alerting preview and upgrade page in legacy alerting",
 			FrontendOnly:    false,
-			Stage:           FeatureStagePublicPreview,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 			Created:         time.Date(2024, time.January, 3, 12, 0, 0, 0, time.UTC),
+			Expression:      "true", // enabled by default
 		},
 		{
 			Name:            "enablePluginsTracingByDefault",
@@ -1309,6 +1318,21 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			Created:      time.Date(2024, time.January, 2, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "groupToNestedTableTransformation",
+			Description:  "Enables the group to nested table transformation",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+			Created:      time.Date(2024, time.February, 5, 12, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:        "newPDFRendering",
+			Description: "New implementation for the dashboard to PDF rendering",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Created:     time.Date(2024, time.February, 8, 9, 51, 00, 00, time.UTC),
 		},
 	}
 )
