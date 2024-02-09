@@ -55,7 +55,7 @@ export default function AdminFeatureTogglesPage() {
           {featureState.error}
           {featureState.loading && 'Fetching feature toggles'}
 
-          {featureState.value?.restartRequired && <EditingAlert />}
+          <EditingAlert />
           {featureState.value && (
             <AdminFeatureTogglesTable
               featureToggles={featureState.value.toggles}
