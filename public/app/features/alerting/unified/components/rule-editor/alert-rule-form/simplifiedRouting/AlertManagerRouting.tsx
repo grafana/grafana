@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, CollapsableSection, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
+import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/datasource';
 
 import { ContactPointReceiverSummary } from '../../../contact-points/ContactPoints';
@@ -35,6 +37,12 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
   const onSelectContactPoint = (contactPoint?: ContactPointWithMetadata) => {
     setSelectedContactPointWithMetadata(contactPoint);
   };
+
+  const { watch } = useFormContext<RuleFormValues>();
+  const hasRouteSettings =
+    watch(`contactPoints.${alertManagerName}.overrideGrouping`) ||
+    watch(`contactPoints.${alertManagerName}.overrideTimings`) ||
+    watch(`contactPoints.${alertManagerName}.muteTimeIntervals`)?.length > 0;
 
   const options = contactPoints.map((receiver) => {
     const integrations = receiver?.grafana_managed_receiver_configs;
@@ -74,7 +82,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
       <div className={styles.routingSection}>
         <CollapsableSection
           label="Muting, grouping and timings (optional)"
-          isOpen={false}
+          isOpen={hasRouteSettings}
           className={styles.collapsableSection}
         >
           <Stack direction="column" gap={1}>
