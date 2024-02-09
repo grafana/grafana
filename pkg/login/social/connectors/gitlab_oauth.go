@@ -81,6 +81,11 @@ func (s *SocialGitlab) Validate(ctx context.Context, settings ssoModels.SSOSetti
 		return err
 	}
 
+	err = validateApiURL(info)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

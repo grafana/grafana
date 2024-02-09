@@ -240,13 +240,20 @@ func validateInfo(info *social.OAuthInfo, requester identity.Requester) error {
 
 func validateURLs(info *social.OAuthInfo) error {
 	if info.AuthUrl == "" || !isValidUrl(info.AuthUrl) {
-		return ssosettings.ErrInvalidOAuthConfig("Auth URL is invalid")
+		return ssosettings.ErrInvalidOAuthConfig("Auth URL is invalid or empty.")
 	}
 
 	if info.TokenUrl == "" || !isValidUrl(info.TokenUrl) {
-		return ssosettings.ErrInvalidOAuthConfig("Token URL is invalid")
+		return ssosettings.ErrInvalidOAuthConfig("Token URL is invalid or empty.")
 	}
 
+	return nil
+}
+
+func validateApiURL(info *social.OAuthInfo) error {
+	if info.ApiUrl == "" || !isValidUrl(info.ApiUrl) {
+		return ssosettings.ErrInvalidOAuthConfig("API URL is invalid or empty.")
+	}
 	return nil
 }
 

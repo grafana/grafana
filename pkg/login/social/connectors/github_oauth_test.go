@@ -361,6 +361,7 @@ func TestSocialGitHub_Validate(t *testing.T) {
 					"allow_assign_grafana_admin": "true",
 					"auth_url":                   "https://example.com/auth",
 					"token_url":                  "https://example.com/token",
+					"api_url":                    "https://example.com/api",
 				},
 			},
 			requester: &user.SignedInUser{IsGrafanaAdmin: true},
@@ -472,6 +473,30 @@ func TestSocialGitHub_Validate(t *testing.T) {
 					"client_id": "client-id",
 					"auth_url":  "https://example.com/auth",
 					"token_url": "/path",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if api url is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "https://example.com/auth",
+					"token_url": "https://example.com/token",
+					"api_url":   "",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if api url is invalid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"auth_url":  "https://example.com/auth",
+					"api_url":   "/api",
+					"token_url": "https://example.com/token",
 				},
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,

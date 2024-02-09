@@ -1045,18 +1045,6 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
 		{
-			name: "fails if teams url is empty",
-			settings: ssoModels.SSOSettings{
-				Settings: map[string]any{
-					"client_id": "client-id",
-					"teams_url": "",
-					"auth_url":  "https://example.com/auth",
-					"token_url": "https://example.com/token",
-				},
-			},
-			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
-		},
-		{
 			name: "fails if teams url is invalid",
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{

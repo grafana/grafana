@@ -77,6 +77,11 @@ func (s *SocialOkta) Validate(ctx context.Context, settings ssoModels.SSOSetting
 		return err
 	}
 
+	err = validateApiURL(info)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
