@@ -22,7 +22,12 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
   const styles = useStyles2(getStyles);
 
   const alertManagerName = alertManager.name;
-  const { isLoading, error: errorInContactPointStatus, contactPoints, refetchReceivers } = useContactPointsWithStatus();
+  const {
+    isLoading,
+    error: errorInContactPointStatus,
+    contactPoints,
+    refetchReceivers,
+  } = useContactPointsWithStatus({ includePoliciesCount: false });
   const [selectedContactPointWithMetadata, setSelectedContactPointWithMetadata] = useState<
     ContactPointWithMetadata | undefined
   >();
