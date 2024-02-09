@@ -67,6 +67,25 @@ Refer to [configuration options]({{< relref "#configuration-options" >}}) for mo
 Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle. Supported in the Terraform provider since v<TODO:TF provider version>
 {{% /admonition %}}
 
+```terraform
+resource "grafana_sso_settings" "generic_sso_settings" {
+  provider_name = "generic_oauth"
+  oauth2_settings {
+    name              = "Auth0"
+    auth_url          = "https://<domain>/authorize"
+    token_url         = "https://<domain>/oauth/token"
+    api_url           = "https://<domain>/userinfo"
+    client_id         = "<client id>"
+    client_secret     = "<client secret>"
+    allow_sign_up     = true
+    auto_login        = false
+    scopes            = "openid profile email offline_access"
+    use_pkce          = true
+    use_refresh_token = true
+  }
+}
+```
+
 ## Configure generic OAuth authentication client using the Grafana configuration file
 
 ### Before you begin

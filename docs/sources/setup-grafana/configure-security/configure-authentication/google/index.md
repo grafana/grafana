@@ -55,6 +55,26 @@ Refer to [configuration options]({{< relref "#configuration-options" >}}) for mo
 Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle. Supported in the Terraform provider since v<TODO:TF provider version>
 {{% /admonition %}}
 
+```terraform
+resource "grafana_sso_settings" "google_sso_settings" {
+  provider_name = "google"
+  oauth2_settings {
+    name            = "Google"
+    auth_url        = "https://accounts.google.com/o/oauth2/v2/auth"
+    token_url       = "https://oauth2.googleapis.com/token"
+    api_url         = "https://openidconnect.googleapis.com/v1/userinfo"
+    client_id       = "CLIENT_ID"
+    client_secret   = "CLIENT_SECRET"
+    allow_sign_up   = true
+    auto_login      = false
+    scopes          = "openid email profile"
+    allowed_domains = "mycompany.com mycompany.org"
+    hosted_domain   = "mycompany.com"
+    use_pkce        = true
+  }
+}
+```
+
 ## Configure Google authentication client using the Grafana configuration file
 
 ### Before you begin

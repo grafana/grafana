@@ -44,6 +44,26 @@ Refer to [configuration options]({{< relref "#configuration-options" >}}) for mo
 Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle. Supported in the Terraform provider since v<TODO:TF provider version>
 {{% /admonition %}}
 
+```terraform
+resource "grafana_sso_settings" "okta_sso_settings" {
+  provider_name = "okta"
+  oauth2_settings {
+    name                  = "Okta"
+    auth_url              = "https://<okta tenant id>.okta.com/oauth2/v1/authorize"
+    token_url             = "https://<okta tenant id>.okta.com/oauth2/v1/token"
+    api_url               = "https://<okta tenant id>.okta.com/oauth2/v1/userinfo"
+    client_id             = "CLIENT_ID"
+    client_secret         = "CLIENT_SECRET"
+    allow_sign_up         = true
+    auto_login            = false
+    scopes                = "openid profile email offline_access"
+    role_attribute_path   = "contains(groups[*], 'Example::DevOps') && 'Admin' || 'None'"
+    role_attribute_strict = true
+    allowed_groups        = "Example::DevOps,Example::Dev,Example::QA"
+  }
+}
+```
+
 ## Configure Okta authentication client using the Grafana configuration file
 
 ### Before you begin

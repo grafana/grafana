@@ -189,6 +189,27 @@ Refer to [configuration options]({{< relref "#configuration-options" >}}) for mo
 Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle. Supported in the Terraform provider since v<TODO:TF provider version>
 {{% /admonition %}}
 
+```terraform
+resource "grafana_sso_settings" "azuread_sso_settings" {
+  provider_name = "azuread"
+  oauth2_settings {
+    name                       = "Azure AD"
+    auth_url                   = "https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/authorize"
+    token_url                  = "https://login.microsoftonline.com/TENANT_ID/oauth2/v2.0/token"
+    client_id                  = "APPLICATION_ID"
+    client_secret              = "CLIENT_SECRET"
+    allow_sign_up              = true
+    auto_login                 = false
+    scopes                     = "openid email profile"
+    allowed_organizations      = "TENANT_ID"
+    role_attribute_strict      = false
+    allow_assign_grafana_admin = false
+    skip_org_role_sync         = false
+    use_pkce                   = true
+  }
+}
+```
+
 ## Configure Azure AD/Entra ID authentication client using the Grafana configuration file
 
 ### Before you begin

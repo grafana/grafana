@@ -51,6 +51,29 @@ Refer to [configuration options]({{< relref "#configuration-options" >}}) for mo
 Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle. Supported in the Terraform provider since v<TODO:TF provider version>
 {{% /admonition %}}
 
+```terraform
+resource "grafana_sso_settings" "gitlab_sso_settings" {
+  provider_name = "gitlab"
+  oauth2_settings {
+    name                  = "Gitlab"
+    auth_url              = "https://gitlab.com/oauth/authorize"
+    token_url             = "https://gitlab.com/oauth/token"
+    api_url               = "https://gitlab.com/oauth/userinfo"
+    client_id             = "YOUR_GITLAB_APPLICATION_ID"
+    client_secret         = "YOUR_GITLAB_APPLICATION_SECRET"
+    allow_sign_up         = true
+    auto_login            = false
+    scopes                = "openid email profile"
+    allowed_domains       = "mycompany.com mycompany.org"
+    role_attribute_path   = "contains(groups[*], 'example-group') && 'Editor' || 'Viewer'"
+    role_attribute_strict = false
+    allowed_groups        = "[\"admins\", \"software engineers\", \"developers/frontend\"]"
+    use_pkce              = true
+    use_refresh_token     = true
+  }
+}
+```
+
 ## Configure GitLab authentication client using the Grafana configuration file
 
 ### Before you begin
