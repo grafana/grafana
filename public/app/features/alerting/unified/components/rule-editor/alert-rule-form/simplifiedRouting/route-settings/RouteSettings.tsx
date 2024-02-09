@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import {
   Field,
   FieldValidationMessage,
@@ -14,7 +14,7 @@ import {
   Text,
   useStyles2,
 } from '@grafana/ui';
-import { MultiValueRemove } from '@grafana/ui/src/components/Select/MultiValue';
+import { MultiValueRemove, MultiValueRemoveProps } from '@grafana/ui/src/components/Select/MultiValue';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import {
   commonGroupByOptions,
@@ -108,8 +108,18 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
                   }}
                   options={[...commonGroupByOptions, ...groupByOptions]}
                   components={{
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    MultiValueRemove(props: any) {
+                    MultiValueRemove(
+                      props: React.PropsWithChildren<
+                        MultiValueRemoveProps &
+                          Array<SelectableValue<string>> & {
+                            data: {
+                              label: string;
+                              value: string;
+                              isFixed: boolean;
+                            };
+                          }
+                      >
+                    ) {
                       const { data } = props;
                       if (data.isFixed) {
                         return null;
