@@ -301,6 +301,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
       set: new AdHocFilterSet({
         name: variable.name ?? 'filters',
+        hide: variable.hide,
         datasource: variable.datasource,
         filters: variable.filters ?? [],
         baseFilters: variable.baseFilters ?? [],
