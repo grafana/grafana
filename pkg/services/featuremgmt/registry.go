@@ -1119,17 +1119,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:              "jitterAlertRules",
-			Description:       "Distributes alert rule evaluations more evenly over time, by rule group",
-			FrontendOnly:      false,
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             grafanaAlertingSquad,
-			AllowSelfServe:    false,
-			HideFromDocs:      false,
-			HideFromAdminPage: false,
-			RequiresRestart:   true,
-		},
-		{
 			Name:              "jitterAlertRulesWithinGroups",
 			Description:       "Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group",
 			FrontendOnly:      false,

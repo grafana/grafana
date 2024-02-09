@@ -1,5 +1,5 @@
 {
-  "name": "@grafana-plugins/grafana-cloud-monitoring-datasource",
+  "name": "@grafana-plugins/stackdriver",
   "description": "Grafana data source for Google Cloud Monitoring",
   "private": true,
   "version": "10.4.0-pre",

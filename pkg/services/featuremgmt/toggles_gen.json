@@ -1927,7 +1927,8 @@
       "metadata": {
         "name": "jitterAlertRules",
         "resourceVersion": "1705492800000",
-        "creationTimestamp": "2024-01-17T12:00:00Z"
+        "creationTimestamp": "2024-01-17T12:00:00Z",
+        "deletionTimestamp": "2024-02-09T21:59:05Z"
       },
       "spec": {
         "description": "Distributes alert rule evaluations more evenly over time, by rule group",
