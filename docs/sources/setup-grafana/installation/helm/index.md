@@ -15,7 +15,6 @@ weight: 500
 
 This topic includes instructions for installing and running Grafana on Kubernetes using Helm Charts.
 
-
 [Helm](https://helm.sh/) is an open-source command line tool used for managing Kubernetes applications. It is a graduate project in the [CNCF Landscape](https://www.cncf.io/projects/helm/).
 
 {{% admonition type="note" %}}
@@ -34,14 +33,14 @@ To install Grafana using Helm, ensure you have completed the following:
 When you install Grafana using Helm, you complete the following tasks:
 
 1. Set up the Grafana Helm repository, which provides a space in which you will install Grafana.
+
 1. Deploy Grafana using Helm, which installs Grafana into a namespace.
+
 1. Accessing Grafana, which provides steps to sign into Grafana.
 
 ### Set up the Grafana Helm repository
 
-The first step is to define the URL to the repository so that you download the correct Grafana Helm charts on your machine.
-
-To set up the Grafana Helm repository, complete the following steps:
+To set up the Grafana Helm repository so that you download the correct Grafana Helm charts on your machine, complete the following steps:
 
 1. To add the Grafana repository, use the following command syntax:
 
@@ -114,7 +113,7 @@ When you create a new namespace in Kubernetes, you can better organize, allocate
    - `grafana/grafana`: The repository and package name to install
    - `--namespace`: The Kubernetes namespace (i.e. `monitoring`) where you want to deploy the chart
 
-4. To verify the deployment status, run the following command and verify that `deployed` appears in the **STATUS** column:
+1. To verify the deployment status, run the following command and verify that `deployed` appears in the **STATUS** column:
 
    ```bash
    helm list -n monitoring
@@ -127,7 +126,7 @@ When you create a new namespace in Kubernetes, you can better organize, allocate
    my-grafana      monitoring      1               2024-01-13 23:06:42.737989554 +0000 UTC deployed        grafana-6.59.0 10.1.0   
    ```
 
-5. To check the overall status of all the objects in the namespace, run the following command:
+1. To check the overall status of all the objects in the namespace, run the following command:
 
       ```bash
       kubectl get all -n monitoring
@@ -139,49 +138,49 @@ When you create a new namespace in Kubernetes, you can better organize, allocate
 
 This section describes the steps you must complete to access Grafana via web browser.
 
-First, run the following `helm status` command:
-
-```bash
-helm status my-grafana -n monitoring
-```
-
-This command will give you the complete status of the release information such as last deployment time, namespace (where it is deployed), release status, additional notes provided by the chart etc.
-
-Within the additonal release notes, it provides the following 2 key information i.e.
-
-1. How to decode the login password for the admin account
-2. Expose service to the web browser
-
-#### Decoding the admin account password
-
-Run the command as follows (it should be the same command you saw when you executed the `helm status` command):
-
-```bash
-kubectl get secret --namespace monitoring my-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
-```
-
-It will give you a decoded `base64` string output which is the password for the admin account (note it down by saving it into a file).
-
-#### Access Grafana via the Kubernetes service in a local web browser
-
-1. Follow the instructions as described in the above `helm status` command, which provides complete instructions on accessing the Grafana server on port `3000`.
+1. Run the following `helm get notes` command:
 
    ```bash
-   # first run the below command export a shell variable named POD_NAME that will save the complete name of the pod which got deployed
+   helm get notes my-grafana -n monitoring
+   ```
 
+   This command will print out the chart notes. You will the output `NOTES` that provide the complete instructions about:
+   - How to decode the login password for the Grafana admin account
+   - Access Grafana service to the web browser
+
+1. To get the Grafana admin password, run the command as follows:
+
+   ```bash
+   kubectl get secret --namespace monitoring my-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+   ```
+
+   It will give you a decoded `base64` string output which is the password for the admin account.
+
+1. Save the decoded password to a file on your machine.
+
+1. To access Grafana service on the web browser, run the following command:
+
+   ```bash
    export POD_NAME=$(kubectl get pods --namespace monitoring -l "app.kubernetes.io/name=grafana,app.kubernetes.io/instance=my-grafana" -o jsonpath="{.items[0].metadata.name}")
+   ```
 
-   # then run the port forwarding command to direct the grafana pod to listen to port 3000
+   The above command will export a shell variable named `POD_NAME` that will save the complete name of the pod which got deployed.
 
+1. Run the following port forwarding command to direct the Grafana pod to listen to port `3000`:
+
+   ```bash
    kubectl --namespace monitoring port-forward $POD_NAME 3000
    ```
 
    For more information about port-forwarding, refer to [Use Port Forwarding to Access Applications in a Cluster](https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/).
 
-2. Navigate to `127.0.0.1:3000` in your browser.
-3. The Grafana sign-in page appears.
-4. To sign in, enter `admin` for the username.
-5. For the password paste it which you have saved to a file after decoding it earlier.
+1. Navigate to `127.0.0.1:3000` in your browser.
+
+1. The Grafana sign-in page appears.
+
+1. To sign in, enter `admin` for the username.
+
+1. For the password paste it which you have saved to a file after decoding it earlier.
 
 ## Customize Grafana default configuraiton
 
@@ -213,7 +212,7 @@ To enable the persistent storage in the Grafana Helm charts, complete the follow
 
 1. Open the `values.yaml` file in your favorite editor.
 
-2. Edit the values and under the section of `persistence`, change the `enable` flag from `false` to `true`
+1. Edit the values and under the section of `persistence`, change the `enable` flag from `false` to `true`
 
    ```yaml
    .......
@@ -228,7 +227,7 @@ To enable the persistent storage in the Grafana Helm charts, complete the follow
    ......
    ```
 
-3. Run the following `helm upgrade` command by specifying the `values.yaml` file to make the changes take effect:
+1. Run the following `helm upgrade` command by specifying the `values.yaml` file to make the changes take effect:
 
    ```bash
    helm upgrade my-grafana grafana/grafana -f values.yaml -n monitoring
@@ -246,7 +245,7 @@ To install plugins in the Grafana Helm Charts, complete the following steps:
 
 1. Open the `values.yaml` file in your favorite editor.
 
-2. Find the line that says `plugins:` and under that section, define the plugins that you want to install.
+1. Find the line that says `plugins:` and under that section, define the plugins that you want to install.
 
    ```yaml
    .......
@@ -262,13 +261,19 @@ To install plugins in the Grafana Helm Charts, complete the following steps:
    ......
    ```
 
-3. After that save the changes and use the `helm upgrade` command to get these plugins installed:
+1. Save the changes and use the `helm upgrade` command to get these plugins installed:
 
    ```bash
    helm upgrade my-grafana grafana/grafana -f values.yaml -n monitoring
    ```
 
-   You can verify if the above plugins got installed by login into the Grafana UI -> Administration -> Plugins.
+1. Navigate to `127.0.0.1:3000` in your browser.
+
+1. Login with admin credentials when the Grafana sign-in page appears.
+
+1. Navigate to UI -> Administration -> Plugins
+
+1. Search for the above plugins and they should be marked as installed.
 
 ## Troubleshooting
 
@@ -304,7 +309,7 @@ To increase log level to `debug` mode, use the following steps:
 
 1. Open the `values.yaml` file in your favorite editor and search for the string `grafana.ini` and there you will find a section about log mode.
 
-2. Add level: `debug` just below the line `mode: console`
+1. Add level: `debug` just below the line `mode: console`
 
    ```yaml
    # This is the values.yaml file
@@ -323,15 +328,15 @@ To increase log level to `debug` mode, use the following steps:
 
    Make sure to keep the indentation level the same otherwise it will not work.
 
-3. Now to apply this, run the `helm upgrade` command as follows:
+1. Now to apply this, run the `helm upgrade` command as follows:
 
    ```bash
    helm upgrade my-grafana grafana/grafana -f values.yaml -n monitoring
    ```
 
-4. To verify it, access the Grafana UI in the browser using the provided `IP:Port`. The Grafana sign-in page appears.
+1. To verify it, access the Grafana UI in the browser using the provided `IP:Port`. The Grafana sign-in page appears.
 
-5. To sign in to Grafana, enter `admin` for the username and paste the password which was decoded earlier. Navigate to Server Admin > Settings and then search for log. You should see the level to `debug` mode.
+1. To sign in to Grafana, enter `admin` for the username and paste the password which was decoded earlier. Navigate to Server Admin > Settings and then search for log. You should see the level to `debug` mode.
 
 ### Reset Grafana admin secrets (login credentials)
 
@@ -345,7 +350,7 @@ By default the login credentials for the super admin account are generated via `
    adminPassword: admin
    ```
 
-2. Then use the `helm upgrade` command as follows:
+1. Then use the `helm upgrade` command as follows:
 
    ```bash
    helm upgrade my-grafana grafana/grafana -f values.yaml -n monitoring
@@ -353,7 +358,7 @@ By default the login credentials for the super admin account are generated via `
 
    This command will now make your super admin login credentials as `admin` for both username and password.
 
-3. To verify it, sign in to Grafana, enter `admin` for both username and password. You sould be able to login as super admin.
+1. To verify it, sign in to Grafana, enter `admin` for both username and password. You sould be able to login as super admin.
 
 ## Uninstalling the Grafana Deployment
 
