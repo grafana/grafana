@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -60,12 +60,11 @@ describe('PanelDataTransformationsModel', () => {
   });
 });
 
-describe.skip('PanelDataTransformationsTab', () => {
+describe('PanelDataTransformationsTab', () => {
   standardTransformersRegistry.setInit(getStandardTransformers);
 
   it('renders empty message when there are no transformations', async () => {
     const modelMock = createModelMock({} as PanelData);
-    userEvent.setup();
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
 
     await screen.findByTestId(selectors.components.Transforms.noTransformationsMessage);
@@ -78,7 +77,6 @@ describe.skip('PanelDataTransformationsTab', () => {
         options: {},
       },
     ]);
-    userEvent.setup();
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
 
     await screen.findByText('1 - Add field from calculation');
@@ -86,31 +84,23 @@ describe.skip('PanelDataTransformationsTab', () => {
 
   it('shows show the transformation selection drawer', async () => {
     const modelMock = createModelMock(mockData);
-    userEvent.setup();
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
     const addButton = await screen.findByTestId(selectors.components.Transforms.addTransformationButton);
-    await act(async () => {
-      userEvent.click(addButton);
-    });
+    await userEvent.click(addButton);
     await screen.findByTestId(selectors.components.Transforms.searchInput);
   });
 
   it('adds a transformation when a transformation is clicked in the drawer and there are no previous transformations', async () => {
     const onChangeTransformation = jest.fn();
     const modelMock = createModelMock(mockData, [], onChangeTransformation);
-    userEvent.setup();
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
     const addButton = await screen.findByTestId(selectors.components.Transforms.addTransformationButton);
-    await act(async () => {
-      userEvent.click(addButton);
-    });
+    await userEvent.click(addButton);
     const transformationCard = await screen.findByTestId(
       selectors.components.TransformTab.newTransform('Add field from calculation')
     );
     const button = transformationCard.getElementsByTagName('button').item(0);
-    await act(async () => {
-      await userEvent.click(button!);
-    });
+    await userEvent.click(button!);
 
     expect(onChangeTransformation).toHaveBeenCalledWith([{ id: 'calculateField', options: {} }]);
   });
@@ -127,19 +117,14 @@ describe.skip('PanelDataTransformationsTab', () => {
       ],
       onChangeTransformation
     );
-    userEvent.setup();
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
     const addButton = await screen.findByTestId(selectors.components.Transforms.addTransformationButton);
-    await act(async () => {
-      userEvent.click(addButton);
-    });
+    await userEvent.click(addButton);
     const transformationCard = await screen.findByTestId(
       selectors.components.TransformTab.newTransform('Add field from calculation')
     );
     const button = transformationCard.getElementsByTagName('button').item(0);
-    await act(async () => {
-      await userEvent.click(button!);
-    });
+    await userEvent.click(button!);
     expect(onChangeTransformation).toHaveBeenCalledWith([
       { id: 'calculateField', options: {} },
       { id: 'calculateField', options: {} },
@@ -158,36 +143,26 @@ describe.skip('PanelDataTransformationsTab', () => {
       ],
       onChangeTransformation
     );
-    userEvent.setup();
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
     const removeButton = await screen.findByTestId(selectors.components.Transforms.removeAllTransformationsButton);
-    await act(async () => {
-      userEvent.click(removeButton);
-    });
+    await userEvent.click(removeButton);
     const confirmButton = await screen.findByTestId(selectors.pages.ConfirmModal.delete);
-    await act(async () => {
-      await userEvent.click(confirmButton);
-    });
+    await userEvent.click(confirmButton);
 
     expect(onChangeTransformation).toHaveBeenCalledWith([]);
   });
 
   it('can filter transformations in the drawer', async () => {
     const modelMock = createModelMock(mockData);
-    userEvent.setup();
     render(<PanelDataTransformationsTabRendered model={modelMock}></PanelDataTransformationsTabRendered>);
     const addButton = await screen.findByTestId(selectors.components.Transforms.addTransformationButton);
-    await act(async () => {
-      await userEvent.click(addButton);
-    });
+    await userEvent.click(addButton);
 
     const searchInput = await screen.findByTestId(selectors.components.Transforms.searchInput);
 
     await screen.findByTestId(selectors.components.TransformTab.newTransform('Reduce'));
 
-    await act(async () => {
-      await userEvent.type(searchInput, 'add field');
-    });
+    await userEvent.type(searchInput, 'add field');
 
     await screen.findByTestId(selectors.components.TransformTab.newTransform('Add field from calculation'));
     const reduce = screen.queryByTestId(selectors.components.TransformTab.newTransform('Reduce'));

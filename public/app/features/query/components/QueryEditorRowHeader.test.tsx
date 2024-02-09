@@ -83,7 +83,7 @@ describe('QueryEditorRowHeader', () => {
     renderScenario({ onChangeDataSource: () => {} });
 
     const dsSelect = screen.getByTestId(selectors.components.DataSourcePicker.container).querySelector('input')!;
-    userEvent.click(dsSelect);
+    await userEvent.click(dsSelect);
     expect(await screen.findByText('${dsVariable}')).toBeInTheDocument();
   });
 });
