@@ -4,7 +4,7 @@
  */
 
 import { produce } from 'immer';
-import { noop, remove } from 'lodash';
+import { remove } from 'lodash';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { onCallApi, OnCallIntegrationDTO } from '../../api/onCallApi';
@@ -83,6 +83,7 @@ export function useContactPointsWithStatus(
               fetchContactPointsStatus.data,
               fetchReceiverMetadata.data,
               onCallMetadata,
+              result.data.alertmanager_config.receivers ?? [],
               result.data
             )
           : [],
@@ -102,8 +103,8 @@ export function useContactPointsWithStatus(
             fetchContactPointsStatus.data,
             fetchReceiverMetadata.data,
             onCallMetadata,
-            undefined, //no config data
-            result.data // contact points from the new readonly endpoint
+            result.data, // contact points from the new readonly endpoint
+            undefined //no config data
           )
         : [],
     }),
@@ -120,23 +121,14 @@ export function useContactPointsWithStatus(
     onCallPluginStatusLoading ||
     onCallPluginIntegrationsLoading;
 
-  if (includePoliciesCount) {
-    const contactPoints = fetchAlertmanagerConfiguration.contactPoints.sort((a, b) => a.name.localeCompare(b.name));
-    return {
-      error,
-      isLoading,
-      contactPoints,
-      refetchReceivers: () => Promise.resolve(noop), // in this case we will not use this function
-    };
-  } else {
-    const contactPoints = fetchGrafanaContactPoints.contactPoints.sort((a, b) => a.name.localeCompare(b.name));
-    return {
-      error,
-      isLoading,
-      contactPoints,
-      refetchReceivers: fetchGrafanaContactPoints.refetch,
-    };
-  }
+  const unsortedContactPoints = fetchAlertmanagerConfiguration.contactPoints ?? fetchGrafanaContactPoints.contactPoints;
+  const contactPoints = unsortedContactPoints.sort((a, b) => a.name.localeCompare(b.name));
+  return {
+    error,
+    isLoading,
+    contactPoints,
+    refetchReceivers: fetchGrafanaContactPoints.refetch,
+  };
 }
 
 export function useDeleteContactPoint(selectedAlertmanager: string) {

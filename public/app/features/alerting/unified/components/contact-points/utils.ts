@@ -1,4 +1,4 @@
-import { countBy, Dictionary, split, trim, upperFirst } from 'lodash';
+import { countBy, split, trim, upperFirst } from 'lodash';
 import { ReactNode } from 'react';
 
 import { config } from '@grafana/runtime';
@@ -99,40 +99,35 @@ export interface ContactPointWithMetadata extends GrafanaManagedContactPoint {
  * This function adds the status information for each of the integrations (contact point types) in a contact point
  * 1. we iterate over all contact points
  * 2. for each contact point we "enhance" it with the status or "undefined" for vanilla Alertmanager
- * resultFromConfig: is passed when we need to get number of policies for each contact point
- * resultFromReadOnlyEndpoint: is passed when there is no need to get number of policies for each contact point,
+ * contactPoints: list of contact points
+ * alertmanagerConfiguration: optional as is passed when we need to get number of policies for each contact point
  * and we prefer using the data from the read-only endpoint.
  */
 export function enhanceContactPointsWithMetadata(
   status: ReceiversStateDTO[] = [],
   notifiers: NotifierDTO[] = [],
   onCallIntegrations: OnCallIntegrationDTO[] | undefined | null,
-  resultFromConfig?: AlertManagerCortexConfig,
-  resultFromReadOnlyEndpoint?: Receiver[]
+  contactPoints: Receiver[],
+  alertmanagerConfiguration?: AlertManagerCortexConfig
 ): ContactPointWithMetadata[] {
-  let fullyInheritedTree: Route | undefined,
-    usedContactPoints: string[] | undefined,
-    usedContactPointsByName: Dictionary<number> | undefined,
-    contactPoints: Receiver[];
+  const fullyInheritedTree = alertmanagerConfiguration
+    ? computeInheritedTree(alertmanagerConfiguration?.alertmanager_config?.route ?? {})
+    : undefined;
+  const usedContactPoints =
+    alertmanagerConfiguration && fullyInheritedTree ? getUsedContactPoints(fullyInheritedTree) : undefined;
+  const usedContactPointsByName = alertmanagerConfiguration ? countBy(usedContactPoints) : undefined;
+  const contactPointsList = alertmanagerConfiguration
+    ? alertmanagerConfiguration?.alertmanager_config.receivers ?? []
+    : contactPoints ?? [];
 
-  if (resultFromConfig) {
-    // compute the entire inherited tree before finding what notification policies are using a particular contact point
-    fullyInheritedTree = resultFromConfig && computeInheritedTree(resultFromConfig?.alertmanager_config?.route ?? {});
-    usedContactPoints = resultFromConfig && fullyInheritedTree && getUsedContactPoints(fullyInheritedTree);
-    usedContactPointsByName = resultFromConfig && countBy(usedContactPoints);
-    contactPoints = resultFromConfig?.alertmanager_config.receivers ?? [];
-  } else {
-    contactPoints = resultFromReadOnlyEndpoint ?? [];
-  }
-
-  return contactPoints.map((contactPoint) => {
+  return contactPointsList.map((contactPoint) => {
     const receivers = extractReceivers(contactPoint);
     const statusForReceiver = status.find((status) => status.name === contactPoint.name);
 
     return {
       ...contactPoint,
       numberOfPolicies:
-        resultFromConfig && usedContactPointsByName && (usedContactPointsByName[contactPoint.name] ?? 0),
+        alertmanagerConfiguration && usedContactPointsByName && (usedContactPointsByName[contactPoint.name] ?? 0),
       grafana_managed_receiver_configs: receivers.map((receiver, index) => {
         const isOnCallReceiver = receiver.type === ReceiverTypes.OnCall;
         return {
