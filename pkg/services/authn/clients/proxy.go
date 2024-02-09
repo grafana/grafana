@@ -152,7 +152,7 @@ func (c *Proxy) Hook(ctx context.Context, identity *authn.Identity, r *authn.Req
 	// 1. Name = x; Role = Admin			# cache missed, new user created and cached with key Name=x;Role=Admin
 	// 2. Name = x; Role = Editor			# cache missed, the user got updated and cached with key Name=x;Role=Editor
 	// 3. Name = x; Role = Admin			# cache hit with key Name=x;Role=Admin, no update, the user stays with Role=Editor
-	// To avoid such a problem we also cache the key used using `prefix:[username]`. 
+	// To avoid such a problem we also cache the key used using `prefix:[username]`.
 	// Then whenever we get a cache miss due to changes in any header we use it to invalidate the previous item.
 	username := getProxyHeader(r, c.cfg.AuthProxyHeaderName, c.cfg.AuthProxyHeadersEncoded)
 	userKey := fmt.Sprintf("%s:%s", proxyCachePrefix, username)
