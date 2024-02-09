@@ -491,7 +491,7 @@ function getRangeAndOffset(monaco: Monaco, model: monacoTypes.editor.ITextModel,
           startLineNumber: position.lineNumber,
           endLineNumber: position.lineNumber,
           startColumn: word.startColumn,
-          endColumn: word.endColumn,
+          endColumn: word.startColumn,
         })
       : monaco.Range.fromPositions(position);
 
