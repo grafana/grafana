@@ -86,7 +86,7 @@ func (b *FeatureFlagAPIBuilder) GetAPIGroupInfo(
 ) (*genericapiserver.APIGroupInfo, error) {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(v0alpha1.GROUP, scheme, metav1.ParameterCodec, codecs)
 
-	featureStore := NewFeaturesStorage(b.features.GetFlags())
+	featureStore := NewFeaturesStorage()
 	toggleStore := NewTogglesStorage(b.features)
 
 	storage := map[string]rest.Storage{}
