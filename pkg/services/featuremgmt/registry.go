@@ -1336,11 +1336,11 @@ var (
 		},
 		{
 			Name:            "kubernetesAggregator",
-			Description:     "Enable kube-aggregator",
+			Description:     "Enable grafana aggregator",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
-			Created:         time.Date(2024, time.February, 1, 12, 0, 0, 0, time.UTC),
+			Created:         time.Date(2024, time.February, 9, 12, 0, 0, 0, time.UTC),
 		},
 	}
 )

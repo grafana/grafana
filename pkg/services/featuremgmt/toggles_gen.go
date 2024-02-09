@@ -640,6 +640,6 @@ const (
 	FlagNewPDFRendering = "newPDFRendering"
 
 	// FlagKubernetesAggregator
-	// Enable kube-aggregator
+	// Enable grafana aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
 )
