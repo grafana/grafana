@@ -266,10 +266,11 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     }),
     $variables: variables,
     $behaviors: [
-      registerDashboardMacro,
       new behaviors.CursorSync({
         sync: oldModel.graphTooltip,
       }),
+      new behaviors.SceneQueryController(),
+      registerDashboardMacro,
       registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
     ],
@@ -287,6 +288,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
           new SceneRefreshPicker({
             refresh: oldModel.refresh,
             intervals: oldModel.timepicker.refresh_intervals,
+            withText: true,
           }),
         ],
         linkControls: new DashboardLinksControls({}),

@@ -143,9 +143,9 @@ describe('transformSaveModelToScene', () => {
 
       const scene = createDashboardSceneFromDashboardModel(oldModel);
 
-      expect(scene.state.$behaviors).toHaveLength(4);
-      expect(scene.state.$behaviors![1]).toBeInstanceOf(behaviors.CursorSync);
-      expect((scene.state.$behaviors![1] as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
+      expect(scene.state.$behaviors).toHaveLength(5);
+      expect(scene.state.$behaviors![0]).toBeInstanceOf(behaviors.CursorSync);
+      expect((scene.state.$behaviors![0] as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
     });
 
     it('should initialize the Dashboard Scene with empty template variables', () => {

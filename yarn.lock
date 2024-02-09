@@ -4011,9 +4011,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:2.6.6":
-  version: 2.6.6
-  resolution: "@grafana/scenes@npm:2.6.6"
+"@grafana/scenes@npm:^2.6.5":
+  version: 2.6.5
+  resolution: "@grafana/scenes@npm:2.6.5"
   dependencies:
     "@grafana/e2e-selectors": "npm:10.0.2"
     react-grid-layout: "npm:1.3.4"
@@ -4025,7 +4025,7 @@ __metadata:
     "@grafana/runtime": 10.0.3
     "@grafana/schema": 10.0.3
     "@grafana/ui": 10.0.3
-  checksum: 10/13f5a7d77892ab68af00ee16887bbd101f00e6e2dbb547f697b0f472a296b8030a96f1596c416c24800367f83a469bc10d975d689a0ca8a7cd533efb7ef1bfc3
+  checksum: 10/68fe91a5a0c8f80b679126f3525b74b29ce3f9ad92bc558eaaf39693235137348b90796c2b02aa7c1c7929586e60df6024e139993a416ef37d4c875e548dc855
   languageName: node
   linkType: hard
 
@@ -11183,7 +11183,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"anymatch@npm:^3.0.3, anymatch@npm:^3.1.3, anymatch@npm:~3.1.2":
+"anymatch@npm:^3.0.3, anymatch@npm:~3.1.2":
+  version: 3.1.2
+  resolution: "anymatch@npm:3.1.2"
+  dependencies:
+    normalize-path: "npm:^3.0.0"
+    picomatch: "npm:^2.0.4"
+  checksum: 10/985163db2292fac9e5a1e072bf99f1b5baccf196e4de25a0b0b81865ebddeb3b3eb4480734ef0a2ac8c002845396b91aa89121f5b84f93981a4658164a9ec6e9
+  languageName: node
+  linkType: hard
+
+"anymatch@npm:^3.1.3":
   version: 3.1.3
   resolution: "anymatch@npm:3.1.3"
   dependencies:
@@ -16678,6 +16688,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fast-fifo@npm:^1.0.0":
+  version: 1.1.0
+  resolution: "fast-fifo@npm:1.1.0"
+  checksum: 10/895f4c9873a4d5059dfa244aa0dde2b22ee563fd673d85b638869715f92244f9d6469bc0873bcb40554d28c51cbc7590045718462cfda1da503b1c6985815209
+  languageName: node
+  linkType: hard
+
 "fast-fifo@npm:^1.1.0":
   version: 1.3.2
   resolution: "fast-fifo@npm:1.3.2"
@@ -16768,12 +16785,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fastq@npm:^1.13.0, fastq@npm:^1.6.0":
+"fastq@npm:^1.13.0":
   version: 1.17.1
   resolution: "fastq@npm:1.17.1"
   dependencies:
     reusify: "npm:^1.0.4"
   checksum: 10/a443180068b527dd7b3a63dc7f2a47ceca2f3e97b9c00a1efe5538757e6cc4056a3526df94308075d7727561baf09ebaa5b67da8dcbddb913a021c5ae69d1f69
+  languageName: node
+  linkType: hard
+
+"fastq@npm:^1.6.0":
+  version: 1.13.0
+  resolution: "fastq@npm:1.13.0"
+  dependencies:
+    reusify: "npm:^1.0.4"
+  checksum: 10/0902cb9b81accf34e5542612c8a1df6c6ea47674f85bcc9cdc38795a28b53e4a096f751cfcf4fb25d2ea42fee5447499ba6cf5af5d0209297e1d1fd4dd551bb6
   languageName: node
   linkType: hard
 
@@ -17991,7 +18017,7 @@ __metadata:
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:2.6.6"
+    "@grafana/scenes": "npm:^2.6.5"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
@@ -25073,7 +25099,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"queue-tick@npm:^1.0.1":
+"queue-tick@npm:^1.0.0, queue-tick@npm:^1.0.1":
   version: 1.0.1
   resolution: "queue-tick@npm:1.0.1"
   checksum: 10/f447926c513b64a857906f017a3b350f7d11277e3c8d2a21a42b7998fa1a613d7a829091e12d142bb668905c8f68d8103416c7197856efb0c72fa835b8e254b5
@@ -28447,13 +28473,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"streamx@npm:^2.12.0, streamx@npm:^2.12.5, streamx@npm:^2.13.2, streamx@npm:^2.14.0":
+"streamx@npm:^2.12.0, streamx@npm:^2.13.2, streamx@npm:^2.14.0":
   version: 2.15.7
   resolution: "streamx@npm:2.15.7"
   dependencies:
     fast-fifo: "npm:^1.1.0"
     queue-tick: "npm:^1.0.1"
   checksum: 10/5f59f49383b41546e87b15ba54970cca262d1eb0826c5b88c4dc5329d18821fed06f92f849da68c764ad91ea05f394518510957371cb0abd3617bdabed465cdb
+  languageName: node
+  linkType: hard
+
+"streamx@npm:^2.12.5":
+  version: 2.12.5
+  resolution: "streamx@npm:2.12.5"
+  dependencies:
+    fast-fifo: "npm:^1.0.0"
+    queue-tick: "npm:^1.0.0"
+  checksum: 10/daa5789ca31101684d9266f7ea77294908bd3e55607805ac1657f0cef1ee0a1966bc3988d2ec12c5f68a718d481147fa3ace2525486a1e39ca7155c598917cd1
   languageName: node
   linkType: hard
 

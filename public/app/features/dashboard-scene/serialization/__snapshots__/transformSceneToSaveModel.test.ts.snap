@@ -307,7 +307,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
   "description": "My custom description",
   "editable": false,
   "fiscalYearStartMonth": 1,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": 1351,
   "links": [
     {
@@ -621,7 +621,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
   },
   "editable": true,
   "fiscalYearStartMonth": 1,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": 1351,
   "links": [],
   "panels": [
