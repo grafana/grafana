@@ -28,13 +28,14 @@ Details on how to set up the files and which fields are required for each object
 
 For a complete guide about how Grafana provisions resources, refer to the [Provision Grafana][provisioning] documentation.
 
-**Notes:**
+{{< admonition type="note" >}}
 
 - You cannot edit provisioned resources from files in Grafana. You can only change the resource properties by changing the provisioning file and restarting Grafana or carrying out a hot reload. This prevents changes being made to the resource that would be overwritten if a file is provisioned again or a hot reload is carried out.
 
-- Importing takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Admin API][reload-provisioning-configurations].
+- Importing takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Admin API](/docs/grafana/<GRAFANA_VERSION>/developers/http_api/admin#reload-provisioning-configurations).
 
 - Importing an existing alerting resource results in a conflict. First, when present, remove the resources you plan to import.
+  {{< /admonition >}}
 
 ## Import alert rules
 
@@ -813,8 +814,6 @@ This eliminates the need for a persistent database to use Grafana Alerting in Ku
 {{% docs/reference %}}
 [alerting_export]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources"
 [alerting_export]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources"
-[reload-provisioning-configurations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/admin#reload-provisioning-configurations"
-[reload-provisioning-configurations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/admin#reload-provisioning-configurations"
 [provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning"
 [provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning"
 {{% /docs/reference %}}
