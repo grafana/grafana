@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, ReactNode } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
+
 import { useContentOutlineContext } from './ContentOutlineContext';
 
 export interface ContentOutlineItemBaseProps {
@@ -25,7 +27,7 @@ export function ContentOutlineItem({ title, icon, children, className }: Content
   }, [title, icon, register, unregister]);
 
   return (
-    <div className={className} ref={ref}>
+    <div className={className} ref={ref} data-testid={selectors.components.Panels.Panel.title(title)}>
       {children}
     </div>
   );
