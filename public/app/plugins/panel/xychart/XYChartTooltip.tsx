@@ -55,7 +55,7 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
 
     return {
       label,
-      value: null,
+      value: '',
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       color: alpha(colorThing as string, 0.5),
       colorIndicator: ColorIndicator.marker_md,

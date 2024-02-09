@@ -11,7 +11,6 @@ import {
   TimeZone,
   LinkModel,
   FieldType,
-  arrayUtils,
 } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
@@ -87,7 +86,6 @@ export const StatusHistoryTooltip2 = ({
   if (mode === TooltipDisplayMode.Multi && !isPinned) {
     const frame = alignedData;
     const fields = frame.fields;
-    const sortIdx: unknown[] = [];
 
     for (let i = 0; i < fields.length; i++) {
       const field = frame.fields[i];
@@ -105,7 +103,6 @@ export const StatusHistoryTooltip2 = ({
       const v = field.values[datapointIdx!];
       const display = fieldFmt(v);
 
-      sortIdx.push(v);
       contentLabelValue.push({
         label: getFieldDisplayName(field),
         value: fmt(field, field.values[datapointIdx]),
@@ -113,19 +110,6 @@ export const StatusHistoryTooltip2 = ({
         colorIndicator: ColorIndicator.value,
         colorPlacement: ColorPlacement.trailing,
         isActive: seriesIdx === i,
-      });
-    }
-
-    if (sortOrder !== SortOrder.None) {
-      // create sort reference series array, as Array.sort() mutates the original array
-      const sortRef = [...contentLabelValue];
-      const sortFn = arrayUtils.sortValues(sortOrder);
-
-      contentLabelValue.sort((a, b) => {
-        // get compared values indices to retrieve raw values from sortIdx
-        const aIdx = sortRef.indexOf(a);
-        const bIdx = sortRef.indexOf(b);
-        return sortFn(sortIdx[aIdx], sortIdx[bIdx]);
       });
     }
   }
@@ -144,7 +128,7 @@ export const StatusHistoryTooltip2 = ({
   return (
     <div className={styles.wrapper}>
       <VizTooltipHeader headerLabel={getHeaderLabel()} isPinned={isPinned} />
-      <VizTooltipContent contentLabelValue={getContentLabelValue()} isPinned={isPinned} />
+      <VizTooltipContent contentLabelValue={getContentLabelValue()} isPinned={isPinned} sortOrder={sortOrder} />
       {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
     </div>
   );

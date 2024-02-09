@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import {
-  arrayUtils,
   DataFrame,
   Field,
   FieldType,
@@ -122,7 +121,6 @@ export const StateTimelineTooltip2 = ({
 
   if (mode === TooltipDisplayMode.Multi && !isPinned) {
     const fields = alignedData.fields;
-    const sortIdx: unknown[] = [];
 
     for (let i = 0; i < fields.length; i++) {
       const field = fields[i];
@@ -140,7 +138,6 @@ export const StateTimelineTooltip2 = ({
       const v = field.values[dataIdxs[i]!];
       const display = fieldFmt(v);
 
-      sortIdx.push(v);
       contentLabelValue.push({
         label: getFieldDisplayName(field),
         value: display.text,
@@ -148,19 +145,6 @@ export const StateTimelineTooltip2 = ({
         colorIndicator: ColorIndicator.value,
         colorPlacement: ColorPlacement.trailing,
         isActive: seriesIdx === i,
-      });
-    }
-
-    if (sortOrder !== SortOrder.None) {
-      // create sort reference series array, as Array.sort() mutates the original array
-      const sortRef = [...contentLabelValue];
-      const sortFn = arrayUtils.sortValues(sortOrder);
-
-      contentLabelValue.sort((a, b) => {
-        // get compared values indices to retrieve raw values from sortIdx
-        const aIdx = sortRef.indexOf(a);
-        const bIdx = sortRef.indexOf(b);
-        return sortFn(sortIdx[aIdx], sortIdx[bIdx]);
       });
     }
   }
@@ -179,7 +163,7 @@ export const StateTimelineTooltip2 = ({
   return (
     <div className={styles.wrapper}>
       <VizTooltipHeader headerLabel={getHeaderLabel()} isPinned={isPinned} />
-      <VizTooltipContent contentLabelValue={getContentLabelValue()} isPinned={isPinned} />
+      <VizTooltipContent contentLabelValue={getContentLabelValue()} isPinned={isPinned} sortOrder={sortOrder} />
       {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
     </div>
   );

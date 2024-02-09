@@ -11,7 +11,6 @@ import {
   LinkModel,
   Field,
   getFieldDisplayName,
-  arrayUtils,
 } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
 import { useStyles2, useTheme2 } from '@grafana/ui';
@@ -84,8 +83,8 @@ export const TimeSeriesTooltip = ({
     contentLabelValue = [
       {
         label: getFieldDisplayName(field, seriesFrame, frames),
-        value: display ? formattedValueToString(display) : null,
-        color: display.color || FALLBACK_COLOR,
+        value: display ? formattedValueToString(display) : '',
+        color: display.color ?? FALLBACK_COLOR,
         colorIndicator: ColorIndicator.series,
         colorPlacement: ColorPlacement.first,
       },
@@ -113,17 +112,12 @@ export const TimeSeriesTooltip = ({
 
       contentLabelValue.push({
         label: field.state?.displayName ?? field.name,
-        value: display ? formattedValueToString(display) : null,
+        value: display ? formattedValueToString(display) : '',
         color: display.color || FALLBACK_COLOR,
         colorIndicator: ColorIndicator.series,
         colorPlacement: ColorPlacement.first,
         isActive: seriesIdx === i,
       });
-
-      if (sortOrder !== SortOrder.None) {
-        const sortFn = arrayUtils.sortValues(sortOrder);
-        contentLabelValue.sort((a, b) => sortFn(a.value, b.value));
-      }
     }
 
     if (seriesIdx != null) {
@@ -148,7 +142,12 @@ export const TimeSeriesTooltip = ({
     <div>
       <div className={styles.wrapper}>
         <VizTooltipHeader headerLabel={getHeaderLabel()} isPinned={isPinned} />
-        <VizTooltipContent contentLabelValue={getContentLabelValue()} isPinned={isPinned} scrollable={scrollable} />
+        <VizTooltipContent
+          contentLabelValue={getContentLabelValue()}
+          isPinned={isPinned}
+          scrollable={scrollable}
+          sortOrder={sortOrder}
+        />
         {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
       </div>
     </div>
