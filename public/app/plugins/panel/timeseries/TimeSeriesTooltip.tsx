@@ -94,7 +94,6 @@ export const TimeSeriesTooltip = ({
 
   if (mode === TooltipDisplayMode.Multi) {
     const fields = seriesFrame.fields;
-    const sortIdx: unknown[] = [];
 
     for (let i = 0; i < fields.length; i++) {
       const field = seriesFrame.fields[i];
@@ -112,7 +111,6 @@ export const TimeSeriesTooltip = ({
       const v = seriesFrame.fields[i].values[dataIdxs[i]!];
       const display = field.display!(v); // super expensive :(
 
-      sortIdx.push(v);
       contentLabelValue.push({
         label: field.state?.displayName ?? field.name,
         value: display ? formattedValueToString(display) : null,
@@ -123,16 +121,8 @@ export const TimeSeriesTooltip = ({
       });
 
       if (sortOrder !== SortOrder.None) {
-        // create sort reference series array, as Array.sort() mutates the original array
-        const sortRef = [...contentLabelValue];
         const sortFn = arrayUtils.sortValues(sortOrder);
-
-        contentLabelValue.sort((a, b) => {
-          // get compared values indices to retrieve raw values from sortIdx
-          const aIdx = sortRef.indexOf(a);
-          const bIdx = sortRef.indexOf(b);
-          return sortFn(sortIdx[aIdx], sortIdx[bIdx]);
-        });
+        contentLabelValue.sort((a, b) => sortFn(a.value, b.value));
       }
     }
 
