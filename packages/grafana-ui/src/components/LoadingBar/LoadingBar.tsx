@@ -1,5 +1,5 @@
 import { css, keyframes } from '@emotion/css';
-import React, { CSSProperties } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -20,14 +20,9 @@ const DEFAULT_ANIMATION_DELAY = 300;
 export function LoadingBar({ width, delay = DEFAULT_ANIMATION_DELAY, ariaLabel = 'Loading bar' }: LoadingBarProps) {
   const durationMs = Math.min(Math.max(Math.round(width * MILLISECONDS_PER_PIXEL), MIN_DURATION_MS), MAX_DURATION_MS);
   const styles = useStyles2(getStyles, delay, durationMs);
-  const containerStyles: CSSProperties = {
-    overflow: 'hidden',
-    position: 'relative',
-    height: 1,
-  };
 
   return (
-    <div style={containerStyles}>
+    <div className={styles.container}>
       <div aria-label={ariaLabel} className={styles.bar} />
     </div>
   );
@@ -45,6 +40,11 @@ const getStyles = (_theme: GrafanaTheme2, delay: number, duration: number) => {
   });
 
   return {
+    container: css({
+      overflow: 'hidden',
+      position: 'relative',
+      height: 1,
+    }),
     bar: css({
       width: BAR_WIDTH + '%',
       height: 1,
