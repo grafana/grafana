@@ -1,4 +1,4 @@
-import { AdHocVariableModel, TypedVariableModel, VariableModel } from '@grafana/data';
+import { AdHocVariableModel, DataFrameDTO, DataFrameJSON, TypedVariableModel, VariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   VizPanel,
@@ -55,6 +55,7 @@ import {
 } from '../utils/utils';
 
 import { getAngularPanelMigrationHandler } from './angularMigration';
+import { GRAFANA_DATASOURCE_REF } from './const';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
@@ -79,7 +80,7 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   return scene;
 }
 
-export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
+export function createSceneObjectsForPanels(oldPanels: PanelModel[], isSnapshot: boolean): SceneGridItemLike[] {
   // collects all panels and rows
   const panels: SceneGridItemLike[] = [];
 
@@ -114,6 +115,11 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridI
         panels.push(gridItem);
       }
     } else {
+      // convert old snapshot data to new snapshot format to be compatible with Scenes
+      if (isSnapshot) {
+        convertOldSnapshotToScenesSnapshot(panel);
+      }
+
       const panelObject = buildGridItemForPanel(panel);
 
       // when processing an expanded row, collect its panels
@@ -254,7 +260,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     version: oldModel.version,
     body: new SceneGridLayout({
       isLazy: true,
-      children: createSceneObjectsForPanels(oldModel.panels),
+      children: createSceneObjectsForPanels(oldModel.panels, oldModel.isSnapshot()),
     }),
     $timeRange: new SceneTimeRange({
       from: oldModel.time.from,
@@ -378,13 +384,20 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     return new TextBoxVariable({
       ...commonProperties,
       description: variable.description,
-      value: variable.query,
+      value: convertToString(variable.current?.value ?? ''),
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
     });
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.type}`);
   }
+}
+
+function convertToString(value: string | string[]): string {
+  if (Array.isArray(value)) {
+    return value.join(',');
+  }
+  return value;
 }
 
 export function buildGridItemForLibPanel(panel: PanelModel) {
@@ -526,3 +539,38 @@ function registerPanelInteractionsReporter(scene: DashboardScene) {
     }
   });
 }
+
+const convertSnapshotData = (snapshotData: DataFrameDTO[]): DataFrameJSON[] => {
+  return [
+    {
+      data: {
+        values: snapshotData[0].fields
+          .map((field) => field.values)
+          .filter((values): values is unknown[] => values !== undefined),
+      },
+      schema: {
+        fields: snapshotData[0].fields.map((field) => ({
+          name: field.name,
+          type: field.type,
+          config: field.config,
+        })),
+      },
+    },
+  ];
+};
+
+const convertOldSnapshotToScenesSnapshot = (panel: PanelModel) => {
+  if (panel.snapshotData) {
+    panel.datasource = GRAFANA_DATASOURCE_REF;
+    panel.targets = [
+      {
+        refId: panel.snapshotData[0]?.refId ?? '',
+        datasource: panel.datasource,
+        queryType: 'snapshot',
+        // @ts-ignore
+        snapshot: convertSnapshotData(panel.snapshotData),
+      },
+    ];
+    panel.snapshotData = [];
+  }
+};
