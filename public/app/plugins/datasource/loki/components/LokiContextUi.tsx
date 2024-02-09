@@ -132,7 +132,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   const isInitialState = useMemo(() => {
     // Initial query has all regular labels enabled and all parsed labels disabled
-    if (initialized && contextFilters.some((filter) => filter.fromParser === filter.enabled)) {
+    if (initialized && contextFilters.some((filter) => filter.nonIndexed === filter.enabled)) {
       return false;
     }
 
@@ -155,7 +155,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
       return;
     }
 
-    if (contextFilters.filter(({ enabled, fromParser }) => enabled && !fromParser).length === 0) {
+    if (contextFilters.filter(({ enabled, nonIndexed: fromParser }) => enabled && !fromParser).length === 0) {
       setContextFilters(previousContextFilters.current);
       return;
     }
@@ -175,7 +175,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
         selectedExtractedLabels: [],
       };
 
-      contextFilters.forEach(({ enabled, fromParser, label }) => {
+      contextFilters.forEach(({ enabled, nonIndexed: fromParser, label }) => {
         // We only want to store real labels that were removed from the initial query
         if (!enabled && !fromParser) {
           preservedLabels.removedLabels.push(label);
@@ -239,10 +239,10 @@ export function LokiContextUi(props: LokiContextUiProps) {
     };
   }, [row.uid]);
 
-  const realLabels = contextFilters.filter(({ fromParser }) => !fromParser);
+  const realLabels = contextFilters.filter(({ nonIndexed: fromParser }) => !fromParser);
   const realLabelsEnabled = realLabels.filter(({ enabled }) => enabled);
 
-  const parsedLabels = contextFilters.filter(({ fromParser }) => fromParser);
+  const parsedLabels = contextFilters.filter(({ nonIndexed: fromParser }) => fromParser);
   const parsedLabelsEnabled = parsedLabels.filter(({ enabled }) => enabled);
 
   const contextFilterToSelectFilter = useCallback((contextFilter: ContextFilter): SelectableValue<string> => {
@@ -284,7 +284,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
                 return contextFilters.map((contextFilter) => ({
                   ...contextFilter,
                   // For revert to initial query we need to enable all labels and disable all parsed labels
-                  enabled: !contextFilter.fromParser,
+                  enabled: !contextFilter.nonIndexed,
                 }));
               });
               // We are removing the preserved labels from local storage so we can preselect the labels in the UI
@@ -357,7 +357,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
               }
               return setContextFilters(
                 contextFilters.map((filter) => {
-                  if (filter.fromParser) {
+                  if (filter.nonIndexed) {
                     return filter;
                   }
                   filter.enabled = keys.some((key) => key.value === filter.label);
@@ -399,7 +399,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
                   }
                   setContextFilters(
                     contextFilters.map((filter) => {
-                      if (!filter.fromParser) {
+                      if (!filter.nonIndexed) {
                         return filter;
                       }
                       filter.enabled = keys.some((key) => key.value === filter.label);
