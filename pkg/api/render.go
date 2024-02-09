@@ -40,8 +40,7 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 		return
 	}
 
-	// can you provide your comments here, how do I query this as float64?
-	scale := float64(c.QueryInt("scale"))
+	scale := c.QueryFloat64("scale")
 	if scale == 0 {
 		scale = hs.Cfg.RendererDefaultImageScale
 	}
@@ -72,7 +71,7 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 		Timezone:          queryReader.Get("tz", ""),
 		Encoding:          queryReader.Get("encoding", ""),
 		ConcurrentLimit:   hs.Cfg.RendererConcurrentRequestLimit,
-		DeviceScaleFactor: 1,
+		DeviceScaleFactor: scale,
 		Headers:           headers,
 		Theme:             models.ThemeDark,
 	}, nil)
