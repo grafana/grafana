@@ -132,10 +132,14 @@ export function unquoteWithUnescape(input: string) {
 
 export const matcherFormatter = {
   default: ([name, operator, value]: ObjectMatcher): string => {
-    return `${name} ${operator} ${value}`;
+    // Value can be an empty string which we want to display as ""
+    const formattedValue = value || '';
+    return `${name} ${operator} ${formattedValue}`;
   },
   unquote: ([name, operator, value]: ObjectMatcher): string => {
-    return `${name} ${operator} ${unquoteWithUnescape(value)}`;
+    // Unquoted value can be an empty string which we want to display as ""
+    const unquotedValue = unquoteWithUnescape(value) || '""';
+    return `${name} ${operator} ${unquotedValue}`;
   },
 } as const;
 

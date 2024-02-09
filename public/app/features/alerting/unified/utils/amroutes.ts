@@ -157,8 +157,9 @@ export const formAmRouteToAmRoute = (
   const overrideRepeatInterval = overrideTimings && repeatIntervalValue;
   const repeat_interval = overrideRepeatInterval ? repeatIntervalValue : INHERIT_FROM_PARENT;
 
+  // Empty matcher values are valid. Such matchers require specified label to not exists
   const object_matchers: ObjectMatcher[] | undefined = formAmRoute.object_matchers
-    ?.filter((route) => route.name && route.value && route.operator)
+    ?.filter((route) => route.name && route.operator && route.value !== null && route.value !== undefined)
     .map(({ name, operator, value }) => [name, operator, value]);
 
   const routes = formAmRoute.routes?.map((subRoute) =>

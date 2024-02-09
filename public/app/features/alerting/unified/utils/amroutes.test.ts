@@ -3,6 +3,7 @@ import { MatcherOperator, Route } from 'app/plugins/datasource/alertmanager/type
 import { FormAmRoute } from '../types/amroutes';
 
 import { amRouteToFormAmRoute, emptyRoute, formAmRouteToAmRoute } from './amroutes';
+import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 
 const emptyAmRoute: Route = {
   receiver: '',
@@ -76,6 +77,34 @@ describe('formAmRouteToAmRoute', () => {
       'foo="bar\\\\baz"',
       'foo="\\\\bar\\\\baz\\"\\\\"',
     ]);
+  });
+
+  it('should allow matchers with empty values for cloud AM', () => {
+    // Arrange
+    const route: FormAmRoute = buildFormAmRoute({
+      id: '1',
+      object_matchers: [{ name: 'foo', operator: MatcherOperator.equal, value: '' }],
+    });
+
+    // Act
+    const amRoute = formAmRouteToAmRoute('mimir-am', route, { id: 'root' });
+
+    // Assert
+    expect(amRoute.matchers).toStrictEqual(['foo=""']);
+  });
+
+  it('should allow matchers with empty values for Grafana AM', () => {
+    // Arrange
+    const route: FormAmRoute = buildFormAmRoute({
+      id: '1',
+      object_matchers: [{ name: 'foo', operator: MatcherOperator.equal, value: '' }],
+    });
+
+    // Act
+    const amRoute = formAmRouteToAmRoute(GRAFANA_RULES_SOURCE_NAME, route, { id: 'root' });
+
+    // Assert
+    expect(amRoute.object_matchers).toStrictEqual([['foo', MatcherOperator.equal, '']]);
   });
 });
 
