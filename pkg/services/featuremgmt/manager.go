@@ -151,6 +151,7 @@ func (fm *FeatureManager) IsEditableFromAdminPage(key string) bool {
 		return false
 	}
 	return flag.Stage == FeatureStageGeneralAvailability ||
+		flag.Stage == FeatureStagePublicPreview ||
 		flag.Stage == FeatureStageDeprecated
 }
 

@@ -98,6 +98,9 @@ type ToggleStatus struct {
 	// The flag description
 	Description string `json:"description,omitempty"`
 
+	// The feature toggle stage
+	Stage string `json:"stage"`
+
 	// Is the flag enabled
 	Enabled bool `json:"enabled"`
 

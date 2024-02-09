@@ -10,15 +10,13 @@ import { getTogglesAPI } from './AdminFeatureTogglesAPI';
 import { AdminFeatureTogglesTable } from './AdminFeatureTogglesTable';
 
 export default function AdminFeatureTogglesPage() {
-  const [reload] = useState(1);
+  const [reload, setReload] = useState(1);
   const togglesApi = getTogglesAPI();
   const featureState = useAsync(() => togglesApi.getFeatureToggles(), [reload]);
-  const [updateSuccessful, setUpdateSuccessful] = useState(false);
   const styles = useStyles2(getStyles);
 
   const handleUpdateSuccess = () => {
-    setUpdateSuccessful(true);
-    // setReload(reload+1); << would trigger updating the server state!
+    setReload(reload + 1);
   };
 
   const EditingAlert = () => {
@@ -28,7 +26,7 @@ export default function AdminFeatureTogglesPage() {
           <Icon name="exclamation-triangle" />
         </div>
         <span className={styles.message}>
-          {featureState.value?.restartRequired || updateSuccessful
+          {featureState.value?.restartRequired
             ? 'A restart is pending for your Grafana instance to apply the latest feature toggle changes'
             : 'Saving feature toggle changes will prompt a restart of the instance, which may take a few minutes'}
         </span>
@@ -57,7 +55,7 @@ export default function AdminFeatureTogglesPage() {
           {featureState.error}
           {featureState.loading && 'Fetching feature toggles'}
 
-          {featureState.value?.restartRequired && <EditingAlert />}
+          <EditingAlert />
           {featureState.value && (
             <AdminFeatureTogglesTable
               featureToggles={featureState.value.toggles}

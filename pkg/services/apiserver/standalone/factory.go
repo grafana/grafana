@@ -79,6 +79,7 @@ func (p *DummyAPIFactory) MakeAPIServer(gv schema.GroupVersion) (builder.APIGrou
 		return featuretoggle.NewFeatureFlagAPIBuilder(
 			featuremgmt.WithFeatureManager(setting.FeatureMgmtSettings{}, nil), // none... for now
 			&actest.FakeAccessControl{ExpectedEvaluate: false},
+			&setting.Cfg{},
 		), nil
 
 	case "testdata.datasource.grafana.app":
