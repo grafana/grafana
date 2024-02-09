@@ -16,13 +16,13 @@ interface AdHocFiltersVariableEditorProps {
 export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProps) {
   const { variable } = props;
   const { set: filterSet } = variable.useState();
-  const { datasource: datasourceRef } = filterSet.useState();
+  const datasourceRef = filterSet.useState().datasource ?? undefined;
 
-  const { value: datasource } = useAsync(async () => {
+  const { value: datasourceSettings } = useAsync(async () => {
     return await getDataSourceSrv().get(datasourceRef);
-  }, [variable.state]);
+  }, [datasourceRef]);
 
-  const message = datasource?.getTagKeys
+  const message = datasourceSettings?.getTagKeys
     ? 'Ad hoc filters are applied automatically to all queries that target this data source'
     : 'This data source does not support ad hoc filters yet.';
 
@@ -32,13 +32,13 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       type: ds.type,
     };
 
-    const newFilterSet = new AdHocFilterSet({
-      ...variable.state,
-      datasource: dsRef,
+    variable.setState({
+      set: new AdHocFilterSet({
+        ...variable.state.set.clone().state,
+        datasource: dsRef,
+      }),
     });
-
-    variable.setState({ set: newFilterSet });
   };
 
-  return <AdHocVariableForm datasource={datasource} infoText={message} onDataSourceChange={onDataSourceChange} />;
+  return <AdHocVariableForm datasource={datasourceRef} infoText={message} onDataSourceChange={onDataSourceChange} />;
 }
