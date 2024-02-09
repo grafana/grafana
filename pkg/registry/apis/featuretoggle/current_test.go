@@ -28,7 +28,7 @@ func TestGetFeatureToggles(t *testing.T) {
 			Stage: featuremgmt.FeatureStageGeneralAvailability,
 		}})
 
-		b := NewFeatureFlagAPIBuilder(features, actest.FakeAccessControl{ExpectedEvaluate: false})
+		b := NewFeatureFlagAPIBuilder(features, actest.FakeAccessControl{ExpectedEvaluate: false}, &setting.Cfg{})
 
 		callGetWith(t, b, http.StatusUnauthorized)
 	})
@@ -200,7 +200,7 @@ func TestSetFeatureToggles(t *testing.T) {
 			Stage: featuremgmt.FeatureStageGeneralAvailability,
 		}})
 
-		b := NewFeatureFlagAPIBuilder(features, actest.FakeAccessControl{ExpectedEvaluate: false})
+		b := NewFeatureFlagAPIBuilder(features, actest.FakeAccessControl{ExpectedEvaluate: false}, &setting.Cfg{})
 		msg := callPatchWith(t, b, v0alpha1.ResolvedToggleState{}, http.StatusUnauthorized)
 		assert.Equal(t, "missing write permission", msg)
 	})
@@ -346,6 +346,18 @@ func TestSetFeatureToggles(t *testing.T) {
 			assert.Equal(t, "an error occurred while updating feeature toggles", msg)
 		})
 
+		t.Run("succeed when webhook request is not successful but app is in dev mode", func(t *testing.T) {
+			webhookServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusBadRequest)
+			}))
+			defer webhookServer.Close()
+			s.UpdateWebhook = webhookServer.URL
+
+			b := newTestAPIBuilder(t, features, disabled, s)
+			b.cfg.Env = setting.Dev
+			callPatchWith(t, b, update, http.StatusOK)
+		})
+
 		t.Run("succeed when webhook request is successful", func(t *testing.T) {
 			webhookServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, "Bearer "+s.UpdateWebhookToken, r.Header.Get("Authorization"))
@@ -444,5 +456,5 @@ func newTestAPIBuilder(
 		Stage: featuremgmt.FeatureStageGeneralAvailability,
 	}}, serverFeatures...), disabled...)
 
-	return NewFeatureFlagAPIBuilder(features, actest.FakeAccessControl{ExpectedEvaluate: true})
+	return NewFeatureFlagAPIBuilder(features, actest.FakeAccessControl{ExpectedEvaluate: true}, &setting.Cfg{})
 }

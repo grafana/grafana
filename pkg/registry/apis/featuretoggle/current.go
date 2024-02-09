@@ -189,7 +189,7 @@ func (b *FeatureFlagAPIBuilder) handlePatchCurrent(w http.ResponseWriter, r *htt
 	}
 
 	err = sendWebhookUpdate(b.features.Settings, payload)
-	if err != nil {
+	if err != nil && b.cfg.Env != setting.Dev {
 		err = errutil.Internal("featuretoggle.webhookFailure", errutil.WithPublicMessage("an error occurred while updating feeature toggles")).Errorf("webhook error: %w", err)
 		errhttp.Write(ctx, err, w)
 		return
