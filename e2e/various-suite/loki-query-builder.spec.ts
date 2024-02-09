@@ -43,6 +43,8 @@ describe('Loki query builder', () => {
       req.reply({ status: 'success', data: ['instance1', 'instance2'] });
     }).as('valuesRequest');
 
+    cy.intercept(/index\/stats/, (req) => {
+      req.reply({ streams: 2, chunks: 2660, bytes: 2721792, entries: 14408 });
     });
 
     // Go to Explore and choose Loki data source
