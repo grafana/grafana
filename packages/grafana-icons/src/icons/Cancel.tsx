@@ -3,6 +3,7 @@
 // To update the component, modify the template in templates/icon.js.
 // Run yarn icons:create to update.
 import React from 'react';
+
 import { IconBase, IconProps } from '../IconBase';
 const SvgCancel = (props: IconProps) => (
   <IconBase {...props}>

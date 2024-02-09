@@ -2,18 +2,18 @@
  * Modify the JSX to use the IconBase component as a wrapper
  */
 const modifyJSX = (jsx) => {
-  jsx.openingElement.name.name = "IconBase";
+  jsx.openingElement.name.name = 'IconBase';
   jsx.openingElement.attributes = [
     {
-      type: "JSXSpreadAttribute",
+      type: 'JSXSpreadAttribute',
       argument: {
-        type: "Identifier",
-        name: "props",
+        type: 'Identifier',
+        name: 'props',
       },
     },
   ];
 
-  jsx.closingElement.name.name = "IconBase";
+  jsx.closingElement.name.name = 'IconBase';
 
   return jsx;
 };
@@ -25,13 +25,14 @@ const comments = `
 // Run yarn icons:create to update.
 `;
 const imports = `
-import React from "react"
-import { IconBase, IconProps } from '../IconBase'
+import React from 'react';
+
+import { IconBase, IconProps } from '../IconBase';
 `;
 const template = ({ exports, jsx, componentName }, { tpl }) => {
   return tpl`
 ${comments}
-${imports} 
+${imports}
 
 const ${componentName} = (props: IconProps) => (
   ${modifyJSX(jsx)}

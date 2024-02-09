@@ -1,9 +1,8 @@
-import React, { SVGProps } from "react";
+import React, { SVGProps } from 'react';
 
-export type IconSize = "xs" | "sm" | "md" | "lg" | "xl" | "xxl" | "xxxl";
+export type IconSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | 'xxxl';
 
-export interface IconProps
-  extends Omit<SVGProps<SVGSVGElement>, "onLoad" | "onError" | "ref"> {
+export interface IconProps extends Omit<SVGProps<SVGSVGElement>, 'onLoad' | 'onError' | 'ref'> {
   /** Size (width and height) of the icon. Defaults to "md" or 16x16px */
   size?: IconSize;
   /** Render the title element with the provided text.
@@ -28,13 +27,7 @@ function getSvgSize(size: IconSize) {
   return sizeMap[size] || 16;
 }
 
-export const IconBase = ({
-  title,
-  className,
-  size = "md",
-  color = "currentColor",
-  ...props
-}: IconProps) => {
+export const IconBase = ({ title, className, size = 'md', color = 'currentColor', ...props }: IconProps) => {
   const svgSize = getSvgSize(size);
 
   return (
@@ -44,11 +37,11 @@ export const IconBase = ({
       height={svgSize}
       width={svgSize}
       style={{
-        display: "inline-block",
+        display: 'inline-block',
         fill: color,
         flexShrink: 0,
         lineHeight: 0,
-        verticalAlign: "middle",
+        verticalAlign: 'middle',
       }}
       className={className}
       {...props}
