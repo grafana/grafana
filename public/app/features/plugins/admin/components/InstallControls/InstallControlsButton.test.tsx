@@ -4,12 +4,12 @@ import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginSignatureStatus } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { configureStore } from 'app/store/configureStore';
 
+import { getPluginsStateMock } from '../../__mocks__';
 import { CatalogPlugin, PluginStatus } from '../../types';
 
 import { InstallControlsButton } from './InstallControlsButton';
-import { configureStore } from 'app/store/configureStore';
-import { getPluginsStateMock } from '../../__mocks__';
 
 const plugin: CatalogPlugin = {
   description: 'The test plugin',
@@ -92,7 +92,6 @@ describe('InstallControlsButton', () => {
     );
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
-
 
   describe('uninstall button on prem', () => {
     const store = configureStore({
