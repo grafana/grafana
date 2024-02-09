@@ -12,11 +12,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 const (
 	withinDuration = 5 * time.Minute
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationGetSSOSettings(t *testing.T) {
 	if testing.Short() {

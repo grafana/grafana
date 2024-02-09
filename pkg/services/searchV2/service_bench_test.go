@@ -19,7 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 // setupBenchEnv will set up a database with folderCount folders and dashboardsPerFolder dashboards per folder
 // It will also set up and run the search service

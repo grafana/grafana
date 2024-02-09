@@ -131,6 +131,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeysimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoSettingsImpl "github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 	starApi "github.com/grafana/grafana/pkg/services/star/api"
@@ -441,7 +442,7 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	return &Server{}, nil
 }
 
-func InitializeForTest(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
+func InitializeForTest(t sqlutil.ITestDB, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
 	wire.Build(wireExtsTestSet)
 	return &TestEnv{Server: &Server{}, SQLStore: &sqlstore.SQLStore{}}, nil
 }

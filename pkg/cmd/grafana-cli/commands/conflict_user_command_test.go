@@ -23,10 +23,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 // "Skipping conflicting users test for mysql as it does make unique constraint case insensitive by default
 const ignoredDatabase = migrator.MySQL
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestBuildConflictBlock(t *testing.T) {
 	type testBuildConflictBlock struct {

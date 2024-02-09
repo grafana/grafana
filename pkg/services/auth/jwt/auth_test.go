@@ -20,6 +20,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 type scenarioContext struct {
@@ -38,6 +39,10 @@ type scenarioFunc func(*testing.T, scenarioContext)
 type cachingScenarioFunc func(*testing.T, cachingScenarioContext)
 
 const subject = "foo-subj"
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestVerifyUsingPKIXPublicKeyFile(t *testing.T) {
 	key := rsaKeys[0]

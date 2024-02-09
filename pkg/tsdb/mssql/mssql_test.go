@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"math/rand"
-	"strings"
+	"os"
 	"testing"
 	"time"
 
@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
@@ -1475,9 +1474,16 @@ func TestGenerateConnectionString(t *testing.T) {
 func initMSSQLTestDB(t *testing.T, jsonData sqleng.JsonData) *sql.DB {
 	t.Helper()
 
-	testDB := sqlutil.MSSQLTestDB()
-	db, err := sql.Open(testDB.DriverName, strings.Replace(testDB.ConnStr, "localhost",
-		serverIP, 1))
+	host := os.Getenv("MSSQL_HOST")
+	if host == "" {
+		host = serverIP
+	}
+	port := os.Getenv("MSSQL_PORT")
+	if port == "" {
+		port = "1433"
+	}
+
+	db, err := sql.Open("mssql", fmt.Sprintf("server=%s;port=%s;database=grafanatest;user id=grafana;password=Password!", host, port))
 	require.NoError(t, err)
 
 	db.SetMaxOpenConns(jsonData.MaxOpenConns)

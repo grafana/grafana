@@ -13,8 +13,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 type getStore func(db.DB) store
 

@@ -2,7 +2,6 @@ package test
 
 import (
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -103,37 +102,6 @@ func convertToRawPermissions(permissions []accesscontrol.Permission) []rawPermis
 		raw[i] = rawPermission{Action: p.Action, Scope: p.Scope}
 	}
 	return raw
-}
-
-func getDBType() string {
-	dbType := migrator.SQLite
-
-	// environment variable present for test db?
-	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-		dbType = db
-	}
-	return dbType
-}
-
-func getTestDB(t *testing.T, dbType string) sqlutil.TestDB {
-	switch dbType {
-	case "mysql":
-		return sqlutil.MySQLTestDB()
-	case "postgres":
-		return sqlutil.PostgresTestDB()
-	default:
-		f, err := os.CreateTemp(".", "grafana-test-db-")
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			err := os.Remove(f.Name())
-			require.NoError(t, err)
-		})
-
-		return sqlutil.TestDB{
-			DriverName: "sqlite3",
-			ConnStr:    f.Name(),
-		}
-	}
 }
 
 func TestMigrations(t *testing.T) {
@@ -253,11 +221,20 @@ func TestMigrations(t *testing.T) {
 
 func setupTestDB(t *testing.T) *xorm.Engine {
 	t.Helper()
-	dbType := getDBType()
-	testDB := getTestDB(t, dbType)
+	dbType := sqlutil.GetTestDBType()
+	testDB, err := sqlutil.GetTestDB(dbType)
+	require.NoError(t, err)
+
+	t.Cleanup(testDB.Cleanup)
 
 	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
 	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		if err := x.Close(); err != nil {
+			fmt.Printf("failed to close xorm engine: %v", err)
+		}
+	})
 
 	err = migrator.NewDialect(x.DriverName()).CleanDB(x)
 	require.NoError(t, err)
