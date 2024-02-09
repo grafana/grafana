@@ -572,6 +572,14 @@ settings:
 
 Create or reset the notification policy tree in your Grafana instance(s).
 
+In Grafana, the entire notification policy tree is considered a single, large resource. Add new specific policies as sub-policies under the root policy. Since specific policies may depend on each other, you cannot provision subsets of the policy tree; the entire tree must be defined in a single place.
+
+{{% admonition type="warning" %}}
+
+Since the policy tree is a single resource, provisioning it will overwrite a policy tree created through any other means.
+
+{{< /admonition >}}
+
 1. Create a notification policy in Grafana.
 1. [Export][alerting_export] and download a provisioning file for your notification policy.
 1. Copy the contents into a YAML or JSON configuration file in the `provisioning/alerting` directory.
@@ -653,12 +661,6 @@ apiVersion: 1
 resetPolicies:
   - 1
 ```
-
-**Note:**
-
-In Grafana, the entire notification policy tree is considered a single, large resource. Add new specific policies as sub-policies under the root policy. Since specific policies may depend on each other, you cannot provision subsets of the policy tree; the entire tree must be defined in a single place.
-
-Since the policy tree is a single resource, applying it will overwrite a policy tree created through any other means.
 
 ## Import templates
 

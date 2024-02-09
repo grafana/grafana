@@ -164,6 +164,12 @@ Notification policies tell Grafana how to route alert instances to your contact 
 
 To provision notification policies and routing, refer to the [grafana_notification_policy schema](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/notification_policy), and complete the following steps.
 
+{{% admonition type="warning" %}}
+
+Since the policy tree is a single resource, provisioning the `grafana_notification_policy` resource will overwrite a policy tree created through any other means.
+
+{{< /admonition >}}
+
 1. Copy this code block into a `.tf` file on your local machine.
 
    In this example, the alerts are grouped by `alertname`, which means that any notifications coming from alerts which share the same name, are grouped into the same Slack message. You can provide any set of label keys here, or you can use the special label `"..."` to route by all label keys, sending each alert in a separate notification.
@@ -207,10 +213,6 @@ To provision notification policies and routing, refer to the [grafana_notificati
 1. Run the command `terraform apply`.
 
 1. Go to the Grafana UI and check the details of your notification policy.
-
-   **Note:**
-
-   Since the policy tree is a single resource, applying it will overwrite a policy tree created through any other means.
 
 1. Click **Test** to verify that the notification point is working correctly.
 
