@@ -24,16 +24,14 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 
 	queryParams := fmt.Sprintf("?%s", c.Req.URL.RawQuery)
 
-	width, err := strconv.Atoi(queryReader.Get("width", hs.Cfg.RendererImageWidth))
-	if err != nil {
-		c.Handle(hs.Cfg, 400, "Render parameters error", fmt.Errorf("cannot parse width as int: %s", err))
-		return
+	width := c.QueryInt("width")
+	if width == 0 {
+		width = hs.Cfg.RendererDefaultImageWidth
 	}
 
-	height, err := strconv.Atoi(queryReader.Get("height", hs.Cfg.RendererImageHeight))
-	if err != nil {
-		c.Handle(hs.Cfg, 400, "Render parameters error", fmt.Errorf("cannot parse height as int: %s", err))
-		return
+	height := c.QueryInt("width")
+	if height == 0 {
+		height = hs.Cfg.RendererDefaultImageHeight
 	}
 
 	timeout, err := strconv.Atoi(queryReader.Get("timeout", "60"))
@@ -42,10 +40,10 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 		return
 	}
 
-	scale, err := strconv.ParseFloat(queryReader.Get("scale", hs.Cfg.RendererImageScale), 64)
-	if err != nil {
-		c.Handle(hs.Cfg, 400, "Render parameters error", fmt.Errorf("cannot parse scale as float: %s", err))
-		return
+	// can you provide your comments here, how do I query this as float64?
+	scale := float64(c.QueryInt("scale"))
+	if scale == 0 {
+		scale = hs.Cfg.RendererDefaultImageScale
 	}
 
 	headers := http.Header{}
@@ -74,7 +72,7 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 		Timezone:          queryReader.Get("tz", ""),
 		Encoding:          queryReader.Get("encoding", ""),
 		ConcurrentLimit:   hs.Cfg.RendererConcurrentRequestLimit,
-		DeviceScaleFactor: scale,
+		DeviceScaleFactor: 1,
 		Headers:           headers,
 		Theme:             models.ThemeDark,
 	}, nil)
