@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
 import React, { useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { LoadingPlaceholder, Pagination, Spinner, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { LinkButton, LoadingPlaceholder, Pagination, Spinner, useStyles2 } from '@grafana/ui';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
+import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
@@ -52,15 +54,18 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
   return (
     <section className={styles.wrapper}>
       <div className={styles.sectionHeader}>
-        <h5>Mimir / Cortex / Loki</h5>
-        {dataSourcesLoading.length ? (
-          <LoadingPlaceholder
-            className={styles.loader}
-            text={`Loading rules from ${dataSourcesLoading.length} ${pluralize('source', dataSourcesLoading.length)}`}
-          />
-        ) : (
-          <div />
-        )}
+        <div className={styles.headerRow}>
+          <h5>Mimir / Cortex / Loki</h5>
+          {dataSourcesLoading.length ? (
+            <LoadingPlaceholder
+              className={styles.loader}
+              text={`Loading rules from ${dataSourcesLoading.length} ${pluralize('source', dataSourcesLoading.length)}`}
+            />
+          ) : (
+            <div />
+          )}
+          <CreateRecordingRuleButton />
+        </div>
       </div>
 
       {pageItems.map(({ group, namespace }) => {
@@ -106,4 +111,35 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(2)};
   `,
   pagination: getPaginationStyles(theme),
+  headerRow: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: theme.spacing(1),
+  }),
 });
+
+export function CreateRecordingRuleButton() {
+  const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
+
+  const location = useLocation();
+
+  const canCreateCloudRules = createCloudRuleSupported && createCloudRuleAllowed;
+
+  if (canCreateCloudRules) {
+    return (
+      <LinkButton
+        key="new-recording-rule"
+        href={urlUtil.renderUrl(`alerting/new/recording`, {
+          returnTo: location.pathname + location.search,
+        })}
+        icon="plus"
+        variant="secondary"
+      >
+        New recording rule
+      </LinkButton>
+    );
+  }
+  return null;
+}

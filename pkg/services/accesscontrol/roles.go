@@ -28,6 +28,11 @@ const (
 
 	BasicRoleNoneUID  = "basic_none"
 	BasicRoleNoneName = "basic:none"
+
+	FixedCloudRolePrefix = "fixed:cloud:"
+	FixedCloudViewerRole = "fixed:cloud:viewer"
+	FixedCloudEditorRole = "fixed:cloud:editor"
+	FixedCloudAdminRole  = "fixed:cloud:admin"
 )
 
 // Roles definition
@@ -374,6 +379,14 @@ func (m *RegistrationList) Range(f func(registration RoleRegistration) bool) {
 			return
 		}
 	}
+}
+
+func (m *RegistrationList) Slice() []RoleRegistration {
+	m.mx.RLock()
+	defer m.mx.RUnlock()
+	out := make([]RoleRegistration, len(m.registrations))
+	copy(out, m.registrations)
+	return out
 }
 
 func BuildBasicRoleDefinitions() map[string]*RoleDTO {

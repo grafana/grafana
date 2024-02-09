@@ -140,6 +140,19 @@ func addUserMigrations(mg *Migrator) {
 			SQLite(migSQLITEisServiceAccountNullable).
 			Postgres("ALTER TABLE `user` ALTER COLUMN is_service_account DROP NOT NULL;").
 			Mysql("ALTER TABLE user MODIFY is_service_account BOOLEAN DEFAULT 0;"))
+
+	mg.AddMigration("Add uid column to user", NewAddColumnMigration(userV2, &Column{
+		Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true,
+	}))
+
+	mg.AddMigration("Update uid column values for users", NewRawSQLMigration("").
+		SQLite("UPDATE user SET uid=printf('u%09d',id) WHERE uid IS NULL;").
+		Postgres("UPDATE `user` SET uid='u' || lpad('' || id::text,9,'0') WHERE uid IS NULL;").
+		Mysql("UPDATE user SET uid=concat('u',lpad(id,9,'0')) WHERE uid IS NULL;"))
+
+	mg.AddMigration("Add unique index user_uid", NewAddIndexMigration(userV2, &Index{
+		Cols: []string{"uid"}, Type: UniqueIndex,
+	}))
 }
 
 const migSQLITEisServiceAccountNullable = `ALTER TABLE user ADD COLUMN tmp_service_account BOOLEAN DEFAULT 0;

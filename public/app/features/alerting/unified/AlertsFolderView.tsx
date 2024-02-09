@@ -140,8 +140,8 @@ function useAlertsFolderViewParams() {
     sortParam === SortOrder.Ascending
       ? SortOrder.Ascending
       : sortParam === SortOrder.Descending
-      ? SortOrder.Descending
-      : undefined
+        ? SortOrder.Descending
+        : undefined
   );
 
   useDebounce(

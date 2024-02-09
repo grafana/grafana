@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.3.1";
+export const pluginVersion = "10.4.0-pre";
 
 export enum QueryEditorMode {
   Builder = 'builder',
@@ -26,6 +26,7 @@ export enum LokiQueryType {
 
 export enum SupportingQueryType {
   DataSample = 'dataSample',
+  InfiniteScroll = 'infiniteScroll',
   LogsSample = 'logsSample',
   LogsVolume = 'logsVolume',
 }

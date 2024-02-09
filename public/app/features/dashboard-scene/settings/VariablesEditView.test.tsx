@@ -1,9 +1,68 @@
-import { SceneVariableSet, CustomVariable, SceneGridItem, SceneGridLayout } from '@grafana/scenes';
+import { of } from 'rxjs';
+
+import {
+  FieldType,
+  LoadingState,
+  PanelData,
+  VariableSupportType,
+  getDefaultTimeRange,
+  toDataFrame,
+} from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import { SceneVariableSet, CustomVariable, SceneGridItem, SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { VariablesEditView } from './VariablesEditView';
+
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
+  getPanelPluginFromCache: (id: string) => undefined,
+});
+
+const defaultDatasource = mockDataSource({
+  name: 'Default Test Data Source',
+  type: 'test',
+});
+
+const promDatasource = mockDataSource({
+  name: 'Prometheus',
+  type: 'prometheus',
+});
+
+jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
+  ...jest.requireActual('@grafana/runtime/src/services/dataSourceSrv'),
+  getDataSourceSrv: () => ({
+    get: async () => ({
+      ...defaultDatasource,
+      variables: {
+        getType: () => VariableSupportType.Custom,
+        query: jest.fn(),
+        editor: jest.fn().mockImplementation(LegacyVariableQueryEditor),
+      },
+    }),
+    getList: () => [defaultDatasource, promDatasource],
+    getInstanceSettings: () => ({ ...defaultDatasource }),
+  }),
+}));
+
+const runRequestMock = jest.fn().mockReturnValue(
+  of<PanelData>({
+    state: LoadingState.Done,
+    series: [
+      toDataFrame({
+        fields: [{ name: 'text', type: FieldType.string, values: ['val1', 'val2', 'val11'] }],
+      }),
+    ],
+    timeRange: getDefaultTimeRange(),
+  })
+);
+
+setRunRequest(runRequestMock);
 
 describe('VariablesEditView', () => {
   describe('Dashboard Variables state', () => {
@@ -35,7 +94,7 @@ describe('VariablesEditView', () => {
         {
           type: 'custom',
           name: 'customVar2',
-          query: 'test3, test4',
+          query: 'test3, test4, $customVar',
           value: 'test3',
         },
       ];
@@ -99,6 +158,89 @@ describe('VariablesEditView', () => {
 
       errorSpy.mockRestore();
     });
+
+    it('should change the variable type creating a new variable object', () => {
+      const previousVariable = variableView.getVariables()[1] as CustomVariable;
+      variableView.onEdit('customVar2');
+
+      variableView.onTypeChange('constant');
+      expect(variableView.getVariables()).toHaveLength(2);
+      const variable = variableView.getVariables()[1];
+      expect(variable).not.toBe(previousVariable);
+      expect(variable.state.type).toBe('constant');
+
+      // Values to be kept between the old and new variable
+      expect(variable.state.name).toEqual(previousVariable.state.name);
+      expect(variable.state.label).toEqual(previousVariable.state.label);
+    });
+
+    it('should reset editing variable when going back', () => {
+      variableView.onEdit('customVar2');
+      expect(variableView.state.editIndex).toBe(1);
+
+      variableView.onGoBack();
+      expect(variableView.state.editIndex).toBeUndefined();
+    });
+
+    it('should add default new query variable when onAdd is called', () => {
+      variableView.onAdd();
+      expect(variableView.getVariables()).toHaveLength(3);
+      expect(variableView.getVariables()[2].state.name).toBe('query0');
+      expect(variableView.getVariables()[2].state.type).toBe('query');
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+  });
+
+  describe('Dashboard Variables dependencies', () => {
+    let variableView: VariablesEditView;
+    let dashboard: DashboardScene;
+
+    beforeEach(async () => {
+      const result = await buildTestScene();
+      variableView = result.variableView;
+      dashboard = result.dashboard;
+    });
+
+    // FIXME: This is not working because the variable is replaced or it is not resolved yet
+    it.skip('should keep dependencies between variables the type is changed so the variable is replaced', () => {
+      // Uses function to avoid store reference to previous existing variables
+      const getSourceVariable = () => variableView.getVariables()[0] as CustomVariable;
+      const getDependantVariable = () => variableView.getVariables()[1] as CustomVariable;
+
+      expect(getSourceVariable().getValue()).toBe('test');
+      // Using getOptionsForSelect to get the interpolated values
+      expect(getDependantVariable().getOptionsForSelect()[2].label).toBe('test');
+
+      variableView.onEdit(getSourceVariable().state.name);
+      // Simulating changing the type and update the value
+      variableView.onTypeChange('constant');
+      getSourceVariable().setState({ value: 'newValue' });
+
+      expect(getSourceVariable().getValue()).toBe('newValue');
+      expect(getDependantVariable().getOptionsForSelect()[2].label).toBe('newValue');
+    });
+
+    it('should keep dependencies with panels when the type is changed so the variable is replaced', async () => {
+      // Uses function to avoid store reference to previous existing variables
+      const getSourceVariable = () => variableView.getVariables()[0] as CustomVariable;
+      const getDependantPanel = () =>
+        ((dashboard.state.body as SceneGridLayout).state.children[0] as SceneGridItem).state.body as VizPanel;
+
+      expect(getSourceVariable().getValue()).toBe('test');
+      // Using description to get the interpolated value
+      expect(getDependantPanel().getDescription()).toContain('Panel A depends on customVar with current value test');
+
+      variableView.onEdit(getSourceVariable().state.name);
+      // Simulating changing the type and update the value
+      variableView.onTypeChange('constant');
+      getSourceVariable().setState({ value: 'newValue' });
+
+      expect(getSourceVariable().getValue()).toBe('newValue');
+      expect(getDependantPanel().getDescription()).toContain('newValue');
+    });
   });
 });
 
@@ -115,10 +257,14 @@ async function buildTestScene() {
         new CustomVariable({
           name: 'customVar',
           query: 'test, test2',
+          value: 'test',
+          text: 'test',
         }),
         new CustomVariable({
           name: 'customVar2',
-          query: 'test3, test4',
+          query: 'test3, test4, $customVar',
+          value: '$customVar',
+          text: '$customVar',
         }),
       ],
     }),
@@ -127,10 +273,12 @@ async function buildTestScene() {
         new SceneGridItem({
           key: 'griditem-1',
           x: 0,
-          y: 0,
-          width: 10,
-          height: 12,
-          body: undefined,
+          body: new VizPanel({
+            title: 'Panel A',
+            description: 'Panel A depends on customVar with current value $customVar',
+            key: 'panel-1',
+            pluginId: 'table',
+          }),
         }),
       ],
     }),

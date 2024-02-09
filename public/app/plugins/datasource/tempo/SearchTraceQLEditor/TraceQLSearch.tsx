@@ -5,10 +5,10 @@ import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { config, FetchError, getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, HorizontalGroup, Select, useStyles2 } from '@grafana/ui';
 
-import { createErrorNotification } from '../../../../core/copy/appNotification';
-import { notifyApp } from '../../../../core/reducers/appNotification';
-import { dispatch } from '../../../../store/store';
-import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
+import { notifyApp } from '../_importedDependencies/actions/appNotification';
+import { createErrorNotification } from '../_importedDependencies/core/appNotification';
+import { RawQuery } from '../_importedDependencies/datasources/prometheus/RawQuery';
+import { dispatch } from '../_importedDependencies/store';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import { TempoQueryBuilderOptions } from '../traceql/TempoQueryBuilderOptions';
@@ -157,7 +157,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
             label={'Duration'}
             tooltip="The trace or span duration, i.e. end - start time of the trace/span. Accepted units are ns, ms, s, m, h"
           >
-            <HorizontalGroup spacing={'sm'}>
+            <HorizontalGroup spacing={'none'}>
               <Select
                 options={[
                   { label: 'span', value: 'span' },
@@ -209,6 +209,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
               staticTags={staticTags}
               isTagsLoading={isTagsLoading}
               query={traceQlQuery}
+              requireTagAndValue={true}
             />
           </InlineSearchField>
           {config.featureToggles.metricsSummary && (
@@ -254,16 +255,16 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app }: Pro
 export default TraceQLSearch;
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  alert: css`
-    max-width: 75ch;
-    margin-top: ${theme.spacing(2)};
-  `,
-  container: css`
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
-    flex-direction: column;
-  `,
+  alert: css({
+    maxWidth: '75ch',
+    marginTop: theme.spacing(2),
+  }),
+  container: css({
+    display: 'flex',
+    gap: '4px',
+    flexWrap: 'wrap',
+    flexDirection: 'column',
+  }),
   rawQueryContainer: css({
     alignItems: 'center',
     backgroundColor: theme.colors.background.secondary,

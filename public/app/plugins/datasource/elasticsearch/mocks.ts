@@ -39,9 +39,9 @@ export function createElasticDatasource(settings: Partial<DataSourceInstanceSett
     jsonData: {
       timeField: '',
       timeInterval: '',
+      index: '[test-]YYYY.MM.DD',
       ...jsonData,
     },
-    database: '[test-]YYYY.MM.DD',
     ...rest,
   };
 

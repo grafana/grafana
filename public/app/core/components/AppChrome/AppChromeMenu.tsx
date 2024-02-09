@@ -10,7 +10,7 @@ import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { KioskMode } from 'app/types';
 
-import { MegaMenu, MENU_WIDTH } from './DockedMegaMenu/MegaMenu';
+import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { TOGGLE_BUTTON_ID } from './NavToolbar/NavToolbar';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
@@ -76,7 +76,7 @@ export function AppChromeMenu({}: Props) {
 }
 
 const getStyles = (theme: GrafanaTheme2, searchBarHidden?: boolean) => {
-  const topPosition = (searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2) + 1;
+  const topPosition = searchBarHidden ? TOP_BAR_LEVEL_HEIGHT : TOP_BAR_LEVEL_HEIGHT * 2;
 
   return {
     backdrop: css({

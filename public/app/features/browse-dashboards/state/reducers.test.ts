@@ -1,4 +1,6 @@
-import { wellFormedDashboard, wellFormedFolder } from '../fixtures/dashboardsTreeItem.fixture';
+import { config } from '@grafana/runtime';
+
+import { sharedWithMeFolder, wellFormedDashboard, wellFormedFolder } from '../fixtures/dashboardsTreeItem.fixture';
 import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
 import { BrowseDashboardsState } from '../types';
 
@@ -19,6 +21,10 @@ function createInitialState(): BrowseDashboardsState {
 }
 
 describe('browse-dashboards reducers', () => {
+  beforeAll(() => {
+    config.sharedWithMeFolderUID = 'sharedwithme';
+  });
+
   describe('fetchNextChildrenPageFulfilled', () => {
     it('loads first page of root items', () => {
       const pageSize = 50;
@@ -321,11 +327,34 @@ describe('browse-dashboards reducers', () => {
 
       expect(state.selectedItems.$all).toBeFalsy();
     });
+
+    it('does not allow the sharedwithme folder to be selected', () => {
+      let seed = 1;
+      const folder = wellFormedFolder(seed++).item;
+      const dashboard = wellFormedDashboard(seed++).item;
+      const sharedWithMe = sharedWithMeFolder(seed++).item;
+      const sharedWithMeDashboard = wellFormedDashboard(seed++, {}, { parentUID: sharedWithMe.uid }).item;
+
+      const state = createInitialState();
+      state.rootItems = fullyLoadedViewItemCollection([sharedWithMe, folder, dashboard]);
+      state.childrenByParentUID[sharedWithMe.uid] = fullyLoadedViewItemCollection([sharedWithMeDashboard]);
+
+      setItemSelectionState(state, {
+        type: 'setItemSelectionState',
+        payload: { item: sharedWithMe, isSelected: true },
+      });
+
+      expect(state.selectedItems.folder[sharedWithMe.uid]).toBeFalsy();
+    });
   });
 
   describe('setAllSelection', () => {
     let seed = 1;
     const topLevelDashboard = wellFormedDashboard(seed++).item;
+
+    const sharedWithMe = sharedWithMeFolder(seed++).item;
+    const sharedWithMeDashboard = wellFormedDashboard(seed++, {}, { parentUID: sharedWithMe.uid }).item;
+
     const topLevelFolder = wellFormedFolder(seed++).item;
     const childDashboard = wellFormedDashboard(seed++, {}, { parentUID: topLevelFolder.uid }).item;
     const childFolder = wellFormedFolder(seed++, {}, { parentUID: topLevelFolder.uid }).item;
@@ -404,6 +433,36 @@ describe('browse-dashboards reducers', () => {
         folder: {
           [childFolder.uid]: false,
         },
+        panel: {},
+      });
+    });
+
+    it("doesn't select the sharedwithme folder when selecting all", () => {
+      const state = createInitialState();
+
+      state.rootItems = fullyLoadedViewItemCollection([topLevelFolder, sharedWithMe]);
+      state.childrenByParentUID[sharedWithMe.uid] = fullyLoadedViewItemCollection([sharedWithMeDashboard]);
+      state.childrenByParentUID[topLevelFolder.uid] = fullyLoadedViewItemCollection([childDashboard, childFolder]);
+
+      setAllSelection(state, { type: 'setAllSelection', payload: { isSelected: true, folderUID: undefined } });
+
+      expect(state.selectedItems.folder[sharedWithMe.uid]).toBeFalsy();
+      expect(state.selectedItems.dashboard[sharedWithMeDashboard.uid]).toBeFalsy();
+    });
+
+    it("doesn't select anything when on the sharedwithme folder page", () => {
+      const state = createInitialState();
+
+      state.rootItems = fullyLoadedViewItemCollection([topLevelFolder, topLevelDashboard]);
+      state.childrenByParentUID[topLevelFolder.uid] = fullyLoadedViewItemCollection([childDashboard, childFolder]);
+      state.childrenByParentUID[childFolder.uid] = fullyLoadedViewItemCollection([grandchildDashboard]);
+
+      setAllSelection(state, { type: 'setAllSelection', payload: { isSelected: true, folderUID: sharedWithMe.uid } });
+
+      expect(state.selectedItems).toEqual({
+        $all: false,
+        dashboard: {},
+        folder: {},
         panel: {},
       });
     });

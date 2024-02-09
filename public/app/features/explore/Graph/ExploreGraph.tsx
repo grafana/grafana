@@ -13,7 +13,6 @@ import {
   getFrameDisplayName,
   LoadingState,
   SplitOpen,
-  TimeZone,
   ThresholdsConfig,
   DashboardCursorSync,
   EventBus,
@@ -25,6 +24,8 @@ import {
   TooltipDisplayMode,
   SortOrder,
   GraphThresholdsStyleConfig,
+  TimeZone,
+  VizLegendOptions,
 } from '@grafana/schema';
 import { PanelContext, PanelContextProvider, SeriesVisibilityChangeMode, useTheme2 } from '@grafana/ui';
 import { GraphFieldConfig } from 'app/plugins/panel/graph/types';
@@ -56,6 +57,7 @@ interface Props {
   thresholdsConfig?: ThresholdsConfig;
   thresholdsStyle?: GraphThresholdsStyleConfig;
   eventBus: EventBus;
+  vizLegendOverrides?: Partial<VizLegendOptions>;
 }
 
 export function ExploreGraph({
@@ -76,6 +78,7 @@ export function ExploreGraph({
   thresholdsConfig,
   thresholdsStyle,
   eventBus,
+  vizLegendOverrides,
 }: Props) {
   const theme = useTheme2();
   const previousTimeRange = usePrevious(absoluteRange);
@@ -165,7 +168,8 @@ export function ExploreGraph({
   const panelContext: PanelContext = {
     eventsScope: 'explore',
     eventBus,
-    sync: () => DashboardCursorSync.Crosshair,
+    // TODO: Re-enable DashboardCursorSync.Crosshair when #81505 is fixed
+    sync: () => DashboardCursorSync.Off,
     onToggleSeriesVisibility(label: string, mode: SeriesVisibilityChangeMode) {
       setFieldConfig(seriesVisibilityConfigFactory(label, mode, fieldConfig, data));
     },
@@ -180,9 +184,10 @@ export function ExploreGraph({
         showLegend: true,
         placement: 'bottom',
         calcs: [],
+        ...vizLegendOverrides,
       },
     }),
-    [tooltipDisplayMode]
+    [tooltipDisplayMode, vizLegendOverrides]
   );
 
   return (

@@ -46,8 +46,8 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
         const matcher = options.fields
           ? getFieldMatcher(options.fields)
           : options.includeTimeField && options.mode === ReduceTransformerMode.ReduceFields
-          ? alwaysFieldMatcher
-          : notTimeFieldMatcher;
+            ? alwaysFieldMatcher
+            : notTimeFieldMatcher;
 
         // Collapse all matching fields into a single row
         if (options.mode === ReduceTransformerMode.ReduceFields) {
@@ -211,7 +211,6 @@ export function reduceFields(data: DataFrame[], matcher: FieldMatcher, reducerId
   const calculators = fieldReducers.list(reducerId);
   const reducers = calculators.map((c) => c.id);
   const processed: DataFrame[] = [];
-
   for (const series of data) {
     const fields: Field[] = [];
     for (const field of series.fields) {
@@ -224,6 +223,7 @@ export function reduceFields(data: DataFrame[], matcher: FieldMatcher, reducerId
           const value = results[reducer];
           const copy = {
             ...field,
+            type: getFieldType(reducer, field),
             values: [value],
           };
           copy.state = undefined;
@@ -247,4 +247,19 @@ export function reduceFields(data: DataFrame[], matcher: FieldMatcher, reducerId
   }
 
   return processed;
+}
+
+function getFieldType(reducer: string, field: Field) {
+  switch (reducer) {
+    case ReducerID.allValues:
+    case ReducerID.uniqueValues:
+      return FieldType.other;
+    case ReducerID.first:
+    case ReducerID.firstNotNull:
+    case ReducerID.last:
+    case ReducerID.lastNotNull:
+      return field.type;
+    default:
+      return FieldType.number;
+  }
 }

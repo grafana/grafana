@@ -98,6 +98,7 @@ describe('sceneVariablesSetToVariables', () => {
       allValue: 'test-all',
       isMulti: true,
     });
+
     const set = new SceneVariableSet({
       variables: [variable],
     });
@@ -335,7 +336,6 @@ describe('sceneVariablesSetToVariables', () => {
         "value": "text value",
       },
       "description": "test-desc",
-      "hide": 2,
       "label": "test-label",
       "name": "test",
       "query": "text value",

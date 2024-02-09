@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestSensuNotifier(t *testing.T) {
@@ -24,7 +25,7 @@ func TestSensuNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewSensuNotifier(model, encryptionService.GetDecryptedValue, nil)
+			_, err := NewSensuNotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -43,7 +44,7 @@ func TestSensuNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewSensuNotifier(model, encryptionService.GetDecryptedValue, nil)
+			not, err := NewSensuNotifier(setting.NewCfg(), model, encryptionService.GetDecryptedValue, nil)
 			sensuNotifier := not.(*SensuNotifier)
 
 			require.Nil(t, err)

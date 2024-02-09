@@ -167,7 +167,7 @@ export const SaveDashboardAsForm = ({
               render={({ field: { ref, ...field } }) => (
                 <FolderPicker
                   {...field}
-                  onChange={(uid: string, title: string) => field.onChange({ uid, title })}
+                  onChange={(uid: string | undefined, title: string | undefined) => field.onChange({ uid, title })}
                   value={field.value?.uid}
                   // Old folder picker fields
                   initialTitle={dashboard.meta.folderTitle}
