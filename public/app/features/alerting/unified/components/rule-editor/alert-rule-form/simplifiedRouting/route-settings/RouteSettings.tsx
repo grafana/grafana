@@ -145,7 +145,6 @@ function getDefaultsForRoutingSettings() {
     repeatIntervalValue: TIMING_OPTIONS_DEFAULTS.repeat_interval,
   };
 }
-
 const getStyles = (theme: GrafanaTheme2) => ({
   switchElement: css({
     flexFlow: 'row-reverse',

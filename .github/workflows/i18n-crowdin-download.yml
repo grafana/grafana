@@ -68,15 +68,40 @@ jobs:
       - name: Get pull request ID
         if: steps.crowdin-download.outputs.pull_request_url
         shell: bash
+        # Crowdin action returns us the URL of the pull request, but we need an ID for the GraphQL API
+        # that looks like 'PR_kwDOAOaWjc5mP_GU'
         run: |
-          echo "PR_NUMBER=$(echo "$PULL_REQUEST_URL" | awk -F / '{print $7}')" >> "$GITHUB_ENV"
+          pr_id=$(gh pr view ${{ steps.crowdin-download.outputs.pull_request_url }} --json id -q .id)
+          echo "PULL_REQUEST_ID=$pr_id" >> "$GITHUB_ENV"
         env:
-          PULL_REQUEST_URL: ${{ steps.crowdin-download.outputs.pull_request_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get project board ID
+        uses: octokit/graphql-action@v2.x
+        id: get-project-id
+        if: steps.crowdin-download.outputs.pull_request_url
+        with:
+          # Frontend Platform project - https://github.com/orgs/grafana/projects/78
+          org: grafana
+          project_number: 78
+          query: |
+            query getProjectId($org: String!, $project_number: Int!){
+              organization(login: $org) {
+                projectV2(number: $project_number) {
+                  title
+                  id
+                }
+              }
+            }
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
       - name: Add to project board
         uses: octokit/graphql-action@v2.x
         if: steps.crowdin-download.outputs.pull_request_url
         with:
+          projectid: ${{ fromJson(steps.get-project-id.outputs.data).organization.projectV2.id }}
+          prid: ${{ env.PULL_REQUEST_ID }}
           query: |
             mutation addPullRequestToProject($projectid: ID!, $prid: ID!){
               addProjectV2ItemById(input: {projectId: $projectid, contentId: $prid}) {
@@ -85,9 +110,6 @@ jobs:
                 }
               }
             }
-          variables: |
-            projectid: 78
-            prid: ${{ env.PR_NUMBER }}
+
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
-
