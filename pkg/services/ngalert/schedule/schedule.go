@@ -81,6 +81,7 @@ type schedule struct {
 
 	appURL               *url.URL
 	disableGrafanaFolder bool
+	jitterEvaluations    JitterStrategy
 
 	metrics *metrics.Scheduler
 
@@ -104,6 +105,7 @@ type SchedulerCfg struct {
 	MinRuleInterval      time.Duration
 	DisableGrafanaFolder bool
 	AppURL               *url.URL
+	JitterEvaluations    JitterStrategy
 	EvaluatorFactory     eval.EvaluatorFactory
 	RuleStore            RulesStore
 	Metrics              *metrics.Scheduler
@@ -131,6 +133,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		metrics:               cfg.Metrics,
 		appURL:                cfg.AppURL,
 		disableGrafanaFolder:  cfg.DisableGrafanaFolder,
+		jitterEvaluations:     cfg.JitterEvaluations,
 		stateManager:          stateManager,
 		minRuleInterval:       cfg.MinRuleInterval,
 		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
@@ -150,6 +153,13 @@ func (sch *schedule) Run(ctx context.Context) error {
 		sch.log.Error("Failure while running the rule evaluation loop", "error", err)
 	}
 	return nil
+}
+
+// Rules fetches the entire set of rules considered for evaluation by the scheduler on the next tick.
+// Such rules are not guaranteed to have been evaluated by the scheduler.
+// Rules returns all supplementary metadata for the rules that is stored by the scheduler - namely, the set of folder titles.
+func (sch *schedule) Rules() ([]*ngmodels.AlertRule, map[ngmodels.FolderKey]string) {
+	return sch.schedulableAlertRules.all()
 }
 
 // deleteAlertRule stops evaluation of the rule, deletes it from active rules, and cleans up state cache.
@@ -204,19 +214,32 @@ type readyToRunItem struct {
 }
 
 func (sch *schedule) updateRulesMetrics(alertRules []*ngmodels.AlertRule) {
-	orgs := make(map[int64]int64, len(alertRules))
-	orgsPaused := make(map[int64]int64, len(alertRules))
+	rulesPerOrg := make(map[int64]int64)                // orgID -> count
+	orgsPaused := make(map[int64]int64)                 // orgID -> count
+	groupsPerOrg := make(map[int64]map[string]struct{}) // orgID -> set of groups
 	for _, rule := range alertRules {
-		orgs[rule.OrgID]++
+		rulesPerOrg[rule.OrgID]++
+
 		if rule.IsPaused {
 			orgsPaused[rule.OrgID]++
 		}
+
+		orgGroups, ok := groupsPerOrg[rule.OrgID]
+		if !ok {
+			orgGroups = make(map[string]struct{})
+			groupsPerOrg[rule.OrgID] = orgGroups
+		}
+		orgGroups[rule.RuleGroup] = struct{}{}
 	}
 
-	for orgID, numRules := range orgs {
+	for orgID, numRules := range rulesPerOrg {
 		numRulesPaused := orgsPaused[orgID]
 		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRuleActiveLabelValue).Set(float64(numRules - numRulesPaused))
 		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRulePausedLabelValue).Set(float64(numRulesPaused))
+	}
+
+	for orgID, groups := range groupsPerOrg {
+		sch.metrics.Groups.WithLabelValues(fmt.Sprint(orgID)).Set(float64(len(groups)))
 	}
 
 	// While these are the rules that we iterate over, at the moment there's no 100% guarantee that they'll be
@@ -280,11 +303,12 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		}
 
 		itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
-		isReadyToRun := item.IntervalSeconds != 0 && tickNum%itemFrequency == 0
+		offset := jitterOffsetInTicks(item, sch.baseInterval, sch.jitterEvaluations)
+		isReadyToRun := item.IntervalSeconds != 0 && (tickNum%itemFrequency)-offset == 0
 
 		var folderTitle string
 		if !sch.disableGrafanaFolder {
-			title, ok := folderTitles[item.NamespaceUID]
+			title, ok := folderTitles[item.GetFolderKey()]
 			if ok {
 				folderTitle = title
 			} else {
@@ -293,6 +317,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		}
 
 		if isReadyToRun {
+			sch.log.Debug("Rule is ready to run on the current tick", "uid", item.UID, "tick", tickNum, "frequency", itemFrequency, "offset", offset)
 			readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, evaluation: evaluation{
 				scheduledAt: tick,
 				rule:        item,

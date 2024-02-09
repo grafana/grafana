@@ -6,10 +6,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { DashboardLink } from '@grafana/schema';
 import { Tooltip, useForceUpdate } from '@grafana/ui';
+import { LINK_ICON_MAP } from 'app/features/dashboard-scene/settings/links/utils';
 
 import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 import { DashboardModel } from '../../state';
-import { linkIconMap } from '../LinksSettings/LinkSettingsEdit';
 
 import { DashboardLinkButton, DashboardLinksDashboard } from './DashboardLinksDashboard';
 
@@ -40,7 +40,7 @@ export const DashboardLinks = ({ dashboard, links }: Props) => {
           return <DashboardLinksDashboard key={key} link={link} linkInfo={linkInfo} dashboardUID={dashboard.uid} />;
         }
 
-        const icon = linkIconMap[link.icon];
+        const icon = LINK_ICON_MAP[link.icon];
 
         const linkElement = (
           <DashboardLinkButton

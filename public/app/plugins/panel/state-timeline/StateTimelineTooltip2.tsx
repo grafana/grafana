@@ -19,7 +19,6 @@ import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTool
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
 import { ColorIndicator, ColorPlacement, LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
-import { DEFAULT_TOOLTIP_WIDTH } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineChart/utils';
 
 import { getDataLinks } from '../status-history/utils';
@@ -69,10 +68,7 @@ export const StateTimelineTooltip2 = ({
    * Render nothing in this case to prevent error.
    * See https://github.com/grafana/support-escalations/issues/932
    */
-  if (
-    (!alignedData.meta?.transformations?.length && alignedData.fields.length - 1 !== valueFieldsCount) ||
-    !alignedData.fields[seriesIdx]
-  ) {
+  if (alignedData.fields.length - 1 !== valueFieldsCount || !alignedData.fields[seriesIdx]) {
     return null;
   }
 
@@ -193,6 +189,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     display: 'flex',
     flexDirection: 'column',
-    width: DEFAULT_TOOLTIP_WIDTH,
   }),
 });

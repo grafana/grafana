@@ -1,9 +1,8 @@
 import * as H from 'history';
 
 import { NavIndex } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
-  getUrlSyncManager,
   SceneFlexItem,
   SceneFlexLayout,
   SceneGridItem,
@@ -11,71 +10,47 @@ import {
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
-  sceneUtils,
   SplitLayout,
   VizPanel,
 } from '@grafana/scenes';
-import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
-import { DashboardScene } from '../scene/DashboardScene';
-import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
-import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { getDashboardUrl } from '../utils/urlBuilders';
+import {
+  findVizPanelByKey,
+  getDashboardSceneFor,
+  getPanelIdForVizPanel,
+  getVizPanelKeyForPanelId,
+} from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
-import { PanelEditorUrlSync } from './PanelEditorUrlSync';
 import { PanelOptionsPane } from './PanelOptionsPane';
-import { PanelVizTypePicker } from './PanelVizTypePicker';
 import { VizPanelManager } from './VizPanelManager';
 
 export interface PanelEditorState extends SceneObjectState {
   body: SceneObject;
   controls?: SceneObject[];
   isDirty?: boolean;
-  /** Panel to inspect */
-  inspectPanelKey?: string;
-  /** Scene object that handles the current drawer */
-  overlay?: SceneObject;
-
-  dashboardRef: SceneObjectRef<DashboardScene>;
-  sourcePanelRef: SceneObjectRef<VizPanel>;
+  panelId: number;
   panelRef: SceneObjectRef<VizPanelManager>;
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   static Component = PanelEditorRenderer;
 
-  /**
-   * Handles url sync
-   */
-  protected _urlSync = new PanelEditorUrlSync(this);
-
   public constructor(state: PanelEditorState) {
     super(state);
-
-    this.addActivationHandler(() => this._activationHandler());
   }
-
-  private _activationHandler() {
-    const oldDashboardWrapper = new DashboardModelCompatibilityWrapper(this.state.dashboardRef.resolve());
-    // @ts-expect-error
-    getDashboardSrv().setCurrent(oldDashboardWrapper);
-
-    // Deactivation logic
-    return () => {
-      getUrlSyncManager().cleanUp(this);
-    };
-  }
-
-  public startUrlSync() {
-    getUrlSyncManager().initSync(this);
+  public getUrlKey() {
+    return this.state.panelId.toString();
   }
 
   public getPageNav(location: H.Location, navIndex: NavIndex) {
+    const dashboard = getDashboardSceneFor(this);
+
     return {
       text: 'Edit panel',
-      parentItem: this.state.dashboardRef.resolve().getPageNav(location, navIndex),
+      parentItem: dashboard.getPageNav(location, navIndex),
     };
   }
 
@@ -97,8 +72,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   };
 
   private _commitChanges() {
-    const dashboard = this.state.dashboardRef.resolve();
-    const sourcePanel = this.state.sourcePanelRef.resolve();
+    const dashboard = getDashboardSceneFor(this);
+    const sourcePanel = findVizPanelByKey(dashboard.state.body, getVizPanelKeyForPanelId(this.state.panelId));
 
     if (!dashboard.state.isEditing) {
       dashboard.onEnterEditMode();
@@ -106,64 +81,109 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     const panelMngr = this.state.panelRef.resolve();
 
-    // Remove data provider if it's a share query. For editing purposes the data provider is cloned and attached to the
-    // ShareQueryDataProvider when panel is in edit mode.
-    // TODO: Handle transformations when we get on transformations edit.
-    if (panelMngr.state.panel.state.$data instanceof ShareQueryDataProvider) {
-      panelMngr.state.panel.state.$data.setState({ $data: undefined });
+    if (sourcePanel!.parent instanceof SceneGridItem) {
+      sourcePanel!.parent.setState({ body: panelMngr.state.panel.clone() });
     }
 
-    if (sourcePanel.parent instanceof SceneGridItem) {
-      sourcePanel.parent.setState({ body: panelMngr.state.panel.clone() });
-    }
-
-    // preserve time range and variables state
     dashboard.setState({
-      $timeRange: this.state.$timeRange?.clone(),
-      $variables: this.state.$variables?.clone(),
       isDirty: true,
     });
   }
 
   private _navigateBackToDashboard() {
+    const dashboard = getDashboardSceneFor(this);
     locationService.push(
       getDashboardUrl({
-        uid: this.state.dashboardRef.resolve().state.uid,
+        uid: dashboard.state.uid,
+        slug: dashboard.state.meta.slug,
         currentQueryParams: locationService.getLocation().search,
+        updateQuery: {
+          editPanel: null,
+          // Clean the PanelEditor data pane tab query param
+          tab: null,
+        },
       })
     );
   }
 }
 
-export function buildPanelEditScene(dashboard: DashboardScene, panel: VizPanel): PanelEditor {
+export function buildPanelEditScene(panel: VizPanel): PanelEditor {
   const panelClone = panel.clone();
-
   const vizPanelMgr = new VizPanelManager(panelClone);
-  const dashboardStateCloned = sceneUtils.cloneSceneObjectState(dashboard.state);
 
   return new PanelEditor({
-    dashboardRef: dashboard.getRef(),
-    sourcePanelRef: panel.getRef(),
+    panelId: getPanelIdForVizPanel(panel),
     panelRef: vizPanelMgr.getRef(),
-    controls: dashboardStateCloned.controls,
-    $variables: dashboardStateCloned.$variables,
-    $timeRange: dashboardStateCloned.$timeRange,
     body: new SplitLayout({
       direction: 'row',
       primary: new SplitLayout({
         direction: 'column',
+        $behaviors: [conditionalDataPaneBehavior],
         primary: new SceneFlexLayout({
           direction: 'column',
+          minHeight: 200,
           children: [vizPanelMgr],
         }),
-        secondary: new SceneFlexItem({
-          body: new PanelDataPane(vizPanelMgr),
-        }),
+        primaryPaneStyles: {
+          minHeight: 0,
+          overflow: 'hidden',
+        },
+        secondaryPaneStyles: {
+          minHeight: 0,
+        },
       }),
-      secondary: new SceneFlexLayout({
-        direction: 'column',
-        children: [new PanelOptionsPane(vizPanelMgr), new PanelVizTypePicker(vizPanelMgr)],
+      secondary: new SceneFlexItem({
+        body: new PanelOptionsPane(vizPanelMgr),
+        width: '100%',
       }),
+      primaryPaneStyles: {
+        minWidth: '0',
+      },
+      secondaryPaneStyles: {
+        minWidth: '0',
+      },
     }),
   });
+}
+
+// This function is used to conditionally add the data pane to the panel editor,
+// depending on the type of a panel being edited.
+function conditionalDataPaneBehavior(scene: SplitLayout) {
+  const dashboard = getDashboardSceneFor(scene);
+
+  const editor = dashboard.state.editPanel;
+
+  if (!editor) {
+    return;
+  }
+
+  const panelManager = editor.state.panelRef.resolve();
+  const panel = panelManager.state.panel;
+
+  const getDataPane = () =>
+    new SceneFlexItem({
+      body: new PanelDataPane(panelManager),
+    });
+
+  if (!config.panels[panel.state.pluginId].skipDataQuery) {
+    scene.setState({
+      secondary: getDataPane(),
+    });
+  }
+
+  const sub = panelManager.subscribeToState((n, p) => {
+    const hadDataSupport = !config.panels[p.panel.state.pluginId].skipDataQuery;
+    const willHaveDataSupport = !config.panels[n.panel.state.pluginId].skipDataQuery;
+
+    if (hadDataSupport && !willHaveDataSupport) {
+      locationService.partial({ tab: null }, true);
+      scene.setState({ secondary: undefined });
+    } else if (!hadDataSupport && willHaveDataSupport) {
+      scene.setState({ secondary: getDataPane() });
+    }
+  });
+
+  return () => {
+    sub.unsubscribe();
+  };
 }

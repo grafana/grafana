@@ -289,50 +289,24 @@ func (s *ServiceImpl) hasAccessToInclude(c *contextmodel.ReqContext, pluginID st
 }
 
 func (s *ServiceImpl) readNavigationSettings() {
-	k8sCfg := NavigationAppConfig{SectionID: navtree.NavIDMonitoring, SortWeight: 1, Text: "Kubernetes"}
-	appO11yCfg := NavigationAppConfig{SectionID: navtree.NavIDMonitoring, SortWeight: 2, Text: "Application"}
-	profilesCfg := NavigationAppConfig{SectionID: navtree.NavIDMonitoring, SortWeight: 3, Text: "Profiles"}
-	frontendCfg := NavigationAppConfig{SectionID: navtree.NavIDMonitoring, SortWeight: 4, Text: "Frontend"}
-	k6Cfg := NavigationAppConfig{SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAlertsAndIncidents + 1, Text: "Performance testing", Icon: "k6"}
-	syntheticsCfg := NavigationAppConfig{SectionID: navtree.NavIDMonitoring, SortWeight: 5, Text: "Synthetics"}
-
-	if s.features.IsEnabledGlobally(featuremgmt.FlagDockedMegaMenu) {
-		k8sCfg.SectionID = navtree.NavIDInfrastructure
-
-		appO11yCfg.SectionID = navtree.NavIDRoot
-		appO11yCfg.SortWeight = navtree.WeightApplication
-		appO11yCfg.Icon = "graph-bar"
-
-		profilesCfg.SectionID = navtree.NavIDExplore
-		profilesCfg.SortWeight = 1
-
-		frontendCfg.SectionID = navtree.NavIDRoot
-		frontendCfg.SortWeight = navtree.WeightFrontend
-		frontendCfg.Icon = "frontend-observability"
-
-		k6Cfg.SectionID = navtree.NavIDTestingAndSynthetics
-		k6Cfg.SortWeight = 1
-		k6Cfg.Text = "Performance"
-
-		syntheticsCfg.SectionID = navtree.NavIDTestingAndSynthetics
-		syntheticsCfg.SortWeight = 2
-	}
-
 	s.navigationAppConfig = map[string]NavigationAppConfig{
-		"grafana-k8s-app":                  k8sCfg,
-		"grafana-app-observability-app":    appO11yCfg,
-		"grafana-pyroscope-app":            profilesCfg,
-		"grafana-kowalski-app":             frontendCfg,
-		"grafana-synthetic-monitoring-app": syntheticsCfg,
+		"grafana-k8s-app":                  {SectionID: navtree.NavIDInfrastructure, SortWeight: 1, Text: "Kubernetes"},
+		"grafana-aws-app":                  {SectionID: navtree.NavIDInfrastructure, SortWeight: 2},
+		"grafana-app-observability-app":    {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApplication, Text: "Application", Icon: "graph-bar"},
+		"grafana-pyroscope-app":            {SectionID: navtree.NavIDExplore, SortWeight: 1, Text: "Profiles"},
+		"grafana-kowalski-app":             {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightFrontend, Text: "Frontend", Icon: "frontend-observability"},
+		"grafana-synthetic-monitoring-app": {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 2, Text: "Synthetics"},
 		"grafana-oncall-app":               {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 1, Text: "OnCall"},
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2, Text: "Incidents"},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "Machine Learning"},
+		"grafana-slo-app":                  {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 4},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfg},
 		"grafana-costmanagementui-app":     {SectionID: navtree.NavIDCfg, Text: "Cost management"},
 		"grafana-adaptive-metrics-app":     {SectionID: navtree.NavIDCfg, Text: "Adaptive Metrics"},
 		"grafana-logvolumeexplorer-app":    {SectionID: navtree.NavIDCfg, Text: "Log Volume Explorer"},
 		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApps + 1, Text: "Connections", Icon: "adjust-circle"},
-		"k6-app":                           k6Cfg,
+		"k6-app":                           {SectionID: navtree.NavIDTestingAndSynthetics, SortWeight: 1, Text: "Performance"},
+		"grafana-asserts-app":              {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAsserts, Icon: "asserts"},
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{

@@ -40,7 +40,7 @@ import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
-import { getPanelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
@@ -50,7 +50,7 @@ import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { DashboardInteractions } from '../utils/interactions';
 import {
   getCurrentValueForOldIntervalModel,
-  getIntervalsFromOldIntervalModel,
+  getIntervalsFromQueryString,
   getVizPanelKeyForPanelId,
 } from '../utils/utils';
 
@@ -62,13 +62,21 @@ export interface DashboardLoaderState {
   loadError?: string;
 }
 
+export interface SaveModelToSceneOptions {
+  isEmbedded?: boolean;
+}
+
 export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   // Just to have migrations run
   const oldModel = new DashboardModel(rsp.dashboard, rsp.meta, {
     autoMigrateOldPanels: false,
   });
 
-  return createDashboardSceneFromDashboardModel(oldModel);
+  const scene = createDashboardSceneFromDashboardModel(oldModel);
+  // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
+  scene.setInitialSaveModel(rsp.dashboard);
+
+  return scene;
 }
 
 export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
@@ -203,11 +211,11 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     });
   }
 
-  if (oldModel.annotations?.list?.length) {
+  if (oldModel.annotations?.list?.length && !oldModel.isSnapshot()) {
     layers = oldModel.annotations?.list.map((a) => {
       // Each annotation query is an individual data layer
       return new DashboardAnnotationsDataLayer({
-        key: `annnotations-${a.name}`,
+        key: `annotations-${a.name}`,
         query: a,
         name: a.name,
         isEnabled: Boolean(a.enable),
@@ -240,7 +248,10 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     id: oldModel.id,
     description: oldModel.description,
     editable: oldModel.editable,
+    isDirty: oldModel.meta.isNew,
+    isEditing: oldModel.meta.isNew,
     meta: oldModel.meta,
+    version: oldModel.version,
     body: new SceneGridLayout({
       isLazy: true,
       children: createSceneObjectsForPanels(oldModel.panels),
@@ -341,7 +352,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       hide: variable.hide,
     });
   } else if (variable.type === 'interval') {
-    const intervals = getIntervalsFromOldIntervalModel(variable);
+    const intervals = getIntervalsFromQueryString(variable.query);
     const currentInterval = getCurrentValueForOldIntervalModel(variable, intervals);
     return new IntervalVariable({
       ...commonProperties,
@@ -398,16 +409,14 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
 }
 
 export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
-  const hasPanelLinks = panel.links && panel.links.length > 0;
   const titleItems: SceneObject[] = [];
-  let panelLinks;
 
-  if (hasPanelLinks) {
-    panelLinks = new VizPanelLinks({
-      menu: new VizPanelLinksMenu({ $behaviors: [getPanelLinksBehavior(panel)] }),
-    });
-    titleItems.push(panelLinks);
-  }
+  titleItems.push(
+    new VizPanelLinks({
+      rawLinks: panel.links,
+      menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
+    })
+  );
 
   titleItems.push(new PanelNotices());
 

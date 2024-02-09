@@ -18,7 +18,7 @@ import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
-import { getTimezones, prepareGraphableFields, regenerateLinksSupplier } from './utils';
+import { getTimezones, isTooltipScrollable, prepareGraphableFields, regenerateLinksSupplier } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
@@ -52,7 +52,7 @@ export const TimeSeriesPanel = ({
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   const showNewVizTooltips =
-    config.featureToggles.newVizTooltips && (sync == null || sync() === DashboardCursorSync.Off);
+    config.featureToggles.newVizTooltips && (sync == null || sync() !== DashboardCursorSync.Tooltip);
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
 
@@ -113,8 +113,12 @@ export const TimeSeriesPanel = ({
                     }
                     queryZoom={onChangeTimeRange}
                     clientZoom={true}
-                    render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2) => {
-                      if (timeRange2 != null) {
+                    render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
+                      if (viaSync) {
+                        return null;
+                      }
+
+                      if (enableAnnotationCreation && timeRange2 != null) {
                         setNewAnnotationRange(timeRange2);
                         dismiss();
                         return;
@@ -138,9 +142,12 @@ export const TimeSeriesPanel = ({
                           sortOrder={options.tooltip.sort}
                           isPinned={isPinned}
                           annotate={enableAnnotationCreation ? annotate : undefined}
+                          scrollable={isTooltipScrollable(options.tooltip)}
                         />
                       );
                     }}
+                    maxWidth={options.tooltip.maxWidth}
+                    maxHeight={options.tooltip.maxHeight}
                   />
                 ) : (
                   <>

@@ -459,7 +459,7 @@
     "datagridpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-bi-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -1731,7 +1731,7 @@
     "tablepanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-bi-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,

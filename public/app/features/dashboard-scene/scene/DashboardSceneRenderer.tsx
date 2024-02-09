@@ -13,37 +13,46 @@ import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview } = model.useState();
+  const { controls, overlay, editview, editPanel } = model.useState();
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
   const pageNav = model.getPageNav(location, navIndex);
   const bodyToRender = model.getBodyToRender();
   const navModel = getNavModel(navIndex, 'dashboards/browse');
+  const showDebugger = location.search.includes('scene-debugger');
 
   if (editview) {
-    return <editview.Component model={editview} />;
+    return (
+      <>
+        <editview.Component model={editview} />
+        {overlay && <overlay.Component model={overlay} />}
+      </>
+    );
   }
 
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
-      <CustomScrollbar autoHeightMin={'100%'}>
-        <div className={styles.canvasContent}>
-          <NavToolbarActions dashboard={model} />
+      {editPanel && <editPanel.Component model={editPanel} />}
+      {!editPanel && (
+        <CustomScrollbar autoHeightMin={'100%'}>
+          <div className={styles.canvasContent}>
+            <NavToolbarActions dashboard={model} />
 
-          {controls && (
-            <div className={styles.controls}>
-              {controls.map((control) => (
-                <control.Component key={control.state.key} model={control} />
-              ))}
-              <SceneDebugger scene={model} key={'scene-debugger'} />
+            {controls && (
+              <div className={styles.controls}>
+                {controls.map((control) => (
+                  <control.Component key={control.state.key} model={control} />
+                ))}
+                {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
+              </div>
+            )}
+            <div className={cx(styles.body)}>
+              <bodyToRender.Component model={bodyToRender} />
             </div>
-          )}
-          <div className={cx(styles.body)}>
-            <bodyToRender.Component model={bodyToRender} />
           </div>
-        </div>
-      </CustomScrollbar>
+        </CustomScrollbar>
+      )}
       {overlay && <overlay.Component model={overlay} />}
     </Page>
   );
@@ -75,7 +84,7 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'sticky',
       top: 0,
       background: theme.colors.background.canvas,
-      zIndex: theme.zIndex.navbarFixed,
+      zIndex: theme.zIndex.activePanel,
       padding: theme.spacing(2, 0),
     }),
   };

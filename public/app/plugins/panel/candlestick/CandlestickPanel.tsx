@@ -22,6 +22,7 @@ import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from '../timeseries/plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
+import { isTooltipScrollable } from '../timeseries/utils';
 
 import { prepareCandlestickFields } from './fields';
 import { Options, defaultCandlestickColors, VizDisplayMode } from './types';
@@ -234,7 +235,7 @@ export const CandlestickPanel = ({
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   const showNewVizTooltips =
-    config.featureToggles.newVizTooltips && (sync == null || sync() === DashboardCursorSync.Off);
+    config.featureToggles.newVizTooltips && (sync == null || sync() !== DashboardCursorSync.Tooltip);
 
   return (
     <TimeSeries
@@ -266,11 +267,17 @@ export const CandlestickPanel = ({
             {showNewVizTooltips ? (
               <TooltipPlugin2
                 config={uplotConfig}
-                hoverMode={TooltipHoverMode.xAll}
+                hoverMode={
+                  options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
+                }
                 queryZoom={onChangeTimeRange}
                 clientZoom={true}
-                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2) => {
-                  if (timeRange2 != null) {
+                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
+                  if (viaSync) {
+                    return null;
+                  }
+
+                  if (enableAnnotationCreation && timeRange2 != null) {
                     setNewAnnotationRange(timeRange2);
                     dismiss();
                     return;
@@ -289,12 +296,15 @@ export const CandlestickPanel = ({
                       seriesFrame={alignedDataFrame}
                       dataIdxs={dataIdxs}
                       seriesIdx={seriesIdx}
-                      mode={TooltipDisplayMode.Multi}
+                      mode={options.tooltip.mode}
                       isPinned={isPinned}
                       annotate={enableAnnotationCreation ? annotate : undefined}
+                      scrollable={isTooltipScrollable(options.tooltip)}
                     />
                   );
                 }}
+                maxWidth={options.tooltip.maxWidth}
+                maxHeight={options.tooltip.maxHeight}
               />
             ) : (
               <>

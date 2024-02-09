@@ -13,8 +13,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 type getStore func(db.DB) store
 
@@ -25,7 +30,7 @@ func testIntegrationGetDashboardVersion(t *testing.T, fn getStore) {
 	dashVerStore := fn(ss)
 
 	t.Run("Get a Dashboard ID and version ID", func(t *testing.T) {
-		savedDash := insertTestDashboard(t, ss, "test dash 26", 1, 0, "", false, "diff")
+		savedDash := insertTestDashboard(t, ss, "test dash 26", 1, "", false, "diff")
 
 		query := dashver.GetDashboardVersionQuery{
 			DashboardID: savedDash.ID,
@@ -67,7 +72,7 @@ func testIntegrationGetDashboardVersion(t *testing.T, fn getStore) {
 	t.Run("Clean up old dashboard versions", func(t *testing.T) {
 		versionsToWrite := 10
 		for i := 0; i < versionsToWrite-1; i++ {
-			insertTestDashboard(t, ss, "test dash 53", 1, int64(i), strconv.Itoa(i), false, "diff-all")
+			insertTestDashboard(t, ss, "test dash 53"+strconv.Itoa(i), 1, strconv.Itoa(i), false, "diff-all")
 		}
 		versionIDsToDelete := []any{1, 2, 3, 4}
 		res, err := dashVerStore.DeleteBatch(
@@ -79,7 +84,7 @@ func testIntegrationGetDashboardVersion(t *testing.T, fn getStore) {
 		assert.EqualValues(t, 4, res)
 	})
 
-	savedDash := insertTestDashboard(t, ss, "test dash 43", 1, 0, "", false, "diff-all")
+	savedDash := insertTestDashboard(t, ss, "test dash 43", 1, "", false, "diff-all")
 	t.Run("Get all versions for a given Dashboard ID", func(t *testing.T) {
 		query := dashver.ListDashboardVersionsQuery{
 			DashboardID: savedDash.ID,
@@ -135,11 +140,10 @@ var (
 )
 
 func insertTestDashboard(t *testing.T, sqlStore db.DB, title string, orgId int64,
-	folderId int64, folderUID string, isFolder bool, tags ...any) *dashboards.Dashboard {
+	folderUID string, isFolder bool, tags ...any) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
 		OrgID:     orgId,
-		FolderID:  folderId, // nolint:staticcheck
 		FolderUID: folderUID,
 		IsFolder:  isFolder,
 		Dashboard: simplejson.NewFromAny(map[string]any{

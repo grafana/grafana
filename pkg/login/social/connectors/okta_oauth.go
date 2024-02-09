@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
@@ -45,13 +46,12 @@ type OktaClaims struct {
 }
 
 func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialOkta {
-	config := createOAuthConfig(info, cfg, social.OktaProviderName)
 	provider := &SocialOkta{
-		SocialBase: newSocialBase(social.OktaProviderName, config, info, cfg.AutoAssignOrgRole, features),
+		SocialBase: newSocialBase(social.OktaProviderName, info, features, cfg),
 	}
 
 	if info.UseRefreshToken {
-		appendUniqueScope(config, social.OfflineAccessScope)
+		appendUniqueScope(provider.Config, social.OfflineAccessScope)
 	}
 
 	if features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
@@ -61,18 +61,35 @@ func NewOktaProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettings ssose
 	return provider
 }
 
-func (s *SocialOkta) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+func (s *SocialOkta) Validate(ctx context.Context, settings ssoModels.SSOSettings, requester identity.Requester) error {
 	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	err = validateInfo(info)
+	err = validateInfo(info, requester)
 	if err != nil {
 		return err
 	}
 
 	// add specific validation rules for Okta
+
+	return nil
+}
+
+func (s *SocialOkta) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
+	newInfo, err := CreateOAuthInfoFromKeyValues(settings.Settings)
+	if err != nil {
+		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
+	}
+
+	s.reloadMutex.Lock()
+	defer s.reloadMutex.Unlock()
+
+	s.SocialBase = newSocialBase(social.OktaProviderName, newInfo, s.features, s.cfg)
+	if newInfo.UseRefreshToken {
+		appendUniqueScope(s.Config, social.OfflineAccessScope)
+	}
 
 	return nil
 }

@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"hash/fnv"
 	"net/http"
@@ -44,9 +43,9 @@ func ProvideApi(
 }
 
 // generateFNVETag computes a FNV hash-based ETag for the SSOSettings struct
-func generateFNVETag(SSOSettings *models.SSOSettings) (string, error) {
+func generateFNVETag(input any) (string, error) {
 	hasher := fnv.New64()
-	data, err := json.Marshal(SSOSettings)
+	data, err := json.Marshal(input)
 	if err != nil {
 		return "", err
 	}
@@ -76,17 +75,28 @@ func (api *Api) RegisterAPIEndpoints() {
 	})
 }
 
+// swagger:route GET /v1/sso-settings sso_settings listAllProvidersSettings
+//
+// # List all SSO Settings entries
+//
+// You need to have a permission with action `settings:read` with scope `settings:auth.<provider>:*`.
+//
+// Responses:
+// 200: listSSOSettingsResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
 func (api *Api) listAllProvidersSettings(c *contextmodel.ReqContext) response.Response {
 	providers, err := api.getAuthorizedList(c.Req.Context(), c.SignedInUser)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Failed to get providers", err)
+		return response.Error(http.StatusInternalServerError, "Failed to list all providers settings", err)
 	}
 
 	return response.JSON(http.StatusOK, providers)
 }
 
 func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Requester) ([]*models.SSOSettings, error) {
-	allProviders, err := api.SSOSettingsService.List(ctx)
+	allProviders, err := api.SSOSettingsService.ListWithRedactedSecrets(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +127,7 @@ func (api *Api) getAuthorizedList(ctx context.Context, identity identity.Request
 // You need to have a permission with action `settings:read` with scope `settings:auth.<provider>:*`.
 //
 // Responses:
-// 200: okResponse
+// 200: getSSOSettingsResponse
 // 400: badRequestError
 // 401: unauthorisedError
 // 403: forbiddenError
@@ -129,12 +139,8 @@ func (api *Api) getProviderSettings(c *contextmodel.ReqContext) response.Respons
 	}
 
 	provider, err := api.SSOSettingsService.GetForProviderWithRedactedSecrets(c.Req.Context(), key)
-
 	if err != nil {
-		if errors.Is(err, ssosettings.ErrNotFound) {
-			return response.Error(http.StatusNotFound, "The provider was not found", err)
-		}
-		return response.Error(http.StatusInternalServerError, "Failed to get provider settings", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to get provider settings", err)
 	}
 
 	etag, err := generateFNVETag(provider)
@@ -172,7 +178,7 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 
 	settings.Provider = key
 
-	err := api.SSOSettingsService.Upsert(c.Req.Context(), settings)
+	err := api.SSOSettingsService.Upsert(c.Req.Context(), &settings, c.SignedInUser)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update provider settings", err)
 	}
@@ -203,17 +209,18 @@ func (api *Api) removeProviderSettings(c *contextmodel.ReqContext) response.Resp
 
 	err := api.SSOSettingsService.Delete(c.Req.Context(), key)
 	if err != nil {
-		if errors.Is(err, ssosettings.ErrNotFound) {
-			return response.Error(http.StatusNotFound, "The provider was not found", err)
-		}
-		return response.Error(http.StatusInternalServerError, "Failed to delete provider settings", err)
+		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to delete provider settings", err)
 	}
 
 	return response.Empty(http.StatusNoContent)
 }
 
+// swagger:parameters listAllProvidersSettings
+type ListAllProvidersSettingsParams struct {
+}
+
 // swagger:parameters getProviderSettings
-type GetProviderSettingsWrapper struct {
+type GetProviderSettingsParams struct {
 	// in:path
 	// required:true
 	Provider string `json:"key"`
@@ -226,7 +233,11 @@ type UpdateProviderSettingsParams struct {
 	Provider string `json:"key"`
 	// in:body
 	// required:true
-	Body models.SSOSettings `json:"body"`
+	Body struct {
+		ID       string         `json:"id"`
+		Provider string         `json:"provider"`
+		Settings map[string]any `json:"settings"`
+	} `json:"body"`
 }
 
 // swagger:parameters removeProviderSettings
@@ -234,4 +245,26 @@ type RemoveProviderSettingsParams struct {
 	// in:path
 	// required:true
 	Provider string `json:"key"`
+}
+
+// swagger:response listSSOSettingsResponse
+type ListSSOSettingsResponse struct {
+	// in: body
+	Body []struct {
+		ID       string         `json:"id"`
+		Provider string         `json:"provider"`
+		Settings map[string]any `json:"settings"`
+		Source   string         `json:"source"`
+	} `json:"body"`
+}
+
+// swagger:response getSSOSettingsResponse
+type GetSSOSettingsResponse struct {
+	// in: body
+	Body struct {
+		ID       string         `json:"id"`
+		Provider string         `json:"provider"`
+		Settings map[string]any `json:"settings"`
+		Source   string         `json:"source"`
+	} `json:"body"`
 }

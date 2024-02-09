@@ -42,17 +42,24 @@ import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from './
 import { DynamicTableWithGuidelines } from './unified/components/DynamicTableWithGuidelines';
 import { Matchers } from './unified/components/notification-policies/Matchers';
 import { ActionIcon } from './unified/components/rules/ActionIcon';
-import { createContactPointLink, makeDashboardLink, makeFolderLink } from './unified/utils/misc';
+import { createContactPointLink, makeDashboardLink, makeFolderAlertsLink } from './unified/utils/misc';
 import { createUrl } from './unified/utils/url';
 
 export const UpgradePage = () => {
-  const { useGetOrgUpgradeSummaryQuery } = upgradeApi;
+  const [, { isLoading: isUpgradeLoading }] = upgradeApi.useUpgradeOrgMutation({
+    fixedCacheKey: 'upgrade-org-loading',
+  });
+  const [, { isLoading: isCancelLoading }] = upgradeApi.useCancelOrgUpgradeMutation({
+    fixedCacheKey: 'cancel-org-upgrade-loading',
+  });
   const {
     currentData: summary,
     isError: isFetchError,
     error: fetchError,
-  } = useGetOrgUpgradeSummaryQuery(undefined, {
+    isLoading: isLoading,
+  } = upgradeApi.useGetOrgUpgradeSummaryQuery(undefined, {
     pollingInterval: 10000,
+    skip: isCancelLoading || isUpgradeLoading, // Stop polling when upgrade or cancel is in progress.
   });
 
   const alertCount = (summary?.migratedDashboards ?? []).reduce(
@@ -71,16 +78,22 @@ export const UpgradePage = () => {
     return null;
   }, [isFetchError, hasData]);
 
+  const showError = isFetchError;
+  const showLoading = isLoading;
+  const showStart = !isLoading && !isFetchError && !hasData;
+  const showData = !isLoading && !isFetchError && hasData;
+
   return (
     <Page navId="alerting-upgrade" actions={cancelUpgrade}>
       <Page.Contents>
-        {isFetchError && (
+        {showError && (
           <Alert severity="error" title="Error loading Grafana Alerting upgrade information">
             {fetchError instanceof Error ? fetchError.message : 'Unknown error.'}
           </Alert>
         )}
-        {!isFetchError && !hasData && <CTAElement />}
-        {!isFetchError && hasData && (
+        {showLoading && <Loading text={'Loading...'} />}
+        {showStart && <CTAElement />}
+        {showData && (
           <>
             <ErrorSummary errors={errors} />
             <UpgradeTabs alertCount={alertCount} contactCount={contactCount} />
@@ -998,7 +1011,7 @@ const useAlertColumns = (): Array<DynamicTableColumnProps<DashboardUpgrade>> => 
                 rel="noreferrer"
                 target="_blank"
                 className={styles.textLink}
-                href={makeFolderLink(dashUpgrade.folderUid)}
+                href={makeFolderAlertsLink(dashUpgrade.folderUid, dashUpgrade.folderName)}
               >
                 {dashUpgrade.folderName}
               </Link>
@@ -1062,7 +1075,7 @@ const useAlertColumns = (): Array<DynamicTableColumnProps<DashboardUpgrade>> => 
                   rel="noreferrer"
                   target="_blank"
                   className={styles.textLink}
-                  href={makeFolderLink(migratedFolderUid)}
+                  href={makeFolderAlertsLink(migratedFolderUid, dashUpgrade.newFolderName)}
                 >
                   {dashUpgrade.newFolderName}
                 </Link>

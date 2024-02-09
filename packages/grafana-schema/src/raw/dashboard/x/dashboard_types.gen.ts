@@ -127,6 +127,10 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
  */
 export interface VariableModel {
   /**
+   * Custom all value
+   */
+  allValue?: string;
+  /**
    * Shows current selected variable text/value on the dashboard
    */
   current?: VariableOption;
@@ -142,6 +146,10 @@ export interface VariableModel {
    * Visibility configuration for the variable
    */
   hide?: VariableHide;
+  /**
+   * Whether all value option is available or not
+   */
+  includeAll?: boolean;
   /**
    * Optional display name
    */
@@ -162,7 +170,15 @@ export interface VariableModel {
    * Query used to fetch values for a variable
    */
   query?: (string | Record<string, unknown>);
+  /**
+   * Options to config when to refresh a variable
+   */
   refresh?: VariableRefresh;
+  /**
+   * Optional field, if you want to extract part of a series name or metric node segment.
+   * Named capture groups can be used to separate the display text and value.
+   */
+  regex?: string;
   /**
    * Whether the variable value should be managed by URL query params or not
    */
@@ -178,6 +194,7 @@ export interface VariableModel {
 }
 
 export const defaultVariableModel: Partial<VariableModel> = {
+  includeAll: false,
   multi: false,
   options: [],
   skipUrlSync: false,
@@ -332,7 +349,7 @@ export type DashboardLinkType = ('link' | 'dashboards');
  * `custom`: Define the variable options manually using a comma-separated list.
  * `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
  */
-export type VariableType = ('query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system');
+export type VariableType = ('query' | 'adhoc' | 'groupby' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system');
 
 /**
  * Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
@@ -637,7 +654,7 @@ export interface TimePickerConfig {
   /**
    * Whether timepicker is visible or not.
    */
-  hidden: boolean;
+  hidden?: boolean;
   /**
    * Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
    */
@@ -645,11 +662,11 @@ export interface TimePickerConfig {
   /**
    * Interval options available in the refresh picker dropdown.
    */
-  refresh_intervals: Array<string>;
+  refresh_intervals?: Array<string>;
   /**
    * Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
    */
-  time_options: Array<string>;
+  time_options?: Array<string>;
 }
 
 export const defaultTimePickerConfig: Partial<TimePickerConfig> = {
@@ -741,10 +758,6 @@ export interface Panel {
    */
   repeatDirection?: ('h' | 'v');
   /**
-   * Tags for the panel.
-   */
-  tags?: Array<string>;
-  /**
    * Depends on the panel plugin. See the plugin documentation for details.
    */
   targets?: Array<Record<string, unknown>>;
@@ -789,7 +802,6 @@ export interface Panel {
 export const defaultPanel: Partial<Panel> = {
   links: [],
   repeatDirection: 'h',
-  tags: [],
   targets: [],
   transformations: [],
   transparent: false,
@@ -1045,7 +1057,7 @@ export interface Dashboard {
   /**
    * Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
    */
-  refresh?: (string | false);
+  refresh?: string;
   /**
    * This property should only be used in dashboards defined by plugins.  It is a quick check
    * to see if the version has changed since the last time.

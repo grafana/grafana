@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service interface {
@@ -17,13 +18,15 @@ type Service interface {
 }
 
 type OSSService struct {
+	cfg              *setting.Cfg
 	searchUserFilter user.SearchUserFilter
 	userService      user.Service
 }
 
-func ProvideUsersService(searchUserFilter user.SearchUserFilter, userService user.Service,
+func ProvideUsersService(cfg *setting.Cfg, searchUserFilter user.SearchUserFilter, userService user.Service,
 ) *OSSService {
 	return &OSSService{
+		cfg:              cfg,
 		searchUserFilter: searchUserFilter,
 		userService:      userService,
 	}
@@ -108,7 +111,7 @@ func (s *OSSService) SearchUser(c *contextmodel.ReqContext) (*user.SearchUserQue
 	}
 
 	for _, user := range res.Users {
-		user.AvatarURL = dtos.GetGravatarUrl(user.Email)
+		user.AvatarURL = dtos.GetGravatarUrl(s.cfg, user.Email)
 		user.AuthLabels = make([]string, 0)
 		if user.AuthModule != nil && len(user.AuthModule) > 0 {
 			for _, authModule := range user.AuthModule {
