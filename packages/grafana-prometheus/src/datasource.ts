@@ -1,4 +1,4 @@
-import { cloneDeep, defaults } from 'lodash';
+import { defaults } from 'lodash';
 import { lastValueFrom, Observable, throwError } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import semver from 'semver/preload';
@@ -877,7 +877,7 @@ export class PrometheusDatasource
 
   // Used when running queries through backend
   applyTemplateVariables(target: PromQuery, scopedVars: ScopedVars, filters?: AdHocVariableFilter[]) {
-    const variables = cloneDeep(scopedVars);
+    const variables = { ...scopedVars };
 
     // We want to interpolate these variables on backend.
     // The pre-calculated values are replaced withe the variable strings.
