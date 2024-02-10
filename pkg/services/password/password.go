@@ -1,6 +1,10 @@
 package password
 
 import (
+	"unicode"
+
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -11,8 +15,44 @@ var (
 )
 
 /*
-Service interface for the password service
+Static function for password validation
 */
-type Service interface {
-	ValidatePassword(newPassword []rune) error
+func ValidatePassword(newPassword user.Password, config *setting.Cfg) error {
+	if !config.BasicAuthStrongPasswordPolicy {
+		if newPassword.IsWeak() {
+			return ErrPasswordTooShort
+		}
+		return nil
+	}
+	if len(newPassword) < MinPasswordLength {
+		return ErrPasswordTooShort
+	}
+
+	hasUpperCase := false
+	hasLowerCase := false
+	hasNumber := false
+	hasSymbol := false
+
+	for _, r := range newPassword {
+		if !hasLowerCase && unicode.IsLower(r) {
+			hasLowerCase = true
+		}
+
+		if !hasUpperCase && unicode.IsUpper(r) {
+			hasUpperCase = true
+		}
+
+		if !hasNumber && unicode.IsNumber(r) {
+			hasNumber = true
+		}
+
+		if !hasSymbol && !unicode.IsLetter(r) && !unicode.IsNumber(r) {
+			hasSymbol = true
+		}
+
+		if hasUpperCase && hasLowerCase && hasNumber && hasSymbol {
+			return nil
+		}
+	}
+	return ErrPasswordPolicyInfringe
 }

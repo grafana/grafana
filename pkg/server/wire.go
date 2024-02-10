@@ -99,7 +99,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
-	"github.com/grafana/grafana/pkg/services/password/passwordimpl"
 	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
@@ -386,7 +385,6 @@ var wireBasicSet = wire.NewSet(
 	idimpl.ProvideService,
 	wire.Bind(new(auth.IDService), new(*idimpl.Service)),
 	cloudmigrations.ProvideService,
-	passwordimpl.ProvideService,
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
 	apiregistry.WireSet,
