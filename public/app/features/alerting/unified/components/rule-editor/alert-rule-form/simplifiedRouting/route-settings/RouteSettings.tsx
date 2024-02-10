@@ -14,8 +14,6 @@ import {
   Text,
   useStyles2,
 } from '@grafana/ui';
-import { useAlertmanagerConfig } from 'app/features/alerting/unified/hooks/useAlertmanagerConfig';
-import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import {
   commonGroupByOptions,
@@ -42,7 +40,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
     formState: { errors },
   } = useFormContext<RuleFormValues>();
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues([]));
-  const { groupBy, groupIntervalValue, groupWaitValue, repeatIntervalValue } = useGetDefaultsForRoutingSettings();
+  const { groupIntervalValue, groupWaitValue, repeatIntervalValue } = getDefaultsForRoutingSettings();
   const overrideGrouping = watch(`contactPoints.${alertManager}.overrideGrouping`);
   const overrideTimings = watch(`contactPoints.${alertManager}.overrideTimings`);
   const requiredFieldsInGroupBy = ['grafana_folder', 'alertname'];
@@ -56,7 +54,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
         </InlineField>
         {!overrideGrouping && (
           <Text variant="body" color="secondary">
-            Grouping: <strong>{groupBy.join(', ')}</strong>
+            Grouping: <strong>{requiredFieldsInGroupBy.join(', ')}</strong>
           </Text>
         )}
       </Stack>
@@ -131,20 +129,13 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
   );
 };
 
-function useGetDefaultsForRoutingSettings() {
-  const { selectedAlertmanager } = useAlertmanager();
-  const { currentData } = useAlertmanagerConfig(selectedAlertmanager);
-  const config = currentData?.alertmanager_config;
-  return React.useMemo(() => {
-    return {
-      groupWaitValue: TIMING_OPTIONS_DEFAULTS.group_wait,
-      groupIntervalValue: TIMING_OPTIONS_DEFAULTS.group_interval,
-      repeatIntervalValue: TIMING_OPTIONS_DEFAULTS.repeat_interval,
-      groupBy: config?.route?.group_by ?? [],
-    };
-  }, [config]);
+function getDefaultsForRoutingSettings() {
+  return {
+    groupWaitValue: TIMING_OPTIONS_DEFAULTS.group_wait,
+    groupIntervalValue: TIMING_OPTIONS_DEFAULTS.group_interval,
+    repeatIntervalValue: TIMING_OPTIONS_DEFAULTS.repeat_interval,
+  };
 }
-
 const getStyles = (theme: GrafanaTheme2) => ({
   switchElement: css({
     flexFlow: 'row-reverse',

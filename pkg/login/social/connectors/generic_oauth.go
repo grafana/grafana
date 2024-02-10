@@ -13,6 +13,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
@@ -67,13 +68,13 @@ func NewGenericOAuthProvider(info *social.OAuthInfo, cfg *setting.Cfg, ssoSettin
 	return provider
 }
 
-func (s *SocialGenericOAuth) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+func (s *SocialGenericOAuth) Validate(ctx context.Context, settings ssoModels.SSOSettings, requester identity.Requester) error {
 	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	err = validateInfo(info)
+	err = validateInfo(info, requester)
 	if err != nil {
 		return err
 	}
@@ -362,7 +363,7 @@ func (s *SocialGenericOAuth) extractEmail(data *UserInfoJson) string {
 	}
 
 	if s.emailAttributePath != "" {
-		email, err := s.searchJSONForStringAttr(s.emailAttributePath, data.rawJSON)
+		email, err := util.SearchJSONForStringAttr(s.emailAttributePath, data.rawJSON)
 		if err != nil {
 			s.log.Error("Failed to search JSON for attribute", "error", err)
 		} else if email != "" {
@@ -394,7 +395,7 @@ func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson) string {
 
 	if s.loginAttributePath != "" {
 		s.log.Debug("Searching for login among JSON", "loginAttributePath", s.loginAttributePath)
-		login, err := s.searchJSONForStringAttr(s.loginAttributePath, data.rawJSON)
+		login, err := util.SearchJSONForStringAttr(s.loginAttributePath, data.rawJSON)
 		if err != nil {
 			s.log.Error("Failed to search JSON for login attribute", "error", err)
 		}
@@ -414,7 +415,7 @@ func (s *SocialGenericOAuth) extractLogin(data *UserInfoJson) string {
 
 func (s *SocialGenericOAuth) extractUserName(data *UserInfoJson) string {
 	if s.nameAttributePath != "" {
-		name, err := s.searchJSONForStringAttr(s.nameAttributePath, data.rawJSON)
+		name, err := util.SearchJSONForStringAttr(s.nameAttributePath, data.rawJSON)
 		if err != nil {
 			s.log.Error("Failed to search JSON for attribute", "error", err)
 		} else if name != "" {
@@ -442,7 +443,7 @@ func (s *SocialGenericOAuth) extractGroups(data *UserInfoJson) ([]string, error)
 		return []string{}, nil
 	}
 
-	return s.searchJSONForStringArrayAttr(s.groupsAttributePath, data.rawJSON)
+	return util.SearchJSONForStringSliceAttr(s.groupsAttributePath, data.rawJSON)
 }
 
 func (s *SocialGenericOAuth) FetchPrivateEmail(ctx context.Context, client *http.Client) (string, error) {
@@ -553,7 +554,7 @@ func (s *SocialGenericOAuth) fetchTeamMembershipsFromTeamsUrl(ctx context.Contex
 		return nil, err
 	}
 
-	return s.searchJSONForStringArrayAttr(s.teamIdsAttributePath, response.Body)
+	return util.SearchJSONForStringSliceAttr(s.teamIdsAttributePath, response.Body)
 }
 
 func (s *SocialGenericOAuth) FetchOrganizations(ctx context.Context, client *http.Client) ([]string, bool) {
