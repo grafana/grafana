@@ -282,7 +282,7 @@ var (
 			Description:  "Enables drag and drop for CSV and Excel files",
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 		},
 		{
 			Name:              "alertingNoNormalState",
@@ -464,7 +464,7 @@ var (
 			Description:  "Enables the edit functionality in the datagrid panel",
 			FrontendOnly: true,
 			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 		},
 		{
 			Name:         "extraThemes",
@@ -506,7 +506,7 @@ var (
 			Description:       "Enables previous SQL data source dataset dropdown behavior",
 			FrontendOnly:      true,
 			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaBiSquad,
+			Owner:             grafanaDatavizSquad,
 			HideFromAdminPage: true,
 		},
 		{
@@ -800,14 +800,14 @@ var (
 			Description:  "Enable format string transformer",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 		},
 		{
 			Name:         "transformationsVariableSupport",
 			Description:  "Allows using variables in transformations",
 			FrontendOnly: true,
 			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 		},
 		{
 			Name:            "kubernetesPlaylists",
@@ -907,7 +907,7 @@ var (
 			Description:  "Add cumulative and window functions to the add field from calculation transformation",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 		},
 		{
 			Name:        "alertmanagerRemoteSecondary",
@@ -939,7 +939,7 @@ var (
 			Description:  "Make sure extracted field names are unique in the dataframe",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: true,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 		},
 		{
 			Name:         "dashboardSceneForViewers",
@@ -1042,14 +1042,14 @@ var (
 			Description:  "Enables shared crosshair in table panel",
 			FrontendOnly: true,
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 		},
 		{
 			Name:         "regressionTransformation",
 			Description:  "Enables regression analysis transformation",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
-			Owner:        grafanaBiSquad,
+			Owner:        grafanaDatavizSquad,
 		},
 		{
 			Name:           "displayAnonymousStats",
