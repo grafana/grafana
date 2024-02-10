@@ -53,8 +53,8 @@ Some features are enabled by default. You can disable these feature by setting t
 | `logRowsPopoverMenu`                 | Enable filtering menu displayed when text of a log line is selected                                                                                                                                                          | Yes                |
 | `displayAnonymousStats`              | Enables anonymous stats to be shown in the UI for Grafana                                                                                                                                                                    | Yes                |
 | `lokiQueryHints`                     | Enables query hints for Loki                                                                                                                                                                                                 | Yes                |
+| `alertingPreviewUpgrade`             | Show Unified Alerting preview and upgrade page in legacy alerting                                                                                                                                                            | Yes                |
 | `alertingQueryOptimization`          | Optimizes eligible queries in order to reduce load on datasources                                                                                                                                                            |                    |
-| `jitterAlertRules`                   | Distributes alert rule evaluations more evenly over time, by rule group                                                                                                                                                      |                    |
 
 ## Preview feature toggles
 
@@ -63,6 +63,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `panelTitleSearch`                     | Search for dashboards using panel title                                                                                                                                                      |
 | `migrationLocking`                     | Lock database during migrations                                                                                                                                                              |
 | `autoMigrateOldPanels`                 | Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)                                                                                                           |
+| `autoMigrateGraphPanel`                | Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking                                                                    |
 | `disableAngular`                       | Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime. |
 | `newVizTooltips`                       | New visualizations tooltips UX                                                                                                                                                               |
 | `grpcServer`                           | Run the GRPC server                                                                                                                                                                          |
@@ -86,7 +87,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `pdfTables`                            | Enables generating table data as PDF in reporting                                                                                                                                            |
 | `canvasPanelPanZoom`                   | Allow pan and zoom in canvas panel                                                                                                                                                           |
 | `regressionTransformation`             | Enables regression analysis transformation                                                                                                                                                   |
-| `alertingPreviewUpgrade`               | Show Unified Alerting preview and upgrade page in legacy alerting                                                                                                                            |
+| `groupToNestedTableTransformation`     | Enables the group to nested table transformation                                                                                                                                             |
 
 ## Experimental feature toggles
 
@@ -170,6 +171,7 @@ Experimental features might be changed or removed without prior notice.
 | `onPremToCloudMigrations`                   | In-development feature that will allow users to easily migrate their on-prem Grafana instances to Grafana Cloud.                                                                                                                                                                  |
 | `promQLScope`                               | In-development feature that will allow injection of labels into prometheus queries.                                                                                                                                                                                               |
 | `nodeGraphDotLayout`                        | Changed the layout algorithm for the node graph                                                                                                                                                                                                                                   |
+| `newPDFRendering`                           | New implementation for the dashboard to PDF rendering                                                                                                                                                                                                                             |
 | `passwordPolicy`                            | Enables password policy for Grafana basic auth users.                                                                                                                                                                                                                             |
 
 ## Development feature toggles
