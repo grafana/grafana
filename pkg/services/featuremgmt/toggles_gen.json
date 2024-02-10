@@ -456,13 +456,16 @@
     {
       "metadata": {
         "name": "editPanelCSVDragAndDrop",
-        "resourceVersion": "1671537600000",
-        "creationTimestamp": "2022-12-20T12:00:00Z"
+        "resourceVersion": "1707523537136",
+        "creationTimestamp": "2022-12-20T12:00:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-10 00:05:37.1362 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables drag and drop for CSV and Excel files",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-bi-squad",
+        "codeowner": "@grafana/dataviz-squad",
         "frontend": true
       }
     },
@@ -775,13 +778,16 @@
     {
       "metadata": {
         "name": "enableDatagridEditing",
-        "resourceVersion": "1682337600000",
-        "creationTimestamp": "2023-04-24T12:00:00Z"
+        "resourceVersion": "1707523537136",
+        "creationTimestamp": "2023-04-24T12:00:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-10 00:05:37.1362 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the edit functionality in the datagrid panel",
         "stage": "preview",
-        "codeowner": "@grafana/grafana-bi-squad",
+        "codeowner": "@grafana/dataviz-squad",
         "frontend": true
       }
     },
@@ -853,13 +859,16 @@
     {
       "metadata": {
         "name": "sqlDatasourceDatabaseSelection",
-        "resourceVersion": "1686052800000",
-        "creationTimestamp": "2023-06-06T12:00:00Z"
+        "resourceVersion": "1707523537136",
+        "creationTimestamp": "2023-06-06T12:00:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-10 00:05:37.1362 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables previous SQL data source dataset dropdown behavior",
         "stage": "preview",
-        "codeowner": "@grafana/grafana-bi-squad",
+        "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "hideFromAdminPage": true
       }
@@ -1356,26 +1365,32 @@
     {
       "metadata": {
         "name": "formatString",
-        "resourceVersion": "1697198400000",
-        "creationTimestamp": "2023-10-13T12:00:00Z"
+        "resourceVersion": "1707523537136",
+        "creationTimestamp": "2023-10-13T12:00:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-10 00:05:37.1362 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enable format string transformer",
         "stage": "preview",
-        "codeowner": "@grafana/grafana-bi-squad",
+        "codeowner": "@grafana/dataviz-squad",
         "frontend": true
       }
     },
     {
       "metadata": {
         "name": "transformationsVariableSupport",
-        "resourceVersion": "1696420800000",
-        "creationTimestamp": "2023-10-04T12:00:00Z"
+        "resourceVersion": "1707523537136",
+        "creationTimestamp": "2023-10-04T12:00:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-10 00:05:37.1362 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Allows using variables in transformations",
         "stage": "preview",
-        "codeowner": "@grafana/grafana-bi-squad",
+        "codeowner": "@grafana/dataviz-squad",
         "frontend": true
       }
     },
@@ -1549,13 +1564,16 @@
     {
       "metadata": {
         "name": "addFieldFromCalculationStatFunctions",
-        "resourceVersion": "1699012800000",
-        "creationTimestamp": "2023-11-03T12:00:00Z"
+        "resourceVersion": "1707523537136",
+        "creationTimestamp": "2023-11-03T12:00:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-10 00:05:37.1362 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Add cumulative and window functions to the add field from calculation transformation",
         "stage": "preview",
-        "codeowner": "@grafana/grafana-bi-squad",
+        "codeowner": "@grafana/dataviz-squad",
         "frontend": true
       }
     },
@@ -1610,13 +1628,16 @@
     {
       "metadata": {
         "name": "extractFieldsNameDeduplication",
-        "resourceVersion": "1698926400000",
-        "creationTimestamp": "2023-11-02T12:00:00Z"
+        "resourceVersion": "1707523537136",
+        "creationTimestamp": "2023-11-02T12:00:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-10 00:05:37.1362 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Make sure extracted field names are unique in the dataframe",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-bi-squad",
+        "codeowner": "@grafana/dataviz-squad",
         "frontend": true
       }
     },
@@ -1792,26 +1813,32 @@
     {
       "metadata": {
         "name": "tableSharedCrosshair",
-        "resourceVersion": "1702382400000",
-        "creationTimestamp": "2023-12-12T12:00:00Z"
+        "resourceVersion": "1707523537136",
+        "creationTimestamp": "2023-12-12T12:00:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-10 00:05:37.1362 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables shared crosshair in table panel",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-bi-squad",
+        "codeowner": "@grafana/dataviz-squad",
         "frontend": true
       }
     },
     {
       "metadata": {
         "name": "regressionTransformation",
-        "resourceVersion": "1700827200000",
-        "creationTimestamp": "2023-11-24T12:00:00Z"
+        "resourceVersion": "1707523537136",
+        "creationTimestamp": "2023-11-24T12:00:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-10 00:05:37.1362 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables regression analysis transformation",
         "stage": "preview",
-        "codeowner": "@grafana/grafana-bi-squad",
+        "codeowner": "@grafana/dataviz-squad",
         "frontend": true
       }
     },
