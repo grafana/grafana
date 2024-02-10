@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"reflect"
 	"strconv"
 
@@ -169,7 +170,79 @@ func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, pr
 // If resource version is "0", this interface will get current object at given key
 // and send it in an "ADDED" event, before watch starts.
 func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOptions) (watch.Interface, error) {
-	return nil, apierrors.NewMethodNotSupported(schema.GroupResource{}, "watch")
+	req := &entityStore.EntityWatchRequest{
+		Key:      []string{key},
+		WithBody: true,
+	}
+
+	if opts.ResourceVersion != "" {
+		rv, err := strconv.ParseInt(opts.ResourceVersion, 10, 64)
+		if err != nil {
+			return nil, apierrors.NewBadRequest(fmt.Sprintf("invalid resource version: %s", opts.ResourceVersion))
+		}
+
+		req.Since = rv
+	}
+
+	result, err := s.store.Watch(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	w := watch.NewFake()
+
+	go func() {
+		for {
+			if w.IsStopped() {
+				log.Printf("watch is stopped")
+				return
+			}
+
+			resp, err := result.Recv()
+			if err != nil {
+				log.Printf("error receiving result: %s", err)
+				_ = result.CloseSend()
+				w.Stop()
+				return
+			}
+
+			for _, r := range resp.Entity {
+				obj := s.newFunc()
+				err := entityToResource(r, obj, s.codec)
+				if err != nil {
+					log.Printf("error decoding entity: %s", err)
+					_ = result.CloseSend()
+					w.Stop()
+					return
+				}
+
+				// TODO filter in storage
+				matches, err := opts.Predicate.Matches(obj)
+				if err != nil {
+					log.Printf("error matching object: %s", err)
+					_ = result.CloseSend()
+					w.Stop()
+					return
+				}
+				if !matches {
+					continue
+				}
+
+				watchAction := watch.Error
+				if resp.Action == entityStore.EntityWatchResponse_DELETED {
+					watchAction = watch.Deleted
+				} else if resp.Action == entityStore.EntityWatchResponse_UPDATED {
+					watchAction = watch.Modified
+				} else if resp.Action == entityStore.EntityWatchResponse_CREATED {
+					watchAction = watch.Added
+				}
+
+				w.Action(watchAction, obj)
+			}
+		}
+	}()
+
+	return w, nil
 }
 
 // Get unmarshals object found at key into objPtr. On a not found error, will either
@@ -260,8 +333,14 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 		return apierrors.NewInternalError(err)
 	}
 
+	maxResourceVersion := int64(0)
+
 	for _, r := range rsp.Results {
 		res := s.newFunc()
+
+		if r.ResourceVersion > maxResourceVersion {
+			maxResourceVersion = r.ResourceVersion
+		}
 
 		err := entityToResource(r, res, s.codec)
 		if err != nil {
@@ -288,6 +367,8 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	if rsp.NextPageToken != "" {
 		listAccessor.SetContinue(rsp.NextPageToken)
 	}
+
+	listAccessor.SetResourceVersion(strconv.FormatInt(maxResourceVersion, 10))
 
 	return nil
 }
