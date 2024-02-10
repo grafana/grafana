@@ -57,7 +57,7 @@ describe('LogContextProvider', () => {
   describe('getLogRowContext', () => {
     it('should call getInitContextFilters if no cachedContextFilters', async () => {
       logContextProvider.getInitContextFilters = jest.fn().mockResolvedValue({
-        contextFilters: [{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }],
+        contextFilters: [{ value: 'baz', enabled: true, nonIndexed: false, label: 'bar' }],
         preservedFiltersApplied: false,
       });
 
@@ -89,7 +89,7 @@ describe('LogContextProvider', () => {
     it('should not call getInitContextFilters if cachedContextFilters', async () => {
       logContextProvider.getInitContextFilters = jest
         .fn()
-        .mockResolvedValue([{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }]);
+        .mockResolvedValue([{ value: 'baz', enabled: true, nonIndexed: false, label: 'bar' }]);
 
       logContextProvider.cachedContextFilters = [
         { value: 'baz', enabled: true, nonIndexed: false, label: 'bar' },
@@ -107,7 +107,7 @@ describe('LogContextProvider', () => {
   describe('getLogRowContextQuery', () => {
     it('should call getInitContextFilters if no cachedContextFilters', async () => {
       logContextProvider.getInitContextFilters = jest.fn().mockResolvedValue({
-        contextFilters: [{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }],
+        contextFilters: [{ value: 'baz', enabled: true, nonIndexed: false, label: 'bar' }],
         preservedFiltersApplied: false,
       });
 
@@ -121,7 +121,7 @@ describe('LogContextProvider', () => {
 
     it('should also call getInitContextFilters if cacheFilters is not set', async () => {
       logContextProvider.getInitContextFilters = jest.fn().mockResolvedValue({
-        contextFilters: [{ value: 'baz', enabled: true, fromParser: false, label: 'bar' }],
+        contextFilters: [{ value: 'baz', enabled: true, nonIndexed: false, label: 'bar' }],
         preservedFiltersApplied: false,
       });
       logContextProvider.cachedContextFilters = [
@@ -229,7 +229,7 @@ describe('LogContextProvider', () => {
         }
       );
 
-      expect(contextQuery.query.expr).toEqual(`{bar="baz"}`);
+      expect(contextQuery.query.expr).toEqual(`{bar="baz"} | foo=\`uniqueParsedLabel\``);
     });
 
     it('should not apply line_format if flag is not set by default', async () => {
@@ -401,9 +401,9 @@ describe('LogContextProvider', () => {
       it('should correctly create contextFilters', async () => {
         const result = await logContextProvider.getInitContextFilters(defaultLogRow.labels, queryWithoutParser);
         expect(result.contextFilters).toEqual([
-          { enabled: true, fromParser: false, label: 'bar', value: 'baz' },
-          { enabled: false, fromParser: true, label: 'foo', value: 'uniqueParsedLabel' },
-          { enabled: true, fromParser: false, label: 'xyz', value: 'abc' },
+          { enabled: true, nonIndexed: false, label: 'bar', value: 'baz' },
+          { enabled: false, nonIndexed: true, label: 'foo', value: 'uniqueParsedLabel' },
+          { enabled: true, nonIndexed: false, label: 'xyz', value: 'abc' },
         ]);
         expect(result.preservedFiltersApplied).toBe(false);
       });
@@ -444,9 +444,9 @@ describe('LogContextProvider', () => {
       it('should correctly create contextFilters', async () => {
         const result = await logContextProvider.getInitContextFilters(defaultLogRow.labels, queryWithParser);
         expect(result.contextFilters).toEqual([
-          { enabled: true, fromParser: false, label: 'bar', value: 'baz' },
-          { enabled: false, fromParser: true, label: 'foo', value: 'uniqueParsedLabel' },
-          { enabled: true, fromParser: false, label: 'xyz', value: 'abc' },
+          { enabled: true, nonIndexed: false, label: 'bar', value: 'baz' },
+          { enabled: false, nonIndexed: true, label: 'foo', value: 'uniqueParsedLabel' },
+          { enabled: true, nonIndexed: false, label: 'xyz', value: 'abc' },
         ]);
         expect(result.preservedFiltersApplied).toBe(false);
       });
@@ -479,9 +479,9 @@ describe('LogContextProvider', () => {
         );
         const result = await logContextProvider.getInitContextFilters(defaultLogRow.labels, queryWithParser);
         expect(result.contextFilters).toEqual([
-          { enabled: false, fromParser: false, label: 'bar', value: 'baz' }, // disabled real label
-          { enabled: true, fromParser: true, label: 'foo', value: 'uniqueParsedLabel' }, // enabled parsed label
-          { enabled: true, fromParser: false, label: 'xyz', value: 'abc' },
+          { enabled: false, nonIndexed: false, label: 'bar', value: 'baz' }, // disabled real label
+          { enabled: true, nonIndexed: true, label: 'foo', value: 'uniqueParsedLabel' }, // enabled parsed label
+          { enabled: true, nonIndexed: false, label: 'xyz', value: 'abc' },
         ]);
         expect(result.preservedFiltersApplied).toBe(true);
       });
@@ -496,9 +496,9 @@ describe('LogContextProvider', () => {
         );
         const result = await logContextProvider.getInitContextFilters(defaultLogRow.labels, queryWithParser);
         expect(result.contextFilters).toEqual([
-          { enabled: true, fromParser: false, label: 'bar', value: 'baz' }, // enabled real label
-          { enabled: false, fromParser: true, label: 'foo', value: 'uniqueParsedLabel' },
-          { enabled: true, fromParser: false, label: 'xyz', value: 'abc' }, // enabled real label
+          { enabled: true, nonIndexed: false, label: 'bar', value: 'baz' }, // enabled real label
+          { enabled: false, nonIndexed: true, label: 'foo', value: 'uniqueParsedLabel' },
+          { enabled: true, nonIndexed: false, label: 'xyz', value: 'abc' }, // enabled real label
         ]);
         expect(result.preservedFiltersApplied).toBe(false);
       });
@@ -513,9 +513,9 @@ describe('LogContextProvider', () => {
         );
         const result = await logContextProvider.getInitContextFilters(defaultLogRow.labels, queryWithParser);
         expect(result.contextFilters).toEqual([
-          { enabled: false, fromParser: false, label: 'bar', value: 'baz' },
-          { enabled: true, fromParser: true, label: 'foo', value: 'uniqueParsedLabel' },
-          { enabled: true, fromParser: false, label: 'xyz', value: 'abc' },
+          { enabled: false, nonIndexed: false, label: 'bar', value: 'baz' },
+          { enabled: true, nonIndexed: true, label: 'foo', value: 'uniqueParsedLabel' },
+          { enabled: true, nonIndexed: false, label: 'xyz', value: 'abc' },
         ]);
         expect(result.preservedFiltersApplied).toBe(true);
       });
