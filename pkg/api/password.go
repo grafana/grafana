@@ -8,8 +8,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/password"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -97,8 +99,12 @@ func (hs *HTTPServer) ResetPassword(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusBadRequest, "Passwords do not match", nil)
 	}
 
-	password := user.Password(form.NewPassword)
-	if password.IsWeak() {
+	userPassword := user.Password(form.NewPassword)
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagPasswordPolicy) {
+		if err := password.ValidatePassword(userPassword, hs.Cfg); err != nil {
+			return response.Err(err)
+		}
+	} else if userPassword.IsWeak() {
 		return response.Error(http.StatusBadRequest, "New password is too short", nil)
 	}
 

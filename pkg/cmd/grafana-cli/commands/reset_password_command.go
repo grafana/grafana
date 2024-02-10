@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/password"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -36,6 +38,15 @@ func resetPasswordCommand(c utils.CommandLine, runner server.Runner) error {
 		newPassword = c.Args().First()
 	}
 
+	userPassword := user.Password(newPassword)
+	if runner.Features.IsEnabled(context.Background(), featuremgmt.FlagPasswordPolicy) {
+		if err := password.ValidatePassword(userPassword, runner.Cfg); err != nil {
+			return err
+		}
+	} else if userPassword.IsWeak() {
+		return fmt.Errorf("new password is too short")
+	}
+
 	err := resetPassword(adminId, newPassword, runner.UserService)
 	if err == nil {
 		logger.Infof("\n")
@@ -45,11 +56,6 @@ func resetPasswordCommand(c utils.CommandLine, runner server.Runner) error {
 }
 
 func resetPassword(adminId int64, newPassword string, userSvc user.Service) error {
-	password := user.Password(newPassword)
-	if password.IsWeak() {
-		return fmt.Errorf("new password is too short")
-	}
-
 	userQuery := user.GetUserByIDQuery{ID: adminId}
 	usr, err := userSvc.GetByID(context.Background(), &userQuery)
 	if err != nil {
