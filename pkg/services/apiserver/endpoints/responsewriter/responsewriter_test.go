@@ -12,7 +12,7 @@ import (
 )
 
 func TestResponseAdapter(t *testing.T) {
-	t.Run("should handle syncronous write", func(t *testing.T) {
+	t.Run("should handle synchronous write", func(t *testing.T) {
 		client := &http.Client{
 			Transport: &roundTripperFunc{
 				ready: make(chan struct{}),
@@ -36,7 +36,7 @@ func TestResponseAdapter(t *testing.T) {
 		require.Equal(t, "OK", string(bodyBytes))
 	})
 
-	t.Run("should handle asyncronous write", func(t *testing.T) {
+	t.Run("should handle synchronous write", func(t *testing.T) {
 		generateRandomStrings(10)
 		client := &http.Client{
 			Transport: &roundTripperFunc{

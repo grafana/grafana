@@ -63,7 +63,6 @@ var (
 )
 
 func getResourceVersion() (*uint64, error) {
-
 	var err error
 	once.Do(func() {
 		node, err = snowflake.NewNode(1)

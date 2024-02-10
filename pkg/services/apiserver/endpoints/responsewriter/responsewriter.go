@@ -15,16 +15,19 @@ var _ http.ResponseWriter = (*ResponseAdapter)(nil)
 var _ io.ReadCloser = (*ResponseAdapter)(nil)
 
 func WrapHandler(handler http.Handler) func(req *http.Request) (*http.Response, error) {
+	// ignore the lint error because the response is passed directly to the client,
+	// so the client will be responsible for closing the response body.
+	//nolint:bodyclose
 	return func(req *http.Request) (*http.Response, error) {
 		w := NewAdapter(req)
+		resp := w.Response()
 		go func() {
 			handler.ServeHTTP(w, req)
-			err := w.CloseWriter()
-			if err != nil {
+			if err := w.CloseWriter(); err != nil {
 				klog.Errorf("error closing writer: %v", err)
 			}
 		}()
-		return w.Response(), nil
+		return resp, nil
 	}
 }
 
