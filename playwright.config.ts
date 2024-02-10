@@ -36,8 +36,8 @@ export default defineConfig<PluginOptions>({
     // 1. Login to Grafana and store the cookie on disk for use in subsequent test projects.
     {
       name: 'authenticate',
-      testMatch: [/.*auth\.setup\.ts/],
-      // testMatch: [/node_modules\/.*auth\.setup\.ts/],
+      testDir: 'node_modules/@grafana/plugin-e2e/dist/auth',
+      testMatch: [/.*\.js/],
     },
     // 2. Run all tests in parallel using Chrome.
     {
