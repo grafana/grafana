@@ -26,9 +26,9 @@ test.describe('query editor query data', () => {
     await queryEditorRow.getByLabel('Labels').fill('invalid-label-format');
     await expect(panelEditPage.refreshPanel(), formatExpectError('Expected panel query to fail')).not.toBeOK();
     await expect(
-      panelEditPage,
+      panelEditPage.panel.getErrorIcon(),
       formatExpectError('Expected panel error to be displayed after query execution')
-    ).toHavePanelError();
+    ).toBeVisible();
   });
 });
 
@@ -50,9 +50,9 @@ test.describe('query editor with mocked responses', () => {
     await panelEditPage.setVisualization(TABLE_VIZ_NAME);
     await panelEditPage.refreshPanel();
     await expect(
-      panelEditPage,
+      panelEditPage.panel.getErrorIcon(),
       formatExpectError('Did not expect panel error to be displayed after query execution')
-    ).not.toHavePanelError();
+    ).not.toBeVisible();
     await expect(
       panelEditPage.getByTestIdOrAriaLabel(selectors.components.Panels.Visualization.Table.body),
       formatExpectError('Expected certain select options to be displayed after clicking on the select input')
