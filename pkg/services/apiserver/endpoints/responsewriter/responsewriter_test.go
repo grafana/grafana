@@ -16,7 +16,10 @@ func TestResponseAdapter(t *testing.T) {
 		client := &http.Client{
 			Transport: &roundTripperFunc{
 				ready: make(chan struct{}),
-				fn:    grafanaresponsewriter.WrapHandler(http.HandlerFunc(syncHandler)),
+				// ignore the lint error because the response is passed directly to the client,
+				// so the client will be responsible for closing the response body.
+				//nolint:bodyclose
+				fn: grafanaresponsewriter.WrapHandler(http.HandlerFunc(syncHandler)),
 			},
 		}
 		close(client.Transport.(*roundTripperFunc).ready)
@@ -41,7 +44,10 @@ func TestResponseAdapter(t *testing.T) {
 		client := &http.Client{
 			Transport: &roundTripperFunc{
 				ready: make(chan struct{}),
-				fn:    grafanaresponsewriter.WrapHandler(http.HandlerFunc(asyncHandler)),
+				// ignore the lint error because the response is passed directly to the client,
+				// so the client will be responsible for closing the response body.
+				//nolint:bodyclose
+				fn: grafanaresponsewriter.WrapHandler(http.HandlerFunc(asyncHandler)),
 			},
 		}
 		close(client.Transport.(*roundTripperFunc).ready)

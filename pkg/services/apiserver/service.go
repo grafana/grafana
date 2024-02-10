@@ -336,7 +336,10 @@ func (s *service) startCoreServer(
 	serverConfig *genericapiserver.RecommendedConfig,
 	server *genericapiserver.GenericAPIServer,
 ) (*genericapiserver.GenericAPIServer, error) {
-	// setup the loopback transport and signal that it's ready
+	// setup the loopback transport and signal that it's ready.
+	// ignore the lint error because the response is passed directly to the client,
+	// so the client will be responsible for closing the response body.
+	// nolint:bodyclose
 	transport.fn = grafanaresponsewriter.WrapHandler(server.Handler)
 	close(transport.ready)
 
@@ -364,6 +367,9 @@ func (s *service) startAggregator(
 	}
 
 	// setup the loopback transport for the aggregator server and signal that it's ready
+	// ignore the lint error because the response is passed directly to the client,
+	// so the client will be responsible for closing the response body.
+	// nolint:bodyclose
 	transport.fn = grafanaresponsewriter.WrapHandler(aggregatorServer.GenericAPIServer.Handler)
 	close(transport.ready)
 
