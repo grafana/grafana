@@ -320,10 +320,10 @@ message EntityListResponse {
 //-----------------------------------------------
 
 message EntityWatchRequest {
-  // Timestamp of last changes. Empty will default to
+  // ResourceVersion of last changes. Empty will default to full history
   int64 since = 1;
 
-  // Watch sppecific entities
+  // Watch specific entities
   repeated string key = 2;
 
   // limit to a specific resource (empty is all)
@@ -357,6 +357,7 @@ message EntityWatchResponse {
     UNKNOWN = 0;
     UPDATED = 1;
     DELETED = 2;
+    CREATED = 3;
   }
 }
 

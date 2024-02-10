@@ -1106,12 +1106,324 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 	return rsp, err
 }
 
-func (s *sqlEntityServer) Watch(*entity.EntityWatchRequest, entity.EntityStore_WatchServer) error {
+func (s *sqlEntityServer) Watch(r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
 	if err := s.Init(); err != nil {
 		return err
 	}
 
-	return fmt.Errorf("unimplemented")
+	user, err := appcontext.User(w.Context())
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return fmt.Errorf("missing user in context")
+	}
+
+	if r.Since == 0 {
+		err = s.watchInit(w.Context(), r, w)
+		if err != nil {
+			return err
+		}
+	}
+
+	for {
+		err := w.Context().Err()
+		if err != nil {
+			s.log.Debug("watch context cancelled", "err", err)
+			break
+		}
+
+		err = s.watch(w.Context(), r, w)
+		if err != nil {
+			s.log.Error("watch error", "err", err)
+			return err
+		}
+
+		time.Sleep(5 * time.Second)
+	}
+
+	return nil
+}
+
+// watchInit is a helper function to send the initial set of entities to the client
+func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
+	rr := &entity.ReadEntityRequest{
+		WithBody:   r.WithBody,
+		WithStatus: r.WithStatus,
+	}
+
+	fields := s.getReadFields(rr)
+
+	entityQuery := selectQuery{
+		dialect:  s.dialect,
+		fields:   fields,
+		from:     "entity", // the table
+		args:     []any{},
+		limit:    100,  // r.Limit,
+		oneExtra: true, // request one more than the limit (and show next token if it exists)
+	}
+
+	// TODO fix this
+	// entityQuery.addWhere("namespace", user.OrgID)
+
+	/*
+		if len(r.Group) > 0 {
+			entityQuery.addWhereIn("group", r.Group)
+		}
+	*/
+
+	if r.Since > 0 {
+		entityQuery.addWhere("resource_version > ?", r.Since)
+	}
+
+	if len(r.Resource) > 0 {
+		entityQuery.addWhereIn("resource", r.Resource)
+	}
+
+	if len(r.Key) > 0 {
+		where := []string{}
+		args := []any{}
+		for _, k := range r.Key {
+			key, err := entity.ParseKey(k)
+			if err != nil {
+				return err
+			}
+
+			args = append(args, key.Namespace, key.Group, key.Resource)
+			whereclause := "(" + s.dialect.Quote("namespace") + "=? AND " + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?"
+			if key.Name != "" {
+				args = append(args, key.Name)
+				whereclause += " AND " + s.dialect.Quote("name") + "=?"
+			}
+			whereclause += ")"
+
+			where = append(where, whereclause)
+		}
+
+		entityQuery.addWhere("("+strings.Join(where, " OR ")+")", args...)
+	}
+
+	// Folder guid
+	if r.Folder != "" {
+		entityQuery.addWhere("folder", r.Folder)
+	}
+
+	// if we have a page token, use that to specify the first record
+	/*
+		continueToken, err := GetContinueToken(r)
+		if err != nil {
+			return err
+		}
+		if continueToken != nil {
+			entityQuery.offset = continueToken.StartOffset
+		}
+	*/
+
+	if len(r.Labels) > 0 {
+		var args []any
+		var conditions []string
+		for labelKey, labelValue := range r.Labels {
+			args = append(args, labelKey)
+			args = append(args, labelValue)
+			conditions = append(conditions, "(label = ? AND value = ?)")
+		}
+		query := "SELECT guid FROM entity_labels" +
+			" WHERE (" + strings.Join(conditions, " OR ") + ")" +
+			" GROUP BY guid" +
+			" HAVING COUNT(label) = ?"
+		args = append(args, len(r.Labels))
+
+		entityQuery.addWhereInSubquery("guid", query, args)
+	}
+
+	entityQuery.addOrderBy("resource_version", Ascending)
+
+	var err error
+
+	s.log.Debug("watch init")
+
+	for hasmore := true; hasmore && err == nil; {
+		hasmore, err = func() (bool, error) {
+			query, args := entityQuery.toQuery()
+
+			rows, err := s.sess.Query(ctx, query, args...)
+			if err != nil {
+				return false, err
+			}
+			defer func() { _ = rows.Close() }()
+
+			found := int64(0)
+
+			for rows.Next() {
+				found++
+				if found > entityQuery.limit {
+					entityQuery.offset += entityQuery.limit
+					return true, nil
+				}
+
+				result, err := s.rowToEntity(ctx, rows, rr)
+				if err != nil {
+					return false, err
+				}
+
+				if result.ResourceVersion > r.Since {
+					r.Since = result.ResourceVersion
+				}
+
+				action := entity.EntityWatchResponse_CREATED
+
+				s.log.Debug("sending init", "action", action, "guid", result.Guid, "version", result.ResourceVersion)
+
+				err = w.Send(&entity.EntityWatchResponse{
+					Action:    action,
+					Entity:    []*entity.Entity{result},
+					Timestamp: time.Now().UnixMilli(),
+				})
+				if err != nil {
+					return false, err
+				}
+			}
+
+			return false, nil
+		}()
+	}
+
+	return err
+}
+
+// watch is a helper to get the next set of entities and send them to the client
+func (s *sqlEntityServer) watch(ctx context.Context, r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
+	rr := &entity.ReadEntityRequest{
+		WithBody:   r.WithBody,
+		WithStatus: r.WithStatus,
+	}
+
+	fields := s.getReadFields(rr)
+
+	entityQuery := selectQuery{
+		dialect: s.dialect,
+		fields:  fields,
+		from:    "entity_history", // the table
+		args:    []any{},
+		limit:   100, // r.Limit,
+		// offset:   0,
+		oneExtra: true, // request one more than the limit (and show next token if it exists)
+	}
+
+	// TODO fix this
+	// entityQuery.addWhere("namespace", user.OrgID)
+
+	/*
+		if len(r.Group) > 0 {
+			entityQuery.addWhereIn("group", r.Group)
+		}
+	*/
+
+	if r.Since > 0 {
+		entityQuery.addWhere("resource_version > ?", r.Since)
+	}
+
+	if len(r.Resource) > 0 {
+		entityQuery.addWhereIn("resource", r.Resource)
+	}
+
+	if len(r.Key) > 0 {
+		where := []string{}
+		args := []any{}
+		for _, k := range r.Key {
+			key, err := entity.ParseKey(k)
+			if err != nil {
+				return err
+			}
+
+			args = append(args, key.Namespace, key.Group, key.Resource)
+			whereclause := "(" + s.dialect.Quote("namespace") + "=? AND " + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?"
+			if key.Name != "" {
+				args = append(args, key.Name)
+				whereclause += " AND " + s.dialect.Quote("name") + "=?"
+			}
+			whereclause += ")"
+
+			where = append(where, whereclause)
+		}
+
+		entityQuery.addWhere("("+strings.Join(where, " OR ")+")", args...)
+	}
+
+	// Folder guid
+	if r.Folder != "" {
+		entityQuery.addWhere("folder", r.Folder)
+	}
+
+	// if we have a page token, use that to specify the first record
+	/*
+		continueToken, err := GetContinueToken(r)
+		if err != nil {
+			return err
+		}
+		if continueToken != nil {
+			entityQuery.offset = continueToken.StartOffset
+		}
+	*/
+
+	if len(r.Labels) > 0 {
+		var args []any
+		var conditions []string
+		for labelKey, labelValue := range r.Labels {
+			args = append(args, labelKey)
+			args = append(args, labelValue)
+			conditions = append(conditions, "(label = ? AND value = ?)")
+		}
+		query := "SELECT guid FROM entity_labels" +
+			" WHERE (" + strings.Join(conditions, " OR ") + ")" +
+			" GROUP BY guid" +
+			" HAVING COUNT(label) = ?"
+		args = append(args, len(r.Labels))
+
+		entityQuery.addWhereInSubquery("guid", query, args)
+	}
+
+	entityQuery.addOrderBy("resource_version", Ascending)
+
+	query, args := entityQuery.toQuery()
+
+	rows, err := s.sess.Query(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = rows.Close() }()
+
+	for rows.Next() {
+		result, err := s.rowToEntity(ctx, rows, rr)
+		if err != nil {
+			return err
+		}
+
+		if result.ResourceVersion > r.Since {
+			r.Since = result.ResourceVersion
+		}
+
+		// TODO store action in history?
+		action := entity.EntityWatchResponse_UNKNOWN
+		if result.UpdatedBy == "" {
+			action = entity.EntityWatchResponse_CREATED
+		} else if true {
+			action = entity.EntityWatchResponse_UPDATED
+		}
+
+		s.log.Debug("sending", "action", action, "guid", result.Guid, "version", result.ResourceVersion, "since", r.Since)
+
+		err = w.Send(&entity.EntityWatchResponse{
+			Action:    action,
+			Entity:    []*entity.Entity{result},
+			Timestamp: time.Now().UnixMilli(),
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.ReferenceRequest) (*entity.EntityListResponse, error) {
