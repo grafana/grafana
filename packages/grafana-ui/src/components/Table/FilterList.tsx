@@ -29,7 +29,7 @@ const operatorSelectableValues: { [key: string]: SelectableValue<string> } = {
   Expression: {
     label: 'Expression',
     value: 'Expression',
-    description: 'Bool2 Expression (Char $ represents the column value in the expression, e.g. "$ >= 10 && $ <= 12")',
+    description: 'Bool Expression (Char $ represents the column value in the expression, e.g. "$ >= 10 && $ <= 12")',
   },
 };
 const OPERATORS = Object.values(operatorSelectableValues);
