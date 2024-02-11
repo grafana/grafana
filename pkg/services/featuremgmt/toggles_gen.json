@@ -2050,6 +2050,19 @@
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true
       }
+    },
+    {
+      "metadata": {
+        "name": "dashboardSceneSolo",
+        "resourceVersion": "1707577534071",
+        "creationTimestamp": "2024-02-10T15:05:34Z"
+      },
+      "spec": {
+        "description": "Enables rendering dashboards using scenes for solo panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
     }
   ]
 }
