@@ -18,40 +18,23 @@ interface Props {
 const ITEM_HEIGHT = 28;
 const MIN_HEIGHT = ITEM_HEIGHT * 5;
 
-const operatorSelectableValue = (op: string): SelectableValue<string> => {
-  const result: SelectableValue<string> = { label: op, value: op };
-  switch (op) {
-    case 'Contains':
-      result.description = 'Contains';
-      break;
-    case '=':
-      result.description = 'Equals';
-      break;
-    case '!=':
-      result.description = 'Not equals';
-      break;
-    case '>':
-      result.description = 'Greater';
-      break;
-    case '>=':
-      result.description = 'Greater or Equal';
-      break;
-    case '<':
-      result.description = 'Less';
-      break;
-    case '<=':
-      result.description = 'Less or Equal';
-      break;
-    case 'Expression':
-      result.description =
-        'Bool Expression (Char $ represents the column value in the expression, e.g. "$ >= 10 && $ <= 12")';
-      break;
-  }
-  return result;
+const operatorSelectableValues: { [key: string]: SelectableValue<string> } = {
+  Contains: { label: 'Contains', value: 'Contains', description: 'Contains' },
+  '=': { label: '=', value: '=', description: 'Equals' },
+  '!=': { label: '!=', value: '!=', description: 'Not equals' },
+  '>': { label: '>', value: '>', description: 'Greater' },
+  '>=': { label: '>=', value: '>=', description: 'Greater or Equal' },
+  '<': { label: '<', value: '<', description: 'Less' },
+  '<=': { label: '<=', value: '<=', description: 'Less or Equal' },
+  Expression: {
+    label: 'Expression',
+    value: 'Expression',
+    description: 'Bool2 Expression (Char $ represents the column value in the expression, e.g. "$ >= 10 && $ <= 12")',
+  },
 };
-const OPERATORS = ['Contains', '=', '!=', '<', '<=', '>', '>=', 'Expression'].map(operatorSelectableValue);
-const REGEX_OPERATOR = OPERATORS.filter((op) => op.value === 'Contains')[0];
-const XPR_OPERATOR = OPERATORS.filter((op) => op.value === 'Expression')[0];
+const OPERATORS = Object.values(operatorSelectableValues);
+const REGEX_OPERATOR = operatorSelectableValues['Contains'];
+const XPR_OPERATOR = operatorSelectableValues['Expression'];
 
 const comparableValue = (value: string): string | number | Date | boolean => {
   value = value.trim().replace(/\\/g, '');
