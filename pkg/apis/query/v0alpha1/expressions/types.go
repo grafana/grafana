@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	openapi "k8s.io/kube-openapi/pkg/common"
-	spec "k8s.io/kube-openapi/pkg/validation/spec"
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
@@ -17,10 +16,7 @@ const QueryTypeResample = "resample"
 const QueryTypeClassic = "classic"
 const QueryTypeThreshold = "threshold"
 
-func GetQueryTypeDefinitions() map[string]definition.QueryTypeSpec {
-	ref := func(path string) spec.Ref {
-		return spec.Ref{}
-	}
+func GetQueryTypeDefinitions(ref openapi.ReferenceCallback) map[string]definition.QueryTypeSpec {
 	return map[string]definition.QueryTypeSpec{
 		QueryTypeMath: {
 			Description: "execute math commands",

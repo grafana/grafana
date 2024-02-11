@@ -10,14 +10,18 @@ import (
 
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/definition"
 )
 
 func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
+	ref := func(path string) spec.Ref {
+		return spec.Ref{} // dummy ref
+	}
 	typesFile := "types.json"
-	current := GetQueryTypeDefinitions()
+	current := GetQueryTypeDefinitions(ref)
 
 	created := time.Now().UTC()
 	resourceVersion := fmt.Sprintf("%d", created.UnixMilli())

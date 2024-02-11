@@ -38,11 +38,12 @@ type QueryTypeVersion struct {
 	// https://github.com/kubernetes/apiextensions-apiserver/blob/v0.29.1/pkg/apis/apiextensions/types_jsonschema.go#L40
 	Schema common.Unstructured `json:"schema"`
 
-	// Examples (include a wrapper)
+	// Examples (include a wrapper) ideally a template!
 	Examples []common.Unstructured `json:"examples,omitempty"`
 
-	// What changed from the previous version
-	// for the full history see git!
+	// Changelog defines the changed from the previous version
+	// All changes in the same version *must* be backwards compatible
+	// Only notable changes will be shown here, for the full version history see git!
 	Changelog []string `json:"changelog,omitempty"`
 }
 

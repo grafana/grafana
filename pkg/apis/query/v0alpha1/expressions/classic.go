@@ -1,7 +1,9 @@
 package expressions
 
 import (
-	// TODO! we can flip the import order here... since we do not want have external imports
+	// TODO!!!
+	// Once this feels a bit more stable, we should flip the import order here...
+	// We want to exclude external imports if possible
 	"github.com/grafana/grafana/pkg/expr/classic"
 )
 
