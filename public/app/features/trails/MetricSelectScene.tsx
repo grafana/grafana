@@ -22,6 +22,7 @@ import {
 } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 import { Input, useStyles2, InlineSwitch, Field, Alert, Icon, LoadingPlaceholder } from '@grafana/ui';
+import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
 import { MetricCategoryCascader } from './MetricCategory/MetricCategoryCascader';
@@ -30,7 +31,7 @@ import { SelectMetricAction } from './SelectMetricAction';
 import { hideEmptyPreviews } from './hideEmptyPreviews';
 import { sortRelatedMetrics } from './relatedMetrics';
 import { getVariablesWithMetricConstant, trailDS, VAR_DATASOURCE, VAR_FILTERS_EXPR, VAR_METRIC_NAMES } from './shared';
-import { getColorByIndex, getTrailFor } from './utils';
+import { getColorByIndex, getFilters, getTrailFor } from './utils';
 
 interface MetricPanel {
   name: string;
@@ -248,7 +249,13 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
 
     const children: SceneFlexItem[] = [];
 
-    const metricsList = this.sortedPreviewMetrics(); //!this.justChangedTimeRange ? this.sortedPreviewMetrics() : Object.values(this.previewCache);
+    const metricsList = this.sortedPreviewMetrics();
+
+    // Get the current filters to determine the count of them
+    // Which is required for `getPreviewPanelFor`
+    const filters = getFilters(this);
+    const currentFilterCount = filters?.length || 0;
+
     for (let index = 0; index < metricsList.length; index++) {
       const metric = metricsList[index];
 
@@ -257,7 +264,7 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
           children.push(metric.itemRef.resolve());
           continue;
         }
-        const panel = getPreviewPanelFor(metric.name, index);
+        const panel = getPreviewPanelFor(metric.name, index, currentFilterCount);
         metric.itemRef = panel.getRef();
         metric.isPanel = true;
         children.push(panel);
@@ -400,7 +407,7 @@ function getMetricNamesVariableSet() {
   });
 }
 
-function getPreviewPanelFor(metric: string, index: number) {
+function getPreviewPanelFor(metric: string, index: number, currentFilterCount: number) {
   const autoQuery = getAutoQueriesForMetric(metric);
 
   const vizPanel = autoQuery.preview
@@ -408,6 +415,10 @@ function getPreviewPanelFor(metric: string, index: number) {
     .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
     .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
     .build();
+
+  const queries = autoQuery.preview.queries.map((query) =>
+    convertPreviewQueriesToIgnoreUsage(query, currentFilterCount)
+  );
 
   return new SceneCSSGridItem({
     $variables: new SceneVariableSet({
@@ -417,7 +428,7 @@ function getPreviewPanelFor(metric: string, index: number) {
     $data: new SceneQueryRunner({
       datasource: trailDS,
       maxDataPoints: 200,
-      queries: autoQuery.preview.queries,
+      queries,
     }),
     body: vizPanel,
   });
@@ -496,4 +507,16 @@ function useVariableStatus(name: string, sceneObject: SceneObject) {
   const { error, loading } = useVariableState() || {};
 
   return { isLoading: !!loading, error };
+}
+
+function convertPreviewQueriesToIgnoreUsage(query: PromQuery, currentFilterCount: number) {
+  // If there are filters, we append to the list. Otherwise, we replace the empty list.
+  const replacement = currentFilterCount > 0 ? "${filters},__ignore_usage__=''" : "__ignore_usage__=''";
+
+  const expr = query.expr?.replace('${filters}', replacement);
+
+  return {
+    ...query,
+    expr,
+  };
 }
