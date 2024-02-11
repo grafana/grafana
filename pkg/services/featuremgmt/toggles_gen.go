@@ -519,6 +519,10 @@ const (
 	// Enables dashboard rendering using Scenes for viewer roles
 	FlagDashboardSceneForViewers = "dashboardSceneForViewers"
 
+	// FlagDashboardSceneSolo
+	// Enables rendering dashboards using scenes for solo panels
+	FlagDashboardSceneSolo = "dashboardSceneSolo"
+
 	// FlagDashboardScene
 	// Enables dashboard rendering using scenes for all roles
 	FlagDashboardScene = "dashboardScene"

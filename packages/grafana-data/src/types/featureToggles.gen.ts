@@ -146,6 +146,7 @@ export interface FeatureToggles {
   annotationPermissionUpdate?: boolean;
   extractFieldsNameDeduplication?: boolean;
   dashboardSceneForViewers?: boolean;
+  dashboardSceneSolo?: boolean;
   dashboardScene?: boolean;
   panelFilterVariable?: boolean;
   pdfTables?: boolean;
