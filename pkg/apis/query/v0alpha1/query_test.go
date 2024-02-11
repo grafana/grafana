@@ -80,9 +80,11 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 	t.Run("read write data frame contracts", func(t *testing.T) {
 		q := v0alpha1.GenericDataQuery{
 			RefID: "A",
-			ResponseContract: &v0alpha1.ResultDataContract{
+			ResultAssertions: &v0alpha1.ResultAssertions{
 				Type:        data.FrameTypeLogLines,
 				TypeVersion: data.FrameTypeVersion{5, 6},
+				MaxBytes:    123456,
+				MaxFrames:   100,
 			},
 			QueryType: "hello",
 		}
@@ -94,8 +96,10 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 		err = json.Unmarshal(out, copy)
 		require.NoError(t, err)
 
-		require.Equal(t, uint(5), copy.ResponseContract.TypeVersion[0])
-		require.Equal(t, uint(6), copy.ResponseContract.TypeVersion[1])
-		require.Equal(t, q.ResponseContract.TypeVersion, copy.ResponseContract.TypeVersion)
+		require.Equal(t, uint(5), copy.ResultAssertions.TypeVersion[0])
+		require.Equal(t, uint(6), copy.ResultAssertions.TypeVersion[1])
+		require.Equal(t, q.ResultAssertions.TypeVersion, copy.ResultAssertions.TypeVersion)
+		require.Equal(t, q.ResultAssertions.MaxBytes, 123456)
+		require.Equal(t, q.ResultAssertions.MaxFrames, 10)
 	})
 }

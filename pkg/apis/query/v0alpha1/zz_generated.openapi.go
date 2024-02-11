@@ -22,7 +22,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery":             schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericQueryRequest":          schema_pkg_apis_query_v0alpha1_GenericQueryRequest(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataResponse":            QueryDataResponse{}.OpenAPIDefinition(),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.ResultDataContract":           schema_pkg_apis_query_v0alpha1_ResultDataContract(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.ResultAssertions":             schema_pkg_apis_query_v0alpha1_ResultAssertions(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange":                    schema_pkg_apis_query_v0alpha1_TimeRange(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.Position":            schema_apis_query_v0alpha1_template_Position(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.QueryTemplate":       schema_apis_query_v0alpha1_template_QueryTemplate(ref),
@@ -198,10 +198,10 @@ func schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref common.ReferenceCallbac
 							Format:      "",
 						},
 					},
-					"resultDataContract": {
+					"resultAssertions": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Optionally specify the required result type and version",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.ResultDataContract"),
+							Description: "Optionally define query result assertions",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.ResultAssertions"),
 						},
 					},
 					"timeRange": {
@@ -256,7 +256,7 @@ func schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref common.ReferenceCallbac
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef", "github.com/grafana/grafana/pkg/apis/query/v0alpha1.ResultDataContract", "github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange"},
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef", "github.com/grafana/grafana/pkg/apis/query/v0alpha1.ResultAssertions", "github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange"},
 	}
 }
 
@@ -324,11 +324,12 @@ func schema_pkg_apis_query_v0alpha1_GenericQueryRequest(ref common.ReferenceCall
 	}
 }
 
-func schema_pkg_apis_query_v0alpha1_ResultDataContract(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_query_v0alpha1_ResultAssertions(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "ResultAssertions define the expected response shape and query behavior.  This is useful to enforce behavior over time.  The assertions are passed to the query engine and can be used to fail queries *before* returning them to a client (select * from bigquery!)",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"type": {
 						SchemaProps: spec.SchemaProps{
@@ -359,9 +360,9 @@ func schema_pkg_apis_query_v0alpha1_ResultDataContract(ref common.ReferenceCallb
 							Format:      "int64",
 						},
 					},
-					"maxLabels": {
+					"maxFrames": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Maximum labels to expand -- if the query planning expects more then this, the query may fail fast",
+							Description: "Maximum frame count",
 							Type:        []string{"integer"},
 							Format:      "int64",
 						},

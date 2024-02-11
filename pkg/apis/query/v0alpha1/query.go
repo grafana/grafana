@@ -48,8 +48,8 @@ type GenericDataQuery struct {
 	// RefID is the unique identifier of the query, set by the frontend call.
 	RefID string `json:"refId"`
 
-	// Optionally specify the required result type and version
-	ResponseContract *ResultDataContract `json:"resultDataContract,omitempty"`
+	// Optionally define query result assertions
+	ResultAssertions *ResultAssertions `json:"resultAssertions,omitempty"`
 
 	// TimeRange represents the query range
 	// NOTE: unlike generic /ds/query, we can now send explicit time values in each query
@@ -80,7 +80,10 @@ type GenericDataQuery struct {
 	props map[string]any `json:"-"`
 }
 
-type ResultDataContract struct {
+// ResultAssertions define the expected response shape and query behavior.  This is useful to
+// enforce behavior over time.  The assertions are passed to the query engine and can be used
+// to fail queries *before* returning them to a client (select * from bigquery!)
+type ResultAssertions struct {
 	// Type asserts that the frame matches a known type structure.
 	Type data.FrameType `json:"type,omitempty"`
 
@@ -91,8 +94,8 @@ type ResultDataContract struct {
 	// Maximum bytes that can be read -- if the query planning expects more then this, the query may fail fast
 	MaxBytes int64 `json:"maxBytes,omitempty"`
 
-	// Maximum labels to expand -- if the query planning expects more then this, the query may fail fast
-	MaxLabels int64 `json:"maxLabels,omitempty"`
+	// Maximum frame count
+	MaxFrames int64 `json:"maxFrames,omitempty"`
 }
 
 func NewGenericDataQuery(vals map[string]any) GenericDataQuery {
@@ -158,8 +161,8 @@ func (g GenericDataQuery) MarshalJSON() ([]byte, error) {
 	if g.MaxDataPoints > 0 {
 		vals["maxDataPoints"] = g.MaxDataPoints
 	}
-	if g.ResponseContract != nil {
-		vals["resultDataContract"] = g.ResponseContract
+	if g.ResultAssertions != nil {
+		vals["resultAssertions"] = g.ResultAssertions
 	}
 	return json.Marshal(vals)
 }
@@ -244,19 +247,19 @@ func (g *GenericDataQuery) unmarshal(vals map[string]any) error {
 		delete(vals, key)
 	}
 
-	key = "resultDataContract"
+	key = "resultAssertions"
 	v, ok = vals[key]
 	if ok {
 		obj, ok := v.(map[string]any)
 		if !ok {
 			return fmt.Errorf("expected resultDataContract as map (got: %t)", v)
 		}
-		g.ResponseContract = &ResultDataContract{}
+		g.ResultAssertions = &ResultAssertions{}
 		t, ok := obj["type"].(string)
 		if !ok {
 			return fmt.Errorf("expected resultDataContract.type as string (got: %t)", obj["type"])
 		}
-		g.ResponseContract.Type = data.FrameType(t)
+		g.ResultAssertions.Type = data.FrameType(t)
 
 		tv, ok := obj["typeVersion"]
 		if ok {
@@ -267,8 +270,8 @@ func (g *GenericDataQuery) unmarshal(vals map[string]any) error {
 
 			var e0, e1 error
 			items = items.Slice(0, 2)
-			g.ResponseContract.TypeVersion[0], e0 = valueAsUint(items.Index(0))
-			g.ResponseContract.TypeVersion[1], e1 = valueAsUint(items.Index(1))
+			g.ResultAssertions.TypeVersion[0], e0 = valueAsUint(items.Index(0))
+			g.ResultAssertions.TypeVersion[1], e1 = valueAsUint(items.Index(1))
 			if e0 != nil {
 				return e0
 			}

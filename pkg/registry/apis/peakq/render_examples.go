@@ -62,7 +62,7 @@ var basicTemplateRenderedTargets = []template.Target{
 				"type": "prometheus",
 				"uid":  "foo", // TODO: Probably a default templating thing to set this.
 			},
-			"resultDataContract": query.ResultDataContract{
+			"resultAssertions": query.ResultAssertions{
 				Type: data.FrameTypeUnknown,
 			},
 			"editorMode": "builder",
