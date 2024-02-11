@@ -71,9 +71,6 @@ func (l *loggerImpl) Middleware() web.Middleware {
 			rw := web.Rw(w, r)
 			next.ServeHTTP(rw, r)
 
-			status := rw.Status()
-			fmt.Printf("Got request %s , status = %d\n", r.URL.Path, status)
-
 			duration := time.Since(start)
 			timeTaken := duration / time.Millisecond
 			ctx := contexthandler.FromContext(r.Context())
