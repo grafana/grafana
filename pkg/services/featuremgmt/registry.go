@@ -949,6 +949,13 @@ var (
 			Owner:        grafanaDashboardsSquad,
 		},
 		{
+			Name:         "dashboardSceneSolo",
+			Description:  "Enables rendering dashboards using scenes for solo panels",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
+		},
+		{
 			Name:         "dashboardScene",
 			Description:  "Enables dashboard rendering using scenes for all roles",
 			Stage:        FeatureStageExperimental,

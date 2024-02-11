@@ -2053,9 +2053,22 @@
     },
     {
       "metadata": {
+        "name": "dashboardSceneSolo",
+        "resourceVersion": "1707577534071",
+        "creationTimestamp": "2024-02-10T15:05:34Z"
+      },
+      "spec": {
+        "description": "Enables rendering dashboards using scenes for solo panels",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
         "name": "passwordPolicy",
-        "resourceVersion": "1707563200368",
-        "creationTimestamp": "2024-02-10T11:06:40Z"
+        "resourceVersion": "1707666700494",
+        "creationTimestamp": "2024-02-11T15:51:40Z"
       },
       "spec": {
         "description": "Enables password policy for Grafana basic auth users.",
