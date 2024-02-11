@@ -76,8 +76,6 @@ export class MetricSelectScene extends SceneObjectBase<MetricSelectSceneState> {
     this.addActivationHandler(this._onActivate.bind(this));
   }
 
-  // private justChangedTimeRange = false;
-
   protected _variableDependency = new VariableDependencyConfig(this, {
     variableNames: [VAR_METRIC_NAMES, VAR_DATASOURCE],
     onReferencedVariableValueChanged: (variable: SceneVariable) => {
