@@ -194,7 +194,7 @@ Click the check box next to the values that you want to display. Enter text in t
 Choose from several operators to display column values:
 
 - **Contains** - Matches a regex pattern (operator by default).
-- **Expression** - Evaluates a boolean expression. The character `v` represents the column value in the expression (for example, "v >= 10 && v <= 12").
+- **Expression** - Evaluates a boolean expression. The character `$` represents the column value in the expression (for example, "$ >= 10 && $ <= 12").
 - The typical comparison operators: `=`, `!=`, `<`, `<=`, `>`, `>=`.
 
 Click the check box above the **Ok** and **Cancel** buttons to add or remove all displayed values to/from the filter.

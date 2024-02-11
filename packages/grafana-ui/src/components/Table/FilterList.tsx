@@ -44,7 +44,7 @@ const operatorSelectableValue = (op: string): SelectableValue<string> => {
       break;
     case 'Expression':
       result.description =
-        'Bool Expression (Char v represents the column value in the expression, e.g. "v >= 10 && v <= 12")';
+        'Bool Expression (Char $ represents the column value in the expression, e.g. "$ >= 10 && $ <= 12")';
       break;
   }
   return result;
@@ -96,7 +96,7 @@ export const FilterList = ({ options, values, caseSensitive, showOperators, onCh
           }
           try {
             const xpr = searchFilter.replace(/\\/g, '');
-            const fnc = new Function('v', `'use strict'; return ${xpr};`);
+            const fnc = new Function('$', `'use strict'; return ${xpr};`);
             const val = comparableValue(option.value);
             return fnc(val);
           } catch (_) {}
