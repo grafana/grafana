@@ -35,6 +35,7 @@ const DEFAULTS_TIMINGS = {
   groupIntervalValue: TIMING_OPTIONS_DEFAULTS.group_interval,
   repeatIntervalValue: TIMING_OPTIONS_DEFAULTS.repeat_interval,
 };
+const DISABLE_GROUPING = '...';
 
 export interface RoutingSettingsProps {
   alertManager: string;
@@ -86,6 +87,14 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
               validate: (value: string[]) => {
                 if (!value || value.length === 0) {
                   return 'At least one group by option is required.';
+                }
+                if (value.length === 1 && value[0] === DISABLE_GROUPING) {
+                  return true;
+                }
+                // we need to make sure that the required fields are included
+                const requiredFieldsIncluded = REQUIRED_FIELDS_IN_GROUPBY.every((field) => value.includes(field));
+                if (!requiredFieldsIncluded) {
+                  return `Group by must include ${REQUIRED_FIELDS_IN_GROUPBY.join(', ')}`;
                 }
                 return true;
               },
