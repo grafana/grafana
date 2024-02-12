@@ -24,8 +24,8 @@ func ProvideFileStoreManager(pluginStore pluginstore.Store, pluginFileStore plug
 	}
 }
 
-var openDashboardFile = func(ctx context.Context, pluginFileStore plugins.FileStore, pluginID, name string) (*plugins.File, error) {
-	f, err := pluginFileStore.File(ctx, pluginID, name)
+var openDashboardFile = func(ctx context.Context, pluginFileStore plugins.FileStore, pluginID, pluginVersion, name string) (*plugins.File, error) {
+	f, err := pluginFileStore.File(ctx, pluginID, pluginVersion, name)
 	if err != nil {
 		return &plugins.File{}, err
 	}
@@ -93,7 +93,7 @@ func (m *FileStoreManager) GetPluginDashboardFileContents(ctx context.Context, a
 		return nil, err
 	}
 
-	file, err := openDashboardFile(ctx, m.pluginFileStore, plugin.ID, cleanPath)
+	file, err := openDashboardFile(ctx, m.pluginFileStore, plugin.ID, plugin.Info.Version, cleanPath)
 	if err != nil {
 		return nil, err
 	}

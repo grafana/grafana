@@ -89,8 +89,8 @@ func NewMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry r
 }
 
 // pluginTarget returns the value for the "target" Prometheus label for the given plugin ID.
-func (m *MetricsMiddleware) pluginTarget(ctx context.Context, pluginID string) (string, error) {
-	p, exists := m.pluginRegistry.Plugin(ctx, pluginID)
+func (m *MetricsMiddleware) pluginTarget(ctx context.Context, pluginID, pluginVersion string) (string, error) {
+	p, exists := m.pluginRegistry.Plugin(ctx, pluginID, pluginVersion)
 	if !exists {
 		return "", plugins.ErrPluginNotRegistered
 	}
@@ -99,7 +99,7 @@ func (m *MetricsMiddleware) pluginTarget(ctx context.Context, pluginID string) (
 
 // instrumentPluginRequestSize tracks the size of the given request in the m.pluginRequestSize metric.
 func (m *MetricsMiddleware) instrumentPluginRequestSize(ctx context.Context, pluginCtx backend.PluginContext, endpoint string, requestSize float64) error {
-	target, err := m.pluginTarget(ctx, pluginCtx.PluginID)
+	target, err := m.pluginTarget(ctx, pluginCtx.PluginID, pluginCtx.PluginVersion)
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func (m *MetricsMiddleware) instrumentPluginRequestSize(ctx context.Context, plu
 
 // instrumentPluginRequest increments the m.pluginRequestCounter metric and tracks the duration of the given request.
 func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginCtx backend.PluginContext, endpoint string, fn func(context.Context) (requestStatus, error)) error {
-	target, err := m.pluginTarget(ctx, pluginCtx.PluginID)
+	target, err := m.pluginTarget(ctx, pluginCtx.PluginID, pluginCtx.PluginVersion)
 	if err != nil {
 		return err
 	}

@@ -30,7 +30,7 @@ func (pm *fakePluginInstaller) Add(_ context.Context, pluginID, version string, 
 	return nil
 }
 
-func (pm *fakePluginInstaller) Remove(_ context.Context, pluginID string) error {
+func (pm *fakePluginInstaller) Remove(_ context.Context, pluginID, _ string) error {
 	delete(pm.plugins, pluginID)
 	return nil
 }
