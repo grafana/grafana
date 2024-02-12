@@ -271,7 +271,11 @@ export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate
             Delete
           </Button>
         )}
-        <Button onClick={onBackToList} data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.apply}>
+        <Button
+          variant="secondary"
+          onClick={onBackToList}
+          data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.apply}
+        >
           Back to list
         </Button>
       </Stack>
