@@ -168,6 +168,7 @@ JSON Body schema:
 
 - **uid** – Optional [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}).
 - **title** – The title of the folder.
+- **parentUid** - Optional field, the unique identifier of the parent folder under which the folder should be created. Requires nested folders to be enabled.
 
 **Example Response**:
 
