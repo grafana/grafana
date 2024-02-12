@@ -2,7 +2,7 @@ import { sortBy } from 'lodash';
 
 import { UrlQueryMap, Labels } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
-import { config } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
 import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
@@ -231,5 +231,10 @@ export function isErrorLike(error: unknown): error is Error {
 }
 
 export function stringifyErrorLike(error: unknown): string {
+  const fetchError = isFetchError(error);
+  if (fetchError) {
+    return error.data.message;
+  }
+
   return isErrorLike(error) ? error.message : String(error);
 }
