@@ -39,13 +39,6 @@ interface Props {
   logsFrame: LogsFrame | null;
 }
 
-function getInitialFieldWidth(field: Field): number | undefined {
-  if (field.type === FieldType.time) {
-    return 200;
-  }
-  return undefined;
-}
-
 export function LogsTable(props: Props) {
   const { timeZone, splitOpen, range, logsSortOrder, width, dataFrame, columnsWithMeta, logsFrame } = props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
@@ -259,4 +252,11 @@ function getLabelFiltersTransform(labelFilters: Record<string, number>) {
     };
   }
   return null;
+}
+
+function getInitialFieldWidth(field: Field): number | undefined {
+  if (field.type === FieldType.time) {
+    return 200;
+  }
+  return undefined;
 }
