@@ -59,6 +59,7 @@ export type SSOProviderSettingsBase = {
 export type SSOProvider = {
   id: string;
   provider: string;
+  source: string;
   settings: SSOProviderSettingsBase & {
     teamIds: string;
     allowedOrganizations: string;

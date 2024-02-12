@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -58,6 +59,10 @@ func ProvideService(
 		Reporter:      s.Usage,
 	}); err != nil {
 		return s, err
+	}
+
+	if err := s.uidMigration(db); err != nil {
+		return nil, err
 	}
 
 	bundleRegistry.RegisterSupportItemCollector(s.supportBundleCollector())
@@ -484,4 +489,26 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 		Default:           false,
 		Fn:                collectorFn,
 	}
+}
+
+// This is just to ensure that all users have a valid uid.
+// To protect against upgrade / downgrade we need to run this for a couple of releases.
+// FIXME: Remove this migration and make uid field required https://github.com/grafana/identity-access-team/issues/552
+func (s *Service) uidMigration(store db.DB) error {
+	return store.WithDbSession(context.Background(), func(sess *db.Session) error {
+		switch store.GetDBType() {
+		case migrator.SQLite:
+			_, err := sess.Exec("UPDATE user SET uid=printf('u%09d',id) WHERE uid IS NULL;")
+			return err
+		case migrator.Postgres:
+			_, err := sess.Exec("UPDATE `user` SET uid='u' || lpad('' || id::text,9,'0') WHERE uid IS NULL;")
+			return err
+		case migrator.MySQL:
+			_, err := sess.Exec("UPDATE user SET uid=concat('u',lpad(id,9,'0')) WHERE uid IS NULL;")
+			return err
+		default:
+			// this branch should be unreachable
+			return nil
+		}
+	})
 }
