@@ -131,6 +131,8 @@ export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any
 }
 
 export function expandRecordingRules(query: string, mapping: { [name: string]: string }): string {
+  const getRuleRegex = (ruleName: string) => new RegExp(`(\\s|\\(|^)(${ruleName})(\\s|$|\\(|\\[|\\{)`, 'ig');
+
   const tmpSplitParts = Object.keys(mapping).reduce<string[]>(
     (prev, curr) => {
       let parts: string[] = [];
@@ -138,10 +140,13 @@ export function expandRecordingRules(query: string, mapping: { [name: string]: s
       let removeIdx: number[] = [];
 
       prev.filter(Boolean).forEach((p, i) => {
-        parts = p.split(curr);
-        if (parts.length > 1) {
-          removeIdx.push(i);
-          tmpParts.push(...[parts[0], curr, parts[1]].filter(Boolean));
+        const doesMatch = p.match(getRuleRegex(curr));
+        if (doesMatch) {
+          parts = p.split(curr);
+          if (parts.length > 1) {
+            removeIdx.push(i);
+            tmpParts.push(...[parts[0], curr, parts[1]].filter(Boolean));
+          }
         }
       });
 
