@@ -377,7 +377,9 @@ func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	store.Cfg.AutoAssignOrg = true
 	store.Cfg.AutoAssignOrgId = int(orgId)
 
-	teamSvc := teamimpl.ProvideService(store, store.Cfg)
+	teamSvc, err := teamimpl.ProvideService(store, store.Cfg)
+	require.NoError(c.t, err)
+
 	cache := localcache.ProvideService()
 	userSvc, err := userimpl.ProvideService(store,
 		orgService, store.Cfg, teamSvc, cache, quotaService,
