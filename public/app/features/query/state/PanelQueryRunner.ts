@@ -456,9 +456,7 @@ export class PanelQueryRunner {
   ): boolean {
     let addWarningMessageMultipleDatasourceVariable = false;
     if (datasource?.uid?.startsWith('${')) {
-      const variableName = datasource.uid;
-      //sanitize variable name to remove the $ and {} in cases like ${tex}
-      const variableNameSanitized = variableName.replace(/\$\{([^{}]+)\}/g, '$1');
+      const variableName = this.templateSrv.getVariableName(datasource.uid);
       const variable = this.templateSrv.getVariables().find((v) => v.name === variableNameSanitized);
 
       // is variable holding multiple values and is not being repeated (scopedVars)
