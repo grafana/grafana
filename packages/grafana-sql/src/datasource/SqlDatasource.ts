@@ -208,6 +208,8 @@ export abstract class SqlDatasource extends DataSourceWithBackend<SQLQuery, SQLO
       format: QueryFormat.Table,
     };
 
+    // NOTE: we can remove this try-catch when https://github.com/grafana/grafana/issues/82250
+    // is fixed.
     let response;
     try {
       response = await this.runMetaQuery(interpolatedQuery, range);
