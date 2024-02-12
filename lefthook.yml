@@ -48,7 +48,7 @@ pre-commit:
       stage_fixed: true
 
     generate-icons:
-      files: 'git diff --cached --quiet packages/grafana-icons/svg'
-      glob: '*packages/grafana-icons/svg/*.svg'
+      files:
+        - '^packages/grafana-icons/svg/.*\.svg$'
       run: yarn generate
       stage_fixed: true
