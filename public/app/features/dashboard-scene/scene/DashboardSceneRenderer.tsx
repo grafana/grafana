@@ -7,6 +7,7 @@ import { SceneComponentProps, SceneDebugger } from '@grafana/scenes';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
+import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty';
 import { useSelector } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
@@ -21,6 +22,15 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const bodyToRender = model.getBodyToRender();
   const navModel = getNavModel(navIndex, 'dashboards/browse');
   const showDebugger = location.search.includes('scene-debugger');
+
+  if (model.isEmpty()) {
+    return (
+      <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
+        <NavToolbarActions dashboard={model} />
+        <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} />
+      </Page>
+    );
+  }
 
   if (editview) {
     return (
