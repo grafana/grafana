@@ -31,7 +31,6 @@ package api
 
 import (
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -48,8 +47,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/user"
 )
-
-var plog = log.New("api")
 
 // registerRoutes registers all API HTTP routes.
 func (hs *HTTPServer) registerRoutes() {
@@ -229,10 +226,10 @@ func (hs *HTTPServer) registerRoutes() {
 		return authnSettingsEval
 	}
 
-	r.Get("/admin/authentication/", authorize(adminAuthPageEvaluator()), hs.Index)
+	r.Get("/admin/authentication", authorize(adminAuthPageEvaluator()), hs.Index)
 	r.Get("/admin/authentication/ldap", authorize(ac.EvalPermission(ac.ActionLDAPStatusRead)), hs.Index)
 	if hs.Features.IsEnabledGlobally(featuremgmt.FlagSsoSettingsApi) {
-		providerParam := ac.Parameter("provider")
+		providerParam := ac.Parameter(":provider")
 		r.Get("/admin/authentication/:provider", authorize(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsOAuth(providerParam))), hs.Index)
 	}
 
@@ -417,14 +414,6 @@ func (hs *HTTPServer) registerRoutes() {
 			pluginRoute.Post("/:pluginId/settings", authorize(ac.EvalPermission(pluginaccesscontrol.ActionWrite, pluginIDScope)), routing.Wrap(hs.UpdatePluginSetting))
 			pluginRoute.Get("/:pluginId/metrics", reqOrgAdmin, routing.Wrap(hs.CollectPluginMetrics))
 		})
-
-		if hs.Features.IsEnabledGlobally(featuremgmt.FlagFeatureToggleAdminPage) {
-			apiRoute.Group("/featuremgmt", func(featuremgmtRoute routing.RouteRegister) {
-				featuremgmtRoute.Get("/state", authorize(ac.EvalPermission(ac.ActionFeatureManagementRead)), hs.GetFeatureMgmtState)
-				featuremgmtRoute.Get("/", authorize(ac.EvalPermission(ac.ActionFeatureManagementRead)), hs.GetFeatureToggles)
-				featuremgmtRoute.Post("/", authorize(ac.EvalPermission(ac.ActionFeatureManagementWrite)), hs.UpdateFeatureToggle)
-			})
-		}
 
 		apiRoute.Get("/frontend/settings/", hs.GetFrontendSettings)
 		apiRoute.Get("/frontend/assets", hs.GetFrontendAssets)
@@ -636,7 +625,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/avatar/:hash", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), hs.AvatarCacheServer.Handler)
 
 	// Snapshots
-	r.Post("/api/snapshots/", reqSnapshotPublicModeOrSignedIn, hs.CreateDashboardSnapshot)
+	r.Post("/api/snapshots/", reqSnapshotPublicModeOrSignedIn, hs.getCreatedSnapshotHandler())
 	r.Get("/api/snapshot/shared-options/", reqSignedIn, hs.GetSharingOptions)
 	r.Get("/api/snapshots/:key", routing.Wrap(hs.GetDashboardSnapshot))
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))

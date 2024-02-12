@@ -211,7 +211,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     });
   }
 
-  if (oldModel.annotations?.list?.length) {
+  if (oldModel.annotations?.list?.length && !oldModel.isSnapshot()) {
     layers = oldModel.annotations?.list.map((a) => {
       // Each annotation query is an individual data layer
       return new DashboardAnnotationsDataLayer({
@@ -266,10 +266,11 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     }),
     $variables: variables,
     $behaviors: [
-      registerDashboardMacro,
       new behaviors.CursorSync({
         sync: oldModel.graphTooltip,
       }),
+      new behaviors.SceneQueryController(),
+      registerDashboardMacro,
       registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
     ],
@@ -287,6 +288,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
           new SceneRefreshPicker({
             refresh: oldModel.refresh,
             intervals: oldModel.timepicker.refresh_intervals,
+            withText: true,
           }),
         ],
         linkControls: new DashboardLinksControls({}),

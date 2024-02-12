@@ -21,8 +21,8 @@ func ProvideService(pluginRegistry registry.Service) *Service {
 	}
 }
 
-func (s *Service) File(ctx context.Context, pluginID, filename string) (*plugins.File, error) {
-	if p, exists := s.pluginRegistry.Plugin(ctx, pluginID); exists {
+func (s *Service) File(ctx context.Context, pluginID, pluginVersion, filename string) (*plugins.File, error) {
+	if p, exists := s.pluginRegistry.Plugin(ctx, pluginID, pluginVersion); exists {
 		f, err := p.File(filename)
 		if err != nil {
 			return nil, err

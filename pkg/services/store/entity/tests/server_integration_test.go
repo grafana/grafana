@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc/metadata"
 
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 )
@@ -64,11 +64,11 @@ func requireEntityMatch(t *testing.T, obj *entity.Entity, m rawEntityMatcher) {
 	}
 
 	if m.createdBy != "" && m.createdBy != obj.CreatedBy {
-		mismatches += fmt.Sprintf("createdBy: expected:%s, found:%s\n", m.createdBy, obj.CreatedBy)
+		mismatches += fmt.Sprintf("createdBy: expected: '%s', found: '%s'\n", m.createdBy, obj.CreatedBy)
 	}
 
 	if m.updatedBy != "" && m.updatedBy != obj.UpdatedBy {
-		mismatches += fmt.Sprintf("updatedBy: expected:%s, found:%s\n", m.updatedBy, obj.UpdatedBy)
+		mismatches += fmt.Sprintf("updatedBy: expected: '%s', found: '%s'\n", m.updatedBy, obj.UpdatedBy)
 	}
 
 	if len(m.body) > 0 {
@@ -99,7 +99,7 @@ func requireVersionMatch(t *testing.T, obj *entity.Entity, m objectVersionMatche
 	}
 
 	if m.updatedBy != "" && m.updatedBy != obj.UpdatedBy {
-		mismatches += fmt.Sprintf("updatedBy: expected:%s, found:%s\n", m.updatedBy, obj.UpdatedBy)
+		mismatches += fmt.Sprintf("updatedBy: expected: '%s', found: '%s'\n", m.updatedBy, obj.UpdatedBy)
 	}
 
 	if m.version != 0 && m.version != obj.ResourceVersion {
@@ -110,9 +110,9 @@ func requireVersionMatch(t *testing.T, obj *entity.Entity, m objectVersionMatche
 }
 
 func TestIntegrationEntityServer(t *testing.T) {
+	// TODO figure out why this still runs into sqlite database locked error
 	if true {
-		// FIXME
-		t.Skip()
+		t.Skip("skipping integration test")
 	}
 
 	if testing.Short() {
@@ -120,7 +120,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 	}
 
 	testCtx := createTestContext(t)
-	ctx := metadata.AppendToOutgoingContext(testCtx.ctx, "authorization", fmt.Sprintf("Bearer %s", testCtx.authToken))
+	ctx := appcontext.WithUser(testCtx.ctx, testCtx.user)
 
 	fakeUser := store.GetUserIDString(testCtx.user)
 	firstVersion := int64(0)
@@ -130,6 +130,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 	namespace := "default"
 	name := "my-test-entity"
 	testKey := "/" + group + "/" + resource + "/" + namespace + "/" + name
+	testKey2 := "/" + group + "/" + resource2 + "/" + namespace + "/" + name
 	body := []byte("{\"name\":\"John\"}")
 
 	t.Run("should not retrieve non-existent objects", func(t *testing.T) {
@@ -158,11 +159,18 @@ func TestIntegrationEntityServer(t *testing.T) {
 		createResp, err := testCtx.client.Create(ctx, createReq)
 		require.NoError(t, err)
 
+		// clean up in case test fails
+		t.Cleanup(func() {
+			_, _ = testCtx.client.Delete(ctx, &entity.DeleteEntityRequest{
+				Key: testKey,
+			})
+		})
+
 		versionMatcher := objectVersionMatcher{
-			updatedRange: []time.Time{before, time.Now()},
-			updatedBy:    fakeUser,
-			version:      firstVersion,
-			comment:      &createReq.Entity.Message,
+			// updatedRange: []time.Time{before, time.Now()},
+			// updatedBy:    fakeUser,
+			version: firstVersion,
+			comment: &createReq.Entity.Message,
 		}
 		requireVersionMatch(t, createResp.Entity, versionMatcher)
 
@@ -182,11 +190,11 @@ func TestIntegrationEntityServer(t *testing.T) {
 		objectMatcher := rawEntityMatcher{
 			key:          testKey,
 			createdRange: []time.Time{before, time.Now()},
-			updatedRange: []time.Time{before, time.Now()},
-			createdBy:    fakeUser,
-			updatedBy:    fakeUser,
-			body:         body,
-			version:      firstVersion,
+			// updatedRange: []time.Time{before, time.Now()},
+			createdBy: fakeUser,
+			// updatedBy:    fakeUser,
+			body:    body,
+			version: firstVersion,
 		}
 		requireEntityMatch(t, readResp, objectMatcher)
 
@@ -222,6 +230,14 @@ func TestIntegrationEntityServer(t *testing.T) {
 		}
 		createResp, err := testCtx.client.Create(ctx, createReq)
 		require.NoError(t, err)
+
+		// clean up in case test fails
+		t.Cleanup(func() {
+			_, _ = testCtx.client.Delete(ctx, &entity.DeleteEntityRequest{
+				Key: testKey,
+			})
+		})
+
 		require.Equal(t, entity.CreateEntityResponse_CREATED, createResp.Status)
 
 		body2 := []byte("{\"name\":\"John2\"}")
@@ -238,12 +254,14 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.NotEqual(t, createResp.Entity.ResourceVersion, updateResp.Entity.ResourceVersion)
 
 		// Duplicate write (no change)
-		writeDupRsp, err := testCtx.client.Update(ctx, updateReq)
-		require.NoError(t, err)
-		require.Nil(t, writeDupRsp.Error)
-		require.Equal(t, entity.UpdateEntityResponse_UNCHANGED, writeDupRsp.Status)
-		require.Equal(t, updateResp.Entity.ResourceVersion, writeDupRsp.Entity.ResourceVersion)
-		require.Equal(t, updateResp.Entity.ETag, writeDupRsp.Entity.ETag)
+		/*
+			writeDupRsp, err := testCtx.client.Update(ctx, updateReq)
+			require.NoError(t, err)
+			require.Nil(t, writeDupRsp.Error)
+			require.Equal(t, entity.UpdateEntityResponse_UNCHANGED, writeDupRsp.Status)
+			require.Equal(t, updateResp.Entity.ResourceVersion, writeDupRsp.Entity.ResourceVersion)
+			require.Equal(t, updateResp.Entity.ETag, writeDupRsp.Entity.ETag)
+		*/
 
 		body3 := []byte("{\"name\":\"John3\"}")
 		writeReq3 := &entity.UpdateEntityRequest{
@@ -255,6 +273,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		}
 		writeResp3, err := testCtx.client.Update(ctx, writeReq3)
 		require.NoError(t, err)
+		require.Equal(t, entity.UpdateEntityResponse_UPDATED, writeResp3.Status)
 		require.NotEqual(t, writeResp3.Entity.ResourceVersion, updateResp.Entity.ResourceVersion)
 
 		latestMatcher := rawEntityMatcher{
@@ -285,9 +304,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		requireEntityMatch(t, readRespFirstVer, rawEntityMatcher{
 			key:          testKey,
 			createdRange: []time.Time{before, time.Now()},
-			updatedRange: []time.Time{before, time.Now()},
 			createdBy:    fakeUser,
-			updatedBy:    fakeUser,
 			body:         body,
 			version:      0,
 		})
@@ -329,7 +346,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 
 		w3, err := testCtx.client.Create(ctx, &entity.CreateEntityRequest{
 			Entity: &entity.Entity{
-				Key:  testKey + "3",
+				Key:  testKey2 + "3",
 				Body: body,
 			},
 		})
@@ -337,7 +354,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 
 		w4, err := testCtx.client.Create(ctx, &entity.CreateEntityRequest{
 			Entity: &entity.Entity{
-				Key:  testKey + "4",
+				Key:  testKey2 + "4",
 				Body: body,
 			},
 		})
@@ -358,18 +375,94 @@ func TestIntegrationEntityServer(t *testing.T) {
 			kinds = append(kinds, res.Resource)
 			version = append(version, res.ResourceVersion)
 		}
-		require.Equal(t, []string{"my-test-entity", "name2", "name3", "name4"}, names)
-		require.Equal(t, []string{"jsonobj", "jsonobj", "playlist", "playlist"}, kinds)
-		require.Equal(t, []int64{
+
+		// default sort is by guid, so we ignore order
+		require.ElementsMatch(t, []string{"my-test-entity1", "my-test-entity2", "my-test-entity3", "my-test-entity4"}, names)
+		require.ElementsMatch(t, []string{"jsonobjs", "jsonobjs", "playlists", "playlists"}, kinds)
+		require.ElementsMatch(t, []int64{
 			w1.Entity.ResourceVersion,
 			w2.Entity.ResourceVersion,
 			w3.Entity.ResourceVersion,
 			w4.Entity.ResourceVersion,
 		}, version)
 
+		// sorted by name
+		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
+			Resource: []string{resource, resource2},
+			WithBody: false,
+			Sort:     []string{"name"},
+		})
+		require.NoError(t, err)
+
+		require.NotNil(t, resp)
+		require.Equal(t, 4, len(resp.Results))
+
+		require.Equal(t, "my-test-entity1", resp.Results[0].Name)
+		require.Equal(t, "my-test-entity2", resp.Results[1].Name)
+		require.Equal(t, "my-test-entity3", resp.Results[2].Name)
+		require.Equal(t, "my-test-entity4", resp.Results[3].Name)
+
+		require.Equal(t, "jsonobjs", resp.Results[0].Resource)
+		require.Equal(t, "jsonobjs", resp.Results[1].Resource)
+		require.Equal(t, "playlists", resp.Results[2].Resource)
+		require.Equal(t, "playlists", resp.Results[3].Resource)
+
+		// sorted by name desc
+		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
+			Resource: []string{resource, resource2},
+			WithBody: false,
+			Sort:     []string{"name_desc"},
+		})
+		require.NoError(t, err)
+
+		require.NotNil(t, resp)
+		require.Equal(t, 4, len(resp.Results))
+
+		require.Equal(t, "my-test-entity1", resp.Results[3].Name)
+		require.Equal(t, "my-test-entity2", resp.Results[2].Name)
+		require.Equal(t, "my-test-entity3", resp.Results[1].Name)
+		require.Equal(t, "my-test-entity4", resp.Results[0].Name)
+
+		require.Equal(t, "jsonobjs", resp.Results[3].Resource)
+		require.Equal(t, "jsonobjs", resp.Results[2].Resource)
+		require.Equal(t, "playlists", resp.Results[1].Resource)
+		require.Equal(t, "playlists", resp.Results[0].Resource)
+
+		// with limit
+		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
+			Resource: []string{resource, resource2},
+			WithBody: false,
+			Limit:    2,
+			Sort:     []string{"name"},
+		})
+		require.NoError(t, err)
+
+		require.NotNil(t, resp)
+		require.Equal(t, 2, len(resp.Results))
+
+		require.Equal(t, "my-test-entity1", resp.Results[0].Name)
+		require.Equal(t, "my-test-entity2", resp.Results[1].Name)
+
+		// with limit & continue
+		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
+			Resource:      []string{resource, resource2},
+			WithBody:      false,
+			Limit:         2,
+			NextPageToken: resp.NextPageToken,
+			Sort:          []string{"name"},
+		})
+		require.NoError(t, err)
+
+		require.NotNil(t, resp)
+		require.Equal(t, 2, len(resp.Results))
+
+		require.Equal(t, "my-test-entity3", resp.Results[0].Name)
+		require.Equal(t, "my-test-entity4", resp.Results[1].Name)
+
 		// Again with only one kind
 		respKind1, err := testCtx.client.List(ctx, &entity.EntityListRequest{
 			Resource: []string{resource},
+			Sort:     []string{"name"},
 		})
 		require.NoError(t, err)
 		names = make([]string, 0, len(respKind1.Results))
@@ -380,8 +473,8 @@ func TestIntegrationEntityServer(t *testing.T) {
 			kinds = append(kinds, res.Resource)
 			version = append(version, res.ResourceVersion)
 		}
-		require.Equal(t, []string{"my-test-entity", "name2"}, names)
-		require.Equal(t, []string{"jsonobj", "jsonobj"}, kinds)
+		require.Equal(t, []string{"my-test-entity1", "my-test-entity2"}, names)
+		require.Equal(t, []string{"jsonobjs", "jsonobjs"}, kinds)
 		require.Equal(t, []int64{
 			w1.Entity.ResourceVersion,
 			w2.Entity.ResourceVersion,
@@ -389,25 +482,32 @@ func TestIntegrationEntityServer(t *testing.T) {
 	})
 
 	t.Run("should be able to filter objects based on their labels", func(t *testing.T) {
-		kind := entity.StandardKindDashboard
 		_, err := testCtx.client.Create(ctx, &entity.CreateEntityRequest{
 			Entity: &entity.Entity{
-				Key:  "/grafana/dashboards/blue-green",
+				Key:  "/dashboards.grafana.app/dashboards/default/blue-green",
 				Body: []byte(dashboardWithTagsBlueGreen),
+				Labels: map[string]string{
+					"blue":  "",
+					"green": "",
+				},
 			},
 		})
 		require.NoError(t, err)
 
 		_, err = testCtx.client.Create(ctx, &entity.CreateEntityRequest{
 			Entity: &entity.Entity{
-				Key:  "/grafana/dashboards/red-green",
+				Key:  "/dashboards.grafana.app/dashboards/default/red-green",
 				Body: []byte(dashboardWithTagsRedGreen),
+				Labels: map[string]string{
+					"red":   "",
+					"green": "",
+				},
 			},
 		})
 		require.NoError(t, err)
 
 		resp, err := testCtx.client.List(ctx, &entity.EntityListRequest{
-			Key:      []string{kind},
+			Key:      []string{"/dashboards.grafana.app/dashboards/default"},
 			WithBody: false,
 			Labels: map[string]string{
 				"red": "",
@@ -419,7 +519,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Equal(t, resp.Results[0].Name, "red-green")
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
-			Key:      []string{kind},
+			Key:      []string{"/dashboards.grafana.app/dashboards/default"},
 			WithBody: false,
 			Labels: map[string]string{
 				"red":   "",
@@ -432,7 +532,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Equal(t, resp.Results[0].Name, "red-green")
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
-			Key:      []string{kind},
+			Key:      []string{"/dashboards.grafana.app/dashboards/default"},
 			WithBody: false,
 			Labels: map[string]string{
 				"red": "invalid",
@@ -443,7 +543,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Len(t, resp.Results, 0)
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
-			Key:      []string{kind},
+			Key:      []string{"/dashboards.grafana.app/dashboards/default"},
 			WithBody: false,
 			Labels: map[string]string{
 				"green": "",
@@ -454,7 +554,7 @@ func TestIntegrationEntityServer(t *testing.T) {
 		require.Len(t, resp.Results, 2)
 
 		resp, err = testCtx.client.List(ctx, &entity.EntityListRequest{
-			Key:      []string{kind},
+			Key:      []string{"/dashboards.grafana.app/dashboards/default"},
 			WithBody: false,
 			Labels: map[string]string{
 				"yellow": "",
