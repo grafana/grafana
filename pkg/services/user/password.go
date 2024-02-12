@@ -3,7 +3,6 @@ package user
 import (
 	"unicode"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -18,9 +17,7 @@ var (
 Static function for password validation
 */
 func ValidatePassword(newPassword Password, config *setting.Cfg) error {
-	featureFlag := config.IsFeatureToggleEnabled(featuremgmt.FlagPasswordPolicy)
-	passwordPolicyEnabled := config.BasicAuthStrongPasswordPolicy
-	if !featureFlag || !passwordPolicyEnabled {
+	if !config.BasicAuthStrongPasswordPolicy {
 		if newPassword.IsWeak() {
 			return ErrPasswordTooShort
 		}

@@ -176,5 +176,4 @@ export interface FeatureToggles {
   nodeGraphDotLayout?: boolean;
   groupToNestedTableTransformation?: boolean;
   newPDFRendering?: boolean;
-  passwordPolicy?: boolean;
 }

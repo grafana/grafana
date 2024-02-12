@@ -638,8 +638,4 @@ const (
 	// FlagNewPDFRendering
 	// New implementation for the dashboard to PDF rendering
 	FlagNewPDFRendering = "newPDFRendering"
-
-	// FlagPasswordPolicy
-	// Enables password policy for Grafana basic auth users.
-	FlagPasswordPolicy = "passwordPolicy"
 )

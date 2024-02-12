@@ -1175,13 +1175,6 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSharingSquad,
 		},
-		{
-			Name:         "passwordPolicy",
-			Description:  "Enables password policy for Grafana basic auth users.",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        identityAccessTeam,
-		},
 	}
 )
 

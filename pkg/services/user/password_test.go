@@ -3,7 +3,6 @@ package user
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 )
@@ -88,7 +87,6 @@ func TestPasswowrdService_ValidatePasswordHardcodePolicy(t *testing.T) {
 	for _, tc := range testCases {
 		cfg := setting.NewCfg()
 		cfg.BasicAuthStrongPasswordPolicy = tc.strongPasswordPolicyEnabled
-		cfg.IsFeatureToggleEnabled = func(key string) bool { return key == featuremgmt.FlagPasswordPolicy }
 		err := ValidatePassword(tc.passwordTest, cfg)
 		assert.Equal(t, tc.expectedError, err)
 	}

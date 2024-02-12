@@ -173,7 +173,6 @@ Experimental features might be changed or removed without prior notice.
 | `promQLScope`                               | In-development feature that will allow injection of labels into prometheus queries.                                                                                                                                                                                               |
 | `nodeGraphDotLayout`                        | Changed the layout algorithm for the node graph                                                                                                                                                                                                                                   |
 | `newPDFRendering`                           | New implementation for the dashboard to PDF rendering                                                                                                                                                                                                                             |
-| `passwordPolicy`                            | Enables password policy for Grafana basic auth users.                                                                                                                                                                                                                             |
 
 ## Development feature toggles
 

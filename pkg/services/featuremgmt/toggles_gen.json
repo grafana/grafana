@@ -2068,7 +2068,8 @@
       "metadata": {
         "name": "passwordPolicy",
         "resourceVersion": "1707666700494",
-        "creationTimestamp": "2024-02-11T15:51:40Z"
+        "creationTimestamp": "2024-02-11T15:51:40Z",
+        "deletionTimestamp": "2024-02-12T14:49:36Z"
       },
       "spec": {
         "description": "Enables password policy for Grafana basic auth users.",
