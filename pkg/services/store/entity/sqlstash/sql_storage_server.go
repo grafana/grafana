@@ -1142,9 +1142,6 @@ func (s *sqlEntityServer) Watch(r *entity.EntityWatchRequest, w entity.EntitySto
 			return nil
 		}
 	}
-
-
-	return nil
 }
 
 // watchInit is a helper function to send the initial set of entities to the client
@@ -1167,16 +1164,6 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 
 	// TODO fix this
 	// entityQuery.addWhere("namespace", user.OrgID)
-
-	/*
-		if len(r.Group) > 0 {
-			entityQuery.addWhereIn("group", r.Group)
-		}
-	*/
-
-	if r.Since > 0 {
-		entityQuery.addWhere("resource_version > ?", r.Since)
-	}
 
 	if len(r.Resource) > 0 {
 		entityQuery.addWhereIn("resource", r.Resource)
@@ -1210,17 +1197,6 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 		entityQuery.addWhere("folder", r.Folder)
 	}
 
-	// if we have a page token, use that to specify the first record
-	/*
-		continueToken, err := GetContinueToken(r)
-		if err != nil {
-			return err
-		}
-		if continueToken != nil {
-			entityQuery.offset = continueToken.StartOffset
-		}
-	*/
-
 	if len(r.Labels) > 0 {
 		var args []any
 		var conditions []string
@@ -1244,13 +1220,19 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 
 	s.log.Debug("watch init")
 
-	for hasmore := true; hasmore && err == nil; {
-		hasmore, err = func() (bool, error) {
+	for hasmore := true; hasmore; {
+		batch := &entity.EntityWatchResponse{
+			Action:    entity.EntityWatchResponse_CREATED,
+			Entity:    make([]*entity.Entity, 0, entityQuery.limit),
+			Timestamp: time.Now().UnixMilli(),
+		}
+
+		err = func() error {
 			query, args := entityQuery.toQuery()
 
 			rows, err := s.sess.Query(ctx, query, args...)
 			if err != nil {
-				return false, err
+				return err
 			}
 			defer func() { _ = rows.Close() }()
 
@@ -1260,41 +1242,42 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 				found++
 				if found > entityQuery.limit {
 					entityQuery.offset += entityQuery.limit
-					return true, nil
+					return nil
 				}
 
 				result, err := s.rowToEntity(ctx, rows, rr)
 				if err != nil {
-					return false, err
+					return err
 				}
 
 				if result.ResourceVersion > r.Since {
 					r.Since = result.ResourceVersion
 				}
 
-				action := entity.EntityWatchResponse_CREATED
-
-				s.log.Debug("sending init", "action", action, "guid", result.Guid, "version", result.ResourceVersion)
-
-				err = w.Send(&entity.EntityWatchResponse{
-					Action:    action,
-					Entity:    []*entity.Entity{result},
-					Timestamp: time.Now().UnixMilli(),
-				})
-				if err != nil {
-					return false, err
-				}
+				batch.Entity = append(batch.Entity, result)
 			}
 
-			return false, nil
+			hasmore = false
+			return nil
 		}()
+		if err != nil {
+			return err
+		}
+
+		s.log.Debug("sending init batch", "count", len(batch.Entity))
+		err = w.Send(batch)
+		if err != nil {
+			return err
+		}
 	}
 
-	return err
+	return nil
 }
 
 // watch is a helper to get the next set of entities and send them to the client
 func (s *sqlEntityServer) watch(ctx context.Context, r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
+	s.log.Debug("watch", "since", r.Since)
+
 	rr := &entity.ReadEntityRequest{
 		WithBody:   r.WithBody,
 		WithStatus: r.WithStatus,
