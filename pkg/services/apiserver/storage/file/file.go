@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -57,8 +58,16 @@ var ErrFileNotExists = fmt.Errorf("file doesn't exist")
 // ErrNamespaceNotExists means the directory for the namespace doesn't actually exist.
 var ErrNamespaceNotExists = errors.New("namespace does not exist")
 
+var (
+	node *snowflake.Node
+	once sync.Once
+)
+
 func getResourceVersion() (*uint64, error) {
-	node, err := snowflake.NewNode(1)
+	var err error
+	once.Do(func() {
+		node, err = snowflake.NewNode(1)
+	})
 	if err != nil {
 		return nil, err
 	}
