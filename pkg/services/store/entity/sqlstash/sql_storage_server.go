@@ -1126,21 +1126,23 @@ func (s *sqlEntityServer) Watch(r *entity.EntityWatchRequest, w entity.EntitySto
 		}
 	}
 
+	t := time.NewTicker(5 * time.Second)
+	defer t.Stop()
+
 	for {
-		err := w.Context().Err()
-		if err != nil {
+		select {
+		case <-t.C:
+			err = s.watch(w.Context(), r, w)
+			if err != nil {
+				s.log.Error("watch error", "err", err)
+				return err
+			}
+		case err := <-w.Context().Done():
 			s.log.Debug("watch context cancelled", "err", err)
-			break
+			return nil
 		}
-
-		err = s.watch(w.Context(), r, w)
-		if err != nil {
-			s.log.Error("watch error", "err", err)
-			return err
-		}
-
-		time.Sleep(5 * time.Second)
 	}
+
 
 	return nil
 }
