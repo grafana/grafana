@@ -12,16 +12,42 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+var testRoutes = map[string]types.AzRoute{
+	azureMonitor: {
+		URL:     "https://management.azure.com",
+		Scopes:  []string{"https://management.azure.com/.default"},
+		Headers: map[string]string{"x-ms-app": "Grafana"},
+	},
+	azureLogAnalytics: {
+		URL:     "https://api.loganalytics.io",
+		Scopes:  []string{"https://api.loganalytics.io/.default"},
+		Headers: map[string]string{"x-ms-app": "Grafana", "Cache-Control": "public, max-age=60"},
+	},
+	azureResourceGraph: {
+		URL:     "https://management.azure.com",
+		Scopes:  []string{"https://management.azure.com/.default"},
+		Headers: map[string]string{"x-ms-app": "Grafana"},
+	},
+	azureTraces: {
+		URL:     "https://api.loganalytics.io",
+		Scopes:  []string{"https://api.loganalytics.io/.default"},
+		Headers: map[string]string{"x-ms-app": "Grafana", "Cache-Control": "public, max-age=60"},
+	},
+	azurePortal: {
+		URL: "https://portal.azure.com",
+	},
+}
 
 func TestNewInstanceSettings(t *testing.T) {
 	tests := []struct {
@@ -38,10 +64,9 @@ func TestNewInstanceSettings(t *testing.T) {
 				ID:                      40,
 			},
 			expectedModel: types.DatasourceInfo{
-				Cloud:                   azsettings.AzurePublic,
 				Credentials:             &azcredentials.AzureManagedIdentityCredentials{},
 				Settings:                types.AzureMonitorSettings{},
-				Routes:                  routes[azsettings.AzurePublic],
+				Routes:                  testRoutes,
 				JSONData:                map[string]any{"azureAuthType": "msi"},
 				DatasourceID:            40,
 				DecryptedSecureJSONData: map[string]string{"key": "value"},
@@ -57,7 +82,6 @@ func TestNewInstanceSettings(t *testing.T) {
 				ID:                      50,
 			},
 			expectedModel: types.DatasourceInfo{
-				Cloud: "AzureCustomizedCloud",
 				Credentials: &azcredentials.AzureClientSecretCredentials{
 					AzureCloud:   "AzureCustomizedCloud",
 					ClientSecret: "secret",
@@ -87,7 +111,7 @@ func TestNewInstanceSettings(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			factory := NewInstanceSettings(&httpclient.Provider{}, map[string]azDatasourceExecutor{})
+			factory := NewInstanceSettings(&httpclient.Provider{}, map[string]azDatasourceExecutor{}, log.DefaultLogger)
 			instance, err := factory(context.Background(), tt.settings)
 			tt.Err(t, err)
 			if !cmp.Equal(instance, tt.expectedModel) {
@@ -98,7 +122,6 @@ func TestNewInstanceSettings(t *testing.T) {
 }
 
 type fakeInstance struct {
-	cloud    string
 	routes   map[string]types.AzRoute
 	services map[string]types.DatasourceService
 	settings types.AzureMonitorSettings
@@ -106,7 +129,6 @@ type fakeInstance struct {
 
 func (f *fakeInstance) Get(_ context.Context, _ backend.PluginContext) (instancemgmt.Instance, error) {
 	return types.DatasourceInfo{
-		Cloud:    f.cloud,
 		Routes:   f.routes,
 		Services: f.services,
 		Settings: f.settings,
@@ -148,19 +170,19 @@ func Test_newMux(t *testing.T) {
 		{
 			name:        "creates an Azure Monitor executor",
 			queryType:   azureMonitor,
-			expectedURL: routes[azsettings.AzurePublic][azureMonitor].URL,
+			expectedURL: testRoutes[azureMonitor].URL,
 			Err:         require.NoError,
 		},
 		{
 			name:        "creates an Azure Log Analytics executor",
 			queryType:   azureLogAnalytics,
-			expectedURL: routes[azsettings.AzurePublic][azureLogAnalytics].URL,
+			expectedURL: testRoutes[azureLogAnalytics].URL,
 			Err:         require.NoError,
 		},
 		{
 			name:        "creates an Azure Traces executor",
 			queryType:   azureTraces,
-			expectedURL: routes[azsettings.AzurePublic][azureLogAnalytics].URL,
+			expectedURL: testRoutes[azureLogAnalytics].URL,
 			Err:         require.NoError,
 		},
 	}
@@ -169,10 +191,10 @@ func Test_newMux(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
 				im: &fakeInstance{
-					routes: routes[azsettings.AzurePublic],
+					routes: testRoutes,
 					services: map[string]types.DatasourceService{
 						tt.queryType: {
-							URL:        routes[azsettings.AzurePublic][tt.queryType].URL,
+							URL:        testRoutes[tt.queryType].URL,
 							HTTPClient: &http.Client{},
 						},
 					},
@@ -301,7 +323,6 @@ func TestCheckHealth(t *testing.T) {
 		})
 	}
 
-	cloud := "AzureCloud"
 	tests := []struct {
 		name           string
 		errorExpected  bool
@@ -317,15 +338,15 @@ func TestCheckHealth(t *testing.T) {
 			},
 			customServices: map[string]types.DatasourceService{
 				azureMonitor: {
-					URL:        routes[cloud]["Azure Monitor"].URL,
+					URL:        testRoutes["Azure Monitor"].URL,
 					HTTPClient: azureMonitorClient(false, false),
 				},
 				azureLogAnalytics: {
-					URL:        routes[cloud]["Azure Log Analytics"].URL,
+					URL:        testRoutes["Azure Log Analytics"].URL,
 					HTTPClient: okClient,
 				},
 				azureResourceGraph: {
-					URL:        routes[cloud]["Azure Resource Graph"].URL,
+					URL:        testRoutes["Azure Resource Graph"].URL,
 					HTTPClient: okClient,
 				}},
 		},
@@ -340,15 +361,15 @@ func TestCheckHealth(t *testing.T) {
 			},
 			customServices: map[string]types.DatasourceService{
 				azureMonitor: {
-					URL:        routes[cloud]["Azure Monitor"].URL,
+					URL:        testRoutes["Azure Monitor"].URL,
 					HTTPClient: azureMonitorClient(false, true),
 				},
 				azureLogAnalytics: {
-					URL:        routes[cloud]["Azure Log Analytics"].URL,
+					URL:        testRoutes["Azure Log Analytics"].URL,
 					HTTPClient: okClient,
 				},
 				azureResourceGraph: {
-					URL:        routes[cloud]["Azure Resource Graph"].URL,
+					URL:        testRoutes["Azure Resource Graph"].URL,
 					HTTPClient: okClient,
 				}},
 		},
@@ -363,15 +384,15 @@ func TestCheckHealth(t *testing.T) {
 			},
 			customServices: map[string]types.DatasourceService{
 				azureMonitor: {
-					URL:        routes[cloud]["Azure Monitor"].URL,
+					URL:        testRoutes["Azure Monitor"].URL,
 					HTTPClient: azureMonitorClient(false, false),
 				},
 				azureLogAnalytics: {
-					URL:        routes[cloud]["Azure Log Analytics"].URL,
+					URL:        testRoutes["Azure Log Analytics"].URL,
 					HTTPClient: failClient(false),
 				},
 				azureResourceGraph: {
-					URL:        routes[cloud]["Azure Resource Graph"].URL,
+					URL:        testRoutes["Azure Resource Graph"].URL,
 					HTTPClient: okClient,
 				}},
 		},
@@ -386,15 +407,15 @@ func TestCheckHealth(t *testing.T) {
 			},
 			customServices: map[string]types.DatasourceService{
 				azureMonitor: {
-					URL:        routes[cloud]["Azure Monitor"].URL,
+					URL:        testRoutes["Azure Monitor"].URL,
 					HTTPClient: azureMonitorClient(false, false),
 				},
 				azureLogAnalytics: {
-					URL:        routes[cloud]["Azure Log Analytics"].URL,
+					URL:        testRoutes["Azure Log Analytics"].URL,
 					HTTPClient: okClient,
 				},
 				azureResourceGraph: {
-					URL:        routes[cloud]["Azure Resource Graph"].URL,
+					URL:        testRoutes["Azure Resource Graph"].URL,
 					HTTPClient: failClient(false),
 				}},
 		},
@@ -409,15 +430,15 @@ func TestCheckHealth(t *testing.T) {
 			},
 			customServices: map[string]types.DatasourceService{
 				azureMonitor: {
-					URL:        routes[cloud]["Azure Monitor"].URL,
+					URL:        testRoutes["Azure Monitor"].URL,
 					HTTPClient: azureMonitorClient(true, false),
 				},
 				azureLogAnalytics: {
-					URL:        routes[cloud]["Azure Log Analytics"].URL,
+					URL:        testRoutes["Azure Log Analytics"].URL,
 					HTTPClient: okClient,
 				},
 				azureResourceGraph: {
-					URL:        routes[cloud]["Azure Resource Graph"].URL,
+					URL:        testRoutes["Azure Resource Graph"].URL,
 					HTTPClient: okClient,
 				}},
 		},
@@ -432,23 +453,22 @@ func TestCheckHealth(t *testing.T) {
 			},
 			customServices: map[string]types.DatasourceService{
 				azureMonitor: {
-					URL:        routes[cloud]["Azure Monitor"].URL,
+					URL:        testRoutes["Azure Monitor"].URL,
 					HTTPClient: failClient(true),
 				},
 				azureLogAnalytics: {
-					URL:        routes[cloud]["Azure Log Analytics"].URL,
+					URL:        testRoutes["Azure Log Analytics"].URL,
 					HTTPClient: failClient(true),
 				},
 				azureResourceGraph: {
-					URL:        routes[cloud]["Azure Resource Graph"].URL,
+					URL:        testRoutes["Azure Resource Graph"].URL,
 					HTTPClient: failClient(true),
 				}},
 		},
 	}
 
 	instance := &fakeInstance{
-		cloud:    cloud,
-		routes:   routes[cloud],
+		routes:   testRoutes,
 		services: map[string]types.DatasourceService{},
 		settings: types.AzureMonitorSettings{
 			LogAnalyticsDefaultWorkspace: "workspace-id",

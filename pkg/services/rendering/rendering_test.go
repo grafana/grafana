@@ -110,7 +110,7 @@ func TestRenderUnavailableError(t *testing.T) {
 		RendererPluginManager: &dummyPluginManager{},
 	}
 	opts := Opts{ErrorOpts: ErrorOpts{ErrorRenderUnavailable: true}}
-	result, err := rs.Render(context.Background(), opts, nil)
+	result, err := rs.Render(context.Background(), RenderPNG, opts, nil)
 	assert.Equal(t, ErrRenderUnavailable, err)
 	assert.Nil(t, result)
 }
@@ -152,7 +152,7 @@ func TestRenderLimitImage(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			opts := Opts{Theme: tc.theme, ConcurrentLimit: 1}
-			result, err := rs.Render(context.Background(), opts, nil)
+			result, err := rs.Render(context.Background(), RenderPNG, opts, nil)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expected, result.FilePath)
 		})
@@ -170,7 +170,7 @@ func TestRenderLimitImageError(t *testing.T) {
 		ConcurrentLimit: 1,
 		Theme:           models.ThemeDark,
 	}
-	result, err := rs.Render(context.Background(), opts, nil)
+	result, err := rs.Render(context.Background(), RenderPNG, opts, nil)
 	assert.Equal(t, ErrConcurrentLimitReached, err)
 	assert.Nil(t, result)
 }

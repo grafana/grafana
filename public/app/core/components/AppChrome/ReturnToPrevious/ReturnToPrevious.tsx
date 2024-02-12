@@ -1,25 +1,32 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { t } from 'app/core/internationalization';
 
 import { DismissableButton } from './DismissableButton';
 
 export interface ReturnToPreviousProps {
-  href: string;
   title: string;
+  href: string;
 }
 
 export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
   const styles = useStyles2(getStyles);
-  const handleOnClick = () => {
-    console.log('Going to...', href);
-  };
-  const handleOnDismiss = () => {
-    console.log('Closing button');
-  };
+  const { chrome } = useGrafana();
+
+  const handleOnClick = useCallback(() => {
+    locationService.push(href);
+    chrome.clearReturnToPrevious('clicked');
+  }, [href, chrome]);
+
+  const handleOnDismiss = useCallback(() => {
+    reportInteraction('grafana_return_to_previous_button_dismissed', { action: 'dismissed', page: href });
+    chrome.clearReturnToPrevious('dismissed');
+  }, [href, chrome]);
 
   return (
     <div className={styles.returnToPrevious}>
@@ -41,6 +48,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     zIndex: theme.zIndex.portal,
     position: 'fixed',
     bottom: theme.spacing.x4,
+    boxShadow: theme.shadows.z3,
   }),
 });
 

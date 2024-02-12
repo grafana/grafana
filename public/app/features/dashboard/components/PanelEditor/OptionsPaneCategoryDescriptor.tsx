@@ -15,10 +15,10 @@ export interface OptionsPaneCategoryDescriptorProps {
   customRender?: () => React.ReactNode;
   sandboxId?: string;
 }
+
 /**
  * This is not a real React component but an intermediary to enable deep option search without traversing a React node tree.
  */
-
 export class OptionsPaneCategoryDescriptor {
   items: OptionsPaneItemDescriptor[] = [];
   categories: OptionsPaneCategoryDescriptor[] = [];
@@ -41,18 +41,18 @@ export class OptionsPaneCategoryDescriptor {
 
   getCategory(name: string): OptionsPaneCategoryDescriptor {
     let sub = this.categories.find((c) => c.props.id === name);
-    if (sub) {
-      return sub;
+    if (!sub) {
+      sub = new OptionsPaneCategoryDescriptor({
+        title: name,
+        id: name,
+      });
+      this.addCategory(sub);
     }
-    sub = new OptionsPaneCategoryDescriptor({
-      title: name,
-      id: name,
-    });
-    this.addCategory(sub);
+
     return sub;
   }
 
-  render(searchQuery?: string) {
+  Render = ({ searchQuery }: { searchQuery?: string }) => {
     if (this.props.customRender) {
       return this.props.customRender();
     }
@@ -60,8 +60,10 @@ export class OptionsPaneCategoryDescriptor {
     return (
       <OptionsPaneCategory key={this.props.title} {...this.props}>
         {this.items.map((item) => item.render(searchQuery))}
-        {this.categories.map((category) => category.render(searchQuery))}
+        {this.categories.map((category) => (
+          <category.Render key={category.props.id} searchQuery={searchQuery} />
+        ))}
       </OptionsPaneCategory>
     );
-  }
+  };
 }

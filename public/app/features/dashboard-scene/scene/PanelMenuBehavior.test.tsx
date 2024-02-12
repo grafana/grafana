@@ -23,6 +23,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { GetExploreUrlArguments } from 'app/core/utils/explore';
 
 import { DashboardScene } from './DashboardScene';
+import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { panelMenuBehavior } from './PanelMenuBehavior';
 
 const mocks = {
@@ -69,7 +70,7 @@ describe('panelMenuBehavior', () => {
 
     await new Promise((r) => setTimeout(r, 1));
 
-    expect(menu.state.items?.length).toBe(6);
+    expect(menu.state.items?.length).toBe(8);
     // verify view panel url keeps url params and adds viewPanel=<panel-key>
     expect(menu.state.items?.[0].href).toBe('/d/dash-1?from=now-5m&to=now&viewPanel=panel-12');
     // verify edit url keeps url time range
@@ -118,7 +119,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(7);
+      expect(menu.state.items?.length).toBe(9);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -157,7 +158,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(7);
+      expect(menu.state.items?.length).toBe(9);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -198,7 +199,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(7);
+      expect(menu.state.items?.length).toBe(9);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
       const menuItem = extensionsSubMenu?.find((i) => (i.text = 'Declare incident when...'));
@@ -346,7 +347,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(7);
+      expect(menu.state.items?.length).toBe(9);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -391,7 +392,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(7);
+      expect(menu.state.items?.length).toBe(9);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -444,7 +445,7 @@ describe('panelMenuBehavior', () => {
 
       await new Promise((r) => setTimeout(r, 1));
 
-      expect(menu.state.items?.length).toBe(7);
+      expect(menu.state.items?.length).toBe(9);
 
       const extensionsSubMenu = menu.state.items?.find((i) => i.text === 'Extensions')?.subMenu;
 
@@ -468,10 +469,28 @@ describe('panelMenuBehavior', () => {
         ])
       );
     });
+
+    it('should only contain explore when embedded', async () => {
+      const { menu, panel } = await buildTestScene({ isEmbedded: true });
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+      mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+      menu.activate();
+
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.length).toBe(1);
+      expect(menu.state.items?.[0].text).toBe('Explore');
+    });
   });
 });
 
-interface SceneOptions {}
+interface SceneOptions {
+  isEmbedded?: boolean;
+}
 
 async function buildTestScene(options: SceneOptions) {
   const menu = new VizPanelMenu({
@@ -483,6 +502,7 @@ async function buildTestScene(options: SceneOptions) {
     pluginId: 'table',
     key: 'panel-12',
     menu,
+    titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     $variables: new SceneVariableSet({
       variables: [new LocalValueVariable({ name: 'a', value: 'a', text: 'a' })],
     }),
@@ -503,6 +523,7 @@ async function buildTestScene(options: SceneOptions) {
     }),
     meta: {
       canEdit: true,
+      isEmbedded: options.isEmbedded ?? false,
     },
     body: new SceneGridLayout({
       children: [

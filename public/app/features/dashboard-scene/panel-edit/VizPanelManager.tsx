@@ -1,15 +1,17 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
 import {
   DataSourceApi,
   DataSourceInstanceSettings,
   FieldConfigSource,
+  GrafanaTheme2,
   PanelModel,
   filterFieldConfigOverrides,
   isStandardFieldProp,
   restoreCustomOverrideRules,
 } from '@grafana/data';
-import { getDataSourceSrv, locationService } from '@grafana/runtime';
+import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
 import {
   SceneObjectState,
   VizPanel,
@@ -20,16 +22,19 @@ import {
   SceneQueryRunner,
   sceneGraph,
   SceneDataProvider,
+  SceneDataTransformer,
 } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, DataTransformerConfig } from '@grafana/schema';
+import { useStyles2 } from '@grafana/ui';
 import { getPluginVersion } from 'app/features/dashboard/state/PanelModel';
+import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
 import { updateQueries } from 'app/features/query/state/updateQueries';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
-import { getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
@@ -37,14 +42,8 @@ interface VizPanelManagerState extends SceneObjectState {
   dsSettings?: DataSourceInstanceSettings;
 }
 
-// VizPanelManager serves as an API to manipulate VizPanel state from the outside. It allows panel type, options and  data maniulation.
+// VizPanelManager serves as an API to manipulate VizPanel state from the outside. It allows panel type, options and  data manipulation.
 export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
-  public static Component = ({ model }: SceneComponentProps<VizPanelManager>) => {
-    const { panel } = model.useState();
-
-    return <panel.Component model={panel} />;
-  };
-
   private _cachedPluginOptions: Record<
     string,
     { options: DeepPartial<{}>; fieldConfig: FieldConfigSource<DeepPartial<{}>> } | undefined
@@ -127,6 +126,27 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       ...restOfOldState,
     });
 
+    // When changing from non-data to data panel, we need to add a new data provider
+    if (!restOfOldState.$data && !config.panels[pluginType].skipDataQuery) {
+      let ds = getLastUsedDatasourceFromStorage(getDashboardSceneFor(this).state.uid!)?.datasourceUid;
+
+      if (!ds) {
+        ds = config.defaultDatasource;
+      }
+
+      newPanel.setState({
+        $data: new SceneDataTransformer({
+          $data: new SceneQueryRunner({
+            datasource: {
+              uid: ds,
+            },
+            queries: [{ refId: 'A' }],
+          }),
+          transformations: [],
+        }),
+      });
+    }
+
     const newPlugin = newPanel.getPlugin();
     const panel: PanelModel = {
       title: newPanel.state.title,
@@ -145,6 +165,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
 
     this.setState({ panel: newPanel });
+    this.loadDataSource();
   }
 
   public async changePanelDataSource(
@@ -217,6 +238,12 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     runner.setState({ queries });
   }
 
+  public changeTransformations(transformations: DataTransformerConfig[]) {
+    const dataprovider = this.dataTransformer;
+    dataprovider.setState({ transformations });
+    dataprovider.reprocessTransformations();
+  }
+
   public inspectPanel() {
     const panel = this.state.panel;
     const panelId = getPanelIdForVizPanel(panel);
@@ -237,7 +264,36 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     return runner;
   }
 
+  get dataTransformer(): SceneDataTransformer {
+    const provider = this.state.panel.state.$data;
+    if (!provider || !(provider instanceof SceneDataTransformer)) {
+      throw new Error('Could not find SceneDataTransformer for panel');
+    }
+    return provider;
+  }
+
   get panelData(): SceneDataProvider {
     return this.state.panel.state.$data!;
   }
+
+  public static Component = ({ model }: SceneComponentProps<VizPanelManager>) => {
+    const { panel } = model.useState();
+    const styles = useStyles2(getStyles);
+
+    return (
+      <div className={styles.wrapper}>
+        <panel.Component model={panel} />
+      </div>
+    );
+  };
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    wrapper: css({
+      height: '100%',
+      width: '100%',
+      paddingLeft: theme.spacing(2),
+    }),
+  };
 }

@@ -164,6 +164,7 @@ export const Components = {
         container: 'data-testid hover-header-container',
         dragIcon: 'data-testid drag-icon',
       },
+      PanelDataErrorMessage: 'data-testid Panel data error message',
     },
     Visualization: {
       Graph: {
@@ -284,7 +285,7 @@ export const Components = {
     rows: 'Query editor row',
   },
   QueryEditorRow: {
-    actionButton: (title: string) => `${title}`,
+    actionButton: (title: string) => `data-testid ${title}`,
     title: (refId: string) => `Query editor row title ${refId}`,
     container: (refId: string) => `Query editor row ${refId}`,
   },
@@ -306,6 +307,7 @@ export const Components = {
   },
   Transforms: {
     card: (name: string) => `data-testid New transform ${name}`,
+    disableTransformationButton: 'data-testid Disable transformation button',
     Reduce: {
       modeLabel: 'data-testid Transform mode label',
       calculationsLabel: 'data-testid Transform calculations label',
@@ -334,6 +336,7 @@ export const Components = {
     searchInput: 'data-testid search transformations',
     noTransformationsMessage: 'data-testid no transformations message',
     addTransformationButton: 'data-testid add transformation button',
+    removeAllTransformationsButton: 'data-testid remove all transformations button',
   },
   NavBar: {
     Configuration: {
@@ -389,7 +392,7 @@ export const Components = {
      */
     container: 'Folder picker select container',
     containerV2: 'data-testid Folder picker select container',
-    input: 'Select a folder',
+    input: 'data-testid folder-picker-input',
   },
   ReadonlyFolderPicker: {
     container: 'data-testid Readonly folder picker select container',
@@ -401,6 +404,11 @@ export const Components = {
      */
     input: () => 'input[id="data-source-picker"]',
     inputV2: 'data-testid Select a data source',
+    dataSourceList: 'data-testid Data source list dropdown',
+    advancedModal: {
+      dataSourceList: 'data-testid Data source list',
+      builtInDataSourceList: 'data-testid Built in data source list',
+    },
   },
   TimeZonePicker: {
     /**

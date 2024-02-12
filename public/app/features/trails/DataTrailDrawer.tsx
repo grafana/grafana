@@ -60,7 +60,7 @@ export function buildDataTrailFromQuery({ query, dsRef, timeRange }: DataTrailDr
   return new DataTrail({
     $timeRange: timeRange,
     metric: query.metric,
-    initialDS: ds?.name,
+    initialDS: ds?.uid,
     initialFilters: filters,
     embedded: true,
   });
