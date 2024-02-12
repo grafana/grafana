@@ -1,13 +1,7 @@
 ---
-aliases:
-  - ../features/datasources/phlare/
-  - ../features/datasources/grafana-pyroscope/
-description: Horizontally-scalable, highly-available, multi-tenant continuous profiling
-  aggregation system. OSS profiling solution from Grafana Labs.
+description: Configure your Pyroscope data source for Grafana.
 keywords:
-  - grafana
-  - phlare
-  - guide
+  - configure
   - profiling
   - pyroscope
 labels:
@@ -15,17 +9,14 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Grafana Pyroscope
-weight: 1150
+title: Configure the Grafana Pyroscope data source
+menuTitle: Configure Pyroscope
+weight: 200
 ---
 
-# Grafana Pyroscope data source
+# Configure the Grafana Pyroscope data source
 
-Formerly Phlare data source, now Grafana Pyroscope, a horizontally scalable, highly-available, multi-tenant, OSS, continuous profiling aggregation system. Add it as a data source, and you are ready to query your profiles in [Explore][explore].
-
-## Configure the Grafana Pyroscope data source
-
-To configure basic settings for the data source, complete the following steps:
+To configure basic settings for the Pyroscope data source, complete the following steps:
 
 1. Click **Connections** in the left-side menu.
 1. Under Your connections, click **Data sources**.
@@ -48,7 +39,7 @@ To configure basic settings for the data source, complete the following steps:
 
 ## Querying
 
-### Query Editor
+### Query editor
 
 ![Query editor](/static/img/docs/phlare/query-editor.png 'Query editor')
 
