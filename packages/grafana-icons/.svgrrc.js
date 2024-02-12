@@ -5,10 +5,26 @@ module.exports = {
   icon: true,
   typescript: true,
   jsxRuntime: 'automatic',
-  outDir: './src/icons',
+  outDir: './src/icons-generated',
   template: require('./templates/icon'),
   svgoConfig: {
-    // Sanitise the SVGs
-    plugins: ['removeScriptElement'],
+    plugins: [
+      // Sanitise the SVGs
+      'removeScriptElement',
+    ],
+  },
+  jsx: {
+    babelConfig: {
+      plugins: [
+        // Remove fill attribute from SVG path elements
+        [
+          '@svgr/babel-plugin-remove-jsx-attribute',
+          {
+            elements: ['path'],
+            attributes: ['fill'],
+          },
+        ],
+      ],
+    },
   },
 };
