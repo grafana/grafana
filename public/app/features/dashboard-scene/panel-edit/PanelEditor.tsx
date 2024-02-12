@@ -116,6 +116,7 @@ export function buildPanelEditScene(panel: VizPanel): PanelEditor {
     panelRef: vizPanelMgr.getRef(),
     body: new SplitLayout({
       direction: 'row',
+      initialSize: 0.75,
       primary: new SplitLayout({
         direction: 'column',
         $behaviors: [conditionalDataPaneBehavior],
