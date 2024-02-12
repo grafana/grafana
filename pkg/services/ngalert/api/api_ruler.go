@@ -520,12 +520,12 @@ func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, valida
 func shouldValidate(delta store.RuleDelta) bool {
 	for _, diff := range delta.Diff {
 		if !slices.Contains(ignoreFieldsForValidate[:], diff.Path) {
-			return false
+			return true
 		}
 	}
 
 	// TODO: consider also checking if rule will be paused after the update
-	return true
+	return false
 }
 
 // getAuthorizedRuleByUid fetches all rules in group to which the specified rule belongs, and checks whether the user is authorized to access the group.
