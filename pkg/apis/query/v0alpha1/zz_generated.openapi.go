@@ -16,6 +16,7 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.CommonQueryProperties":                    schema_pkg_apis_query_v0alpha1_CommonQueryProperties(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServer":                      schema_pkg_apis_query_v0alpha1_DataSourceApiServer(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServerList":                  schema_pkg_apis_query_v0alpha1_DataSourceApiServerList(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef":                            schema_pkg_apis_query_v0alpha1_DataSourceRef(ref),
@@ -39,6 +40,74 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.TemplateVariable":                schema_apis_query_v0alpha1_template_TemplateVariable(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.VariableReplacement":             schema_apis_query_v0alpha1_template_VariableReplacement(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.replacement":                     schema_apis_query_v0alpha1_template_replacement(ref),
+	}
+}
+
+func schema_pkg_apis_query_v0alpha1_CommonQueryProperties(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"refId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RefID is the unique identifier of the query, set by the frontend call.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"timeRange": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TimeRange represents the query range NOTE: unlike generic /ds/query, we can now send explicit time values in each query",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange"),
+						},
+					},
+					"datasource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The datasource",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef"),
+						},
+					},
+					"datasourceId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Deprecated -- use datasource ref instead",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"queryType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "QueryType is an optional identifier for the type of query. It can be used to distinguish different types of queries.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"maxDataPoints": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxDataPoints is the maximum number of data points that should be returned from a time series query.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"intervalMs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Interval is the suggested duration between time points in a time series query.",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"hide": {
+						SchemaProps: spec.SchemaProps{
+							Description: "true if query is disabled (ie should not be returned to the dashboard) Note this does not always imply that the query should not be executed since the results from a hidden query may be used as the input to other queries (SSE etc)",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef", "github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange"},
 	}
 }
 
@@ -510,7 +579,7 @@ func schema_apis_query_v0alpha1_definition_QueryTypeVersion(ref common.Reference
 					},
 					"examples": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Examples (include a wrapper)",
+							Description: "Examples (include a wrapper) ideally a template!",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -523,7 +592,7 @@ func schema_apis_query_v0alpha1_definition_QueryTypeVersion(ref common.Reference
 					},
 					"changelog": {
 						SchemaProps: spec.SchemaProps{
-							Description: "What changed from the previous version for the full history see git!",
+							Description: "Changelog defines the changed from the previous version All changes in the same version *must* be backwards compatible Only notable changes will be shown here, for the full version history see git!",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -552,6 +621,60 @@ func schema_apis_query_v0alpha1_expressions_ClassicQueryTypeProperties(ref commo
 				Description: "QueryType = classic",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"refId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RefID is the unique identifier of the query, set by the frontend call.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"timeRange": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TimeRange represents the query range NOTE: unlike generic /ds/query, we can now send explicit time values in each query",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange"),
+						},
+					},
+					"datasource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The datasource",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef"),
+						},
+					},
+					"datasourceId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Deprecated -- use datasource ref instead",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"queryType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "QueryType is an optional identifier for the type of query. It can be used to distinguish different types of queries.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"maxDataPoints": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxDataPoints is the maximum number of data points that should be returned from a time series query.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"intervalMs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Interval is the suggested duration between time points in a time series query.",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"hide": {
+						SchemaProps: spec.SchemaProps{
+							Description: "true if query is disabled (ie should not be returned to the dashboard) Note this does not always imply that the query should not be executed since the results from a hidden query may be used as the input to other queries (SSE etc)",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"conditions": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
@@ -570,7 +693,7 @@ func schema_apis_query_v0alpha1_expressions_ClassicQueryTypeProperties(ref commo
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/expr/classic.ConditionJSON"},
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef", "github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange", "github.com/grafana/grafana/pkg/expr/classic.ConditionJSON"},
 	}
 }
 
@@ -581,6 +704,60 @@ func schema_apis_query_v0alpha1_expressions_MathQueryTypeProperties(ref common.R
 				Description: "QueryType = math",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"refId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RefID is the unique identifier of the query, set by the frontend call.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"timeRange": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TimeRange represents the query range NOTE: unlike generic /ds/query, we can now send explicit time values in each query",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange"),
+						},
+					},
+					"datasource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The datasource",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef"),
+						},
+					},
+					"datasourceId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Deprecated -- use datasource ref instead",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"queryType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "QueryType is an optional identifier for the type of query. It can be used to distinguish different types of queries.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"maxDataPoints": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxDataPoints is the maximum number of data points that should be returned from a time series query.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"intervalMs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Interval is the suggested duration between time points in a time series query.",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"hide": {
+						SchemaProps: spec.SchemaProps{
+							Description: "true if query is disabled (ie should not be returned to the dashboard) Note this does not always imply that the query should not be executed since the results from a hidden query may be used as the input to other queries (SSE etc)",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"expression": {
 						SchemaProps: spec.SchemaProps{
 							Description: "General math expression",
@@ -593,6 +770,8 @@ func schema_apis_query_v0alpha1_expressions_MathQueryTypeProperties(ref common.R
 				Required: []string{"expression"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef", "github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange"},
 	}
 }
 
@@ -603,6 +782,60 @@ func schema_apis_query_v0alpha1_expressions_ReduceQueryTypeProperties(ref common
 				Description: "QueryType = reduce",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"refId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RefID is the unique identifier of the query, set by the frontend call.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"timeRange": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TimeRange represents the query range NOTE: unlike generic /ds/query, we can now send explicit time values in each query",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange"),
+						},
+					},
+					"datasource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The datasource",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef"),
+						},
+					},
+					"datasourceId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Deprecated -- use datasource ref instead",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"queryType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "QueryType is an optional identifier for the type of query. It can be used to distinguish different types of queries.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"maxDataPoints": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxDataPoints is the maximum number of data points that should be returned from a time series query.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"intervalMs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Interval is the suggested duration between time points in a time series query.",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"hide": {
+						SchemaProps: spec.SchemaProps{
+							Description: "true if query is disabled (ie should not be returned to the dashboard) Note this does not always imply that the query should not be executed since the results from a hidden query may be used as the input to other queries (SSE etc)",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"expression": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Reference to other query results",
@@ -632,7 +865,7 @@ func schema_apis_query_v0alpha1_expressions_ReduceQueryTypeProperties(ref common
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/query/v0alpha1/expressions.ReduceSettings"},
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef", "github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange", "github.com/grafana/grafana/pkg/apis/query/v0alpha1/expressions.ReduceSettings"},
 	}
 }
 
@@ -672,6 +905,60 @@ func schema_apis_query_v0alpha1_expressions_ResampleQueryTypeProperties(ref comm
 				Description: "QueryType = resample",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"refId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RefID is the unique identifier of the query, set by the frontend call.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"timeRange": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TimeRange represents the query range NOTE: unlike generic /ds/query, we can now send explicit time values in each query",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange"),
+						},
+					},
+					"datasource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The datasource",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef"),
+						},
+					},
+					"datasourceId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Deprecated -- use datasource ref instead",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"queryType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "QueryType is an optional identifier for the type of query. It can be used to distinguish different types of queries.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"maxDataPoints": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxDataPoints is the maximum number of data points that should be returned from a time series query.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"intervalMs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Interval is the suggested duration between time points in a time series query.",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"hide": {
+						SchemaProps: spec.SchemaProps{
+							Description: "true if query is disabled (ie should not be returned to the dashboard) Note this does not always imply that the query should not be executed since the results from a hidden query may be used as the input to other queries (SSE etc)",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"expression": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The math expression",
@@ -708,6 +995,8 @@ func schema_apis_query_v0alpha1_expressions_ResampleQueryTypeProperties(ref comm
 				Required: []string{"expression", "window", "downsampler", "upsampler"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef", "github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange"},
 	}
 }
 
@@ -718,6 +1007,60 @@ func schema_apis_query_v0alpha1_expressions_ThresholdQueryTypeProperties(ref com
 				Description: "QueryType = threshold",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"refId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RefID is the unique identifier of the query, set by the frontend call.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"timeRange": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TimeRange represents the query range NOTE: unlike generic /ds/query, we can now send explicit time values in each query",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange"),
+						},
+					},
+					"datasource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The datasource",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef"),
+						},
+					},
+					"datasourceId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Deprecated -- use datasource ref instead",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"queryType": {
+						SchemaProps: spec.SchemaProps{
+							Description: "QueryType is an optional identifier for the type of query. It can be used to distinguish different types of queries.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"maxDataPoints": {
+						SchemaProps: spec.SchemaProps{
+							Description: "MaxDataPoints is the maximum number of data points that should be returned from a time series query.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"intervalMs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Interval is the suggested duration between time points in a time series query.",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"hide": {
+						SchemaProps: spec.SchemaProps{
+							Description: "true if query is disabled (ie should not be returned to the dashboard) Note this does not always imply that the query should not be executed since the results from a hidden query may be used as the input to other queries (SSE etc)",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"expression": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -743,7 +1086,7 @@ func schema_apis_query_v0alpha1_expressions_ThresholdQueryTypeProperties(ref com
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/expr.ThresholdConditionJSON"},
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef", "github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange", "github.com/grafana/grafana/pkg/expr.ThresholdConditionJSON"},
 	}
 }
 

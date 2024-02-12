@@ -42,9 +42,11 @@ func (r *subQueryREST) readQueries(req *http.Request) ([]backend.DataQuery, *v0a
 	// Simple URL to JSON mapping
 	if req.Method == http.MethodGet {
 		query := v0alpha1.GenericDataQuery{
-			RefID:         "A",
-			MaxDataPoints: 1000,
-			IntervalMS:    10,
+			CommonQueryProperties: v0alpha1.CommonQueryProperties{
+				RefID:         "A",
+				MaxDataPoints: 1000,
+				IntervalMS:    10,
+			},
 		}
 		params := req.URL.Query()
 		for k := range params {

@@ -41,8 +41,7 @@ type DataSourceRef struct {
 	UID string `json:"uid"`
 }
 
-// GenericDataQuery is a replacement for `dtos.MetricRequest` that provides more explicit types
-type GenericDataQuery struct {
+type CommonQueryProperties struct {
 	// RefID is the unique identifier of the query, set by the frontend call.
 	RefID string `json:"refId,omitempty"`
 
@@ -70,6 +69,11 @@ type GenericDataQuery struct {
 	// Note this does not always imply that the query should not be executed since
 	// the results from a hidden query may be used as the input to other queries (SSE etc)
 	Hide bool `json:"hide,omitempty"`
+}
+
+// GenericDataQuery is a replacement for `dtos.MetricRequest` that provides more explicit types
+type GenericDataQuery struct {
+	CommonQueryProperties `json:",inline"`
 
 	// Additional Properties (that live at the root)
 	props map[string]any `json:"-"`

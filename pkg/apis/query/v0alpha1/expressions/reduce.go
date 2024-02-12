@@ -2,6 +2,12 @@ package expressions
 
 // QueryType = reduce
 type ReduceQueryTypeProperties struct {
+	// RefID is the unique identifier of the query, set by the frontend call.
+	RefID string `json:"refId,omitempty"`
+
+	// QueryType must equal "reduce"
+	QueryType string `json:"queryType,omitempty"`
+
 	// Reference to other query results
 	Expression string `json:"expression"`
 
