@@ -247,8 +247,8 @@ export class LogContextProvider {
         }
       }
 
-      const parsedLabels = contextFilters.filter((filter) => filter.nonIndexed && filter.enabled);
-      for (const parsedLabel of parsedLabels) {
+      const nonIndexedLabels = contextFilters.filter((filter) => filter.nonIndexed && filter.enabled);
+      for (const parsedLabel of nonIndexedLabels) {
         if (parsedLabel.enabled) {
           expr = addLabelToQuery(
             expr,
@@ -379,9 +379,7 @@ export class LogContextProvider {
         return { ...contextFilter };
       });
 
-      const isAtLeastOneRealLabelEnabled = newContextFilters.some(
-        ({ enabled, nonIndexed: fromParser }) => enabled && !fromParser
-      );
+      const isAtLeastOneRealLabelEnabled = newContextFilters.some(({ enabled, nonIndexed }) => enabled && !nonIndexed);
       if (!isAtLeastOneRealLabelEnabled) {
         // If we end up with no real labels enabled, we need to reset the init filters
         return { contextFilters, preservedFiltersApplied };

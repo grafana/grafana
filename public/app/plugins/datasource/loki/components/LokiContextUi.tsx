@@ -155,7 +155,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
       return;
     }
 
-    if (contextFilters.filter(({ enabled, nonIndexed: fromParser }) => enabled && !fromParser).length === 0) {
+    if (contextFilters.filter(({ enabled, nonIndexed }) => enabled && !nonIndexed).length === 0) {
       setContextFilters(previousContextFilters.current);
       return;
     }
@@ -175,13 +175,13 @@ export function LokiContextUi(props: LokiContextUiProps) {
         selectedExtractedLabels: [],
       };
 
-      contextFilters.forEach(({ enabled, nonIndexed: fromParser, label }) => {
+      contextFilters.forEach(({ enabled, nonIndexed, label }) => {
         // We only want to store real labels that were removed from the initial query
-        if (!enabled && !fromParser) {
+        if (!enabled && !nonIndexed) {
           preservedLabels.removedLabels.push(label);
         }
         // Or extracted labels that were added to the initial query
-        if (enabled && fromParser) {
+        if (enabled && nonIndexed) {
           preservedLabels.selectedExtractedLabels.push(label);
         }
       });
@@ -239,10 +239,10 @@ export function LokiContextUi(props: LokiContextUiProps) {
     };
   }, [row.uid]);
 
-  const realLabels = contextFilters.filter(({ nonIndexed: fromParser }) => !fromParser);
+  const realLabels = contextFilters.filter(({ nonIndexed }) => !nonIndexed);
   const realLabelsEnabled = realLabels.filter(({ enabled }) => enabled);
 
-  const parsedLabels = contextFilters.filter(({ nonIndexed: fromParser }) => fromParser);
+  const parsedLabels = contextFilters.filter(({ nonIndexed }) => nonIndexed);
   const parsedLabelsEnabled = parsedLabels.filter(({ enabled }) => enabled);
 
   const contextFilterToSelectFilter = useCallback((contextFilter: ContextFilter): SelectableValue<string> => {
@@ -252,7 +252,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
     };
   }, []);
 
-  // If there's any "parsedLabel", that also includes structured metadata, we show the parsed labels input
+  // If there's any nonIndexed labels, that includes structured metadata and parsed labels, we show the nonIndexed labels input
   const showNonIndexedLabels = parsedLabels.length > 0;
 
   let queryExpr = logContextProvider.prepareExpression(
