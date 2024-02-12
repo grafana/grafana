@@ -200,12 +200,13 @@ describe('expandRecordingRules()', () => {
   });
 
   it('ins:metric:per{pid="val-42", comp="api"}', () => {
-    const query = `ins:metric:per{pid="val-42", comp="api"}`;
+    const query = `aaa:111{pid="val-42", comp="api"} + bbb:222{pid="val-42"}`;
     const mapping = {
-      'ins:metric:per':
-        '100 - (max without (mp) (targetMetric{device=~"/dev/(sda1|sdb)"}) / max without (mp) (targetMetric2{device=~"/dev/(sda1|sdb)"}) * 100)',
+      'aaa:111':
+        '(max without (mp) (targetMetric{device=~"/dev/(sda1|sdb)"}) / max without (mp) (targetMetric2{device=~"/dev/(sda1|sdb)"}))',
+      'bbb:222': '(targetMetric2{device=~"/dev/(sda1|sdb)"})',
     };
-    const expected = `100 - (max without (mp) (targetMetric{device=~"/dev/(sda1|sdb)",pid="val-42", comp="api"}) / max without (mp) (targetMetric2{device=~"/dev/(sda1|sdb)",pid="val-42", comp="api"}) * 100)`;
+    const expected = `(max without (mp) (targetMetric{device=~"/dev/(sda1|sdb)", pid="val-42", comp="api"}) / max without (mp) (targetMetric2{device=~"/dev/(sda1|sdb)", pid="val-42", comp="api"})) + (targetMetric2{device=~"/dev/(sda1|sdb)", pid="val-42"})`;
     const result = expandRecordingRules(query, mapping);
     expect(result).toBe(expected);
   });

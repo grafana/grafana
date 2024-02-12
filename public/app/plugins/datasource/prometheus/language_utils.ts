@@ -131,42 +131,52 @@ export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any
 }
 
 export function expandRecordingRules(query: string, mapping: { [name: string]: string }): string {
-  const ruleNames = Object.keys(mapping);
-  const rulesRegex = new RegExp(`(\\s|\\(|^)(${ruleNames.join('|')})(\\s|$|\\(|\\[|\\{)`, 'ig');
-  const expandedQuery = query.replace(rulesRegex, (match, pre, name, post) => `${pre}${mapping[name]}${post}`);
+  const tmpSplitParts = Object.keys(mapping).reduce<string[]>(
+    (prev, curr) => {
+      let parts: string[] = [];
+      let tmpParts: string[] = [];
+      let removeIdx: number[] = [];
 
-  // Split query into array, so if query uses operators, we can correctly add labels to each individual part.
-  const tmpQueryArray = expandedQuery.split(/(\+|\-|\*|\/|\%|\^)/);
+      prev.filter(Boolean).forEach((p, i) => {
+        parts = p.split(curr);
+        if (parts.length > 1) {
+          removeIdx.push(i);
+          tmpParts.push(...[parts[0], curr, parts[1]].filter(Boolean));
+        }
+      });
 
-  // check if there is a regex match operator
-  // if there is any then merge them into one so invalidLabelsRegex won't confuse
-  // For instance we don't want to split this targetMetric{device=~"/dev/(sda1|sdb)"}
-  const refinedQueryArray = [];
-  let regexMatchOperatorExist = false;
-  for (let i = 0; i < tmpQueryArray.length; i++) {
-    const qa = tmpQueryArray[i];
+      removeIdx.forEach((ri) => (prev[ri] = ''));
+      prev = prev.filter(Boolean);
+      prev.push(...tmpParts);
 
-    if (regexMatchOperatorExist) {
-      refinedQueryArray[refinedQueryArray.length - 1] += qa;
-      if (qa.indexOf(`"`) > -1) {
-        regexMatchOperatorExist = false;
+      return prev;
+    },
+    [query]
+  );
+
+  let labelFound = false;
+  const trulyExpandedQuery = tmpSplitParts.map((tsp, i) => {
+    if (labelFound) {
+      labelFound = false;
+      return '';
+    }
+
+    if (mapping[tsp]) {
+      const recordingRule = mapping[tsp];
+      // it is a recording rule. if the following is a label then apply it
+      if (i + 1 !== tmpSplitParts.length && tmpSplitParts[i + 1].match(labelRegexp)) {
+        labelFound = true;
+        const labels = tmpSplitParts[i + 1];
+        const invalidLabelsRegex = /(\)\{|\}\{|\]\{)/;
+        return addLabelsToExpression(recordingRule + labels, invalidLabelsRegex);
+      } else {
+        return recordingRule;
       }
-    } else {
-      refinedQueryArray.push(qa);
     }
 
-    if (qa.indexOf('~') > -1) {
-      regexMatchOperatorExist = true;
-    }
-  }
-
-  // Regex that matches occurrences of ){ or }{ or ]{ which is a sign of incorrecly added labels.
-  const invalidLabelsRegex = /(\)\{|\}\{|\]\{)/;
-  const correctlyExpandedQueryArray = refinedQueryArray.map((query) => {
-    return addLabelsToExpression(query, invalidLabelsRegex);
+    return tsp;
   });
-
-  return correctlyExpandedQueryArray.join('');
+  return trulyExpandedQuery.filter(Boolean).join('');
 }
 
 function addLabelsToExpression(expr: string, invalidLabelsRegexp: RegExp) {
