@@ -8,7 +8,7 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 
 import { VariableLegend } from './VariableLegend';
 
-interface GroupByVariableFormProps {
+export interface GroupByVariableFormProps {
   datasource?: DataSourceRef;
   onDataSourceChange: (dsSettings: DataSourceInstanceSettings) => void;
   onDefaultOptionsChange: (options?: MetricFindValue[]) => void;
