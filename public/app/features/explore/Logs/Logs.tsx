@@ -207,6 +207,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
 
   updatePanelState = (logsPanelState: Partial<ExploreLogsPanelState>) => {
     const state: ExploreItemState | undefined = getState().explore.panes[this.props.exploreId];
+    console.log('updatePanelState', state);
+    console.log('cols', logsPanelState.columns ?? this.props.panelState?.logs?.columns);
     if (state?.panelsState) {
       dispatch(
         changePanelState(this.props.exploreId, 'logs', {

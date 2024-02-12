@@ -96,7 +96,7 @@ export function LogsTableWrap(props: Props) {
     if (logsFrame?.timeField.name && logsFrame?.bodyField.name && !propsColumns) {
       const defaultColumns = { 0: logsFrame?.timeField.name ?? '', 1: logsFrame?.bodyField.name ?? '' };
       updatePanelState({
-        columns: Object.values(defaultColumns),
+        columns: defaultColumns,
         visualisationType: 'table',
         labelFieldName: logsFrame?.getLabelFieldName() ?? undefined,
       });
