@@ -177,6 +177,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     tabsBar: css({
       flexShrink: 0,
+      paddingLeft: theme.spacing(2),
     }),
     scroll: css({
       background: theme.colors.background.primary,
