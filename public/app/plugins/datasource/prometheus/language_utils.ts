@@ -143,9 +143,13 @@ export function expandRecordingRules(query: string, mapping: { [name: string]: s
         const doesMatch = p.match(getRuleRegex(curr));
         if (doesMatch) {
           parts = p.split(curr);
-          if (parts.length > 1) {
+          if (parts.length === 2) {
             removeIdx.push(i);
             tmpParts.push(...[parts[0], curr, parts[1]].filter(Boolean));
+          } else if (parts.length > 2) {
+            removeIdx.push(i);
+            parts = parts.map((p) => (p === '' ? curr : p));
+            tmpParts.push(...parts);
           }
         }
       });
