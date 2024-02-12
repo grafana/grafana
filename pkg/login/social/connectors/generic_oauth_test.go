@@ -739,6 +739,18 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 			requester: &user.SignedInUser{IsGrafanaAdmin: true},
 		},
 		{
+			name: "passes when team_url is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"teams_url": "",
+					"auth_url":  "https://example.com/auth",
+					"token_url": "https://example.com/token",
+				},
+			},
+			wantErr: nil,
+		},
+		{
 			name: "fails if settings map contains an invalid field",
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{
@@ -849,7 +861,7 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 					"client_id": "client-id",
 					"teams_url": "file://teams",
 					"auth_url":  "https://example.com/auth",
-					"token_url": "ttps://example.com/token",
+					"token_url": "https://example.com/token",
 				},
 			},
 			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,

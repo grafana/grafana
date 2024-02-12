@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -79,7 +80,11 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, settings ssoModels.SS
 		return err
 	}
 
-	err = validateURLs(info)
+	err = validation.Validate(info, requester,
+		validation.UrlValidator(info.AuthUrl, "Auth URL"),
+		validation.UrlValidator(info.TokenUrl, "Token URL"),
+		validateTeamsUrlWhenNotEmpty)
+
 	if err != nil {
 		return err
 	}
@@ -97,6 +102,13 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, settings ssoModels.SS
 	}
 
 	return nil
+}
+
+func validateTeamsUrlWhenNotEmpty(info *social.OAuthInfo, requester identity.Requester) error {
+	if info.TeamsUrl == "" {
+		return nil
+	}
+	return validation.UrlValidator(info.TeamsUrl, "Teams URL")(info, requester)
 }
 
 func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
