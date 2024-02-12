@@ -189,6 +189,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
           pageNav={pageNav}
           navModel={navModel}
           dashboard={dashboard}
+          onDelete={onDelete}
         />
       );
     }
@@ -216,6 +217,7 @@ interface VariableEditorSettingsEditViewProps {
   dashboard: DashboardScene;
   onTypeChange: (variableType: EditableVariableType) => void;
   onGoBack: () => void;
+  onDelete: (variableName: string) => void;
 }
 
 function VariableEditorSettingsView({
@@ -225,6 +227,7 @@ function VariableEditorSettingsView({
   dashboard,
   onTypeChange,
   onGoBack,
+  onDelete,
 }: VariableEditorSettingsEditViewProps) {
   const parentTab = pageNav.children!.find((p) => p.active)!;
   parentTab.parentItem = pageNav;
@@ -237,7 +240,7 @@ function VariableEditorSettingsView({
   return (
     <Page navModel={navModel} pageNav={editVariablePageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
-      <VariableEditorForm variable={variable} onTypeChange={onTypeChange} onGoBack={onGoBack} />
+      <VariableEditorForm variable={variable} onTypeChange={onTypeChange} onGoBack={onGoBack} onDelete={onDelete} />
     </Page>
   );
 }
