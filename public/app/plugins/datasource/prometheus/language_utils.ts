@@ -136,11 +136,33 @@ export function expandRecordingRules(query: string, mapping: { [name: string]: s
   const expandedQuery = query.replace(rulesRegex, (match, pre, name, post) => `${pre}${mapping[name]}${post}`);
 
   // Split query into array, so if query uses operators, we can correctly add labels to each individual part.
-  const queryArray = expandedQuery.split(/(\+|\-|\*|\/|\%|\^)/);
+  const tmpQueryArray = expandedQuery.split(/(\+|\-|\*|\/|\%|\^)/);
+
+  // check if there is a regex match operator
+  // if there is any then merge them into one so invalidLabelsRegex won't confuse
+  // For instance we don't want to split this targetMetric{device=~"/dev/(sda1|sdb)"}
+  const refinedQueryArray = [];
+  let regexMatchOperatorExist = false;
+  for (let i = 0; i < tmpQueryArray.length; i++) {
+    const qa = tmpQueryArray[i];
+
+    if (regexMatchOperatorExist) {
+      refinedQueryArray[refinedQueryArray.length - 1] += qa;
+      if (qa.indexOf(`"`) > -1) {
+        regexMatchOperatorExist = false;
+      }
+    } else {
+      refinedQueryArray.push(qa);
+    }
+
+    if (qa.indexOf('~') > -1) {
+      regexMatchOperatorExist = true;
+    }
+  }
 
   // Regex that matches occurrences of ){ or }{ or ]{ which is a sign of incorrecly added labels.
   const invalidLabelsRegex = /(\)\{|\}\{|\]\{)/;
-  const correctlyExpandedQueryArray = queryArray.map((query) => {
+  const correctlyExpandedQueryArray = refinedQueryArray.map((query) => {
     return addLabelsToExpression(query, invalidLabelsRegex);
   });
 
@@ -184,7 +206,6 @@ function addLabelsToExpression(expr: string, invalidLabelsRegexp: RegExp) {
   // Useful for this kind of metrics sum (recording_rule_metric{label1="value1"}) by (env)
   // if we don't check this part, ) by (env) part will be lost
   const potentialLeftOver = exprAfterRegexMatch.replace(`{${existingLabel}}`, '');
-  console.log(potentialLeftOver);
 
   return result + potentialLeftOver;
 }

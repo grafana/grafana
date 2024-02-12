@@ -191,6 +191,14 @@ describe('expandRecordingRules()', () => {
     ).toBe('sum (foo{labelInside="valueInside", label1="value1"}) by (env)');
   });
 
+  it('expands the query with regex match', () => {
+    expect(
+      expandRecordingRules('sum (metric{label1=~"/value1/(sa|sb)"}) by (env)', {
+        metric: 'foo{labelInside="valueInside"}',
+      })
+    ).toBe('sum (foo{labelInside="valueInside", label1=~"/value1/(sa|sb)"}) by (env)');
+  });
+
   it('ins:metric:per{pid="val-42", comp="api"}', () => {
     const query = `ins:metric:per{pid="val-42", comp="api"}`;
     const mapping = {
