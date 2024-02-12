@@ -1,13 +1,7 @@
 ---
-aliases:
-  - ../features/datasources/phlare/
-  - ../features/datasources/grafana-pyroscope/
-description: Horizontally-scalable, highly-available, multi-tenant continuous profiling
-  aggregation system. OSS profiling solution from Grafana Labs.
+description: Configure your Pyroscope data source for Grafana.
 keywords:
-  - grafana
-  - phlare
-  - guide
+  - configure
   - profiling
   - pyroscope
 labels:
@@ -15,15 +9,12 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Grafana Pyroscope
-weight: 1150
+title: Configure the Grafana Pyroscope data source
+menuTitle: Configure Pyroscope
+weight: 200
 ---
 
-# Grafana Pyroscope data source
-
-Grafana Pyroscope is a horizontally scalable, highly available, multi-tenant, OSS, continuous profiling aggregation system. Add it as a data source, and you are ready to query your profiles in [Explore][explore].
-
-## Configure the Grafana Pyroscope data source
+# Configure the Grafana Pyroscope data source
 
 To configure basic settings for the data source, complete the following steps:
 
@@ -43,84 +34,6 @@ To configure basic settings for the data source, complete the following steps:
    | `User`         | User name for basic authentication.                                                                                                                                                                                                                                                                          |
    | `Password`     | Password for basic authentication.                                                                                                                                                                                                                                                                           |
    | `Minimal step` | Used for queries returning timeseries data. The Pyroscope backend, similar to Prometheus, scrapes profiles at certain intervals. To prevent querying at smaller interval, use Minimal step same or higher than your Pyroscope scrape interval. This prevents returning too many data points to the frontend. |
-
-### Traces to profiles
-
-You can link profile and tracing data using your Pyroscope data source with the Tempo data source.
-For more information, refer to the [Traces to profile section][configure-tempo-data-source] of the Tempo data source documentation.
-
-{{< youtube id="AG8VzfFMLxo" >}}
-
-## Querying
-
-You can query your profiling data using the query editor.
-
-### Query editor
-
-The query editor gives you access to a profile type selector, a label selector, and collapsible options.
-
-![Query editor](/media/docs/pyroscope/query-editor/query-editor.png 'Query editor')
-
-To access the query editor:
-
-1. Sign into Grafana or Grafana Cloud.
-1. Select your Pyroscope data source.
-1. From the menu, choose **Explore**.
-
-1. Select a profile type from the drop-down menu.
-
-   {{< figure src="/media/docs/pyroscope/query-editor/select-profile.png" class="docs-image--no-shadow" max-width="450px" caption="Profile selector" >}}
-
-1. Use the labels selector input to filter by labels. Pyroscope uses similar syntax to Prometheus to filter labels.
-   Refer to [Pyroscope documentation](https://grafana.com/docs/pyroscope/latest/) for available operators and syntax.
-
-   While the label selector can be left empty to query all profiles without filtering by labels, the profile type or app must be selected for the query to be valid.
-
-   Grafana doesn't show any data if the profile type or app isn’t selected when a query runs.
-
-   ![Labels selector](/media/docs/pyroscope/query-editor/labels-selector.png 'Labels selector')
-
-1. Expand the **Options** section to view **Query Type** and **Group by**.
-   ![Options section](/media/docs/pyroscope/query-editor/options-section.png 'Options section')
-
-1. Select a query type to return the profile data which can be shown in the [Flame Graph][flame-graph], metric data visualized in a graph, or both. You can only select both options in a dashboard, because panels allow only one visualization.
-
-**Group by** allows you to group metric data by a specified label. Without any **Group by** label, metric data is aggregated over all the labels into single time series. You can use multiple labels to group by. Group by has only an effect on the metric data and doesn't change the profile data results.
-
-### Profiles query results
-
-Profiles can be visualized in a flame graph. See the [Flame Graph documentation][flame-graph] to learn about the visualization and its features.
-
-![Flame graph](/media/docs/pyroscope/query-editor/flame-graph.png 'Flame graph')
-
-Pyroscope returns profiles aggregated over a selected time range.
-The absolute values in the flame graph grow as the time range gets bigger while keeping the relative values meaningful.
-You can zoom in on the time range to get a higher granularity profile up to the point of a single scrape interval.
-
-### Metrics query results
-
-Metrics results represent the aggregated sum value over time of the selected profile type.
-
-![Metrics graph](/media/docs/pyroscope/query-editor/metric-graph.png 'Metrics graph')
-
-This allows you to quickly see any spikes in the value of the scraped profiles and zoom in to a particular time range.
-
-## Provision the Grafana Pyroscope data source
-
-You can modify the Grafana configuration files to provision the Grafana Pyroscope data source. To learn more, and to view the available provisioning settings, see [provisioning documentation][provisioning-data-sources].
-
-Here is an example configuration:
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: Grafana Pyroscope
-    type: grafana-pyroscope-datasource
-    url: http://localhost:4040
-    jsonData:
-      minStep: '15s'
-```
 
 {{% docs/reference %}}
 [explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
