@@ -1,29 +1,28 @@
-package password
+package user
 
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/password"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestPasswowrdService_ValidatePasswordHardcodePolicy(t *testing.T) {
-	LOWERCASE := user.Password("lowercase")
-	UPPERCASE := user.Password("UPPERCASE")
-	NUMBER := user.Password("123")
-	SYMBOLS := user.Password("!@#$%")
+	LOWERCASE := Password("lowercase")
+	UPPERCASE := Password("UPPERCASE")
+	NUMBER := Password("123")
+	SYMBOLS := Password("!@#$%")
 	testCases := []struct {
 		expectedError               error
 		name                        string
-		passwordTest                user.Password
+		passwordTest                Password
 		strongPasswordPolicyEnabled bool
 	}{
 		{
 			name:                        "should return error when the password has less than 4 characters and strong password policy is disabled",
 			passwordTest:                NUMBER,
-			expectedError:               password.ErrPasswordTooShort,
+			expectedError:               ErrPasswordTooShort,
 			strongPasswordPolicyEnabled: false,
 		},
 		{name: "should not return error when the password has 4 characters and strong password policy is disabled",
@@ -34,31 +33,31 @@ func TestPasswowrdService_ValidatePasswordHardcodePolicy(t *testing.T) {
 		{
 			name:                        "should return error when the password has less than 12 characters and strong password policy is enabled",
 			passwordTest:                NUMBER,
-			expectedError:               password.ErrPasswordTooShort,
+			expectedError:               ErrPasswordTooShort,
 			strongPasswordPolicyEnabled: true,
 		},
 		{
 			name:                        "should return error when the password is missing an uppercase character and strong password policy is enabled",
 			passwordTest:                LOWERCASE + NUMBER + SYMBOLS,
-			expectedError:               password.ErrPasswordPolicyInfringe,
+			expectedError:               ErrPasswordPolicyInfringe,
 			strongPasswordPolicyEnabled: true,
 		},
 		{
 			name:                        "should return error when the password is missing a lowercase character and strong password policy is enabled",
 			passwordTest:                UPPERCASE + NUMBER + SYMBOLS,
-			expectedError:               password.ErrPasswordPolicyInfringe,
+			expectedError:               ErrPasswordPolicyInfringe,
 			strongPasswordPolicyEnabled: true,
 		},
 		{
 			name:                        "should return error when the password is missing a number character and strong password policy is enabled",
 			passwordTest:                LOWERCASE + UPPERCASE + SYMBOLS,
-			expectedError:               password.ErrPasswordPolicyInfringe,
+			expectedError:               ErrPasswordPolicyInfringe,
 			strongPasswordPolicyEnabled: true,
 		},
 		{
 			name:                        "should return error when the password is missing a symbol characters and strong password policy is enabled",
 			passwordTest:                LOWERCASE + UPPERCASE + NUMBER,
-			expectedError:               password.ErrPasswordPolicyInfringe,
+			expectedError:               ErrPasswordPolicyInfringe,
 			strongPasswordPolicyEnabled: true,
 		},
 		{
@@ -89,7 +88,8 @@ func TestPasswowrdService_ValidatePasswordHardcodePolicy(t *testing.T) {
 	for _, tc := range testCases {
 		cfg := setting.NewCfg()
 		cfg.BasicAuthStrongPasswordPolicy = tc.strongPasswordPolicyEnabled
-		err := password.ValidatePassword(tc.passwordTest, cfg)
+		cfg.IsFeatureToggleEnabled = func(key string) bool { return key == featuremgmt.FlagPasswordPolicy }
+		err := ValidatePassword(tc.passwordTest, cfg)
 		assert.Equal(t, tc.expectedError, err)
 	}
 }
