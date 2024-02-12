@@ -19,7 +19,7 @@ export const RecordingBadge = ({ health }: RecordingBadgeProps) => {
   const text = hasError ? 'Recording error' : 'Recording';
 
   return (
-    <Stack direction="row" gap={0.5}>
+    <Stack direction="row" gap={0.5} wrap={'nowrap'} flex={'0 0 auto'}>
       <AlertStateDot color={color} />
       <Text variant="bodySmall" color={color}>
         {text}
@@ -65,7 +65,7 @@ export const StateBadge = ({ state, health }: StateBadgeProps) => {
   }
 
   return (
-    <Stack direction="row" gap={0.5}>
+    <Stack direction="row" gap={0.5} wrap={'nowrap'} flex={'0 0 auto'}>
       <AlertStateDot color={color} />
       <Text variant="bodySmall" color={color}>
         {stateLabel}
