@@ -83,6 +83,7 @@ export function LogsTable(props: Props) {
           custom: {
             inspect: true,
             filterable: true, // This sets the columns to be filterable
+            width: getInitialFieldWidth(field),
             ...field.config.custom,
           },
           // This sets the individual field value as filterable
@@ -298,4 +299,11 @@ function getLabelFiltersTransform(labelFilters: Record<string, number>) {
     };
   }
   return null;
+}
+
+function getInitialFieldWidth(field: Field): number | undefined {
+  if (field.type === FieldType.time) {
+    return 200;
+  }
+  return undefined;
 }
