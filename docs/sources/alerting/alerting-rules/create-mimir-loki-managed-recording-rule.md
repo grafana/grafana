@@ -69,5 +69,5 @@ To create recording rules, follow these steps.
 [annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"
 
 [configure-grafana]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana"
-[configure-grafana]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana"
+[configure-grafana]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/setup-grafana/configure-grafana"
 {{% /docs/reference %}}

@@ -140,8 +140,8 @@ For example, if a screenshot could not be taken within the expected time (10 sec
 
 {{% docs/reference %}}
 [image-rendering]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering"
-[image-rendering]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering"
+[image-rendering]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/setup-grafana/image-rendering"
 
 [paths]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#paths"
-[paths]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#paths"
+[paths]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/setup-grafana/configure-grafana#paths"
 {{% /docs/reference %}}
