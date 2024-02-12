@@ -150,10 +150,6 @@ type subFile struct {
 	fileInfo           os.FileInfo
 }
 
-func (s subFile) isDistDir() bool {
-	return s.fileInfo.IsDir() && s.fileInfo.Name() == "dist"
-}
-
 // CleanRelativePath returns the shortest path name equivalent to path
 // by purely lexical processing. It makes sure the provided path is rooted
 // and then uses filepath.Clean and filepath.Rel to make sure the path
