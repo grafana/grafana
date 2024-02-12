@@ -11,8 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/server"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/password"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -39,12 +37,7 @@ func resetPasswordCommand(c utils.CommandLine, runner server.Runner) error {
 	}
 
 	userPassword := user.Password(newPassword)
-	if runner.Features.IsEnabled(context.Background(), featuremgmt.FlagPasswordPolicy) {
-		if err := password.ValidatePassword(userPassword, runner.Cfg); err != nil {
-			logger.Error("the new password doesn't meet the password policy criteria", "err", err)
-			return err
-		}
-	} else if userPassword.IsWeak() {
+	if err := user.ValidatePassword(userPassword, runner.Cfg); err != nil {
 		return fmt.Errorf("new password is too short")
 	}
 
