@@ -112,7 +112,7 @@ const HeatmapHoverCell = ({
 
   let nonNumericOrdinalDisplay: string | undefined = undefined;
 
-  let contentLabelValue: LabelValue[] = [];
+  let contentItems: LabelValue[] = [];
 
   const getYValueIndex = (idx: number) => {
     return idx % data.yBucketCount! ?? 0;
@@ -244,7 +244,7 @@ const HeatmapHoverCell = ({
   if (mode === TooltipDisplayMode.Single || isPinned) {
     const fromToInt: LabelValue[] = interval ? [{ label: 'Duration', value: formatMilliseconds(interval) }] : [];
 
-    contentLabelValue = [
+    contentItems = [
       {
         label: getFieldDisplayName(countField, data.heatmap),
         value: data.display!(count),
@@ -272,7 +272,7 @@ const HeatmapHoverCell = ({
 
     const vals: LabelValue[] = getDisplayData(fromIdx, toIdx);
     vals.forEach((val) => {
-      contentLabelValue.push({
+      contentItems.push({
         label: val.label,
         value: val.value,
         color: val.color ?? '#FFF',
@@ -330,26 +330,17 @@ const HeatmapHoverCell = ({
     [index]
   );
 
-  const getHeaderLabel = (): LabelValue => {
-    return {
-      label: '',
-      value: xDisp(xBucketMax)!,
-    };
+  const headerLabel: LabelValue = {
+    label: '',
+    value: xDisp(xBucketMax!)!,
   };
 
-  const getContentLabelValue = (): LabelValue[] => {
-    return contentLabelValue;
-  };
+  let customContent: ReactElement[] = [];
 
-  const getCustomContent = () => {
-    let content: ReactElement[] = [];
-    if (mode !== TooltipDisplayMode.Single) {
-      return content;
-    }
-
+  if (mode === TooltipDisplayMode.Single) {
     // Histogram
     if (showHistogram) {
-      content.push(
+      customContent.push(
         <canvas
           width={histCanWidth}
           height={histCanHeight}
@@ -361,7 +352,7 @@ const HeatmapHoverCell = ({
 
     // Color scale
     if (colorPalette && showColorScale) {
-      content.push(
+      customContent.push(
         <ColorScale
           colorPalette={colorPalette}
           min={data.heatmapColors?.minValue!}
@@ -371,20 +362,14 @@ const HeatmapHoverCell = ({
         />
       );
     }
-
-    return content;
-  };
+  }
 
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.wrapper}>
-      <VizTooltipHeader headerLabel={getHeaderLabel()} isPinned={isPinned} />
-      <VizTooltipContent
-        contentLabelValue={getContentLabelValue()}
-        customContent={getCustomContent()}
-        isPinned={isPinned}
-      />
+      <VizTooltipHeader headerLabel={headerLabel} isPinned={isPinned} />
+      <VizTooltipContent contentLabelValue={contentItems} customContent={customContent} isPinned={isPinned} />
       {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
     </div>
   );
