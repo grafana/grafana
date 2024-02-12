@@ -3,8 +3,9 @@ const applyFieldOverridesMock = jest.fn(); // needs to be first in this file
 import { Subject } from 'rxjs';
 
 // Importing this way to be able to spy on grafana/data
+
 import * as grafanaData from '@grafana/data';
-import { DataSourceApi } from '@grafana/data';
+import { DataSourceApi, TypedVariableModel } from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import { TemplateSrvMock } from 'app/features/templating/template_srv.mock';
 
@@ -46,7 +47,27 @@ jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
 }));
 
 jest.mock('app/features/templating/template_srv', () => ({
-  getTemplateSrv: () => new TemplateSrvMock({}),
+  ...jest.requireActual('app/features/templating/template_srv'),
+  getTemplateSrv: () =>
+    new TemplateSrvMock([
+      {
+        name: 'server',
+        type: 'datasource',
+        current: { text: 'Server1', value: 'server' },
+        options: [{ text: 'Server1', value: 'server1' }],
+      },
+      //multi value variable
+      {
+        name: 'multi',
+        type: 'datasource',
+        multi: true,
+        current: { text: 'Server1,Server2', value: ['server-1', 'server-2'] },
+        options: [
+          { text: 'Server1', value: 'server1' },
+          { text: 'Server2', value: 'server2' },
+        ],
+      },
+    ] as TypedVariableModel[]),
 }));
 
 interface ScenarioContext {
@@ -403,6 +424,53 @@ describe('PanelQueryRunner', () => {
     {
       ...defaultPanelConfig,
       snapshotData,
+    }
+  );
+
+  describeQueryRunnerScenario(
+    'shouldAddErrorwhenDatasourceVariableIsMultiple',
+    (ctx) => {
+      it('should add error when datasource variable is multiple and not repeated', async () => {
+        // scopedVars is an objet that represent the variables repeated in a panel
+        const scopedVars = {
+          server: { text: 'Server1', value: 'server-1' },
+        };
+
+        const response = {
+          data: [
+            {
+              target: 'hello',
+              datapoints: [
+                [1, 1000],
+                [2, 2000],
+              ],
+            },
+          ],
+        };
+
+        const datasource = {
+          name: '${multi}',
+          uid: '${multi}',
+          interval: ctx.dsInterval,
+          query: (options: grafanaData.DataQueryRequest) => {
+            ctx.queryCalledWith = options;
+            return Promise.resolve(response);
+          },
+          getRef: () => ({ type: 'test', uid: 'TestDB-uid' }),
+          testDatasource: jest.fn(),
+        } as unknown as DataSourceApi;
+
+        const shouldAddError = ctx.runner.shouldAddErrorWhenDatasourceVariableIsMultiple(datasource, scopedVars);
+
+        expect(shouldAddError).toBe(true);
+        // console.log(ctx.runner.getLastResult());
+        // expect(ctx.runner.errors[0].message).toBe(
+        //   'Datasource variable ${multi} is multiple and not repeated in the query.'
+        // );
+      });
+    },
+    {
+      ...defaultPanelConfig,
     }
   );
 });

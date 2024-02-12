@@ -392,7 +392,7 @@ export class PanelQueryRunner {
           next.errors = [
             {
               message:
-                'Panel is using a variable datasource with multiple values without repeat option. Please configure the panel to be repeated by the datasource variable.',
+                'Panel is using a variable datasource with multiple values without repeat option. Please configure the panel to be repeated by the same datasource variable.',
             },
           ];
           next.state = LoadingState.Error;
@@ -476,9 +476,10 @@ export class PanelQueryRunner {
     scopedVars: ScopedVars | undefined
   ): boolean {
     let addWarningMessageMultipleDatasourceVariable = false;
+
     if (datasource?.uid?.startsWith('${')) {
-      const variableName = this.templateSrv.getVariableName(datasource.uid);
-      const variable = this.templateSrv.getVariables().find((v) => v.name === variableNameSanitized);
+      const variableName = this.templateSrv.getVariableName(datasource.uid) ?? '';
+      const variable = this.templateSrv.getVariables().find((v) => v.name === variableName);
 
       // is variable holding multiple values and is not being repeated (scopedVars)
 
@@ -486,7 +487,7 @@ export class PanelQueryRunner {
         variable?.type === 'datasource' &&
         Array.isArray(variable?.current?.value) &&
         variable?.current?.value?.length > 1 &&
-        (scopedVars === undefined || (scopedVars && !scopedVars[variableNameSanitized]))
+        (scopedVars === undefined || (scopedVars && !scopedVars[variableName]))
       ) {
         addWarningMessageMultipleDatasourceVariable = true;
       }

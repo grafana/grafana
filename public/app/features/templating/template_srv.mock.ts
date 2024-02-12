@@ -13,18 +13,40 @@ import { variableRegex } from '../variables/utils';
  */
 export class TemplateSrvMock implements TemplateSrv {
   private regex = variableRegex;
-  constructor(private variables: Record<string, string>) {}
+  constructor(private variables: Array<Partial<TypedVariableModel>>) {}
 
   getVariables(): TypedVariableModel[] {
-    return Object.keys(this.variables).map((key) => {
-      return {
-        type: 'custom',
-        name: key,
-        label: key,
-      };
-      // TODO: we remove this type assertion in a later PR
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    }) as TypedVariableModel[];
+    if (!this.variables) {
+      return [];
+    }
+
+    return this.variables.reduce(
+      (acc, variable) => {
+        const commonProps = {
+          type: variable.type,
+          name: variable.name,
+          label: variable.label,
+        };
+        if (variable.type === 'datasource') {
+          acc.push({
+            ...commonProps,
+            current: {
+              text: variable.current?.text,
+              value: variable.current?.value,
+            },
+            options: variable.options,
+            multi: variable.multi,
+            includeAll: variable.includeAll,
+          });
+        } else {
+          acc.push({
+            ...commonProps,
+          });
+        }
+        return acc;
+      },
+      [] as unknown as Array<Partial<TypedVariableModel>>
+    ) as TypedVariableModel[];
   }
 
   replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {
@@ -36,7 +58,11 @@ export class TemplateSrvMock implements TemplateSrv {
 
     return target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
       const variableName = var1 || var2 || var3;
-      return this.variables[variableName];
+      if (!variableName) {
+        return this.variables.find((v) => v.name === variableName);
+      } else {
+        return variableName;
+      }
     });
   }
 
