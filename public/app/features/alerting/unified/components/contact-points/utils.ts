@@ -1,4 +1,4 @@
-import { countBy, difference, split, take, takeRight, trim, upperFirst, without } from 'lodash';
+import { countBy, difference, take, trim, upperFirst } from 'lodash';
 import { ReactNode } from 'react';
 
 import { config } from '@grafana/runtime';
