@@ -6,6 +6,7 @@ import { Labels } from '../../../../../../types/unified-alerting-dto';
 import { useAlertmanagerConfig } from '../../../hooks/useAlertmanagerConfig';
 import { useRouteGroupsMatcher } from '../../../useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from '../../../utils/amroutes';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
 import { AlertInstanceMatch, computeInheritedTree, normalizeRoute } from '../../../utils/notification-policies';
 
 import { getRoutesByIdMap, RouteWithPath } from './route';
@@ -55,7 +56,9 @@ export const useAlertmanagerNotificationRoutingPreview = (
     if (!rootRoute) {
       return;
     }
-    return await matchInstancesToRoute(rootRoute, potentialInstances);
+    return await matchInstancesToRoute(rootRoute, potentialInstances, {
+      unquoteMatchers: alertManagerSourceName !== GRAFANA_RULES_SOURCE_NAME,
+    });
   }, [rootRoute, potentialInstances]);
 
   return {

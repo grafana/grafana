@@ -1946,8 +1946,8 @@ github.com/grafana/grafana-google-sdk-go v0.1.0/go.mod h1:Vo2TKWfDVmNTELBUM+3lkr
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 h1:r+mU5bGMzcXCRVAuOrTn54S80qbfVkvTdUJZfSfTNbs=
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
-github.com/grafana/grafana-plugin-sdk-go v0.208.0 h1:+cHmkoayG+nkqwbyQ9uVoRZJFcyLuZafwkTaeRO/r8U=
-github.com/grafana/grafana-plugin-sdk-go v0.208.0/go.mod h1:RpVdugdeeNmo/DUQdFRbsBrIwDg+igNHSNsaUqiXdEc=
+github.com/grafana/grafana-plugin-sdk-go v0.209.0 h1:izPAnJePvzqrpJ3/X3eCbESnxR2bPqx32Q92glYHmkU=
+github.com/grafana/grafana-plugin-sdk-go v0.209.0/go.mod h1:RpVdugdeeNmo/DUQdFRbsBrIwDg+igNHSNsaUqiXdEc=
 github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 h1:1YNoeIhii4UIIQpCPU+EXidnqf449d0C3ZntAEt4KSo=
 github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482/go.mod h1:GNcfpy5+SY6RVbNGQW264gC0r336Dm+0zgQ5vt6+M8Y=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20240208102907-e82436ce63e6 h1:CBm0rwLCPDyarg9/bHJ50rBLYmyMDoyCWpgRMITZhdA=
