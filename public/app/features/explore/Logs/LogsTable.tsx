@@ -170,6 +170,9 @@ export function LogsTable(props: Props) {
       onCellFilterAdded={props.onClickFilterLabel && props.onClickFilterOutLabel ? onCellFilterAdded : undefined}
       height={props.height}
       footerOptions={{ show: true, reducer: ['count'], countRows: true }}
+      headerMenuClick={(fieldName) => {
+        console.log('headerMenuClick', fieldName);
+      }}
     />
   );
 }

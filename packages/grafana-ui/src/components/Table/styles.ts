@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { TableCellHeight } from '@grafana/schema';
 
-export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCellHeight) {
+export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCellHeight, tableHeaderMenu: boolean) {
   const borderColor = theme.colors.border.weak;
   const resizerColor = theme.colors.primary.border;
   const cellPadding = 6;
@@ -128,7 +128,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
     }),
     headerCell: css({
       height: '100%',
-      padding: `0 ${cellPadding}px`,
+      padding: `0 ${tableHeaderMenu ? cellPadding * 3 : cellPadding}px ${cellPadding}px ${cellPadding}px`,
       overflow: 'hidden',
       whiteSpace: 'nowrap',
       display: 'flex',
@@ -247,6 +247,11 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
     }),
     imageCell: css({
       height: '100%',
+    }),
+    headerMenuIcon: css({
+      position: 'absolute',
+      right: '4px',
+      cursor: 'pointer',
     }),
     resizeHandle: css({
       label: 'resizeHandle',

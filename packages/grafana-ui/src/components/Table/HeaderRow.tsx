@@ -1,6 +1,7 @@
 import React from 'react';
 import { HeaderGroup, Column } from 'react-table';
 
+import { Field } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { getFieldTypeIcon } from '../../types';
@@ -13,10 +14,11 @@ export interface HeaderRowProps {
   headerGroups: HeaderGroup[];
   showTypeIcons?: boolean;
   tableStyles: TableStyles;
+  headerMenuClick?: (fieldName: string) => void;
 }
 
 export const HeaderRow = (props: HeaderRowProps) => {
-  const { headerGroups, showTypeIcons, tableStyles } = props;
+  const { headerGroups, showTypeIcons, tableStyles, headerMenuClick } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
 
   return (
@@ -32,7 +34,7 @@ export const HeaderRow = (props: HeaderRowProps) => {
             role="row"
           >
             {headerGroup.headers.map((column: Column, index: number) =>
-              renderHeaderCell(column, tableStyles, showTypeIcons)
+              renderHeaderCell(column, tableStyles, showTypeIcons, headerMenuClick)
             )}
           </div>
         );
@@ -41,9 +43,14 @@ export const HeaderRow = (props: HeaderRowProps) => {
   );
 };
 
-function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?: boolean) {
+function renderHeaderCell(
+  column: any,
+  tableStyles: TableStyles,
+  showTypeIcons?: boolean,
+  headerMenuClick?: (fieldName: string) => void
+) {
   const headerProps = column.getHeaderProps();
-  const field = column.field ?? null;
+  const field: Field = column.field ?? null;
 
   if (column.canResize) {
     headerProps.style.userSelect = column.isResizing ? 'none' : 'auto'; // disables selecting text while resizing
@@ -74,6 +81,9 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?:
       {!column.canSort && column.render('Header')}
       {!column.canSort && column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
       {column.canResize && <div {...column.getResizerProps()} className={tableStyles.resizeHandle} />}
+      {headerMenuClick && (
+        <Icon onClick={() => headerMenuClick(field?.name)} className={tableStyles.headerMenuIcon} name={'ellipsis-v'} />
+      )}
     </div>
   );
 }

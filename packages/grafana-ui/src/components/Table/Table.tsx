@@ -49,13 +49,14 @@ export const Table = memo((props: Props) => {
     timeRange,
     enableSharedCrosshair = false,
     initialRowIndex = undefined,
+    headerMenuClick = undefined,
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
   const tableDivRef = useRef<HTMLDivElement>(null);
   const variableSizeListScrollbarRef = useRef<HTMLDivElement>(null);
   const theme = useTheme2();
-  const tableStyles = useTableStyles(theme, cellHeight);
+  const tableStyles = useTableStyles(theme, cellHeight, !!headerMenuClick);
   const headerHeight = noHeader ? 0 : tableStyles.rowHeight;
   const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
 
@@ -285,7 +286,12 @@ export const Table = memo((props: Props) => {
       <CustomScrollbar hideVerticalTrack={true}>
         <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
           {!noHeader && (
-            <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} tableStyles={tableStyles} />
+            <HeaderRow
+              headerGroups={headerGroups}
+              showTypeIcons={showTypeIcons}
+              tableStyles={tableStyles}
+              headerMenuClick={headerMenuClick}
+            />
           )}
           {itemCount > 0 ? (
             <div data-testid={selectors.components.Panels.Visualization.Table.body} ref={variableSizeListScrollbarRef}>
