@@ -11,10 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/password"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -501,13 +499,9 @@ func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Re
 	}
 
 	userPassword := user.Password(cmd.NewPassword)
-	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagPasswordPolicy) {
-		if err := password.ValidatePassword(userPassword, hs.Cfg); err != nil {
-			c.Logger.Error("the new password doesn't meet the password policy criteria", "err", err)
-			return response.Err(err)
-		}
-	} else if userPassword.IsWeak() {
-		return response.Error(http.StatusBadRequest, "New password is too short", nil)
+	if err := user.ValidatePassword(userPassword, hs.Cfg); err != nil {
+		c.Logger.Warn("the new password doesn't meet the password policy criteria", "err", err)
+		return response.Err(err)
 	}
 
 	cmd.UserID = userID
