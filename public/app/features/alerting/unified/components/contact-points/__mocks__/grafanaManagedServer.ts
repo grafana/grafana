@@ -48,7 +48,7 @@ export const setupTestEndpointMock = (server: SetupServer) => {
         const requestBody = await request.json();
         mock(requestBody);
 
-        return HttpResponse.json();
+        return HttpResponse.json({});
       },
       {
         once: true,
@@ -69,7 +69,7 @@ export const setupSaveEndpointMock = (server: SetupServer) => {
         const requestBody = await request.json();
         mock(requestBody);
 
-        return HttpResponse.json();
+        return HttpResponse.json({});
       },
       {
         once: true,
