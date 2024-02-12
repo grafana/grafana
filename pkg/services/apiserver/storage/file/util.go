@@ -10,12 +10,23 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func (s *Storage) filePath(key string) string {
-	return key + ".json"
+	// Replace backslashes with underscores to avoid creating bogus subdirectories
+	key = strings.Replace(key, "\\", "_", -1)
+	fileName := filepath.Join(s.root, filepath.Clean(key+".json"))
+	return fileName
+}
+
+func (s *Storage) dirPath(key string) string {
+	// Replace backslashes with underscores to avoid creating bogus subdirectories
+	key = strings.Replace(key, "\\", "_", -1)
+	dirName := filepath.Join(s.root, filepath.Clean(key))
+	return dirName
 }
 
 func writeFile(codec runtime.Codec, path string, obj runtime.Object) error {
