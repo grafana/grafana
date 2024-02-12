@@ -1,10 +1,11 @@
 import { Placement } from '@floating-ui/react';
-/**
- * This API allows popovers to update Popper's position when e.g. popover content changes
- * updatePopperPosition is delivered to content by react-popper.
- */
+
 export interface PopoverContentProps {
-  // Is this used anywhere in plugins? Can we remove it or rename it to just update?
+  /**
+   * @deprecated
+   * This prop is deprecated and no longer has any effect as popper position updates automatically.
+   * It will be removed in a future release.
+   */
   updatePopperPosition?: () => void;
 }
 
