@@ -288,10 +288,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
               );
             } else {
               const response = linkedDatasource.query(linkedRequest);
-              if (!('pipe' in response) || typeof response.pipe !== 'function') {
-                throw Error('Linked datasource does not allow piping on query response');
-              }
-              return response.pipe(
+              return from(response).pipe(
                 map((response) =>
                   response.error ? response : transformTraceList(response, this.uid, this.name, traceLinkMatcher)
                 )
