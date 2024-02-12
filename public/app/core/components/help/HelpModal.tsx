@@ -27,7 +27,7 @@ const getShortcuts = (modKey: string) => {
           description: t('help-modal.shortcuts-description.exit-edit/setting-views', 'Exit edit/setting views'),
         },
         {
-          keys: ['h'],
+          keys: [`${modKey} + h`],
           description: t('help-modal.shortcuts-description.show-all-shortcuts', 'Show all keyboard shortcuts'),
         },
         { keys: ['c', 't'], description: t('help-modal.shortcuts-description.change-theme', 'Change theme') },
@@ -177,60 +177,55 @@ export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    titleDescription: css`
-      font-size: ${theme.typography.bodySmall.fontSize};
-      font-weight: ${theme.typography.bodySmall.fontWeight};
-      color: ${theme.colors.text.disabled};
-      padding-bottom: ${theme.spacing(2)};
-    `,
-    categories: css`
-      font-size: ${theme.typography.bodySmall.fontSize};
-      display: flex;
-      flex-flow: row wrap;
-      justify-content: space-between;
-      align-items: flex-start;
-    `,
-    shortcutCategory: css`
-      width: 50%;
-      font-size: ${theme.typography.bodySmall.fontSize};
-    `,
-    shortcutTable: css`
-      margin-bottom: ${theme.spacing(2)};
-    `,
-    shortcutTableCategoryHeader: css`
-      font-weight: normal;
-      font-size: ${theme.typography.h6.fontSize};
-      text-align: left;
-    `,
-    shortcutTableDescription: css`
-      text-align: left;
-      color: ${theme.colors.text.disabled};
-      width: 99%;
-      padding: ${theme.spacing(1, 2)};
-    `,
-    shortcutTableKeys: css`
-      white-space: nowrap;
-      width: 1%;
-      text-align: right;
-      color: ${theme.colors.text.primary};
-    `,
-    shortcutTableKey: css`
-      display: inline-block;
-      text-align: center;
-      margin-right: ${theme.spacing(0.5)};
-      padding: 3px 5px;
-      font:
-        11px Consolas,
-        'Liberation Mono',
-        Menlo,
-        Courier,
-        monospace;
-      line-height: 10px;
-      vertical-align: middle;
-      border: solid 1px ${theme.colors.border.medium};
-      border-radius: ${theme.shape.borderRadius(3)};
-      color: ${theme.colors.text.primary};
-      background-color: ${theme.colors.background.secondary};
-    `,
+    titleDescription: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.bodySmall.fontWeight,
+      color: theme.colors.text.disabled,
+      paddingBottom: theme.spacing(2),
+    }),
+    categories: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+      display: 'flex',
+      flexFlow: 'row wrap',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+    }),
+    shortcutCategory: css({
+      width: '50%',
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
+    shortcutTable: css({
+      marginBottom: theme.spacing(2),
+    }),
+    shortcutTableCategoryHeader: css({
+      fontWeight: 'normal',
+      fontSize: theme.typography.h6.fontSize,
+      textAlign: 'left',
+    }),
+    shortcutTableDescription: css({
+      textAlign: 'left',
+      color: theme.colors.text.disabled,
+      width: '99%',
+      padding: theme.spacing(1, 2),
+    }),
+    shortcutTableKeys: css({
+      whiteSpace: 'nowrap',
+      width: '1%',
+      textAlign: 'right',
+      color: theme.colors.text.primary,
+    }),
+    shortcutTableKey: css({
+      display: 'inline-block',
+      textAlign: 'center',
+      marginRight: theme.spacing(0.5),
+      padding: '3px 5px',
+      font: "11px Consolas, 'Liberation Mono', Menlo, Courier, monospace",
+      lineHeight: '10px',
+      verticalAlign: 'middle',
+      border: `solid 1px ${theme.colors.border.medium}`,
+      borderRadius: theme.shape.radius.default,
+      color: theme.colors.text.primary,
+      backgroundColor: theme.colors.background.secondary,
+    }),
   };
 }
