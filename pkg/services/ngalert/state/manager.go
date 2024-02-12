@@ -146,7 +146,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 		// Emit a warning if we detect a large group.
 		// We will not enforce this here, but it's convenient to emit the warning here as we load up all the rules.
 		for name, size := range groupSizes {
-			if st.rulesPerRuleGroupLimit > 0 && int64(size) > st.rulesPerRuleGroupLimit {
+			if st.rulesPerRuleGroupLimit > 0 && size > st.rulesPerRuleGroupLimit {
 				st.log.Warn(
 					"Large rule group was loaded. Large groups are discouraged and changes to them may be disallowed in the future.",
 					"limit", st.rulesPerRuleGroupLimit,
