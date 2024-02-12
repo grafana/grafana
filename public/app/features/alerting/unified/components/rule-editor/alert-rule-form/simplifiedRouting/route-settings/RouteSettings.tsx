@@ -46,14 +46,13 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
     watch,
     register,
     setValue,
-    getValues,
     formState: { errors },
   } = useFormContext<RuleFormValues>();
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues([]));
   const { groupIntervalValue, groupWaitValue, repeatIntervalValue } = DEFAULTS_TIMINGS;
   const overrideGrouping = watch(`contactPoints.${alertManager}.overrideGrouping`);
   const overrideTimings = watch(`contactPoints.${alertManager}.overrideTimings`);
-  const groupByCount = getValues(`contactPoints.${alertManager}.groupBy`)?.length ?? 0;
+  const groupByCount = watch(`contactPoints.${alertManager}.groupBy`)?.length ?? 0;
 
   const styles = useStyles2(getStyles);
   useEffect(() => {
