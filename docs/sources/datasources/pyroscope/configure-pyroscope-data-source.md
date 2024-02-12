@@ -94,7 +94,6 @@ datasources:
       minStep: '15s'
 ```
 
-
 {{% docs/reference %}}
 [explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/explore"
 [explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/explore"
