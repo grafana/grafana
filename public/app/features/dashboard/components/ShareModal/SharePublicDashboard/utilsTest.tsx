@@ -1,3 +1,4 @@
+import 'whatwg-fetch';
 import { fireEvent, render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import React from 'react';

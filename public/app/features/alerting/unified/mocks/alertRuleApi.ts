@@ -1,3 +1,4 @@
+import 'whatwg-fetch';
 import { http, HttpResponse } from 'msw';
 import { SetupServer } from 'msw/node';
 

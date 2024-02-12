@@ -1,3 +1,4 @@
+import 'whatwg-fetch';
 import { renderHook, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';

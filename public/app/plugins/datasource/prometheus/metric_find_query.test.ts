@@ -1,3 +1,4 @@
+import 'whatwg-fetch'; // fetch polyfill needed backendSrv
 import { of } from 'rxjs';
 
 import { DataSourceInstanceSettings, TimeRange, toUtc } from '@grafana/data';
