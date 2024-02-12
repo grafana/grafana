@@ -232,13 +232,18 @@ func (d *DuplicatePluginIDValidation) Filter(ctx context.Context, bundles []*plu
 			continue
 		}
 
+		var nonDupeChildren []*plugins.FoundPlugin
 		for _, child := range b.Children {
 			if slices.ContainsFunc(ps, matchesPluginIDFunc(*child)) {
 				d.log.Warn("Skipping loading of child plugin as it's a duplicate", "pluginId", child.JSONData.ID)
 				continue
 			}
+			nonDupeChildren = append(nonDupeChildren, child)
 		}
-		res = append(res, b)
+		res = append(res, &plugins.FoundBundle{
+			Primary:  b.Primary,
+			Children: nonDupeChildren,
+		})
 	}
 
 	return res, nil
