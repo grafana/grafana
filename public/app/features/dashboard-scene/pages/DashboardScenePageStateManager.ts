@@ -202,7 +202,13 @@ export class DashboardScenePageStateManager extends StateManagerBase<DashboardSc
 
   public clearState() {
     getDashboardSrv().setCurrent(undefined);
-    this.setState({ dashboard: undefined, loadError: undefined, isLoading: false, panelEditor: undefined });
+
+    this.setState({
+      dashboard: undefined,
+      loadError: undefined,
+      isLoading: false,
+      panelEditor: undefined,
+    });
   }
 
   public setDashboardCache(cacheKey: string, dashboard: DashboardDTO) {
