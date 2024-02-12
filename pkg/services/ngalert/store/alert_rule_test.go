@@ -751,22 +751,26 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 	}
 
 	uids := &sync.Map{}
+	uniqueTitle := models.WithUniqueTitle()
 
 	rulesWithNotifications := models.GenerateAlertRules(5, models.AlertRuleGen(
 		models.WithOrgID(1),
 		models.WithUniqueUID(uids),
+		uniqueTitle,
 		withIntervalMatching(store.Cfg.BaseInterval),
 		models.WithNotificationSettingsGen(models.NotificationSettingsGen()),
 	))
 	rulesInOtherOrg := models.GenerateAlertRules(5, models.AlertRuleGen(
 		models.WithOrgID(2),
 		models.WithUniqueUID(uids),
+		models.WithUniqueTitle(),
 		withIntervalMatching(store.Cfg.BaseInterval),
 		models.WithNotificationSettingsGen(models.NotificationSettingsGen()),
 	))
 	rulesWithNoNotifications := models.GenerateAlertRules(5, models.AlertRuleGen(
 		models.WithOrgID(1),
 		models.WithUniqueUID(uids),
+		uniqueTitle,
 		withIntervalMatching(store.Cfg.BaseInterval),
 		models.WithNoNotificationSettings(),
 	))

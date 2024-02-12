@@ -273,6 +273,21 @@ func WithUniqueUID(knownUids *sync.Map) AlertRuleMutator {
 	}
 }
 
+func WithUniqueTitle() AlertRuleMutator {
+	knownTitles := sync.Map{}
+	return func(rule *AlertRule) {
+		title := rule.Title
+		for {
+			_, ok := knownTitles.LoadOrStore(title, struct{}{})
+			if !ok {
+				rule.Title = title
+				return
+			}
+			title = uuid.NewString()
+		}
+	}
+}
+
 func WithQuery(query ...AlertQuery) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.Data = query
