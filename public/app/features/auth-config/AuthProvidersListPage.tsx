@@ -62,7 +62,10 @@ export const AuthConfigPageUnconnected = ({
       subTitle={
         <>
           Manage your auth settings and configure single sign-on. Find out more in our{' '}
-          <TextLink href="https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication">
+          <TextLink
+            external={true}
+            href="https://grafana.com/docs/grafana/next/setup-grafana/configure-security/configure-authentication"
+          >
             documentation
           </TextLink>
           .

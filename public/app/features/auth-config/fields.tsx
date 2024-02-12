@@ -173,10 +173,13 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     allowedGroups: {
       label: 'Allowed groups',
       type: 'select',
-      description:
-        'List of comma- or space-separated groups. The user should be a member of \n' +
-        'at least one group to log in. If you configure allowed_groups, you must also configure \n' +
-        'groups_attribute_path.',
+      description: (
+        <>
+          List of comma- or space-separated groups. The user should be a member of at least one group to log in.{' '}
+          {provider === 'generic_oauth' &&
+            'If you configure allowed_groups, you must also configure groups_attribute_path.'}
+        </>
+      ),
       multi: true,
       allowCustomValue: true,
       options: [],
@@ -347,9 +350,13 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     },
     teamsUrl: {
       label: 'Teams URL',
-      description:
-        'The URL used to query for Team Ids. If not set, the default value is /teams. \n' +
-        'If you configure teams_url, you must also configure team_ids_attribute_path.',
+      description: (
+        <>
+          The URL used to query for Team Ids. If not set, the default value is /teams.{' '}
+          {provider === 'generic_oauth' &&
+            'If you configure teams_url, you must also configure team_ids_attribute_path.'}
+        </>
+      ),
       type: 'text',
       validation: {
         validate: (value, formValues) => {
@@ -379,9 +386,14 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     teamIds: {
       label: 'Team Ids',
       type: 'select',
-      description:
-        'String list of Team Ids. If set, the user must be a member of one of the given teams to log in. \n' +
-        'If you configure team_ids, you must also configure teams_url and team_ids_attribute_path.',
+      description: (
+        <>
+          {provider === 'github' ? 'Integer' : 'String'} list of Team Ids. If set, the user must be a member of one of
+          the given teams to log in.{' '}
+          {provider === 'generic_oauth' &&
+            'If you configure team_ids, you must also configure teams_url and team_ids_attribute_path.'}
+        </>
+      ),
       multi: true,
       allowCustomValue: true,
       options: [],
