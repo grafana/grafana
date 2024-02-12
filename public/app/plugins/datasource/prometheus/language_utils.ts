@@ -197,15 +197,16 @@ function addLabelsToExpression(expr: string, invalidLabelsRegexp: RegExp) {
   });
 
   // reconstruct the labels
-  const existingLabel = arrayOfLabelObjects.reduce((prev, curr) => {
-    prev += `${curr.key}${curr.operator}${curr.value}`;
+  let existingLabel = arrayOfLabelObjects.reduce((prev, curr) => {
+    prev += `${curr.key}${curr.operator}${curr.value}, `;
     return prev;
   }, '');
 
   // Check if there is anything besides labels
   // Useful for this kind of metrics sum (recording_rule_metric{label1="value1"}) by (env)
   // if we don't check this part, ) by (env) part will be lost
-  const potentialLeftOver = exprAfterRegexMatch.replace(`{${existingLabel}}`, '');
+  existingLabel = '{' + existingLabel.slice(0, -2) + '}';
+  const potentialLeftOver = exprAfterRegexMatch.replace(existingLabel, '');
 
   return result + potentialLeftOver;
 }
