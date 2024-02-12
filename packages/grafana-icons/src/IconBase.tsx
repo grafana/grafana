@@ -27,7 +27,7 @@ function getSvgSize(size: IconSize) {
   return sizeMap[size] || 16;
 }
 
-export const IconBase = ({ title, className, size = 'md', color = 'currentColor', ...props }: IconProps) => {
+export const IconBase = ({ title, size = 'md', color = 'currentColor', ...props }: IconProps) => {
   const svgSize = getSvgSize(size);
 
   return (
@@ -43,7 +43,6 @@ export const IconBase = ({ title, className, size = 'md', color = 'currentColor'
         lineHeight: 0,
         verticalAlign: 'middle',
       }}
-      className={className}
       {...props}
     >
       {title && <title>{title}</title>}
