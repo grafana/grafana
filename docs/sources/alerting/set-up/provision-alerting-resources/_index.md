@@ -77,5 +77,5 @@ Provisioned resources are labeled **Provisioned**, so that it is clear that they
 [alerting_export_http]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting/set-up/provision-alerting-resources/export-alerting-resources#export-api-endpoints"
 
 [provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/administration/provisioning"
-[provisioning]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/administration/provisioning"
+[provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/latest/administration/provisioning"
 {{% /docs/reference %}}

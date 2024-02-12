@@ -384,8 +384,8 @@ resource "grafana_mute_timing" "mute_all" {
 [alerting_http_provisioning]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting/set-up/provision-alerting-resources/http-api-provisioning"
 
 [service-accounts]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts"
-[service-accounts]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/administration/service-accounts"
+[service-accounts]: "/docs/grafana-cloud/ -> /docs/grafana/latest/administration/service-accounts"
 
 [testdata]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/testdata"
-[testdata]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/datasources/testdata"
+[testdata]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/connect-externally-hosted/data-sources/testdata"
 {{% /docs/reference %}}

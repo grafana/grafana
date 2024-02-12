@@ -64,13 +64,13 @@ The following topics provide you with advanced configuration options for Grafana
 [configure-alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager"
 
 [configure-high-availability]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-high-availability"
-[configure-high-availability]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-high-availability"
+[configure-high-availability]: "/docs/grafana-cloud/ -> /docs/grafana/latest/alerting/set-up/configure-high-availability"
 
 [data-source-alerting]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/data-source-alerting"
 [data-source-alerting]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/data-source-alerting"
 
 [data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management"
-[data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/administration/data-source-management"
+[data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/latest/administration/data-source-management"
 
 [terraform-provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning"
 [terraform-provisioning]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/terraform-provisioning"

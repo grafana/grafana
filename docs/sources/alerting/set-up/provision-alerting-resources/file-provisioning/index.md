@@ -815,5 +815,5 @@ This eliminates the need for a persistent database to use Grafana Alerting in Ku
 [alerting_export]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources"
 [alerting_export]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting/set-up/provision-alerting-resources/export-alerting-resources"
 [provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/administration/provisioning"
-[provisioning]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/administration/provisioning"
+[provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/latest/administration/provisioning"
 {{% /docs/reference %}}

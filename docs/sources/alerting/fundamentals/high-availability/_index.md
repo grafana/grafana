@@ -39,5 +39,5 @@ It is important to make sure that gossiping is configured and tested. You can fi
 
 {{% docs/reference %}}
 [configure-high-availability]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-high-availability"
-[configure-high-availability]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-high-availability"
+[configure-high-availability]: "/docs/grafana-cloud/ -> /docs/grafana/latest/alerting/set-up/configure-high-availability"
 {{% /docs/reference %}}
