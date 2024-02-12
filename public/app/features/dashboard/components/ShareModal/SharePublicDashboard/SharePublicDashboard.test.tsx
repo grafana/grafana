@@ -102,9 +102,12 @@ const getNonExistentPublicDashboardResponse = () =>
   });
 const getErrorPublicDashboardResponse = () =>
   http.get('/api/dashboards/uid/:dashboardUid/public-dashboards', () => {
-    return HttpResponse.json(undefined, {
-      status: 500,
-    });
+    return HttpResponse.json(
+      {},
+      {
+        status: 500,
+      }
+    );
   });
 
 const alertTests = () => {
