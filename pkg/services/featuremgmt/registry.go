@@ -1176,6 +1176,13 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSharingSquad,
 		},
+		{
+			Name:            "kubernetesAggregator",
+			Description:     "Enable grafana aggregator",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+		},
 	}
 )
 

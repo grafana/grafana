@@ -638,4 +638,8 @@ const (
 	// FlagNewPDFRendering
 	// New implementation for the dashboard to PDF rendering
 	FlagNewPDFRendering = "newPDFRendering"
+
+	// FlagKubernetesAggregator
+	// Enable grafana aggregator
+	FlagKubernetesAggregator = "kubernetesAggregator"
 )
