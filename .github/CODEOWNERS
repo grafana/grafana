@@ -593,7 +593,6 @@
 /pkg/services/extsvcauth/ @grafana/identity-access-team
 /pkg/services/oauthtoken/ @grafana/identity-access-team
 /pkg/services/serviceaccounts/ @grafana/identity-access-team
-/pkg/services/user/password/ @grafana/identity-access-team
 
 # Support bundles
 /public/app/features/support-bundles/ @grafana/identity-access-team
