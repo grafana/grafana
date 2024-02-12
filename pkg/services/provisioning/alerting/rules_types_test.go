@@ -344,20 +344,6 @@ func validRuleV1(t *testing.T) AlertRuleV1 {
 	}
 }
 
-func validNotificationSettingsV1(t *testing.T) NotificationSettingsV1 {
-	t.Helper()
-	var (
-		receiver values.StringValue
-	)
-
-	err := yaml.Unmarshal([]byte("test"), &receiver)
-	require.NoError(t, err)
-
-	return NotificationSettingsV1{
-		Receiver: receiver,
-	}
-}
-
 func stringToStringValue(s string) values.StringValue {
 	result := values.StringValue{}
 	err := yaml.Unmarshal([]byte(s), &result)

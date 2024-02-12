@@ -24,11 +24,29 @@ type fakeConfigStore struct {
 	notificationSettings map[int64]map[models.AlertRuleKey][]models.NotificationSettings
 }
 
-func (f *fakeConfigStore) ListNotificationSettings(ctx context.Context, orgID int64) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
-	settings, ok := f.notificationSettings[orgID]
+func (f *fakeConfigStore) ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error) {
+	settings, ok := f.notificationSettings[q.OrgID]
 	if !ok {
 		return nil, nil
 	}
+	if q.ReceiverName != "" {
+		filteredSettings := make(map[models.AlertRuleKey][]models.NotificationSettings)
+		for key, notificationSettings := range settings {
+			// Current semantics is that we only key entries where any of the settings match the receiver name.
+			var found bool
+			for _, setting := range notificationSettings {
+				if q.ReceiverName == setting.Receiver {
+					found = true
+					break
+				}
+			}
+			if found {
+				filteredSettings[key] = notificationSettings
+			}
+		}
+		return filteredSettings, nil
+	}
+
 	return settings, nil
 }
 
