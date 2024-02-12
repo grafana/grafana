@@ -30,23 +30,24 @@ export function VisualizationSuggestions({ searchQuery, onChange, data, panel }:
           return null;
         }
 
-        const columnCount = Math.floor(width / 170);
+        width = width - 1;
+        const columnCount = Math.floor(width / 200);
         const spaceBetween = 8 * (columnCount! - 1);
-        const previewWidth = (width - spaceBetween) / columnCount!;
+        const previewWidth = Math.floor((width - spaceBetween) / columnCount!);
 
         return (
           <div>
             <div className={styles.filterRow}>
               <div className={styles.infoText}>Based on current data</div>
             </div>
-            <div className={styles.grid} style={{ gridTemplateColumns: `repeat(auto-fill, ${previewWidth - 1}px)` }}>
+            <div className={styles.grid} style={{ gridTemplateColumns: `repeat(auto-fill, ${previewWidth}px)` }}>
               {filteredSuggestions.map((suggestion, index) => (
                 <VisualizationSuggestionCard
                   key={index}
                   data={data!}
                   suggestion={suggestion}
                   onChange={onChange}
-                  width={previewWidth}
+                  width={previewWidth - 1}
                 />
               ))}
               {searchQuery && filteredSuggestions.length === 0 && (
