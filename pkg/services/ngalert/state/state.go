@@ -521,7 +521,7 @@ func GetRuleExtraLabels(l log.Logger, rule *models.AlertRule, folderTitle string
 		// Moreover, this cannot happen unless the API was changed to support multiple settings.
 		if len(rule.NotificationSettings) > 1 {
 			ignored, _ := json.Marshal(rule.NotificationSettings[1:])
-			l.Warn("Detected multiple notification settings, which is not supported. Only the first will be applied", "ignored_settings", string(ignored))
+			l.Error("Detected multiple notification settings, which is not supported. Only the first will be applied", "ignored_settings", string(ignored))
 		}
 		return mergeLabels(extraLabels, rule.NotificationSettings[0].ToLabels())
 	}
