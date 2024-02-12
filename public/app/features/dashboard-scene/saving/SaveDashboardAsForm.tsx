@@ -10,7 +10,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 import { DashboardChangeInfo, NameAlreadyExistsError, SaveButton, isNameExistsError } from './shared';
-import { useDashboardSave } from './useSaveDashboard';
+import { useSaveDashboard } from './useSaveDashboard';
 
 interface SaveDashboardAsFormDTO {
   firstName?: string;
@@ -45,7 +45,7 @@ export function SaveDashboardAsForm({ dashboard, drawer, changeInfo }: Props) {
   const { errors, isValid, defaultValues } = formState;
   const formValues = watch();
 
-  const { state, onSaveDashboard } = useDashboardSave(false);
+  const { state, onSaveDashboard } = useSaveDashboard(false);
 
   const onSave = async (overwrite: boolean) => {
     const data = getValues();
@@ -117,7 +117,7 @@ export function SaveDashboardAsForm({ dashboard, drawer, changeInfo }: Props) {
         <FolderPicker
           onChange={(uid: string | undefined, title: string | undefined) => setValue('folder', { uid, title })}
           // Old folder picker fields
-          value={formValues.folder.uid}
+          value={formValues.folder?.uid}
           initialTitle={defaultValues!.folder!.title}
           dashboardId={changedSaveModel.id ?? undefined}
           enableCreateNew

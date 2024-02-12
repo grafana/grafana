@@ -200,7 +200,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 			require.NoError(t, json.Unmarshal(response.Body(), result))
 			require.NotNil(t, result)
 			for namespace, groups := range *result {
-				require.Equal(t, models.GetNamespaceKey(folder.ParentUID, folder.Title), namespace)
+				require.Equal(t, folder.Fullpath, namespace)
 				for _, group := range groups {
 				grouploop:
 					for _, actualRule := range group.Rules {
@@ -243,7 +243,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		require.NotNil(t, result)
 		found := false
 		for namespace, groups := range *result {
-			require.Equal(t, models.GetNamespaceKey(folder.ParentUID, folder.Title), namespace)
+			require.Equal(t, folder.Fullpath, namespace)
 			for _, group := range groups {
 				for _, actualRule := range group.Rules {
 					if actualRule.GrafanaManagedAlert.UID == expectedRules[0].UID {
@@ -278,7 +278,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 
 		models.RulesGroup(expectedRules).SortByGroupIndex()
 
-		groups, ok := (*result)[models.GetNamespaceKey(folder.ParentUID, folder.Title)]
+		groups, ok := (*result)[folder.Fullpath]
 		require.True(t, ok)
 		require.Len(t, groups, 1)
 		group := groups[0]
@@ -329,10 +329,10 @@ func TestRouteGetRulesConfig(t *testing.T) {
 				require.NoError(t, json.Unmarshal(response.Body(), result))
 				require.NotNil(t, result)
 
-				require.Contains(t, *result, models.GetNamespaceKey(folder1.ParentUID, folder1.Title))
+				require.Contains(t, *result, folder1.Fullpath)
 				require.NotContains(t, *result, folder2.UID)
 
-				groups := (*result)[models.GetNamespaceKey(folder1.ParentUID, folder1.Title)]
+				groups := (*result)[folder1.Fullpath]
 				require.Len(t, groups, 1)
 				require.Equal(t, group1Key.RuleGroup, groups[0].Name)
 				require.Len(t, groups[0].Rules, len(group1))
@@ -361,7 +361,7 @@ func TestRouteGetRulesConfig(t *testing.T) {
 
 		models.RulesGroup(expectedRules).SortByGroupIndex()
 
-		groups, ok := (*result)[models.GetNamespaceKey(folder.ParentUID, folder.Title)]
+		groups, ok := (*result)[folder.Fullpath]
 		require.True(t, ok)
 		require.Len(t, groups, 1)
 		group := groups[0]

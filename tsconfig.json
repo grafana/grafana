@@ -11,8 +11,8 @@
     "incremental": true,
     "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
     "paths": {
-      "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"],
-    },
+      "@grafana/schema/dist/esm/*": ["../packages/grafana-schema/src/*"]
+    }
   },
   "extends": "@grafana/tsconfig/base.json",
   "include": [
@@ -21,7 +21,7 @@
     "public/test/**/*.ts",
     "public/vendor/**/*.ts",
     "packages/grafana-data/typings",
-    "packages/grafana-ui/src/types",
+    "packages/grafana-ui/src/types"
   ],
-  "exclude": ["public/app/**/webpack.config.ts"],
+  "exclude": ["public/app/**/webpack.config.ts"]
 }

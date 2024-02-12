@@ -121,12 +121,16 @@ const defaults: any = {
   cachedPluginOptions: {},
   transparent: false,
   options: {},
+  links: [],
+  transformations: [],
   fieldConfig: {
     defaults: {},
     overrides: [],
   },
   title: '',
 };
+
+export const explicitlyControlledMigrationPanels = ['graph'];
 
 export const autoMigrateAngular: Record<string, string> = {
   graph: 'timeseries',

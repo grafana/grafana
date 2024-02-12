@@ -11,7 +11,7 @@ export function hideEmptyPreviews(metric: string) {
     }
 
     data.subscribeToState((state) => {
-      if (state.data?.state === LoadingState.Loading) {
+      if (state.data?.state === LoadingState.Loading || state.data?.state === LoadingState.Error) {
         return;
       }
       const scene = sceneGraph.getAncestor(gridItem, MetricSelectScene);
