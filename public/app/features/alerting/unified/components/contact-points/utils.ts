@@ -40,7 +40,13 @@ export function getReceiverDescription(receiver: ReceiverConfigWithMetadata): Re
       return hasEmailAddresses ? summarizeEmailAddresses(receiver.settings['addresses']) : undefined;
     }
     case 'slack': {
-      const channelName = receiver.settings['recipient'];
+      const recipient = receiver.settings['recipient'];
+      if (!recipient) {
+        return;
+      }
+
+      // Slack channel name might have a "#" in the recipient already
+      const channelName = recipient.replace(/^#/, '');
       return channelName ? `#${channelName}` : undefined;
     }
     case 'kafka': {
