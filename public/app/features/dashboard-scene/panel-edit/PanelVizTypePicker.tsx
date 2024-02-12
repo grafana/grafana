@@ -67,14 +67,12 @@ export function PanelVizTypePicker({ panelManager, data, onChange }: Props) {
                 <VizTypePicker pluginId={plugin.meta.id} onChange={onVizChange} searchQuery={searchQuery} isWidget />
               )} */}
         {listMode === VisualizationSelectPaneTab.Suggestions && (
-          <div>
-            <VisualizationSuggestions
-              onChange={onVizTypeChange}
-              searchQuery={searchQuery}
-              panel={panelModel}
-              data={data}
-            />
-          </div>
+          <VisualizationSuggestions
+            onChange={onVizTypeChange}
+            searchQuery={searchQuery}
+            panel={panelModel}
+            data={data}
+          />
         )}
       </CustomScrollbar>
     </div>
