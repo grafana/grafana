@@ -207,7 +207,8 @@ func setupDB(b testing.TB) benchScenario {
 	quotaService := quotatest.New(false, nil)
 	cfg := setting.NewCfg()
 
-	teamSvc := teamimpl.ProvideService(db, cfg)
+	teamSvc, err := teamimpl.ProvideService(db, cfg)
+	require.NoError(b, err)
 	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(b, err)
 

@@ -57,7 +57,8 @@ func NewTestMigrationStore(t testing.TB, sqlStore *sqlstore.SQLStore, cfg *setti
 
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
-	teamSvc := teamimpl.ProvideService(sqlStore, cfg)
+	teamSvc, err := teamimpl.ProvideService(sqlStore, cfg)
+	require.NoError(t, err)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamSvc, cache, quotaService, bundleregistry.ProvideService())
