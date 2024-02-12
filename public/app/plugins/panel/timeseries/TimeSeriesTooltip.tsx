@@ -41,31 +41,18 @@ interface TimeSeriesTooltipProps {
   annotate?: () => void;
 }
 
-export const TimeSeriesTooltip = ({
-  frames,
-  seriesFrame,
-  dataIdxs,
-  seriesIdx,
-  mode = TooltipDisplayMode.Single,
-  sortOrder = SortOrder.None,
-  scrollable = false,
-  isPinned,
-  annotate,
-}: TimeSeriesTooltipProps) => {
-  const theme = useTheme2();
-  const styles = useStyles2(getStyles);
-
-  const xField = seriesFrame.fields[0];
-
-  const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, theme });
-  let xVal = xFieldFmt(xField!.values[dataIdxs[0]!]).text;
-
+export function getContentRows(
+  fields: Field[],
+  xField: Field,
+  dataIdxs: Array<number | null>,
+  seriesIdx: number | null | undefined,
+  mode: TooltipDisplayMode,
+  sortOrder: SortOrder
+) {
   let contentLabelValue: LabelValue[] = [];
 
-  const fields = seriesFrame.fields;
-
   for (let i = 0; i < fields.length; i++) {
-    const field = seriesFrame.fields[i];
+    const field = fields[i];
 
     if (
       field === xField ||
@@ -89,7 +76,7 @@ export const TimeSeriesTooltip = ({
       continue;
     }
 
-    const v = seriesFrame.fields[i].values[dataIdx];
+    const v = fields[i].values[dataIdx];
 
     // no value -> zero?
     const display = field.display!(v); // super expensive :(
@@ -115,6 +102,30 @@ export const TimeSeriesTooltip = ({
     let mult = sortOrder === SortOrder.Descending ? -1 : 1;
     contentLabelValue.sort((a, b) => mult * (a.numeric! - b.numeric!));
   }
+
+  return contentLabelValue;
+}
+
+export const TimeSeriesTooltip = ({
+  frames,
+  seriesFrame,
+  dataIdxs,
+  seriesIdx,
+  mode = TooltipDisplayMode.Single,
+  sortOrder = SortOrder.None,
+  scrollable = false,
+  isPinned,
+  annotate,
+}: TimeSeriesTooltipProps) => {
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles);
+
+  const xField = seriesFrame.fields[0];
+
+  const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, theme });
+  let xVal = xFieldFmt(xField!.values[dataIdxs[0]!]).text;
+
+  const contentLabelValue = getContentRows(seriesFrame.fields, xField, dataIdxs, seriesIdx, mode, sortOrder);
 
   let links: Array<LinkModel<Field>> = [];
 
