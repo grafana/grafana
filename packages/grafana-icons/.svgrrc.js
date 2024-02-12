@@ -8,6 +8,7 @@ module.exports = {
   outDir: './src/icons',
   template: require('./templates/icon'),
   svgoConfig: {
+    // Sanitise the SVGs
     plugins: ['removeScriptElement'],
   },
 };
