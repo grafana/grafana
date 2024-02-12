@@ -6270,12 +6270,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "6"]
     ],
     "public/app/plugins/panel/timeseries/plugins/annotations/AnnotationEditor.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"],
-      [0, 0, 0, "Styles should be written using objects.", "3"],
-      [0, 0, 0, "Styles should be written using objects.", "4"],
-      [0, 0, 0, "Styles should be written using objects.", "5"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/panel/timeseries/plugins/annotations/AnnotationEditorForm.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
@@ -6285,11 +6280,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Styles should be written using objects.", "4"],
       [0, 0, 0, "Styles should be written using objects.", "5"],
       [0, 0, 0, "Styles should be written using objects.", "6"]
-    ],
-    "public/app/plugins/panel/timeseries/plugins/annotations/AnnotationMarker.tsx:5381": [
-      [0, 0, 0, "Styles should be written using objects.", "0"],
-      [0, 0, 0, "Styles should be written using objects.", "1"],
-      [0, 0, 0, "Styles should be written using objects.", "2"]
     ],
     "public/app/plugins/panel/timeseries/plugins/annotations/AnnotationTooltip.tsx:5381": [
       [0, 0, 0, "Styles should be written using objects.", "0"],
