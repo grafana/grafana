@@ -20,9 +20,8 @@ may themselves act as parent API Servers to Grafana will never be made aware of 
 Thus, any `APIService` objects corresponding to Grafana's API groups will take the address of 
 Grafana's main API Server (the one that bundles grafana-aggregator).
 
-Also, note that the single binary OSS offering of Grafana won't make use of remote aggregation to achieve
-breaking the monolith at runtime. The aggregator will simply omit the indirection for the API Groups belonging to 
-Grafana by designating their APIService objects with type `Local`.
+Also, note that the single binary OSS offering of Grafana doesn't make use of the aggregator component at all, instead
+opting for local installation of all the Grafana API groups.
 
 ### kube-aggregator versus grafana-aggregator
 
