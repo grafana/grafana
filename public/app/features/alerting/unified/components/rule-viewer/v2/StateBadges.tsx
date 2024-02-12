@@ -29,7 +29,7 @@ interface StateBadgeProps {
 
 export const StateBadge = ({ state, health }: StateBadgeProps) => {
   let stateLabel: string;
-  let color: 'success' | 'error' | 'warning';
+  let color: BadgeColor;
 
   switch (state) {
     case PromAlertingRuleState.Inactive:
@@ -60,8 +60,11 @@ export const StateBadge = ({ state, health }: StateBadgeProps) => {
   return <Badge color={color} text={stateLabel} />;
 };
 
+// the generic badge component
+type BadgeColor = 'success' | 'error' | 'warning';
+
 interface BadgeProps {
-  color: 'success' | 'error' | 'warning';
+  color: BadgeColor;
   text: NonNullable<ReactNode>;
 }
 
