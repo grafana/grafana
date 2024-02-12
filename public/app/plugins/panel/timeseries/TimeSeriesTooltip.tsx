@@ -5,15 +5,13 @@ import {
   DataFrame,
   FALLBACK_COLOR,
   FieldType,
-  GrafanaTheme2,
   formattedValueToString,
-  getDisplayProcessor,
   LinkModel,
   Field,
   getFieldDisplayName,
 } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema/dist/esm/common/common.gen';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
@@ -24,7 +22,7 @@ import { getDataLinks } from '../status-history/utils';
 // exemplar / annotation / time region hovering?
 // add annotation UI / alert dismiss UI?
 
-interface TimeSeriesTooltipProps {
+export interface TimeSeriesTooltipProps {
   frames?: DataFrame[];
   // aligned series frame
   seriesFrame: DataFrame;
@@ -41,15 +39,22 @@ interface TimeSeriesTooltipProps {
   annotate?: () => void;
 }
 
-export function getContentRows(
+const numberCmp = (a: LabelValue, b: LabelValue) => a.numeric! - b.numeric!;
+const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+const stringCmp = (a: LabelValue, b: LabelValue) => collator.compare(`${a.value}`, `${b.value}`);
+
+export function getContentItems(
   fields: Field[],
   xField: Field,
   dataIdxs: Array<number | null>,
   seriesIdx: number | null | undefined,
   mode: TooltipDisplayMode,
-  sortOrder: SortOrder
+  sortOrder: SortOrder,
+  fieldFilter = (field: Field) => true
 ) {
-  let contentLabelValue: LabelValue[] = [];
+  let rows: LabelValue[] = [];
+
+  let allNumeric = false;
 
   for (let i = 0; i < fields.length; i++) {
     const field = fields[i];
@@ -57,7 +62,7 @@ export function getContentRows(
     if (
       field === xField ||
       field.type === FieldType.time ||
-      field.type !== FieldType.number ||
+      !fieldFilter(field) ||
       field.config.custom?.hideFrom?.tooltip ||
       field.config.custom?.hideFrom?.viz
     ) {
@@ -76,6 +81,10 @@ export function getContentRows(
       continue;
     }
 
+    if (!(field.type === FieldType.number || field.type === FieldType.boolean || field.type === FieldType.enum)) {
+      allNumeric = false;
+    }
+
     const v = fields[i].values[dataIdx];
 
     // no value -> zero?
@@ -87,7 +96,7 @@ export function getContentRows(
         ? Number.MIN_SAFE_INTEGER
         : Number.MAX_SAFE_INTEGER;
 
-    contentLabelValue.push({
+    rows.push({
       label: field.state?.displayName ?? field.name,
       value: formattedValueToString(display),
       color: display.color ?? FALLBACK_COLOR,
@@ -98,12 +107,13 @@ export function getContentRows(
     });
   }
 
-  if (sortOrder !== SortOrder.None && contentLabelValue.length > 1) {
-    let mult = sortOrder === SortOrder.Descending ? -1 : 1;
-    contentLabelValue.sort((a, b) => mult * (a.numeric! - b.numeric!));
+  if (sortOrder !== SortOrder.None && rows.length > 1) {
+    const cmp = allNumeric ? numberCmp : stringCmp;
+    const mult = sortOrder === SortOrder.Descending ? -1 : 1;
+    rows.sort((a, b) => mult * cmp(a, b));
   }
 
-  return contentLabelValue;
+  return rows;
 }
 
 export const TimeSeriesTooltip = ({
@@ -117,15 +127,21 @@ export const TimeSeriesTooltip = ({
   isPinned,
   annotate,
 }: TimeSeriesTooltipProps) => {
-  const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
   const xField = seriesFrame.fields[0];
 
-  const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, theme });
-  let xVal = xFieldFmt(xField!.values[dataIdxs[0]!]).text;
+  const xVal = xField.display!(xField.values[dataIdxs[0]!]).text;
 
-  const contentLabelValue = getContentRows(seriesFrame.fields, xField, dataIdxs, seriesIdx, mode, sortOrder);
+  const contentItems = getContentItems(
+    seriesFrame.fields,
+    xField,
+    dataIdxs,
+    seriesIdx,
+    mode,
+    sortOrder,
+    (field) => field.type === FieldType.number
+  );
 
   let links: Array<LinkModel<Field>> = [];
 
@@ -144,14 +160,14 @@ export const TimeSeriesTooltip = ({
     <div>
       <div className={styles.wrapper}>
         <VizTooltipHeader headerLabel={headerItem} isPinned={isPinned} />
-        <VizTooltipContent contentLabelValue={contentLabelValue} isPinned={isPinned} scrollable={scrollable} />
+        <VizTooltipContent contentLabelValue={contentItems} isPinned={isPinned} scrollable={scrollable} />
         {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
       </div>
     </div>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+export const getStyles = () => ({
   wrapper: css({
     display: 'flex',
     flexDirection: 'column',
