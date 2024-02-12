@@ -83,6 +83,7 @@ type UnifiedAlertingSettings struct {
 	MaxAttempts                    int64
 	MinInterval                    time.Duration
 	EvaluationTimeout              time.Duration
+	DisableJitter                  bool
 	ExecuteAlerts                  bool
 	DefaultConfiguration           string
 	Enabled                        *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
@@ -299,6 +300,10 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.MaxAttempts = ua.Key("max_attempts").MustInt64(schedulerDefaultMaxAttempts)
 
 	uaCfg.BaseInterval = SchedulerBaseInterval
+
+	// TODO: This was promoted from a feature toggle and is now the default behavior.
+	// We can consider removing the knob entirely in a release after 10.4.
+	uaCfg.DisableJitter = ua.Key("disable_jitter").MustBool(false)
 
 	// The base interval of the scheduler for evaluating alerts.
 	// 1. It is used by the internal scheduler's timer to tick at this interval.
