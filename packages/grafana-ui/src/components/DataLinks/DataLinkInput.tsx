@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
+import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
 import Prism, { Grammar, LanguageMap } from 'prismjs';
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { Popper as ReactPopper } from 'react-popper';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import usePrevious from 'react-use/lib/usePrevious';
 import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
@@ -86,6 +86,29 @@ export const DataLinkInput = memo(
     const prevLinkUrl = usePrevious<Value>(linkUrl);
     const [scrollTop, setScrollTop] = useState(0);
 
+    // the order of middleware is important!
+    const middleware = [
+      offset(({ rects }) => ({
+        alignmentAxis: rects.reference.width,
+      })),
+      flip({
+        fallbackAxisSideDirection: 'start',
+        // see https://floating-ui.com/docs/flip#combining-with-shift
+        crossAxis: false,
+        boundary: document.body,
+      }),
+      shift(),
+    ];
+
+    const { refs, floatingStyles } = useFloating({
+      open: showingSuggestions,
+      placement: 'bottom-start',
+      onOpenChange: setShowingSuggestions,
+      middleware,
+      whileElementsMounted: autoUpdate,
+      strategy: 'fixed',
+    });
+
     // Workaround for https://github.com/ianstormtaylor/slate/issues/2927
     const stateRef = useRef({ showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange });
     stateRef.current = { showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange };
@@ -96,12 +119,11 @@ export const DataLinkInput = memo(
       setScrollTop(getElementPosition(activeRef.current, suggestionsIndex));
     }, [suggestionsIndex]);
 
-    // SelectionReference is used to position the variables suggestion relatively to current DOM selection
-    const selectionRef = useMemo(() => new SelectionReference(), []);
-
     const onKeyDown = React.useCallback((event: React.KeyboardEvent, next: () => void) => {
       if (!stateRef.current.showingSuggestions) {
         if (event.key === '=' || event.key === '$' || (event.keyCode === 32 && event.ctrlKey)) {
+          const selectionRef = new SelectionReference();
+          refs.setReference(selectionRef);
           return setShowingSuggestions(true);
         }
         return next();
@@ -181,49 +203,21 @@ export const DataLinkInput = memo(
           <div id="data-link-input" className="slate-query-field">
             {showingSuggestions && (
               <Portal>
-                <ReactPopper
-                  referenceElement={selectionRef}
-                  placement="bottom-end"
-                  modifiers={[
-                    {
-                      name: 'preventOverflow',
-                      enabled: true,
-                      options: {
-                        rootBoundary: 'viewport',
-                      },
-                    },
-                    {
-                      name: 'arrow',
-                      enabled: false,
-                    },
-                    {
-                      name: 'offset',
-                      options: {
-                        offset: [250, 0],
-                      },
-                    },
-                  ]}
-                >
-                  {({ ref, style, placement }) => {
-                    return (
-                      <div ref={ref} style={style} data-placement={placement} className={styles.suggestionsWrapper}>
-                        <CustomScrollbar
-                          scrollTop={scrollTop}
-                          autoHeightMax="300px"
-                          setScrollTop={({ scrollTop }) => setScrollTop(scrollTop)}
-                        >
-                          <DataLinkSuggestions
-                            activeRef={activeRef}
-                            suggestions={stateRef.current.suggestions}
-                            onSuggestionSelect={onVariableSelect}
-                            onClose={() => setShowingSuggestions(false)}
-                            activeIndex={suggestionsIndex}
-                          />
-                        </CustomScrollbar>
-                      </div>
-                    );
-                  }}
-                </ReactPopper>
+                <div ref={refs.setFloating} style={floatingStyles}>
+                  <CustomScrollbar
+                    scrollTop={scrollTop}
+                    autoHeightMax="300px"
+                    setScrollTop={({ scrollTop }) => setScrollTop(scrollTop)}
+                  >
+                    <DataLinkSuggestions
+                      activeRef={activeRef}
+                      suggestions={stateRef.current.suggestions}
+                      onSuggestionSelect={onVariableSelect}
+                      onClose={() => setShowingSuggestions(false)}
+                      activeIndex={suggestionsIndex}
+                    />
+                  </CustomScrollbar>
+                </div>
               </Portal>
             )}
             <Editor
