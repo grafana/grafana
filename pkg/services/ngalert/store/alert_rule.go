@@ -670,21 +670,38 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 }
 
 // ListNotificationSettings fetches all notification settings for given organization
-func (st DBstore) ListNotificationSettings(ctx context.Context, orgID int64) (map[ngmodels.AlertRuleKey][]ngmodels.NotificationSettings, error) {
+func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListNotificationSettingsQuery) (map[ngmodels.AlertRuleKey][]ngmodels.NotificationSettings, error) {
 	var rules []ngmodels.AlertRule
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Table(ngmodels.AlertRule{}).Select("uid, notification_settings").Where("notification_settings IS NOT NULL AND notification_settings <> 'null' AND org_id = ?", orgID).Find(&rules)
+		query := sess.Table(ngmodels.AlertRule{}).Select("uid, notification_settings").Where("notification_settings IS NOT NULL AND notification_settings <> 'null' AND org_id = ?", q.OrgID)
+		if q.ReceiverName != "" {
+			query.And("notification_settings LIKE ?", fmt.Sprintf(`%%"%s"%%`, q.ReceiverName))
+		}
+		return query.Find(&rules)
 	})
 	if err != nil {
 		return nil, err
 	}
 	result := make(map[ngmodels.AlertRuleKey][]ngmodels.NotificationSettings, len(rules))
 	for _, rule := range rules {
-		key := ngmodels.AlertRuleKey{
-			OrgID: orgID,
-			UID:   rule.UID,
+		var ns []ngmodels.NotificationSettings
+		if q.ReceiverName != "" { // if filter by receiver name is specified, perform fine filtering on client to avoid false-positives
+			for _, setting := range rule.NotificationSettings {
+				if q.ReceiverName == setting.Receiver { // currently, there can be only one setting. If in future there are more, we will return all settings of a rule that has a setting with receiver
+					ns = rule.NotificationSettings
+					break
+				}
+			}
+		} else {
+			ns = rule.NotificationSettings
 		}
-		result[key] = rule.NotificationSettings
+		if len(ns) > 0 {
+			key := ngmodels.AlertRuleKey{
+				OrgID: q.OrgID,
+				UID:   rule.UID,
+			}
+			result[key] = rule.NotificationSettings
+		}
 	}
 	return result, nil
 }

@@ -778,7 +778,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 	_, err := store.InsertAlertRules(context.Background(), deref)
 	require.NoError(t, err)
 
-	result, err := store.ListNotificationSettings(context.Background(), 1)
+	result, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{OrgID: 1})
 	require.NoError(t, err)
 	require.Len(t, result, len(rulesWithNotifications))
 	for _, rule := range rulesWithNotifications {
@@ -787,6 +787,17 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 		}
 		assert.EqualValues(t, rule.NotificationSettings, result[rule.GetKey()])
 	}
+
+	t.Run("should list notification settings by receiver name", func(t *testing.T) {
+		rule := rulesWithNotifications[0]
+		receiverName := rule.NotificationSettings[0].Receiver
+		actual, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
+			OrgID:        1,
+			ReceiverName: receiverName,
+		})
+		require.NoError(t, err)
+		assert.Contains(t, actual, rule.GetKey())
+	})
 }
 
 // createAlertRule creates an alert rule in the database and returns it.

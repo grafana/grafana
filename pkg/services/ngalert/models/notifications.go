@@ -12,6 +12,11 @@ import (
 	"github.com/prometheus/common/model"
 )
 
+type ListNotificationSettingsQuery struct {
+	OrgID        int64
+	ReceiverName string
+}
+
 // NotificationSettings represents the settings for sending notifications for a single AlertRule. It is used to
 // automatically generate labels and an associated matching route containing the given settings.
 type NotificationSettings struct {
