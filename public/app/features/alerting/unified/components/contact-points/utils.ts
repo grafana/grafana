@@ -40,21 +40,21 @@ export function getReceiverDescription(receiver: ReceiverConfigWithMetadata): Re
       return hasEmailAddresses ? summarizeEmailAddresses(receiver.settings['addresses']) : undefined;
     }
     case 'slack': {
-      const recipient = receiver.settings['recipient'];
+      const recipient: string | undefined = receiver.settings['recipient'];
       if (!recipient) {
         return;
       }
 
       // Slack channel name might have a "#" in the recipient already
       const channelName = recipient.replace(/^#/, '');
-      return channelName ? `#${channelName}` : undefined;
+      return `#${channelName}`;
     }
     case 'kafka': {
-      const topicName = receiver.settings['kafkaTopic'];
+      const topicName: string | undefined = receiver.settings['kafkaTopic'];
       return topicName;
     }
     case 'webhook': {
-      const url = receiver.settings['url'];
+      const url: string | undefined = receiver.settings['url'];
       return url;
     }
     case ReceiverTypes.OnCall: {
