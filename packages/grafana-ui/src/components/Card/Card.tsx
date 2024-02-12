@@ -29,7 +29,6 @@ export interface Props extends Omit<CardContainerProps, 'disableEvents' | 'disab
 }
 
 export interface CardInterface extends FC<Props> {
-  Overline: typeof Overline;
   Heading: typeof Heading;
   Tags: typeof Tags;
   Figure: typeof Figure;
@@ -163,28 +162,6 @@ const getHeadingStyles = (theme: GrafanaTheme2) => ({
         zIndex: 1,
       },
     },
-  }),
-});
-
-/** Card text to be displayed above title */
-const Overline = ({ children, className }: ChildProps) => {
-  const styles = useStyles2(getOverlineStyles);
-  return (
-    <div className={cx(styles.overline, className)}>
-      {children && (
-        <Text color="info" weight="medium" variant="bodySmall">
-          {children}
-        </Text>
-      )}
-    </div>
-  );
-};
-Overline.displayName = 'Overline';
-
-const getOverlineStyles = (theme: GrafanaTheme2) => ({
-  overline: css({
-    gridArea: 'Overline',
-    marginBottom: theme.spacing(0.5),
   }),
 });
 
@@ -384,7 +361,6 @@ export const getCardStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-Card.Overline = Overline;
 Card.Heading = Heading;
 Card.Tags = Tags;
 Card.Figure = Figure;
