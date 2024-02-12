@@ -56,98 +56,84 @@ export const TimeSeriesTooltip = ({
   const styles = useStyles2(getStyles);
 
   const xField = seriesFrame.fields[0];
-  if (!xField) {
-    return null;
-  }
 
   const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, theme });
   let xVal = xFieldFmt(xField!.values[dataIdxs[0]!]).text;
 
-  let links: Array<LinkModel<Field>> = [];
   let contentLabelValue: LabelValue[] = [];
 
-  // Single mode
-  if (mode === TooltipDisplayMode.Single) {
-    const field = seriesFrame.fields[seriesIdx!];
-    if (!field) {
-      return null;
+  const fields = seriesFrame.fields;
+
+  for (let i = 0; i < fields.length; i++) {
+    const field = seriesFrame.fields[i];
+
+    if (
+      field === xField ||
+      field.type === FieldType.time ||
+      field.type !== FieldType.number ||
+      field.config.custom?.hideFrom?.tooltip ||
+      field.config.custom?.hideFrom?.viz
+    ) {
+      continue;
     }
 
-    const dataIdx = dataIdxs[seriesIdx!]!;
-    xVal = xFieldFmt(xField!.values[dataIdx]).text;
-    const fieldFmt = field.display || getDisplayProcessor({ field, theme });
-    const display = fieldFmt(field.values[dataIdx]);
+    // in single mode, skip all but closest field
+    if (mode === TooltipDisplayMode.Single && seriesIdx !== i) {
+      continue;
+    }
 
+    let dataIdx = dataIdxs[i];
+
+    // omit non-hovered
+    if (dataIdx == null) {
+      continue;
+    }
+
+    const v = seriesFrame.fields[i].values[dataIdx];
+
+    // no value -> zero?
+    const display = field.display!(v); // super expensive :(
+    // sort NaN and non-numeric to bottom (regardless of sort order)
+    const numeric = !Number.isNaN(display.numeric)
+      ? display.numeric
+      : sortOrder === SortOrder.Descending
+        ? Number.MIN_SAFE_INTEGER
+        : Number.MAX_SAFE_INTEGER;
+
+    contentLabelValue.push({
+      label: field.state?.displayName ?? field.name,
+      value: formattedValueToString(display),
+      color: display.color ?? FALLBACK_COLOR,
+      colorIndicator: ColorIndicator.series,
+      colorPlacement: ColorPlacement.first,
+      isActive: mode === TooltipDisplayMode.Multi && seriesIdx === i,
+      numeric,
+    });
+  }
+
+  if (sortOrder !== SortOrder.None && contentLabelValue.length > 1) {
+    let mult = sortOrder === SortOrder.Descending ? -1 : 1;
+    contentLabelValue.sort((a, b) => mult * (a.numeric! - b.numeric!));
+  }
+
+  let links: Array<LinkModel<Field>> = [];
+
+  if (seriesIdx != null) {
+    const field = seriesFrame.fields[seriesIdx];
+    const dataIdx = dataIdxs[seriesIdx]!;
     links = getDataLinks(field, dataIdx);
-
-    contentLabelValue = [
-      {
-        label: getFieldDisplayName(field, seriesFrame, frames),
-        value: display ? formattedValueToString(display) : '',
-        color: display.color ?? FALLBACK_COLOR,
-        colorIndicator: ColorIndicator.series,
-        colorPlacement: ColorPlacement.first,
-      },
-    ];
   }
 
-  if (mode === TooltipDisplayMode.Multi) {
-    const fields = seriesFrame.fields;
-
-    for (let i = 0; i < fields.length; i++) {
-      const field = seriesFrame.fields[i];
-      if (
-        !field ||
-        field === xField ||
-        field.type === FieldType.time ||
-        field.type !== FieldType.number ||
-        field.config.custom?.hideFrom?.tooltip ||
-        field.config.custom?.hideFrom?.viz
-      ) {
-        continue;
-      }
-
-      const v = seriesFrame.fields[i].values[dataIdxs[i]!];
-      const display = field.display!(v); // super expensive :(
-
-      contentLabelValue.push({
-        label: field.state?.displayName ?? field.name,
-        value: display ? formattedValueToString(display) : '',
-        color: display.color || FALLBACK_COLOR,
-        colorIndicator: ColorIndicator.series,
-        colorPlacement: ColorPlacement.first,
-        isActive: seriesIdx === i,
-      });
-    }
-
-    if (seriesIdx != null) {
-      const field = seriesFrame.fields[seriesIdx];
-      const dataIdx = dataIdxs[seriesIdx]!;
-      links = getDataLinks(field, dataIdx);
-    }
-  }
-
-  const getHeaderLabel = (): LabelValue => {
-    return {
-      label: xField.type === FieldType.time ? '' : getFieldDisplayName(xField, seriesFrame, frames),
-      value: xVal,
-    };
-  };
-
-  const getContentLabelValue = () => {
-    return contentLabelValue;
+  const headerItem: LabelValue = {
+    label: xField.type === FieldType.time ? '' : getFieldDisplayName(xField, seriesFrame, frames),
+    value: xVal,
   };
 
   return (
     <div>
       <div className={styles.wrapper}>
-        <VizTooltipHeader headerLabel={getHeaderLabel()} isPinned={isPinned} />
-        <VizTooltipContent
-          contentLabelValue={getContentLabelValue()}
-          isPinned={isPinned}
-          scrollable={scrollable}
-          sortOrder={sortOrder}
-        />
+        <VizTooltipHeader headerLabel={headerItem} isPinned={isPinned} />
+        <VizTooltipContent contentLabelValue={contentLabelValue} isPinned={isPinned} scrollable={scrollable} />
         {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
       </div>
     </div>

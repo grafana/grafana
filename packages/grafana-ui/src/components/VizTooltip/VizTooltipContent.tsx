@@ -14,25 +14,15 @@ interface Props {
   customContent?: ReactElement[];
   scrollable?: boolean;
   isPinned: boolean;
-  sortOrder?: SortOrder;
 }
-
-const stringCmp = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' }).compare;
 
 export const VizTooltipContent = ({
   contentLabelValue,
   customContent,
   isPinned,
   scrollable = false,
-  sortOrder = SortOrder.None,
 }: Props) => {
   const styles = useStyles2(getStyles);
-
-  if (sortOrder !== SortOrder.None && contentLabelValue.length > 1) {
-    let mult = sortOrder === SortOrder.Descending ? -1 : 1;
-    // mutates!
-    contentLabelValue.sort((a, b) => mult * stringCmp(a.value, b.value));
-  }
 
   const scrollableStyle: CSSProperties = scrollable
     ? {
