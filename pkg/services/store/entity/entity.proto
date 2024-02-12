@@ -81,6 +81,18 @@ message Entity {
 
   // When errors exist
   repeated EntityErrorInfo errors = 21;
+
+  // Action code
+  Action action = 3;
+
+  // Status enumeration
+  enum Action {
+    UNKNOWN = 0;
+    CREATED = 1;
+    UPDATED = 2;
+    DELETED = 3;
+    ERROR = 4;
+  }
 }
 
 // This stores additional metadata for items entities that were synced from external systmes
@@ -350,15 +362,7 @@ message EntityWatchResponse {
   repeated Entity entity = 2;
 
   // Action code
-  Action action = 3;
-
-  // Status enumeration
-  enum Action {
-    UNKNOWN = 0;
-    UPDATED = 1;
-    DELETED = 2;
-    CREATED = 3;
-  }
+  Entity.Action action = 3;
 }
 
 message EntitySummary {

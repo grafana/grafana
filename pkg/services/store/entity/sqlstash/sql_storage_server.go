@@ -92,6 +92,7 @@ func (s *sqlEntityServer) getReadFields(r *entity.ReadEntityRequest) []string {
 		"meta",
 		"title", "slug", "description", "labels", "fields",
 		"message",
+		"action",
 	}
 
 	if r.WithBody {
@@ -138,6 +139,7 @@ func (s *sqlEntityServer) rowToEntity(ctx context.Context, rows *sql.Rows, r *en
 		&raw.Meta,
 		&raw.Title, &raw.Slug, &raw.Description, &labels, &fields,
 		&raw.Message,
+		&raw.Action,
 	}
 	if r.WithBody {
 		args = append(args, &raw.Body)
@@ -423,7 +425,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 			current.Message = r.Entity.Message
 		}
 
-		// Update version
+		// Update resource version
 		current.ResourceVersion = s.snowflake.Generate().Int64()
 
 		values := map[string]any{
@@ -455,6 +457,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 			"origin_key":       current.Origin.Key,
 			"origin_ts":        current.Origin.Time,
 			"message":          current.Message,
+			"action":           entity.Entity_CREATED,
 		}
 
 		// 1. Add row to the `entity_history` values
@@ -627,7 +630,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			current.Message = r.Entity.Message
 		}
 
-		// Update version
+		// Update resource version
 		current.ResourceVersion = s.snowflake.Generate().Int64()
 
 		values := map[string]any{
@@ -661,6 +664,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			"origin_key":       current.Origin.Key,
 			"origin_ts":        current.Origin.Time,
 			"message":          current.Message,
+			"action":           entity.Entity_UPDATED,
 		}
 
 		// 1. Add the `entity_history` values
@@ -680,6 +684,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		delete(values, "name")
 		delete(values, "created_at")
 		delete(values, "created_by")
+		delete(values, "action")
 
 		err = s.dialect.Update(
 			ctx,
@@ -792,13 +797,68 @@ func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequ
 }
 
 func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, ent *entity.Entity) error {
-	_, err := tx.Exec(ctx, "DELETE FROM entity WHERE guid=?", ent.Guid)
+	// Update resource version
+	ent.ResourceVersion = s.snowflake.Generate().Int64()
+
+	labels, err := json.Marshal(ent.Labels)
 	if err != nil {
+		s.log.Error("error marshalling labels", "msg", err.Error())
 		return err
 	}
 
-	// TODO: keep history? would need current version bump, and the "write" would have to get from history
-	_, err = tx.Exec(ctx, "DELETE FROM entity_history WHERE guid=?", ent.Guid)
+	fields, err := json.Marshal(ent.Fields)
+	if err != nil {
+		s.log.Error("error marshalling fields", "msg", err.Error())
+		return err
+	}
+
+	errors, err := json.Marshal(ent.Errors)
+	if err != nil {
+		s.log.Error("error marshalling errors", "msg", err.Error())
+		return err
+	}
+
+	values := map[string]any{
+		// below are only set in history table
+		"guid":       ent.Guid,
+		"key":        ent.Key,
+		"namespace":  ent.Namespace,
+		"group":      ent.Group,
+		"resource":   ent.Resource,
+		"name":       ent.Name,
+		"created_at": ent.CreatedAt,
+		"created_by": ent.CreatedBy,
+		// below are updated
+		"group_version":    ent.GroupVersion,
+		"folder":           ent.Folder,
+		"slug":             ent.Slug,
+		"updated_at":       ent.UpdatedAt,
+		"updated_by":       ent.UpdatedBy,
+		"body":             ent.Body,
+		"meta":             ent.Meta,
+		"status":           ent.Status,
+		"size":             ent.Size,
+		"etag":             ent.ETag,
+		"resource_version": ent.ResourceVersion,
+		"title":            ent.Title,
+		"description":      ent.Description,
+		"labels":           labels,
+		"fields":           fields,
+		"errors":           errors,
+		"origin":           ent.Origin.Source,
+		"origin_key":       ent.Origin.Key,
+		"origin_ts":        ent.Origin.Time,
+		"message":          ent.Message,
+		"action":           entity.Entity_DELETED,
+	}
+
+	// 1. Add the `entity_history` values
+	if err := s.dialect.Insert(ctx, tx, "entity_history", values); err != nil {
+		s.log.Error("error inserting entity history", "msg", err.Error())
+		return err
+	}
+
+	_, err = tx.Exec(ctx, "DELETE FROM entity WHERE guid=?", ent.Guid)
 	if err != nil {
 		return err
 	}
@@ -1222,7 +1282,7 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 
 	for hasmore := true; hasmore; {
 		batch := &entity.EntityWatchResponse{
-			Action:    entity.EntityWatchResponse_CREATED,
+			Action:    entity.Entity_CREATED,
 			Entity:    make([]*entity.Entity, 0, entityQuery.limit),
 			Timestamp: time.Now().UnixMilli(),
 		}
@@ -1378,6 +1438,12 @@ func (s *sqlEntityServer) watch(ctx context.Context, r *entity.EntityWatchReques
 	}
 	defer func() { _ = rows.Close() }()
 
+	batch := &entity.EntityWatchResponse{
+		Action:    entity.Entity_UNKNOWN,
+		Entity:    []*entity.Entity{},
+		Timestamp: time.Now().UnixMilli(),
+	}
+
 	for rows.Next() {
 		result, err := s.rowToEntity(ctx, rows, rr)
 		if err != nil {
@@ -1388,21 +1454,31 @@ func (s *sqlEntityServer) watch(ctx context.Context, r *entity.EntityWatchReques
 			r.Since = result.ResourceVersion
 		}
 
-		// TODO store action in history?
-		action := entity.EntityWatchResponse_UNKNOWN
-		if result.UpdatedBy == "" {
-			action = entity.EntityWatchResponse_CREATED
-		} else if true {
-			action = entity.EntityWatchResponse_UPDATED
+		// if action matches the rest of the batch, add to batch
+		if result.Action == batch.Action {
+			batch.Entity = append(batch.Entity, result)
+			continue
 		}
 
-		s.log.Debug("sending", "action", action, "guid", result.Guid, "version", result.ResourceVersion, "since", r.Since)
+		// if action doesn't match, send the batch and start a new one
+		if len(batch.Entity) > 0 {
+			s.log.Debug("sending batch", "action", batch.Action, "count", len(batch.Entity))
+			err = w.Send(batch)
+			if err != nil {
+				return err
+			}
+		}
 
-		err = w.Send(&entity.EntityWatchResponse{
-			Action:    action,
+		batch = &entity.EntityWatchResponse{
+			Action:    result.Action,
 			Entity:    []*entity.Entity{result},
 			Timestamp: time.Now().UnixMilli(),
-		})
+		}
+	}
+
+	if len(batch.Entity) > 0 {
+		s.log.Debug("sending batch", "action", batch.Action, "count", len(batch.Entity))
+		err = w.Send(batch)
 		if err != nil {
 			return err
 		}
