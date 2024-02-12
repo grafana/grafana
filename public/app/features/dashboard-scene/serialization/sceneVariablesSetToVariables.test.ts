@@ -351,7 +351,6 @@ describe('sceneVariablesSetToVariables', () => {
       name: 'test',
       label: 'test-label',
       description: 'test-desc',
-      type: 'adhoc',
       datasource: { uid: 'fake-std', type: 'fake-std' },
       filters: [
         {

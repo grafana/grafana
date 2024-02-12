@@ -840,8 +840,7 @@ describe('transformSaveModelToScene', () => {
         filters: [{ key: 'filterTest', operator: '=', value: 'test' }],
         baseFilters: [{ key: 'baseFilterTest', operator: '=', value: 'test' }],
         datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
-        applyMode: 'same-datasource',
-        layout: 'horizontal',
+        applyMode: 'auto',
       });
     });
 

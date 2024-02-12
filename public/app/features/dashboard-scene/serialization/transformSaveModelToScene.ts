@@ -294,9 +294,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   };
   if (variable.type === 'adhoc') {
     return new AdHocFiltersVariable({
-      type: 'adhoc',
-      name: variable.name ?? 'filters',
-      label: variable.label,
+      ...commonProperties,
       description: variable.description,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
