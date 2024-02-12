@@ -88,7 +88,7 @@ export const mockModuleWithDefineMethod = `ace.define(function() {
 const server = setupServer(
   http.get(
     '/public/plugins/mockAmdModule/module.js',
-    async () =>
+    () =>
       new HttpResponse(mockAmdModule, {
         headers: {
           'Content-Type': 'text/javascript',
@@ -97,7 +97,7 @@ const server = setupServer(
   ),
   http.get(
     '/public/plugins/mockSystemModule/module.js',
-    async () =>
+    () =>
       new HttpResponse(mockSystemModule, {
         headers: {
           'Content-Type': 'text/javascript',
@@ -106,7 +106,7 @@ const server = setupServer(
   ),
   http.get(
     'http://my-cdn.com/plugins/my-plugin/v1.0.0/public/plugins/my-plugin/module.js',
-    async () =>
+    () =>
       new HttpResponse(mockAmdModule, {
         headers: {
           'Content-Type': 'text/javascript',
@@ -115,7 +115,7 @@ const server = setupServer(
   ),
   http.get(
     '/public/plugins/mockAmdModuleNamedNoDeps/module.js',
-    async () =>
+    () =>
       new HttpResponse(mockAmdModuleNamedNoDeps, {
         headers: {
           'Content-Type': 'text/javascript',
@@ -124,7 +124,7 @@ const server = setupServer(
   ),
   http.get(
     '/public/plugins/mockAmdModuleNamedWithDeps/module.js',
-    async () =>
+    () =>
       new HttpResponse(mockAmdModuleNamedWithDeps, {
         headers: {
           'Content-Type': 'text/javascript',
@@ -133,7 +133,7 @@ const server = setupServer(
   ),
   http.get(
     '/public/plugins/mockAmdModuleNamedWithDeps2/module.js',
-    async () =>
+    () =>
       new HttpResponse(mockAmdModuleNamedWithDeps2, {
         headers: {
           'Content-Type': 'text/javascript',
@@ -142,7 +142,7 @@ const server = setupServer(
   ),
   http.get(
     '/public/plugins/mockAmdModuleNamedWithDeps3/module.js',
-    async () =>
+    () =>
       new HttpResponse(mockAmdModuleNamedWithDeps3, {
         headers: {
           'Content-Type': 'text/javascript',
@@ -151,7 +151,7 @@ const server = setupServer(
   ),
   http.get(
     '/public/plugins/mockAmdModuleOnlyFunction/module.js',
-    async () =>
+    () =>
       new HttpResponse(mockAmdModuleOnlyFunction, {
         headers: {
           'Content-Type': 'text/javascript',
@@ -160,7 +160,7 @@ const server = setupServer(
   ),
   http.get(
     '/public/plugins/mockAmdModuleWithComments/module.js',
-    async () =>
+    () =>
       new HttpResponse(mockAmdModuleWithComments, {
         headers: {
           'Content-Type': 'text/javascript',
@@ -169,7 +169,7 @@ const server = setupServer(
   ),
   http.get(
     '/public/plugins/mockAmdModuleWithComments2/module.js',
-    async () =>
+    () =>
       new HttpResponse(mockAmdModuleWithComments2, {
         headers: {
           'Content-Type': 'text/javascript',
@@ -178,7 +178,7 @@ const server = setupServer(
   ),
   http.get(
     '/public/plugins/mockModuleWithDefineMethod/module.js',
-    async () =>
+    () =>
       new HttpResponse(mockModuleWithDefineMethod, {
         headers: {
           'Content-Type': 'text/javascript',
