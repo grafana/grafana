@@ -517,8 +517,8 @@ func GetRuleExtraLabels(l log.Logger, rule *models.AlertRule, folderTitle string
 	}
 
 	if len(rule.NotificationSettings) > 0 {
-		// Currently, we do not support multiple notification settings for a rule but this can change in the future.
-		// Moreover, this cannot happen unless the API was changed to support multiple settings.
+		// Notification settings are defined as a slice to workaround xorm behavior.
+		// Any items past the first should not exist so we ignore them.
 		if len(rule.NotificationSettings) > 1 {
 			ignored, _ := json.Marshal(rule.NotificationSettings[1:])
 			l.Error("Detected multiple notification settings, which is not supported. Only the first will be applied", "ignored_settings", string(ignored))
