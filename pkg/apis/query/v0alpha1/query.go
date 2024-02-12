@@ -279,6 +279,25 @@ func (g *GenericDataQuery) unmarshal(vals map[string]any) error {
 				return e1
 			}
 		}
+
+		tv, ok = obj["maxBytes"]
+		if ok {
+			fv, ok := tv.(float64)
+			if !ok {
+				return fmt.Errorf("expected maxBytes as float (got: %t)", tv)
+			}
+			g.ResultAssertions.MaxBytes = int64(fv)
+		}
+
+		tv, ok = obj["maxFrames"]
+		if ok {
+			fv, ok := tv.(float64)
+			if !ok {
+				return fmt.Errorf("expected maxFrames as float (got: %t)", tv)
+			}
+			g.ResultAssertions.MaxFrames = int64(fv)
+		}
+
 		delete(vals, key)
 	}
 

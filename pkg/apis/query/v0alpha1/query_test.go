@@ -99,7 +99,7 @@ func TestParseQueriesIntoQueryDataRequest(t *testing.T) {
 		require.Equal(t, uint(5), copy.ResultAssertions.TypeVersion[0])
 		require.Equal(t, uint(6), copy.ResultAssertions.TypeVersion[1])
 		require.Equal(t, q.ResultAssertions.TypeVersion, copy.ResultAssertions.TypeVersion)
-		require.Equal(t, q.ResultAssertions.MaxBytes, 123456)
-		require.Equal(t, q.ResultAssertions.MaxFrames, 10)
+		require.Equal(t, q.ResultAssertions.MaxBytes, copy.ResultAssertions.MaxBytes)
+		require.Equal(t, q.ResultAssertions.MaxFrames, copy.ResultAssertions.MaxFrames)
 	})
 }

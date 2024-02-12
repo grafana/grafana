@@ -1,8 +1,6 @@
 package peakq
 
 import (
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template"
 )
@@ -50,26 +48,5 @@ var basicTemplateSpec = template.QueryTemplate{
 				"exemplar":   false,
 			}),
 		},
-	},
-}
-
-var basicTemplateRenderedTargets = []template.Target{
-	{
-		//DataTypeVersion: data.FrameTypeVersion{0, 0},
-		Properties: query.NewGenericDataQuery(map[string]any{
-			"refId": "A", // TODO: Set when Where?
-			"datasource": map[string]any{
-				"type": "prometheus",
-				"uid":  "foo", // TODO: Probably a default templating thing to set this.
-			},
-			"resultAssertions": query.ResultAssertions{
-				Type: data.FrameTypeUnknown,
-			},
-			"editorMode": "builder",
-			"expr":       "up + up + 42",
-			"instant":    true,
-			"range":      false,
-			"exemplar":   false,
-		}),
 	},
 }
