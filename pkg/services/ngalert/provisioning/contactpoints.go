@@ -24,6 +24,7 @@ import (
 
 type AlertRuleNotificationSettingsStore interface {
 	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error)
+	ListNotificationSettings(ctx context.Context, q models.ListNotificationSettingsQuery) (map[models.AlertRuleKey][]models.NotificationSettings, error)
 }
 
 type ContactPointService struct {
@@ -341,6 +342,21 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 	}
 
 	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
+		if fullRemoval {
+			used, err := ecp.notificationSettingsStore.ListNotificationSettings(ctx, models.ListNotificationSettingsQuery{OrgID: orgID, ReceiverName: name})
+			if err != nil {
+				return fmt.Errorf("failed to query alert rules for reference to the contact point '%s': %w", name, err)
+			}
+			if len(used) > 0 {
+				uids := make([]string, 0, len(used))
+				for key := range used {
+					uids = append(uids, key.UID)
+				}
+				ecp.log.Error("Cannot delete contact point because it is used in rule's notification settings", "receiverName", name, "rulesUid", strings.Join(uids, ","))
+				return fmt.Errorf("contact point '%s' is currently used by a notification policy", name)
+			}
+		}
+
 		if err := ecp.configStore.Save(ctx, revision, orgID); err != nil {
 			return err
 		}

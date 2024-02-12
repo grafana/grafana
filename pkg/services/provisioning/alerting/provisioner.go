@@ -53,10 +53,6 @@ func Provision(ctx context.Context, cfg ProvisionerConfig) error {
 	if err != nil {
 		return fmt.Errorf("notification policies: %w", err)
 	}
-	err = cpProvisioner.Unprovision(ctx, files)
-	if err != nil {
-		return fmt.Errorf("contact points: %w", err)
-	}
 	err = mtProvisioner.Unprovision(ctx, files)
 	if err != nil {
 		return fmt.Errorf("mute times: %w", err)
@@ -73,6 +69,10 @@ func Provision(ctx context.Context, cfg ProvisionerConfig) error {
 	err = ruleProvisioner.Provision(ctx, files)
 	if err != nil {
 		return fmt.Errorf("alert rules: %w", err)
+	}
+	err = cpProvisioner.Unprovision(ctx, files) // Unprovision contact points after rules to make sure all references in rules are updated
+	if err != nil {
+		return fmt.Errorf("contact points: %w", err)
 	}
 	logger.Info("finished to provision alerting")
 	return nil
