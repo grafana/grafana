@@ -1684,7 +1684,7 @@ func TestFolderServiceGetFolder(t *testing.T) {
 			name:             "when flag is on and WithFullpath is false",
 			svc:              &folderSvcOn,
 			WithFullpath:     false,
-			expectedFullpath: f.Title,
+			expectedFullpath: "",
 		},
 		{
 			name:             "when flag is on and WithFullpath is true",
