@@ -81,8 +81,10 @@ export const LokiQueryBuilder = React.memo<Props>(
 
       let values;
       const labelsToConsider = query.labels.filter((x) => x !== forLabel);
-      // If we have no equality/regex operation, we can't fetch series as it will throw an error, so we fetch label values
-      const hasEqualityOperation = labelsToConsider.find((filter) => filter.op === '=' || filter.op === '=~');
+      // If we have no equality/regex operation with .*, we can't fetch series as it will throw an error, so we fetch label values
+      const hasEqualityOperation = labelsToConsider.find(
+        (filter) => filter.op === '=' || (filter.op === '=~' && filter.value !== '.*')
+      );
       if (labelsToConsider.length === 0 || !hasEqualityOperation) {
         values = await datasource.languageProvider.fetchLabelValues(forLabel.label, { timeRange });
       } else {
