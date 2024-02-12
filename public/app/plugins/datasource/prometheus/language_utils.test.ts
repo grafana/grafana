@@ -184,6 +184,23 @@ describe('expandRecordingRules()', () => {
       })
     ).toBe('rate(fooA{label1="value1", label2="value2"}[])/ rate(fooB{label3="value3"}[])');
   });
+
+  it('expands the query even it is wrapped with parentheses', () => {
+    expect(
+      expandRecordingRules('sum (metric{label1="value1"}) by (env)', { metric: 'foo{labelInside="valueInside"}' })
+    ).toBe('sum (foo{labelInside="valueInside", label1="value1"}) by (env)');
+  });
+
+  it('ins:metric:per{pid="val-42", comp="api"}', () => {
+    const query = `ins:metric:per{pid="val-42", comp="api"}`;
+    const mapping = {
+      'ins:metric:per':
+        '100 - (max without (mp) (targetMetric{device=~"/dev/(sda1|sdb)"}) / max without (mp) (targetMetric2{device=~"/dev/(sda1|sdb)"}) * 100)',
+    };
+    const expected = `100 - (max without (mp) (targetMetric{device=~"/dev/(sda1|sdb)",pid="val-42", comp="api"}) / max without (mp) (targetMetric2{device=~"/dev/(sda1|sdb)",pid="val-42", comp="api"}) * 100)`;
+    const result = expandRecordingRules(query, mapping);
+    expect(result).toBe(expected);
+  });
 });
 
 describe('escapeLabelValueInExactSelector()', () => {

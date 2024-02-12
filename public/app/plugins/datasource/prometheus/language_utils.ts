@@ -132,7 +132,7 @@ export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any
 
 export function expandRecordingRules(query: string, mapping: { [name: string]: string }): string {
   const ruleNames = Object.keys(mapping);
-  const rulesRegex = new RegExp(`(\\s|^)(${ruleNames.join('|')})(\\s|$|\\(|\\[|\\{)`, 'ig');
+  const rulesRegex = new RegExp(`(\\s|\\(|^)(${ruleNames.join('|')})(\\s|$|\\(|\\[|\\{)`, 'ig');
   const expandedQuery = query.replace(rulesRegex, (match, pre, name, post) => `${pre}${mapping[name]}${post}`);
 
   // Split query into array, so if query uses operators, we can correctly add labels to each individual part.
@@ -174,7 +174,19 @@ function addLabelsToExpression(expr: string, invalidLabelsRegexp: RegExp) {
     result = addLabelToQuery(result, obj.key, value, obj.operator);
   });
 
-  return result;
+  // reconstruct the labels
+  const existingLabel = arrayOfLabelObjects.reduce((prev, curr) => {
+    prev += `${curr.key}${curr.operator}${curr.value}`;
+    return prev;
+  }, '');
+
+  // Check if there is anything besides labels
+  // Useful for this kind of metrics sum (recording_rule_metric{label1="value1"}) by (env)
+  // if we don't check this part, ) by (env) part will be lost
+  const potentialLeftOver = exprAfterRegexMatch.replace(`{${existingLabel}}`, '');
+  console.log(potentialLeftOver);
+
+  return result + potentialLeftOver;
 }
 
 /**
