@@ -1,9 +1,11 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
 import {
   DataSourceApi,
   DataSourceInstanceSettings,
   FieldConfigSource,
+  GrafanaTheme2,
   PanelModel,
   filterFieldConfigOverrides,
   isStandardFieldProp,
@@ -23,6 +25,7 @@ import {
   SceneDataTransformer,
 } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig } from '@grafana/schema';
+import { useStyles2 } from '@grafana/ui';
 import { getPluginVersion } from 'app/features/dashboard/state/PanelModel';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
@@ -41,12 +44,6 @@ interface VizPanelManagerState extends SceneObjectState {
 
 // VizPanelManager serves as an API to manipulate VizPanel state from the outside. It allows panel type, options and  data manipulation.
 export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
-  public static Component = ({ model }: SceneComponentProps<VizPanelManager>) => {
-    const { panel } = model.useState();
-
-    return <panel.Component model={panel} />;
-  };
-
   private _cachedPluginOptions: Record<
     string,
     { options: DeepPartial<{}>; fieldConfig: FieldConfigSource<DeepPartial<{}>> } | undefined
@@ -278,4 +275,25 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   get panelData(): SceneDataProvider {
     return this.state.panel.state.$data!;
   }
+
+  public static Component = ({ model }: SceneComponentProps<VizPanelManager>) => {
+    const { panel } = model.useState();
+    const styles = useStyles2(getStyles);
+
+    return (
+      <div className={styles.wrapper}>
+        <panel.Component model={panel} />
+      </div>
+    );
+  };
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    wrapper: css({
+      height: '100%',
+      width: '100%',
+      paddingLeft: theme.spacing(2),
+    }),
+  };
 }
