@@ -21,10 +21,11 @@ import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound'
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { appEvents, contextSrv } from 'app/core/core';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
+import { getMessageFromError } from 'app/core/utils/errors';
 
 import { getPluginSettings } from '../pluginSettings';
 import { importAppPlugin } from '../plugin_loader';
-import { buildPluginSectionNav } from '../utils';
+import { buildPluginSectionNav, pluginsLogger } from '../utils';
 
 import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
 
@@ -191,6 +192,9 @@ async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyActio
         pluginNav: process.env.NODE_ENV === 'development' ? getExceptionNav(err) : getNotFoundNav(),
       })
     );
+    const error = err instanceof Error ? err : new Error(getMessageFromError(err));
+    pluginsLogger.logError(error);
+    console.error(error);
   }
 }
 

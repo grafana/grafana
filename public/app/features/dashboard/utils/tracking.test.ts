@@ -25,13 +25,18 @@ describe('trackDashboardLoaded', () => {
           { type: 'query', name: 'Query 2' },
         ],
       },
+      timepicker: {
+        nowDelay: '1m',
+      },
+      liveNow: true,
     };
     const model = getDashboardModel(dashboardJSON);
     const reportInteractionSpy = jest.spyOn(runtime, 'reportInteraction');
 
-    trackDashboardLoaded(model, 16);
+    trackDashboardLoaded(model, 200, 16);
 
     expect(reportInteractionSpy).toHaveBeenCalledWith('dashboards_init_dashboard_completed', {
+      duration: 200,
       uid: 'dashboard-123',
       title: 'Test Dashboard',
       schemaVersion: model.schemaVersion, // This value is based on public/app/features/dashboard/state/DashboardMigrator.ts#L81
@@ -45,6 +50,8 @@ describe('trackDashboardLoaded', () => {
       panel_type_timeseries_count: 1,
       'panel_type_grafana-worldmap-panel_count': 1,
       panel_type_geomap_count: 1,
+      settings_nowdelay: '1m',
+      settings_livenow: true,
     });
   });
 });

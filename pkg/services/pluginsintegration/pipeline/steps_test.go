@@ -3,12 +3,12 @@ package pipeline
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
 )
 
 func TestSkipPlugins(t *testing.T) {
@@ -80,25 +80,5 @@ func TestAsExternal(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, filtered, 1)
 		require.Equal(t, filtered[0].Primary.JSONData.ID, "plugin2")
-	})
-
-	t.Run("should log an error if an external plugin is not available", func(t *testing.T) {
-		cfg := &config.Cfg{
-			Features: featuremgmt.WithFeatures(featuremgmt.FlagExternalCorePlugins),
-			PluginSettings: setting.PluginSettings{
-				"plugin3": map[string]string{
-					"as_external": "true",
-				},
-			},
-		}
-
-		fakeLogger := log.NewTestLogger()
-		s := NewAsExternalStep(cfg)
-		s.log = fakeLogger
-
-		filtered, err := s.Filter(plugins.ClassExternal, bundles)
-		require.NoError(t, err)
-		require.Len(t, filtered, 2)
-		require.Equal(t, fakeLogger.ErrorLogs.Calls, 1)
 	})
 }

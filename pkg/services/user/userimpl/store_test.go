@@ -19,7 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationUserGet(t *testing.T) {
 	testCases := []struct {
@@ -104,6 +109,7 @@ func TestIntegrationUserGet(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, usr)
+				require.NotEmpty(t, usr.UID)
 			}
 		})
 	}
@@ -148,6 +154,32 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
+	})
+
+	t.Run("insert user (with known UID)", func(t *testing.T) {
+		ctx := context.Background()
+		id, err := userStore.Insert(ctx,
+			&user.User{
+				UID:     "abcd",
+				Email:   "next-test@email.com",
+				Name:    "next-test1",
+				Login:   "next-test1",
+				Created: time.Now(),
+				Updated: time.Now(),
+			},
+		)
+		require.NoError(t, err)
+
+		found, err := userStore.GetByID(ctx, id)
+		require.NoError(t, err)
+		require.Equal(t, "abcd", found.UID)
+
+		siu, err := userStore.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
+			UserID: id,
+			OrgID:  found.OrgID,
+		})
+		require.NoError(t, err)
+		require.Equal(t, "abcd", siu.UserUID)
 	})
 
 	t.Run("get user", func(t *testing.T) {

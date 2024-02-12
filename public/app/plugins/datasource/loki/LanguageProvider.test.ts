@@ -2,8 +2,9 @@ import { AbstractLabelOperator, DataFrame, TimeRange, dateTime, getDefaultTimeRa
 import { config } from '@grafana/runtime';
 
 import LanguageProvider from './LanguageProvider';
+import { createLokiDatasource } from './__mocks__/datasource';
+import { createMetadataRequest } from './__mocks__/metadataRequest';
 import { DEFAULT_MAX_LINES_SAMPLE, LokiDatasource } from './datasource';
-import { createLokiDatasource, createMetadataRequest } from './mocks';
 import {
   extractLogParserFromDataFrame,
   extractLabelKeysFromDataFrame,
@@ -13,18 +14,6 @@ import { LabelType, LokiQueryType } from './types';
 
 jest.mock('./responseUtils');
 
-jest.mock('app/store/store', () => ({
-  store: {
-    getState: jest.fn().mockReturnValue({
-      explore: {
-        left: {
-          mode: 'Logs',
-        },
-      },
-    }),
-  },
-}));
-
 const mockTimeRange = {
   from: dateTime(1546372800000),
   to: dateTime(1546380000000),
@@ -33,19 +22,49 @@ const mockTimeRange = {
     to: dateTime(1546380000000),
   },
 };
+
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
-  getDefaultTimeRange: jest.fn().mockReturnValue({
-    from: 0,
-    to: 1,
+  getDefaultTimeRange: jest.fn().mockImplementation(() => ({
+    from: dateTime(0),
+    to: dateTime(1),
     raw: {
-      from: 0,
-      to: 1,
+      from: dateTime(0),
+      to: dateTime(1),
     },
-  }),
+  })),
 }));
 
 describe('Language completion provider', () => {
+  describe('start', () => {
+    const datasource = setup({ testkey: ['label1_val1', 'label1_val2'], label2: [] });
+
+    it('should fetch labels on initial start', async () => {
+      const languageProvider = new LanguageProvider(datasource);
+      const fetchSpy = jest.spyOn(languageProvider, 'fetchLabels').mockResolvedValue([]);
+      await languageProvider.start();
+      expect(fetchSpy).toHaveBeenCalled();
+    });
+
+    it('should not again fetch labels on second start', async () => {
+      const languageProvider = new LanguageProvider(datasource);
+      const fetchSpy = jest.spyOn(languageProvider, 'fetchLabels').mockResolvedValue([]);
+      await languageProvider.start();
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      await languageProvider.start();
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should again fetch labels on second start with different timerange', async () => {
+      const languageProvider = new LanguageProvider(datasource);
+      const fetchSpy = jest.spyOn(languageProvider, 'fetchLabels').mockResolvedValue([]);
+      await languageProvider.start();
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      await languageProvider.start(mockTimeRange);
+      expect(fetchSpy).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe('fetchSeries', () => {
     it('should use match[] parameter', () => {
       const datasource = setup({}, { '{foo="bar"}': [{ label1: 'label_val1' }] });
@@ -118,6 +137,17 @@ describe('Language completion provider', () => {
         'match[]': 'stream',
         start: 1546372800000,
       });
+    });
+
+    it('should work if request returns undefined', async () => {
+      const datasource = setup({});
+      datasource.getTimeRangeParams = jest
+        .fn()
+        .mockImplementation((range: TimeRange) => ({ start: range.from.valueOf(), end: range.to.valueOf() }));
+      const languageProvider = new LanguageProvider(datasource);
+      languageProvider.request = jest.fn().mockResolvedValue(undefined);
+      const series = await languageProvider.fetchSeriesLabels('stream', { timeRange: mockTimeRange });
+      expect(series).toEqual({});
     });
   });
 
@@ -301,10 +331,30 @@ describe('fetchLabels', () => {
 describe('Query imports', () => {
   const datasource = setup({});
 
-  it('returns empty queries', async () => {
-    const instance = new LanguageProvider(datasource);
-    const result = await instance.importFromAbstractQuery({ refId: 'bar', labelMatchers: [] });
-    expect(result).toEqual({ refId: 'bar', expr: '', queryType: LokiQueryType.Range });
+  describe('importing from abstract query', () => {
+    it('returns empty queries', async () => {
+      const instance = new LanguageProvider(datasource);
+      const result = await instance.importFromAbstractQuery({ refId: 'bar', labelMatchers: [] });
+      expect(result).toEqual({ refId: 'bar', expr: '', queryType: LokiQueryType.Range });
+    });
+
+    it('returns valid query', () => {
+      const instance = new LanguageProvider(datasource);
+      const result = instance.importFromAbstractQuery({
+        refId: 'bar',
+        labelMatchers: [
+          { name: 'label1', operator: AbstractLabelOperator.Equal, value: 'value1' },
+          { name: 'label2', operator: AbstractLabelOperator.NotEqual, value: 'value2' },
+          { name: 'label3', operator: AbstractLabelOperator.EqualRegEx, value: 'value3' },
+          { name: 'label4', operator: AbstractLabelOperator.NotEqualRegEx, value: 'value4' },
+        ],
+      });
+      expect(result).toEqual({
+        refId: 'bar',
+        expr: '{label1="value1", label2!="value2", label3=~"value3", label4!~"value4"}',
+        queryType: LokiQueryType.Range,
+      });
+    });
   });
 
   describe('exporting to abstract query', () => {
@@ -313,6 +363,42 @@ describe('Query imports', () => {
       const abstractQuery = instance.exportToAbstractQuery({
         refId: 'bar',
         expr: '{label1="value1", label2!="value2", label3=~"value3", label4!~"value4"}',
+        instant: true,
+        range: false,
+      });
+      expect(abstractQuery).toMatchObject({
+        refId: 'bar',
+        labelMatchers: [
+          { name: 'label1', operator: AbstractLabelOperator.Equal, value: 'value1' },
+          { name: 'label2', operator: AbstractLabelOperator.NotEqual, value: 'value2' },
+          { name: 'label3', operator: AbstractLabelOperator.EqualRegEx, value: 'value3' },
+          { name: 'label4', operator: AbstractLabelOperator.NotEqualRegEx, value: 'value4' },
+        ],
+      });
+    });
+
+    it('exports labels in metric query', async () => {
+      const instance = new LanguageProvider(datasource);
+      const abstractQuery = instance.exportToAbstractQuery({
+        refId: 'bar',
+        expr: 'rate({label1="value1", label2!="value2"}[5m])',
+        instant: true,
+        range: false,
+      });
+      expect(abstractQuery).toMatchObject({
+        refId: 'bar',
+        labelMatchers: [
+          { name: 'label1', operator: AbstractLabelOperator.Equal, value: 'value1' },
+          { name: 'label2', operator: AbstractLabelOperator.NotEqual, value: 'value2' },
+        ],
+      });
+    });
+
+    it('exports labels in query with multiple stream selectors', async () => {
+      const instance = new LanguageProvider(datasource);
+      const abstractQuery = instance.exportToAbstractQuery({
+        refId: 'bar',
+        expr: 'rate({label1="value1", label2!="value2"}[5m]) + rate({label3=~"value3", label4!~"value4"}[5m])',
         instant: true,
         range: false,
       });
@@ -341,6 +427,7 @@ describe('Query imports', () => {
     const extractLogParserFromDataFrameMock = jest.mocked(extractLogParserFromDataFrame);
     const extractedLabelKeys = ['extracted', 'label'];
     const structuredMetadataKeys = ['structured', 'metadata'];
+    const parsedKeys = ['parsed', 'label'];
     const unwrapLabelKeys = ['unwrap', 'labels'];
 
     beforeEach(() => {
@@ -349,8 +436,12 @@ describe('Query imports', () => {
       jest.mocked(extractLabelKeysFromDataFrame).mockImplementation((_, type) => {
         if (type === LabelType.Indexed || !type) {
           return extractedLabelKeys;
-        } else {
+        } else if (type === LabelType.StructuredMetadata) {
           return structuredMetadataKeys;
+        } else if (type === LabelType.Parsed) {
+          return parsedKeys;
+        } else {
+          return [];
         }
       });
       jest.mocked(extractUnwrapLabelKeysFromDataFrame).mockReturnValue(unwrapLabelKeys);
@@ -361,7 +452,7 @@ describe('Query imports', () => {
       extractLogParserFromDataFrameMock.mockReturnValueOnce({ hasLogfmt: false, hasJSON: true, hasPack: false });
 
       expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
-        extractedLabelKeys,
+        extractedLabelKeys: [...extractedLabelKeys, ...parsedKeys],
         unwrapLabelKeys,
         structuredMetadataKeys,
         hasJSON: true,
@@ -375,7 +466,7 @@ describe('Query imports', () => {
       extractLogParserFromDataFrameMock.mockReturnValueOnce({ hasLogfmt: true, hasJSON: false, hasPack: false });
 
       expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
-        extractedLabelKeys,
+        extractedLabelKeys: [...extractedLabelKeys, ...parsedKeys],
         unwrapLabelKeys,
         structuredMetadataKeys,
         hasJSON: false,
@@ -416,11 +507,7 @@ describe('Query imports', () => {
           maxLines: DEFAULT_MAX_LINES_SAMPLE,
           refId: 'data-samples',
         },
-        // mocked default time range
-        expect.objectContaining({
-          from: 0,
-          to: 1,
-        })
+        getDefaultTimeRange()
       );
     });
 
@@ -441,11 +528,7 @@ describe('Query imports', () => {
           maxLines: 5,
           refId: 'data-samples',
         },
-        // mocked default time range
-        expect.objectContaining({
-          from: 0,
-          to: 1,
-        })
+        getDefaultTimeRange()
       );
     });
 

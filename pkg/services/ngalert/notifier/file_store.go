@@ -7,8 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
+	alertingClusterPB "github.com/grafana/alerting/cluster/clusterpb"
 	alertingNotify "github.com/grafana/alerting/notify"
-	"github.com/prometheus/alertmanager/cluster/clusterpb"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -77,7 +77,7 @@ func (fileStore *FileStore) GetFullState(ctx context.Context, filenames ...strin
 		return "", fmt.Errorf("no values for org %d", fileStore.orgID)
 	}
 
-	var parts []clusterpb.Part
+	var parts []alertingClusterPB.Part
 	for _, f := range filenames {
 		v, ok := keys[f]
 		if !ok {
@@ -88,10 +88,10 @@ func (fileStore *FileStore) GetFullState(ctx context.Context, filenames ...strin
 		if err != nil {
 			return "", fmt.Errorf("error decoding value for key %q", f)
 		}
-		parts = append(parts, clusterpb.Part{Key: f, Data: b})
+		parts = append(parts, alertingClusterPB.Part{Key: f, Data: b})
 	}
 
-	fs := clusterpb.FullState{
+	fs := alertingClusterPB.FullState{
 		Parts: parts,
 	}
 	b, err := fs.Marshal()

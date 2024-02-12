@@ -46,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -95,7 +96,7 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 		desc        string
 		url         string
 		expectedLen int
-		features    *featuremgmt.FeatureManager
+		features    featuremgmt.FeatureToggles
 	}{
 		{
 			desc:        "impl=default nested_folders=on get root folders",
@@ -325,20 +326,20 @@ func setupDB(b testing.TB) benchScenario {
 			str := fmt.Sprintf("dashboard_%d_%d", i, j)
 			dashID := generateID(IDs)
 			dashs = append(dashs, &dashboards.Dashboard{
-				ID:       dashID,
-				OrgID:    signedInUser.OrgID,
-				IsFolder: false,
-				UID:      str,
-				FolderID: f0.ID, // nolint:staticcheck
-				Slug:     str,
-				Title:    str,
-				Data:     simplejson.New(),
-				Created:  now,
-				Updated:  now,
+				ID:        dashID,
+				OrgID:     signedInUser.OrgID,
+				IsFolder:  false,
+				UID:       str,
+				FolderUID: f0.UID,
+				Slug:      str,
+				Title:     str,
+				Data:      simplejson.New(),
+				Created:   now,
+				Updated:   now,
 			})
 
 			dashTags = append(dashTags, &dashboardTag{
-				DashboardId: dashID,
+				DashboardID: dashID,
 				Term:        fmt.Sprintf("tag%d", j),
 			})
 		}
@@ -352,20 +353,20 @@ func setupDB(b testing.TB) benchScenario {
 				str := fmt.Sprintf("dashboard_%d_%d_%d", i, j, k)
 				dashID := generateID(IDs)
 				dashs = append(dashs, &dashboards.Dashboard{
-					ID:       dashID,
-					OrgID:    signedInUser.OrgID,
-					IsFolder: false,
-					UID:      str,
-					FolderID: f1.ID, // nolint:staticcheck
-					Slug:     str,
-					Title:    str,
-					Data:     simplejson.New(),
-					Created:  now,
-					Updated:  now,
+					ID:        dashID,
+					OrgID:     signedInUser.OrgID,
+					IsFolder:  false,
+					UID:       str,
+					FolderUID: f1.UID,
+					Slug:      str,
+					Title:     str,
+					Data:      simplejson.New(),
+					Created:   now,
+					Updated:   now,
 				})
 
 				dashTags = append(dashTags, &dashboardTag{
-					DashboardId: dashID,
+					DashboardID: dashID,
 					Term:        fmt.Sprintf("tag%d", k),
 				})
 			}
@@ -379,20 +380,20 @@ func setupDB(b testing.TB) benchScenario {
 					str := fmt.Sprintf("dashboard_%d_%d_%d_%d", i, j, k, l)
 					dashID := generateID(IDs)
 					dashs = append(dashs, &dashboards.Dashboard{
-						ID:       dashID,
-						OrgID:    signedInUser.OrgID,
-						IsFolder: false,
-						UID:      str,
-						FolderID: f2.ID, // nolint:staticcheck
-						Slug:     str,
-						Title:    str,
-						Data:     simplejson.New(),
-						Created:  now,
-						Updated:  now,
+						ID:        dashID,
+						OrgID:     signedInUser.OrgID,
+						IsFolder:  false,
+						UID:       str,
+						FolderUID: f2.UID,
+						Slug:      str,
+						Title:     str,
+						Data:      simplejson.New(),
+						Created:   now,
+						Updated:   now,
 					})
 
 					dashTags = append(dashTags, &dashboardTag{
-						DashboardId: dashID,
+						DashboardID: dashID,
 						Term:        fmt.Sprintf("tag%d", l),
 					})
 				}
@@ -423,7 +424,7 @@ func setupDB(b testing.TB) benchScenario {
 	}
 }
 
-func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureManager) *web.Macaron {
+func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureToggles) *web.Macaron {
 	b.Helper()
 
 	m := web.New()
@@ -439,7 +440,7 @@ func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureMa
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 
-	acSvc := acimpl.ProvideOSSService(sc.cfg, acdb.ProvideService(sc.db), localcache.ProvideService(), features)
+	acSvc := acimpl.ProvideOSSService(sc.cfg, acdb.ProvideService(sc.db), localcache.ProvideService(), usertest.NewUserServiceFake(), features)
 
 	quotaSrv := quotatest.New(false, nil)
 
@@ -451,11 +452,12 @@ func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureMa
 	ac := acimpl.ProvideAccessControl(sc.cfg)
 	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sc.cfg, dashStore, folderStore, sc.db, features, nil)
 
+	cfg := setting.NewCfg()
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
 	require.NoError(b, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
 	require.NoError(b, err)
 
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
@@ -489,7 +491,7 @@ func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureMa
 }
 
 type f struct {
-	ID          int64   `xorm:"pk autoincr 'id'"`
+	// ID          int64   `xorm:"pk autoincr 'id'"`
 	OrgID       int64   `xorm:"org_id"`
 	UID         string  `xorm:"uid"`
 	ParentUID   *string `xorm:"parent_uid"`
@@ -506,8 +508,8 @@ func (f *f) TableName() string {
 
 // SQL bean helper to save tags
 type dashboardTag struct {
-	Id          int64
-	DashboardId int64
+	ID          int64
+	DashboardID int64
 	Term        string
 }
 
@@ -515,10 +517,10 @@ func addFolder(orgID int64, id int64, uid string, parentUID *string) (*f, *dashb
 	now := time.Now()
 	title := uid
 	f := &f{
-		OrgID:     orgID,
-		UID:       uid,
-		Title:     title,
-		ID:        id,
+		OrgID: orgID,
+		UID:   uid,
+		Title: title,
+		// ID:        id,
 		Created:   now,
 		Updated:   now,
 		ParentUID: parentUID,

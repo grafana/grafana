@@ -11,7 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	playlist "github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	playlistsvc "github.com/grafana/grafana/pkg/services/playlist"
 )
 
@@ -62,31 +62,14 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 		return nil, err
 	}
 
-	limit := 100
-	if options.Limit > 0 {
-		limit = int(options.Limit)
-	}
-	res, err := s.service.Search(ctx, &playlistsvc.GetPlaylistsQuery{
-		OrgId: orgId,
-		Limit: limit,
-	})
+	res, err := s.service.List(ctx, orgId)
 	if err != nil {
 		return nil, err
 	}
 
 	list := &playlist.PlaylistList{}
-	for _, v := range res {
-		p, err := s.service.Get(ctx, &playlistsvc.GetPlaylistByUidQuery{
-			UID:   v.UID,
-			OrgId: orgId,
-		})
-		if err != nil {
-			return nil, err
-		}
-		list.Items = append(list.Items, *convertToK8sResource(p, s.namespacer))
-	}
-	if len(list.Items) == limit {
-		list.Continue = "<more>" // TODO?
+	for idx := range res {
+		list.Items = append(list.Items, *convertToK8sResource(&res[idx], s.namespacer))
 	}
 	return list, nil
 }

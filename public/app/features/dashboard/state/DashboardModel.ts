@@ -44,7 +44,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 
 import { DashboardMigrator } from './DashboardMigrator';
-import { PanelModel, autoMigrateAngular } from './PanelModel';
+import { PanelModel, autoMigrateAngular, explicitlyControlledMigrationPanels } from './PanelModel';
 import { TimeModel } from './TimeModel';
 import { deleteScopeVars, isOnTheSameGridRow } from './utils';
 
@@ -70,13 +70,13 @@ export class DashboardModel implements TimeModel {
   editable: any;
   graphTooltip: DashboardCursorSync;
   time: any;
-  liveNow: boolean;
+  liveNow?: boolean;
   private originalTime: any;
   timepicker: any;
   templating: { list: any[] };
   private originalTemplating: any;
   annotations: { list: AnnotationQuery[] };
-  refresh: string;
+  refresh?: string;
   snapshot: any;
   schemaVersion: number;
   version: number;
@@ -147,10 +147,10 @@ export class DashboardModel implements TimeModel {
     this.graphTooltip = data.graphTooltip || 0;
     this.time = data.time ?? { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker ?? {};
-    this.liveNow = Boolean(data.liveNow);
+    this.liveNow = data.liveNow;
     this.templating = this.ensureListExist(data.templating);
     this.annotations = this.ensureListExist(data.annotations);
-    this.refresh = data.refresh || '';
+    this.refresh = data.refresh;
     this.snapshot = data.snapshot;
     this.schemaVersion = data.schemaVersion ?? 0;
     this.fiscalYearStartMonth = data.fiscalYearStartMonth ?? 0;
@@ -173,9 +173,30 @@ export class DashboardModel implements TimeModel {
     if (options?.autoMigrateOldPanels || !config.angularSupportEnabled || config.featureToggles.autoMigrateOldPanels) {
       for (const p of this.panelIterator()) {
         const newType = autoMigrateAngular[p.type];
+
+        // Skip explicitly controlled panels
+        if (explicitlyControlledMigrationPanels.includes(p.type)) {
+          continue;
+        }
+
         if (!p.autoMigrateFrom && newType) {
           p.autoMigrateFrom = p.type;
           p.type = newType;
+        }
+      }
+    }
+
+    // Explicit handling of graph -> time series migration (and eventually others)
+    if (
+      options?.autoMigrateOldPanels ||
+      !config.angularSupportEnabled ||
+      config.featureToggles.autoMigrateOldPanels ||
+      config.featureToggles.autoMigrateGraphPanel
+    ) {
+      for (const p of this.panelIterator()) {
+        if (!p.autoMigrateFrom && p.type === 'graph') {
+          p.autoMigrateFrom = p.type;
+          p.type = 'timeseries';
         }
       }
     }
@@ -302,12 +323,8 @@ export class DashboardModel implements TimeModel {
   }
 
   private getPanelSaveModels() {
-    // Todo: Remove panel.type === 'add-panel' when we remove the emptyDashboardPage toggle
     return this.panels
-      .filter(
-        (panel) =>
-          this.isSnapshotTruthy() || !(panel.type === 'add-panel' || panel.repeatPanelId || panel.repeatedByRow)
-      )
+      .filter((panel) => this.isSnapshotTruthy() || !(panel.repeatPanelId || panel.repeatedByRow))
       .map((panel) => {
         // Clean libarary panels on save
         if (panel.libraryPanel) {

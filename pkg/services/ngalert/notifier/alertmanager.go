@@ -3,6 +3,7 @@ package notifier
 import (
 	"context"
 	"crypto/md5"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -83,7 +84,7 @@ func (m maintenanceOptions) MaintenanceFunc(state alertingNotify.State) (int64, 
 	return m.maintenanceFunc(state)
 }
 
-func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, kvStore kvstore.KVStore,
+func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store AlertingStore, kvStore kvstore.KVStore,
 	peer alertingNotify.ClusterPeer, decryptFn alertingNotify.GetDecryptedValueFn, ns notifications.Service,
 	m *metrics.Alertmanager) (*alertmanager, error) {
 	workingPath := filepath.Join(cfg.DataPath, workingDir, strconv.Itoa(int(orgID)))
@@ -127,7 +128,7 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		Nflog:              nflogOptions,
 	}
 
-	l := log.New("ngalert.notifier.alertmanager", orgID)
+	l := log.New("ngalert.notifier.alertmanager", "org", orgID)
 	gam, err := alertingNotify.NewGrafanaAlertmanager("orgID", orgID, amcfg, peer, l, alertingNotify.NewGrafanaAlertmanagerMetrics(m.Registerer))
 	if err != nil {
 		return nil, err
@@ -179,7 +180,7 @@ func (am *alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 		}
 
 		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			_, err := am.applyConfig(cfg, []byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
+			_, err := am.applyConfig(cfg)
 			return err
 		})
 		if err != nil {
@@ -209,7 +210,7 @@ func (am *alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 		}
 
 		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			_, err := am.applyConfig(cfg, rawConfig)
+			_, err := am.applyConfig(cfg)
 			return err
 		})
 		if err != nil {
@@ -231,7 +232,7 @@ func (am *alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertCo
 
 	var outerErr error
 	am.Base.WithLock(func() {
-		if err := am.applyAndMarkConfig(ctx, dbCfg.ConfigurationHash, cfg, nil); err != nil {
+		if err := am.applyAndMarkConfig(ctx, dbCfg.ConfigurationHash, cfg); err != nil {
 			outerErr = fmt.Errorf("unable to apply configuration: %w", err)
 			return
 		}
@@ -255,6 +256,10 @@ func (am *alertmanager) updateConfigMetrics(cfg *apimodels.PostableUserConfig) {
 	am.ConfigMetrics.MatchRE.Set(float64(amu.MatchRE))
 	am.ConfigMetrics.Match.Set(float64(amu.Match))
 	am.ConfigMetrics.ObjectMatchers.Set(float64(amu.ObjectMatchers))
+
+	am.ConfigMetrics.ConfigHash.
+		WithLabelValues(strconv.FormatInt(am.orgID, 10)).
+		Set(hashAsMetricValue(am.Base.ConfigHash()))
 }
 
 func (am *alertmanager) aggregateRouteMatchers(r *apimodels.Route, amu *AggregateMatchersUsage) {
@@ -281,16 +286,13 @@ func (am *alertmanager) aggregateInhibitMatchers(rules []config.InhibitRule, amu
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It returns a boolean indicating whether the user config was changed and an error.
 // It is not safe to call concurrently.
-func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig []byte) (bool, error) {
+func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, error) {
 	// First, let's make sure this config is not already loaded
 	var amConfigChanged bool
-	if rawConfig == nil {
-		enc, err := json.Marshal(cfg.AlertmanagerConfig)
-		if err != nil {
-			// In theory, this should never happen.
-			return false, err
-		}
-		rawConfig = enc
+	rawConfig, err := json.Marshal(cfg.AlertmanagerConfig)
+	if err != nil {
+		// In theory, this should never happen.
+		return false, err
 	}
 
 	if am.Base.ConfigHash() != md5.Sum(rawConfig) {
@@ -315,8 +317,6 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		return false, nil
 	}
 
-	am.updateConfigMetrics(cfg)
-
 	err = am.Base.ApplyConfig(AlertingConfiguration{
 		rawAlertmanagerConfig:    rawConfig,
 		alertmanagerConfig:       cfg.AlertmanagerConfig,
@@ -327,12 +327,13 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		return false, err
 	}
 
+	am.updateConfigMetrics(cfg)
 	return true, nil
 }
 
 // applyAndMarkConfig applies a configuration and marks it as applied if no errors occur.
-func (am *alertmanager) applyAndMarkConfig(ctx context.Context, hash string, cfg *apimodels.PostableUserConfig, rawConfig []byte) error {
-	configChanged, err := am.applyConfig(cfg, rawConfig)
+func (am *alertmanager) applyAndMarkConfig(ctx context.Context, hash string, cfg *apimodels.PostableUserConfig) error {
+	configChanged, err := am.applyConfig(cfg)
 	if err != nil {
 		return err
 	}
@@ -421,3 +422,13 @@ func (e AlertValidationError) Error() string {
 type nilLimits struct{}
 
 func (n nilLimits) MaxNumberOfAggregationGroups() int { return 0 }
+
+// This function is taken from upstream, modified to take a [16]byte instead of a []byte.
+// https://github.com/prometheus/alertmanager/blob/30fa9cd44bc91c0d6adcc9985609bb08a09a127b/config/coordinator.go#L149-L156
+func hashAsMetricValue(data [16]byte) float64 {
+	// We only want 48 bits as a float64 only has a 53 bit mantissa.
+	smallSum := data[0:6]
+	bytes := make([]byte, 8)
+	copy(bytes, smallSum)
+	return float64(binary.LittleEndian.Uint64(bytes))
+}

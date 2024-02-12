@@ -24,7 +24,7 @@ func TestTeamsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			_, err := NewTeamsNotifier(model, encryptionService.GetDecryptedValue, nil)
+			_, err := NewTeamsNotifier(nil, model, encryptionService.GetDecryptedValue, nil)
 			require.Error(t, err)
 		})
 
@@ -41,7 +41,7 @@ func TestTeamsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewTeamsNotifier(model, encryptionService.GetDecryptedValue, nil)
+			not, err := NewTeamsNotifier(nil, model, encryptionService.GetDecryptedValue, nil)
 			teamsNotifier := not.(*TeamsNotifier)
 
 			require.Nil(t, err)
@@ -63,7 +63,7 @@ func TestTeamsNotifier(t *testing.T) {
 				Settings: settingsJSON,
 			}
 
-			not, err := NewTeamsNotifier(model, encryptionService.GetDecryptedValue, nil)
+			not, err := NewTeamsNotifier(nil, model, encryptionService.GetDecryptedValue, nil)
 			teamsNotifier := not.(*TeamsNotifier)
 
 			require.Nil(t, err)
