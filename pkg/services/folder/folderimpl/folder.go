@@ -249,7 +249,7 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 	f.ID = dashFolder.ID
 	f.Version = dashFolder.Version
 
-	if !q.WithFullpath {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		f.Fullpath = f.Title // set full path to the folder title (unescaped)
 	}
 
