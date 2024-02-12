@@ -5,7 +5,6 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
-import { Text } from '../Text/Text';
 
 import { CardContainer, CardContainerProps, getCardContainerStyles } from './CardContainer';
 
