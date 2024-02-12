@@ -229,12 +229,12 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 				}
 
 				watchAction := watch.Error
-				if resp.Action == entityStore.EntityWatchResponse_DELETED {
-					watchAction = watch.Deleted
-				} else if resp.Action == entityStore.EntityWatchResponse_UPDATED {
-					watchAction = watch.Modified
-				} else if resp.Action == entityStore.EntityWatchResponse_CREATED {
+				if resp.Action == entityStore.Entity_CREATED {
 					watchAction = watch.Added
+				} else if resp.Action == entityStore.Entity_UPDATED {
+					watchAction = watch.Modified
+				} else if resp.Action == entityStore.Entity_DELETED {
+					watchAction = watch.Deleted
 				}
 
 				w.Action(watchAction, obj)
