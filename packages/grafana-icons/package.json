@@ -25,8 +25,8 @@
     "./LICENSE_APACHE2"
   ],
   "scripts": {
-    "clean": "rimraf ./dist ./compiled ./package.tgz ./src/icons",
-    "generate": "rimraf ./src/icons && npx @svgr/cli ./svg",
+    "clean": "rimraf ./dist ./compiled ./package.tgz ./src/icons-generated",
+    "generate": "rimraf ./src/icons-generated && npx @svgr/cli ./svg",
     "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
     "bundle": "rollup -c rollup.config.ts"
   },
