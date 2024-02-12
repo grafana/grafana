@@ -503,6 +503,7 @@ func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Re
 	userPassword := user.Password(cmd.NewPassword)
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagPasswordPolicy) {
 		if err := password.ValidatePassword(userPassword, hs.Cfg); err != nil {
+			c.Logger.Error("the new password doesn't meet the password policy criteria", "err", err)
 			return response.Err(err)
 		}
 	} else if userPassword.IsWeak() {

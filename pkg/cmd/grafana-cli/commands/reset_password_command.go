@@ -41,6 +41,7 @@ func resetPasswordCommand(c utils.CommandLine, runner server.Runner) error {
 	userPassword := user.Password(newPassword)
 	if runner.Features.IsEnabled(context.Background(), featuremgmt.FlagPasswordPolicy) {
 		if err := password.ValidatePassword(userPassword, runner.Cfg); err != nil {
+			logger.Error("the new password doesn't meet the password policy criteria", "err", err)
 			return err
 		}
 	} else if userPassword.IsWeak() {

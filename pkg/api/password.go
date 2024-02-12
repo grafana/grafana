@@ -102,6 +102,7 @@ func (hs *HTTPServer) ResetPassword(c *contextmodel.ReqContext) response.Respons
 	userPassword := user.Password(form.NewPassword)
 	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagPasswordPolicy) {
 		if err := password.ValidatePassword(userPassword, hs.Cfg); err != nil {
+			c.Logger.Error("the new password doesn't meet the password policy criteria", "err", err)
 			return response.Err(err)
 		}
 	} else if userPassword.IsWeak() {
