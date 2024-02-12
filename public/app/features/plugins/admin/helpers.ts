@@ -358,15 +358,12 @@ function getId(inputString: string): string {
 }
 
 function getPluginDetailsForFuzzySearch(plugins: CatalogPlugin[]): string[] {
-  const pluginsForSearch = plugins.reduce(
-    (result: { [key: string]: string }, { id, name, type, orgName, info }: CatalogPlugin) => {
-      const keywordsForSearch = info.keywords?.join(' ').toLowerCase();
-      result[id] = `${id} - ${name} - ${type} - ${orgName} - ${keywordsForSearch}`;
-      return result;
-    },
-    {}
-  );
-  return Object.values(pluginsForSearch);
+  return plugins.reduce((result: string[], { id, name, type, orgName, info }: CatalogPlugin) => {
+    const keywordsForSearch = info.keywords?.join(' ').toLowerCase();
+    const pluginString = `${id} - ${name} - ${type} - ${orgName} - ${keywordsForSearch}`;
+    result.push(pluginString);
+    return result;
+  }, []);
 }
 export function filterByKeyword(plugins: CatalogPlugin[], query: string) {
   const dataArray = getPluginDetailsForFuzzySearch(plugins);
