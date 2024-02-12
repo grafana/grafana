@@ -350,9 +350,13 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     },
     teamsUrl: {
       label: 'Teams URL',
-      description:
-        'The URL used to query for Team Ids. If not set, the default value is /teams. \n' +
-        'If you configure teams_url, you must also configure team_ids_attribute_path.',
+      description: (
+        <>
+          The URL used to query for Team Ids. If not set, the default value is /teams.{' '}
+          {provider === 'generic_oauth' &&
+            'If you configure teams_url, you must also configure team_ids_attribute_path.'}
+        </>
+      ),
       type: 'text',
       validation: {
         validate: (value, formValues) => {
@@ -382,9 +386,14 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     teamIds: {
       label: 'Team Ids',
       type: 'select',
-      description:
-        'String list of Team Ids. If set, the user must be a member of one of the given teams to log in. \n' +
-        'If you configure team_ids, you must also configure teams_url and team_ids_attribute_path.',
+      description: (
+        <>
+          {provider === 'github' ? 'Integer' : 'String'} list of Team Ids. If set, the user must be a member of one of
+          the given teams to log in.{' '}
+          {provider === 'generic_oauth' &&
+            'If you configure team_ids, you must also configure teams_url and team_ids_attribute_path.'}
+        </>
+      ),
       multi: true,
       allowCustomValue: true,
       options: [],
