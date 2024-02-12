@@ -11,7 +11,7 @@ import {
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { DataSourceJsonData } from '@grafana/schema';
@@ -54,6 +54,8 @@ export type PromOrLokiQuery = PromQuery | LokiQuery;
 
 export const MINUTE = '1m';
 
+export const MANUAL_ROUTING_KEY = 'grafana.alerting.manualRouting';
+
 export const getDefaultFormValues = (): RuleFormValues => {
   const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
 
@@ -75,7 +77,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     execErrState: GrafanaAlertStateDecision.Error,
     evaluateFor: '5m',
     evaluateEvery: MINUTE,
-    manualRouting: false, // let's decide this later
+    manualRouting: getDefautManualRouting(), // we default to true if the feature toggle is enabled and the user hasn't set local storage to false
     contactPoints: {},
     overrideGrouping: false,
     overrideTimings: false,
@@ -87,6 +89,18 @@ export const getDefaultFormValues = (): RuleFormValues => {
     forTime: 1,
     forTimeUnit: 'm',
   });
+};
+
+export const getDefautManualRouting = () => {
+  // first check if feature toggle for simplified routing is enabled
+  const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
+  if (!simplifiedRoutingToggleEnabled) {
+    return false;
+  }
+  //then, check in local storage if the user has enabled simplified routing
+  // if it's not set, we'll default to true
+  const manualRouting = localStorage.getItem(MANUAL_ROUTING_KEY);
+  return manualRouting !== 'false';
 };
 
 export function formValuesToRulerRuleDTO(values: RuleFormValues): RulerRuleDTO {
