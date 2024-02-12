@@ -32,6 +32,9 @@ export class DashboardModelCompatibilityWrapper {
   public constructor(private _scene: DashboardScene) {
     const timeRange = sceneGraph.getTimeRange(_scene);
 
+    // Copied from DashboardModel, as this function is passed around
+    this.formatDate = this.formatDate.bind(this);
+
     this._subs.add(
       timeRange.subscribeToState((state, prev) => {
         if (state.value !== prev.value) {
