@@ -208,9 +208,9 @@ type FrontendSettingsDTO struct {
 	AnonymousDeviceLimit             int64                          `json:"anonymousDeviceLimit"`
 	RendererAvailable                bool                           `json:"rendererAvailable"`
 	RendererVersion                  string                         `json:"rendererVersion"`
-	RendererDefaultImageWidth               int                            `json:"rendererDefaultImageWidth"`
-	RendererDefaultImageHeight              int                            `json:"rendererDefaultImageHeight"`
-	RendererDefaultImageScale               float64                        `json:"rendererDefaultImageScale"`
+	RendererDefaultImageWidth        int                            `json:"rendererDefaultImageWidth"`
+	RendererDefaultImageHeight       int                            `json:"rendererDefaultImageHeight"`
+	RendererDefaultImageScale        float64                        `json:"rendererDefaultImageScale"`
 	SecretsManagerPluginEnabled      bool                           `json:"secretsManagerPluginEnabled"`
 	Http2Enabled                     bool                           `json:"http2Enabled"`
 	GrafanaJavascriptAgent           setting.GrafanaJavascriptAgent `json:"grafanaJavascriptAgent"`
