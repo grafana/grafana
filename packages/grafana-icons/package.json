@@ -1,6 +1,6 @@
 {
   "name": "@grafana/icons",
-  "version": "1.0.0",
+  "version": "1.0.0-beta",
   "description": "Icons for Grafana",
   "author": "Grafana Labs",
   "license": "Apache-2.0",
@@ -22,7 +22,7 @@
     "./dist",
     "./README.md",
     "./CHANGELOG.md",
-    "LICENSE_APACHE2"
+    "./LICENSE_APACHE2"
   ],
   "scripts": {
     "clean": "rimraf ./dist ./compiled ./package.tgz ./src/icons",
