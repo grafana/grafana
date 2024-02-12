@@ -40,7 +40,7 @@ export const selectPlugins = (filters: PluginFilters) =>
         return false;
       }
 
-      if (keyword && filteredPluginIds != null && !filteredPluginIds.includes(plugin.id)) {
+      if (keyword && !filteredPluginIds?.includes(plugin.id)) {
         return false;
       }
 

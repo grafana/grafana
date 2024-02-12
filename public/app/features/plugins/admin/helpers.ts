@@ -357,17 +357,20 @@ function getId(inputString: string): string {
   return parts[0];
 }
 
-function getPluginDetailsForFuzzySearch(plugins: CatalogPlugin[]): { [key: string]: string } {
-  return plugins.reduce((result: { [key: string]: string }, { id, name, type, orgName, info }: CatalogPlugin) => {
-    const keywordsForSearch = info.keywords?.join(' ').toLowerCase();
-    result[id] = `${id} - ${name} - ${type} - ${orgName} - ${keywordsForSearch}`;
-    return result;
-  }, {});
+function getPluginDetailsForFuzzySearch(plugins: CatalogPlugin[]): string[] {
+  const pluginsForSearch = plugins.reduce(
+    (result: { [key: string]: string }, { id, name, type, orgName, info }: CatalogPlugin) => {
+      const keywordsForSearch = info.keywords?.join(' ').toLowerCase();
+      result[id] = `${id} - ${name} - ${type} - ${orgName} - ${keywordsForSearch}`;
+      return result;
+    },
+    {}
+  );
+  return Object.values(pluginsForSearch);
 }
 export function filterByKeyword(plugins: CatalogPlugin[], query: string) {
-  const dataArray = Object.values(getPluginDetailsForFuzzySearch(plugins));
-  let opts = {};
-  let uf = new uFuzzy(opts);
+  const dataArray = getPluginDetailsForFuzzySearch(plugins);
+  let uf = new uFuzzy({});
   let idxs = uf.filter(dataArray, query);
   if (idxs === null) {
     return null;
