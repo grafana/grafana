@@ -966,12 +966,15 @@
     {
       "metadata": {
         "name": "logsExploreTableVisualisation",
-        "resourceVersion": "1689163200000",
-        "creationTimestamp": "2023-07-12T12:00:00Z"
+        "resourceVersion": "1707747885704",
+        "creationTimestamp": "2023-07-12T12:00:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-12 14:24:45.704022 +0000 UTC"
+        }
       },
       "spec": {
         "description": "A table visualisation for logs in Explore",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-logs",
         "frontend": true
       }
