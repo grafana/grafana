@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import {
@@ -10,7 +10,8 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getDataSourceSrv, locationService } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
+import { VizPanel } from '@grafana/scenes';
 import { AnnotationPanelFilter } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import {
   Button,
@@ -25,23 +26,26 @@ import {
   Stack,
 } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
-import config from 'app/core/config';
 import StandardAnnotationQueryEditor from 'app/features/annotations/components/StandardAnnotationQueryEditor';
-import { AngularEditorLoader } from 'app/features/dashboard-scene/settings/annotations/AngularEditorLoader';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { DashboardModel } from '../../state/DashboardModel';
+import { getPanelIdForVizPanel } from '../../utils/utils';
+
+import { AngularEditorLoader } from './AngularEditorLoader';
 
 type Props = {
-  editIdx: number;
-  dashboard: DashboardModel;
+  annotation: AnnotationQuery;
+  editIndex: number;
+  panels: VizPanel[];
+  onUpdate: (annotation: AnnotationQuery, editIndex: number) => void;
+  onBackToList: () => void;
+  onDelete: (index: number) => void;
 };
 
 export const newAnnotationName = 'New annotation';
 
-export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
+export const AnnotationSettingsEdit = ({ annotation, editIndex, panels, onUpdate, onBackToList, onDelete }: Props) => {
   const styles = useStyles2(getStyles);
-  const [annotation, setAnnotation] = useState(dashboard.annotations.list[editIdx]);
 
   const panelFilter = useMemo(() => {
     if (!annotation.filter) {
@@ -56,56 +60,64 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
 
   const dsi = getDataSourceSrv().getInstanceSettings(annotation.datasource);
 
-  const onUpdate = (annotation: AnnotationQuery) => {
-    const list = [...dashboard.annotations.list];
-    list.splice(editIdx, 1, annotation);
-    setAnnotation(annotation);
-    dashboard.annotations.list = list;
-  };
-
   const onNameChange = (ev: React.FocusEvent<HTMLInputElement>) => {
-    onUpdate({
-      ...annotation,
-      name: ev.currentTarget.value,
-    });
+    onUpdate(
+      {
+        ...annotation,
+        name: ev.currentTarget.value,
+      },
+      editIndex
+    );
   };
 
   const onDataSourceChange = (ds: DataSourceInstanceSettings) => {
     const dsRef = getDataSourceRef(ds);
 
     if (annotation.datasource?.type !== dsRef.type) {
-      onUpdate({
-        datasource: dsRef,
-        builtIn: annotation.builtIn,
-        enable: annotation.enable,
-        iconColor: annotation.iconColor,
-        name: annotation.name,
-        hide: annotation.hide,
-        filter: annotation.filter,
-        mappings: annotation.mappings,
-        type: annotation.type,
-      });
+      onUpdate(
+        {
+          datasource: dsRef,
+          builtIn: annotation.builtIn,
+          enable: annotation.enable,
+          iconColor: annotation.iconColor,
+          name: annotation.name,
+          hide: annotation.hide,
+          filter: annotation.filter,
+          mappings: annotation.mappings,
+          type: annotation.type,
+        },
+        editIndex
+      );
     } else {
-      onUpdate({
-        ...annotation,
-        datasource: dsRef,
-      });
+      onUpdate(
+        {
+          ...annotation,
+          datasource: dsRef,
+        },
+        editIndex
+      );
     }
   };
 
   const onChange = (ev: React.FocusEvent<HTMLInputElement>) => {
     const target = ev.currentTarget;
-    onUpdate({
-      ...annotation,
-      [target.name]: target.type === 'checkbox' ? target.checked : target.value,
-    });
+    onUpdate(
+      {
+        ...annotation,
+        [target.name]: target.type === 'checkbox' ? target.checked : target.value,
+      },
+      editIndex
+    );
   };
 
   const onColorChange = (color?: string) => {
-    onUpdate({
-      ...annotation,
-      iconColor: color!,
-    });
+    onUpdate(
+      {
+        ...annotation,
+        iconColor: color!,
+      },
+      editIndex
+    );
   };
 
   const onFilterTypeChange = (v: SelectableValue<PanelFilterType>) => {
@@ -116,7 +128,7 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
             exclude: v.value === PanelFilterType.ExcludePanels,
             ids: annotation.filter?.ids ?? [],
           };
-    onUpdate({ ...annotation, filter });
+    onUpdate({ ...annotation, filter }, editIndex);
   };
 
   const onAddFilterPanelID = (selections: Array<SelectableValue<number>>) => {
@@ -130,19 +142,12 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
     };
 
     selections.forEach((selection) => selection.value && filter.ids.push(selection.value));
-    onUpdate({ ...annotation, filter });
+    onUpdate({ ...annotation, filter }, editIndex);
   };
 
-  const onApply = goBackToList;
-
-  const onPreview = () => {
-    locationService.partial({ editview: null, editIndex: null });
-  };
-
-  const onDelete = () => {
-    const annotations = dashboard.annotations.list;
-    dashboard.annotations.list = [...annotations.slice(0, editIdx), ...annotations.slice(editIdx + 1)];
-    goBackToList();
+  const onDeleteAndLeavePage = () => {
+    onDelete(editIndex);
+    onBackToList();
   };
 
   const isNewAnnotation = annotation.name === newAnnotationName;
@@ -155,21 +160,21 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
     return -1;
   };
 
-  const panels: Array<SelectableValue<number>> = useMemo(
+  const selectablePanels: Array<SelectableValue<number>> = useMemo(
     () =>
-      dashboard?.panels
+      panels
         // Filtering out rows at the moment, revisit to only include panels that support annotations
         // However the information to know if a panel supports annotations requires it to be already loaded
         // panel.plugin?.dataSupport?.annotations
-        .filter((panel) => config.panels[panel.type])
+        .filter((panel) => config.panels[panel.state.pluginId])
         .map((panel) => ({
-          value: panel.id,
-          label: panel.title ?? `Panel ${panel.id}`,
-          description: panel.description,
-          imgUrl: config.panels[panel.type].info.logos.small,
+          value: getPanelIdForVizPanel(panel),
+          label: panel.state.title ?? `Panel ${getPanelIdForVizPanel(panel)}`,
+          description: panel.state.description,
+          imgUrl: config.panels[panel.state.pluginId].info.logos.small,
         }))
         .sort(sortFn) ?? [],
-    [dashboard]
+    [panels]
   );
 
   return (
@@ -177,7 +182,7 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
       <FieldSet className={styles.settingsForm}>
         <Field label="Name">
           <Input
-            aria-label={selectors.pages.Dashboard.Settings.Annotations.Settings.name}
+            data-testid={selectors.pages.Dashboard.Settings.Annotations.Settings.name}
             name="name"
             id="name"
             autoFocus={isNewAnnotation}
@@ -189,38 +194,50 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
           <DataSourcePicker annotations variables current={annotation.datasource} onChange={onDataSourceChange} />
         </Field>
         <Field label="Enabled" description="When enabled the annotation query is issued every dashboard refresh">
-          <Checkbox name="enable" id="enable" value={annotation.enable} onChange={onChange} />
+          <Checkbox
+            name="enable"
+            id="enable"
+            value={annotation.enable}
+            onChange={onChange}
+            data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.enable}
+          />
         </Field>
         <Field
           label="Hidden"
           description="Annotation queries can be toggled on or off at the top of the dashboard. With this option checked this toggle will be hidden."
         >
-          <Checkbox name="hide" id="hide" value={annotation.hide} onChange={onChange} />
+          <Checkbox
+            name="hide"
+            id="hide"
+            value={annotation.hide}
+            onChange={onChange}
+            data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.hide}
+          />
         </Field>
         <Field label="Color" description="Color to use for the annotation event markers">
           <HorizontalGroup>
             <ColorValueEditor value={annotation?.iconColor} onChange={onColorChange} />
           </HorizontalGroup>
         </Field>
-        <Field label="Show in" aria-label={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel}>
+        <Field label="Show in" data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.showInLabel}>
           <>
             <Select
               options={panelFilters}
               value={panelFilter}
               onChange={onFilterTypeChange}
-              aria-label={selectors.components.Annotations.annotationsTypeInput}
+              data-testid={selectors.components.Annotations.annotationsTypeInput}
             />
             {panelFilter !== PanelFilterType.AllPanels && (
               <MultiSelect
-                options={panels}
-                value={panels.filter((panel) => annotation.filter?.ids.includes(panel.value!))}
+                options={selectablePanels}
+                value={selectablePanels.filter((panel) => annotation.filter?.ids.includes(panel.value!))}
                 onChange={onAddFilterPanelID}
                 isClearable={true}
                 placeholder="Choose panels"
                 width={100}
                 closeMenuOnSelect={false}
                 className={styles.select}
-                aria-label={selectors.components.Annotations.annotationsChoosePanelInput}
+                data-testid={selectors.components.Annotations.annotationsChoosePanelInput}
               />
             )}
           </>
@@ -233,26 +250,33 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
             datasource={ds}
             datasourceInstanceSettings={dsi}
             annotation={annotation}
-            onChange={onUpdate}
+            onChange={(annotation) => onUpdate(annotation, editIndex)}
           />
         )}
-        {ds && !ds.annotations && <AngularEditorLoader datasource={ds} annotation={annotation} onChange={onUpdate} />}
+        {ds && !ds.annotations && (
+          <AngularEditorLoader
+            datasource={ds}
+            annotation={annotation}
+            onChange={(annotation) => onUpdate(annotation, editIndex)}
+          />
+        )}
       </FieldSet>
       <Stack>
         {!annotation.builtIn && (
-          <Button variant="destructive" onClick={onDelete}>
+          <Button
+            variant="destructive"
+            onClick={onDeleteAndLeavePage}
+            data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.delete}
+          >
             Delete
           </Button>
         )}
         <Button
           variant="secondary"
-          onClick={onPreview}
-          data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.previewInDashboard}
+          onClick={onBackToList}
+          data-testid={selectors.pages.Dashboard.Settings.Annotations.NewAnnotation.apply}
         >
-          Preview in dashboard
-        </Button>
-        <Button variant="primary" onClick={onApply}>
-          Apply
+          Back to list
         </Button>
       </Stack>
     </div>
@@ -265,15 +289,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       maxWidth: theme.spacing(60),
       marginBottom: theme.spacing(2),
     }),
-    select: css`
-      margin-top: 8px;
-    `,
+    select: css({
+      marginTop: '8px',
+    }),
   };
 };
-
-function goBackToList() {
-  locationService.partial({ editIndex: null });
-}
 
 // Synthetic type
 enum PanelFilterType {
