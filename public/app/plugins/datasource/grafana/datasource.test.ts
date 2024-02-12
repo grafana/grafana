@@ -22,7 +22,7 @@ describe('grafana data source', () => {
   });
 
   describe('when executing an annotations query', () => {
-    let calledBackendSrvParams: any;
+    let calledBackendSrvParams: Parameters<(typeof backendSrv)['get']>[1];
     let ds: GrafanaDatasource;
     beforeEach(() => {
       getMock.mockImplementation((url, options) => {
@@ -41,7 +41,7 @@ describe('grafana data source', () => {
       });
 
       it('should interpolate template variables in tags in query options', () => {
-        expect(calledBackendSrvParams.tags[0]).toBe('tag1:replaced');
+        expect(calledBackendSrvParams?.tags[0]).toBe('tag1:replaced');
       });
     });
 
@@ -53,8 +53,8 @@ describe('grafana data source', () => {
       });
 
       it('should interpolate template variables in tags in query options', () => {
-        expect(calledBackendSrvParams.tags[0]).toBe('replaced');
-        expect(calledBackendSrvParams.tags[1]).toBe('replaced2');
+        expect(calledBackendSrvParams?.tags[0]).toBe('replaced');
+        expect(calledBackendSrvParams?.tags[1]).toBe('replaced2');
       });
     });
 
@@ -72,7 +72,7 @@ describe('grafana data source', () => {
       });
 
       it('should remove tags from query options', () => {
-        expect(calledBackendSrvParams.tags).toBe(undefined);
+        expect(calledBackendSrvParams?.tags).toBe(undefined);
       });
     });
   });
