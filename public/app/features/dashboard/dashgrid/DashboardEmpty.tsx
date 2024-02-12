@@ -1,19 +1,16 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, getDataSourceRef } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, getDataSourceSrv, locationService } from '@grafana/runtime';
-import { VizPanel, VizPanelMenu, SceneDataTransformer, SceneQueryRunner } from '@grafana/scenes';
+import { config, locationService } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { onAddLibraryPanel, onCreateNewPanel, onImportDashboard } from 'app/features/dashboard/utils/dashboard';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { VizPanelLinks, VizPanelLinksMenu } from 'app/features/dashboard-scene/scene/PanelLinks';
-import { panelMenuBehavior } from 'app/features/dashboard-scene/scene/PanelMenuBehavior';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
-import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils';
+import { onCreateNewPanel as onCreateNewPanelScene } from 'app/features/dashboard-scene/utils/utils';
 import { useDispatch, useSelector } from 'app/types';
 
 import { setInitialDatasource } from '../state/reducers';
@@ -28,6 +25,19 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
   const isDashboardScene = dashboard instanceof DashboardScene;
+
+  const onAddVisualization = () => {
+    let id;
+    if (isDashboardScene) {
+      id = onCreateNewPanelScene(dashboard);
+    } else {
+      id = onCreateNewPanel(dashboard, initialDatasource);
+      dispatch(setInitialDatasource(undefined));
+    }
+
+    locationService.partial({ editPanel: id, firstPanel: true });
+    DashboardInteractions.emptyDashboardButtonClicked({ item: 'add_visualization' });
+  };
 
   return (
     <Stack alignItems="center" justifyContent="center">
@@ -52,34 +62,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                 size="lg"
                 icon="plus"
                 data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
-                onClick={() => {
-                  if (isDashboardScene) {
-                    const vizPanel = new VizPanel({
-                      title: 'Panel Title',
-                      key: 'panel-1', // the first panel should always be panel-1
-                      pluginId: 'timeseries',
-                      titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
-                      menu: new VizPanelMenu({
-                        $behaviors: [panelMenuBehavior],
-                      }),
-                      $data: new SceneDataTransformer({
-                        $data: new SceneQueryRunner({
-                          queries: [{ refId: 'A' }],
-                          datasource: getDataSourceRef(getDataSourceSrv().getInstanceSettings(null)!),
-                        }),
-                        transformations: [],
-                      }),
-                    });
-                    dashboard.addPanel(vizPanel);
-                    const id = getPanelIdForVizPanel(vizPanel);
-                    locationService.partial({ editPanel: id, firstPanel: true });
-                  } else {
-                    const id = onCreateNewPanel(dashboard, initialDatasource);
-                    locationService.partial({ editPanel: id, firstPanel: true });
-                    dispatch(setInitialDatasource(undefined));
-                  }
-                  DashboardInteractions.emptyDashboardButtonClicked({ item: 'add_visualization' });
-                }}
+                onClick={onAddVisualization}
                 disabled={!canCreate}
               >
                 <Trans i18nKey="dashboard.empty.add-visualization-button">Add visualization</Trans>
