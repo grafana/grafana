@@ -78,15 +78,8 @@ export async function importPluginModule({
   let attempts = 0;
   // While the module's default export is a promise, wait for it to resolve.
   // Do we need to recurse here? It seems unlikely that a module would return a promise that resolves to another promise.
-  while (
-    !('plugin' in mod) &&
-    'default' in mod &&
-    typeof mod.default === 'object' &&
-    'then' in mod.default &&
-    typeof mod.default.then === 'function' &&
-    attempts < 5
-  ) {
-    mod = await mod.default;
+  while (!('plugin' in mod) && 'default' in mod && attempts < 5) {
+    mod = Promise.resolve(mod.default);
     attempts++;
   }
   return mod;
