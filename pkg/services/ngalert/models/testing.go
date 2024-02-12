@@ -273,8 +273,7 @@ func WithUniqueUID(knownUids *sync.Map) AlertRuleMutator {
 	}
 }
 
-func WithUniqueTitle() AlertRuleMutator {
-	knownTitles := sync.Map{}
+func WithUniqueTitle(knownTitles *sync.Map) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		title := rule.Title
 		for {
