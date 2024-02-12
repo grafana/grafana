@@ -210,6 +210,8 @@ resource "grafana_sso_settings" "azuread_sso_settings" {
 }
 ```
 
+Go to [Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/sso_settings) for a complete reference on using the `grafana_sso_settings` resource.
+
 ## Configure Azure AD/Entra ID authentication client using the Grafana configuration file
 
 ### Before you begin
