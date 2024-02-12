@@ -46,9 +46,3 @@ pre-commit:
       glob: '*public/app/plugins/**/**/*.cue'
       run: make fix-cue
       stage_fixed: true
-
-    generate-icons:
-      files:
-        - '^packages/grafana-icons/svg/.*\.svg$'
-      run: yarn generate
-      stage_fixed: true
