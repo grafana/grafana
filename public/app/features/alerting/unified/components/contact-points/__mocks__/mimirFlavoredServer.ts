@@ -15,10 +15,16 @@ export default (server: SetupServer) => {
       HttpResponse.json(mimirAlertmanagerMock)
     ),
     http.get(`/api/datasources/proxy/uid/${MIMIR_DATASOURCE_UID}/api/v1/status/buildinfo`, () =>
-      HttpResponse.json<AlertManagerCortexConfig>(undefined, { status: 404 })
+      HttpResponse.json<AlertManagerCortexConfig>(
+        {
+          template_files: {},
+          alertmanager_config: {},
+        },
+        { status: 404 }
+      )
     ),
     // this endpoint will respond if the OnCall plugin is installed
-    http.get('/api/plugins/grafana-oncall-app/settings', () => HttpResponse.json(undefined, { status: 404 }))
+    http.get('/api/plugins/grafana-oncall-app/settings', () => HttpResponse.json({}, { status: 404 }))
   );
 
   return server;

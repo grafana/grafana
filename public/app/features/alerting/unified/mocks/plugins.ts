@@ -12,7 +12,7 @@ export function mockPluginSettings(server: SetupServer, plugin: SupportedPlugin,
       if (response) {
         return HttpResponse.json(response);
       }
-      return HttpResponse.json(undefined, { status: 404 });
+      return HttpResponse.json({}, { status: 404 });
     })
   );
 }

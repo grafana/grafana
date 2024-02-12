@@ -15,7 +15,7 @@ export default (server: SetupServer) => {
       HttpResponse.json<AlertmanagerStatus>(vanillaAlertManagerConfig)
     ),
     // this endpoint will respond if the OnCall plugin is installed
-    http.get('/api/plugins/grafana-oncall-app/settings', () => HttpResponse.json(undefined, { status: 404 }))
+    http.get('/api/plugins/grafana-oncall-app/settings', () => HttpResponse.json({}, { status: 404 }))
   );
 
   return server;

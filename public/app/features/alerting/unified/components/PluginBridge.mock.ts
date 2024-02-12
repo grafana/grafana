@@ -9,9 +9,12 @@ export const NON_EXISTING_PLUGIN = '__does_not_exist__';
 
 const server = setupServer(
   http.get(`/api/plugins/${NON_EXISTING_PLUGIN}/settings`, async () =>
-    HttpResponse.json(undefined, {
-      status: 404,
-    })
+    HttpResponse.json(
+      {},
+      {
+        status: 404,
+      }
+    )
   ),
   http.get(`/api/plugins/${SupportedPlugin.Incident}/settings`, async () => {
     return HttpResponse.json({

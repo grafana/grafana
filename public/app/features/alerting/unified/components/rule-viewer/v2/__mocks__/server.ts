@@ -51,7 +51,7 @@ function mockFolderAccess(server: SetupServer, accessControl: Partial<Record<Acc
 function mockGrafanaIncidentPluginSettings(server: SetupServer) {
   server.use(
     http.get('/api/plugins/grafana-incident-app/settings', () => {
-      return HttpResponse.json();
+      return HttpResponse.json({});
     })
   );
 }

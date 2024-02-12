@@ -336,7 +336,7 @@ export function mockExportApi(server: SetupServer) {
             return HttpResponse.text(response[format]);
           }
 
-          return HttpResponse.text(undefined, { status: 500 });
+          return HttpResponse.text('', { status: 500 });
         })
       );
     },
@@ -350,7 +350,7 @@ export function mockExportApi(server: SetupServer) {
             return HttpResponse.text(response[format]);
           }
 
-          return HttpResponse.text(undefined, { status: 500 });
+          return HttpResponse.text('', { status: 500 });
         })
       );
     },
@@ -364,7 +364,7 @@ export function mockExportApi(server: SetupServer) {
             return HttpResponse.text(response[format]);
           }
 
-          return HttpResponse.text(undefined, { status: 500 });
+          return HttpResponse.text('', { status: 500 });
         })
       );
     },

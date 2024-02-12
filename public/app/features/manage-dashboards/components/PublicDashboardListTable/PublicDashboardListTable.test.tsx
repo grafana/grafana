@@ -66,7 +66,7 @@ const server = setupServer(
       publicDashboards: publicDashboardListResponse,
     })
   ),
-  http.delete('/api/dashboards/uid/:dashboardUid/public-dashboards/:uid', () => HttpResponse.json())
+  http.delete('/api/dashboards/uid/:dashboardUid/public-dashboards/:uid', () => HttpResponse.json({}))
 );
 
 jest.mock('@grafana/runtime', () => ({
