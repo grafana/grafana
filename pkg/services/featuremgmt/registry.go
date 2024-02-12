@@ -564,7 +564,8 @@ var (
 		{
 			Name:         "logsExploreTableVisualisation",
 			Description:  "A table visualisation for logs in Explore",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
+			Expression:   "true", // enabled by default,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
 		},
