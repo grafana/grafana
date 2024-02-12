@@ -32,7 +32,7 @@ export function VisualizationSuggestions({ searchQuery, onChange, data, panel }:
             return null;
           }
 
-          width = width - 2;
+          width = width - 1;
           const columnCount = Math.floor(width / 200);
           const spaceBetween = 8 * (columnCount! - 1);
           const previewWidth = Math.floor((width - spaceBetween) / columnCount!);
