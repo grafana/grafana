@@ -77,14 +77,13 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'relative',
       minHeight: 0,
       gap: '8px',
-      marginBottom: theme.spacing(2),
     }),
     controls: css({
       display: 'flex',
       flexWrap: 'wrap',
       alignItems: 'center',
       gap: theme.spacing(1),
-      padding: theme.spacing(2, 0),
+      padding: theme.spacing(2),
     }),
   };
 }

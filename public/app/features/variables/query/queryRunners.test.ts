@@ -1,10 +1,10 @@
 import { of } from 'rxjs';
 
-import { getDefaultTimeRange, VariableSupportType } from '@grafana/data';
+import { DataQueryRequest, getDefaultTimeRange, QueryVariableModel, VariableSupportType } from '@grafana/data';
 
 import { VariableRefresh } from '../types';
 
-import { QueryRunners, variableDummyRefId } from './queryRunners';
+import { QueryRunners, RunnerArgs, variableDummyRefId } from './queryRunners';
 
 describe('QueryRunners', () => {
   describe('when using a legacy data source', () => {
@@ -17,8 +17,14 @@ describe('QueryRunners', () => {
       const datasource: any = { metricFindQuery: jest.fn().mockResolvedValue([{ text: 'A', value: 'A' }]) };
       const runner = new QueryRunners().getRunnerForDatasource(datasource);
       const runRequest = jest.fn().mockReturnValue(of({}));
-      const runnerArgs: any = { datasource, variable, searchFilter: 'A searchFilter', timeSrv, runRequest };
-      const request: any = {};
+      const runnerArgs = {
+        datasource,
+        variable,
+        searchFilter: 'A searchFilter',
+        timeSrv,
+        runRequest,
+      } as unknown as RunnerArgs;
+      const request = {} as DataQueryRequest;
 
       return { timeSrv, datasource, runner, variable, runnerArgs, request, defaultTimeRange };
     };
@@ -146,7 +152,7 @@ describe('QueryRunners', () => {
 
   describe('when using a data source with standard variable support', () => {
     const getStandardTestContext = (datasource?: any) => {
-      const variable: any = { query: { refId: 'A', query: 'A query' } };
+      const variable = { query: { refId: 'A', query: 'A query' } } as QueryVariableModel;
       const timeSrv = {};
       datasource = datasource ?? {
         variables: {
@@ -156,8 +162,14 @@ describe('QueryRunners', () => {
       };
       const runner = new QueryRunners().getRunnerForDatasource(datasource);
       const runRequest = jest.fn().mockReturnValue(of({}));
-      const runnerArgs: any = { datasource, variable, searchFilter: 'A searchFilter', timeSrv, runRequest };
-      const request: any = {};
+      const runnerArgs = {
+        datasource,
+        variable,
+        searchFilter: 'A searchFilter',
+        timeSrv,
+        runRequest,
+      } as unknown as RunnerArgs;
+      const request = {} as DataQueryRequest;
 
       return { timeSrv, datasource, runner, variable, runnerArgs, request, runRequest };
     };
@@ -222,15 +234,21 @@ describe('QueryRunners', () => {
 
   describe('when using a data source with custom variable support', () => {
     const getCustomTestContext = () => {
-      const variable: any = { query: { refId: 'A', query: 'A query' } };
+      const variable = { query: { refId: 'A', query: 'A query' } } as QueryVariableModel;
       const timeSrv = {};
       const datasource: any = {
         variables: { getType: () => VariableSupportType.Custom, query: () => undefined, editor: {} },
       };
       const runner = new QueryRunners().getRunnerForDatasource(datasource);
       const runRequest = jest.fn().mockReturnValue(of({}));
-      const runnerArgs: any = { datasource, variable, searchFilter: 'A searchFilter', timeSrv, runRequest };
-      const request: any = {};
+      const runnerArgs = {
+        datasource,
+        variable,
+        searchFilter: 'A searchFilter',
+        timeSrv,
+        runRequest,
+      } as unknown as RunnerArgs;
+      const request = {} as DataQueryRequest;
 
       return { timeSrv, datasource, runner, variable, runnerArgs, request, runRequest };
     };
@@ -270,15 +288,21 @@ describe('QueryRunners', () => {
 
   describe('when using a data source with datasource variable support', () => {
     const getDatasourceTestContext = () => {
-      const variable: any = { query: { refId: 'A', query: 'A query' } };
+      const variable = { query: { refId: 'A', query: 'A query' } } as QueryVariableModel;
       const timeSrv = {};
       const datasource: any = {
         variables: { getType: () => VariableSupportType.Datasource },
       };
       const runner = new QueryRunners().getRunnerForDatasource(datasource);
       const runRequest = jest.fn().mockReturnValue(of({}));
-      const runnerArgs: any = { datasource, variable, searchFilter: 'A searchFilter', timeSrv, runRequest };
-      const request: any = {};
+      const runnerArgs = {
+        datasource,
+        variable,
+        searchFilter: 'A searchFilter',
+        timeSrv,
+        runRequest,
+      } as unknown as RunnerArgs;
+      const request = {} as DataQueryRequest;
 
       return { timeSrv, datasource, runner, variable, runnerArgs, request, runRequest };
     };

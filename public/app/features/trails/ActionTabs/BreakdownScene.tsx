@@ -19,11 +19,12 @@ import {
   SceneQueryRunner,
   VariableDependencyConfig,
 } from '@grafana/scenes';
-import { Button, Field, RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { Button, Field, useStyles2 } from '@grafana/ui';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { getAutoQueriesForMetric } from '../AutomaticMetricQueries/AutoQueryEngine';
 import { AutoQueryDef } from '../AutomaticMetricQueries/types';
+import { BreakdownLabelSelector } from '../BreakdownLabelSelector';
 import { MetricScene } from '../MetricScene';
 import { trailDS, VAR_FILTERS, VAR_GROUP_BY, VAR_GROUP_BY_EXP } from '../shared';
 import { getColorByIndex } from '../utils';
@@ -109,7 +110,11 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
     this.setState(stateUpdate);
   }
 
-  public onChange = (value: string) => {
+  public onChange = (value?: string) => {
+    if (!value) {
+      return;
+    }
+
     const variable = this.getVariable();
 
     if (value === ALL_VARIABLE_VALUE) {
@@ -129,9 +134,13 @@ export class BreakdownScene extends SceneObjectBase<BreakdownSceneState> {
       <div className={styles.container}>
         {loading && <div>Loading...</div>}
         <div className={styles.controls}>
-          <Field label="By label">
-            <RadioButtonGroup options={labels} value={value} onChange={model.onChange} />
-          </Field>
+          {!loading && (
+            <div className={styles.controlsLeft}>
+              <Field label="By label">
+                <BreakdownLabelSelector options={labels} value={value} onChange={model.onChange} />
+              </Field>
+            </div>
+          )}
           {body instanceof LayoutSwitcher && (
             <div className={styles.controlsRight}>
               <body.Selector model={body} />
@@ -157,10 +166,6 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       paddingTop: theme.spacing(0),
     }),
-    tabHeading: css({
-      paddingRight: theme.spacing(2),
-      fontWeight: theme.typography.fontWeightMedium,
-    }),
     controls: css({
       flexGrow: 0,
       display: 'flex',
@@ -168,9 +173,16 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(2),
     }),
     controlsRight: css({
-      flexGrow: 1,
+      flexGrow: 0,
       display: 'flex',
       justifyContent: 'flex-end',
+    }),
+    controlsLeft: css({
+      display: 'flex',
+      justifyContent: 'flex-left',
+      justifyItems: 'left',
+      width: '100%',
+      flexDirection: 'column',
     }),
   };
 }
@@ -184,6 +196,7 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
     }
 
     const expr = queryDef.queries[0].expr.replace(VAR_GROUP_BY_EXP, String(option.value));
+    const unit = queryDef.unit;
 
     children.push(
       new SceneCSSGridItem({
@@ -203,6 +216,7 @@ export function buildAllLayout(options: Array<SelectableValue<string>>, queryDef
             })
           )
           .setHeaderActions(new SelectLabelAction({ labelName: String(option.value) }))
+          .setUnit(unit)
           .build(),
       })
     );

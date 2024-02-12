@@ -203,7 +203,7 @@ export interface GrafanaNotificationSettings {
   group_wait?: string;
   group_interval?: string;
   repeat_interval?: string;
-  mute_timings?: string[];
+  mute_time_intervals?: string[];
 }
 export interface PostableGrafanaRuleDefinition {
   uid?: string;

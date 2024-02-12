@@ -24,7 +24,7 @@ func TestFeatureManager(t *testing.T) {
 		require.Equal(t, map[string]bool{"a": true}, ft.GetEnabled(context.Background()))
 	})
 
-	t.Run("check description and docs configs", func(t *testing.T) {
+	t.Run("check description and stage configs", func(t *testing.T) {
 		ft := FeatureManager{
 			flags: map[string]*FeatureFlag{},
 		}
@@ -35,14 +35,14 @@ func TestFeatureManager(t *testing.T) {
 			Name:        "a",
 			Description: "second",
 		}, FeatureFlag{
-			Name:    "a",
-			DocsURL: "http://something",
+			Name:  "a",
+			Stage: FeatureStagePrivatePreview,
 		}, FeatureFlag{
 			Name: "a",
 		})
 		flag := ft.flags["a"]
 		require.Equal(t, "second", flag.Description)
-		require.Equal(t, "http://something", flag.DocsURL)
+		require.Equal(t, FeatureStagePrivatePreview, flag.Stage)
 	})
 
 	t.Run("check startup false flags", func(t *testing.T) {

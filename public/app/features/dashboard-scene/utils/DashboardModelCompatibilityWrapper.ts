@@ -4,6 +4,7 @@ import { AnnotationQuery, DashboardCursorSync, dateTimeFormat, DateTimeInput, Ev
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import {
   behaviors,
+  SceneDataLayers,
   SceneDataTransformer,
   sceneGraph,
   SceneGridItem,
@@ -16,6 +17,7 @@ import { DataSourceRef } from '@grafana/schema';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
+import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 
 import { dashboardSceneGraph } from './dashboardSceneGraph';
 import { findVizPanelByKey, getPanelIdForVizPanel, getQueryRunnerFor, getVizPanelKeyForPanelId } from './utils';
@@ -29,6 +31,9 @@ export class DashboardModelCompatibilityWrapper {
 
   public constructor(private _scene: DashboardScene) {
     const timeRange = sceneGraph.getTimeRange(_scene);
+
+    // Copied from DashboardModel, as this function is passed around
+    this.formatDate = this.formatDate.bind(this);
 
     this._subs.add(
       timeRange.subscribeToState((state, prev) => {
@@ -109,8 +114,13 @@ export class DashboardModelCompatibilityWrapper {
    * Used from from timeseries migration handler to migrate time regions to dashboard annotations
    */
   public get annotations(): { list: AnnotationQuery[] } {
-    console.error('Scenes DashboardModelCompatibilityWrapper.annotations not implemented (yet)');
-    return { list: [] };
+    const annotations: { list: AnnotationQuery[] } = { list: [] };
+
+    if (this._scene.state.$data instanceof SceneDataLayers) {
+      annotations.list = dataLayersToAnnotations(this._scene.state.$data.state.layers);
+    }
+
+    return annotations;
   }
 
   public getTimezone() {
@@ -204,8 +214,15 @@ export class DashboardModelCompatibilityWrapper {
   }
 
   public canEditAnnotations(dashboardUID?: string) {
-    // TOOD
-    return false;
+    if (!this._scene.canEditDashboard()) {
+      return false;
+    }
+
+    if (dashboardUID) {
+      return Boolean(this._scene.state.meta.annotationsPermissions?.dashboard.canEdit);
+    }
+
+    return Boolean(this._scene.state.meta.annotationsPermissions?.organization.canEdit);
   }
 
   public panelInitialized() {}
@@ -213,6 +230,10 @@ export class DashboardModelCompatibilityWrapper {
   public destroy() {
     this.events.removeAllListeners();
     this._subs.unsubscribe();
+  }
+
+  public hasUnsavedChanges() {
+    return this._scene.state.isDirty;
   }
 }
 

@@ -4,12 +4,13 @@ import { Redirect } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps, sceneGraph, SceneObject, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { Button, useStyles2, Stack } from '@grafana/ui';
+import { Button, Stack, useStyles2 } from '@grafana/ui';
 import { Text } from '@grafana/ui/src/components/Text/Text';
 
 import { DataTrail } from './DataTrail';
 import { DataTrailCard } from './DataTrailCard';
 import { DataTrailsApp } from './DataTrailsApp';
+import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
 import { getDatasourceForNewTrail, getUrlForTrail, newMetricsTrail } from './utils';
 
@@ -47,17 +48,13 @@ export class DataTrailsHome extends SceneObjectBase<DataTrailsHomeState> {
     // If there are no recent trails, don't show home page and create a new trail
     if (!getTrailStore().recent.length) {
       const trail = newMetricsTrail(getDatasourceForNewTrail());
-      getTrailStore().setRecentTrail(trail);
       return <Redirect to={getUrlForTrail(trail)} />;
     }
 
     return (
       <div className={styles.container}>
         <Stack gap={2} justifyContent={'space-between'} alignItems={'center'}>
-          <Stack direction="column" gap={1}>
-            <Text variant="h1">Metrics</Text>
-            <Text color="secondary">Navigate through your Prometheus-compatible metrics without writing a query</Text>
-          </Stack>
+          <MetricsHeader />
           <Button icon="plus" size="md" variant="primary" onClick={model.onNewMetricsTrail}>
             New metric exploration
           </Button>
