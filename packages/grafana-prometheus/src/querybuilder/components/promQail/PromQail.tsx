@@ -125,7 +125,7 @@ export const PromQail = (props: PromQailProps) => {
                   fill="solid"
                   variant="primary"
                   onClick={() => dispatch(showStartingMessage(false))}
-                  data-testid={testIds.securityInfoButton}
+                  data-testid={queryAssistanttestIds.securityInfoButton}
                 >
                   Continue
                 </Button>
@@ -181,7 +181,7 @@ export const PromQail = (props: PromQailProps) => {
                       className={styles.leftButton}
                       fill="solid"
                       variant="secondary"
-                      data-testid={testIds.clickForHistorical}
+                      data-testid={queryAssistanttestIds.clickForHistorical}
                       onClick={() => {
                         const isLoading = true;
                         const suggestionType = SuggestionType.Historical;
@@ -198,7 +198,7 @@ export const PromQail = (props: PromQailProps) => {
                     <Button
                       fill="solid"
                       variant="primary"
-                      data-testid={testIds.clickForAi}
+                      data-testid={queryAssistanttestIds.clickForAi}
                       onClick={() => {
                         reportInteraction('grafana_prometheus_promqail_know_what_you_want_to_query', {
                           promVisualQuery: query,
@@ -293,7 +293,7 @@ export const PromQail = (props: PromQailProps) => {
                                 <Button
                                   fill="solid"
                                   variant="primary"
-                                  data-testid={testIds.submitPrompt + idx}
+                                  data-testid={queryAssistanttestIds.submitPrompt + idx}
                                   onClick={() => {
                                     const newInteraction: Interaction = {
                                       ...interaction,
@@ -557,7 +557,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const testIds = {
+export const queryAssistanttestIds = {
   promQail: 'prom-qail',
   securityInfoButton: 'security-info-button',
   clickForHistorical: 'click-for-historical',

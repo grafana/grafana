@@ -232,7 +232,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 
 	n.log.Debug("Rendering alert panel image", "ruleId", evalCtx.Rule.ID, "urlPath", renderOpts.Path)
 	start := time.Now()
-	result, err := n.renderService.Render(evalCtx.Ctx, renderOpts, nil)
+	result, err := n.renderService.Render(evalCtx.Ctx, rendering.RenderPNG, renderOpts, nil)
 	if err != nil {
 		return err
 	}

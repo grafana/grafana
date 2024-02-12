@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import { isEmptyObject, ScopedVars, TimeRange } from '@grafana/data';
 import {
   behaviors,
@@ -7,7 +9,6 @@ import {
   SceneGridLayout,
   SceneGridRow,
   VizPanel,
-  SceneQueryRunner,
   SceneDataTransformer,
   SceneVariableSet,
   AdHocFilterSet,
@@ -24,6 +25,7 @@ import {
   FieldConfigSource,
   Panel,
   RowPanel,
+  TimePickerConfig,
   VariableModel,
   VariableRefresh,
 } from '@grafana/schema';
@@ -39,7 +41,7 @@ import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { getPanelIdForVizPanel } from '../utils/utils';
+import { getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
 import { dataLayersToAnnotations } from './dataLayersToAnnotations';
@@ -51,8 +53,10 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   const data = state.$data;
   const variablesSet = state.$variables;
   const body = state.body;
-  let refresh_intervals = defaultTimePickerConfig.refresh_intervals;
-  let hideTimePicker: boolean = defaultTimePickerConfig.hidden;
+
+  let refreshIntervals: string[] | undefined;
+  let hideTimePicker: boolean | undefined;
+
   let panels: Panel[] = [];
   let graphTooltip = defaultDashboard.graphTooltip;
   let variables: VariableModel[] = [];
@@ -89,14 +93,15 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   }
 
   if (state.controls && state.controls[0] instanceof DashboardControls) {
-    hideTimePicker = state.controls[0].state.hideTimeControls ?? hideTimePicker;
+    hideTimePicker = state.controls[0].state.hideTimeControls;
 
     const timeControls = state.controls[0].state.timeControls;
     for (const control of timeControls) {
       if (control instanceof SceneRefreshPicker && control.state.intervals) {
-        refresh_intervals = control.state.intervals;
+        refreshIntervals = control.state.intervals;
       }
     }
+
     const variableControls = state.controls[0].state.variableControls;
     for (const control of variableControls) {
       if (control instanceof AdHocFilterSet) {
@@ -109,9 +114,22 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     }
   }
 
-  if (state.$behaviors && state.$behaviors[0] instanceof behaviors.CursorSync) {
-    graphTooltip = state.$behaviors[0].state.sync;
+  if (state.$behaviors) {
+    for (const behavior of state.$behaviors!) {
+      if (behavior instanceof behaviors.CursorSync) {
+        graphTooltip = behavior.state.sync;
+      }
+    }
   }
+
+  const timePickerWithoutDefaults = removeDefaults<TimePickerConfig>(
+    {
+      refresh_intervals: refreshIntervals,
+      hidden: hideTimePicker,
+      nowDelay: timeRange.UNSAFE_nowDelay,
+    },
+    defaultTimePickerConfig
+  );
 
   const dashboard: Dashboard = {
     ...defaultDashboard,
@@ -124,12 +142,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
       from: timeRange.from,
       to: timeRange.to,
     },
-    timepicker: {
-      ...defaultTimePickerConfig,
-      refresh_intervals,
-      hidden: hideTimePicker,
-      nowDelay: timeRange.UNSAFE_nowDelay,
-    },
+    timepicker: timePickerWithoutDefaults,
     panels,
     annotations: {
       list: annotations,
@@ -208,6 +221,7 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
     fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
     transformations: [],
     transparent: vizPanel.state.displayMode === 'transparent',
+    pluginVersion: vizPanel.state.pluginVersion,
     ...vizPanelDataToPanel(vizPanel, isSnapshot),
   };
 
@@ -228,6 +242,18 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
   const panelLinks = dashboardSceneGraph.getPanelLinks(vizPanel);
   panel.links = (panelLinks.state.rawLinks as DashboardLink[]) ?? [];
 
+  if (panel.links.length === 0) {
+    delete panel.links;
+  }
+
+  if (panel.transformations?.length === 0) {
+    delete panel.transformations;
+  }
+
+  if (!panel.transparent) {
+    delete panel.transparent;
+  }
+
   return panel;
 }
 
@@ -238,24 +264,15 @@ function vizPanelDataToPanel(
   const dataProvider = vizPanel.state.$data;
 
   const panel: Pick<Panel, 'datasource' | 'targets' | 'maxDataPoints' | 'transformations'> = {};
+  const queryRunner = getQueryRunnerFor(vizPanel);
 
-  // Regular queries handling
-  if (dataProvider instanceof SceneQueryRunner) {
-    panel.targets = dataProvider.state.queries;
-    panel.maxDataPoints = dataProvider.state.maxDataPoints;
-    panel.datasource = dataProvider.state.datasource;
+  if (queryRunner) {
+    panel.targets = queryRunner.state.queries;
+    panel.maxDataPoints = queryRunner.state.maxDataPoints;
+    panel.datasource = queryRunner.state.datasource;
   }
 
-  // Transformations handling
   if (dataProvider instanceof SceneDataTransformer) {
-    const panelData = dataProvider.state.$data;
-
-    if (panelData instanceof SceneQueryRunner) {
-      panel.targets = panelData.state.queries;
-      panel.maxDataPoints = panelData.state.maxDataPoints;
-      panel.datasource = panelData.state.datasource;
-    }
-
     panel.transformations = dataProvider.state.transformations as DataTransformerConfig[];
   }
 
@@ -468,4 +485,15 @@ export function trimDashboardForSnapshot(title: string, time: TimeRange, dash: D
   }
 
   return result;
+}
+
+function removeDefaults<T>(object: T, defaults: T): T {
+  const newObj = { ...object };
+  for (const key in defaults) {
+    if (isEqual(newObj[key], defaults[key])) {
+      delete newObj[key];
+    }
+  }
+
+  return newObj;
 }
