@@ -76,7 +76,6 @@ export function Splitter(props: Props) {
 
       {kids[1] && (
         <>
-          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
           <div
             className={dragHandleStyle}
             {...splitterProps}
