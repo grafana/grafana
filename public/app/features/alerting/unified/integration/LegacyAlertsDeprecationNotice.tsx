@@ -12,7 +12,7 @@ interface DeprecationNoticeProps {
   dashboard: Dashboard;
 }
 
-const usingLegacyAlerting = config.alertingEnabled && !config.unifiedAlertingEnabled;
+const usingLegacyAlerting = !config.unifiedAlertingEnabled;
 
 export default function LegacyAlertsDeprecationNotice({ dashboard }: DeprecationNoticeProps) {
   // if the user is still using legacy alerting we don't need to show any notice at all – they will probably keep using legacy alerting and do not intend to upgrade.
