@@ -56,8 +56,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     const panelId = getPanelIdForVizPanel(panel);
     const dashboard = getDashboardSceneFor(panel);
     const { isEmbedded } = dashboard.state.meta;
-    const gridItem = panel.parent instanceof LibraryVizPanel ? panel.parent.parent : panel.parent;
-    const panelJson = gridItemToPanel(gridItem as SceneGridItem);
+    const panelJson = gridItemToPanel(sceneGraph.getAncestor(panel, SceneGridItem));
     const panelModel = new PanelModel(panelJson);
     const dashboardJson = transformSceneToSaveModel(dashboard);
     const dashboardModel = new DashboardModel(dashboardJson);
