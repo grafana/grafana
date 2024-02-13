@@ -735,20 +735,12 @@ type GettableApiAlertingConfig struct {
 	Receivers []*GettableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
 
-func (c *GettableApiAlertingConfig) ReceiverNames() map[string]struct{} {
-	receivers := make(map[string]struct{}, len(c.Receivers))
-	for _, r := range c.Receivers {
-		receivers[r.Name] = struct{}{}
-	}
-	return receivers
+func (c *GettableApiAlertingConfig) GetReceivers() []*GettableApiReceiver {
+	return c.Receivers
 }
 
-func (c *GettableApiAlertingConfig) MuteTimeIntervalNames() map[string]struct{} {
-	muteTimeIntervals := make(map[string]struct{}, len(c.MuteTimeIntervals))
-	for _, interval := range c.MuteTimeIntervals {
-		muteTimeIntervals[interval.Name] = struct{}{}
-	}
-	return muteTimeIntervals
+func (c *GettableApiAlertingConfig) GetMuteTimeIntervals() []config.MuteTimeInterval {
+	return c.MuteTimeIntervals
 }
 
 func (c *GettableApiAlertingConfig) GetRoute() *Route {
@@ -980,20 +972,12 @@ type PostableApiAlertingConfig struct {
 	Receivers []*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
 
-func (c *PostableApiAlertingConfig) ReceiverNames() map[string]struct{} {
-	receivers := make(map[string]struct{}, len(c.Receivers))
-	for _, r := range c.Receivers {
-		receivers[r.Name] = struct{}{}
-	}
-	return receivers
+func (c *PostableApiAlertingConfig) GetReceivers() []*PostableApiReceiver {
+	return c.Receivers
 }
 
-func (c *PostableApiAlertingConfig) MuteTimeIntervalNames() map[string]struct{} {
-	muteTimeIntervals := make(map[string]struct{}, len(c.MuteTimeIntervals))
-	for _, interval := range c.MuteTimeIntervals {
-		muteTimeIntervals[interval.Name] = struct{}{}
-	}
-	return muteTimeIntervals
+func (c *PostableApiAlertingConfig) GetMuteTimeIntervals() []config.MuteTimeInterval {
+	return c.MuteTimeIntervals
 }
 
 func (c *PostableApiAlertingConfig) GetRoute() *Route {
@@ -1249,6 +1233,10 @@ func (r *GettableApiReceiver) Type() ReceiverType {
 	return AlertmanagerReceiverType
 }
 
+func (r *GettableApiReceiver) GetName() string {
+	return r.Receiver.Name
+}
+
 type PostableApiReceiver struct {
 	config.Receiver          `yaml:",inline"`
 	PostableGrafanaReceivers `yaml:",inline"`
@@ -1315,6 +1303,10 @@ func (r *PostableApiReceiver) Type() ReceiverType {
 	}
 
 	return AlertmanagerReceiverType
+}
+
+func (r *PostableApiReceiver) GetName() string {
+	return r.Receiver.Name
 }
 
 type GettableGrafanaReceivers struct {

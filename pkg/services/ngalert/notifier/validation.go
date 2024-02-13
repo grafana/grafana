@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/prometheus/alertmanager/config"
 )
 
 // NotificationSettingsValidator validates NotificationSettings against the current Alertmanager configuration
@@ -24,17 +25,31 @@ type staticValidator struct {
 }
 
 // apiAlertingConfig contains the methods required to validate NotificationSettings and create autogen routes.
-type apiAlertingConfig interface {
-	ReceiverNames() map[string]struct{}
-	MuteTimeIntervalNames() map[string]struct{}
+type apiAlertingConfig[R receiver] interface {
+	GetReceivers() []R
+	GetMuteTimeIntervals() []config.MuteTimeInterval
 	GetRoute() *definitions.Route
 }
 
+type receiver interface {
+	GetName() string
+}
+
 // NewNotificationSettingsValidator creates a new NotificationSettingsValidator from the given apiAlertingConfig.
-func NewNotificationSettingsValidator(am apiAlertingConfig) NotificationSettingsValidator {
+func NewNotificationSettingsValidator[R receiver](am apiAlertingConfig[R]) NotificationSettingsValidator {
+	availableReceivers := make(map[string]struct{})
+	for _, receiver := range am.GetReceivers() {
+		availableReceivers[receiver.GetName()] = struct{}{}
+	}
+
+	availableMuteTimings := make(map[string]struct{})
+	for _, interval := range am.GetMuteTimeIntervals() {
+		availableMuteTimings[interval.Name] = struct{}{}
+	}
+
 	return staticValidator{
-		availableReceivers:   am.ReceiverNames(),
-		availableMuteTimings: am.MuteTimeIntervalNames(),
+		availableReceivers:   availableReceivers,
+		availableMuteTimings: availableMuteTimings,
 	}
 }
 
