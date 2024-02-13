@@ -2066,6 +2066,19 @@
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true
       }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAggregator",
+        "resourceVersion": "1707775742552",
+        "creationTimestamp": "2024-02-12T22:09:02Z"
+      },
+      "spec": {
+        "description": "Enable grafana aggregator",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
     }
   ]
 }
