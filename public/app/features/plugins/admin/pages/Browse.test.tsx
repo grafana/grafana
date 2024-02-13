@@ -185,8 +185,8 @@ describe('Browse list of plugins', () => {
     it('should only list plugins matching search', async () => {
       const { queryByText } = renderBrowse('/plugins?filterBy=all&q=zabbix', [
         getCatalogPluginMock({ id: 'zabbix', name: 'Zabbix' }),
-        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2' }),
-        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3' }),
+        getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', info: { keywords: ['plugin2'] } }),
+        getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', info: { keywords: ['plugin3'] } }),
       ]);
 
       await waitFor(() => expect(queryByText('Zabbix')).toBeInTheDocument());
