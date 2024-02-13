@@ -147,10 +147,11 @@ type DeleteFolderCommand struct {
 type GetFolderQuery struct {
 	UID *string
 	// Deprecated: use FolderUID instead
-	ID        *int64
-	Title     *string
-	ParentUID *string
-	OrgID     int64
+	ID           *int64
+	Title        *string
+	ParentUID    *string
+	OrgID        int64
+	WithFullpath bool
 
 	SignedInUser identity.Requester `json:"-"`
 }

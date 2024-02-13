@@ -3,6 +3,7 @@ package folderimpl
 import (
 	"context"
 	"fmt"
+	"path"
 	"slices"
 	"sort"
 	"testing"
@@ -391,11 +392,7 @@ func TestIntegrationGet(t *testing.T) {
 		UID:         util.GenerateShortUID(),
 		ParentUID:   f.UID,
 	})
-
-	t.Cleanup(func() {
-		err := folderStore.Delete(context.Background(), []string{f.UID}, orgID)
-		require.NoError(t, err)
-	})
+	require.NoError(t, err)
 
 	t.Run("should gently fail in case of bad request", func(t *testing.T) {
 		_, err = folderStore.Get(context.Background(), folder.GetFolderQuery{})
@@ -462,6 +459,24 @@ func TestIntegrationGet(t *testing.T) {
 		assert.Equal(t, f.Title, ff.Title)
 		assert.Equal(t, f.Description, ff.Description)
 		//assert.Equal(t, folder.GeneralFolderUID, ff.ParentUID)
+		assert.NotEmpty(t, ff.Created)
+		assert.NotEmpty(t, ff.Updated)
+		assert.NotEmpty(t, ff.URL)
+	})
+
+	t.Run("get folder with fullpath should set fullpath as expected", func(t *testing.T) {
+		ff, err := folderStore.Get(context.Background(), folder.GetFolderQuery{
+			UID:          &subfolderWithSameName.UID,
+			OrgID:        orgID,
+			WithFullpath: true,
+		})
+		require.NoError(t, err)
+		assert.Equal(t, subfolderWithSameName.UID, ff.UID)
+		assert.Equal(t, subfolderWithSameName.OrgID, ff.OrgID)
+		assert.Equal(t, subfolderWithSameName.Title, ff.Title)
+		assert.Equal(t, subfolderWithSameName.Description, ff.Description)
+		assert.Equal(t, path.Join(f.Title, subfolderWithSameName.Title), ff.Fullpath)
+		assert.Equal(t, f.UID, ff.ParentUID)
 		assert.NotEmpty(t, ff.Created)
 		assert.NotEmpty(t, ff.Updated)
 		assert.NotEmpty(t, ff.URL)
