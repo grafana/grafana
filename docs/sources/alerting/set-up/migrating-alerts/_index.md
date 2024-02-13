@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../migrating-alerts/ # /docs/grafana/<GRAFANA VERSION>/alerting/migrating-alerts/
+  - ../migrating-alerts/ # /docs/grafana/<GRAFANA_VERSION>/alerting/migrating-alerts/
 canonical: https://grafana.com/docs/grafana/latest/alerting/set-up/migrating-alerts/
 description: Upgrade to Grafana Alerting
 labels:

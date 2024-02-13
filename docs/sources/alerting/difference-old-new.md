@@ -2,7 +2,7 @@
 _build:
   list: false
 aliases:
-  - ./unified-alerting/difference-old-new/ # /docs/grafana/<GRAFANA VERSION>/alerting/unified-alerting/difference-old-new/
+  - ./unified-alerting/difference-old-new/ # /docs/grafana/<GRAFANA_VERSION>/alerting/unified-alerting/difference-old-new/
 canonical: https://grafana.com/docs/grafana/latest/alerting/difference-old-new/
 description: Learn about how Grafana Alerting compares to legacy alerting
 keywords:

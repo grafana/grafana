@@ -54,6 +54,6 @@ If you are provisioning your data source, set the flag `handleGrafanaManagedAler
 [Add an external Alertmanager][configure-alertmanager]
 
 {{% docs/reference %}}
-[configure-alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/configure-alertmanager"
+[configure-alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager"
 [configure-alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager"
 {{% /docs/reference %}}
