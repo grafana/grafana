@@ -129,7 +129,6 @@ export function getColumns(
     };
 
     const Cell = getCellComponent(fieldTableOptions.cellOptions?.type, field);
-    console.log(field, getTextAlign(field));
     columns.push({
       // @ts-expect-error
       // TODO fix type error here

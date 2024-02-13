@@ -133,9 +133,7 @@ export function LogsTable(props: Props) {
 
       if (transformations.length > 0) {
         const transformedDataFrame = await lastValueFrom(transformDataFrame(transformations, [dataFrame]));
-        console.time('prepareTableFrame');
         const tableFrame = prepareTableFrame(transformedDataFrame[0]);
-        console.timeEnd('prepareTableFrame');
         setTableFrame(tableFrame);
       } else {
         setTableFrame(prepareTableFrame(dataFrame));
