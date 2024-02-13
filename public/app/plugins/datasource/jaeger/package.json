@@ -11,8 +11,6 @@
     "@grafana/runtime": "workspace:*",
     "@grafana/ui": "workspace:*",
     "@reduxjs/toolkit": "1.9.5",
-    "buffer": "6.0.3",
-    "events": "3.3.0",
     "lodash": "4.17.21",
     "logfmt": "^1.3.2",
     "react": "18.2.0",
@@ -21,7 +19,6 @@
     "reselect": "4.1.8",
     "rxjs": "7.8.1",
     "stream-browserify": "3.0.0",
-    "string_decoder": "1.2.0",
     "tslib": "2.6.2",
     "uuid": "9.0.1"
   },

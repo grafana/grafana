@@ -3355,8 +3355,6 @@ __metadata:
     "@types/react": "npm:18.2.48"
     "@types/react-window": "npm:1.8.8"
     "@types/uuid": "npm:9.0.8"
-    buffer: "npm:6.0.3"
-    events: "npm:3.3.0"
     jest: "npm:29.7.0"
     lodash: "npm:4.17.21"
     logfmt: "npm:^1.3.2"
@@ -3366,7 +3364,6 @@ __metadata:
     reselect: "npm:4.1.8"
     rxjs: "npm:7.8.1"
     stream-browserify: "npm:3.0.0"
-    string_decoder: "npm:1.2.0"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.2"
     uuid: "npm:9.0.1"
@@ -28741,15 +28738,6 @@ __metadata:
     define-properties: "npm:^1.2.0"
     es-abstract: "npm:^1.22.1"
   checksum: 10/6e594d3a61b127d243b8be1312e9f78683abe452cfe0bcafa3e0dc62ad6f030ccfb64d87ed3086fb7cb540fda62442c164d237cc5cc4d53c6e3eb659c29a0aeb
-  languageName: node
-  linkType: hard
-
-"string_decoder@npm:1.2.0":
-  version: 1.2.0
-  resolution: "string_decoder@npm:1.2.0"
-  dependencies:
-    safe-buffer: "npm:~5.1.0"
-  checksum: 10/5ec46dfa2ba2315b3449a71cfc06e45db836ff059bc3227d8fcb77cc86b5e35731d93f07481aaaa903d31829ed647449cfe4204664388b87116ea9745a439b33
   languageName: node
   linkType: hard
 

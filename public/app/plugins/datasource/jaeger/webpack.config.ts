@@ -5,10 +5,7 @@ const configWithFallback = async (env: Record<string, unknown>) => {
   if (response !== undefined && response.resolve !== undefined) {
     response.resolve.fallback = {
       ...response.resolve.fallback,
-      buffer: require.resolve('buffer/'),
-      events: require.resolve('events/'),
       stream: require.resolve('stream-browserify'),
-      string_decoder: require.resolve('string_decoder/'),
     };
   }
   return response;
