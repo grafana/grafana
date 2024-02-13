@@ -605,6 +605,7 @@ func createService(store *fakes.RuleStore) *RulerSrv {
 			BaseInterval: 10 * time.Second,
 		},
 		authz:          accesscontrol.NewRuleService(acimpl.ProvideAccessControl(setting.NewCfg())),
+		amConfigStore:  &fakeAMRefresher{},
 		amRefresher:    &fakeAMRefresher{},
 		featureManager: &featuremgmt.FeatureManager{},
 	}
@@ -613,8 +614,12 @@ func createService(store *fakes.RuleStore) *RulerSrv {
 type fakeAMRefresher struct {
 }
 
-func (f *fakeAMRefresher) RefreshConfig(_ context.Context, _ int64) error {
+func (f *fakeAMRefresher) ApplyConfig(ctx context.Context, orgId int64, dbConfig *models.AlertConfiguration) error {
 	return nil
+}
+
+func (f *fakeAMRefresher) GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error) {
+	return nil, nil
 }
 
 func createRequestContext(orgID int64, params map[string]string) *contextmodel.ReqContext {

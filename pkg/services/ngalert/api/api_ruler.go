@@ -30,17 +30,17 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-type NotificationSettingsValidatorProvider interface {
-	Validator(ctx context.Context, orgID int64) (notifier.NotificationSettingsValidator, error)
-}
-
 type ConditionValidator interface {
 	// Validate validates that the condition is correct. Returns nil if the condition is correct. Otherwise, error that describes the failure
 	Validate(ctx eval.EvaluationContext, condition ngmodels.Condition) error
 }
 
+type AMConfigStore interface {
+	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*ngmodels.AlertConfiguration, error)
+}
+
 type AMRefresher interface {
-	RefreshConfig(ctx context.Context, orgId int64) error
+	ApplyConfig(ctx context.Context, orgId int64, dbConfig *ngmodels.AlertConfiguration) error
 }
 
 type RulerSrv struct {
@@ -53,9 +53,9 @@ type RulerSrv struct {
 	conditionValidator ConditionValidator
 	authz              RuleAccessControlService
 
-	nsValidatorProvider NotificationSettingsValidatorProvider
-	amRefresher         AMRefresher
-	featureManager      featuremgmt.FeatureToggles
+	amConfigStore  AMConfigStore
+	amRefresher    AMRefresher
+	featureManager featuremgmt.FeatureToggles
 }
 
 var (
@@ -285,7 +285,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 //nolint:gocyclo
 func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRuleWithOptionals) response.Response {
 	var finalChanges *store.GroupDelta
-	var notificationSettingsChanged bool
+	var dbConfig *ngmodels.AlertConfiguration
 	err := srv.xactManager.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
 		userNamespace, id := c.SignedInUser.GetNamespacedID()
 		logger := srv.log.New("namespace_uid", groupKey.NamespaceUID, "group",
@@ -312,11 +312,15 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 
 		newOrUpdatedNotificationSettings := groupChanges.NewOrUpdatedNotificationSettings()
 		if len(newOrUpdatedNotificationSettings) > 0 {
-			notificationSettingsChanged = true
-			validator, err := srv.nsValidatorProvider.Validator(c.Req.Context(), groupChanges.GroupKey.OrgID)
+			dbConfig, err = srv.amConfigStore.GetLatestAlertmanagerConfiguration(c.Req.Context(), groupChanges.GroupKey.OrgID)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to get latest configuration: %w", err)
 			}
+			cfg, err := notifier.Load([]byte(dbConfig.AlertmanagerConfiguration))
+			if err != nil {
+				return fmt.Errorf("failed to parse configuration: %w", err)
+			}
+			validator := notifier.NewNotificationSettingsValidator(&cfg.AlertmanagerConfig)
 			for _, s := range newOrUpdatedNotificationSettings {
 				if err := validator.Validate(s); err != nil {
 					return errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
@@ -408,9 +412,9 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
-	if srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingSimplifiedRouting) && notificationSettingsChanged {
+	if srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingSimplifiedRouting) && dbConfig != nil {
 		// This isn't strictly necessary since the alertmanager config is periodically synced.
-		err := srv.amRefresher.RefreshConfig(c.Req.Context(), c.SignedInUser.GetOrgID())
+		err := srv.amRefresher.ApplyConfig(c.Req.Context(), groupKey.OrgID, dbConfig)
 		if err != nil {
 			srv.log.Warn("Failed to refresh Alertmanager config for org after change in notification settings", "org", c.SignedInUser.GetOrgID(), "error", err)
 		}
