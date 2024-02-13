@@ -339,7 +339,7 @@ const HeatmapHoverCell = ({
 
   if (mode === TooltipDisplayMode.Single) {
     // Histogram
-    if (showHistogram) {
+    if (showHistogram && !isSparse) {
       customContent.push(
         <canvas
           width={histCanWidth}
