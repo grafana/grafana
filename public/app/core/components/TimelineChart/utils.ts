@@ -106,7 +106,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   mergeValues,
   getValueColor,
   eventsScope = '__global_',
-  hoverMulti
+  hoverMulti,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
