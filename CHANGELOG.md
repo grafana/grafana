@@ -1257,6 +1257,15 @@ Starting with 10.0, changing the folder UID is deprecated. It will be removed in
 - **Grafana/ui:** Fix margin in RadioButtonGroup option when only icon is present. [#68899](https://github.com/grafana/grafana/issues/68899), [@aocenas](https://github.com/aocenas)
 
 <!-- 10.1.0 END -->
+<!-- 10.0.11 START -->
+
+# 10.0.11 (2024-01-29)
+
+### Bug fixes
+
+- **Annotations:** Split cleanup into separate queries and deletes to avoid deadlocks on MySQL. [#80681](https://github.com/grafana/grafana/issues/80681), [@alexweav](https://github.com/alexweav)
+
+<!-- 10.0.11 END -->
 <!-- 10.0.10 START -->
 
 # 10.0.10 (2023-12-18)
@@ -1789,6 +1798,15 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.16 START -->
+
+# 9.5.16 (2024-01-29)
+
+### Bug fixes
+
+- **Annotations:** Split cleanup into separate queries and deletes to avoid deadlocks on MySQL. [#80682](https://github.com/grafana/grafana/issues/80682), [@alexweav](https://github.com/alexweav)
+
+<!-- 9.5.16 END -->
 <!-- 9.5.15 START -->
 
 # 9.5.15 (2023-12-18)
