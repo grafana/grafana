@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 import { DataQueryRequest, DataSourceInstanceSettings, dateTime, PluginMetaInfo, PluginType } from '@grafana/data';
 import { BackendSrv } from '@grafana/runtime';
 
-import { createFetchResponse } from '../_importedDependencies/test/helpers/createFetchResponse';
+import { createFetchResponse } from '../helpers/createFetchResponse';
 import { JaegerDatasource, JaegerJsonData } from '../datasource';
 import { testResponse } from '../testResponse';
 import { JaegerQuery } from '../types';

@@ -21,8 +21,7 @@ import { getConfigValue } from '../utils/config/get-config';
 
 import { getTraceName } from './trace-viewer';
 
-// exported for tests
-export function deduplicateTags(tags: TraceKeyValuePair[]) {
+function deduplicateTags(tags: TraceKeyValuePair[]) {
   const warningsHash: Map<string, string> = new Map<string, string>();
   const dedupedTags: TraceKeyValuePair[] = tags.reduce<TraceKeyValuePair[]>((uniqueTags, tag) => {
     if (!uniqueTags.some((t) => t.key === tag.key && t.value === tag.value)) {
@@ -36,8 +35,7 @@ export function deduplicateTags(tags: TraceKeyValuePair[]) {
   return { dedupedTags, warnings };
 }
 
-// exported for tests
-export function orderTags(tags: TraceKeyValuePair[], topPrefixes?: string[]) {
+function orderTags(tags: TraceKeyValuePair[], topPrefixes?: string[]) {
   const orderedTags: TraceKeyValuePair[] = tags?.slice() ?? [];
   const tp = (topPrefixes || []).map((p: string) => p.toLowerCase());
 

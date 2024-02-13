@@ -21,5 +21,3 @@ export {
   TraceLink,
   CriticalPathSection,
 } from './trace';
-export { default as TNil } from './TNil';
-export { SpanLinkFunc, SpanLinkDef } from './links';
