@@ -138,7 +138,7 @@ describe('setDashboardPanelContext', () => {
     });
 
     it('Should update and add filter to existing set', () => {
-      const { scene, context } = buildTestScene({ existingFilterSet: true });
+      const { scene, context } = buildTestScene({ existingFilterVariable: true });
 
       const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
 
@@ -163,7 +163,7 @@ interface SceneOptions {
   canEdit?: boolean;
   canDelete?: boolean;
   orgCanEdit?: boolean;
-  existingFilterSet?: boolean;
+  existingFilterVariable?: boolean;
 }
 
 function buildTestScene(options: SceneOptions) {
@@ -198,7 +198,7 @@ function buildTestScene(options: SceneOptions) {
         },
       ],
       templating: {
-        list: options.existingFilterSet
+        list: options.existingFilterVariable
           ? [
               {
                 type: 'adhoc',

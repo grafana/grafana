@@ -111,8 +111,8 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       return;
     }
 
-    const filterSet = getAdHocFilterVariableFor(dashboard, queryRunner.state.datasource);
-    updateAdHocFilterVariable(filterSet, newFilter);
+    const filterVar = getAdHocFilterVariableFor(dashboard, queryRunner.state.datasource);
+    updateAdHocFilterVariable(filterVar, newFilter);
   };
 
   context.onUpdateData = (frames: DataFrame[]): Promise<boolean> => {

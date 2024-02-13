@@ -825,10 +825,10 @@ describe('transformSaveModelToScene', () => {
       };
 
       const migrated = createSceneVariableFromVariableModel(variable) as AdHocFiltersVariable;
-      const filterSetState = migrated.state;
+      const filterVarState = migrated.state;
 
       expect(migrated).toBeInstanceOf(AdHocFiltersVariable);
-      expect(filterSetState).toEqual({
+      expect(filterVarState).toEqual({
         key: expect.any(String),
         description: 'Adhoc Description',
         hide: 0,
