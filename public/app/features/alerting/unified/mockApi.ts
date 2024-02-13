@@ -251,7 +251,7 @@ export function mockApi(server: SetupServer) {
               const body = await request.json();
               const integrationId = uniqueId('oncall-integration-');
 
-              return HttpResponse.json({
+              return HttpResponse.json<NewOnCallIntegrationDTO>({
                 id: integrationId,
                 integration: body.integration,
                 integration_url: `https://oncall-endpoint.example.com/${integrationId}`,
