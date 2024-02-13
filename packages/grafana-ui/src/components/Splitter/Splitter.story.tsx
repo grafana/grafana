@@ -6,7 +6,7 @@ import { Splitter, useTheme2 } from '@grafana/ui';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 
-import mdx from './Spinner.mdx';
+import mdx from './Splitter.mdx';
 
 const meta: Meta = {
   title: 'General/Layout/Splitter',
