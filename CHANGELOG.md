@@ -766,6 +766,15 @@ Starting with 10.2, `parentRowIndex` is deprecated. It will be removed in a futu
 - **Drawer:** Make content scroll by default. [#75287](https://github.com/grafana/grafana/issues/75287), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 10.2.0 END -->
+<!-- 10.1.7 START -->
+
+# 10.1.7 (2024-01-29)
+
+### Bug fixes
+
+- **Annotations:** Split cleanup into separate queries and deletes to avoid deadlocks on MySQL. [#80678](https://github.com/grafana/grafana/issues/80678), [@alexweav](https://github.com/alexweav)
+
+<!-- 10.1.7 END -->
 <!-- 10.1.6 START -->
 
 # 10.1.6 (2023-12-18)
