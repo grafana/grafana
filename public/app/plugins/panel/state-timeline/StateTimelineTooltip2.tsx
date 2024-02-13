@@ -40,14 +40,7 @@ export const StateTimelineTooltip2 = ({
 
   mode = isPinned ? TooltipDisplayMode.Single : mode;
 
-  const contentItems = getContentItems(
-    seriesFrame.fields,
-    xField,
-    dataIdxs,
-    seriesIdx,
-    mode,
-    sortOrder
-  );
+  const contentItems = getContentItems(seriesFrame.fields, xField, dataIdxs, seriesIdx, mode, sortOrder);
 
   // append duration in single mode
   if (withDuration && mode === TooltipDisplayMode.Single) {

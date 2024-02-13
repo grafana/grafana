@@ -1,7 +1,6 @@
-import { css } from '@emotion/css';
 import React from 'react';
 
-import { DataFrame, Field, getFieldDisplayName, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { DataFrame, Field, getFieldDisplayName, LinkModel } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
@@ -9,6 +8,8 @@ import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizToolt
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
 import { ColorIndicator, LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
 import { getTitleFromHref } from 'app/features/explore/utils/links';
+
+import { getStyles } from '../timeseries/TimeSeriesTooltip';
 
 import { Options } from './panelcfg.gen';
 import { ScatterSeries } from './types';
@@ -106,10 +107,3 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
     </div>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css({
-    display: 'flex',
-    flexDirection: 'column',
-  }),
-});
