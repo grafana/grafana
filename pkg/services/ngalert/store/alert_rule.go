@@ -675,7 +675,12 @@ func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListN
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		query := sess.Table(ngmodels.AlertRule{}).Select("uid, notification_settings").Where("notification_settings IS NOT NULL AND notification_settings <> 'null' AND org_id = ?", q.OrgID)
 		if q.ReceiverName != "" {
-			query.And("notification_settings LIKE ?", fmt.Sprintf(`%%"%s"%%`, q.ReceiverName))
+			// marshall string according to JSON rules so we follow escaping rules.
+			b, err := json.Marshal(q.ReceiverName)
+			if err != nil {
+				return fmt.Errorf("failed to marshall receiver name query: %w", err)
+			}
+			query = query.And("notification_settings LIKE ?", fmt.Sprintf(`%%%s%%`, string(b)))
 		}
 		return query.Find(&rules)
 	})
