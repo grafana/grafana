@@ -42,7 +42,7 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
   return (
     <GroupByVariableForm
       defaultOptions={defaultOptions}
-      datasource={datasource}
+      datasource={datasourceRef ?? undefined}
       infoText={message}
       onDataSourceChange={onDataSourceChange}
       onDefaultOptionsChange={onDefaultOptionsChange}
