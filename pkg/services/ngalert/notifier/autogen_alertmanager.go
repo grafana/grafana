@@ -140,7 +140,7 @@ func generateRouteFromSettings(defaultReceiver string, settings map[data.Fingerp
 			ObjectMatchers: definitions.ObjectMatchers{settingMatcher},
 			Continue:       false, // Only a single setting-specific route should match.
 
-			GroupByStr:        s.GroupBy, // We previously ensured that FolderTitleLabel and AlertNameLabel were present during validation.
+			GroupByStr:        s.GroupBy, // Note: in order to pass validation at least FolderTitleLabel and AlertNameLabel are always included.
 			MuteTimeIntervals: s.MuteTimeIntervals,
 			GroupWait:         s.GroupWait,
 			GroupInterval:     s.GroupInterval,
