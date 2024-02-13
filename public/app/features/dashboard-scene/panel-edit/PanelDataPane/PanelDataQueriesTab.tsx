@@ -84,10 +84,10 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
       minInterval: queryRunner.state.minInterval,
       timeRange: timeRangeOpts,
       cacheTimeout: panelManager.state.dsSettings?.meta.queryOptions?.cacheTimeout
-        ? queryCachingOptions.state.cacheTimeout
+        ? queryCachingOptions?.state.cacheTimeout
         : undefined,
       queryCachingTTL: panelManager.state.dsSettings?.cachingConfig?.enabled
-        ? queryCachingOptions.state.queryCachingTTL
+        ? queryCachingOptions?.state.queryCachingTTL
         : undefined,
     };
   }

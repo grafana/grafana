@@ -296,11 +296,11 @@ function vizPanelDataToPanel(
     ];
   }
 
-  if (cachingOptions.state.cacheTimeout) {
+  if (cachingOptions?.state.cacheTimeout) {
     // @ts-expect-error Graphite-specific option, not sure we should add it to schema
     panel.cacheTimeout = cachingOptions.state.cacheTimeout;
   }
-  if (cachingOptions.state.queryCachingTTL) {
+  if (cachingOptions?.state.queryCachingTTL) {
     // @ts-expect-error enterprise/cloud option, not sure we should add it to schema
     panel.queryCachingTTL = cachingOptions.state.queryCachingTTL;
   }

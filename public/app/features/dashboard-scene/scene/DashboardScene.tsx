@@ -550,7 +550,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   };
 
   /**
-   * Called by the SceneQueryRunner to privide contextural parameters (tracking) props for the request
+   * Called by the SceneQueryRunner to privide contextual parameters props for the request
    */
   public enrichDataRequest(sceneObject: SceneObject): Partial<DataQueryRequest> {
     const panel = getClosestVizPanel(sceneObject);
@@ -565,8 +565,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       }
 
       const cachingOptionsBehavior = dashboardSceneGraph.getPanelCacheOptionsBehavior(panel);
-      cachingOptions.cacheTimeout = cachingOptionsBehavior.state.cacheTimeout;
-      cachingOptions.queryCachingTTL = cachingOptionsBehavior.state.queryCachingTTL;
+      cachingOptions.cacheTimeout = cachingOptionsBehavior?.state.cacheTimeout;
+      cachingOptions.queryCachingTTL = cachingOptionsBehavior?.state.queryCachingTTL;
     }
 
     return {

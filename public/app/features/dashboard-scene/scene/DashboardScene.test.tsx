@@ -27,6 +27,7 @@ import { djb2Hash } from '../utils/djb2Hash';
 import { DashboardControls } from './DashboardControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
+import { PanelQueryCachingOptionsBehavior } from './PanelQueryCachingOptionsBehavior';
 
 jest.mock('../settings/version-history/HistorySrv');
 jest.mock('../serialization/transformSaveModelToScene');
@@ -135,6 +136,18 @@ describe('DashboardScene', () => {
         dashboardUID: 'dash-1',
         panelId: 1,
         panelPluginType: 'table',
+      });
+    });
+
+    it('Should add query caching options', () => {
+      const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner-with-caching')!;
+      expect(scene.enrichDataRequest(queryRunner)).toEqual({
+        app: CoreApp.Dashboard,
+        dashboardUID: 'dash-1',
+        panelId: 3,
+        panelPluginType: 'table',
+        cacheTimeout: '60',
+        queryCachingTTL: 200000,
       });
     });
 
@@ -313,6 +326,20 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
             key: 'panel-2-clone-1',
             pluginId: 'table',
             $data: new SceneQueryRunner({ key: 'data-query-runner2', queries: [{ refId: 'A' }] }),
+          }),
+        }),
+        new SceneGridItem({
+          body: new VizPanel({
+            title: 'Panel with caching options',
+            key: 'panel-3',
+            pluginId: 'table',
+            $behaviors: [
+              new PanelQueryCachingOptionsBehavior({
+                cacheTimeout: '60',
+                queryCachingTTL: 200000,
+              }),
+            ],
+            $data: new SceneQueryRunner({ key: 'data-query-runner-with-caching', queries: [{ refId: 'A' }] }),
           }),
         }),
       ],

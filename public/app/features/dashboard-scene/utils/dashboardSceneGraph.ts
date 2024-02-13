@@ -63,8 +63,7 @@ function getPanelCacheOptionsBehavior(panel: VizPanel) {
   if (behavior instanceof PanelQueryCachingOptionsBehavior) {
     return behavior;
   }
-
-  throw new Error('PanelQueryCachingOptionsBehavior not found');
+  return null;
 }
 
 function getVizPanels(scene: DashboardScene): VizPanel[] {

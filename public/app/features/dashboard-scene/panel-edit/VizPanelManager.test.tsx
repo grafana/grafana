@@ -12,6 +12,7 @@ import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { findVizPanelByKey } from '../utils/utils';
 
 import { buildPanelEditScene } from './PanelEditor';
@@ -406,6 +407,30 @@ describe('VizPanelManager', () => {
           });
 
           expect(dataObj.state.minInterval).toBe('1s');
+        });
+      });
+
+      describe('query caching', () => {
+        it('updates cacheTimeout and queryCachingTTL', async () => {
+          const { vizPanelManager } = setupTest('panel-1');
+          vizPanelManager.activate();
+          await Promise.resolve();
+
+          const cacheOptionsBehavior = dashboardSceneGraph.getPanelCacheOptionsBehavior(vizPanelManager.state.panel);
+
+          vizPanelManager.changeQueryOptions({
+            cacheTimeout: '60',
+            queryCachingTTL: 200000,
+            dataSource: {
+              name: 'grafana-testdata',
+              type: 'grafana-testdata-datasource',
+              default: true,
+            },
+            queries: [],
+          });
+
+          expect(cacheOptionsBehavior!.state.cacheTimeout).toBe('60');
+          expect(cacheOptionsBehavior!.state.queryCachingTTL).toBe(200000);
         });
       });
     });
