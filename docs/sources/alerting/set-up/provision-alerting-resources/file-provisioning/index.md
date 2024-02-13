@@ -729,9 +729,9 @@ spec:
 This eliminates the need for a persistent database to use Grafana Alerting in Kubernetes; all your provisioned resources appear after each restart or re-deployment. Grafana still requires a database for normal operation, you do not need to persist the contents of the database between restarts if all objects are provisioned using files.
 
 {{% docs/reference %}}
-[alerting_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/alerting_provisioning"
-[alerting_provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/alerting_provisioning"
+[alerting_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/developers/http_api/alerting_provisioning"
+[alerting_provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/developers/http_api/alerting_provisioning"
 
-[reload-provisioning-configurations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/admin#reload-provisioning-configurations"
-[reload-provisioning-configurations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/admin#reload-provisioning-configurations"
+[reload-provisioning-configurations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/developers/http_api/admin#reload-provisioning-configurations"
+[reload-provisioning-configurations]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/developers/http_api/admin#reload-provisioning-configurations"
 {{% /docs/reference %}}

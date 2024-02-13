@@ -48,6 +48,6 @@ Click **View in Explore** or click the `expr` link to open the `expr` in [Explor
 > **Note:** Only users with Admin or Editor roles in an organization can use the Explore feature unless the viewers can edit.
 
 {{% docs/reference %}}
-[explore]: "/docs/grafana -> /docs/grafana/<GRAFANA VERSION>/explore"
-[explore]: "/docs/grafana-cloud/-> /docs/grafana/<GRAFANA VERSION>/explore"
+[explore]: "/docs/grafana -> /docs/grafana/<GRAFANA_VERSION>/explore"
+[explore]: "/docs/grafana-cloud/-> /docs/grafana/<GRAFANA_VERSION>/explore"
 {{% /docs/reference %}}
