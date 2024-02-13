@@ -23,15 +23,6 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   const navModel = getNavModel(navIndex, 'dashboards/browse');
   const showDebugger = location.search.includes('scene-debugger');
 
-  if (model.isEmpty()) {
-    return (
-      <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
-        <NavToolbarActions dashboard={model} />
-        <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} />
-      </Page>
-    );
-  }
-
   if (editview) {
     return (
       <>
@@ -41,6 +32,29 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     );
   }
 
+  const emptyState = (
+    <>
+      <div className={styles.controls}>{showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}</div>
+      <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} />
+    </>
+  );
+
+  const withPanels = (
+    <>
+      {controls && (
+        <div className={styles.controls}>
+          {controls.map((control) => (
+            <control.Component key={control.state.key} model={control} />
+          ))}
+          {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
+        </div>
+      )}
+      <div className={cx(styles.body)}>
+        <bodyToRender.Component model={bodyToRender} />
+      </div>
+    </>
+  );
+
   return (
     <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
       {editPanel && <editPanel.Component model={editPanel} />}
@@ -48,18 +62,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
         <CustomScrollbar autoHeightMin={'100%'}>
           <div className={styles.canvasContent}>
             <NavToolbarActions dashboard={model} />
-
-            {controls && (
-              <div className={styles.controls}>
-                {controls.map((control) => (
-                  <control.Component key={control.state.key} model={control} />
-                ))}
-                {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
-              </div>
-            )}
-            <div className={cx(styles.body)}>
-              <bodyToRender.Component model={bodyToRender} />
-            </div>
+            {model.isEmpty() ? emptyState : withPanels}
           </div>
         </CustomScrollbar>
       )}
@@ -96,6 +99,7 @@ function getStyles(theme: GrafanaTheme2) {
       background: theme.colors.background.canvas,
       zIndex: theme.zIndex.activePanel,
       padding: theme.spacing(2, 0),
+      marginLeft: 'auto',
     }),
   };
 }
