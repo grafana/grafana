@@ -1,6 +1,3 @@
-// Copied from https://github.com/grafana/grafana/blob/main/pkg/tsdb/intervalv2/intervalv2.go
-// We're copying this to not block ourselves from decoupling until the conversation here is resolved
-// https://raintank-corp.slack.com/archives/C05QFJUHUQ6/p1700064431005089
 package converter
 
 import (
@@ -11,14 +8,15 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/tsdb/cloud-monitoring/jsonitere"
+	sdkjsoniter "github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
 	jsoniter "github.com/json-iterator/go"
+
 	"golang.org/x/exp/slices"
 )
 
 // helpful while debugging all the options that may appear
 func logf(format string, a ...any) {
-	//fmt.Printf(format, a...)
+	// fmt.Printf(format, a...)
 }
 
 type Options struct {
@@ -31,7 +29,7 @@ func rspErr(e error) backend.DataResponse {
 
 // ReadPrometheusStyleResult will read results from a prometheus or loki server and return data frames
 func ReadPrometheusStyleResult(jIter *jsoniter.Iterator, opt Options) backend.DataResponse {
-	iter := jsonitere.NewIterator(jIter)
+	iter := sdkjsoniter.NewIterator(jIter)
 	var rsp backend.DataResponse
 	status := "unknown"
 	errorType := ""
@@ -104,14 +102,14 @@ l1Fields:
 	return rsp
 }
 
-func readWarnings(iter *jsonitere.Iterator) ([]data.Notice, error) {
+func readWarnings(iter *sdkjsoniter.Iterator) ([]data.Notice, error) {
 	warnings := []data.Notice{}
 	next, err := iter.WhatIsNext()
 	if err != nil {
 		return nil, err
 	}
 
-	if next != jsoniter.ArrayValue {
+	if next != sdkjsoniter.ArrayValue {
 		return warnings, nil
 	}
 
@@ -123,7 +121,7 @@ func readWarnings(iter *jsonitere.Iterator) ([]data.Notice, error) {
 		if err != nil {
 			return nil, err
 		}
-		if next == jsoniter.StringValue {
+		if next == sdkjsoniter.StringValue {
 			s, err := iter.ReadString()
 			if err != nil {
 				return nil, err
@@ -139,18 +137,18 @@ func readWarnings(iter *jsonitere.Iterator) ([]data.Notice, error) {
 	return warnings, nil
 }
 
-func readPrometheusData(iter *jsonitere.Iterator, opt Options) backend.DataResponse {
+func readPrometheusData(iter *sdkjsoniter.Iterator, opt Options) backend.DataResponse {
 	var rsp backend.DataResponse
 	t, err := iter.WhatIsNext()
 	if err != nil {
 		return rspErr(err)
 	}
 
-	if t == jsoniter.ArrayValue {
+	if t == sdkjsoniter.ArrayValue {
 		return readArrayData(iter)
 	}
 
-	if t != jsoniter.ObjectValue {
+	if t != sdkjsoniter.ObjectValue {
 		return backend.DataResponse{
 			Error: fmt.Errorf("expected object type"),
 		}
@@ -192,7 +190,7 @@ l1Fields:
 			// if we have saved resultBytes we will parse them here
 			// we saved them because when we had them we don't know the resultType
 			if len(resultBytes) > 0 {
-				ji := jsonitere.NewIterator(jsoniter.ParseBytes(jsoniter.ConfigDefault, resultBytes))
+				ji := sdkjsoniter.NewIterator(jsoniter.ParseBytes(sdkjsoniter.ConfigDefault, resultBytes))
 				rsp = readResult(resultType, rsp, ji, opt, encodingFlags)
 			}
 		case "result":
@@ -202,7 +200,7 @@ l1Fields:
 			if resultTypeFound {
 				rsp = readResult(resultType, rsp, iter, opt, encodingFlags)
 			} else {
-				resultBytes = iter.SkipAndReturnBytes()
+				resultBytes, _ = iter.SkipAndReturnBytes()
 			}
 
 		case "stats":
@@ -243,7 +241,7 @@ l1Fields:
 }
 
 // will read the result object based on the resultType and return a DataResponse
-func readResult(resultType string, rsp backend.DataResponse, iter *jsonitere.Iterator, opt Options, encodingFlags []string) backend.DataResponse {
+func readResult(resultType string, rsp backend.DataResponse, iter *sdkjsoniter.Iterator, opt Options, encodingFlags []string) backend.DataResponse {
 	switch resultType {
 	case "matrix", "vector":
 		rsp = readMatrixOrVectorMulti(iter, resultType, opt)
@@ -265,7 +263,7 @@ func readResult(resultType string, rsp backend.DataResponse, iter *jsonitere.Ite
 			return rsp
 		}
 	case "scalar":
-		rsp = readScalar(iter)
+		rsp = readScalar(iter, opt.Dataplane)
 		if rsp.Error != nil {
 			return rsp
 		}
@@ -281,7 +279,7 @@ func readResult(resultType string, rsp backend.DataResponse, iter *jsonitere.Ite
 }
 
 // will return strings or exemplars
-func readArrayData(iter *jsonitere.Iterator) backend.DataResponse {
+func readArrayData(iter *sdkjsoniter.Iterator) backend.DataResponse {
 	lookup := make(map[string]*data.Field)
 
 	var labelFrame *data.Frame
@@ -300,7 +298,7 @@ func readArrayData(iter *jsonitere.Iterator) backend.DataResponse {
 		}
 
 		switch next {
-		case jsoniter.StringValue:
+		case sdkjsoniter.StringValue:
 			s, err := iter.ReadString()
 			if err != nil {
 				return rspErr(err)
@@ -308,7 +306,7 @@ func readArrayData(iter *jsonitere.Iterator) backend.DataResponse {
 			stringField.Append(s)
 
 		// Either label or exemplars
-		case jsoniter.ObjectValue:
+		case sdkjsoniter.ObjectValue:
 			exemplar, labelPairs, err := readLabelsOrExemplars(iter)
 			if err != nil {
 				rspErr(err)
@@ -367,7 +365,7 @@ func readArrayData(iter *jsonitere.Iterator) backend.DataResponse {
 }
 
 // For consistent ordering read values to an array not a map
-func readLabelsAsPairs(iter *jsonitere.Iterator) ([][2]string, error) {
+func readLabelsAsPairs(iter *sdkjsoniter.Iterator) ([][2]string, error) {
 	pairs := make([][2]string, 0, 10)
 	for k, err := iter.ReadObject(); k != ""; k, err = iter.ReadObject() {
 		if err != nil {
@@ -382,7 +380,7 @@ func readLabelsAsPairs(iter *jsonitere.Iterator) ([][2]string, error) {
 	return pairs, nil
 }
 
-func readLabelsOrExemplars(iter *jsonitere.Iterator) (*data.Frame, [][2]string, error) {
+func readLabelsOrExemplars(iter *sdkjsoniter.Iterator) (*data.Frame, [][2]string, error) {
 	pairs := make([][2]string, 0, 10)
 	labels := data.Labels{}
 	var frame *data.Frame
@@ -498,7 +496,7 @@ l1Fields:
 	return frame, pairs, nil
 }
 
-func readString(iter *jsonitere.Iterator) backend.DataResponse {
+func readString(iter *sdkjsoniter.Iterator) backend.DataResponse {
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
 	timeField.Name = data.TimeSeriesTimeFieldName
 	valueField := data.NewFieldFromFieldType(data.FieldTypeString, 0)
@@ -543,7 +541,7 @@ func readString(iter *jsonitere.Iterator) backend.DataResponse {
 	}
 }
 
-func readScalar(iter *jsonitere.Iterator) backend.DataResponse {
+func readScalar(iter *sdkjsoniter.Iterator, dataPlane bool) backend.DataResponse {
 	rsp := backend.DataResponse{}
 
 	timeField := data.NewFieldFromFieldType(data.FieldTypeTime, 0)
@@ -566,12 +564,16 @@ func readScalar(iter *jsonitere.Iterator) backend.DataResponse {
 		Custom: resultTypeToCustomMeta("scalar"),
 	}
 
+	if dataPlane {
+		frame.Meta.TypeVersion = data.FrameTypeVersion{0, 1}
+	}
+
 	return backend.DataResponse{
 		Frames: []*data.Frame{frame},
 	}
 }
 
-func readMatrixOrVectorMulti(iter *jsonitere.Iterator, resultType string, opt Options) backend.DataResponse {
+func readMatrixOrVectorMulti(iter *sdkjsoniter.Iterator, resultType string, opt Options) backend.DataResponse {
 	rsp := backend.DataResponse{}
 
 	for more, err := iter.ReadArray(); more; more, err = iter.ReadArray() {
@@ -677,7 +679,7 @@ func readMatrixOrVectorMulti(iter *jsonitere.Iterator, resultType string, opt Op
 	return rsp
 }
 
-func readTimeValuePair(iter *jsonitere.Iterator) (time.Time, float64, error) {
+func readTimeValuePair(iter *sdkjsoniter.Iterator) (time.Time, float64, error) {
 	if _, err := iter.ReadArray(); err != nil {
 		return time.Time{}, 0, err
 	}
@@ -706,7 +708,7 @@ func readTimeValuePair(iter *jsonitere.Iterator) (time.Time, float64, error) {
 }
 
 type histogramInfo struct {
-	//XMax (time)	YMin	Ymax	Count	YLayout
+	// XMax (time)	YMin	Ymax	Count	YLayout
 	time    *data.Field
 	yMin    *data.Field // will have labels?
 	yMax    *data.Field
@@ -732,7 +734,7 @@ func newHistogramInfo() *histogramInfo {
 
 // This will read a single sparse histogram
 // [ time, { count, sum, buckets: [...] }]
-func readHistogram(iter *jsonitere.Iterator, hist *histogramInfo) error {
+func readHistogram(iter *sdkjsoniter.Iterator, hist *histogramInfo) error {
 	// first element
 	if _, err := iter.ReadArray(); err != nil {
 		return err
@@ -832,7 +834,7 @@ func readHistogram(iter *jsonitere.Iterator, hist *histogramInfo) error {
 	return nil
 }
 
-func appendValueFromString(iter *jsonitere.Iterator, field *data.Field) error {
+func appendValueFromString(iter *sdkjsoniter.Iterator, field *data.Field) error {
 	var err error
 	var s string
 	if s, err = iter.ReadString(); err != nil {
@@ -848,7 +850,7 @@ func appendValueFromString(iter *jsonitere.Iterator, field *data.Field) error {
 	return nil
 }
 
-func readStream(iter *jsonitere.Iterator) backend.DataResponse {
+func readStream(iter *sdkjsoniter.Iterator) backend.DataResponse {
 	rsp := backend.DataResponse{}
 
 	labelsField := data.NewFieldFromFieldType(data.FieldTypeJSON, 0)
@@ -948,7 +950,7 @@ func readStream(iter *jsonitere.Iterator) backend.DataResponse {
 	return rsp
 }
 
-func readCategorizedStream(iter *jsonitere.Iterator) backend.DataResponse {
+func readCategorizedStream(iter *sdkjsoniter.Iterator) backend.DataResponse {
 	rsp := backend.DataResponse{}
 
 	labelsField := data.NewFieldFromFieldType(data.FieldTypeJSON, 0)
@@ -1082,7 +1084,7 @@ func readCategorizedStream(iter *jsonitere.Iterator) backend.DataResponse {
 	return rsp
 }
 
-func readCategorizedStreamField(iter *jsonitere.Iterator) (map[string]interface{}, map[string]interface{}, error) {
+func readCategorizedStreamField(iter *sdkjsoniter.Iterator) (map[string]interface{}, map[string]interface{}, error) {
 	parsedLabels := data.Labels{}
 	structuredMetadata := data.Labels{}
 	var parsedLabelsMap map[string]interface{}
