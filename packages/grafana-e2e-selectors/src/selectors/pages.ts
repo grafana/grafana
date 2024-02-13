@@ -178,7 +178,9 @@ export const Pages = {
             minIntervalInput: 'data-testid interval variable mininum interval input',
           },
           GroupByVariable: {
+            dataSourceSelect: Components.DataSourcePicker.inputV2,
             infoText: 'data-testid group by variable info text',
+            modeToggle: 'data-testid group by variable mode toggle',
           },
         },
       },

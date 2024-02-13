@@ -56,6 +56,7 @@ export function GroupByVariableForm({
         description="Provide dimensions as CSV: dimensionId, dimensionName "
       >
         <Switch
+          data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.modeToggle}
           value={defaultOptions !== undefined}
           onChange={(e) => {
             if (defaultOptions === undefined) {

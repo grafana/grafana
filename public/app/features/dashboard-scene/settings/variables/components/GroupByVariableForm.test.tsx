@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { byTestId } from 'testing-library-selector';
 
 import { VariableSupportType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -44,7 +45,7 @@ describe('GroupByVariableForm', () => {
     onDefaultOptionsChange: onDefaultOptionsChangeMock,
   };
 
-  function setup(props?: React.ComponentProps<typeof GroupByVariableForm>) {
+  function setup(props?: Partial<GroupByVariableFormProps>) {
     return {
       renderer: render(<GroupByVariableForm {...defaultProps} {...props} />),
       user: userEvent.setup(),
@@ -65,5 +66,49 @@ describe('GroupByVariableForm', () => {
 
     expect(onDataSourceChangeMock).toHaveBeenCalledTimes(1);
     expect(onDataSourceChangeMock).toHaveBeenCalledWith(promDatasource, undefined);
+  });
+
+  it('should not render code editor when no default options provided', async () => {
+    const {
+      renderer: { queryByTestId },
+    } = setup();
+    const codeEditor = queryByTestId(selectors.components.CodeEditor.container);
+
+    expect(codeEditor).not.toBeInTheDocument();
+  });
+
+  it('should  render code editor when no default options provided', async () => {
+    const {
+      renderer: { queryByTestId },
+    } = setup({ defaultOptions: [{ text: 'test', value: 'test' }] });
+    const codeEditor = queryByTestId(selectors.components.CodeEditor.container);
+
+    await byTestId(selectors.components.CodeEditor.container).find();
+
+    expect(codeEditor).toBeInTheDocument();
+  });
+
+  it('should call onDefaultOptionsChange when providing static options', async () => {
+    const {
+      renderer: { getByTestId },
+    } = setup();
+
+    const toggle = getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.modeToggle);
+
+    await userEvent.click(toggle);
+    expect(onDefaultOptionsChangeMock).toHaveBeenCalledTimes(1);
+    expect(onDefaultOptionsChangeMock).toHaveBeenCalledWith([]);
+  });
+
+  it('should call onDefaultOptionsChange when toggling off static options', async () => {
+    const {
+      renderer: { getByTestId },
+    } = setup({ defaultOptions: [{ text: 'test', value: 'test' }] });
+
+    const toggle = getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.modeToggle);
+
+    await userEvent.click(toggle);
+    expect(onDefaultOptionsChangeMock).toHaveBeenCalledTimes(1);
+    expect(onDefaultOptionsChangeMock).toHaveBeenCalledWith(undefined);
   });
 });

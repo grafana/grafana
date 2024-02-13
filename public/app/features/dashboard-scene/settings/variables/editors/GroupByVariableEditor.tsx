@@ -1,6 +1,5 @@
 import React from 'react';
-import { useAsync, useAsyncFn } from 'react-use';
-import { lastValueFrom } from 'rxjs';
+import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings, DataSourceRef, MetricFindValue } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -10,15 +9,12 @@ import { GroupByVariableForm } from '../components/GroupByVariableForm';
 
 interface GroupByVariableEditorProps {
   variable: GroupByVariable;
+  onRunQuery: () => void;
 }
 
 export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
-  const { variable } = props;
+  const { variable, onRunQuery } = props;
   const { datasource: datasourceRef, defaultOptions } = variable.useState();
-
-  const [_, updateVariable] = useAsyncFn(async () => {
-    await lastValueFrom(variable.validateAndUpdate!());
-  }, [variable]);
 
   const { value: datasource } = useAsync(async () => {
     return await getDataSourceSrv().get(datasourceRef);
@@ -35,12 +31,12 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
     };
 
     variable.setState({ datasource: dsRef });
-    await updateVariable();
+    onRunQuery();
   };
 
   const onDefaultOptionsChange = async (defaultOptions?: MetricFindValue[]) => {
     variable.setState({ defaultOptions });
-    await updateVariable();
+    onRunQuery();
   };
 
   return (
