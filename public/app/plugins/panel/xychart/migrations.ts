@@ -1,13 +1,15 @@
 import { FieldMatcherID, FrameMatcherID, PanelModel } from '@grafana/data';
 
 import { Options } from './panelcfg.gen';
+import { SeriesMapping2 } from './types2';
 
 export const xyChartMigrationHandler = (panel: PanelModel): Partial<Options> => {
-  // Renamed `seriesMapping` to `mapping` in GA 10.4 release
-  const shouldMigrate = panel.options.seriesMapping != null;
+  const pluginVersion = panel?.pluginVersion ?? '';
 
   // Update to new format for GA 10.4 release
-  if (shouldMigrate) {
+  // Initial plugin version is empty string for first migration
+  if (pluginVersion === '') {
+    console.log('Migration: xyChartMigrationHandler', { ...panel.options });
     for (const series of panel.options.series) {
       // Update x / y to new format using field matchers when in manual mode
       const xField = series.x;
@@ -31,41 +33,43 @@ export const xyChartMigrationHandler = (panel: PanelModel): Partial<Options> => 
             id: FieldMatcherID.byName,
             options: yField,
           },
-          exclude: excludeYFields
-            ? {
-                id: FieldMatcherID.byNames,
-                options: excludeYFields,
-              }
-            : undefined,
+          ...(excludeYFields && {
+            exclude: {
+              id: FieldMatcherID.byNames,
+              options: excludeYFields,
+            },
+          }),
         },
       };
 
-      // TODO: figure out why this is breaking things
-      //   if (series.size) {
-      //     series.size = {
-      //       field: {
-      //         matcher: {
-      //           id: FieldMatcherID.byName,
-      //           options: seriesSizeField,
-      //         },
-      //       },
-      //     };
-      //   }
+      if (series.size) {
+        series.size = {
+          ...(seriesSizeField && {
+            field: {
+              matcher: {
+                id: FieldMatcherID.byName,
+                options: seriesSizeField,
+              },
+            },
+          }),
+        };
+      }
 
-      //   if (series.color) {
-      //     series.color = {
-      //       field: {
-      //         matcher: {
-      //           id: FieldMatcherID.byName,
-      //           options: seriesColorField,
-      //         },
-      //       },
-      //     };
-      //   }
+      if (series.color) {
+        series.color = {
+          ...(seriesColorField && {
+            field: {
+              matcher: {
+                id: FieldMatcherID.byName,
+                options: seriesColorField,
+              },
+            },
+          }),
+        };
+      }
 
-      // Required for manual mode
-      // TODO: update with enum type instead of string
-      if (panel.options.seriesMapping === 'manual') {
+      // Frame is required for manual mode
+      if (panel.options.seriesMapping === SeriesMapping2.Manual) {
         series.frame = {
           id: FrameMatcherID.byIndex,
           options: 0,
@@ -74,11 +78,12 @@ export const xyChartMigrationHandler = (panel: PanelModel): Partial<Options> => 
     }
 
     // Handle mapping option cleanup
-    panel.options.mapping = panel.options.seriesMapping;
+    panel.options.mapping = `${panel.options.seriesMapping}`;
     delete panel.options.seriesMapping;
   }
 
-  console.log('Migration: xyChartMigrationHandler', panel.options);
+  // TODO: Add migration tests
+  console.log('Migration: xyChartMigrationHandler RESULT', panel.options);
 
   return panel.options;
 };
