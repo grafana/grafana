@@ -1,7 +1,8 @@
 import React from 'react';
+import { Controller } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
-import { Field, Input, InputControl, Select } from '@grafana/ui';
+import { Field, Input, Select } from '@grafana/ui';
 
 import { NotificationChannelSecureFields, NotificationChannelType } from '../../../types';
 
@@ -31,7 +32,7 @@ export const BasicSettings = ({
         <Input {...register('name', { required: 'Name is required' })} />
       </Field>
       <Field label="Type">
-        <InputControl
+        <Controller
           name="type"
           render={({ field: { ref, ...field } }) => <Select {...field} options={channels} />}
           control={control}
