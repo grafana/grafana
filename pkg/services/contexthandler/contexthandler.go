@@ -213,8 +213,8 @@ func WithAuthHTTPHeaders(ctx context.Context, cfg *setting.Cfg) context.Context 
 	list.Items = append(list.Items, "X-Grafana-Device-Id")
 
 	// if jwt is enabled we add it to the list. We can ignore in case it is set to Authorization
-	if cfg.JWTAuthEnabled && cfg.JWTAuthHeaderName != "" && cfg.JWTAuthHeaderName != "Authorization" {
-		list.Items = append(list.Items, cfg.JWTAuthHeaderName)
+	if cfg.JWTAuth.Enabled && cfg.JWTAuth.HeaderName != "" && cfg.JWTAuth.HeaderName != "Authorization" {
+		list.Items = append(list.Items, cfg.JWTAuth.HeaderName)
 	}
 
 	// if auth proxy is enabled add the main proxy header and all configured headers
