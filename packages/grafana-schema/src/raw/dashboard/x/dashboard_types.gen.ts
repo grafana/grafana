@@ -1089,6 +1089,10 @@ export interface Dashboard {
      */
     externalUrl: string;
     /**
+     * original url, url of the dashboard that was snapshotted
+     */
+    originalUrl: string;
+    /**
      * Unique identifier of the snapshot
      */
     id: number;

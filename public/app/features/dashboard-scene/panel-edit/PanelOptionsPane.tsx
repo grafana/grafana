@@ -51,8 +51,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     const { panelManager } = model;
     const { panel } = panelManager.state;
     const dataObject = sceneGraph.getData(panel);
-    const rawData = dataObject.useState();
-    const dataWithFieldConfig = panel.applyFieldConfig(rawData.data!);
+    const { data } = dataObject.useState();
     const { pluginId, options, fieldConfig } = panel.useState();
     const styles = useStyles2(getStyles);
     const panelFrameOptions = useMemo(() => getPanelFrameCategory2(panel), [panel]);
@@ -77,7 +76,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
         getFieldOverrideCategories(
           fieldConfig,
           panel.getPlugin()?.fieldConfigRegistry!,
-          dataWithFieldConfig.series,
+          data?.series ?? [],
           searchQuery,
           (newConfig) => {
             panel.setState({
@@ -135,7 +134,9 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
             />
           </Box>
         )}
-        {isVizPickerOpen && <PanelVizTypePicker panelManager={panelManager} onChange={model.onToggleVizPicker} />}
+        {isVizPickerOpen && (
+          <PanelVizTypePicker panelManager={panelManager} onChange={model.onToggleVizPicker} data={data} />
+        )}
         {!isVizPickerOpen && (
           <>
             <div className={styles.top}>
