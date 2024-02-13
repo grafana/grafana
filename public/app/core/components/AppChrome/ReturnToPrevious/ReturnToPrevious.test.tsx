@@ -17,7 +17,7 @@ const renderComponent = () => {
   const href = 'https://grafana.com/';
 
   const grafanaContext = getGrafanaContextMock();
-  // TODO: grafanaContext.chrome.returnToPreviousData(???) => currently undefined, need to be mocked
+  // TODO: grafanaContext.chrome.returnToPreviousData({title: 'jklo', href: '/alerting/list?search='}) => returnToPreviousData is declared private
 
   return render(
     <GrafanaContext.Provider value={grafanaContext}>
