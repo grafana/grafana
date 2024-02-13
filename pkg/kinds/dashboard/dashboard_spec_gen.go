@@ -694,6 +694,9 @@ type Snapshot struct {
 	// OrgId org id of the snapshot
 	OrgId int `json:"orgId"`
 
+	// OriginalUrl original url, url of the dashboard that was snapshotted
+	OriginalUrl string `json:"originalUrl"`
+
 	// Updated last time when the snapshot was updated
 	Updated time.Time `json:"updated"`
 

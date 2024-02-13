@@ -186,6 +186,7 @@ Sensitive information stripped: queries (metric, template,annotation) and panel 
 | `key`         | string  | **Yes**  |         | Optional, defined the unique key of the snapshot, required if external is true |
 | `name`        | string  | **Yes**  |         | Optional, name of the snapshot                                                 |
 | `orgId`       | uint32  | **Yes**  |         | org id of the snapshot                                                         |
+| `originalUrl` | string  | **Yes**  |         | original url, url of the dashboard that was snapshotted                        |
 | `updated`     | string  | **Yes**  |         | last time when the snapshot was updated                                        |
 | `userId`      | uint32  | **Yes**  |         | user id of the snapshot creator                                                |
 | `url`         | string  | No       |         | url of the snapshot, if snapshot was shared internally                         |

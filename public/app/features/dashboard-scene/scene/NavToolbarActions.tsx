@@ -15,6 +15,7 @@ import { DashboardInteractions } from '../utils/interactions';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardScene } from './DashboardScene';
+import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 
 interface Props {
   dashboard: DashboardScene;
@@ -89,14 +90,7 @@ export function ToolbarActions({ dashboard }: Props) {
     group: 'icon-actions',
     condition: meta.isSnapshot && !isEditing,
     render: () => (
-      <ToolbarButton
-        key="button-snapshot"
-        tooltip={t('dashboard.toolbar.open-original', 'Open original dashboard')}
-        icon="link"
-        onClick={() => {
-          dashboard.onOpenSnapshotOriginalDashboard();
-        }}
-      />
+      <GoToSnapshotOriginButton originalURL={dashboard.getInitialSaveModel()?.snapshot?.originalUrl ?? ''} />
     ),
   });
 

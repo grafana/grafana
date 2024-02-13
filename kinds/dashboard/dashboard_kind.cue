@@ -494,6 +494,8 @@ lineage: schemas: [{
 			external: bool @grafanamaturity(NeedsExpertReview)
 			// external url, if snapshot was shared in external grafana instance
 			externalUrl: string @grafanamaturity(NeedsExpertReview)
+			// original url, url of the dashboard that was snapshotted
+			originalUrl: string @grafanamaturity(NeedsExpertReview)
 			// Unique identifier of the snapshot
 			id: uint32 @grafanamaturity(NeedsExpertReview)
 			// Optional, defined the unique key of the snapshot, required if external is true
