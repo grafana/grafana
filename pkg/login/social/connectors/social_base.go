@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -229,13 +228,6 @@ func validateInfo(info *social.OAuthInfo, requester identity.Requester) error {
 		validation.RequiredValidator(info.ClientId, "Client Id"),
 		validation.AllowAssignGrafanaAdminValidator,
 		validation.SkipOrgRoleSyncAllowAssignGrafanaAdminValidator)
-}
-
-func validateApiURL(info *social.OAuthInfo) error {
-	if info.ApiUrl == "" || !isValidUrl(info.ApiUrl) {
-		return ssosettings.ErrInvalidOAuthConfig("API URL is invalid or empty.")
-	}
-	return nil
 }
 
 func isValidUrl(actual string) bool {
