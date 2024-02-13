@@ -14,7 +14,6 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 
-import { getDashboardUrl } from '../utils/urlBuilders';
 import {
   findVizPanelByKey,
   getDashboardSceneFor,
@@ -38,8 +37,18 @@ export interface PanelEditorState extends SceneObjectState {
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   static Component = PanelEditorRenderer;
 
+  private _discardChanges = false;
+
   public constructor(state: PanelEditorState) {
     super(state);
+
+    this.addActivationHandler(() => {
+      return () => {
+        if (!this._discardChanges) {
+          this.commitChanges();
+        }
+      };
+    });
   }
   public getUrlKey() {
     return this.state.panelId.toString();
@@ -55,23 +64,11 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   }
 
   public onDiscard = () => {
-    // Open question on what to preserve when going back
-    // Preserve time range, and variables state (that might have been changed while in panel edit)
-    // Preserve current panel data? (say if you just changed the time range and have new data)
-    this._navigateBackToDashboard();
+    this._discardChanges = true;
+    locationService.partial({ editPanel: null });
   };
 
-  public onApply = () => {
-    this._commitChanges();
-    this._navigateBackToDashboard();
-  };
-
-  public onSave = () => {
-    this._commitChanges();
-    // Open dashboard save drawer
-  };
-
-  private _commitChanges() {
+  public commitChanges() {
     const dashboard = getDashboardSceneFor(this);
     const sourcePanel = findVizPanelByKey(dashboard.state.body, getVizPanelKeyForPanelId(this.state.panelId));
 
@@ -84,26 +81,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     if (sourcePanel!.parent instanceof SceneGridItem) {
       sourcePanel!.parent.setState({ body: panelMngr.state.panel.clone() });
     }
-
-    dashboard.setState({
-      isDirty: true,
-    });
-  }
-
-  private _navigateBackToDashboard() {
-    const dashboard = getDashboardSceneFor(this);
-    locationService.push(
-      getDashboardUrl({
-        uid: dashboard.state.uid,
-        slug: dashboard.state.meta.slug,
-        currentQueryParams: locationService.getLocation().search,
-        updateQuery: {
-          editPanel: null,
-          // Clean the PanelEditor data pane tab query param
-          tab: null,
-        },
-      })
-    );
   }
 }
 

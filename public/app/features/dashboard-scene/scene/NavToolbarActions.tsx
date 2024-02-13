@@ -36,14 +36,16 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  * This part is split into a separate componet to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const { isEditing, viewPanelScene, isDirty, uid, meta, editview } = dashboard.useState();
+  const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel } = dashboard.useState();
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
   const buttonWithExtraMargin = useStyles2(getStyles);
+  const isEditingPanel = Boolean(editPanel);
+  const isViewingPanel = Boolean(viewPanelScene);
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: uid && !editview && Boolean(meta.canStar),
+    condition: uid && !editview && Boolean(meta.canStar) && !isEditingPanel,
     render: () => {
       let desc = meta.isStarred
         ? t('dashboard.toolbar.unmark-favorite', 'Unmark as favorite')
@@ -66,7 +68,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: uid && !editview,
+    condition: uid && !editview && !isEditingPanel,
     render: () => (
       <ToolbarButton
         key="view-in-old-dashboard-button"
@@ -98,7 +100,7 @@ export function ToolbarActions({ dashboard }: Props) {
     ),
   });
 
-  if (dynamicDashNavActions.left.length > 0) {
+  if (dynamicDashNavActions.left.length > 0 && !isEditingPanel) {
     dynamicDashNavActions.left.map((action, index) => {
       const props = { dashboard: getDashboardSrv().getCurrent()! };
       if (action.show(props)) {
@@ -114,11 +116,11 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'back-button',
-    condition: Boolean(viewPanelScene),
+    condition: isViewingPanel || isEditingPanel,
     render: () => (
       <Button
         onClick={() => {
-          locationService.partial({ viewPanel: null });
+          locationService.partial({ viewPanel: null, editPanel: null });
         }}
         tooltip=""
         key="back"
@@ -173,7 +175,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: !isEditing && dashboard.canEditDashboard() && !viewPanelScene,
+    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isEditingPanel,
     render: () => (
       <Button
         onClick={() => {
@@ -192,7 +194,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'settings',
-    condition: isEditing && dashboard.canEditDashboard() && !viewPanelScene && !editview,
+    condition: isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isEditingPanel && !editview,
     render: () => (
       <Button
         onClick={() => {
@@ -211,7 +213,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditing && !editview && !meta.isNew,
+    condition: isEditing && !editview && !meta.isNew && !isViewingPanel && !isEditingPanel,
     render: () => (
       <Button
         onClick={() => dashboard.exitEditMode({ skipConfirm: false })}
@@ -222,6 +224,23 @@ export function ToolbarActions({ dashboard }: Props) {
         variant="primary"
       >
         Exit edit
+      </Button>
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'main-buttons',
+    condition: isEditingPanel && !editview && !meta.isNew && !isViewingPanel,
+    render: () => (
+      <Button
+        onClick={editPanel?.onDiscard}
+        tooltip="Discard panel changes"
+        size="sm"
+        key="discard"
+        fill="outline"
+        variant="destructive"
+      >
+        Discard panel changes
       </Button>
     ),
   });
