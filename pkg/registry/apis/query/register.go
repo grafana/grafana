@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry/apis/query/expr"
 	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -38,19 +39,22 @@ type QueryAPIBuilder struct {
 
 	runner   v0alpha1.QueryRunner
 	registry v0alpha1.DataSourceApiServerRegistry
+	handler  *expr.ExpressionQueyHandler
 }
 
 func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 	runner v0alpha1.QueryRunner,
 	registry v0alpha1.DataSourceApiServerRegistry,
-) *QueryAPIBuilder {
+) (*QueryAPIBuilder, error) {
+	handler, err := expr.NewQueryHandler()
 	return &QueryAPIBuilder{
-		concurrentQueryLimit: 4, // from config?
+		concurrentQueryLimit: 4,
 		log:                  log.New("query_apiserver"),
 		returnMultiStatus:    features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryMultiStatus),
 		runner:               runner,
 		registry:             registry,
-	}
+		handler:              handler,
+	}, err
 }
 
 func RegisterAPIService(features featuremgmt.FeatureToggles,
@@ -60,12 +64,12 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 	accessControl accesscontrol.AccessControl,
 	pluginClient plugins.Client,
 	pCtxProvider *plugincontext.Provider,
-) *QueryAPIBuilder {
+) (*QueryAPIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil // skip registration unless opting into experimental apis
+		return nil, nil // skip registration unless opting into experimental apis
 	}
 
-	builder := NewQueryAPIBuilder(
+	builder, err := NewQueryAPIBuilder(
 		features,
 		runner.NewDirectQueryRunner(pluginClient, pCtxProvider),
 		runner.NewDirectRegistry(pluginStore, dataSourcesService),
@@ -73,7 +77,7 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 
 	// ONLY testdata...
 	if false {
-		builder = NewQueryAPIBuilder(
+		builder, err = NewQueryAPIBuilder(
 			features,
 			runner.NewDummyTestRunner(),
 			runner.NewDummyRegistry(),
@@ -81,7 +85,7 @@ func RegisterAPIService(features featuremgmt.FeatureToggles,
 	}
 
 	apiregistration.RegisterAPI(builder)
-	return builder
+	return builder, err
 }
 
 func (b *QueryAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -177,7 +181,38 @@ func (b *QueryAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
 		}`), &randomWalkTable)
 
 	return &builder.APIRoutes{
-		Root: []builder.APIRouteHandler{},
+		Root: []builder.APIRouteHandler{
+			{
+				Path: "expressions.jsonschema",
+				Spec: &spec3.PathProps{
+					Get: &spec3.Operation{
+						OperationProps: spec3.OperationProps{
+							Tags:        []string{"QueryTypeDefinition"},
+							Description: "get a single json schema for the query type",
+							Responses: &spec3.Responses{
+								ResponsesProps: spec3.ResponsesProps{
+									StatusCodeResponses: map[int]*spec3.Response{
+										http.StatusOK: {
+											ResponseProps: spec3.ResponseProps{
+												Description: "Query results",
+												Content: map[string]*spec3.MediaType{
+													"application/json": {
+														MediaTypeProps: spec3.MediaTypeProps{
+															Schema: &responseSchema,
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Handler: b.handleExpressionsSchema,
+			},
+		},
 		Namespace: []builder.APIRouteHandler{
 			{
 				Path: "query",

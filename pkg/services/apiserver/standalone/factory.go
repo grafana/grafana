@@ -73,7 +73,7 @@ func (p *DummyAPIFactory) MakeAPIServer(gv schema.GroupVersion) (builder.APIGrou
 			featuremgmt.WithFeatures(),
 			runner.NewDummyTestRunner(),
 			runner.NewDummyRegistry(),
-		), nil
+		)
 
 	case "featuretoggle.grafana.app":
 		return featuretoggle.NewFeatureFlagAPIBuilder(

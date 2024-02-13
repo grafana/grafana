@@ -1,0 +1,133 @@
+{
+  "metadata": {
+    "resourceVersion": "1707809363514"
+  },
+  "items": [
+    {
+      "metadata": {
+        "name": "math",
+        "resourceVersion": "1707809363514",
+        "creationTimestamp": "2024-02-13T05:40:45Z"
+      },
+      "spec": {
+        "name": "math",
+        "versions": [
+          {
+            "schema": {
+              "properties": {
+                "expression": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "General math expression",
+                  "examples": [
+                    "$A + 1",
+                    "$A/$B"
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "type": "object",
+              "required": [
+                "expression"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "reduce",
+        "resourceVersion": "1707809363514",
+        "creationTimestamp": "2024-02-13T05:40:45Z"
+      },
+      "spec": {
+        "name": "reduce",
+        "versions": [
+          {
+            "schema": {
+              "properties": {
+                "expression": {
+                  "type": "string",
+                  "description": "Reference to other query results"
+                },
+                "reducer": {
+                  "type": "string",
+                  "description": "The reducer"
+                },
+                "settings": {
+                  "properties": {
+                    "mode": {
+                      "type": "string",
+                      "description": "Non-number reduce behavior"
+                    },
+                    "replaceWithValue": {
+                      "type": "number",
+                      "description": "Only valid when mode is replace"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "mode"
+                  ],
+                  "description": "Reducer Options"
+                }
+              },
+              "additionalProperties": false,
+              "type": "object",
+              "required": [
+                "expression",
+                "reducer",
+                "settings"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "resample",
+        "resourceVersion": "1707809363514",
+        "creationTimestamp": "2024-02-13T05:40:45Z"
+      },
+      "spec": {
+        "name": "resample",
+        "versions": [
+          {
+            "schema": {
+              "properties": {
+                "expression": {
+                  "type": "string",
+                  "description": "The math expression"
+                },
+                "window": {
+                  "type": "string",
+                  "description": "The math expression"
+                },
+                "downsampler": {
+                  "type": "string",
+                  "description": "The reducer"
+                },
+                "upsampler": {
+                  "type": "string",
+                  "description": "The reducer"
+                }
+              },
+              "additionalProperties": false,
+              "type": "object",
+              "required": [
+                "expression",
+                "window",
+                "downsampler",
+                "upsampler"
+              ],
+              "description": "QueryType = resample"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
