@@ -114,8 +114,12 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     }
   }
 
-  if (state.$behaviors && state.$behaviors[0] instanceof behaviors.CursorSync) {
-    graphTooltip = state.$behaviors[0].state.sync;
+  if (state.$behaviors) {
+    for (const behavior of state.$behaviors!) {
+      if (behavior instanceof behaviors.CursorSync) {
+        graphTooltip = behavior.state.sync;
+      }
+    }
   }
 
   const timePickerWithoutDefaults = removeDefaults<TimePickerConfig>(

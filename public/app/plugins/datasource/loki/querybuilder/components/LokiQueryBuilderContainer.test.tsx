@@ -50,16 +50,16 @@ describe('LokiQueryBuilderContainer', () => {
     const labels = screen.getByText(/Label filters/);
     const selects = await findAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[3]);
-    userEvent.click(await screen.findByText('job'));
+    await userEvent.click(await screen.findByText('job'));
 
     await userEvent.click(selects[4]);
-    userEvent.click(await screen.findByText('=~'));
+    await userEvent.click(await screen.findByText('=~'));
 
     await userEvent.click(selects[5]);
-    userEvent.click(await screen.findByText('grafana'));
+    await userEvent.click(await screen.findByText('grafana'));
 
     await userEvent.click(selects[5]);
-    userEvent.click(await screen.findByText('loki'));
+    await userEvent.click(await screen.findByText('loki'));
 
     await waitFor(() => {
       expect(props.onChange).toBeCalledWith({ expr: '{app="app1", job=~"grafana|loki"}', refId: 'A' });
