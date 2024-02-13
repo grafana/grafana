@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { intersectionBy, isEqual } from 'lodash';
-import pluralize from 'pluralize';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
@@ -107,8 +106,6 @@ const AmRoutes = () => {
   }, [contactPointFilter, labelMatchersFilter, rootRoute]);
 
   const isProvisioned = Boolean(config?.route?.provenance);
-
-  const hasSomeFilter = Boolean(contactPointFilter) || labelMatchersFilter.length > 0;
 
   function handleSave(partialRoute: Partial<FormAmRoute>) {
     if (!rootRoute) {
@@ -230,22 +227,12 @@ const AmRoutes = () => {
                 <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={selectedAlertmanager} />
                 <Stack direction="column" gap={1}>
                   {rootRoute && (
-                    <Stack direction="row" gap={1}>
-                      <NotificationPoliciesFilter
-                        receivers={receivers}
-                        onChangeMatchers={setLabelMatchersFilter}
-                        onChangeReceiver={setContactPointFilter}
-                      />
-                      {hasSomeFilter && routesMatchingFilters.length > 0 && (
-                        <div className={styles.marginResults}>
-                          {routesMatchingFilters.length} {pluralize('policy', routesMatchingFilters.length)} match the
-                          filter.
-                        </div>
-                      )}
-                      {hasSomeFilter && routesMatchingFilters.length === 0 && (
-                        <div className={styles.marginResults}>No policies match the filters.</div>
-                      )}
-                    </Stack>
+                    <NotificationPoliciesFilter
+                      receivers={receivers}
+                      onChangeMatchers={setLabelMatchersFilter}
+                      onChangeReceiver={setContactPointFilter}
+                      matchingCount={routesMatchingFilters.length}
+                    />
                   )}
                   {rootRoute && (
                     <Policy
@@ -327,9 +314,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tabContent: css`
     margin-top: ${theme.spacing(2)};
   `,
-  marginResults: css({
-    marginTop: theme.spacing(3),
-  }),
 });
 
 interface QueryParamValues {
