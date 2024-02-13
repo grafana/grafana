@@ -16,8 +16,8 @@ export const getDragStyles = (theme: GrafanaTheme2, handlePosition?: DragHandleP
 
   switch (position) {
     case 'start': {
-      verticalOffset = '0';
-      horizontalOffset = '0';
+      verticalOffset = '0%';
+      horizontalOffset = '0%';
       break;
     }
     case 'end': {
