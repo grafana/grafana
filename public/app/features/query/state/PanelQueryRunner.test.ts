@@ -463,10 +463,6 @@ describe('PanelQueryRunner', () => {
         const shouldAddError = ctx.runner.shouldAddErrorWhenDatasourceVariableIsMultiple(datasource, scopedVars);
 
         expect(shouldAddError).toBe(true);
-        // console.log(ctx.runner.getLastResult());
-        // expect(ctx.runner.errors[0].message).toBe(
-        //   'Datasource variable ${multi} is multiple and not repeated in the query.'
-        // );
       });
     },
     {

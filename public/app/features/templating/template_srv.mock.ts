@@ -1,4 +1,4 @@
-import { ScopedVars, TimeRange, TypedVariableModel } from '@grafana/data';
+import { ScopedVars, TimeRange, TypedVariableModel, VariableOption } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
 import { variableRegex } from '../variables/utils';
@@ -13,40 +13,37 @@ import { variableRegex } from '../variables/utils';
  */
 export class TemplateSrvMock implements TemplateSrv {
   private regex = variableRegex;
-  constructor(private variables: Array<Partial<TypedVariableModel>>) {}
+  constructor(private variables: TypedVariableModel[]) {}
 
   getVariables(): TypedVariableModel[] {
     if (!this.variables) {
       return [];
     }
 
-    return this.variables.reduce(
-      (acc, variable) => {
-        const commonProps = {
-          type: variable.type,
-          name: variable.name,
-          label: variable.label,
-        };
-        if (variable.type === 'datasource') {
-          acc.push({
-            ...commonProps,
-            current: {
-              text: variable.current?.text,
-              value: variable.current?.value,
-            },
-            options: variable.options,
-            multi: variable.multi,
-            includeAll: variable.includeAll,
-          });
-        } else {
-          acc.push({
-            ...commonProps,
-          });
-        }
-        return acc;
-      },
-      [] as unknown as Array<Partial<TypedVariableModel>>
-    ) as TypedVariableModel[];
+    return this.variables.reduce((acc: TypedVariableModel[], variable) => {
+      const commonProps = {
+        type: variable.type ?? 'custom',
+        name: variable.name ?? 'test',
+        label: variable.label ?? 'test',
+      };
+      if (variable.type === 'datasource') {
+        acc.push({
+          ...commonProps,
+          current: {
+            text: variable.current?.text,
+            value: variable.current?.value,
+          } as VariableOption,
+          options: variable.options ?? [],
+          multi: variable.multi ?? false,
+          includeAll: variable.includeAll ?? false,
+        } as TypedVariableModel);
+      } else {
+        acc.push({
+          ...commonProps,
+        } as TypedVariableModel);
+      }
+      return acc as TypedVariableModel[];
+    }, []);
   }
 
   replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {
