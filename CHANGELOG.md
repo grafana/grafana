@@ -1,3 +1,12 @@
+<!-- 10.0.11 START -->
+
+# 10.0.11 (2024-01-29)
+
+### Bug fixes
+
+- **Annotations:** Split cleanup into separate queries and deletes to avoid deadlocks on MySQL. [#80681](https://github.com/grafana/grafana/issues/80681), [@alexweav](https://github.com/alexweav)
+
+<!-- 10.0.11 END -->
 <!-- 10.0.10 START -->
 
 # 10.0.10 (2023-12-18)
@@ -458,7 +467,7 @@ Issue [#67014](https://github.com/grafana/grafana/issues/67014)
 
 Grafana requires an Elasticsearch version of 7.16 or newer. If you use an older Elasticsearch version, you will get warnings in the query editor and on the datasource configuration page. Issue [#66928](https://github.com/grafana/grafana/issues/66928)
 
-The deprecated `plugin:create` and `component:create` commands in the Grafana Toolkit have been removed in this release. The replacement `create-plugin` tool is recommended for [scaffolding new plugins](https://grafana.github.io/plugin-tools/docs/getting-started/creating-a-plugin) and a migration guide for moving from the toolkit is available [here](https://grafana.github.io/plugin-tools/docs/getting-started/migrating-from-toolkit). Issue [#66729](https://github.com/grafana/grafana/issues/66729)
+The deprecated `plugin:create` and `component:create` commands in the Grafana Toolkit have been removed in this release. The replacement `create-plugin` tool is recommended for [scaffolding new plugins](https://grafana.com/developers/plugin-tools/) and a migration guide for moving from the toolkit is available [here](https://grafana.com/developers/plugin-tools/migration-guides/migrate-from-toolkit). Issue [#66729](https://github.com/grafana/grafana/issues/66729)
 
 We've removed some now unused properties from the `NavModel` interface. Issue [#66548](https://github.com/grafana/grafana/issues/66548)
 
@@ -530,6 +539,66 @@ The `database` field has been deprecated in the Elasticsearch datasource provisi
 - **InteractiveTable:** Updated design and minor tweak to Correlactions page. [#66443](https://github.com/grafana/grafana/issues/66443), [@torkelo](https://github.com/torkelo)
 
 <!-- 10.0.0-preview END -->
+<!-- 9.5.16 START -->
+
+# 9.5.16 (2024-01-29)
+
+### Bug fixes
+
+- **Annotations:** Split cleanup into separate queries and deletes to avoid deadlocks on MySQL. [#80682](https://github.com/grafana/grafana/issues/80682), [@alexweav](https://github.com/alexweav)
+
+<!-- 9.5.16 END -->
+<!-- 9.5.15 START -->
+
+# 9.5.15 (2023-12-18)
+
+### Features and enhancements
+
+- **Alerting:** Attempt to retry retryable errors. [#79209](https://github.com/grafana/grafana/issues/79209), [@gotjosh](https://github.com/gotjosh)
+- **Unified Alerting:** Set to 1 by default. [#79109](https://github.com/grafana/grafana/issues/79109), [@gotjosh](https://github.com/gotjosh)
+
+### Bug fixes
+
+- **Recorded Queries:** Add org isolation (remote write target per org), and fix cross org Delete/List. (Enterprise)
+
+<!-- 9.5.15 END -->
+<!-- 9.5.14 START -->
+
+# 9.5.14 (2023-11-13)
+
+### Bug fixes
+
+- **Alerting:** Fix state manager to not keep datasource_uid and ref_id labels in state after Error. [#77391](https://github.com/grafana/grafana/issues/77391), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Transformations:** Config overrides being lost when config from query transform is applied. [#75347](https://github.com/grafana/grafana/issues/75347), [@IbrahimCSAE](https://github.com/IbrahimCSAE)
+- **LDAP:** FIX Enable users on successfull login . [#75192](https://github.com/grafana/grafana/issues/75192), [@gamab](https://github.com/gamab)
+- **Auditing and UsageInsights:** FIX Loki configuration to use proxy env variables. (Enterprise)
+
+<!-- 9.5.14 END -->
+<!-- 9.5.13 START -->
+
+# 9.5.13 (2023-10-11)
+
+### Features and enhancements
+
+- **Chore:** Upgrade Go to 1.20.10. [#76367](https://github.com/grafana/grafana/issues/76367), [@zerok](https://github.com/zerok)
+- **Licensing:** Updated grpc plugin factory newPlugin signature. (Enterprise)
+
+### Bug fixes
+
+- **BrowseDashboards:** Only remember the most recent expanded folder. [#74817](https://github.com/grafana/grafana/issues/74817), [@joshhunt](https://github.com/joshhunt)
+- **Licensing:** Pass func to update env variables when starting plugin. [#74681](https://github.com/grafana/grafana/issues/74681), [@leandro-deveikis](https://github.com/leandro-deveikis)
+- **RBAC:** Chore fix hasPermissionInOrg. (Enterprise)
+
+<!-- 9.5.13 END -->
+<!-- 9.5.12 START -->
+
+# 9.5.12 (2023-09-29)
+
+### Features and enhancements
+
+- **Azure:** Add support for Workload Identity authentication. [#75730](https://github.com/grafana/grafana/issues/75730), [@aangelisc](https://github.com/aangelisc)
+
+<!-- 9.5.12 END -->
 <!-- 9.5.10 START -->
 
 # 9.5.10 (2023-09-18)
@@ -931,6 +1000,22 @@ Users who use LDAP role sync to only sync Viewer, Editor and Admin roles, but gr
 - **ContextMenu:** Fix padding and show border based on items. [#63948](https://github.com/grafana/grafana/pull/63948), [@aocenas](https://github.com/aocenas)
 
 <!-- 9.5.0 END -->
+<!-- 9.4.17 START -->
+
+# 9.4.17 (2023-10-11)
+
+### Features and enhancements
+
+- **Chore:** Upgrade Go to 1.20.10. [#76370](https://github.com/grafana/grafana/issues/76370), [@zerok](https://github.com/zerok)
+- **SSE:** DSNode to update result with names to make each value identifiable by labels (only Graphite and TestData). [#74615](https://github.com/grafana/grafana/issues/74615), [@yuri-tceretian](https://github.com/yuri-tceretian)
+
+### Bug fixes
+
+- **BrowseDashboards:** Only remember the most recent expanded folder. [#74812](https://github.com/grafana/grafana/issues/74812), [@joshhunt](https://github.com/joshhunt)
+- **SQL Datasources:** Fix variable throwing error if query returns no data. [#74609](https://github.com/grafana/grafana/issues/74609), [@mdvictor](https://github.com/mdvictor)
+- **RBAC:** Chore fix hasPermissionInOrg. (Enterprise)
+
+<!-- 9.4.17 END -->
 <!-- 9.4.15 START -->
 
 # 9.4.15 (2023-09-18)
