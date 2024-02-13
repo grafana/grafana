@@ -1,5 +1,5 @@
 import { PanelPlugin, PanelPluginMeta, PluginType } from '@grafana/data';
-import { SceneFlexItem, SplitLayout, VizPanel } from '@grafana/scenes';
+import { SceneFlexItem, SceneGridItem, SceneGridLayout, SplitLayout, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { activateFullSceneTree } from '../utils/test-utils';
@@ -26,6 +26,37 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('PanelEditor', () => {
+  describe('When closing editor', () => {
+    it('should apply changes automatically', () => {
+      pluginToLoad = getTestPanelPlugin({ id: 'text', skipDataQuery: true });
+
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'text',
+      });
+
+      const editScene = buildPanelEditScene(panel);
+      const gridItem = new SceneGridItem({ body: panel });
+      const scene = new DashboardScene({
+        editPanel: editScene,
+        isEditing: true,
+        body: new SceneGridLayout({
+          children: [gridItem],
+        }),
+      });
+
+      const deactivate = activateFullSceneTree(scene);
+
+      const vizManager = editScene.state.panelRef.resolve();
+      vizManager.state.panel.setState({ title: 'changed title' });
+
+      deactivate();
+
+      const updatedPanel = gridItem.state.body as VizPanel;
+      expect(updatedPanel?.state.title).toBe('changed title');
+    });
+  });
+
   describe('PanelDataPane', () => {
     it('should not exist if panel is skipDataQuery', () => {
       pluginToLoad = getTestPanelPlugin({ id: 'text', skipDataQuery: true });
@@ -44,7 +75,7 @@ describe('PanelEditor', () => {
       expect(((editScene.state.body as SplitLayout).state.primary as SplitLayout).state.secondary).toBeUndefined();
     });
 
-    it('should  exist if panel is supporting querying', () => {
+    it('should exist if panel is supporting querying', () => {
       pluginToLoad = getTestPanelPlugin({ id: 'timeseries' });
 
       const panel = new VizPanel({
