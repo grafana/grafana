@@ -1,4 +1,4 @@
-package peakq
+package template
 
 import (
 	"testing"
@@ -6,52 +6,49 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
-	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
-	peakq "github.com/grafana/grafana/pkg/apis/peakq/v0alpha1"
+	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 
-var nestedFieldRender = peakq.QueryTemplateSpec{
+var nestedFieldRender = QueryTemplate{
 	Title: "Test",
-	Variables: []peakq.TemplateVariable{
+	Variables: []TemplateVariable{
 		{
 			Key: "metricName",
 		},
 	},
-	Targets: []peakq.Target{
+	Targets: []Target{
 		{
 			DataType: data.FrameTypeUnknown,
 			//DataTypeVersion: data.FrameTypeVersion{0, 0},
 
-			Variables: map[string][]peakq.VariableReplacement{
+			Variables: map[string][]VariableReplacement{
 				"metricName": {
 					{
 						Path: "$.nestedObject.anArray[0]",
-						Position: &peakq.Position{
+						Position: &Position{
 							Start: 0,
 							End:   3,
 						},
 					},
 				},
 			},
-			Properties: common.Unstructured{
-				Object: map[string]any{
-					"nestedObject": map[string]any{
-						"anArray": []any{"foo", .2},
-					},
+			Properties: query.NewGenericDataQuery(map[string]any{
+				"nestedObject": map[string]any{
+					"anArray": []any{"foo", .2},
 				},
-			},
+			}),
 		},
 	},
 }
 
-var nestedFieldRenderedTargets = []peakq.Target{
+var nestedFieldRenderedTargets = []Target{
 	{
 		DataType: data.FrameTypeUnknown,
-		Variables: map[string][]peakq.VariableReplacement{
+		Variables: map[string][]VariableReplacement{
 			"metricName": {
 				{
 					Path: "$.nestedObject.anArray[0]",
-					Position: &peakq.Position{
+					Position: &Position{
 						Start: 0,
 						End:   3,
 					},
@@ -59,28 +56,27 @@ var nestedFieldRenderedTargets = []peakq.Target{
 			},
 		},
 		//DataTypeVersion: data.FrameTypeVersion{0, 0},
-		Properties: common.Unstructured{
-			Object: map[string]any{
+		Properties: query.NewGenericDataQuery(
+			map[string]any{
 				"nestedObject": map[string]any{
 					"anArray": []any{"up", .2},
 				},
-			},
-		},
+			}),
 	},
 }
 
 func TestNestedFieldRender(t *testing.T) {
-	rT, err := Render(nestedFieldRender, map[string][]string{"metricName": {"up"}})
+	rT, err := RenderTemplate(nestedFieldRender, map[string][]string{"metricName": {"up"}})
 	require.NoError(t, err)
 	require.Equal(t,
 		nestedFieldRenderedTargets,
-		rT.Targets,
+		rT,
 	)
 }
 
-var multiVarTemplate = peakq.QueryTemplateSpec{
+var multiVarTemplate = QueryTemplate{
 	Title: "Test",
-	Variables: []peakq.TemplateVariable{
+	Variables: []TemplateVariable{
 		{
 			Key: "metricName",
 		},
@@ -88,23 +84,23 @@ var multiVarTemplate = peakq.QueryTemplateSpec{
 			Key: "anotherMetric",
 		},
 	},
-	Targets: []peakq.Target{
+	Targets: []Target{
 		{
 			DataType: data.FrameTypeUnknown,
 			//DataTypeVersion: data.FrameTypeVersion{0, 0},
 
-			Variables: map[string][]peakq.VariableReplacement{
+			Variables: map[string][]VariableReplacement{
 				"metricName": {
 					{
 						Path: "$.expr",
-						Position: &peakq.Position{
+						Position: &Position{
 							Start: 4,
 							End:   14,
 						},
 					},
 					{
 						Path: "$.expr",
-						Position: &peakq.Position{
+						Position: &Position{
 							Start: 37,
 							End:   47,
 						},
@@ -113,7 +109,7 @@ var multiVarTemplate = peakq.QueryTemplateSpec{
 				"anotherMetric": {
 					{
 						Path: "$.expr",
-						Position: &peakq.Position{
+						Position: &Position{
 							Start: 21,
 							End:   34,
 						},
@@ -121,30 +117,28 @@ var multiVarTemplate = peakq.QueryTemplateSpec{
 				},
 			},
 
-			Properties: common.Unstructured{
-				Object: map[string]any{
-					"expr": "1 + metricName + 1 + anotherMetric + metricName",
-				},
-			},
+			Properties: query.NewGenericDataQuery(map[string]any{
+				"expr": "1 + metricName + 1 + anotherMetric + metricName",
+			}),
 		},
 	},
 }
 
-var multiVarRenderedTargets = []peakq.Target{
+var multiVarRenderedTargets = []Target{
 	{
 		DataType: data.FrameTypeUnknown,
-		Variables: map[string][]peakq.VariableReplacement{
+		Variables: map[string][]VariableReplacement{
 			"metricName": {
 				{
 					Path: "$.expr",
-					Position: &peakq.Position{
+					Position: &Position{
 						Start: 4,
 						End:   14,
 					},
 				},
 				{
 					Path: "$.expr",
-					Position: &peakq.Position{
+					Position: &Position{
 						Start: 37,
 						End:   47,
 					},
@@ -153,7 +147,7 @@ var multiVarRenderedTargets = []peakq.Target{
 			"anotherMetric": {
 				{
 					Path: "$.expr",
-					Position: &peakq.Position{
+					Position: &Position{
 						Start: 21,
 						End:   34,
 					},
@@ -161,45 +155,41 @@ var multiVarRenderedTargets = []peakq.Target{
 			},
 		},
 		//DataTypeVersion: data.FrameTypeVersion{0, 0},
-		Properties: common.Unstructured{
-			Object: map[string]any{
-				"expr": "1 + up + 1 + sloths_do_like_a_good_nap + up",
-			},
-		},
+		Properties: query.NewGenericDataQuery(map[string]any{
+			"expr": "1 + up + 1 + sloths_do_like_a_good_nap + up",
+		}),
 	},
 }
 
 func TestMultiVarTemplate(t *testing.T) {
-	rT, err := Render(multiVarTemplate, map[string][]string{
+	rT, err := RenderTemplate(multiVarTemplate, map[string][]string{
 		"metricName":    {"up"},
 		"anotherMetric": {"sloths_do_like_a_good_nap"},
 	})
 	require.NoError(t, err)
 	require.Equal(t,
 		multiVarRenderedTargets,
-		rT.Targets,
+		rT,
 	)
 }
 
 func TestRenderWithRune(t *testing.T) {
-	qt := peakq.QueryTemplateSpec{
-		Variables: []peakq.TemplateVariable{
+	qt := QueryTemplate{
+		Variables: []TemplateVariable{
 			{
 				Key: "name",
 			},
 		},
-		Targets: []peakq.Target{
+		Targets: []Target{
 			{
-				Properties: common.Unstructured{
-					Object: map[string]any{
-						"message": "🐦 name!",
-					},
-				},
-				Variables: map[string][]peakq.VariableReplacement{
+				Properties: query.NewGenericDataQuery(map[string]any{
+					"message": "🐦 name!",
+				}),
+				Variables: map[string][]VariableReplacement{
 					"name": {
 						{
 							Path: "$.message",
-							Position: &peakq.Position{
+							Position: &Position{
 								Start: 2,
 								End:   6,
 							},
@@ -214,8 +204,8 @@ func TestRenderWithRune(t *testing.T) {
 		"name": {"🦥"},
 	}
 
-	rq, err := Render(qt, selectedValues)
+	rq, err := RenderTemplate(qt, selectedValues)
 	require.NoError(t, err)
 
-	require.Equal(t, "🐦 🦥!", rq.Targets[0].Properties.Object["message"])
+	require.Equal(t, "🐦 🦥!", rq[0].Properties.AdditionalProperties()["message"])
 }

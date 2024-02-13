@@ -6,7 +6,9 @@ import { Unsubscribable } from 'rxjs';
 import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil, textUtil } from '@grafana/data';
 import { locationService, config } from '@grafana/runtime';
 import {
+  dataLayers,
   getUrlSyncManager,
+  SceneDataLayers,
   SceneFlexLayout,
   sceneGraph,
   SceneGridItem,
@@ -370,6 +372,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       (event: SceneObjectStateChangedEvent) => {
         if (event.payload.changedObject instanceof SceneRefreshPicker) {
           if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'intervals')) {
+            this.setIsDirty();
+          }
+        }
+        if (event.payload.changedObject instanceof SceneDataLayers) {
+          this.setIsDirty();
+        }
+        if (event.payload.changedObject instanceof dataLayers.AnnotationsDataLayer) {
+          if (!Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'data')) {
             this.setIsDirty();
           }
         }
