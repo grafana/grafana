@@ -167,7 +167,7 @@ function useSplitter(direction: 'row' | 'column', onSizeChange: Props['onSizeCha
   const containerSize = useRef<number | null>(null);
   const primarySizeRef = useRef<'1fr' | number>('1fr');
 
-  const firstPaneMeasurements = useRef<ReturnType<typeof measureElement>>(undefined);
+  const firstPaneMeasurements = useRef<MeasureResult | undefined>(undefined);
   const savedPos = useRef<string | undefined>(undefined);
 
   const measurementProp = propsForDirection[direction].dim;
@@ -185,8 +185,13 @@ function useSplitter(direction: 'row' | 'column', onSizeChange: Props['onSizeCha
           return;
         }
 
+        if (!firstPaneRef.current) {
+          return;
+        }
+
         const curSize = firstPaneRef.current!.getBoundingClientRect()[measurementProp];
-        const newDims = measureElement(firstPaneRef.current!);
+        const newDims = measureElement(firstPaneRef.current);
+
         splitterRef.current!.ariaValueNow = `${clamp(
           ((curSize - newDims[minDimProp]) / (newDims[maxDimProp] - newDims[minDimProp])) * 100,
           0,
@@ -201,6 +206,10 @@ function useSplitter(direction: 'row' | 'column', onSizeChange: Props['onSizeCha
   const dragStart = useRef<number | null>(null);
   const onPointerDown = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
+      if (!firstPaneRef.current) {
+        return;
+      }
+
       // measure left-side width
       primarySizeRef.current = firstPaneRef.current!.getBoundingClientRect()[measurementProp];
       containerSize.current = containerRef.current!.getBoundingClientRect()[measurementProp];
@@ -208,7 +217,7 @@ function useSplitter(direction: 'row' | 'column', onSizeChange: Props['onSizeCha
       // set position at start of drag
       dragStart.current = e[clientAxis];
       splitterRef.current!.setPointerCapture(e.pointerId);
-      firstPaneMeasurements.current = measureElement(firstPaneRef.current!);
+      firstPaneMeasurements.current = measureElement(firstPaneRef.current);
 
       savedPos.current = undefined;
     },
@@ -299,6 +308,10 @@ function useSplitter(direction: 'row' | 'column', onSizeChange: Props['onSizeCha
 
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (!firstPaneRef.current || !secondPaneRef.current || !splitterRef.current || !containerRef.current) {
+        return;
+      }
+
       if (e.key === 'Enter') {
         if (savedPos.current === undefined) {
           savedPos.current = firstPaneRef.current!.style.flexGrow;
@@ -311,17 +324,17 @@ function useSplitter(direction: 'row' | 'column', onSizeChange: Props['onSizeCha
         }
         return;
       } else if (e.key === 'Home') {
-        firstPaneMeasurements.current = measureElement(firstPaneRef.current!);
+        firstPaneMeasurements.current = measureElement(firstPaneRef.current);
         containerSize.current = containerRef.current!.getBoundingClientRect()[measurementProp];
-        const newFlex = firstPaneMeasurements.current[minDimProp] / (containerSize.current! - handleSize);
-        firstPaneRef.current!.style.flexGrow = `${newFlex}`;
-        secondPaneRef.current!.style.flexGrow = `${1 - newFlex}`;
-        splitterRef.current!.ariaValueNow = '0';
+        const newFlex = firstPaneMeasurements.current[minDimProp] / (containerSize.current - handleSize);
+        firstPaneRef.current.style.flexGrow = `${newFlex}`;
+        secondPaneRef.current.style.flexGrow = `${1 - newFlex}`;
+        splitterRef.current.ariaValueNow = '0';
         return;
       } else if (e.key === 'End') {
-        firstPaneMeasurements.current = measureElement(firstPaneRef.current!);
+        firstPaneMeasurements.current = measureElement(firstPaneRef.current);
         containerSize.current = containerRef.current!.getBoundingClientRect()[measurementProp];
-        const newFlex = firstPaneMeasurements.current[maxDimProp] / (containerSize.current! - handleSize);
+        const newFlex = firstPaneMeasurements.current[maxDimProp] / (containerSize.current - handleSize);
         firstPaneRef.current!.style.flexGrow = `${newFlex}`;
         secondPaneRef.current!.style.flexGrow = `${1 - newFlex}`;
         splitterRef.current!.ariaValueNow = '100';
@@ -341,9 +354,9 @@ function useSplitter(direction: 'row' | 'column', onSizeChange: Props['onSizeCha
       savedPos.current = undefined;
       e.preventDefault();
       e.stopPropagation();
-      primarySizeRef.current = firstPaneRef.current!.getBoundingClientRect()[measurementProp];
+      primarySizeRef.current = firstPaneRef.current.getBoundingClientRect()[measurementProp];
       containerSize.current = containerRef.current!.getBoundingClientRect()[measurementProp];
-      firstPaneMeasurements.current = measureElement(firstPaneRef.current!);
+      firstPaneMeasurements.current = measureElement(firstPaneRef.current);
       const newKey = !pressedKeys.current.has(e.key);
 
       if (newKey) {
@@ -374,9 +387,13 @@ function useSplitter(direction: 'row' | 'column', onSizeChange: Props['onSizeCha
   );
 
   const onDoubleClick = useCallback(() => {
-    firstPaneRef.current!.style.flexGrow = '0.5';
-    secondPaneRef.current!.style.flexGrow = '0.5';
-    const dim = measureElement(firstPaneRef.current!);
+    if (!firstPaneRef.current || !secondPaneRef.current) {
+      return;
+    }
+
+    firstPaneRef.current.style.flexGrow = '0.5';
+    secondPaneRef.current.style.flexGrow = '0.5';
+    const dim = measureElement(firstPaneRef.current);
     firstPaneMeasurements.current = dim;
     primarySizeRef.current = firstPaneRef.current!.getBoundingClientRect()[measurementProp];
     splitterRef.current!.ariaValueNow = `${((primarySizeRef.current - dim[minDimProp]) / (dim[maxDimProp] - dim[minDimProp])) * 100}`;
@@ -411,18 +428,14 @@ function useSplitter(direction: 'row' | 'column', onSizeChange: Props['onSizeCha
   };
 }
 
-type MeasureR<T> = T extends HTMLElement
-  ? { minWidth: number; maxWidth: number; minHeight: number; maxHeight: number }
-  : T extends null
-    ? undefined
-    : never;
-type HTMLElementOrNull = HTMLElement | null;
+interface MeasureResult {
+  minWidth: number;
+  maxWidth: number;
+  minHeight: number;
+  maxHeight: number;
+}
 
-function measureElement<T extends HTMLElementOrNull>(ref: T): MeasureR<T> {
-  if (ref === null) {
-    return undefined as MeasureR<T>;
-  }
-
+function measureElement<T extends HTMLElement>(ref: T): MeasureResult {
   const savedBodyOverflow = document.body.style.overflow;
   const savedWidth = ref.style.width;
   const savedHeight = ref.style.height;
@@ -439,7 +452,7 @@ function measureElement<T extends HTMLElementOrNull>(ref: T): MeasureR<T> {
   ref.style.height = savedHeight;
   ref.style.flexGrow = savedFlex;
 
-  return { minWidth, maxWidth, minHeight, maxHeight } as MeasureR<T>;
+  return { minWidth, maxWidth, minHeight, maxHeight } as MeasureResult;
 }
 
 function useResizeObserver(
