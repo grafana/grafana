@@ -233,6 +233,7 @@ export const StateTimelinePanel = ({
                           isPinned={isPinned}
                           timeRange={timeRange}
                           annotate={enableAnnotationCreation ? annotate : undefined}
+                          withDuration={true}
                         />
                       );
                     }}

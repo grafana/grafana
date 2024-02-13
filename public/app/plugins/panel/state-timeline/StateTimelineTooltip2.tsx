@@ -14,6 +14,7 @@ import { TimeSeriesTooltipProps, getContentItems, getStyles } from '../timeserie
 
 interface StateTimelineTooltip2Props extends TimeSeriesTooltipProps {
   timeRange: TimeRange;
+  withDuration: boolean;
 }
 
 export const StateTimelineTooltip2 = ({
@@ -27,6 +28,7 @@ export const StateTimelineTooltip2 = ({
   isPinned,
   annotate,
   timeRange,
+  withDuration,
 }: StateTimelineTooltip2Props) => {
   const styles = useStyles2(getStyles);
 
@@ -36,10 +38,19 @@ export const StateTimelineTooltip2 = ({
 
   const xVal = xField.display!(xField.values[dataIdx!]).text;
 
-  const contentItems = getContentItems(seriesFrame.fields, xField, dataIdxs, seriesIdx, mode, sortOrder);
+  mode = isPinned ? TooltipDisplayMode.Single : mode;
+
+  const contentItems = getContentItems(
+    seriesFrame.fields,
+    xField,
+    dataIdxs,
+    seriesIdx,
+    mode,
+    sortOrder
+  );
 
   // append duration in single mode
-  if (mode === TooltipDisplayMode.Single) {
+  if (withDuration && mode === TooltipDisplayMode.Single) {
     const field = seriesFrame.fields[seriesIdx!];
     const nextStateIdx = findNextStateIndex(field, dataIdx!);
     let nextStateTs;

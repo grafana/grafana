@@ -26,6 +26,8 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 import { DataHoverView } from 'app/features/visualization/data-hover/DataHoverView';
 
+import { getStyles } from '../timeseries/TimeSeriesTooltip';
+
 import { HeatmapData } from './fields';
 import { renderHistogram } from './renderHistogram';
 import { formatMilliseconds, getFieldFromData, getHoverCellColor, getSparseCellMinMax } from './tooltip/utils';
@@ -374,10 +376,3 @@ const HeatmapHoverCell = ({
     </div>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css({
-    display: 'flex',
-    flexDirection: 'column',
-  }),
-});
