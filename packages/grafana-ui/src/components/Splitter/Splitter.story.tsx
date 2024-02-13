@@ -2,16 +2,15 @@ import { css } from '@emotion/css';
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
-import { Spinner, useTheme2 } from '@grafana/ui';
+import { Splitter, useTheme2 } from '@grafana/ui';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 
 import mdx from './Spinner.mdx';
-import { Splitter } from './Splitter';
 
 const meta: Meta = {
   title: 'General/Layout/Splitter',
-  component: Spinner,
+  component: Splitter,
   parameters: {
     docs: {
       page: mdx,
@@ -21,7 +20,7 @@ const meta: Meta = {
     },
   },
   argTypes: {
-    direction: { control: { type: 'radio' }, options: ['row', 'column'] },
+    initialSize: { control: { type: 'number', min: 0.1, max: 1 } },
   },
 };
 
@@ -48,6 +47,7 @@ export const Basic: StoryFn = (args) => {
 
 Basic.args = {
   direction: 'row',
+  dragPosition: 'middle',
 };
 
 export default meta;

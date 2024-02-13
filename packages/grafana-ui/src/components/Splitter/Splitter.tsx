@@ -1,18 +1,17 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { clamp, throttle } from 'lodash';
 import React, { useCallback, useId, useLayoutEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { getDragStyles } from '../DragHandle/DragHandle';
+import { DragHandlePosition, getDragStyles } from '../DragHandle/DragHandle';
 
 export interface Props {
   initialSize?: number | 'auto';
   direction?: 'row' | 'column';
   primary?: 'first' | 'second';
-  drag?: 'between' | 'first-edge' | 'second-edge';
-  collapsedDefault?: boolean;
+  dragPosition?: DragHandlePosition;
   primaryPaneStyles?: React.CSSProperties;
   secondaryPaneStyles?: React.CSSProperties;
   /**
@@ -30,7 +29,7 @@ export function Splitter(props: Props) {
     primaryPaneStyles,
     secondaryPaneStyles,
     onSizeChange,
-    dragEdge,
+    dragPosition = 'middle',
     children,
   } = props;
 
@@ -52,14 +51,10 @@ export function Splitter(props: Props) {
     secondPaneRef,
   } = useSplitter(direction, onSizeChange, children);
 
-  const styles = useStyles2(getStyles, dragEdge);
-  const dragStyles = useStyles2(getDragStyles);
-  let dragHandleStyle = direction === 'column' ? dragStyles.dragHandleHorizontal : dragStyles.dragHandleVertical;
+  const styles = useStyles2(getStyles);
+  const dragStyles = useStyles2(getDragStyles, dragPosition);
+  const dragHandleStyle = direction === 'column' ? dragStyles.dragHandleHorizontal : dragStyles.dragHandleVertical;
   const id = useId();
-
-  // if (dragEdge) {
-  //   dragHandleStyle = cx(dragHandleStyle, styles.dragEdge[dragEdge]);
-  // }
 
   const secondAvailable = kids.length === 2;
   const visibilitySecond = secondAvailable ? 'visible' : 'hidden';
@@ -128,7 +123,7 @@ export function Splitter(props: Props) {
   );
 }
 
-function getStyles(theme: GrafanaTheme2, dragEdge?: Props['dragEdge']) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
       display: 'flex',
