@@ -1,11 +1,12 @@
 import React, { useMemo, useEffect, useState } from 'react';
 
+import { AzureCredentials } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { AzureDataSourceSettings } from '../types';
 
-import { AzureCredentials, KnownAzureClouds } from './AzureCredentials';
+import { KnownAzureClouds } from './AzureCredentials';
 import { getCredentials, getDefaultCredentials, hasCredentials, updateCredentials } from './AzureCredentialsConfig';
 import { AzureCredentialsForm } from './AzureCredentialsForm';
 import { DefaultSubscription } from './DefaultSubscription';

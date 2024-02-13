@@ -1,10 +1,10 @@
 import { Namespace } from 'i18next';
 import { find, startsWith } from 'lodash';
 
+import { AzureCredentials } from '@grafana/azure-sdk';
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
-import { AzureCredentials } from '../components/AzureCredentials';
 import { getCredentials } from '../components/AzureCredentialsConfig';
 import TimegrainConverter from '../time_grain_converter';
 import {
