@@ -1,20 +1,36 @@
 import React from 'react';
 
-import { StandardEditorProps, FieldNamePickerBaseNameMode } from '@grafana/data';
+import { StandardEditorProps, FieldNamePickerBaseNameMode, FieldMatcherID } from '@grafana/data';
 import { Field } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 
-import { Options, ScatterSeriesConfig } from './panelcfg.gen';
+import { Options } from './panelcfg.gen';
+import { XYSeriesConfig } from './types2';
 
-export interface Props extends StandardEditorProps<ScatterSeriesConfig, unknown, Options> {
+export interface Props extends StandardEditorProps<XYSeriesConfig, unknown, Options> {
   baseNameMode: FieldNamePickerBaseNameMode;
   frameFilter?: number;
 }
 
 export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, frameFilter = -1 }: Props) => {
-  const onFieldChange = (val: unknown | undefined, field: string) => {
-    onChange({ ...value, [field]: val });
+  const onFieldChange = (val: any | undefined, field: string) => {
+    if (val && val.field) {
+      onChange({
+        ...value,
+        [field]: {
+          field: {
+            matcher: { id: FieldMatcherID.byName, options: val.field },
+            min: val.min ?? undefined,
+            max: val.max ?? undefined,
+          },
+        },
+      });
+    } else if (val && val.fixed) {
+      onChange({ ...value, [field]: { fixed: { value: val.fixed } } });
+    } else {
+      onChange({ ...value, [field]: undefined });
+    }
   };
 
   const frame = context.data && frameFilter > -1 ? context.data[frameFilter] : undefined;
@@ -23,9 +39,21 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, fr
     <div>
       <Field label={'X Field'}>
         <FieldNamePicker
-          value={value.x ?? ''}
+          value={value.x.field.matcher.options ?? ''}
           context={context}
-          onChange={(field) => onFieldChange(field, 'x')}
+          onChange={(field) =>
+            onChange({
+              ...value,
+              x: {
+                field: {
+                  matcher: {
+                    id: FieldMatcherID.byName,
+                    options: field,
+                  },
+                },
+              },
+            })
+          }
           item={{
             id: 'x',
             name: 'x',
@@ -40,9 +68,21 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, fr
       </Field>
       <Field label={'Y Field'}>
         <FieldNamePicker
-          value={value.y ?? ''}
+          value={value.y.field.matcher.options ?? ''}
           context={context}
-          onChange={(field) => onFieldChange(field, 'y')}
+          onChange={(field) =>
+            onChange({
+              ...value,
+              y: {
+                field: {
+                  matcher: {
+                    id: FieldMatcherID.byName,
+                    options: field,
+                  },
+                },
+              },
+            })
+          }
           item={{
             id: 'y',
             name: 'y',
@@ -57,9 +97,16 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, fr
       </Field>
       <Field label={'Point color'}>
         <ColorDimensionEditor
-          value={value.pointColor!}
+          // TODO create proper mapping for ColorDimensionConfig
+          value={
+            value.color?.fixed
+              ? { fixed: value.color?.fixed.value }
+              : value.color?.field
+                ? { field: value.color?.field.matcher.options }
+                : { field: undefined }
+          }
           context={context}
-          onChange={(field) => onFieldChange(field, 'pointColor')}
+          onChange={(field) => onFieldChange(field, 'color')}
           item={{
             id: 'x',
             name: 'x',
@@ -73,9 +120,16 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, fr
       </Field>
       <Field label={'Point size'}>
         <ScaleDimensionEditor
-          value={value.pointSize!}
+          // TODO create proper mapping for ScaleDimensionConfig
+          value={
+            value.size?.fixed
+              ? { fixed: value.size?.fixed.value }
+              : value.size?.field
+                ? { field: value.size?.field.matcher.options, min: value.size?.field.min, max: value.size.field.max }
+                : { fixed: 2 }
+          }
           context={context}
-          onChange={(field) => onFieldChange(field, 'pointSize')}
+          onChange={(field) => onFieldChange(field, 'size')}
           item={{
             id: 'x',
             name: 'x',

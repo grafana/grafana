@@ -7,18 +7,19 @@ import {
   FieldNamePickerBaseNameMode,
   StandardEditorsRegistryItem,
   getFrameDisplayName,
+  FieldMatcherID,
+  FrameMatcherID,
+  getFieldDisplayName,
 } from '@grafana/data';
 import { Button, Field, IconButton, Select, useStyles2 } from '@grafana/ui';
 import { LayerName } from 'app/core/components/Layers/LayerName';
 
 import { ScatterSeriesEditor } from './ScatterSeriesEditor';
-import { Options, ScatterSeriesConfig, defaultFieldConfig } from './panelcfg.gen';
+import { isGraphable } from './dims';
+import { Options } from './panelcfg.gen';
+import { XYSeriesConfig } from './types2';
 
-export const ManualEditor = ({
-  value,
-  onChange,
-  context,
-}: StandardEditorProps<ScatterSeriesConfig[], unknown, Options>) => {
+export const ManualEditor = ({ value, onChange, context }: StandardEditorProps<XYSeriesConfig[], unknown, Options>) => {
   const frameNames = useMemo(() => {
     if (context?.data?.length) {
       return context.data.map((frame, index) => ({
@@ -32,6 +33,24 @@ export const ManualEditor = ({
   const [selected, setSelected] = useState(0);
   const style = useStyles2(getStyles);
 
+  const numbericFieldsForSelected = useMemo(() => {
+    const numberFields: string[] = [];
+    if (!value[selected]) {
+      return numberFields;
+    }
+    const frame = context.data[value[selected].frame!.options];
+
+    if (frame) {
+      for (let field of frame.fields) {
+        if (isGraphable(field)) {
+          const name = getFieldDisplayName(field);
+          numberFields.push(name);
+        }
+      }
+    }
+    return numberFields;
+  }, [context.data, selected, value]);
+
   const onFieldChange = (val: unknown | undefined, index: number, field: string) => {
     onChange(
       value.map((obj, i) => {
@@ -44,11 +63,21 @@ export const ManualEditor = ({
   };
 
   const createNewSeries = () => {
+    const frame = context.data[0];
+    const numberFields: string[] = [];
+    for (let field of frame.fields) {
+      if (isGraphable(field)) {
+        const name = getFieldDisplayName(field);
+        numberFields.push(name);
+      }
+    }
+
     onChange([
       ...value,
       {
-        pointColor: undefined,
-        pointSize: defaultFieldConfig.pointSize,
+        frame: { id: FrameMatcherID.byIndex, options: 0 },
+        x: { field: { matcher: { id: FieldMatcherID.byName, options: numberFields[0] } } },
+        y: { field: { matcher: { id: FieldMatcherID.byName, options: numberFields[1] } } },
       },
     ]);
     setSelected(value.length);
@@ -121,17 +150,36 @@ export const ManualEditor = ({
                 placeholder={'Change filter'}
                 value={
                   frameNames.find((v) => {
-                    return v.value === value[selected].frame;
+                    return v.value === value[selected].frame?.options;
                   }) ?? 0
                 }
                 onChange={(val) => {
                   onChange(
                     value.map((obj, i) => {
                       if (i === selected) {
-                        if (val === null) {
-                          return { ...value[i], frame: undefined };
-                        }
-                        return { ...value[i], frame: val?.value!, x: undefined, y: undefined };
+                        return {
+                          ...value[i],
+                          frame: {
+                            id: FrameMatcherID.byIndex,
+                            options: val.value,
+                          },
+                          x: {
+                            field: {
+                              matcher: {
+                                id: FieldMatcherID.byName,
+                                options: numbericFieldsForSelected[0],
+                              },
+                            },
+                          },
+                          y: {
+                            field: {
+                              matcher: {
+                                id: FieldMatcherID.byName,
+                                options: numbericFieldsForSelected[1],
+                              },
+                            },
+                          },
+                        };
                       }
                       return obj;
                     })
@@ -156,7 +204,7 @@ export const ManualEditor = ({
                 })
               );
             }}
-            frameFilter={value[selected].frame ?? undefined}
+            frameFilter={value[selected].frame?.options ?? undefined}
           />
         </>
       )}

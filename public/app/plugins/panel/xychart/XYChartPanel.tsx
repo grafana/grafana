@@ -34,14 +34,16 @@ import { Options, SeriesMapping } from './panelcfg.gen';
 import { prepData, prepScatter, ScatterPanelInfo } from './scatter';
 import { autoOpts, manualOpts } from './testProps';
 import { ScatterHoverEvent, ScatterSeries } from './types';
+import { Options as Options2 } from './types2';
 import { prepXYSeries } from './utils';
 
-export const XYChartPanel = (props: Props) => {
+export const XYChartPanel = (props: Props2) => {
   let frames = props.data.series;
   console.log(prepXYSeries(autoOpts, frames));
   console.log(prepXYSeries(manualOpts, frames));
 };
 
+type Props2 = PanelProps<Options2>;
 type Props = PanelProps<Options>;
 const TOOLTIP_OFFSET = 10;
 
