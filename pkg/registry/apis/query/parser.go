@@ -3,6 +3,8 @@ package query
 import (
 	"fmt"
 
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/query"
+
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 )
@@ -45,7 +47,7 @@ func parseQueryRequest(raw v0alpha1.GenericQueryRequest) (parsedQueryRequest, er
 		q := original
 
 		if q.TimeRange == nil && raw.From != "" {
-			q.TimeRange = &v0alpha1.TimeRange{
+			q.TimeRange = &query.TimeRange{
 				From: raw.From,
 				To:   raw.To,
 			}
@@ -68,7 +70,7 @@ func parseQueryRequest(raw v0alpha1.GenericQueryRequest) (parsedQueryRequest, er
 
 	for _, q := range parsed.Expressions {
 		// TODO: parse and build tree, for now just fail fast on unknown commands
-		_, err := expr.GetExpressionCommandType(q.AdditionalProperties())
+		_, err := expr.GetExpressionCommandType(q.Additional)
 		if err != nil {
 			return parsed, err
 		}

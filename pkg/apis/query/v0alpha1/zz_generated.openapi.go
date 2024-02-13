@@ -18,16 +18,15 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 	return map[string]common.OpenAPIDefinition{
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServer":          schema_pkg_apis_query_v0alpha1_DataSourceApiServer(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceApiServerList":      schema_pkg_apis_query_v0alpha1_DataSourceApiServerList(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef":                schema_pkg_apis_query_v0alpha1_DataSourceRef(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery":             schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericQueryRequest":          schema_pkg_apis_query_v0alpha1_GenericQueryRequest(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryDataResponse":            QueryDataResponse{}.OpenAPIDefinition(),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange":                    schema_pkg_apis_query_v0alpha1_TimeRange(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.Position":            schema_apis_query_v0alpha1_template_Position(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.QueryTemplate":       schema_apis_query_v0alpha1_template_QueryTemplate(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.Target":              schema_apis_query_v0alpha1_template_Target(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.TemplateVariable":    schema_apis_query_v0alpha1_template_TemplateVariable(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.VariableReplacement": schema_apis_query_v0alpha1_template_VariableReplacement(ref),
+		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.replacement":         schema_apis_query_v0alpha1_template_replacement(ref),
 	}
 }
 
@@ -153,35 +152,6 @@ func schema_pkg_apis_query_v0alpha1_DataSourceApiServerList(ref common.Reference
 	}
 }
 
-func schema_pkg_apis_query_v0alpha1_DataSourceRef(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"type": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The datasource plugin type",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"uid": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Datasource UID",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"type", "uid"},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -192,21 +162,26 @@ func schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref common.ReferenceCallbac
 					"refId": {
 						SchemaProps: spec.SchemaProps{
 							Description: "RefID is the unique identifier of the query, set by the frontend call.",
-							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"resultAssertions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optionally define expected query result behavior",
+							Ref:         ref("github.com/grafana/grafana-plugin-sdk-go/experimental/query.ResultAssertions"),
 						},
 					},
 					"timeRange": {
 						SchemaProps: spec.SchemaProps{
 							Description: "TimeRange represents the query range NOTE: unlike generic /ds/query, we can now send explicit time values in each query",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange"),
+							Ref:         ref("github.com/grafana/grafana-plugin-sdk-go/experimental/query.TimeRange"),
 						},
 					},
 					"datasource": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The datasource",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef"),
+							Ref:         ref("github.com/grafana/grafana-plugin-sdk-go/experimental/query.DataSourceRef"),
 						},
 					},
 					"datasourceId": {
@@ -245,11 +220,10 @@ func schema_pkg_apis_query_v0alpha1_GenericDataQuery(ref common.ReferenceCallbac
 						},
 					},
 				},
-				Required: []string{"refId"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.DataSourceRef", "github.com/grafana/grafana/pkg/apis/query/v0alpha1.TimeRange"},
+			"github.com/grafana/grafana-plugin-sdk-go/experimental/query.DataSourceRef", "github.com/grafana/grafana-plugin-sdk-go/experimental/query.ResultAssertions", "github.com/grafana/grafana-plugin-sdk-go/experimental/query.TimeRange"},
 	}
 }
 
@@ -314,36 +288,6 @@ func schema_pkg_apis_query_v0alpha1_GenericQueryRequest(ref common.ReferenceCall
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.GenericDataQuery"},
-	}
-}
-
-func schema_pkg_apis_query_v0alpha1_TimeRange(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "TimeRange represents a time range for a query and is a property of DataQuery.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"from": {
-						SchemaProps: spec.SchemaProps{
-							Description: "From is the start time of the query.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"to": {
-						SchemaProps: spec.SchemaProps{
-							Description: "To is the end time of the query.",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"from", "to"},
-			},
-		},
 	}
 }
 
@@ -582,5 +526,39 @@ func schema_apis_query_v0alpha1_template_VariableReplacement(ref common.Referenc
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.Position"},
+	}
+}
+
+func schema_apis_query_v0alpha1_template_replacement(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"Position": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.Position"),
+						},
+					},
+					"TemplateVariable": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.TemplateVariable"),
+						},
+					},
+					"format": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Possible enum values:\n - `\"csv\"` Formats variables with multiple values as a comma-separated string.\n - `\"doublequote\"` Formats single- and multi-valued variables into a comma-separated string\n - `\"json\"` Formats variables with multiple values as a comma-separated string.\n - `\"pipe\"` Formats variables with multiple values into a pipe-separated string.\n - `\"raw\"` Formats variables with multiple values into comma-separated string. This is the default behavior when no format is specified\n - `\"singlequote\"` Formats single- and multi-valued variables into a comma-separated string",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"csv", "doublequote", "json", "pipe", "raw", "singlequote"},
+						},
+					},
+				},
+				Required: []string{"Position", "TemplateVariable", "format"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.Position", "github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.TemplateVariable"},
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/query"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
@@ -37,14 +38,16 @@ func (r *subQueryREST) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
 }
 
-func (r *subQueryREST) readQueries(req *http.Request) ([]backend.DataQuery, *v0alpha1.DataSourceRef, error) {
+func (r *subQueryREST) readQueries(req *http.Request) ([]backend.DataQuery, *query.DataSourceRef, error) {
 	reqDTO := v0alpha1.GenericQueryRequest{}
 	// Simple URL to JSON mapping
 	if req.Method == http.MethodGet {
 		query := v0alpha1.GenericDataQuery{
-			RefID:         "A",
-			MaxDataPoints: 1000,
-			IntervalMS:    10,
+			CommonQueryProperties: query.CommonQueryProperties{
+				RefID:         "A",
+				MaxDataPoints: 1000,
+				IntervalMS:    10,
+			},
 		}
 		params := req.URL.Query()
 		for k := range params {
@@ -61,7 +64,7 @@ func (r *subQueryREST) readQueries(req *http.Request) ([]backend.DataQuery, *v0a
 			case "queryType":
 				query.QueryType = v
 			default:
-				query.AdditionalProperties()[k] = v
+				query.Additional[k] = v
 			}
 		}
 		reqDTO.Queries = []v0alpha1.GenericDataQuery{query}
