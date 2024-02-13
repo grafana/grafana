@@ -1,12 +1,11 @@
 import React, { ChangeEvent, useMemo } from 'react';
 
+import { AzureAuthType, AzureCredentials } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
 import { Button, Select, Field, Input } from '@grafana/ui';
 
 import { selectors } from '../e2e/selectors';
-
-import { AzureAuthType, AzureCredentials } from './AzureCredentials';
 
 export interface Props {
   managedIdentityEnabled: boolean;

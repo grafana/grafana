@@ -1,7 +1,8 @@
+import { AzureAuthType, AzureCredentials, ConcealedSecret } from '@grafana/azure-sdk';
 import {DataSourceInstanceSettings, DataSourceSettings} from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { AzureAuthType, AzureCloud, AzureCredentials, ConcealedSecret } from './AzureCredentials';
+import { AzureCloud } from './AzureCredentials';
 
 const concealed: ConcealedSecret = Symbol('Concealed client secret');
 const concealedLegacy: ConcealedSecret = Symbol('Concealed legacy client secret');
