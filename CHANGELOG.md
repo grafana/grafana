@@ -1,3 +1,12 @@
+<!-- 9.5.16 START -->
+
+# 9.5.16 (2024-01-29)
+
+### Bug fixes
+
+- **Annotations:** Split cleanup into separate queries and deletes to avoid deadlocks on MySQL. [#80682](https://github.com/grafana/grafana/issues/80682), [@alexweav](https://github.com/alexweav)
+
+<!-- 9.5.16 END -->
 <!-- 9.5.15 START -->
 
 # 9.5.15 (2023-12-18)
