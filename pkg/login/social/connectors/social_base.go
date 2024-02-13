@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/url"
 	"regexp"
 	"strings"
 	"sync"
@@ -228,12 +227,4 @@ func validateInfo(info *social.OAuthInfo, requester identity.Requester) error {
 		validation.RequiredValidator(info.ClientId, "Client Id"),
 		validation.AllowAssignGrafanaAdminValidator,
 		validation.SkipOrgRoleSyncAllowAssignGrafanaAdminValidator)
-}
-
-func isValidUrl(actual string) bool {
-	parsed, err := url.ParseRequestURI(actual)
-	if err != nil {
-		return false
-	}
-	return strings.HasPrefix(parsed.Scheme, "http") && parsed.Host != ""
 }
