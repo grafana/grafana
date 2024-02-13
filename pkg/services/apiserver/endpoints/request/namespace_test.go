@@ -77,15 +77,15 @@ func TestParseNamespace(t *testing.T) {
 			},
 		},
 		{
-			name:      "valid stack",
+			name:      "invalid stack id (must be an int)",
+			expectErr: true,
 			namespace: "stack-abcdef",
 			expected: request.NamespaceInfo{
-				OrgID:   1,
-				StackID: "abcdef",
+				OrgID: -1,
 			},
 		},
 		{
-			name:      "invalid stack id",
+			name:      "invalid stack id (must be provided)",
 			namespace: "stack-",
 			expectErr: true,
 			expected: request.NamespaceInfo{
@@ -93,11 +93,18 @@ func TestParseNamespace(t *testing.T) {
 			},
 		},
 		{
-			name:      "invalid stack id (too short)",
-			namespace: "stack-1",
+			name:      "invalid stack id (cannot be 0)",
+			namespace: "stack-0",
 			expectErr: true,
 			expected: request.NamespaceInfo{
-				OrgID:   -1,
+				OrgID: -1,
+			},
+		},
+		{
+			name:      "valid stack",
+			namespace: "stack-1",
+			expected: request.NamespaceInfo{
+				OrgID:   1,
 				StackID: "1",
 			},
 		},

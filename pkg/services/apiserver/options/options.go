@@ -75,6 +75,9 @@ func (o *Options) Validate() []error {
 func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) error {
 	serverConfig.AggregatedDiscoveryGroupManager = aggregated.NewResourceManager("apis")
 
+	// avoid picking up an in-cluster service account token
+	o.RecommendedOptions.Authentication.SkipInClusterLookup = true
+
 	if err := o.ExtraOptions.ApplyTo(serverConfig); err != nil {
 		return err
 	}
@@ -87,12 +90,8 @@ func (o *Options) ApplyTo(serverConfig *genericapiserver.RecommendedConfig) erro
 		return err
 	}
 
-	if o.ExtraOptions.DevMode {
-		// NOTE: Only consider authn for dev mode - resolves the failure due to missing extension apiserver auth-config
-		// in parent k8s
-		if err := o.RecommendedOptions.Authentication.ApplyTo(&serverConfig.Authentication, serverConfig.SecureServing, serverConfig.OpenAPIConfig); err != nil {
-			return err
-		}
+	if err := o.RecommendedOptions.Authentication.ApplyTo(&serverConfig.Authentication, serverConfig.SecureServing, serverConfig.OpenAPIConfig); err != nil {
+		return err
 	}
 
 	if !o.ExtraOptions.DevMode {
