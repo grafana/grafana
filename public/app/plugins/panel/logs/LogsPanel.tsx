@@ -80,7 +80,10 @@ export const LogsPanel = ({
   const [closeCallback, setCloseCallback] = useState<(() => void) | null>(null);
   const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | undefined>(undefined);
+  // Loading state to be passed as a prop to the <InfiniteScroll> component
   const [infiniteScrolling, setInfiniteScrolling] = useState(false);
+  // Loading ref to prevent firing multiple requests
+  const loadingRef = useRef(false);
   const [panelData, setPanelData] = useState(data);
 
   const { eventBus } = usePanelContext();
@@ -222,10 +225,11 @@ export const LogsPanel = ({
 
   const loadMoreLogs = useCallback(
     async (scrollRange: AbsoluteTimeRange) => {
-      if (!data.request || !config.featureToggles.logsInfiniteScrolling) {
+      if (!data.request || !config.featureToggles.logsInfiniteScrolling || loadingRef.current) {
         return;
       }
 
+      loadingRef.current = true;
       setInfiniteScrolling(true);
 
       let newSeries: DataFrame[] = [];
@@ -235,6 +239,7 @@ export const LogsPanel = ({
         console.error(e);
       } finally {
         setInfiniteScrolling(false);
+        loadingRef.current = false;
       }
 
       setPanelData({

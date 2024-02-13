@@ -75,10 +75,17 @@ export const InfiniteScroll = ({
     }
 
     function handleScroll(event: Event | WheelEvent) {
-      if (!scrollElement || !loadMoreLogs || !rows.length || loading || !config.featureToggles.logsInfiniteScrolling) {
+      const isLoading = loading || upperLoading || lowerLoading;
+      event.stopImmediatePropagation();
+      if (
+        !scrollElement ||
+        !loadMoreLogs ||
+        !rows.length ||
+        isLoading ||
+        !config.featureToggles.logsInfiniteScrolling
+      ) {
         return;
       }
-      event.stopImmediatePropagation();
       const scrollDirection = shouldLoadMore(event, scrollElement, lastScroll.current);
       lastScroll.current = scrollElement.scrollTop;
       if (scrollDirection === ScrollDirection.NoScroll) {
@@ -127,7 +134,7 @@ export const InfiniteScroll = ({
       scrollElement.removeEventListener('scroll', handleScroll);
       scrollElement.removeEventListener('wheel', handleScroll);
     };
-  }, [loadMoreLogs, loading, range, rows, scrollElement, sortOrder, timeZone]);
+  }, [loadMoreLogs, loading, lowerLoading, range, rows, scrollElement, sortOrder, timeZone, upperLoading]);
 
   // We allow "now" to move when using relative time, so we hide the message so it doesn't flash.
   const hideTopMessage = sortOrder === LogsSortOrder.Descending && isRelativeTime(range.raw.to);
