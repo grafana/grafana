@@ -64,7 +64,7 @@ export function processLabels(labels: Array<{ [key: string]: string }>, withName
 
 // const cleanSelectorRegexp = /\{(\w+="[^"\n]*?")(,\w+="[^"\n]*?")*\}/;
 export const selectorRegexp = /\{[^}]*?(\}|$)/;
-export const labelRegexp = /\b(\w+)(!?=~?)("[^"\n]*?")/g;
+export const labelRegexp = /\b(\w+)(!?=~?)("[^"\n]*?")(,)?(\s*)?/g;
 
 export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any[]; selector: string } {
   if (!query.match(selectorRegexp)) {
@@ -200,9 +200,15 @@ function addLabelsToExpression(expr: string, invalidLabelsRegexp: RegExp) {
   const exprAfterRegexMatch = expr.slice(indexOfRegexMatch + 1);
 
   // Create arrayOfLabelObjects with label objects that have key, operator and value.
-  const arrayOfLabelObjects: Array<{ key: string; operator: string; value: string }> = [];
-  exprAfterRegexMatch.replace(labelRegexp, (label, key, operator, value) => {
-    arrayOfLabelObjects.push({ key, operator, value });
+  const arrayOfLabelObjects: Array<{
+    key: string;
+    operator: string;
+    value: string;
+    comma?: string;
+    space?: string;
+  }> = [];
+  exprAfterRegexMatch.replace(labelRegexp, (label, key, operator, value, comma, space) => {
+    arrayOfLabelObjects.push({ key, operator, value, comma, space });
     return '';
   });
 
@@ -217,14 +223,14 @@ function addLabelsToExpression(expr: string, invalidLabelsRegexp: RegExp) {
 
   // reconstruct the labels
   let existingLabel = arrayOfLabelObjects.reduce((prev, curr) => {
-    prev += `${curr.key}${curr.operator}${curr.value}, `;
+    prev += `${curr.key}${curr.operator}${curr.value}${curr.comma ?? ''}${curr.space ?? ''}`;
     return prev;
   }, '');
 
   // Check if there is anything besides labels
   // Useful for this kind of metrics sum (recording_rule_metric{label1="value1"}) by (env)
   // if we don't check this part, ) by (env) part will be lost
-  existingLabel = '{' + existingLabel.slice(0, -2) + '}';
+  existingLabel = '{' + existingLabel + '}';
   const potentialLeftOver = exprAfterRegexMatch.replace(existingLabel, '');
 
   return result + potentialLeftOver;

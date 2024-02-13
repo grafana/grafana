@@ -176,13 +176,13 @@ describe('expandRecordingRules()', () => {
         metricA: 'rate(fooA[])',
         metricB: 'rate(fooB[])',
       })
-    ).toBe('rate(fooA{label1="value1"}[])/ rate(fooB{label2="value2"}[])');
+    ).toBe('rate(fooA{label1="value1"}[]) / rate(fooB{label2="value2"}[])');
     expect(
       expandRecordingRules('metricA{label1="value1",label2="value2"} / metricB{label3="value3"}', {
         metricA: 'rate(fooA[])',
         metricB: 'rate(fooB[])',
       })
-    ).toBe('rate(fooA{label1="value1", label2="value2"}[])/ rate(fooB{label3="value3"}[])');
+    ).toBe('rate(fooA{label1="value1", label2="value2"}[]) / rate(fooB{label3="value3"}[])');
   });
 
   it('expands the query even it is wrapped with parentheses', () => {
