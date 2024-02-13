@@ -39,12 +39,13 @@ export function Splitter(props: Props) {
     children,
   } = props;
 
-  const { kids, containerRef, firstPaneRef, minDimProp, splitterProps, secondPaneRef } = useSplitter(
+  const { containerRef, firstPaneRef, minDimProp, splitterProps, secondPaneRef } = useSplitter(
     direction,
     onSizeChange,
     children
   );
 
+  const kids = React.Children.toArray(children);
   const styles = useStyles2(getStyles, direction);
   const dragStyles = useStyles2(getDragStyles, dragPosition);
   const dragHandleStyle = direction === 'column' ? dragStyles.dragHandleHorizontal : dragStyles.dragHandleVertical;
@@ -158,7 +159,6 @@ const propsForDirection = {
 
 function useSplitter(direction: 'row' | 'column', onSizeChange: Props['onSizeChange'], children: Props['children']) {
   const handleSize = 16;
-  const kids = React.Children.toArray(children);
   const splitterRef = useRef<HTMLDivElement | null>(null);
   const firstPaneRef = useRef<HTMLDivElement | null>(null);
   const secondPaneRef = useRef<HTMLDivElement | null>(null);
@@ -408,7 +408,6 @@ function useSplitter(direction: 'row' | 'column', onSizeChange: Props['onSizeCha
   }, [onSizeChange]);
 
   return {
-    kids,
     containerRef,
     firstPaneRef,
     minDimProp,
