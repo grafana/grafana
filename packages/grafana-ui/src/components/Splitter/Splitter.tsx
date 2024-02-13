@@ -10,7 +10,6 @@ import { DragHandlePosition, getDragStyles } from '../DragHandle/DragHandle';
 export interface Props {
   initialSize?: number | 'auto';
   direction?: 'row' | 'column';
-  primary?: 'first' | 'second';
   dragPosition?: DragHandlePosition;
   primaryPaneStyles?: React.CSSProperties;
   secondaryPaneStyles?: React.CSSProperties;

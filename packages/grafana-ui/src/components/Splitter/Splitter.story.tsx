@@ -30,6 +30,8 @@ export const Basic: StoryFn = (args) => {
     display: 'flex',
     flexGrow: 1,
     background: theme.colors.background.primary,
+    padding: theme.spacing(2),
+    border: `1px solid ${theme.colors.border.weak}`,
     height: '100%',
   });
 
