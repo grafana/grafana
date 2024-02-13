@@ -4,7 +4,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 )
 
 // round the duration to the nearest millisecond larger-or-equal-to the duration
@@ -31,7 +31,7 @@ func calculateStep(interval time.Duration, timeRange time.Duration, resolution i
 		return ceilMs(chosenStep), nil
 	}
 
-	step, err := intervalv2.ParseIntervalStringToTimeDuration(*queryStep)
+	step, err := gtime.ParseIntervalStringToTimeDuration(*queryStep)
 	if err != nil {
 		return step, err
 	}

@@ -14,6 +14,7 @@ const esModules = [
   'robust-predicates',
   'leven',
   'nanoid',
+  'monaco-promql',
 ].join('|');
 
 module.exports = {
@@ -25,7 +26,7 @@ module.exports = {
   transformIgnorePatterns: [
     `/node_modules/(?!${esModules})`, // exclude es modules to prevent TS complaining
   ],
-  moduleDirectories: ['public'],
+  moduleDirectories: ['public', 'node_modules'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages'],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],

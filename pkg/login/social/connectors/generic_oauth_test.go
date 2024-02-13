@@ -13,214 +13,15 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-func TestSearchJSONForEmail(t *testing.T) {
-	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := NewGenericOAuthProvider(social.NewOAuthInfo(), &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
-
-		tests := []struct {
-			Name                 string
-			UserInfoJSONResponse []byte
-			EmailAttributePath   string
-			ExpectedResult       string
-			ExpectedError        string
-		}{
-			{
-				Name:                 "Given an invalid user info JSON response",
-				UserInfoJSONResponse: []byte("{"),
-				EmailAttributePath:   "attributes.email",
-				ExpectedResult:       "",
-				ExpectedError:        "failed to unmarshal user info JSON response: unexpected end of JSON input",
-			},
-			{
-				Name:                 "Given an empty user info JSON response and empty JMES path",
-				UserInfoJSONResponse: []byte{},
-				EmailAttributePath:   "",
-				ExpectedResult:       "",
-				ExpectedError:        "no attribute path specified",
-			},
-			{
-				Name:                 "Given an empty user info JSON response and valid JMES path",
-				UserInfoJSONResponse: []byte{},
-				EmailAttributePath:   "attributes.email",
-				ExpectedResult:       "",
-				ExpectedError:        "empty user info JSON response provided",
-			},
-			{
-				Name: "Given a simple user info JSON response and valid JMES path",
-				UserInfoJSONResponse: []byte(`{
-	"attributes": {
-		"email": "grafana@localhost"
-	}
-}`),
-				EmailAttributePath: "attributes.email",
-				ExpectedResult:     "grafana@localhost",
-			},
-			{
-				Name: "Given a user info JSON response with e-mails array and valid JMES path",
-				UserInfoJSONResponse: []byte(`{
-	"attributes": {
-		"emails": ["grafana@localhost", "admin@localhost"]
-	}
-}`),
-				EmailAttributePath: "attributes.emails[0]",
-				ExpectedResult:     "grafana@localhost",
-			},
-			{
-				Name: "Given a nested user info JSON response and valid JMES path",
-				UserInfoJSONResponse: []byte(`{
-	"identities": [
-		{
-			"userId": "grafana@localhost"
-		},
-		{
-			"userId": "admin@localhost"
-		}
-	]
-}`),
-				EmailAttributePath: "identities[0].userId",
-				ExpectedResult:     "grafana@localhost",
-			},
-		}
-
-		for _, test := range tests {
-			provider.emailAttributePath = test.EmailAttributePath
-			t.Run(test.Name, func(t *testing.T) {
-				actualResult, err := provider.searchJSONForStringAttr(test.EmailAttributePath, test.UserInfoJSONResponse)
-				if test.ExpectedError == "" {
-					require.NoError(t, err, "Testing case %q", test.Name)
-				} else {
-					require.EqualError(t, err, test.ExpectedError, "Testing case %q", test.Name)
-				}
-				require.Equal(t, test.ExpectedResult, actualResult)
-			})
-		}
-	})
-}
-
-func TestSearchJSONForGroups(t *testing.T) {
-	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := NewGenericOAuthProvider(social.NewOAuthInfo(), &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
-
-		tests := []struct {
-			Name                 string
-			UserInfoJSONResponse []byte
-			GroupsAttributePath  string
-			ExpectedResult       []string
-			ExpectedError        string
-		}{
-			{
-				Name:                 "Given an invalid user info JSON response",
-				UserInfoJSONResponse: []byte("{"),
-				GroupsAttributePath:  "attributes.groups",
-				ExpectedResult:       []string{},
-				ExpectedError:        "failed to unmarshal user info JSON response: unexpected end of JSON input",
-			},
-			{
-				Name:                 "Given an empty user info JSON response and empty JMES path",
-				UserInfoJSONResponse: []byte{},
-				GroupsAttributePath:  "",
-				ExpectedResult:       []string{},
-				ExpectedError:        "no attribute path specified",
-			},
-			{
-				Name:                 "Given an empty user info JSON response and valid JMES path",
-				UserInfoJSONResponse: []byte{},
-				GroupsAttributePath:  "attributes.groups",
-				ExpectedResult:       []string{},
-				ExpectedError:        "empty user info JSON response provided",
-			},
-			{
-				Name: "Given a simple user info JSON response and valid JMES path",
-				UserInfoJSONResponse: []byte(`{
-		"attributes": {
-			"groups": ["foo", "bar"]
-		}
-}`),
-				GroupsAttributePath: "attributes.groups[]",
-				ExpectedResult:      []string{"foo", "bar"},
-			},
-		}
-
-		for _, test := range tests {
-			provider.groupsAttributePath = test.GroupsAttributePath
-			t.Run(test.Name, func(t *testing.T) {
-				actualResult, err := provider.searchJSONForStringArrayAttr(test.GroupsAttributePath, test.UserInfoJSONResponse)
-				if test.ExpectedError == "" {
-					require.NoError(t, err, "Testing case %q", test.Name)
-				} else {
-					require.EqualError(t, err, test.ExpectedError, "Testing case %q", test.Name)
-				}
-				require.Equal(t, test.ExpectedResult, actualResult)
-			})
-		}
-	})
-}
-
-func TestSearchJSONForRole(t *testing.T) {
-	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := NewGenericOAuthProvider(social.NewOAuthInfo(), &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
-
-		tests := []struct {
-			Name                 string
-			UserInfoJSONResponse []byte
-			RoleAttributePath    string
-			ExpectedResult       string
-			ExpectedError        string
-		}{
-			{
-				Name:                 "Given an invalid user info JSON response",
-				UserInfoJSONResponse: []byte("{"),
-				RoleAttributePath:    "attributes.role",
-				ExpectedResult:       "",
-				ExpectedError:        "failed to unmarshal user info JSON response: unexpected end of JSON input",
-			},
-			{
-				Name:                 "Given an empty user info JSON response and empty JMES path",
-				UserInfoJSONResponse: []byte{},
-				RoleAttributePath:    "",
-				ExpectedResult:       "",
-				ExpectedError:        "no attribute path specified",
-			},
-			{
-				Name:                 "Given an empty user info JSON response and valid JMES path",
-				UserInfoJSONResponse: []byte{},
-				RoleAttributePath:    "attributes.role",
-				ExpectedResult:       "",
-				ExpectedError:        "empty user info JSON response provided",
-			},
-			{
-				Name: "Given a simple user info JSON response and valid JMES path",
-				UserInfoJSONResponse: []byte(`{
-	"attributes": {
-		"role": "admin"
-	}
-}`),
-				RoleAttributePath: "attributes.role",
-				ExpectedResult:    "admin",
-			},
-		}
-
-		for _, test := range tests {
-			provider.info.RoleAttributePath = test.RoleAttributePath
-			t.Run(test.Name, func(t *testing.T) {
-				actualResult, err := provider.searchJSONForStringAttr(test.RoleAttributePath, test.UserInfoJSONResponse)
-				if test.ExpectedError == "" {
-					require.NoError(t, err, "Testing case %q", test.Name)
-				} else {
-					require.EqualError(t, err, test.ExpectedError, "Testing case %q", test.Name)
-				}
-				require.Equal(t, test.ExpectedResult, actualResult)
-			})
-		}
-	})
-}
 
 func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 	provider := NewGenericOAuthProvider(&social.OAuthInfo{
@@ -919,18 +720,20 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 
 func TestSocialGenericOAuth_Validate(t *testing.T) {
 	testCases := []struct {
-		name        string
-		settings    ssoModels.SSOSettings
-		expectError bool
+		name      string
+		settings  ssoModels.SSOSettings
+		requester identity.Requester
+		wantErr   error
 	}{
 		{
 			name: "SSOSettings is valid",
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{
-					"client_id": "client-id",
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
 				},
 			},
-			expectError: false,
+			requester: &user.SignedInUser{IsGrafanaAdmin: true},
 		},
 		{
 			name: "fails if settings map contains an invalid field",
@@ -940,7 +743,7 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 					"invalid_field": []int{1, 2, 3},
 				},
 			},
-			expectError: true,
+			wantErr: ssosettings.ErrInvalidSettings,
 		},
 		{
 			name: "fails if client id is empty",
@@ -949,14 +752,39 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 					"client_id": "",
 				},
 			},
-			expectError: true,
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
 		{
 			name: "fails if client id does not exist",
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{},
 			},
-			expectError: true,
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if both allow assign grafana admin and skip org role sync are enabled",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
+					"skip_org_role_sync":         "true",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if the user is not allowed to update allow assign grafana admin",
+			requester: &user.SignedInUser{
+				IsGrafanaAdmin: false,
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
+					"skip_org_role_sync":         "true",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
 	}
 
@@ -964,12 +792,15 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := NewGenericOAuthProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
-			err := s.Validate(context.Background(), tc.settings)
-			if tc.expectError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
+			if tc.requester == nil {
+				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
 			}
+			err := s.Validate(context.Background(), tc.settings, tc.requester)
+			if tc.wantErr != nil {
+				require.ErrorIs(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
 		})
 	}
 }

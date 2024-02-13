@@ -37,6 +37,7 @@ interface TimeSeriesTooltipProps {
   sortOrder?: SortOrder;
 
   isPinned: boolean;
+  scrollable?: boolean;
 
   annotate?: () => void;
 }
@@ -48,6 +49,7 @@ export const TimeSeriesTooltip = ({
   seriesIdx,
   mode = TooltipDisplayMode.Single,
   sortOrder = SortOrder.None,
+  scrollable = false,
   isPinned,
   annotate,
 }: TimeSeriesTooltipProps) => {
@@ -61,11 +63,12 @@ export const TimeSeriesTooltip = ({
 
   const xFieldFmt = xField.display || getDisplayProcessor({ field: xField, theme });
   let xVal = xFieldFmt(xField!.values[dataIdxs[0]!]).text;
+
   let links: Array<LinkModel<Field>> = [];
   let contentLabelValue: LabelValue[] = [];
 
   // Single mode
-  if (mode === TooltipDisplayMode.Single || isPinned) {
+  if (mode === TooltipDisplayMode.Single) {
     const field = seriesFrame.fields[seriesIdx!];
     if (!field) {
       return null;
@@ -75,6 +78,7 @@ export const TimeSeriesTooltip = ({
     xVal = xFieldFmt(xField!.values[dataIdx]).text;
     const fieldFmt = field.display || getDisplayProcessor({ field, theme });
     const display = fieldFmt(field.values[dataIdx]);
+
     links = getDataLinks(field, dataIdx);
 
     contentLabelValue = [
@@ -88,7 +92,7 @@ export const TimeSeriesTooltip = ({
     ];
   }
 
-  if (mode === TooltipDisplayMode.Multi && !isPinned) {
+  if (mode === TooltipDisplayMode.Multi) {
     const fields = seriesFrame.fields;
     const sortIdx: unknown[] = [];
 
@@ -131,6 +135,12 @@ export const TimeSeriesTooltip = ({
         });
       }
     }
+
+    if (seriesIdx != null) {
+      const field = seriesFrame.fields[seriesIdx];
+      const dataIdx = dataIdxs[seriesIdx]!;
+      links = getDataLinks(field, dataIdx);
+    }
   }
 
   const getHeaderLabel = (): LabelValue => {
@@ -148,7 +158,7 @@ export const TimeSeriesTooltip = ({
     <div>
       <div className={styles.wrapper}>
         <VizTooltipHeader headerLabel={getHeaderLabel()} isPinned={isPinned} />
-        <VizTooltipContent contentLabelValue={getContentLabelValue()} isPinned={isPinned} />
+        <VizTooltipContent contentLabelValue={getContentLabelValue()} isPinned={isPinned} scrollable={scrollable} />
         {isPinned && <VizTooltipFooter dataLinks={links} annotate={annotate} />}
       </div>
     </div>
