@@ -148,10 +148,15 @@ func (l *LibraryElementService) createLibraryElement(c context.Context, signedIn
 	}
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
+	// folderUID *string will be changed to string
+	var folderUID string
+	if cmd.FolderUID == nil {
+		folderUID = ""
+	}
 	element := model.LibraryElement{
 		OrgID:     signedInUser.GetOrgID(),
 		FolderID:  cmd.FolderID, // nolint:staticcheck
-		FolderUID: *cmd.FolderUID,
+		FolderUID: folderUID,
 		UID:       createUID,
 		Name:      cmd.Name,
 		Model:     updatedModel,
