@@ -205,21 +205,11 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		return err
 	}
 
-	esUrl, err := url.Parse(ds.URL)
+	esUrl, err := createElasticsearchURL(req, ds)
 	if err != nil {
-		logger.Error("Failed to parse data source URL", "error", err, "url", ds.URL)
-		return err
+		logger.Error("Failed to create request url", "error", err, "url", ds.URL, "path", req.Path)
 	}
 
-	resourcePath, err := url.Parse(req.Path)
-	if err != nil {
-		logger.Error("Failed to parse data source path", "error", err, "url", req.Path)
-		return err
-	}
-
-	// We take the path and the query-string only
-	esUrl.RawQuery = resourcePath.RawQuery
-	esUrl.Path = path.Join(esUrl.Path, resourcePath.Path)
 	request, err := http.NewRequestWithContext(ctx, req.Method, esUrl.String(), bytes.NewBuffer(req.Body))
 	if err != nil {
 		logger.Error("Failed to create request", "error", err, "url", esUrl.String())
@@ -268,4 +258,14 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		Headers: responseHeaders,
 		Body:    body,
 	})
+}
+
+func createElasticsearchURL(req *backend.CallResourceRequest, ds *es.DatasourceInfo) (*url.URL, error) {
+	esUrl, err := url.Parse(ds.URL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse data source URL: %s, error: %w", ds.URL, err)
+	}
+
+	esUrl.Path = path.Join(esUrl.Path, req.Path)
+	return esUrl, nil
 }
