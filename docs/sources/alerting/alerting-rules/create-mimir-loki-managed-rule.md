@@ -126,6 +126,6 @@ All alert rules and instances, irrespective of their labels, match the default n
 1. Click **Save rule**.
 
 {{% docs/reference %}}
-[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label"
+[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/annotation-label"
 [annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"
 {{% /docs/reference %}}

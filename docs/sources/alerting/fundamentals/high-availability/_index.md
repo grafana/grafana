@@ -41,6 +41,6 @@ The notification logs and silences are persisted in the database periodically an
 [Configure alerting high availability][configure-high-availability]
 
 {{% docs/reference %}}
-[configure-high-availability]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/set-up/configure-high-availability"
+[configure-high-availability]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-high-availability"
 [configure-high-availability]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-high-availability"
 {{% /docs/reference %}}
