@@ -1,0 +1,35 @@
+{
+  "name": "grafana",
+  "$schema": "node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "targets": {
+    "start": {
+      "dependsOn": [
+        "themes-generate",
+        {
+          "projects": ["@grafana-plugins/**"],
+          "target": "build"
+        }
+      ]
+    },
+    "build": {
+      "dependsOn": [
+        "themes-generate",
+        {
+          "projects": ["@grafana-plugins/**"],
+          "target": "build"
+        }
+      ],
+      "outputs": ["{workspaceRoot}/public/build"],
+      "cache": true
+    },
+    "themes-generate": {
+      "outputs": [
+        "{workspaceRoot}/public/sass/_variables.generated.scss",
+        "{workspaceRoot}/public/sass/_variables.dark.generated.scss",
+        "{workspaceRoot}/public/sass/_variables.light.generated.scss"
+      ],
+      "cache": true
+    }
+  }
+}

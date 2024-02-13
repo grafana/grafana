@@ -3,22 +3,13 @@
     "default": {
       "runner": "nx/tasks-runners/default",
       "options": {
-        "cacheableOperations": ["build", "themes:generate"]
+        "cacheableOperations": ["build"]
       }
     }
   },
   "targetDefaults": {
     "build": {
       "outputs": ["{projectRoot}/dist"]
-    }
-  },
-  "targets": {
-    "theme-generate": {
-      "outputs": [
-        "public/sass/_variables.generated.scss",
-        "public/sass/_variables.dark.generated.scss",
-        "public/sass/_variables.light.generated.scss"
-      ]
     }
   },
   "affected": {

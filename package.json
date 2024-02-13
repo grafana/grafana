@@ -6,8 +6,8 @@
   "version": "10.4.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
-    "build": "NODE_ENV=production nx exec -- webpack --config scripts/webpack/webpack.prod.js",
-    "build:nominify": "yarn run build --env noMinify=1",
+    "build": "NODE_ENV=production nx exec --verbose -- webpack --config scripts/webpack/webpack.prod.js",
+    "build:nominify": "yarn run build -- --env noMinify=1",
     "dev": "NODE_ENV=dev nx exec -- webpack --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
     "e2e:debug": "./e2e/start-and-run-suite debug",
@@ -25,21 +25,21 @@
     "lint:sass": "yarn stylelint '{public/sass,packages}/**/*.scss' --cache",
     "test:ci": "mkdir -p reports/junit && JEST_JUNIT_OUTPUT_DIR=reports/junit jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%}",
     "lint:fix": "yarn lint:ts --fix",
-    "packages:build": "lerna run build --ignore '@grafana-plugins/*'",
+    "packages:build": "nx run-many -t build --projects='@grafana/*'",
     "packages:clean": "rimraf ./npm-artifacts && lerna run clean --parallel",
     "packages:prepare": "lerna version --no-push --no-git-tag-version --force-publish --exact",
     "packages:pack": "mkdir -p ./npm-artifacts && lerna exec --no-private -- yarn pack --out \"../../npm-artifacts/%s-%v.tgz\"",
-    "packages:typecheck": "lerna run typecheck",
+    "packages:typecheck": "nx run-many -t typecheck --projects='@grafana/*'",
     "prettier:check": "prettier --check --list-different=false --log-level=warn \"**/*.{ts,tsx,scss,md,mdx,json}\"",
     "prettier:checkDocs": "prettier --check --list-different=false --log-level=warn \"docs/**/*.md\" \"*.md\" \"packages/**/*.{ts,tsx,scss,md,mdx,json}\"",
     "prettier:write": "prettier --list-different \"**/*.{js,ts,tsx,scss,md,mdx,json}\" --write",
     "start": "NODE_ENV=dev nx exec -- webpack --config scripts/webpack/webpack.dev.js --watch",
-    "start:noTsCheck": "yarn start --env noTsCheck=1",
-    "start:noLint": "yarn start --env noTsCheck=1 --env noLint=1",
+    "start:noTsCheck": "yarn start -- --env noTsCheck=1",
+    "start:noLint": "yarn start -- --env noTsCheck=1 --env noLint=1",
     "stats": "webpack --mode production --config scripts/webpack/webpack.prod.js --profile --json > compilation-stats.json",
     "storybook": "yarn workspace @grafana/ui storybook --ci",
     "storybook:build": "yarn workspace @grafana/ui storybook:build",
-    "themes:generate": "esbuild --target=es6 ./scripts/cli/generateSassVariableFiles.ts --bundle --platform=node --tsconfig=./scripts/cli/tsconfig.json | node",
+    "themes-generate": "esbuild --target=es6 ./scripts/cli/generateSassVariableFiles.ts --bundle --platform=node --tsconfig=./scripts/cli/tsconfig.json | node",
     "themes:usage": "eslint . --ext .tsx,.ts --ignore-pattern '*.test.ts*' --ignore-pattern '*.spec.ts*' --cache --rule '{ @grafana/theme-token-usage: \"error\" }'",
     "typecheck": "tsc --noEmit && yarn run packages:typecheck",
     "plugins:build-bundled": "find plugins-bundled -name package.json -not -path '*/node_modules/*' -execdir yarn build \\;",
@@ -54,36 +54,9 @@
     "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
     "betterer:issues": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateBettererIssues.ts",
     "generate-icons-bundle-cache-file": "node ./scripts/generate-icon-bundle.js",
-    "plugin:build": "lerna run build --ignore=\"@grafana/*\" --ignore=\"@grafana-plugins/input-datasource\"",
-    "plugin:build:commit": "lerna run build:commit --ignore=\"@grafana/*\" --ignore=\"@grafana-plugins/input-datasource\"",
-    "plugin:build:dev": "lerna run dev --ignore=\"@grafana/*\" --ignore=\"@grafana-plugins/input-datasource\""
-  },
-  "nx": {
-    "targets": {
-      "start": {
-        "dependsOn": [
-          "grafana:themes:generate",
-          "@grafana-plugins/grafana-testdata-datasource:build",
-          "@grafana-plugins/grafana-pyroscope-datasource:build",
-          "@grafana-plugins/grafana-azure-monitor-datasource:build",
-          "@grafana-plugins/grafana-cloud-monitoring-datasource:build",
-          "@grafana-plugins/parca:build",
-          "@grafana-plugins/tempo:build"
-        ]
-      },
-      "build": {
-        "dependsOn": [
-          "grafana:themes:generate",
-          "@grafana-plugins/grafana-testdata-datasource:build",
-          "@grafana-plugins/grafana-pyroscope-datasource:build",
-          "@grafana-plugins/grafana-azure-monitor-datasource:build",
-          "@grafana-plugins/grafana-cloud-monitoring-datasource:build",
-          "@grafana-plugins/parca:build",
-          "@grafana-plugins/tempo:build"
-        ]
-      }
-    },
-    "parallel": 5
+    "plugin:build": "nx run-many -t build --projects='@grafana-plugins/*' --exclude \"@grafana-plugins/input-datasource\"",
+    "plugin:build:commit": "nx run-many -t build:commit --projects='@grafana-plugins/*' --exclude \"@grafana-plugins/input-datasource\"",
+    "plugin:build:dev": "nx run-many -t dev --projects='@grafana-plugins/*' --exclude \"@grafana-plugins/input-datasource\""
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v10-3/",
@@ -207,13 +180,13 @@
     "jest-fail-on-console": "3.1.2",
     "jest-junit": "16.0.0",
     "jest-matcher-utils": "29.7.0",
-    "lerna": "8.0.2",
+    "lerna": "8.1.2",
     "mini-css-extract-plugin": "2.8.0",
     "msw": "1.3.2",
     "mutationobserver-shim": "0.3.7",
     "ngtemplate-loader": "2.1.0",
     "node-notifier": "10.0.1",
-    "nx": "17.2.8",
+    "nx": "18.0.4",
     "postcss": "8.4.35",
     "postcss-loader": "7.3.4",
     "postcss-reporter": "7.1.0",
