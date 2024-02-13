@@ -1,4 +1,7 @@
-import { SelectableValue } from '@grafana/data';
+import { chain } from 'lodash';
+
+import { DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import {
   ConstantVariable,
   CustomVariable,
@@ -7,15 +10,20 @@ import {
   TextBoxVariable,
   QueryVariable,
   AdHocFilterSet,
+  GroupByVariable,
   SceneVariable,
   MultiValueVariable,
+  SceneVariableState,
 } from '@grafana/scenes';
 import { VariableType } from '@grafana/schema';
+
+import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor } from './editors/ConstantVariableEditor';
 import { CustomVariableEditor } from './editors/CustomVariableEditor';
 import { DataSourceVariableEditor } from './editors/DataSourceVariableEditor';
+import { GroupByVariableEditor } from './editors/GroupByVariableEditor';
 import { IntervalVariableEditor } from './editors/IntervalVariableEditor';
 import { QueryVariableEditor } from './editors/QueryVariableEditor';
 import { TextBoxVariableEditor } from './editors/TextBoxVariableEditor';
@@ -63,6 +71,11 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     description: 'Add key/value filters on the fly',
     editor: AdHocFiltersVariableEditor,
   },
+  groupby: {
+    name: 'Group by',
+    description: 'Add keys to group by on the fly',
+    editor: GroupByVariableEditor,
+  },
   textbox: {
     name: 'Textbox',
     description: 'Define a textbox variable, where users can enter any arbitrary string',
@@ -78,6 +91,7 @@ export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
   'datasource',
   'interval',
   'adhoc',
+  'groupby',
 ];
 
 export function getVariableTypeSelectOptions(): Array<SelectableValue<EditableVariableType>> {
@@ -112,11 +126,66 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
     case 'adhoc':
       // TODO: Initialize properly AdHocFilterSet with initialState
       return new AdHocFilterSet({ name: initialState.name });
+    case 'groupby':
+      return new GroupByVariable(initialState);
     case 'textbox':
       return new TextBoxVariable(initialState);
   }
 }
 
+export function getVariableDefault(variables: Array<SceneVariable<SceneVariableState>>) {
+  const defaultVariableType = 'query';
+  const nextVariableIdName = getNextAvailableId(defaultVariableType, variables);
+  return new QueryVariable({
+    name: nextVariableIdName,
+  });
+}
+
+export function getNextAvailableId(type: VariableType, variables: Array<SceneVariable<SceneVariableState>>): string {
+  let counter = 0;
+  let nextId = `${type}${counter}`;
+
+  while (variables.find((variable) => variable.state.name === nextId)) {
+    nextId = `${type}${++counter}`;
+  }
+
+  return nextId;
+}
+
 export function hasVariableOptions(variable: SceneVariable): variable is MultiValueVariable {
-  return 'options' in variable.state;
+  // variable options can be defined by state.options or state.intervals in case of interval variable
+  return 'options' in variable.state || 'intervals' in variable.state;
+}
+
+export function getDefinition(model: SceneVariable): string {
+  let definition = '';
+
+  if (model instanceof QueryVariable) {
+    definition = model.state.definition || (typeof model.state.query === 'string' ? model.state.query : '');
+  } else if (model instanceof DataSourceVariable) {
+    definition = String(model.state.pluginId);
+  } else if (model instanceof CustomVariable) {
+    definition = model.state.query;
+  } else if (model instanceof IntervalVariable) {
+    definition = getIntervalsQueryFromNewIntervalModel(model.state.intervals);
+  } else if (model instanceof TextBoxVariable || model instanceof ConstantVariable) {
+    definition = String(model.state.value);
+  }
+
+  return definition;
+}
+
+export function getOptionDataSourceTypes() {
+  const datasources = getDataSourceSrv().getList({ metrics: true, variables: true });
+
+  const optionTypes = chain(datasources)
+    .uniqBy('meta.id')
+    .map((ds: DataSourceInstanceSettings) => {
+      return { label: ds.meta.name, value: ds.meta.id };
+    })
+    .value();
+
+  optionTypes.unshift({ label: '', value: '' });
+
+  return optionTypes;
 }

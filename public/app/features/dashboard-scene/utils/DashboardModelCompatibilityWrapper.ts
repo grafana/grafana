@@ -4,24 +4,23 @@ import { AnnotationQuery, DashboardCursorSync, dateTimeFormat, DateTimeInput, Ev
 import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import {
   behaviors,
+  SceneDataLayers,
   SceneDataTransformer,
   sceneGraph,
   SceneGridItem,
   SceneGridLayout,
   SceneGridRow,
   SceneObject,
-  SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
-import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
-import { ShareQueryDataProvider } from '../scene/ShareQueryDataProvider';
+import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 
 import { dashboardSceneGraph } from './dashboardSceneGraph';
-import { findVizPanelByKey, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from './utils';
+import { findVizPanelByKey, getPanelIdForVizPanel, getQueryRunnerFor, getVizPanelKeyForPanelId } from './utils';
 
 /**
  * Will move this to make it the main way we remain somewhat compatible with getDashboardSrv().getCurrent
@@ -32,6 +31,9 @@ export class DashboardModelCompatibilityWrapper {
 
   public constructor(private _scene: DashboardScene) {
     const timeRange = sceneGraph.getTimeRange(_scene);
+
+    // Copied from DashboardModel, as this function is passed around
+    this.formatDate = this.formatDate.bind(this);
 
     this._subs.add(
       timeRange.subscribeToState((state, prev) => {
@@ -85,6 +87,10 @@ export class DashboardModelCompatibilityWrapper {
     return this._scene.state.tags;
   }
 
+  public get links() {
+    return this._scene.state.links;
+  }
+
   public get meta() {
     return this._scene.state.meta;
   }
@@ -108,8 +114,13 @@ export class DashboardModelCompatibilityWrapper {
    * Used from from timeseries migration handler to migrate time regions to dashboard annotations
    */
   public get annotations(): { list: AnnotationQuery[] } {
-    console.error('Scenes DashboardModelCompatibilityWrapper.annotations not implemented (yet)');
-    return { list: [] };
+    const annotations: { list: AnnotationQuery[] } = { list: [] };
+
+    if (this._scene.state.$data instanceof SceneDataLayers) {
+      annotations.list = dataLayersToAnnotations(this._scene.state.$data.state.layers);
+    }
+
+    return annotations;
   }
 
   public getTimezone() {
@@ -203,8 +214,15 @@ export class DashboardModelCompatibilityWrapper {
   }
 
   public canEditAnnotations(dashboardUID?: string) {
-    // TOOD
-    return false;
+    if (!this._scene.canEditDashboard()) {
+      return false;
+    }
+
+    if (dashboardUID) {
+      return Boolean(this._scene.state.meta.annotationsPermissions?.dashboard.canEdit);
+    }
+
+    return Boolean(this._scene.state.meta.annotationsPermissions?.organization.canEdit);
   }
 
   public panelInitialized() {}
@@ -212,6 +230,10 @@ export class DashboardModelCompatibilityWrapper {
   public destroy() {
     this.events.removeAllListeners();
     this._subs.unsubscribe();
+  }
+
+  public hasUnsavedChanges() {
+    return this._scene.state.isDirty;
   }
 }
 
@@ -248,60 +270,17 @@ class PanelCompatibilityWrapper {
   }
 
   public get targets() {
-    if (this._vizPanel.state.$data instanceof SceneQueryRunner) {
-      return this._vizPanel.state.$data.state.queries;
+    const queryRunner = getQueryRunnerFor(this._vizPanel);
+    if (!queryRunner) {
+      return [];
     }
 
-    if (this._vizPanel.state.$data instanceof ShareQueryDataProvider) {
-      return [
-        {
-          datasource: {
-            uid: SHARED_DASHBOARD_QUERY,
-            type: 'datasource',
-          },
-          ...this._vizPanel.state.$data.state.query,
-        },
-      ];
-    }
-
-    if (this._vizPanel.state.$data instanceof SceneDataTransformer) {
-      if (this._vizPanel.state.$data.state.$data instanceof ShareQueryDataProvider) {
-        return [
-          {
-            datasource: {
-              uid: SHARED_DASHBOARD_QUERY,
-              type: 'datasource',
-            },
-            ...(this._vizPanel.state.$data.state.$data as ShareQueryDataProvider).state.query,
-          },
-        ];
-      }
-      if (this._vizPanel.state.$data.state.$data instanceof SceneQueryRunner) {
-        return (this._vizPanel.state.$data.state.$data as SceneQueryRunner).state.queries;
-      }
-    }
-
-    return [];
+    return queryRunner.state.queries;
   }
 
-  public get datasource(): DataSourceRef | null {
-    if (this._vizPanel.state.$data instanceof SceneQueryRunner) {
-      return this._vizPanel.state.$data.state.datasource ?? null;
-    }
-
-    if (this._vizPanel.state.$data instanceof ShareQueryDataProvider) {
-      return { uid: SHARED_DASHBOARD_QUERY, type: 'datasource' };
-    }
-
-    if (this._vizPanel.state.$data instanceof SceneDataTransformer) {
-      if (this._vizPanel.state.$data.state.$data instanceof ShareQueryDataProvider) {
-        return { uid: SHARED_DASHBOARD_QUERY, type: 'datasource' };
-      }
-
-      return (this._vizPanel.state.$data.state.$data as SceneQueryRunner).state.datasource ?? null;
-    }
-
-    return null;
+  public get datasource(): DataSourceRef | null | undefined {
+    const queryRunner = getQueryRunnerFor(this._vizPanel);
+    return queryRunner?.state.datasource;
   }
 
   public refresh() {

@@ -3,8 +3,7 @@ import { sortBy } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Space } from '@grafana/experimental';
-import { Text, Box, Button, useStyles2 } from '@grafana/ui';
+import { Text, Box, Button, useStyles2, Space } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { Trans, t } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -159,41 +158,20 @@ export const Permissions = ({
 
   return (
     <div>
-      {canSetPermissions && (
+      {canSetPermissions && resource === 'folders' && (
         <>
-          {resource === 'folders' && (
-            <>
-              <Trans i18nKey="access-control.permissions.permissions-change-warning">
-                This will change permissions for this folder and all its descendants. In total, this will affect:
-              </Trans>
-              <DescendantCount
-                selectedItems={{
-                  folder: { [resourceId]: true },
-                  dashboard: {},
-                  panel: {},
-                  $all: false,
-                }}
-              />
-              <Space v={2} />
-            </>
-          )}
-          <Button
-            className={styles.addPermissionButton}
-            variant={'primary'}
-            key="add-permission"
-            onClick={() => setIsAdding(true)}
-          >
-            {buttonLabel}
-          </Button>
-          <SlideDown in={isAdding}>
-            <AddPermission
-              title={addPermissionTitle}
-              onAdd={onAdd}
-              permissions={desc.permissions}
-              assignments={desc.assignments}
-              onCancel={() => setIsAdding(false)}
-            />
-          </SlideDown>
+          <Trans i18nKey="access-control.permissions.permissions-change-warning">
+            This will change permissions for this folder and all its descendants. In total, this will affect:
+          </Trans>
+          <DescendantCount
+            selectedItems={{
+              folder: { [resourceId]: true },
+              dashboard: {},
+              panel: {},
+              $all: false,
+            }}
+          />
+          <Space v={2} />
         </>
       )}
       {items.length === 0 && (
@@ -228,7 +206,6 @@ export const Permissions = ({
         onRemove={onRemove}
         canSet={canSetPermissions}
       />
-
       <PermissionList
         title={titleTeam}
         items={teams}
@@ -238,6 +215,28 @@ export const Permissions = ({
         onRemove={onRemove}
         canSet={canSetPermissions}
       />
+      {canSetPermissions && (
+        <>
+          <Button
+            className={styles.addPermissionButton}
+            variant={'primary'}
+            key="add-permission"
+            onClick={() => setIsAdding(true)}
+            icon="plus"
+          >
+            {buttonLabel}
+          </Button>
+          <SlideDown in={isAdding}>
+            <AddPermission
+              title={addPermissionTitle}
+              onAdd={onAdd}
+              permissions={desc.permissions}
+              assignments={desc.assignments}
+              onCancel={() => setIsAdding(false)}
+            />
+          </SlideDown>
+        </>
+      )}
     </div>
   );
 };

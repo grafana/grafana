@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"path"
+	"strings"
 	"testing"
 	"time"
 
@@ -34,9 +35,14 @@ import (
 	secrets_fakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestProvisioningApi(t *testing.T) {
 	t.Run("policies", func(t *testing.T) {
@@ -1363,9 +1369,13 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 		})
 
 		t.Run("decrypt true without alert.provisioning.secrets:read permissions returns 403", func(t *testing.T) {
+			recPermCheck := false
 			env := createTestEnv(t, testConfig)
 			env.ac = &recordingAccessControlFake{
 				Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
+					if strings.Contains(evaluator.String(), accesscontrol.ActionAlertingProvisioningReadSecrets) {
+						recPermCheck = true
+					}
 					return false, nil
 				},
 			}
@@ -1377,16 +1387,18 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 
 			response := sut.RouteGetContactPointsExport(&rc)
 
+			require.True(t, recPermCheck)
 			require.Equal(t, 403, response.Status())
-			require.Len(t, env.ac.EvaluateRecordings, 1)
-			require.Equal(t, accesscontrol.ActionAlertingProvisioningReadSecrets, env.ac.EvaluateRecordings[0].Evaluator.String())
 		})
 
 		t.Run("decrypt true with admin returns 200", func(t *testing.T) {
+			recPermCheck := false
 			env := createTestEnv(t, testConfig)
 			env.ac = &recordingAccessControlFake{
 				Callback: func(user *user.SignedInUser, evaluator accesscontrol.Evaluator) (bool, error) {
-					require.Equal(t, accesscontrol.ActionAlertingProvisioningReadSecrets, evaluator.String())
+					if strings.Contains(evaluator.String(), accesscontrol.ActionAlertingProvisioningReadSecrets) {
+						recPermCheck = true
+					}
 					return true, nil
 				},
 			}
@@ -1399,9 +1411,8 @@ func TestProvisioningApiContactPointExport(t *testing.T) {
 			response := sut.RouteGetContactPointsExport(&rc)
 			response.WriteTo(&rc)
 
+			require.True(t, recPermCheck)
 			require.Equal(t, 200, response.Status())
-			require.Len(t, env.ac.EvaluateRecordings, 1)
-			require.Equal(t, accesscontrol.ActionAlertingProvisioningReadSecrets, env.ac.EvaluateRecordings[0].Evaluator.String())
 		})
 
 		t.Run("json body content is as expected", func(t *testing.T) {
@@ -1614,10 +1625,11 @@ func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
 func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) ProvisioningSrv {
 	t.Helper()
 
+	receiverSvc := notifier.NewReceiverService(env.ac, env.configs, env.prov, env.secrets, env.xact, env.log)
 	return ProvisioningSrv{
 		log:                 env.log,
 		policies:            newFakeNotificationPolicyService(),
-		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, env.log, env.ac),
+		contactPointService: provisioning.NewContactPointService(env.configs, env.secrets, env.prov, env.xact, receiverSvc, env.log),
 		templates:           provisioning.NewTemplateService(env.configs, env.prov, env.xact, env.log),
 		muteTimings:         provisioning.NewMuteTimingService(env.configs, env.prov, env.xact, env.log),
 		alertRules:          provisioning.NewAlertRuleService(env.store, env.prov, env.dashboardService, env.quotas, env.xact, 60, 10, env.log),

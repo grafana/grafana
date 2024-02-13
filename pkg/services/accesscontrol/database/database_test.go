@@ -23,7 +23,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+// run tests with cleanup
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 type getUserPermissionsTestCase struct {
 	desc               string
@@ -316,7 +322,8 @@ func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, user.Service, te
 	cfg.AutoAssignOrgId = 1
 	acstore := ProvideService(sql)
 	permissionStore := rs.NewStore(sql, featuremgmt.WithFeatures())
-	teamService := teamimpl.ProvideService(sql, cfg)
+	teamService, err := teamimpl.ProvideService(sql, cfg)
+	require.NoError(t, err)
 	orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 
@@ -522,6 +529,20 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 			},
 			options: accesscontrol.SearchOptions{Scope: "teams:id:1"},
 			wantPerm: map[int64][]accesscontrol.Permission{1: {
+				{Action: "teams:read", Scope: "teams:id:1"},
+				{Action: "teams:write", Scope: "teams:id:1"},
+			}},
+		},
+		{
+			name:  "user assignment by scope",
+			users: []testUser{{orgRole: org.RoleAdmin, isAdmin: false}},
+			permCmds: []rs.SetResourcePermissionsCommand{
+				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("*")}, // hack to have a global permission
+				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: writeTeamPerm("1")},
+			},
+			options: accesscontrol.SearchOptions{Scope: "teams:id:1"},
+			wantPerm: map[int64][]accesscontrol.Permission{1: {
+				{Action: "teams:read", Scope: "teams:id:*"},
 				{Action: "teams:read", Scope: "teams:id:1"},
 				{Action: "teams:write", Scope: "teams:id:1"},
 			}},

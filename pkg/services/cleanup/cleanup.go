@@ -74,7 +74,7 @@ func (j cleanUpJob) String() string {
 func (srv *CleanUpService) Run(ctx context.Context) error {
 	srv.cleanUpTmpFiles(ctx)
 
-	ticker := time.NewTicker(time.Minute * 1)
+	ticker := time.NewTicker(time.Minute * 10)
 	for {
 		select {
 		case <-ticker.C:
@@ -134,6 +134,7 @@ func (srv *CleanUpService) cleanUpTmpFiles(ctx context.Context) {
 	folders := []string{
 		srv.Cfg.ImagesDir,
 		srv.Cfg.CSVsDir,
+		srv.Cfg.PDFsDir,
 	}
 
 	for _, f := range folders {
