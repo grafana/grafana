@@ -41,8 +41,6 @@ func (cfg *Cfg) readAzureSettings() {
 		azureSettings.UserIdentityEnabled = true
 		tokenEndpointSettings := &azsettings.TokenEndpointSettings{}
 
-		azureSettings.UserIdentityServiceCredentials = true
-
 		// Get token endpoint from Azure AD settings if enabled
 		azureAdSection := cfg.Raw.Section("auth.azuread")
 		if azureAdSection.Key("enabled").MustBool(false) {
