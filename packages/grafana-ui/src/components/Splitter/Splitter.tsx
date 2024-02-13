@@ -8,7 +8,10 @@ import { useStyles2 } from '../../themes';
 import { DragHandlePosition, getDragStyles } from '../DragHandle/DragHandle';
 
 export interface Props {
-  initialSize?: number | 'auto';
+  /**
+   * The initial size of the primary pane between 0-1, defaults to 0.5
+   */
+  initialSize?: number;
   direction?: 'row' | 'column';
   dragPosition?: DragHandlePosition;
   primaryPaneStyles?: React.CSSProperties;
@@ -21,10 +24,14 @@ export interface Props {
   children: [React.ReactNode, React.ReactNode];
 }
 
+/**
+ * Splits two children into two resizable panes
+ * @alpha
+ */
 export function Splitter(props: Props) {
   const {
     direction = 'row',
-    initialSize = 'auto',
+    initialSize = 0.5,
     primaryPaneStyles,
     secondaryPaneStyles,
     onSizeChange,
@@ -70,7 +77,7 @@ export function Splitter(props: Props) {
         ref={firstPaneRef}
         className={styles.panel}
         style={{
-          flexGrow: initialSize === 'auto' ? 0.5 : clamp(initialSize, 0, 1),
+          flexGrow: clamp(initialSize, 0, 1),
           [minDimProp]: 'min-content',
           ...primaryPaneStyles,
         }}
@@ -107,7 +114,7 @@ export function Splitter(props: Props) {
             ref={secondPaneRef}
             className={styles.panel}
             style={{
-              flexGrow: initialSize === 'auto' ? 0.5 : clamp(1 - initialSize, 0, 1),
+              flexGrow: clamp(1 - initialSize, 0, 1),
               [minDimProp]: 'min-content',
               visibility: `${visibilitySecond}`,
               ...secondaryPaneStyles,
