@@ -15,23 +15,20 @@ import {
   SceneObjectBase,
   SceneObjectRef,
   SceneObjectState,
-  SceneQueryRunner,
   SceneVariable,
   SceneVariableSet,
   VariableDependencyConfig,
 } from '@grafana/scenes';
 import { VariableHide } from '@grafana/schema';
 import { Input, useStyles2, InlineSwitch, Field, Alert, Icon, LoadingPlaceholder } from '@grafana/ui';
-import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
-import { getAutoQueriesForMetric } from './AutomaticMetricQueries/AutoQueryEngine';
+import { getPreviewPanelFor } from './AutomaticMetricQueries/previewPanel';
 import { MetricCategoryCascader } from './MetricCategory/MetricCategoryCascader';
 import { MetricScene } from './MetricScene';
 import { SelectMetricAction } from './SelectMetricAction';
-import { hideEmptyPreviews } from './hideEmptyPreviews';
 import { sortRelatedMetrics } from './relatedMetrics';
 import { getVariablesWithMetricConstant, trailDS, VAR_DATASOURCE, VAR_FILTERS_EXPR, VAR_METRIC_NAMES } from './shared';
-import { getColorByIndex, getFilters, getTrailFor } from './utils';
+import { getFilters, getTrailFor } from './utils';
 
 interface MetricPanel {
   name: string;
@@ -405,33 +402,6 @@ function getMetricNamesVariableSet() {
   });
 }
 
-function getPreviewPanelFor(metric: string, index: number, currentFilterCount: number) {
-  const autoQuery = getAutoQueriesForMetric(metric);
-
-  const vizPanel = autoQuery.preview
-    .vizBuilder()
-    .setColor({ mode: 'fixed', fixedColor: getColorByIndex(index) })
-    .setHeaderActions(new SelectMetricAction({ metric, title: 'Select' }))
-    .build();
-
-  const queries = autoQuery.preview.queries.map((query) =>
-    convertPreviewQueriesToIgnoreUsage(query, currentFilterCount)
-  );
-
-  return new SceneCSSGridItem({
-    $variables: new SceneVariableSet({
-      variables: getVariablesWithMetricConstant(metric),
-    }),
-    $behaviors: [hideEmptyPreviews(metric)],
-    $data: new SceneQueryRunner({
-      datasource: trailDS,
-      maxDataPoints: 200,
-      queries,
-    }),
-    body: vizPanel,
-  });
-}
-
 function getCardPanelFor(metric: string) {
   return PanelBuilders.text()
     .setTitle(metric)
@@ -505,16 +475,4 @@ function useVariableStatus(name: string, sceneObject: SceneObject) {
   const { error, loading } = useVariableState() || {};
 
   return { isLoading: !!loading, error };
-}
-
-function convertPreviewQueriesToIgnoreUsage(query: PromQuery, currentFilterCount: number) {
-  // If there are filters, we append to the list. Otherwise, we replace the empty list.
-  const replacement = currentFilterCount > 0 ? "${filters},__ignore_usage__=''" : "__ignore_usage__=''";
-
-  const expr = query.expr?.replace('${filters}', replacement);
-
-  return {
-    ...query,
-    expr,
-  };
 }
