@@ -130,7 +130,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     moreSubMenu.push({
       text: t('panel.header-menu.new-alert-rule', `New alert rule`),
-      onClick: (e) => onCreateAlert(panel, dashboard),
+      onClick: (e) => onCreateAlert(panel),
     });
 
     if (hasLegendOptions(panel.state.options)) {
@@ -423,7 +423,7 @@ export function removePanel(dashboard: DashboardScene, panel: VizPanel, ask: boo
   }
 }
 
-const onCreateAlert = async (panel: VizPanel, dashboard: DashboardScene) => {
+const onCreateAlert = async (panel: VizPanel) => {
   DashboardInteractions.panelMenuItemClicked('create-alert');
 
   const formValues = await scenesPanelToRuleFormValues(panel);
