@@ -3,10 +3,9 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
-import { Button, useStyles2 } from '@grafana/ui';
-import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
-import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
+import { useStyles2 } from '@grafana/ui';
 
+import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { PanelEditor } from './PanelEditor';
@@ -19,7 +18,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
 
   return (
     <>
-      <AppChromeUpdate actions={getToolbarActions(model)} />
+      <NavToolbarActions dashboard={dashboard} />
       <div className={styles.canvasContent}>
         {controls && (
           <div className={styles.controls}>
@@ -32,29 +31,6 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
           <body.Component model={body} />
         </div>
       </div>
-    </>
-  );
-}
-
-function getToolbarActions(editor: PanelEditor) {
-  return (
-    <>
-      <NavToolbarSeparator leftActionsSeparator key="separator" />
-
-      <Button
-        onClick={editor.onDiscard}
-        tooltip=""
-        key="panel-edit-discard"
-        variant="destructive"
-        fill="outline"
-        size="sm"
-      >
-        Discard
-      </Button>
-
-      <Button onClick={editor.onApply} tooltip="" key="panel-edit-apply" variant="primary" size="sm">
-        Apply
-      </Button>
     </>
   );
 }
