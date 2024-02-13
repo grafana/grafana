@@ -81,14 +81,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/d-solo/:uid/:slug',
+      path: '/d-solo/:uid/:slug?',
       pageClass: 'dashboard-solo',
       routeName: DashboardRoutes.Normal,
       chromeless: true,
       component: SafeDynamicImport(() =>
         config.featureToggles.dashboardSceneSolo
           ? import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard-scene/solo/SoloPanelPage')
-          : import(/* webpackChunkName: "SoloPanelPage" */ '../features/dashboard/containers/SoloPanelPage')
+          : import(/* webpackChunkName: "SoloPanelPageOld" */ '../features/dashboard/containers/SoloPanelPage')
       ),
     },
     // This route handles embedding of snapshot/scripted dashboard panels

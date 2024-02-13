@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
+// InMemory is a registry that only allows a single version of a plugin to be registered at a time.
 type InMemory struct {
 	store map[string]*plugins.Plugin
 	alias map[string]*plugins.Plugin
@@ -25,7 +26,7 @@ func NewInMemory() *InMemory {
 	}
 }
 
-func (i *InMemory) Plugin(_ context.Context, pluginID string) (*plugins.Plugin, bool) {
+func (i *InMemory) Plugin(_ context.Context, pluginID, _ string) (*plugins.Plugin, bool) {
 	return i.plugin(pluginID)
 }
 
@@ -56,7 +57,7 @@ func (i *InMemory) Add(_ context.Context, p *plugins.Plugin) error {
 	return nil
 }
 
-func (i *InMemory) Remove(_ context.Context, pluginID string) error {
+func (i *InMemory) Remove(_ context.Context, pluginID, _ string) error {
 	p, ok := i.plugin(pluginID)
 	if !ok {
 		return fmt.Errorf("plugin %s is not registered", pluginID)
