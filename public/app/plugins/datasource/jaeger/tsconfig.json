@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "types": ["jest", "@testing-library/jest-dom"],
+    "types": ["jest", "@testing-library/jest-dom"]
   },
   "extends": "@grafana/plugin-configs/tsconfig.json",
-  "include": ["."],
+  "include": ["."]
 }
