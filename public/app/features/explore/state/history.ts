@@ -65,25 +65,29 @@ export const addHistoryItem = (
   datasourceUid: string,
   datasourceName: string,
   queries: DataQuery[],
-  muteAllErrorsAndWarnings: boolean
+  hideAllErrorsAndWarnings: boolean
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    const { richHistoryStorageFull, limitExceeded } = await addToRichHistory(
+    const showNotif = hideAllErrorsAndWarnings
+      ? { quotaExceededError: false, limitExceededWarning: false, otherErrors: false }
+      : {
+          quotaExceededError: !getState().explore.richHistoryStorageFull,
+          limitExceededWarning: !getState().explore.richHistoryLimitExceededWarningShown,
+        };
+    const { richHistoryStorageFull, limitExceeded } = await addToRichHistory({
       localOverride,
-      datasourceUid,
-      datasourceName,
+      datasource: { uid: datasourceUid, name: datasourceName },
       queries,
-      false,
-      '',
-      muteAllErrorsAndWarnings ? false : !getState().explore.richHistoryStorageFull,
-      muteAllErrorsAndWarnings ? false : !getState().explore.richHistoryLimitExceededWarningShown,
-      muteAllErrorsAndWarnings
-    );
-    if (!muteAllErrorsAndWarnings && richHistoryStorageFull) {
-      dispatch(richHistoryStorageFullAction());
-    }
-    if (!muteAllErrorsAndWarnings && limitExceeded) {
-      dispatch(richHistoryLimitExceededAction());
+      starred: false,
+      showNotif,
+    });
+    if (!hideAllErrorsAndWarnings) {
+      if (richHistoryStorageFull) {
+        dispatch(richHistoryStorageFullAction());
+      }
+      if (limitExceeded) {
+        dispatch(richHistoryLimitExceededAction());
+      }
     }
   };
 };

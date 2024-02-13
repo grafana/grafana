@@ -109,17 +109,13 @@ describe('richHistory', () => {
 
     it('should append query to query history', async () => {
       Date.now = jest.fn(() => 2);
-      const { limitExceeded, richHistoryStorageFull } = await addToRichHistory(
-        false,
-        mock.testDatasourceUid,
-        mock.testDatasourceName,
-        mock.testQueries,
-        mock.testStarred,
-        mock.testComment,
-        true,
-        true,
-        false
-      );
+      const { limitExceeded, richHistoryStorageFull } = await addToRichHistory({
+        localOverride: false,
+        datasource: { uid: mock.testDatasourceUid, name: mock.testDatasourceName },
+        queries: mock.testQueries,
+        starred: mock.testStarred,
+        comment: mock.testComment,
+      });
       expect(limitExceeded).toBeFalsy();
       expect(richHistoryStorageFull).toBeFalsy();
       expect(richHistoryStorageMock.addToRichHistory).toBeCalledWith({
@@ -144,17 +140,13 @@ describe('richHistory', () => {
         });
       });
 
-      const { richHistoryStorageFull, limitExceeded } = await addToRichHistory(
-        false,
-        mock.testDatasourceUid,
-        mock.testDatasourceName,
-        mock.testQueries,
-        mock.testStarred,
-        mock.testComment,
-        true,
-        true,
-        false
-      );
+      const { richHistoryStorageFull, limitExceeded } = await addToRichHistory({
+        localOverride: false,
+        datasource: { uid: mock.testDatasourceUid, name: mock.testDatasourceName },
+        queries: mock.testQueries,
+        starred: mock.testStarred,
+        comment: mock.testComment,
+      });
       expect(richHistoryStorageFull).toBeFalsy();
       expect(limitExceeded).toBeTruthy();
     });
