@@ -75,6 +75,7 @@ export function LogsTable(props: Props) {
             dataFrame: sortedFrame!,
           });
         };
+        //cellProps.style?.justifyContent
         field.config = {
           ...field.config,
           custom: {

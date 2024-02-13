@@ -59,6 +59,8 @@ export const DefaultCell = (props: TableCellProps) => {
     } else if (justifyContent === 'center') {
       cellProps.style = { ...cellProps.style, textAlign: 'center' };
     }
+  } else {
+    console.log('typeof vlaue', typeof value, value);
   }
 
   return (
