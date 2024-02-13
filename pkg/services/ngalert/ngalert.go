@@ -301,6 +301,7 @@ func (ng *AlertNG) init() error {
 		DoNotSaveNormalState:           ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoNormalState),
 		ApplyNoDataAndErrorToAllStates: ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingNoDataErrorExecution),
 		MaxStateSaveConcurrency:        ng.Cfg.UnifiedAlerting.MaxStateSaveConcurrency,
+		RulesPerRuleGroupLimit:         ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit,
 		Tracer:                         ng.tracer,
 		Log:                            log.New("ngalert.state.manager"),
 	}
@@ -330,7 +331,8 @@ func (ng *AlertNG) init() error {
 	muteTimingService := provisioning.NewMuteTimingService(ng.store, ng.store, ng.store, ng.Log)
 	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.dashboardService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
-		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()), ng.Log)
+		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
+		ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit, ng.Log)
 
 	ng.api = &api.API{
 		Cfg:                  ng.Cfg,

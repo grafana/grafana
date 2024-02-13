@@ -101,6 +101,7 @@ type UnifiedAlertingSettings struct {
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency   int
 	StatePeriodicSaveInterval time.Duration
+	RulesPerRuleGroupLimit    int64
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
@@ -351,6 +352,9 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	if uaMinInterval > uaCfg.DefaultRuleEvaluationInterval {
 		uaCfg.DefaultRuleEvaluationInterval = uaMinInterval
 	}
+
+	quotas := iniFile.Section("quota")
+	uaCfg.RulesPerRuleGroupLimit = quotas.Key("alerting_rule_group_rules").MustInt64(100)
 
 	remoteAlertmanager := iniFile.Section("remote.alertmanager")
 	uaCfgRemoteAM := RemoteAlertmanagerSettings{

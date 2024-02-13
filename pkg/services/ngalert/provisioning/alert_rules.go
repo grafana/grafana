@@ -17,6 +17,7 @@ import (
 type AlertRuleService struct {
 	defaultIntervalSeconds int64
 	baseIntervalSeconds    int64
+	rulesPerRuleGroupLimit int64
 	ruleStore              RuleStore
 	provenanceStore        ProvisioningStore
 	dashboardService       dashboards.DashboardService
@@ -32,10 +33,12 @@ func NewAlertRuleService(ruleStore RuleStore,
 	xact TransactionManager,
 	defaultIntervalSeconds int64,
 	baseIntervalSeconds int64,
+	rulesPerRuleGroupLimit int64,
 	log log.Logger) *AlertRuleService {
 	return &AlertRuleService{
 		defaultIntervalSeconds: defaultIntervalSeconds,
 		baseIntervalSeconds:    baseIntervalSeconds,
+		rulesPerRuleGroupLimit: rulesPerRuleGroupLimit,
 		ruleStore:              ruleStore,
 		provenanceStore:        provenanceStore,
 		dashboardService:       dashboardService,
@@ -246,6 +249,10 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 				group.Rules = append(group.Rules, *r)
 			}
 		}
+	}
+
+	if err := service.checkGroupLimits(group); err != nil {
+		return fmt.Errorf("write rejected due to exceeded limits: %w", err)
 	}
 
 	key := models.AlertRuleGroupKey{
@@ -532,4 +539,16 @@ func withoutNilAlertRules(ptrs []*models.AlertRule) []models.AlertRule {
 		}
 	}
 	return result
+}
+
+func (service *AlertRuleService) checkGroupLimits(group models.AlertRuleGroup) error {
+	if service.rulesPerRuleGroupLimit > 0 && int64(len(group.Rules)) > service.rulesPerRuleGroupLimit {
+		service.log.Warn("Large rule group was edited. Large groups are discouraged and may be rejected in the future.",
+			"limit", service.rulesPerRuleGroupLimit,
+			"actual", len(group.Rules),
+			"group", group.Title,
+		)
+	}
+
+	return nil
 }
