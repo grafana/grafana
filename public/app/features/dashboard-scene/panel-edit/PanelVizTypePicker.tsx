@@ -92,9 +92,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderBottom: 'none',
     borderTopLeftRadius: theme.shape.radius.default,
   }),
-  customFieldMargin: css`
-    margin-bottom: ${theme.spacing(1)};
-  `,
+  customFieldMargin: css({
+    marginBottom: theme.spacing(1),
+  }),
   filter: css({
     minHeight: theme.spacing(4),
   }),
