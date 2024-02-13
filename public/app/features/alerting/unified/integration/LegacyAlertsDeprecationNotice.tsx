@@ -2,6 +2,7 @@ import { isEmpty } from 'lodash';
 import React from 'react';
 import { useToggle } from 'react-use';
 
+import { config } from '@grafana/runtime';
 import { Dashboard, Panel, RowPanel } from '@grafana/schema';
 import { Alert, Collapse, Column, InteractiveTable, TextLink } from '@grafana/ui';
 
@@ -11,7 +12,14 @@ interface DeprecationNoticeProps {
   dashboard: Dashboard;
 }
 
+const usingLegacyAlerting = config.alertingEnabled && !config.unifiedAlertingEnabled;
+
 export default function LegacyAlertsDeprecationNotice({ dashboard }: DeprecationNoticeProps) {
+  // if the user is still using legacy alerting we don't need to show any notice at all – they will probably keep using legacy alerting and do not intend to upgrade.
+  if (usingLegacyAlerting) {
+    return null;
+  }
+
   const panelsWithLegacyAlerts = getLegacyAlertPanelsFromDashboard(dashboard);
 
   // don't show anything when the user has no legacy alerts defined
