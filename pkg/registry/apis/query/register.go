@@ -93,6 +93,8 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&v0alpha1.DataSourceApiServer{},
 		&v0alpha1.DataSourceApiServerList{},
 		&v0alpha1.QueryDataResponse{},
+		&v0alpha1.QueryTypeDefinition{},
+		&v0alpha1.QueryTypeDefinitionList{},
 	)
 }
 
@@ -115,6 +117,12 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 
 	storage := map[string]rest.Storage{}
 	storage[plugins.resourceInfo.StoragePath()] = plugins
+
+	expr, err := newExprStorage()
+	if err != nil {
+		return nil, err
+	}
+	storage[expr.resourceInfo.StoragePath()] = expr
 
 	apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
 	return &apiGroupInfo, nil

@@ -46,16 +46,9 @@ type GenericDataQuery struct {
 // Produce an API definition that represents map[string]any
 func (in GenericDataQuery) OpenAPIDefinition() openapi.OpenAPIDefinition {
 	s := spec.Schema{}
-	err := json.Unmarshal(query.GetCommonJSONSchema(), &s)
-	if err != nil {
-		s = spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type:                 []string{"object"},
-				AdditionalProperties: &spec.SchemaOrBool{Allows: true},
-			},
-		}
-	}
-	// Keep the unknown fields
+	_ = json.Unmarshal(query.GetCommonJSONSchema(), &s)
+	s.SchemaProps.Type = []string{"object"}
+	s.SchemaProps.AdditionalProperties = &spec.SchemaOrBool{Allows: true}
 	s.VendorExtensible = spec.VendorExtensible{
 		Extensions: map[string]interface{}{
 			"x-kubernetes-preserve-unknown-fields": true,
@@ -70,7 +63,6 @@ func (in *GenericDataQuery) DeepCopy() *GenericDataQuery {
 		return nil
 	}
 	out := new(GenericDataQuery)
-
 	jj, err := json.Marshal(in)
 	if err != nil {
 		json.Unmarshal(jj, out)

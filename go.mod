@@ -63,7 +63,7 @@ require (
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.23.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.12.0 // @grafana/partner-datasources
-	github.com/grafana/grafana-plugin-sdk-go v0.210.1-0.20240213000238-0ec8629d41bc // @grafana/plugins-platform-backend
+	github.com/grafana/grafana-plugin-sdk-go v0.210.1-0.20240213051238-fa45a9035c94 // @grafana/plugins-platform-backend
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // @grafana/backend-platform
 	github.com/hashicorp/go-hclog v1.6.2 // @grafana/plugins-platform-backend
 	github.com/hashicorp/go-plugin v1.6.0 // @grafana/plugins-platform-backend
@@ -487,8 +487,11 @@ require github.com/spyzhov/ajson v0.9.0 // @grafana/grafana-app-platform-squad
 require github.com/fullstorydev/grpchan v1.1.1 // @grafana/backend-platform
 
 require (
+	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/bufbuild/protocompile v0.4.0 // indirect
+	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/grafana/sqlds/v3 v3.2.0 // indirect
+	github.com/invopop/jsonschema v0.12.0 // indirect
 	github.com/jhump/protoreflect v1.15.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mithrandie/csvq v1.17.10 // indirect
@@ -496,6 +499,7 @@ require (
 	github.com/mithrandie/go-file/v2 v2.1.0 // indirect
 	github.com/mithrandie/go-text v1.5.4 // indirect
 	github.com/mithrandie/ternary v1.1.1 // indirect
+	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
