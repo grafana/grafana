@@ -14,7 +14,7 @@ export const xyChartMigrationHandler = (panel: PanelModel): Partial<Options> => 
       // Update x / y to new format using field matchers when in manual mode
       const xField = series.x;
       const yField = series.y;
-      const excludeYFields = series?.dims?.exclude;
+      const excludeYFields = panel.options?.dims?.exclude;
       const seriesSizeFixed = series?.size?.fixed;
       const seriesSizeField = series?.size?.field;
       const seriesColorFixed = series?.color?.fixed;
