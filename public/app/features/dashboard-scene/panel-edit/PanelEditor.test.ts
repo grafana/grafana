@@ -45,12 +45,12 @@ describe('PanelEditor', () => {
         }),
       });
 
-      const deactive = activateFullSceneTree(scene);
+      const deactivate = activateFullSceneTree(scene);
 
       const vizManager = editScene.state.panelRef.resolve();
       vizManager.state.panel.setState({ title: 'changed title' });
 
-      deactive();
+      deactivate();
 
       const updatedPanel = gridItem.state.body as VizPanel;
       expect(updatedPanel?.state.title).toBe('changed title');
