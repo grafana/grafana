@@ -9,9 +9,9 @@ import {
   FieldValidationMessage,
   IconButton,
   InputControl,
+  Select,
   Stack,
   TextLink,
-  VirtualizedSelect,
   useStyles2,
 } from '@grafana/ui';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
@@ -29,6 +29,8 @@ export interface ContactPointSelectorProps {
   onSelectContactPoint: (contactPoint?: ContactPointWithMetadata) => void;
   refetchReceivers: () => Promise<unknown>;
 }
+
+const MAX_CONTACT_POINTS_RENDERED = 500;
 
 export function ContactPointSelector({
   alertManager,
@@ -81,7 +83,8 @@ export function ContactPointSelector({
             render={({ field: { onChange, ref, ...field }, fieldState: { error } }) => (
               <>
                 <div className={styles.contactPointsSelector}>
-                  <VirtualizedSelect<ContactPointWithMetadata>
+                  <Select<ContactPointWithMetadata>
+                    virtualized={options.length > MAX_CONTACT_POINTS_RENDERED}
                     aria-label="Contact point"
                     defaultValue={selectedContactPointSelectableValue}
                     onChange={(value: SelectableValue<ContactPointWithMetadata>, _: ActionMeta) => {
