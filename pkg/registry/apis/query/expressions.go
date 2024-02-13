@@ -100,6 +100,8 @@ func (b *QueryAPIBuilder) handleExpressionsSchema(w http.ResponseWriter, r *http
 		},
 	}
 
+	queryTypeEnum := spec.StringProperty().WithDescription("Query type selector")
+
 	common := make(map[string]spec.Schema)
 	for k, v := range generic.Properties {
 		if k == "queryType" {
@@ -133,6 +135,7 @@ func (b *QueryAPIBuilder) handleExpressionsSchema(w http.ResponseWriter, r *http
 			if ver.Version != "" {
 				key = fmt.Sprintf("%s/%s", qt.Name, ver.Version)
 			}
+			queryTypeEnum.Enum = append(queryTypeEnum.Enum, key)
 
 			node := spec.Schema{}
 			_ = json.Unmarshal(ver.Schema, &node)
@@ -154,7 +157,7 @@ func (b *QueryAPIBuilder) handleExpressionsSchema(w http.ResponseWriter, r *http
 		}
 	}
 
-	//b.handler.QueryTypeDefinitionList()
+	s.Properties["queryType"] = *queryTypeEnum
 
 	json.NewEncoder(w).Encode(s)
 }

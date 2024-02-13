@@ -2510,8 +2510,8 @@ github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWm
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gotestyourself/gotestyourself v1.3.0/go.mod h1:zZKM6oeNM8k+FRljX1mnzVYeS8wiGgQyvST1/GafPbY=
 github.com/gotestyourself/gotestyourself v2.2.0+incompatible/go.mod h1:zZKM6oeNM8k+FRljX1mnzVYeS8wiGgQyvST1/GafPbY=
-github.com/grafana/alerting v0.0.0-20240208110638-b1d7d5f9cbf2 h1:a85edeQM7SXGcVmlQ1QAC2nE++LWS+Q4Q/lmc/jBG7k=
-github.com/grafana/alerting v0.0.0-20240208110638-b1d7d5f9cbf2/go.mod h1:brTFeACal/cSZAR8XO/4LPKs7rzNfS86okl6QjSP1eY=
+github.com/grafana/alerting v0.0.0-20240213130827-92f64f0f2a12 h1:QepaY7wUP3U1hFiU1Lnv+tymnovzK21KQ/evMDpYsEw=
+github.com/grafana/alerting v0.0.0-20240213130827-92f64f0f2a12/go.mod h1:brTFeACal/cSZAR8XO/4LPKs7rzNfS86okl6QjSP1eY=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
 github.com/grafana/cue v0.0.0-20230926092038-971951014e3f h1:TmYAMnqg3d5KYEAaT6PtTguL2GjLfvr6wnAX8Azw6tQ=
@@ -2535,10 +2535,6 @@ github.com/grafana/grafana-google-sdk-go v0.1.0/go.mod h1:Vo2TKWfDVmNTELBUM+3lkr
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 h1:r+mU5bGMzcXCRVAuOrTn54S80qbfVkvTdUJZfSfTNbs=
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
-github.com/grafana/grafana-plugin-sdk-go v0.210.1-0.20240213031029-556b81690010 h1:0dCV8Vw0Qw65GdNzHHPGEO64h9CZBuy2lJZmKlrEv44=
-github.com/grafana/grafana-plugin-sdk-go v0.210.1-0.20240213031029-556b81690010/go.mod h1:udcOq6XFvGNKu427UuCSGOO1bMT+JPSa1Cz4YE2xB0o=
-github.com/grafana/grafana-plugin-sdk-go v0.210.1-0.20240213051238-fa45a9035c94 h1:QN/LSoIYPlRyLsXEpxEvCGd0xpQ10zUtIP9mvqCChEg=
-github.com/grafana/grafana-plugin-sdk-go v0.210.1-0.20240213051238-fa45a9035c94/go.mod h1:udcOq6XFvGNKu427UuCSGOO1bMT+JPSa1Cz4YE2xB0o=
 github.com/grafana/grafana-plugin-sdk-go v0.210.1-0.20240213072556-645173e3f633 h1:UevVBqKfz4SPREDyRGm5OmTQ0ooRfxqEgclK1uaUKac=
 github.com/grafana/grafana-plugin-sdk-go v0.210.1-0.20240213072556-645173e3f633/go.mod h1:udcOq6XFvGNKu427UuCSGOO1bMT+JPSa1Cz4YE2xB0o=
 github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 h1:1YNoeIhii4UIIQpCPU+EXidnqf449d0C3ZntAEt4KSo=

@@ -9,6 +9,7 @@ import { VersionList } from '../components/VersionList';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { CatalogPlugin, Permission, PluginTabIds } from '../types';
 
+import { APIServerInfo } from './APIServerInfo';
 import { AppConfigCtrlWrapper } from './AppConfigWrapper';
 import { PluginDashboards } from './PluginDashboards';
 import { PluginUsage } from './PluginUsage';
@@ -56,6 +57,14 @@ export function PluginDetailsBody({ plugin, queryParams, pageId }: Props): JSX.E
     return (
       <div className={styles.container}>
         <VersionList versions={plugin.details?.versions} installedVersion={plugin.installedVersion} />
+      </div>
+    );
+  }
+
+  if (pageId === PluginTabIds.APISERVER) {
+    return (
+      <div className={styles.container}>
+        <APIServerInfo plugin={plugin} />
       </div>
     );
   }
