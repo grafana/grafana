@@ -88,7 +88,7 @@ export function LogsTable(props: Props) {
           filterable: isFieldFilterable(field, logsFrame?.bodyField.name ?? '', logsFrame?.timeField.name ?? ''),
         };
 
-        // If it's a string, then try to guess for a better type for numeric support in derived fields
+        // If it's a string, then try to guess for a better type for numeric support in viz
         field.type = field.type === FieldType.string ? guessFieldTypeForField(field) ?? FieldType.string : field.type;
       }
 
