@@ -16,6 +16,7 @@ import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
+import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { VizPanelManager } from '../VizPanelManager';
 
 import { PanelDataPaneTabState, PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
@@ -52,6 +53,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   buildQueryOptions(): QueryGroupOptions {
     const panelManager = this._panelManager;
     const panelObj = this._panelManager.state.panel;
+    const queryCachingOptions = dashboardSceneGraph.getPanelCacheOptionsBehavior(panelObj);
     const queryRunner = this._panelManager.queryRunner;
     const timeRangeObj = sceneGraph.getTimeRange(panelObj);
 
@@ -72,9 +74,6 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     let queries: QueryGroupOptions['queries'] = queryRunner.state.queries;
 
     return {
-      // TODO
-      // cacheTimeout: dsSettings?.meta.queryOptions?.cacheTimeout ? panel.cacheTimeout : undefined,
-      // queryCachingTTL: dsSettings?.cachingConfig?.enabled ? panel.queryCachingTTL : undefined,
       dataSource: {
         default: panelManager.state.dsSettings?.isDefault,
         type: panelManager.state.dsSettings?.type,
@@ -84,6 +83,12 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
       maxDataPoints: queryRunner.state.maxDataPoints,
       minInterval: queryRunner.state.minInterval,
       timeRange: timeRangeOpts,
+      cacheTimeout: panelManager.state.dsSettings?.meta.queryOptions?.cacheTimeout
+        ? queryCachingOptions.state.cacheTimeout
+        : undefined,
+      queryCachingTTL: panelManager.state.dsSettings?.cachingConfig?.enabled
+        ? queryCachingOptions.state.queryCachingTTL
+        : undefined,
     };
   }
 

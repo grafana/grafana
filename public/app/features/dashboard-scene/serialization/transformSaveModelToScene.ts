@@ -42,6 +42,7 @@ import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
+import { PanelQueryCachingOptionsBehavior } from '../scene/PanelQueryCachingOptionsBehavior';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
@@ -434,6 +435,12 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     // To be replaced with it's own option persited option instead derived
     hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
     $data: createPanelDataProvider(panel),
+    $behaviors: [
+      new PanelQueryCachingOptionsBehavior({
+        cacheTimeout: panel.cacheTimeout,
+        queryCachingTTL: panel.queryCachingTTL,
+      }),
+    ],
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),

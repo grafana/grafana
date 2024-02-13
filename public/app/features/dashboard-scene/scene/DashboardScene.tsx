@@ -46,6 +46,7 @@ import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
 import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import { forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel, isPanelClone } from '../utils/utils';
@@ -554,6 +555,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public enrichDataRequest(sceneObject: SceneObject): Partial<DataQueryRequest> {
     const panel = getClosestVizPanel(sceneObject);
     let panelId = 0;
+    const cachingOptions: Pick<DataQueryRequest, 'cacheTimeout' | 'queryCachingTTL'> = {};
 
     if (panel && panel.state.key) {
       if (isPanelClone(panel.state.key)) {
@@ -561,6 +563,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       } else {
         panelId = getPanelIdForVizPanel(panel);
       }
+
+      const cachingOptionsBehavior = dashboardSceneGraph.getPanelCacheOptionsBehavior(panel);
+      cachingOptions.cacheTimeout = cachingOptionsBehavior.state.cacheTimeout;
+      cachingOptions.queryCachingTTL = cachingOptionsBehavior.state.queryCachingTTL;
     }
 
     return {
@@ -568,6 +574,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboardUID: this.state.uid,
       panelId,
       panelPluginType: panel?.state.pluginId,
+      ...cachingOptions,
     };
   }
 

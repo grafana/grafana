@@ -7,6 +7,7 @@ import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 
 import { panelMenuBehavior } from './PanelMenuBehavior';
+import { PanelQueryCachingOptionsBehavior } from './PanelQueryCachingOptionsBehavior';
 
 interface LibraryVizPanelState extends SceneObjectState {
   // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
@@ -45,6 +46,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
     try {
       const libPanel = await getLibraryPanel(this.state.uid, true);
       const libPanelModel = new PanelModel(libPanel.model);
+
       vizPanel.setState({
         options: libPanelModel.options ?? {},
         fieldConfig: libPanelModel.fieldConfig,
@@ -52,6 +54,12 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
         displayMode: libPanelModel.transparent ? 'transparent' : undefined,
         description: libPanelModel.description,
         $data: createPanelDataProvider(libPanelModel),
+        $behaviors: [
+          new PanelQueryCachingOptionsBehavior({
+            cacheTimeout: libPanelModel.cacheTimeout,
+            queryCachingTTL: libPanelModel.queryCachingTTL,
+          }),
+        ],
       });
     } catch (err) {
       vizPanel.setState({

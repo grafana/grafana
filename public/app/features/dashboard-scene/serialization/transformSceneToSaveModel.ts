@@ -265,6 +265,7 @@ function vizPanelDataToPanel(
 
   const panel: Pick<Panel, 'datasource' | 'targets' | 'maxDataPoints' | 'transformations'> = {};
   const queryRunner = getQueryRunnerFor(vizPanel);
+  const cachingOptions = dashboardSceneGraph.getPanelCacheOptionsBehavior(vizPanel);
 
   if (queryRunner) {
     panel.targets = queryRunner.state.queries;
@@ -293,6 +294,15 @@ function vizPanelDataToPanel(
         snapshot: data,
       },
     ];
+  }
+
+  if (cachingOptions.state.cacheTimeout) {
+    // @ts-expect-error Graphite-specific option, not sure we should add it to schema
+    panel.cacheTimeout = cachingOptions.state.cacheTimeout;
+  }
+  if (cachingOptions.state.queryCachingTTL) {
+    // @ts-expect-error enterprise/cloud option, not sure we should add it to schema
+    panel.queryCachingTTL = cachingOptions.state.queryCachingTTL;
   }
 
   return panel;

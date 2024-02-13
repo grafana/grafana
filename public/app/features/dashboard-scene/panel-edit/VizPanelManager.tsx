@@ -33,7 +33,9 @@ import { updateQueries } from 'app/features/query/state/updateQueries';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
+import { PanelQueryCachingOptionsBehaviorState } from '../scene/PanelQueryCachingOptionsBehavior';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
+import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 interface VizPanelManagerState extends SceneObjectState {
@@ -199,11 +201,14 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
   public changeQueryOptions(options: QueryGroupOptions) {
     const panelObj = this.state.panel;
+    const cacheOptionsBehavior = dashboardSceneGraph.getPanelCacheOptionsBehavior(panelObj);
+
     const dataObj = this.queryRunner;
     let timeRangeObj = sceneGraph.getTimeRange(panelObj);
 
     const dataObjStateUpdate: Partial<SceneQueryRunner['state']> = {};
     const timeRangeObjStateUpdate: Partial<PanelTimeRangeState> = {};
+    const cacheOptionsObjStateUpdate: Partial<PanelQueryCachingOptionsBehaviorState> = {};
 
     if (options.maxDataPoints !== dataObj.state.maxDataPoints) {
       dataObjStateUpdate.maxDataPoints = options.maxDataPoints ?? undefined;
@@ -229,6 +234,15 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       panelObj.setState({ $timeRange: new PanelTimeRange(timeRangeObjStateUpdate) });
     }
 
+    if (options.cacheTimeout !== cacheOptionsBehavior.state.cacheTimeout) {
+      cacheOptionsObjStateUpdate.cacheTimeout = options.cacheTimeout;
+    }
+
+    if (options.queryCachingTTL !== cacheOptionsBehavior.state.queryCachingTTL) {
+      cacheOptionsObjStateUpdate.queryCachingTTL = options.queryCachingTTL;
+    }
+
+    cacheOptionsBehavior.setState(cacheOptionsObjStateUpdate);
     dataObj.setState(dataObjStateUpdate);
     dataObj.runQueries();
   }

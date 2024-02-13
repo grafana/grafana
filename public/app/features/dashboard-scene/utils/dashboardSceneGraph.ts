@@ -11,6 +11,7 @@ import {
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks } from '../scene/PanelLinks';
+import { PanelQueryCachingOptionsBehavior } from '../scene/PanelQueryCachingOptionsBehavior';
 
 function getTimePicker(scene: DashboardScene) {
   const dashboardControls = getDashboardControls(scene);
@@ -57,6 +58,15 @@ function getPanelLinks(panel: VizPanel) {
   throw new Error('VizPanelLinks links not found');
 }
 
+function getPanelCacheOptionsBehavior(panel: VizPanel) {
+  const behavior = panel.state.$behaviors?.find((b) => b instanceof PanelQueryCachingOptionsBehavior);
+  if (behavior instanceof PanelQueryCachingOptionsBehavior) {
+    return behavior;
+  }
+
+  throw new Error('PanelQueryCachingOptionsBehavior not found');
+}
+
 function getVizPanels(scene: DashboardScene): VizPanel[] {
   const panels: VizPanel[] = [];
 
@@ -94,6 +104,7 @@ export const dashboardSceneGraph = {
   getRefreshPicker,
   getDashboardControls,
   getPanelLinks,
+  getPanelCacheOptionsBehavior,
   getVizPanels,
   getDataLayers,
 };
