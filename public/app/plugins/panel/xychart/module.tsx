@@ -6,9 +6,11 @@ import { DynamicEditor } from './DynamicEditor';
 import { ManualEditor } from './ManualEditor';
 import { XYChartPanel } from './XYChartPanel';
 import { getScatterFieldConfig } from './config';
+import { xyChartMigrationHandler } from './migrations';
 import { Options, FieldConfig, defaultFieldConfig } from './panelcfg.gen';
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel)
+  .setMigrationHandler(xyChartMigrationHandler)
   .useFieldConfig(getScatterFieldConfig(defaultFieldConfig))
   .setPanelOptions((builder) => {
     builder
