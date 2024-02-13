@@ -194,7 +194,6 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	// - /_mapping for fetching index mapping, e.g. requests going to `index/_mapping`
 	// - _msearch for executing getTerms queries
 	// - _mapping for fetching "root" index mappings
-	// If adding a path with raw query params, ensure that params are correctly added, as this is not supported at the moment, as not needed.
 	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_msearch" && req.Path != "_mapping" {
 		logger.Error("Invalid resource path", "path", req.Path)
 		return fmt.Errorf("invalid resource URL: %s", req.Path)
