@@ -21,6 +21,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -30,7 +31,7 @@ import (
 )
 
 type NotificationSettingsValidatorProvider interface {
-	Validator(ctx context.Context, orgID int64) (ngmodels.NotificationSettingsValidator, error)
+	Validator(ctx context.Context, orgID int64) (notifier.NotificationSettingsValidator, error)
 }
 
 type ConditionValidator interface {
@@ -309,9 +310,18 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			return err
 		}
 
-		notificationSettingsChanged, err = store.ValidateNotificationsInGroupDelta(c.Req.Context(), groupChanges, srv.nsValidatorProvider)
-		if err != nil {
-			return err
+		newOrUpdatedNotificationSettings := groupChanges.NewOrUpdatedNotificationSettings()
+		if len(newOrUpdatedNotificationSettings) > 0 {
+			notificationSettingsChanged = true
+			validator, err := srv.nsValidatorProvider.Validator(c.Req.Context(), groupChanges.GroupKey.OrgID)
+			if err != nil {
+				return err
+			}
+			for _, s := range newOrUpdatedNotificationSettings {
+				if err := validator.Validate(s); err != nil {
+					return errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
+				}
+			}
 		}
 
 		if err := verifyProvisionedRulesNotAffected(c.Req.Context(), srv.provenanceStore, c.SignedInUser.GetOrgID(), groupChanges); err != nil {

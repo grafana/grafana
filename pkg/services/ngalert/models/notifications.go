@@ -165,8 +165,3 @@ func (s *NotificationSettings) Fingerprint() data.Fingerprint {
 	}
 	return data.Fingerprint(h.Sum64())
 }
-
-// NotificationSettingsValidator validates NotificationSettings against the current Alertmanager configuration
-type NotificationSettingsValidator interface {
-	Validate(s NotificationSettings) error
-}

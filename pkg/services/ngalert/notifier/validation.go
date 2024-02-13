@@ -12,7 +12,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
-type NotificationSettingsValidator struct {
+// NotificationSettingsValidator validates NotificationSettings against the current Alertmanager configuration
+type NotificationSettingsValidator interface {
+	Validate(s models.NotificationSettings) error
+}
+
+// staticValidator is a NotificationSettingsValidator that uses static pre-fetched values for available receivers and mute timings.
+type staticValidator struct {
 	availableReceivers   map[string]struct{}
 	availableMuteTimings map[string]struct{}
 }
@@ -26,14 +32,14 @@ type apiAlertingConfig interface {
 
 // NewNotificationSettingsValidator creates a new NotificationSettingsValidator from the given apiAlertingConfig.
 func NewNotificationSettingsValidator(am apiAlertingConfig) NotificationSettingsValidator {
-	return NotificationSettingsValidator{
+	return staticValidator{
 		availableReceivers:   am.ReceiverNames(),
 		availableMuteTimings: am.MuteTimeIntervalNames(),
 	}
 }
 
-// Validate checks that models.NotificationSettings is valid and refers to the available receiver and mute timings
-func (n NotificationSettingsValidator) Validate(settings models.NotificationSettings) error {
+// Validate checks that models.NotificationSettings is valid and references existing receivers and mute timings.
+func (n staticValidator) Validate(settings models.NotificationSettings) error {
 	if err := settings.Validate(); err != nil {
 		return err
 	}
@@ -49,46 +55,52 @@ func (n NotificationSettingsValidator) Validate(settings models.NotificationSett
 	return errors.Join(errs...)
 }
 
-type NotificationSettingsValidationService struct {
+// NotificationSettingsValidatorProvider provides a NotificationSettingsValidator for a given orgID.
+type NotificationSettingsValidatorProvider interface {
+	Validator(ctx context.Context, orgID int64) (NotificationSettingsValidator, error)
+}
+
+// notificationSettingsValidationService provides a new NotificationSettingsValidator for a given orgID by loading the latest Alertmanager configuration.
+type notificationSettingsValidationService struct {
 	store store.AlertingStore
 }
 
-func NewNotificationSettingsValidationService(store store.AlertingStore) *NotificationSettingsValidationService {
-	return &NotificationSettingsValidationService{
+func NewNotificationSettingsValidationService(store store.AlertingStore) NotificationSettingsValidatorProvider {
+	return &notificationSettingsValidationService{
 		store: store,
 	}
 }
 
 // Validator returns a NotificationSettingsValidator using the alertmanager configuration from the given orgID.
-func (v *NotificationSettingsValidationService) Validator(ctx context.Context, orgID int64) (models.NotificationSettingsValidator, error) {
+func (v *notificationSettingsValidationService) Validator(ctx context.Context, orgID int64) (NotificationSettingsValidator, error) {
 	rawCfg, err := v.store.GetLatestAlertmanagerConfiguration(ctx, orgID)
 	if err != nil {
-		return NotificationSettingsValidator{}, err
+		return staticValidator{}, err
 	}
 	cfg, err := Load([]byte(rawCfg.AlertmanagerConfiguration))
 	if err != nil {
-		return NotificationSettingsValidator{}, err
+		return staticValidator{}, err
 	}
 	log.New("ngalert.notifier.validator").FromContext(ctx).Debug("Create validator from Alertmanager configuration", "hash", rawCfg.ConfigurationHash)
 	return NewNotificationSettingsValidator(&cfg.AlertmanagerConfig), nil
 }
 
-type CachedNotificationSettingsValidationService struct {
-	srv        *NotificationSettingsValidationService
+type cachedNotificationSettingsValidationService struct {
+	srv        NotificationSettingsValidatorProvider
 	mtx        sync.Mutex
-	validators map[int64]models.NotificationSettingsValidator
+	validators map[int64]NotificationSettingsValidator
 }
 
-func NewCachedNotificationSettingsValidationService(store store.AlertingStore) *CachedNotificationSettingsValidationService {
-	return &CachedNotificationSettingsValidationService{
+func NewCachedNotificationSettingsValidationService(store store.AlertingStore) NotificationSettingsValidatorProvider {
+	return &cachedNotificationSettingsValidationService{
 		srv:        NewNotificationSettingsValidationService(store),
 		mtx:        sync.Mutex{},
-		validators: map[int64]models.NotificationSettingsValidator{},
+		validators: map[int64]NotificationSettingsValidator{},
 	}
 }
 
 // Validator returns a NotificationSettingsValidator using the alertmanager configuration from the given orgID.
-func (v *CachedNotificationSettingsValidationService) Validator(ctx context.Context, orgID int64) (models.NotificationSettingsValidator, error) {
+func (v *cachedNotificationSettingsValidationService) Validator(ctx context.Context, orgID int64) (NotificationSettingsValidator, error) {
 	v.mtx.Lock()
 	defer v.mtx.Unlock()
 

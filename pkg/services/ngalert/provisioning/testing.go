@@ -144,6 +144,6 @@ func (a *alertmanagerConfigStoreFake) Save(ctx context.Context, revision *cfgRev
 type NotificationSettingsValidatorProviderFake struct {
 }
 
-func (n *NotificationSettingsValidatorProviderFake) Validator(ctx context.Context, orgID int64) (models.NotificationSettingsValidator, error) {
+func (n *NotificationSettingsValidatorProviderFake) Validator(ctx context.Context, orgID int64) (notifier.NotificationSettingsValidator, error) {
 	return notifier.NoValidation{}, nil
 }

@@ -9,13 +9,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type NotificationSettingsValidatorProvider interface {
-	Validator(ctx context.Context, orgID int64) (models.NotificationSettingsValidator, error)
+	Validator(ctx context.Context, orgID int64) (notifier.NotificationSettingsValidator, error)
 }
 
 type AlertRuleService struct {
@@ -292,9 +293,17 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 		return nil
 	}
 
-	_, err = store.ValidateNotificationsInGroupDelta(ctx, delta, service.nsValidatorProvider)
-	if err != nil {
-		return err
+	newOrUpdatedNotificationSettings := delta.NewOrUpdatedNotificationSettings()
+	if len(newOrUpdatedNotificationSettings) > 0 {
+		validator, err := service.nsValidatorProvider.Validator(ctx, delta.GroupKey.OrgID)
+		if err != nil {
+			return err
+		}
+		for _, s := range newOrUpdatedNotificationSettings {
+			if err := validator.Validate(s); err != nil {
+				return errors.Join(models.ErrAlertRuleFailedValidation, err)
+			}
+		}
 	}
 
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
