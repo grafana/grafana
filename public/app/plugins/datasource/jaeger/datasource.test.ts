@@ -12,7 +12,6 @@ import {
 import { BackendSrv } from '@grafana/runtime';
 
 import { createFetchResponse } from './helpers/createFetchResponse';
-import { TimeSrv } from './_importedDependencies/utils/timeSrv';
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { JaegerDatasource, JaegerJsonData } from './datasource';
 import mockJson from './mockJsonResponse.json';
@@ -38,15 +37,6 @@ jest.mock('@grafana/runtime', () => ({
     },
   }),
 }));
-
-const timeSrvStub = {
-  timeRange() {
-    return {
-      from: dateTime(1531468681),
-      to: dateTime(1531489712),
-    };
-  },
-} as TimeSrv;
 
 describe('JaegerDatasource', () => {
   beforeEach(() => {
@@ -123,7 +113,7 @@ describe('JaegerDatasource', () => {
 
   it('should return search results when the query type is search', async () => {
     const mock = setupFetchMock({ data: [testResponse] });
-    const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
+    const ds = new JaegerDatasource(defaultSettings);
     const response = await lastValueFrom(
       ds.query({
         ...defaultQuery,
@@ -140,7 +130,7 @@ describe('JaegerDatasource', () => {
   });
 
   it('should show the correct error message if no service name is selected', async () => {
-    const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
+    const ds = new JaegerDatasource(defaultSettings);
     const response = await lastValueFrom(
       ds.query({
         ...defaultQuery,
@@ -152,7 +142,7 @@ describe('JaegerDatasource', () => {
 
   it('should remove operation from the query when all is selected', async () => {
     const mock = setupFetchMock({ data: [testResponse] });
-    const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
+    const ds = new JaegerDatasource(defaultSettings);
     await lastValueFrom(
       ds.query({
         ...defaultQuery,
@@ -166,7 +156,7 @@ describe('JaegerDatasource', () => {
 
   it('should convert tags from logfmt format to an object', async () => {
     const mock = setupFetchMock({ data: [testResponse] });
-    const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
+    const ds = new JaegerDatasource(defaultSettings);
     await lastValueFrom(
       ds.query({
         ...defaultQuery,
@@ -180,7 +170,7 @@ describe('JaegerDatasource', () => {
 
   it('should resolve templates in traceID', async () => {
     const mock = setupFetchMock({ data: [testResponse] });
-    const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
+    const ds = new JaegerDatasource(defaultSettings);
 
     await lastValueFrom(
       ds.query({
@@ -206,7 +196,7 @@ describe('JaegerDatasource', () => {
 
   it('should resolve templates in tags', async () => {
     const mock = setupFetchMock({ data: [testResponse] });
-    const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
+    const ds = new JaegerDatasource(defaultSettings);
     await lastValueFrom(
       ds.query({
         ...defaultQuery,
@@ -226,7 +216,7 @@ describe('JaegerDatasource', () => {
 
   it('should interpolate variables correctly', async () => {
     const mock = setupFetchMock({ data: [testResponse] });
-    const ds = new JaegerDatasource(defaultSettings, timeSrvStub);
+    const ds = new JaegerDatasource(defaultSettings);
     const text = 'interpolationText';
     await lastValueFrom(
       ds.query({

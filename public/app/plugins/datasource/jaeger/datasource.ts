@@ -11,6 +11,7 @@ import {
   dateMath,
   DateTime,
   FieldType,
+  getDefaultTimeRange,
   MutableDataFrame,
   ScopedVars,
   urlUtil,
@@ -18,7 +19,6 @@ import {
 import { NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
 import { BackendSrvRequest, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
-import { getTimeSrv, TimeSrv } from './_importedDependencies/utils/timeSrv';
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { TraceIdTimeParamsOptions } from './configuration/TraceIdTimeParams';
 import { mapJaegerDependenciesResponse } from './dependencyGraphTransform';
@@ -39,7 +39,6 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
   spanBar?: SpanBarOptions;
   constructor(
     private instanceSettings: DataSourceInstanceSettings<JaegerJsonData>,
-    private readonly timeSrv: TimeSrv = getTimeSrv(),
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
@@ -67,7 +66,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
 
     // Use the internal Jaeger /dependencies API for rendering the dependency graph.
     if (target.queryType === 'dependencyGraph') {
-      const timeRange = this.timeSrv.timeRange();
+      const timeRange = options.range ?? getDefaultTimeRange();
       const endTs = getTime(timeRange.to, true) / 1000;
       const lookback = endTs - getTime(timeRange.from, false) / 1000;
       return this._request('/api/dependencies', { endTs, lookback }).pipe(map(mapJaegerDependenciesResponse));
@@ -227,10 +226,12 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
   }
 
   getTimeRange(): { start: number; end: number } {
-    const range = this.timeSrv.timeRange();
+    const endNanoSeconds = Date.now() * 1000;
+    const startNanoSeconds = endNanoSeconds - 3600 * 6 * 1000 * 1000; // 6 hours before
+
     return {
-      start: getTime(range.from, false),
-      end: getTime(range.to, true),
+      start: startNanoSeconds,
+      end: endNanoSeconds,
     };
   }
 
