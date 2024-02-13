@@ -177,4 +177,5 @@ export interface FeatureToggles {
   groupToNestedTableTransformation?: boolean;
   newPDFRendering?: boolean;
   kubernetesAggregator?: boolean;
+  groupByVariable?: boolean;
 }

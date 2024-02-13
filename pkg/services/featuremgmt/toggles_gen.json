@@ -2079,6 +2079,20 @@
         "codeowner": "@grafana/grafana-app-platform-squad",
         "requiresRestart": true
       }
+    },
+    {
+      "metadata": {
+        "name": "groupByVariable",
+        "resourceVersion": "1707830433722",
+        "creationTimestamp": "2024-02-13T13:20:33Z"
+      },
+      "spec": {
+        "description": "Enable groupBy variable support in scenes dashboards",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "hideFromAdminPage": true,
+        "hideFromDocs": true
+      }
     }
   ]
 }

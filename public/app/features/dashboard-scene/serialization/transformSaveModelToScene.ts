@@ -382,7 +382,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
     });
-  } else if (variable.type === 'groupby') {
+  } else if (config.featureToggles.groupByVariable && variable.type === 'groupby') {
     return new GroupByVariable({
       ...commonProperties,
       datasource: variable.datasource,
