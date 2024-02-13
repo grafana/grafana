@@ -11,7 +11,7 @@ import { ColorIndicator, LabelValue } from '@grafana/ui/src/components/VizToolti
 import { getTitleFromHref } from 'app/features/explore/utils/links';
 
 import { Options } from './panelcfg.gen';
-import { ScatterSeries, YValue } from './types';
+import { ScatterSeries } from './types';
 import { fmt } from './utils';
 
 export interface Props {
@@ -41,66 +41,46 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
   const xField = series.x(frame);
   const yField = series.y(frame);
 
-  const getHeaderLabel = (): LabelValue => {
-    let label = series.name;
-    if (options.seriesMapping === 'manual') {
-      label = options.series?.[hoveredPointIndex]?.name ?? `Series ${hoveredPointIndex + 1}`;
-    }
+  let label = series.name;
+  if (options.seriesMapping === 'manual') {
+    label = options.series?.[hoveredPointIndex]?.name ?? `Series ${hoveredPointIndex + 1}`;
+  }
 
-    let colorThing = series.pointColor(frame);
+  let colorThing = series.pointColor(frame);
 
-    if (Array.isArray(colorThing)) {
-      colorThing = colorThing[rowIndex];
-    }
+  if (Array.isArray(colorThing)) {
+    colorThing = colorThing[rowIndex];
+  }
 
-    return {
-      label,
-      value: '',
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      color: alpha(colorThing as string, 0.5),
-      colorIndicator: ColorIndicator.marker_md,
-    };
+  const headerItem: LabelValue = {
+    label,
+    value: '',
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    color: alpha(colorThing as string, 0.5),
+    colorIndicator: ColorIndicator.marker_md,
   };
 
-  const getContentLabel = (): LabelValue[] => {
-    let colorThing = series.pointColor(frame);
+  const contentItems: LabelValue[] = [
+    {
+      label: getFieldDisplayName(xField, frame),
+      value: fmt(xField, xField.values[rowIndex]),
+    },
+    {
+      label: getFieldDisplayName(yField, frame),
+      value: fmt(yField, yField.values[rowIndex]),
+    },
+  ];
 
-    if (Array.isArray(colorThing)) {
-      colorThing = colorThing[rowIndex];
-    }
-
-    const yValue: YValue = {
-      name: getFieldDisplayName(yField, frame),
-      val: yField.values[rowIndex],
-      field: yField,
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      color: alpha(colorThing as string, 0.5),
-    };
-
-    const content: LabelValue[] = [
-      {
-        label: getFieldDisplayName(xField, frame),
-        value: fmt(xField, xField.values[rowIndex]),
-      },
-      {
-        label: yValue.name,
-        value: fmt(yValue.field, yValue.val),
-      },
-    ];
-
-    // add extra fields
-    const extraFields: Field[] = frame.fields.filter((f) => f !== xField && f !== yField);
-    if (extraFields) {
-      extraFields.forEach((field) => {
-        content.push({
-          label: field.name,
-          value: fmt(field, field.values[rowIndex]),
-        });
+  // add extra fields
+  const extraFields: Field[] = frame.fields.filter((f) => f !== xField && f !== yField);
+  if (extraFields) {
+    extraFields.forEach((field) => {
+      contentItems.push({
+        label: field.name,
+        value: fmt(field, field.values[rowIndex]),
       });
-    }
-
-    return content;
-  };
+    });
+  }
 
   const getLinks = (): Array<LinkModel<Field>> => {
     let links: Array<LinkModel<Field>> = [];
@@ -120,8 +100,8 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
 
   return (
     <div className={styles.wrapper}>
-      <VizTooltipHeader headerLabel={getHeaderLabel()} isPinned={isPinned} />
-      <VizTooltipContent contentLabelValue={getContentLabel()} isPinned={isPinned} />
+      <VizTooltipHeader headerLabel={headerItem} isPinned={isPinned} />
+      <VizTooltipContent contentLabelValue={contentItems} isPinned={isPinned} />
       {isPinned && <VizTooltipFooter dataLinks={getLinks()} />}
     </div>
   );

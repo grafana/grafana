@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 import React, { CSSProperties, ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SortOrder } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes';
 
@@ -16,12 +15,7 @@ interface Props {
   isPinned: boolean;
 }
 
-export const VizTooltipContent = ({
-  contentLabelValue,
-  customContent,
-  isPinned,
-  scrollable = false,
-}: Props) => {
+export const VizTooltipContent = ({ contentLabelValue, customContent, isPinned, scrollable = false }: Props) => {
   const styles = useStyles2(getStyles);
 
   const scrollableStyle: CSSProperties = scrollable

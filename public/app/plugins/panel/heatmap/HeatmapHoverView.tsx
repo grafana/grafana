@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import React, { ReactElement, useEffect, useRef, useState } from 'react';
 import uPlot from 'uplot';
 
@@ -9,7 +8,6 @@ import {
   formattedValueToString,
   getFieldDisplayName,
   getLinksSupplier,
-  GrafanaTheme2,
   InterpolateFunction,
   LinkModel,
   PanelData,
