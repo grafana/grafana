@@ -234,6 +234,7 @@
     "@grafana-plugins/stackdriver": "workspace:*",
     "@grafana-plugins/tempo": "workspace:*",
     "@grafana/aws-sdk": "0.3.1",
+    "@grafana/azure-sdk": "0.0.1",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
     "@grafana/experimental": "1.7.10",

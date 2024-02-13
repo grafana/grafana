@@ -1,7 +1,8 @@
+import { AzureCredentials, ConcealedSecret } from '@grafana/azure-sdk';
 import { DataSourceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
-import { AzureCloud, AzureCredentials, ConcealedSecret } from './AzureCredentials';
+import { AzureCloud } from './AzureCredentials';
 
 const concealed: ConcealedSecret = Symbol('Concealed client secret');
 
@@ -66,6 +67,8 @@ export function getCredentials(options: DataSourceSettings<any, any>): AzureCred
         clientId: credentials.clientId,
         clientSecret: getSecret(options),
       };
+    default:
+      throw new Error(`Azure authentication type '${credentials.authType}' not supported by the Prometheus datasource.`);
   }
 }
 
@@ -122,6 +125,9 @@ export function updateCredentials(
       };
 
       return options;
+
+    default:
+      throw new Error(`Azure authentication type '${credentials.authType}' not supported by the Prometheus datasource.`);
   }
 }
 

@@ -1,3 +1,4 @@
+import { AzureCredentials } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
 
 export enum AzureCloud {
@@ -13,42 +14,14 @@ export const KnownAzureClouds: Array<SelectableValue<AzureCloud>> = [
   { value: AzureCloud.USGovernment, label: 'Azure US Government' },
 ];
 
-export type AzureAuthType = 'msi' | 'clientsecret' | 'workloadidentity';
-
-export type ConcealedSecret = symbol;
-
-interface AzureCredentialsBase {
-  authType: AzureAuthType;
-  defaultSubscriptionId?: string;
-}
-
-export interface AzureManagedIdentityCredentials extends AzureCredentialsBase {
-  authType: 'msi';
-}
-
-export interface AzureWorkloadIdentityCredentials extends AzureCredentialsBase {
-  authType: 'workloadidentity';
-}
-
-export interface AzureClientSecretCredentials extends AzureCredentialsBase {
-  authType: 'clientsecret';
-  azureCloud?: string;
-  tenantId?: string;
-  clientId?: string;
-  clientSecret?: string | ConcealedSecret;
-}
-
-export type AzureCredentials =
-  | AzureManagedIdentityCredentials
-  | AzureClientSecretCredentials
-  | AzureWorkloadIdentityCredentials;
-
 export function isCredentialsComplete(credentials: AzureCredentials): boolean {
   switch (credentials.authType) {
+    case 'currentuser':
     case 'msi':
     case 'workloadidentity':
       return true;
     case 'clientsecret':
+    case 'clientsecret-obo':
       return !!(credentials.azureCloud && credentials.tenantId && credentials.clientId && credentials.clientSecret);
   }
 }
