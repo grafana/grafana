@@ -15,7 +15,9 @@ export const xyChartMigrationHandler = (panel: PanelModel): Partial<Options> => 
       const xField = series.x;
       const yField = series.y;
       const excludeYFields = series?.dims?.exclude;
+      const seriesSizeFixed = series?.size?.fixed;
       const seriesSizeField = series?.size?.field;
+      const seriesColorFixed = series?.color?.fixed;
       const seriesColorField = series?.color?.field;
 
       series.x = {
@@ -44,6 +46,9 @@ export const xyChartMigrationHandler = (panel: PanelModel): Partial<Options> => 
 
       if (series.size) {
         series.size = {
+          ...(seriesSizeFixed && {
+            fixed: seriesSizeFixed,
+          }),
           ...(seriesSizeField && {
             field: {
               matcher: {
@@ -57,6 +62,9 @@ export const xyChartMigrationHandler = (panel: PanelModel): Partial<Options> => 
 
       if (series.color) {
         series.color = {
+          ...(seriesColorFixed && {
+            fixed: seriesColorFixed,
+          }),
           ...(seriesColorField && {
             field: {
               matcher: {
