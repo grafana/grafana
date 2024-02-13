@@ -3,15 +3,15 @@ package expr
 // QueryType = resample
 type ResampleQuery struct {
 	// The math expression
-	Expression string `json:"expression"`
+	Expression string `json:"expression" jsonschema:"minLength=1,example=$A + 1,example=$A"`
 
-	// The math expression
-	Window string `json:"window"`
+	// The time durration
+	Window string `json:"window" jsonschema:"minLength=1,example=1w,example=10m"`
 
-	// The reducer
+	// The downsample function
 	Downsampler string `json:"downsampler"`
 
-	// The reducer
+	// The upsample function
 	Upsampler string `json:"upsampler"`
 }
 

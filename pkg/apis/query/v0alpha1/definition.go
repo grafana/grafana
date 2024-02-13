@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 )
 
 // Generic query request with shared time across all values
@@ -51,11 +49,19 @@ type QueryTypeVersion struct {
 	// The JSONSchema definition for the non-common fields
 	Schema json.RawMessage `json:"schema"`
 
-	// Examples (include a wrapper) ideally a template!
-	Examples []common.Unstructured `json:"examples,omitempty"`
+	// Example queries (ideally this could be a template)
+	Examples []QueryExample `json:"examples,omitempty"`
 
 	// Changelog defines the changed from the previous version
 	// All changes in the same version *must* be backwards compatible
 	// Only notable changes will be shown here, for the full version history see git!
 	Changelog []string `json:"changelog,omitempty"`
+}
+
+type QueryExample struct {
+	// Version identifier or empty if only one exists
+	Name string `json:"name,omitempty"`
+
+	// An example query
+	Query json.RawMessage `json:"query"`
 }

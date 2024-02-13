@@ -10,12 +10,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/query/expr"
+	"github.com/grafana/grafana/pkg/registry/apis/query/schema"
+	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 )
 
 var (
@@ -87,77 +88,10 @@ func (s *exprStorage) Get(ctx context.Context, name string, options *metav1.GetO
 }
 
 func (b *QueryAPIBuilder) handleExpressionsSchema(w http.ResponseWriter, r *http.Request) {
-	generic := query.GenericDataQuery{}.OpenAPIDefinition().Schema
-	delete(generic.VendorExtensible.Extensions, "x-kubernetes-preserve-unknown-fields")
-	generic.ID = ""
-	generic.Schema = ""
-
-	s := spec.Schema{
-		SchemaProps: spec.SchemaProps{
-			Type:        []string{"object"},
-			Properties:  make(map[string]spec.Schema),
-			Definitions: make(spec.Definitions),
-		},
+	s, err := schema.GetQuerySchema(b.handler.QueryTypeDefinitionList())
+	if err != nil {
+		errhttp.Write(r.Context(), err, w)
+		return
 	}
-
-	queryTypeEnum := spec.StringProperty().WithDescription("Query type selector")
-
-	common := make(map[string]spec.Schema)
-	for k, v := range generic.Properties {
-		if k == "queryType" {
-			continue
-		}
-
-		s.Definitions[k] = v
-		common[k] = *spec.RefProperty("#/definitions/" + k)
-	}
-
-	// //	refId := s.Properties["refId"]
-	// ds := generic.Properties["datasource"]
-	// t := ds.Properties["uid"]
-	// t.AddExtension("const", "expr") // must be the constant value
-
-	// s := generic
-	// delete(s.Properties, "queryType") // gets replaced
-
-	// generic.Properties["resultAssertions"] = *spec.RefProperty("#/definitions/resultAssertions")
-	// generic.Properties["timeRange"] = *spec.RefProperty("#/definitions/timeRange")
-
-	for _, qt := range b.handler.QueryTypeDefinitionList().Items {
-		discriminator := qt.Spec.DiscriminatorField
-		if discriminator == "" {
-			discriminator = "queryType"
-		}
-		s.WithDiscriminator(discriminator)
-
-		for _, ver := range qt.Spec.Versions {
-			key := qt.Name
-			if ver.Version != "" {
-				key = fmt.Sprintf("%s/%s", qt.Name, ver.Version)
-			}
-			queryTypeEnum.Enum = append(queryTypeEnum.Enum, key)
-
-			node := spec.Schema{}
-			_ = json.Unmarshal(ver.Schema, &node)
-			t := spec.StringProperty().WithDescription(key)
-			t.WithPattern(`^` + key + `$`) // no const value
-
-			node.Properties[discriminator] = *t
-			node.Required = append(node.Required, discriminator, "refId")
-
-			for k, v := range common {
-				_, found := node.Properties[k]
-				if found {
-					continue
-				}
-				node.Properties[k] = v
-			}
-
-			s.OneOf = append(s.OneOf, node)
-		}
-	}
-
-	s.Properties["queryType"] = *queryTypeEnum
-
 	json.NewEncoder(w).Encode(s)
 }

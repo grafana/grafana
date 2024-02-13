@@ -3,8 +3,8 @@ package expr
 var _ ExpressionQuery = (*ReduceQuery)(nil)
 
 type ReduceQuery struct {
-	// Reference to other query results
-	Expression string `json:"expression"`
+	// Reference to single query result
+	Expression string `json:"expression" jsonschema:"minLength=1,example=$A"`
 
 	// The reducer
 	Reducer ReducerID `json:"reducer"`

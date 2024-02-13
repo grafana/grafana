@@ -16,14 +16,20 @@ import (
 type QueryType string
 
 const (
-	// Math query type
+	// Apply a mathematical expression to results
 	QueryTypeMath QueryType = "math"
 
-	// Reduce query type
+	// Reduce query results
 	QueryTypeReduce QueryType = "reduce"
 
-	// Reduce query type
+	// Resample query results
 	QueryTypeResample QueryType = "resample"
+
+	// Classic query
+	QueryTypeClassic QueryType = "classic"
+
+	// Threshold
+	QueryTypeThreshold QueryType = "threshold"
 )
 
 type ExpressionQuery interface {
@@ -98,7 +104,14 @@ func (*ExpressionQueyHandler) ReadQuery(
 		return q, err
 
 	case QueryTypeResample:
-		return nil, nil
+		q := &ResampleQuery{}
+		err := iter.ReadVal(q)
+		return q, err
+
+	case QueryTypeClassic:
+		q := &ClassicQuery{}
+		err := iter.ReadVal(q)
+		return q, err
 	}
 	return nil, fmt.Errorf("unknown query type")
 }
