@@ -10,7 +10,14 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
-import { SceneVariableSet, CustomVariable, SceneGridItem, SceneGridLayout, VizPanel } from '@grafana/scenes';
+import {
+  SceneVariableSet,
+  CustomVariable,
+  SceneGridItem,
+  SceneGridLayout,
+  VizPanel,
+  AdHocFiltersVariable,
+} from '@grafana/scenes';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
@@ -97,11 +104,16 @@ describe('VariablesEditView', () => {
           query: 'test3, test4, $customVar',
           value: 'test3',
         },
+        {
+          type: 'adhoc',
+          name: 'adhoc',
+        },
       ];
       const variables = variableView.getVariables();
-      expect(variables).toHaveLength(2);
+      expect(variables).toHaveLength(3);
       expect(variables[0].state).toMatchObject(expectedVariables[0]);
       expect(variables[1].state).toMatchObject(expectedVariables[1]);
+      expect(variables[2].state).toMatchObject(expectedVariables[2]);
     });
   });
 
@@ -117,7 +129,7 @@ describe('VariablesEditView', () => {
       const variables = variableView.getVariables();
       const variable = variables[0];
       variableView.onDuplicated(variable.state.name);
-      expect(variableView.getVariables()).toHaveLength(3);
+      expect(variableView.getVariables()).toHaveLength(4);
       expect(variableView.getVariables()[1].state.name).toBe('copy_of_customVar');
     });
 
@@ -125,7 +137,7 @@ describe('VariablesEditView', () => {
       const variableIdentifier = 'customVar';
       variableView.onDuplicated(variableIdentifier);
       variableView.onDuplicated(variableIdentifier);
-      expect(variableView.getVariables()).toHaveLength(4);
+      expect(variableView.getVariables()).toHaveLength(5);
       expect(variableView.getVariables()[1].state.name).toBe('copy_of_customVar_1');
       expect(variableView.getVariables()[2].state.name).toBe('copy_of_customVar');
     });
@@ -133,7 +145,7 @@ describe('VariablesEditView', () => {
     it('should delete a variable', () => {
       const variableIdentifier = 'customVar';
       variableView.onDelete(variableIdentifier);
-      expect(variableView.getVariables()).toHaveLength(1);
+      expect(variableView.getVariables()).toHaveLength(2);
       expect(variableView.getVariables()[0].state.name).toBe('customVar2');
     });
 
@@ -147,7 +159,7 @@ describe('VariablesEditView', () => {
 
     it('should keep the same order of variables with invalid indexes', () => {
       const fromIndex = 0;
-      const toIndex = 2;
+      const toIndex = 3;
 
       const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -163,11 +175,11 @@ describe('VariablesEditView', () => {
       const previousVariable = variableView.getVariables()[1] as CustomVariable;
       variableView.onEdit('customVar2');
 
-      variableView.onTypeChange('constant');
-      expect(variableView.getVariables()).toHaveLength(2);
+      variableView.onTypeChange('adhoc');
+      expect(variableView.getVariables()).toHaveLength(3);
       const variable = variableView.getVariables()[1];
       expect(variable).not.toBe(previousVariable);
-      expect(variable.state.type).toBe('constant');
+      expect(variable.state.type).toBe('adhoc');
 
       // Values to be kept between the old and new variable
       expect(variable.state.name).toEqual(previousVariable.state.name);
@@ -184,9 +196,9 @@ describe('VariablesEditView', () => {
 
     it('should add default new query variable when onAdd is called', () => {
       variableView.onAdd();
-      expect(variableView.getVariables()).toHaveLength(3);
-      expect(variableView.getVariables()[2].state.name).toBe('query0');
-      expect(variableView.getVariables()[2].state.type).toBe('query');
+      expect(variableView.getVariables()).toHaveLength(4);
+      expect(variableView.getVariables()[3].state.name).toBe('query0');
+      expect(variableView.getVariables()[3].state.type).toBe('query');
     });
 
     afterEach(() => {
@@ -265,6 +277,17 @@ async function buildTestScene() {
           query: 'test3, test4, $customVar',
           value: '$customVar',
           text: '$customVar',
+        }),
+        new AdHocFiltersVariable({
+          type: 'adhoc',
+          name: 'adhoc',
+          filters: [
+            {
+              key: 'test',
+              operator: '=',
+              value: 'testValue',
+            },
+          ],
         }),
       ],
     }),

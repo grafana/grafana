@@ -3791,6 +3791,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/lezer-logql@npm:0.2.3":
+  version: 0.2.3
+  resolution: "@grafana/lezer-logql@npm:0.2.3"
+  peerDependencies:
+    "@lezer/lr": ^1.0.0
+  checksum: 10/a7f2f07d328d3e8c3d5cd31c5a0ea9379beeb7d65def078bae159298814d92881d978b088f05eff5148c8e26528de84a6fb6add8edf7bb383863fa51e9bc5f56
+  languageName: node
+  linkType: hard
+
 "@grafana/lezer-traceql@npm:0.0.14":
   version: 0.0.14
   resolution: "@grafana/lezer-traceql@npm:0.0.14"
@@ -4011,9 +4020,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:2.6.6":
-  version: 2.6.6
-  resolution: "@grafana/scenes@npm:2.6.6"
+"@grafana/scenes@npm:^3.2.1":
+  version: 3.2.1
+  resolution: "@grafana/scenes@npm:3.2.1"
   dependencies:
     "@grafana/e2e-selectors": "npm:10.0.2"
     react-grid-layout: "npm:1.3.4"
@@ -4025,7 +4034,7 @@ __metadata:
     "@grafana/runtime": 10.0.3
     "@grafana/schema": 10.0.3
     "@grafana/ui": 10.0.3
-  checksum: 10/13f5a7d77892ab68af00ee16887bbd101f00e6e2dbb547f697b0f472a296b8030a96f1596c416c24800367f83a469bc10d975d689a0ca8a7cd533efb7ef1bfc3
+  checksum: 10/5e93c0dcdfbd7cfed977d650fb0744c9b8107b1c92af2ae6d6e9f2f61bb9ba7f3cb5ad394fa3389aaef0d892a18c6a12fedf5454a4210bdcc6797a272ddbc625
   languageName: node
   linkType: hard
 
@@ -18012,12 +18021,12 @@ __metadata:
     "@grafana/faro-web-sdk": "npm:^1.3.6"
     "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": "npm:0.1.2"
-    "@grafana/lezer-logql": "npm:0.2.2"
+    "@grafana/lezer-logql": "npm:0.2.3"
     "@grafana/monaco-logql": "npm:^0.0.7"
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:2.6.6"
+    "@grafana/scenes": "npm:^3.2.1"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"

@@ -187,6 +187,10 @@ export const Pages = {
             infoText: 'data-testid group by variable info text',
             modeToggle: 'data-testid group by variable mode toggle',
           },
+          AdHocFiltersVariable: {
+            datasourceSelect: Components.DataSourcePicker.inputV2,
+            infoText: 'data-testid ad-hoc filters variable info text',
+          },
         },
       },
     },
