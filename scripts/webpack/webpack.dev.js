@@ -35,6 +35,7 @@ module.exports = (env = {}) => {
       ignored: [
         '/node_modules/',
         '**/plugins/datasource/azuremonitor/**',
+        '**/plugins/datasource/cloud-monitoring/**',
         '**/plugins/datasource/grafana-pyroscope-datasource/**',
         '**/plugins/datasource/grafana-testdata-datasource/**',
         '**/plugins/datasource/parca/**',
@@ -130,7 +131,12 @@ module.exports = (env = {}) => {
         integrity: true,
         publicPath: true,
       }),
-      new WebpackBar(),
+      new WebpackBar({
+        color: '#eb7b18',
+        name: 'Grafana',
+      }),
     ],
+
+    stats: 'minimal',
   });
 };
