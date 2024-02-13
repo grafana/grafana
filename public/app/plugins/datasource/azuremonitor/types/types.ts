@@ -9,30 +9,32 @@ import {
   TimeRange,
 } from '@grafana/data';
 
-import { AzureAuthType } from "../components/AzureCredentials";
 import Datasource from '../datasource';
 
 import { AzureLogAnalyticsMetadataTable } from './logAnalyticsMetadata';
 import { AzureMonitorQuery, ResultFormat } from './query';
 
+type DataSourceJsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | { [x: string]: DataSourceJsonValue }
+  | Array<DataSourceJsonValue>;
+
+export interface DataSourceJsonData2 extends DataSourceJsonData {
+  [field: string]: DataSourceJsonValue;
+}
+
+export interface DataSourceSecureJsonData2 {
+  [field: string]: string | undefined;
+}
+
 export type AzureDataSourceSettings = DataSourceSettings<AzureDataSourceJsonData, AzureDataSourceSecureJsonData>;
 export type AzureDataSourceInstanceSettings = DataSourceInstanceSettings<AzureDataSourceJsonData>;
 
-export interface DatasourceValidationResult {
-  status: 'success' | 'error';
-  message: string;
-  title?: string;
-}
-
-export interface AzureDataSourceJsonData extends DataSourceJsonData {
-  /** @deprecated Legacy Azure credentials */
-  cloudName: string;
-  /** @deprecated Legacy Azure credentials */
-  azureAuthType?: AzureAuthType;
-  /** @deprecated Legacy Azure credentials */
-  tenantId?: string;
-  /** @deprecated Legacy Azure credentials */
-  clientId?: string;
+export interface AzureDataSourceJsonData extends DataSourceJsonData2 {
   /** @deprecated Legacy Azure credentials */
   subscriptionId?: string;
   /** @deprecated Legacy Azure Logs Analytics setting */
@@ -41,8 +43,14 @@ export interface AzureDataSourceJsonData extends DataSourceJsonData {
   enableSecureSocksProxy?: boolean;
 }
 
-export interface AzureDataSourceSecureJsonData {
+export interface AzureDataSourceSecureJsonData extends DataSourceSecureJsonData2 {
   appInsightsApiKey?: string;
+}
+
+export interface DatasourceValidationResult {
+  status: 'success' | 'error';
+  message: string;
+  title?: string;
 }
 
 // Represents an errors that come back from frontend requests.

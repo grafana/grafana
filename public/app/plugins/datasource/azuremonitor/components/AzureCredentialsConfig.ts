@@ -2,6 +2,7 @@ import { AzureAuthType, AzureCredentials, ConcealedSecret } from '@grafana/azure
 import {DataSourceInstanceSettings, DataSourceSettings} from '@grafana/data';
 import { config } from '@grafana/runtime';
 
+import { DataSourceJsonData2, DataSourceSecureJsonData2 } from "../types";
 import { AzureCloud } from './AzureCredentials';
 
 const concealed: ConcealedSecret = Symbol('Concealed client secret');
@@ -11,11 +12,12 @@ function getDefaultAzureCloud(): string {
   return config.azure.cloud || AzureCloud.Public;
 }
 
-function isInstanceSettings(options: DataSourceSettings<any, any> | DataSourceInstanceSettings<any>): options is DataSourceInstanceSettings<any> {
+function isInstanceSettings(options: DataSourceSettings<DataSourceJsonData2, DataSourceSecureJsonData2> |
+  DataSourceInstanceSettings<DataSourceJsonData2>): options is DataSourceInstanceSettings<DataSourceJsonData2> {
   return !options.hasOwnProperty('secureJsonFields');
 }
 
-function getSecret(options: DataSourceSettings<any, any>): undefined | string | ConcealedSecret {
+function getSecret(options: DataSourceSettings<DataSourceJsonData2, DataSourceSecureJsonData2>): undefined | string | ConcealedSecret {
   if (options.secureJsonFields.azureClientSecret) {
     // The secret is concealed on server
     return concealed;
@@ -28,7 +30,7 @@ function getSecret(options: DataSourceSettings<any, any>): undefined | string | 
   }
 }
 
-export function hasCredentials(options: DataSourceSettings<any, any>): boolean {
+export function hasCredentials(options: DataSourceSettings<DataSourceJsonData2, DataSourceSecureJsonData2>): boolean {
   if (typeof options.jsonData.azureCredentials === 'object') {
     // Credentials in common format
     return true;
@@ -51,7 +53,7 @@ export function getDefaultCredentials(): AzureCredentials {
   }
 }
 
-export function getCredentials(options: DataSourceSettings<any, any> | DataSourceInstanceSettings<any>): AzureCredentials {
+export function getCredentials(options: DataSourceSettings<DataSourceJsonData2, DataSourceSecureJsonData2> | DataSourceInstanceSettings<DataSourceJsonData2>): AzureCredentials {
   const credentials = options.jsonData.azureCredentials as AzureCredentials | undefined;
 
   // If no credentials saved then try to restore legacy credentials, otherwise return default credentials
@@ -101,8 +103,9 @@ export function getCredentials(options: DataSourceSettings<any, any> | DataSourc
   }
 }
 
-function getLegacyCredentials(options: DataSourceSettings<any, any> | DataSourceInstanceSettings<any>): AzureCredentials | undefined {
-  let authType: AzureAuthType | undefined = options.jsonData.azureAuthType;
+function getLegacyCredentials(options: DataSourceSettings<DataSourceJsonData2, DataSourceSecureJsonData2> | DataSourceInstanceSettings<DataSourceJsonData2>): AzureCredentials | undefined {
+  let authType: AzureAuthType | undefined = typeof options.jsonData.azureAuthType === 'string' ?
+    options.jsonData.azureAuthType as AzureAuthType : undefined;
   if (!authType) {
     // If authentication type isn't explicitly specified and datasource has client credentials,
     // then this is existing datasource which is configured for app registration (client secret)
@@ -134,7 +137,7 @@ function getLegacyCredentials(options: DataSourceSettings<any, any> | DataSource
         return getDefaultCredentials();
       }
     case 'clientsecret':
-      const azureCloud = resolveLegacyCloudName(options.jsonData.cloudName);
+      const azureCloud = resolveLegacyCloudName(typeof options.jsonData.cloudName === 'string' ? options.jsonData.cloudName : undefined);
       return {
         authType: 'clientsecret',
         azureCloud: azureCloud,
@@ -148,7 +151,7 @@ function getLegacyCredentials(options: DataSourceSettings<any, any> | DataSource
   return undefined;
 }
 
-function resolveLegacyCloudName(cloudName: string): AzureCloud {
+function resolveLegacyCloudName(cloudName: string | undefined): AzureCloud {
   if (!cloudName) {
     return AzureCloud.Public;
   }
@@ -166,9 +169,9 @@ function resolveLegacyCloudName(cloudName: string): AzureCloud {
 }
 
 export function updateCredentials(
-  options: DataSourceSettings<any, any>,
+  options: DataSourceSettings<DataSourceJsonData2, DataSourceSecureJsonData2>,
   credentials: AzureCredentials
-): DataSourceSettings<any, any> {
+): DataSourceSettings<DataSourceJsonData2, DataSourceSecureJsonData2> {
   // Cleanup legacy credentials
   options = {
     ...options,
@@ -244,18 +247,6 @@ export function updateCredentials(
   }
 
   return options;
-}
-
-export function getAzureCloud(credentials: AzureCredentials): string {
-  switch (credentials.authType) {
-    case 'currentuser':
-    case 'msi':
-    case 'workloadidentity':
-      return getDefaultAzureCloud();
-    case 'clientsecret':
-    case 'clientsecret-obo':
-      return credentials.azureCloud || getDefaultAzureCloud();
-  }
 }
 
 export function isCredentialsComplete(credentials: AzureCredentials): boolean {
