@@ -172,10 +172,10 @@ describe('getVariableScene', () => {
     ['adhoc', AdHocFiltersVariable],
     ['groupby', GroupByVariable],
     ['textbox', TextBoxVariable],
-  ])('should return the scene variable instance for the given editable variable type', () => {
+  ])('should return the scene variable instance for the given editable variable type', (type, instanceType) => {
     const initialState = { name: 'MyVariable' };
-    const sceneVariable = getVariableScene('custom', initialState);
-    expect(sceneVariable).toBeInstanceOf(CustomVariable);
+    const sceneVariable = getVariableScene(type as EditableVariableType, initialState);
+    expect(sceneVariable).toBeInstanceOf(instanceType);
     expect(sceneVariable.state.name).toBe(initialState.name);
   });
 });

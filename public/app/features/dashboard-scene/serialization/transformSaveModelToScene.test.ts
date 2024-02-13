@@ -11,8 +11,9 @@ import {
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config } from '@grafana/runtime';
 import {
-  AdHocFilterSet,
+  AdHocFiltersVariable,
   behaviors,
+  ConstantVariable,
   CustomVariable,
   DataSourceVariable,
   QueryVariable,
@@ -120,11 +121,11 @@ describe('transformSaveModelToScene', () => {
       expect(scene.state?.$timeRange?.state.timeZone).toEqual('America/New_York');
       expect(scene.state?.$timeRange?.state.weekStart).toEqual('saturday');
 
-      expect(scene.state?.$variables?.state.variables).toHaveLength(1);
+      expect(scene.state?.$variables?.state.variables).toHaveLength(2);
+      expect(scene.state?.$variables?.getByName('constant')).toBeInstanceOf(ConstantVariable);
+      expect(scene.state?.$variables?.getByName('CoolFilters')).toBeInstanceOf(AdHocFiltersVariable);
       expect(dashboardControls).toBeDefined();
       expect(dashboardControls).toBeInstanceOf(DashboardControls);
-      expect(dashboardControls.state.variableControls[1]).toBeInstanceOf(AdHocFilterSet);
-      expect((dashboardControls.state.variableControls[1] as AdHocFilterSet).state.name).toBe('CoolFilters');
       expect(dashboardControls.state.timeControls).toHaveLength(2);
       expect(dashboardControls.state.timeControls[0]).toBeInstanceOf(SceneTimePicker);
       expect(dashboardControls.state.timeControls[1]).toBeInstanceOf(SceneRefreshPicker);
@@ -789,6 +790,60 @@ describe('transformSaveModelToScene', () => {
       });
     });
 
+    it('should migrate adhoc variable', () => {
+      const variable: TypedVariableModel = {
+        id: 'adhoc',
+        global: false,
+        index: 0,
+        state: LoadingState.Done,
+        error: null,
+        name: 'adhoc',
+        label: 'Adhoc Label',
+        description: 'Adhoc Description',
+        type: 'adhoc',
+        rootStateKey: 'N4XLmH5Vz',
+        datasource: {
+          uid: 'gdev-prometheus',
+          type: 'prometheus',
+        },
+        filters: [
+          {
+            key: 'filterTest',
+            operator: '=',
+            value: 'test',
+          },
+        ],
+        baseFilters: [
+          {
+            key: 'baseFilterTest',
+            operator: '=',
+            value: 'test',
+          },
+        ],
+        hide: 0,
+        skipUrlSync: false,
+      };
+
+      const migrated = createSceneVariableFromVariableModel(variable) as AdHocFiltersVariable;
+      const filterVarState = migrated.state;
+
+      expect(migrated).toBeInstanceOf(AdHocFiltersVariable);
+      expect(filterVarState).toEqual({
+        key: expect.any(String),
+        description: 'Adhoc Description',
+        hide: 0,
+        label: 'Adhoc Label',
+        name: 'adhoc',
+        skipUrlSync: false,
+        type: 'adhoc',
+        filterExpression: 'filterTest="test"',
+        filters: [{ key: 'filterTest', operator: '=', value: 'test' }],
+        baseFilters: [{ key: 'baseFilterTest', operator: '=', value: 'test' }],
+        datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
+        applyMode: 'auto',
+      });
+    });
+
     it.each(['system'])('should throw for unsupported (yet) variables', (type) => {
       const variable = {
         name: 'query0',
@@ -856,7 +911,7 @@ describe('transformSaveModelToScene', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
-      expect((scene.state.controls![0] as DashboardControls)!.state.variableControls[2]).toBeInstanceOf(
+      expect((scene.state.controls![0] as DashboardControls)!.state.variableControls[1]).toBeInstanceOf(
         SceneDataLayerControls
       );
 
@@ -886,7 +941,7 @@ describe('transformSaveModelToScene', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
-      expect((scene.state.controls![0] as DashboardControls)!.state.variableControls[2]).toBeInstanceOf(
+      expect((scene.state.controls![0] as DashboardControls)!.state.variableControls[1]).toBeInstanceOf(
         SceneDataLayerControls
       );
 
@@ -902,7 +957,7 @@ describe('transformSaveModelToScene', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
-      expect((scene.state.controls![0] as DashboardControls)!.state.variableControls[2]).toBeInstanceOf(
+      expect((scene.state.controls![0] as DashboardControls)!.state.variableControls[1]).toBeInstanceOf(
         SceneDataLayerControls
       );
 

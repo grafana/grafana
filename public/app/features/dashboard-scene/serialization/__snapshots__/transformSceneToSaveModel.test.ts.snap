@@ -456,6 +456,16 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
   "templating": {
     "list": [
       {
+        "baseFilters": [],
+        "datasource": {
+          "type": "prometheus",
+          "uid": "wc2AL7L7k",
+        },
+        "filters": [],
+        "name": "Filters",
+        "type": "adhoc",
+      },
+      {
         "auto": true,
         "auto_count": 30,
         "auto_min": "10s",
@@ -524,14 +534,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "query": "test",
         "skipUrlSync": true,
         "type": "constant",
-      },
-      {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "wc2AL7L7k",
-        },
-        "name": "Filters",
-        "type": "adhoc",
       },
     ],
   },
@@ -758,6 +760,16 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
   "templating": {
     "list": [
       {
+        "baseFilters": [],
+        "datasource": {
+          "type": "prometheus",
+          "uid": "wc2AL7L7k",
+        },
+        "filters": [],
+        "name": "Filters",
+        "type": "adhoc",
+      },
+      {
         "auto": true,
         "auto_count": 30,
         "auto_min": "10s",
@@ -826,14 +838,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "query": "test",
         "skipUrlSync": true,
         "type": "constant",
-      },
-      {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "wc2AL7L7k",
-        },
-        "name": "Filters",
-        "type": "adhoc",
       },
     ],
   },

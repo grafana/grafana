@@ -2,6 +2,13 @@ import { BOOKMARKED_TRAILS_KEY, RECENT_TRAILS_KEY } from '../shared';
 
 import { SerializedTrail, getTrailStore } from './TrailStore';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: () => ({
+    getAdhocFilters: jest.fn().mockReturnValue([{ key: 'origKey', operator: '=', value: '' }]),
+  }),
+}));
+
 describe('TrailStore', () => {
   beforeAll(() => {
     let localStore: Record<string, string> = {};

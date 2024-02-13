@@ -13,6 +13,7 @@ import {
 } from '@grafana/data';
 import { setRunRequest } from '@grafana/runtime';
 import {
+  AdHocFiltersVariable,
   ConstantVariable,
   CustomVariable,
   DataSourceVariable,
@@ -341,6 +342,62 @@ describe('sceneVariablesSetToVariables', () => {
       "query": "text value",
       "skipUrlSync": true,
       "type": "textbox",
+    }
+    `);
+  });
+
+  it('should handle AdHocFiltersVariable', () => {
+    const variable = new AdHocFiltersVariable({
+      name: 'test',
+      label: 'test-label',
+      description: 'test-desc',
+      datasource: { uid: 'fake-std', type: 'fake-std' },
+      filters: [
+        {
+          key: 'filterTest',
+          operator: '=',
+          value: 'test',
+        },
+      ],
+      baseFilters: [
+        {
+          key: 'baseFilterTest',
+          operator: '=',
+          value: 'test',
+        },
+      ],
+    });
+    const set = new SceneVariableSet({
+      variables: [variable],
+    });
+
+    const result = sceneVariablesSetToVariables(set);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchInlineSnapshot(`
+    {
+      "baseFilters": [
+        {
+          "key": "baseFilterTest",
+          "operator": "=",
+          "value": "test",
+        },
+      ],
+      "datasource": {
+        "type": "fake-std",
+        "uid": "fake-std",
+      },
+      "description": "test-desc",
+      "filters": [
+        {
+          "key": "filterTest",
+          "operator": "=",
+          "value": "test",
+        },
+      ],
+      "label": "test-label",
+      "name": "test",
+      "type": "adhoc",
     }
     `);
   });

@@ -11,7 +11,7 @@ export function getLabelOptions(scenObject: SceneObject, variable: QueryVariable
     return [];
   }
 
-  const filters = labelFilters.state.set.state.filters;
+  const filters = labelFilters.state.filters;
 
   for (const option of variable.getOptionsForSelect()) {
     const filterExists = filters.find((f) => f.key === option.value);
