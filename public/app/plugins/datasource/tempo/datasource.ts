@@ -18,6 +18,7 @@ import {
   LoadingState,
   rangeUtil,
   ScopedVars,
+  SelectableValue,
   TestDataSourceResponse,
   urlUtil,
 } from '@grafana/data';
@@ -112,7 +113,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     spanStartTimeShift?: string;
     spanEndTimeShift?: string;
   };
-  uploadedJson?: string | ArrayBuffer | null = null;
+  uploadedJson?: string | null = null;
   spanBar?: SpanBarOptions;
   languageProvider: TempoLanguageProvider;
 
@@ -204,9 +205,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       options = await this.languageProvider.getOptionsV1(labelName);
     }
 
-    return options.filter((option) => option.value !== undefined).map((option) => ({ text: option.value })) as Array<{
-      text: string;
-    }>;
+    return options.flatMap((option: SelectableValue<string>) =>
+      option.value !== undefined ? [{ text: option.value }] : []
+    );
   }
 
   init = async () => {
@@ -271,7 +272,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             // Wrap linked query into a data request based on original request
             const linkedRequest: DataQueryRequest = { ...options, targets: targets.search.map((t) => t.linkedQuery!) };
             // Find trace matchers in derived fields of the linked datasource that's identical to this datasource
-            const settings: DataSourceInstanceSettings<LokiOptions> = (linkedDatasource as any).instanceSettings;
+            const settings: DataSourceInstanceSettings<LokiOptions> = (linkedDatasource as TempoDatasource)
+              .instanceSettings;
             const traceLinkMatcher: string[] =
               settings.jsonData.derivedFields
                 ?.filter((field) => field.datasourceUid === this.uid && field.matcherRegex)
@@ -285,7 +287,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
                   )
               );
             } else {
-              return (linkedDatasource.query(linkedRequest) as Observable<DataQueryResponse>).pipe(
+              const response = linkedDatasource.query(linkedRequest);
+              return from(response).pipe(
                 map((response) =>
                   response.error ? response : transformTraceList(response, this.uid, this.name, traceLinkMatcher)
                 )
@@ -453,7 +456,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           grafana_version: config.buildInfo.version,
         });
 
-        const jsonData = JSON.parse(this.uploadedJson as string);
+        const jsonData = JSON.parse(this.uploadedJson);
         const isTraceData = jsonData.batches;
         const isServiceGraphData =
           Array.isArray(jsonData) && jsonData.some((df) => df?.meta?.preferredVisualisationType === 'nodeGraph');
@@ -720,16 +723,17 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   }
 
   getQueryDisplayText(query: TempoQuery) {
-    if (query.queryType === 'nativeSearch') {
-      let result = [];
-      for (const key of ['serviceName', 'spanName', 'search', 'minDuration', 'maxDuration', 'limit']) {
-        if (query.hasOwnProperty(key) && query[key as keyof TempoQuery]) {
-          result.push(`${startCase(key)}: ${query[key as keyof TempoQuery]}`);
-        }
-      }
-      return result.join(', ');
+    if (query.queryType !== 'nativeSearch') {
+      return query.query ?? '';
     }
-    return query.query ?? '';
+
+    const keys: Array<
+      keyof Pick<TempoQuery, 'serviceName' | 'spanName' | 'search' | 'minDuration' | 'maxDuration' | 'limit'>
+    > = ['serviceName', 'spanName', 'search', 'minDuration', 'maxDuration', 'limit'];
+    return keys
+      .filter((key) => query[key])
+      .map((key) => `${startCase(key)}: ${query[key]}`)
+      .join(', ');
   }
 
   buildSearchQuery(query: TempoQuery, timeRange?: { startTime: number; endTime?: number }): SearchQueryParams {

@@ -1,12 +1,14 @@
 package pipeline
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -81,4 +83,99 @@ func TestAsExternal(t *testing.T) {
 		require.Len(t, filtered, 1)
 		require.Equal(t, filtered[0].Primary.JSONData.ID, "plugin2")
 	})
+}
+
+func TestDuplicatePluginIDValidation(t *testing.T) {
+	tcs := []struct {
+		name              string
+		registeredPlugins []string
+		in                []*plugins.FoundBundle
+		out               []*plugins.FoundBundle
+	}{
+		{
+			name:              "should filter out a plugin if it already exists in the plugin registry",
+			registeredPlugins: []string{"foobar-datasource"},
+			in: []*plugins.FoundBundle{
+				{
+					Primary: plugins.FoundPlugin{
+						JSONData: plugins.JSONData{
+							ID: "foobar-datasource",
+						},
+					},
+				},
+			},
+			out: []*plugins.FoundBundle{},
+		},
+		{
+			name:              "should not filter out a plugin if it doesn't exist in the plugin registry",
+			registeredPlugins: []string{"foobar-datasource"},
+			in: []*plugins.FoundBundle{
+				{
+					Primary: plugins.FoundPlugin{
+						JSONData: plugins.JSONData{
+							ID: "test-datasource",
+						},
+					},
+				},
+			},
+			out: []*plugins.FoundBundle{
+				{
+					Primary: plugins.FoundPlugin{
+						JSONData: plugins.JSONData{
+							ID: "test-datasource",
+						},
+					},
+				},
+			},
+		},
+		{
+			name:              "should filter out child plugins if they are already registered",
+			registeredPlugins: []string{"foobar-datasource"},
+			in: []*plugins.FoundBundle{
+				{
+					Primary: plugins.FoundPlugin{
+						JSONData: plugins.JSONData{
+							ID: "test-datasource",
+						},
+					},
+					Children: []*plugins.FoundPlugin{
+						{
+							JSONData: plugins.JSONData{
+								ID: "foobar-datasource",
+							},
+						},
+					},
+				},
+			},
+			out: []*plugins.FoundBundle{
+				{
+					Primary: plugins.FoundPlugin{
+						JSONData: plugins.JSONData{
+							ID: "test-datasource",
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			r := registry.NewInMemory()
+			s := NewDuplicatePluginIDFilterStep(r)
+
+			ctx := context.Background()
+			for _, pluginID := range tc.registeredPlugins {
+				err := r.Add(ctx, &plugins.Plugin{
+					JSONData: plugins.JSONData{
+						ID: pluginID,
+					},
+				})
+				require.NoError(t, err)
+			}
+
+			res, err := s.Filter(ctx, tc.in)
+			require.NoError(t, err)
+			require.Equal(t, tc.out, res)
+		})
+	}
 }

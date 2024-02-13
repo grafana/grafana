@@ -95,6 +95,7 @@ export const Pages = {
            */
           addAnnotationCTA: Components.CallToActionCard.button('Add annotation query'),
           addAnnotationCTAV2: Components.CallToActionCard.buttonV2('Add annotation query'),
+          annotations: 'data-testid list-annotations',
         },
         Settings: {
           name: 'Annotations settings name input',
@@ -103,6 +104,10 @@ export const Pages = {
           panelFilterSelect: 'data-testid annotations-panel-filter',
           showInLabel: 'show-in-label',
           previewInDashboard: 'data-testid annotations-preview',
+          delete: 'data-testid annotations-delete',
+          apply: 'data-testid annotations-apply',
+          enable: 'data-testid annotation-enable',
+          hide: 'data-testid annotation-hide',
         },
       },
       Variables: {

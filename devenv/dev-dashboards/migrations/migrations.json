@@ -21,7 +21,31 @@
   "links": [
     {
       "asDropdown": false,
-      "icon": "dashboard",
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "Auto migrate graph panel (TRUE)",
+      "tooltip": "",
+      "type": "link",
+      "url": " /d/cdd412c4/?__feature.autoMigrateGraphPanel=true"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "Auto migrate graph panel (FALSE)",
+      "tooltip": "",
+      "type": "link",
+      "url": " /d/cdd412c4/?__feature.autoMigrateGraphPanel=false"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
       "includeVars": false,
       "keepTime": false,
       "tags": [],
@@ -45,7 +69,7 @@
     },
     {
       "asDropdown": false,
-      "icon": "dashboard",
+      "icon": "external link",
       "includeVars": false,
       "keepTime": false,
       "tags": [],
@@ -198,7 +222,7 @@
         "sort": 0,
         "value_type": "individual"
       },
-      "type": "timeseries",
+      "type": "graph",
       "xaxis": {
         "mode": "time",
         "show": true,
