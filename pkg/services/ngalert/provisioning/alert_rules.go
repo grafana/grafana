@@ -248,46 +248,10 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 		return err
 	}
 
-	// If the provided request did not provide the rules list at all, treat it as though it does not wish to change rules.
-	// This is done for backwards compatibility. Requests which specify only the interval must update only the interval.
-	if group.Rules == nil {
-		listRulesQuery := models.ListAlertRulesQuery{
-			OrgID:         orgID,
-			NamespaceUIDs: []string{group.FolderUID},
-			RuleGroup:     group.Title,
-		}
-		ruleList, err := service.ruleStore.ListAlertRules(ctx, &listRulesQuery)
-		if err != nil {
-			return fmt.Errorf("failed to list alert rules: %w", err)
-		}
-		group.Rules = make([]models.AlertRule, 0, len(ruleList))
-		for _, r := range ruleList {
-			if r != nil {
-				group.Rules = append(group.Rules, *r)
-			}
-		}
-	}
-
-	key := models.AlertRuleGroupKey{
-		OrgID:        orgID,
-		NamespaceUID: group.FolderUID,
-		RuleGroup:    group.Title,
-	}
-	rules := make([]*models.AlertRuleWithOptionals, len(group.Rules))
-	group = *syncGroupRuleFields(&group, orgID)
-	for i := range group.Rules {
-		if err := group.Rules[i].SetDashboardAndPanelFromAnnotations(); err != nil {
-			return err
-		}
-		rules = append(rules, &models.AlertRuleWithOptionals{AlertRule: group.Rules[i], HasPause: true})
-	}
-	delta, err := store.CalculateChanges(ctx, service.ruleStore, key, rules)
+	delta, err := service.calcDelta(ctx, orgID, group)
 	if err != nil {
-		return fmt.Errorf("failed to calculate diff for alert rules: %w", err)
+		return err
 	}
-
-	// Refresh all calculated fields across all rules.
-	delta = store.UpdateCalculatedRuleFields(delta)
 
 	if len(delta.New) == 0 && len(delta.Update) == 0 && len(delta.Delete) == 0 {
 		return nil
@@ -306,6 +270,53 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 		}
 	}
 
+	return service.persistDelta(ctx, orgID, delta, userID, provenance)
+}
+
+func (service *AlertRuleService) calcDelta(ctx context.Context, orgID int64, group models.AlertRuleGroup) (*store.GroupDelta, error) {
+	// If the provided request did not provide the rules list at all, treat it as though it does not wish to change rules.
+	// This is done for backwards compatibility. Requests which specify only the interval must update only the interval.
+	if group.Rules == nil {
+		listRulesQuery := models.ListAlertRulesQuery{
+			OrgID:         orgID,
+			NamespaceUIDs: []string{group.FolderUID},
+			RuleGroup:     group.Title,
+		}
+		ruleList, err := service.ruleStore.ListAlertRules(ctx, &listRulesQuery)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list alert rules: %w", err)
+		}
+		group.Rules = make([]models.AlertRule, 0, len(ruleList))
+		for _, r := range ruleList {
+			if r != nil {
+				group.Rules = append(group.Rules, *r)
+			}
+		}
+	}
+
+	key := models.AlertRuleGroupKey{
+		OrgID:        orgID,
+		NamespaceUID: group.FolderUID,
+		RuleGroup:    group.Title,
+	}
+	rules := make([]*models.AlertRuleWithOptionals, len(group.Rules))
+	group = *syncGroupRuleFields(&group, orgID)
+	for i := range group.Rules {
+		if err := group.Rules[i].SetDashboardAndPanelFromAnnotations(); err != nil {
+			return nil, err
+		}
+		rules = append(rules, &models.AlertRuleWithOptionals{AlertRule: group.Rules[i], HasPause: true})
+	}
+	delta, err := store.CalculateChanges(ctx, service.ruleStore, key, rules)
+	if err != nil {
+		return nil, fmt.Errorf("failed to calculate diff for alert rules: %w", err)
+	}
+
+	// Refresh all calculated fields across all rules.
+	return store.UpdateCalculatedRuleFields(delta), nil
+}
+
+func (service *AlertRuleService) persistDelta(ctx context.Context, orgID int64, delta *store.GroupDelta, userID int64, provenance models.Provenance) error {
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		// Delete first as this could prevent future unique constraint violations.
 		if len(delta.Delete) > 0 {
@@ -340,7 +351,7 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 					New:      *update.New,
 				})
 			}
-			if err = service.ruleStore.UpdateAlertRules(ctx, updates); err != nil {
+			if err := service.ruleStore.UpdateAlertRules(ctx, updates); err != nil {
 				return fmt.Errorf("failed to update alert rules: %w", err)
 			}
 			for _, update := range delta.Update {
@@ -362,7 +373,7 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 			}
 		}
 
-		if err = service.checkLimitsTransactionCtx(ctx, orgID, userID); err != nil {
+		if err := service.checkLimitsTransactionCtx(ctx, orgID, userID); err != nil {
 			return err
 		}
 
