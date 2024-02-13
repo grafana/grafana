@@ -1,3 +1,13 @@
+<!-- 10.3.3 START -->
+
+# 10.3.3 (2024-02-02)
+
+### Bug fixes
+
+- **Elasticsearch:** Fix creating of legend so it is backward compatible with frontend produced frames. [#81786](https://github.com/grafana/grafana/issues/81786), [@ivanahuckova](https://github.com/ivanahuckova)
+- **ShareModal:** Fixes url sync issue that caused issue with save drawer. [#81721](https://github.com/grafana/grafana/issues/81721), [@ivanortegaalba](https://github.com/ivanortegaalba)
+
+<!-- 10.3.3 END -->
 <!-- 10.3.1 START -->
 
 # 10.3.1 (2024-01-22)
