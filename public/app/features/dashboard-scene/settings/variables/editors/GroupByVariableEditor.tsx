@@ -43,7 +43,7 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
     <GroupByVariableForm
       defaultOptions={defaultOptions}
       datasource={datasourceRef ?? undefined}
-      infoText={message}
+      infoText={datasourceRef ? message : undefined}
       onDataSourceChange={onDataSourceChange}
       onDefaultOptionsChange={onDefaultOptionsChange}
     />
