@@ -5,7 +5,7 @@ import { PanelContext } from '@grafana/ui';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { findVizPanelByKey } from '../utils/utils';
 
-import { getAdHocFilterSetFor, setDashboardPanelContext } from './setDashboardPanelContext';
+import { getAdHocFilterVariableFor, setDashboardPanelContext } from './setDashboardPanelContext';
 
 const postFn = jest.fn();
 const putFn = jest.fn();
@@ -132,7 +132,7 @@ describe('setDashboardPanelContext', () => {
 
       context.onAddAdHocFilter!({ key: 'hello', value: 'world', operator: '=' });
 
-      const variable = getAdHocFilterSetFor(scene, { uid: 'my-ds-uid' });
+      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
 
       expect(variable.state.filters).toEqual([{ key: 'hello', value: 'world', operator: '=' }]);
     });
@@ -140,7 +140,7 @@ describe('setDashboardPanelContext', () => {
     it('Should update and add filter to existing set', () => {
       const { scene, context } = buildTestScene({ existingFilterSet: true });
 
-      const variable = getAdHocFilterSetFor(scene, { uid: 'my-ds-uid' });
+      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
 
       variable.setState({ filters: [{ key: 'existing', value: 'world', operator: '=' }] });
 

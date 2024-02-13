@@ -111,8 +111,8 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       return;
     }
 
-    const filterSet = getAdHocFilterSetFor(dashboard, queryRunner.state.datasource);
-    updateAdHocFilterSet(filterSet, newFilter);
+    const filterSet = getAdHocFilterVariableFor(dashboard, queryRunner.state.datasource);
+    updateAdHocFilterVariable(filterSet, newFilter);
   };
 
   context.onUpdateData = (frames: DataFrame[]): Promise<boolean> => {
@@ -149,7 +149,7 @@ function reRunBuiltInAnnotationsLayer(scene: DashboardScene) {
   }
 }
 
-export function getAdHocFilterSetFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
+export function getAdHocFilterVariableFor(scene: DashboardScene, ds: DataSourceRef | null | undefined) {
   const variables = sceneGraph.getVariables(scene);
 
   for (const variable of variables.state.variables) {
@@ -174,12 +174,12 @@ export function getAdHocFilterSetFor(scene: DashboardScene, ds: DataSourceRef | 
   return newVariable;
 }
 
-function updateAdHocFilterSet(filterSetVariable: AdHocFiltersVariable, newFilter: AdHocFilterItem) {
+function updateAdHocFilterVariable(filterVar: AdHocFiltersVariable, newFilter: AdHocFilterItem) {
   // Check if we need to update an existing filter
-  for (const filter of filterSetVariable.state.filters) {
+  for (const filter of filterVar.state.filters) {
     if (filter.key === newFilter.key) {
-      filterSetVariable.setState({
-        filters: filterSetVariable.state.filters.map((f) => {
+      filterVar.setState({
+        filters: filterVar.state.filters.map((f) => {
           if (f.key === newFilter.key) {
             return newFilter;
           }
@@ -191,7 +191,7 @@ function updateAdHocFilterSet(filterSetVariable: AdHocFiltersVariable, newFilter
   }
 
   // Add new filter
-  filterSetVariable.setState({
-    filters: [...filterSetVariable.state.filters, newFilter],
+  filterVar.setState({
+    filters: [...filterVar.state.filters, newFilter],
   });
 }
