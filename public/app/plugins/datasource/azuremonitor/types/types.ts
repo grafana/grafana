@@ -21,7 +21,7 @@ type DataSourceJsonValue =
   | null
   | undefined
   | { [x: string]: DataSourceJsonValue }
-  | Array<DataSourceJsonValue>;
+  | DataSourceJsonValue[];
 
 export interface DataSourceJsonData2 extends DataSourceJsonData {
   [field: string]: DataSourceJsonValue;

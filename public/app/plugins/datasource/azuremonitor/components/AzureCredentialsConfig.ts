@@ -3,6 +3,7 @@ import {DataSourceInstanceSettings, DataSourceSettings} from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { DataSourceJsonData2, DataSourceSecureJsonData2 } from "../types";
+
 import { AzureCloud } from './AzureCredentials';
 
 const concealed: ConcealedSecret = Symbol('Concealed client secret');
