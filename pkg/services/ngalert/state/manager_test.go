@@ -1275,8 +1275,8 @@ func TestProcessEvalResults(t *testing.T) {
 			for evalTime := range tc.evalResults {
 				evals = append(evals, evalTime)
 			}
-			slices.SortFunc(evals, func(a, b time.Time) bool {
-				return a.Before(b)
+			slices.SortFunc(evals, func(a, b time.Time) int {
+				return a.Compare(b)
 			})
 			results := 0
 			for _, evalTime := range evals {
