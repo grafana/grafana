@@ -18,7 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationDeviceService_tag(t *testing.T) {
 	type tagReq struct {

@@ -25,8 +25,12 @@ When configured, this connection lets you run queries from a trace span into the
 
 There are two ways to configure the trace to profiles feature:
 
-- Use a simplified configuration with default query, or
+- Use a basic configuration with default query, or
 - Configure a custom query where you can use a template language to interpolate variables from the trace or span.
+
+{{< admonition type="note">}}
+Traces to profile requires a Tempo data source with Traces to profiles configured and a Pyroscope data source. This integration supports profile data generated using Go, Ruby, and Java instrumentation SDKs.
+{{< /admonition >}}
 
 To use trace to profiles, navigate to **Explore** and query a trace. Each span now links to your queries. Clicking a link runs the query in a split panel. If tags are configured, Grafana dynamically inserts the span attribute values into the query. The query runs over the time range of the (span start time - 60) to (span end time + 60 seconds).
 
@@ -40,7 +44,7 @@ Hover over a particular block in the flame graph to see more details about the r
 
 ## Use a basic configuration
 
-To use a simple configuration, follow these steps:
+To use a basic configuration, follow these steps:
 
 1. Select a Pyroscope data source from the **Data source** drop-down.
 1. Optional: Choose any tags to use in the query. If left blank, the default values of `service.name` and `service.namespace` are used.

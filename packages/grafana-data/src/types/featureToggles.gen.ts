@@ -33,6 +33,7 @@ export interface FeatureToggles {
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   autoMigrateOldPanels?: boolean;
+  autoMigrateGraphPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
   newVizTooltips?: boolean;
@@ -41,7 +42,6 @@ export interface FeatureToggles {
   logRequestsInstrumentedAsUnknown?: boolean;
   dataConnectionsConsole?: boolean;
   topnav?: boolean;
-  dockedMegaMenu?: boolean;
   returnToPrevious?: boolean;
   grpcServer?: boolean;
   unifiedStorage?: boolean;
@@ -146,6 +146,7 @@ export interface FeatureToggles {
   annotationPermissionUpdate?: boolean;
   extractFieldsNameDeduplication?: boolean;
   dashboardSceneForViewers?: boolean;
+  dashboardSceneSolo?: boolean;
   dashboardScene?: boolean;
   panelFilterVariable?: boolean;
   pdfTables?: boolean;
@@ -168,10 +169,11 @@ export interface FeatureToggles {
   cloudRBACRoles?: boolean;
   alertingQueryOptimization?: boolean;
   newFolderPicker?: boolean;
-  jitterAlertRules?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
   alertingSaveStatePeriodic?: boolean;
   promQLScope?: boolean;
   nodeGraphDotLayout?: boolean;
+  groupToNestedTableTransformation?: boolean;
+  newPDFRendering?: boolean;
 }

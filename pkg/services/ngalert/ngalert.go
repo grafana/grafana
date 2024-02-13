@@ -174,7 +174,7 @@ func (ng *AlertNG) init() error {
 	// using the UTF-8 parser and then fallsback to the classic parser on error.
 	// UTF-8 is permitted in label names. This should be removed when the compat package
 	// is removed from Alertmanager.
-	compat.InitFromFlags(ng.Log, compat.RegisteredMetrics, featurecontrol.NoopFlags{})
+	compat.InitFromFlags(ng.Log, featurecontrol.NoopFlags{})
 
 	// If enabled, configure the remote Alertmanager.
 	// - If several toggles are enabled, the order of precedence is RemoteOnly, RemotePrimary, RemoteSecondary
@@ -274,7 +274,7 @@ func (ng *AlertNG) init() error {
 		BaseInterval:         ng.Cfg.UnifiedAlerting.BaseInterval,
 		MinRuleInterval:      ng.Cfg.UnifiedAlerting.MinInterval,
 		DisableGrafanaFolder: ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel),
-		JitterEvaluations:    schedule.JitterStrategyFrom(ng.FeatureToggles),
+		JitterEvaluations:    schedule.JitterStrategyFrom(ng.Cfg.UnifiedAlerting, ng.FeatureToggles),
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
 		RuleStore:            ng.store,
@@ -348,6 +348,7 @@ func (ng *AlertNG) init() error {
 		StateManager:         ng.stateManager,
 		AccessControl:        ng.accesscontrol,
 		Policies:             policyService,
+		ReceiverService:      receiverService,
 		ContactPointService:  contactPointService,
 		Templates:            templateService,
 		MuteTimings:          muteTimingService,
