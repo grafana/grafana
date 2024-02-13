@@ -9,6 +9,7 @@ import {
   DataTransformerConfig,
   Field,
   FieldType,
+  guessFieldTypeForField,
   LogsSortOrder,
   sortDataFrame,
   SplitOpen,
@@ -87,6 +88,9 @@ export function LogsTable(props: Props) {
           // This sets the individual field value as filterable
           filterable: isFieldFilterable(field, logsFrame?.bodyField.name ?? '', logsFrame?.timeField.name ?? ''),
         };
+
+        // If it's a string, then try to guess for a better type for numeric support in derived fields
+        field.type = field.type === FieldType.string ? guessFieldTypeForField(field) ?? field.type : field.type;
       }
 
       return frameWithOverrides;
@@ -129,7 +133,9 @@ export function LogsTable(props: Props) {
 
       if (transformations.length > 0) {
         const transformedDataFrame = await lastValueFrom(transformDataFrame(transformations, [dataFrame]));
+        console.time('prepareTableFrame');
         const tableFrame = prepareTableFrame(transformedDataFrame[0]);
+        console.timeEnd('prepareTableFrame');
         setTableFrame(tableFrame);
       } else {
         setTableFrame(prepareTableFrame(dataFrame));
