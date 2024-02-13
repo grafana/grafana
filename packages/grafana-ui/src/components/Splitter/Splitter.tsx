@@ -39,45 +39,33 @@ export function Splitter(props: Props) {
     children,
   } = props;
 
-  const {
-    kids,
-    containerRef,
-    firstPaneRef,
-    minDimProp,
-    splitterRef,
-    measurementProp,
-    handleSize,
-    onPointerUp,
-    onPointerDown,
-    onPointerMove,
-    onKeyDown,
-    onKeyUp,
-    onDoubleClick,
-    onBlur,
-    secondPaneRef,
-  } = useSplitter(direction, onSizeChange, children);
+  const { kids, containerRef, firstPaneRef, minDimProp, splitterProps, secondPaneRef } = useSplitter(
+    direction,
+    onSizeChange,
+    children
+  );
 
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, direction);
   const dragStyles = useStyles2(getDragStyles, dragPosition);
   const dragHandleStyle = direction === 'column' ? dragStyles.dragHandleHorizontal : dragStyles.dragHandleVertical;
   const id = useId();
 
   const secondAvailable = kids.length === 2;
   const visibilitySecond = secondAvailable ? 'visible' : 'hidden';
+  let firstChildSize = initialSize;
+
+  // If second child is missing let first child have all the space
+  if (!children[1]) {
+    firstChildSize = 1;
+  }
 
   return (
-    <div
-      ref={containerRef}
-      className={styles.container}
-      style={{
-        flexDirection: direction,
-      }}
-    >
+    <div ref={containerRef} className={styles.container}>
       <div
         ref={firstPaneRef}
         className={styles.panel}
         style={{
-          flexGrow: clamp(initialSize, 0, 1),
+          flexGrow: clamp(firstChildSize, 0, 1),
           [minDimProp]: 'min-content',
           ...primaryPaneStyles,
         }}
@@ -90,20 +78,12 @@ export function Splitter(props: Props) {
         <>
           {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
           <div
-            ref={splitterRef}
-            style={{ [measurementProp]: `${handleSize}px` }}
             className={dragHandleStyle}
-            onPointerUp={onPointerUp}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onKeyDown={onKeyDown}
-            onKeyUp={onKeyUp}
-            onDoubleClick={onDoubleClick}
-            onBlur={onBlur}
+            {...splitterProps}
             role="separator"
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-valuenow={50}
+            aria-valuenow={initialSize * 100}
             aria-controls={`start-panel-${id}`}
             aria-label="Pane resize widget"
             // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
@@ -129,10 +109,11 @@ export function Splitter(props: Props) {
   );
 }
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, direction: Props['direction']) {
   return {
     container: css({
       display: 'flex',
+      flexDirection: direction === 'row' ? 'row' : 'column',
       width: '100%',
       flexGrow: 1,
       overflow: 'hidden',
@@ -415,16 +396,17 @@ function useSplitter(direction: 'row' | 'column', onSizeChange: Props['onSizeCha
     containerRef,
     firstPaneRef,
     minDimProp,
-    splitterRef,
-    measurementProp,
-    handleSize,
-    onPointerUp,
-    onPointerDown,
-    onPointerMove,
-    onKeyDown,
-    onKeyUp,
-    onDoubleClick,
-    onBlur,
+    splitterProps: {
+      onPointerUp,
+      onPointerDown,
+      onPointerMove,
+      onKeyDown,
+      onKeyUp,
+      onDoubleClick,
+      onBlur,
+      ref: splitterRef,
+      style: { [measurementProp]: `${handleSize}px` },
+    },
     secondPaneRef,
   };
 }

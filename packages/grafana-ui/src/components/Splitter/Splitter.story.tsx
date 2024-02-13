@@ -37,7 +37,7 @@ export const Basic: StoryFn = (args) => {
 
   return (
     <DashboardStoryCanvas>
-      <div style={{ display: 'flex', width: '900px', height: '700px' }}>
+      <div style={{ display: 'flex', width: '700px', height: '500px' }}>
         <Splitter {...args}>
           <div className={paneStyles}>Primary</div>
           <div className={paneStyles}>Secondary</div>
