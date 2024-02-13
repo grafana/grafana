@@ -159,7 +159,7 @@ const SearchField = ({
           )}
           value={filter.tag}
           onChange={(v) => {
-            updateFilter({ ...filter, tag: v?.value });
+            updateFilter({ ...filter, tag: v?.value, value: [] });
           }}
           placeholder="Select tag"
           isClearable
