@@ -9,7 +9,7 @@ import { PopoverMenu } from './PopoverMenu';
 const row = createLogRow();
 
 test('Does not render if the filter functions are not defined', () => {
-  render(<PopoverMenu selection="test" x={0} y={0} row={row} close={() => {}} />);
+  render(<PopoverMenu selection="test" x={0} y={0} refId={row.dataFrame.refId} close={() => {}} />);
 
   expect(screen.queryByText('Copy selection')).not.toBeInTheDocument();
 });
@@ -17,7 +17,14 @@ test('Does not render if the filter functions are not defined', () => {
 test('Renders copy and line contains filter', async () => {
   const onClickFilterValue = jest.fn();
   render(
-    <PopoverMenu selection="test" x={0} y={0} row={row} close={() => {}} onClickFilterValue={onClickFilterValue} />
+    <PopoverMenu
+      selection="test"
+      x={0}
+      y={0}
+      refId={row.dataFrame.refId}
+      close={() => {}}
+      onClickFilterValue={onClickFilterValue}
+    />
   );
 
   expect(screen.getByText('Copy selection')).toBeInTheDocument();
@@ -36,7 +43,7 @@ test('Renders copy and line does not contain filter', async () => {
       selection="test"
       x={0}
       y={0}
-      row={row}
+      refId={row.dataFrame.refId}
       close={() => {}}
       onClickFilterOutValue={onClickFilterOutValue}
     />
@@ -57,7 +64,7 @@ test('Renders copy, line contains filter, and line does not contain filter', () 
       selection="test"
       x={0}
       y={0}
-      row={row}
+      refId={row.dataFrame.refId}
       close={() => {}}
       onClickFilterValue={() => {}}
       onClickFilterOutValue={() => {}}
@@ -76,7 +83,7 @@ test('Can be dismissed with escape', async () => {
       selection="test"
       x={0}
       y={0}
-      row={row}
+      refId={row.dataFrame.refId}
       close={close}
       onClickFilterValue={() => {}}
       onClickFilterOutValue={() => {}}
