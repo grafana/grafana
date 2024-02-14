@@ -183,7 +183,7 @@
     "jest-matcher-utils": "29.7.0",
     "lerna": "7.4.1",
     "mini-css-extract-plugin": "2.8.0",
-    "msw": "1.3.2",
+    "msw": "2.2.0",
     "mutationobserver-shim": "0.3.7",
     "ngtemplate-loader": "2.1.0",
     "node-notifier": "10.0.1",
