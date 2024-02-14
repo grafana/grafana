@@ -1,16 +1,29 @@
 import { css } from '@emotion/css';
 import saveAs from 'file-saver';
 import React from 'react';
+import { lastValueFrom } from 'rxjs';
 
-import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel, CoreApp, dateTimeFormat } from '@grafana/data';
+import {
+  LogsDedupStrategy,
+  LogsMetaItem,
+  LogsMetaKind,
+  LogRowModel,
+  CoreApp,
+  dateTimeFormat,
+  transformDataFrame,
+  DataTransformerConfig,
+  CustomTransformOperator,
+} from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Menu, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { downloadLogsModelAsTxt } from '../../inspector/utils/download';
+import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../../inspector/utils/download';
 import { LogLabels } from '../../logs/components/LogLabels';
 import { MAX_CHARACTERS } from '../../logs/components/LogRowMessage';
 import { logRowsToReadableJson } from '../../logs/utils';
 import { MetaInfoText, MetaItemProps } from '../MetaInfoText';
+
+import { getLogsExtractFields } from './LogsTable';
 
 const getStyles = () => ({
   metaContainer: css`
@@ -35,6 +48,7 @@ export type Props = {
 enum DownloadFormat {
   Text = 'text',
   Json = 'json',
+  CSV = 'csv',
 }
 
 export const LogsMetaRow = React.memo(
@@ -51,12 +65,14 @@ export const LogsMetaRow = React.memo(
   }: Props) => {
     const style = useStyles2(getStyles);
 
-    const downloadLogs = (format: DownloadFormat) => {
+    const downloadLogs = async (format: DownloadFormat) => {
       reportInteraction('grafana_logs_download_logs_clicked', {
         app: CoreApp.Explore,
         format,
         area: 'logs-meta-row',
       });
+
+      const fileName = `Explore-logs-${dateTimeFormat(new Date())}.json`;
 
       switch (format) {
         case DownloadFormat.Text:
@@ -68,9 +84,22 @@ export const LogsMetaRow = React.memo(
             type: 'application/json;charset=utf-8',
           });
 
-          const fileName = `Explore-logs-${dateTimeFormat(new Date())}.json`;
           saveAs(blob, fileName);
           break;
+        case DownloadFormat.CSV:
+          const dataFrame = logRows[0].dataFrame;
+          const transforms: Array<DataTransformerConfig | CustomTransformOperator> = getLogsExtractFields(dataFrame);
+          transforms.push({
+            id: 'organize',
+            options: {
+              excludeByName: {
+                ['labels']: true,
+                ['labelTypes']: true,
+              },
+            },
+          });
+          const transformedDataFrame = await lastValueFrom(transformDataFrame(transforms, [dataFrame]));
+          downloadDataFrameAsCsv(transformedDataFrame[0], fileName);
       }
     };
 
@@ -131,6 +160,7 @@ export const LogsMetaRow = React.memo(
       <Menu>
         <Menu.Item label="txt" onClick={() => downloadLogs(DownloadFormat.Text)} />
         <Menu.Item label="json" onClick={() => downloadLogs(DownloadFormat.Json)} />
+        <Menu.Item label="csv" onClick={() => downloadLogs(DownloadFormat.CSV)} />
       </Menu>
     );
     return (
