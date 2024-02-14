@@ -114,6 +114,6 @@ func (c *Grafana) AuthenticatePassword(ctx context.Context, r *authn.Request, us
 
 func comparePassword(password, salt string, hash user.Password) bool {
 	// It is ok to ignore the error here because util.EncodePassword can never return a error
-	hashedPassword, _ := util.EncodePassword(string(password), salt)
+	hashedPassword, _ := util.EncodePassword(password, salt)
 	return subtle.ConstantTimeCompare([]byte(hashedPassword), []byte(hash)) == 1
 }
