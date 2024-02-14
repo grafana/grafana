@@ -1494,12 +1494,6 @@
         "count": 1
       }
     ],
-    "/public/app/core/components/help/HelpModal.tsx": [
-      {
-        "message": "Styles should be written using objects.",
-        "count": 8
-      }
-    ],
     "/public/app/core/navigation/types.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
@@ -1857,7 +1851,7 @@
     "/public/app/features/alerting/unified/components/AlertStateDot.tsx": [
       {
         "message": "Styles should be written using objects.",
-        "count": 4
+        "count": 1
       }
     ],
     "/public/app/features/alerting/unified/components/AnnotationDetailsField.tsx": [
@@ -2009,19 +2003,13 @@
       },
       {
         "message": "Styles should be written using objects.",
-        "count": 4
+        "count": 3
       }
     ],
     "/public/app/features/alerting/unified/components/alert-groups/AlertGroupHeader.tsx": [
       {
         "message": "Do not use any type assertions.",
         "count": 2
-      }
-    ],
-    "/public/app/features/alerting/unified/components/alert-groups/AlertStateFilter.tsx": [
-      {
-        "message": "Styles should be written using objects.",
-        "count": 1
       }
     ],
     "/public/app/features/alerting/unified/components/alert-groups/GroupBy.tsx": [
@@ -2551,7 +2539,7 @@
     "/public/app/features/alerting/unified/components/rules/RuleDetailsMatchingInstances.tsx": [
       {
         "message": "Styles should be written using objects.",
-        "count": 6
+        "count": 5
       }
     ],
     "/public/app/features/alerting/unified/components/rules/RuleHealth.tsx": [
@@ -2738,6 +2726,12 @@
       {
         "message": "Unexpected any. Specify a different type.",
         "count": 3
+      }
+    ],
+    "/public/app/features/alerting/unified/utils/misc.ts": [
+      {
+        "message": "Do not use any type assertions.",
+        "count": 1
       }
     ],
     "/public/app/features/alerting/unified/utils/receiver-form.ts": [
@@ -3901,7 +3895,7 @@
     "/public/app/features/explore/TraceView/components/TracePageHeader/SpanFilters/SpanFilters.tsx": [
       {
         "message": "Styles should be written using objects.",
-        "count": 7
+        "count": 6
       }
     ],
     "/public/app/features/explore/TraceView/components/TracePageHeader/SpanGraph/CanvasSpanGraph.tsx": [
