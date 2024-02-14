@@ -142,9 +142,6 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       validation: {
         required: true,
         validate: (value) => {
-          if (typeof value !== 'string') {
-            return false;
-          }
           return isUrlValid(value);
         },
         message: 'This field is required and must be a valid URL.',
@@ -169,9 +166,6 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       validation: {
         required: true,
         validate: (value) => {
-          if (typeof value !== 'string') {
-            return false;
-          }
           return isUrlValid(value);
         },
         message: 'This field is required and must be a valid URL.',
