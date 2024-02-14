@@ -88,18 +88,21 @@ func (s *Service) DBMigration(db db.DB) {
 	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
 		if db.GetDialect().DriverName() == migrator.SQLite {
+			// covered by UQE_folder_org_id_uid
 			_, err = sess.Exec(`
 				INSERT INTO folder (uid, org_id, title, created, updated)
 				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1
 				ON CONFLICT DO UPDATE SET title=excluded.title, updated=excluded.updated
 			`)
 		} else if db.GetDialect().DriverName() == migrator.Postgres {
+			// covered by UQE_folder_org_id_uid
 			_, err = sess.Exec(`
 				INSERT INTO folder (uid, org_id, title, created, updated)
 				SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true
 				ON CONFLICT(uid, org_id) DO UPDATE SET title=excluded.title, updated=excluded.updated
 			`)
 		} else {
+			// covered by UQE_folder_org_id_uid
 			_, err = sess.Exec(`
 				INSERT INTO folder (uid, org_id, title, created, updated)
 				SELECT * FROM (SELECT uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1) AS derived
@@ -109,6 +112,8 @@ func (s *Service) DBMigration(db db.DB) {
 		if err != nil {
 			return err
 		}
+
+		// covered by UQE_folder_org_id_uid
 		_, err = sess.Exec(`
 			DELETE FROM folder WHERE NOT EXISTS
 				(SELECT 1 FROM dashboard WHERE dashboard.uid = folder.uid AND dashboard.org_id = folder.org_id AND dashboard.is_folder = true)

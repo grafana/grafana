@@ -88,6 +88,7 @@ func (ss *sqlStore) Delete(ctx context.Context, UIDs []string, orgID int64) erro
 		return nil
 	}
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		// covered by UQE_folder_org_id_uid
 		s := fmt.Sprintf("DELETE FROM folder WHERE org_id=? AND uid IN (%s)", strings.Repeat("?, ", len(UIDs)-1)+"?")
 		sqlArgs := make([]any, 0, len(UIDs)+2)
 		sqlArgs = append(sqlArgs, s, orgID)
@@ -140,6 +141,7 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 		}
 
 		sql.WriteString(strings.Join(columnsToUpdate, ", "))
+		// covered by UQE_folder_org_id_uid
 		sql.WriteString(" WHERE uid = ? AND org_id = ?")
 		args = append(args, cmd.UID, cmd.OrgID)
 
@@ -178,13 +180,16 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 		var err error
 		switch {
 		case q.UID != nil:
+			// covered UQE_folder_uid_org_id
 			exists, err = sess.SQL("SELECT * FROM folder WHERE uid = ? AND org_id = ?", q.UID, q.OrgID).Get(foldr)
 		// nolint:staticcheck
 		case q.ID != nil:
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
+			// covered by primary key
 			exists, err = sess.SQL("SELECT * FROM folder WHERE id = ?", q.ID).Get(foldr)
 		case q.Title != nil:
 			s := strings.Builder{}
+			// covered by UQE_folder_org_id_parent_uid_title
 			s.WriteString("SELECT * FROM folder WHERE title = ? AND org_id = ?")
 			args := []any{*q.Title, q.OrgID}
 			if q.ParentUID != nil {
@@ -216,6 +221,7 @@ func (ss *sqlStore) GetParents(ctx context.Context, q folder.GetParentsQuery) ([
 	}
 	var folders []*folder.Folder
 
+	// covered by UQE_folder_org_id_uid
 	recQuery := `
 		WITH RECURSIVE RecQry AS (
 			SELECT * FROM folder WHERE uid = ? AND org_id = ?
@@ -266,6 +272,7 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sql := strings.Builder{}
 		args := make([]any, 0, 2)
+		// covered by UQE_folder_org_id_parent_uid_title
 		if q.UID == "" {
 			sql.WriteString("SELECT * FROM folder WHERE parent_uid IS NULL AND org_id=?")
 			args = append(args, q.OrgID)
@@ -312,6 +319,7 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 func (ss *sqlStore) getParentsMySQL(ctx context.Context, q folder.GetParentsQuery) (folders []*folder.Folder, err error) {
 	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		uid := ""
+		// covered by UQE_folder_org_id_uid
 		ok, err := sess.SQL("SELECT parent_uid FROM folder WHERE org_id=? AND uid=?", q.OrgID, q.UID).Get(&uid)
 		if err != nil {
 			return err
@@ -321,6 +329,7 @@ func (ss *sqlStore) getParentsMySQL(ctx context.Context, q folder.GetParentsQuer
 		}
 		for {
 			f := &folder.Folder{}
+			// covered by UQE_folder_org_id_uid
 			ok, err := sess.SQL("SELECT * FROM folder WHERE org_id=? AND uid=?", q.OrgID, uid).Get(f)
 			if err != nil {
 				return err
@@ -424,6 +433,7 @@ func (ss *sqlStore) GetFolders(ctx context.Context, q getFoldersQuery) ([]*folde
 			if q.WithFullpath || q.WithFullpathUIDs || len(q.ancestorUIDs) > 0 {
 				s.WriteString(getFullpathJoinsSQL())
 			}
+			// covered by UQE_folder_org_id_uid
 			s.WriteString(` WHERE f0.org_id=?`)
 			args := []any{q.OrgID}
 			if len(partialUIDs) > 0 {
@@ -479,6 +489,7 @@ func (ss *sqlStore) GetDescendants(ctx context.Context, orgID int64, ancestor_ui
 	}
 	switch recursiveQueriesAreSupported {
 	case true:
+		// covered by UQE_folder_org_id_parent_uid_title
 		recQuery := `
 		WITH RECURSIVE RecQry AS (
 			SELECT * FROM folder WHERE parent_uid = ? AND org_id = ?
@@ -502,6 +513,7 @@ func (ss *sqlStore) GetDescendants(ctx context.Context, orgID int64, ancestor_ui
 			s := strings.Builder{}
 			args := make([]any, 0, 1+folder.MaxNestedFolderDepth)
 			args = append(args, orgID)
+			// covered by UQE_folder_org_id_uid
 			s.WriteString(`SELECT f0.id, f0.org_id, f0.uid, f0.parent_uid, f0.title, f0.description, f0.created, f0.updated`)
 			s.WriteString(` FROM folder f0`)
 			s.WriteString(getFullpathJoinsSQL())
@@ -555,6 +567,7 @@ func getFullapathUIDsSQL(dialect migrator.Dialect) string {
 func getFullpathJoinsSQL() string {
 	joins := make([]string, 0, folder.MaxNestedFolderDepth)
 	for i := 1; i <= folder.MaxNestedFolderDepth; i++ {
+		// covered by UQE_folder_org_id_uid
 		joins = append(joins, fmt.Sprintf(` LEFT JOIN folder f%d ON f%d.org_id = f%d.org_id AND f%d.uid = f%d.parent_uid`, i, i, i-1, i, i-1))
 	}
 	return strings.Join(joins, "\n")
