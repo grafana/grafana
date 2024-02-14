@@ -1,4 +1,5 @@
 'use strict';
+const { getPackagesSync } = require('@manypkg/get-packages');
 const browserslist = require('browserslist');
 const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
 const ESLintPlugin = require('eslint-webpack-plugin');
@@ -19,6 +20,12 @@ const esbuildOptions = {
   format: undefined,
 };
 
+// To speed up webpack and prevent unnecessary rebuilds we ignore decoupled packages
+function getDecoupledPlugins() {
+  const { packages } = getPackagesSync(process.cwd());
+  return packages.filter((pkg) => pkg.dir.includes('plugins/datasource')).map((pkg) => `${pkg.dir}/**`);
+}
+
 module.exports = (env = {}) => {
   return merge(common, {
     devtool: 'source-map',
@@ -32,15 +39,7 @@ module.exports = (env = {}) => {
 
     // If we enabled watch option via CLI
     watchOptions: {
-      ignored: [
-        '/node_modules/',
-        '**/plugins/datasource/azuremonitor/**',
-        '**/plugins/datasource/cloud-monitoring/**',
-        '**/plugins/datasource/grafana-pyroscope-datasource/**',
-        '**/plugins/datasource/grafana-testdata-datasource/**',
-        '**/plugins/datasource/parca/**',
-        '**/plugins/datasource/tempo/**',
-      ],
+      ignored: ['/node_modules/', ...getDecoupledPlugins()],
     },
 
     resolve: {
