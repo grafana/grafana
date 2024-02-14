@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, SceneVariable, SceneVariables, sceneGraph } from '@grafana/scenes';
@@ -178,19 +178,30 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
   const { variables } = model.getVariableSet().useState();
   const { editIndex } = model.useState();
 
+  const isVariableNameTaken = useCallback(
+    (name: string, key: string | undefined) => {
+      const variable = model.getVariableSet().getByName(name);
+      if (!variable) {
+        return false;
+      }
+      return !(key === variable?.state.key);
+    },
+    [model]
+  );
+
   if (editIndex !== undefined && variables[editIndex]) {
     const variable = variables[editIndex];
     if (variable) {
       return (
         <VariableEditorSettingsView
           variable={variable}
-          allVariables={variables}
           onTypeChange={onTypeChange}
           onGoBack={onGoBack}
           pageNav={pageNav}
           navModel={navModel}
           dashboard={dashboard}
           onDelete={onDelete}
+          isVariableNameTaken={isVariableNameTaken}
         />
       );
     }
@@ -213,24 +224,24 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
 
 interface VariableEditorSettingsEditViewProps {
   variable: SceneVariable;
-  allVariables: SceneVariable[];
   pageNav: NavModelItem;
   navModel: NavModel;
   dashboard: DashboardScene;
   onTypeChange: (variableType: EditableVariableType) => void;
   onGoBack: () => void;
   onDelete: (variableName: string) => void;
+  isVariableNameTaken: (name: string, key: string | undefined) => boolean;
 }
 
 function VariableEditorSettingsView({
   variable,
-  allVariables,
   pageNav,
   navModel,
   dashboard,
   onTypeChange,
   onGoBack,
   onDelete,
+  isVariableNameTaken,
 }: VariableEditorSettingsEditViewProps) {
   const parentTab = pageNav.children!.find((p) => p.active)!;
   parentTab.parentItem = pageNav;
@@ -245,10 +256,10 @@ function VariableEditorSettingsView({
       <NavToolbarActions dashboard={dashboard} />
       <VariableEditorForm
         variable={variable}
-        allVariables={allVariables}
         onTypeChange={onTypeChange}
         onGoBack={onGoBack}
         onDelete={onDelete}
+        isVariableNameTaken={isVariableNameTaken}
       />
     </Page>
   );

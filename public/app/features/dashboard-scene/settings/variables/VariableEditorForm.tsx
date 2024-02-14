@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FormEvent, useCallback, useMemo, useState } from 'react';
+import React, { FormEvent, useCallback, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
@@ -24,33 +24,30 @@ const WORD_CHARACTERS_REGEX = /^\w+$/;
 
 interface VariableEditorFormProps {
   variable: SceneVariable;
-  allVariables: SceneVariable[];
   onTypeChange: (type: EditableVariableType) => void;
   onGoBack: () => void;
   onDelete: (variableName: string) => void;
+  isVariableNameTaken: (name: string, key: string | undefined) => boolean;
 }
 export function VariableEditorForm({
   variable,
-  allVariables,
   onTypeChange,
   onGoBack,
   onDelete,
+  isVariableNameTaken,
 }: VariableEditorFormProps) {
   const styles = useStyles2(getStyles);
   const [nameError, setNameError] = useState<string | null>(null);
-  const { name, type, label, description, hide } = variable.useState();
+  const { name, type, label, description, hide, key } = variable.useState();
   const EditorToRender = isEditableVariableType(type) ? getVariableEditor(type) : undefined;
   const [runQueryState, onRunQuery] = useAsyncFn(async () => {
     await lastValueFrom(variable.validateAndUpdate!());
   }, [variable]);
-
   const onVariableTypeChange = (option: SelectableValue<EditableVariableType>) => {
     if (option.value) {
       onTypeChange(option.value);
     }
   };
-
-  const variableNameSet = useMemo(() => new Set(allVariables.map((v) => v.state.name)), [allVariables]);
 
   const onNameChange = useCallback(
     (e: FormEvent<HTMLInputElement>) => {
@@ -63,7 +60,7 @@ export function VariableEditorForm({
         errorText = 'Only word characters are allowed in variable names';
       }
 
-      if (variableNameSet.has(e.currentTarget.value)) {
+      if (isVariableNameTaken(e.currentTarget.value, key || '')) {
         errorText = 'Variable with the same name already exists';
       }
 
@@ -71,7 +68,7 @@ export function VariableEditorForm({
         setNameError(errorText);
       }
     },
-    [nameError, variableNameSet]
+    [isVariableNameTaken, key, nameError]
   );
 
   const onNameBlur = (e: FormEvent<HTMLInputElement>) => {
