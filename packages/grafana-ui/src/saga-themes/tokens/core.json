@@ -369,12 +369,12 @@
         "description": "Standard Corner Radius used throughout Grafana."
       },
       "circle": {
-        "value": "100%",
+        "value": "100000",
         "type": "borderRadius",
         "description": "used to generate full circle elements"
       },
       "pill": {
-        "value": "9999px",
+        "value": "9999",
         "type": "borderRadius",
         "description": "used to generate pill-shaped elements"
       }
