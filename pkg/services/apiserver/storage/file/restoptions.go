@@ -3,7 +3,8 @@
 package file
 
 import (
-	"path"
+	"os"
+	"path/filepath"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -21,7 +22,7 @@ type RESTOptionsGetter struct {
 
 func NewRESTOptionsGetter(path string, originalStorageConfig storagebackend.Config) *RESTOptionsGetter {
 	if path == "" {
-		path = "/tmp/grafana-apiserver"
+		path = filepath.Join(os.TempDir(), "grafana-apiserver")
 	}
 
 	return &RESTOptionsGetter{path: path, original: originalStorageConfig}
@@ -47,11 +48,12 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource) (gener
 	}
 
 	ret := generic.RESTOptions{
-		StorageConfig:             storageConfig,
-		Decorator:                 NewStorage,
-		DeleteCollectionWorkers:   0,
-		EnableGarbageCollection:   false,
-		ResourcePrefix:            path.Join(storageConfig.Prefix, resource.Group, resource.Resource),
+		StorageConfig:           storageConfig,
+		Decorator:               NewStorage,
+		DeleteCollectionWorkers: 0,
+		EnableGarbageCollection: false,
+		// k8s expects forward slashes here, we'll convert them to os path separators in the storage
+		ResourcePrefix:            "/" + resource.Group + "/" + resource.Resource,
 		CountMetricPollPeriod:     1 * time.Second,
 		StorageObjectCountTracker: storageConfig.Config.StorageObjectCountTracker,
 	}
