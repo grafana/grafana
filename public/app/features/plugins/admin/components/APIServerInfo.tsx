@@ -48,18 +48,6 @@ export const APIServerInfo = ({ plugin }: Props) => {
               {
                 uri: schemaURL,
                 fileMatch: ['*'], // associate with our model
-                // schema: {
-                //   type: "object",
-                //   properties: {
-                //     p1: {
-                //       enum: ["v1", "v2"]
-                //     },
-                //   },
-                //   "additionalProperties": false,
-                //   "required": [
-                //     "p1"
-                //   ]
-                // }
               },
             ],
           });
