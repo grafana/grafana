@@ -177,25 +177,10 @@ export class DashboardModel implements TimeModel {
       config.featureToggles.autoMigrateGraphPanel ||
       config.featureToggles.autoMigrateTablePanel ||
       config.featureToggles.autoMigratePiechartPanel ||
-      config.featureToggles.autoMigrateWorldmapPanel;
+      config.featureToggles.autoMigrateWorldmapPanel ||
+      config.featureToggles.autoMigrateStatPanel;
 
-    if (shouldMigrateAllAngularPanels) {
-      for (const p of this.panelIterator()) {
-        const newType = autoMigrateAngular[p.type];
-
-        // Skip explicitly controlled panels
-        if (explicitlyControlledMigrationPanels.includes(p.type)) {
-          continue;
-        }
-
-        if (!p.autoMigrateFrom && newType) {
-          p.autoMigrateFrom = p.type;
-          p.type = newType;
-        }
-      }
-    }
-
-    // Explicit handling of migration for graph -> time series, table (old) -> table, grafana-piechart-panel -> piechart, and worldmap -> geomap
+    // Handles both granular and all angular panel migration
     if (shouldMigrateAllAngularPanels || shouldMigrateExplicitAngularPanels) {
       for (const p of this.panelIterator()) {
         if (
@@ -224,9 +209,15 @@ export class DashboardModel implements TimeModel {
           p.type === 'grafana-worldmap-panel' &&
           (config.featureToggles.autoMigrateWorldmapPanel || shouldMigrateAllAngularPanels)
         ) {
-          console.log('is this happening????');
           p.autoMigrateFrom = p.type;
           p.type = 'geomap';
+        } else if (
+          !p.autoMigrateFrom &&
+          (p.type === 'singlestat' || p.type === 'grafana-singlestat-panel') &&
+          (config.featureToggles.autoMigrateStatPanel || shouldMigrateAllAngularPanels)
+        ) {
+          p.autoMigrateFrom = p.type;
+          p.type = 'stat';
         }
       }
     }

@@ -135,6 +135,8 @@ export const explicitlyControlledMigrationPanels = [
   'table-old',
   'grafana-piechart-panel',
   'grafana-worldmap-panel',
+  'singlestat',
+  'grafana-singlestat-panel',
 ];
 
 export const autoMigrateAngular: Record<string, string> = {

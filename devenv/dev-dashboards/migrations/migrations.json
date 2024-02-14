@@ -122,6 +122,30 @@
       "keepTime": false,
       "tags": [],
       "targetBlank": true,
+      "title": "Auto migrate stat panel (TRUE)",
+      "tooltip": "",
+      "type": "link",
+      "url": " /d/cdd412c4/?__feature.autoMigrateStatPanel=true"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
+      "title": "Auto migrate stat panel (FALSE)",
+      "tooltip": "",
+      "type": "link",
+      "url": " /d/cdd412c4/?__feature.autoMigrateStatPanel=false"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [],
+      "targetBlank": true,
       "title": "Auto migrate (TRUE)",
       "tooltip": "",
       "type": "link",
@@ -167,73 +191,44 @@
   "liveNow": false,
   "panels": [
     {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
       "datasource": {
         "type": "testdata",
         "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
           "unit": "short"
         },
         "overrides": []
       },
+      "fill": 1,
+      "fillGradient": 0,
       "gridPos": {
         "h": 11,
         "w": 16,
         "x": 0,
         "y": 0
       },
+      "hiddenSeries": false,
       "id": 4,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
       "options": {
+        "alertThreshold": true,
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -245,7 +240,15 @@
           "sort": "none"
         }
       },
+      "percentage": false,
       "pluginVersion": "10.4.0-pre",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
       "targets": [
         {
           "datasource": {
@@ -257,8 +260,35 @@
           "seriesCount": 3
         }
       ],
+      "thresholds": [],
+      "timeRegions": [],
       "title": "Flot graph",
-      "type": "graph"
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "format": "short",
+          "logBase": 1,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
     },
     {
       "datasource": {
@@ -884,6 +914,6 @@
   "timezone": "",
   "title": "Devenv - Panel migrations",
   "uid": "cdd412c4",
-  "version": 63,
+  "version": 67,
   "weekStart": ""
 }

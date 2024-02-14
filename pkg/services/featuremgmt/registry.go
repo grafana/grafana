@@ -135,7 +135,6 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
-			Created:      time.Date(2024, time.February, 12, 0, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "autoMigratePiechartPanel",
@@ -143,7 +142,6 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
-			Created:      time.Date(2024, time.February, 12, 0, 0, 0, 0, time.UTC),
 		},
 		{
 			Name:         "autoMigrateWorldmapPanel",
@@ -151,7 +149,13 @@ var (
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
-			Created:      time.Date(2024, time.February, 12, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			Name:         "autoMigrateStatPanel",
+			Description:  "Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
 		},
 		{
 			Name:              "disableAngular",
