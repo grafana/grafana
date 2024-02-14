@@ -7,10 +7,11 @@ import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTool
 import { VizTooltipFooter } from '@grafana/ui/src/components/VizTooltip/VizTooltipFooter';
 import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizTooltipHeader';
 import { LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
+import { getContentItems } from '@grafana/ui/src/components/VizTooltip/utils';
 import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineChart/utils';
 
 import { getDataLinks } from '../status-history/utils';
-import { TimeSeriesTooltipProps, getContentItems, getStyles } from '../timeseries/TimeSeriesTooltip';
+import { TimeSeriesTooltipProps, getStyles } from '../timeseries/TimeSeriesTooltip';
 
 interface StateTimelineTooltip2Props extends TimeSeriesTooltipProps {
   timeRange: TimeRange;
