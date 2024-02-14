@@ -139,8 +139,8 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 				sqleng.Interpolate = origInterpolate
 			})
 
-			sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
-				return sql, nil
+			sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) string {
+				return sql
 			}
 
 			cfg := setting.NewCfg()
@@ -164,7 +164,7 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 
 			cnnstr := getCnnStr()
 
-			db, handler, err := newPostgres(cfg, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
+			db, handler, err := newPostgres(context.Background(), cfg, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
 
 			t.Cleanup((func() {
 				_, err := db.Exec("DROP TABLE tbl")

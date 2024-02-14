@@ -237,8 +237,9 @@ func setupTestEnvironment(t *testing.T, ops Options) (*Service, *sqlstore.SQLSto
 
 	sql := db.InitTestDB(t)
 	cfg := setting.NewCfg()
-	teamSvc := teamimpl.ProvideService(sql, cfg)
-	userSvc, err := userimpl.ProvideService(sql, nil, cfg, teamimpl.ProvideService(sql, cfg), nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+	teamSvc, err := teamimpl.ProvideService(sql, cfg)
+	require.NoError(t, err)
+	userSvc, err := userimpl.ProvideService(sql, nil, cfg, teamSvc, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()

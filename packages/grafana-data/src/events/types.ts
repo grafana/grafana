@@ -19,9 +19,21 @@ export abstract class BusEventBase implements BusEvent {
   readonly payload?: any;
   readonly origin?: EventBus;
 
+  /** @internal */
+  tags?: Set<string>;
+
   constructor() {
     //@ts-ignore
     this.type = this.__proto__.constructor.type;
+  }
+
+  /**
+   * @internal
+   * Tag event for finer-grained filtering in subscribers
+   */
+  setTags(tags: string[]) {
+    this.tags = new Set(tags);
+    return this;
   }
 }
 

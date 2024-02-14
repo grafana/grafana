@@ -97,6 +97,8 @@ export interface Props {
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
+  // The index of the field value that the table will initialize scrolled to
+  initialRowIndex?: number;
 
   // PoC for cell interaction menus
   //we prolly dont need a dom ref for each cell since we can pull the target out of the event handler and get its DOMRect

@@ -162,6 +162,17 @@ describe('ShareModal', () => {
         `http://localhost:3000/goto/${mockUid}`
       );
     });
+
+    it('should generate render url without shareView param', async () => {
+      mockLocationHref('http://dashboards.grafana.com/d/abcdefghi/my-dash?shareView=link');
+      render(<ShareLink {...props} />);
+
+      const base = 'http://dashboards.grafana.com/render/d-solo/abcdefghi/my-dash';
+      const params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
+      expect(
+        await screen.findByRole('link', { name: selectors.pages.SharePanelModal.linkToRenderedImage })
+      ).toHaveAttribute('href', base + params);
+    });
   });
 });
 
