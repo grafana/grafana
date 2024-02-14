@@ -358,11 +358,8 @@ message EntityWatchResponse {
   // Timestamp the event was sent
   int64 timestamp = 1;
 
-  // List of entities with the same action
-  repeated Entity entity = 2;
-
-  // Action code
-  Entity.Action action = 3;
+  // Entity that was created, updated, or deleted
+  Entity entity = 2;
 }
 
 message EntitySummary {

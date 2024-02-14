@@ -9,6 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"reflect"
 	"strconv"
@@ -192,53 +193,66 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	w := watch.NewFake()
 
 	go func() {
+		var err error
+
+		defer func() {
+			if !w.IsStopped() {
+				if err != nil {
+					reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
+					w.Error(reporter.AsObject(err))
+				}
+				w.Stop()
+			}
+			_ = result.CloseSend()
+		}()
+
 		for {
 			if w.IsStopped() {
 				log.Printf("watch is stopped")
 				return
 			}
 
-			resp, err := result.Recv()
-			if err != nil {
-				log.Printf("error receiving result: %s", err)
-				_ = result.CloseSend()
-				w.Stop()
+			var resp *entityStore.EntityWatchResponse
+			resp, err = result.Recv()
+			if errors.Is(err, io.EOF) {
+				log.Printf("watch is done")
+				err = nil
 				return
 			}
 
-			for _, r := range resp.Entity {
-				obj := s.newFunc()
-				err := entityToResource(r, obj, s.codec)
-				if err != nil {
-					log.Printf("error decoding entity: %s", err)
-					_ = result.CloseSend()
-					w.Stop()
-					return
-				}
-
-				// TODO filter in storage
-				matches, err := opts.Predicate.Matches(obj)
-				if err != nil {
-					log.Printf("error matching object: %s", err)
-					_ = result.CloseSend()
-					w.Stop()
-					return
-				}
-				if !matches {
-					continue
-				}
-
-				watchAction := watch.Error
-				if resp.Action == entityStore.Entity_CREATED {
-					watchAction = watch.Added
-				} else if resp.Action == entityStore.Entity_UPDATED {
-					watchAction = watch.Modified
-				} else if resp.Action == entityStore.Entity_DELETED {
-					watchAction = watch.Deleted
-				}
-
-				w.Action(watchAction, obj)
+			if err != nil {
+				log.Printf("error receiving result: %s", err)
+				return
 			}
+
+			obj := s.newFunc()
+			err = entityToResource(resp.Entity, obj, s.codec)
+			if err != nil {
+				log.Printf("error decoding entity: %s", err)
+				return
+			}
+
+			// apply any predicates not handled in storage
+			var matches bool
+			matches, err = opts.Predicate.Matches(obj)
+			if err != nil {
+				log.Printf("error matching object: %s", err)
+				return
+			}
+			if !matches {
+				continue
+			}
+
+			watchAction := watch.Error
+			if resp.Entity.Action == entityStore.Entity_CREATED {
+				watchAction = watch.Added
+			} else if resp.Entity.Action == entityStore.Entity_UPDATED {
+				watchAction = watch.Modified
+			} else if resp.Entity.Action == entityStore.Entity_DELETED {
+				watchAction = watch.Deleted
+			}
+
+			w.Action(watchAction, obj)
 		}
 	}()
 

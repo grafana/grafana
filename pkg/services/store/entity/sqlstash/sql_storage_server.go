@@ -1307,11 +1307,6 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 
 	s.log.Debug("watch init", "since", r.Since)
 
-	batch := &entity.EntityWatchResponse{
-		Action:    entity.Entity_CREATED,
-		Timestamp: time.Now().UnixMilli(),
-	}
-
 	for hasmore := true; hasmore; {
 		err = func() error {
 			query, args := entityQuery.toQuery()
@@ -1340,40 +1335,23 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 					r.Since = result.ResourceVersion
 				}
 
-				action := result.Action
 				if fromZero {
-					action = entity.Entity_CREATED
+					result.Action = entity.Entity_CREATED
 				}
 
-				if action != batch.Action || len(batch.Entity) >= 100 {
-					if len(batch.Entity) > 0 {
-						s.log.Debug("sending init batch", "action", batch.Action, "count", len(batch.Entity))
-						err = w.Send(batch)
-						if err != nil {
-							return err
-						}
-					}
-
-					batch = &entity.EntityWatchResponse{
-						Action:    action,
-						Timestamp: time.Now().UnixMilli(),
-					}
+				s.log.Debug("sending init event", "guid", result.Guid, "action", result.Action, "rv", result.ResourceVersion)
+				err = w.Send(&entity.EntityWatchResponse{
+					Timestamp: time.Now().UnixMilli(),
+					Entity:    result,
+				})
+				if err != nil {
+					return err
 				}
-
-				batch.Entity = append(batch.Entity, result)
 			}
 
 			hasmore = false
 			return nil
 		}()
-		if err != nil {
-			return err
-		}
-	}
-
-	if len(batch.Entity) > 0 {
-		s.log.Debug("sending init batch", "action", batch.Action, "count", len(batch.Entity))
-		err = w.Send(batch)
 		if err != nil {
 			return err
 		}
@@ -1423,7 +1401,7 @@ func (s *sqlEntityServer) poll(ctx context.Context, since int64, out chan *entit
 			since = result.ResourceVersion
 		}
 
-		s.log.Debug("sending poll result", "guid", result.Guid, "action", result.Action, "since", since)
+		s.log.Debug("sending poll result", "guid", result.Guid, "action", result.Action, "rv", result.ResourceVersion)
 		out <- result
 	}
 
@@ -1501,15 +1479,6 @@ func (s *sqlEntityServer) watch(ctx context.Context, r *entity.EntityWatchReques
 		return err
 	}
 
-	batch := &entity.EntityWatchResponse{
-		Action:    entity.Entity_CREATED,
-		Timestamp: time.Now().UnixMilli(),
-	}
-
-	// max time to wait for additional events in a batch
-	t := time.NewTicker(1 * time.Second)
-	defer t.Stop()
-
 	for {
 		select {
 		// user closed the connection
@@ -1523,24 +1492,6 @@ func (s *sqlEntityServer) watch(ctx context.Context, r *entity.EntityWatchReques
 				break
 			}
 
-			s.log.Debug("watch result", "guid", result.Guid, "action", result.Action, "rv", result.ResourceVersion)
-
-			// if action doesn't match the current batch, send it and start a new batch
-			if result.Action != batch.Action {
-				if len(batch.Entity) > 0 {
-					s.log.Debug("sending batch", "action", batch.Action, "count", len(batch.Entity))
-					err = w.Send(batch)
-					if err != nil {
-						return err
-					}
-				}
-
-				batch = &entity.EntityWatchResponse{
-					Action:    result.Action,
-					Timestamp: time.Now().UnixMilli(),
-				}
-			}
-
 			// remove the body and status if not requested
 			if !r.WithBody {
 				result.Body = nil
@@ -1549,24 +1500,13 @@ func (s *sqlEntityServer) watch(ctx context.Context, r *entity.EntityWatchReques
 				result.Status = nil
 			}
 
-			// add the result to the batch
-			batch.Entity = append(batch.Entity, result)
-		// batch timer ticked, send the batch if we haven't received any events in a while
-		case <-t.C:
-			// nothing to send
-			if len(batch.Entity) == 0 {
-				break
-			}
-
-			s.log.Debug("sending queued batch", "action", batch.Action, "count", len(batch.Entity))
-			err = w.Send(batch)
+			s.log.Debug("sending watch result", "guid", result.Guid, "action", result.Action, "rv", result.ResourceVersion)
+			err = w.Send(&entity.EntityWatchResponse{
+				Timestamp: time.Now().UnixMilli(),
+				Entity:    result,
+			})
 			if err != nil {
 				return err
-			}
-
-			batch = &entity.EntityWatchResponse{
-				Action:    entity.Entity_CREATED,
-				Timestamp: time.Now().UnixMilli(),
 			}
 		}
 	}
