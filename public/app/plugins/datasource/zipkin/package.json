@@ -10,14 +10,11 @@
     "@grafana/o11y-ds-frontend": "workspace:*",
     "@grafana/runtime": "workspace:*",
     "@grafana/ui": "workspace:*",
-    "@reduxjs/toolkit": "1.9.5",
     "lodash": "4.17.21",
     "react": "18.2.0",
     "react-use": "17.5.0",
-    "redux": "4.2.1",
     "rxjs": "7.8.1",
-    "tslib": "2.6.2",
-    "uuid": "9.0.1"
+    "tslib": "2.6.2"
   },
   "devDependencies": {
     "@grafana/plugin-configs": "workspace:*",
@@ -26,7 +23,6 @@
     "@types/jest": "29.5.11",
     "@types/lodash": "4.14.202",
     "@types/react": "18.2.48",
-    "@types/uuid": "9.0.8",
     "ts-node": "10.9.2",
     "webpack": "5.90.0"
   },
