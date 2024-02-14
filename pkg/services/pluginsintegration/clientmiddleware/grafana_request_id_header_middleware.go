@@ -19,6 +19,7 @@ import (
 
 const GrafanaRequestID = "X-Grafana-Request-Id"
 const GrafanaSignedRequestID = "X-Grafana-Signed-Request-Id"
+const XRealIPHeader = "X-Real-Ip"
 const GrafanaInternalRequest = "X-Grafana-Internal-Request"
 
 // NewHostedGrafanaACHeaderMiddleware creates a new plugins.ClientMiddleware that will
@@ -83,6 +84,7 @@ func (m *HostedGrafanaACHeaderMiddleware) applyGrafanaRequestIDHeader(ctx contex
 	if reqCtx != nil && reqCtx.Req != nil {
 		remoteAddress := web.RemoteAddr(reqCtx.Req)
 		if remoteAddress != "" {
+			h.SetHTTPHeader(XRealIPHeader, remoteAddress)
 			return
 		}
 	}

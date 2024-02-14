@@ -54,6 +54,9 @@ func Test_HostedGrafanaACHeaderMiddleware(t *testing.T) {
 
 		require.Equal(t, cdt.CallResourceReq.Headers[GrafanaSignedRequestID][0], computed)
 
+		require.Len(t, cdt.CallResourceReq.Headers[XRealIPHeader], 1)
+		require.Equal(t, cdt.CallResourceReq.Headers[XRealIPHeader][0], "1.2.3.4")
+
 		// Internal header should not be set
 		require.Len(t, cdt.CallResourceReq.Headers[GrafanaInternalRequest], 0)
 	})
