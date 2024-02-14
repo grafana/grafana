@@ -298,9 +298,9 @@
     "id": "fbe099152beb8adb76d992721d447104f9aea052",
     "name": "Light",
     "$figmaStyleReferences": {
-      "shadow.z1": "S:79fad4a514fbf108608ede01bec680f6cb55293f,",
-      "shadow.z2": "S:62352e35d21de61bd6f2d03f7f7e02d7c3237375,",
-      "shadow.z3": "S:7a2d249a5b203d72a7e592822c3c2907856d31c5,"
+      "shadow.z1": "S:04855e4cfd2ef41f7625534ef472fb4e9584cbfa,",
+      "shadow.z2": "S:aabf29978909e6492f1db87f6fbd37a6fcbbc836,",
+      "shadow.z3": "S:f8b17724320b476ca6debf9570d874403334d515,"
     },
     "selectedTokenSets": {
       "core": "source",
@@ -316,9 +316,9 @@
     "id": "6fff78a46dacef84af2fc9fbe742b29dbef489bf",
     "name": "Dark",
     "$figmaStyleReferences": {
-      "shadow.z1": "S:18186e97d5bd3941e70e4d5f7995b63a9aec5cf8,",
-      "shadow.z2": "S:ec589deaa5ce83ae1eb649b8326fdefb4fec72ec,",
-      "shadow.z3": "S:e0d173c28e0a498830c6a7a6d44897b6265b8812,"
+      "shadow.z1": "S:f51a80e26bd7b47069d249d04997171bd4cdaba9,",
+      "shadow.z2": "S:e084be1d64946c0b7b758f80c41ded81ad7acfea,",
+      "shadow.z3": "S:2b701c2b2cc5f689abd7636c688d2a99f59e860d,"
     },
     "selectedTokenSets": {
       "core": "source",
