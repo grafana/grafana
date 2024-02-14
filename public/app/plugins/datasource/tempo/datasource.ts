@@ -38,7 +38,7 @@ import { BarGaugeDisplayMode, TableCellDisplayMode, VariableFormatID } from '@gr
 import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import { TempoVariableQuery, TempoVariableQueryType } from './VariableQueryEditor';
 import { LokiOptions } from './_importedDependencies/datasources/loki/types';
-import { PromQuery, PrometheusDatasource } from './_importedDependencies/datasources/prometheus/types';
+import { PrometheusDatasource, PromQuery } from './_importedDependencies/datasources/prometheus/types';
 import { TraceqlFilter, TraceqlSearchScope } from './dataquery.gen';
 import {
   defaultTableFilter,
@@ -55,10 +55,11 @@ import TempoLanguageProvider from './language_provider';
 import { createTableFrameFromMetricsSummaryQuery, emptyResponse, MetricsSummary } from './metricsSummary';
 import {
   createTableFrameFromSearch,
+  formatTraceQLMetrics,
+  formatTraceQLResponse,
   transformFromOTLP as transformFromOTEL,
   transformTrace,
   transformTraceList,
-  formatTraceQLResponse,
 } from './resultTransformer';
 import { doTempoChannelStream } from './streaming';
 import { SearchQueryParams, TempoJsonData, TempoQuery } from './types';
@@ -337,9 +338,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       try {
         const appliedQuery = this.applyVariables(targets.traceql[0], options.scopedVars);
         const queryValue = appliedQuery?.query || '';
-        const hexOnlyRegex = /^[0-9A-Fa-f]*$/;
         // Check whether this is a trace ID or traceQL query by checking if it only contains hex characters
-        if (queryValue.trim().match(hexOnlyRegex)) {
+        if (this.isTraceIdQuery(queryValue)) {
           // There's only hex characters so let's assume that this is a trace ID
           reportInteraction('grafana_traces_traceID_queried', {
             datasourceType: 'tempo',
@@ -350,39 +350,23 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
           subQueries.push(this.handleTraceIdQuery(options, targets.traceql));
         } else {
-          reportInteraction('grafana_traces_traceql_queried', {
-            datasourceType: 'tempo',
-            app: options.app ?? '',
-            grafana_version: config.buildInfo.version,
-            query: queryValue ?? '',
-            streaming: config.featureToggles.traceQLStreaming,
-          });
-
-          if (config.featureToggles.traceQLStreaming && this.isFeatureAvailable(FeatureName.streaming)) {
-            subQueries.push(this.handleStreamingSearch(options, targets.traceql, queryValue));
+          if (this.isTraceQlMetricsQuery(queryValue)) {
+            reportInteraction('grafana_traces_traceql_metrics_queried', {
+              datasourceType: 'tempo',
+              app: options.app ?? '',
+              grafana_version: config.buildInfo.version,
+              query: queryValue ?? '',
+            });
+            subQueries.push(this.handleTraceQlMetricsQuery(options, queryValue));
           } else {
-            subQueries.push(
-              this._request('/api/search', {
-                q: queryValue,
-                limit: options.targets[0].limit ?? DEFAULT_LIMIT,
-                spss: options.targets[0].spss ?? DEFAULT_SPSS,
-                start: options.range.from.unix(),
-                end: options.range.to.unix(),
-              }).pipe(
-                map((response) => {
-                  return {
-                    data: formatTraceQLResponse(
-                      response.data.traces,
-                      this.instanceSettings,
-                      targets.traceql[0].tableType
-                    ),
-                  };
-                }),
-                catchError((err) => {
-                  return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
-                })
-              )
-            );
+            reportInteraction('grafana_traces_traceql_queried', {
+              datasourceType: 'tempo',
+              app: options.app ?? '',
+              grafana_version: config.buildInfo.version,
+              query: queryValue ?? '',
+              streaming: config.featureToggles.traceQLStreaming,
+            });
+            subQueries.push(this.handleTraceQlQuery(options, targets, queryValue));
           }
         }
       } catch (error) {
@@ -495,6 +479,19 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
 
     return merge(...subQueries);
+  }
+
+  isTraceQlMetricsQuery(query: string): boolean {
+    // Check whether this is a metrics query by checking if it contains a metrics function
+    const metricsFnRegex =
+      /\|\s*(rate|count_over_time|avg_over_time|max_over_time|min_over_time|quantile_over_time)\s*\(/;
+    return !!query.trim().match(metricsFnRegex);
+  }
+
+  isTraceIdQuery(query: string): boolean {
+    const hexOnlyRegex = /^[0-9A-Fa-f]*$/;
+    // Check whether this is a trace ID or traceQL query by checking if it only contains hex characters
+    return !!query.trim().match(hexOnlyRegex);
   }
 
   applyTemplateVariables(query: TempoQuery, scopedVars: ScopedVars) {
@@ -639,6 +636,55 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       })
     );
   }
+
+  handleTraceQlQuery = (
+    options: DataQueryRequest<TempoQuery>,
+    targets: {
+      [type: string]: TempoQuery[];
+    },
+    queryValue: string
+  ): Observable<DataQueryResponse> => {
+    if (config.featureToggles.traceQLStreaming && this.isFeatureAvailable(FeatureName.streaming)) {
+      return this.handleStreamingSearch(options, targets.traceql, queryValue);
+    } else {
+      return this._request('/api/search', {
+        q: queryValue,
+        limit: options.targets[0].limit ?? DEFAULT_LIMIT,
+        spss: options.targets[0].spss ?? DEFAULT_SPSS,
+        start: options.range.from.unix(),
+        end: options.range.to.unix(),
+      }).pipe(
+        map((response) => {
+          return {
+            data: formatTraceQLResponse(response.data.traces, this.instanceSettings, targets.traceql[0].tableType),
+          };
+        }),
+        catchError((err) => {
+          return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
+        })
+      );
+    }
+  };
+
+  handleTraceQlMetricsQuery = (
+    options: DataQueryRequest<TempoQuery>,
+    queryValue: string
+  ): Observable<DataQueryResponse> => {
+    return this._request('/api/metrics/query_range', {
+      query: queryValue,
+      start: options.range.from.unix(),
+      end: options.range.to.unix(),
+    }).pipe(
+      map((response) => {
+        return {
+          data: formatTraceQLMetrics(response.data),
+        };
+      }),
+      catchError((err) => {
+        return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
+      })
+    );
+  };
 
   traceIdQueryRequest(options: DataQueryRequest<TempoQuery>, targets: TempoQuery[]): DataQueryRequest<TempoQuery> {
     const request = {
