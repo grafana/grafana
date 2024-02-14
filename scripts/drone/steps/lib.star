@@ -466,7 +466,6 @@ def build_frontend_package_step(depends_on = []):
         "image": images["node"],
         "environment": {
             "NODE_OPTIONS": "--max_old_space_size=8192",
-            "NX_SKIP_NX_CACHE": "true"
         },
         "depends_on": [
             "yarn-install",
