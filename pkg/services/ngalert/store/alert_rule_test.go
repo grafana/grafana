@@ -684,7 +684,9 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 			models.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithMuteTimeIntervals(receiverName))))) // simulate collision of names of receiver and mute timing
 	deref := make([]models.AlertRule, 0, len(rules)+len(receiveRules)+len(noise))
 	for _, rule := range append(append(rules, receiveRules...), noise...) {
-		deref = append(deref, *rule)
+		r := *rule
+		r.ID = 0
+		deref = append(deref, r)
 	}
 
 	_, err := store.InsertAlertRules(context.Background(), deref)
@@ -776,7 +778,9 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 	))
 	deref := make([]models.AlertRule, 0, len(rulesWithNotifications)+len(rulesWithNoNotifications)+len(rulesInOtherOrg))
 	for _, rule := range append(append(rulesWithNotifications, rulesWithNoNotifications...), rulesInOtherOrg...) {
-		deref = append(deref, *rule)
+		r := *rule
+		r.ID = 0
+		deref = append(deref, r)
 	}
 
 	_, err := store.InsertAlertRules(context.Background(), deref)
