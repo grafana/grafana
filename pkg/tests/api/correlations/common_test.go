@@ -50,7 +50,7 @@ func NewTestEnv(t *testing.T) TestContext {
 
 type User struct {
 	User     user.User
-	password string
+	password user.Password
 }
 
 type GetParams struct {
@@ -168,7 +168,7 @@ func (c TestContext) createUser(cmd user.CreateUserCommand) User {
 
 	return User{
 		User:     *user,
-		password: string(user.Password),
+		password: cmd.Password,
 	}
 }
 
