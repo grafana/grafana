@@ -87,7 +87,6 @@ export function createGroupByVariable(input?: Partial<GroupByVariableModel>): Gr
       uid: 'abc-123',
       type: 'prometheus',
     },
-    groupByKeys: [],
     multi: true,
     current: createVariableOption('job'),
     options: [createVariableOption('job'), createVariableOption('instance')],

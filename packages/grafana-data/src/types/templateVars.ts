@@ -68,7 +68,6 @@ export interface AdHocVariableModel extends BaseVariableModel {
 export interface GroupByVariableModel extends VariableWithOptions {
   type: 'groupby';
   datasource: DataSourceRef | null;
-  groupByKeys: string[];
   multi: true;
 }
 

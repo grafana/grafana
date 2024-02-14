@@ -886,7 +886,6 @@ describe('transformSaveModelToScene', () => {
           ],
           current: {},
           query: '',
-          groupByKeys: ['a', 'b'], // TODO do we need this?
           hide: 0,
           skipUrlSync: false,
         };
@@ -949,7 +948,6 @@ describe('transformSaveModelToScene', () => {
           options: [],
           current: {},
           query: '',
-          groupByKeys: ['foo', 'bar'],
           hide: 0,
           skipUrlSync: false,
         };
