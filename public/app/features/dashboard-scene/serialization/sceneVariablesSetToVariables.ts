@@ -104,6 +104,16 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
         },
         query: variable.state.value,
       });
+    } else if (sceneUtils.isAdHocVariable(variable)) {
+      variables.push({
+        ...commonProperties,
+        name: variable.state.name!,
+        type: 'adhoc',
+        datasource: variable.state.datasource,
+        // @ts-expect-error
+        baseFilters: variable.state.baseFilters,
+        filters: variable.state.filters,
+      });
     } else {
       throw new Error('Unsupported variable type');
     }
