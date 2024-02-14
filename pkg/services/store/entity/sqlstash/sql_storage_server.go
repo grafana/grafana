@@ -1207,29 +1207,20 @@ func (s *sqlEntityServer) Watch(r *entity.EntityWatchRequest, w entity.EntitySto
 		return fmt.Errorf("missing user in context")
 	}
 
-	if r.Since == 0 {
-		err = s.watchInit(w.Context(), r, w)
-		if err != nil {
-			return err
-		}
+	// collect and send any historical events
+	err = s.watchInit(w.Context(), r, w)
+	if err != nil {
+		return err
 	}
 
-	t := time.NewTicker(5 * time.Second)
-	defer t.Stop()
-
-	for {
-		select {
-		case <-t.C:
-			err = s.watch(w.Context(), r, w)
-			if err != nil {
-				s.log.Error("watch error", "err", err)
-				return err
-			}
-		case err := <-w.Context().Done():
-			s.log.Debug("watch context cancelled", "err", err)
-			return nil
-		}
+	// subscribe to new events
+	err = s.watch(w.Context(), r, w)
+	if err != nil {
+		s.log.Error("watch error", "err", err)
+		return err
 	}
+
+	return nil
 }
 
 // watchInit is a helper function to send the initial set of entities to the client
@@ -1248,6 +1239,14 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 		args:     []any{},
 		limit:    100,  // r.Limit,
 		oneExtra: true, // request one more than the limit (and show next token if it exists)
+	}
+
+	// if we got an initial resource version, start from that location in the history
+	fromZero := true
+	if r.Since > 0 {
+		entityQuery.from = "entity_history"
+		entityQuery.addWhere("resource_version > ?", r.Since)
+		fromZero = false
 	}
 
 	// TODO fix this
@@ -1306,15 +1305,14 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 
 	var err error
 
-	s.log.Debug("watch init")
+	s.log.Debug("watch init", "since", r.Since)
+
+	batch := &entity.EntityWatchResponse{
+		Action:    entity.Entity_CREATED,
+		Timestamp: time.Now().UnixMilli(),
+	}
 
 	for hasmore := true; hasmore; {
-		batch := &entity.EntityWatchResponse{
-			Action:    entity.Entity_CREATED,
-			Entity:    make([]*entity.Entity, 0, entityQuery.limit),
-			Timestamp: time.Now().UnixMilli(),
-		}
-
 		err = func() error {
 			query, args := entityQuery.toQuery()
 
@@ -1342,6 +1340,26 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 					r.Since = result.ResourceVersion
 				}
 
+				action := result.Action
+				if fromZero {
+					action = entity.Entity_CREATED
+				}
+
+				if action != batch.Action || len(batch.Entity) >= 100 {
+					if len(batch.Entity) > 0 {
+						s.log.Debug("sending init batch", "action", batch.Action, "count", len(batch.Entity))
+						err = w.Send(batch)
+						if err != nil {
+							return err
+						}
+					}
+
+					batch = &entity.EntityWatchResponse{
+						Action:    action,
+						Timestamp: time.Now().UnixMilli(),
+					}
+				}
+
 				batch.Entity = append(batch.Entity, result)
 			}
 
@@ -1351,8 +1369,10 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 		if err != nil {
 			return err
 		}
+	}
 
-		s.log.Debug("sending init batch", "count", len(batch.Entity))
+	if len(batch.Entity) > 0 {
+		s.log.Debug("sending init batch", "action", batch.Action, "count", len(batch.Entity))
 		err = w.Send(batch)
 		if err != nil {
 			return err
@@ -1482,7 +1502,7 @@ func (s *sqlEntityServer) watch(ctx context.Context, r *entity.EntityWatchReques
 	}
 
 	batch := &entity.EntityWatchResponse{
-		Action:    entity.Entity_UNKNOWN,
+		Action:    entity.Entity_CREATED,
 		Timestamp: time.Now().UnixMilli(),
 	}
 
@@ -1545,7 +1565,7 @@ func (s *sqlEntityServer) watch(ctx context.Context, r *entity.EntityWatchReques
 			}
 
 			batch = &entity.EntityWatchResponse{
-				Action:    entity.Entity_UNKNOWN,
+				Action:    entity.Entity_CREATED,
 				Timestamp: time.Now().UnixMilli(),
 			}
 		}
