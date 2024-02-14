@@ -39,7 +39,7 @@ export function getOnCallMetadata(
   }
 
   const matchingOnCallIntegration = onCallIntegrations.find(
-    (integration) => integration.integration_url === receiver.settings.url
+    (integration) => integration.integration_url === receiver.settings?.url
   );
 
   return {

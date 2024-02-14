@@ -120,7 +120,9 @@ class GrafanaReceiverConfigBuilder {
   }
 
   addSetting(key: string, value: string): GrafanaReceiverConfigBuilder {
-    this.grafanaReceiverConfig.settings[key] = value;
+    if (this.grafanaReceiverConfig.settings) {
+      this.grafanaReceiverConfig.settings[key] = value;
+    }
     return this;
   }
 
