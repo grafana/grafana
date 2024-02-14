@@ -265,6 +265,7 @@ export { Avatar } from './UsersIndicator/Avatar';
 export { InlineFormLabel } from './FormLabel/FormLabel';
 export { Divider } from './Divider/Divider';
 export { getDragStyles } from './DragHandle/DragHandle';
+export { Splitter } from './Splitter/Splitter';
 
 export { LayoutItemContext, type LayoutItemContextProps } from './Layout/LayoutItemContext';
 
