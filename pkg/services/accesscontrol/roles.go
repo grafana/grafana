@@ -263,6 +263,19 @@ var (
 			},
 		},
 	}
+
+	instanceConfigWriterRole = RoleDTO{
+		Name:        "fixed:server.config:writer",
+		DisplayName: "Instance config writer",
+		Description: "Read and update Grafana instance configuration.",
+		Group:       "Settings",
+		Permissions: []Permission{
+			{
+				Action: ActionSettingsWrite,
+				Scope:  "settings:auth:oauth_allow_insecure_email_lookup",
+			},
+		},
+	}
 )
 
 // Declare OSS roles to the accesscontrol service
@@ -299,6 +312,10 @@ func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
 		Role:   usersWriterRole,
 		Grants: []string{RoleGrafanaAdmin},
 	}
+	instanceConfigWriter := RoleRegistration{
+		Role:   instanceConfigWriterRole,
+		Grants: []string{RoleGrafanaAdmin},
+	}
 
 	// TODO: Move to own service when implemented
 	authenticationConfigWriter := RoleRegistration{
@@ -311,7 +328,7 @@ func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
 	}
 
 	return service.DeclareFixedRoles(ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
-		settingsReader, statsReader, usersReader, usersWriter, authenticationConfigWriter)
+		settingsReader, statsReader, usersReader, usersWriter, authenticationConfigWriter, instanceConfigWriter)
 }
 
 func ConcatPermissions(permissions ...[]Permission) []Permission {
