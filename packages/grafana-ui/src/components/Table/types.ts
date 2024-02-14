@@ -99,11 +99,12 @@ export interface Props {
   enableSharedCrosshair?: boolean;
   // The index of the field value that the table will initialize scrolled to
   initialRowIndex?: number;
-
-  // PoC for cell interaction menus
-  //we prolly dont need a dom ref for each cell since we can pull the target out of the event handler and get its DOMRect
-  onCellClick?: (rect: DOMRect, columnIndex: number, rowIndex: number, e?: HTMLElement) => void;
+  // For cell interaction controlled by parent component
+  onCellClick?: onTableCellClickArgs;
 }
+
+// The arguments passed to the calling component on click of a table cell
+export type onTableCellClickArgs = (rect: DOMRect, columnIndex: number, rowIndex: number, e?: HTMLElement) => void;
 
 /**
  * @alpha

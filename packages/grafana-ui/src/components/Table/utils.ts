@@ -44,6 +44,7 @@ import {
   FooterItem,
   GrafanaTableColumn,
   TableFooterCalc,
+  onTableCellClickArgs,
 } from './types';
 
 export const EXPANDER_WIDTH = 50;
@@ -568,9 +569,14 @@ export function calculateAroundPointThreshold(timeField: Field): number {
   return (max - min) / timeField.values.length;
 }
 
-export function getOnTableCellClick(
-  onCellClick?: (rect: DOMRect, columnIndex: number, rowIndex: number, e?: HTMLElement) => void
-) {
+/**
+ * This fires on click of anything in the table, if it's a table cell we grab the row and column
+ *
+ * @param onCellClick
+ * @warning if there's html in the table cell that isn't role=cell this isn't going to callback
+ * Also this assumes that the relationship between elements (tr,td) with data-row-index, data-column-index and attrs will always be direct parent -> child.
+ */
+export function getOnTableCellClick(onCellClick?: onTableCellClickArgs) {
   return (e: React.MouseEvent<HTMLElement>) => {
     if (onCellClick && e.target instanceof Element) {
       const columnIndex = Number(e.target.getAttribute('data-column-index'));
