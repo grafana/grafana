@@ -19,7 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationUserAuthToken(t *testing.T) {
 	ctx := createTestContext(t)
@@ -479,14 +484,14 @@ func TestIntegrationUserAuthToken(t *testing.T) {
 			token, err = ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: token.UnhashedToken})
 			require.NoError(t, err)
 			assert.True(t, token.UnhashedToken != prev)
-			assert.True(t, token.PrevAuthToken == hashToken(prev))
+			assert.True(t, token.PrevAuthToken == hashToken("", prev))
 		})
 
 		t.Run("should rotate token when called with previous", func(t *testing.T) {
 			newPrev := token.UnhashedToken
 			token, err = ctx.tokenService.RotateToken(context.Background(), auth.RotateCommand{UnHashedToken: prev})
 			require.NoError(t, err)
-			assert.True(t, token.PrevAuthToken == hashToken(newPrev))
+			assert.True(t, token.PrevAuthToken == hashToken("", newPrev))
 		})
 
 		t.Run("should not rotate token when called with old previous", func(t *testing.T) {

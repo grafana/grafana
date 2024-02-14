@@ -105,6 +105,7 @@ export interface AnalyticsSettings {
 export interface CurrentUserDTO {
   isSignedIn: boolean;
   id: number;
+  uid: string;
   externalUserId: string;
   login: string;
   email: string;
@@ -135,7 +136,7 @@ export interface BootData {
   user: CurrentUserDTO;
   settings: GrafanaConfig;
   navTree: NavLinkDTO[];
-  themePaths: {
+  assets: {
     light: string;
     dark: string;
   };
@@ -259,4 +260,6 @@ export interface AuthSettings {
   GoogleSkipOrgRoleSync?: boolean;
   // @deprecated -- this is no longer used and will be removed in Grafana 11
   GenericOAuthSkipOrgRoleSync?: boolean;
+
+  disableLogin?: boolean;
 }

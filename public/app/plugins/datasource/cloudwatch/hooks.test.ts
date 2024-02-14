@@ -11,7 +11,13 @@ import {
   setupMockedDataSource,
 } from './__mocks__/CloudWatchDataSource';
 import { setupMockedResourcesAPI } from './__mocks__/ResourcesAPI';
-import { useAccountOptions, useDimensionKeys, useIsMonitoringAccount, useMetrics } from './hooks';
+import {
+  useAccountOptions,
+  useDimensionKeys,
+  useIsMonitoringAccount,
+  useMetrics,
+  useEnsureVariableHasSingleSelection,
+} from './hooks';
 
 const originalFeatureToggleValue = config.featureToggles.cloudWatchCrossAccountQuerying;
 
@@ -64,7 +70,6 @@ describe('hooks', () => {
   describe('useDimensionKeys', () => {
     it('should interpolate variables before calling api', async () => {
       const { datasource } = setupMockedDataSource({
-        mockGetVariableName: true,
         variables: [regionVariable, namespaceVariable, accountIdVariable, metricVariable, dimensionVariable],
       });
       const getDimensionKeysMock = jest.fn().mockResolvedValue([]);
@@ -83,15 +88,18 @@ describe('hooks', () => {
       );
       await waitFor(() => {
         expect(getDimensionKeysMock).toHaveBeenCalledTimes(1);
-        expect(getDimensionKeysMock).toHaveBeenCalledWith({
-          region: regionVariable.current.value,
-          namespace: namespaceVariable.current.value,
-          metricName: metricVariable.current.value,
-          accountId: accountIdVariable.current.value,
-          dimensionFilters: {
-            environment: [dimensionVariable.current.value],
+        expect(getDimensionKeysMock).toHaveBeenCalledWith(
+          {
+            region: regionVariable.current.value,
+            namespace: namespaceVariable.current.value,
+            metricName: metricVariable.current.value,
+            accountId: accountIdVariable.current.value,
+            dimensionFilters: {
+              environment: [dimensionVariable.current.value],
+            },
           },
-        });
+          false
+        );
       });
     });
   });
@@ -138,6 +146,37 @@ describe('hooks', () => {
           { label: 'Template Variables', options: [{ label: '$region', value: '$region' }] },
         ]);
       });
+    });
+  });
+
+  describe('useEnsureVariableHasSingleSelection', () => {
+    it('should return an error if a variable has multiple options selected', () => {
+      const { datasource } = setupMockedDataSource();
+      datasource.resources.isVariableWithMultipleOptionsSelected = jest.fn().mockReturnValue(true);
+
+      const variable = '$variable';
+      const { result } = renderHook(() => useEnsureVariableHasSingleSelection(datasource, variable));
+      expect(result.current).toEqual(
+        `Template variables with multiple selected options are not supported for ${variable}`
+      );
+    });
+
+    it('should not return an error if a variable is a multi-variable but does not have multiple options selected', () => {
+      const { datasource } = setupMockedDataSource();
+      datasource.resources.isVariableWithMultipleOptionsSelected = jest.fn().mockReturnValue(false);
+
+      const variable = '$variable';
+      const { result } = renderHook(() => useEnsureVariableHasSingleSelection(datasource, variable));
+      expect(result.current).toEqual('');
+    });
+
+    it('should not return an error if a variable is not a multi-variable', () => {
+      const { datasource } = setupMockedDataSource();
+      datasource.resources.isMultiVariable = jest.fn().mockReturnValue(false);
+
+      const variable = '$variable';
+      const { result } = renderHook(() => useEnsureVariableHasSingleSelection(datasource, variable));
+      expect(result.current).toEqual('');
     });
   });
 });

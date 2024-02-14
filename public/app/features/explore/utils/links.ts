@@ -299,8 +299,8 @@ const builtInVariables = [
  * @param query
  * @param scopedVars
  */
-export function getVariableUsageInfo<T extends DataLink>(
-  query: T,
+export function getVariableUsageInfo(
+  query: object,
   scopedVars: ScopedVars
 ): { variables: VariableInterpolation[]; allVariablesDefined: boolean } {
   let variables: VariableInterpolation[] = [];

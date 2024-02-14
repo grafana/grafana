@@ -3,20 +3,26 @@ import { compact } from 'lodash';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Modal, Stack, useStyles2 } from '@grafana/ui';
 
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
-import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
 import { AlertmanagerAction } from '../../../hooks/useAbilities';
 import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
-import { GRAFANA_DATASOURCE_NAME } from '../../../utils/datasource';
+import { getAmMatcherFormatter } from '../../../utils/alertmanager';
+import { MatcherFormatter } from '../../../utils/matchers';
 import { makeAMLink } from '../../../utils/misc';
 import { Authorize } from '../../Authorize';
 import { Matchers } from '../../notification-policies/Matchers';
 
 import { hasEmptyMatchers, isDefaultPolicy, RouteWithPath } from './route';
 
-function PolicyPath({ route, routesByIdMap }: { routesByIdMap: Map<string, RouteWithPath>; route: RouteWithPath }) {
+interface Props {
+  routesByIdMap: Map<string, RouteWithPath>;
+  route: RouteWithPath;
+  matcherFormatter: MatcherFormatter;
+}
+
+function PolicyPath({ route, routesByIdMap, matcherFormatter }: Props) {
   const styles = useStyles2(getStyles);
   const routePathIds = route.path?.slice(1) ?? [];
   const routePathObjects = [...compact(routePathIds.map((id) => routesByIdMap.get(id))), route];
@@ -31,7 +37,7 @@ function PolicyPath({ route, routesByIdMap }: { routesByIdMap: Map<string, Route
               {hasEmptyMatchers(pathRoute) ? (
                 <div className={styles.textMuted}>No matchers</div>
               ) : (
-                <Matchers matchers={pathRoute.object_matchers ?? []} />
+                <Matchers matchers={pathRoute.object_matchers ?? []} formatter={matcherFormatter} />
               )}
             </div>
           </div>
@@ -60,7 +66,7 @@ export function NotificationRouteDetailsModal({
   const isDefault = isDefaultPolicy(route);
 
   return (
-    <AlertmanagerProvider accessType="notification" alertmanagerSourceName={GRAFANA_DATASOURCE_NAME}>
+    <AlertmanagerProvider accessType="notification" alertmanagerSourceName={alertManagerSourceName}>
       <Modal
         className={styles.detailsModal}
         isOpen={true}
@@ -77,7 +83,11 @@ export function NotificationRouteDetailsModal({
           <div className={styles.separator(1)} />
           {!isDefault && (
             <>
-              <PolicyPath route={route} routesByIdMap={routesByIdMap} />
+              <PolicyPath
+                route={route}
+                routesByIdMap={routesByIdMap}
+                matcherFormatter={getAmMatcherFormatter(alertManagerSourceName)}
+              />
             </>
           )}
           <div className={styles.separator(4)} />

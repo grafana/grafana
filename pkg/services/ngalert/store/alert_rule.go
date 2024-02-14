@@ -7,17 +7,17 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"golang.org/x/exp/maps"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -72,8 +72,8 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUI
 }
 
 // IncreaseVersionForAllRulesInNamespace Increases version for all rules that have specified namespace. Returns all rules that belong to the namespace
-func (st DBstore) IncreaseVersionForAllRulesInNamespace(ctx context.Context, orgID int64, namespaceUID string) ([]ngmodels.AlertRuleKeyWithVersionAndPauseStatus, error) {
-	var keys []ngmodels.AlertRuleKeyWithVersionAndPauseStatus
+func (st DBstore) IncreaseVersionForAllRulesInNamespace(ctx context.Context, orgID int64, namespaceUID string) ([]ngmodels.AlertRuleKeyWithVersion, error) {
+	var keys []ngmodels.AlertRuleKeyWithVersion
 	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		now := TimeNow()
 		_, err := sess.Exec("UPDATE alert_rule SET version = version + 1, updated = ? WHERE namespace_uid = ? AND org_id = ?", now, namespaceUID, orgID)
@@ -165,7 +165,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 			for i := range newRules {
 				if _, err := sess.Insert(&newRules[i]); err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
-						return ngmodels.ErrAlertRuleUniqueConstraintViolation
+						return ngmodels.ErrAlertRuleConflict(newRules[i], ngmodels.ErrAlertRuleUniqueConstraintViolation)
 					}
 					return fmt.Errorf("failed to create new rules: %w", err)
 				}
@@ -208,7 +208,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 			if updated, err := sess.ID(r.Existing.ID).AllCols().Update(r.New); err != nil || updated == 0 {
 				if err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
-						return ngmodels.ErrAlertRuleUniqueConstraintViolation
+						return ngmodels.ErrAlertRuleConflict(r.New, ngmodels.ErrAlertRuleUniqueConstraintViolation)
 					}
 					return fmt.Errorf("failed to update rule [%s] %s: %w", r.New.UID, r.New.Title, err)
 				}
@@ -317,11 +317,18 @@ func newTitlesOverlapExisting(rules []ngmodels.UpdateRule) bool {
 
 // CountInFolder is a handler for retrieving the number of alert rules of
 // specific organisation associated with a given namespace (parent folder).
-func (st DBstore) CountInFolder(ctx context.Context, orgID int64, folderUID string, u identity.Requester) (int64, error) {
+func (st DBstore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) (int64, error) {
+	if len(folderUIDs) == 0 {
+		return 0, nil
+	}
 	var count int64
 	var err error
 	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		q := sess.Table("alert_rule").Where("org_id = ?", orgID).Where("namespace_uid = ?", folderUID)
+		args := make([]any, 0, len(folderUIDs))
+		for _, folderUID := range folderUIDs {
+			args = append(args, folderUID)
+		}
+		q := sess.Table("alert_rule").Where("org_id = ?", orgID).Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Repeat("?,", len(folderUIDs)-1)+"?"), args...)
 		count, err = q.Count()
 		return err
 	})
@@ -426,67 +433,34 @@ func (st DBstore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespa
 	})
 }
 
-// GetUserVisibleNamespaces returns the folders that are visible to the user and have at least one alert in it
+// GetUserVisibleNamespaces returns the folders that are visible to the user
 func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, user identity.Requester) (map[string]*folder.Folder, error) {
-	namespaceMap := make(map[string]*folder.Folder)
-
-	searchQuery := dashboards.FindPersistedDashboardsQuery{
-		OrgId:        orgID,
+	folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
+		OrgID:        orgID,
+		WithFullpath: true,
 		SignedInUser: user,
-		Type:         searchstore.TypeAlertFolder,
-		Limit:        -1,
-		Permission:   dashboardaccess.PERMISSION_VIEW,
-		Sort:         model.SortOption{},
-		Filters: []any{
-			searchstore.FolderWithAlertsFilter{},
-		},
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	var page int64 = 1
-	for {
-		query := searchQuery
-		query.Page = page
-		proj, err := st.DashboardService.FindDashboards(ctx, &query)
-		if err != nil {
-			return nil, err
-		}
-
-		if len(proj) == 0 {
-			break
-		}
-
-		for _, hit := range proj {
-			if !hit.IsFolder {
-				continue
-			}
-			namespaceMap[hit.UID] = &folder.Folder{
-				UID:   hit.UID,
-				Title: hit.Title,
-			}
-		}
-		page += 1
+	namespaceMap := make(map[string]*folder.Folder)
+	for _, f := range folders {
+		namespaceMap[f.UID] = f
 	}
 	return namespaceMap, nil
 }
 
-// GetNamespaceByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.
-func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, orgID int64, user identity.Requester) (*folder.Folder, error) {
-	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &namespace, SignedInUser: user})
-	if err != nil {
-		return nil, err
-	}
-
-	return folder, nil
-}
-
 // GetNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
 func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user identity.Requester) (*folder.Folder, error) {
-	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, UID: &uid, SignedInUser: user})
+	f, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{OrgID: orgID, UIDs: []string{uid}, WithFullpath: true, SignedInUser: user})
 	if err != nil {
 		return nil, err
 	}
-
-	return folder, nil
+	if len(f) == 0 {
+		return nil, dashboards.ErrFolderAccessDenied
+	}
+	return f[0], nil
 }
 
 func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodels.AlertRuleKeyWithVersion, error) {
@@ -514,10 +488,6 @@ func (st DBstore) GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodel
 
 // GetAlertRulesForScheduling returns a short version of all alert rules except those that belong to an excluded list of organizations
 func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error {
-	var folders []struct {
-		Uid   string
-		Title string
-	}
 	var rules []*ngmodels.AlertRule
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var disabledOrgs []int64
@@ -552,10 +522,12 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "GetAlertRulesForScheduling", "error", err)
 				continue
 			}
-			if optimizations, err := OptimizeAlertQueries(rule.Data); err != nil {
-				st.Logger.Error("Could not migrate rule from range to instant query", "rule", rule.UID, "err", err)
-			} else if len(optimizations) > 0 {
-				st.Logger.Info("Migrated rule from range to instant query", "rule", rule.UID, "migrated_queries", len(optimizations))
+			if st.FeatureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingQueryOptimization) {
+				if optimizations, err := OptimizeAlertQueries(rule.Data); err != nil {
+					st.Logger.Error("Could not migrate rule from range to instant query", "rule", rule.UID, "err", err)
+				} else if len(optimizations) > 0 {
+					st.Logger.Info("Migrated rule from range to instant query", "rule", rule.UID, "migrated_queries", len(optimizations))
+				}
 			}
 			rules = append(rules, rule)
 		}
@@ -563,19 +535,36 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 		query.ResultRules = rules
 
 		if query.PopulateFolders {
-			foldersSql := sess.Table("dashboard").Alias("d").Select("d.uid, d.title").
-				Where("is_folder = ?", st.SQLStore.GetDialect().BooleanStr(true)).
-				And(`EXISTS (SELECT 1 FROM alert_rule a WHERE d.uid = a.namespace_uid)`)
-			if len(disabledOrgs) > 0 {
-				foldersSql.NotIn("org_id", disabledOrgs)
+			query.ResultFoldersTitles = map[ngmodels.FolderKey]string{}
+			uids := map[int64]map[string]struct{}{}
+			for _, r := range rules {
+				om, ok := uids[r.OrgID]
+				if !ok {
+					om = make(map[string]struct{})
+					uids[r.OrgID] = om
+				}
+				om[r.NamespaceUID] = struct{}{}
 			}
+			for orgID, uids := range uids {
+				schedulerUser := accesscontrol.BackgroundUser("grafana_scheduler", orgID, org.RoleAdmin,
+					[]accesscontrol.Permission{
+						{
+							Action: dashboards.ActionFoldersRead, Scope: dashboards.ScopeFoldersAll,
+						},
+					})
 
-			if err := foldersSql.Find(&folders); err != nil {
-				return fmt.Errorf("failed to fetch a list of folders that contain alert rules: %w", err)
-			}
-			query.ResultFoldersTitles = make(map[string]string, len(folders))
-			for _, folder := range folders {
-				query.ResultFoldersTitles[folder.Uid] = folder.Title
+				folders, err := st.FolderService.GetFolders(ctx, folder.GetFoldersQuery{
+					OrgID:        orgID,
+					UIDs:         maps.Keys(uids),
+					WithFullpath: true,
+					SignedInUser: schedulerUser,
+				})
+				if err != nil {
+					return fmt.Errorf("failed to fetch a list of folders that contain alert rules: %w", err)
+				}
+				for _, f := range folders {
+					query.ResultFoldersTitles[ngmodels.FolderKey{OrgID: f.OrgID, UID: f.UID}] = f.Fullpath
+				}
 			}
 		}
 		return nil
@@ -583,35 +572,37 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 }
 
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
-func (st DBstore) DeleteInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) error {
-	evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeName(folderUID))
-	canSave, err := st.AccessControl.Evaluate(ctx, user, evaluator)
-	if err != nil {
-		st.Logger.Error("Failed to evaluate access control", "error", err)
-		return err
-	}
-	if !canSave {
-		st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user")
-		return dashboards.ErrFolderAccessDenied
-	}
-
-	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
-		OrgID:         orgID,
-		NamespaceUIDs: []string{folderUID},
-	})
-	if err != nil {
-		return err
-	}
-
-	uids := make([]string, 0, len(rules))
-	for _, tgt := range rules {
-		if tgt != nil {
-			uids = append(uids, tgt.UID)
+func (st DBstore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
+	for _, folderUID := range folderUIDs {
+		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
+		canSave, err := st.AccessControl.Evaluate(ctx, user, evaluator)
+		if err != nil {
+			st.Logger.Error("Failed to evaluate access control", "error", err)
+			return err
 		}
-	}
+		if !canSave {
+			st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user")
+			return dashboards.ErrFolderAccessDenied
+		}
 
-	if err := st.DeleteAlertRulesByUID(ctx, orgID, uids...); err != nil {
-		return err
+		rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
+			OrgID:         orgID,
+			NamespaceUIDs: []string{folderUID},
+		})
+		if err != nil {
+			return err
+		}
+
+		uids := make([]string, 0, len(rules))
+		for _, tgt := range rules {
+			if tgt != nil {
+				uids = append(uids, tgt.UID)
+			}
+		}
+
+		if err := st.DeleteAlertRulesByUID(ctx, orgID, uids...); err != nil {
+			return err
+		}
 	}
 	return nil
 }

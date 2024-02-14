@@ -4,20 +4,23 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"time"
 )
 
 type FeatureToggles interface {
-	// Check if a feature is enabled for a given context.
+	// IsEnabled checks if a feature is enabled for a given context.
 	// The settings may be per user, tenant, or globally set in the cloud
 	IsEnabled(ctx context.Context, flag string) bool
 
-	// Check if a flag is configured globally.  For now, this is the same
+	// IsEnabledGlobally checks if a flag is configured globally.  For now, this is the same
 	// as the function above, however it will move to only checking flags that
 	// are configured by the operator and shared across all tenants.
 	// Use of global feature flags should be limited and careful as they require
 	// a full server restart for a change to take place.
 	IsEnabledGlobally(flag string) bool
+
+	// Get the enabled flags -- this *may* also include disabled flags (with value false)
+	// but it is guaranteed to have the enabled ones listed
+	GetEnabled(ctx context.Context) map[string]bool
 }
 
 // FeatureFlagStage indicates the quality level
@@ -106,16 +109,15 @@ func (s *FeatureFlagStage) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// These are properties about the feature, but not the current state or value for it
 type FeatureFlag struct {
-	// Required properties
 	Name        string           `json:"name" yaml:"name"` // Unique name
 	Description string           `json:"description"`
 	Stage       FeatureFlagStage `json:"stage,omitempty"`
-	Created     time.Time        `json:"created,omitempty"` // when the flag was introduced
-	Owner       codeowner        `json:"-"`                 // Owner person or team that owns this feature flag
+	Owner       codeowner        `json:"-"` // Owner person or team that owns this feature flag
 
 	// Recommended properties - control behavior of the feature toggle management page in the UI
-	AllowSelfServe    bool `json:"allowSelfServe,omitempty"`    // allow users with the right privileges to toggle this from the UI (GeneralAvailability and Deprecated toggles only)
+	AllowSelfServe    bool `json:"allowSelfServe,omitempty"`    // allow users with the right privileges to toggle this from the UI (GeneralAvailability, PublicPreview, and Deprecated toggles only)
 	HideFromAdminPage bool `json:"hideFromAdminPage,omitempty"` // GA, Deprecated, and PublicPreview toggles only: don't display this feature in the UI; if this is a GA toggle, add a comment with the reasoning
 
 	// CEL-GO expression.  Using the value "true" will mean this is on by default
@@ -123,30 +125,14 @@ type FeatureFlag struct {
 
 	// Special behavior properties
 	RequiresDevMode bool `json:"requiresDevMode,omitempty"` // can not be enabled in production
-	RequiresLicense bool `json:"requiresLicense,omitempty"` // Must be enabled in the license
 	FrontendOnly    bool `json:"frontend,omitempty"`        // change is only seen in the frontend
 	HideFromDocs    bool `json:"hideFromDocs,omitempty"`    // don't add the values to docs
 
-	// This field is only for the feature management API. To enable your feature toggle by default, use `Expression`.
-	Enabled bool `json:"enabled,omitempty"`
-
-	// These are currently unused
-	DocsURL         string `json:"docsURL,omitempty"`
-	RequiresRestart bool   `json:"requiresRestart,omitempty"` // The server must be initialized with the value
+	// The server must be initialized with the value
+	RequiresRestart bool `json:"requiresRestart,omitempty"`
 }
 
-type UpdateFeatureTogglesCommand struct {
-	FeatureToggles []FeatureToggleDTO `json:"featureToggles"`
-}
-
-type FeatureToggleDTO struct {
-	Name        string `json:"name" binding:"Required"`
-	Description string `json:"description"`
-	Enabled     bool   `json:"enabled"`
-	ReadOnly    bool   `json:"readOnly,omitempty"`
-}
-
-type FeatureManagerState struct {
-	RestartRequired bool `json:"restartRequired"`
-	AllowEditing    bool `json:"allowEditing"`
+type FeatureToggleWebhookPayload struct {
+	FeatureToggles map[string]string `json:"feature_toggles"`
+	User           string            `json:"user"`
 }

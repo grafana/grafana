@@ -78,17 +78,13 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
     width: '32px',
     height: '16px',
     position: 'relative',
+    lineHeight: 1,
 
     input: {
       opacity: 0,
       left: '-100vw',
       zIndex: -1000,
       position: 'absolute',
-
-      '&:disabled + label': {
-        background: theme.colors.action.disabledBackground,
-        cursor: 'not-allowed',
-      },
 
       '&:checked + label': {
         background: theme.colors.primary.main,
@@ -101,6 +97,22 @@ const getSwitchStyles = (theme: GrafanaTheme2, transparent?: boolean) => ({
         '&::after': {
           transform: 'translate3d(18px, -50%, 0)',
           background: theme.colors.primary.contrastText,
+        },
+      },
+
+      '&:disabled + label': {
+        background: theme.colors.action.disabledBackground,
+        borderColor: theme.colors.border.weak,
+        cursor: 'not-allowed',
+
+        '&:hover': {
+          background: theme.colors.action.disabledBackground,
+        },
+      },
+
+      '&:disabled:checked + label': {
+        '&::after': {
+          background: theme.colors.text.disabled,
         },
       },
 

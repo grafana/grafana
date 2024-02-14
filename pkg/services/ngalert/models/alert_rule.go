@@ -27,7 +27,7 @@ var (
 	ErrCannotEditNamespace                = errors.New("user does not have permissions to edit the namespace")
 	ErrRuleGroupNamespaceNotFound         = errors.New("rule group not found under this namespace")
 	ErrAlertRuleFailedValidation          = errors.New("invalid alert rule")
-	ErrAlertRuleUniqueConstraintViolation = errors.New("a conflicting alert rule is found: rule title under the same organisation and folder should be unique")
+	ErrAlertRuleUniqueConstraintViolation = errors.New("rule title under the same organisation and folder should be unique")
 	ErrQuotaReached                       = errors.New("quota has been exceeded")
 	// ErrNoDashboard is returned when the alert rule does not have a Dashboard UID
 	// in its annotations or the dashboard does not exist.
@@ -112,6 +112,10 @@ const (
 	MigratedUseLegacyChannelsLabel = MigratedLabelPrefix + "use_channels__"
 	// MigratedContactLabelPrefix is created during legacy migration to route a migrated alert rule to a specific migrated channel.
 	MigratedContactLabelPrefix = MigratedLabelPrefix + "c_"
+	// MigratedSilenceLabelErrorKeepState is a label that will match a silence rule intended for legacy alerts with error state = keep_state.
+	MigratedSilenceLabelErrorKeepState = MigratedLabelPrefix + "silence_error_keep_state__"
+	// MigratedSilenceLabelNodataKeepState is a label that will match a silence rule intended for legacy alerts with nodata state = keep_state.
+	MigratedSilenceLabelNodataKeepState = MigratedLabelPrefix + "silence_nodata_keep_state__"
 	// MigratedAlertIdAnnotation is created during legacy migration to store the ID of the migrated legacy alert rule.
 	MigratedAlertIdAnnotation = "__alertId__"
 	// MigratedMessageAnnotation is created during legacy migration to store the migrated alert message.
@@ -364,11 +368,6 @@ type AlertRuleKeyWithVersion struct {
 	AlertRuleKey `xorm:"extends"`
 }
 
-type AlertRuleKeyWithVersionAndPauseStatus struct {
-	IsPaused                bool
-	AlertRuleKeyWithVersion `xorm:"extends"`
-}
-
 type AlertRuleKeyWithId struct {
 	AlertRuleKey
 	ID int64
@@ -483,6 +482,13 @@ func (alertRule *AlertRule) ResourceOrgID() int64 {
 	return alertRule.OrgID
 }
 
+func (alertRule *AlertRule) GetFolderKey() FolderKey {
+	return FolderKey{
+		OrgID: alertRule.OrgID,
+		UID:   alertRule.NamespaceUID,
+	}
+}
+
 // AlertRuleVersion is the model for alert rule versions in unified alerting.
 type AlertRuleVersion struct {
 	ID               int64  `xorm:"pk autoincr 'id'"`
@@ -541,12 +547,22 @@ type CountAlertRulesQuery struct {
 	NamespaceUID string
 }
 
+type FolderKey struct {
+	OrgID int64
+	UID   string
+}
+
+func (f FolderKey) String() string {
+	return fmt.Sprintf("%d:%s", f.OrgID, f.UID)
+}
+
 type GetAlertRulesForSchedulingQuery struct {
 	PopulateFolders bool
 	RuleGroups      []string
 
-	ResultRules         []*AlertRule
-	ResultFoldersTitles map[string]string
+	ResultRules []*AlertRule
+	// A map of folder UID to folder Title in NamespaceKey format (see GetNamespaceKey)
+	ResultFoldersTitles map[FolderKey]string
 }
 
 // ListNamespaceAlertRulesQuery is the query for listing namespace alert rules

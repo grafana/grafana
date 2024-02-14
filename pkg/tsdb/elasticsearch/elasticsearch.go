@@ -16,6 +16,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	exphttpclient "github.com/grafana/grafana-plugin-sdk-go/experimental/errorsource/httpclient"
 
@@ -88,6 +89,8 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			httpCliOpts.SigV4.Service = "es"
 		}
 
+		// set the default middlewars from the httpClientProvider
+		httpCliOpts.Middlewares = httpClientProvider.(*sdkhttpclient.Provider).Opts.Middlewares
 		// enable experimental http client to support errors with source
 		httpCli, err := exphttpclient.New(httpCliOpts)
 		if err != nil {
@@ -188,9 +191,10 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	logger := eslog.FromContext(ctx)
 	// allowed paths for resource calls:
 	// - empty string for fetching db version
-	// - ?/_mapping for fetching index mapping
+	// - /_mapping for fetching index mapping, e.g. requests going to `index/_mapping`
 	// - _msearch for executing getTerms queries
-	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_msearch" {
+	// - _mapping for fetching "root" index mappings
+	if req.Path != "" && !strings.HasSuffix(req.Path, "/_mapping") && req.Path != "_msearch" && req.Path != "_mapping" {
 		logger.Error("Invalid resource path", "path", req.Path)
 		return fmt.Errorf("invalid resource URL: %s", req.Path)
 	}
@@ -201,21 +205,11 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		return err
 	}
 
-	esUrl, err := url.Parse(ds.URL)
+	esUrl, err := createElasticsearchURL(req, ds)
 	if err != nil {
-		logger.Error("Failed to parse data source URL", "error", err, "url", ds.URL)
-		return err
+		logger.Error("Failed to create request url", "error", err, "url", ds.URL, "path", req.Path)
 	}
 
-	resourcePath, err := url.Parse(req.Path)
-	if err != nil {
-		logger.Error("Failed to parse data source path", "error", err, "url", req.Path)
-		return err
-	}
-
-	// We take the path and the query-string only
-	esUrl.RawQuery = resourcePath.RawQuery
-	esUrl.Path = path.Join(esUrl.Path, resourcePath.Path)
 	request, err := http.NewRequestWithContext(ctx, req.Method, esUrl.String(), bytes.NewBuffer(req.Body))
 	if err != nil {
 		logger.Error("Failed to create request", "error", err, "url", esUrl.String())
@@ -264,4 +258,14 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		Headers: responseHeaders,
 		Body:    body,
 	})
+}
+
+func createElasticsearchURL(req *backend.CallResourceRequest, ds *es.DatasourceInfo) (*url.URL, error) {
+	esUrl, err := url.Parse(ds.URL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse data source URL: %s, error: %w", ds.URL, err)
+	}
+
+	esUrl.Path = path.Join(esUrl.Path, req.Path)
+	return esUrl, nil
 }

@@ -2,6 +2,7 @@ package models
 
 import (
 	"net/http"
+	"time"
 )
 
 type DatasourceInfo struct {
@@ -17,6 +18,7 @@ type DatasourceInfo struct {
 	DefaultBucket string `json:"defaultBucket"`
 	Organization  string `json:"organization"`
 	MaxSeries     int    `json:"maxSeries"`
+	Timeout       time.Duration
 
 	// FlightSQL grpc connection
 	SecureGrpc bool `json:"secureGrpc"`

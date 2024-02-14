@@ -75,6 +75,10 @@ func (l *Loader) instrumentLoad(ctx context.Context, src plugins.PluginSource) f
 
 	return func(logger log.Logger, start time.Time) func([]*plugins.Plugin) {
 		return func(plugins []*plugins.Plugin) {
+			if len(plugins) == 0 {
+				logger.Debug("Plugin source loaded, though no plugins were found")
+				return
+			}
 			names := make([]string, len(plugins))
 			for i, p := range plugins {
 				names[i] = p.ID

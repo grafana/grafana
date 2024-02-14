@@ -4,9 +4,6 @@ import (
 	"errors"
 	"time"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/grafana/grafana/pkg/kinds/team"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/search/model"
@@ -34,18 +31,6 @@ type Team struct {
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
-}
-
-func (t *Team) ToResource() team.K8sResource {
-	r := team.NewK8sResource(t.UID, &team.Spec{
-		Name: t.Name,
-	})
-	r.Metadata.CreationTimestamp = v1.NewTime(t.Created)
-	r.Metadata.SetUpdatedTimestamp(&t.Updated)
-	if t.Email != "" {
-		r.Spec.Email = &t.Email
-	}
-	return r
 }
 
 // ---------------------

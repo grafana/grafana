@@ -45,6 +45,7 @@ func main() {
 					return nil
 				},
 			},
+			gsrv.ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp),
 		},
 		CommandNotFound:      cmdNotFound,
 		EnableBashCompletion: true,

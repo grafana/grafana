@@ -23,3 +23,4 @@ export { ensureTimeField } from './transformers/convertFieldType';
 
 // Required for Sparklines util to work in @grafana/data, but ideally kept internal
 export { applyNullInsertThreshold } from './transformers/nulls/nullInsertThreshold';
+export { nullToValue } from './transformers/nulls/nullToValue';

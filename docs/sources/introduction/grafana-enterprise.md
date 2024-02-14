@@ -21,6 +21,8 @@ To learn more about Grafana Enterprise, refer to [our product page](/enterprise)
 
 Many Grafana Enterprise features are also available in [Grafana Cloud](/docs/grafana-cloud) Free, Pro, and Advanced accounts. For details, refer to [the Grafana Cloud features table](/pricing/#featuresTable).
 
+To migrate to Grafana Cloud, refer to [Migrate from Grafana Enterprise to Grafana Cloud](/docs/grafana-cloud/account-management/e2c-guide/).
+
 ## Authentication
 
 Grafana Enterprise includes integrations with more ways to authenticate your users and enhanced authentication capabilities.
@@ -85,6 +87,7 @@ With a Grafana Enterprise license, you also get access to premium data sources, 
 - [MongoDB](/grafana/plugins/grafana-mongodb-datasource)
 - [New Relic](/grafana/plugins/grafana-newrelic-datasource)
 - [Oracle Database](/grafana/plugins/grafana-oracle-datasource)
+- [PagerDuty](/grafana/plugins/grafana-pagerduty-datasource)
 - [Salesforce](/grafana/plugins/grafana-salesforce-datasource)
 - [SAP HANA®](/grafana/plugins/grafana-saphana-datasource)
 - [ServiceNow](/grafana/plugins/grafana-servicenow-datasource)

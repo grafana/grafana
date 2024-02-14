@@ -5,12 +5,11 @@ option go_package = "github.com/grafana/grafana/pkg/services/store/entity";
 
 // The canonical entity/document data -- this represents the raw bytes and storage level metadata
 message Entity {
-
   // Globally unique ID set by the system.  This can not be set explicitly
   string guid = 1;
 
-  // The resourceVersion -- it will change whenever anythign on the object is saved
-  string version = 2;
+  // The resource version, this is a snowflake id controlled by storage
+  int64 resource_version = 2;
 
   // group
   string group = 24;
@@ -26,7 +25,7 @@ message Entity {
   // group version
   string group_version = 23;
 
-  // k8s key value
+  // k8s key value (TODO remove -- it is duplicate of group+resource+version)
   string key = 22;
 
   // The folder k8s name
@@ -118,7 +117,7 @@ message ReadEntityRequest {
   string key = 1;
 
   // Fetch an explicit version (default is latest)
-  string version = 2;
+  int64 resource_version = 2;
 
   // Include the full body
   bool with_body = 4;
@@ -174,7 +173,7 @@ message UpdateEntityRequest {
   Entity entity = 1;
 
   // Used for optimistic locking.  If missing, the previous version will be replaced regardless
-  string previous_version = 2;
+  int64 previous_version = 2;
 }
 
 message UpdateEntityResponse {
@@ -204,7 +203,7 @@ message DeleteEntityRequest {
   string key = 1;
 
   // Used for optimistic locking.  If missing, the current version will be deleted regardless
-  string previous_version = 2;
+  int64 previous_version = 2;
 }
 
 message DeleteEntityResponse {

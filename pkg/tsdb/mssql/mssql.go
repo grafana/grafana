@@ -2,6 +2,7 @@ package mssql
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -9,6 +10,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -112,7 +114,7 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 		}
 
 		// register a new proxy driver if the secure socks proxy is enabled
-		proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo)
+		proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo, settings.Name, settings.Type)
 		if sdkproxy.New(proxyOpts).SecureSocksProxyEnabled() {
 			URL, err := ParseURL(dsInfo.URL, logger)
 			if err != nil {
@@ -125,8 +127,6 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 		}
 
 		config := sqleng.DataPluginConfiguration{
-			DriverName:        driverName,
-			ConnectionString:  cnnstr,
 			DSInfo:            dsInfo,
 			MetricColumnTypes: []string{"VARCHAR", "CHAR", "NVARCHAR", "NCHAR"},
 			RowLimit:          cfg.DataProxyRowLimit,
@@ -136,7 +136,16 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 			userError: cfg.UserFacingDefaultError,
 		}
 
-		return sqleng.NewQueryDataHandler(cfg, config, &queryResultTransformer, newMssqlMacroEngine(), logger)
+		db, err := sql.Open(driverName, cnnstr)
+		if err != nil {
+			return nil, err
+		}
+
+		db.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
+		db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
+		db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
+
+		return sqleng.NewQueryDataHandler(cfg.UserFacingDefaultError, db, config, &queryResultTransformer, newMssqlMacroEngine(), logger)
 	}
 }
 
@@ -273,7 +282,7 @@ func (t *mssqlQueryResultTransformer) TransformQueryError(logger log.Logger, err
 	// ref https://github.com/denisenkom/go-mssqldb/blob/045585d74f9069afe2e115b6235eb043c8047043/tds.go#L904
 	if strings.HasPrefix(strings.ToLower(err.Error()), "unable to open tcp connection with host") {
 		logger.Error("Query error", "error", err)
-		return sqleng.ErrConnectionFailed.Errorf("failed to connect to server - %s", t.userError)
+		return fmt.Errorf("failed to connect to server - %s", t.userError)
 	}
 
 	return err
