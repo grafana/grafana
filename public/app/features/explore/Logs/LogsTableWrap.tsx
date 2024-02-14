@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import { Resizable, ResizeCallback } from 're-resizable';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, MouseEvent, useRef, useMemo } from 'react';
 
 import {
+  CoreApp,
   DataFrame,
   ExploreLogsPanelState,
   GrafanaTheme2,
@@ -12,14 +13,16 @@ import {
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime/src';
+import { config, reportInteraction } from '@grafana/runtime/src';
 import { InlineField, Select, Themeable2 } from '@grafana/ui/';
+import { targetIsElement } from 'app/features/logs/utils';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
 
 import { LogsColumnSearch } from './LogsColumnSearch';
 import { LogsTable } from './LogsTable';
 import { LogsTableMultiSelect } from './LogsTableMultiSelect';
+import { PopoverMenu } from './PopoverMenu';
 import { fuzzySearch } from './utils/uFuzzy';
 
 interface Props extends Themeable2 {
@@ -33,7 +36,10 @@ interface Props extends Themeable2 {
   updatePanelState: (panelState: Partial<ExploreLogsPanelState>) => void;
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterValue?: (value: string, refId?: string) => void;
+  onClickFilterOutValue?: (value: string, refId?: string) => void;
   datasourceType?: string;
+  app?: CoreApp;
 }
 
 type ActiveFieldMeta = {
@@ -66,6 +72,11 @@ export function LogsTableWrap(props: Props) {
   const [filteredColumnsWithMeta, setFilteredColumnsWithMeta] = useState<FieldNameMetaStore | undefined>(undefined);
   const [searchValue, setSearchValue] = useState<string>('');
 
+  // Popover Menu
+  const [selectedText, setSelectedText] = useState('');
+  const [menuCoordinates, setMenuCoordinates] = useState({ x: 0, y: 0 });
+  const tableWrapperRef = useRef<HTMLDivElement | null>(null);
+
   const height = getLogsTableHeight();
   const panelStateRefId = props?.panelState?.refId;
 
@@ -89,7 +100,7 @@ export function LogsTableWrap(props: Props) {
     },
     [props.panelState?.columns]
   );
-  const logsFrame = parseLogsFrame(currentDataFrame);
+  const logsFrame = useMemo(() => parseLogsFrame(currentDataFrame), [currentDataFrame]);
 
   useEffect(() => {
     if (logsFrame?.timeField.name && logsFrame?.bodyField.name && !propsColumns) {
@@ -265,6 +276,41 @@ export function LogsTableWrap(props: Props) {
 
     // The panel state is updated when the user interacts with the multi-select sidebar
   }, [currentDataFrame, getColumnsFromProps]);
+
+  const handleDeselection = useCallback((e?: Event) => {
+    // Click comes from the table, let handleTableClick handle it
+    if (e && targetIsElement(e.target) && tableWrapperRef.current?.contains(e.target)) {
+      return;
+    }
+    if (document.getSelection()?.toString()) {
+      return;
+    }
+    document.removeEventListener('click', handleDeselection);
+    document.removeEventListener('contextmenu', handleDeselection);
+    setSelectedText('');
+    setMenuCoordinates({ x: 0, y: 0 });
+  }, []);
+
+  const handleTableClick = useCallback(
+    (e: MouseEvent<HTMLTableRowElement>) => {
+      const hasCallbacks = Boolean(props.onClickFilterOutValue || props.onClickFilterValue);
+      if (!config.featureToggles.logRowsPopoverMenu || props.app !== CoreApp.Explore || !hasCallbacks) {
+        return;
+      }
+      const selection = document.getSelection()?.toString();
+      if (!selection || !tableWrapperRef.current) {
+        handleDeselection();
+        return;
+      }
+      e.stopPropagation();
+      const parentBounds = tableWrapperRef.current?.getBoundingClientRect();
+      setSelectedText(selection);
+      setMenuCoordinates({ x: e.clientX - parentBounds.left, y: e.clientY - parentBounds.top });
+      document.addEventListener('click', handleDeselection);
+      document.addEventListener('contextmenu', handleDeselection);
+    },
+    [handleDeselection, props.app, props.onClickFilterOutValue, props.onClickFilterValue]
+  );
 
   const [sidebarWidth, setSidebarWidth] = useState(220);
   const tableWidth = props.width - sidebarWidth;
@@ -512,7 +558,7 @@ export function LogsTableWrap(props: Props) {
           </div>
         )}
       </div>
-      <div className={styles.wrapper}>
+      <div className={styles.wrapper} ref={tableWrapperRef}>
         <Resizable
           enable={{
             right: true,
@@ -531,19 +577,32 @@ export function LogsTableWrap(props: Props) {
             />
           </section>
         </Resizable>
-        <LogsTable
-          logsFrame={logsFrame}
-          onClickFilterLabel={props.onClickFilterLabel}
-          onClickFilterOutLabel={props.onClickFilterOutLabel}
-          logsSortOrder={props.logsSortOrder}
-          range={props.range}
-          splitOpen={props.splitOpen}
-          timeZone={props.timeZone}
-          width={tableWidth}
-          dataFrame={currentDataFrame}
-          columnsWithMeta={columnsWithMeta}
-          height={height}
-        />
+        {selectedText !== '' && (
+          <PopoverMenu
+            close={handleDeselection}
+            selection={selectedText}
+            {...menuCoordinates}
+            onClickFilterValue={props.onClickFilterValue}
+            onClickFilterOutValue={props.onClickFilterOutValue}
+            refId={currentDataFrame.refId}
+          />
+        )}
+        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
+        <div onClick={handleTableClick}>
+          <LogsTable
+            logsFrame={logsFrame}
+            onClickFilterLabel={props.onClickFilterLabel}
+            onClickFilterOutLabel={props.onClickFilterOutLabel}
+            logsSortOrder={props.logsSortOrder}
+            range={props.range}
+            splitOpen={props.splitOpen}
+            timeZone={props.timeZone}
+            width={tableWidth}
+            dataFrame={currentDataFrame}
+            columnsWithMeta={columnsWithMeta}
+            height={height}
+          />
+        </div>
       </div>
     </>
   );
@@ -557,6 +616,8 @@ function getStyles(theme: GrafanaTheme2, height: number, width: number) {
   return {
     wrapper: css({
       display: 'flex',
+      position: 'relative',
+      zIndex: 0,
     }),
     sidebar: css({
       height: height,
