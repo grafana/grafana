@@ -1,4 +1,5 @@
-import { rest } from 'msw';
+import 'whatwg-fetch';
+import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 
 export const mockSystemModule = `System.register(['./dependencyA'], function (_export, _context) {
@@ -85,38 +86,104 @@ export const mockModuleWithDefineMethod = `ace.define(function() {
 });`;
 
 const server = setupServer(
-  rest.get('/public/plugins/mockAmdModule/module.js', async (_req, res, ctx) =>
-    res(ctx.status(200), ctx.set('Content-Type', 'text/javascript'), ctx.body(mockAmdModule))
+  http.get(
+    '/public/plugins/mockAmdModule/module.js',
+    () =>
+      new HttpResponse(mockAmdModule, {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
   ),
-  rest.get('/public/plugins/mockSystemModule/module.js', async (_req, res, ctx) =>
-    res(ctx.status(200), ctx.set('Content-Type', 'text/javascript'), ctx.body(mockSystemModule))
+  http.get(
+    '/public/plugins/mockSystemModule/module.js',
+    () =>
+      new HttpResponse(mockSystemModule, {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
   ),
-  rest.get('http://my-cdn.com/plugins/my-plugin/v1.0.0/public/plugins/my-plugin/module.js', async (_req, res, ctx) =>
-    res(ctx.status(200), ctx.set('Content-Type', 'text/javascript'), ctx.body(mockAmdModule))
+  http.get(
+    'http://my-cdn.com/plugins/my-plugin/v1.0.0/public/plugins/my-plugin/module.js',
+    () =>
+      new HttpResponse(mockAmdModule, {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
   ),
-  rest.get('/public/plugins/mockAmdModuleNamedNoDeps/module.js', async (_req, res, ctx) =>
-    res(ctx.status(200), ctx.set('Content-Type', 'text/javascript'), ctx.body(mockAmdModuleNamedNoDeps))
+  http.get(
+    '/public/plugins/mockAmdModuleNamedNoDeps/module.js',
+    () =>
+      new HttpResponse(mockAmdModuleNamedNoDeps, {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
   ),
-  rest.get('/public/plugins/mockAmdModuleNamedWithDeps/module.js', async (_req, res, ctx) =>
-    res(ctx.status(200), ctx.set('Content-Type', 'text/javascript'), ctx.body(mockAmdModuleNamedWithDeps))
+  http.get(
+    '/public/plugins/mockAmdModuleNamedWithDeps/module.js',
+    () =>
+      new HttpResponse(mockAmdModuleNamedWithDeps, {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
   ),
-  rest.get('/public/plugins/mockAmdModuleNamedWithDeps2/module.js', async (_req, res, ctx) =>
-    res(ctx.status(200), ctx.set('Content-Type', 'text/javascript'), ctx.body(mockAmdModuleNamedWithDeps2))
+  http.get(
+    '/public/plugins/mockAmdModuleNamedWithDeps2/module.js',
+    () =>
+      new HttpResponse(mockAmdModuleNamedWithDeps2, {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
   ),
-  rest.get('/public/plugins/mockAmdModuleNamedWithDeps3/module.js', async (_req, res, ctx) =>
-    res(ctx.status(200), ctx.set('Content-Type', 'text/javascript'), ctx.body(mockAmdModuleNamedWithDeps3))
+  http.get(
+    '/public/plugins/mockAmdModuleNamedWithDeps3/module.js',
+    () =>
+      new HttpResponse(mockAmdModuleNamedWithDeps3, {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
   ),
-  rest.get('/public/plugins/mockAmdModuleOnlyFunction/module.js', async (_req, res, ctx) =>
-    res(ctx.status(200), ctx.set('Content-Type', 'text/javascript'), ctx.body(mockAmdModuleOnlyFunction))
+  http.get(
+    '/public/plugins/mockAmdModuleOnlyFunction/module.js',
+    () =>
+      new HttpResponse(mockAmdModuleOnlyFunction, {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
   ),
-  rest.get('/public/plugins/mockAmdModuleWithComments/module.js', async (_req, res, ctx) =>
-    res(ctx.status(200), ctx.set('Content-Type', 'text/javascript'), ctx.body(mockAmdModuleWithComments))
+  http.get(
+    '/public/plugins/mockAmdModuleWithComments/module.js',
+    () =>
+      new HttpResponse(mockAmdModuleWithComments, {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
   ),
-  rest.get('/public/plugins/mockAmdModuleWithComments2/module.js', async (_req, res, ctx) =>
-    res(ctx.status(200), ctx.set('Content-Type', 'text/javascript'), ctx.body(mockAmdModuleWithComments2))
+  http.get(
+    '/public/plugins/mockAmdModuleWithComments2/module.js',
+    () =>
+      new HttpResponse(mockAmdModuleWithComments2, {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
   ),
-  rest.get('/public/plugins/mockModuleWithDefineMethod/module.js', async (_req, res, ctx) =>
-    res(ctx.status(200), ctx.set('Content-Type', 'text/javascript'), ctx.body(mockModuleWithDefineMethod))
+  http.get(
+    '/public/plugins/mockModuleWithDefineMethod/module.js',
+    () =>
+      new HttpResponse(mockModuleWithDefineMethod, {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
   )
 );
 

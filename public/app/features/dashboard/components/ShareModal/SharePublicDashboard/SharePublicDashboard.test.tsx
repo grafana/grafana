@@ -1,9 +1,9 @@
+import 'whatwg-fetch';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { rest } from 'msw';
+import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 
-import 'whatwg-fetch';
 import { BootData, DataQuery } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { reportInteraction, setEchoSrv } from '@grafana/runtime';
@@ -87,20 +87,27 @@ afterEach(() => {
 });
 
 const getNonExistentPublicDashboardResponse = () =>
-  rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
-    return res(
-      ctx.status(404),
-      ctx.json({
+  http.get('/api/dashboards/uid/:dashboardUid/public-dashboards', () => {
+    return HttpResponse.json(
+      {
         message: 'Public dashboard not found',
         messageId: 'publicdashboards.notFound',
         statusCode: 404,
         traceID: '',
-      })
+      },
+      {
+        status: 404,
+      }
     );
   });
 const getErrorPublicDashboardResponse = () =>
-  rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
-    return res(ctx.status(500));
+  http.get('/api/dashboards/uid/:dashboardUid/public-dashboards', () => {
+    return HttpResponse.json(
+      {},
+      {
+        status: 500,
+      }
+    );
   });
 
 const alertTests = () => {
@@ -277,14 +284,11 @@ describe('SharePublic - Already persisted', () => {
   });
   it('when modal is opened, then time range switch is enabled and not checked when its not checked in the db', async () => {
     server.use(
-      rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
-        return res(
-          ctx.status(200),
-          ctx.json({
-            ...pubdashResponse,
-            timeSelectionEnabled: false,
-          })
-        );
+      http.get('/api/dashboards/uid/:dashboardUid/public-dashboards', () => {
+        return HttpResponse.json({
+          ...pubdashResponse,
+          timeSelectionEnabled: false,
+        });
       })
     );
 
@@ -303,17 +307,16 @@ describe('SharePublic - Already persisted', () => {
   });
   it('when pubdash is disabled in the db, then link url is not copyable and switch is checked', async () => {
     server.use(
-      rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
-        return res(
-          ctx.status(200),
-          ctx.json({
-            isEnabled: false,
-            annotationsEnabled: false,
-            uid: 'a-uid',
-            dashboardUid: req.params.dashboardUid,
-            accessToken: 'an-access-token',
-          })
-        );
+      http.get('/api/dashboards/uid/:dashboardUid/public-dashboards', ({ request }) => {
+        const url = new URL(request.url);
+        const dashboardUid = url.searchParams.get('dashboardUid');
+        return HttpResponse.json({
+          isEnabled: false,
+          annotationsEnabled: false,
+          uid: 'a-uid',
+          dashboardUid,
+          accessToken: 'an-access-token',
+        });
       })
     );
 
@@ -339,15 +342,14 @@ describe('SharePublic - Report interactions', () => {
     jest.clearAllMocks();
     server.use(getExistentPublicDashboardResponse());
     server.use(
-      rest.patch('/api/dashboards/uid/:dashboardUid/public-dashboards/:uid', (req, res, ctx) =>
-        res(
-          ctx.status(200),
-          ctx.json({
-            ...pubdashResponse,
-            dashboardUid: req.params.dashboardUid,
-          })
-        )
-      )
+      http.patch('/api/dashboards/uid/:dashboardUid/public-dashboards/:uid', ({ request }) => {
+        const url = new URL(request.url);
+        const dashboardUid = url.searchParams.get('dashboardUid');
+        return HttpResponse.json({
+          ...pubdashResponse,
+          dashboardUid,
+        });
+      })
     );
   });
 

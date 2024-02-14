@@ -1,7 +1,7 @@
 import 'whatwg-fetch'; // fetch polyfill
 import { fireEvent, render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { rest } from 'msw';
+import { HttpResponse, http } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -47,14 +47,11 @@ describe('NestedFolderPicker', () => {
   beforeAll(() => {
     window.HTMLElement.prototype.scrollIntoView = function () {};
     server = setupServer(
-      rest.get('/api/folders/:uid', (_, res, ctx) => {
-        return res(
-          ctx.status(200),
-          ctx.json({
-            title: folderA.item.title,
-            uid: folderA.item.uid,
-          })
-        );
+      http.get('/api/folders/:uid', () => {
+        return HttpResponse.json({
+          title: folderA.item.title,
+          uid: folderA.item.uid,
+        });
       })
     );
     server.listen();

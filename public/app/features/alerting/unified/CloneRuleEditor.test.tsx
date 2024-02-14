@@ -1,3 +1,4 @@
+import 'whatwg-fetch';
 import { render, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import { setupServer } from 'msw/node';
 import React from 'react';
@@ -11,7 +12,6 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSearchItem, DashboardSearchItemType } from 'app/features/search/types';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
-import 'whatwg-fetch';
 
 import {
   RulerAlertingRuleDTO,

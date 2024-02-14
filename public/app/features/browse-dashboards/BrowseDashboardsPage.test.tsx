@@ -1,7 +1,7 @@
-import 'whatwg-fetch'; // fetch polyfill
+import 'whatwg-fetch';
 import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { rest } from 'msw';
+import { HttpResponse, http } from 'msw';
 import { setupServer, SetupServer } from 'msw/node';
 import React, { ComponentProps } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
@@ -120,25 +120,19 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
 
   beforeAll(() => {
     server = setupServer(
-      rest.get('/api/folders/:uid', (_, res, ctx) => {
-        return res(
-          ctx.status(200),
-          ctx.json({
-            title: folderA.item.title,
-            uid: folderA.item.uid,
-          })
-        );
+      http.get('/api/folders/:uid', () => {
+        return HttpResponse.json({
+          title: folderA.item.title,
+          uid: folderA.item.uid,
+        });
       }),
-      rest.get('/api/search', (_, res, ctx) => {
-        return res(ctx.status(200), ctx.json({}));
+      http.get('/api/search', () => {
+        return HttpResponse.json({});
       }),
-      rest.get('/api/search/sorting', (_, res, ctx) => {
-        return res(
-          ctx.status(200),
-          ctx.json({
-            sortOptions: [],
-          })
-        );
+      http.get('/api/search/sorting', () => {
+        return HttpResponse.json({
+          sortOptions: [],
+        });
       })
     );
     server.listen();
