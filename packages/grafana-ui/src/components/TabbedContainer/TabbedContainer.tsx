@@ -5,7 +5,7 @@ import { SelectableValue, GrafanaTheme2 } from '@grafana/data';
 
 import { IconButton } from '../../components/IconButton/IconButton';
 import { TabsBar, Tab, TabContent } from '../../components/Tabs';
-import { useStyles2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes';
 import { IconName } from '../../types/icon';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 
@@ -25,12 +25,14 @@ export interface TabbedContainerProps {
 
 export function TabbedContainer({ tabs, defaultTab, closeIconTooltip, onClose }: TabbedContainerProps) {
   const [activeTab, setActiveTab] = useState(tabs.some((tab) => tab.value === defaultTab) ? defaultTab : tabs[0].value);
+  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
 
   const onSelectTab = (item: SelectableValue<string>) => {
     setActiveTab(item.value!);
   };
 
-  const styles = useStyles2(getStyles);
+  const autoHeight = `calc(100% - (${theme.components.menuTabs.height}px + ${theme.spacing(1)}))`;
 
   return (
     <div className={styles.container}>
@@ -46,7 +48,7 @@ export function TabbedContainer({ tabs, defaultTab, closeIconTooltip, onClose }:
         ))}
         <IconButton className={styles.close} onClick={onClose} name="times" tooltip={closeIconTooltip ?? 'Close'} />
       </TabsBar>
-      <CustomScrollbar autoHeightMin="100%">
+      <CustomScrollbar autoHeightMin={autoHeight} autoHeightMax={autoHeight}>
         <TabContent className={styles.tabContent}>{tabs.find((t) => t.value === activeTab)?.content}</TabContent>
       </CustomScrollbar>
     </div>
@@ -60,7 +62,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   tabContent: css({
     padding: theme.spacing(2),
     backgroundColor: theme.colors.background.primary,
-    height: `calc(100% - ${theme.components.menuTabs.height}px)`,
+    height: `100%`,
   }),
   close: css({
     position: 'absolute',

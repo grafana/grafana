@@ -9,7 +9,7 @@ import { Button, ClipboardButton, JSONFormatter, LoadingPlaceholder, Stack } fro
 import { Trans } from 'app/core/internationalization';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { getPanelInspectorStyles } from './styles';
+import { getPanelInspectorStyles2 } from './styles';
 
 interface ExecutedQueryInfo {
   refId: string;
@@ -212,7 +212,7 @@ export class QueryInspector extends PureComponent<Props, State> {
     const { allNodesExpanded, executedQueries, response } = this.state;
     const { onRefreshQuery, data } = this.props;
     const openNodes = this.getNrOfOpenNodes();
-    const styles = getPanelInspectorStyles();
+    const styles = getPanelInspectorStyles2(config.theme2);
     const haveData = Object.keys(response).length > 0;
     const isLoading = data.state === LoadingState.Loading;
 
