@@ -16,708 +16,187 @@ description: An annotated list of Grafana plugins using AngularJS.
 
 # Plugins using AngularJS
 
-The use of AngularJS in Grafana has been [deprecated]({{< relref "../angular_deprecation" >}}) and support for it will be removed in a future release.
+The use of AngularJS in Grafana has been [deprecated]({{< relref "../angular_deprecation" >}}) and support for it will be removed by default in Grafana 11.
 
 This page is to help users of Grafana understand how they might be impacted by the removal of Angular support, and whether a migration option exists.
 
-It lists the latest versions of plugins _currently available_ in the Grafana [plugin catalog](https://grafana.com/plugins) which depend on Angular, and will stop working when Angular support is removed from Grafana. The list will be updated as more plugins migrate to React or offer migration advice.
-
-Plugins which have been [deprecated](/legal/plugin-deprecation/) will _not_ be listed. Generally, we advise users to migrate away from deprecated plugins as they will not be updated and may not function in current or future versions of Grafana.
-
-{{% admonition type="note" %}}
-We advise you to ensure you are running the latest version of plugins, as previous releases of plugins not listed here may still require AngularJS.
-{{% /admonition %}}
-
-We also list the year in which the plugin was last updated in the catalog and where appropriate, highlight warnings for plugins where the source repository has not been updated in a number of years and appears inactive. This may help indicate the likelihood of a migration being undertaken, but is informational rather than definitive.
-
-{{% admonition type="note" %}}
-Plugins were updated to include signatures in 2021, so whilst a plugin may show as having been updated at that point - the last update to its functionality or dependencies may have been longer ago.
-{{% /admonition %}}
-
 ## What should I do with the information below?
 
-- Consider the available migration steps.
+- Consider the advice on whether to update, migrate to a listed alternative, or explore the Grafana plugins [catalog](/grafana/plugins) to find the most suitable for your use case.
+- Use our [open source tooling](https://github.com/grafana/detect-angular-dashboards) to list dashboards which have a dependency on Angular plugins
 - Check your Grafana instances for usage of these plugins - see information here on [browsing installed plugins]({{< relref "../../administration/plugin-management/#browse-plugins" >}}).
-- Review the project repositories to add your support to any migration issues.
+- Grafana Enterprise customers and users of Grafana Cloud can also leverage [usage insights]({{< relref "../../dashboards/assess-dashboard-usage/" >}}) to prioritize any migration efforts.
+- Review the plugin source repositories to add your support to any migration issues or consider forking.
+
+## Private plugins
+
+Grafana OSS and Grafana Enterprise support the creation of private plugins for use on local instances. These plugins may have a dependency on Angular and require an update.
+
+The open source tooling listed above will include private plugins in its report **if the Grafana version is v10.1.0 or later**.
+
+Additionally, warning icons and messages will be displayed when browsing the catalog via **Administration** > **Plugins and Data** > **Plugins** in your local instance.
 
 ## I'm a plugin author
 
-We are greatly appreciative of the developers who have contributed plugins to the Grafana ecosystem, your work has helped support millions of users to gain insights into their data. A plugin being listed below is no reflection on its quality, and is purely to help users understand the impact of the removal of Angular support in Grafana.
-
-Guidance on migrating a plugin to React can be found in our [migration guide](/developers/plugin-tools/migration-guides/migrate-angularjs-to-react). If you would like to add any specific migration guidance for your plugin here or update our assessment, please open a PR by clicking the `Suggest an edit` button at the bottom of this page.
-
-# Current AngularJS based plugins
-
-## Apps
-
-### [Bosun](https://grafana.com/grafana/plugins/bosun-app)
-
-Latest Version: 0.0.29 | Signature: Community | Last Updated: 2023
-
-> [Migration issue](https://github.com/bosun-monitor/bosun-grafana-app/issues/63) has been raised.
-
-### [GLPI](https://grafana.com/grafana/plugins/ddurieux-glpi-app)
-
-Latest Version: 1.3.1 | Signature: Community | Last Updated: 2021
-
-> [Migration issue](https://github.com/ddurieux/glpi_app_grafana/issues/96) has been raised.
-
-### [DevOpsProdigy KubeGraf](https://grafana.com/grafana/plugins/devopsprodigy-kubegraf-app/)
-
-Latest Version: 1.5.2 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-[Issues](https://github.com/devopsprodigy/kubegraf/issues/71) in the project repository suggest that the project _may_ be unsupported.
-{{% /admonition %}}
-
-> **Migration available - potential alternative:** Grafana Cloud includes a [Kubernetes integration](https://grafana.com/solutions/kubernetes/).
-
-### [AWS IoT TwinMaker App](https://grafana.com/grafana/plugins/grafana-iot-twinmaker-app)
-
-Latest Version: 1.6.2 | Signature: Grafana | Last Updated: 2023
-
-{{% admonition type="note" %}}
-Plugin should continue to work even if Angular is disabled, and a full removal of Angular related code is planned.
-{{% /admonition %}}
-
-### [Stagemonitor Elasticsearch](https://grafana.com/grafana/plugins/stagemonitor-elasticsearch-app)
-
-Latest Version: 0.83.3 | Signature: Community | Last Updated: 2021
-
-> [Migration issue](https://github.com/stagemonitor/stagemonitor-grafana-elasticsearch/issues/1) has been raised.
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/stagemonitor/stagemonitor-grafana-elasticsearch) in the past 4 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Voxter VoIP Platform Metrics](https://grafana.com/grafana/plugins/voxter-app)
-
-Latest Version: 0.0.2 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/raintank/voxter-app) in the past 3 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-## Datasources
-
-### [Akumuli](https://grafana.com/grafana/plugins/akumuli-datasource/)
-
-Latest Version: 1.3.12 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-[Issues](https://github.com/akumuli/Akumuli/issues/379) in the project repository suggest that the project _may_ be unsupported.
-{{% /admonition %}}
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/akumuli/Akumuli/) in the past 3 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Finance](https://grafana.com/grafana/plugins/ayoungprogrammer-finance-datasource/)
-
-Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-[Issues](https://github.com/ayoungprogrammer/grafana-finance/issues/7) in the project repository suggest that the project _may_ be unsupported.
-{{% /admonition %}}
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/ayoungprogrammer/grafana-finance) in the past 6 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Chaos Mesh](https://grafana.com/grafana/plugins/chaosmeshorg-datasource/)
-
-Latest Version: 2.2.3 | Signature: Community | Last Updated: 2022
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/chaos-mesh/datasource) in the past year suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [DeviceHive](https://grafana.com/grafana/plugins/devicehive-devicehive-datasource/)
-
-Latest Version: 2.0.2 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/devicehive/devicehive-grafana-datasource) in the past 5 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Google BigQuery](https://grafana.com/grafana/plugins/doitintl-bigquery-datasource/)
-
-Latest Version: 2.0.3 | Signature: Community | Last Updated: 2022
-
-> **Migration available - plugin superseded:** Grafana provides its own [Google BigQuery Plugin](https://grafana.com/grafana/plugins/grafana-bigquery-datasource/). The previous [Project repository](https://github.com/doitintl/bigquery-grafana) was archived on December 11, 2022 with a recommendation to migrate to the aforementioned Grafana provided plugin.
-
-### [Open-Falcon](https://grafana.com/grafana/plugins/fastweb-openfalcon-datasource/)
-
-Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-[Project repository](https://github.com/open-falcon/grafana-openfalcon-datasource) suggests support for Grafana v4.2 - Grafana v5.4.
-{{% /admonition %}}
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/open-falcon/grafana-openfalcon-datasource) in the past year suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [GraphQL Data Source](https://grafana.com/grafana/plugins/fifemon-graphql-datasource/)
-
-Latest Version: 1.3.0 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Project support is unclear after a request for new maintainers - [source](https://github.com/fifemon/graphql-datasource/issues/77).
-{{% /admonition %}}
-
-> **Migration available - potential alternative:** The [Infinity](https://grafana.com/grafana/plugins/yesoreyeram-infinity-datasource/) data source supports GraphQL.
-
-### [Cloudera Manager](https://grafana.com/grafana/plugins/foursquare-clouderamanager-datasource/)
-
-Latest Version: 0.9.3 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/foursquare/datasource-plugin-clouderamanager) in the past 7 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Simple Annotations](https://grafana.com/grafana/plugins/fzakaria-simple-annotations-datasource/)
-
-Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Plugin only claims support for Grafana v4.x.x.
-{{% /admonition %}}
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/fzakaria/simple-annotations-plugin/) in the past 6 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-{{% admonition type="warning" %}}
-Developer no longer maintains the project, but is open to contributions: https://github.com/fzakaria/simple-annotations-plugin/issues/2
-{{% /admonition %}}
-
-### [Gnocchi](https://grafana.com/grafana/plugins/gnocchixyz-gnocchi-datasource/)
-
-Latest Version: 1.7.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Plugin only claims support for Grafana v4.x.x
-{{% /admonition %}}
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/gnocchixyz/grafana-gnocchi-datasource) in the past 3 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [MetaQueries](https://grafana.com/grafana/plugins/goshposh-metaqueries-datasource/)
-
-Latest Version: 0.0.9 | Signature: Community | Last Updated: 2022
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/GoshPosh/grafana-meta-queries) in the past year suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Open Distro for Elasticsearch](https://grafana.com/grafana/plugins/grafana-es-open-distro-datasource/)
-
-Latest Version: 1.0.6 | Signature: Grafana | Last Updated: 2021
-
-> **Migration available - plugin superseded:** Plugin was deprecated in favour of the [OpenSearch Plugin](https://grafana.com/grafana/plugins/grafana-opensearch-datasource/).
-
-### [KairosDB](https://grafana.com/grafana/plugins/grafana-kairosdb-datasource/)
-
-Latest Version: 3.0.2 | Signature: Grafana | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-[Project repository](https://github.com/grafana/kairosdb-datasource) was archived on August 30th, 2021, and is no longer maintained.
-{{% /admonition %}}
-
-### [SimpleJson](https://grafana.com/grafana/plugins/grafana-simple-json-datasource/)
-
-Latest Version: 1.4.2 | Signature: Grafana | Last Updated: 2021
-
-> **Migration available - potential alternative:** [Project repository](https://github.com/grafana/simple-json-datasource) is no longer maintained, but a number of alternatives exist, including - [Infinity](https://grafana.com/grafana/plugins/yesoreyeram-infinity-datasource/), [JSON](https://grafana.com/grafana/plugins/simpod-json-datasource) and [JSON API](https://grafana.com/grafana/plugins/marcusolsson-json-datasource).
-
-{{% admonition type="note" %}}
-If you're looking for an example of a data source plugin to start from, refer to [grafana-starter-datasource-backend](https://github.com/grafana/grafana-starter-datasource-backend).
-{{% /admonition %}}
-
-### [openHistorian](https://grafana.com/grafana/plugins/gridprotectionalliance-openhistorian-datasource/)
-
-Latest Version: 1.0.3 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/GridProtectionAlliance/openHistorian-grafana/) in the past 2 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Hawkular](https://grafana.com/grafana/plugins/hawkular-datasource/)
-
-Latest Version: 1.1.2 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/hawkular/hawkular-grafana-datasource) in the past 5 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [PRTG](https://grafana.com/grafana/plugins/jasonlashua-prtg-datasource/)
-
-Latest Version: 4.0.4 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/neuralfraud/grafana-prtg) in the past 4 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-{{% admonition type="warning" %}}
-Unmaintained since 2017 - [source](https://github.com/neuralfraud/grafana-prtg/wiki).
-{{% /admonition %}}
-
-### [Monasca](https://grafana.com/grafana/plugins/monasca-datasource/)
-
-Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/openstack/monasca-grafana-datasource) in the past 2 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-{{% admonition type="warning" %}}
-Last updated to support Grafana v7.
-{{% /admonition %}}
-
-### [Monitoring Art](https://grafana.com/grafana/plugins/monitoringartist-monitoringart-datasource/)
-
-Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/monitoringartist/grafana-monitoring-art) in the past 6 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [GoogleCalendar](https://grafana.com/grafana/plugins/mtanda-google-calendar-datasource/)
-
-Latest Version: 1.0.5 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/mtanda/grafana-google-calendar-datasource) in the past 2 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [USGS Water Services](https://grafana.com/grafana/plugins/natel-usgs-datasource/)
-
-Latest Version: 0.0.3 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/NatelEnergy/natel-usgs-datasource) in the past 3 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [KapacitorSimpleJson](https://grafana.com/grafana/plugins/paytm-kapacitor-datasource/)
-
-Latest Version: 0.1.3 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/paytm/kapacitor-grafana-datasource-plugin) in the past 4 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Ambari Metrics](https://grafana.com/grafana/plugins/praj-ams-datasource/)
-
-Latest Version: 1.2.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/prajwalrao/ambari-metrics-grafana) in the past 5 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Solr](https://grafana.com/grafana/plugins/pue-solr-datasource/)
-
-Latest Version: 1.0.3 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Unclear progress on migration to React - [issue](https://github.com/pueteam/datasource-plugin-solr/issues/12).
-{{% /admonition %}}
-
-> **Migration available - potential alternative:** Users could configure the solr-exporter for Prometheus as described [here](https://solr.apache.org/guide/solr/latest/deployment-guide/monitoring-with-prometheus-and-grafana.html).
-
-### [QuasarDB](https://grafana.com/grafana/plugins/quasardb-datasource/)
-
-Latest Version: 3.8.3 | Signature: Community | Last Updated: 2021
-
-### [Blueflood](https://grafana.com/grafana/plugins/rackerlabs-blueflood-datasource/)
-
-Latest Version: 0.0.3 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/rax-maas/blueflood-grafana) in the past 7 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [NetXMS](https://grafana.com/grafana/plugins/radensolutions-netxms-datasource/)
-
-Latest Version: 1.2.3 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/netxms/grafana) in the past 2 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Sidewinder](https://grafana.com/grafana/plugins/sidewinder-datasource/)
-
-Latest Version: 0.2.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/srotya/sidewinder-grafana) in the past 5 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Skydive](https://grafana.com/grafana/plugins/skydive-datasource/)
-
-Latest Version: 1.2.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/skydive-project/skydive-grafana-datasource) in the past 4 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-{{% admonition type="warning" %}}
-Issues suggest the entire project, not just the plugin, may be abandoned - [source](https://github.com/skydive-project/skydive/issues/2417).
-{{% /admonition %}}
-
-### [Altinity plugin for ClickHouse](https://grafana.com/grafana/plugins/vertamedia-clickhouse-datasource/)
-
-Latest Version: 2.5.3 | Signature: Community | Last Updated: 2022
-
-{{% admonition type="note" %}}
-The [migration issue](https://github.com/Altinity/clickhouse-grafana/issues/475) has been assigned to a new major version milestone.
-{{% /admonition %}}
-
-### [Pagerduty](https://grafana.com/grafana/plugins/xginn8-pagerduty-datasource/)
-
-Latest Version: 0.2.2 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/xginn8/grafana-pagerduty) in the past year suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-{{% admonition type="warning" %}}
-Plugin only claims support for Grafana v5.
-{{% /admonition %}}
-
-### [Chaos Mesh](https://grafana.com/grafana/plugins/yeya24-chaosmesh-datasource/)
-
-Latest Version: 0.2.3 | Signature: Community | Last Updated: 2022
-
-{{% admonition type="warning" %}}
-Plugin declares itself deprecated in favour of [chaosmeshorg-datasource](https://grafana.com/grafana/plugins/chaosmeshorg-datasource/) which also appears above in this list with warnings around its future.
-{{% /admonition %}}
-
-## Panels
-
-### [FlowCharting](https://grafana.com/grafana/plugins/agenty-flowcharting-panel/)
-
-Latest Version: 0.9.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/algenty/grafana-flowcharting) in the past year suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-> **Migration available - potential alternative:** Grafana provides the native [Canvas]({{< relref "../../panels-visualizations/visualizations/canvas/" >}}) panel.
-
-### [HTML](https://grafana.com/grafana/plugins/aidanmountford-html-panel/)
-
-Latest Version: 0.0.2 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/aidanmountford/aidanmountford-html-panel) in the past 4 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-> **Migration available - potential alternative:** The [Text]({{< relref "../../panels-visualizations/visualizations/text/#html" >}}) panel included with Grafana supports rendering HTML content. Other plugins also exist which provide similar capabilities - [HTML](https://grafana.com/grafana/plugins/gapit-htmlgraphics-panel/) and [Dynamic Text](https://grafana.com/grafana/plugins/marcusolsson-dynamictext-panel/).
-
-### [Track Map](https://grafana.com/grafana/plugins/alexandra-trackmap-panel/)
-
-Latest Version: 1.2.6 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-[Issue](https://github.com/alexandrainst/alexandra-trackmap-panel/issues/72#issuecomment-1332179974) suggests problems with ongoing maintenance unless new contributors are found.
-{{% /admonition %}}
-
-{{% admonition type="warning" %}}
-[Migration issue](https://github.com/alexandrainst/alexandra-trackmap-panel/issues/105) has been marked as needing help.
-{{% /admonition %}}
-
-### [PictureIt](https://grafana.com/grafana/plugins/bessler-pictureit-panel/)
-
-Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/vbessler/grafana-pictureit) in the past 6 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-> **Migration available - potential alternative:** another plugin exists which provides similar capabilities - [ePict](https://grafana.com/grafana/plugins/larona-epict-panel/).
-
-### [Singlestat Math](https://grafana.com/grafana/plugins/blackmirror1-singlestat-math-panel/)
-
-Latest Version: 1.1.8 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/black-mirror-1/singlestat-math) in the past 5 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Status By Group Panel](https://grafana.com/grafana/plugins/blackmirror1-statusbygroup-panel/)
-
-Latest Version: 1.1.2 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/black-mirror-1/Grafana_Status_panel) in the past 5 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Datatable Panel](https://grafana.com/grafana/plugins/briangann-datatable-panel/)
-
-Latest Version: 1.0.3 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="note" %}}
-Migration to React is planned - [issue](https://github.com/briangann/grafana-datatable-panel/issues/174).
-{{% /admonition %}}
-
-### [GeoLoop](https://grafana.com/grafana/plugins/citilogics-geoloop-panel/)
-
-Latest Version: 1.1.2 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/CitiLogics/citilogics-geoloop-panel) in the past 2 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Progress List](https://grafana.com/grafana/plugins/corpglory-progresslist-panel/)
-
-Latest Version: 1.0.6 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/CorpGlory/grafana-progress-list) in the past 2 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Bubble Chart](https://grafana.com/grafana/plugins/digrich-bubblechart-panel/)
-
-Latest Version: 1.2.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/digrich/bubblechart-panel) in the past 3 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Blendstat](https://grafana.com/grafana/plugins/farski-blendstat-panel/)
-
-Latest Version: 1.0.3 | Signature: Community | Last Updated: 2021
-
-> **Migration available - potential alternative:** plugin author recommends use of single stat panel and transformations functionality - [source](https://github.com/farski/blendstat-grafana/issues/11#issuecomment-1112158909).
-
-### [WindRose](https://grafana.com/grafana/plugins/fatcloud-windrose-panel/)
-
-Latest Version: 0.7.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/fatcloud/windrose-panel) in the past 4 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-> **Migration available - potential alternative:** another plugin exists which provides similar capabilities - [Operator Windrose](https://grafana.com/grafana/plugins/operato-windrose-panel/)
-
-### [Statusmap](https://grafana.com/grafana/plugins/flant-statusmap-panel/)
-
-Latest Version: 0.5.1 | Signature: Community | Last Updated: 2022
-
-{{% admonition type="warning" %}}
-Unknown whether migration to React will be undertaken - [migration issue](https://github.com/flant/grafana-statusmap/issues/302).
-{{% /admonition %}}
-
-### [Singlestat](https://grafana.com/grafana/plugins/grafana-singlestat-panel/)
-
-Latest Version: 2.0.0 | Signature: Grafana | Last Updated: 2022
-
-> **Migration available - plugin superseded:** Singlestat plugin was replaced by the [Stat]({{< relref "../../panels-visualizations/visualizations/stat/" >}})panel included in Grafana.
-
-### [Worldmap Panel](https://grafana.com/grafana/plugins/grafana-worldmap-panel/)
-
-Latest Version: 1.0.3 | Signature: Grafana | Last Updated: 2023
-
-> **Migration available - plugin superseded:** Worldmap plugin was replaced by [Geomap]({{< relref "../../panels-visualizations/visualizations/geomap/" >}}) panel included in Grafana.
-
-### [Topology Panel](https://grafana.com/grafana/plugins/gretamosa-topology-panel/)
-
-Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/gretamosa/gretamosa-topology-panel) in the past 4 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [SVG](https://grafana.com/grafana/plugins/marcuscalidus-svg-panel/)
-
-Latest Version: 0.3.4 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/MarcusCalidus/marcuscalidus-svg-panel) in the past year suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-> **Migration available - potential alternative:** Grafana provides the native [Canvas]({{< relref "../../panels-visualizations/visualizations/canvas/" >}}) panel.
-
-> **Migration available - potential alternative:** other plugins exist which provide similar capabilities - [HTML](https://grafana.com/grafana/plugins/gapit-htmlgraphics-panel/), [Dynamic Text](https://grafana.com/grafana/plugins/marcusolsson-dynamictext-panel/) and [ACE.SVG](https://grafana.com/grafana/plugins/aceiot-svg-panel/). Note that the ACE.SVG panel has compatibility issues with Grafana versions 10.0.0-10.1.0.
-
-### [Annunciator](https://grafana.com/grafana/plugins/michaeldmoore-annunciator-panel/)
-
-Latest Version: 1.1.0 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Plugin developer has indicated they will retire the plugin once Angular support is discontinued - [source](https://github.com/michaeldmoore/michaeldmoore-annunciator-panel/issues/24#issuecomment-1479372673).
-{{% /admonition %}}
-
-### [Multistat](https://grafana.com/grafana/plugins/michaeldmoore-multistat-panel/)
-
-Latest Version: 1.7.2 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Plugin developer has indicated they will retire the plugin once Angular support is discontinued - [source](https://github.com/michaeldmoore/michaeldmoore-multistat-panel/issues/71#issuecomment-1479372977).
-{{% /admonition %}}
-
-### [HeatmapEpoch](https://grafana.com/grafana/plugins/mtanda-heatmap-epoch-panel/)
-
-Latest Version: 0.1.8 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Plugin advises caution as not stable; [project repository](https://github.com/mtanda/grafana-heatmap-epoch-panel) has not been updated in 7 years.
-{{% /admonition %}}
-
-> **Migration available - potential alternative:** Other Heatmap panels exist including natively in Grafana - [learn more]({{< relref "../../panels-visualizations/visualizations/heatmap/" >}}).
-
-### [Histogram](https://grafana.com/grafana/plugins/mtanda-histogram-panel/)
-
-Latest Version: 0.1.7 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/mtanda/grafana-histogram-panel) in the past 7 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-> **Migration available - potential alternative:** other Histogram panels exist including natively in Grafana - [learn more]({{< relref "../../panels-visualizations/visualizations/histogram/" >}}).
-
-### [Separator](https://grafana.com/grafana/plugins/mxswat-separator-panel/)
-
-Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/mxswat/grafana-separator-panel) in the past 5 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-> **Migration available - potential alternative:** the [Text]({{< relref "../../panels-visualizations/visualizations/text/#html" >}}) panel can be used with no data to provide space within dashboards.
-
-### [Discrete](https://grafana.com/grafana/plugins/natel-discrete-panel/)
-
-Latest Version: 0.1.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/NatelEnergy/grafana-discrete-panel) in the past 3 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Influx Admin](https://grafana.com/grafana/plugins/natel-influx-admin-panel/)
-
-Latest Version: 0.0.6 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/NatelEnergy/grafana-influx-admin) in the past 5 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Plotly](https://grafana.com/grafana/plugins/natel-plotly-panel/)
-
-Latest Version: 0.0.7 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/NatelEnergy/grafana-plotly-panel) in the past 2 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-> **Migration available - potential alternative:** other plugins exist which provide similar capabilities - [nline-plotlyjs-panel](https://grafana.com/grafana/plugins/nline-plotlyjs-panel/) and [ae3e-plotly-panel](https://grafana.com/grafana/plugins/ae3e-plotly-panel/).
-
-### [Cal-HeatMap](https://grafana.com/grafana/plugins/neocat-cal-heatmap-panel/)
-
-Latest Version: 0.0.4 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Plugin advises caution as not stable; [project repository](https://github.com/NeoCat/grafana-cal-heatmap-panel) has not been updated in 7 years.
-{{% /admonition %}}
-
-> **Migration available - potential alternative:** other Heatmap panels exist including natively in Grafana - [learn more]({{< relref "../../panels-visualizations/visualizations/heatmap/" >}}).
-
-### [Annotation Panel](https://grafana.com/grafana/plugins/novalabs-annotations-panel/)
-
-Latest Version: 0.0.2 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/novalabs/grafana-annotations-panel) in the past 6 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Carpet plot](https://grafana.com/grafana/plugins/petrslavotinek-carpetplot-panel/)
-
-Latest Version: 0.1.2 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/petrslavotinek/grafana-carpetplot) in the past 6 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [TrackMap](https://grafana.com/grafana/plugins/pr0ps-trackmap-panel/)
-
-Latest Version: 2.1.4 | Signature: Community | Last Updated: 2023
-
-{{% admonition type="warning" %}}
-Unknown whether migration to React will be undertaken - [migration issue](https://github.com/pR0Ps/grafana-trackmap-panel/issues/84).
-{{% /admonition %}}
-
-### [AJAX](https://grafana.com/grafana/plugins/ryantxu-ajax-panel/)
-
-Latest Version: 0.1.0 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/ryantxu/ajax-panel) in the past 2 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [3D Globe Panel](https://grafana.com/grafana/plugins/satellogic-3d-globe-panel/)
-
-Latest Version: 0.1.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/satellogic/grafana-3d-globe-panel) in the past 5 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Heatmap](https://grafana.com/grafana/plugins/savantly-heatmap-panel/)
-
-Latest Version: 0.2.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/savantly-net/grafana-heatmap) in the past 6 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-> **Migration available - potential alternative:** other Heatmap panels exist including natively in Grafana - [learn more]({{< relref "../../panels-visualizations/visualizations/heatmap/" >}}).
-
-### [TrafficLight](https://grafana.com/grafana/plugins/smartmakers-trafficlight-panel/)
-
-Latest Version: 1.0.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/smartmakers/grafana-trafficlight) in the past 5 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Radar Graph](https://grafana.com/grafana/plugins/snuids-radar-panel/)
-
-Latest Version: 1.5.1 | Signature: Community | Last Updated: 2022
-
-{{% admonition type="warning" %}}
-Unknown whether migration to React will be undertaken - [migration issue](https://github.com/snuids/grafana-radar-panel/issues/29).
-{{% /admonition %}}
-
-### [Traffic Lights](https://grafana.com/grafana/plugins/snuids-trafficlights-panel/)
-
-Latest Version: 1.6.0 | Signature: Community | Last Updated: 2023
-
-{{% admonition type="warning" %}}
-Unknown whether migration to React will be undertaken - [migration issue](https://github.com/snuids/trafficlights-panel/issues/44).
-{{% /admonition %}}
-
-### [Status Panel](https://grafana.com/grafana/plugins/vonage-status-panel/)
-
-Latest Version: 1.0.11 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/Vonage/Grafana_Status_panel) in the past 3 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Boom Table](https://grafana.com/grafana/plugins/yesoreyeram-boomtable-panel/)
-
-Latest Version: 1.4.1 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Lack of recent activity in the [project repository](https://github.com/yesoreyeram/yesoreyeram-boomtable-panel) in the past 3 years suggests project _may_ not be actively maintained.
-{{% /admonition %}}
-
-### [Parity Report](https://grafana.com/grafana/plugins/zuburqan-parity-report-panel/)
-
-Latest Version: 1.2.2 | Signature: Community | Last Updated: 2021
-
-{{% admonition type="warning" %}}
-Unknown whether migration to React will be undertaken - [migration issue](https://github.com/zuburqan/grafana-parity-report/issues/17).
-{{% /admonition %}}
+We are greatly appreciative of the developers who have contributed plugins to the Grafana ecosystem, your work has helped support millions of users to gain insights into their data. Guidance on migrating a plugin to React can be found in our [migration guide](/developers/plugin-tools/migration-guides/migrate-angularjs-to-react). If you would like to add any specific migration guidance for your plugin here or update our assessment, please open a PR by clicking the `Suggest an edit` button at the bottom of this page.
+
+## Automatic migration of plugins
+
+Certain legacy Grafana panel plugins will automatically update to their react based replacements when Angular support is disabled. This migration is usually available within the panel options, as shown in the screenshot below for World Map. Automatic migration can also be tested by appending `&__feature.autoMigrateOldPanels=true` to the dashboard URL in your browser.
+
+Automatic migration is supported for the following plugins, each of the target plugin is included in Grafana as a Core plugin and does not require installation.
+
+| Plugin      | Migration Target |
+| ----------- | ---------------- |
+| Graph (old) | Time Series      |
+| Singlestat  | Stat             |
+| Stat (old)  | Stat             |
+| Table (old) | Table            |
+| Worldmap    | Geomap           |
+
+A dashboard will still need to be saved with the new plugin ID to persist the change.
+
+# AngularJS based plugins
+
+This table lists plugins which we have detected as having a dependency on Angular. For alternatives, consider included [Visualizations]({{< relref "../../panels-visualizations/visualizations" >}}) and [Data sources]({{< relref "../../datasources" >}}), as well as external plugins from the [catalog](/grafana/plugins).
+
+| Plugin ID                                       | Name                                | Action                                                                                                                                                                                                                        |
+| ----------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| grafana-worldmap-panel                          | Worldmap Panel                      | Migrate - [Geomap]({{< relref "../../panels-visualizations/visualizations/geomap" >}}) (core) replaced Worldmap - note this should migrate when Angular is disabled.                                                          |
+| natel-discrete-panel                            | Discrete                            | Migrate - browse included visualizations and plugins catalog for potential alternatives.                                                                                                                                      |
+| vonage-status-panel                             | Status Panel                        | Migrate - consider [Stat]({{< relref "../../panels-visualizations/visualizations/stat" >}}) (core) or [Polystat](https://grafana.com/grafana/plugins/grafana-polystat-panel/) as potential alternatives.                      |
+| grafana-simple-json-datasource                  | SimpleJson                          | Migrate - consider [Infinity](https://grafana.com/grafana/plugins/yesoreyeram-infinity-datasource/) as a potential alternative.                                                                                               |
+| natel-plotly-panel                              | Plotly                              | Migrate - consider alternative [nline-plotlyjs-panel](https://grafana.com/grafana/plugins/nline-plotlyjs-panel/) plugin.                                                                                                      |
+| agenty-flowcharting-panel                       | FlowCharting                        | Migrate - consider [Canvas]({{< relref "../../panels-visualizations/visualizations/canvas" >}}) (core) or [Diagram](https://grafana.com/grafana/plugins/jdbranham-diagram-panel/) as potential alternatives.                  |
+| camptocamp-prometheus-alertmanager-datasource   | Prometheus AlertManager             | Update - minimum version 2.0.0.                                                                                                                                                                                               |
+| briangann-gauge-panel                           | D3 Gauge                            | Update - minimum version 2.0.0, recommend latest.                                                                                                                                                                             |
+| yesoreyeram-boomtable-panel                     | Boom Table                          | Migrate - consider [Table]({{< relref "../../panels-visualizations/visualizations/table" >}}) (core) and [transformations]({{< relref "../../panels-visualizations/query-transform-data/transform-data/" >}}) as appropriate. |
+| briangann-datatable-panel                       | Datatable Panel                     | Wait - new version with react migration is planned.                                                                                                                                                                           |
+| flant-statusmap-panel                           | Statusmap                           | Migrate - browse included visualizations and plugins catalog for potential alternatives.                                                                                                                                      |
+| michaeldmoore-multistat-panel                   | Multistat                           | Migrate - browse included visualizations and plugins catalog for potential alternatives.                                                                                                                                      |
+| pr0ps-trackmap-panel                            | TrackMap                            | Migrate - browse included visualizations and plugins catalog for potential alternatives.                                                                                                                                      |
+| snuids-trafficlights-panel                      | Traffic Lights                      | Migrate - browse included visualizations and plugins catalog for potential alternatives.                                                                                                                                      |
+| vertamedia-clickhouse-datasource                | Altinity plugin for ClickHouse      | Update - minimum version 3.0.0.                                                                                                                                                                                               |
+| petrslavotinek-carpetplot-panel                 | Carpet plot                         | Migrate - browse included visualizations and plugins catalog for potential alternatives.                                                                                                                                      |
+| ryantxu-ajax-panel                              | AJAX                                | Migrate - browse included visualizations and plugins catalog for potential alternatives.                                                                                                                                      |
+| michaeldmoore-annunciator-panel                 | Annunciator                         | Migrate - consider [Stat]({{< relref "../../panels-visualizations/visualizations/stat" >}}) (core).                                                                                                                           |
+| marcuscalidus-svg-panel                         | SVG                                 | Migrate - consider alternatives such as [Canvas]({{< relref "../../panels-visualizations/visualizations/canvas" >}}) (core), [Colored SVG](https://grafana.com/grafana/plugins/snuids-svg-panel/) or others.                  |
+| neocat-cal-heatmap-panel                        | Cal-HeatMap                         | Migrate - consider [Heatmap]({{< relref "../../panels-visualizations/visualizations/heatmap" >}}) (core) visualization.                                                                                                       |
+| blackmirror1-singlestat-math-panel              | Singlestat Math                     | Migrate - browse included visualizations and plugins catalog for potential alternatives.                                                                                                                                      |
+| scadavis-synoptic-panel                         | SCADAvis Synoptic Panel             | Update - minimum version 2.0.                                                                                                                                                                                                 |
+| farski-blendstat-panel                          | Blendstat                           | Migrate - consider [Stat]({{< relref "../../panels-visualizations/visualizations/stat" >}}) (core) and [transformations]({{< relref "../../panels-visualizations/query-transform-data/transform-data/" >}}) as appropriate.   |
+| savantly-heatmap-panel                          | Heatmap                             | Migrate - consider [Heatmap]({{< relref "../../panels-visualizations/visualizations/heatmap" >}}) (core) visualization.                                                                                                       |
+| mtanda-histogram-panel                          | Histogram                           | Migrate - consider included [Histogram]({{< relref "../../panels-visualizations/visualizations/histogram" >}}) visualization.                                                                                                 |
+| snuids-radar-panel                              | Radar Graph                         | Migrate - browse included visualizations and plugins catalog for potential alternatives.                                                                                                                                      |
+| fatcloud-windrose-panel                         | WindRose                            | Migrate - consider alternative [Operator Windrose](https://grafana.com/grafana/plugins/operato-windrose-panel/) plugin.                                                                                                       |
+| bessler-pictureit-panel                         | PictureIt                           | Migrate - consider alternative [ePict](https://grafana.com/grafana/plugins/larona-epict-panel/) plugin.                                                                                                                       |
+| digrich-bubblechart-panel                       | Bubble Chart                        | Update - minimum version 2.0.1, recommend latest.                                                                                                                                                                             |
+| corpglory-progresslist-panel                    | Progress List                       | Migrate - browse included visualizations and plugins catalog for potential alternatives.                                                                                                                                      |
+| aidanmountford-html-panel                       | HTML                                | Migrate - consider alternatives such as [Text]({{< relref "../../panels-visualizations/visualizations/text" >}}) (core), [HTML](https://grafana.com/grafana/plugins/gapit-htmlgraphics-panel) or others.                      |
+| fifemon-graphql-datasource                      | GraphQL Data Source                 | Wait - removal of angular is planned, alternatively consider alternative [Infinity](https://grafana.com/grafana/plugins/yesoreyeram-infinity-datasource/) plugin.                                                             |
+| goshposh-metaqueries-datasource                 | MetaQueries                         | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| mxswat-separator-panel                          | Separator                           | Migrate - consider alternative [Text]({{< relref "../../panels-visualizations/visualizations/text" >}}) panel (core) which can be empty and used as a separator.                                                              |
+| natel-influx-admin-panel                        | Influx Admin                        | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| doitintl-bigquery-datasource                    | Google BigQuery                     | Migrate - consider [Grafana Big Query](https://grafana.com/grafana/plugins/grafana-bigquery-datasource/) plugin.                                                                                                              |
+| satellogic-3d-globe-panel                       | 3D Globe Panel                      | Migrate - browse included visualizations and plugins catalog for potential alternatives.                                                                                                                                      |
+| foursquare-clouderamanager-datasource           | Cloudera Manager                    | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| grafana-splunk-datasource                       | Splunk                              | Update - minimum version 4.1.0, recommend latest.                                                                                                                                                                             |
+| grafana-singlestat-panel                        | Singlestat                          | Migrate - consider [Stat]({{< relref "../../panels-visualizations/visualizations/stat" >}}) panel (core).                                                                                                                     |
+| blackmirror1-statusbygroup-panel                | Status By Group Panel               | Migrate - browse included visualizations and plugins catalog for potential alternatives.                                                                                                                                      |
+| novalabs-annotations-panel                      | Annotation Panel                    | Migrate - browse included visualizations and plugins catalog for potential alternatives.                                                                                                                                      |
+| jasonlashua-prtg-datasource                     | PRTG                                | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| ryantxu-annolist-panel                          | Annotation List                     | Migrate - consider [annotations list]({{< relref "../../panels-visualizations/visualizations/annotation-list" >}}) (core).                                                                                                    |
+| cloudflare-app                                  | Cloudflare Grafana App              | Migrate - consider using the [Cloudflare Dashboard](https://dash.cloudflare.com/?to=/:account/:zone/analytics/dns) or [DNS Analytics API](https://developers.cloudflare.com/api/operations/dns-analytics-table).              |
+| smartmakers-trafficlight-panel                  | TrafficLight                        | Migrate - browse included visualizations and plugins catalog for potential alternatives.                                                                                                                                      |
+| zuburqan-parity-report-panel                    | Parity Report                       | Migrate - browse included visualizations and plugins catalog for potential alternatives.                                                                                                                                      |
+| citilogics-geoloop-panel                        | GeoLoop                             | Migrate - browse included visualizations and plugins catalog for potential alternatives.                                                                                                                                      |
+| xginn8-pagerduty-datasource                     | Pagerduty                           | Wait - Grafana Labs are developing an Enterprise plugin for Pagerduty targetted for availability in Q1 2024 (**note** all roadmap items are subject to change).                                                               |
+| gretamosa-topology-panel                        | Topology Panel                      | Migrate - browse included visualizations and plugins catalog for potential alternatives.                                                                                                                                      |
+| fzakaria-simple-annotations-datasource          | Simple Annotations                  | Migrate - check for annotations support within your datasources to remove dependency on this plugin.                                                                                                                          |
+| oci-metrics-datasource                          | Oracle Cloud Infrastructure Metrics | Update - minimum version 5.0.0.                                                                                                                                                                                               |
+| abhisant-druid-datasource                       | Druid                               | Migrate - migrate to replacement [Druid](https://grafana.com/grafana/plugins/grafadruid-druid-datasource/) plugin.                                                                                                            |
+| devopsprodigy-kubegraf-app                      | DevOpsProdigy KubeGraf              | Migrate - consider [Grafana Kubernetes Monitoring](https://grafana.com/solutions/kubernetes/) (Grafana Cloud only)                                                                                                            |
+| mtanda-heatmap-epoch-panel                      | HeatmapEpoch                        | Migrate - consider [Heatmap]({{< relref "../../panels-visualizations/visualizations/heatmap" >}}) (core) visualization.                                                                                                       |
+| alexandra-trackmap-panel                        | Track Map                           | Migrate - browse included visualizations and plugins catalog for potential alternatives.                                                                                                                                      |
+| gnocchixyz-gnocchi-datasource                   | Gnocchi                             | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| tencentcloud-monitor-app                        | Tencent Cloud Monitor               | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| andig-darksky-datasource                        | DarkSky                             | Remove - support for the DarkSky API was ended by Apple in March 2023.                                                                                                                                                        |
+| mtanda-google-calendar-datasource               | GoogleCalendar                      | Wait - migration to React is planned.                                                                                                                                                                                         |
+| ntop-ntopng-datasource                          | ntopng                              | Migrate - consider [InfluxDB]({{< relref "../../datasources/influxdb/" >}}) (core), with additional guidance available [here](https://www.ntop.org/guides/ntopng/basic_concepts/timeseries.html#influxdb-driver).             |
+| ayoungprogrammer-finance-datasource             | Finance                             | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| grafana-kairosdb-datasource                     | KairosDB                            | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| fastweb-openfalcon-datasource                   | Open-Falcon                         | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| praj-ams-datasource                             | Ambari Metrics                      | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| monasca-datasource                              | Monasca                             | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| grafana-strava-datasource                       | Strava                              | Update - minimum version 1.6.0, recommend latest.                                                                                                                                                                             |
+| gridprotectionalliance-osisoftpi-datasource     | OSIsoft-PI                          | Update - minimum version 4.0.0, recommend latest.                                                                                                                                                                             |
+| monitoringartist-monitoringart-datasource       | Monitoring Art                      | Migrate - browse included visualizations and plugins catalog for potential alternatives.                                                                                                                                      |
+| hawkular-datasource                             | Hawkular                            | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| ovh-warp10-datasource                           | Warp 10                             | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| natel-usgs-datasource                           | USGS Water Services                 | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| radensolutions-netxms-datasource                | NetXMS                              | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| ibm-apm-datasource                              | IBM APM                             | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| cognitedata-datasource                          | Cognite Data Fusion                 | Update - minimum version 4.0.0, recommend latest.                                                                                                                                                                             |
+| linksmart-sensorthings-datasource               | LinkSmart SensorThings              | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| pue-solr-datasource                             | Solr                                | Migrate - consider this [guidance](https://solr.apache.org/guide/solr/latest/deployment-guide/monitoring-with-prometheus-and-grafana.html) on using solr-exporter for prometheus.                                             |
+| paytm-kapacitor-datasource                      | KapacitorSimpleJson                 | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| oci-logs-datasource                             | Oracle Cloud Infrastructure Logs    | Update - minimum version 4.0.0.                                                                                                                                                                                               |
+| gridprotectionalliance-openhistorian-datasource | openHistorian                       | Wait - new version with react migration is planned.                                                                                                                                                                           |
+| devicehive-devicehive-datasource                | DeviceHive                          | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| rackerlabs-blueflood-datasource                 | Blueflood                           | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| udoprog-heroic-datasource                       | Heroic                              | Migrate - Heroic DB has been discontinued.                                                                                                                                                                                    |
+| akumuli-datasource                              | Akumuli                             | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| bmchelix-ade-datasource                         | BMC Helix                           | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| sidewinder-datasource                           | Sidewinder                          | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| linksmart-hds-datasource                        | LinkSmart HDS Datasource            | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| skydive-datasource                              | Skydive                             | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| quasardb-datasource                             | QuasarDB                            | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| spotify-heroic-datasource                       | Heroic                              | Migrate - Heroic DB has been discontinued.                                                                                                                                                                                    |
+| grafana-es-open-distro-datasource               | Open Distro for Elasticsearch       | Migrate - [OpenSearch](https://grafana.com/grafana/plugins/grafana-opensearch-datasource/) replaced Open Distro for Elasticseach.                                                                                             |
+| humio-datasource                                | Humio                               | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| yeya24-chaosmesh-datasource                     | Chaos Mesh                          | Migrate - replaced by [chaosmeshorg-datasource](https://grafana.com/grafana/plugins/chaosmeshorg-datasource/).                                                                                                                |
+| kentik-connect-app                              | Kentik Connect Pro                  | Update - minimum version 1.7.0.                                                                                                                                                                                               |
+| chaosmeshorg-datasource                         | Chaos Mesh                          | Update - minimum version 3.0.0.                                                                                                                                                                                               |
+| aquaqanalytics-kdbadaptor-datasource            | kdb+                                | Migrate - [kdb+ backend](https://grafana.com/grafana/plugins/aquaqanalytics-kdbbackend-datasource) replaced kdb+.                                                                                                             |
+| alexanderzobnin-zabbix-app                      | Zabbix                              | Update - minimum version 4.3.0, recommend latest, **note** recently brought under Grafana signature.                                                                                                                          |
+| bosun-app                                       | Bosun                               | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| belugacdn-app                                   | BelugaCDN                           | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| grafana-azure-data-explorer-datasource          | Azure Data Explorer Datasource      | Update - minimum 3.5.1, recommend latest.                                                                                                                                                                                     |
+| ddurieux-glpi-app                               | glpi                                | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| fetzerch-sunandmoon-datasource                  | Sun and Moon                        | Update - minimum version 0.3.0.                                                                                                                                                                                               |
+| grafana-clock-panel                             | Clock                               | Update - minimum version 1.1.0, recommend latest.                                                                                                                                                                             |
+| grafana-github-datasource                       | GitHub                              | Update - minimum version 1.3.3, recommend latest.                                                                                                                                                                             |
+| grafana-datadog-datasource                      | Datadog                             | Update - minimum version 3.0.0, recommend latest.                                                                                                                                                                             |
+| grafana-gitlab-datasource                       | Gitlab                              | Update - minimum version 1.1.0, recommend latest.                                                                                                                                                                             |
+| grafana-iot-twinmaker-app                       | AWS IoT TwinMaker App               | Update - minimum version 1.6.3, recommend latest.                                                                                                                                                                             |
+| grafana-newrelic-datasource                     | New Relic                           | Update - minimum version 3.0.0, recommend latest.                                                                                                                                                                             |
+| grafana-opensearch-datasource                   | Opensearch                          | Update - minimum version 2.0.0, recommend latest.                                                                                                                                                                             |
+| grafana-oracle-datasource                       | Oracle                              | Update - minimum version 2.0.6, recommend latest.                                                                                                                                                                             |
+| grafana-piechart-panel                          | Pie Chart                           | Migrate - [Pie Chart]({{< relref "../../panels-visualizations/visualizations/pie-chart" >}}) (core) replaced Pie Chart.                                                                                                       |
+| grafana-polystat-panel                          | Polystat                            | Update - minimum version 2.0.0, recommend latest.                                                                                                                                                                             |
+| grafana-servicenow-datasource                   | ServiceNow                          | Update - minimum version 2.0.2, recommend latest.                                                                                                                                                                             |
+| grafana-synthetic-monitoring-app                | Synthetic Monitoring                | Update - minimum version 0.7.3, recommend latest.                                                                                                                                                                             |
+| grafana-wavefront-datasource                    | Wavefront                           | Update - minimum version 2.0.0, recommend latest.                                                                                                                                                                             |
+| hadesarchitect-cassandra-datasource             | Apache Cassandra                    | Update - minimum version 2.1.1, recommend latest.                                                                                                                                                                             |
+| instana-datasource                              | Instana                             | Update - minimum version 3.0.0, recommend latest.                                                                                                                                                                             |
+| jdbranham-diagram-panel                         | Diagram                             | Update - minimum version 1.7.1, recommend latest.                                                                                                                                                                             |
+| larona-epict-panel                              | ePict                               | Update - minimum version 2.0.0, recommend latest.                                                                                                                                                                             |
+| moogsoft-aiops-app                              | Moogsoft AIOps                      | Update - minimum version 9.0.0.                                                                                                                                                                                               |
+| opennms-helm-app                                | OpenNMS Helm                        | Migrate - [OpenNMS Plugin for Grafana](https://grafana.com/grafana/plugins/opennms-opennms-app/) replaced OpenNMS Helm.                                                                                                       |
+| percona-percona-app                             | Percona                             | Migrate - consider use of [Percona dashboards](https://github.com/percona/grafana-dashboards/).                                                                                                                               |
+| novatec-sdg-panel                               | Service Dependency Graph            | Update - minimum version 4.0.3.                                                                                                                                                                                               |
+| pierosavi-imageit-panel                         | ImageIt                             | Migrate - consider [ePict](https://grafana.com/grafana/plugins/larona-epict-panel/) or browse plugins catalog for potential alternatives.                                                                                     |
+| redis-app                                       | Redis Application                   | Update - minimum version 1.2.0, recommend latest.                                                                                                                                                                             |
+| sbueringer-consul-datasource                    | Consul                              | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| simpod-json-datasource                          | JSON                                | Update - minimum version 0.3.0, recommend latest.                                                                                                                                                                             |
+| singlestat                                      | Singlestat                          | Migrate - [Stat]({{< relref "../../panels-visualizations/visualizations/stat" >}}) (core) replaced Singlestat.                                                                                                                |
+| sni-pnp-datasource                              | PNP                                 | Update - minimum version 2.0.0, recommend latest.                                                                                                                                                                             |
+| sni-thruk-datasource                            | Thruk                               | Update - minimum version 2.0.0, recommend latest.                                                                                                                                                                             |
+| stagemonitor-elasticsearch-app                  | stagemonitor Elasticsearch          | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| tdengine-datasource                             | TDengine Datasource                 | Update - minimum version 3.3.0, recommend latest.                                                                                                                                                                             |
+| vertica-grafana-datasource                      | Vertica                             | Update - minimum version 2.0.0, recommend latest.                                                                                                                                                                             |
+| vonage-status-panel                             | Status Panel                        | Wait - updated version may become available, or browse included visualizations and plugins catalog for potential alternatives.                                                                                                |
+| voxter-app                                      | Voxter VoIP Platform Metrics        | Migrate - browse included data sources and plugins catalog for potential alternatives.                                                                                                                                        |
+| graph                                           | Graph (old)                         | Migrate - replaced by Time Series (core) - note this should automigrate when Angular is disabled.                                                                                                                             |
+| table-old                                       | Table (old)                         | Migrate - replaced by Table (core) - note this should automigrate when Angular is disabled.                                                                                                                                   |
+| shorelinesoftware-shoreline-datasource          | Shoreline Data Source               | Update - minimum version 1.2.1, recommend latest.                                                                                                                                                                             |
