@@ -459,37 +459,42 @@
     }
   },
   "zIndex": {
-    "1": {
+    "90": {
+      "value": "900",
+      "type": "other",
+      "description": "Used usualy in the activePanel."
+    },
+    "100": {
       "value": "1000",
       "type": "other",
       "description": "Used usualy in the navbarFixed."
     },
-    "2": {
+    "120": {
       "value": "1020",
       "type": "other",
       "description": "Used usualy in the sidemenu."
     },
-    "3": {
+    "130": {
       "value": "1030",
       "type": "other",
       "description": "Used usualy in dropdown and typeahead."
     },
-    "4": {
+    "140": {
       "value": "1040",
       "type": "other",
       "description": "Used usualy in tooltip."
     },
-    "5": {
+    "150": {
       "value": "1050",
       "type": "other",
       "description": "Used usualy in modalBackdrop."
     },
-    "6": {
+    "160": {
       "value": "1060",
       "type": "other",
       "description": "Used usualy in modal."
     },
-    "7": {
+    "170": {
       "value": "1070",
       "type": "other",
       "description": "Used usualy in portal."

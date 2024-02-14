@@ -182,5 +182,43 @@
       "type": "typography",
       "description": "Code on the typography hierarchy."
     }
+  },
+  "zIndex": {
+    "activePanel": {
+      "value": "{zIndex.90}",
+      "type": "other"
+    },
+    "navbarFixed": {
+      "value": "{zIndex.100}",
+      "type": "other"
+    },
+    "sidemenu": {
+      "value": "{zIndex.120}",
+      "type": "other"
+    },
+    "dropdown": {
+      "value": "{zIndex.130}",
+      "type": "other"
+    },
+    "typeahead": {
+      "value": "{zIndex.130}",
+      "type": "other"
+    },
+    "tooltip": {
+      "value": "{zIndex.140}",
+      "type": "other"
+    },
+    "modalBackdrop": {
+      "value": "{zIndex.150}",
+      "type": "other"
+    },
+    "modal": {
+      "value": "{zIndex.160}",
+      "type": "other"
+    },
+    "portal": {
+      "value": "{zIndex.170}",
+      "type": "other"
+    }
   }
 }
