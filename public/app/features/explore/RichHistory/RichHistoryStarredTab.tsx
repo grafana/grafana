@@ -54,9 +54,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     footer: css`
       height: 60px;
-      margin-top: ${theme.spacing(3)};
       display: flex;
       justify-content: center;
+      align-items: center;
       font-weight: ${theme.typography.fontWeightLight};
       font-size: ${theme.typography.bodySmall.fontSize};
       a {
