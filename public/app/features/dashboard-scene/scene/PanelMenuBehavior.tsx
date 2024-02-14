@@ -45,7 +45,8 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
   const asyncFunc = async () => {
     // hm.. add another generic param to SceneObject to specify parent type?
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const panel = menu.parent as VizPanel;
+    const panel = sceneGraph.getAncestor(menu, VizPanel);
+    const libraryPanel = panel.parent instanceof LibraryVizPanel ? panel.parent : undefined;
     const plugin = panel.getPlugin();
 
     const items: PanelMenuItem[] = [];
@@ -203,7 +204,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       iconClassName: 'trash-alt',
       onClick: () => {
         DashboardInteractions.panelMenuItemClicked('remove');
-        removePanel(dashboard, panel, true);
+        removePanel(dashboard, libraryPanel || panel, true);
       },
       shortcut: 'p r',
     });
@@ -377,7 +378,7 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
   };
 }
 
-export function removePanel(dashboard: DashboardScene, panel: VizPanel, ask: boolean) {
+export function removePanel(dashboard: DashboardScene, panel: VizPanel | LibraryVizPanel, ask: boolean) {
   const vizPanelData = sceneGraph.getData(panel);
   let panelHasAlert = false;
 
