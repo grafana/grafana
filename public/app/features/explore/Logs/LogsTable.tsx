@@ -9,6 +9,7 @@ import {
   DataTransformerConfig,
   Field,
   FieldType,
+  guessFieldTypeForField,
   LogsSortOrder,
   sortDataFrame,
   SplitOpen,
@@ -86,6 +87,9 @@ export function LogsTable(props: Props) {
           // This sets the individual field value as filterable
           filterable: isFieldFilterable(field, logsFrame?.bodyField.name ?? '', logsFrame?.timeField.name ?? ''),
         };
+
+        // If it's a string, then try to guess for a better type for numeric support in viz
+        field.type = field.type === FieldType.string ? guessFieldTypeForField(field) ?? FieldType.string : field.type;
       }
 
       return frameWithOverrides;
