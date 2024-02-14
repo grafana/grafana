@@ -112,8 +112,8 @@ func (c *Grafana) AuthenticatePassword(ctx context.Context, r *authn.Request, us
 	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: true}, login.PasswordAuthModule), nil
 }
 
-func comparePassword(password, salt, hash string) bool {
+func comparePassword(password, salt string, hash user.Password) bool {
 	// It is ok to ignore the error here because util.EncodePassword can never return a error
-	hashedPassword, _ := util.EncodePassword(password, salt)
+	hashedPassword, _ := util.EncodePassword(string(password), salt)
 	return subtle.ConstantTimeCompare([]byte(hashedPassword), []byte(hash)) == 1
 }

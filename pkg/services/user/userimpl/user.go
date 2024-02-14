@@ -166,11 +166,11 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 	usr.Rands = rands
 
 	if len(cmd.Password) > 0 {
-		encodedPassword, err := util.EncodePassword(cmd.Password, usr.Salt)
+		encodedPassword, err := util.EncodePassword(string(cmd.Password), usr.Salt)
 		if err != nil {
 			return nil, err
 		}
-		usr.Password = encodedPassword
+		usr.Password = user.Password(encodedPassword)
 	}
 
 	_, err = s.store.Insert(ctx, usr)

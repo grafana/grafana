@@ -13,6 +13,19 @@ var (
 	MinPasswordLength         = 12
 )
 
+type Password string
+
+func NewPassword(newPassword string, config *setting.Cfg) (Password, error) {
+	if err := ValidatePassword(newPassword, config); err != nil {
+		return "", err
+	}
+	return Password(newPassword), nil
+}
+
+func (p Password) Validate(config *setting.Cfg) error {
+	return ValidatePassword(string(p), config)
+}
+
 // ValidatePassword checks if a new password meets the required criteria based on the given configuration.
 // If BasicAuthStrongPasswordPolicy is disabled, it only checks for password length.
 // Otherwise, it ensures the password meets the minimum length requirement and contains at least one uppercase letter,
