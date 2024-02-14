@@ -6,30 +6,31 @@
     {
       "metadata": {
         "name": "math",
-        "resourceVersion": "1707862448494",
+        "resourceVersion": "1707870605915",
         "creationTimestamp": "2024-02-13T05:40:45Z"
       },
       "spec": {
         "name": "math",
+        "discriminatorField": "queryType",
         "versions": [
           {
             "schema": {
-              "additionalProperties": false,
               "properties": {
                 "expression": {
+                  "type": "string",
+                  "minLength": 1,
                   "description": "General math expression",
                   "examples": [
                     "$A + 1",
                     "$A/$B"
-                  ],
-                  "minLength": 1,
-                  "type": "string"
+                  ]
                 }
               },
+              "additionalProperties": false,
+              "type": "object",
               "required": [
                 "expression"
-              ],
-              "type": "object"
+              ]
             },
             "examples": [
               {
@@ -52,26 +53,26 @@
     {
       "metadata": {
         "name": "reduce",
-        "resourceVersion": "1707863642773",
+        "resourceVersion": "1707870605915",
         "creationTimestamp": "2024-02-13T05:40:45Z"
       },
       "spec": {
         "name": "reduce",
+        "discriminatorField": "queryType",
         "versions": [
           {
             "schema": {
-              "additionalProperties": false,
               "properties": {
                 "expression": {
+                  "type": "string",
+                  "minLength": 1,
                   "description": "Reference to single query result",
                   "examples": [
                     "$A"
-                  ],
-                  "minLength": 1,
-                  "type": "string"
+                  ]
                 },
                 "reducer": {
-                  "description": "The reducer\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
+                  "type": "string",
                   "enum": [
                     "sum",
                     "mean",
@@ -80,42 +81,43 @@
                     "count",
                     "last"
                   ],
-                  "type": "string",
+                  "description": "The reducer\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
                   "x-enum-description": {}
                 },
                 "settings": {
-                  "additionalProperties": false,
-                  "description": "Reducer Options",
                   "properties": {
                     "mode": {
-                      "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
+                      "type": "string",
                       "enum": [
                         "dropNN",
                         "replaceNN"
                       ],
-                      "type": "string",
+                      "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
                       "x-enum-description": {
                         "dropNN": "Drop non-numbers",
                         "replaceNN": "Replace non-numbers"
                       }
                     },
                     "replaceWithValue": {
-                      "description": "Only valid when mode is replace",
-                      "type": "number"
+                      "type": "number",
+                      "description": "Only valid when mode is replace"
                     }
                   },
+                  "additionalProperties": false,
+                  "type": "object",
                   "required": [
                     "mode"
                   ],
-                  "type": "object"
+                  "description": "Reducer Options"
                 }
               },
+              "additionalProperties": false,
+              "type": "object",
               "required": [
                 "expression",
                 "reducer",
                 "settings"
-              ],
-              "type": "object"
+              ]
             },
             "examples": [
               {
@@ -136,60 +138,61 @@
     {
       "metadata": {
         "name": "resample",
-        "resourceVersion": "1707863642773",
+        "resourceVersion": "1707870605915",
         "creationTimestamp": "2024-02-13T05:40:45Z"
       },
       "spec": {
         "name": "resample",
+        "discriminatorField": "queryType",
         "versions": [
           {
             "schema": {
-              "additionalProperties": false,
-              "description": "QueryType = resample",
               "properties": {
-                "downsampler": {
-                  "description": "The downsample function",
-                  "type": "string"
-                },
                 "expression": {
+                  "type": "string",
+                  "minLength": 1,
                   "description": "The math expression",
                   "examples": [
                     "$A + 1",
                     "$A"
-                  ],
-                  "minLength": 1,
-                  "type": "string"
-                },
-                "upsampler": {
-                  "description": "The upsample function",
-                  "type": "string"
+                  ]
                 },
                 "window": {
+                  "type": "string",
+                  "minLength": 1,
                   "description": "The time durration",
                   "examples": [
                     "1w",
                     "10m"
-                  ],
-                  "minLength": 1,
-                  "type": "string"
+                  ]
+                },
+                "downsampler": {
+                  "type": "string",
+                  "description": "The downsample function"
+                },
+                "upsampler": {
+                  "type": "string",
+                  "description": "The upsample function"
                 }
               },
+              "additionalProperties": false,
+              "type": "object",
               "required": [
                 "expression",
                 "window",
                 "downsampler",
                 "upsampler"
               ],
-              "type": "object"
+              "description": "QueryType = resample"
             },
             "examples": [
               {
                 "name": "resample at a every day",
                 "query": {
-                  "downsampler": "",
                   "expression": "$A",
-                  "upsampler": "",
-                  "window": "1d"
+                  "window": "1d",
+                  "downsampler": "",
+                  "upsampler": ""
                 }
               }
             ]
@@ -200,22 +203,20 @@
     {
       "metadata": {
         "name": "classic",
-        "resourceVersion": "1707865372170",
+        "resourceVersion": "1707870605915",
         "creationTimestamp": "2024-02-13T22:34:02Z"
       },
       "spec": {
         "name": "classic",
+        "discriminatorField": "queryType",
         "versions": [
           {
             "schema": {
-              "additionalProperties": false,
               "properties": {
                 "conditions": {
                   "items": {
-                    "additionalProperties": false,
                     "properties": {
                       "evaluator": {
-                        "additionalProperties": false,
                         "properties": {
                           "params": {
                             "items": {
@@ -227,26 +228,26 @@
                             "type": "string"
                           }
                         },
+                        "additionalProperties": false,
+                        "type": "object",
                         "required": [
                           "params",
                           "type"
-                        ],
-                        "type": "object"
+                        ]
                       },
                       "operator": {
-                        "additionalProperties": false,
                         "properties": {
                           "type": {
                             "type": "string"
                           }
                         },
+                        "additionalProperties": false,
+                        "type": "object",
                         "required": [
                           "type"
-                        ],
-                        "type": "object"
+                        ]
                       },
                       "query": {
-                        "additionalProperties": false,
                         "properties": {
                           "params": {
                             "items": {
@@ -255,39 +256,42 @@
                             "type": "array"
                           }
                         },
+                        "additionalProperties": false,
+                        "type": "object",
                         "required": [
                           "params"
-                        ],
-                        "type": "object"
+                        ]
                       },
                       "reducer": {
-                        "additionalProperties": false,
                         "properties": {
                           "type": {
                             "type": "string"
                           }
                         },
+                        "additionalProperties": false,
+                        "type": "object",
                         "required": [
                           "type"
-                        ],
-                        "type": "object"
+                        ]
                       }
                     },
+                    "additionalProperties": false,
+                    "type": "object",
                     "required": [
                       "evaluator",
                       "operator",
                       "query",
                       "reducer"
-                    ],
-                    "type": "object"
+                    ]
                   },
                   "type": "array"
                 }
               },
+              "additionalProperties": false,
+              "type": "object",
               "required": [
                 "conditions"
-              ],
-              "type": "object"
+              ]
             },
             "examples": [
               {
@@ -304,11 +308,12 @@
     {
       "metadata": {
         "name": "threshold",
-        "resourceVersion": "1707865895760",
+        "resourceVersion": "1707870605915",
         "creationTimestamp": "2024-02-13T22:34:02Z"
       },
       "spec": {
         "name": "threshold",
+        "discriminatorField": "queryType",
         "versions": [
           {
             "schema": {

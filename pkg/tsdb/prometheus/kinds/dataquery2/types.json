@@ -1,0 +1,90 @@
+{
+  "metadata": {
+    "resourceVersion": "1707868901853"
+  },
+  "items": [
+    {
+      "metadata": {
+        "resourceVersion": "1707868901853",
+        "creationTimestamp": "2024-02-14T00:01:41Z"
+      },
+      "spec": {
+        "versions": [
+          {
+            "schema": {
+              "properties": {
+                "format": {
+                  "type": "string",
+                  "description": "The response format"
+                },
+                "expr": {
+                  "type": "string",
+                  "description": "The actual expression/query that will be evaluated by Prometheus"
+                },
+                "range": {
+                  "type": "boolean",
+                  "description": "Returns a Range vector, comprised of a set of time series containing a range of data points over time for each time series"
+                },
+                "instant": {
+                  "type": "boolean",
+                  "description": "Returns only the latest value that Prometheus has scraped for the requested time series"
+                },
+                "exemplar": {
+                  "type": "boolean",
+                  "description": "Execute an additional query to identify interesting raw samples relevant for the given expr"
+                },
+                "editorMode": {
+                  "type": "string",
+                  "description": "what we should show in the editor"
+                },
+                "intervalFactor": {
+                  "type": "number",
+                  "description": "@deprecated Used to specify how many times to divide max data points by. We use max data points under query options\nSee https://github.com/grafana/grafana/issues/48081"
+                },
+                "legendFormat": {
+                  "type": "string",
+                  "description": "Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname"
+                },
+                "scope": {
+                  "properties": {
+                    "matchers": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "matchers"
+                  ],
+                  "description": "???"
+                }
+              },
+              "additionalProperties": false,
+              "type": "object",
+              "required": [
+                "expr"
+              ],
+              "description": "PrometheusDataQuery defines model for PrometheusDataQuery."
+            },
+            "examples": [
+              {
+                "name": "example timeseries",
+                "query": {
+                  "format": "time_series",
+                  "expr": "???"
+                }
+              },
+              {
+                "name": "example table",
+                "query": {
+                  "format": "table",
+                  "expr": "???"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

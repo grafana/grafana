@@ -17,8 +17,9 @@ import (
 func TestQueryTypeDefinitions(t *testing.T) {
 	builder, err := extschema.NewBuilder(t,
 		extschema.BuilderOptions{
-			BasePackage: "github.com/grafana/grafana/pkg/registry/apis/query/expr",
-			CodePath:    "./",
+			BasePackage:        "github.com/grafana/grafana/pkg/registry/apis/query/expr",
+			CodePath:           "./",
+			DiscriminatorField: "queryType",
 			// We need to identify the enum fields explicitly :(
 			// *AND* have the +enum common for this to work
 			Enums: []reflect.Type{
