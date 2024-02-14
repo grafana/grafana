@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FormEvent } from 'react';
+import React, { FormEvent, useCallback, useMemo, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 import { lastValueFrom } from 'rxjs';
 
@@ -19,15 +19,25 @@ import { VariableNameConstraints } from 'app/features/variables/editor/types';
 import { VariableTypeSelect } from './components/VariableTypeSelect';
 import { EditableVariableType, getVariableEditor, hasVariableOptions, isEditableVariableType } from './utils';
 
+const RESERVED_GLOBAL_VARIABLE_NAME_REGEX = /^(?!__).*$/;
+const WORD_CHARACTERS_REGEX = /^\w+$/;
+
 interface VariableEditorFormProps {
   variable: SceneVariable;
+  allVariables: SceneVariable[];
   onTypeChange: (type: EditableVariableType) => void;
   onGoBack: () => void;
   onDelete: (variableName: string) => void;
 }
-
-export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete }: VariableEditorFormProps) {
+export function VariableEditorForm({
+  variable,
+  allVariables,
+  onTypeChange,
+  onGoBack,
+  onDelete,
+}: VariableEditorFormProps) {
   const styles = useStyles2(getStyles);
+  const [nameError, setNameError] = useState<string | null>(null);
   const { name, type, label, description, hide } = variable.useState();
   const EditorToRender = isEditableVariableType(type) ? getVariableEditor(type) : undefined;
   const [runQueryState, onRunQuery] = useAsyncFn(async () => {
@@ -40,7 +50,36 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
     }
   };
 
-  const onNameBlur = (e: FormEvent<HTMLInputElement>) => variable.setState({ name: e.currentTarget.value });
+  const variableNameSet = useMemo(() => new Set(allVariables.map((v) => v.state.name)), [allVariables]);
+
+  const onNameChange = useCallback(
+    (e: FormEvent<HTMLInputElement>) => {
+      let errorText = null;
+      if (!RESERVED_GLOBAL_VARIABLE_NAME_REGEX.test(e.currentTarget.value)) {
+        errorText = "Template names cannot begin with '__', that's reserved for Grafana's global variables";
+      }
+
+      if (!WORD_CHARACTERS_REGEX.test(e.currentTarget.value)) {
+        errorText = 'Only word characters are allowed in variable names';
+      }
+
+      if (variableNameSet.has(e.currentTarget.value)) {
+        errorText = 'Variable with the same name already exists';
+      }
+
+      if (errorText !== nameError) {
+        setNameError(errorText);
+      }
+    },
+    [nameError, variableNameSet]
+  );
+
+  const onNameBlur = (e: FormEvent<HTMLInputElement>) => {
+    if (!nameError) {
+      variable.setState({ name: e.currentTarget.value });
+    }
+  };
+
   const onLabelBlur = (e: FormEvent<HTMLInputElement>) => variable.setState({ label: e.currentTarget.value });
   const onDescriptionBlur = (e: FormEvent<HTMLTextAreaElement>) =>
     variable.setState({ description: e.currentTarget.value });
@@ -64,10 +103,13 @@ export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete 
         description="The name of the template variable. (Max. 50 characters)"
         placeholder="Variable name"
         defaultValue={name ?? ''}
+        onChange={onNameChange}
         onBlur={onNameBlur}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2}
         maxLength={VariableNameConstraints.MaxSize}
         required
+        invalid={!!nameError}
+        error={nameError}
       />
       <VariableTextField
         name="Label"

@@ -202,6 +202,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
       return (
         <VariableEditorSettingsView
           variable={variable}
+          allVariables={variables}
           onTypeChange={onTypeChange}
           onGoBack={onGoBack}
           pageNav={pageNav}
@@ -230,6 +231,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
 
 interface VariableEditorSettingsEditViewProps {
   variable: SceneVariable;
+  allVariables: SceneVariable[];
   pageNav: NavModelItem;
   navModel: NavModel;
   dashboard: DashboardScene;
@@ -240,6 +242,7 @@ interface VariableEditorSettingsEditViewProps {
 
 function VariableEditorSettingsView({
   variable,
+  allVariables,
   pageNav,
   navModel,
   dashboard,
@@ -258,7 +261,13 @@ function VariableEditorSettingsView({
   return (
     <Page navModel={navModel} pageNav={editVariablePageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
-      <VariableEditorForm variable={variable} onTypeChange={onTypeChange} onGoBack={onGoBack} onDelete={onDelete} />
+      <VariableEditorForm
+        variable={variable}
+        allVariables={allVariables}
+        onTypeChange={onTypeChange}
+        onGoBack={onGoBack}
+        onDelete={onDelete}
+      />
     </Page>
   );
 }
