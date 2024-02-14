@@ -1,4 +1,6 @@
 {
+  "kind": "QueryTypeDefinitionList",
+  "apiVersion": "query.grafana.app/v0alpha1",
   "metadata": {
     "resourceVersion": "1707874339398"
   },
@@ -11,73 +13,73 @@
       },
       "spec": {
         "schema": {
+          "additionalProperties": false,
+          "description": "PrometheusDataQuery defines model for PrometheusDataQuery.",
           "properties": {
-            "format": {
-              "type": "string",
-              "description": "The response format"
-            },
-            "expr": {
-              "type": "string",
-              "description": "The actual expression/query that will be evaluated by Prometheus"
-            },
-            "range": {
-              "type": "boolean",
-              "description": "Returns a Range vector, comprised of a set of time series containing a range of data points over time for each time series"
-            },
-            "instant": {
-              "type": "boolean",
-              "description": "Returns only the latest value that Prometheus has scraped for the requested time series"
+            "editorMode": {
+              "description": "what we should show in the editor",
+              "type": "string"
             },
             "exemplar": {
-              "type": "boolean",
-              "description": "Execute an additional query to identify interesting raw samples relevant for the given expr"
+              "description": "Execute an additional query to identify interesting raw samples relevant for the given expr",
+              "type": "boolean"
             },
-            "editorMode": {
-              "type": "string",
-              "description": "what we should show in the editor"
+            "expr": {
+              "description": "The actual expression/query that will be evaluated by Prometheus",
+              "type": "string"
+            },
+            "format": {
+              "description": "The response format",
+              "type": "string"
+            },
+            "instant": {
+              "description": "Returns only the latest value that Prometheus has scraped for the requested time series",
+              "type": "boolean"
             },
             "intervalFactor": {
-              "type": "number",
-              "description": "@deprecated Used to specify how many times to divide max data points by. We use max data points under query options\nSee https://github.com/grafana/grafana/issues/48081"
+              "description": "@deprecated Used to specify how many times to divide max data points by. We use max data points under query options\nSee https://github.com/grafana/grafana/issues/48081",
+              "type": "number"
             },
             "legendFormat": {
-              "type": "string",
-              "description": "Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname"
+              "description": "Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname",
+              "type": "string"
+            },
+            "range": {
+              "description": "Returns a Range vector, comprised of a set of time series containing a range of data points over time for each time series",
+              "type": "boolean"
             },
             "scope": {
+              "additionalProperties": false,
+              "description": "???",
               "properties": {
                 "matchers": {
                   "type": "string"
                 }
               },
-              "additionalProperties": false,
-              "type": "object",
               "required": [
                 "matchers"
               ],
-              "description": "???"
+              "type": "object"
             }
           },
-          "additionalProperties": false,
-          "type": "object",
           "required": [
             "expr"
           ],
-          "description": "PrometheusDataQuery defines model for PrometheusDataQuery."
+          "type": "object"
         },
         "examples": [
           {
             "name": "example timeseries",
             "query": {
-              "format": "time_series",
-              "expr": "???"
+              "expr": "???",
+              "format": "time_series"
             }
           },
           {
             "name": "example table",
             "query": {
-              "format": "table",
-              "expr": "???"
+              "expr": "???",
+              "format": "table"
             }
           }
         ]

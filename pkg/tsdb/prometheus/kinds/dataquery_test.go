@@ -14,7 +14,7 @@ import (
 )
 
 func TestQueryTypeDefinitions(t *testing.T) {
-	builder, err := extschema.NewBuilder(t,
+	builder, err := extschema.NewBuilder(
 		extschema.BuilderOptions{
 			BasePackage: "github.com/grafana/grafana/pkg/tsdb/prometheus/kinds",
 			CodePath:    "./",
@@ -48,7 +48,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	_ = builder.Write("dataquery.json")
+	builder.UpdateSchemaDefinition(t, "dataquery.json")
 
 	qt, err := NewQueryHandler()
 	require.NoError(t, err)
