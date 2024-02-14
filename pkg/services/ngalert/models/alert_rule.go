@@ -390,11 +390,6 @@ type AlertRuleKeyWithVersion struct {
 	AlertRuleKey `xorm:"extends"`
 }
 
-type AlertRuleKeyWithVersionAndPauseStatus struct {
-	IsPaused                bool
-	AlertRuleKeyWithVersion `xorm:"extends"`
-}
-
 type AlertRuleKeyWithId struct {
 	AlertRuleKey
 	ID int64

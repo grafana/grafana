@@ -2,17 +2,7 @@ import * as H from 'history';
 
 import { NavIndex } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import {
-  SceneFlexItem,
-  SceneFlexLayout,
-  SceneGridItem,
-  SceneObject,
-  SceneObjectBase,
-  SceneObjectRef,
-  SceneObjectState,
-  SplitLayout,
-  VizPanel,
-} from '@grafana/scenes';
+import { SceneGridItem, SceneObject, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
 import {
   findVizPanelByKey,
@@ -27,11 +17,12 @@ import { PanelOptionsPane } from './PanelOptionsPane';
 import { VizPanelManager } from './VizPanelManager';
 
 export interface PanelEditorState extends SceneObjectState {
-  body: SceneObject;
   controls?: SceneObject[];
   isDirty?: boolean;
   panelId: number;
-  panelRef: SceneObjectRef<VizPanelManager>;
+  optionsPane?: PanelOptionsPane;
+  dataPane?: PanelDataPane;
+  vizManager: VizPanelManager;
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
@@ -42,14 +33,41 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   public constructor(state: PanelEditorState) {
     super(state);
 
-    this.addActivationHandler(() => {
-      return () => {
-        if (!this._discardChanges) {
-          this.commitChanges();
-        }
-      };
-    });
+    this.addActivationHandler(this._activationHandler.bind(this));
   }
+
+  private _activationHandler() {
+    const panelManager = this.state.vizManager;
+    const panel = panelManager.state.panel;
+
+    this._subs.add(
+      panelManager.subscribeToState((n, p) => {
+        if (n.panel.state.pluginId !== p.panel.state.pluginId) {
+          this._initDataPane(n.panel.state.pluginId);
+        }
+      })
+    );
+
+    this._initDataPane(panel.state.pluginId);
+
+    return () => {
+      if (!this._discardChanges) {
+        this.commitChanges();
+      }
+    };
+  }
+
+  private _initDataPane(pluginId: string) {
+    const skipDataQuery = config.panels[pluginId].skipDataQuery;
+
+    if (!skipDataQuery && !this.state.dataPane) {
+      this.setState({ dataPane: new PanelDataPane(this.state.vizManager) });
+    } else if (this.state.dataPane) {
+      locationService.partial({ tab: null }, true);
+      this.setState({ dataPane: undefined });
+    }
+  }
+
   public getUrlKey() {
     return this.state.panelId.toString();
   }
@@ -76,10 +94,20 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       dashboard.onEnterEditMode();
     }
 
-    const panelMngr = this.state.panelRef.resolve();
-
     if (sourcePanel!.parent instanceof SceneGridItem) {
-      sourcePanel!.parent.setState({ body: panelMngr.state.panel.clone() });
+      sourcePanel!.parent.setState({ body: this.state.vizManager.state.panel.clone() });
+    }
+  }
+
+  public toggleOptionsPane(withOpenVizPicker?: boolean) {
+    if (this.state.optionsPane) {
+      this.setState({ optionsPane: undefined });
+    } else {
+      this.setState({
+        optionsPane: new PanelOptionsPane({
+          isVizPickerOpen: withOpenVizPicker,
+        }),
+      });
     }
   }
 }
@@ -90,78 +118,7 @@ export function buildPanelEditScene(panel: VizPanel): PanelEditor {
 
   return new PanelEditor({
     panelId: getPanelIdForVizPanel(panel),
-    panelRef: vizPanelMgr.getRef(),
-    body: new SplitLayout({
-      direction: 'row',
-      initialSize: 0.75,
-      primary: new SplitLayout({
-        direction: 'column',
-        $behaviors: [conditionalDataPaneBehavior],
-        primary: new SceneFlexLayout({
-          direction: 'column',
-          minHeight: 200,
-          children: [vizPanelMgr],
-        }),
-        primaryPaneStyles: {
-          minHeight: 0,
-          overflow: 'hidden',
-        },
-        secondaryPaneStyles: {
-          minHeight: 0,
-        },
-      }),
-      secondary: new SceneFlexItem({
-        body: new PanelOptionsPane(vizPanelMgr),
-        width: '100%',
-      }),
-      primaryPaneStyles: {
-        minWidth: '0',
-      },
-      secondaryPaneStyles: {
-        minWidth: '0',
-      },
-    }),
+    optionsPane: new PanelOptionsPane({}),
+    vizManager: vizPanelMgr,
   });
-}
-
-// This function is used to conditionally add the data pane to the panel editor,
-// depending on the type of a panel being edited.
-function conditionalDataPaneBehavior(scene: SplitLayout) {
-  const dashboard = getDashboardSceneFor(scene);
-
-  const editor = dashboard.state.editPanel;
-
-  if (!editor) {
-    return;
-  }
-
-  const panelManager = editor.state.panelRef.resolve();
-  const panel = panelManager.state.panel;
-
-  const getDataPane = () =>
-    new SceneFlexItem({
-      body: new PanelDataPane(panelManager),
-    });
-
-  if (!config.panels[panel.state.pluginId].skipDataQuery) {
-    scene.setState({
-      secondary: getDataPane(),
-    });
-  }
-
-  const sub = panelManager.subscribeToState((n, p) => {
-    const hadDataSupport = !config.panels[p.panel.state.pluginId].skipDataQuery;
-    const willHaveDataSupport = !config.panels[n.panel.state.pluginId].skipDataQuery;
-
-    if (hadDataSupport && !willHaveDataSupport) {
-      locationService.partial({ tab: null }, true);
-      scene.setState({ secondary: undefined });
-    } else if (!hadDataSupport && willHaveDataSupport) {
-      scene.setState({ secondary: getDataPane() });
-    }
-  });
-
-  return () => {
-    sub.unsubscribe();
-  };
 }
