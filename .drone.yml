@@ -551,6 +551,7 @@ steps:
   - yarn-install
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
+    NX_SKIP_NX_CACHE: "true"
   image: node:20.9.0-alpine
   name: build-frontend-packages
 - failure: ignore
@@ -1838,6 +1839,7 @@ steps:
   - update-package-json-version
   environment:
     NODE_OPTIONS: --max_old_space_size=8192
+    NX_SKIP_NX_CACHE: "true"
   image: node:20.9.0-alpine
   name: build-frontend-packages
 - commands:
@@ -4800,6 +4802,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: c5243aaa05fbb21c64d03465f079ad710c9dcddb81db19b89ebb61cc9b60bc72
+hmac: bb5d8277d4c3ad6fd593dfd6d95e6740af7c29c2c0d5e2cff475b8aa361c704c
 
 ...
