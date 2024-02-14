@@ -143,6 +143,15 @@ export function prepXYSeries(panelOpts: PanelOpts, frames: DataFrame[]) {
     series.forEach((s, i) => {
       s.color.fixed.value = getColorByName(palette[i % palette.length]);
     });
+
+    // strip common prefix from names
+    let parts = series[0].name.split(' ');
+
+    if (parts.length > 1 && series.every(s => s.name.startsWith(parts[0]))) {
+      series.forEach((s, i) => {
+        s.name = s.name.slice(parts[0].length);
+      });
+    }
   }
 
   // TODO: regenerate display names?
