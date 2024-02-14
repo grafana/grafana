@@ -3,6 +3,7 @@ package schedule
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -23,11 +24,13 @@ type FetcherCfg struct {
 
 // BackgroundFetcher periodically refreshes rules and folders in the background.
 type BackgroundFetcher struct {
-	cfg                FetcherCfg
-	ticker             *time.Ticker
-	ruleStore          RulesStore
-	metrics            *metrics.Scheduler
-	logger             log.Logger
+	cfg       FetcherCfg
+	ticker    *time.Ticker
+	ruleStore RulesStore
+	metrics   *metrics.Scheduler
+	logger    log.Logger
+
+	mu                 sync.Mutex
 	latestRules        []*models.AlertRule
 	latestFolderTitles map[models.FolderKey]string
 }
@@ -42,6 +45,12 @@ func NewBackgroundFetcher(cfg FetcherCfg, ruleStore RulesStore, metrics *metrics
 		latestRules:        make([]*models.AlertRule, 0),
 		latestFolderTitles: make(map[models.FolderKey]string),
 	}
+}
+
+// Refresh forces a synchronous refresh and blocks until the refresh is done.
+// This is thread-safe with the periodic background refresh.
+func (f *BackgroundFetcher) Refresh(ctx context.Context) {
+	f.updateSchedulableAlertRules(context.Background())
 }
 
 func (f *BackgroundFetcher) Run(ctx context.Context) error {
@@ -71,7 +80,8 @@ func (f *BackgroundFetcher) updateSchedulableAlertRules(ctx context.Context) {
 		)
 	}()
 
-	// At this point, we know we need to re-fetch rules as there are changes.
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	q := models.GetAlertRulesForSchedulingQuery{
 		PopulateFolders: !f.cfg.DisableGrafanaFolder,
 	}
