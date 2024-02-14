@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 
 // Maps the ID of the nav item to a translated phrase to later pass to <Trans />
@@ -140,9 +139,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'plugin-page-grafana-slo-app':
       return t('nav.slo.title', 'SLO');
     case 'plugin-page-k6-app':
-      return config.featureToggles.dockedMegaMenu
-        ? t('nav.k6.title', 'Performance')
-        : t('nav.performance-testing.title', 'Performance testing');
+      return t('nav.k6.title', 'Performance');
     case 'monitoring':
       return t('nav.observability.title', 'Observability');
     case 'plugin-page-grafana-k8s-app':

@@ -45,7 +45,10 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
     url: `${folder.url}/library-panels`,
   });
 
-  if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) && config.unifiedAlertingEnabled) {
+  if (
+    contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
+    (config.unifiedAlertingEnabled || config.featureToggles.alertingPreviewUpgrade)
+  ) {
     model.children!.push({
       active: false,
       icon: 'bell',

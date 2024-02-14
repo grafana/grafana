@@ -349,7 +349,7 @@ export type DashboardLinkType = ('link' | 'dashboards');
  * `custom`: Define the variable options manually using a comma-separated list.
  * `system`: Variables defined by Grafana. See: https://grafana.com/docs/grafana/latest/dashboards/variables/add-template-variables/#global-variables
  */
-export type VariableType = ('query' | 'adhoc' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system');
+export type VariableType = ('query' | 'adhoc' | 'groupby' | 'constant' | 'datasource' | 'interval' | 'textbox' | 'custom' | 'system');
 
 /**
  * Color mode for a field. You can specify a single color, or select a continuous (gradient) color schemes, based on a value.
@@ -1088,6 +1088,10 @@ export interface Dashboard {
      * external url, if snapshot was shared in external grafana instance
      */
     externalUrl: string;
+    /**
+     * original url, url of the dashboard that was snapshotted
+     */
+    originalUrl: string;
     /**
      * Unique identifier of the snapshot
      */

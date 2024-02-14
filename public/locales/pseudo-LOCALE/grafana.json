@@ -108,6 +108,9 @@
       "dark-theme": "Đäřĸ",
       "light-theme": "Ŀįģĥŧ"
     },
+    "empty-state": {
+      "title": "Ńő řęşūľŧş ƒőūŉđ"
+    },
     "search-box": {
       "placeholder": "Ŝęäřčĥ őř ĵūmp ŧő..."
     },
@@ -670,6 +673,22 @@
       "invalid-user-or-password": "Ĩŉväľįđ ūşęřŉämę őř päşşŵőřđ",
       "title": "Ŀőģįŉ ƒäįľęđ",
       "unknown": "Ůŉĸŉőŵŉ ęřřőř őččūřřęđ"
+    },
+    "forgot-password": "Főřģőŧ yőūř päşşŵőřđ?",
+    "form": {
+      "password-label": "Päşşŵőřđ",
+      "password-required": "Päşşŵőřđ įş řęqūįřęđ",
+      "submit-label": "Ŀőģ įŉ",
+      "submit-loading-label": "Ŀőģģįŉģ įŉ...",
+      "username-label": "Ēmäįľ őř ūşęřŉämę",
+      "username-required": "Ēmäįľ őř ūşęřŉämę įş řęqūįřęđ"
+    },
+    "services": {
+      "sing-in-with-prefix": "Ŝįģŉ įŉ ŵįŧĥ {{serviceName}}"
+    },
+    "signup": {
+      "button-label": "Ŝįģŉ ūp",
+      "new-to-question": "Ńęŵ ŧő Ğřäƒäŉä?"
     }
   },
   "nav": {
@@ -879,9 +898,6 @@
     "org-settings": {
       "subtitle": "Mäŉäģę přęƒęřęŉčęş äčřőşş äŉ őřģäŉįžäŧįőŉ",
       "title": "Đęƒäūľŧ přęƒęřęŉčęş"
-    },
-    "performance-testing": {
-      "title": "Pęřƒőřmäŉčę ŧęşŧįŉģ"
     },
     "playlists": {
       "subtitle": "Ğřőūpş őƒ đäşĥþőäřđş ŧĥäŧ äřę đįşpľäyęđ įŉ ä şęqūęŉčę",
