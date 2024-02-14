@@ -10,9 +10,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
+// RulesStore is a store that provides alert rules for scheduling
+type RulesStore interface {
+	GetAlertRulesKeysForScheduling(ctx context.Context) ([]models.AlertRuleKeyWithVersion, error)
+	GetAlertRulesForScheduling(ctx context.Context, query *models.GetAlertRulesForSchedulingQuery) error
+}
+
 type FetcherCfg struct {
-	reloadInterval       time.Duration
-	disableGrafanaFolder bool
+	ReloadInterval       time.Duration
+	DisableGrafanaFolder bool
 }
 
 // BackgroundFetcher periodically refreshes rules and folders in the background.
@@ -29,7 +35,7 @@ type BackgroundFetcher struct {
 func NewBackgroundFetcher(cfg FetcherCfg, ruleStore RulesStore, metrics *metrics.Scheduler, logger log.Logger) *BackgroundFetcher {
 	return &BackgroundFetcher{
 		cfg:                cfg,
-		ticker:             time.NewTicker(cfg.reloadInterval),
+		ticker:             time.NewTicker(cfg.ReloadInterval),
 		ruleStore:          ruleStore,
 		metrics:            metrics,
 		logger:             logger,
@@ -65,7 +71,7 @@ func (f *BackgroundFetcher) updateSchedulableAlertRules(ctx context.Context) {
 
 	// At this point, we know we need to re-fetch rules as there are changes.
 	q := models.GetAlertRulesForSchedulingQuery{
-		PopulateFolders: !f.cfg.disableGrafanaFolder,
+		PopulateFolders: !f.cfg.DisableGrafanaFolder,
 	}
 	if err := f.ruleStore.GetAlertRulesForScheduling(ctx, &q); err != nil {
 		f.logger.Error("Failed to fetch alert rules", "error", err)

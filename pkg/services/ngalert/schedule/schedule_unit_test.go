@@ -70,6 +70,10 @@ func TestProcessTicks(t *testing.T) {
 	cacheServ := &datasources.FakeCacheService{}
 	evaluator := eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheServ, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, &featuremgmt.FeatureManager{}, nil, tracing.InitializeTracerForTest()), &pluginstore.FakePluginStore{})
 
+	fetcherCfg := FetcherCfg{
+		ReloadInterval: cfg.BaseInterval,
+	}
+	fetcher := NewBackgroundFetcher(fetcherCfg, ruleStore, testMetrics.GetSchedulerMetrics(), log.NewNopLogger())
 	schedCfg := SchedulerCfg{
 		BaseInterval:     cfg.BaseInterval,
 		C:                mockedClock,
@@ -93,7 +97,7 @@ func TestProcessTicks(t *testing.T) {
 	}
 	st := state.NewManager(managerCfg, state.NewNoopPersister())
 
-	sched := NewScheduler(schedCfg, st)
+	sched := NewScheduler(schedCfg, st, fetcher)
 
 	evalAppliedCh := make(chan evalAppliedInfo, 1)
 	stopAppliedCh := make(chan models.AlertRuleKey, 1)
@@ -886,6 +890,10 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		MaxAttempts:  1,
 	}
 
+	fetcherCfg := FetcherCfg{
+		ReloadInterval: cfg.BaseInterval,
+	}
+	fetcher := NewBackgroundFetcher(fetcherCfg, rs, m.GetSchedulerMetrics(), log.NewNopLogger())
 	schedCfg := SchedulerCfg{
 		BaseInterval:     cfg.BaseInterval,
 		MaxAttempts:      cfg.MaxAttempts,
@@ -912,7 +920,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	syncStatePersister := state.NewSyncStatePersisiter(log.New("ngalert.state.manager.perist"), managerCfg)
 	st := state.NewManager(managerCfg, syncStatePersister)
 
-	return NewScheduler(schedCfg, st)
+	return NewScheduler(schedCfg, st, fetcher)
 }
 
 func withQueryForState(t *testing.T, evalResult eval.State) models.AlertRuleMutator {
