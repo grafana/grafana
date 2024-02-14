@@ -74,6 +74,7 @@ func (l *loggerImpl) Middleware() web.Middleware {
 			duration := time.Since(start)
 			timeTaken := duration / time.Millisecond
 			ctx := contexthandler.FromContext(r.Context())
+
 			if ctx != nil && ctx.PerfmonTimer != nil {
 				ctx.PerfmonTimer.Observe(float64(timeTaken))
 			}

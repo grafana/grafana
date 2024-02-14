@@ -11,7 +11,6 @@ import {
   VizPanel,
   SceneDataTransformer,
   SceneVariableSet,
-  AdHocFilterSet,
   LocalValueVariable,
   SceneRefreshPicker,
 } from '@grafana/scenes';
@@ -101,21 +100,14 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
         refreshIntervals = control.state.intervals;
       }
     }
-
-    const variableControls = state.controls[0].state.variableControls;
-    for (const control of variableControls) {
-      if (control instanceof AdHocFilterSet) {
-        variables.push({
-          name: control.state.name!,
-          type: 'adhoc',
-          datasource: control.state.datasource,
-        });
-      }
-    }
   }
 
-  if (state.$behaviors && state.$behaviors[0] instanceof behaviors.CursorSync) {
-    graphTooltip = state.$behaviors[0].state.sync;
+  if (state.$behaviors) {
+    for (const behavior of state.$behaviors!) {
+      if (behavior instanceof behaviors.CursorSync) {
+        graphTooltip = behavior.state.sync;
+      }
+    }
   }
 
   const timePickerWithoutDefaults = removeDefaults<TimePickerConfig>(
