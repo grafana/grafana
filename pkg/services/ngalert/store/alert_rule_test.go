@@ -754,7 +754,7 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 
 	uids := &sync.Map{}
 	titles := &sync.Map{}
-	receiverName := `receiver%"-'test`
+	receiverName := `receiver%"-👍'test`
 	rulesWithNotifications := models.GenerateAlertRules(5, models.AlertRuleGen(
 		models.WithOrgID(1),
 		models.WithUniqueUID(uids),
