@@ -182,4 +182,5 @@ export interface FeatureToggles {
   newPDFRendering?: boolean;
   kubernetesAggregator?: boolean;
   groupByVariable?: boolean;
+  alertingFetchRulesAsync?: boolean;
 }

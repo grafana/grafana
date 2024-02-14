@@ -1221,6 +1221,17 @@ var (
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
+		{
+			Name:              "alertingFetchRulesAsync",
+			Description:       "Eventually consistent loading of alert rules from the database",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaAlertingSquad,
+			AllowSelfServe:    false,
+			HideFromDocs:      false,
+			HideFromAdminPage: false,
+			RequiresRestart:   true,
+			FrontendOnly:      false,
+		},
 	}
 )
 

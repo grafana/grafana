@@ -2109,6 +2109,22 @@
         "codeowner": "@grafana/plugins-platform-backend",
         "requiresRestart": true
       }
+    },
+    {
+      "metadata": {
+        "name": "alertingFetchRulesAsync",
+        "resourceVersion": "1707946216855",
+        "creationTimestamp": "2024-02-14T21:30:01Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-14 21:30:16.855050454 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Eventually consistent loading of alert rules from the database",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true
+      }
     }
   ]
 }
