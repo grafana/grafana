@@ -10,6 +10,7 @@ import {
   ExternalAlertmanagerDataSourceWithStatus,
   useExternalDataSourceAlertmanagers,
 } from '../../hooks/useExternalAmSelector';
+import { updateAlertManagerConfigAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME, isAlertmanagerDataSourceInterestedInAlerts } from '../../utils/datasource';
 
 const USING_INTERNAL_ALERTMANAGER_SETTINGS = [AlertmanagerChoice.Internal, AlertmanagerChoice.All];
@@ -21,8 +22,8 @@ interface Context {
   isUpdating: boolean;
   enableAlertmanager: (uid: string) => void;
   disableAlertmanager: (uid: string) => void;
-  updateAlertmanagerSettings: (uid: string) => void;
-  resetAlertmanagerSettings: (uid: string) => void;
+  updateAlertmanagerSettings: (name: string, oldConfig: string, newConfig: string) => void;
+  resetAlertmanagerSettings: (name: string) => void;
 }
 
 const SettingsContext = React.createContext<Context | undefined>(undefined);
@@ -91,7 +92,16 @@ export const SettingsProvider = (props: PropsWithChildren) => {
     isUpdating: updateDeliverySettingsState.isLoading || updateAlertmanagerDataSourceState.isLoading,
 
     // CRUD for Alertmanager settings
-    updateAlertmanagerSettings: () => {},
+    updateAlertmanagerSettings: (alertManagerName: string, oldConfig: string, newConfig: string): void => {
+      dispatch(
+        updateAlertManagerConfigAction({
+          newConfig: JSON.parse(newConfig),
+          oldConfig: JSON.parse(oldConfig),
+          alertManagerSourceName: alertManagerName,
+          successMessage: 'Alertmanager configuration updated.',
+        })
+      );
+    },
     resetAlertmanagerSettings: () => {},
   };
 

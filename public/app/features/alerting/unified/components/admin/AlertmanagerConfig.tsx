@@ -1,18 +1,15 @@
 import { css } from '@emotion/css';
-import React, { useState, useMemo } from 'react';
+import React, { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
-import { useDispatch } from 'app/types';
+import { Alert, Button, CodeEditor, Stack, useStyles2 } from '@grafana/ui';
 
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
-import { deleteAlertManagerConfigAction, updateAlertManagerConfigAction } from '../../state/actions';
-import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
-
-import AlertmanagerConfigSelector, { ValidAmConfigOption } from './AlertmanagerConfigSelector';
-import { ConfigEditor } from './ConfigEditor';
+import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
+import { Spacer } from '../Spacer';
 
 export interface FormValues {
   configJSON: string;
@@ -21,21 +18,16 @@ export interface FormValues {
 interface Props {
   alertmanagerName: string;
   onDismiss: () => void;
+  onSave: (dataSourceName: string, oldConfig: string, newConfig: string) => void;
+  onReset: (dataSourceName: string) => void;
 }
 
-export default function AlertmanagerConfig({ alertmanagerName, onDismiss }: Props): JSX.Element {
-  const dispatch = useDispatch();
-
-  const [showConfirmDeleteAMConfig, setShowConfirmDeleteAMConfig] = useState(false);
-  const { loading: isDeleting } = useUnifiedAlertingSelector((state) => state.deleteAMConfig);
-  const { loading: isSaving } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
+export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave, onReset }: Props): JSX.Element {
+  const { loading: isDeleting, error: deletingError } = useUnifiedAlertingSelector((state) => state.deleteAMConfig);
+  const { loading: isSaving, error: savingError } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
 
   const readOnly = alertmanagerName ? isVanillaPrometheusAlertManagerDataSource(alertmanagerName) : false;
   const styles = useStyles2(getStyles);
-
-  const handleDismiss = () => onDismiss();
-
-  const [selectedAmConfig, setSelectedAmConfig] = useState<ValidAmConfigOption | undefined>();
 
   const {
     currentData: config,
@@ -43,69 +35,76 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss }: Prop
     isLoading: isLoadingConfig,
   } = useAlertmanagerConfig(alertmanagerName);
 
-  const resetConfig = () => {
-    if (alertmanagerName) {
-      dispatch(deleteAlertManagerConfigAction(alertmanagerName));
-    }
-    setShowConfirmDeleteAMConfig(false);
+  const defaultValues = {
+    configJSON: config ? JSON.stringify(config, null, 2) : '',
   };
 
-  const defaultValues = useMemo(
-    (): FormValues => ({
-      configJSON: config ? JSON.stringify(config, null, 2) : '',
-    }),
-    [config]
-  );
+  const {
+    register,
+    setValue,
+    setError,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormValues>({
+    defaultValues,
+  });
 
-  const defaultValidValues = useMemo(
-    (): FormValues => ({
-      configJSON: selectedAmConfig ? JSON.stringify(selectedAmConfig.value, null, 2) : '',
-    }),
-    [selectedAmConfig]
-  );
-
-  const loading = isDeleting || isLoadingConfig || isSaving;
-
-  const onSubmit = (values: FormValues) => {
-    if (alertmanagerName && config) {
-      dispatch(
-        updateAlertManagerConfigAction({
-          newConfig: JSON.parse(values.configJSON),
-          oldConfig: config,
-          alertManagerSourceName: alertmanagerName,
-          successMessage: 'Alertmanager configuration updated.',
-        })
-      );
+  useEffect(() => {
+    if (savingError) {
+      setError('configJSON', { type: 'deps', message: savingError.message });
     }
-  };
+  }, [savingError, setError]);
+
+  useEffect(() => {
+    if (deletingError) {
+      setError('configJSON', { type: 'deps', message: deletingError.message });
+    }
+  }, [deletingError, setError]);
+
+  // manually register the config field with validation
+  register('configJSON', {
+    required: { value: true, message: 'Required' },
+    validate: (value: string) => {
+      try {
+        JSON.parse(value);
+        return true;
+      } catch (e) {
+        return e instanceof Error ? e.message : 'JSON is invalid';
+      }
+    },
+  });
+
+  const handleSave = handleSubmit(
+    (values: FormValues) => {
+      onSave(alertmanagerName, defaultValues.configJSON, values.configJSON);
+    },
+    (errors) => {
+      console.error(errors);
+    }
+  );
+
+  const isOperating = isLoadingConfig || isDeleting || isSaving;
+
+  /* loading error, if this fails don't bother rendering the form */
+  if (loadingError) {
+    return (
+      <Alert severity="error" title="Failed to load Alertmanager configuration">
+        {loadingError.message ?? 'An unkown error occurred.'}
+      </Alert>
+    );
+  }
 
   return (
     <div className={styles.container}>
-      {/* error state */}
-      {loadingError && !loading && (
-        <>
-          <Alert
-            severity="error"
-            title="Your Alertmanager configuration is incorrect. These are the details of the error:"
-          >
-            {loadingError.message || 'Unknown error.'}
-          </Alert>
-
-          {alertmanagerName === GRAFANA_RULES_SOURCE_NAME && (
-            <AlertmanagerConfigSelector
-              onChange={setSelectedAmConfig}
-              selectedAmConfig={selectedAmConfig}
-              defaultValues={defaultValidValues}
-              readOnly={true}
-              loading={loading}
-              onSubmit={onSubmit}
-            />
-          )}
-        </>
+      {/* form error state */}
+      {errors.configJSON && (
+        <Alert severity="error" title="Oops, something went wrong">
+          {errors.configJSON.message || 'An unknown error occurred.'}
+        </Alert>
       )}
 
       {/* resetting state */}
-      {isDeleting && alertmanagerName !== GRAFANA_RULES_SOURCE_NAME && (
+      {isDeleting && (
         <Alert severity="info" title="Resetting Alertmanager configuration">
           It might take a while...
         </Alert>
@@ -114,31 +113,35 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss }: Prop
       <div className={styles.content}>
         <AutoSizer>
           {({ height, width }) => (
-            <ConfigEditor
-              defaultValues={defaultValues}
-              onSubmit={(values) => onSubmit(values)}
-              readOnly={readOnly}
-              loading={loading}
-              height={height}
-              width={width}
-              alertManagerSourceName={alertmanagerName}
-              showConfirmDeleteAMConfig={showConfirmDeleteAMConfig}
-              onReset={() => setShowConfirmDeleteAMConfig(true)}
-              onConfirmReset={resetConfig}
-              onDismiss={() => setShowConfirmDeleteAMConfig(false)}
-            />
+            <>
+              <CodeEditor
+                language="json"
+                width={width}
+                height={height}
+                showLineNumbers={true}
+                monacoOptions={{
+                  scrollBeyondLastLine: false,
+                }}
+                value={defaultValues.configJSON}
+                showMiniMap={false}
+                onSave={(value) => setValue('configJSON', value)}
+                onBlur={(value) => setValue('configJSON', value)}
+                readOnly={isOperating}
+              />
+            </>
           )}
         </AutoSizer>
       </div>
       {!readOnly && (
         <Stack justifyContent="flex-end">
-          <Button variant="destructive" onClick={() => undefined}>
+          <Button variant="destructive" onClick={() => undefined} disabled={isOperating}>
             Reset
           </Button>
-          <Button variant="secondary" onClick={handleDismiss}>
+          <Spacer />
+          <Button variant="secondary" onClick={() => onDismiss()} disabled={isOperating}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={() => undefined}>
+          <Button variant="primary" onClick={handleSave} disabled={isOperating}>
             Save
           </Button>
         </Stack>

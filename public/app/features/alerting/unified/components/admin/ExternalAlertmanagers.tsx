@@ -16,7 +16,7 @@ import { ProvisioningBadge } from '../Provisioning';
 import { useSettings } from './SettingsContext';
 
 interface Props {
-  onEditConfiguration: (dataSourceUid: string) => void;
+  onEditConfiguration: (dataSourceName: string) => void;
 }
 
 export const ExternalAlertmanagers = ({ onEditConfiguration }: Props) => {
