@@ -658,4 +658,8 @@ const (
 	// FlagKubernetesAggregator
 	// Enable grafana aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
+
+	// FlagGroupByVariable
+	// Enable groupBy variable support in scenes dashboards
+	FlagGroupByVariable = "groupByVariable"
 )
