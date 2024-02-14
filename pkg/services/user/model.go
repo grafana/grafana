@@ -280,9 +280,3 @@ type AdminCreateUserResponse struct {
 	ID      int64  `json:"id"`
 	Message string `json:"message"`
 }
-
-type Password string
-
-func (p Password) IsWeak() bool {
-	return len(p) <= 4
-}

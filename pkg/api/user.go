@@ -498,8 +498,7 @@ func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Re
 		return response.Error(http.StatusUnauthorized, "Invalid old password", nil)
 	}
 
-	userPassword := user.Password(cmd.NewPassword)
-	if err := user.ValidatePassword(userPassword, hs.Cfg); err != nil {
+	if err := user.ValidatePassword(cmd.NewPassword, hs.Cfg); err != nil {
 		c.Logger.Warn("the new password doesn't meet the password policy criteria", "err", err)
 		return response.Err(err)
 	}

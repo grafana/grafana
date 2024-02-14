@@ -36,8 +36,7 @@ func resetPasswordCommand(c utils.CommandLine, runner server.Runner) error {
 		newPassword = c.Args().First()
 	}
 
-	userPassword := user.Password(newPassword)
-	if err := user.ValidatePassword(userPassword, runner.Cfg); err != nil {
+	if err := user.ValidatePassword(newPassword, runner.Cfg); err != nil {
 		return fmt.Errorf("new password is too short")
 	}
 

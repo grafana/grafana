@@ -8,14 +8,14 @@ import (
 )
 
 func TestPasswowrdService_ValidatePasswordHardcodePolicy(t *testing.T) {
-	LOWERCASE := Password("lowercase")
-	UPPERCASE := Password("UPPERCASE")
-	NUMBER := Password("123")
-	SYMBOLS := Password("!@#$%")
+	LOWERCASE := "lowercase"
+	UPPERCASE := "UPPERCASE"
+	NUMBER := "123"
+	SYMBOLS := "!@#$%"
 	testCases := []struct {
 		expectedError               error
 		name                        string
-		passwordTest                Password
+		passwordTest                string
 		strongPasswordPolicyEnabled bool
 	}{
 		{

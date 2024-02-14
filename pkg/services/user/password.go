@@ -16,9 +16,9 @@ var (
 /*
 Static function for password validation
 */
-func ValidatePassword(newPassword Password, config *setting.Cfg) error {
+func ValidatePassword(newPassword string, config *setting.Cfg) error {
 	if !config.BasicAuthStrongPasswordPolicy {
-		if newPassword.IsWeak() {
+		if len(newPassword) <= 4 {
 			return ErrPasswordTooShort
 		}
 		return nil

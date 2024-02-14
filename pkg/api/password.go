@@ -97,8 +97,7 @@ func (hs *HTTPServer) ResetPassword(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusBadRequest, "Passwords do not match", nil)
 	}
 
-	userPassword := user.Password(form.NewPassword)
-	if err := user.ValidatePassword(userPassword, hs.Cfg); err != nil {
+	if err := user.ValidatePassword(form.NewPassword, hs.Cfg); err != nil {
 		c.Logger.Warn("the new password doesn't meet the password policy criteria", "err", err)
 		return response.Err(err)
 	}
