@@ -251,13 +251,24 @@ function vizPanelDataToPanel(
 ): Pick<Panel, 'datasource' | 'targets' | 'maxDataPoints' | 'transformations'> {
   const dataProvider = vizPanel.state.$data;
 
-  const panel: Pick<Panel, 'datasource' | 'targets' | 'maxDataPoints' | 'transformations'> = {};
+  const panel: Pick<
+    Panel,
+    'datasource' | 'targets' | 'maxDataPoints' | 'transformations' | 'cacheTimeout' | 'queryCachingTTL'
+  > = {};
   const queryRunner = getQueryRunnerFor(vizPanel);
 
   if (queryRunner) {
     panel.targets = queryRunner.state.queries;
     panel.maxDataPoints = queryRunner.state.maxDataPoints;
     panel.datasource = queryRunner.state.datasource;
+
+    if (queryRunner.state.cacheTimeout) {
+      panel.cacheTimeout = queryRunner.state.cacheTimeout;
+    }
+
+    if (queryRunner.state.queryCachingTTL) {
+      panel.queryCachingTTL = queryRunner.state.queryCachingTTL;
+    }
   }
 
   if (dataProvider instanceof SceneDataTransformer) {

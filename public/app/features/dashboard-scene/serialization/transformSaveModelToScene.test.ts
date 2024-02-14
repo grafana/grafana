@@ -443,6 +443,22 @@ describe('transformSaveModelToScene', () => {
       expect(repeater.state.repeatDirection).toBe('v');
       expect(repeater.state.maxPerRow).toBe(8);
     });
+
+    it('should apply query caching options to SceneQueryRunner', () => {
+      const panel = {
+        title: '',
+        type: 'test-plugin',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        transparent: true,
+        cacheTimeout: '10',
+        queryCachingTTL: 200000,
+      };
+
+      const { vizPanel } = buildGridItemForTest(panel);
+      const runner = getQueryRunnerFor(vizPanel)!;
+      expect(runner.state.cacheTimeout).toBe('10');
+      expect(runner.state.queryCachingTTL).toBe(200000);
+    });
   });
 
   describe('when creating variables objects', () => {

@@ -591,6 +591,12 @@ lineage: schemas: [{
 			// Dynamically load the panel
 			libraryPanel?: #LibraryPanelRef
 
+			// Sets panel queries cache timeout. 
+			cacheTimeout?: string
+
+			// Overrides the data source configured time-to-live for a query cache item in milliseconds
+			queryCachingTTL?: number
+
 			// It depends on the panel plugin. They are specified by the Options field in panel plugin schemas.
 			options?: {...} @grafanamaturity(NeedsExpertReview)
 

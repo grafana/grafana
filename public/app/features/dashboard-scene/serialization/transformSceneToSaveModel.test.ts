@@ -564,6 +564,37 @@ describe('transformSceneToSaveModel', () => {
         uid: SHARED_DASHBOARD_QUERY,
       });
     });
+
+    it('Given panel with query caching options', () => {
+      const panel = buildGridItemFromPanelSchema({
+        datasource: {
+          type: 'grafana-testdata',
+          uid: 'abc',
+        },
+        cacheTimeout: '10',
+        queryCachingTTL: 200000,
+        maxDataPoints: 100,
+        targets: [
+          {
+            refId: 'A',
+            expr: 'A',
+            datasource: {
+              type: 'grafana-testdata',
+              uid: 'abc',
+            },
+          },
+          {
+            refId: 'B',
+            expr: 'B',
+          },
+        ],
+      });
+
+      const result = gridItemToPanel(panel);
+
+      expect(result.cacheTimeout).toBe('10');
+      expect(result.queryCachingTTL).toBe(200000);
+    });
   });
 
   describe('Snapshots', () => {

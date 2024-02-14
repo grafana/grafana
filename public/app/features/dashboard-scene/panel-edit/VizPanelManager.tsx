@@ -229,6 +229,14 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       panelObj.setState({ $timeRange: new PanelTimeRange(timeRangeObjStateUpdate) });
     }
 
+    if (options.cacheTimeout !== dataObj?.state.cacheTimeout) {
+      dataObjStateUpdate.cacheTimeout = options.cacheTimeout;
+    }
+
+    if (options.queryCachingTTL !== dataObj?.state.queryCachingTTL) {
+      dataObjStateUpdate.queryCachingTTL = options.queryCachingTTL;
+    }
+
     dataObj.setState(dataObjStateUpdate);
     dataObj.runQueries();
   }
