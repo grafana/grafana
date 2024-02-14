@@ -43,8 +43,8 @@ const mockLogContextProvider = {
   getInitContextFilters: jest.fn().mockImplementation(() =>
     Promise.resolve({
       contextFilters: [
-        { value: 'value1', enabled: true, fromParser: false, label: 'label1' },
-        { value: 'value3', enabled: false, fromParser: true, label: 'label3' },
+        { value: 'value1', enabled: true, nonIndexed: false, label: 'label1' },
+        { value: 'value3', enabled: false, nonIndexed: true, label: 'label3' },
       ],
       preservedFiltersApplied: false,
     })
@@ -339,8 +339,8 @@ describe('LokiContextUi', () => {
         getInitContextFilters: jest.fn().mockImplementation(() =>
           Promise.resolve({
             contextFilters: [
-              { value: 'value1', enabled: true, fromParser: false, label: 'label1' },
-              { value: 'value3', enabled: false, fromParser: true, label: 'label3' },
+              { value: 'value1', enabled: true, nonIndexed: false, label: 'label1' },
+              { value: 'value3', enabled: false, nonIndexed: true, label: 'label3' },
             ],
             preservedFiltersApplied: true,
           })

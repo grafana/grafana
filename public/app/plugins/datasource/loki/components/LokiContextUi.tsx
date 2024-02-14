@@ -28,7 +28,6 @@ import {
   SHOULD_INCLUDE_PIPELINE_OPERATIONS,
 } from '../LogContextProvider';
 import { escapeLabelValueInSelector } from '../languageUtils';
-import { isQueryWithParser } from '../queryUtils';
 import { lokiGrammar } from '../syntax';
 import { ContextFilter, LokiQuery } from '../types';
 
@@ -133,7 +132,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
 
   const isInitialState = useMemo(() => {
     // Initial query has all regular labels enabled and all parsed labels disabled
-    if (initialized && contextFilters.some((filter) => filter.fromParser === filter.enabled)) {
+    if (initialized && contextFilters.some((filter) => filter.nonIndexed === filter.enabled)) {
       return false;
     }
 
@@ -156,7 +155,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
       return;
     }
 
-    if (contextFilters.filter(({ enabled, fromParser }) => enabled && !fromParser).length === 0) {
+    if (contextFilters.filter(({ enabled, nonIndexed }) => enabled && !nonIndexed).length === 0) {
       setContextFilters(previousContextFilters.current);
       return;
     }
@@ -176,13 +175,13 @@ export function LokiContextUi(props: LokiContextUiProps) {
         selectedExtractedLabels: [],
       };
 
-      contextFilters.forEach(({ enabled, fromParser, label }) => {
+      contextFilters.forEach(({ enabled, nonIndexed, label }) => {
         // We only want to store real labels that were removed from the initial query
-        if (!enabled && !fromParser) {
+        if (!enabled && !nonIndexed) {
           preservedLabels.removedLabels.push(label);
         }
         // Or extracted labels that were added to the initial query
-        if (enabled && fromParser) {
+        if (enabled && nonIndexed) {
           preservedLabels.selectedExtractedLabels.push(label);
         }
       });
@@ -240,10 +239,10 @@ export function LokiContextUi(props: LokiContextUiProps) {
     };
   }, [row.uid]);
 
-  const realLabels = contextFilters.filter(({ fromParser }) => !fromParser);
+  const realLabels = contextFilters.filter(({ nonIndexed }) => !nonIndexed);
   const realLabelsEnabled = realLabels.filter(({ enabled }) => enabled);
 
-  const parsedLabels = contextFilters.filter(({ fromParser }) => fromParser);
+  const parsedLabels = contextFilters.filter(({ nonIndexed }) => nonIndexed);
   const parsedLabelsEnabled = parsedLabels.filter(({ enabled }) => enabled);
 
   const contextFilterToSelectFilter = useCallback((contextFilter: ContextFilter): SelectableValue<string> => {
@@ -253,8 +252,8 @@ export function LokiContextUi(props: LokiContextUiProps) {
     };
   }, []);
 
-  // Currently we support adding of parser and showing parsed labels only if there is 1 parser
-  const showParsedLabels = origQuery && isQueryWithParser(origQuery.expr).parserCount === 1 && parsedLabels.length > 0;
+  // If there's any nonIndexed labels, that includes structured metadata and parsed labels, we show the nonIndexed labels input
+  const showNonIndexedLabels = parsedLabels.length > 0;
 
   let queryExpr = logContextProvider.prepareExpression(
     contextFilters.filter(({ enabled }) => enabled),
@@ -285,7 +284,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
                 return contextFilters.map((contextFilter) => ({
                   ...contextFilter,
                   // For revert to initial query we need to enable all labels and disable all parsed labels
-                  enabled: !contextFilter.fromParser,
+                  enabled: !contextFilter.nonIndexed,
                 }));
               });
               // We are removing the preserved labels from local storage so we can preselect the labels in the UI
@@ -358,7 +357,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
               }
               return setContextFilters(
                 contextFilters.map((filter) => {
-                  if (filter.fromParser) {
+                  if (filter.nonIndexed) {
                     return filter;
                   }
                   filter.enabled = keys.some((key) => key.value === filter.label);
@@ -367,7 +366,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
               );
             }}
           />
-          {showParsedLabels && (
+          {showNonIndexedLabels && (
             <>
               <Label
                 className={styles.label}
@@ -400,7 +399,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
                   }
                   setContextFilters(
                     contextFilters.map((filter) => {
-                      if (!filter.fromParser) {
+                      if (!filter.nonIndexed) {
                         return filter;
                       }
                       filter.enabled = keys.some((key) => key.value === filter.label);
