@@ -1,6 +1,7 @@
 import { Property } from 'csstype';
 import { clone } from 'lodash';
 import memoize from 'micro-memoize';
+import React from 'react';
 import { Row } from 'react-table';
 
 import {
@@ -565,4 +566,19 @@ export function calculateAroundPointThreshold(timeField: Field): number {
   }
 
   return (max - min) / timeField.values.length;
+}
+
+export function getOnTableCellClick(
+  onCellClick?: (rect: DOMRect, columnIndex: number, rowIndex: number, e?: HTMLElement) => void
+) {
+  return (e: React.MouseEvent<HTMLElement>) => {
+    if (onCellClick && e.target instanceof Element) {
+      const columnIndex = Number(e.target.getAttribute('data-column-index'));
+      const rowIndex = Number(e.target.parentElement?.getAttribute('data-row-index'));
+
+      if (e.target.role === 'cell') {
+        onCellClick(e.currentTarget.getBoundingClientRect(), columnIndex, rowIndex, e.currentTarget);
+      }
+    }
+  };
 }

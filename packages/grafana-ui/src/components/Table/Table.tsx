@@ -25,7 +25,14 @@ import { useFixScrollbarContainer, useResetVariableListSizeCache } from './hooks
 import { getInitialState, useTableStateReducer } from './reducer';
 import { useTableStyles } from './styles';
 import { FooterItem, GrafanaTableState, Props } from './types';
-import { getColumns, sortCaseInsensitive, sortNumber, getFooterItems, createFooterCalculationValues } from './utils';
+import {
+  getColumns,
+  sortCaseInsensitive,
+  sortNumber,
+  getFooterItems,
+  createFooterCalculationValues,
+  getOnTableCellClick,
+} from './utils';
 
 const COLUMN_MIN_WIDTH = 150;
 const FOOTER_ROW_HEIGHT = 36;
@@ -289,17 +296,7 @@ export const Table = memo((props: Props) => {
     <div
       {...getTableProps()}
       className={tableStyles.table}
-      onClick={(e: React.MouseEvent<HTMLElement>) => {
-        if (props?.onCellClick) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const target = e.target as HTMLElement;
-          const columnIndex = Number(target.getAttribute('data-column-index'));
-          const rowIndex = Number(target.parentElement?.getAttribute('data-row-index'));
-
-          // Only if role=cell?
-          props.onCellClick(e.currentTarget.getBoundingClientRect(), columnIndex, rowIndex, e.currentTarget);
-        }
-      }}
+      onClick={getOnTableCellClick(props.onCellClick)}
       aria-label={ariaLabel}
       role="table"
       ref={tableDivRef}
