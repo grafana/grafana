@@ -1,0 +1,23 @@
+import { Meta, Preview, ArgTypes } from '@storybook/blocks';
+import { Box, Splitter, Text } from '@grafana/ui';
+
+<Meta title="MDX|Splitter" component={Splitter} />
+
+# Splitter
+
+The splitter creates two resizable panes, either horizontally or vertically.
+
+<Preview>
+  <div style={{ display: 'flex', width: '900px', height: '700px' }}>
+    <Splitter direction="row" initialSize={0.7}>
+      <Box display="flex" grow={1} backgroundColor="secondary" padding={2}>
+        <Text color="primary">Primary</Text>
+      </Box>
+      <Box display="flex" grow={1} backgroundColor="secondary" padding={2}>
+        <Text color="primary">Secondary</Text>
+      </Box>
+    </Splitter>
+  </div>
+</Preview>
+
+<ArgTypes of={Splitter} />
