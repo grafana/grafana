@@ -966,12 +966,15 @@
     {
       "metadata": {
         "name": "logsExploreTableVisualisation",
-        "resourceVersion": "1689163200000",
-        "creationTimestamp": "2023-07-12T12:00:00Z"
+        "resourceVersion": "1707747885704",
+        "creationTimestamp": "2023-07-12T12:00:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-12 14:24:45.704022 +0000 UTC"
+        }
       },
       "spec": {
         "description": "A table visualisation for logs in Explore",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-logs",
         "frontend": true
       }
@@ -1465,12 +1468,15 @@
     {
       "metadata": {
         "name": "lokiStructuredMetadata",
-        "resourceVersion": "1700136000000",
-        "creationTimestamp": "2023-11-16T12:00:00Z"
+        "resourceVersion": "1707755676105",
+        "creationTimestamp": "2023-11-16T12:00:00Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-12 16:34:36.105725 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the loki data source to request structured metadata from the Loki server",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-logs"
       }
     },
@@ -2061,6 +2067,71 @@
         "description": "Enables rendering dashboards using scenes for solo panels",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesAggregator",
+        "resourceVersion": "1707775742552",
+        "creationTimestamp": "2024-02-12T22:09:02Z"
+      },
+      "spec": {
+        "description": "Enable grafana aggregator",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "autoMigrateStatPanel",
+        "resourceVersion": "1707922335937",
+        "creationTimestamp": "2024-02-14T14:52:15Z"
+      },
+      "spec": {
+        "description": "Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking",
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "autoMigratePiechartPanel",
+        "resourceVersion": "1707922335937",
+        "creationTimestamp": "2024-02-14T14:52:15Z"
+      },
+      "spec": {
+        "description": "Migrate old piechart panel to supported piechart panel - broken out from autoMigrateOldPanels to enable granular tracking",
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "autoMigrateTablePanel",
+        "resourceVersion": "1707922335937",
+        "creationTimestamp": "2024-02-14T14:52:15Z"
+      },
+      "spec": {
+        "description": "Migrate old table panel to supported table panel - broken out from autoMigrateOldPanels to enable granular tracking",
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "autoMigrateWorldmapPanel",
+        "resourceVersion": "1707922335937",
+        "creationTimestamp": "2024-02-14T14:52:15Z"
+      },
+      "spec": {
+        "description": "Migrate old worldmap panel to supported geomap panel - broken out from autoMigrateOldPanels to enable granular tracking",
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
         "frontend": true
       }
     }
