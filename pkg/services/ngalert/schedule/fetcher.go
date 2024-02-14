@@ -44,15 +44,17 @@ func NewBackgroundFetcher(cfg FetcherCfg, ruleStore RulesStore, metrics *metrics
 	}
 }
 
-func (f *BackgroundFetcher) Run(ctx context.Context) {
+func (f *BackgroundFetcher) Run(ctx context.Context) error {
+	f.logger.Info("Starting rules fetcher")
 	for {
 		select {
 		case <-f.ticker.C:
-			f.logger.Debug("Refreshing rules from storage.")
+			f.logger.Debug("Refreshing rules from storage")
 			f.updateSchedulableAlertRules(context.Background())
 		case <-ctx.Done():
 			f.ticker.Stop()
-			f.logger.Info("Fetcher is shut down.")
+			f.logger.Info("Fetcher is shut down")
+			return nil
 		}
 	}
 }

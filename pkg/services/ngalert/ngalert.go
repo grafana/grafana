@@ -142,6 +142,7 @@ type AlertNG struct {
 	Log                 log.Logger
 	renderService       rendering.Service
 	ImageService        image.ImageService
+	fetcher             *schedule.BackgroundFetcher
 	schedule            schedule.ScheduleService
 	stateManager        *state.Manager
 	folderService       folder.Service
@@ -325,6 +326,7 @@ func (ng *AlertNG) init() error {
 		subscribeToFolderChanges(ng.Log, ng.bus, ng.store)
 	}
 
+	ng.fetcher = fetcher
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
 
@@ -444,6 +446,9 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		//
 		ng.stateManager.Warm(ctx, ng.store)
 
+		children.Go(func() error {
+			return ng.fetcher.Run(subCtx)
+		})
 		children.Go(func() error {
 			return ng.schedule.Run(subCtx)
 		})
