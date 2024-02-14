@@ -14,6 +14,8 @@ import (
 	"reflect"
 	"strconv"
 
+	grpcCodes "google.golang.org/grpc/codes"
+	grpcStatus "google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -163,6 +165,72 @@ func (s *Storage) Delete(ctx context.Context, key string, out runtime.Object, pr
 	return nil
 }
 
+type Decoder struct {
+	client  entityStore.EntityStore_WatchClient
+	newFunc func() runtime.Object
+	opts    storage.ListOptions
+	codec   runtime.Codec
+}
+
+func (d *Decoder) Decode() (action watch.EventType, object runtime.Object, err error) {
+	for {
+		resp, err := d.client.Recv()
+		if errors.Is(err, io.EOF) {
+			log.Printf("watch is done")
+			return watch.Error, nil, err
+		}
+
+		if grpcStatus.Code(err) == grpcCodes.Canceled {
+			log.Printf("watch was canceled")
+			return watch.Error, nil, err
+		}
+
+		if err != nil {
+			log.Printf("error receiving result: %s", err)
+			return watch.Error, nil, err
+		}
+
+		obj := d.newFunc()
+
+		err = entityToResource(resp.Entity, obj, d.codec)
+		if err != nil {
+			log.Printf("error decoding entity: %s", err)
+			return watch.Error, nil, err
+		}
+
+		// apply any predicates not handled in storage
+		var matches bool
+		matches, err = d.opts.Predicate.Matches(obj)
+		if err != nil {
+			log.Printf("error matching object: %s", err)
+			return watch.Error, nil, err
+		}
+		if !matches {
+			continue
+		}
+
+		var watchAction watch.EventType
+		switch resp.Entity.Action {
+		case entityStore.Entity_CREATED:
+			watchAction = watch.Added
+		case entityStore.Entity_UPDATED:
+			watchAction = watch.Modified
+		case entityStore.Entity_DELETED:
+			watchAction = watch.Deleted
+		default:
+			watchAction = watch.Error
+		}
+
+		return watchAction, obj, nil
+	}
+}
+
+func (d *Decoder) Close() {
+	_ = d.client.CloseSend()
+}
+
+var _ watch.Decoder = (*Decoder)(nil)
+
 // Watch begins watching the specified key. Events are decoded into API objects,
 // and any items selected by 'p' are sent down to returned watch.Interface.
 // resourceVersion may be used to specify what version to begin watching,
@@ -190,71 +258,16 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 		return nil, err
 	}
 
-	w := watch.NewFake()
+	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
 
-	go func() {
-		var err error
+	decoder := &Decoder{
+		client:  result,
+		newFunc: s.newFunc,
+		opts:    opts,
+		codec:   s.codec,
+	}
 
-		defer func() {
-			if !w.IsStopped() {
-				if err != nil {
-					reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
-					w.Error(reporter.AsObject(err))
-				}
-				w.Stop()
-			}
-			_ = result.CloseSend()
-		}()
-
-		for {
-			if w.IsStopped() {
-				log.Printf("watch is stopped")
-				return
-			}
-
-			var resp *entityStore.EntityWatchResponse
-			resp, err = result.Recv()
-			if errors.Is(err, io.EOF) {
-				log.Printf("watch is done")
-				err = nil
-				return
-			}
-
-			if err != nil {
-				log.Printf("error receiving result: %s", err)
-				return
-			}
-
-			obj := s.newFunc()
-			err = entityToResource(resp.Entity, obj, s.codec)
-			if err != nil {
-				log.Printf("error decoding entity: %s", err)
-				return
-			}
-
-			// apply any predicates not handled in storage
-			var matches bool
-			matches, err = opts.Predicate.Matches(obj)
-			if err != nil {
-				log.Printf("error matching object: %s", err)
-				return
-			}
-			if !matches {
-				continue
-			}
-
-			watchAction := watch.Error
-			if resp.Entity.Action == entityStore.Entity_CREATED {
-				watchAction = watch.Added
-			} else if resp.Entity.Action == entityStore.Entity_UPDATED {
-				watchAction = watch.Modified
-			} else if resp.Entity.Action == entityStore.Entity_DELETED {
-				watchAction = watch.Deleted
-			}
-
-			w.Action(watchAction, obj)
-		}
-	}()
+	w := watch.NewStreamWatcher(decoder, reporter)
 
 	return w, nil
 }
