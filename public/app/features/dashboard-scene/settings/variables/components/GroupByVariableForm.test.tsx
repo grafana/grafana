@@ -79,9 +79,9 @@ describe('GroupByVariableForm', () => {
 
   it('should render code editor when default options provided', async () => {
     const {
-      renderer: { queryByTestId },
+      renderer: { getByTestId },
     } = setup({ defaultOptions: [{ text: 'test', value: 'test' }] });
-    const codeEditor = queryByTestId(selectors.components.CodeEditor.container);
+    const codeEditor = getByTestId(selectors.components.CodeEditor.container);
 
     await byTestId(selectors.components.CodeEditor.container).find();
 
