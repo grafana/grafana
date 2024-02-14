@@ -447,10 +447,10 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		//
 		ng.stateManager.Warm(ctx, ng.store)
 
-		// Make sure we've at least tried to load rules before the scheduler starts.
-		ng.fetcher.Refresh(ctx)
-
 		if ng.FeatureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingFetchRulesAsync) {
+			// Make sure we've at least tried to load rules before the scheduler starts.
+			ng.fetcher.Refresh(ctx)
+
 			children.Go(func() error {
 				return ng.fetcher.Run(subCtx)
 			})
