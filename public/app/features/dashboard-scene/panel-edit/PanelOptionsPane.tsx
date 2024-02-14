@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
 import { Box, ButtonGroup, FilterInput, RadioButtonGroup, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { OptionFilter, RenderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
+import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
 import { getPanelFrameCategory2 } from 'app/features/dashboard/components/PanelEditor/getPanelFrameOptions';
 import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
@@ -97,29 +97,24 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 
     if (isSearching) {
       mainBoxElements.push(
-        <RenderSearchHits
-          allOptions={[panelFrameOptions, ...(visualizationOptions ?? [])]}
-          overrides={justOverrides}
-          searchQuery={searchQuery}
-          key="render-search-hits"
-        />
+        renderSearchHits([panelFrameOptions, ...(visualizationOptions ?? [])], justOverrides, searchQuery)
       );
     } else {
       switch (listMode) {
         case OptionFilter.All:
-          mainBoxElements.push(<panelFrameOptions.Render key="panel-frame-options" />);
+          mainBoxElements.push(panelFrameOptions.render());
 
           for (const item of visualizationOptions ?? []) {
-            mainBoxElements.push(<item.Render key={item.props.id} />);
+            mainBoxElements.push(item.render());
           }
 
           for (const item of justOverrides) {
-            mainBoxElements.push(<item.Render key={item.props.id} />);
+            mainBoxElements.push(item.render());
           }
           break;
         case OptionFilter.Overrides:
           for (const item of justOverrides) {
-            mainBoxElements.push(<item.Render key={item.props.id} />);
+            mainBoxElements.push(item.render());
           }
         default:
           break;
