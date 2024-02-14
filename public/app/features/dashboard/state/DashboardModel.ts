@@ -44,7 +44,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 import { mergePanels, PanelMergeInfo } from '../utils/panelMerge';
 
 import { DashboardMigrator } from './DashboardMigrator';
-import { PanelModel, autoMigrateAngular, explicitlyControlledMigrationPanels } from './PanelModel';
+import { PanelModel } from './PanelModel';
 import { TimeModel } from './TimeModel';
 import { deleteScopeVars, isOnTheSameGridRow } from './utils';
 
@@ -182,42 +182,42 @@ export class DashboardModel implements TimeModel {
 
     // Handles both granular and all angular panel migration
     if (shouldMigrateAllAngularPanels || shouldMigrateExplicitAngularPanels) {
-      for (const p of this.panelIterator()) {
+      for (const panel of this.panelIterator()) {
         if (
-          !p.autoMigrateFrom &&
-          p.type === 'graph' &&
+          !panel.autoMigrateFrom &&
+          panel.type === 'graph' &&
           (config.featureToggles.autoMigrateGraphPanel || shouldMigrateAllAngularPanels)
         ) {
-          p.autoMigrateFrom = p.type;
-          p.type = 'timeseries';
+          panel.autoMigrateFrom = panel.type;
+          panel.type = 'timeseries';
         } else if (
-          !p.autoMigrateFrom &&
-          p.type === 'table-old' &&
+          !panel.autoMigrateFrom &&
+          panel.type === 'table-old' &&
           (config.featureToggles.autoMigrateTablePanel || shouldMigrateAllAngularPanels)
         ) {
-          p.autoMigrateFrom = p.type;
-          p.type = 'table';
+          panel.autoMigrateFrom = panel.type;
+          panel.type = 'table';
         } else if (
-          !p.autoMigrateFrom &&
-          p.type === 'grafana-piechart-panel' &&
+          !panel.autoMigrateFrom &&
+          panel.type === 'grafana-piechart-panel' &&
           (config.featureToggles.autoMigratePiechartPanel || shouldMigrateAllAngularPanels)
         ) {
-          p.autoMigrateFrom = p.type;
-          p.type = 'piechart';
+          panel.autoMigrateFrom = panel.type;
+          panel.type = 'piechart';
         } else if (
-          !p.autoMigrateFrom &&
-          p.type === 'grafana-worldmap-panel' &&
+          !panel.autoMigrateFrom &&
+          panel.type === 'grafana-worldmap-panel' &&
           (config.featureToggles.autoMigrateWorldmapPanel || shouldMigrateAllAngularPanels)
         ) {
-          p.autoMigrateFrom = p.type;
-          p.type = 'geomap';
+          panel.autoMigrateFrom = panel.type;
+          panel.type = 'geomap';
         } else if (
-          !p.autoMigrateFrom &&
-          (p.type === 'singlestat' || p.type === 'grafana-singlestat-panel') &&
+          !panel.autoMigrateFrom &&
+          (panel.type === 'singlestat' || panel.type === 'grafana-singlestat-panel') &&
           (config.featureToggles.autoMigrateStatPanel || shouldMigrateAllAngularPanels)
         ) {
-          p.autoMigrateFrom = p.type;
-          p.type = 'stat';
+          panel.autoMigrateFrom = panel.type;
+          panel.type = 'stat';
         }
       }
     }
