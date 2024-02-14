@@ -100,6 +100,13 @@ func (f *BackgroundFetcher) updateSchedulableAlertRules(ctx context.Context) {
 // It returns diff that contains rule keys that were updated since the last poll,
 // and an error if the database query encountered problems.
 func (sch *schedule) updateSchedulableAlertRules(ctx context.Context) (diff, error) {
+	if sch.fetchAsync {
+		r, f := sch.fetcher.Rules()
+		d := sch.schedulableAlertRules.set(r, f)
+		sch.log.Debug("Alert rules loaded for tick", "rulesCount", len(r), "foldersCount", len(f), "updatedRules", len(d.updated))
+		return d, nil
+	}
+
 	start := time.Now()
 	defer func() {
 		sch.metrics.UpdateSchedulableAlertRulesDuration.Observe(

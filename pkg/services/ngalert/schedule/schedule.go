@@ -81,6 +81,7 @@ type schedule struct {
 	appURL               *url.URL
 	disableGrafanaFolder bool
 	jitterEvaluations    JitterStrategy
+	fetchAsync           bool
 
 	metrics *metrics.Scheduler
 
@@ -105,6 +106,7 @@ type SchedulerCfg struct {
 	DisableGrafanaFolder bool
 	AppURL               *url.URL
 	JitterEvaluations    JitterStrategy
+	FetchAsync           bool
 	EvaluatorFactory     eval.EvaluatorFactory
 	RuleStore            RulesStore
 	Metrics              *metrics.Scheduler
@@ -134,6 +136,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager, fetcher RulesFe
 		appURL:                cfg.AppURL,
 		disableGrafanaFolder:  cfg.DisableGrafanaFolder,
 		jitterEvaluations:     cfg.JitterEvaluations,
+		fetchAsync:            cfg.FetchAsync,
 		stateManager:          stateManager,
 		minRuleInterval:       cfg.MinRuleInterval,
 		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},

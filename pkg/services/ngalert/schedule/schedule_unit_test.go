@@ -114,6 +114,8 @@ func TestProcessTicks(t *testing.T) {
 	// create alert rule under main org with one second interval
 	alertRule1 := models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(cfg.BaseInterval), models.WithTitle("rule-1"))()
 	ruleStore.PutRule(ctx, alertRule1)
+	// Assume for the sake of the test that the eventually consistent rule fetches are "fast enough."
+	fetcher.Refresh(ctx)
 
 	t.Run("on 1st tick alert rule should be evaluated", func(t *testing.T) {
 		tick = tick.Add(cfg.BaseInterval)
@@ -143,6 +145,7 @@ func TestProcessTicks(t *testing.T) {
 	// add alert rule under main org with three base intervals
 	alertRule2 := models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(3*cfg.BaseInterval), models.WithTitle("rule-2"))()
 	ruleStore.PutRule(ctx, alertRule2)
+	fetcher.Refresh(ctx)
 
 	t.Run("on 2nd tick first alert rule should be evaluated", func(t *testing.T) {
 		tick = tick.Add(cfg.BaseInterval)
@@ -289,6 +292,7 @@ func TestProcessTicks(t *testing.T) {
 		tick = tick.Add(cfg.BaseInterval)
 
 		ruleStore.DeleteRule(alertRule1)
+		fetcher.Refresh(ctx)
 
 		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
 
@@ -328,6 +332,7 @@ func TestProcessTicks(t *testing.T) {
 	// create alert rule with one base interval
 	alertRule3 := models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(cfg.BaseInterval), models.WithTitle("rule-3"))()
 	ruleStore.PutRule(ctx, alertRule3)
+	fetcher.Refresh(ctx)
 
 	t.Run("on 10th tick a new alert rule should be evaluated", func(t *testing.T) {
 		tick = tick.Add(cfg.BaseInterval)
@@ -350,6 +355,7 @@ func TestProcessTicks(t *testing.T) {
 		}
 
 		ruleStore.PutRule(context.Background(), newRule2)
+		fetcher.Refresh(ctx)
 
 		tick = tick.Add(cfg.BaseInterval)
 		scheduled, stopped, updated := sched.processTick(ctx, dispatcherGroup, tick)
