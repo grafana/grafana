@@ -1705,10 +1705,8 @@ type EntityWatchResponse struct {
 
 	// Timestamp the event was sent
 	Timestamp int64 `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	// List of entities with the same action
-	Entity []*Entity `protobuf:"bytes,2,rep,name=entity,proto3" json:"entity,omitempty"`
-	// Action code
-	Action Entity_Action `protobuf:"varint,3,opt,name=action,proto3,enum=entity.Entity_Action" json:"action,omitempty"`
+	// Entity that was created, updated, or deleted
+	Entity *Entity `protobuf:"bytes,2,opt,name=entity,proto3" json:"entity,omitempty"`
 }
 
 func (x *EntityWatchResponse) Reset() {
@@ -1750,18 +1748,11 @@ func (x *EntityWatchResponse) GetTimestamp() int64 {
 	return 0
 }
 
-func (x *EntityWatchResponse) GetEntity() []*Entity {
+func (x *EntityWatchResponse) GetEntity() *Entity {
 	if x != nil {
 		return x.Entity
 	}
 	return nil
-}
-
-func (x *EntityWatchResponse) GetAction() Entity_Action {
-	if x != nil {
-		return x.Action
-	}
-	return Entity_UNKNOWN
 }
 
 type EntitySummary struct {
@@ -2201,16 +2192,13 @@ var file_entity_proto_rawDesc = []byte{
 	0x39, 0x0a, 0x0b, 0x4c, 0x61, 0x62, 0x65, 0x6c, 0x73, 0x45, 0x6e, 0x74, 0x72, 0x79, 0x12, 0x10,
 	0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b, 0x65, 0x79,
 	0x12, 0x14, 0x0a, 0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x8a, 0x01, 0x0a, 0x13, 0x45,
-	0x6e, 0x74, 0x69, 0x74, 0x79, 0x57, 0x61, 0x74, 0x63, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x12, 0x1c, 0x0a, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x18,
-	0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70,
-	0x12, 0x26, 0x0a, 0x06, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x18, 0x02, 0x20, 0x03, 0x28, 0x0b,
-	0x32, 0x0e, 0x2e, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x2e, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79,
-	0x52, 0x06, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x12, 0x2d, 0x0a, 0x06, 0x61, 0x63, 0x74, 0x69,
-	0x6f, 0x6e, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x15, 0x2e, 0x65, 0x6e, 0x74, 0x69, 0x74,
-	0x79, 0x2e, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x2e, 0x41, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x52,
-	0x06, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x22, 0xa2, 0x04, 0x0a, 0x0d, 0x45, 0x6e, 0x74, 0x69,
+	0x05, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x5b, 0x0a, 0x13, 0x45, 0x6e,
+	0x74, 0x69, 0x74, 0x79, 0x57, 0x61, 0x74, 0x63, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x1c, 0x0a, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x03, 0x52, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x12,
+	0x26, 0x0a, 0x06, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x0e, 0x2e, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x2e, 0x45, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x52,
+	0x06, 0x65, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x22, 0xa2, 0x04, 0x0a, 0x0d, 0x45, 0x6e, 0x74, 0x69,
 	0x74, 0x79, 0x53, 0x75, 0x6d, 0x6d, 0x61, 0x72, 0x79, 0x12, 0x10, 0x0a, 0x03, 0x55, 0x49, 0x44,
 	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x55, 0x49, 0x44, 0x12, 0x12, 0x0a, 0x04, 0x6b,
 	0x69, 0x6e, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6b, 0x69, 0x6e, 0x64, 0x12,
@@ -2363,33 +2351,32 @@ var file_entity_proto_depIdxs = []int32{
 	4,  // 20: entity.EntityListResponse.results:type_name -> entity.Entity
 	28, // 21: entity.EntityWatchRequest.labels:type_name -> entity.EntityWatchRequest.LabelsEntry
 	4,  // 22: entity.EntityWatchResponse.entity:type_name -> entity.Entity
-	0,  // 23: entity.EntityWatchResponse.action:type_name -> entity.Entity.Action
-	29, // 24: entity.EntitySummary.labels:type_name -> entity.EntitySummary.LabelsEntry
-	6,  // 25: entity.EntitySummary.error:type_name -> entity.EntityErrorInfo
-	30, // 26: entity.EntitySummary.fields:type_name -> entity.EntitySummary.FieldsEntry
-	23, // 27: entity.EntitySummary.nested:type_name -> entity.EntitySummary
-	24, // 28: entity.EntitySummary.references:type_name -> entity.EntityExternalReference
-	7,  // 29: entity.EntityStore.Read:input_type -> entity.ReadEntityRequest
-	8,  // 30: entity.EntityStore.BatchRead:input_type -> entity.BatchReadEntityRequest
-	10, // 31: entity.EntityStore.Create:input_type -> entity.CreateEntityRequest
-	12, // 32: entity.EntityStore.Update:input_type -> entity.UpdateEntityRequest
-	14, // 33: entity.EntityStore.Delete:input_type -> entity.DeleteEntityRequest
-	16, // 34: entity.EntityStore.History:input_type -> entity.EntityHistoryRequest
-	18, // 35: entity.EntityStore.List:input_type -> entity.EntityListRequest
-	21, // 36: entity.EntityStore.Watch:input_type -> entity.EntityWatchRequest
-	4,  // 37: entity.EntityStore.Read:output_type -> entity.Entity
-	9,  // 38: entity.EntityStore.BatchRead:output_type -> entity.BatchReadEntityResponse
-	11, // 39: entity.EntityStore.Create:output_type -> entity.CreateEntityResponse
-	13, // 40: entity.EntityStore.Update:output_type -> entity.UpdateEntityResponse
-	15, // 41: entity.EntityStore.Delete:output_type -> entity.DeleteEntityResponse
-	17, // 42: entity.EntityStore.History:output_type -> entity.EntityHistoryResponse
-	20, // 43: entity.EntityStore.List:output_type -> entity.EntityListResponse
-	22, // 44: entity.EntityStore.Watch:output_type -> entity.EntityWatchResponse
-	37, // [37:45] is the sub-list for method output_type
-	29, // [29:37] is the sub-list for method input_type
-	29, // [29:29] is the sub-list for extension type_name
-	29, // [29:29] is the sub-list for extension extendee
-	0,  // [0:29] is the sub-list for field type_name
+	29, // 23: entity.EntitySummary.labels:type_name -> entity.EntitySummary.LabelsEntry
+	6,  // 24: entity.EntitySummary.error:type_name -> entity.EntityErrorInfo
+	30, // 25: entity.EntitySummary.fields:type_name -> entity.EntitySummary.FieldsEntry
+	23, // 26: entity.EntitySummary.nested:type_name -> entity.EntitySummary
+	24, // 27: entity.EntitySummary.references:type_name -> entity.EntityExternalReference
+	7,  // 28: entity.EntityStore.Read:input_type -> entity.ReadEntityRequest
+	8,  // 29: entity.EntityStore.BatchRead:input_type -> entity.BatchReadEntityRequest
+	10, // 30: entity.EntityStore.Create:input_type -> entity.CreateEntityRequest
+	12, // 31: entity.EntityStore.Update:input_type -> entity.UpdateEntityRequest
+	14, // 32: entity.EntityStore.Delete:input_type -> entity.DeleteEntityRequest
+	16, // 33: entity.EntityStore.History:input_type -> entity.EntityHistoryRequest
+	18, // 34: entity.EntityStore.List:input_type -> entity.EntityListRequest
+	21, // 35: entity.EntityStore.Watch:input_type -> entity.EntityWatchRequest
+	4,  // 36: entity.EntityStore.Read:output_type -> entity.Entity
+	9,  // 37: entity.EntityStore.BatchRead:output_type -> entity.BatchReadEntityResponse
+	11, // 38: entity.EntityStore.Create:output_type -> entity.CreateEntityResponse
+	13, // 39: entity.EntityStore.Update:output_type -> entity.UpdateEntityResponse
+	15, // 40: entity.EntityStore.Delete:output_type -> entity.DeleteEntityResponse
+	17, // 41: entity.EntityStore.History:output_type -> entity.EntityHistoryResponse
+	20, // 42: entity.EntityStore.List:output_type -> entity.EntityListResponse
+	22, // 43: entity.EntityStore.Watch:output_type -> entity.EntityWatchResponse
+	36, // [36:44] is the sub-list for method output_type
+	28, // [28:36] is the sub-list for method input_type
+	28, // [28:28] is the sub-list for extension type_name
+	28, // [28:28] is the sub-list for extension extendee
+	0,  // [0:28] is the sub-list for field type_name
 }
 
 func init() { file_entity_proto_init() }
