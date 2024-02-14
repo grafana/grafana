@@ -127,13 +127,14 @@ func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []Exte
 }
 
 func (s *ExternalAlertmanager) Run() {
+	logger := s.logger
 	s.wg.Add(2)
 
 	go func() {
-		s.logger.Info("Initiating communication with a group of external Alertmanagers")
+		logger.Info("Initiating communication with a group of external Alertmanagers")
 
 		if err := s.sdManager.Run(); err != nil {
-			s.logger.Error("Failed to start the sender service discovery manager", "error", err)
+			logger.Error("Failed to start the sender service discovery manager", "error", err)
 		}
 		s.wg.Done()
 	}()

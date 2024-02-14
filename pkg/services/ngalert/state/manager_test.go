@@ -1380,7 +1380,7 @@ func TestProcessEvalResults(t *testing.T) {
 		require.NotEmpty(t, states)
 
 		savedStates := make(map[string]models.AlertInstance)
-		for _, op := range instanceStore.RecordedOps {
+		for _, op := range instanceStore.RecordedOps() {
 			switch q := op.(type) {
 			case models.AlertInstance:
 				cacheId, err := q.Labels.StringKey()
@@ -1669,7 +1669,7 @@ func TestStaleResults(t *testing.T) {
 	})
 
 	t.Run("should delete stale states from the database", func(t *testing.T) {
-		for _, op := range store.RecordedOps {
+		for _, op := range store.RecordedOps() {
 			switch q := op.(type) {
 			case state.FakeInstanceStoreOp:
 				keys, ok := q.Args[1].([]models.AlertInstanceKey)

@@ -42,7 +42,7 @@ func TestAsyncStatePersister_Async(t *testing.T) {
 
 		// Check if the state was saved
 		require.Eventually(t, func() bool {
-			return len(store.RecordedOps) == 1
+			return len(store.RecordedOps()) == 1
 		}, time.Second*5, time.Second)
 	})
 	t.Run("It should save on context done", func(t *testing.T) {
@@ -71,7 +71,7 @@ func TestAsyncStatePersister_Async(t *testing.T) {
 
 		// Check if the context cancellation was handled correctly
 		require.Eventually(t, func() bool {
-			return len(store.RecordedOps) == 1
+			return len(store.RecordedOps()) == 1
 		}, time.Second*5, time.Second)
 	})
 }
