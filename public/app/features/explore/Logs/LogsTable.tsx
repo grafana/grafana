@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import {
@@ -40,7 +40,18 @@ interface Props {
 }
 
 export function LogsTable(props: Props) {
-  const { timeZone, splitOpen, range, logsSortOrder, width, dataFrame, columnsWithMeta, logsFrame } = props;
+  const {
+    timeZone,
+    splitOpen,
+    range,
+    logsSortOrder,
+    width,
+    dataFrame,
+    columnsWithMeta,
+    logsFrame,
+    onClickFilterLabel,
+    onClickFilterOutLabel,
+  } = props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
   const timeIndex = logsFrame?.timeField.index;
 
@@ -144,24 +155,29 @@ export function LogsTable(props: Props) {
     logsFrame?.timeField.name,
   ]);
 
+  // Memoization prevents <Table> to re-render on any change to the parent state or props
+  const onCellFilterAdded = useCallback(
+    (filter: AdHocFilterItem) => {
+      const { value, key, operator } = filter;
+      if (!onClickFilterLabel || !onClickFilterOutLabel) {
+        return;
+      }
+      if (operator === FILTER_FOR_OPERATOR) {
+        onClickFilterLabel(key, value, dataFrame);
+      }
+
+      if (operator === FILTER_OUT_OPERATOR) {
+        onClickFilterOutLabel(key, value, dataFrame);
+      }
+    },
+    [dataFrame, onClickFilterLabel, onClickFilterOutLabel]
+  );
+
+  const footerOptions = useMemo(() => ({ show: true, reducer: ['count'], countRows: true }), []);
+
   if (!tableFrame) {
     return null;
   }
-
-  const onCellFilterAdded = (filter: AdHocFilterItem) => {
-    const { value, key, operator } = filter;
-    const { onClickFilterLabel, onClickFilterOutLabel } = props;
-    if (!onClickFilterLabel || !onClickFilterOutLabel) {
-      return;
-    }
-    if (operator === FILTER_FOR_OPERATOR) {
-      onClickFilterLabel(key, value, dataFrame);
-    }
-
-    if (operator === FILTER_OUT_OPERATOR) {
-      onClickFilterOutLabel(key, value, dataFrame);
-    }
-  };
 
   return (
     <Table
@@ -169,7 +185,7 @@ export function LogsTable(props: Props) {
       width={width}
       onCellFilterAdded={props.onClickFilterLabel && props.onClickFilterOutLabel ? onCellFilterAdded : undefined}
       height={props.height}
-      footerOptions={{ show: true, reducer: ['count'], countRows: true }}
+      footerOptions={footerOptions}
     />
   );
 }
