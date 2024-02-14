@@ -353,7 +353,7 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 					uids = append(uids, key.UID)
 				}
 				ecp.log.Error("Cannot delete contact point because it is used in rule's notification settings", "receiverName", name, "rulesUid", strings.Join(uids, ","))
-				return fmt.Errorf("contact point '%s' is currently used by a notification policy", name)
+				return fmt.Errorf("contact point '%s' is currently used in notification settings by one or many alert rules", name)
 			}
 		}
 
