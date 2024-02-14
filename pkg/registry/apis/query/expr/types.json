@@ -6,46 +6,42 @@
     {
       "metadata": {
         "name": "math",
-        "resourceVersion": "1707870605915",
+        "resourceVersion": "1707874908423",
         "creationTimestamp": "2024-02-13T05:40:45Z"
       },
       "spec": {
-        "name": "math",
         "discriminatorField": "queryType",
-        "versions": [
-          {
-            "schema": {
-              "properties": {
-                "expression": {
-                  "type": "string",
-                  "minLength": 1,
-                  "description": "General math expression",
-                  "examples": [
-                    "$A + 1",
-                    "$A/$B"
-                  ]
-                }
-              },
-              "additionalProperties": false,
-              "type": "object",
-              "required": [
-                "expression"
+        "discriminatorValue": "math",
+        "schema": {
+          "properties": {
+            "expression": {
+              "type": "string",
+              "minLength": 1,
+              "description": "General math expression",
+              "examples": [
+                "$A + 1",
+                "$A/$B"
               ]
-            },
-            "examples": [
-              {
-                "name": "constant addition",
-                "query": {
-                  "expression": "$A + 10"
-                }
-              },
-              {
-                "name": "math with two queries",
-                "query": {
-                  "expression": "$A - $B"
-                }
-              }
-            ]
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "expression"
+          ]
+        },
+        "examples": [
+          {
+            "name": "constant addition",
+            "query": {
+              "expression": "$A + 10"
+            }
+          },
+          {
+            "name": "math with two queries",
+            "query": {
+              "expression": "$A - $B"
+            }
           }
         ]
       }
@@ -53,84 +49,80 @@
     {
       "metadata": {
         "name": "reduce",
-        "resourceVersion": "1707870605915",
+        "resourceVersion": "1707874908423",
         "creationTimestamp": "2024-02-13T05:40:45Z"
       },
       "spec": {
-        "name": "reduce",
         "discriminatorField": "queryType",
-        "versions": [
-          {
-            "schema": {
+        "discriminatorValue": "reduce",
+        "schema": {
+          "properties": {
+            "expression": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Reference to single query result",
+              "examples": [
+                "$A"
+              ]
+            },
+            "reducer": {
+              "type": "string",
+              "enum": [
+                "sum",
+                "mean",
+                "min",
+                "max",
+                "count",
+                "last"
+              ],
+              "description": "The reducer\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
+              "x-enum-description": {}
+            },
+            "settings": {
               "properties": {
-                "expression": {
-                  "type": "string",
-                  "minLength": 1,
-                  "description": "Reference to single query result",
-                  "examples": [
-                    "$A"
-                  ]
-                },
-                "reducer": {
+                "mode": {
                   "type": "string",
                   "enum": [
-                    "sum",
-                    "mean",
-                    "min",
-                    "max",
-                    "count",
-                    "last"
+                    "dropNN",
+                    "replaceNN"
                   ],
-                  "description": "The reducer\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
-                  "x-enum-description": {}
+                  "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
+                  "x-enum-description": {
+                    "dropNN": "Drop non-numbers",
+                    "replaceNN": "Replace non-numbers"
+                  }
                 },
-                "settings": {
-                  "properties": {
-                    "mode": {
-                      "type": "string",
-                      "enum": [
-                        "dropNN",
-                        "replaceNN"
-                      ],
-                      "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
-                      "x-enum-description": {
-                        "dropNN": "Drop non-numbers",
-                        "replaceNN": "Replace non-numbers"
-                      }
-                    },
-                    "replaceWithValue": {
-                      "type": "number",
-                      "description": "Only valid when mode is replace"
-                    }
-                  },
-                  "additionalProperties": false,
-                  "type": "object",
-                  "required": [
-                    "mode"
-                  ],
-                  "description": "Reducer Options"
+                "replaceWithValue": {
+                  "type": "number",
+                  "description": "Only valid when mode is replace"
                 }
               },
               "additionalProperties": false,
               "type": "object",
               "required": [
-                "expression",
-                "reducer",
-                "settings"
-              ]
-            },
-            "examples": [
-              {
-                "name": "get max value",
-                "query": {
-                  "expression": "$A",
-                  "reducer": "max",
-                  "settings": {
-                    "mode": "dropNN"
-                  }
-                }
+                "mode"
+              ],
+              "description": "Reducer Options"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "expression",
+            "reducer",
+            "settings"
+          ]
+        },
+        "examples": [
+          {
+            "name": "get max value",
+            "query": {
+              "expression": "$A",
+              "reducer": "max",
+              "settings": {
+                "mode": "dropNN"
               }
-            ]
+            }
           }
         ]
       }
@@ -138,64 +130,60 @@
     {
       "metadata": {
         "name": "resample",
-        "resourceVersion": "1707870605915",
+        "resourceVersion": "1707874908423",
         "creationTimestamp": "2024-02-13T05:40:45Z"
       },
       "spec": {
-        "name": "resample",
         "discriminatorField": "queryType",
-        "versions": [
-          {
-            "schema": {
-              "properties": {
-                "expression": {
-                  "type": "string",
-                  "minLength": 1,
-                  "description": "The math expression",
-                  "examples": [
-                    "$A + 1",
-                    "$A"
-                  ]
-                },
-                "window": {
-                  "type": "string",
-                  "minLength": 1,
-                  "description": "The time durration",
-                  "examples": [
-                    "1w",
-                    "10m"
-                  ]
-                },
-                "downsampler": {
-                  "type": "string",
-                  "description": "The downsample function"
-                },
-                "upsampler": {
-                  "type": "string",
-                  "description": "The upsample function"
-                }
-              },
-              "additionalProperties": false,
-              "type": "object",
-              "required": [
-                "expression",
-                "window",
-                "downsampler",
-                "upsampler"
-              ],
-              "description": "QueryType = resample"
+        "discriminatorValue": "resample",
+        "schema": {
+          "properties": {
+            "expression": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The math expression",
+              "examples": [
+                "$A + 1",
+                "$A"
+              ]
             },
-            "examples": [
-              {
-                "name": "resample at a every day",
-                "query": {
-                  "expression": "$A",
-                  "window": "1d",
-                  "downsampler": "",
-                  "upsampler": ""
-                }
-              }
-            ]
+            "window": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The time durration",
+              "examples": [
+                "1w",
+                "10m"
+              ]
+            },
+            "downsampler": {
+              "type": "string",
+              "description": "The downsample function"
+            },
+            "upsampler": {
+              "type": "string",
+              "description": "The upsample function"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "expression",
+            "window",
+            "downsampler",
+            "upsampler"
+          ],
+          "description": "QueryType = resample"
+        },
+        "examples": [
+          {
+            "name": "resample at a every day",
+            "query": {
+              "expression": "$A",
+              "window": "1d",
+              "downsampler": "",
+              "upsampler": ""
+            }
           }
         ]
       }
@@ -203,104 +191,100 @@
     {
       "metadata": {
         "name": "classic",
-        "resourceVersion": "1707870605915",
+        "resourceVersion": "1707874908423",
         "creationTimestamp": "2024-02-13T22:34:02Z"
       },
       "spec": {
-        "name": "classic",
         "discriminatorField": "queryType",
-        "versions": [
-          {
-            "schema": {
-              "properties": {
-                "conditions": {
-                  "items": {
+        "discriminatorValue": "classic",
+        "schema": {
+          "properties": {
+            "conditions": {
+              "items": {
+                "properties": {
+                  "evaluator": {
                     "properties": {
-                      "evaluator": {
-                        "properties": {
-                          "params": {
-                            "items": {
-                              "type": "number"
-                            },
-                            "type": "array"
-                          },
-                          "type": {
-                            "type": "string"
-                          }
+                      "params": {
+                        "items": {
+                          "type": "number"
                         },
-                        "additionalProperties": false,
-                        "type": "object",
-                        "required": [
-                          "params",
-                          "type"
-                        ]
+                        "type": "array"
                       },
-                      "operator": {
-                        "properties": {
-                          "type": {
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": false,
-                        "type": "object",
-                        "required": [
-                          "type"
-                        ]
-                      },
-                      "query": {
-                        "properties": {
-                          "params": {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
-                          }
-                        },
-                        "additionalProperties": false,
-                        "type": "object",
-                        "required": [
-                          "params"
-                        ]
-                      },
-                      "reducer": {
-                        "properties": {
-                          "type": {
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": false,
-                        "type": "object",
-                        "required": [
-                          "type"
-                        ]
+                      "type": {
+                        "type": "string"
                       }
                     },
                     "additionalProperties": false,
                     "type": "object",
                     "required": [
-                      "evaluator",
-                      "operator",
-                      "query",
-                      "reducer"
+                      "params",
+                      "type"
                     ]
                   },
-                  "type": "array"
-                }
+                  "operator": {
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ]
+                  },
+                  "query": {
+                    "properties": {
+                      "params": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "params"
+                    ]
+                  },
+                  "reducer": {
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "evaluator",
+                  "operator",
+                  "query",
+                  "reducer"
+                ]
               },
-              "additionalProperties": false,
-              "type": "object",
-              "required": [
-                "conditions"
-              ]
-            },
-            "examples": [
-              {
-                "name": "do classic query (TODO)",
-                "query": {
-                  "conditions": []
-                }
-              }
-            ]
+              "type": "array"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "conditions"
+          ]
+        },
+        "examples": [
+          {
+            "name": "do classic query (TODO)",
+            "query": {
+              "conditions": []
+            }
           }
         ]
       }
@@ -308,99 +292,95 @@
     {
       "metadata": {
         "name": "threshold",
-        "resourceVersion": "1707870605915",
+        "resourceVersion": "1707874908423",
         "creationTimestamp": "2024-02-13T22:34:02Z"
       },
       "spec": {
-        "name": "threshold",
         "discriminatorField": "queryType",
-        "versions": [
-          {
-            "schema": {
-              "properties": {
-                "expression": {
-                  "type": "string",
-                  "minLength": 1,
-                  "description": "Reference to single query result",
-                  "examples": [
-                    "$A"
-                  ]
-                },
-                "conditions": {
-                  "items": {
+        "discriminatorValue": "threshold",
+        "schema": {
+          "properties": {
+            "expression": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Reference to single query result",
+              "examples": [
+                "$A"
+              ]
+            },
+            "conditions": {
+              "items": {
+                "properties": {
+                  "evaluator": {
                     "properties": {
-                      "evaluator": {
-                        "properties": {
-                          "params": {
-                            "items": {
-                              "type": "number"
-                            },
-                            "type": "array"
-                          },
-                          "type": {
-                            "type": "string"
-                          }
+                      "params": {
+                        "items": {
+                          "type": "number"
                         },
-                        "additionalProperties": false,
-                        "type": "object",
-                        "required": [
-                          "params",
-                          "type"
-                        ]
+                        "type": "array"
                       },
-                      "unloadEvaluator": {
-                        "properties": {
-                          "params": {
-                            "items": {
-                              "type": "number"
-                            },
-                            "type": "array"
-                          },
-                          "type": {
-                            "type": "string"
-                          }
-                        },
-                        "additionalProperties": false,
-                        "type": "object",
-                        "required": [
-                          "params",
-                          "type"
-                        ]
-                      },
-                      "loadedDimensions": {
-                        "additionalProperties": true,
-                        "type": "object",
-                        "x-grafana-type": "data.DataFrame"
+                      "type": {
+                        "type": "string"
                       }
                     },
                     "additionalProperties": false,
                     "type": "object",
                     "required": [
-                      "evaluator",
-                      "unloadEvaluator",
-                      "loadedDimensions"
+                      "params",
+                      "type"
                     ]
                   },
-                  "type": "array",
-                  "description": "Threshold Conditions"
-                }
+                  "unloadEvaluator": {
+                    "properties": {
+                      "params": {
+                        "items": {
+                          "type": "number"
+                        },
+                        "type": "array"
+                      },
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "params",
+                      "type"
+                    ]
+                  },
+                  "loadedDimensions": {
+                    "additionalProperties": true,
+                    "type": "object",
+                    "x-grafana-type": "data.DataFrame"
+                  }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "evaluator",
+                  "unloadEvaluator",
+                  "loadedDimensions"
+                ]
               },
-              "additionalProperties": false,
-              "type": "object",
-              "required": [
-                "expression",
-                "conditions"
-              ]
-            },
-            "examples": [
-              {
-                "name": "TODO... a threshold query",
-                "query": {
-                  "expression": "$A",
-                  "conditions": null
-                }
-              }
-            ]
+              "type": "array",
+              "description": "Threshold Conditions"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "expression",
+            "conditions"
+          ]
+        },
+        "examples": [
+          {
+            "name": "TODO... a threshold query",
+            "query": {
+              "expression": "$A",
+              "conditions": null
+            }
           }
         ]
       }

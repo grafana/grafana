@@ -37,7 +37,7 @@ type ExpressionQuery interface {
 	Variables() []string
 }
 
-var _ query.TypedQueryHandler[ExpressionQuery] = (*ExpressionQueyHandler)(nil)
+var _ query.TypedQueryReader[ExpressionQuery] = (*ExpressionQueyHandler)(nil)
 
 type ExpressionQueyHandler struct {
 	k8s   *v0alpha1.QueryTypeDefinitionList
@@ -86,17 +86,15 @@ func (h *ExpressionQueyHandler) QueryTypeDefinitionList() *v0alpha1.QueryTypeDef
 
 // ReadQuery implements query.TypedQueryHandler.
 func (*ExpressionQueyHandler) ReadQuery(
-	// The query type split by version (when multiple exist)
-	queryType string, version string,
 	// Properties that have been parsed off the same node
 	common query.CommonQueryProperties,
 	// An iterator with context for the full node (include common values)
 	iter *jsoniter.Iterator,
 ) (ExpressionQuery, error) {
-	qt := QueryType(queryType)
+	qt := QueryType(common.QueryType)
 	switch qt {
 	case QueryTypeMath:
-		return readMathQuery(version, iter)
+		return readMathQuery(iter)
 
 	case QueryTypeReduce:
 		q := &ReduceQuery{}

@@ -20,7 +20,7 @@ func (q *MathQuery) Variables() []string {
 	return q.variables
 }
 
-func readMathQuery(version string, iter *jsoniter.Iterator) (q *MathQuery, err error) {
+func readMathQuery(iter *jsoniter.Iterator) (q *MathQuery, err error) {
 	fname := ""
 	for fname, err = iter.ReadObject(); fname != "" && err == nil; fname, err = iter.ReadObject() {
 		switch fname {

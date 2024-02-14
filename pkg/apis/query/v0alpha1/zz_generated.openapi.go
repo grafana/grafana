@@ -25,7 +25,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinition":          schema_pkg_apis_query_v0alpha1_QueryTypeDefinition(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinitionList":      schema_pkg_apis_query_v0alpha1_QueryTypeDefinitionList(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeDefinitionSpec":      schema_pkg_apis_query_v0alpha1_QueryTypeDefinitionSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeVersion":             schema_pkg_apis_query_v0alpha1_QueryTypeVersion(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.Position":            schema_apis_query_v0alpha1_template_Position(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.QueryTemplate":       schema_apis_query_v0alpha1_template_QueryTemplate(ref),
 		"github.com/grafana/grafana/pkg/apis/query/v0alpha1/template.Target":              schema_apis_query_v0alpha1_template_Target(ref),
@@ -342,13 +341,6 @@ func schema_pkg_apis_query_v0alpha1_QueryTypeDefinitionSpec(ref common.Reference
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Description: "The query type value NOTE: this must be a k8s compatible name",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"discriminatorField": {
 						SchemaProps: spec.SchemaProps{
 							Description: "DiscriminatorField is the field used to link behavior to this specific query type.  It is typically \"queryType\", but can be another field if necessary",
@@ -356,52 +348,16 @@ func schema_pkg_apis_query_v0alpha1_QueryTypeDefinitionSpec(ref common.Reference
 							Format:      "",
 						},
 					},
+					"discriminatorValue": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The discriminator value",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"description": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Describe whe the query type is for",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"versions": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Versions (most recent first)",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeVersion"),
-									},
-								},
-							},
-						},
-					},
-					"preferredVersion": {
-						SchemaProps: spec.SchemaProps{
-							Description: "When multiple versions exist, this is the preferredVersion",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"versions"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/query/v0alpha1.QueryTypeVersion"},
-	}
-}
-
-func schema_pkg_apis_query_v0alpha1_QueryTypeVersion(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"version": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Version identifier or empty if only one exists",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -415,7 +371,7 @@ func schema_pkg_apis_query_v0alpha1_QueryTypeVersion(ref common.ReferenceCallbac
 					},
 					"examples": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Example queries (ideally this could be a template)",
+							Description: "Examples (include a wrapper) ideally a template!",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{

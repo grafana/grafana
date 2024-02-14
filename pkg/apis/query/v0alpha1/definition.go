@@ -24,32 +24,20 @@ type QueryTypeDefinitionList struct {
 }
 
 type QueryTypeDefinitionSpec struct {
-	// The query type value
-	// NOTE: this must be a k8s compatible name
-	Name string `json:"name,omitempty"` // must be k8s name? compatible
-
 	// DiscriminatorField is the field used to link behavior to this specific
 	// query type.  It is typically "queryType", but can be another field if necessary
 	DiscriminatorField string `json:"discriminatorField,omitempty"`
 
+	// The discriminator value
+	DiscriminatorValue string `json:"discriminatorValue,omitempty"`
+
 	// Describe whe the query type is for
 	Description string `json:"description,omitempty"`
-
-	// Versions (most recent first)
-	Versions []QueryTypeVersion `json:"versions"`
-
-	// When multiple versions exist, this is the preferredVersion
-	PreferredVersion string `json:"preferredVersion,omitempty"`
-}
-
-type QueryTypeVersion struct {
-	// Version identifier or empty if only one exists
-	Version string `json:"version,omitempty"`
 
 	// The JSONSchema definition for the non-common fields
 	Schema json.RawMessage `json:"schema"`
 
-	// Example queries (ideally this could be a template)
+	// Examples (include a wrapper) ideally a template!
 	Examples []QueryExample `json:"examples,omitempty"`
 
 	// Changelog defines the changed from the previous version

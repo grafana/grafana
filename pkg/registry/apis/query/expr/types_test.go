@@ -28,8 +28,8 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			},
 		},
 		extschema.QueryTypeInfo{
-			QueryType: string(QueryTypeMath),
-			GoType:    reflect.TypeOf(&MathQuery{}),
+			Discriminator: string(QueryTypeMath),
+			GoType:        reflect.TypeOf(&MathQuery{}),
 			Examples: []query.QueryExample{
 				{
 					Name: "constant addition",
@@ -46,8 +46,8 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			},
 		},
 		extschema.QueryTypeInfo{
-			QueryType: string(QueryTypeReduce),
-			GoType:    reflect.TypeOf(&ReduceQuery{}),
+			Discriminator: string(QueryTypeReduce),
+			GoType:        reflect.TypeOf(&ReduceQuery{}),
 			Examples: []query.QueryExample{
 				{
 					Name: "get max value",
@@ -62,8 +62,8 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			},
 		},
 		extschema.QueryTypeInfo{
-			QueryType: string(QueryTypeResample),
-			GoType:    reflect.TypeOf(&ResampleQuery{}),
+			Discriminator: string(QueryTypeResample),
+			GoType:        reflect.TypeOf(&ResampleQuery{}),
 			Examples: []query.QueryExample{
 				{
 					Name: "resample at a every day",
@@ -75,8 +75,8 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			},
 		},
 		extschema.QueryTypeInfo{
-			QueryType: string(QueryTypeClassic),
-			GoType:    reflect.TypeOf(&ClassicQuery{}),
+			Discriminator: string(QueryTypeClassic),
+			GoType:        reflect.TypeOf(&ClassicQuery{}),
 			Examples: []query.QueryExample{
 				{
 					Name: "do classic query (TODO)",
@@ -88,8 +88,8 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			},
 		},
 		extschema.QueryTypeInfo{
-			QueryType: string(QueryTypeThreshold),
-			GoType:    reflect.TypeOf(&ThresholdQuery{}),
+			Discriminator: string(QueryTypeThreshold),
+			GoType:        reflect.TypeOf(&ThresholdQuery{}),
 			Examples: []query.QueryExample{
 				{
 					Name: "TODO... a threshold query",

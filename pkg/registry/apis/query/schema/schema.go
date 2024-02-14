@@ -35,23 +35,15 @@ func GetQuerySchema(defs *query.QueryTypeDefinitionList) (*spec.Schema, error) {
 			}
 		}
 
-		for _, ver := range qt.Spec.Versions {
-			key := qt.Name
-			if ver.Version != "" {
-				key = fmt.Sprintf("%s/%s", qt.Name, ver.Version)
-			}
-
-			node := &spec.Schema{}
-			err := json.Unmarshal(ver.Schema, node)
-			if err != nil {
-				return nil, fmt.Errorf("error reading query types schema: %s // %w", key, err)
-			}
-
-			specs = append(specs, querySpec{
-				key:    key,
-				schema: node,
-			})
+		node := &spec.Schema{}
+		err := json.Unmarshal(qt.Spec.Schema, node)
+		if err != nil {
+			return nil, fmt.Errorf("error reading query types schema: %s // %w", qt.Spec.DiscriminatorValue, err)
 		}
+		specs = append(specs, querySpec{
+			key:    qt.Spec.DiscriminatorValue,
+			schema: node,
+		})
 	}
 
 	// Single node -- just union the global and local properties
