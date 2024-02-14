@@ -7,6 +7,7 @@ import {
   IntervalVariableModel,
   TypedVariableModel,
   TextBoxVariableModel,
+  GroupByVariableModel,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { config } from '@grafana/runtime';
@@ -16,6 +17,7 @@ import {
   ConstantVariable,
   CustomVariable,
   DataSourceVariable,
+  GroupByVariable,
   QueryVariable,
   SceneDataLayerControls,
   SceneDataLayers,
@@ -441,6 +443,22 @@ describe('transformSaveModelToScene', () => {
       expect(repeater.state.repeatDirection).toBe('v');
       expect(repeater.state.maxPerRow).toBe(8);
     });
+
+    it('should apply query caching options to SceneQueryRunner', () => {
+      const panel = {
+        title: '',
+        type: 'test-plugin',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        transparent: true,
+        cacheTimeout: '10',
+        queryCachingTTL: 200000,
+      };
+
+      const { vizPanel } = buildGridItemForTest(panel);
+      const runner = getQueryRunnerFor(vizPanel)!;
+      expect(runner.state.cacheTimeout).toBe('10');
+      expect(runner.state.queryCachingTTL).toBe(200000);
+    });
   });
 
   describe('when creating variables objects', () => {
@@ -841,6 +859,116 @@ describe('transformSaveModelToScene', () => {
         baseFilters: [{ key: 'baseFilterTest', operator: '=', value: 'test' }],
         datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
         applyMode: 'auto',
+      });
+    });
+
+    describe('when groupByVariable feature toggle is enabled', () => {
+      beforeAll(() => {
+        config.featureToggles.groupByVariable = true;
+      });
+
+      afterAll(() => {
+        config.featureToggles.groupByVariable = false;
+      });
+
+      it('should migrate groupby variable', () => {
+        const variable: GroupByVariableModel = {
+          id: 'groupby',
+          global: false,
+          index: 0,
+          state: LoadingState.Done,
+          error: null,
+          name: 'groupby',
+          label: 'GroupBy Label',
+          description: 'GroupBy Description',
+          type: 'groupby',
+          rootStateKey: 'N4XLmH5Vz',
+          datasource: {
+            uid: 'gdev-prometheus',
+            type: 'prometheus',
+          },
+          multi: true,
+          options: [
+            {
+              selected: false,
+              text: 'Foo',
+              value: 'foo',
+            },
+            {
+              selected: false,
+              text: 'Bar',
+              value: 'bar',
+            },
+          ],
+          current: {},
+          query: '',
+          hide: 0,
+          skipUrlSync: false,
+        };
+
+        const migrated = createSceneVariableFromVariableModel(variable) as GroupByVariable;
+        const groupbyVarState = migrated.state;
+
+        expect(migrated).toBeInstanceOf(GroupByVariable);
+        expect(groupbyVarState).toEqual({
+          key: expect.any(String),
+          description: 'GroupBy Description',
+          hide: 0,
+          defaultOptions: [
+            {
+              selected: false,
+              text: 'Foo',
+              value: 'foo',
+            },
+            {
+              selected: false,
+              text: 'Bar',
+              value: 'bar',
+            },
+          ],
+          isMulti: true,
+          layout: 'horizontal',
+          noValueOnClear: true,
+          label: 'GroupBy Label',
+          name: 'groupby',
+          skipUrlSync: false,
+          type: 'groupby',
+          baseFilters: [],
+          options: [],
+          text: [],
+          value: [],
+          datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
+          applyMode: 'auto',
+        });
+      });
+    });
+
+    describe('when groupByVariable feature toggle is disabled', () => {
+      it('should not migrate groupby variable and throw an error instead', () => {
+        const variable: GroupByVariableModel = {
+          id: 'groupby',
+          global: false,
+          index: 0,
+          state: LoadingState.Done,
+          error: null,
+          name: 'groupby',
+          label: 'GroupBy Label',
+          description: 'GroupBy Description',
+          type: 'groupby',
+          rootStateKey: 'N4XLmH5Vz',
+          datasource: {
+            uid: 'gdev-prometheus',
+            type: 'prometheus',
+          },
+          multi: true,
+          options: [],
+          current: {},
+          query: '',
+          hide: 0,
+          skipUrlSync: false,
+        };
+
+        expect(() => createSceneVariableFromVariableModel(variable)).toThrow('Scenes: Unsupported variable type');
       });
     });
 

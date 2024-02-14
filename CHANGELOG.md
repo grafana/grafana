@@ -113,6 +113,29 @@ Users who have InfluxDB datasource configured with SQL querying language must up
 Removes `NamespaceID` from responses of all GET routes underneath the path `/api/ruler/grafana/api/v1/rules` - 3 affected endpoints. All affected routes are not in the publicly documented or `stable` marked portion of the ngalert API. This only breaks clients who are directly using the unstable portion of the API. Such clients should use `NamespaceUID` rather than `NamespaceID` to identify namespaces. Issue [#79359](https://github.com/grafana/grafana/issues/79359)
 
 <!-- 10.3.0 END -->
+<!-- 10.2.4 START -->
+
+# 10.2.4 (2024-01-29)
+
+### Features and enhancements
+
+- **Chore:** Upgrade Go to 1.21.5. [#79560](https://github.com/grafana/grafana/issues/79560), [@tolzhabayev](https://github.com/tolzhabayev)
+
+### Bug fixes
+
+- **Field:** Fix perf regression in getUniqueFieldName(). [#81417](https://github.com/grafana/grafana/issues/81417), [@leeoniya](https://github.com/leeoniya)
+- **Alerting:** Fix Graphite subqueries. [#80816](https://github.com/grafana/grafana/issues/80816), [@gillesdemey](https://github.com/gillesdemey)
+- **Alerting:** Fix Graphite subqueries. [#80744](https://github.com/grafana/grafana/issues/80744), [@gillesdemey](https://github.com/gillesdemey)
+- **Annotations:** Split cleanup into separate queries and deletes to avoid deadlocks on MySQL. [#80485](https://github.com/grafana/grafana/issues/80485), [@alexweav](https://github.com/alexweav)
+- **Loki:** Fix bug duplicating parsed labels across multiple log lines. [#80368](https://github.com/grafana/grafana/issues/80368), [@svennergr](https://github.com/svennergr)
+- **Alerting:** Fix NoData & Error alerts not resolving when rule is reset. [#80241](https://github.com/grafana/grafana/issues/80241), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Auth:** Fix a panic during logout when OAuth provider is not set. [#80221](https://github.com/grafana/grafana/issues/80221), [@dmihai](https://github.com/dmihai)
+- **Gauges:** Fixing broken auto sizing. [#79940](https://github.com/grafana/grafana/issues/79940), [@torkelo](https://github.com/torkelo)
+- **Templating:** Json interpolation of single-value default selection does not create valid json. [#79503](https://github.com/grafana/grafana/issues/79503), [@kaydelaney](https://github.com/kaydelaney)
+- **Tempo:** Fix cache in TraceQL editor. [#79471](https://github.com/grafana/grafana/issues/79471), [@adrapereira](https://github.com/adrapereira)
+- **Alerting:** Fix for data source filter on cloud rules. (#79327). [#79350](https://github.com/grafana/grafana/issues/79350), [@soniaAguilarPeiron](https://github.com/soniaAguilarPeiron)
+
+<!-- 10.2.4 END -->
 <!-- 10.2.3 START -->
 
 # 10.2.3 (2023-12-18)
