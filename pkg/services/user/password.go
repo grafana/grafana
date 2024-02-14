@@ -13,9 +13,10 @@ var (
 	MinPasswordLength         = 12
 )
 
-/*
-Static function for password validation
-*/
+// ValidatePassword checks if a new password meets the required criteria based on the given configuration.
+// If BasicAuthStrongPasswordPolicy is disabled, it only checks for password length.
+// Otherwise, it ensures the password meets the minimum length requirement and contains at least one uppercase letter,
+// one lowercase letter, one number, and one symbol.
 func ValidatePassword(newPassword string, config *setting.Cfg) error {
 	if !config.BasicAuthStrongPasswordPolicy {
 		if len(newPassword) <= 4 {
