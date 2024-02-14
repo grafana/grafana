@@ -24,7 +24,7 @@
       "type": "spacing"
     },
     "100": {
-      "value": "{dimension.scale}",
+      "value": "{dimension.scale}*1",
       "type": "spacing"
     },
     "150": {
