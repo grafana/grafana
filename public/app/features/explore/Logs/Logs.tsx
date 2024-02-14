@@ -809,10 +809,13 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   logsFrames={this.props.logsFrames ?? []}
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
+                  onClickFilterValue={this.props.onClickFilterValue}
+                  onClickFilterOutValue={this.props.onClickFilterOutValue}
                   panelState={this.props.panelState?.logs}
                   theme={theme}
                   updatePanelState={this.updatePanelState}
                   datasourceType={this.props.datasourceType}
+                  app={CoreApp.Explore}
                 />
               </div>
             )}
