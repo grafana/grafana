@@ -469,6 +469,10 @@
       "type": "other",
       "description": "Used usualy in the navbarFixed."
     },
+    "110": {
+      "value": "1010",
+      "type": "other"
+    },
     "120": {
       "value": "1020",
       "type": "other",
