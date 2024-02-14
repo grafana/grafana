@@ -209,7 +209,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
         {this.state.selection && this.state.selectedRow && (
           <PopoverMenu
             close={this.closePopoverMenu}
-            row={this.state.selectedRow}
+            refId={this.state.selectedRow.dataFrame?.refId}
+            dataSourceType={this.state.selectedRow.datasourceType}
             selection={this.state.selection}
             {...this.state.popoverMenuCoordinates}
             onClickFilterValue={rest.onClickFilterValue}
