@@ -9,10 +9,10 @@ import {
   IntervalVariable,
   TextBoxVariable,
   QueryVariable,
-  AdHocFilterSet,
   GroupByVariable,
   SceneVariable,
   MultiValueVariable,
+  AdHocFiltersVariable,
   SceneVariableState,
 } from '@grafana/scenes';
 import { VariableType } from '@grafana/schema';
@@ -124,8 +124,7 @@ export function getVariableScene(type: EditableVariableType, initialState: Commo
     case 'datasource':
       return new DataSourceVariable(initialState);
     case 'adhoc':
-      // TODO: Initialize properly AdHocFilterSet with initialState
-      return new AdHocFilterSet({ name: initialState.name });
+      return new AdHocFiltersVariable(initialState);
     case 'groupby':
       return new GroupByVariable(initialState);
     case 'textbox':
