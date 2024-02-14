@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -76,7 +77,10 @@ func (s *SocialGitlab) Validate(ctx context.Context, settings ssoModels.SSOSetti
 		return err
 	}
 
-	return nil
+	return validation.Validate(info, requester,
+		validation.MustBeEmptyValidator(info.AuthUrl, "Auth URL"),
+		validation.MustBeEmptyValidator(info.TokenUrl, "Token URL"),
+		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"))
 }
 
 func (s *SocialGitlab) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {

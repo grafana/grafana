@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -197,13 +198,19 @@ func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSett
 		return err
 	}
 
+	return validation.Validate(info, requester,
+		validateAllowedGroups,
+		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
+		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"))
+}
+
+func validateAllowedGroups(info *social.OAuthInfo, requester identity.Requester) error {
 	for _, groupId := range info.AllowedGroups {
 		_, err := uuid.Parse(groupId)
 		if err != nil {
 			return ssosettings.ErrInvalidOAuthConfig("One or more of the Allowed groups are not in the correct format. Allowed groups should be a list of Object Ids.")
 		}
 	}
-
 	return nil
 }
 

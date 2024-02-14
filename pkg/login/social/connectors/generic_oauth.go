@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -79,15 +80,31 @@ func (s *SocialGenericOAuth) Validate(ctx context.Context, settings ssoModels.SS
 		return err
 	}
 
+	err = validation.Validate(info, requester,
+		validation.UrlValidator(info.AuthUrl, "Auth URL"),
+		validation.UrlValidator(info.TokenUrl, "Token URL"),
+		validateTeamsUrlWhenNotEmpty)
+
+	if err != nil {
+		return err
+	}
+
 	if info.Extra[teamIdsKey] != "" && (info.TeamIdsAttributePath == "" || info.TeamsUrl == "") {
 		return ssosettings.ErrInvalidOAuthConfig("If Team Ids are configured then Team Ids attribute path and Teams URL must be configured.")
 	}
 
 	if info.AllowedGroups != nil && len(info.AllowedGroups) > 0 && info.GroupsAttributePath == "" {
-		return ssosettings.ErrInvalidOAuthConfig("If Allowed groups are configured then Groups attribute path must be configured.")
+		return ssosettings.ErrInvalidOAuthConfig("If Allowed groups is configured then Groups attribute path must be configured.")
 	}
 
 	return nil
+}
+
+func validateTeamsUrlWhenNotEmpty(info *social.OAuthInfo, requester identity.Requester) error {
+	if info.TeamsUrl == "" {
+		return nil
+	}
+	return validation.UrlValidator(info.TeamsUrl, "Teams URL")(info, requester)
 }
 
 func (s *SocialGenericOAuth) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {

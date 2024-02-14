@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -66,9 +67,10 @@ func (s *SocialGoogle) Validate(ctx context.Context, settings ssoModels.SSOSetti
 		return err
 	}
 
-	// add specific validation rules for Google
-
-	return nil
+	return validation.Validate(info, requester,
+		validation.MustBeEmptyValidator(info.AuthUrl, "Auth URL"),
+		validation.MustBeEmptyValidator(info.TokenUrl, "Token URL"),
+		validation.MustBeEmptyValidator(info.ApiUrl, "API URL"))
 }
 
 func (s *SocialGoogle) Reload(ctx context.Context, settings ssoModels.SSOSettings) error {
