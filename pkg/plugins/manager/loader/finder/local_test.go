@@ -143,6 +143,7 @@ func TestFinder_Find(t *testing.T) {
 									{Name: "img1", Path: "img/screenshot1.png"},
 									{Name: "img2", Path: "img/screenshot2.png"},
 								},
+								Keywords: []string{"test"},
 							},
 							Dependencies: plugins.Dependencies{
 								GrafanaVersion: "3.x.x",
@@ -176,40 +177,19 @@ func TestFinder_Find(t *testing.T) {
 		{
 			name:       "Multiple plugin dirs",
 			pluginDirs: []string{"../../testdata/duplicate-plugins", "../../testdata/invalid-v1-signature"},
-			expectedBundles: []*plugins.FoundBundle{{
-				Primary: plugins.FoundPlugin{
-					JSONData: plugins.JSONData{
-						ID:   "test-app",
-						Type: plugins.TypeDataSource,
-						Name: "Parent",
-						Info: plugins.Info{
-							Author: plugins.InfoLink{
-								Name: "Grafana Labs",
-								URL:  "http://grafana.com",
-							},
-							Description: "Parent plugin",
-							Version:     "1.0.0",
-							Updated:     "2020-10-20",
-						},
-						Dependencies: plugins.Dependencies{
-							GrafanaVersion: "*",
-							Plugins:        []plugins.Dependency{},
-						},
-					},
-					FS: mustNewStaticFSForTests(t, filepath.Join(testData, "duplicate-plugins/nested")),
-				},
-				Children: []*plugins.FoundPlugin{
-					{
+			expectedBundles: []*plugins.FoundBundle{
+				{
+					Primary: plugins.FoundPlugin{
 						JSONData: plugins.JSONData{
 							ID:   "test-app",
 							Type: plugins.TypeDataSource,
-							Name: "Child",
+							Name: "Parent",
 							Info: plugins.Info{
 								Author: plugins.InfoLink{
 									Name: "Grafana Labs",
 									URL:  "http://grafana.com",
 								},
-								Description: "Child plugin",
+								Description: "Parent plugin",
 								Version:     "1.0.0",
 								Updated:     "2020-10-20",
 							},
@@ -218,10 +198,32 @@ func TestFinder_Find(t *testing.T) {
 								Plugins:        []plugins.Dependency{},
 							},
 						},
-						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "duplicate-plugins/nested/nested")),
+						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "duplicate-plugins/nested")),
+					},
+					Children: []*plugins.FoundPlugin{
+						{
+							JSONData: plugins.JSONData{
+								ID:   "test-app",
+								Type: plugins.TypeDataSource,
+								Name: "Child",
+								Info: plugins.Info{
+									Author: plugins.InfoLink{
+										Name: "Grafana Labs",
+										URL:  "http://grafana.com",
+									},
+									Description: "Child plugin",
+									Version:     "1.0.0",
+									Updated:     "2020-10-20",
+								},
+								Dependencies: plugins.Dependencies{
+									GrafanaVersion: "*",
+									Plugins:        []plugins.Dependency{},
+								},
+							},
+							FS: mustNewStaticFSForTests(t, filepath.Join(testData, "duplicate-plugins/nested/nested")),
+						},
 					},
 				},
-			},
 				{
 					Primary: plugins.FoundPlugin{
 						JSONData: plugins.JSONData{
