@@ -752,13 +752,13 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 
 	uids := &sync.Map{}
 	titles := &sync.Map{}
-
+	receiverName := `receiver%"-'test`
 	rulesWithNotifications := models.GenerateAlertRules(5, models.AlertRuleGen(
 		models.WithOrgID(1),
 		models.WithUniqueUID(uids),
 		models.WithUniqueTitle(titles),
 		withIntervalMatching(store.Cfg.BaseInterval),
-		models.WithNotificationSettingsGen(models.NotificationSettingsGen()),
+		models.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(receiverName))),
 	))
 	rulesInOtherOrg := models.GenerateAlertRules(5, models.AlertRuleGen(
 		models.WithOrgID(2),
@@ -793,14 +793,20 @@ func TestIntegrationListNotificationSettings(t *testing.T) {
 	}
 
 	t.Run("should list notification settings by receiver name", func(t *testing.T) {
-		rule := rulesWithNotifications[0]
-		receiverName := rule.NotificationSettings[0].Receiver
+		expectedUIDs := map[models.AlertRuleKey]struct{}{}
+		for _, rule := range rulesWithNotifications {
+			expectedUIDs[rule.GetKey()] = struct{}{}
+		}
+
 		actual, err := store.ListNotificationSettings(context.Background(), models.ListNotificationSettingsQuery{
 			OrgID:        1,
 			ReceiverName: receiverName,
 		})
 		require.NoError(t, err)
-		assert.Contains(t, actual, rule.GetKey())
+		assert.Len(t, actual, len(expectedUIDs))
+		for ruleKey := range actual {
+			assert.Contains(t, expectedUIDs, ruleKey)
+		}
 	})
 }
 

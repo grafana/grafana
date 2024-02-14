@@ -20,8 +20,10 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/util"
+	"xorm.io/xorm"
 )
 
 // AlertRuleMaxTitleLength is the maximum length of the alert rule title
@@ -370,12 +372,10 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 		}
 
 		if query.ReceiverName != "" {
-			// marshall string according to JSON rules so we follow escaping rules.
-			b, err := json.Marshal(query.ReceiverName)
+			q, err = st.filterByReceiverName(query.ReceiverName, q)
 			if err != nil {
-				return fmt.Errorf("failed to marshall receiver name query: %w", err)
+				return err
 			}
-			q = q.Where("notification_settings LIKE ?", fmt.Sprintf(`%%%s%%`, string(b)))
 		}
 
 		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
@@ -673,14 +673,15 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListNotificationSettingsQuery) (map[ngmodels.AlertRuleKey][]ngmodels.NotificationSettings, error) {
 	var rules []ngmodels.AlertRule
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		query := sess.Table(ngmodels.AlertRule{}).Select("uid, notification_settings").Where("notification_settings IS NOT NULL AND notification_settings <> 'null' AND org_id = ?", q.OrgID)
+		query := sess.Table(ngmodels.AlertRule{}).Select("uid, notification_settings").Where("org_id = ?", q.OrgID)
 		if q.ReceiverName != "" {
-			// marshall string according to JSON rules so we follow escaping rules.
-			b, err := json.Marshal(q.ReceiverName)
+			var err error
+			query, err = st.filterByReceiverName(q.ReceiverName, query)
 			if err != nil {
-				return fmt.Errorf("failed to marshall receiver name query: %w", err)
+				return err
 			}
-			query = query.And("notification_settings LIKE ?", fmt.Sprintf(`%%%s%%`, string(b)))
+		} else {
+			query = query.And("notification_settings IS NOT NULL AND notification_settings <> 'null'")
 		}
 		return query.Find(&rules)
 	})
@@ -709,6 +710,23 @@ func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListN
 		}
 	}
 	return result, nil
+}
+
+func (st DBstore) filterByReceiverName(receiver string, sess *xorm.Session) (*xorm.Session, error) {
+	if receiver == "" {
+		return sess, nil
+	}
+	// marshall string according to JSON rules so we follow escaping rules.
+	b, err := json.Marshal(receiver)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshall receiver name query: %w", err)
+	}
+	var search = string(b)
+	if st.SQLStore.GetDialect().DriverName() != migrator.SQLite {
+		// this escapes escaped double quote (\") to \\\"
+		search = strings.ReplaceAll(strings.ReplaceAll(search, `\`, `\\`), `"`, `\"`)
+	}
+	return sess.And(fmt.Sprintf("notification_settings %s ?", st.SQLStore.GetDialect().LikeStr()), "%"+search+"%"), nil
 }
 
 func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error) {
