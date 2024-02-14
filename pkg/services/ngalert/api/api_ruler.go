@@ -162,9 +162,7 @@ func (srv RulerSrv) RouteGetNamespaceRulesConfig(c *contextmodel.ReqContext, nam
 	result := apimodels.NamespaceConfigResponse{}
 
 	for groupKey, rules := range ruleGroups {
-		key := ngmodels.GetNamespaceKey(namespace.ParentUID, namespace.Title)
-		// nolint:staticcheck
-		result[key] = append(result[key], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords))
+		result[namespace.Fullpath] = append(result[namespace.Fullpath], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords))
 	}
 
 	return response.JSON(http.StatusAccepted, result)
@@ -242,9 +240,7 @@ func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Res
 			srv.log.Error("Namespace not visible to the user", "user", id, "userNamespace", userNamespace, "namespace", groupKey.NamespaceUID)
 			continue
 		}
-		key := ngmodels.GetNamespaceKey(folder.ParentUID, folder.Title)
-		// nolint:staticcheck
-		result[key] = append(result[key], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords))
+		result[folder.Fullpath] = append(result[folder.Fullpath], toGettableRuleGroupConfig(groupKey.RuleGroup, rules, provenanceRecords))
 	}
 	return response.JSON(http.StatusOK, result)
 }
@@ -253,6 +249,10 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 	namespace, err := srv.store.GetNamespaceByUID(c.Req.Context(), namespaceUID, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return toNamespaceErrorResponse(err)
+	}
+
+	if err := srv.checkGroupLimits(ruleGroupConfig); err != nil {
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
 
 	rules, err := validateRuleGroup(&ruleGroupConfig, c.SignedInUser.GetOrgID(), namespace, srv.cfg)
@@ -267,6 +267,18 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 	}
 
 	return srv.updateAlertRulesInGroup(c, groupKey, rules)
+}
+
+func (srv RulerSrv) checkGroupLimits(group apimodels.PostableRuleGroupConfig) error {
+	if srv.cfg.RulesPerRuleGroupLimit > 0 && int64(len(group.Rules)) > srv.cfg.RulesPerRuleGroupLimit {
+		srv.log.Warn("Large rule group was edited. Large groups are discouraged and may be rejected in the future.",
+			"limit", srv.cfg.RulesPerRuleGroupLimit,
+			"actual", len(group.Rules),
+			"group", group.Name,
+		)
+	}
+
+	return nil
 }
 
 // updateAlertRulesInGroup calculates changes (rules to add,update,delete), verifies that the user is authorized to do the calculated changes and updates database.

@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 var (
@@ -33,6 +34,10 @@ var (
 	twoNotificationsConfig       = "./testdata/test-configs/two-notifications"
 	unknownNotifier              = "./testdata/test-configs/unknown-notifier"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestNotificationAsConfig(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
