@@ -109,6 +109,6 @@ When this query is used as the **condition** in an alert rule, then the non-zero
 
 {{% docs/reference %}}
 
-[set-up-grafana-monitoring]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring"
-[set-up-grafana-monitoring]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/set-up-grafana-monitoring"
+[set-up-grafana-monitoring]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring"
+[set-up-grafana-monitoring]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring"
 {{% /docs/reference %}}

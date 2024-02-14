@@ -1,7 +1,9 @@
 import { MultiValueVariable, sceneGraph } from '@grafana/scenes';
 
+import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { findVizPanelByKey } from '../utils/utils';
 
 import { getSaveDashboardChange } from './getSaveDashboardChange';
 
@@ -59,15 +61,42 @@ describe('getSaveDashboardChange', () => {
     expect(result.hasChanges).toBe(true);
     expect(result.diffCount).toBe(2);
   });
+
+  describe('Saving from panel edit', () => {
+    it('Should commit panel edit changes', () => {
+      const dashboard = setup();
+      const panel = findVizPanelByKey(dashboard, 'panel-1')!;
+      const editScene = buildPanelEditScene(panel);
+
+      dashboard.onEnterEditMode();
+      dashboard.setState({ editPanel: editScene });
+
+      editScene.state.vizManager.state.panel.setState({ title: 'changed title' });
+
+      const result = getSaveDashboardChange(dashboard, false, true);
+      const panelSaveModel = result.changedSaveModel.panels![0];
+      expect(panelSaveModel.title).toBe('changed title');
+    });
+  });
 });
 
-function setup() {
+interface ScenarioOptions {
+  fromPanelEdit?: boolean;
+}
+
+function setup(options: ScenarioOptions = {}) {
   const dashboard = transformSaveModelToScene({
     dashboard: {
       title: 'hello',
       uid: 'my-uid',
       schemaVersion: 30,
-      panels: [],
+      panels: [
+        {
+          id: 1,
+          title: 'Panel 1',
+          type: 'text',
+        },
+      ],
       version: 10,
       templating: {
         list: [
