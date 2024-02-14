@@ -87,8 +87,7 @@ export interface ContextFilter {
   enabled: boolean;
   label: string;
   value: string;
-  fromParser: boolean;
-  description?: string;
+  nonIndexed: boolean;
 }
 
 export interface ParserAndLabelKeysResult {
