@@ -127,30 +127,34 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     }
 
     return (
-      <div className={styles.box}>
-        {isVizPickerOpen && (
-          <PanelVizTypePicker panelManager={panelManager} onChange={model.onToggleVizPicker} data={data} />
-        )}
-        {!isVizPickerOpen && (
-          <>
-            <div className={styles.top}>
-              {!isVizPickerOpen && (
-                <Field label="Visualization">
-                  <VisualizationButton
-                    pluginId={pluginId}
-                    onOpen={model.onToggleVizPicker}
-                    isOpen={isVizPickerOpen}
-                    onTogglePane={model.onCollapsePane}
-                  />
-                </Field>
-              )}
-              <FilterInput
-                className={styles.searchOptions}
-                value={searchQuery}
-                placeholder="Search options"
-                onChange={model.onSetSearchQuery}
-              />
-              {/* {!isSearching && (
+      <div className={styles.pane}>
+        <div className={styles.searchWrapper}>
+          <FilterInput
+            className={styles.searchOptions}
+            value={searchQuery}
+            placeholder="Search options"
+            onChange={model.onSetSearchQuery}
+          />
+        </div>
+        <div className={styles.box}>
+          {isVizPickerOpen && (
+            <PanelVizTypePicker panelManager={panelManager} onChange={model.onToggleVizPicker} data={data} />
+          )}
+          {!isVizPickerOpen && (
+            <>
+              <div className={styles.top}>
+                {!isVizPickerOpen && (
+                  <Field label="Visualization" className={styles.vizField}>
+                    <VisualizationButton
+                      pluginId={pluginId}
+                      onOpen={model.onToggleVizPicker}
+                      isOpen={isVizPickerOpen}
+                      onTogglePane={model.onCollapsePane}
+                    />
+                  </Field>
+                )}
+
+                {/* {!isSearching && (
                 <RadioButtonGroup
                   options={[
                     { label: 'All', value: OptionFilter.All },
@@ -161,10 +165,11 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                   fullWidth
                 ></RadioButtonGroup>
               )} */}
-            </div>
-            <div className={styles.mainBox}>{mainBoxElements}</div>
-          </>
-        )}
+              </div>
+              <div className={styles.mainBox}>{mainBoxElements}</div>
+            </>
+          )}
+        </div>
       </div>
     );
   };
@@ -172,6 +177,11 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    pane: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: '1',
+    }),
     box: css({
       display: 'flex',
       flexDirection: 'column',
@@ -179,11 +189,12 @@ function getStyles(theme: GrafanaTheme2) {
       background: theme.colors.background.primary,
       overflow: 'hidden',
       borderLeft: `1px solid ${theme.colors.border.weak}`,
+      borderTop: `1px solid ${theme.colors.border.weak}`,
     }),
     top: css({
       display: 'flex',
       flexDirection: 'column',
-      padding: theme.spacing(2, 1),
+      padding: theme.spacing(1),
       gap: theme.spacing(1),
     }),
     mainBox: css({
@@ -193,6 +204,12 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     searchOptions: css({
       minHeight: theme.spacing(4),
+    }),
+    searchWrapper: css({
+      padding: theme.spacing(2, 2, 2, 0),
+    }),
+    vizField: css({
+      marginBottom: theme.spacing(1),
     }),
   };
 }
