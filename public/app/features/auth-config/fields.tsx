@@ -2,17 +2,20 @@ import React from 'react';
 import { validate as uuidValidate } from 'uuid';
 
 import { TextLink } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 
 import { FieldData, SSOProvider, SSOSettingsField } from './types';
 import { isSelectableValue } from './utils/guards';
+import { isUrlValid } from './utils/url';
 
 /** Map providers to their settings */
 export const fields: Record<SSOProvider['provider'], Array<keyof SSOProvider['settings']>> = {
-  github: ['clientId', 'clientSecret', 'teamIds', 'allowedOrganizations'],
-  google: ['clientId', 'clientSecret', 'allowedDomains'],
-  gitlab: ['clientId', 'clientSecret', 'allowedOrganizations', 'teamIds'],
-  azuread: ['clientId', 'clientSecret', 'authUrl', 'tokenUrl', 'scopes', 'allowedGroups', 'allowedDomains'],
+  github: ['name', 'clientId', 'clientSecret', 'teamIds', 'allowedOrganizations'],
+  google: ['name', 'clientId', 'clientSecret', 'allowedDomains'],
+  gitlab: ['name', 'clientId', 'clientSecret', 'allowedOrganizations', 'teamIds'],
+  azuread: ['name', 'clientId', 'clientSecret', 'authUrl', 'tokenUrl', 'scopes', 'allowedGroups', 'allowedDomains'],
   okta: [
+    'name',
     'clientId',
     'clientSecret',
     'authUrl',
@@ -137,7 +140,11 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'text',
       description: 'The authorization endpoint of your OAuth2 provider.',
       validation: {
-        required: false,
+        required: true,
+        validate: (value) => {
+          return isUrlValid(value);
+        },
+        message: 'This field is required and must be a valid URL.',
       },
     },
     authStyle: {
@@ -150,14 +157,18 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         { value: 'InParams', label: 'InParams' },
         { value: 'InHeader', label: 'InHeader' },
       ],
-      defaultValue: 'AutoDetect',
+      defaultValue: { value: 'AutoDetect', label: 'AutoDetect' },
     },
     tokenUrl: {
       label: 'Token URL',
       type: 'text',
       description: 'The token endpoint of your OAuth2 provider.',
       validation: {
-        required: false,
+        required: true,
+        validate: (value) => {
+          return isUrlValid(value);
+        },
+        message: 'This field is required and must be a valid URL.',
       },
     },
     scopes: {
@@ -171,10 +182,13 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     allowedGroups: {
       label: 'Allowed groups',
       type: 'select',
-      description:
-        'List of comma- or space-separated groups. The user should be a member of \n' +
-        'at least one group to log in. If you configure allowed_groups, you must also configure \n' +
-        'groups_attribute_path.',
+      description: (
+        <>
+          List of comma- or space-separated groups. The user should be a member of at least one group to log in.{' '}
+          {provider === 'generic_oauth' &&
+            'If you configure allowed_groups, you must also configure groups_attribute_path.'}
+        </>
+      ),
       multi: true,
       allowCustomValue: true,
       options: [],
@@ -209,6 +223,18 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
       validation: {
         required: false,
+        validate: (value) => {
+          if (typeof value !== 'string') {
+            return false;
+          }
+
+          if (value.length) {
+            return isUrlValid(value);
+          }
+
+          return true;
+        },
+        message: 'This field must be a valid URL if set.',
       },
     },
     roleAttributePath: {
@@ -221,7 +247,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     },
     name: {
       label: 'Display name',
-      description: 'Helpful if you use more than one identity providers or SSO protocols.',
+      description:
+        'Will be displayed on the login page as "Sign in with ...". Helpful if you use more than one identity providers or SSO protocols.',
       type: 'text',
     },
     allowSignUp: {
@@ -278,6 +305,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       label: 'Allow assign Grafana admin',
       description: 'If enabled, it will automatically sync the Grafana server administrator role.',
       type: 'switch',
+      hidden: !contextSrv.isGrafanaAdmin,
     },
     skipOrgRoleSync: {
       label: 'Skip organization role sync',
@@ -313,17 +341,17 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     },
     tlsClientCa: {
       label: 'TLS client ca',
-      description: 'The path to the trusted certificate authority list. Is not applicable on Grafana Cloud.',
+      description: 'The file path to the trusted certificate authority list. Is not applicable on Grafana Cloud.',
       type: 'text',
     },
     tlsClientCert: {
       label: 'TLS client cert',
-      description: 'The path to the certificate. Is not applicable on Grafana Cloud.',
+      description: 'The file path to the certificate. Is not applicable on Grafana Cloud.',
       type: 'text',
     },
     tlsClientKey: {
       label: 'TLS client key',
-      description: 'The path to the key. Is not applicable on Grafana Cloud.',
+      description: 'The file path to the key. Is not applicable on Grafana Cloud.',
       type: 'text',
     },
     tlsSkipVerifyInsecure: {
@@ -343,18 +371,27 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     },
     teamsUrl: {
       label: 'Teams URL',
-      description:
-        'The URL used to query for Team Ids. If not set, the default value is /teams. \n' +
-        'If you configure teams_url, you must also configure team_ids_attribute_path.',
+      description: (
+        <>
+          The URL used to query for Team Ids. If not set, the default value is /teams.{' '}
+          {provider === 'generic_oauth' &&
+            'If you configure teams_url, you must also configure team_ids_attribute_path.'}
+        </>
+      ),
       type: 'text',
       validation: {
         validate: (value, formValues) => {
+          let result = true;
           if (formValues.teamIds.length) {
-            return !!value;
+            result = !!value;
           }
-          return true;
+
+          if (typeof value === 'string' && value.length) {
+            result = isUrlValid(value);
+          }
+          return result;
         },
-        message: 'This field must be set if Team Ids are configured.',
+        message: 'This field must be set if Team Ids are configured and must be a valid URL.',
       },
     },
     teamIdsAttributePath: {
@@ -375,9 +412,14 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     teamIds: {
       label: 'Team Ids',
       type: 'select',
-      description:
-        'String list of Team Ids. If set, the user must be a member of one of the given teams to log in. \n' +
-        'If you configure team_ids, you must also configure teams_url and team_ids_attribute_path.',
+      description: (
+        <>
+          {provider === 'github' ? 'Integer' : 'String'} list of Team Ids. If set, the user must be a member of one of
+          the given teams to log in.{' '}
+          {provider === 'generic_oauth' &&
+            'If you configure team_ids, you must also configure teams_url and team_ids_attribute_path.'}
+        </>
+      ),
       multi: true,
       allowCustomValue: true,
       options: [],
