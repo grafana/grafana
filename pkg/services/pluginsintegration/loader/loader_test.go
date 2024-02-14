@@ -414,8 +414,8 @@ func TestLoader_Load(t *testing.T) {
 								{Name: "License & Terms", URL: "http://license.com"},
 							},
 							Logos: plugins.Logos{
-								Small: "/public/img/icn-app.svg",
-								Large: "/public/img/icn-app.svg",
+								Small: "public/img/icn-app.svg",
+								Large: "public/img/icn-app.svg",
 							},
 							Updated:  "2015-02-10",
 							Keywords: []string{"test"},
@@ -428,9 +428,6 @@ func TestLoader_Load(t *testing.T) {
 						Includes: []*plugins.Includes{
 							{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Slug: "nginx-memory"},
 							{Name: "Root Page (react)", Type: "page", Role: org.RoleViewer, Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
-						Logos: plugins.Logos{
-							Small: "public/img/icn-app.svg",
-							Large: "public/img/icn-app.svg",
 						},
 						Backend: false,
 					},
@@ -522,44 +519,32 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 		}
 		pluginPaths := []string{filepath.Join(testDataDir(t), "oauth-external-registration")}
 		expected := []*plugins.Plugin{
-			{
-				JSONData: plugins.JSONData{
-					ID:         "grafana-test-datasource",
-					Type:       plugins.TypeDataSource,
-					Name:       "Test",
-					Backend:    true,
-					Executable: "gpx_test_datasource",
-					Info: plugins.Info{
-						Author: plugins.InfoLink{
-							Name: "Grafana Labs",
-							URL:  "https://grafana.com",
-						},
-						Version: "1.0.0",
-						Logos: plugins.Logos{
-							Small: "/public/plugins/grafana-test-datasource/img/ds.svg",
-							Large: "/public/plugins/grafana-test-datasource/img/ds.svg",
-						},
-						Updated:     "2023-08-03",
-						Screenshots: []plugins.Screenshots{},
+			{JSONData: plugins.JSONData{
+				ID:         "grafana-test-datasource",
+				Type:       plugins.TypeDataSource,
+				Name:       "Test",
+				Backend:    true,
+				Executable: "gpx_test_datasource",
+				Info: plugins.Info{
+					Author: plugins.InfoLink{
+						Name: "Grafana Labs",
+						URL:  "https://grafana.com",
 					},
-					Dependencies: plugins.Dependencies{
-						GrafanaVersion: "*",
-						Plugins:        []plugins.Dependency{},
 					Version: "1.0.0",
 					Logos: plugins.Logos{
 						Small: "public/plugins/grafana-test-datasource/img/ds.svg",
 						Large: "public/plugins/grafana-test-datasource/img/ds.svg",
 					},
-					IAM: &plugindef.IAM{
-						Impersonation: &plugindef.Impersonation{
-							Groups: boolPtr(true),
-							Permissions: []plugindef.Permission{
-								{
-									Action: "read",
-									Scope:  stringPtr("datasource"),
-								},
-							},
-						},
+					Updated:     "2023-08-03",
+					Screenshots: []plugins.Screenshots{},
+				},
+				Dependencies: plugins.Dependencies{
+					GrafanaVersion: "*",
+					Plugins:        []plugins.Dependency{},
+				},
+				IAM: &plugindef.IAM{
+					Impersonation: &plugindef.Impersonation{
+						Groups: boolPtr(true),
 						Permissions: []plugindef.Permission{
 							{
 								Action: "read",
@@ -567,7 +552,14 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 							},
 						},
 					},
+					Permissions: []plugindef.Permission{
+						{
+							Action: "read",
+							Scope:  stringPtr("datasource"),
+						},
+					},
 				},
+			},
 				FS:        mustNewStaticFSForTests(t, pluginPaths[0]),
 				Class:     plugins.ClassExternal,
 				Signature: plugins.SignatureStatusUnsigned,
@@ -645,8 +637,8 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 						},
 						Version: "1.0.0",
 						Logos: plugins.Logos{
-							Small: "/public/plugins/grafana-test-datasource/img/ds.svg",
-							Large: "/public/plugins/grafana-test-datasource/img/ds.svg",
+							Small: "public/plugins/grafana-test-datasource/img/ds.svg",
+							Large: "public/plugins/grafana-test-datasource/img/ds.svg",
 						},
 						Updated:     "2023-08-03",
 						Screenshots: []plugins.Screenshots{},
@@ -654,10 +646,6 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 					Dependencies: plugins.Dependencies{
 						GrafanaVersion: "*",
 						Plugins:        []plugins.Dependency{},
-					Version: "1.0.0",
-					Logos: plugins.Logos{
-						Small: "public/plugins/grafana-test-datasource/img/ds.svg",
-						Large: "public/plugins/grafana-test-datasource/img/ds.svg",
 					},
 					IAM: &plugindef.IAM{
 						Permissions: []plugindef.Permission{
