@@ -20,29 +20,21 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
   return (
     <>
       <NavToolbarActions dashboard={dashboard} />
-      <div className={styles.canvasContent}>
-        {controls && (
-          <div className={styles.controls}>
-            {controls.map((control) => (
-              <control.Component key={control.state.key} model={control} />
-            ))}
-            {!optionsPane && (
-              <VisualizationButton
-                pluginId={vizManager.state.panel.state.pluginId}
-                onOpen={() => model.toggleOptionsPane(true)}
-                isOpen={false}
-                onTogglePane={() => model.toggleOptionsPane()}
-              />
-            )}
-          </div>
-        )}
+      <Splitter
+        direction="row"
+        dragPosition="end"
+        initialSize={0.75}
+        primaryPaneStyles={{ paddingBottom: !dataPane ? 16 : 0 }}
+      >
         <div className={styles.body}>
-          <Splitter
-            direction="row"
-            dragPosition="end"
-            initialSize={0.75}
-            primaryPaneStyles={{ paddingBottom: !dataPane ? 16 : 0 }}
-          >
+          <div className={styles.canvasContent}>
+            {controls && (
+              <div className={styles.controls}>
+                {controls.map((control) => (
+                  <control.Component key={control.state.key} model={control} />
+                ))}
+              </div>
+            )}
             <Splitter
               direction="column"
               primaryPaneStyles={{ minHeight: 0, paddingRight: !optionsPane ? 16 : 0 }}
@@ -52,10 +44,10 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
               <vizManager.Component model={vizManager} />
               {dataPane && <dataPane.Component model={dataPane} />}
             </Splitter>
-            {optionsPane && <optionsPane.Component model={optionsPane} />}
-          </Splitter>
+          </div>
         </div>
-      </div>
+        {optionsPane && <optionsPane.Component model={optionsPane} />}
+      </Splitter>
     </>
   );
 }
@@ -84,7 +76,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'wrap',
       alignItems: 'center',
       gap: theme.spacing(1),
-      padding: theme.spacing(2),
+      padding: theme.spacing(2, 0, 2, 2),
     }),
   };
 }

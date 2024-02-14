@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
-import { Box, ButtonGroup, FilterInput, RadioButtonGroup, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Box, ButtonGroup, Field, FilterInput, RadioButtonGroup, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { OptionFilter, RenderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
 import { getPanelFrameCategory2 } from 'app/features/dashboard/components/PanelEditor/getPanelFrameOptions';
@@ -128,29 +128,29 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 
     return (
       <div className={styles.box}>
-        {!isVizPickerOpen && (
-          <Box paddingX={1} paddingTop={1}>
-            <VisualizationButton
-              pluginId={pluginId}
-              onOpen={model.onToggleVizPicker}
-              isOpen={isVizPickerOpen}
-              onTogglePane={model.onCollapsePane}
-            />
-          </Box>
-        )}
         {isVizPickerOpen && (
           <PanelVizTypePicker panelManager={panelManager} onChange={model.onToggleVizPicker} data={data} />
         )}
         {!isVizPickerOpen && (
           <>
             <div className={styles.top}>
+              {!isVizPickerOpen && (
+                <Field label="Visualization">
+                  <VisualizationButton
+                    pluginId={pluginId}
+                    onOpen={model.onToggleVizPicker}
+                    isOpen={isVizPickerOpen}
+                    onTogglePane={model.onCollapsePane}
+                  />
+                </Field>
+              )}
               <FilterInput
                 className={styles.searchOptions}
                 value={searchQuery}
                 placeholder="Search options"
                 onChange={model.onSetSearchQuery}
               />
-              {!isSearching && (
+              {/* {!isSearching && (
                 <RadioButtonGroup
                   options={[
                     { label: 'All', value: OptionFilter.All },
@@ -160,7 +160,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                   onChange={model.onSetListMode}
                   fullWidth
                 ></RadioButtonGroup>
-              )}
+              )} */}
             </div>
             <div className={styles.mainBox}>{mainBoxElements}</div>
           </>
@@ -178,14 +178,12 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: '1',
       background: theme.colors.background.primary,
       overflow: 'hidden',
-      border: `1px solid ${theme.colors.border.weak}`,
-      borderBottom: 'none',
-      borderTopLeftRadius: theme.shape.radius.default,
+      borderLeft: `1px solid ${theme.colors.border.weak}`,
     }),
     top: css({
       display: 'flex',
       flexDirection: 'column',
-      padding: theme.spacing(1),
+      padding: theme.spacing(2, 1),
       gap: theme.spacing(1),
     }),
     mainBox: css({
@@ -222,18 +220,19 @@ export function VisualizationButton({ pluginId, onOpen, isOpen, onTogglePane }: 
           data-testid={selectors.components.PanelEditor.toggleVizPicker}
           aria-label="Change Visualization"
           variant="canvas"
+          isOpen={false}
           fullWidth
         >
           {pluginMeta.name}
         </ToolbarButton>
-        <ToolbarButton
+        {/* <ToolbarButton
           tooltip={isOpen ? 'Close options pane' : 'Show options pane'}
           icon={isOpen ? 'angle-right' : 'angle-left'}
           onClick={onTogglePane}
           variant="canvas"
           data-testid={selectors.components.PanelEditor.toggleVizOptions}
           aria-label={isOpen ? 'Close options pane' : 'Show options pane'}
-        />
+        /> */}
       </ButtonGroup>
     </div>
   );
