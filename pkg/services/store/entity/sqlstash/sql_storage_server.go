@@ -85,19 +85,7 @@ func (s *sqlEntityServer) Init() error {
 		stream := make(chan *entity.Entity)
 
 		// start the poller
-		go func() {
-			since := s.snowflake.Generate().Int64()
-
-			t := time.NewTicker(5 * time.Second)
-			defer t.Stop()
-
-			for range t.C {
-				since, err = s.poll(context.Background(), since, stream)
-				if err != nil {
-					s.log.Error("watch error", "err", err)
-				}
-			}
-		}()
+		go s.poller(stream)
 
 		return stream, nil
 	})
@@ -1358,6 +1346,21 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 	}
 
 	return nil
+}
+
+func (s *sqlEntityServer) poller(stream chan *entity.Entity) {
+	var err error
+	since := s.snowflake.Generate().Int64()
+
+	t := time.NewTicker(5 * time.Second)
+	defer t.Stop()
+
+	for range t.C {
+		since, err = s.poll(context.Background(), since, stream)
+		if err != nil {
+			s.log.Error("watch error", "err", err)
+		}
+	}
 }
 
 func (s *sqlEntityServer) poll(ctx context.Context, since int64, out chan *entity.Entity) (int64, error) {
