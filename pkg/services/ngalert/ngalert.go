@@ -277,6 +277,7 @@ func (ng *AlertNG) init() error {
 		MinRuleInterval:      ng.Cfg.UnifiedAlerting.MinInterval,
 		DisableGrafanaFolder: disableGrafanaFolder,
 		JitterEvaluations:    schedule.JitterStrategyFrom(ng.Cfg.UnifiedAlerting, ng.FeatureToggles),
+		FetchAsync:           ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertingFetchRulesAsync),
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
 		RuleStore:            ng.store,
@@ -449,9 +450,11 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		// Make sure we've at least tried to load rules before the scheduler starts.
 		ng.fetcher.Refresh(ctx)
 
-		children.Go(func() error {
-			return ng.fetcher.Run(subCtx)
-		})
+		if ng.FeatureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingFetchRulesAsync) {
+			children.Go(func() error {
+				return ng.fetcher.Run(subCtx)
+			})
+		}
 		children.Go(func() error {
 			return ng.schedule.Run(subCtx)
 		})
