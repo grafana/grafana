@@ -29,6 +29,17 @@ const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototyp
 // the content of the plugin code at runtime which can only be done with fetch/eval.
 systemJSPrototype.shouldFetch = () => true;
 
+const originalImport = systemJSPrototype.import;
+
+systemJSPrototype.import = function (...args: Parameters<typeof originalImport>) {
+  return originalImport.apply(this, args).then((module) => {
+    if (module && module.__useDefault) {
+      return module.default;
+    }
+    return module;
+  });
+};
+
 const systemJSFetch = systemJSPrototype.fetch;
 systemJSPrototype.fetch = function (url: string, options?: Record<string, unknown>) {
   return decorateSystemJSFetch(systemJSFetch, url, options);
@@ -74,15 +85,7 @@ export async function importPluginModule({
     return importPluginModuleInSandbox({ pluginId });
   }
 
-  let mod = await SystemJS.import(modulePath);
-  let attempts = 0;
-  // While the module's default export is a promise, wait for it to resolve.
-  // Do we need to recurse here? It seems unlikely that a module would return a promise that resolves to another promise.
-  while (!('plugin' in mod) && 'default' in mod && attempts < 5) {
-    mod = Promise.resolve(mod.default);
-    attempts++;
-  }
-  return mod;
+  return SystemJS.import(modulePath);
 }
 
 export function importDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
