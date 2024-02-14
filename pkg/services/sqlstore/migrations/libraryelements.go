@@ -67,4 +67,6 @@ func addLibraryElementsMigrations(mg *migrator.Migrator) {
 	}))
 
 	mg.AddMigration("populate library_element folder_uid", migrator.NewRawSQLMigration("UPDATE library_element SET folder_uid = (SELECT uid FROM dashboard WHERE id = library_element.folder_id)"))
+
+	mg.AddMigration("add index library_element org_id-folder_uid-name-kind", migrator.NewAddIndexMigration(libraryElementsV1, &migrator.Index{Cols: []string{"org_id", "folder_uid", "name", "kind"}, Type: migrator.UniqueIndex}))
 }
