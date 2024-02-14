@@ -168,7 +168,7 @@ func (c TestContext) createUser(cmd user.CreateUserCommand) User {
 
 	return User{
 		User:     *user,
-		password: cmd.Password,
+		password: string(user.Password),
 	}
 }
 
