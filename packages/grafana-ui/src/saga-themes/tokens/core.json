@@ -364,7 +364,7 @@
   "border": {
     "borderRadius": {
       "default": {
-        "value": "2px",
+        "value": "{dimension.scale} *0.25",
         "type": "borderRadius",
         "description": "Standard Corner Radius used throughout Grafana."
       },
@@ -855,43 +855,67 @@
   },
   "shadow": {
     "z1": {
-      "value": [
+      "value": {
+        "color": "#010409bf",
+        "type": "dropShadow",
+        "x": 0,
+        "y": 1,
+        "blur": 2,
+        "spread": 0
+      },
+      "type": "boxShadow",
+      "oldValue": [
         {
           "x": "0px",
           "y": "1px",
           "blur": "2px",
           "spread": "0px",
-          "color": "rgba( {color.gray.1400} ,1)",
+          "color": "rgba( {color.gray.1400} ,0.75)",
           "type": "dropShadow"
         }
-      ],
-      "type": "boxShadow"
+      ]
     },
     "z2": {
-      "value": [
+      "value": {
+        "color": "#010409bf",
+        "type": "dropShadow",
+        "x": 0,
+        "y": 4,
+        "blur": 8,
+        "spread": 0
+      },
+      "type": "boxShadow",
+      "oldValue": [
         {
           "x": "0px",
           "y": "4px",
           "blur": "8px",
           "spread": "0px",
-          "color": "rgba( {color.gray.1400} ,1)",
+          "color": "rgba( {color.gray.1400} ,0.75)",
           "type": "dropShadow"
         }
-      ],
-      "type": "boxShadow"
+      ]
     },
     "z3": {
-      "value": [
+      "value": {
+        "color": "#010409",
+        "type": "dropShadow",
+        "x": 0,
+        "y": 8,
+        "blur": 24,
+        "spread": 0
+      },
+      "type": "boxShadow",
+      "oldValue": [
         {
           "x": "0px",
           "y": "8px",
           "blur": "24px",
           "spread": "0px",
-          "color": "rgba( {color.gray.1400} ,1)",
+          "color": "rgb( {color.gray.1400} )",
           "type": "dropShadow"
         }
-      ],
-      "type": "boxShadow"
+      ]
     }
   },
   "boder": {
