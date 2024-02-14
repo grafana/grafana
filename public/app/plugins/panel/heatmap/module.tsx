@@ -429,6 +429,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       settings: {
         integer: true,
       },
+      showIf: (options) => config.featureToggles.newVizTooltips && options.tooltip?.mode !== TooltipDisplayMode.None,
     });
 
     builder.addNumberInput({
@@ -438,6 +439,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       settings: {
         integer: true,
       },
+      showIf: (options) => config.featureToggles.newVizTooltips && options.tooltip?.mode !== TooltipDisplayMode.None,
     });
 
     category = ['Legend'];

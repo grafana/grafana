@@ -24,12 +24,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
 	TESTDATA_UID = "testdata"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestGrafanaRuleConfig(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -50,6 +55,8 @@ func TestGrafanaRuleConfig(t *testing.T) {
 	})
 
 	apiCli := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+
+	apiCli.CreateFolder(t, "NamespaceUID", "NamespaceTitle")
 
 	dsCmd := &datasources.AddDataSourceCommand{
 		Name:   "TestDatasource",

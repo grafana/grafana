@@ -33,6 +33,11 @@ export interface FeatureToggles {
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   autoMigrateOldPanels?: boolean;
+  autoMigrateGraphPanel?: boolean;
+  autoMigrateTablePanel?: boolean;
+  autoMigratePiechartPanel?: boolean;
+  autoMigrateWorldmapPanel?: boolean;
+  autoMigrateStatPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
   newVizTooltips?: boolean;
@@ -145,6 +150,7 @@ export interface FeatureToggles {
   annotationPermissionUpdate?: boolean;
   extractFieldsNameDeduplication?: boolean;
   dashboardSceneForViewers?: boolean;
+  dashboardSceneSolo?: boolean;
   dashboardScene?: boolean;
   panelFilterVariable?: boolean;
   pdfTables?: boolean;
@@ -167,10 +173,13 @@ export interface FeatureToggles {
   cloudRBACRoles?: boolean;
   alertingQueryOptimization?: boolean;
   newFolderPicker?: boolean;
-  jitterAlertRules?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
   alertingSaveStatePeriodic?: boolean;
   promQLScope?: boolean;
   nodeGraphDotLayout?: boolean;
+  groupToNestedTableTransformation?: boolean;
+  newPDFRendering?: boolean;
+  kubernetesAggregator?: boolean;
+  groupByVariable?: boolean;
 }

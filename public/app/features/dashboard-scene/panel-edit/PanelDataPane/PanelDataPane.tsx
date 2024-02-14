@@ -51,6 +51,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   constructor(panelMgr: VizPanelManager) {
     super({
       tab: TabId.Queries,
+      tabs: [],
     });
 
     this.panelManager = panelMgr;
@@ -97,6 +98,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   private buildTabs() {
     const panelManager = this.panelManager;
     const panel = panelManager.state.panel;
+
     const runner = this.panelManager.queryRunner;
     const tabs: PanelDataPaneTab[] = [];
 
@@ -104,7 +106,6 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
       const plugin = panel.getPlugin();
 
       if (!plugin) {
-        this.setState({ tabs });
         return;
       }
 
@@ -143,7 +144,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const currentTab = tabs.find((t) => t.tabId === tab);
 
   return (
-    <>
+    <div className={styles.dataPane}>
       <TabsBar hideBorder={true} className={styles.tabsBar}>
         {tabs.map((t, index) => {
           return (
@@ -160,12 +161,19 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
           <Container>{currentTab && <currentTab.Component model={currentTab} />}</Container>
         </TabContent>
       </CustomScrollbar>
-    </>
+    </div>
   );
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    dataPane: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+      minHeight: 0,
+      height: '100%',
+    }),
     tabContent: css({
       padding: theme.spacing(2),
       border: `1px solid ${theme.colors.border.weak}`,
@@ -176,6 +184,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     tabsBar: css({
       flexShrink: 0,
+      paddingLeft: theme.spacing(2),
     }),
     scroll: css({
       background: theme.colors.background.primary,
