@@ -127,6 +127,8 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 		{format: "table", name: "types_other"},
 		{format: "table", name: "timestamp_convert_bigint"},
 		{format: "table", name: "timestamp_convert_integer"},
+		{format: "table", name: "timestamp_convert_real"},
+		{format: "table", name: "timestamp_convert_double"},
 	}
 
 	for _, test := range tt {
@@ -137,8 +139,8 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 				sqleng.Interpolate = origInterpolate
 			})
 
-			sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
-				return sql, nil
+			sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) string {
+				return sql
 			}
 
 			cfg := setting.NewCfg()
@@ -162,7 +164,7 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 
 			cnnstr := getCnnStr()
 
-			db, handler, err := newPostgres(cfg, dsInfo, cnnstr, logger)
+			db, handler, err := newPostgres(cfg, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
 
 			t.Cleanup((func() {
 				_, err := db.Exec("DROP TABLE tbl")

@@ -459,7 +459,7 @@ export class ElementState implements LayerElement {
 
   handleMouseEnter = (event: React.MouseEvent, isSelected: boolean | undefined) => {
     const scene = this.getScene();
-    if (!scene?.isEditingEnabled) {
+    if (!scene?.isEditingEnabled && !scene?.tooltip?.isOpen) {
       this.handleTooltip(event);
     } else if (!isSelected) {
       scene?.connections.handleMouseEnter(event);

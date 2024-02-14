@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
-import { getAppEvents, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { getAppEvents, getBackendSrv, isFetchError, locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Button, CollapsableSection, ConfirmModal, Field, LinkButton, Stack, Switch } from '@grafana/ui';
 
 import { FormPrompt } from '../../core/components/FormPrompt/FormPrompt';
@@ -31,7 +31,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
     setValue,
     unregister,
     formState: { errors, dirtyFields, isSubmitted },
-  } = useForm({ defaultValues: dataToDTO(config), mode: 'onChange', reValidateMode: 'onChange' });
+  } = useForm({ defaultValues: dataToDTO(config), mode: 'onSubmit', reValidateMode: 'onChange' });
   const [isSaving, setIsSaving] = useState(false);
   const providerFields = fields[provider];
   const [submitError, setSubmitError] = useState(false);
@@ -44,10 +44,21 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
     setSubmitError(false);
     const requestData = dtoToData(data, provider);
     try {
-      await getBackendSrv().put(`/api/v1/sso-settings/${provider}`, {
-        id: config?.id,
-        provider: config?.provider,
-        settings: { ...requestData },
+      await getBackendSrv().put(
+        `/api/v1/sso-settings/${provider}`,
+        {
+          id: config?.id,
+          provider: config?.provider,
+          settings: { ...requestData },
+        },
+        {
+          showErrorAlert: false,
+        }
+      );
+
+      reportInteraction('grafana_authentication_ssosettings_saved', {
+        provider,
+        enabled: requestData.enabled,
       });
 
       appEvents.publish({
@@ -71,14 +82,17 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
         payload: [message],
       });
       setSubmitError(true);
-    } finally {
       setIsSaving(false);
     }
   };
 
   const onResetConfig = async () => {
     try {
-      await getBackendSrv().delete(`/api/v1/sso-settings/${provider}`);
+      await getBackendSrv().delete(`/api/v1/sso-settings/${provider}`, undefined, { showSuccessAlert: false });
+      reportInteraction('grafana_authentication_ssosettings_removed', {
+        provider,
+      });
+
       appEvents.publish({
         type: AppEvents.alertSuccess.name,
         payload: ['Settings reset to defaults'],
@@ -107,6 +121,9 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
           <FormPrompt
             confirmRedirect={!!Object.keys(dirtyFields).length && !dataSubmitted}
             onDiscard={() => {
+              reportInteraction('grafana_authentication_ssosettings_abandoned', {
+                provider,
+              });
               reset();
             }}
           />
@@ -133,6 +150,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
                               register={register}
                               watch={watch}
                               unregister={unregister}
+                              provider={provider}
                               secretConfigured={!!config?.settings.clientSecret}
                             />
                           );
@@ -154,6 +172,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
                     register={register}
                     watch={watch}
                     unregister={unregister}
+                    provider={provider}
                     secretConfigured={!!config?.settings.clientSecret}
                   />
                 );
@@ -162,7 +181,9 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
           )}
           <Box display={'flex'} gap={2} marginTop={6}>
             <Field>
-              <Button type={'submit'}>{isSaving ? 'Saving...' : 'Save'}</Button>
+              <Button type={'submit'} disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Save'}
+              </Button>
             </Field>
             <Field>
               <LinkButton href={'/admin/authentication'} variant={'secondary'}>
@@ -172,6 +193,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
             <Field>
               <Button
                 variant={'secondary'}
+                hidden={config?.source === 'system'}
                 onClick={(event) => {
                   setResetConfig(true);
                 }}

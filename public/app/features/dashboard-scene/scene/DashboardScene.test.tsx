@@ -57,7 +57,7 @@ describe('DashboardScene', () => {
 
         expect(scene.state.isDirty).toBe(true);
 
-        scene.onDiscard();
+        scene.exitEditMode({ skipConfirm: true });
         const gridItem2 = sceneGraph.findObject(scene, (p) => p.state.key === 'griditem-1') as SceneGridItem;
         expect(gridItem2.state.x).toBe(0);
       });
@@ -77,7 +77,7 @@ describe('DashboardScene', () => {
 
           expect(scene.state.isDirty).toBe(true);
 
-          scene.onDiscard();
+          scene.exitEditMode({ skipConfirm: true });
           expect(scene.state[prop]).toEqual(prevState);
         }
       );
@@ -89,7 +89,7 @@ describe('DashboardScene', () => {
 
         expect(scene.state.isDirty).toBe(true);
 
-        scene.onDiscard();
+        scene.exitEditMode({ skipConfirm: true });
         expect(dashboardSceneGraph.getRefreshPicker(scene)!.state.intervals).toEqual(prevState);
       });
 
@@ -100,7 +100,7 @@ describe('DashboardScene', () => {
 
         expect(scene.state.isDirty).toBe(true);
 
-        scene.onDiscard();
+        scene.exitEditMode({ skipConfirm: true });
         expect(dashboardSceneGraph.getDashboardControls(scene)!.state.hideTimeControls).toEqual(prevState);
       });
 
@@ -111,7 +111,7 @@ describe('DashboardScene', () => {
 
         expect(scene.state.isDirty).toBe(true);
 
-        scene.onDiscard();
+        scene.exitEditMode({ skipConfirm: true });
         expect(sceneGraph.getTimeRange(scene)!.state.timeZone).toBe(prevState);
       });
     });
@@ -125,12 +125,13 @@ describe('DashboardScene', () => {
       scene.onEnterEditMode();
     });
 
-    it('Should add app, uid, and panelId', () => {
+    it('Should add app, uid, panelId and panelPluginType', () => {
       const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner')!;
       expect(scene.enrichDataRequest(queryRunner)).toEqual({
         app: CoreApp.Dashboard,
         dashboardUID: 'dash-1',
         panelId: 1,
+        panelPluginType: 'table',
       });
     });
 
