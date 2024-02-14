@@ -5,8 +5,78 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
+
+type FetcherCfg struct {
+	reloadInterval       time.Duration
+	disableGrafanaFolder bool
+}
+
+// BackgroundFetcher periodically refreshes rules and folders in the background.
+type BackgroundFetcher struct {
+	cfg                FetcherCfg
+	ticker             *time.Ticker
+	ruleStore          RulesStore
+	metrics            *metrics.Scheduler
+	logger             log.Logger
+	latestRules        []*models.AlertRule
+	latestFolderTitles map[models.FolderKey]string
+}
+
+func NewBackgroundFetcher(cfg FetcherCfg, ruleStore RulesStore, metrics *metrics.Scheduler, logger log.Logger) *BackgroundFetcher {
+	return &BackgroundFetcher{
+		cfg:                cfg,
+		ticker:             time.NewTicker(cfg.reloadInterval),
+		ruleStore:          ruleStore,
+		metrics:            metrics,
+		logger:             logger,
+		latestRules:        make([]*models.AlertRule, 0),
+		latestFolderTitles: make(map[models.FolderKey]string),
+	}
+}
+
+func (f *BackgroundFetcher) Run(ctx context.Context) {
+	for {
+		select {
+		case <-f.ticker.C:
+			f.logger.Debug("Refreshing rules from storage.")
+			f.updateSchedulableAlertRules(context.Background())
+		case <-ctx.Done():
+			f.ticker.Stop()
+			f.logger.Info("Fetcher is shut down.")
+		}
+	}
+}
+
+func (f *BackgroundFetcher) Rules() ([]*models.AlertRule, map[models.FolderKey]string) {
+	return f.latestRules, f.latestFolderTitles
+}
+
+func (f *BackgroundFetcher) updateSchedulableAlertRules(ctx context.Context) {
+	start := time.Now()
+	defer func() {
+		f.metrics.UpdateSchedulableAlertRulesDuration.Observe(
+			time.Since(start).Seconds(),
+		)
+	}()
+
+	// At this point, we know we need to re-fetch rules as there are changes.
+	q := models.GetAlertRulesForSchedulingQuery{
+		PopulateFolders: !f.cfg.disableGrafanaFolder,
+	}
+	if err := f.ruleStore.GetAlertRulesForScheduling(ctx, &q); err != nil {
+		f.logger.Error("Failed to fetch alert rules", "error", err)
+		return
+	}
+
+	f.latestRules = q.ResultRules
+	f.latestFolderTitles = q.ResultFoldersTitles
+
+	f.logger.Debug("Alert rules fetched", "rulesCount", len(f.latestRules), "foldersCount", len(f.latestFolderTitles))
+}
 
 // updateSchedulableAlertRules updates the alert rules for the scheduler.
 // It returns diff that contains rule keys that were updated since the last poll,
