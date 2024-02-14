@@ -16,12 +16,12 @@ module.exports = {
   jsx: {
     babelConfig: {
       plugins: [
-        // Remove fill attribute from SVG path elements
+        // Remove fill and id attributes from SVG child elements
         [
           '@svgr/babel-plugin-remove-jsx-attribute',
           {
-            elements: ['path'],
-            attributes: ['fill'],
+            elements: ['path', 'g', 'clipPath'],
+            attributes: ['id', 'fill'],
           },
         ],
       ],
