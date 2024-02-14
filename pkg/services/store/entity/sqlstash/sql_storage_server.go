@@ -44,11 +44,12 @@ func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (en
 }
 
 type sqlEntityServer struct {
-	log       log.Logger
-	db        db.EntityDBInterface // needed to keep xorm engine in scope
-	sess      *session.SessionDB
-	dialect   migrator.Dialect
-	snowflake *snowflake.Node
+	log         log.Logger
+	db          db.EntityDBInterface // needed to keep xorm engine in scope
+	sess        *session.SessionDB
+	dialect     migrator.Dialect
+	snowflake   *snowflake.Node
+	broadcaster *Broadcaster
 }
 
 func (s *sqlEntityServer) Init() error {
@@ -77,6 +78,33 @@ func (s *sqlEntityServer) Init() error {
 
 	s.sess = sess
 	s.dialect = migrator.NewDialect(engine.DriverName())
+
+	// set up the broadcaster
+	s.broadcaster = &Broadcaster{}
+	err = s.broadcaster.Start(func() (chan *entity.Entity, error) {
+		stream := make(chan *entity.Entity)
+
+		// start the poller
+		go func() {
+			since := s.snowflake.Generate().Int64()
+
+			t := time.NewTicker(5 * time.Second)
+			defer t.Stop()
+
+			for range t.C {
+				since, err = s.poll(context.Background(), since, stream)
+				if err != nil {
+					s.log.Error("watch error", "err", err)
+				}
+			}
+		}()
+
+		return stream, nil
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -1334,13 +1362,12 @@ func (s *sqlEntityServer) watchInit(ctx context.Context, r *entity.EntityWatchRe
 	return nil
 }
 
-// watch is a helper to get the next set of entities and send them to the client
-func (s *sqlEntityServer) watch(ctx context.Context, r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
-	s.log.Debug("watch", "since", r.Since)
+func (s *sqlEntityServer) poll(ctx context.Context, since int64, out chan *entity.Entity) (int64, error) {
+	s.log.Debug("watch poll", "since", since)
 
 	rr := &entity.ReadEntityRequest{
-		WithBody:   r.WithBody,
-		WithStatus: r.WithStatus,
+		WithBody:   true,
+		WithStatus: true,
 	}
 
 	fields := s.getReadFields(rr)
@@ -1353,138 +1380,176 @@ func (s *sqlEntityServer) watch(ctx context.Context, r *entity.EntityWatchReques
 		limit:   100, // r.Limit,
 		// offset:   0,
 		oneExtra: true, // request one more than the limit (and show next token if it exists)
+		orderBy:  []string{"resource_version"},
 	}
 
-	// TODO fix this
-	// entityQuery.addWhere("namespace", user.OrgID)
-
-	/*
-		if len(r.Group) > 0 {
-			entityQuery.addWhereIn("group", r.Group)
-		}
-	*/
-
-	if r.Since > 0 {
-		entityQuery.addWhere("resource_version > ?", r.Since)
-	}
-
-	if len(r.Resource) > 0 {
-		entityQuery.addWhereIn("resource", r.Resource)
-	}
-
-	if len(r.Key) > 0 {
-		where := []string{}
-		args := []any{}
-		for _, k := range r.Key {
-			key, err := entity.ParseKey(k)
-			if err != nil {
-				return err
-			}
-
-			args = append(args, key.Namespace, key.Group, key.Resource)
-			whereclause := "(" + s.dialect.Quote("namespace") + "=? AND " + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?"
-			if key.Name != "" {
-				args = append(args, key.Name)
-				whereclause += " AND " + s.dialect.Quote("name") + "=?"
-			}
-			whereclause += ")"
-
-			where = append(where, whereclause)
-		}
-
-		entityQuery.addWhere("("+strings.Join(where, " OR ")+")", args...)
-	}
-
-	// Folder guid
-	if r.Folder != "" {
-		entityQuery.addWhere("folder", r.Folder)
-	}
-
-	// if we have a page token, use that to specify the first record
-	/*
-		continueToken, err := GetContinueToken(r)
-		if err != nil {
-			return err
-		}
-		if continueToken != nil {
-			entityQuery.offset = continueToken.StartOffset
-		}
-	*/
-
-	if len(r.Labels) > 0 {
-		var args []any
-		var conditions []string
-		for labelKey, labelValue := range r.Labels {
-			args = append(args, labelKey)
-			args = append(args, labelValue)
-			conditions = append(conditions, "(label = ? AND value = ?)")
-		}
-		query := "SELECT guid FROM entity_labels" +
-			" WHERE (" + strings.Join(conditions, " OR ") + ")" +
-			" GROUP BY guid" +
-			" HAVING COUNT(label) = ?"
-		args = append(args, len(r.Labels))
-
-		entityQuery.addWhereInSubquery("guid", query, args)
-	}
-
-	entityQuery.addOrderBy("resource_version", Ascending)
+	entityQuery.addWhere("resource_version > ?", since)
 
 	query, args := entityQuery.toQuery()
 
 	rows, err := s.sess.Query(ctx, query, args...)
 	if err != nil {
-		return err
+		return since, err
 	}
 	defer func() { _ = rows.Close() }()
-
-	batch := &entity.EntityWatchResponse{
-		Action:    entity.Entity_UNKNOWN,
-		Entity:    []*entity.Entity{},
-		Timestamp: time.Now().UnixMilli(),
-	}
 
 	for rows.Next() {
 		result, err := s.rowToEntity(ctx, rows, rr)
 		if err != nil {
-			return err
+			return since, err
 		}
 
-		if result.ResourceVersion > r.Since {
-			r.Since = result.ResourceVersion
+		if result.ResourceVersion > since {
+			since = result.ResourceVersion
 		}
 
-		// if action matches the rest of the batch, add to batch
-		if result.Action == batch.Action {
+		s.log.Debug("sending poll result", "guid", result.Guid, "action", result.Action, "since", since)
+		out <- result
+	}
+
+	return since, nil
+}
+
+func watchMatches(r *entity.EntityWatchRequest, result *entity.Entity) bool {
+	// Resource version too old
+	if result.ResourceVersion < r.Since {
+		return false
+	}
+
+	// Folder guid
+	if r.Folder != "" && r.Folder != result.Folder {
+		return false
+	}
+
+	// must match at least one resource if specified
+	if len(r.Resource) > 0 {
+		matched := false
+		for _, res := range r.Resource {
+			if res == result.Resource {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
+	// must match at least one key if specified
+	if len(r.Key) > 0 {
+		matched := false
+		for _, k := range r.Key {
+			key, err := entity.ParseKey(k)
+			if err != nil {
+				return false
+			}
+
+			if key.Namespace == result.Namespace && key.Group == result.Group && key.Resource == result.Resource && (key.Name == "" || key.Name == result.Name) {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
+	// must match at least one label/value pair if specified
+	// TODO should this require matching all label conditions?
+	if len(r.Labels) > 0 {
+		matched := false
+		for labelKey, labelValue := range r.Labels {
+			if result.Labels[labelKey] == labelValue {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			return false
+		}
+	}
+
+	return true
+}
+
+// watch is a helper to get the next set of entities and send them to the client
+func (s *sqlEntityServer) watch(ctx context.Context, r *entity.EntityWatchRequest, w entity.EntityStore_WatchServer) error {
+	s.log.Debug("watch started", "since", r.Since)
+
+	evts, err := s.broadcaster.Subscribe(w.Context())
+	if err != nil {
+		return err
+	}
+
+	batch := &entity.EntityWatchResponse{
+		Action:    entity.Entity_UNKNOWN,
+		Timestamp: time.Now().UnixMilli(),
+	}
+
+	// max time to wait for additional events in a batch
+	t := time.NewTicker(1 * time.Second)
+	defer t.Stop()
+
+	for {
+		select {
+		// user closed the connection
+		case <-w.Context().Done():
+			return nil
+		// got a raw result from the broadcaster
+		case result := <-evts:
+			// result doesn't match our watch params, skip it
+			if !watchMatches(r, result) {
+				s.log.Debug("watch result not matched", "guid", result.Guid, "action", result.Action, "rv", result.ResourceVersion)
+				break
+			}
+
+			s.log.Debug("watch result", "guid", result.Guid, "action", result.Action, "rv", result.ResourceVersion)
+
+			// if action doesn't match the current batch, send it and start a new batch
+			if result.Action != batch.Action {
+				if len(batch.Entity) > 0 {
+					s.log.Debug("sending batch", "action", batch.Action, "count", len(batch.Entity))
+					err = w.Send(batch)
+					if err != nil {
+						return err
+					}
+				}
+
+				batch = &entity.EntityWatchResponse{
+					Action:    result.Action,
+					Timestamp: time.Now().UnixMilli(),
+				}
+			}
+
+			// remove the body and status if not requested
+			if !r.WithBody {
+				result.Body = nil
+			}
+			if !r.WithStatus {
+				result.Status = nil
+			}
+
+			// add the result to the batch
 			batch.Entity = append(batch.Entity, result)
-			continue
-		}
+		// batch timer ticked, send the batch if we haven't received any events in a while
+		case <-t.C:
+			// nothing to send
+			if len(batch.Entity) == 0 {
+				break
+			}
 
-		// if action doesn't match, send the batch and start a new one
-		if len(batch.Entity) > 0 {
-			s.log.Debug("sending batch", "action", batch.Action, "count", len(batch.Entity))
+			s.log.Debug("sending queued batch", "action", batch.Action, "count", len(batch.Entity))
 			err = w.Send(batch)
 			if err != nil {
 				return err
 			}
-		}
 
-		batch = &entity.EntityWatchResponse{
-			Action:    result.Action,
-			Entity:    []*entity.Entity{result},
-			Timestamp: time.Now().UnixMilli(),
-		}
-	}
-
-	if len(batch.Entity) > 0 {
-		s.log.Debug("sending batch", "action", batch.Action, "count", len(batch.Entity))
-		err = w.Send(batch)
-		if err != nil {
-			return err
+			batch = &entity.EntityWatchResponse{
+				Action:    entity.Entity_UNKNOWN,
+				Timestamp: time.Now().UnixMilli(),
+			}
 		}
 	}
-
-	return nil
 }
 
 func (s *sqlEntityServer) FindReferences(ctx context.Context, r *entity.ReferenceRequest) (*entity.EntityListResponse, error) {
