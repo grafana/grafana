@@ -531,6 +531,10 @@ const (
 	// Enables dashboard rendering using Scenes for viewer roles
 	FlagDashboardSceneForViewers = "dashboardSceneForViewers"
 
+	// FlagDashboardSceneSolo
+	// Enables rendering dashboards using scenes for solo panels
+	FlagDashboardSceneSolo = "dashboardSceneSolo"
+
 	// FlagDashboardScene
 	// Enables dashboard rendering using scenes for all roles
 	FlagDashboardScene = "dashboardScene"
@@ -619,10 +623,6 @@ const (
 	// Enables the nested folder picker without having nested folders enabled
 	FlagNewFolderPicker = "newFolderPicker"
 
-	// FlagJitterAlertRules
-	// Distributes alert rule evaluations more evenly over time, by rule group
-	FlagJitterAlertRules = "jitterAlertRules"
-
 	// FlagJitterAlertRulesWithinGroups
 	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
@@ -650,4 +650,8 @@ const (
 	// FlagNewPDFRendering
 	// New implementation for the dashboard to PDF rendering
 	FlagNewPDFRendering = "newPDFRendering"
+
+	// FlagKubernetesAggregator
+	// Enable grafana aggregator
+	FlagKubernetesAggregator = "kubernetesAggregator"
 )

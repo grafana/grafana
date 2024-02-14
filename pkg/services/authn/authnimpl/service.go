@@ -131,7 +131,7 @@ func ProvideService(
 		}
 	}
 
-	if s.cfg.JWTAuthEnabled {
+	if s.cfg.JWTAuth.Enabled {
 		s.RegisterClient(clients.ProvideJWT(jwtService, cfg))
 	}
 
