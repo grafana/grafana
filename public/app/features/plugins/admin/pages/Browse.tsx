@@ -39,6 +39,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
     },
     sortBy
   );
+
   const filterByOptions = [
     { value: 'all', label: 'All' },
     { value: 'installed', label: 'Installed' },

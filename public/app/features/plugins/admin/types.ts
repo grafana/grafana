@@ -83,6 +83,7 @@ export interface CatalogPluginInfo {
     large: string;
     small: string;
   };
+  keywords: string[];
 }
 
 export type RemotePlugin = {
@@ -93,6 +94,7 @@ export type RemotePlugin = {
   featured: number;
   id: number;
   internal: boolean;
+  keywords: string[];
   json?: {
     dependencies: PluginDependencies;
     iam?: IdentityAccessManagement;
@@ -161,6 +163,7 @@ export type LocalPlugin = WithAccessControlMetadata & {
       small: string;
       large: string;
     };
+    keywords: string[];
     build: Build;
     screenshots?: Array<{
       path: string;
