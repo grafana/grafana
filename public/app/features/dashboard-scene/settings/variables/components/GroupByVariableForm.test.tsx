@@ -77,7 +77,7 @@ describe('GroupByVariableForm', () => {
     expect(codeEditor).not.toBeInTheDocument();
   });
 
-  it('should  render code editor when no default options provided', async () => {
+  it('should render code editor when default options provided', async () => {
     const {
       renderer: { queryByTestId },
     } = setup({ defaultOptions: [{ text: 'test', value: 'test' }] });
