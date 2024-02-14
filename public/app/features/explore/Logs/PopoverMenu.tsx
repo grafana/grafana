@@ -13,8 +13,9 @@ interface PopoverMenuProps {
   y: number;
   onClickFilterValue?: (value: string, refId?: string) => void;
   onClickFilterOutValue?: (value: string, refId?: string) => void;
-  row: LogRowModel;
   close: () => void;
+  refId?: string;
+  dataSourceType?: string;
 }
 
 export const PopoverMenu = ({
@@ -23,8 +24,9 @@ export const PopoverMenu = ({
   onClickFilterValue,
   onClickFilterOutValue,
   selection,
-  row,
   close,
+  refId,
+  dataSourceType,
 }: PopoverMenuProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const styles = useStyles2(getStyles);
@@ -56,16 +58,16 @@ export const PopoverMenu = ({
           onClick={() => {
             copyText(selection, containerRef);
             close();
-            track('copy', selection.length, row.datasourceType);
+            track('copy', selection.length, dataSourceType);
           }}
         />
         {onClickFilterValue && (
           <Menu.Item
             label="Add as line contains filter"
             onClick={() => {
-              onClickFilterValue(selection, row.dataFrame.refId);
+              onClickFilterValue(selection, refId);
               close();
-              track('line_contains', selection.length, row.datasourceType);
+              track('line_contains', selection.length, dataSourceType);
             }}
           />
         )}
@@ -73,9 +75,9 @@ export const PopoverMenu = ({
           <Menu.Item
             label="Add as line does not contain filter"
             onClick={() => {
-              onClickFilterOutValue(selection, row.dataFrame.refId);
+              onClickFilterOutValue(selection, refId);
               close();
-              track('line_does_not_contain', selection.length, row.datasourceType);
+              track('line_does_not_contain', selection.length, dataSourceType);
             }}
           />
         )}
