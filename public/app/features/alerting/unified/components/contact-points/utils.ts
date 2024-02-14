@@ -1,4 +1,4 @@
-import { countBy, split, trim, upperFirst } from 'lodash';
+import { countBy, difference, take, trim, upperFirst } from 'lodash';
 import { ReactNode } from 'react';
 
 import { config } from '@grafana/runtime';
@@ -40,15 +40,21 @@ export function getReceiverDescription(receiver: ReceiverConfigWithMetadata): Re
       return hasEmailAddresses ? summarizeEmailAddresses(receiver.settings['addresses']) : undefined;
     }
     case 'slack': {
-      const channelName = receiver.settings['recipient'];
-      return channelName ? `#${channelName}` : undefined;
+      const recipient: string | undefined = receiver.settings['recipient'];
+      if (!recipient) {
+        return;
+      }
+
+      // Slack channel name might have a "#" in the recipient already
+      const channelName = recipient.replace(/^#/, '');
+      return `#${channelName}`;
     }
     case 'kafka': {
-      const topicName = receiver.settings['kafkaTopic'];
+      const topicName: string | undefined = receiver.settings['kafkaTopic'];
       return topicName;
     }
     case 'webhook': {
-      const url = receiver.settings['url'];
+      const url: string | undefined = receiver.settings['url'];
       return url;
     }
     case ReceiverTypes.OnCall: {
@@ -61,20 +67,22 @@ export function getReceiverDescription(receiver: ReceiverConfigWithMetadata): Re
 
 // input: foo+1@bar.com, foo+2@bar.com, foo+3@bar.com, foo+4@bar.com
 // output: foo+1@bar.com, foo+2@bar.com, +2 more
-function summarizeEmailAddresses(addresses: string): string {
+export function summarizeEmailAddresses(addresses: string): string {
   const MAX_ADDRESSES_SHOWN = 3;
   const SUPPORTED_SEPARATORS = /,|;|\n+/g;
 
+  // split all email addresses
   const emails = addresses.trim().split(SUPPORTED_SEPARATORS).map(trim);
 
-  const notShown = emails.length - MAX_ADDRESSES_SHOWN;
+  // grab the first 3 and the rest
+  const summary = take(emails, MAX_ADDRESSES_SHOWN);
+  const rest = difference(emails, summary);
 
-  const truncatedAddresses = split(addresses, SUPPORTED_SEPARATORS, MAX_ADDRESSES_SHOWN);
-  if (notShown > 0) {
-    truncatedAddresses.push(`+${notShown} more`);
+  if (rest.length) {
+    summary.push(`+${rest.length} more`);
   }
 
-  return truncatedAddresses.join(', ');
+  return summary.join(', ');
 }
 
 // Grafana Managed contact points have receivers with additional diagnostics
