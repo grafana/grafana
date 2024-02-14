@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import { SceneVariables, sceneUtils } from '@grafana/scenes';
 import { VariableHide, VariableModel, VariableRefresh, VariableSort } from '@grafana/schema';
 
@@ -104,7 +105,7 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
         },
         query: variable.state.value,
       });
-    } else if (sceneUtils.isGroupByVariable(variable)) {
+    } else if (sceneUtils.isGroupByVariable(variable) && config.featureToggles.groupByVariable) {
       variables.push({
         ...commonProperties,
         datasource: variable.state.datasource,
