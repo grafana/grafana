@@ -42,8 +42,8 @@ func TestIntegrationMySQL(t *testing.T) {
 		sqleng.Interpolate = origInterpolate
 	})
 
-	sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
-		return sql, nil
+	sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) string {
+		return sql
 	}
 
 	dsInfo := sqleng.DataSourceInfo{
@@ -67,7 +67,7 @@ func TestIntegrationMySQL(t *testing.T) {
 
 	db := InitMySQLTestDB(t, config.DSInfo.JsonData)
 
-	exe, err := sqleng.NewQueryDataHandler(setting.NewCfg(), db, config, &rowTransformer, newMysqlMacroEngine(logger, setting.NewCfg()), logger)
+	exe, err := sqleng.NewQueryDataHandler("", db, config, &rowTransformer, newMysqlMacroEngine(logger, setting.NewCfg()), logger)
 
 	require.NoError(t, err)
 
@@ -1179,7 +1179,7 @@ func TestIntegrationMySQL(t *testing.T) {
 
 			queryResultTransformer := mysqlQueryResultTransformer{}
 
-			handler, err := sqleng.NewQueryDataHandler(setting.NewCfg(), db, config, &queryResultTransformer, newMysqlMacroEngine(logger, setting.NewCfg()), logger)
+			handler, err := sqleng.NewQueryDataHandler("", db, config, &queryResultTransformer, newMysqlMacroEngine(logger, setting.NewCfg()), logger)
 			require.NoError(t, err)
 
 			t.Run("When doing a table query that returns 2 rows should limit the result to 1 row", func(t *testing.T) {

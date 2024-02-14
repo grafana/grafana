@@ -11,7 +11,7 @@ import {
   formatPrometheusLabelFilters,
   formatPrometheusLabelFiltersToString,
   MetricSelect,
-  Props,
+  MetricSelectProps,
 } from './MetricSelect';
 
 const instanceSettings = {
@@ -48,7 +48,7 @@ dataSourceMock.metricFindQuery = jest.fn((query: string) => {
   );
 });
 
-const props: Props = {
+const props: MetricSelectProps = {
   labelsFilters: [],
   datasource: dataSourceMock,
   query: {
