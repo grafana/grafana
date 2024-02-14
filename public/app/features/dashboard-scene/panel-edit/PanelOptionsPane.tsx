@@ -11,8 +11,8 @@ import { getPanelFrameCategory2 } from 'app/features/dashboard/components/PanelE
 import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 
+import { PanelEditor } from './PanelEditor';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
-import { VizPanelManager } from './VizPanelManager';
 
 export interface PanelOptionsPaneState extends SceneObjectState {
   isVizPickerOpen?: boolean;
@@ -21,15 +21,16 @@ export interface PanelOptionsPaneState extends SceneObjectState {
 }
 
 export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
-  public panelManager: VizPanelManager;
-
-  public constructor(panelMgr: VizPanelManager) {
+  public constructor(state: Partial<PanelOptionsPaneState>) {
     super({
       searchQuery: '',
       listMode: OptionFilter.All,
+      ...state,
     });
+  }
 
-    this.panelManager = panelMgr;
+  public getVizManager() {
+    return sceneGraph.getAncestor(this, PanelEditor).state.vizManager;
   }
 
   onToggleVizPicker = () => {
@@ -44,11 +45,14 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     this.setState({ listMode });
   };
 
-  onCollapsePane = () => {};
+  onCollapsePane = () => {
+    const editor = sceneGraph.getAncestor(this, PanelEditor);
+    editor.toggleOptionsPane();
+  };
 
   static Component = ({ model }: SceneComponentProps<PanelOptionsPane>) => {
     const { isVizPickerOpen, searchQuery, listMode } = model.useState();
-    const { panelManager } = model;
+    const panelManager = model.getVizManager();
     const { panel } = panelManager.state;
     const dataObject = sceneGraph.getData(panel);
     const { data } = dataObject.useState();

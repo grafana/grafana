@@ -144,7 +144,7 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
   const currentTab = tabs.find((t) => t.tabId === tab);
 
   return (
-    <>
+    <div className={styles.dataPane}>
       <TabsBar hideBorder={true} className={styles.tabsBar}>
         {tabs.map((t, index) => {
           return (
@@ -161,12 +161,19 @@ function PanelDataPaneRendered({ model }: SceneComponentProps<PanelDataPane>) {
           <Container>{currentTab && <currentTab.Component model={currentTab} />}</Container>
         </TabContent>
       </CustomScrollbar>
-    </>
+    </div>
   );
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    dataPane: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: 1,
+      minHeight: 0,
+      height: '100%',
+    }),
     tabContent: css({
       padding: theme.spacing(2),
       border: `1px solid ${theme.colors.border.weak}`,

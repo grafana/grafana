@@ -506,11 +506,9 @@ describe('VizPanelManager', () => {
   describe('change transformations', () => {
     it('should update and reprocess transformations', () => {
       const { scene, panel } = setupTest('panel-3');
-      scene.setState({
-        editPanel: buildPanelEditScene(panel),
-      });
+      scene.setState({ editPanel: buildPanelEditScene(panel) });
 
-      const vizPanelManager = scene.state.editPanel!.state.panelRef.resolve();
+      const vizPanelManager = scene.state.editPanel!.state.vizManager;
       vizPanelManager.activate();
       vizPanelManager.state.panel.state.$data?.activate();
 
@@ -560,11 +558,9 @@ describe('VizPanelManager', () => {
     describe('dashboard queries', () => {
       it('should update queries', () => {
         const { scene, panel } = setupTest('panel-3');
-        scene.setState({
-          editPanel: buildPanelEditScene(panel),
-        });
+        scene.setState({ editPanel: buildPanelEditScene(panel) });
 
-        const vizPanelManager = scene.state.editPanel!.state.panelRef.resolve();
+        const vizPanelManager = scene.state.editPanel!.state.vizManager;
         vizPanelManager.activate();
         vizPanelManager.state.panel.state.$data?.activate();
 
@@ -578,6 +574,7 @@ describe('VizPanelManager', () => {
             panelId: panelWithTransformations.id,
           },
         ]);
+
         expect(vizPanelManager.panelData).toBeInstanceOf(SceneDataTransformer);
         expect(vizPanelManager.queryRunner.state.queries[0].panelId).toEqual(panelWithTransformations.id);
 

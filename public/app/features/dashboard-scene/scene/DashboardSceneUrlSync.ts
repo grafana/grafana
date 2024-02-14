@@ -147,7 +147,7 @@ class ResolveInspectPanelByKey extends SceneObjectBase<ResolveInspectPanelByKeyS
     let panel = findVizPanelByKey(dashboard, panelId);
 
     if (dashboard.state.editPanel) {
-      panel = dashboard.state.editPanel.state.panelRef.resolve().state.panel;
+      panel = dashboard.state.editPanel.state.vizManager.state.panel;
     }
 
     if (dashboard.state.viewPanelScene && dashboard.state.viewPanelScene.state.body) {
