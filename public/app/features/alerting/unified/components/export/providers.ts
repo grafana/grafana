@@ -1,12 +1,16 @@
+export type ProvisioningType = 'file' | 'api' | 'terraform';
+
 export interface ExportProvider<TFormat> {
   name: string;
   exportFormat: TFormat;
+  type: ProvisioningType;
   formatter?: (raw: string) => string;
 }
 
 export const JsonExportProvider: ExportProvider<'json'> = {
   name: 'JSON',
   exportFormat: 'json',
+  type: 'file',
   formatter: (raw: string) => {
     try {
       return JSON.stringify(JSON.parse(raw), null, 4);
@@ -19,11 +23,13 @@ export const JsonExportProvider: ExportProvider<'json'> = {
 export const YamlExportProvider: ExportProvider<'yaml'> = {
   name: 'YAML',
   exportFormat: 'yaml',
+  type: 'file',
 };
 
 export const HclExportProvider: ExportProvider<'hcl'> = {
   name: 'Terraform (HCL)',
   exportFormat: 'hcl',
+  type: 'terraform',
 };
 
 export const allGrafanaExportProviders = {

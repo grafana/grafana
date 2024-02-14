@@ -4,9 +4,9 @@ import React, { useCallback, useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, ClipboardButton, CodeEditor, useStyles2 } from '@grafana/ui';
+import { Alert, Button, ClipboardButton, CodeEditor, TextLink, useStyles2 } from '@grafana/ui';
 
-import { allGrafanaExportProviders, ExportFormats } from './providers';
+import { allGrafanaExportProviders, ExportFormats, ExportProvider, ProvisioningType } from './providers';
 
 interface FileExportPreviewProps {
   format: ExportFormats;
@@ -19,6 +19,7 @@ interface FileExportPreviewProps {
 
 export function FileExportPreview({ format, textDefinition, downloadFileName, onClose }: FileExportPreviewProps) {
   const styles = useStyles2(fileExportPreviewStyles);
+  const provider = allGrafanaExportProviders[format];
 
   const onDownload = useCallback(() => {
     const blob = new Blob([textDefinition], {
@@ -28,13 +29,13 @@ export function FileExportPreview({ format, textDefinition, downloadFileName, on
   }, [textDefinition, downloadFileName, format]);
 
   const formattedTextDefinition = useMemo(() => {
-    const provider = allGrafanaExportProviders[format];
     return provider.formatter ? provider.formatter(textDefinition) : textDefinition;
-  }, [format, textDefinition]);
+  }, [provider, textDefinition]);
 
   return (
     // TODO Handle empty content
     <div className={styles.container}>
+      <FileExportInlineDocumentation exportProvider={provider} />
       <div className={styles.content}>
         <AutoSizer disableWidth>
           {({ height }) => (
@@ -87,3 +88,60 @@ const fileExportPreviewStyles = (theme: GrafanaTheme2) => ({
     gap: ${theme.spacing(1)};
   `,
 });
+
+function FileExportInlineDocumentation({ exportProvider }: { exportProvider: ExportProvider<unknown> }) {
+  const { name, type } = exportProvider;
+
+  const exportInlineDoc: Record<ProvisioningType, { title: string; component: React.ReactNode }> = {
+    file: {
+      title: 'File-provisioning format',
+      component: (
+        <>
+          {name} format is only valid for File Provisioning.{' '}
+          <TextLink
+            href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/"
+            external
+          >
+            Read more in the docs.
+          </TextLink>
+        </>
+      ),
+    },
+    api: {
+      title: 'API-provisioning format',
+      component: (
+        <>
+          {name} format is only valid for API Provisioning.{' '}
+          <TextLink
+            href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/http-api-provisioning/"
+            external
+          >
+            Read more in the docs.
+          </TextLink>
+        </>
+      ),
+    },
+    terraform: {
+      title: 'Terraform-provisioning format',
+      component: (
+        <>
+          {name} format is only valid for Terraform Provisioning.{' '}
+          <TextLink
+            href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/terraform-provisioning/"
+            external
+          >
+            Read more in the docs.
+          </TextLink>
+        </>
+      ),
+    },
+  };
+
+  const { title, component } = exportInlineDoc[type];
+
+  return (
+    <Alert title={title} severity="info" bottomSpacing={0} topSpacing={0}>
+      {component}
+    </Alert>
+  );
+}
