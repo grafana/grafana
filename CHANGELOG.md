@@ -1257,6 +1257,15 @@ Starting with 10.0, changing the folder UID is deprecated. It will be removed in
 - **Grafana/ui:** Fix margin in RadioButtonGroup option when only icon is present. [#68899](https://github.com/grafana/grafana/issues/68899), [@aocenas](https://github.com/aocenas)
 
 <!-- 10.1.0 END -->
+<!-- 10.0.11 START -->
+
+# 10.0.11 (2024-01-29)
+
+### Bug fixes
+
+- **Annotations:** Split cleanup into separate queries and deletes to avoid deadlocks on MySQL. [#80681](https://github.com/grafana/grafana/issues/80681), [@alexweav](https://github.com/alexweav)
+
+<!-- 10.0.11 END -->
 <!-- 10.0.10 START -->
 
 # 10.0.10 (2023-12-18)
