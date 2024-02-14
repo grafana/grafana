@@ -1,4 +1,0 @@
-API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/peakq/v0alpha1,ReplacementHistory,Replacement
-API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/peakq/v0alpha1,VariableReplacement,History
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/peakq/v0alpha1,QueryTemplateSpec,Variables
-API rule violation: names_match,github.com/grafana/grafana/pkg/apis/peakq/v0alpha1,TemplateVariable,DefaultValues

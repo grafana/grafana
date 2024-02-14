@@ -67,6 +67,10 @@ const (
 	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
 	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
 
+	// FlagAutoMigrateGraphPanel
+	// Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking
+	FlagAutoMigrateGraphPanel = "autoMigrateGraphPanel"
+
 	// FlagDisableAngular
 	// Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
 	FlagDisableAngular = "disableAngular"
@@ -515,6 +519,10 @@ const (
 	// Enables dashboard rendering using Scenes for viewer roles
 	FlagDashboardSceneForViewers = "dashboardSceneForViewers"
 
+	// FlagDashboardSceneSolo
+	// Enables rendering dashboards using scenes for solo panels
+	FlagDashboardSceneSolo = "dashboardSceneSolo"
+
 	// FlagDashboardScene
 	// Enables dashboard rendering using scenes for all roles
 	FlagDashboardScene = "dashboardScene"
@@ -603,10 +611,6 @@ const (
 	// Enables the nested folder picker without having nested folders enabled
 	FlagNewFolderPicker = "newFolderPicker"
 
-	// FlagJitterAlertRules
-	// Distributes alert rule evaluations more evenly over time, by rule group
-	FlagJitterAlertRules = "jitterAlertRules"
-
 	// FlagJitterAlertRulesWithinGroups
 	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
@@ -626,4 +630,12 @@ const (
 	// FlagNodeGraphDotLayout
 	// Changed the layout algorithm for the node graph
 	FlagNodeGraphDotLayout = "nodeGraphDotLayout"
+
+	// FlagGroupToNestedTableTransformation
+	// Enables the group to nested table transformation
+	FlagGroupToNestedTableTransformation = "groupToNestedTableTransformation"
+
+	// FlagNewPDFRendering
+	// New implementation for the dashboard to PDF rendering
+	FlagNewPDFRendering = "newPDFRendering"
 )
