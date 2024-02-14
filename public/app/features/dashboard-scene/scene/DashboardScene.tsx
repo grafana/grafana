@@ -49,6 +49,7 @@ import { forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel, isPanel
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
+import { LibraryVizPanel } from './LibraryVizPanel';
 import { PanelRepeaterGridItem } from './PanelRepeaterGridItem';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
@@ -414,6 +415,36 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this._initialState;
   }
 
+  public duplicateLibraryPanel(libraryPanel: LibraryVizPanel) {
+    if (!libraryPanel.parent) {
+      return;
+    }
+    const gridItem = libraryPanel.parent;
+
+    if (!(gridItem instanceof SceneGridItem || PanelRepeaterGridItem)) {
+      console.error('Trying to duplicate a panel in a layout that is not SceneGridItem or PanelRepeaterGridItem');
+      return;
+    }
+
+    const { key: gridItemKey, ...gridItemToDuplicateState } = sceneUtils.cloneSceneObjectState(gridItem.state);
+
+    const newGridItem = new SceneGridItem({
+      ...gridItemToDuplicateState,
+      body: new LibraryVizPanel(libraryPanel?.state),
+    });
+
+    if (!(this.state.body instanceof SceneGridLayout)) {
+      console.error('Trying to duplicate a panel in a layout that is not SceneGridLayout ');
+      return;
+    }
+
+    const sceneGridLayout = this.state.body;
+
+    sceneGridLayout.setState({
+      children: [...sceneGridLayout.state.children, newGridItem],
+    });
+  }
+
   public duplicatePanel(vizPanel: VizPanel) {
     if (!vizPanel.parent) {
       return;
@@ -460,12 +491,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     });
   }
 
-  public copyPanel(vizPanel: VizPanel) {
-    if (!vizPanel.parent) {
+  public copyPanel(panel: VizPanel | LibraryVizPanel) {
+    if (!panel.parent) {
       return;
     }
 
-    const gridItem = vizPanel.parent;
+    const gridItem = panel.parent;
 
     const jsonData = gridItemToPanel(gridItem);
 

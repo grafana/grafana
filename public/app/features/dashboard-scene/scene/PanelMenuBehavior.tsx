@@ -98,7 +98,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       text: t('panel.header-menu.duplicate', `Duplicate`),
       onClick: () => {
         DashboardInteractions.panelMenuItemClicked('duplicate');
-        dashboard.duplicatePanel(panel);
+        libraryPanel ? dashboard.duplicateLibraryPanel(libraryPanel) : dashboard.duplicatePanel(panel);
       },
       shortcut: 'p d',
     });
@@ -107,7 +107,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       text: t('panel.header-menu.copy', `Copy`),
       onClick: () => {
         DashboardInteractions.panelMenuItemClicked('copy');
-        dashboard.copyPanel(panel);
+        dashboard.copyPanel(libraryPanel || panel);
       },
     });
 
