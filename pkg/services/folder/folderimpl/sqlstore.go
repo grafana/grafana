@@ -173,30 +173,58 @@ func (ss *sqlStore) Update(ctx context.Context, cmd folder.UpdateFolderCommand) 
 	return foldr.WithURL(), err
 }
 
+// If WithFullpath is true it computes also the full path of a folder.
+// The full path is a string that contains the titles of all parent folders separated by a slash.
+// For example, if the folder structure is:
+//
+//	A
+//	└── B
+//	    └── C
+//
+// The full path of C is "A/B/C".
+// The full path of B is "A/B".
+// The full path of A is "A".
+// If a folder contains a slash in its title, it is escaped with a backslash.
+// For example, if the folder structure is:
+//
+//	A
+//	└── B/C
+//
+// The full path of C is "A/B\/C".
 func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.Folder, error) {
 	foldr := &folder.Folder{}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		exists := false
 		var err error
+		s := strings.Builder{}
+		s.WriteString("SELECT *")
+		if q.WithFullpath {
+			s.WriteString(fmt.Sprintf(`, %s AS fullpath`, getFullpathSQL(ss.db.GetDialect())))
+		}
+		s.WriteString(" FROM folder f0")
+		if q.WithFullpath {
+			s.WriteString(getFullpathJoinsSQL())
+		}
 		switch {
 		case q.UID != nil:
 			// covered UQE_folder_uid_org_id
-			exists, err = sess.SQL("SELECT * FROM folder WHERE uid = ? AND org_id = ?", q.UID, q.OrgID).Get(foldr)
+			s.WriteString(" WHERE f0.uid = ? AND f0.org_id = ?")
+			exists, err = sess.SQL(s.String(), q.UID, q.OrgID).Get(foldr)
 		// nolint:staticcheck
 		case q.ID != nil:
+			s.WriteString(" WHERE f0.id = ?")
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 			// covered by primary key
-			exists, err = sess.SQL("SELECT * FROM folder WHERE id = ?", q.ID).Get(foldr)
+			exists, err = sess.SQL(s.String(), q.ID).Get(foldr)
 		case q.Title != nil:
-			s := strings.Builder{}
 			// covered by UQE_folder_org_id_parent_uid_title
-			s.WriteString("SELECT * FROM folder WHERE title = ? AND org_id = ?")
+			s.WriteString(" WHERE f0.title = ? AND f0.org_id = ?")
 			args := []any{*q.Title, q.OrgID}
 			if q.ParentUID != nil {
-				s.WriteString(" AND parent_uid = ?")
+				s.WriteString(" AND f0.parent_uid = ?")
 				args = append(args, *q.ParentUID)
 			} else {
-				s.WriteString(" AND parent_uid IS NULL")
+				s.WriteString(" AND f0.parent_uid IS NULL")
 			}
 			exists, err = sess.SQL(s.String(), args...).Get(foldr)
 		default:
@@ -212,6 +240,7 @@ func (ss *sqlStore) Get(ctx context.Context, q folder.GetFolderQuery) (*folder.F
 		return nil
 	})
 
+	foldr.Fullpath = strings.TrimLeft(foldr.Fullpath, "/")
 	return foldr.WithURL(), err
 }
 
@@ -281,15 +310,16 @@ func (ss *sqlStore) GetChildren(ctx context.Context, q folder.GetChildrenQuery) 
 			args = append(args, q.UID, q.OrgID)
 		}
 
-		if q.FolderUIDs != nil {
-			sql.WriteString(" AND uid IN (?")
-			for range q.FolderUIDs[1:] {
-				sql.WriteString(", ?")
-			}
-			sql.WriteString(")")
-			for _, uid := range q.FolderUIDs {
+		if len(q.FolderUIDs) > 0 {
+			sql.WriteString(" AND uid IN (")
+			for i, uid := range q.FolderUIDs {
+				if i > 0 {
+					sql.WriteString(", ")
+				}
+				sql.WriteString("?")
 				args = append(args, uid)
 			}
+			sql.WriteString(")")
 		}
 		sql.WriteString(" ORDER BY title ASC")
 

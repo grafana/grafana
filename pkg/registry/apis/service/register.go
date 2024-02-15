@@ -26,6 +26,10 @@ func NewServiceAPIBuilder() *ServiceAPIBuilder {
 }
 
 func RegisterAPIService(features featuremgmt.FeatureToggles, apiregistration builder.APIRegistrar) *ServiceAPIBuilder {
+	if !features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
+		return nil // skip registration unless opting into aggregator mode
+	}
+
 	builder := NewServiceAPIBuilder()
 	apiregistration.RegisterAPI(NewServiceAPIBuilder())
 	return builder
