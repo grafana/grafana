@@ -30,7 +30,7 @@
     "@floating-ui/react": "0.26.9",
     "@grafana/data": "workspace:*",
     "@grafana/experimental": "1.7.10",
-    "@grafana/faro-web-sdk": "1.3.7",
+    "@grafana/faro-web-sdk": "1.3.8",
     "@grafana/runtime": "workspace:*",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -82,7 +82,7 @@
     "@types/jquery": "3.5.29",
     "@types/lodash": "4.14.202",
     "@types/marked": "5.0.2",
-    "@types/node": "20.11.18",
+    "@types/node": "20.11.19",
     "@types/pluralize": "^0.0.33",
     "@types/prismjs": "1.26.3",
     "@types/react": "18.2.55",
@@ -124,7 +124,7 @@
     "testing-library-selector": "0.3.1",
     "ts-node": "10.9.2",
     "typescript": "5.3.3",
-    "webpack": "5.90.1",
+    "webpack": "5.90.2",
     "webpack-cli": "5.1.4"
   },
   "peerDependencies": {

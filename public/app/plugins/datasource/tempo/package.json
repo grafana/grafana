@@ -47,7 +47,7 @@
     "@testing-library/user-event": "14.5.2",
     "@types/jest": "29.5.12",
     "@types/lodash": "4.14.202",
-    "@types/node": "20.11.18",
+    "@types/node": "20.11.19",
     "@types/prismjs": "1.26.3",
     "@types/react": "18.2.55",
     "@types/react-dom": "18.2.19",
@@ -57,7 +57,7 @@
     "react-select-event": "5.5.1",
     "ts-node": "10.9.2",
     "typescript": "5.3.3",
-    "webpack": "5.90.1"
+    "webpack": "5.90.2"
   },
   "peerDependencies": {
     "@grafana/runtime": "*"
