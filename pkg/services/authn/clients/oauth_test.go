@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -201,13 +202,12 @@ func TestOAuth_Authenticate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			cfg := setting.NewCfg()
+			auth, err := cfg.Raw.NewSection("auth")
+			assert.NoError(t, err)
+			_, err = auth.NewKey("oauth_allow_insecure_email_lookup", strconv.FormatBool(tt.allowInsecureTakeover))
+			assert.NoError(t, err)
 
-			if tt.allowInsecureTakeover {
-				var err error
-				cfg, err = setting.NewCfgFromBytes([]byte(`[auth] 
-					oauth_allow_insecure_email_lookup = true`))
-				require.NoError(t, err)
-			}
+			settingsProvider := &setting.OSSImpl{Cfg: cfg}
 
 			if tt.addStateCookie {
 				v := tt.stateCookieValue
@@ -231,7 +231,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 				},
 			}
 
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, nil, fakeSocialSvc, setting.ProvideProvider(cfg))
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, nil, fakeSocialSvc, settingsProvider)
 
 			identity, err := c.Authenticate(context.Background(), tt.req)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -312,7 +312,9 @@ func TestOAuth_RedirectURL(t *testing.T) {
 				},
 			}
 
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), setting.NewCfg(), nil, fakeSocialSvc, setting.ProvideProvider(setting.NewCfg()))
+			cfg := setting.NewCfg()
+
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), cfg, nil, fakeSocialSvc, &setting.OSSImpl{Cfg: cfg})
 
 			redirect, err := c.RedirectURL(context.Background(), nil)
 			assert.ErrorIs(t, err, tt.expectedErr)
@@ -425,7 +427,7 @@ func TestOAuth_Logout(t *testing.T) {
 			fakeSocialSvc := &socialtest.FakeSocialService{
 				ExpectedAuthInfoProvider: tt.oauthCfg,
 			}
-			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), tt.cfg, mockService, fakeSocialSvc, setting.ProvideProvider(tt.cfg))
+			c := ProvideOAuth(authn.ClientWithPrefix("azuread"), tt.cfg, mockService, fakeSocialSvc, &setting.OSSImpl{Cfg: tt.cfg})
 
 			redirect, ok := c.Logout(context.Background(), &authn.Identity{}, &login.UserAuth{})
 
