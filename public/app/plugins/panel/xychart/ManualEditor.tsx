@@ -33,7 +33,7 @@ export const ManualEditor = ({ value, onChange, context }: StandardEditorProps<X
   const [selected, setSelected] = useState(0);
   const style = useStyles2(getStyles);
 
-  const numbericFieldsForSelected = useMemo(() => {
+  const numberFieldsForSelected = useMemo(() => {
     const numberFields: string[] = [];
     if (!value[selected]) {
       return numberFields;
@@ -165,13 +165,13 @@ export const ManualEditor = ({ value, onChange, context }: StandardEditorProps<X
                           x: {
                             matcher: {
                               id: FieldMatcherID.byName,
-                              options: numbericFieldsForSelected[0],
+                              options: numberFieldsForSelected[0],
                             },
                           },
                           y: {
                             matcher: {
                               id: FieldMatcherID.byName,
-                              options: numbericFieldsForSelected[1],
+                              options: numberFieldsForSelected[1],
                             },
                           },
                         };
