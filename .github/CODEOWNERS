@@ -142,11 +142,9 @@
 /pkg/tests/apis/ @grafana/grafana-app-platform-squad
 /pkg/tests/api/correlations/ @grafana/explore-squad
 /pkg/tsdb/grafanads/ @grafana/backend-platform
-/pkg/tsdb/intervalv2/ @grafana/backend-platform
 /pkg/tsdb/legacydata/ @grafana/backend-platform
 /pkg/tsdb/opentsdb/ @grafana/backend-platform
 /pkg/tsdb/sqleng/ @grafana/partner-datasources @grafana/oss-big-tent
-/pkg/tsdb/sqleng/proxyutil @grafana/hosted-grafana-team
 /pkg/util/ @grafana/backend-platform
 /pkg/web/ @grafana/backend-platform
 
@@ -343,7 +341,7 @@
 /packages/grafana-o11y-ds-frontend/ @grafana/observability-logs @grafana/observability-traces-and-profiling
 /packages/grafana-sql/ @grafana/partner-datasources @grafana/oss-big-tent
 
-# root files, mostly frontend 
+# root files, mostly frontend
 /.browserslistrc @grafana/frontend-ops
 /package.json @grafana/frontend-ops
 /tsconfig.json @grafana/frontend-ops
@@ -465,13 +463,13 @@
 /public/app/types/ @grafana/grafana-frontend-platform
 /public/app/types/alerting.ts @grafana/alerting-frontend
 /public/dashboards/ @grafana/dashboards-squad
-/public/fonts/ @grafana/alerting-frontend
 /public/gazetteer/ @ryantxu
 /public/img/ @grafana/grafana-frontend-platform
 /public/lib/ @grafana/grafana-frontend-platform
 /public/lib/monaco-languages/kusto.ts @grafana/partner-datasources
 /public/maps/ @ryantxu
 /public/robots.txt @grafana/frontend-ops
+/public/fonts/ @grafana/grafana-frontend-platform
 /public/sass/ @grafana/grafana-frontend-platform
 /public/test/ @grafana/grafana-frontend-platform
 /public/test/helpers/alertingRuleEditor.tsx @grafana/alerting-frontend
@@ -532,6 +530,7 @@
 .pa11yci.conf.js @grafana/grafana-frontend-platform
 .pa11yci-pr.conf.js @grafana/grafana-frontend-platform
 .betterer.results @grafanabot
+.betterer.results.json @grafanabot
 .betterer.ts @grafana/grafana-frontend-platform
 
 # @grafana/ui component documentation
