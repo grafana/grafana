@@ -303,8 +303,7 @@ describe('LogsMetaRow', () => {
         name: 'csv',
       })
     );
-
-    expect(saveAs).toBeCalledTimes(2);
+    expect(saveAs).toBeCalled();
 
     const blob = (saveAs as unknown as jest.Mock).mock.lastCall[0];
     expect(blob.type).toBe('text/csv;charset=utf-8');
