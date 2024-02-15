@@ -313,7 +313,7 @@ type UPlotConfigPrepOpts<T extends Record<string, unknown> = {}> = {
   tweakAxis?: (opts: AxisProps, forField: Field) => AxisProps;
   // Identifies the shared key for uPlot cursor sync
   eventsScope?: string;
-  hoverProximity?: number | undefined;
+  hoverProximity?: number;
 } & T;
 
 /** @alpha */
