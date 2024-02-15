@@ -12,7 +12,8 @@ const logo = 'https://grafana.com/static/assets/img/apple-touch-icon.png';
 const meta: Meta<typeof Card> = {
   title: 'General/Card',
   component: Card,
-  tags: ['autodocs'],
+  // nosort is a custom tag used so the stories shown in docs keep the order they are defined in the file
+  tags: ['autodocs', 'nosort'],
   parameters: {
     controls: {
       exclude: ['onClick', 'href', 'heading', 'description', 'className'],
@@ -251,7 +252,7 @@ export const Selectable: StoryFn<typeof Card> = () => {
   return (
     <Card isSelected disabled>
       <Card.Heading>Option #1</Card.Heading>
-      <Card.Description>This is a really great option, you won't regret it.</Card.Description>
+      <Card.Description>This is a really great option, you will not regret it.</Card.Description>
       <Card.Figure>
         <img src={logo} alt="Grafana Logo" width="40" height="40" />
       </Card.Figure>
