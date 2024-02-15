@@ -684,8 +684,9 @@ describe('Table', () => {
       });
       expect(getTable()).toBeInTheDocument();
 
-      const span = within(getTable()).getByText('Hello custom row component!');
-      expect(span).toBeVisible();
+      const rows = within(getTable()).getAllByRole('row');
+      // First row is columnheader
+      expect(within(rows[3]).getByText('Hello custom row component!')).toBeVisible();
     });
   });
 });
