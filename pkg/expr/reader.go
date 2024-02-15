@@ -155,7 +155,7 @@ func (h *ExpressionQueryReader) ReadQuery(
 	default:
 		err = fmt.Errorf("unknown query type")
 	}
-	return
+	return eq, err
 }
 
 func getReferenceVar(exp string, refId string) (string, error) {
