@@ -65,7 +65,7 @@ func (in *GenericDataQuery) DeepCopy() *GenericDataQuery {
 	out := new(GenericDataQuery)
 	jj, err := json.Marshal(in)
 	if err != nil {
-		json.Unmarshal(jj, out)
+		_ = json.Unmarshal(jj, out)
 	}
 	return out
 }

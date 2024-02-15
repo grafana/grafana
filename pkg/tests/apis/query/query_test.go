@@ -10,13 +10,19 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/query"
 
-	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestSimpleQuery(t *testing.T) {
 	if testing.Short() {
@@ -44,16 +50,22 @@ func TestSimpleQuery(t *testing.T) {
 			Version: "v0alpha1",
 		})
 
-		q := query.GenericDataQuery{
-			Datasource: &query.DataSourceRef{
-				Type: "grafana-testdata-datasource",
-				UID:  ds.UID,
+		q := v0alpha1.GenericDataQuery{
+			CommonQueryProperties: query.CommonQueryProperties{
+				Datasource: &query.DataSourceRef{
+					Type: "grafana-testdata-datasource",
+					UID:  ds.UID,
+				},
+			},
+			Additional: map[string]any{
+				"csvContent": `a,b,c\n1,hello,true`,
+				"scenarioId": `csv_content`,
 			},
 		}
-		q.AdditionalProperties()["csvContent"] = "a,b,c\n1,hello,true"
-		q.AdditionalProperties()["scenarioId"] = "csv_content"
-		body, err := json.Marshal(&query.GenericQueryRequest{Queries: []query.GenericDataQuery{q}})
+		body, err := json.Marshal(&v0alpha1.GenericQueryRequest{Queries: []v0alpha1.GenericDataQuery{q}})
 		require.NoError(t, err)
+
+		fmt.Printf("%s\n", string(body))
 
 		result := client.Post().
 			Namespace("default").

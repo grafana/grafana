@@ -39,14 +39,14 @@ type QueryAPIBuilder struct {
 
 	runner   v0alpha1.QueryRunner
 	registry v0alpha1.DataSourceApiServerRegistry
-	handler  *expr.ExpressionQueyHandler
+	handler  *expr.ExpressionQueryReader
 }
 
 func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 	runner v0alpha1.QueryRunner,
 	registry v0alpha1.DataSourceApiServerRegistry,
 ) (*QueryAPIBuilder, error) {
-	handler, err := expr.NewQueryHandler()
+	handler, err := expr.NewExpressionQueryReader(features)
 	return &QueryAPIBuilder{
 		concurrentQueryLimit: 4,
 		log:                  log.New("query_apiserver"),
@@ -122,7 +122,7 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 	storage := map[string]rest.Storage{}
 	storage[plugins.resourceInfo.StoragePath()] = plugins
 
-	expr, err := newExprStorage()
+	expr, err := newExprStorage(b.handler)
 	if err != nil {
 		return nil, err
 	}

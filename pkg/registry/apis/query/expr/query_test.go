@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/registry/apis/query/schema"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestQueryTypeDefinitions(t *testing.T) {
@@ -104,7 +105,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 	require.NoError(t, err)
 	builder.UpdateSchemaDefinition(t, "query.json")
 
-	qt, err := NewQueryHandler()
+	qt, err := NewExpressionQueryReader(featuremgmt.WithFeatures())
 	require.NoError(t, err)
 	s, err := schema.GetQuerySchema(qt.QueryTypeDefinitionList())
 	require.NoError(t, err)

@@ -30,15 +30,10 @@ var (
 type exprStorage struct {
 	resourceInfo   *common.ResourceInfo
 	tableConverter rest.TableConvertor
-	handler        *expr.ExpressionQueyHandler
+	handler        *expr.ExpressionQueryReader
 }
 
-func newExprStorage() (*exprStorage, error) {
-	handler, err := expr.NewQueryHandler()
-	if err != nil {
-		return nil, err
-	}
-
+func newExprStorage(handler *expr.ExpressionQueryReader) (*exprStorage, error) {
 	var resourceInfo = common.NewResourceInfo(query.GROUP, query.VERSION,
 		"expressions", "expression", "DataSourceApiServer",
 		func() runtime.Object { return &query.QueryTypeDefinition{} },
@@ -48,7 +43,7 @@ func newExprStorage() (*exprStorage, error) {
 		resourceInfo:   &resourceInfo,
 		tableConverter: rest.NewDefaultTableConvertor(resourceInfo.GroupResource()),
 		handler:        handler,
-	}, err
+	}, nil
 }
 
 func (s *exprStorage) New() runtime.Object {
@@ -93,5 +88,5 @@ func (b *QueryAPIBuilder) handleExpressionsSchema(w http.ResponseWriter, r *http
 		errhttp.Write(r.Context(), err, w)
 		return
 	}
-	json.NewEncoder(w).Encode(s)
+	_ = json.NewEncoder(w).Encode(s)
 }
