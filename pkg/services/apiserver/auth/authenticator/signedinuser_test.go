@@ -14,7 +14,6 @@ import (
 
 func TestSignedInUser(t *testing.T) {
 	t.Run("should call next authenticator if SignedInUser is not set", func(t *testing.T) {
-
 		req, err := http.NewRequest("GET", "http://localhost:3000/apis", nil)
 		require.NoError(t, err)
 		mockAuthenticator := &mockAuthenticator{}

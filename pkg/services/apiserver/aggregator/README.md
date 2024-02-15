@@ -92,7 +92,12 @@ configuration overwrites on startup.
   go run ./pkg/cmd/grafana apiserver \
     --runtime-config=example.grafana.app/v0alpha1=true \
     --secure-port 7443 \
-    --client-ca-file=$PWD/data/grafana-aggregator/ca.crt
+    --requestheader-client-ca-file==$PWD/data/grafana-aggregator/ca.crt \
+    --requestheader-allowed-names=development \
+    --requestheader-extra-headers-prefix=X-Remote-Extra- \
+    --requestheader-group-headers=X-Remote-Group \
+    --requestheader-username-headers=X-Remote-User \
+    -v 10
   ```
 6. After 10 seconds, check `APIService` again. It should report as available.
   ```shell
