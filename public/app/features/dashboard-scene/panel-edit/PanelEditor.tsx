@@ -20,7 +20,9 @@ export interface PanelEditorState extends SceneObjectState {
   controls?: SceneObject[];
   isDirty?: boolean;
   panelId: number;
-  optionsPane?: PanelOptionsPane;
+  optionsPane: PanelOptionsPane;
+  optionsCollapsed?: boolean;
+  optionsPaneSize: number;
   dataPane?: PanelDataPane;
   vizManager: VizPanelManager;
 }
@@ -101,18 +103,41 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     }
   }
 
-  public toggleOptionsPane(withOpenVizPicker?: boolean) {
-    if (this.state.optionsPane) {
-      this.setState({ optionsPane: undefined });
-    } else {
-      this.setState({
-        optionsPane: new PanelOptionsPane({
-          isVizPickerOpen: withOpenVizPicker,
-        }),
-      });
-    }
+  public toggleOptionsPane() {
+    this.setState({ optionsCollapsed: this.state.optionsCollapsed });
   }
+
+  public onOptionsPaneResizing = (size: number) => {
+    const optionsPaneSize = 1 - size;
+
+    if (this.state.optionsCollapsed && optionsPaneSize > MIN_PANEL_OPTIONS_PANE_SIZE) {
+      this.setState({ optionsCollapsed: false });
+    }
+
+    if (!this.state.optionsCollapsed && optionsPaneSize < MIN_PANEL_OPTIONS_PANE_SIZE) {
+      this.setState({ optionsCollapsed: true });
+    }
+  };
+
+  public onOptionsPaneSizeChanged = (size: number) => {
+    const newPaneSize = 1 - size;
+    const isSnappedClosed = this.state.optionsPaneSize === 0;
+
+    if (this.state.optionsCollapsed) {
+      if (isSnappedClosed) {
+        this.setState({
+          optionsPaneSize: Math.max(newPaneSize, DEFAULT_PANEL_OPTIONS_PANE_SIZE),
+          optionsCollapsed: false,
+        });
+      } else {
+        this.setState({ optionsPaneSize: 0 });
+      }
+    }
+  };
 }
+
+export const MIN_PANEL_OPTIONS_PANE_SIZE = 0.17;
+export const DEFAULT_PANEL_OPTIONS_PANE_SIZE = 0.25;
 
 export function buildPanelEditScene(panel: VizPanel): PanelEditor {
   const panelClone = panel.clone();
@@ -122,5 +147,6 @@ export function buildPanelEditScene(panel: VizPanel): PanelEditor {
     panelId: getPanelIdForVizPanel(panel),
     optionsPane: new PanelOptionsPane({}),
     vizManager: vizPanelMgr,
+    optionsPaneSize: 0.25,
   });
 }

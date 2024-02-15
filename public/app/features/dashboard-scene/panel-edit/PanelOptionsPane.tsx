@@ -5,13 +5,11 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
 import { FilterInput, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
-import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
-import { getPanelFrameCategory2 } from 'app/features/dashboard/components/PanelEditor/getPanelFrameOptions';
-import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
+import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 
 import { PanelEditor } from './PanelEditor';
+import { PanelOptions } from './PanelOptions';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
 
 export interface PanelOptionsPaneState extends SceneObjectState {
@@ -27,10 +25,6 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
       listMode: OptionFilter.All,
       ...state,
     });
-  }
-
-  public getVizManager() {
-    return sceneGraph.getAncestor(this, PanelEditor).state.vizManager;
   }
 
   onToggleVizPicker = () => {
@@ -52,78 +46,28 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 
   static Component = ({ model }: SceneComponentProps<PanelOptionsPane>) => {
     const { isVizPickerOpen, searchQuery, listMode } = model.useState();
-    const panelManager = model.getVizManager();
-    const { panel } = panelManager.state;
-    const dataObject = sceneGraph.getData(panel);
-    const { data } = dataObject.useState();
-    const { pluginId, options, fieldConfig } = panel.useState();
+    const editor = sceneGraph.getAncestor(model, PanelEditor);
+    const { optionsCollapsed, vizManager } = editor.useState();
+    const { pluginId } = vizManager.state.panel.useState();
     const styles = useStyles2(getStyles);
-    const panelFrameOptions = useMemo(() => getPanelFrameCategory2(panel), [panel]);
 
-    const visualizationOptions = useMemo(() => {
-      const plugin = panel.getPlugin();
-      if (!plugin) {
-        return undefined;
-      }
-
-      return getVisualizationOptions2({
-        panel,
-        plugin: plugin,
-        eventBus: panel.getPanelContext().eventBus,
-        instanceState: panel.getPanelContext().instanceState!,
-      });
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [panel, options, fieldConfig]);
-
-    const justOverrides = useMemo(
-      () =>
-        getFieldOverrideCategories(
-          fieldConfig,
-          panel.getPlugin()?.fieldConfigRegistry!,
-          data?.series ?? [],
-          searchQuery,
-          (newConfig) => {
-            panel.setState({
-              fieldConfig: newConfig,
-            });
-          }
-        ),
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      [searchQuery, panel, fieldConfig]
-    );
-
-    const isSearching = searchQuery.length > 0;
-    const mainBoxElements: React.ReactNode[] = [];
-
-    if (isSearching) {
-      mainBoxElements.push(
-        renderSearchHits([panelFrameOptions, ...(visualizationOptions ?? [])], justOverrides, searchQuery)
+    if (optionsCollapsed) {
+      return (
+        <div className={styles.pane}>
+          <div className={styles.top}>
+            <ToolbarButton
+              tooltip={'Open options pane'}
+              icon={'arrow-to-right'}
+              onClick={model.onCollapsePane}
+              variant="canvas"
+              className={styles.rotateIcon}
+              data-testid={selectors.components.PanelEditor.toggleVizOptions}
+              aria-label={'Open options pane'}
+            />
+          </div>
+        </div>
       );
-    } else {
-      switch (listMode) {
-        case OptionFilter.All:
-          mainBoxElements.push(panelFrameOptions.render());
-
-          for (const item of visualizationOptions ?? []) {
-            mainBoxElements.push(item.render());
-          }
-
-          for (const item of justOverrides) {
-            mainBoxElements.push(item.render());
-          }
-          break;
-        case OptionFilter.Overrides:
-          for (const item of justOverrides) {
-            mainBoxElements.push(item.render());
-          }
-        default:
-          break;
-      }
     }
-
-    // {isVizPickerOpen && (
-    //   <PanelVizTypePicker panelManager={panelManager} onChange={model.onToggleVizPicker} data={data} />
-    // )}
 
     return (
       <div className={styles.pane}>
@@ -143,12 +87,12 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
                 onChange={model.onSetSearchQuery}
               />
             </div>
-            <div className={styles.listOfOptions}>{mainBoxElements}</div>
+            <div className={styles.listOfOptions}>
+              <PanelOptions vizManager={vizManager} searchQuery={searchQuery} listMode={listMode} />
+            </div>
           </>
         )}
-        {isVizPickerOpen && (
-          <PanelVizTypePicker panelManager={panelManager} onChange={model.onToggleVizPicker} data={data} />
-        )}
+        {isVizPickerOpen && <PanelVizTypePicker vizManager={vizManager} onChange={model.onToggleVizPicker} />}
       </div>
     );
   };
@@ -184,6 +128,9 @@ function getStyles(theme: GrafanaTheme2) {
     vizField: css({
       marginBottom: theme.spacing(1),
     }),
+    rotateIcon: css({
+      rotate: '180deg',
+    }),
   };
 }
 
@@ -213,14 +160,14 @@ export function VisualizationButton({ pluginId, onOpen, isOpen, onTogglePane }: 
       >
         {pluginMeta.name}
       </ToolbarButton>
-      <ToolbarButton
+      {/* <ToolbarButton
         tooltip={'Close options pane'}
         icon={'arrow-to-right'}
         onClick={onTogglePane}
         variant="canvas"
         data-testid={selectors.components.PanelEditor.toggleVizOptions}
         aria-label={'Close options pane'}
-      />
+      /> */}
     </Stack>
   );
 }
