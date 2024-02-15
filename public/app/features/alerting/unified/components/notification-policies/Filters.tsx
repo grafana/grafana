@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
 import React, { useCallback, useEffect, useRef } from 'react';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
 import { Button, Field, Icon, Input, Label as LabelElement, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { ObjectMatcher, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
@@ -53,67 +53,64 @@ const NotificationPoliciesFilter = ({
   const inputInvalid = queryString && queryString.length > 3 ? parseMatchers(queryString).length === 0 : false;
 
   return (
-    <Stack direction="row" gap={1}>
-      <Stack direction="row" alignItems="flex-start" gap={0.5}>
-        <Field
-          className={styles.noBottom}
-          label={
-            <LabelElement>
-              <Stack gap={0.5}>
-                <span>Search by matchers</span>
-                <Tooltip
-                  content={
-                    <div>
-                      Filter silences by matchers using a comma separated list of matchers, ie:
-                      <pre>{`severity=critical, instance=~cluster-us-.+`}</pre>
-                    </div>
-                  }
-                >
-                  <Icon name="info-circle" size="sm" />
-                </Tooltip>
-              </Stack>
-            </LabelElement>
-          }
-          invalid={inputInvalid}
-          error={inputInvalid ? 'Query must use valid matcher syntax' : null}
-        >
-          <Input
-            ref={searchInputRef}
-            data-testid="search-query-input"
-            placeholder="Search"
-            width={46}
-            prefix={<Icon name="search" />}
-            onChange={(event) => {
-              setSearchParams({ queryString: event.currentTarget.value });
-            }}
-            defaultValue={queryString}
-          />
-        </Field>
-        <Field label="Search by contact point" style={{ marginBottom: 0 }}>
-          <Select
-            id="receiver"
-            aria-label="Search by contact point"
-            value={selectedContactPoint}
-            options={receiverOptions}
-            onChange={(option) => {
-              setSearchParams({ contactPoint: option?.value });
-            }}
-            width={28}
-            isClearable
-          />
-        </Field>
-        {hasFilters && (
-          <Button variant="secondary" icon="times" onClick={clearFilters} style={{ marginTop: 19 }}>
+    <Stack direction="row" alignItems="flex-end" gap={1}>
+      <Field
+        className={styles.noBottom}
+        label={
+          <LabelElement>
+            <Stack gap={0.5}>
+              <span>Search by matchers</span>
+              <Tooltip
+                content={
+                  <div>
+                    Filter silences by matchers using a comma separated list of matchers, ie:
+                    <pre>{`severity=critical, instance=~cluster-us-.+`}</pre>
+                  </div>
+                }
+              >
+                <Icon name="info-circle" size="sm" />
+              </Tooltip>
+            </Stack>
+          </LabelElement>
+        }
+        invalid={inputInvalid}
+        error={inputInvalid ? 'Query must use valid matcher syntax' : null}
+      >
+        <Input
+          ref={searchInputRef}
+          data-testid="search-query-input"
+          placeholder="Search"
+          width={46}
+          prefix={<Icon name="search" />}
+          onChange={(event) => {
+            setSearchParams({ queryString: event.currentTarget.value });
+          }}
+          defaultValue={queryString}
+        />
+      </Field>
+      <Field label="Search by contact point" style={{ marginBottom: 0 }}>
+        <Select
+          id="receiver"
+          aria-label="Search by contact point"
+          value={selectedContactPoint}
+          options={receiverOptions}
+          onChange={(option) => {
+            setSearchParams({ contactPoint: option?.value });
+          }}
+          width={28}
+          isClearable
+        />
+      </Field>
+      {hasFilters && (
+        <Stack alignItems="center">
+          <Button variant="secondary" icon="times" onClick={clearFilters}>
             Clear filters
           </Button>
-        )}
-      </Stack>
-      {hasFilters && matchingCount > 0 && (
-        <div className={styles.marginResults}>
-          {matchingCount} {matchingCount > 1 ? 'policies match' : 'policy matches'} the filter.
-        </div>
+          {matchingCount === 0 && 'No policies matching filters.'}
+          {matchingCount === 1 && `${matchingCount} policy matches the filters.`}
+          {matchingCount > 1 && `${matchingCount} policies match the filters.`}
+        </Stack>
       )}
-      {hasFilters && matchingCount === 0 && <div className={styles.marginResults}>No policies match the filters.</div>}
     </Stack>
   );
 };
@@ -175,12 +172,9 @@ const getNotificationPoliciesFilters = (searchParams: URLSearchParams) => ({
   contactPoint: searchParams.get('contactPoint') ?? undefined,
 });
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   noBottom: css({
     marginBottom: 0,
-  }),
-  marginResults: css({
-    marginTop: theme.spacing(3),
   }),
 });
 
