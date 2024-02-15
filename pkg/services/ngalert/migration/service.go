@@ -371,6 +371,7 @@ func (ms *migrationService) Run(ctx context.Context) error {
 
 				// Append a field to log when dry-running
 				errMigration = ms.store.InTransaction(ctx, func(ctx context.Context) error {
+					ctx = log.WithContextualAttributes(ctx, []any{"dryrun", "true"})
 					err := ms.applyTransition(ctx, t)
 					if err != nil {
 						return err
