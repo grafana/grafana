@@ -21,6 +21,7 @@ func TestTemplateService(t *testing.T) {
 			GetsConfig(models.AlertConfiguration{
 				AlertmanagerConfiguration: configWithTemplates,
 			})
+		sut.provenanceStore.(*MockProvisioningStore).EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 
 		result, err := sut.GetTemplates(context.Background(), 1)
 
