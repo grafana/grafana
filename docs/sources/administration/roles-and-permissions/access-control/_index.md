@@ -93,6 +93,7 @@ Assign fixed roles when the basic roles do not meet your permission requirements
 - [Feature Toggles]({{< relref "../../feature-toggles/" >}})
 - [Folders]({{< relref "../../../dashboards/manage-dashboards/#create-a-dashboard-folder" >}})
 - [LDAP]({{< relref "../../../setup-grafana/configure-security/configure-authentication/ldap/" >}})
+- [Library panels]({{< relref "../../../dashboards/build-dashboards/manage-library-panels" >}})
 - [Licenses]({{< relref "../../stats-and-license/" >}})
 - [Organizations]({{< relref "../../organization-management/" >}})
 - [Provisioning]({{< relref "../../provisioning/" >}})
