@@ -45,6 +45,7 @@ interface RowsListProps {
   timeRange?: TimeRange;
   footerPaginationEnabled: boolean;
   initialRowIndex?: number;
+  expandedRowIndex?: Map<number, React.ReactElement>;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -217,6 +218,8 @@ export const RowsList = (props: RowsListProps) => {
           'aria-selected': 'true',
         };
       }
+
+      const expandedRowElement = props?.expandedRowIndex?.has(index) && props.expandedRowIndex.get(index);
       return (
         <div
           {...row.getRowProps({ style, ...additionalProps })}
@@ -225,6 +228,7 @@ export const RowsList = (props: RowsListProps) => {
           onMouseEnter={() => onRowHover(index, data)}
           onMouseLeave={onRowLeave}
         >
+          {expandedRowElement && <>{expandedRowElement}</>}
           {/*add the nested data to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
           {nestedDataField && tableState.expanded[row.id] && (
             <ExpandedRow
@@ -265,6 +269,7 @@ export const RowsList = (props: RowsListProps) => {
       theme.components.table.rowHoverBackground,
       timeRange,
       width,
+      props.expandedRowIndex,
     ]
   );
 

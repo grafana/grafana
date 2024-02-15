@@ -24,6 +24,7 @@ import { LogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
 
+import { ExpandedRow } from './ExpandedRow';
 import { FieldNameMeta } from './LogsTableWrap';
 
 interface Props {
@@ -44,6 +45,11 @@ export function LogsTable(props: Props) {
   const { timeZone, splitOpen, range, logsSortOrder, width, dataFrame, columnsWithMeta, logsFrame } = props;
   const [tableFrame, setTableFrame] = useState<DataFrame | undefined>(undefined);
   const timeIndex = logsFrame?.timeField.index;
+  const [selectedRowIndex, setSelectedRowIndex] = useState<number | undefined>();
+
+  const map = new Map();
+  map.set(selectedRowIndex, <ExpandedRow />);
+  console.log('selectedIndex', selectedRowIndex);
 
   const prepareTableFrame = useCallback(
     (frame: DataFrame): DataFrame => {
@@ -169,6 +175,15 @@ export function LogsTable(props: Props) {
 
   return (
     <Table
+      expandedRowIndex={map}
+      onCellClick={(rect, colIndex, rowIndex, event) => {
+        if (rowIndex === selectedRowIndex) {
+          setSelectedRowIndex(undefined);
+        } else {
+          setSelectedRowIndex(rowIndex);
+        }
+        console.log(rect, colIndex, rowIndex, event);
+      }}
       data={tableFrame}
       width={width}
       onCellFilterAdded={props.onClickFilterLabel && props.onClickFilterOutLabel ? onCellFilterAdded : undefined}

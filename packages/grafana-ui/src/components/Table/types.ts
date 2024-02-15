@@ -101,6 +101,7 @@ export interface Props {
   initialRowIndex?: number;
   // For cell interaction controlled by parent component
   onCellClick?: onTableCellClickArgs;
+  expandedRowIndex?: Map<number, React.ReactElement>;
 }
 
 // The arguments passed to the calling component on click of a table cell
