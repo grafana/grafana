@@ -73,13 +73,23 @@ func ProvideService(
 
 type operation func(ctx context.Context) (*definitions.OrgMigrationSummary, error)
 
-// verifyTry verifies that the org has been migrated, and then attempts to execute the operation. If another operation
-// is already in progress, ErrUpgradeInProgress will be returned.
-func (ms *migrationService) verifyTry(ctx context.Context, orgID int64, op operation) (definitions.OrgMigrationSummary, error) {
-	if err := ms.verifyMigrated(ctx, orgID); err != nil {
-		return definitions.OrgMigrationSummary{}, err
+// tryAndSet attempts to execute the operation and then sets the migrated status to true.
+// If another operation is already in progress, ErrUpgradeInProgress will be returned
+func (ms *migrationService) tryAndSet(ctx context.Context, orgID int64, op operation) (definitions.OrgMigrationSummary, error) {
+	opAndSet := func(ctx context.Context) (*definitions.OrgMigrationSummary, error) {
+		s, err := op(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		err = ms.migrationStore.SetMigrated(ctx, orgID, true)
+		if err != nil {
+			return nil, fmt.Errorf("setting migration status: %w", err)
+		}
+
+		return s, nil
 	}
-	return ms.try(ctx, op)
+	return ms.try(ctx, opAndSet)
 }
 
 // try attempts to execute the operation. If another operation is already in progress, ErrUpgradeInProgress will be returned.
@@ -110,7 +120,7 @@ func (ms *migrationService) try(ctx context.Context, op operation) (definitions.
 
 // MigrateChannel migrates a single legacy notification channel to a unified alerting contact point.
 func (ms *migrationService) MigrateChannel(ctx context.Context, orgID int64, channelID int64) (definitions.OrgMigrationSummary, error) {
-	return ms.verifyTry(ctx, orgID, func(ctx context.Context) (*definitions.OrgMigrationSummary, error) {
+	return ms.tryAndSet(ctx, orgID, func(ctx context.Context) (*definitions.OrgMigrationSummary, error) {
 		summary := definitions.OrgMigrationSummary{}
 		om := ms.newOrgMigration(orgID)
 		oldState, err := om.migrationStore.GetOrgMigrationState(ctx, orgID)
@@ -161,7 +171,7 @@ func (ms *migrationService) MigrateChannel(ctx context.Context, orgID int64, cha
 
 // MigrateAllChannels migrates all legacy notification channel to unified alerting contact points.
 func (ms *migrationService) MigrateAllChannels(ctx context.Context, orgID int64, skipExisting bool) (definitions.OrgMigrationSummary, error) {
-	return ms.verifyTry(ctx, orgID, func(ctx context.Context) (*definitions.OrgMigrationSummary, error) {
+	return ms.tryAndSet(ctx, orgID, func(ctx context.Context) (*definitions.OrgMigrationSummary, error) {
 		summary := definitions.OrgMigrationSummary{}
 		om := ms.newOrgMigration(orgID)
 		pairs, err := om.migrateOrgChannels(ctx)
@@ -181,7 +191,7 @@ func (ms *migrationService) MigrateAllChannels(ctx context.Context, orgID int64,
 
 // MigrateAlert migrates a single dashboard alert from legacy alerting to unified alerting.
 func (ms *migrationService) MigrateAlert(ctx context.Context, orgID int64, dashboardID int64, panelID int64) (definitions.OrgMigrationSummary, error) {
-	return ms.verifyTry(ctx, orgID, func(ctx context.Context) (*definitions.OrgMigrationSummary, error) {
+	return ms.tryAndSet(ctx, orgID, func(ctx context.Context) (*definitions.OrgMigrationSummary, error) {
 		summary := definitions.OrgMigrationSummary{}
 		om := ms.newOrgMigration(orgID)
 		oldState, err := om.migrationStore.GetOrgMigrationState(ctx, orgID)
@@ -238,7 +248,7 @@ func (ms *migrationService) MigrateAlert(ctx context.Context, orgID int64, dashb
 
 // MigrateDashboardAlerts migrates all legacy dashboard alerts from a single dashboard to unified alerting.
 func (ms *migrationService) MigrateDashboardAlerts(ctx context.Context, orgID int64, dashboardID int64, skipExisting bool) (definitions.OrgMigrationSummary, error) {
-	return ms.verifyTry(ctx, orgID, func(ctx context.Context) (*definitions.OrgMigrationSummary, error) {
+	return ms.tryAndSet(ctx, orgID, func(ctx context.Context) (*definitions.OrgMigrationSummary, error) {
 		summary := definitions.OrgMigrationSummary{}
 		om := ms.newOrgMigration(orgID)
 		alerts, err := ms.migrationStore.GetDashboardAlerts(ctx, orgID, dashboardID)
@@ -259,7 +269,7 @@ func (ms *migrationService) MigrateDashboardAlerts(ctx context.Context, orgID in
 
 // MigrateAllDashboardAlerts migrates all legacy alerts to unified alerting contact points.
 func (ms *migrationService) MigrateAllDashboardAlerts(ctx context.Context, orgID int64, skipExisting bool) (definitions.OrgMigrationSummary, error) {
-	return ms.verifyTry(ctx, orgID, func(ctx context.Context) (*definitions.OrgMigrationSummary, error) {
+	return ms.tryAndSet(ctx, orgID, func(ctx context.Context) (*definitions.OrgMigrationSummary, error) {
 		summary := definitions.OrgMigrationSummary{}
 		om := ms.newOrgMigration(orgID)
 		dashboardUpgrades, err := om.migrateOrgAlerts(ctx)
@@ -279,7 +289,7 @@ func (ms *migrationService) MigrateAllDashboardAlerts(ctx context.Context, orgID
 
 // MigrateOrg executes the migration for a single org.
 func (ms *migrationService) MigrateOrg(ctx context.Context, orgID int64, skipExisting bool) (definitions.OrgMigrationSummary, error) {
-	return ms.try(ctx, func(ctx context.Context) (*definitions.OrgMigrationSummary, error) {
+	return ms.tryAndSet(ctx, orgID, func(ctx context.Context) (*definitions.OrgMigrationSummary, error) {
 		summary := definitions.OrgMigrationSummary{}
 		ms.log.Info("Starting legacy migration for org", "orgId", orgID, "skipExisting", skipExisting)
 		om := ms.newOrgMigration(orgID)
@@ -293,11 +303,6 @@ func (ms *migrationService) MigrateOrg(ctx context.Context, orgID int64, skipExi
 			return nil, err
 		}
 
-		err = ms.migrationStore.SetMigrated(ctx, orgID, true)
-		if err != nil {
-			return nil, fmt.Errorf("setting migration status: %w", err)
-		}
-
 		summary.Add(s)
 		return &summary, nil
 	})
@@ -306,9 +311,6 @@ func (ms *migrationService) MigrateOrg(ctx context.Context, orgID int64, skipExi
 // GetOrgMigrationState returns the current migration state for an org. This is a potentially expensive operation as it
 // requires re-hydrating the entire migration state from the database against all current alerting resources.
 func (ms *migrationService) GetOrgMigrationState(ctx context.Context, orgID int64) (*definitions.OrgMigrationState, error) {
-	if migrated, err := ms.migrationStore.IsMigrated(ctx, orgID); err != nil || !migrated {
-		return &definitions.OrgMigrationState{OrgID: orgID}, err
-	}
 	dState, err := ms.migrationStore.GetOrgMigrationState(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -525,18 +527,6 @@ func (ms *migrationService) RevertAllOrgs(ctx context.Context) error {
 	return err
 }
 
-// verifyMigrated returns an error if the org has not been migrated.
-func (ms *migrationService) verifyMigrated(ctx context.Context, orgID int64) error {
-	migrated, err := ms.migrationStore.IsMigrated(ctx, orgID)
-	if err != nil {
-		return fmt.Errorf("check if migrated: %w", err)
-	}
-	if !migrated {
-		return fmt.Errorf("not migrated")
-	}
-	return nil
-}
-
 // fromDashboardUpgrades converts DashboardUpgrades to their api representation. This requires rehydrating information
 // from the database for the current state of dashboards, alerts, and rules.
 func (ms *migrationService) fromDashboardUpgrades(ctx context.Context, orgID int64, migratedDashboards map[int64]*migrationStore.DashboardUpgrade, amConfig *migmodels.Alertmanager) ([]*definitions.DashboardUpgrade, error) {
@@ -616,7 +606,7 @@ func (ms *migrationService) fromDashboardUpgrades(ctx context.Context, orgID int
 					} else {
 						// We could potentially set an error here, but it's not really an error. It just means that the
 						// user deleted the migrated rule after the migration. This could just as easily be intentional.
-						ms.log.Info("Could not find rule for migrated alert", "alertId", a.ID, "ruleUid", p.NewRuleUID)
+						ms.log.Debug("Could not find rule for migrated alert", "alertId", a.ID, "ruleUid", p.NewRuleUID)
 					}
 				}
 			}
