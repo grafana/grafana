@@ -1519,6 +1519,9 @@ func (s *sqlEntityServer) watch(ctx context.Context, r *entity.EntityWatchReques
 				result.Status = nil
 			}
 
+			// update r.Since value so we don't send earlier results again
+			r.Since = result.ResourceVersion
+
 			s.log.Debug("sending watch result", "guid", result.Guid, "action", result.Action, "rv", result.ResourceVersion)
 			err = w.Send(&entity.EntityWatchResponse{
 				Timestamp: time.Now().UnixMilli(),
