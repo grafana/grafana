@@ -414,6 +414,24 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this._initialState;
   }
 
+  public addPanel(vizPanel: VizPanel): void {
+    // TODO: need logic for adding a panel when other panels exist
+    // This is the logic when dashboard is empty
+    this.setState({
+      body: new SceneGridLayout({
+        children: [
+          new SceneGridItem({
+            height: 10,
+            width: 10,
+            x: 0.2,
+            y: 0,
+            body: vizPanel,
+          }),
+        ],
+      }),
+    });
+  }
+
   public duplicatePanel(vizPanel: VizPanel) {
     if (!vizPanel.parent) {
       return;
@@ -502,6 +520,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public onOpenSettings = () => {
     locationService.partial({ editview: 'settings' });
+  };
+
+  public isEmpty = (): boolean => {
+    const { body, viewPanelScene } = this.state;
+
+    if (!!viewPanelScene) {
+      return !!viewPanelScene.state.body;
+    }
+
+    if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
+      return body.state.children.length === 0;
+    }
+
+    throw new Error('Invalid body type');
   };
 
   /**
