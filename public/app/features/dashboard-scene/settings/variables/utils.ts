@@ -214,6 +214,7 @@ export function isSceneVariableInstance(sceneObject: SceneObject): sceneObject i
     sceneUtils.isDataSourceVariable(sceneObject) ||
     sceneUtils.isIntervalVariable(sceneObject) ||
     sceneUtils.isQueryVariable(sceneObject) ||
-    sceneUtils.isTextBoxVariable(sceneObject)
+    sceneUtils.isTextBoxVariable(sceneObject) ||
+    sceneUtils.isGroupByVariable(sceneObject)
   );
 }
