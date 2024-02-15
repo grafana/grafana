@@ -60,11 +60,13 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _initDataPane(pluginId: string) {
     const skipDataQuery = config.panels[pluginId].skipDataQuery;
 
-    if (!skipDataQuery && !this.state.dataPane) {
-      this.setState({ dataPane: new PanelDataPane(this.state.vizManager) });
-    } else if (this.state.dataPane) {
+    if (skipDataQuery && this.state.dataPane) {
       locationService.partial({ tab: null }, true);
       this.setState({ dataPane: undefined });
+    }
+
+    if (!skipDataQuery && !this.state.dataPane) {
+      this.setState({ dataPane: new PanelDataPane(this.state.vizManager) });
     }
   }
 

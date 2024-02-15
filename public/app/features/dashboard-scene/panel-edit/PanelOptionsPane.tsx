@@ -214,12 +214,12 @@ export function VisualizationButton({ pluginId, onOpen, isOpen, onTogglePane }: 
         {pluginMeta.name}
       </ToolbarButton>
       <ToolbarButton
-        tooltip={'Show options pane'}
+        tooltip={'Close options pane'}
         icon={'arrow-to-right'}
         onClick={onTogglePane}
         variant="canvas"
         data-testid={selectors.components.PanelEditor.toggleVizOptions}
-        aria-label={'Show options pane'}
+        aria-label={'Close options pane'}
       />
     </Stack>
   );
