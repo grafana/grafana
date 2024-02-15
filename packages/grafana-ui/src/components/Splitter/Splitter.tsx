@@ -18,9 +18,9 @@ export interface Props {
   secondaryPaneStyles?: React.CSSProperties;
   /**
    * Called when ever the size of the primary pane changes
-   * @param size (float from 0-1)
+   * @param flexSize (float from 0-1)
    */
-  onSizeChanged?: (size: number, pixelSize: number) => void;
+  onSizeChanged?: (flexSize: number, pixelSize: number) => void;
   onResizing?: (flexSize: number, pixelSize: number) => void;
   children: [React.ReactNode, React.ReactNode];
 }
@@ -44,8 +44,7 @@ export function Splitter(props: Props) {
   const { containerRef, firstPaneRef, minDimProp, splitterProps, secondPaneRef } = useSplitter(
     direction,
     onSizeChanged,
-    onResizing,
-    children
+    onResizing
   );
 
   const kids = React.Children.toArray(children);
@@ -163,8 +162,7 @@ const propsForDirection = {
 function useSplitter(
   direction: 'row' | 'column',
   onSizeChanged: Props['onSizeChanged'],
-  onResizing: Props['onResizing'],
-  children: Props['children']
+  onResizing: Props['onResizing']
 ) {
   const handleSize = 16;
   const splitterRef = useRef<HTMLDivElement | null>(null);
@@ -255,9 +253,13 @@ function useSplitter(
     (e: React.PointerEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
+
       splitterRef.current!.releasePointerCapture(e.pointerId);
       dragStart.current = null;
-      onSizeChanged?.(parseFloat(firstPaneRef.current!.style.flexGrow), primarySizeRef.current);
+
+      if (typeof primarySizeRef.current === 'number') {
+        onSizeChanged?.(parseFloat(firstPaneRef.current!.style.flexGrow), primarySizeRef.current);
+      }
     },
     [onSizeChanged]
   );
@@ -386,7 +388,10 @@ function useSplitter(
       }
 
       pressedKeys.current.delete(e.key);
-      onSizeChanged?.(parseFloat(firstPaneRef.current!.style.flexGrow), primarySizeRef.current);
+
+      if (typeof primarySizeRef.current === 'number') {
+        onSizeChanged?.(parseFloat(firstPaneRef.current!.style.flexGrow), primarySizeRef.current);
+      }
     },
     [direction, onSizeChanged]
   );
@@ -409,7 +414,10 @@ function useSplitter(
     if (pressedKeys.current.size > 0) {
       pressedKeys.current.clear();
       dragStart.current = null;
-      onSizeChanged?.(parseFloat(firstPaneRef.current!.style.flexGrow));
+
+      if (typeof primarySizeRef.current === 'number') {
+        onSizeChanged?.(parseFloat(firstPaneRef.current!.style.flexGrow), primarySizeRef.current);
+      }
     }
   }, [onSizeChanged]);
 

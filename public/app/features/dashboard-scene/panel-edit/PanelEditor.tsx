@@ -107,37 +107,52 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this.setState({ optionsCollapsed: this.state.optionsCollapsed });
   }
 
-  public onOptionsPaneResizing = (size: number) => {
-    const optionsPaneSize = 1 - size;
+  public onOptionsPaneResizing = (flexSize: number, pixelSize: number) => {
+    if (flexSize <= 0 && pixelSize <= 0) {
+      return;
+    }
 
-    if (this.state.optionsCollapsed && optionsPaneSize > MIN_PANEL_OPTIONS_PANE_SIZE) {
+    const optionsPixelSize = (pixelSize / flexSize) * (1 - flexSize);
+    console.log('options pane pixe, optionsPixelSize', optionsPixelSize);
+
+    if (this.state.optionsCollapsed && optionsPixelSize > OPTIONS_PANE_PIXELS_MIN) {
       this.setState({ optionsCollapsed: false });
     }
 
-    if (!this.state.optionsCollapsed && optionsPaneSize < MIN_PANEL_OPTIONS_PANE_SIZE) {
+    if (!this.state.optionsCollapsed && optionsPixelSize < OPTIONS_PANE_PIXELS_MIN) {
       this.setState({ optionsCollapsed: true });
     }
   };
 
-  public onOptionsPaneSizeChanged = (size: number) => {
-    const newPaneSize = 1 - size;
+  public onOptionsPaneSizeChanged = (flexSize: number, pixelSize: number) => {
+    if (flexSize <= 0 && pixelSize <= 0) {
+      return;
+    }
+
+    const optionsPaneSize = 1 - flexSize;
     const isSnappedClosed = this.state.optionsPaneSize === 0;
+    const fullWidth = pixelSize / flexSize;
+    const snapWidth = OPTIONS_PANE_PIXELS_SNAP / fullWidth;
+    console.log('snapWidth', snapWidth);
 
     if (this.state.optionsCollapsed) {
       if (isSnappedClosed) {
         this.setState({
-          optionsPaneSize: Math.max(newPaneSize, DEFAULT_PANEL_OPTIONS_PANE_SIZE),
+          optionsPaneSize: Math.max(optionsPaneSize, snapWidth),
           optionsCollapsed: false,
         });
       } else {
         this.setState({ optionsPaneSize: 0 });
       }
+    } else if (isSnappedClosed) {
+      this.setState({ optionsPaneSize: optionsPaneSize });
     }
   };
 }
 
-export const MIN_PANEL_OPTIONS_PANE_SIZE = 0.17;
-export const DEFAULT_PANEL_OPTIONS_PANE_SIZE = 0.25;
+export const OPTIONS_PANE_PIXELS_MIN = 300;
+export const OPTIONS_PANE_PIXELS_SNAP = 400;
+export const OPTIONS_PANE_FLEX_DEFAULT = 0.25;
 
 export function buildPanelEditScene(panel: VizPanel): PanelEditor {
   const panelClone = panel.clone();
@@ -147,6 +162,6 @@ export function buildPanelEditScene(panel: VizPanel): PanelEditor {
     panelId: getPanelIdForVizPanel(panel),
     optionsPane: new PanelOptionsPane({}),
     vizManager: vizPanelMgr,
-    optionsPaneSize: 0.25,
+    optionsPaneSize: OPTIONS_PANE_FLEX_DEFAULT,
   });
 }

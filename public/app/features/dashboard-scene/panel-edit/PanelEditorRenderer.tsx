@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { CSSProperties, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
@@ -12,7 +12,7 @@ import { PanelEditor } from './PanelEditor';
 
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
-  const { optionsPane, vizManager, dataPane, optionsCollapsed, optionsPaneSize } = model.useState();
+  const { optionsPane, vizManager, dataPane, optionsPaneSize } = model.useState();
   const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
   const [vizPaneStyles, optionsPaneStyles] = useMemo(() => {
@@ -22,17 +22,6 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
       return [{ flexGrow: 1 }, { minWidth: 'unset', flexGrow: 0 }];
     }
   }, [optionsPaneSize]);
-
-  // const optionsPaneStyles = useMemo(
-  //   () => ({
-  //     minWidth: 'unset',
-  //     overflow: optionsPaneSize === 0 ? 'unset' : 'hidden',
-  //     flexGrow: optionsPaneSize,
-  //   }),
-  //   [optionsPaneSize]
-  // );
-
-  // const primaryStyles = useMemo(() => (optionsPaneSize === 0 ? { flexGrow: 1 } : undefined), [optionsPaneSize]);
 
   return (
     <>
