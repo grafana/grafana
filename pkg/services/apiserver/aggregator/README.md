@@ -92,8 +92,7 @@ configuration overwrites on startup.
   go run ./pkg/cmd/grafana apiserver \
     --runtime-config=example.grafana.app/v0alpha1=true \
     --secure-port 7443 \
-    --requestheader-client-ca-file==$PWD/data/grafana-aggregator/ca.crt \
-    --requestheader-allowed-names=development \
+    --requestheader-client-ca-file=$PWD/data/grafana-aggregator/ca.crt \
     --requestheader-extra-headers-prefix=X-Remote-Extra- \
     --requestheader-group-headers=X-Remote-Group \
     --requestheader-username-headers=X-Remote-User \

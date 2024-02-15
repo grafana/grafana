@@ -23,7 +23,7 @@ func signedInUserAuthenticator(req *http.Request) (*authenticator.Response, bool
 
 	userInfo := &k8suser.DefaultInfo{
 		Name:   signedInUser.Login,
-		UID:    strconv.FormatInt(signedInUser.UserID, 10),
+		UID:    signedInUser.UserUID,
 		Groups: []string{},
 		Extra:  map[string][]string{},
 	}
@@ -33,7 +33,7 @@ func signedInUserAuthenticator(req *http.Request) (*authenticator.Response, bool
 	}
 
 	if signedInUser.IDToken != "" {
-		userInfo.Extra["id_token"] = []string{signedInUser.IDToken}
+		userInfo.Extra["ID-Token"] = []string{signedInUser.IDToken}
 	}
 
 	return &authenticator.Response{

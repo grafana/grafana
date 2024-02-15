@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
@@ -27,9 +28,10 @@ func TestSignedInUser(t *testing.T) {
 
 	t.Run("should set user and group", func(t *testing.T) {
 		u := &user.SignedInUser{
-			Login:  "admin",
-			UserID: 1,
-			Teams:  []int64{1, 2},
+			Login:   "admin",
+			UserID:  1,
+			UserUID: uuid.New().String(),
+			Teams:   []int64{1, 2},
 		}
 		ctx := appcontext.WithUser(context.Background(), u)
 		req, err := http.NewRequest("GET", "http://localhost:3000/apis", nil)
@@ -42,15 +44,17 @@ func TestSignedInUser(t *testing.T) {
 		require.True(t, ok)
 		require.False(t, mockAuthenticator.called)
 
-		require.Equal(t, "admin", res.User.GetName())
-		require.Equal(t, "1", res.User.GetUID())
+		require.Equal(t, u.Login, res.User.GetName())
+		require.Equal(t, u.UserUID, res.User.GetUID())
 		require.Equal(t, []string{"1", "2"}, res.User.GetGroups())
+		require.Empty(t, res.User.GetExtra()["ID-Token"])
 	})
 
 	t.Run("should set ID token when available", func(t *testing.T) {
 		u := &user.SignedInUser{
 			Login:   "admin",
 			UserID:  1,
+			UserUID: uuid.New().String(),
 			Teams:   []int64{1, 2},
 			IDToken: "test-id-token",
 		}
@@ -65,10 +69,10 @@ func TestSignedInUser(t *testing.T) {
 		require.True(t, ok)
 
 		require.False(t, mockAuthenticator.called)
-		require.Equal(t, "admin", res.User.GetName())
-		require.Equal(t, "1", res.User.GetUID())
+		require.Equal(t, u.Login, res.User.GetName())
+		require.Equal(t, u.UserUID, res.User.GetUID())
 		require.Equal(t, []string{"1", "2"}, res.User.GetGroups())
-		require.Equal(t, "test-id-token", res.User.GetExtra()["id_token"][0])
+		require.Equal(t, "test-id-token", res.User.GetExtra()["ID-Token"][0])
 	})
 }
 
