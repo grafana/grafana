@@ -38,7 +38,7 @@ export const ManualEditor = ({ value, onChange, context }: StandardEditorProps<X
     if (!value[selected]) {
       return numberFields;
     }
-    const frame = context.data[value[selected].frame!.options];
+    const frame = context.data[value[selected].frame?.matcher.options ?? 0];
 
     if (frame) {
       for (let field of frame.fields) {
@@ -75,9 +75,9 @@ export const ManualEditor = ({ value, onChange, context }: StandardEditorProps<X
     onChange([
       ...value,
       {
-        frame: { id: FrameMatcherID.byIndex, options: 0 },
-        x: { field: { matcher: { id: FieldMatcherID.byName, options: numberFields[0] } } },
-        y: { field: { matcher: { id: FieldMatcherID.byName, options: numberFields[1] } } },
+        frame: { matcher: { id: FrameMatcherID.byIndex, options: 0 } },
+        x: { matcher: { id: FieldMatcherID.byName, options: numberFields[0] } },
+        y: { matcher: { id: FieldMatcherID.byName, options: numberFields[1] } },
       },
     ]);
     setSelected(value.length);
@@ -150,7 +150,7 @@ export const ManualEditor = ({ value, onChange, context }: StandardEditorProps<X
                 placeholder={'Change filter'}
                 value={
                   frameNames.find((v) => {
-                    return v.value === value[selected].frame?.options;
+                    return v.value === value[selected].frame?.matcher.options;
                   }) ?? 0
                 }
                 onChange={(val) => {
@@ -160,23 +160,18 @@ export const ManualEditor = ({ value, onChange, context }: StandardEditorProps<X
                         return {
                           ...value[i],
                           frame: {
-                            id: FrameMatcherID.byIndex,
-                            options: val.value,
+                            matcher: { id: FrameMatcherID.byIndex, options: val.value },
                           },
                           x: {
-                            field: {
-                              matcher: {
-                                id: FieldMatcherID.byName,
-                                options: numbericFieldsForSelected[0],
-                              },
+                            matcher: {
+                              id: FieldMatcherID.byName,
+                              options: numbericFieldsForSelected[0],
                             },
                           },
                           y: {
-                            field: {
-                              matcher: {
-                                id: FieldMatcherID.byName,
-                                options: numbericFieldsForSelected[1],
-                              },
+                            matcher: {
+                              id: FieldMatcherID.byName,
+                              options: numbericFieldsForSelected[1],
                             },
                           },
                         };
@@ -204,7 +199,7 @@ export const ManualEditor = ({ value, onChange, context }: StandardEditorProps<X
                 })
               );
             }}
-            frameFilter={value[selected].frame?.options ?? undefined}
+            frameFilter={value[selected].frame?.matcher.options ?? undefined}
           />
         </>
       )}

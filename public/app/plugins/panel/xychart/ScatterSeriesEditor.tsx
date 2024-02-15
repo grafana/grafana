@@ -39,17 +39,15 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, fr
     <div>
       <Field label={'X Field'}>
         <FieldNamePicker
-          value={value.x.field.matcher.options ?? ''}
+          value={value.x.matcher.options ?? ''}
           context={context}
           onChange={(field) =>
             onChange({
               ...value,
               x: {
-                field: {
-                  matcher: {
-                    id: FieldMatcherID.byName,
-                    options: field,
-                  },
+                matcher: {
+                  id: FieldMatcherID.byName,
+                  options: field,
                 },
               },
             })
@@ -68,17 +66,15 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, fr
       </Field>
       <Field label={'Y Field'}>
         <FieldNamePicker
-          value={value.y.field.matcher.options ?? ''}
+          value={value.y?.matcher?.options ?? ''}
           context={context}
           onChange={(field) =>
             onChange({
               ...value,
               y: {
-                field: {
-                  matcher: {
-                    id: FieldMatcherID.byName,
-                    options: field,
-                  },
+                matcher: {
+                  id: FieldMatcherID.byName,
+                  options: field,
                 },
               },
             })
@@ -98,13 +94,7 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, fr
       <Field label={'Point color'}>
         <ColorDimensionEditor
           // TODO create proper mapping for ColorDimensionConfig
-          value={
-            value.color?.fixed
-              ? { fixed: value.color?.fixed.value }
-              : value.color?.field
-                ? { field: value.color?.field.matcher.options }
-                : { field: undefined }
-          }
+          value={value.color ? value.color?.matcher.options : undefined}
           context={context}
           onChange={(field) => onFieldChange(field, 'color')}
           item={{
@@ -121,13 +111,7 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, fr
       <Field label={'Point size'}>
         <ScaleDimensionEditor
           // TODO create proper mapping for ScaleDimensionConfig
-          value={
-            value.size?.fixed
-              ? { fixed: value.size?.fixed.value }
-              : value.size?.field
-                ? { field: value.size?.field.matcher.options, min: value.size?.field.min, max: value.size.field.max }
-                : { fixed: 2 }
-          }
+          value={value.size ? value.size?.matcher.options : undefined}
           context={context}
           onChange={(field) => onFieldChange(field, 'size')}
           item={{
