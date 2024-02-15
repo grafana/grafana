@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
-import { Splitter, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Splitter, useStyles2 } from '@grafana/ui';
 
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -42,16 +42,6 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
                 {controls.map((control) => (
                   <control.Component key={control.state.key} model={control} />
                 ))}
-                {!optionsPane && (
-                  <ToolbarButton
-                    title="Show options pane"
-                    onClick={() => model.toggleOptionsPane()}
-                    variant="canvas"
-                    icon="sliders-v-alt"
-                  >
-                    Options
-                  </ToolbarButton>
-                )}
               </div>
             )}
             <Splitter

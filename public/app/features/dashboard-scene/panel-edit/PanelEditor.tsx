@@ -104,7 +104,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   }
 
   public toggleOptionsPane() {
-    this.setState({ optionsCollapsed: this.state.optionsCollapsed });
+    this.setState({ optionsCollapsed: !this.state.optionsCollapsed, optionsPaneSize: OPTIONS_PANE_FLEX_DEFAULT });
   }
 
   public onOptionsPaneResizing = (flexSize: number, pixelSize: number) => {
@@ -113,7 +113,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     }
 
     const optionsPixelSize = (pixelSize / flexSize) * (1 - flexSize);
-    console.log('options pane pixe, optionsPixelSize', optionsPixelSize);
 
     if (this.state.optionsCollapsed && optionsPixelSize > OPTIONS_PANE_PIXELS_MIN) {
       this.setState({ optionsCollapsed: false });
@@ -133,7 +132,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const isSnappedClosed = this.state.optionsPaneSize === 0;
     const fullWidth = pixelSize / flexSize;
     const snapWidth = OPTIONS_PANE_PIXELS_SNAP / fullWidth;
-    console.log('snapWidth', snapWidth);
 
     if (this.state.optionsCollapsed) {
       if (isSnappedClosed) {
