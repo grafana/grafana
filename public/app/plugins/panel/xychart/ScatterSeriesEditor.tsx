@@ -93,9 +93,11 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, fr
             id: 'color',
             name: 'color',
             settings: {
+              filter: (field) =>
+                frame?.fields.some((obj) => obj.state?.displayName === field.state?.displayName) ?? true,
               baseNameMode,
               isClearable: true,
-              placeholderText: 'Use standard color scheme or field configuration',
+              placeholderText: 'Use default color scheme or field config',
             },
           }}
         />
@@ -108,6 +110,13 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, fr
           item={{
             id: 'size',
             name: 'size',
+            settings: {
+              filter: (field) =>
+                frame?.fields.some((obj) => obj.state?.displayName === field.state?.displayName) ?? true,
+              baseNameMode,
+              isClearable: true,
+              placeholderText: 'Use default size or field config',
+            },
           }}
         />
       </Field>
