@@ -12,6 +12,7 @@ import {
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { activateFullSceneTree } from '../utils/test-utils';
 import { findVizPanelByKey } from '../utils/utils';
 
@@ -90,6 +91,7 @@ async function buildTestScene() {
     title: 'Panel A',
     pluginId: 'table',
     key: 'panel-12',
+    titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
     $data: new SceneDataTransformer({
       transformations: [
         {

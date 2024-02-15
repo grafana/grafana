@@ -153,8 +153,8 @@ func TestContextHandler(t *testing.T) {
 
 	t.Run("should store auth header in context", func(t *testing.T) {
 		cfg := setting.NewCfg()
-		cfg.JWTAuthEnabled = true
-		cfg.JWTAuthHeaderName = "jwt-header"
+		cfg.JWTAuth.Enabled = true
+		cfg.JWTAuth.HeaderName = "jwt-header"
 		cfg.AuthProxyEnabled = true
 		cfg.AuthProxyHeaderName = "proxy-header"
 		cfg.AuthProxyHeaders = map[string]string{

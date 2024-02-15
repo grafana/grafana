@@ -19,6 +19,7 @@ import {
   createCustomVariable,
   createDashboardVariable,
   createDatasourceVariable,
+  createGroupByVariable,
   createIntervalVariable,
   createOrgVariable,
   createQueryVariable,
@@ -164,6 +165,7 @@ describe('type guards', () => {
   const variableFactsObj: Record<VariableType | ExtraVariableTypes, VariableFacts> = {
     query:      { variable: createQueryVariable(),      isMulti: true,  hasOptions: true,  hasCurrent: true },
     adhoc:      { variable: createAdhocVariable(),      isMulti: false, hasOptions: false, hasCurrent: false },
+    groupby:    { variable: createGroupByVariable(),    isMulti: true,  hasOptions: true, hasCurrent: true },
     constant:   { variable: createConstantVariable(),   isMulti: false, hasOptions: true,  hasCurrent: true },
     datasource: { variable: createDatasourceVariable(), isMulti: true,  hasOptions: true,  hasCurrent: true },
     interval:   { variable: createIntervalVariable(),   isMulti: false, hasOptions: true,  hasCurrent: true },

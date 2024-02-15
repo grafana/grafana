@@ -123,6 +123,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -224,6 +225,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -497,7 +499,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.47/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -535,6 +537,7 @@ steps:
   image: golang:1.21.6-alpine
   name: wire-install
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -569,6 +572,9 @@ steps:
     --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
   depends_on:
   - yarn-install
+  environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
   image: grafana/grafana-build:main
   name: rgm-package
   pull: always
@@ -648,6 +654,8 @@ steps:
     repo:
     - grafana/grafana
 - commands:
+  - if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos';
+    false; fi
   - apt-get update
   - apt-get install -yq zip
   - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
@@ -716,6 +724,9 @@ steps:
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - yarn-install
+  environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
   image: grafana/grafana-build:main
   name: rgm-build-docker
   pull: always
@@ -842,7 +853,7 @@ steps:
   name: clone-enterprise
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.47/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1044,6 +1055,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1403,6 +1415,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1479,6 +1492,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1537,6 +1551,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1761,7 +1776,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.47/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -1799,6 +1814,7 @@ steps:
   image: golang:1.21.6-alpine
   name: wire-install
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -1832,6 +1848,9 @@ steps:
     --build-id=$$DRONE_BUILD_NUMBER --grafana-dir=$$PWD > packages.txt
   depends_on:
   - update-package-json-version
+  environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
   image: grafana/grafana-build:main
   name: rgm-package
   pull: always
@@ -1911,6 +1930,8 @@ steps:
     repo:
     - grafana/grafana
 - commands:
+  - if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos';
+    false; fi
   - apt-get update
   - apt-get install -yq zip
   - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
@@ -2015,6 +2036,9 @@ steps:
   - find ./dist -name '*docker*.tar.gz' -type f | xargs -n1 docker load -i
   depends_on:
   - update-package-json-version
+  environment:
+    _EXPERIMENTAL_DAGGER_CLOUD_TOKEN:
+      from_secret: dagger_token
   image: grafana/grafana-build:main
   name: rgm-build-docker
   pull: always
@@ -2203,7 +2227,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.47/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2405,7 +2429,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.47/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
@@ -2535,7 +2559,7 @@ steps:
   name: identify-runner
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.47/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -2714,6 +2738,7 @@ steps:
   image: golang:1.21.6-alpine
   name: compile-build-cmd
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -2987,6 +3012,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -3193,7 +3219,7 @@ steps:
   name: identify-runner
 - commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.47/windows/grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/windows/grabpl.exe
     -OutFile grabpl.exe
   image: grafana/ci-wix:0.1.1
   name: windows-init
@@ -3410,6 +3436,7 @@ steps:
   image: alpine:3.18.5
   name: identify-runner
 - commands:
+  - apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python
   - yarn install --immutable
   depends_on: []
   image: node:20.9.0-alpine
@@ -3994,7 +4021,7 @@ services:
 steps:
 - commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.47/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
   - chmod +x bin/grabpl
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
@@ -4777,6 +4804,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 0e34c95370617ee9f721421913cbe1fe103c117e2912ac589953298246fd2012
+hmac: 2a70d8442b85841e1b882c9562e8cc42b0c4b697a49ee03d086218f79cdff660
 
 ...

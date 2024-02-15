@@ -1,4 +1,4 @@
-import { AdHocVariableModel, TypedVariableModel, VariableModel } from '@grafana/data';
+import { TypedVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import {
   VizPanel,
@@ -24,9 +24,10 @@ import {
   SceneDataLayers,
   SceneDataLayerProvider,
   SceneDataLayerControls,
-  AdHocFilterSet,
   TextBoxVariable,
   UserActionEvent,
+  GroupByVariable,
+  AdHocFiltersVariable,
 } from '@grafana/scenes';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { trackDashboardLoaded } from 'app/features/dashboard/utils/tracking';
@@ -40,7 +41,7 @@ import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
-import { getPanelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
@@ -173,24 +174,11 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
 export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel) {
   let variables: SceneVariableSet | undefined = undefined;
   let layers: SceneDataLayerProvider[] = [];
-  let filtersSets: AdHocFilterSet[] = [];
 
   if (oldModel.templating?.list?.length) {
     const variableObjects = oldModel.templating.list
       .map((v) => {
         try {
-          if (isAdhocVariable(v)) {
-            filtersSets.push(
-              new AdHocFilterSet({
-                name: v.name,
-                datasource: v.datasource,
-                filters: v.filters ?? [],
-                baseFilters: v.baseFilters ?? [],
-              })
-            );
-            return null;
-          }
-
           return createSceneVariableFromVariableModel(v);
         } catch (err) {
           console.error(err);
@@ -211,11 +199,11 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     });
   }
 
-  if (oldModel.annotations?.list?.length) {
+  if (oldModel.annotations?.list?.length && !oldModel.isSnapshot()) {
     layers = oldModel.annotations?.list.map((a) => {
       // Each annotation query is an individual data layer
       return new DashboardAnnotationsDataLayer({
-        key: `annnotations-${a.name}`,
+        key: `annotations-${a.name}`,
         query: a,
         name: a.name,
         isEnabled: Boolean(a.enable),
@@ -248,6 +236,8 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     id: oldModel.id,
     description: oldModel.description,
     editable: oldModel.editable,
+    isDirty: oldModel.meta.isNew,
+    isEditing: oldModel.meta.isNew,
     meta: oldModel.meta,
     version: oldModel.version,
     body: new SceneGridLayout({
@@ -264,10 +254,11 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     }),
     $variables: variables,
     $behaviors: [
-      registerDashboardMacro,
       new behaviors.CursorSync({
         sync: oldModel.graphTooltip,
       }),
+      new behaviors.SceneQueryController(),
+      registerDashboardMacro,
       registerDashboardSceneTracking(oldModel),
       registerPanelInteractionsReporter,
     ],
@@ -279,12 +270,13 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
         : undefined,
     controls: [
       new DashboardControls({
-        variableControls: [new VariableValueSelectors({}), ...filtersSets, new SceneDataLayerControls()],
+        variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
         timeControls: [
           new SceneTimePicker({}),
           new SceneRefreshPicker({
             refresh: oldModel.refresh,
             intervals: oldModel.timepicker.refresh_intervals,
+            withText: true,
           }),
         ],
         linkControls: new DashboardLinksControls({}),
@@ -300,13 +292,26 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   const commonProperties = {
     name: variable.name,
     label: variable.label,
+    description: variable.description,
   };
+  if (variable.type === 'adhoc') {
+    return new AdHocFiltersVariable({
+      ...commonProperties,
+      description: variable.description,
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+      datasource: variable.datasource,
+      applyMode: 'auto',
+      filters: variable.filters ?? [],
+      baseFilters: variable.baseFilters ?? [],
+    });
+  }
   if (variable.type === 'custom') {
     return new CustomVariable({
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
-      description: variable.description,
+
       query: variable.query,
       isMulti: variable.multi,
       allValue: variable.allValue || undefined,
@@ -320,7 +325,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
-      description: variable.description,
+
       query: variable.query,
       datasource: variable.datasource,
       sort: variable.sort,
@@ -339,7 +344,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
-      description: variable.description,
       regex: variable.regex,
       pluginId: variable.query,
       allValue: variable.allValue || undefined,
@@ -355,7 +359,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     return new IntervalVariable({
       ...commonProperties,
       value: currentInterval,
-      description: variable.description,
       intervals: intervals,
       autoEnabled: variable.auto,
       autoStepCount: variable.auto_count,
@@ -367,7 +370,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else if (variable.type === 'constant') {
     return new ConstantVariable({
       ...commonProperties,
-      description: variable.description,
       value: variable.query,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
@@ -375,10 +377,20 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else if (variable.type === 'textbox') {
     return new TextBoxVariable({
       ...commonProperties,
-      description: variable.description,
       value: variable.query,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
+    });
+  } else if (config.featureToggles.groupByVariable && variable.type === 'groupby') {
+    return new GroupByVariable({
+      ...commonProperties,
+      datasource: variable.datasource,
+      value: variable.current?.value || [],
+      text: variable.current?.text || [],
+      skipUrlSync: variable.skipUrlSync,
+      hide: variable.hide,
+      // @ts-expect-error
+      defaultOptions: variable.options,
     });
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.type}`);
@@ -407,16 +419,14 @@ export function buildGridItemForLibPanel(panel: PanelModel) {
 }
 
 export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
-  const hasPanelLinks = panel.links && panel.links.length > 0;
   const titleItems: SceneObject[] = [];
-  let panelLinks;
 
-  if (hasPanelLinks) {
-    panelLinks = new VizPanelLinks({
-      menu: new VizPanelLinksMenu({ $behaviors: [getPanelLinksBehavior(panel)] }),
-    });
-    titleItems.push(panelLinks);
-  }
+  titleItems.push(
+    new VizPanelLinks({
+      rawLinks: panel.links,
+      menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
+    })
+  );
 
   titleItems.push(new PanelNotices());
 
@@ -477,8 +487,6 @@ export function buildGridItemForPanel(panel: PanelModel): SceneGridItemLike {
     body,
   });
 }
-
-const isAdhocVariable = (v: VariableModel): v is AdHocVariableModel => v.type === 'adhoc';
 
 const getLimitedDescriptionReporter = () => {
   const reportedPanels: string[] = [];

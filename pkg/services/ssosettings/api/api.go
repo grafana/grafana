@@ -178,7 +178,7 @@ func (api *Api) updateProviderSettings(c *contextmodel.ReqContext) response.Resp
 
 	settings.Provider = key
 
-	err := api.SSOSettingsService.Upsert(c.Req.Context(), &settings)
+	err := api.SSOSettingsService.Upsert(c.Req.Context(), &settings, c.SignedInUser)
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update provider settings", err)
 	}
@@ -233,7 +233,11 @@ type UpdateProviderSettingsParams struct {
 	Provider string `json:"key"`
 	// in:body
 	// required:true
-	Body models.SSOSettings `json:"body"`
+	Body struct {
+		ID       string         `json:"id"`
+		Provider string         `json:"provider"`
+		Settings map[string]any `json:"settings"`
+	} `json:"body"`
 }
 
 // swagger:parameters removeProviderSettings
@@ -246,11 +250,21 @@ type RemoveProviderSettingsParams struct {
 // swagger:response listSSOSettingsResponse
 type ListSSOSettingsResponse struct {
 	// in: body
-	Body []models.SSOSettings `json:"body"`
+	Body []struct {
+		ID       string         `json:"id"`
+		Provider string         `json:"provider"`
+		Settings map[string]any `json:"settings"`
+		Source   string         `json:"source"`
+	} `json:"body"`
 }
 
 // swagger:response getSSOSettingsResponse
 type GetSSOSettingsResponse struct {
 	// in: body
-	Body models.SSOSettings `json:"body"`
+	Body struct {
+		ID       string         `json:"id"`
+		Provider string         `json:"provider"`
+		Settings map[string]any `json:"settings"`
+		Source   string         `json:"source"`
+	} `json:"body"`
 }

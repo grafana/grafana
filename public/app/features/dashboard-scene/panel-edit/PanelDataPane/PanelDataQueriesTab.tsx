@@ -3,9 +3,9 @@ import React from 'react';
 import { CoreApp, DataSourceApi, DataSourceInstanceSettings, IconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { SceneObjectBase, SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { SceneObjectBase, SceneComponentProps, sceneGraph, SceneQueryRunner } from '@grafana/scenes';
 import { DataQuery } from '@grafana/schema';
-import { Button, HorizontalGroup } from '@grafana/ui';
+import { Button, HorizontalGroup, Tab } from '@grafana/ui';
 import { addQuery } from 'app/core/utils/query';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { GroupActionComponents } from 'app/features/query/components/QueryActionComponent';
@@ -18,7 +18,7 @@ import { QueryGroupOptions } from 'app/types';
 import { PanelTimeRange } from '../../scene/PanelTimeRange';
 import { VizPanelManager } from '../VizPanelManager';
 
-import { PanelDataPaneTabState, PanelDataPaneTab, TabId } from './types';
+import { PanelDataPaneTabState, PanelDataPaneTab, TabId, PanelDataTabHeaderProps } from './types';
 
 interface PanelDataQueriesTabState extends PanelDataPaneTabState {
   datasource?: DataSourceApi;
@@ -26,6 +26,7 @@ interface PanelDataQueriesTabState extends PanelDataPaneTabState {
 }
 export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabState> implements PanelDataPaneTab {
   static Component = PanelDataQueriesTabRendered;
+  TabComponent: (props: PanelDataTabHeaderProps) => React.JSX.Element;
 
   tabId = TabId.Queries;
   icon: IconName = 'database';
@@ -41,6 +42,9 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
   constructor(panelManager: VizPanelManager) {
     super({});
+    this.TabComponent = (props: PanelDataTabHeaderProps) => {
+      return QueriesTab({ ...props, model: this });
+    };
 
     this._panelManager = panelManager;
   }
@@ -68,9 +72,12 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     let queries: QueryGroupOptions['queries'] = queryRunner.state.queries;
 
     return {
-      // TODO
-      // cacheTimeout: dsSettings?.meta.queryOptions?.cacheTimeout ? panel.cacheTimeout : undefined,
-      // queryCachingTTL: dsSettings?.cachingConfig?.enabled ? panel.queryCachingTTL : undefined,
+      cacheTimeout: panelManager.state.dsSettings?.meta.queryOptions?.cacheTimeout
+        ? queryRunner.state.cacheTimeout
+        : undefined,
+      queryCachingTTL: panelManager.state.dsSettings?.cachingConfig?.enabled
+        ? queryRunner.state.queryCachingTTL
+        : undefined,
       dataSource: {
         default: panelManager.state.dsSettings?.isDefault,
         type: panelManager.state.dsSettings?.type,
@@ -153,6 +160,10 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
       .filter(Boolean);
   }
 
+  get queryRunner(): SceneQueryRunner {
+    return this._panelManager.queryRunner;
+  }
+
   get panelManager() {
     return this._panelManager;
   }
@@ -213,5 +224,26 @@ function PanelDataQueriesTabRendered({ model }: SceneComponentProps<PanelDataQue
         {model.renderExtraActions()}
       </HorizontalGroup>
     </>
+  );
+}
+
+interface QueriesTabProps extends PanelDataTabHeaderProps {
+  model: PanelDataQueriesTab;
+}
+
+function QueriesTab(props: QueriesTabProps) {
+  const { model } = props;
+
+  const queryRunnerState = model.queryRunner.useState();
+
+  return (
+    <Tab
+      key={props.key}
+      label={model.getTabLabel()}
+      icon="database"
+      counter={queryRunnerState.queries.length}
+      active={props.active}
+      onChangeTab={props.onChangeTab}
+    />
   );
 }

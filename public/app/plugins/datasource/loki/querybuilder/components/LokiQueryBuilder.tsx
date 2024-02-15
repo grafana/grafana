@@ -1,9 +1,11 @@
+import { isEqual } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
+import { usePrevious } from 'react-use';
 
 import { DataSourceApi, getDefaultTimeRange, LoadingState, PanelData, SelectableValue, TimeRange } from '@grafana/data';
 import {
   EditorRow,
-  // LabelFilters, this is broken in @grafana/experimental so we need to use the one from prometheus
+  LabelFilters,
   OperationExplainedBox,
   OperationList,
   OperationListExplained,
@@ -14,7 +16,6 @@ import {
   QueryBuilderOperation,
 } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
 
 import { testIds } from '../../components/LokiQueryEditor';
 import { LokiDatasource } from '../../datasource';
@@ -29,6 +30,7 @@ import { LokiOperationId, LokiVisualQuery } from '../types';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './LokiQueryBuilderExplained';
 import { NestedQueryList } from './NestedQueryList';
 
+export const TIME_SPAN_TO_TRIGGER_SAMPLES = 5 * 60 * 1000;
 export interface Props {
   query: LokiVisualQuery;
   datasource: LokiDatasource;
@@ -41,6 +43,8 @@ export const LokiQueryBuilder = React.memo<Props>(
   ({ datasource, query, onChange, onRunQuery, showExplain, timeRange }) => {
     const [sampleData, setSampleData] = useState<PanelData>();
     const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>(undefined);
+    const prevQuery = usePrevious(query);
+    const prevTimeRange = usePrevious(timeRange);
 
     const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
       onChange({ ...query, labels });
@@ -54,7 +58,10 @@ export const LokiQueryBuilder = React.memo<Props>(
     const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<string[]> => {
       const labelsToConsider = query.labels.filter((x) => x !== forLabel);
 
-      if (labelsToConsider.length === 0) {
+      const hasEqualityOperation = labelsToConsider.find(
+        (filter) => filter.op === '=' || (filter.op === '=~' && new RegExp(filter.value).test('') === false)
+      );
+      if (labelsToConsider.length === 0 || !hasEqualityOperation) {
         return await datasource.languageProvider.fetchLabels({ timeRange });
       }
 
@@ -77,7 +84,11 @@ export const LokiQueryBuilder = React.memo<Props>(
 
       let values;
       const labelsToConsider = query.labels.filter((x) => x !== forLabel);
-      if (labelsToConsider.length === 0) {
+      // If we have no equality/regex operation with .*, we can't fetch series as it will throw an error, so we fetch label values
+      const hasEqualityOperation = labelsToConsider.find(
+        (filter) => filter.op === '=' || (filter.op === '=~' && new RegExp(filter.value).test('') === false)
+      );
+      if (labelsToConsider.length === 0 || !hasEqualityOperation) {
         values = await datasource.languageProvider.fetchLabelValues(forLabel.label, { timeRange });
       } else {
         const expr = lokiQueryModeller.renderLabels(labelsToConsider);
@@ -109,10 +120,16 @@ export const LokiQueryBuilder = React.memo<Props>(
         setSampleData(sampleData);
       };
 
-      if (config.featureToggles.lokiQueryHints) {
+      const updateBasedOnChangedTimeRange =
+        prevTimeRange &&
+        timeRange &&
+        (Math.abs(timeRange.to.valueOf() - prevTimeRange.to.valueOf()) > TIME_SPAN_TO_TRIGGER_SAMPLES ||
+          Math.abs(timeRange.from.valueOf() - prevTimeRange.from.valueOf()) > TIME_SPAN_TO_TRIGGER_SAMPLES);
+      const updateBasedOnChangedQuery = !isEqual(prevQuery, query);
+      if (config.featureToggles.lokiQueryHints && (updateBasedOnChangedTimeRange || updateBasedOnChangedQuery)) {
         onGetSampleData().catch(console.error);
       }
-    }, [datasource, query, timeRange]);
+    }, [datasource, query, timeRange, prevQuery, prevTimeRange]);
 
     const lang = { grammar: logqlGrammar, name: 'logql' };
     return (

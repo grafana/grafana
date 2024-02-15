@@ -3,6 +3,8 @@ import React from 'react';
 import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
+import { VizPanelLinks } from 'app/features/dashboard-scene/scene/PanelLinks';
+import { dashboardSceneGraph } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { GenAIPanelDescriptionButton } from '../GenAI/GenAIPanelDescriptionButton';
@@ -180,6 +182,9 @@ export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDesc
     isOpenDefault: true,
   });
 
+  const panelLinksObject = dashboardSceneGraph.getPanelLinks(panel);
+  const links = panelLinksObject.state.rawLinks;
+
   return descriptor
     .addItem(
       new OptionsPaneItemDescriptor({
@@ -234,29 +239,21 @@ export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDesc
           );
         },
       })
+    )
+    .addCategory(
+      new OptionsPaneCategoryDescriptor({
+        title: 'Panel links',
+        id: 'Panel links',
+        isOpenDefault: false,
+        itemsCount: links?.length,
+      }).addItem(
+        new OptionsPaneItemDescriptor({
+          title: 'Panel links',
+          render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject} />,
+        })
+      )
     );
-  // .addCategory(
-  //   new OptionsPaneCategoryDescriptor({
-  //     title: 'Panel links',
-  //     id: 'Panel links',
-  //     isOpenDefault: false,
-  //     itemsCount: panel.state.links?.length,
-  //   }).addItem(
-  //     new OptionsPaneItemDescriptor({
-  //       title: 'Panel links',
-  //       render: function renderLinks() {
-  //         return (
-  //           <DataLinksInlineEditor
-  //             links={panel.links}
-  //             onChange={(links) => onPanelConfigChange('links', links)}
-  //             getSuggestions={getPanelLinksVariableSuggestions}
-  //             data={[]}
-  //           />
-  //         );
-  //       },
-  //     })
-  //   )
-  // )
+  //
   // .addCategory(
   //   new OptionsPaneCategoryDescriptor({
   //     title: 'Repeat options',
@@ -318,4 +315,21 @@ export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDesc
   //       })
   //     )
   // );
+}
+
+interface ScenePanelLinksEditorProps {
+  panelLinks: VizPanelLinks;
+}
+
+function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
+  const { rawLinks: links } = panelLinks.useState();
+
+  return (
+    <DataLinksInlineEditor
+      links={links}
+      onChange={(links) => panelLinks.setState({ rawLinks: links })}
+      getSuggestions={getPanelLinksVariableSuggestions}
+      data={[]}
+    />
+  );
 }

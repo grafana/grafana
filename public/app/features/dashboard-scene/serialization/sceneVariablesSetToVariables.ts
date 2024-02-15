@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import { SceneVariables, sceneUtils } from '@grafana/scenes';
 import { VariableHide, VariableModel, VariableRefresh, VariableSort } from '@grafana/schema';
 
@@ -103,6 +104,32 @@ export function sceneVariablesSetToVariables(set: SceneVariables) {
           value: variable.state.value,
         },
         query: variable.state.value,
+      });
+    } else if (sceneUtils.isGroupByVariable(variable) && config.featureToggles.groupByVariable) {
+      variables.push({
+        ...commonProperties,
+        datasource: variable.state.datasource,
+        // Only persist the statically defined options
+        options: variable.state.defaultOptions?.map((option) => ({
+          text: option.text,
+          value: String(option.value),
+        })),
+        current: {
+          // @ts-expect-error
+          text: variable.state.text,
+          // @ts-expect-error
+          value: variable.state.value,
+        },
+      });
+    } else if (sceneUtils.isAdHocVariable(variable)) {
+      variables.push({
+        ...commonProperties,
+        name: variable.state.name!,
+        type: 'adhoc',
+        datasource: variable.state.datasource,
+        // @ts-expect-error
+        baseFilters: variable.state.baseFilters,
+        filters: variable.state.filters,
       });
     } else {
       throw new Error('Unsupported variable type');

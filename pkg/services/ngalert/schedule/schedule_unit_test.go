@@ -59,7 +59,7 @@ func TestProcessTicks(t *testing.T) {
 
 	mockedClock := clock.NewMock()
 
-	notifier := &AlertsSenderMock{}
+	notifier := NewSyncAlertsSenderMock()
 	notifier.EXPECT().Send(mock.Anything, mock.Anything, mock.Anything).Return()
 
 	appUrl := &url.URL{
@@ -364,7 +364,7 @@ func TestProcessTicks(t *testing.T) {
 func TestSchedule_ruleRoutine(t *testing.T) {
 	createSchedule := func(
 		evalAppliedChan chan time.Time,
-		senderMock *AlertsSenderMock,
+		senderMock *SyncAlertsSenderMock,
 	) (*schedule, *fakeRulesStore, *state.FakeInstanceStore, prometheus.Gatherer) {
 		ruleStore := newFakeRulesStore()
 		instanceStore := &state.FakeInstanceStore{}
@@ -439,7 +439,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 				s := states[0]
 
 				var cmd *models.AlertInstance
-				for _, op := range instanceStore.RecordedOps {
+				for _, op := range instanceStore.RecordedOps() {
 					switch q := op.(type) {
 					case models.AlertInstance:
 						cmd = &q
@@ -581,12 +581,12 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalAppliedChan := make(chan time.Time)
 		updateChan := make(chan ruleVersionAndPauseStatus)
 
-		sender := AlertsSenderMock{}
+		sender := NewSyncAlertsSenderMock()
 		sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
 
-		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
+		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender)
 		ruleStore.PutRule(context.Background(), rule)
-		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[string]string{rule.NamespaceUID: folderTitle})
+		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[models.FolderKey]string{rule.GetFolderKey(): folderTitle})
 
 		go func() {
 			ctx, cancel := context.WithCancel(context.Background())
@@ -644,13 +644,13 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			updateChan <- ruleVersionAndPauseStatus{ruleFp + 1, false}
 
 			require.Eventually(t, func() bool {
-				return len(sender.Calls) > 0
+				return len(sender.Calls()) > 0
 			}, 5*time.Second, 100*time.Millisecond)
 
 			require.Empty(t, sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID))
 			sender.AssertNumberOfCalls(t, "Send", 1)
-			args, ok := sender.Calls[0].Arguments[2].(definitions.PostableAlerts)
-			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[2]))
+			args, ok := sender.Calls()[0].Arguments[2].(definitions.PostableAlerts)
+			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls()[0].Arguments[2]))
 			require.Len(t, args.PostableAlerts, expectedToBeSent)
 		})
 	})
@@ -662,10 +662,10 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalChan := make(chan *evaluation)
 		evalAppliedChan := make(chan time.Time)
 
-		sender := AlertsSenderMock{}
+		sender := NewSyncAlertsSenderMock()
 		sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
 
-		sch, ruleStore, _, reg := createSchedule(evalAppliedChan, &sender)
+		sch, ruleStore, _, reg := createSchedule(evalAppliedChan, sender)
 		sch.maxAttempts = 3
 		ruleStore.PutRule(context.Background(), rule)
 
@@ -753,8 +753,8 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 		t.Run("it should send special alert DatasourceError", func(t *testing.T) {
 			sender.AssertNumberOfCalls(t, "Send", 1)
-			args, ok := sender.Calls[0].Arguments[2].(definitions.PostableAlerts)
-			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[2]))
+			args, ok := sender.Calls()[0].Arguments[2].(definitions.PostableAlerts)
+			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls()[0].Arguments[2]))
 			assert.Len(t, args.PostableAlerts, 1)
 			assert.Equal(t, state.ErrorAlertName, args.PostableAlerts[0].Labels[prometheusModel.AlertNameLabel])
 		})
@@ -768,10 +768,10 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			evalChan := make(chan *evaluation)
 			evalAppliedChan := make(chan time.Time)
 
-			sender := AlertsSenderMock{}
+			sender := NewSyncAlertsSenderMock()
 			sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
 
-			sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
+			sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender)
 			ruleStore.PutRule(context.Background(), rule)
 
 			go func() {
@@ -788,8 +788,8 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			waitForTimeChannel(t, evalAppliedChan)
 
 			sender.AssertNumberOfCalls(t, "Send", 1)
-			args, ok := sender.Calls[0].Arguments[2].(definitions.PostableAlerts)
-			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls[0].Arguments[2]))
+			args, ok := sender.Calls()[0].Arguments[2].(definitions.PostableAlerts)
+			require.Truef(t, ok, fmt.Sprintf("expected argument of function was supposed to be 'definitions.PostableAlerts' but got %T", sender.Calls()[0].Arguments[2]))
 
 			require.Len(t, args.PostableAlerts, 1)
 		})
@@ -801,10 +801,10 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		evalChan := make(chan *evaluation)
 		evalAppliedChan := make(chan time.Time)
 
-		sender := AlertsSenderMock{}
+		sender := NewSyncAlertsSenderMock()
 		sender.EXPECT().Send(mock.Anything, rule.GetKey(), mock.Anything).Return()
 
-		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
+		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, sender)
 		ruleStore.PutRule(context.Background(), rule)
 
 		go func() {
@@ -847,7 +847,7 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 	})
 }
 
-func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStore, registry *prometheus.Registry, senderMock *AlertsSenderMock, evalMock eval.EvaluatorFactory) *schedule {
+func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStore, registry *prometheus.Registry, senderMock *SyncAlertsSenderMock, evalMock eval.EvaluatorFactory) *schedule {
 	t.Helper()
 	testTracer := tracing.InitializeTracerForTest()
 
@@ -877,7 +877,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	}
 
 	if senderMock == nil {
-		senderMock = &AlertsSenderMock{}
+		senderMock = NewSyncAlertsSenderMock()
 		senderMock.EXPECT().Send(mock.Anything, mock.Anything, mock.Anything).Return()
 	}
 
