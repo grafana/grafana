@@ -3,7 +3,6 @@ import React from 'react';
 import { StandardEditorProps, FieldNamePickerBaseNameMode, FieldMatcherID } from '@grafana/data';
 import { Field } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
-import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 
 import { Options } from './panelcfg.gen';
 import { XYSeriesConfig } from './types2';
@@ -15,19 +14,13 @@ export interface Props extends StandardEditorProps<XYSeriesConfig, unknown, Opti
 
 export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, frameFilter = -1 }: Props) => {
   const onFieldChange = (val: any | undefined, field: string) => {
-    if (val && val.field) {
+    if (val) {
       onChange({
         ...value,
         [field]: {
-          field: {
-            matcher: { id: FieldMatcherID.byName, options: val.field },
-            min: val.min ?? undefined,
-            max: val.max ?? undefined,
-          },
+          matcher: { id: FieldMatcherID.byName, options: val },
         },
       });
-    } else if (val && val.fixed) {
-      onChange({ ...value, [field]: { fixed: { value: val.fixed } } });
     } else {
       onChange({ ...value, [field]: undefined });
     }
@@ -91,36 +84,30 @@ export const ScatterSeriesEditor = ({ value, onChange, context, baseNameMode, fr
           }}
         />
       </Field>
-      <Field label={'Point color'}>
-        <ColorDimensionEditor
-          // TODO create proper mapping for ColorDimensionConfig
+      <Field label={'Color field'}>
+        <FieldNamePicker
           value={value.color ? value.color?.matcher.options : undefined}
           context={context}
           onChange={(field) => onFieldChange(field, 'color')}
           item={{
-            id: 'x',
-            name: 'x',
+            id: 'color',
+            name: 'color',
             settings: {
               baseNameMode,
               isClearable: true,
-              placeholder: 'Use standard color scheme',
+              placeholderText: 'Use standard color scheme or field configuration',
             },
           }}
         />
       </Field>
-      <Field label={'Point size'}>
-        <ScaleDimensionEditor
-          // TODO create proper mapping for ScaleDimensionConfig
+      <Field label={'Size field'}>
+        <FieldNamePicker
           value={value.size ? value.size?.matcher.options : undefined}
           context={context}
           onChange={(field) => onFieldChange(field, 'size')}
           item={{
-            id: 'x',
-            name: 'x',
-            settings: {
-              min: 1,
-              max: 100,
-            },
+            id: 'size',
+            name: 'size',
           }}
         />
       </Field>
