@@ -16,6 +16,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -99,6 +100,7 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion) {
 		&v0alpha1.QueryDataResponse{},
 		&v0alpha1.QueryTypeDefinition{},
 		&v0alpha1.QueryTypeDefinitionList{},
+		&example.DummySubresource{},
 	)
 }
 
@@ -127,6 +129,7 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 		return nil, err
 	}
 	storage[expr.resourceInfo.StoragePath()] = expr
+	storage[expr.resourceInfo.StoragePath("validate")] = &validateQueryREST{handler: b.handler}
 
 	apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
 	return &apiGroupInfo, nil

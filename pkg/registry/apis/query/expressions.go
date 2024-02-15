@@ -90,3 +90,41 @@ func (b *QueryAPIBuilder) handleExpressionsSchema(w http.ResponseWriter, r *http
 	}
 	_ = json.NewEncoder(w).Encode(s)
 }
+
+type validateQueryREST struct {
+	handler *expr.ExpressionQueryReader
+}
+
+var _ = rest.Connecter(&validateQueryREST{})
+
+func (r *validateQueryREST) New() runtime.Object {
+	return &example.DummySubresource{}
+}
+
+func (r *validateQueryREST) Destroy() {
+}
+
+func (r *validateQueryREST) ConnectMethods() []string {
+	return []string{"POST"}
+}
+
+func (r *validateQueryREST) NewConnectOptions() (runtime.Object, bool, string) {
+	return nil, false, "" // true means you can use the trailing path as a variable
+}
+
+func (r *validateQueryREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	// Find the expression
+	for _, qt := range r.handler.QueryTypeDefinitionList().Items {
+		if qt.Name == name {
+			return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				// GenericDataQuery
+				// This response object format is negotiated by k8s
+				dummy := &example.DummySubresource{
+					Info: fmt.Sprintf("%s/%s", name, name),
+				}
+				responder.Object(http.StatusOK, dummy)
+			}), nil
+		}
+	}
+	return nil, fmt.Errorf("not found")
+}

@@ -2534,12 +2534,6 @@ github.com/grafana/grafana-google-sdk-go v0.1.0/go.mod h1:Vo2TKWfDVmNTELBUM+3lkr
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 h1:r+mU5bGMzcXCRVAuOrTn54S80qbfVkvTdUJZfSfTNbs=
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
-github.com/grafana/grafana-plugin-sdk-go v0.211.1-0.20240213220337-f6bb32321af8 h1:q34BOpMkXhQFtDwkzR45M4rOPUSu2I7mWUrJcTCAxTs=
-github.com/grafana/grafana-plugin-sdk-go v0.211.1-0.20240213220337-f6bb32321af8/go.mod h1:udcOq6XFvGNKu427UuCSGOO1bMT+JPSa1Cz4YE2xB0o=
-github.com/grafana/grafana-plugin-sdk-go v0.211.1-0.20240213230553-992463de0282 h1:0oCYRafSdEJ5K6hIuvtKd6ysYjrPCmXDqvepxlvfZ6U=
-github.com/grafana/grafana-plugin-sdk-go v0.211.1-0.20240213230553-992463de0282/go.mod h1:udcOq6XFvGNKu427UuCSGOO1bMT+JPSa1Cz4YE2xB0o=
-github.com/grafana/grafana-plugin-sdk-go v0.211.1-0.20240214011539-58b32eea2791 h1:WTZdMsKeHxPSDKA+7wbQHmo8uLuRWt8eeYX5H0vbPKs=
-github.com/grafana/grafana-plugin-sdk-go v0.211.1-0.20240214011539-58b32eea2791/go.mod h1:udcOq6XFvGNKu427UuCSGOO1bMT+JPSa1Cz4YE2xB0o=
 github.com/grafana/grafana-plugin-sdk-go v0.211.1-0.20240214042209-d791fc906236 h1:jdxnjX5T2W25kMrNXwAD4WQjLYqha6Isojb5aeehoEw=
 github.com/grafana/grafana-plugin-sdk-go v0.211.1-0.20240214042209-d791fc906236/go.mod h1:udcOq6XFvGNKu427UuCSGOO1bMT+JPSa1Cz4YE2xB0o=
 github.com/grafana/kindsys v0.0.0-20230508162304-452481b63482 h1:1YNoeIhii4UIIQpCPU+EXidnqf449d0C3ZntAEt4KSo=
