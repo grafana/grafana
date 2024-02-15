@@ -345,7 +345,8 @@ func (f *accessControlDashboardPermissionFilter) addRecQry(queryName string, whe
 		f.recQueries = make([]clause, 0, maximumRecursiveQueries)
 	}
 	c := make([]any, len(whereParams)+1)
-	c = append([]any{orgID}, whereParams...)
+	copy(c, whereParams)
+	c = append([]any{orgID}, c...)
 	f.recQueries = append(f.recQueries, clause{
 		// covered by UQE_folder_org_id_uid and UQE_folder_org_id_parent_uid_title
 		string: fmt.Sprintf(`%s AS (

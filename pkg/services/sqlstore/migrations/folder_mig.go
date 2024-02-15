@@ -80,7 +80,6 @@ func addFolderMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("Remove index IDX_folder_parent_uid_org_id", migrator.NewDropIndexMigration(folderv1(), &migrator.Index{
 		Cols: []string{"parent_uid", "org_id"},
 	}))
-
 }
 
 func folderv1() migrator.Table {
