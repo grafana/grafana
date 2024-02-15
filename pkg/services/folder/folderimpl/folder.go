@@ -179,6 +179,10 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
+	if q.UID != nil && *q.UID == accesscontrol.GeneralFolderUID {
+		return folder.RootFolder, nil
+	}
+
 	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && q.UID != nil && *q.UID == folder.SharedWithMeFolderUID {
 		return folder.SharedWithMeFolder.WithURL(), nil
 	}
@@ -478,7 +482,7 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 }
 
 func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) || q.UID == accesscontrol.GeneralFolderUID {
 		return nil, nil
 	}
 	if q.UID == folder.SharedWithMeFolderUID {
