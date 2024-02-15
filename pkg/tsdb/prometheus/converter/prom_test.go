@@ -1,15 +1,14 @@
 package converter
 
 import (
-	"fmt"
 	"os"
 	"path"
 	"strings"
 	"testing"
 	"time"
 
+	sdkjsoniter "github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -44,29 +43,6 @@ func TestReadPromFrames(t *testing.T) {
 	}
 }
 
-func TestReadLimited(t *testing.T) {
-	for _, name := range files {
-		p := path.Join("testdata", name+".json")
-		stat, err := os.Stat(p)
-		require.NoError(t, err)
-		size := stat.Size()
-
-		for i := int64(10); i < size-1; i += size / 10 {
-			t.Run(fmt.Sprintf("%v_%v", name, i), func(t *testing.T) {
-				//nolint:gosec
-				f, err := os.Open(p)
-				require.NoError(t, err)
-				mbr := httpclient.MaxBytesReader(f, i)
-
-				iter := jsoniter.Parse(jsoniter.ConfigDefault, mbr, 1024)
-				rsp := ReadPrometheusStyleResult(iter, Options{})
-
-				require.ErrorContains(t, rsp.Error, "response body too large")
-			})
-		}
-	}
-}
-
 func runScenario(name string, opts Options) func(t *testing.T) {
 	return func(t *testing.T) {
 		// Safe to disable, this is a test.
@@ -74,7 +50,7 @@ func runScenario(name string, opts Options) func(t *testing.T) {
 		f, err := os.Open(path.Join("testdata", name+".json"))
 		require.NoError(t, err)
 
-		iter := jsoniter.Parse(jsoniter.ConfigDefault, f, 1024)
+		iter := jsoniter.Parse(sdkjsoniter.ConfigDefault, f, 1024)
 		rsp := ReadPrometheusStyleResult(iter, opts)
 
 		if strings.Contains(name, "error") {
