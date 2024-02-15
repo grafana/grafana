@@ -30,7 +30,7 @@ import { alertingApi } from './alertingApi';
 import { fetchAlertManagerConfig, fetchStatus } from './alertmanager';
 import { featureDiscoveryApi } from './featureDiscoveryApi';
 
-const LIMIT_TO_SUCCESSFULLY_APPLIED_AMS = 10;
+const LIMIT_TO_SUCCESSFULLY_APPLIED_AMS = 30;
 const FETCH_CONFIG_RETRY_TIMEOUT = 30 * 1000;
 
 export interface AlertmanagersChoiceResponse {

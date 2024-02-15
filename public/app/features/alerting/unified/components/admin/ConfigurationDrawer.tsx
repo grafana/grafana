@@ -1,7 +1,7 @@
 import moment from 'moment';
 import React, { useCallback, useMemo, useState } from 'react';
 
-import { Button, CellProps, Column, Drawer, InteractiveTable, Stack, Tab, TabsBar } from '@grafana/ui';
+import { Button, CellProps, Column, Drawer, InteractiveTable, Stack, Tab, TabsBar, Text } from '@grafana/ui';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
@@ -45,7 +45,7 @@ export function useEditConfigurationDrawer(): [React.ReactNode, (dataSourceName:
       <Drawer
         onClose={handleDismiss}
         title={title}
-        subtitle="Edit the raw Alertmanager configuration"
+        subtitle="Edit the Alertmanager configuration"
         size="lg"
         tabs={
           <TabsBar>
@@ -83,7 +83,7 @@ export function useEditConfigurationDrawer(): [React.ReactNode, (dataSourceName:
   return [drawer, showConfiguration, handleDismiss];
 }
 
-const VERSIONS_PAGE_SIZE = 10;
+const VERSIONS_PAGE_SIZE = 30;
 
 interface AlertmanagerConfigurationVersionManagerProps {
   alertmanagerName: string;
@@ -125,12 +125,19 @@ const AlertmanagerConfigurationVersionManager = ({
 };
 
 const LastAppliedCell = ({ value }: CellProps<VersionData>) => {
-  const date = new Date(value);
+  const date = moment(value);
+
   return (
     <Stack direction="row" alignItems="center">
-      {moment(date).calendar()}
+      {date.toLocaleString()}
+      <Text variant="bodySmall" color="secondary">
+        {date.fromNow()}
+      </Text>
       <Spacer />
       {/* TODO make sure we ask for confirmation! */}
+      <Button variant="secondary" size="sm" icon="pathfinder" fill="outline" onClick={() => {}}>
+        Compare
+      </Button>
       <Button variant="secondary" size="sm" icon="history" onClick={() => {}}>
         Restore
       </Button>
