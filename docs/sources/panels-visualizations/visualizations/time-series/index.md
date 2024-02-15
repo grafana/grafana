@@ -50,6 +50,10 @@ Tooltip options control the information overlay that appears when you hover over
 
 {{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
+### Hover proximity
+
+This option controls how close your cursor must be to a data point before the tooltip appears. Values are in pixels.
+
 ## Legend options
 
 Legend options control the series names and statistics that appear under or to the right of the graph.
