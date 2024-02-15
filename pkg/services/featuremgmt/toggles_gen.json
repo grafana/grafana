@@ -2109,6 +2109,19 @@
         "codeowner": "@grafana/plugins-platform-backend",
         "requiresRestart": true
       }
+    },
+    {
+      "metadata": {
+        "name": "expressionParser",
+        "resourceVersion": "1708023281821",
+        "creationTimestamp": "2024-02-15T18:54:41Z"
+      },
+      "spec": {
+        "description": "Enable new expression parser",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true
+      }
     }
   ]
 }

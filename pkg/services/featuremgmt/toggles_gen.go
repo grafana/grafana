@@ -659,6 +659,10 @@ const (
 	// Enable grafana aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
 
+	// FlagExpressionParser
+	// Enable new expression parser
+	FlagExpressionParser = "expressionParser"
+
 	// FlagGroupByVariable
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
