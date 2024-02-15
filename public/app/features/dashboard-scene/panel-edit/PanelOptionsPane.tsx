@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
-import { Box, ButtonGroup, FilterInput, RadioButtonGroup, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { FilterInput, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
 import { getPanelFrameCategory2 } from 'app/features/dashboard/components/PanelEditor/getPanelFrameOptions';
@@ -146,6 +146,9 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
             <div className={styles.listOfOptions}>{mainBoxElements}</div>
           </>
         )}
+        {isVizPickerOpen && (
+          <PanelVizTypePicker panelManager={panelManager} onChange={model.onToggleVizPicker} data={data} />
+        )}
       </div>
     );
   };
@@ -196,12 +199,11 @@ export function VisualizationButton({ pluginId, onOpen, isOpen, onTogglePane }: 
   const pluginMeta = useMemo(() => getAllPanelPluginMeta().filter((p) => p.id === pluginId)[0], [pluginId]);
 
   return (
-    <Stack gap={2}>
+    <Stack gap={1}>
       <ToolbarButton
         className={styles.vizButton}
         tooltip="Click to change visualization"
         imgSrc={pluginMeta.info.logos.small}
-        // isOpen={isVizPickerOpen}
         onClick={onOpen}
         data-testid={selectors.components.PanelEditor.toggleVizPicker}
         aria-label="Change Visualization"
@@ -212,12 +214,12 @@ export function VisualizationButton({ pluginId, onOpen, isOpen, onTogglePane }: 
         {pluginMeta.name}
       </ToolbarButton>
       <ToolbarButton
-        tooltip={isOpen ? 'Close options pane' : 'Show options pane'}
+        tooltip={'Show options pane'}
         icon={'arrow-to-right'}
         onClick={onTogglePane}
         variant="canvas"
         data-testid={selectors.components.PanelEditor.toggleVizOptions}
-        aria-label={isOpen ? 'Close options pane' : 'Show options pane'}
+        aria-label={'Show options pane'}
       />
     </Stack>
   );

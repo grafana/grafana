@@ -3,13 +3,12 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
-import { Splitter, useStyles2 } from '@grafana/ui';
+import { Splitter, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { PanelEditor } from './PanelEditor';
-import { VisualizationButton } from './PanelOptionsPane';
 
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
@@ -24,7 +23,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
         direction="row"
         dragPosition="end"
         initialSize={0.75}
-        primaryPaneStyles={{ paddingBottom: !dataPane ? 16 : 0 }}
+        primaryPaneStyles={{ paddingRight: !optionsPane ? 16 : 0 }}
       >
         <div className={styles.body}>
           <div className={styles.canvasContent}>
@@ -33,11 +32,21 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
                 {controls.map((control) => (
                   <control.Component key={control.state.key} model={control} />
                 ))}
+                {!optionsPane && (
+                  <ToolbarButton
+                    title="Show options pane"
+                    onClick={() => model.toggleOptionsPane()}
+                    variant="canvas"
+                    icon="cog"
+                  >
+                    Options
+                  </ToolbarButton>
+                )}
               </div>
             )}
             <Splitter
               direction="column"
-              primaryPaneStyles={{ minHeight: 0, paddingRight: !optionsPane ? 16 : 0 }}
+              primaryPaneStyles={{ minHeight: 0, paddingBottom: !dataPane ? 16 : 0 }}
               secondaryPaneStyles={{ minHeight: 0, overflow: 'hidden' }}
               dragPosition="start"
             >
