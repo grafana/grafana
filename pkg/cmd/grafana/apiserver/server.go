@@ -110,6 +110,7 @@ func (o *APIServerOptions) ModifiedApplyTo(config *genericapiserver.RecommendedC
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -160,6 +161,7 @@ func (o *APIServerOptions) Config() (*genericapiserver.RecommendedConfig, error)
 func (o *APIServerOptions) Validate(args []string) error {
 	errors := []error{}
 	errors = append(errors, o.RecommendedOptions.Validate()...)
+	errors = append(errors, o.factory.GetOptions().ValidateOptions()...)
 	return utilerrors.NewAggregate(errors)
 }
 

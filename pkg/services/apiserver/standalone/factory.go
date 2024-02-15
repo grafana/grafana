@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/spf13/pflag"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -19,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
@@ -26,7 +26,7 @@ import (
 
 type APIServerFactory interface {
 	// Called before the groups are loaded so any custom command can be registered
-	InitFlags(flags *pflag.FlagSet)
+	GetOptions() options.OptionsProvider
 
 	// Given the flags, what can we produce
 	GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error)
@@ -42,7 +42,9 @@ func GetDummyAPIFactory() APIServerFactory {
 
 type DummyAPIFactory struct{}
 
-func (p *DummyAPIFactory) InitFlags(flags *pflag.FlagSet) {}
+func (p *DummyAPIFactory) GetOptions() options.OptionsProvider {
+	return nil
+}
 
 func (p *DummyAPIFactory) GetEnabled(runtime []RuntimeConfig) ([]schema.GroupVersion, error) {
 	gv := []schema.GroupVersion{}
