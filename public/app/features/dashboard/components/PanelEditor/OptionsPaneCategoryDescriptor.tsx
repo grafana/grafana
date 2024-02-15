@@ -52,7 +52,7 @@ export class OptionsPaneCategoryDescriptor {
     return sub;
   }
 
-  Render = ({ searchQuery }: { searchQuery?: string }) => {
+  render(searchQuery?: string) {
     if (this.props.customRender) {
       return this.props.customRender();
     }
@@ -60,10 +60,8 @@ export class OptionsPaneCategoryDescriptor {
     return (
       <OptionsPaneCategory key={this.props.title} {...this.props}>
         {this.items.map((item) => item.render(searchQuery))}
-        {this.categories.map((category) => (
-          <category.Render key={category.props.id} searchQuery={searchQuery} />
-        ))}
+        {this.categories.map((category) => category.render(searchQuery))}
       </OptionsPaneCategory>
     );
-  };
+  }
 }

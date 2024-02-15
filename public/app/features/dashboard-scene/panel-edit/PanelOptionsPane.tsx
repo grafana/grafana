@@ -4,8 +4,8 @@ import React, { useMemo } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
-import { Box, ButtonGroup, Field, FilterInput, RadioButtonGroup, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { OptionFilter, RenderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
+import { Box, ButtonGroup, FilterInput, RadioButtonGroup, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
 import { getPanelFrameCategory2 } from 'app/features/dashboard/components/PanelEditor/getPanelFrameOptions';
 import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
@@ -97,79 +97,55 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 
     if (isSearching) {
       mainBoxElements.push(
-        <RenderSearchHits
-          allOptions={[panelFrameOptions, ...(visualizationOptions ?? [])]}
-          overrides={justOverrides}
-          searchQuery={searchQuery}
-          key="render-search-hits"
-        />
+        renderSearchHits([panelFrameOptions, ...(visualizationOptions ?? [])], justOverrides, searchQuery)
       );
     } else {
       switch (listMode) {
         case OptionFilter.All:
-          mainBoxElements.push(<panelFrameOptions.Render key="panel-frame-options" />);
+          mainBoxElements.push(panelFrameOptions.render());
 
           for (const item of visualizationOptions ?? []) {
-            mainBoxElements.push(<item.Render key={item.props.id} />);
+            mainBoxElements.push(item.render());
           }
 
           for (const item of justOverrides) {
-            mainBoxElements.push(<item.Render key={item.props.id} />);
+            mainBoxElements.push(item.render());
           }
           break;
         case OptionFilter.Overrides:
           for (const item of justOverrides) {
-            mainBoxElements.push(<item.Render key={item.props.id} />);
+            mainBoxElements.push(item.render());
           }
         default:
           break;
       }
     }
 
+    // {isVizPickerOpen && (
+    //   <PanelVizTypePicker panelManager={panelManager} onChange={model.onToggleVizPicker} data={data} />
+    // )}
+
     return (
       <div className={styles.pane}>
-        <div className={styles.searchWrapper}>
-          <FilterInput
-            className={styles.searchOptions}
-            value={searchQuery}
-            placeholder="Search options"
-            onChange={model.onSetSearchQuery}
-          />
-        </div>
-        <div className={styles.box}>
-          {isVizPickerOpen && (
-            <PanelVizTypePicker panelManager={panelManager} onChange={model.onToggleVizPicker} data={data} />
-          )}
-          {!isVizPickerOpen && (
-            <>
-              <div className={styles.top}>
-                {!isVizPickerOpen && (
-                  <Field label="Visualization" className={styles.vizField}>
-                    <VisualizationButton
-                      pluginId={pluginId}
-                      onOpen={model.onToggleVizPicker}
-                      isOpen={isVizPickerOpen}
-                      onTogglePane={model.onCollapsePane}
-                    />
-                  </Field>
-                )}
-
-                {/* {!isSearching && (
-                <RadioButtonGroup
-                  options={[
-                    { label: 'All', value: OptionFilter.All },
-                    { label: 'Overrides', value: OptionFilter.Overrides },
-                  ]}
-                  value={listMode}
-                  onChange={model.onSetListMode}
-                  fullWidth
-                ></RadioButtonGroup>
-              )} */}
-              </div>
-              <div className={styles.mainBox}>{mainBoxElements}</div>
-            </>
-          )}
-        </div>
+        {!isVizPickerOpen && (
+          <>
+            <div className={styles.top}>
+              <VisualizationButton
+                pluginId={pluginId}
+                onOpen={model.onToggleVizPicker}
+                isOpen={isVizPickerOpen}
+                onTogglePane={model.onCollapsePane}
+              />
+              <FilterInput
+                className={styles.searchOptions}
+                value={searchQuery}
+                placeholder="Search options"
+                onChange={model.onSetSearchQuery}
+              />
+            </div>
+            <div className={styles.listOfOptions}>{mainBoxElements}</div>
+          </>
+        )}
       </div>
     );
   };
@@ -181,25 +157,19 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       flexGrow: '1',
-    }),
-    box: css({
-      display: 'flex',
-      flexDirection: 'column',
-      flexGrow: '1',
-      background: theme.colors.background.primary,
-      overflow: 'hidden',
       borderLeft: `1px solid ${theme.colors.border.weak}`,
-      borderTop: `1px solid ${theme.colors.border.weak}`,
+      background: theme.colors.background.primary,
     }),
     top: css({
       display: 'flex',
       flexDirection: 'column',
-      padding: theme.spacing(1),
-      gap: theme.spacing(1),
+      padding: theme.spacing(2, 1),
+      gap: theme.spacing(2),
     }),
-    mainBox: css({
-      flexGrow: 1,
-      background: theme.colors.background.primary,
+    listOfOptions: css({
+      display: 'flex',
+      flexDirection: 'column',
+      flexGrow: '1',
       overflow: 'auto',
     }),
     searchOptions: css({
@@ -226,41 +196,35 @@ export function VisualizationButton({ pluginId, onOpen, isOpen, onTogglePane }: 
   const pluginMeta = useMemo(() => getAllPanelPluginMeta().filter((p) => p.id === pluginId)[0], [pluginId]);
 
   return (
-    <div className={styles.wrapper}>
-      <ButtonGroup>
-        <ToolbarButton
-          className={styles.vizButton}
-          tooltip="Click to change visualization"
-          imgSrc={pluginMeta.info.logos.small}
-          // isOpen={isVizPickerOpen}
-          onClick={onOpen}
-          data-testid={selectors.components.PanelEditor.toggleVizPicker}
-          aria-label="Change Visualization"
-          variant="canvas"
-          isOpen={false}
-          fullWidth
-        >
-          {pluginMeta.name}
-        </ToolbarButton>
-        {/* <ToolbarButton
-          tooltip={isOpen ? 'Close options pane' : 'Show options pane'}
-          icon={isOpen ? 'angle-right' : 'angle-left'}
-          onClick={onTogglePane}
-          variant="canvas"
-          data-testid={selectors.components.PanelEditor.toggleVizOptions}
-          aria-label={isOpen ? 'Close options pane' : 'Show options pane'}
-        /> */}
-      </ButtonGroup>
-    </div>
+    <Stack gap={2}>
+      <ToolbarButton
+        className={styles.vizButton}
+        tooltip="Click to change visualization"
+        imgSrc={pluginMeta.info.logos.small}
+        // isOpen={isVizPickerOpen}
+        onClick={onOpen}
+        data-testid={selectors.components.PanelEditor.toggleVizPicker}
+        aria-label="Change Visualization"
+        variant="canvas"
+        isOpen={false}
+        fullWidth
+      >
+        {pluginMeta.name}
+      </ToolbarButton>
+      <ToolbarButton
+        tooltip={isOpen ? 'Close options pane' : 'Show options pane'}
+        icon={'arrow-to-right'}
+        onClick={onTogglePane}
+        variant="canvas"
+        data-testid={selectors.components.PanelEditor.toggleVizOptions}
+        aria-label={isOpen ? 'Close options pane' : 'Show options pane'}
+      />
+    </Stack>
   );
 }
 
 function getVizButtonStyles(theme: GrafanaTheme2) {
   return {
-    wrapper: css({
-      display: 'flex',
-      flexDirection: 'column',
-    }),
     vizButton: css({
       textAlign: 'left',
     }),
