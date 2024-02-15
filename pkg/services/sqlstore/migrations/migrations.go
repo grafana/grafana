@@ -117,6 +117,8 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	}
 
 	addKVStoreMySQLValueTypeLongTextMigration(mg)
+
+	ualert.AddRuleNotificationSettingsColumns(mg)
 }
 
 func addStarMigrations(mg *Migrator) {

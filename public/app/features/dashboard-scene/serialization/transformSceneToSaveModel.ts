@@ -11,7 +11,6 @@ import {
   VizPanel,
   SceneDataTransformer,
   SceneVariableSet,
-  AdHocFilterSet,
   LocalValueVariable,
   SceneRefreshPicker,
 } from '@grafana/scenes';
@@ -99,17 +98,6 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     for (const control of timeControls) {
       if (control instanceof SceneRefreshPicker && control.state.intervals) {
         refreshIntervals = control.state.intervals;
-      }
-    }
-
-    const variableControls = state.controls[0].state.variableControls;
-    for (const control of variableControls) {
-      if (control instanceof AdHocFilterSet) {
-        variables.push({
-          name: control.state.name!,
-          type: 'adhoc',
-          datasource: control.state.datasource,
-        });
       }
     }
   }
@@ -263,13 +251,24 @@ function vizPanelDataToPanel(
 ): Pick<Panel, 'datasource' | 'targets' | 'maxDataPoints' | 'transformations'> {
   const dataProvider = vizPanel.state.$data;
 
-  const panel: Pick<Panel, 'datasource' | 'targets' | 'maxDataPoints' | 'transformations'> = {};
+  const panel: Pick<
+    Panel,
+    'datasource' | 'targets' | 'maxDataPoints' | 'transformations' | 'cacheTimeout' | 'queryCachingTTL'
+  > = {};
   const queryRunner = getQueryRunnerFor(vizPanel);
 
   if (queryRunner) {
     panel.targets = queryRunner.state.queries;
     panel.maxDataPoints = queryRunner.state.maxDataPoints;
     panel.datasource = queryRunner.state.datasource;
+
+    if (queryRunner.state.cacheTimeout) {
+      panel.cacheTimeout = queryRunner.state.cacheTimeout;
+    }
+
+    if (queryRunner.state.queryCachingTTL) {
+      panel.queryCachingTTL = queryRunner.state.queryCachingTTL;
+    }
   }
 
   if (dataProvider instanceof SceneDataTransformer) {
