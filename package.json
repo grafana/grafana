@@ -289,7 +289,7 @@
     "angular-bindonce": "0.3.1",
     "angular-route": "1.8.3",
     "angular-sanitize": "1.8.3",
-    "ansicolor": "2.0.1",
+    "ansicolor": "1.1.100",
     "baron": "3.0.3",
     "brace": "0.11.1",
     "calculate-size": "1.1.1",
