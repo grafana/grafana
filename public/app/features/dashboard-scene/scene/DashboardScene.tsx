@@ -56,6 +56,7 @@ import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { PanelRepeaterGridItem } from './PanelRepeaterGridItem';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
+import { createWorker } from './workers/createDetectChangesWorker';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links'];
 
@@ -160,6 +161,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // @ts-expect-error
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
+    this._changesWorker = createWorker();
+    this._changesWorker.onmessage = (e: MessageEvent<DashboardChangeInfo>) => {
+      this.detectChanges(e.data);
+    };
+
     // Deactivation logic
     return () => {
       window.__grafanaSceneContext = prevSceneContext;
@@ -168,6 +174,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.stopUrlSync();
       oldDashboardWrapper.destroy();
       dashboardWatcher.leave();
+      this._changesWorker?.terminate();
     };
   }
 
@@ -367,11 +374,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   private startTrackingChanges() {
-    console.log('Starting tracking changes');
-    this._changesWorker = new Worker(new URL('./DetectChangesWorker.ts', import.meta.url));
-    this._changesWorker.onmessage = (e: MessageEvent<DashboardChangeInfo>) => {
-      this.detectChanges(e.data);
-    };
     this._changeTrackerSub = this.subscribeToEvent(
       SceneObjectStateChangedEvent,
       (event: SceneObjectStateChangedEvent) => {
@@ -418,18 +420,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   private postChangesMessage() {
-    console.log('Changes posted');
-    if (window.Worker) {
-      this._changesWorker?.postMessage({ changed: transformSceneToSaveModel(this), initial: this._initialSaveModel });
-    }
+    // FIXME: The test stops here, if you have a console log here, it works. And the changes _changesWorker exists, but postMessage is never called.
+    this._changesWorker?.postMessage({ changed: transformSceneToSaveModel(this), initial: this._initialSaveModel });
   }
 
   private detectChanges(changes: DashboardChangeInfo) {
-    console.log('deecting changed');
-    const { hasChanges, hasTimeChanges, hasVariableValueChanges } = changes;
-    const hasChangesToSave = hasChanges || hasTimeChanges || hasVariableValueChanges;
+    const { hasChanges } = changes;
 
-    if (hasChangesToSave) {
+    if (hasChanges) {
       if (!this.state.isDirty) {
         this.setState({ isDirty: true });
       }
@@ -441,9 +439,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   private stopTrackingChanges() {
-    console.log('Stopping tracking changes');
     this._changeTrackerSub?.unsubscribe();
-    this._changesWorker?.terminate();
   }
 
   public getInitialState(): DashboardSceneState | undefined {

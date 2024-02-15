@@ -26,6 +26,7 @@ import { DashboardControls } from './DashboardControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { getDashboardChangesFromScene } from './getDashboardChangesFromScene';
+import { createWorker } from './workers/createDetectChangesWorker';
 
 jest.mock('../settings/version-history/HistorySrv');
 jest.mock('../serialization/transformSaveModelToScene');
@@ -44,6 +45,8 @@ jest.mock('./getDashboardChangesFromScene', () => ({
   })),
 }));
 
+jest.mock('./workers/createDetectChangesWorker');
+
 describe('DashboardScene', () => {
   describe('DashboardSrv.getCurrent compatibility', () => {
     it('Should set to compatibility wrapper', () => {
@@ -55,19 +58,36 @@ describe('DashboardScene', () => {
   });
 
   describe('Editing and discarding', () => {
+    const worker = createWorker();
+
     describe('Given scene in edit mode', () => {
       let scene: DashboardScene;
+      let deactivateScene: () => void;
 
       beforeEach(() => {
         scene = buildTestScene();
+        deactivateScene = scene.activate();
         scene.onEnterEditMode();
+        jest.clearAllMocks();
       });
 
       it('Should set isEditing to true', () => {
         expect(scene.state.isEditing).toBe(true);
       });
 
-      it('A change to griditem pos should set isDirty true', () => {
+      it('Should initialize the detect changes worker', () => {
+        // @ts-expect-error
+        expect(scene._changesWorker).toBe(worker);
+        expect(worker.onmessage).toBeDefined();
+      });
+
+      it('Should terminate the detect changes worker when deactivate', () => {
+        expect(worker.terminate).toHaveBeenCalledTimes(0);
+        deactivateScene();
+        expect(worker.terminate).toHaveBeenCalledTimes(1);
+      });
+
+      it('A change to griditem pos should call worker to detect changes', () => {
         const gridItem = sceneGraph.findObject(scene, (p) => p.state.key === 'griditem-1') as SceneGridItem;
         gridItem.setState({ x: 10, y: 0, width: 10, height: 10 });
 

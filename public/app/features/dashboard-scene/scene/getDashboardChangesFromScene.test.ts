@@ -5,7 +5,6 @@ import { transformSaveModelToScene } from '../serialization/transformSaveModelTo
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { findVizPanelByKey } from '../utils/utils';
 
-import { getDashboardChanges } from './getDashboardChanges';
 import { getDashboardChangesFromScene } from './getDashboardChangesFromScene';
 
 describe('getDashboardChangesFromScene', () => {
