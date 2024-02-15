@@ -1053,11 +1053,10 @@ var (
 		},
 		{
 			Name:         "alertingSimplifiedRouting",
-			Description:  "Enables the simplified routing for alerting",
-			Stage:        FeatureStageExperimental,
+			Description:  "Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
 		},
 		{
 			Name:         "logRowsPopoverMenu",

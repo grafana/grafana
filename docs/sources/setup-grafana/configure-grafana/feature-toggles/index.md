@@ -92,6 +92,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `addFieldFromCalculationStatFunctions` | Add cumulative and window functions to the add field from calculation transformation                                                                                                         |
 | `pdfTables`                            | Enables generating table data as PDF in reporting                                                                                                                                            |
 | `canvasPanelPanZoom`                   | Allow pan and zoom in canvas panel                                                                                                                                                           |
+| `alertingSimplifiedRouting`            | Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule                                                          |
 | `regressionTransformation`             | Enables regression analysis transformation                                                                                                                                                   |
 | `groupToNestedTableTransformation`     | Enables the group to nested table transformation                                                                                                                                             |
 
