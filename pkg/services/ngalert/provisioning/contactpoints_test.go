@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -405,11 +406,12 @@ func createEncryptedConfig(t *testing.T, secretService secrets.Service) string {
 
 func TestStitchReceivers(t *testing.T) {
 	type testCase struct {
-		name        string
-		initial     *definitions.PostableUserConfig
-		new         *definitions.PostableGrafanaReceiver
-		expModified bool
-		expCfg      definitions.PostableApiAlertingConfig
+		name               string
+		initial            *definitions.PostableUserConfig
+		new                *definitions.PostableGrafanaReceiver
+		expModified        bool
+		expCfg             definitions.PostableApiAlertingConfig
+		expRenamedReceiver string
 	}
 
 	cases := []testCase{
@@ -489,7 +491,8 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "new-receiver",
 				Type: "slack",
 			},
-			expModified: true,
+			expModified:        true,
+			expRenamedReceiver: "new-receiver",
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{
@@ -1090,7 +1093,8 @@ func TestStitchReceivers(t *testing.T) {
 				Name: "receiver-1",
 				Type: "slack",
 			},
-			expModified: true,
+			expModified:        true,
+			expRenamedReceiver: "receiver-1",
 			expCfg: definitions.PostableApiAlertingConfig{
 				Config: definitions.Config{
 					Route: &definitions.Route{
@@ -1142,8 +1146,12 @@ func TestStitchReceivers(t *testing.T) {
 				cfg = c.initial
 			}
 
-			modified := stitchReceiver(cfg, c.new)
-
+			modified, renamedReceiver := stitchReceiver(cfg, c.new)
+			if c.expRenamedReceiver != "" {
+				assert.Equal(t, c.expRenamedReceiver, renamedReceiver)
+			} else {
+				assert.Empty(t, renamedReceiver)
+			}
 			require.Equal(t, c.expModified, modified)
 			require.Equal(t, c.expCfg, cfg.AlertmanagerConfig)
 		})
