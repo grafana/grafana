@@ -45,7 +45,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'center',
     left: '50%',
     transform: 'translateX(-50%)',
-    zIndex: theme.zIndex.portal,
+    zIndex: theme.zIndex.tooltip,
     position: 'fixed',
     bottom: theme.spacing.x4,
     boxShadow: theme.shadows.z3,
