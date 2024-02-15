@@ -646,8 +646,8 @@ func TestInitalizer_azureEnvVars(t *testing.T) {
 					ClientId:  "mock_workload_identity_client_id",
 					TokenFile: "mock_workload_identity_token_file",
 				},
-				UserIdentityEnabled:            true,
-				UserIdentityServiceCredentials: false,
+				UserIdentityEnabled:                    true,
+				UserIdentityFallbackCredentialsEnabled: false,
 				UserIdentityTokenEndpoint: &azsettings.TokenEndpointSettings{
 					TokenUrl:          "mock_user_identity_token_url",
 					ClientId:          "mock_user_identity_client_id",
@@ -668,7 +668,7 @@ func TestInitalizer_azureEnvVars(t *testing.T) {
 			"GFAZPL_USER_IDENTITY_CLIENT_ID=mock_user_identity_client_id",
 			"GFAZPL_USER_IDENTITY_CLIENT_SECRET=mock_user_identity_client_secret",
 			"GFAZPL_USER_IDENTITY_ASSERTION=username",
-			"GFAZPL_USER_IDENTITY_SERVICE_CREDENTIALS=false",
+			"GFAZPL_USER_IDENTITY_FALLBACK_SERVICE_CREDENTIALS_ENABLED=false",
 		}, envVars)
 	})
 }
@@ -873,8 +873,8 @@ func TestService_GetConfigMap_azure(t *testing.T) {
 			ClientId:  "mock_workload_identity_client_id",
 			TokenFile: "mock_workload_identity_token_file",
 		},
-		UserIdentityEnabled:            true,
-		UserIdentityServiceCredentials: true,
+		UserIdentityEnabled:                    true,
+		UserIdentityFallbackCredentialsEnabled: true,
 		UserIdentityTokenEndpoint: &azsettings.TokenEndpointSettings{
 			TokenUrl:          "mock_user_identity_token_url",
 			ClientId:          "mock_user_identity_client_id",
@@ -892,17 +892,17 @@ func TestService_GetConfigMap_azure(t *testing.T) {
 		}
 		require.Equal(t, map[string]string{
 			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
-			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":        "mock_managed_identity_client_id",
-			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":         "true",
-			"GFAZPL_WORKLOAD_IDENTITY_TENANT_ID":       "mock_workload_identity_tenant_id",
-			"GFAZPL_WORKLOAD_IDENTITY_CLIENT_ID":       "mock_workload_identity_client_id",
-			"GFAZPL_WORKLOAD_IDENTITY_TOKEN_FILE":      "mock_workload_identity_token_file",
-			"GFAZPL_USER_IDENTITY_ENABLED":             "true",
-			"GFAZPL_USER_IDENTITY_SERVICE_CREDENTIALS": "true",
-			"GFAZPL_USER_IDENTITY_TOKEN_URL":           "mock_user_identity_token_url",
-			"GFAZPL_USER_IDENTITY_CLIENT_ID":           "mock_user_identity_client_id",
-			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":       "mock_user_identity_client_secret",
-			"GFAZPL_USER_IDENTITY_ASSERTION":           "username",
+			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":                         "mock_managed_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":                          "true",
+			"GFAZPL_WORKLOAD_IDENTITY_TENANT_ID":                        "mock_workload_identity_tenant_id",
+			"GFAZPL_WORKLOAD_IDENTITY_CLIENT_ID":                        "mock_workload_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_TOKEN_FILE":                       "mock_workload_identity_token_file",
+			"GFAZPL_USER_IDENTITY_ENABLED":                              "true",
+			"GFAZPL_USER_IDENTITY_FALLBACK_SERVICE_CREDENTIALS_ENABLED": "true",
+			"GFAZPL_USER_IDENTITY_TOKEN_URL":                            "mock_user_identity_token_url",
+			"GFAZPL_USER_IDENTITY_CLIENT_ID":                            "mock_user_identity_client_id",
+			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":                        "mock_user_identity_client_secret",
+			"GFAZPL_USER_IDENTITY_ASSERTION":                            "username",
 		}, s.GetConfigMap(context.Background(), "grafana-azure-monitor-datasource", nil))
 	})
 
@@ -924,17 +924,17 @@ func TestService_GetConfigMap_azure(t *testing.T) {
 		}
 		require.Equal(t, map[string]string{
 			"GFAZPL_AZURE_CLOUD": "AzureCloud", "GFAZPL_MANAGED_IDENTITY_ENABLED": "true",
-			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":        "mock_managed_identity_client_id",
-			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":         "true",
-			"GFAZPL_WORKLOAD_IDENTITY_TENANT_ID":       "mock_workload_identity_tenant_id",
-			"GFAZPL_WORKLOAD_IDENTITY_CLIENT_ID":       "mock_workload_identity_client_id",
-			"GFAZPL_WORKLOAD_IDENTITY_TOKEN_FILE":      "mock_workload_identity_token_file",
-			"GFAZPL_USER_IDENTITY_ENABLED":             "true",
-			"GFAZPL_USER_IDENTITY_SERVICE_CREDENTIALS": "true",
-			"GFAZPL_USER_IDENTITY_TOKEN_URL":           "mock_user_identity_token_url",
-			"GFAZPL_USER_IDENTITY_CLIENT_ID":           "mock_user_identity_client_id",
-			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":       "mock_user_identity_client_secret",
-			"GFAZPL_USER_IDENTITY_ASSERTION":           "username",
+			"GFAZPL_MANAGED_IDENTITY_CLIENT_ID":                         "mock_managed_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_ENABLED":                          "true",
+			"GFAZPL_WORKLOAD_IDENTITY_TENANT_ID":                        "mock_workload_identity_tenant_id",
+			"GFAZPL_WORKLOAD_IDENTITY_CLIENT_ID":                        "mock_workload_identity_client_id",
+			"GFAZPL_WORKLOAD_IDENTITY_TOKEN_FILE":                       "mock_workload_identity_token_file",
+			"GFAZPL_USER_IDENTITY_ENABLED":                              "true",
+			"GFAZPL_USER_IDENTITY_FALLBACK_SERVICE_CREDENTIALS_ENABLED": "true",
+			"GFAZPL_USER_IDENTITY_TOKEN_URL":                            "mock_user_identity_token_url",
+			"GFAZPL_USER_IDENTITY_CLIENT_ID":                            "mock_user_identity_client_id",
+			"GFAZPL_USER_IDENTITY_CLIENT_SECRET":                        "mock_user_identity_client_secret",
+			"GFAZPL_USER_IDENTITY_ASSERTION":                            "username",
 		}, s.GetConfigMap(context.Background(), "test-datasource", nil))
 	})
 }

@@ -93,12 +93,12 @@ func TestAzureSettings(t *testing.T) {
 
 			azureSection, err := cfg.Raw.NewSection("azure")
 			require.NoError(t, err)
-			_, err = azureSection.NewKey("user_identity_enabled", "true")
+			_, err = azureSection.NewKey("user_identity_fallback_credentials_enabled", "true")
 			require.NoError(t, err)
 
 			cfg.readAzureSettings()
 
-			assert.True(t, cfg.Azure.UserIdentityServiceCredentials)
+			assert.True(t, cfg.Azure.UserIdentityFallbackCredentialsEnabled)
 		})
 		t.Run("disables service credentials", func(t *testing.T) {
 			cfg := NewCfg()
@@ -107,12 +107,12 @@ func TestAzureSettings(t *testing.T) {
 			require.NoError(t, err)
 			_, err = azureSection.NewKey("user_identity_enabled", "true")
 			require.NoError(t, err)
-			_, err = azureSection.NewKey("user_identity_service_credentials", "false")
+			_, err = azureSection.NewKey("user_identity_fallback_credentials_enabled", "false")
 			require.NoError(t, err)
 
 			cfg.readAzureSettings()
 
-			assert.False(t, cfg.Azure.UserIdentityServiceCredentials)
+			assert.False(t, cfg.Azure.UserIdentityFallbackCredentialsEnabled)
 		})
 
 		t.Run("should use token endpoint from Azure AD if enabled", func(t *testing.T) {
