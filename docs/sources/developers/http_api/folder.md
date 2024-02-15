@@ -160,7 +160,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
   "uid": "nErXDvCkzz",
-  "title": "Department ABC"
+  "title": "Department ABC",
+  "parentUid": "fgnj5e52gel76g"
 }
 ```
 
