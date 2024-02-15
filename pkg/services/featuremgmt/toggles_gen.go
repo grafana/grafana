@@ -576,7 +576,7 @@ const (
 	FlagDatatrails = "datatrails"
 
 	// FlagAlertingSimplifiedRouting
-	// Enables the simplified routing for alerting
+	// Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
 	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
 
 	// FlagLogRowsPopoverMenu

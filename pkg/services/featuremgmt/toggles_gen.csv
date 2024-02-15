@@ -141,7 +141,7 @@ logsInfiniteScrolling,experimental,@grafana/observability-logs,false,false,true
 flameGraphItemCollapsing,experimental,@grafana/observability-traces-and-profiling,false,false,true
 alertingDetailsViewV2,experimental,@grafana/alerting-squad,false,false,true
 datatrails,experimental,@grafana/dashboards-squad,false,false,true
-alertingSimplifiedRouting,experimental,@grafana/alerting-squad,false,false,false
+alertingSimplifiedRouting,preview,@grafana/alerting-squad,false,false,false
 logRowsPopoverMenu,GA,@grafana/observability-logs,false,false,true
 pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,false,false,false
 tableSharedCrosshair,experimental,@grafana/dataviz-squad,false,false,true
