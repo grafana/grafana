@@ -73,8 +73,6 @@ export const LogsMetaRow = React.memo(
         area: 'logs-meta-row',
       });
 
-      const fileName = `Explore-logs-${dateTimeFormat(new Date())}.json`;
-
       switch (format) {
         case DownloadFormat.Text:
           downloadLogsModelAsTxt({ meta, rows: logRows }, 'Explore');
@@ -84,7 +82,7 @@ export const LogsMetaRow = React.memo(
           const blob = new Blob([JSON.stringify(jsonLogs)], {
             type: 'application/json;charset=utf-8',
           });
-
+          const fileName = `Explore-logs-${dateTimeFormat(new Date())}.json`;
           saveAs(blob, fileName);
           break;
         case DownloadFormat.CSV:
