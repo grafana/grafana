@@ -80,15 +80,9 @@ require (
 	github.com/lib/pq v1.10.9 // @grafana/backend-platform
 	github.com/linkedin/goavro/v2 v2.10.0 // @grafana/backend-platform
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/backend-platform
-<<<<<<< HEAD
 	github.com/magefile/mage v1.15.0 // @grafana/grafana-release-guild
 	github.com/mattn/go-isatty v0.0.18 // @grafana/backend-platform
 	github.com/mattn/go-sqlite3 v1.14.16 // @grafana/backend-platform
-=======
-	github.com/magefile/mage v1.15.0 // @grafana/grafana-release-guild
-	github.com/mattn/go-isatty v0.0.19 // @grafana/backend-platform
-	github.com/mattn/go-sqlite3 v1.14.19 // @grafana/backend-platform
->>>>>>> a6bc262093c (Chore: Remove `grafana-release-guild` references (#82505))
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-squad-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
@@ -460,11 +454,7 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20220208224320-6efb837e6bc2 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140 // indirect
-<<<<<<< HEAD
 	github.com/docker/docker v23.0.4+incompatible // @grafana/grafana-release-guild
-=======
-	github.com/docker/docker v24.0.7+incompatible // @grafana/grafana-release-guild
->>>>>>> a6bc262093c (Chore: Remove `grafana-release-guild` references (#82505))
 	github.com/elazarl/goproxy v0.0.0-20230731152917-f99041a5c027 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect
 	github.com/go-logr/logr v1.3.0 // @grafana/grafana-app-platform-squad
