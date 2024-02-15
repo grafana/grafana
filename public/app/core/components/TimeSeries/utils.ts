@@ -577,6 +577,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       },
       skip: [null],
     },
+    focus: {
+      prox: hoverProximity ?? 30,
+    },
   };
 
   if (sync && sync() !== DashboardCursorSync.Off && xField.type === FieldType.time) {
