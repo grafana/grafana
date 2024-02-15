@@ -129,7 +129,7 @@ func owners(fileSystem fs.FS, logger *log.Logger, args []string) error {
 }
 
 // Print dependencies for a given owner. Can specify one or more owners.
-// An example CLI command to list all direct dependencies owned by Delivery and Authnz `go run scripts/modowners/modowners.go modules -o @grafana/grafana-delivery,@grafana/identity-access-team go.mod`
+// An example CLI command to list all direct dependencies owned by Delivery and Authnz `go run scripts/modowners/modowners.go modules -o @grafana/grafana-release-guild,@grafana/identity-access-team go.mod`
 func modules(fileSystem fs.FS, logger *log.Logger, args []string) error {
 	fs := flag.NewFlagSet("modules", flag.ExitOnError)
 	indirect := fs.Bool("i", false, "print indirect dependencies")

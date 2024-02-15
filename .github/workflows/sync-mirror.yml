@@ -1,4 +1,4 @@
-# Owned by grafana-delivery-squad
+# Owned by grafana-release-guild
 # Intended to be dropped into the base repo, Ex: grafana/grafana
 name: Sync to mirror
 run-name: sync-to-mirror-${{ github.ref_name }}
