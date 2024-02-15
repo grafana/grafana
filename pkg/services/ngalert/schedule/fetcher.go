@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // RulesStore is a store that provides alert rules for scheduling
@@ -36,6 +37,10 @@ type BackgroundFetcher struct {
 }
 
 func NewBackgroundFetcher(cfg FetcherCfg, ruleStore RulesStore, metrics *metrics.Scheduler, logger log.Logger) *BackgroundFetcher {
+	if cfg.ReloadInterval <= 0 {
+		logger.Warn("A nonpositive reload interval was provided, falling back to the default")
+		cfg.ReloadInterval = setting.SchedulerBaseInterval
+	}
 	return &BackgroundFetcher{
 		cfg:                cfg,
 		ticker:             time.NewTicker(cfg.ReloadInterval),
