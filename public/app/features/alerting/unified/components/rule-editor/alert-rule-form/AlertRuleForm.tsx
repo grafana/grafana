@@ -4,6 +4,7 @@ import { FormProvider, SubmitErrorHandler, UseFormWatch, useForm } from 'react-h
 import { Link, useParams } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { Button, ConfirmModal, CustomScrollbar, HorizontalGroup, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
@@ -201,6 +202,7 @@ export const AlertRuleForm = ({ existing, prefill }: Props) => {
         size="sm"
         onClick={handleSubmit((values) => submit(values, true), onInvalid)}
         disabled={submitState.loading}
+        data-testid={selectors.components.AlertRuleCreation.save}
       >
         {submitState.loading && <Spinner className={styles.buttonSpinner} inline={true} />}
         Save rule and exit

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
@@ -105,7 +106,7 @@ export function FolderActionsButton({ folder }: Props) {
   return (
     <>
       <Dropdown overlay={menu} onVisibleChange={setIsOpen}>
-        <Button variant="secondary">
+        <Button variant="secondary" data-testid={selectors.components.FolderView.folderActionsButton}>
           <Trans i18nKey="browse-dashboards.folder-actions-button.folder-actions">Folder actions</Trans>
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
         </Button>

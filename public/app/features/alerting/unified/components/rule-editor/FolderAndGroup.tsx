@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 
 import { AppEvents, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import {
   AsyncSelect,
   Box,
@@ -191,6 +192,7 @@ export function FolderAndGroup({
                     fill="outline"
                     variant="secondary"
                     disabled={!contextSrv.hasPermission(AccessControlAction.FoldersCreate)}
+                    data-testid={selectors.components.AlertRuleCreation.newFolder}
                   >
                     New folder
                   </Button>
@@ -269,6 +271,7 @@ export function FolderAndGroup({
             fill="outline"
             variant="secondary"
             disabled={!folder}
+            data-testid={selectors.components.AlertRuleCreation.newGroup}
           >
             New evaluation group
           </Button>
