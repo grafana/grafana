@@ -549,25 +549,25 @@ function registerPanelInteractionsReporter(scene: DashboardScene) {
 }
 
 const convertSnapshotData = (snapshotData: DataFrameDTO[]): DataFrameJSON[] => {
-  return [
-    {
+  return snapshotData.map((data) => {
+    return {
       data: {
-        values: snapshotData[0].fields
-          .map((field) => field.values)
-          .filter((values): values is unknown[] => values !== undefined),
+        values: data.fields.map((field) => field.values).filter((values): values is unknown[] => values !== undefined),
       },
       schema: {
-        fields: snapshotData[0].fields.map((field) => ({
+        fields: data.fields.map((field) => ({
           name: field.name,
           type: field.type,
           config: field.config,
         })),
       },
-    },
-  ];
+    };
+  });
 };
 
+// override panel datasource and targets with snapshot data using the Grafana datasource
 const convertOldSnapshotToScenesSnapshot = (panel: PanelModel) => {
+  // only old snapshots created with old dashboards contains snapshotData
   if (panel.snapshotData) {
     panel.datasource = GRAFANA_DATASOURCE_REF;
     panel.targets = [
