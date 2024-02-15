@@ -297,6 +297,7 @@ export const CandlestickPanel = ({
                       dataIdxs={dataIdxs}
                       seriesIdx={seriesIdx}
                       mode={options.tooltip.mode}
+                      sortOrder={options.tooltip.sort}
                       isPinned={isPinned}
                       annotate={enableAnnotationCreation ? annotate : undefined}
                       scrollable={isTooltipScrollable(options.tooltip)}

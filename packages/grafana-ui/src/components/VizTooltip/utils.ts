@@ -1,5 +1,8 @@
+import { FALLBACK_COLOR, Field, FieldType, formattedValueToString } from '@grafana/data';
+import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
+
 import { ColorIndicatorStyles } from './VizTooltipColorIndicator';
-import { ColorIndicator } from './types';
+import { ColorIndicator, ColorPlacement, LabelValue } from './types';
 
 export const calculateTooltipPosition = (
   xPos = 0,
@@ -65,4 +68,81 @@ export const getColorIndicatorClass = (colorIndicator: string, styles: ColorIndi
     default:
       return styles.value;
   }
+};
+
+const numberCmp = (a: LabelValue, b: LabelValue) => a.numeric! - b.numeric!;
+const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+const stringCmp = (a: LabelValue, b: LabelValue) => collator.compare(`${a.value}`, `${b.value}`);
+
+export const getContentItems = (
+  fields: Field[],
+  xField: Field,
+  dataIdxs: Array<number | null>,
+  seriesIdx: number | null | undefined,
+  mode: TooltipDisplayMode,
+  sortOrder: SortOrder,
+  fieldFilter = (field: Field) => true
+): LabelValue[] => {
+  let rows: LabelValue[] = [];
+
+  let allNumeric = false;
+
+  for (let i = 0; i < fields.length; i++) {
+    const field = fields[i];
+
+    if (
+      field === xField ||
+      field.type === FieldType.time ||
+      !fieldFilter(field) ||
+      field.config.custom?.hideFrom?.tooltip ||
+      field.config.custom?.hideFrom?.viz
+    ) {
+      continue;
+    }
+
+    // in single mode, skip all but closest field
+    if (mode === TooltipDisplayMode.Single && seriesIdx !== i) {
+      continue;
+    }
+
+    let dataIdx = dataIdxs[i];
+
+    // omit non-hovered
+    if (dataIdx == null) {
+      continue;
+    }
+
+    if (!(field.type === FieldType.number || field.type === FieldType.boolean || field.type === FieldType.enum)) {
+      allNumeric = false;
+    }
+
+    const v = fields[i].values[dataIdx];
+
+    // no value -> zero?
+    const display = field.display!(v); // super expensive :(
+    // sort NaN and non-numeric to bottom (regardless of sort order)
+    const numeric = !Number.isNaN(display.numeric)
+      ? display.numeric
+      : sortOrder === SortOrder.Descending
+        ? Number.MIN_SAFE_INTEGER
+        : Number.MAX_SAFE_INTEGER;
+
+    rows.push({
+      label: field.state?.displayName ?? field.name,
+      value: formattedValueToString(display),
+      color: display.color ?? FALLBACK_COLOR,
+      colorIndicator: ColorIndicator.series,
+      colorPlacement: ColorPlacement.first,
+      isActive: mode === TooltipDisplayMode.Multi && seriesIdx === i,
+      numeric,
+    });
+  }
+
+  if (sortOrder !== SortOrder.None && rows.length > 1) {
+    const cmp = allNumeric ? numberCmp : stringCmp;
+    const mult = sortOrder === SortOrder.Descending ? -1 : 1;
+    rows.sort((a, b) => mult * cmp(a, b));
+  }
+
+  return rows;
 };

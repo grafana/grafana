@@ -411,7 +411,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       name: 'Show histogram (Y axis)',
       defaultValue: defaultOptions.tooltip.yHistogram,
       category,
-      showIf: (opts) => opts.tooltip.mode !== TooltipDisplayMode.None,
+      showIf: (opts) => opts.tooltip.mode === TooltipDisplayMode.Single,
     });
 
     builder.addBooleanSwitch({
@@ -419,7 +419,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(HeatmapPanel)
       name: 'Show color scale',
       defaultValue: defaultOptions.tooltip.showColorScale,
       category,
-      showIf: (opts) => opts.tooltip.mode !== TooltipDisplayMode.None && config.featureToggles.newVizTooltips,
+      showIf: (opts) => opts.tooltip.mode === TooltipDisplayMode.Single && config.featureToggles.newVizTooltips,
     });
 
     builder.addNumberInput({

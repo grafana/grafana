@@ -22,13 +22,13 @@ import {
   TimelineMode,
 } from 'app/core/components/TimelineChart/utils';
 
+import { StateTimelineTooltip2 } from '../state-timeline/StateTimelineTooltip2';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
 import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
 import { StatusHistoryTooltip } from './StatusHistoryTooltip';
-import { StatusHistoryTooltip2 } from './StatusHistoryTooltip2';
 import { Options } from './panelcfg.gen';
 
 const TOOLTIP_OFFSET = 10;
@@ -251,16 +251,17 @@ export const StatusHistoryPanel = ({
                       };
 
                       return (
-                        <StatusHistoryTooltip2
-                          data={frames ?? []}
+                        <StateTimelineTooltip2
+                          frames={frames ?? []}
+                          seriesFrame={alignedFrame}
                           dataIdxs={dataIdxs}
-                          alignedData={alignedFrame}
                           seriesIdx={seriesIdx}
-                          timeZone={timeZone}
                           mode={options.tooltip.mode}
                           sortOrder={options.tooltip.sort}
                           isPinned={isPinned}
+                          timeRange={timeRange}
                           annotate={enableAnnotationCreation ? annotate : undefined}
+                          withDuration={false}
                         />
                       );
                     }}
