@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import saveAs from 'file-saver';
 import React, { ComponentProps } from 'react';
@@ -224,11 +224,49 @@ describe('LogsMetaRow', () => {
         entryFieldIndex: 0,
         dataFrame: toDataFrame({
           name: 'logs',
+          refId: 'A',
           fields: [
             {
               name: 'time',
               type: FieldType.time,
               values: ['1970-01-01T00:00:00Z'],
+            },
+            {
+              name: 'message',
+              type: FieldType.string,
+              values: ['INFO 1'],
+              labels: {
+                foo: 'bar',
+              },
+            },
+          ],
+        }),
+        entry: 'test entry',
+        hasAnsi: false,
+        hasUnescapedContent: false,
+        labels: {
+          foo: 'bar',
+        },
+        logLevel: LogLevel.info,
+        raw: '',
+        timeEpochMs: 10,
+        timeEpochNs: '123456789',
+        timeFromNow: '',
+        timeLocal: '',
+        timeUtc: '',
+        uid: '2',
+      },
+      {
+        rowIndex: 2,
+        entryFieldIndex: 1,
+        dataFrame: toDataFrame({
+          name: 'logs',
+          refId: 'B',
+          fields: [
+            {
+              name: 'time',
+              type: FieldType.time,
+              values: ['1970-01-02T00:00:00Z'],
             },
             {
               name: 'message',
@@ -266,10 +304,11 @@ describe('LogsMetaRow', () => {
       })
     );
 
-    expect(saveAs).toBeCalled();
+    expect(saveAs).toBeCalledTimes(2);
+
     const blob = (saveAs as unknown as jest.Mock).mock.lastCall[0];
     expect(blob.type).toBe('text/csv;charset=utf-8');
     const text = await blob.text();
-    expect(text).toBe(`"time","message bar"\r\n1970-01-01T00:00:00Z,INFO 1`);
+    expect(text).toBe(`"time","message bar"\r\n1970-01-02T00:00:00Z,INFO 1`);
   });
 });
