@@ -112,7 +112,7 @@ func (query *Query) renderTags() []string {
 		var textValue string
 		switch tag.Operator {
 		case "=~", "!~", "":
-			textValue = escape(tag.Value)
+			textValue = tag.Value
 		case "<", ">", ">=", "<=":
 			textValue = removeRegexWrappers(tag.Value, `'`)
 		case "Is", "Is Not":
@@ -257,45 +257,4 @@ func removeRegexWrappers(wrappedValue string, wrapper string) string {
 	}
 
 	return value
-}
-
-func escape(unescapedValue string) string {
-	pipe := `|`
-	beginning := `/^`
-	ending := `$/`
-	value := unescapedValue
-	substitute := `\$0`
-	fullMatch := false
-
-	// get the value only in between /^...$/
-	matches := regexMatcherWithStartEndPattern.FindStringSubmatch(unescapedValue)
-	if len(matches) > 1 {
-		// full match. the value is like /^value$/
-		value = matches[1]
-		fullMatch = true
-	}
-
-	if !fullMatch {
-		// get the value only in between /.../
-		matches = regexMatcherSimple.FindStringSubmatch(unescapedValue)
-		if len(matches) > 1 {
-			value = matches[1]
-			beginning = `/`
-			ending = `/`
-		}
-	}
-
-	// split them with pipe |
-	parts := strings.Split(value, pipe)
-	for i, v := range parts {
-		// escape each item
-		parts[i] = mustEscapeCharsMatcher.ReplaceAllString(v, substitute)
-	}
-
-	// stitch them to each other
-	escaped := make([]byte, 0, 64)
-	escaped = append(escaped, beginning...)
-	escaped = append(escaped, strings.Join(parts, pipe)...)
-	escaped = append(escaped, ending...)
-	return string(escaped)
 }
