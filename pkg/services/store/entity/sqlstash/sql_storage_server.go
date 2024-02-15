@@ -29,15 +29,9 @@ import (
 var _ entity.EntityStoreServer = &sqlEntityServer{}
 
 func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (entity.EntityStoreServer, error) {
-	snode, err := snowflake.NewNode(rand.Int63n(1024))
-	if err != nil {
-		return nil, err
-	}
-
 	entityServer := &sqlEntityServer{
-		db:        db,
-		log:       log.New("sql-entity-server"),
-		snowflake: snode,
+		db:  db,
+		log: log.New("sql-entity-server"),
 	}
 
 	return entityServer, nil
@@ -78,6 +72,12 @@ func (s *sqlEntityServer) Init() error {
 
 	s.sess = sess
 	s.dialect = migrator.NewDialect(engine.DriverName())
+
+	// initialize snowflake generator
+	s.snowflake, err = snowflake.NewNode(rand.Int63n(1024))
+	if err != nil {
+		return err
+	}
 
 	// set up the broadcaster
 	s.broadcaster = &Broadcaster[*entity.Entity]{}
@@ -1413,7 +1413,7 @@ func (s *sqlEntityServer) poll(ctx context.Context, since int64, out chan *entit
 
 func watchMatches(r *entity.EntityWatchRequest, result *entity.Entity) bool {
 	// Resource version too old
-	if result.ResourceVersion < r.Since {
+	if result.ResourceVersion <= r.Since {
 		return false
 	}
 
