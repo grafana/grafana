@@ -44,6 +44,7 @@ var subtypeToPrefix = map[string]string{
 	Mimir:      mimirPrefix,
 }
 
+// The requester is primarily used for testing purposes, allowing us to inject a different implementation of withReq.
 type requester interface {
 	withReq(ctx *contextmodel.ReqContext, method string, u *url.URL, body io.Reader, extractor func(*response.NormalResponse) (any, error), headers map[string]string) response.Response
 }
