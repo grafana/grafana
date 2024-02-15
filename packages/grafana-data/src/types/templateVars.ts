@@ -1,5 +1,4 @@
 import { LoadingState } from './data';
-import { MetricFindValue } from './datasource';
 import { DataSourceRef } from './query';
 
 export type VariableType = TypedVariableModel['type'];
@@ -66,11 +65,9 @@ export interface AdHocVariableModel extends BaseVariableModel {
   baseFilters?: AdHocVariableFilter[];
 }
 
-export interface GroupByVariableModel extends BaseVariableModel {
+export interface GroupByVariableModel extends VariableWithOptions {
   type: 'groupby';
   datasource: DataSourceRef | null;
-  groupByKeys: string[];
-  defaultOptions?: MetricFindValue[];
   multi: true;
 }
 
