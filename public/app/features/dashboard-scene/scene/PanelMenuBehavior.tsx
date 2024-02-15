@@ -107,7 +107,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       text: t('panel.header-menu.copy', `Copy`),
       onClick: () => {
         DashboardInteractions.panelMenuItemClicked('copy');
-        dashboard.copyPanel(libraryPanel || panel);
+        dashboard.copyPanel(panel);
       },
     });
 

@@ -491,12 +491,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     });
   }
 
-  public copyPanel(panel: VizPanel | LibraryVizPanel) {
-    if (!panel.parent) {
+  public copyPanel(vizPanel: VizPanel) {
+    if (!vizPanel.parent) {
       return;
     }
 
-    const gridItem = panel.parent;
+    const gridItem = vizPanel.parent;
 
     const jsonData = gridItemToPanel(gridItem);
 
