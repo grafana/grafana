@@ -344,7 +344,7 @@ func (f *accessControlDashboardPermissionFilter) addRecQry(queryName string, whe
 	if f.recQueries == nil {
 		f.recQueries = make([]clause, 0, maximumRecursiveQueries)
 	}
-	c := make([]any, len(whereParams)+1)
+	c := make([]any, len(whereParams))
 	copy(c, whereParams)
 	c = append([]any{orgID}, c...)
 	f.recQueries = append(f.recQueries, clause{
