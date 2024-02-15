@@ -112,7 +112,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
     }
 
     // Check if action exists and give access if user has the required permission.
-    if (pluginInclude?.action) {
+    if (pluginInclude?.action && config.featureToggles.accessControlOnCall) {
       return contextSrv.hasPermission(pluginInclude.action);
     }
 

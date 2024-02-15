@@ -26,6 +26,25 @@ jest.mock('../plugin_loader', () => ({
   importAppPlugin: jest.fn(),
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  config: {
+    featureToggles: {
+      accessControlOnCall: true,
+    },
+    theme2: {
+      breakpoints: {
+        values: {
+          sm: 576,
+          md: 768,
+          lg: 992,
+          xl: 1200,
+        },
+      },
+    },
+  },
+}));
+
 const importAppPluginMock = importAppPlugin as jest.Mock<
   ReturnType<typeof importAppPlugin>,
   Parameters<typeof importAppPlugin>
