@@ -2087,14 +2087,14 @@
     {
       "metadata": {
         "name": "alertingSimplifiedRouting",
-        "resourceVersion": "1708033274313",
+        "resourceVersion": "1708033557575",
         "creationTimestamp": "2024-02-14T16:41:35Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2024-02-15 21:41:14.3138752 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2024-02-15 21:45:57.5750554 +0000 UTC"
         }
       },
       "spec": {
-        "description": "This feature enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",
+        "description": "Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",
         "stage": "preview",
         "codeowner": "@grafana/alerting-squad"
       }

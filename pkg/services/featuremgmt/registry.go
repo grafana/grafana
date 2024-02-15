@@ -1053,7 +1053,7 @@ var (
 		},
 		{
 			Name:         "alertingSimplifiedRouting",
-			Description:  "This feature enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",
+			Description:  "Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",
 			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
