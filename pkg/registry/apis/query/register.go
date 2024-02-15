@@ -18,9 +18,9 @@ import (
 
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry/apis/query/expr"
 	"github.com/grafana/grafana/pkg/registry/apis/query/runner"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -40,7 +40,7 @@ type QueryAPIBuilder struct {
 
 	runner   v0alpha1.QueryRunner
 	registry v0alpha1.DataSourceApiServerRegistry
-	handler  *expr.ExpressionQueryReader
+	expr     *exprStorage
 }
 
 func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
@@ -48,13 +48,17 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 	registry v0alpha1.DataSourceApiServerRegistry,
 ) (*QueryAPIBuilder, error) {
 	handler, err := expr.NewExpressionQueryReader(features)
+	if err != nil {
+		return nil, err
+	}
+	expr, err := newExprStorage(handler)
 	return &QueryAPIBuilder{
 		concurrentQueryLimit: 4,
 		log:                  log.New("query_apiserver"),
 		returnMultiStatus:    features.IsEnabledGlobally(featuremgmt.FlagDatasourceQueryMultiStatus),
 		runner:               runner,
 		registry:             registry,
-		handler:              handler,
+		expr:                 expr,
 	}, err
 }
 
@@ -124,12 +128,8 @@ func (b *QueryAPIBuilder) GetAPIGroupInfo(
 	storage := map[string]rest.Storage{}
 	storage[plugins.resourceInfo.StoragePath()] = plugins
 
-	expr, err := newExprStorage(b.handler)
-	if err != nil {
-		return nil, err
-	}
-	storage[expr.resourceInfo.StoragePath()] = expr
-	storage[expr.resourceInfo.StoragePath("validate")] = &validateQueryREST{handler: b.handler}
+	storage[b.expr.resourceInfo.StoragePath()] = b.expr
+	storage[b.expr.resourceInfo.StoragePath("validate")] = &validateQueryREST{s: b.expr}
 
 	apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
 	return &apiGroupInfo, nil

@@ -14,7 +14,7 @@ import (
 	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/query/expr"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/registry/apis/query/schema"
 	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 )
@@ -31,6 +31,7 @@ type exprStorage struct {
 	resourceInfo   *common.ResourceInfo
 	tableConverter rest.TableConvertor
 	handler        *expr.ExpressionQueryReader
+	vals           *query.QueryTypeDefinitionList
 }
 
 func newExprStorage(handler *expr.ExpressionQueryReader) (*exprStorage, error) {
@@ -39,10 +40,33 @@ func newExprStorage(handler *expr.ExpressionQueryReader) (*exprStorage, error) {
 		func() runtime.Object { return &query.QueryTypeDefinition{} },
 		func() runtime.Object { return &query.QueryTypeDefinitionList{} },
 	)
+
+	vals := &query.QueryTypeDefinitionList{}
+	body, err := handler.QueryTypeDefinitionListJSON()
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(body, vals)
+	if err != nil {
+		return nil, err
+	}
+
+	field := ""
+	for _, qt := range vals.Items {
+		if field == "" {
+			field = qt.Spec.DiscriminatorField
+		} else if qt.Spec.DiscriminatorField != "" {
+			if qt.Spec.DiscriminatorField != field {
+				return nil, fmt.Errorf("only one discriminator field allowed")
+			}
+		}
+	}
+
 	return &exprStorage{
 		resourceInfo:   &resourceInfo,
 		tableConverter: rest.NewDefaultTableConvertor(resourceInfo.GroupResource()),
 		handler:        handler,
+		vals:           vals,
 	}, nil
 }
 
@@ -69,21 +93,20 @@ func (s *exprStorage) ConvertToTable(ctx context.Context, object runtime.Object,
 }
 
 func (s *exprStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	return s.handler.QueryTypeDefinitionList(), nil
+	return s.vals, nil
 }
 
 func (s *exprStorage) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	expr := s.handler.QueryTypeDefinitionList()
-	for idx, flag := range expr.Items {
+	for idx, flag := range s.vals.Items {
 		if flag.Name == name {
-			return &expr.Items[idx], nil
+			return &s.vals.Items[idx], nil
 		}
 	}
 	return nil, fmt.Errorf("not found")
 }
 
 func (b *QueryAPIBuilder) handleExpressionsSchema(w http.ResponseWriter, r *http.Request) {
-	s, err := schema.GetQuerySchema(b.handler.QueryTypeDefinitionList())
+	s, err := schema.GetQuerySchema(b.expr.vals)
 	if err != nil {
 		errhttp.Write(r.Context(), err, w)
 		return
@@ -92,7 +115,7 @@ func (b *QueryAPIBuilder) handleExpressionsSchema(w http.ResponseWriter, r *http
 }
 
 type validateQueryREST struct {
-	handler *expr.ExpressionQueryReader
+	s *exprStorage
 }
 
 var _ = rest.Connecter(&validateQueryREST{})
@@ -114,7 +137,7 @@ func (r *validateQueryREST) NewConnectOptions() (runtime.Object, bool, string) {
 
 func (r *validateQueryREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	// Find the expression
-	for _, qt := range r.handler.QueryTypeDefinitionList().Items {
+	for _, qt := range r.s.vals.Items {
 		if qt.Name == name {
 			return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 				// GenericDataQuery
