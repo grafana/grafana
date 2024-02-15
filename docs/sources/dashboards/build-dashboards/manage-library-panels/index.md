@@ -97,6 +97,6 @@ Delete a library panel when you no longer need it.
 1. Click the delete icon next to the library panel name.
 
 {{% docs/reference %}}
-[rbac]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/manage-library-panels"
-[rbac]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/manage-library-panels"
+[rbac]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>administration/roles-and-permissions/access-control"
+[rbac]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>administration/roles-and-permissions/access-control"
 {{% /docs/reference %}}
