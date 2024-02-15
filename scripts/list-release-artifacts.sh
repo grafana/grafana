@@ -12,8 +12,6 @@ ERSION_DEB="${ERSION//-/\~}"
 ASSETS=$(cat << EOF
 gs://${BUCKET}/artifacts/downloads/${VERSION}/oss/release/grafana-${ERSION_DEB}-1.aarch64.rpm
 gs://${BUCKET}/artifacts/downloads/${VERSION}/oss/release/grafana-${ERSION_DEB}-1.aarch64.rpm.sha256
-gs://${BUCKET}/artifacts/downloads/${VERSION}/oss/release/grafana-${ERSION_DEB}-1.armhfp.rpm
-gs://${BUCKET}/artifacts/downloads/${VERSION}/oss/release/grafana-${ERSION_DEB}-1.armhfp.rpm.sha256
 gs://${BUCKET}/artifacts/downloads/${VERSION}/oss/release/grafana-${ERSION_DEB}-1.x86_64.rpm
 gs://${BUCKET}/artifacts/downloads/${VERSION}/oss/release/grafana-${ERSION_DEB}-1.x86_64.rpm.sha256
 gs://${BUCKET}/artifacts/downloads/${VERSION}/oss/release/grafana-${ERSION}.darwin-amd64.tar.gz
