@@ -49,7 +49,7 @@ type sqlEntityServer struct {
 	sess        *session.SessionDB
 	dialect     migrator.Dialect
 	snowflake   *snowflake.Node
-	broadcaster *Broadcaster
+	broadcaster *Broadcaster[*entity.Entity]
 }
 
 func (s *sqlEntityServer) Init() error {
@@ -80,7 +80,7 @@ func (s *sqlEntityServer) Init() error {
 	s.dialect = migrator.NewDialect(engine.DriverName())
 
 	// set up the broadcaster
-	s.broadcaster = &Broadcaster{}
+	s.broadcaster = &Broadcaster[*entity.Entity]{}
 	err = s.broadcaster.Start(func() (chan *entity.Entity, error) {
 		stream := make(chan *entity.Entity)
 
