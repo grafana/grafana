@@ -19,6 +19,7 @@ export const PluginList = ({ plugins, displayMode, isLoading }: Props) => {
   const { pathname } = useLocation();
   const pathName = config.appSubUrl + (pathname.endsWith('/') ? pathname.slice(0, -1) : pathname);
 
+  console.log('plugins', plugins);
   return (
     <Grid gap={3} {...(isList ? { columns: 1 } : { minColumnWidth: 34 })} data-testid="plugin-list">
       {isLoading
