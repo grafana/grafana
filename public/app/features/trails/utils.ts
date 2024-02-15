@@ -110,7 +110,7 @@ export function isSceneTimeRangeState(state: SceneObjectState): state is SceneTi
 export function getFilters(scene: SceneObject) {
   const filters = sceneGraph.lookupVariable('filters', scene);
   if (filters instanceof AdHocFiltersVariable) {
-    return filters.state.set.state.filters;
+    return filters.state.filters;
   }
   return null;
 }
