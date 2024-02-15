@@ -54,39 +54,55 @@ type Cfg struct {
 	HideAngularDeprecation []string
 
 	ConcurrentQueryCount int
+
+	UserFacingDefaultError string
+
+	DataProxyRowLimit int64
+
+	SqlDatasourceMaxOpenConnsDefault    int
+	SqlDatasourceMaxIdleConnsDefault    int
+	SqlDatasourceMaxConnLifetimeDefault int
 }
 
 func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
 	awsAllowedAuthProviders []string, awsAssumeRoleEnabled bool, awsExternalId string, awsSessionDuration string, awsListMetricsPageLimit string, AWSForwardSettingsPlugins []string, azure *azsettings.AzureSettings, secureSocksDSProxy setting.SecureSocksDSProxySettings,
 	grafanaVersion string, logDatasourceRequests bool, pluginsCDNURLTemplate string, appURL string, appSubURL string, tracing Tracing, features featuremgmt.FeatureToggles, angularSupportEnabled bool,
-	grafanaComURL string, disablePlugins []string, hideAngularDeprecation []string, forwardHostEnvVars []string, concurrentQueryCount int, azureAuthEnabled bool) *Cfg {
+	grafanaComURL string, disablePlugins []string, hideAngularDeprecation []string, forwardHostEnvVars []string, concurrentQueryCount int, azureAuthEnabled bool,
+	userFacingDefaultError string, dataProxyRowLimit int64,
+	sqlDatasourceMaxOpenConnsDefault int, sqlDatasourceMaxIdleConnsDefault int, sqlDatasourceMaxConnLifetimeDefault int,
+) *Cfg {
 	return &Cfg{
-		log:                       log.New("plugin.cfg"),
-		PluginsPath:               pluginsPath,
-		BuildVersion:              grafanaVersion,
-		DevMode:                   devMode,
-		PluginSettings:            pluginSettings,
-		PluginsAllowUnsigned:      pluginsAllowUnsigned,
-		DisablePlugins:            disablePlugins,
-		AWSAllowedAuthProviders:   awsAllowedAuthProviders,
-		AWSAssumeRoleEnabled:      awsAssumeRoleEnabled,
-		AWSExternalId:             awsExternalId,
-		AWSSessionDuration:        awsSessionDuration,
-		AWSListMetricsPageLimit:   awsListMetricsPageLimit,
-		AWSForwardSettingsPlugins: AWSForwardSettingsPlugins,
-		Azure:                     azure,
-		ProxySettings:             secureSocksDSProxy,
-		LogDatasourceRequests:     logDatasourceRequests,
-		PluginsCDNURLTemplate:     pluginsCDNURLTemplate,
-		Tracing:                   tracing,
-		GrafanaComURL:             grafanaComURL,
-		GrafanaAppURL:             appURL,
-		GrafanaAppSubURL:          appSubURL,
-		Features:                  features,
-		AngularSupportEnabled:     angularSupportEnabled,
-		HideAngularDeprecation:    hideAngularDeprecation,
-		ForwardHostEnvVars:        forwardHostEnvVars,
-		ConcurrentQueryCount:      concurrentQueryCount,
-		AzureAuthEnabled:          azureAuthEnabled,
+		log:                                 log.New("plugin.cfg"),
+		PluginsPath:                         pluginsPath,
+		BuildVersion:                        grafanaVersion,
+		DevMode:                             devMode,
+		PluginSettings:                      pluginSettings,
+		PluginsAllowUnsigned:                pluginsAllowUnsigned,
+		DisablePlugins:                      disablePlugins,
+		AWSAllowedAuthProviders:             awsAllowedAuthProviders,
+		AWSAssumeRoleEnabled:                awsAssumeRoleEnabled,
+		AWSExternalId:                       awsExternalId,
+		AWSSessionDuration:                  awsSessionDuration,
+		AWSListMetricsPageLimit:             awsListMetricsPageLimit,
+		AWSForwardSettingsPlugins:           AWSForwardSettingsPlugins,
+		Azure:                               azure,
+		ProxySettings:                       secureSocksDSProxy,
+		LogDatasourceRequests:               logDatasourceRequests,
+		PluginsCDNURLTemplate:               pluginsCDNURLTemplate,
+		Tracing:                             tracing,
+		GrafanaComURL:                       grafanaComURL,
+		GrafanaAppURL:                       appURL,
+		GrafanaAppSubURL:                    appSubURL,
+		Features:                            features,
+		AngularSupportEnabled:               angularSupportEnabled,
+		HideAngularDeprecation:              hideAngularDeprecation,
+		ForwardHostEnvVars:                  forwardHostEnvVars,
+		ConcurrentQueryCount:                concurrentQueryCount,
+		AzureAuthEnabled:                    azureAuthEnabled,
+		UserFacingDefaultError:              userFacingDefaultError,
+		DataProxyRowLimit:                   dataProxyRowLimit,
+		SqlDatasourceMaxOpenConnsDefault:    sqlDatasourceMaxOpenConnsDefault,
+		SqlDatasourceMaxIdleConnsDefault:    sqlDatasourceMaxIdleConnsDefault,
+		SqlDatasourceMaxConnLifetimeDefault: sqlDatasourceMaxConnLifetimeDefault,
 	}
 }

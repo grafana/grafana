@@ -110,6 +110,12 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 		m[backend.ConcurrentQueryCount] = strconv.Itoa(s.cfg.ConcurrentQueryCount)
 	}
 
+	m[backend.LogUserFacingDefaultError] = s.cfg.UserFacingDefaultError
+	m[backend.SqlRowLimit] = strconv.FormatInt(s.cfg.DataProxyRowLimit, 10)
+	m[backend.SqlMaxOpenConnsDefault] = strconv.Itoa(s.cfg.SqlDatasourceMaxOpenConnsDefault)
+	m[backend.SqlMaxIdleConnsDefault] = strconv.Itoa(s.cfg.SqlDatasourceMaxIdleConnsDefault)
+	m[backend.SqlMaxConnLifetimeSecondsDefault] = strconv.Itoa(s.cfg.SqlDatasourceMaxConnLifetimeDefault)
+
 	// TODO add support via plugin SDK
 	// if externalService != nil {
 	//	m[oauthtokenretriever.AppURL] = s.cfg.GrafanaAppURL
