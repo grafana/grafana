@@ -173,6 +173,8 @@ export class DashboardGrid extends PureComponent<Props, State> {
 
     let x = 0;
     let y = 0;
+    let lastPanelHeight = 1;
+
     for (const panel of this.props.dashboard.panels) {
       if (!panel.key) {
         panel.key = `panel-${panel.id}-${Date.now()}`;
@@ -213,11 +215,12 @@ export class DashboardGrid extends PureComponent<Props, State> {
           // row
           if (x !== 0) {
             x = 0;
-            y++;
+            y += lastPanelHeight;
           }
           panelPos.x = x;
           panelPos.y = y;
           y++;
+          lastPanelHeight = 1;
         } else {
           // Skip if this non-row panel doesn't
           // match the title filter
@@ -225,13 +228,15 @@ export class DashboardGrid extends PureComponent<Props, State> {
             continue
           }
 
+          lastPanelHeight = panelPos.h;
+
           panelPos.w = overrideWidth;
           panelPos.x = x;
           panelPos.y = y;
           x += overrideWidth;
           if (x >= GRID_COLUMN_COUNT) {
             x = 0;
-            y++;
+            y += lastPanelHeight;
           }
         }
       }
