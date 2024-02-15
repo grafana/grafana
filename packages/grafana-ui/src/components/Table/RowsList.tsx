@@ -45,6 +45,7 @@ interface RowsListProps {
   timeRange?: TimeRange;
   footerPaginationEnabled: boolean;
   initialRowIndex?: number;
+  expandedRows?: Map<number, React.ReactElement>;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -68,6 +69,7 @@ export const RowsList = (props: RowsListProps) => {
     listRef,
     enableSharedCrosshair = false,
     initialRowIndex = undefined,
+    expandedRows,
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
@@ -210,6 +212,7 @@ export const RowsList = (props: RowsListProps) => {
       prepareRow(row);
 
       const expandedRowStyle = tableState.expanded[row.id] ? css({ '&:hover': { background: 'inherit' } }) : {};
+      const expandedRowElement = expandedRows?.has(index) && expandedRows.get(index);
 
       if (rowHighlightIndex !== undefined && row.index === rowHighlightIndex) {
         style = { ...style, backgroundColor: theme.components.table.rowHoverBackground };
@@ -234,6 +237,9 @@ export const RowsList = (props: RowsListProps) => {
               cellHeight={cellHeight}
             />
           )}
+          {/* Render absolutely positioned row component */}
+          {expandedRowElement && <>{expandedRowElement}</>}
+          {/* Render the table cells */}
           {row.cells.map((cell: Cell, index: number) => (
             <TableCell
               key={index}
@@ -264,6 +270,7 @@ export const RowsList = (props: RowsListProps) => {
       theme.components.table.rowHoverBackground,
       timeRange,
       width,
+      expandedRows,
     ]
   );
 
