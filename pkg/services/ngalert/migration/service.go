@@ -291,7 +291,7 @@ func (ms *migrationService) MigrateAllDashboardAlerts(ctx context.Context, orgID
 func (ms *migrationService) MigrateOrg(ctx context.Context, orgID int64, skipExisting bool) (definitions.OrgMigrationSummary, error) {
 	return ms.tryAndSet(ctx, orgID, func(ctx context.Context) (*definitions.OrgMigrationSummary, error) {
 		summary := definitions.OrgMigrationSummary{}
-		ms.log.FromContext(ctx).Info("Starting legacy migration for org", "orgId", orgID, "skipExisting", skipExisting)
+		ms.log.FromContext(ctx).Info("Starting legacy upgrade for org", "orgId", orgID, "skipExisting", skipExisting)
 		om := ms.newOrgMigration(orgID)
 		dashboardUpgrades, pairs, err := om.migrateOrg(ctx)
 		if err != nil {
@@ -340,7 +340,8 @@ func (ms *migrationService) GetOrgMigrationState(ctx context.Context, orgID int6
 	}, nil
 }
 
-var ErrSuccessRollback = errors.New("dry-run migration succeeded, rolling back")
+// ErrSuccessRollback is returned when a dry-run upgrade succeeded and the changes were rolled back.
+var ErrSuccessRollback = errors.New("dry-run upgrade succeeded, rolling back")
 
 // Run starts the migration to transition between legacy alerting and unified alerting based on the current and desired
 // alerting type as determined by the kvstore and configuration, respectively.
@@ -366,10 +367,8 @@ func (ms *migrationService) Run(ctx context.Context) error {
 				//
 				// If this becomes a problem, we can add a configuration option to disable this behavior. FF on or off by default?
 				// The most realistic way to do this is to run the upgrade, let it logs the errors as usual and then force a rollback even on success.
-				l.Info("Dry-running migration to unified alerting upgrade")
+				l.Info("Dry-running upgrade to unified alerting")
 				t.DesiredType = migrationStore.UnifiedAlerting
-
-				// Append a field to log when dry-running
 				errMigration = ms.store.InTransaction(ctx, func(ctx context.Context) error {
 					ctx = log.WithContextualAttributes(ctx, []any{"dryrun", "true"})
 					err := ms.applyTransition(ctx, t)
@@ -379,9 +378,9 @@ func (ms *migrationService) Run(ctx context.Context) error {
 					return ErrSuccessRollback
 				})
 				if errors.Is(errMigration, ErrSuccessRollback) {
-					l.Info("Dry-run migration succeeded, rolling back")
+					l.Info("Dry-run upgrade succeeded. No changes were made.")
 				} else {
-					l.Error("Dry-run migration failed", "err", errMigration)
+					l.Warn("Dry-run upgrade failed. No changes were made.", "err", errMigration)
 				}
 			}
 			// Dry should never fail startup, so we reset the error.
@@ -393,7 +392,7 @@ func (ms *migrationService) Run(ctx context.Context) error {
 		})
 	})
 	if errLock != nil {
-		ms.log.FromContext(ctx).Warn("Server lock for alerting migration already exists")
+		ms.log.FromContext(ctx).Warn("Server lock for alerting upgrade already exists")
 		return nil
 	}
 	if errMigration != nil {
@@ -458,7 +457,7 @@ func (ms *migrationService) applyTransition(ctx context.Context, t transition) e
 		"CleanOnUpgrade", t.CleanOnUpgrade,
 	)
 	if t.isNoChange() {
-		l.Info("Migration already complete")
+		l.Debug("Migration already complete")
 		return nil
 	}
 
@@ -480,7 +479,7 @@ func (ms *migrationService) applyTransition(ctx context.Context, t transition) e
 		return fmt.Errorf("setting migration status: %w", err)
 	}
 
-	l.Info("Completed legacy migration")
+	l.Info("Completed legacy upgrade")
 	return nil
 }
 
@@ -549,7 +548,7 @@ func (ms *migrationService) migrateAllOrgs(ctx context.Context) error {
 // configurations, and silence files for a single organization.
 // In addition, it will delete all folders and permissions originally created by this migration.
 func (ms *migrationService) RevertOrg(ctx context.Context, orgID int64) error {
-	ms.log.FromContext(ctx).Info("Reverting legacy migration for org", "orgId", orgID)
+	ms.log.FromContext(ctx).Info("Reverting legacy upgrade for org", "orgId", orgID)
 	_, err := ms.try(ctx, func(ctx context.Context) (*definitions.OrgMigrationSummary, error) {
 		return nil, ms.migrationStore.RevertOrg(ctx, orgID)
 	})
@@ -559,7 +558,7 @@ func (ms *migrationService) RevertOrg(ctx context.Context, orgID int64) error {
 // RevertAllOrgs reverts the migration for all orgs, deleting all unified alerting resources such as alert rules, alertmanager configurations, and silence files.
 // In addition, it will delete all folders and permissions originally created by this migration.
 func (ms *migrationService) RevertAllOrgs(ctx context.Context) error {
-	ms.log.FromContext(ctx).Info("Reverting legacy migration for all orgs")
+	ms.log.FromContext(ctx).Info("Reverting legacy upgrade for all orgs")
 	_, err := ms.try(ctx, func(ctx context.Context) (*definitions.OrgMigrationSummary, error) {
 		return nil, ms.migrationStore.RevertAllOrgs(ctx)
 	})

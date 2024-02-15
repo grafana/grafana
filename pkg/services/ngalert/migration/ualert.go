@@ -49,7 +49,7 @@ func (om *OrgMigration) migrateDashboard(ctx context.Context, dashID int64, aler
 		"dashboardTitle", dashboard.Title,
 		"dashboardUid", dashboard.UID,
 	)
-	l.Info("Migrating alerts for dashboard", "alertCount", len(alerts))
+	l.Debug("Migrating alerts for dashboard", "alertCount", len(alerts))
 
 	du := migmodels.NewDashboardUpgrade(dashID)
 	du.UID = dashboard.UID
