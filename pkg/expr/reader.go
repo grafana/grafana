@@ -67,7 +67,7 @@ func (h *ExpressionQueryReader) ReadQuery(
 		}
 		if err == nil {
 			eq.Command, err = NewReduceCommand(common.RefID,
-				string(q.Reducer), referenceVar, mapper)
+				q.Reducer, referenceVar, mapper)
 		}
 
 	case QueryTypeResample:
