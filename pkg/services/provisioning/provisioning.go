@@ -16,7 +16,7 @@ import (
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/folder"
-	alertingNotifier "github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -281,10 +281,10 @@ func (ps *ProvisioningServiceImpl) ProvisionAlerting(ctx context.Context) error 
 		int64(ps.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ps.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
 		ps.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit,
-		ps.log)
-	receiverSvc := alertingNotifier.NewReceiverService(ps.ac, &st, st, ps.secretService, ps.SQLStore, ps.log)
+		ps.log, notifier.NewCachedNotificationSettingsValidationService(&st))
+	receiverSvc := notifier.NewReceiverService(ps.ac, &st, st, ps.secretService, ps.SQLStore, ps.log)
 	contactPointService := provisioning.NewContactPointService(&st, ps.secretService,
-		st, ps.SQLStore, receiverSvc, ps.log)
+		st, ps.SQLStore, receiverSvc, ps.log, &st)
 	notificationPolicyService := provisioning.NewNotificationPolicyService(&st,
 		st, ps.SQLStore, ps.Cfg.UnifiedAlerting, ps.log)
 	mutetimingsService := provisioning.NewMuteTimingService(&st, st, &st, ps.log)

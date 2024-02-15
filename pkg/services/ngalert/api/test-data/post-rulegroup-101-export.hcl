@@ -77,5 +77,14 @@ resource "grafana_rule_group" "rule_group_0000" {
     no_data_state  = "NoData"
     exec_err_state = "Alerting"
     is_paused      = false
+
+    notification_settings {
+      receiver            = "Test-Receiver"
+      group_by            = ["alertname", "grafana_folder", "test"]
+      group_wait          = "1s"
+      group_interval      = "5s"
+      repeat_interval     = "5m"
+      mute_time_intervals = ["test-mute"]
+    }
   }
 }

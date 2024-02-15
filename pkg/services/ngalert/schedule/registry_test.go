@@ -415,6 +415,9 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 				"key-label": "value-label",
 			},
 			IsPaused: false,
+			NotificationSettings: []models.NotificationSettings{
+				models.NotificationSettingsGen()(),
+			},
 		}
 		r2 := &models.AlertRule{
 			ID:        2,
@@ -450,6 +453,9 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 				"key-label": "value-label23",
 			},
 			IsPaused: true,
+			NotificationSettings: []models.NotificationSettings{
+				models.NotificationSettingsGen()(),
+			},
 		}
 
 		excludedFields := map[string]struct{}{

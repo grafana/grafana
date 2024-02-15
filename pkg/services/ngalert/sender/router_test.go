@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fake_ds "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -410,7 +411,7 @@ func createMultiOrgAlertmanager(t *testing.T, orgs []int64) *notifier.MultiOrgAl
 	m := metrics.NewNGAlert(registry)
 	secretsService := secretsManager.SetupTestService(t, fake_secrets.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
-	moa, err := notifier.NewMultiOrgAlertmanager(cfg, cfgStore, orgStore, kvStore, fakes.NewFakeProvisioningStore(), decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	moa, err := notifier.NewMultiOrgAlertmanager(cfg, cfgStore, orgStore, kvStore, fakes.NewFakeProvisioningStore(), decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService, &featuremgmt.FeatureManager{})
 	require.NoError(t, err)
 	require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
 	require.Eventually(t, func() bool {
