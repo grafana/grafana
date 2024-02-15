@@ -340,8 +340,8 @@ func (ms *migrationService) GetOrgMigrationState(ctx context.Context, orgID int6
 	}, nil
 }
 
-// ErrSuccessRollback is returned when a dry-run upgrade succeeded and the changes were rolled back.
-var ErrSuccessRollback = errors.New("dry-run upgrade succeeded, rolling back")
+// ErrSuccessRollback is returned when a dry-run succeeded and the changes were rolled back.
+var ErrSuccessRollback = errors.New("dry-run succeeded, rolling back")
 
 // Run starts the migration to transition between legacy alerting and unified alerting based on the current and desired
 // alerting type as determined by the kvstore and configuration, respectively.
@@ -356,43 +356,10 @@ func (ms *migrationService) Run(ctx context.Context) error {
 			return
 		}
 
-		t := newTransition(currentType, ms.cfg)
-		if t.isNoChange() {
-			if t.CurrentType == migrationStore.Legacy {
-				// In 10.4.0+, even if legacy alerting is enabled and the user is not intending to update, we want to "test the waters".
-				// This is intended to surface any potential issues that would exist if the upgrade would be run right now but without
-				// risk of failing startup.
-				// Concerns:
-				//    - If the user has a large number of orgs or large amount of alerts, this could increase grafana startup time.
-				//
-				// If this becomes a problem, we can add a configuration option to disable this behavior. FF on or off by default?
-				// The most realistic way to do this is to run the upgrade, let it logs the errors as usual and then force a rollback even on success.
-				l.Info("Dry-running upgrade to unified alerting")
-				t.DesiredType = migrationStore.UnifiedAlerting
-				errMigration = ms.store.InTransaction(ctx, func(ctx context.Context) error {
-					ctx = log.WithContextualAttributes(ctx, []any{"dryrun", "true"})
-					err := ms.applyTransition(ctx, t)
-					if err != nil {
-						return err
-					}
-					return ErrSuccessRollback
-				})
-				if errors.Is(errMigration, ErrSuccessRollback) {
-					l.Info("Dry-run upgrade succeeded. No changes were made.")
-				} else {
-					l.Warn("Dry-run upgrade failed. No changes were made.", "err", errMigration)
-				}
-			}
-			// Dry should never fail startup, so we reset the error.
-			errMigration = nil
-			return
-		}
-		errMigration = ms.store.InTransaction(ctx, func(ctx context.Context) error {
-			return ms.applyTransition(ctx, t)
-		})
+		errMigration = ms.applyTransition(ctx, newTransition(currentType, ms.cfg))
 	})
 	if errLock != nil {
-		ms.log.FromContext(ctx).Warn("Server lock for alerting upgrade already exists")
+		ms.log.FromContext(ctx).Warn("Server lock for alerting migration already exists")
 		return nil
 	}
 	if errMigration != nil {
@@ -412,6 +379,10 @@ func newTransition(currentType migrationStore.AlertingType, cfg *setting.Cfg) tr
 		DesiredType:      desiredType,
 		CleanOnDowngrade: cfg.ForceMigration,
 		CleanOnUpgrade:   cfg.UnifiedAlerting.Upgrade.CleanUpgrade,
+		// In 10.4.0+, even if legacy alerting is enabled and the user is not intending to update, we want to "test the waters".
+		// This is intended to surface any potential issues that would exist if the upgrade would be run right now but without
+		// risk of failing startup.
+		DryrunUpgrade: currentType == migrationStore.Legacy && desiredType == migrationStore.Legacy,
 	}
 }
 
@@ -421,16 +392,17 @@ type transition struct {
 	DesiredType      migrationStore.AlertingType
 	CleanOnDowngrade bool
 	CleanOnUpgrade   bool
+	DryrunUpgrade    bool
 }
 
 // isNoChange returns true if the migration is a no-op.
 func (t transition) isNoChange() bool {
-	return t.CurrentType == t.DesiredType
+	return t.CurrentType == t.DesiredType && !t.DryrunUpgrade
 }
 
 // isUpgrading returns true if the migration is an upgrade from legacy alerting to unified alerting.
 func (t transition) isUpgrading() bool {
-	return t.CurrentType == migrationStore.Legacy && t.DesiredType == migrationStore.UnifiedAlerting
+	return (t.CurrentType == migrationStore.Legacy && t.DesiredType == migrationStore.UnifiedAlerting) || t.DryrunUpgrade
 }
 
 // isDowngrading returns true if the migration is a downgrade from unified alerting to legacy alerting.
@@ -450,37 +422,60 @@ func (t transition) shouldClean() bool {
 // If the transition is an upgrade and CleanOnUpgrade is false, all orgs will be migrated.
 // If the transition is an upgrade and CleanOnUpgrade is true, all unified alerting data will be deleted and then all orgs will be migrated.
 func (ms *migrationService) applyTransition(ctx context.Context, t transition) error {
-	l := ms.log.FromContext(ctx).New(
-		"CurrentType", t.CurrentType,
-		"DesiredType", t.DesiredType,
-		"CleanOnDowngrade", t.CleanOnDowngrade,
-		"CleanOnUpgrade", t.CleanOnUpgrade,
-	)
-	if t.isNoChange() {
-		l.Debug("Migration already complete")
+	if t.DryrunUpgrade {
+		ctx = log.WithContextualAttributes(ctx, []any{"dryrun", "true"})
+	}
+
+	err := ms.store.InTransaction(ctx, func(ctx context.Context) error {
+		l := ms.log.FromContext(ctx)
+		if t.isNoChange() {
+			l.Debug("No change in alerting type")
+			return nil
+		}
+
+		if t.DryrunUpgrade {
+			l.Info("Dry-running upgrade", "cleanOnUpgrade", t.CleanOnUpgrade)
+		} else {
+			l.Info("Applying transition", "currentType", t.CurrentType, "desiredType", t.DesiredType, "cleanOnDowngrade", t.CleanOnDowngrade, "cleanOnUpgrade", t.CleanOnUpgrade)
+		}
+
+		if t.shouldClean() {
+			l.Info("Cleaning up unified alerting data")
+			if err := ms.migrationStore.RevertAllOrgs(ctx); err != nil {
+				return fmt.Errorf("cleaning up unified alerting data: %w", err)
+			}
+			l.Info("Unified alerting data deleted")
+		}
+
+		if t.isUpgrading() {
+			if err := ms.migrateAllOrgs(ctx); err != nil {
+				return fmt.Errorf("executing migration: %w", err)
+			}
+		}
+
+		if err := ms.migrationStore.SetCurrentAlertingType(ctx, t.DesiredType); err != nil {
+			return fmt.Errorf("setting migration status: %w", err)
+		}
+
+		if t.DryrunUpgrade {
+			// Ensure we rollback the changes made during the dry-run.
+			return ErrSuccessRollback
+		}
+
+		l.Info("Completed alerting migration")
+		return nil
+	})
+	if t.DryrunUpgrade {
+		if errors.Is(err, ErrSuccessRollback) {
+			ms.log.FromContext(ctx).Info("Dry-run upgrade succeeded. No changes were made.")
+		} else {
+			ms.log.FromContext(ctx).Warn("Dry-run upgrade failed. No changes were made.", "err", err)
+		}
+		// Dry should never error.
 		return nil
 	}
 
-	if t.shouldClean() {
-		l.Info("Cleaning up unified alerting data")
-		if err := ms.migrationStore.RevertAllOrgs(ctx); err != nil {
-			return fmt.Errorf("cleaning up unified alerting data: %w", err)
-		}
-		l.Info("Unified alerting data deleted")
-	}
-
-	if t.isUpgrading() {
-		if err := ms.migrateAllOrgs(ctx); err != nil {
-			return fmt.Errorf("executing migration: %w", err)
-		}
-	}
-
-	if err := ms.migrationStore.SetCurrentAlertingType(ctx, t.DesiredType); err != nil {
-		return fmt.Errorf("setting migration status: %w", err)
-	}
-
-	l.Info("Completed legacy upgrade")
-	return nil
+	return err
 }
 
 // migrateAllOrgs executes the migration for all orgs.
