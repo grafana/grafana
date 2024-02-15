@@ -5,6 +5,7 @@ import { transformSaveModelToScene } from '../serialization/transformSaveModelTo
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { findVizPanelByKey } from '../utils/utils';
 
+import { getDashboardChanges } from './getDashboardChanges';
 import { getDashboardChangesFromScene } from './getDashboardChangesFromScene';
 
 describe('getDashboardChangesFromScene', () => {
@@ -73,7 +74,7 @@ describe('getDashboardChangesFromScene', () => {
 
       editScene.state.vizManager.state.panel.setState({ title: 'changed title' });
 
-      const result = getSaveDashboardChange(dashboard, false, true);
+      const result = getDashboardChangesFromScene(dashboard, false, true);
       const panelSaveModel = result.changedSaveModel.panels![0];
       expect(panelSaveModel.title).toBe('changed title');
     });
