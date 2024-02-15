@@ -342,16 +342,15 @@ const Policy = (props: PolicyComponentProps) => {
                 );
               })}
               {showMore && (
-                <div className={styles.moreButtons}>
-                  <Button
-                    icon="angle-down"
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => setVisibleChildPolicies(visibleChildPolicies + POLICIES_PER_PAGE)}
-                  >
-                    {moreCount} additional {pluralize('policy', moreCount)}
-                  </Button>
-                </div>
+                <Button
+                  size="sm"
+                  icon="angle-down"
+                  variant="secondary"
+                  className={styles.moreButtons}
+                  onClick={() => setVisibleChildPolicies(visibleChildPolicies + POLICIES_PER_PAGE)}
+                >
+                  {moreCount} additional {pluralize('policy', moreCount)}
+                </Button>
               )}
             </>
           )}
@@ -938,9 +937,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: 0,
   }),
   moreButtons: css({
-    display: 'flex',
-    justifyContent: 'felx-start',
-    gap: theme.spacing(1),
     marginTop: theme.spacing(0.5),
     marginBottom: theme.spacing(1.5),
   }),
