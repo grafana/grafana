@@ -560,6 +560,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
   // if hovered value is null, how far we may scan left/right to hover nearest non-null
   const DEFAULT_HOVER_NULL_PROXIMITY = 15;
+  const DEFAULT_FOCUS_PROXIMITY = 30;
 
   let cursor: Partial<uPlot.Cursor> = {
     // horizontal proximity / point hover behavior
@@ -582,7 +583,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
     },
     // vertical proximity / series focus behavior
     focus: {
-      prox: hoverProximity ?? 30,
+      prox: hoverProximity ?? DEFAULT_FOCUS_PROXIMITY,
     },
   };
 
