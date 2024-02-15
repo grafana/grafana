@@ -4,19 +4,17 @@ import (
 	"context"
 	"fmt"
 	"sync"
-
-	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
-type ConnectFunc func() (chan *entity.Entity, error)
+type ConnectFunc[T any] func() (chan T, error)
 
-type Broadcaster struct {
+type Broadcaster[T any] struct {
 	sync.Mutex
 	running bool
-	subs    map[chan *entity.Entity]struct{}
+	subs    map[chan T]struct{}
 }
 
-func (b *Broadcaster) Subscribe(ctx context.Context) (<-chan *entity.Entity, error) {
+func (b *Broadcaster[T]) Subscribe(ctx context.Context) (<-chan T, error) {
 	b.Lock()
 	defer b.Unlock()
 
@@ -24,9 +22,9 @@ func (b *Broadcaster) Subscribe(ctx context.Context) (<-chan *entity.Entity, err
 		return nil, fmt.Errorf("broadcaster not running")
 	}
 
-	sub := make(chan *entity.Entity, 100)
+	sub := make(chan T, 100)
 	if b.subs == nil {
-		b.subs = map[chan *entity.Entity]struct{}{}
+		b.subs = map[chan T]struct{}{}
 	}
 	b.subs[sub] = struct{}{}
 	go func() {
@@ -37,7 +35,7 @@ func (b *Broadcaster) Subscribe(ctx context.Context) (<-chan *entity.Entity, err
 	return sub, nil
 }
 
-func (b *Broadcaster) unsub(sub chan *entity.Entity, lock bool) {
+func (b *Broadcaster[T]) unsub(sub chan T, lock bool) {
 	if lock {
 		b.Lock()
 	}
@@ -50,7 +48,7 @@ func (b *Broadcaster) unsub(sub chan *entity.Entity, lock bool) {
 	}
 }
 
-func (b *Broadcaster) Start(connect ConnectFunc) error {
+func (b *Broadcaster[T]) Start(connect ConnectFunc[T]) error {
 	c, err := connect()
 	if err != nil {
 		return err
@@ -61,7 +59,7 @@ func (b *Broadcaster) Start(connect ConnectFunc) error {
 	return nil
 }
 
-func (b *Broadcaster) stream(input chan *entity.Entity) {
+func (b *Broadcaster[T]) stream(input chan T) {
 	for item := range input {
 		b.Lock()
 		for sub := range b.subs {
