@@ -104,7 +104,7 @@ export const LogsMetaRow = React.memo(
               },
             });
             const transformedDataFrame = await lastValueFrom(transformDataFrame(transforms, [dataFrame]));
-            downloadDataFrameAsCsv(transformedDataFrame[0], 'Explore-logs');
+            downloadDataFrameAsCsv(transformedDataFrame[0], `Explore-logs-${dataFrame.refId}`);
           });
       }
     };
