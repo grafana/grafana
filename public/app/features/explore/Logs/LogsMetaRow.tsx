@@ -14,6 +14,7 @@ import {
   DataTransformerConfig,
   CustomTransformOperator,
 } from '@grafana/data';
+import { DataFrame } from '@grafana/data/';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Dropdown, Menu, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 
@@ -87,19 +88,26 @@ export const LogsMetaRow = React.memo(
           saveAs(blob, fileName);
           break;
         case DownloadFormat.CSV:
-          const dataFrame = logRows[0].dataFrame;
-          const transforms: Array<DataTransformerConfig | CustomTransformOperator> = getLogsExtractFields(dataFrame);
-          transforms.push({
-            id: 'organize',
-            options: {
-              excludeByName: {
-                ['labels']: true,
-                ['labelTypes']: true,
-              },
-            },
+          const dataFrameMap = new Map<string, DataFrame>();
+          logRows.forEach((row) => {
+            if (row.dataFrame?.refId && !dataFrameMap.has(row.dataFrame?.refId)) {
+              dataFrameMap.set(row.dataFrame?.refId, row.dataFrame);
+            }
           });
-          const transformedDataFrame = await lastValueFrom(transformDataFrame(transforms, [dataFrame]));
-          downloadDataFrameAsCsv(transformedDataFrame[0], fileName);
+          dataFrameMap.forEach(async (dataFrame) => {
+            const transforms: Array<DataTransformerConfig | CustomTransformOperator> = getLogsExtractFields(dataFrame);
+            transforms.push({
+              id: 'organize',
+              options: {
+                excludeByName: {
+                  ['labels']: true,
+                  ['labelTypes']: true,
+                },
+              },
+            });
+            const transformedDataFrame = await lastValueFrom(transformDataFrame(transforms, [dataFrame]));
+            downloadDataFrameAsCsv(transformedDataFrame[0], 'Explore-logs');
+          });
       }
     };
 
