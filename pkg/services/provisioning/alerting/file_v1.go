@@ -3,30 +3,8 @@ package alerting
 import (
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
-
-type configVersion struct {
-	APIVersion values.Int64Value `json:"apiVersion" yaml:"apiVersion"`
-}
-
-type OrgID int64
-
-type AlertingFile struct {
-	configVersion
-	Filename            string
-	Groups              []models.AlertRuleGroupWithFolderTitle
-	DeleteRules         []RuleDelete
-	ContactPoints       []ContactPoint
-	DeleteContactPoints []DeleteContactPoint
-	Policies            []NotificiationPolicy
-	ResetPolicies       []OrgID
-	MuteTimes           []MuteTime
-	DeleteMuteTimes     []DeleteMuteTime
-	Templates           []Template
-	DeleteTemplates     []DeleteTemplate
-}
 
 type AlertingFileV1 struct {
 	configVersion
@@ -43,7 +21,7 @@ type AlertingFileV1 struct {
 	DeleteTemplates     []DeleteTemplateV1      `json:"deleteTemplates" yaml:"deleteTemplates"`
 }
 
-func (fileV1 *AlertingFileV1) MapToModel() (AlertingFile, error) {
+func (fileV1 *AlertingFileV1) Map() (AlertingFile, error) {
 	alertingFile := AlertingFile{}
 	alertingFile.Filename = fileV1.Filename
 	if err := fileV1.mapRules(&alertingFile); err != nil {

@@ -36,7 +36,7 @@ const (
 )
 
 func TestConfigReader(t *testing.T) {
-	configReader := newRulesConfigReader(log.NewNopLogger())
+	configReader := newRulesConfigReader(log.NewNopLogger(), nil)
 	ctx := context.Background()
 	t.Run("a broken YAML file should error", func(t *testing.T) {
 		_, err := configReader.readConfig(ctx, testFileBrokenYAML)
