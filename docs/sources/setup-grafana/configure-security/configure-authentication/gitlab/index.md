@@ -56,9 +56,6 @@ resource "grafana_sso_settings" "gitlab_sso_settings" {
   provider_name = "gitlab"
   oauth2_settings {
     name                  = "Gitlab"
-    auth_url              = "https://gitlab.com/oauth/authorize"
-    token_url             = "https://gitlab.com/oauth/token"
-    api_url               = "https://gitlab.com/oauth/userinfo"
     client_id             = "YOUR_GITLAB_APPLICATION_ID"
     client_secret         = "YOUR_GITLAB_APPLICATION_SECRET"
     allow_sign_up         = true

@@ -56,9 +56,6 @@ resource "grafana_sso_settings" "github_sso_settings" {
   provider_name = "github"
   oauth2_settings {
     name                  = "Github"
-    auth_url              = "https://github.com/login/oauth/authorize"
-    token_url             = "https://github.com/login/oauth/access_token"
-    api_url               = "https://api.github.com/user"
     client_id             = "YOUR_GITHUB_APP_CLIENT_ID"
     client_secret         = "YOUR_GITHUB_APP_CLIENT_SECRET"
     allow_sign_up         = true

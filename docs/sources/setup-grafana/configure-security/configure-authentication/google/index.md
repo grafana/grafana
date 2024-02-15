@@ -60,9 +60,6 @@ resource "grafana_sso_settings" "google_sso_settings" {
   provider_name = "google"
   oauth2_settings {
     name            = "Google"
-    auth_url        = "https://accounts.google.com/o/oauth2/v2/auth"
-    token_url       = "https://oauth2.googleapis.com/token"
-    api_url         = "https://openidconnect.googleapis.com/v1/userinfo"
     client_id       = "CLIENT_ID"
     client_secret   = "CLIENT_SECRET"
     allow_sign_up   = true
