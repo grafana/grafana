@@ -37,7 +37,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
                     title="Show options pane"
                     onClick={() => model.toggleOptionsPane()}
                     variant="canvas"
-                    icon="cog"
+                    icon="sliders-v-alt"
                   >
                     Options
                   </ToolbarButton>
