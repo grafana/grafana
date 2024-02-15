@@ -899,7 +899,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(1.5),
   }),
   metadataRow: css({
-    background: theme.colors.background.secondary,
     borderBottomLeftRadius: theme.shape.borderRadius(2),
     borderBottomRightRadius: theme.shape.borderRadius(2),
   }),
@@ -910,7 +909,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
       background: theme.colors.background.secondary,
       borderRadius: theme.shape.radius.default,
       border: `solid 1px ${theme.colors.border.weak}`,
-      ...(hasFocus && { borderColor: theme.colors.primary.border }),
+      ...(hasFocus && {
+        borderColor: theme.colors.primary.border,
+        background: theme.colors.primary.transparent,
+      }),
     }),
   metadata: css({
     color: theme.colors.text.secondary,
