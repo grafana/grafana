@@ -23,7 +23,7 @@ import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from '
 import { alertmanagerApi } from './api/alertmanagerApi';
 import { discoverAlertmanagerFeatures } from './api/buildInfo';
 import * as grafanaApp from './components/receivers/grafanaAppReceivers/grafanaApp';
-import { mockDataSource, MockDataSourceSrv, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
+import { MockDataSourceSrv, mockDataSource, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
 import { defaultGroupBy } from './utils/amroutes';
 import { getAllDataSources } from './utils/config';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
@@ -779,7 +779,7 @@ describe('findRoutesMatchingFilters', () => {
     });
 
     expect(matchingRoutes).toHaveLength(1);
-    expect(matchingRoutes[0]).toHaveProperty('id', '1');
+    expect(matchingRoutes.matchedRoutes[0]).toHaveProperty('id', '1');
   });
 
   it('should work with only contact point and inheritance', () => {
@@ -788,8 +788,8 @@ describe('findRoutesMatchingFilters', () => {
     });
 
     expect(matchingRoutes).toHaveLength(2);
-    expect(matchingRoutes[0]).toHaveProperty('id', '1');
-    expect(matchingRoutes[1]).toHaveProperty('id', '2');
+    expect(matchingRoutes.matchedRoutes[0]).toHaveProperty('id', '1');
+    expect(matchingRoutes.matchedRoutes[1]).toHaveProperty('id', '2');
   });
 
   it('should work with non-intersecting filters', () => {
@@ -808,7 +808,7 @@ describe('findRoutesMatchingFilters', () => {
     });
 
     expect(matchingRoutes).toHaveLength(1);
-    expect(matchingRoutes[0]).toHaveProperty('id', '1');
+    expect(matchingRoutes.matchedRoutes[0]).toHaveProperty('id', '1');
   });
 });
 
