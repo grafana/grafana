@@ -7,7 +7,7 @@ import (
 )
 
 func initEntityTables(mg *migrator.Migrator) string {
-	marker := "Initialize entity tables (v14)" // changing this key wipe+rewrite everything
+	marker := "Initialize entity tables (v15)" // changing this key wipe+rewrite everything
 	mg.AddMigration(marker, &migrator.RawSQLMigration{})
 
 	tables := []migrator.Table{}
@@ -129,6 +129,8 @@ func initEntityTables(mg *migrator.Migrator) string {
 				Type: migrator.UniqueIndex,
 				Name: "UQE_entity_history_namespace_group_name_version",
 			},
+			// index to support watch poller
+			{Cols: []string{"resource_version"}, Type: migrator.IndexType},
 		},
 	})
 
