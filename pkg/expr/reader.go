@@ -140,7 +140,7 @@ func (h *ExpressionQueryReader) ReadQuery(
 		}
 
 	default:
-		err = fmt.Errorf("unknown query type")
+		err = fmt.Errorf("unknown query type (%s)", common.QueryType)
 	}
 	return eq, err
 }

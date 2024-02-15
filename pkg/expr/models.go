@@ -19,7 +19,7 @@ const (
 	QueryTypeResample QueryType = "resample"
 
 	// Classic query
-	QueryTypeClassic QueryType = "classic"
+	QueryTypeClassic QueryType = "classic_conditions"
 
 	// Threshold
 	QueryTypeThreshold QueryType = "threshold"

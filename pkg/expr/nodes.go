@@ -48,14 +48,22 @@ type rawNode struct {
 	idx int64
 }
 
-func GetExpressionCommandType(rawQuery map[string]any) (c CommandType, err error) {
+func getExpressionCommandTypeString(rawQuery map[string]any) (string, error) {
 	rawType, ok := rawQuery["type"]
 	if !ok {
-		return c, errors.New("no expression command type in query")
+		return "", errors.New("no expression command type in query")
 	}
 	typeString, ok := rawType.(string)
 	if !ok {
-		return c, fmt.Errorf("expected expression command type to be a string, got type %T", rawType)
+		return "", fmt.Errorf("expected expression command type to be a string, got type %T", rawType)
+	}
+	return typeString, nil
+}
+
+func GetExpressionCommandType(rawQuery map[string]any) (c CommandType, err error) {
+	typeString, err := getExpressionCommandTypeString(rawQuery)
+	if err != nil {
+		return c, err
 	}
 	return ParseCommandType(typeString)
 }
@@ -114,8 +122,9 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 	}
 
 	if true { // toggles.IsEnabledGlobally(featuremgmt.FlagExpressionParser) {
-		if rn.QueryType == "" {
-			return nil, errors.New("no expression command type in query")
+		rn.QueryType, err = getExpressionCommandTypeString(rn.Query)
+		if err != nil {
+			return nil, err // should not happen because the command was parsed first thing
 		}
 
 		// NOTE: this structure of this is weird now, because it is targeting a structure
