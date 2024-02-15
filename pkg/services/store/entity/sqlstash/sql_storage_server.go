@@ -1373,39 +1373,55 @@ func (s *sqlEntityServer) poll(ctx context.Context, since int64, out chan *entit
 
 	fields := s.getReadFields(rr)
 
-	entityQuery := selectQuery{
-		dialect: s.dialect,
-		fields:  fields,
-		from:    "entity_history", // the table
-		args:    []any{},
-		limit:   100, // r.Limit,
-		// offset:   0,
-		oneExtra: true, // request one more than the limit (and show next token if it exists)
-		orderBy:  []string{"resource_version"},
-	}
+	for hasmore := true; hasmore; {
+		err := func() error {
+			entityQuery := selectQuery{
+				dialect: s.dialect,
+				fields:  fields,
+				from:    "entity_history", // the table
+				args:    []any{},
+				limit:   100, // r.Limit,
+				// offset:   0,
+				oneExtra: true, // request one more than the limit (and show next token if it exists)
+				orderBy:  []string{"resource_version"},
+			}
 
-	entityQuery.addWhere("resource_version > ?", since)
+			entityQuery.addWhere("resource_version > ?", since)
 
-	query, args := entityQuery.toQuery()
+			query, args := entityQuery.toQuery()
 
-	rows, err := s.sess.Query(ctx, query, args...)
-	if err != nil {
-		return since, err
-	}
-	defer func() { _ = rows.Close() }()
+			rows, err := s.sess.Query(ctx, query, args...)
+			if err != nil {
+				return err
+			}
+			defer func() { _ = rows.Close() }()
 
-	for rows.Next() {
-		result, err := s.rowToEntity(ctx, rows, rr)
+			found := int64(0)
+			for rows.Next() {
+				found++
+				if found > entityQuery.limit {
+					return nil
+				}
+
+				result, err := s.rowToEntity(ctx, rows, rr)
+				if err != nil {
+					return err
+				}
+
+				if result.ResourceVersion > since {
+					since = result.ResourceVersion
+				}
+
+				s.log.Debug("sending poll result", "guid", result.Guid, "action", result.Action, "rv", result.ResourceVersion)
+				out <- result
+			}
+
+			hasmore = false
+			return nil
+		}()
 		if err != nil {
 			return since, err
 		}
-
-		if result.ResourceVersion > since {
-			since = result.ResourceVersion
-		}
-
-		s.log.Debug("sending poll result", "guid", result.Guid, "action", result.Action, "rv", result.ResourceVersion)
-		out <- result
 	}
 
 	return since, nil
