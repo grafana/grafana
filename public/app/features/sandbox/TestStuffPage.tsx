@@ -13,6 +13,7 @@ import {
 import { getPluginExtensions, isPluginExtensionLink } from '@grafana/runtime';
 import { Button, HorizontalGroup, LinkButton, Table } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { config } from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { QueryGroupOptions } from 'app/types';
@@ -67,38 +68,8 @@ export const TestStuffPage = () => {
   return (
     <Page navModel={{ node: node, main: node }}>
       <Page.Contents>
-        <HorizontalGroup>
-          <LinkToBasicApp extensionPointId="grafana/sandbox/testing" />
-        </HorizontalGroup>
-        {data && (
-          <AutoSizer style={{ width: '100%', height: '600px' }}>
-            {({ width }) => {
-              return (
-                <div>
-                  <PanelRenderer
-                    title="Hello"
-                    pluginId="timeseries"
-                    width={width}
-                    height={300}
-                    data={data}
-                    options={{}}
-                    fieldConfig={{ defaults: {}, overrides: [] }}
-                    timeZone="browser"
-                  />
-                  <Table data={data.series[0]} width={width} height={300} />
-                </div>
-              );
-            }}
-          </AutoSizer>
-        )}
-        <div style={{ marginTop: '16px', height: '45%' }}>
-          <QueryGroup
-            options={queryOptions}
-            queryRunner={queryRunner}
-            onRunQueries={onRunQueries}
-            onOptionsChange={onOptionsChange}
-          />
-        </div>
+        <FolderPicker />
+
         <div style={{ display: 'flex', gap: '1em' }}>
           <Button onClick={() => notifyApp.success('Success toast', 'some more text goes here')} variant="primary">
             Success

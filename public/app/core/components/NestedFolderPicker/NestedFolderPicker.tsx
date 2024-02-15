@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { autoUpdate, flip, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
+import { createSelector } from '@reduxjs/toolkit';
 import debounce from 'debounce-promise';
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
@@ -7,18 +8,26 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
-import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import {
+  ListFolderArgs,
+  browseDashboardsAPI,
+  skipToken,
+  useGetFolderQuery,
+  useLazyListFoldersQuery,
+} from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import {
   childrenByParentUIDSelector,
   createFlatTree,
-  fetchNextChildrenPage,
   rootItemsSelector,
   useBrowseLoadingStatus,
-  useLoadNextChildrenPage,
 } from 'app/features/browse-dashboards/state';
 import { getPaginationPlaceholders } from 'app/features/browse-dashboards/state/utils';
-import { DashboardViewItemCollection } from 'app/features/browse-dashboards/types';
+import {
+  DashboardViewItemCollection,
+  DashboardViewItemWithUIItems,
+  DashboardsTreeItem,
+} from 'app/features/browse-dashboards/types';
 import { QueryResponse, getGrafanaSearcher } from 'app/features/search/service';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
@@ -72,7 +81,6 @@ export function NestedFolderPicker({
   onChange,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
-  const dispatch = useDispatch();
   const selectedFolder = useGetFolderQuery(value || skipToken);
 
   const rootStatus = useBrowseLoadingStatus(undefined);
@@ -87,6 +95,8 @@ export function NestedFolderPicker({
   const overlayId = useId();
   const [error] = useState<Error | undefined>(undefined); // TODO: error not populated anymore
   const lastSearchTimestamp = useRef<number>(0);
+
+  const [flatTree, fetchFolderPage] = useFolderList();
 
   useEffect(() => {
     if (!search) {
@@ -109,8 +119,8 @@ export function NestedFolderPicker({
     });
   }, [search]);
 
-  const rootCollection = useSelector(rootItemsSelector);
-  const childrenCollections = useSelector(childrenByParentUIDSelector);
+  // const rootCollection = useSelector(rootItemsSelector);
+  // const childrenCollections = useSelector(childrenByParentUIDSelector);
 
   // the order of middleware is important!
   const middleware = [
@@ -146,10 +156,11 @@ export function NestedFolderPicker({
       setFolderOpenState((old) => ({ ...old, [uid]: newOpenState }));
 
       if (newOpenState && !folderOpenState[uid]) {
-        dispatch(fetchNextChildrenPage({ parentUID: uid, pageSize: PAGE_SIZE, excludeKinds: EXCLUDED_KINDS }));
+        console.log('TODO: fetch next children page here', { parentUID: uid, pageSize: PAGE_SIZE });
+        // dispatch(fetchNextChildrenPage({ parentUID: uid, pageSize: PAGE_SIZE, excludeKinds: EXCLUDED_KINDS }));
       }
     },
-    [dispatch, folderOpenState]
+    [folderOpenState]
   );
 
   const handleFolderSelect = useCallback(
@@ -175,69 +186,69 @@ export function NestedFolderPicker({
 
   const handleCloseOverlay = useCallback(() => setOverlayOpen(false), [setOverlayOpen]);
 
-  const baseHandleLoadMore = useLoadNextChildrenPage(EXCLUDED_KINDS);
+  // const baseHandleLoadMore = useLoadNextChildrenPage(EXCLUDED_KINDS);
   const handleLoadMore = useCallback(
     (folderUID: string | undefined) => {
       if (search) {
         return;
       }
 
-      baseHandleLoadMore(folderUID);
+      fetchFolderPage(folderUID);
     },
-    [search, baseHandleLoadMore]
+    [search, fetchFolderPage]
   );
 
-  const flatTree = useMemo(() => {
-    if (search && searchResults) {
-      const searchCollection: DashboardViewItemCollection = {
-        isFullyLoaded: true, //searchResults.items.length === searchResults.totalRows,
-        lastKindHasMoreItems: false, // TODO: paginate search
-        lastFetchedKind: 'folder', // TODO: paginate search
-        lastFetchedPage: 1, // TODO: paginate search
-        items: searchResults.items ?? [],
-      };
+  // const flatTree = useMemo(() => {
+  //   if (search && searchResults) {
+  //     const searchCollection: DashboardViewItemCollection = {
+  //       isFullyLoaded: true, //searchResults.items.length === searchResults.totalRows,
+  //       lastKindHasMoreItems: false, // TODO: paginate search
+  //       lastFetchedKind: 'folder', // TODO: paginate search
+  //       lastFetchedPage: 1, // TODO: paginate search
+  //       items: searchResults.items ?? [],
+  //     };
 
-      return createFlatTree(undefined, searchCollection, childrenCollections, {}, 0, EXCLUDED_KINDS, excludeUIDs);
-    }
+  //     return createFlatTree(undefined, searchCollection, childrenCollections, {}, 0, EXCLUDED_KINDS, excludeUIDs);
+  //   }
 
-    const allExcludedUIDs = config.sharedWithMeFolderUID
-      ? [...(excludeUIDs || []), config.sharedWithMeFolderUID]
-      : excludeUIDs;
+  //   const allExcludedUIDs = config.sharedWithMeFolderUID
+  //     ? [...(excludeUIDs || []), config.sharedWithMeFolderUID]
+  //     : excludeUIDs;
 
-    let flatTree = createFlatTree(
-      undefined,
-      rootCollection,
-      childrenCollections,
-      folderOpenState,
-      0,
-      EXCLUDED_KINDS,
-      allExcludedUIDs
-    );
+  //   let flatTree = createFlatTree(
+  //     undefined,
+  //     rootCollection,
+  //     childrenCollections,
+  //     folderOpenState,
+  //     0,
+  //     EXCLUDED_KINDS,
+  //     allExcludedUIDs
+  //   );
 
-    if (showRootFolder) {
-      // Increase the level of each item to 'make way' for the fake root Dashboards item
-      for (const item of flatTree) {
-        item.level += 1;
-      }
+  //   if (showRootFolder) {
+  //     // Increase the level of each item to 'make way' for the fake root Dashboards item
+  //     for (const item of flatTree) {
+  //       item.level += 1;
+  //     }
 
-      flatTree.unshift({
-        isOpen: true,
-        level: 0,
-        item: {
-          kind: 'folder',
-          title: 'Dashboards',
-          uid: '',
-        },
-      });
-    }
+  //     flatTree.unshift({
+  //       isOpen: true,
+  //       level: 0,
+  //       item: {
+  //         kind: 'folder',
+  //         title: 'Dashboards',
+  //         uid: '',
+  //       },
+  //     });
+  //   }
 
-    // If the root collection hasn't loaded yet, create loading placeholders
-    if (!rootCollection) {
-      flatTree = flatTree.concat(getPaginationPlaceholders(PAGE_SIZE, undefined, 0));
-    }
+  //   // If the root collection hasn't loaded yet, create loading placeholders
+  //   if (!rootCollection) {
+  //     flatTree = flatTree.concat(getPaginationPlaceholders(PAGE_SIZE, undefined, 0));
+  //   }
 
-    return flatTree;
-  }, [search, searchResults, rootCollection, childrenCollections, folderOpenState, excludeUIDs, showRootFolder]);
+  //   return flatTree;
+  // }, [search, searchResults, rootCollection, childrenCollections, folderOpenState, excludeUIDs, showRootFolder]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {
@@ -385,3 +396,153 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+// const listFoldersSelector = createSelector(
+//   (parentUid: string | undefined, page: number) => ({ parentUid, page }),
+//   (args) => browseDashboardsAPI.endpoints.listFolders.select(args)
+// );
+
+// export type DashboardViewItemCollection = {
+//   items: DashboardViewItem[];
+//   lastFetchedKind: 'folder' | 'dashboard';
+//   lastFetchedPage: number;
+//   lastKindHasMoreItems: boolean;
+//   isFullyLoaded: boolean;
+// };
+
+const listFolderSelector = createSelector(
+  [
+    (state: any) => state,
+    (state, parentUid: ListFolderArgs['parentUid']) => parentUid,
+    (state, parentUid: ListFolderArgs['parentUid'], page: ListFolderArgs['page']) => page,
+    (state, parentUid: ListFolderArgs['parentUid'], page: ListFolderArgs['page'], limit: ListFolderArgs['limit']) =>
+      limit,
+  ],
+  (state, parentUid, page, limit) => {
+    return browseDashboardsAPI.endpoints.listFolders.select({ parentUid, page, limit })(state);
+  }
+);
+
+function useFolderList() {
+  const requestedArgs = useRef<ListFolderArgs[] | null>(null);
+  if (requestedArgs.current === null) {
+    requestedArgs.current = [];
+  }
+
+  // TODO: propertly memoize this into a stable selector
+  const state = useSelector((rxState) => {
+    const requests = requestedArgs.current ?? [];
+
+    const pages = requests
+      .map((args) => {
+        return listFolderSelector(rxState, args.parentUid, args.page, args.limit);
+      })
+      .filter((page, index, all) => {
+        return all.findIndex((otherPage) => otherPage.requestId === page.requestId) === index;
+      });
+
+    const rootPages: Array<(typeof pages)[number]> = [];
+    const pagesByParent: Record<string, Array<(typeof pages)[number]>> = {};
+
+    for (const page of pages) {
+      const parentUid = page.originalArgs?.parentUid;
+
+      if (parentUid) {
+        if (!pagesByParent[parentUid]) {
+          pagesByParent[parentUid] = [];
+        }
+
+        pagesByParent[parentUid].push(page);
+      } else {
+        rootPages.push(page);
+      }
+    }
+
+    return {
+      rootPages,
+      pagesByParent,
+    };
+  });
+
+  console.log('state', state);
+
+  const rootCollection = useMemo(() => {
+    const rrr = state.rootPages;
+
+    let flatTree: Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> = rrr.flatMap((page) => {
+      return (page.data ?? []).map((item) => {
+        const ddddd: DashboardsTreeItem<DashboardViewItemWithUIItems> = {
+          isOpen: false,
+          level: 1,
+          item: {
+            kind: 'folder' as const,
+            title: item.title,
+            uid: item.uid,
+          },
+        };
+
+        return ddddd;
+      });
+    });
+
+    flatTree.unshift({
+      isOpen: true,
+      level: 0,
+      item: {
+        kind: 'folder',
+        title: 'Dashboards',
+        uid: '',
+      },
+    });
+
+    const lastPage = rrr.at(-1);
+    const fullyLoaded = (lastPage?.data?.length ?? 0) < (lastPage?.originalArgs?.limit ?? 0);
+
+    if (!fullyLoaded) {
+      flatTree = flatTree.concat(getPaginationPlaceholders(PAGE_SIZE, undefined, 1));
+    }
+
+    return flatTree;
+  }, [state]);
+
+  const dispatch = useDispatch();
+  const unsubscribes = useRef<Function[] | null>();
+
+  if (!unsubscribes.current) {
+    unsubscribes.current = [];
+  }
+
+  const loadNextPage = useCallback(
+    (parentUid: string | undefined) => {
+      console.log('loadNextPage', { parentUid });
+
+      const pageSet = parentUid ? state.pagesByParent[parentUid] : state.rootPages;
+
+      let page = 0;
+      if (!pageSet) {
+        page = 0;
+      } else {
+        page = pageSet.length;
+      }
+
+      const args = { parentUid, page, limit: PAGE_SIZE };
+
+      requestedArgs.current?.push(args);
+
+      const promise = dispatch(browseDashboardsAPI.endpoints.listFolders.initiate(args));
+
+      console.log('promise-ish', promise);
+
+      unsubscribes.current?.push(promise.unsubscribe);
+    },
+    [state, dispatch]
+  );
+
+  useEffect(() => {
+    for (const unsubscribe of unsubscribes.current ?? []) {
+      unsubscribe();
+    }
+  }, []);
+
+  return [rootCollection, loadNextPage] as const;
+}
