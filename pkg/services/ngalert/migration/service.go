@@ -339,18 +339,54 @@ func (ms *migrationService) GetOrgMigrationState(ctx context.Context, orgID int6
 	}, nil
 }
 
+var ErrSuccessRollback = errors.New("dry-run migration succeeded, rolling back")
+
 // Run starts the migration to transition between legacy alerting and unified alerting based on the current and desired
 // alerting type as determined by the kvstore and configuration, respectively.
 func (ms *migrationService) Run(ctx context.Context) error {
 	var errMigration error
 	errLock := ms.lock.LockExecuteAndRelease(ctx, actionName, time.Minute*10, func(ctx context.Context) {
 		ms.log.Info("Starting")
-		errMigration = ms.store.InTransaction(ctx, func(ctx context.Context) error {
-			currentType, err := ms.migrationStore.GetCurrentAlertingType(ctx)
-			if err != nil {
-				return fmt.Errorf("getting migration status: %w", err)
+		currentType, err := ms.migrationStore.GetCurrentAlertingType(ctx)
+		if err != nil {
+			errMigration = fmt.Errorf("getting migration status: %w", err)
+			return
+		}
+
+		t := newTransition(currentType, ms.cfg)
+		if t.isNoChange() {
+			if t.CurrentType == migrationStore.Legacy {
+				// In 10.4.0+, even if legacy alerting is enabled and the user is not intending to update, we want to "test the waters".
+				// This is intended to surface any potential issues that would exist if the upgrade would be run right now but without
+				// risk of failing startup.
+				// Concerns:
+				//    - If the user has a large number of orgs or large amount of alerts, this could increase grafana startup time.
+				//
+				// If this becomes a problem, we can add a configuration option to disable this behavior. FF on or off by default?
+				// The most realistic way to do this is to run the upgrade, let it logs the errors as usual and then force a rollback even on success.
+				ms.log.Info("Dry-running migration to unified alerting upgrade")
+				t.DesiredType = migrationStore.UnifiedAlerting
+
+				// Append a field to log when dry-running
+				errMigration = ms.store.InTransaction(ctx, func(ctx context.Context) error {
+					err := ms.applyTransition(ctx, t)
+					if err != nil {
+						return err
+					}
+					return ErrSuccessRollback
+				})
+				if errors.Is(errMigration, ErrSuccessRollback) {
+					ms.log.Info("Dry-run migration succeeded, rolling back")
+				} else {
+					ms.log.Error("Dry-run migration failed", "err", errMigration)
+				}
 			}
-			return ms.applyTransition(ctx, newTransition(currentType, ms.cfg))
+			// Dry should never fail startup, so we reset the error.
+			errMigration = nil
+			return
+		}
+		errMigration = ms.store.InTransaction(ctx, func(ctx context.Context) error {
+			return ms.applyTransition(ctx, t)
 		})
 	})
 	if errLock != nil {
