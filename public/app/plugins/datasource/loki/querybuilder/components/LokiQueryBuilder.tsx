@@ -58,7 +58,10 @@ export const LokiQueryBuilder = React.memo<Props>(
     const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<string[]> => {
       const labelsToConsider = query.labels.filter((x) => x !== forLabel);
 
-      if (labelsToConsider.length === 0) {
+      const hasEqualityOperation = labelsToConsider.find(
+        (filter) => filter.op === '=' || (filter.op === '=~' && new RegExp(filter.value).test('') === false)
+      );
+      if (labelsToConsider.length === 0 || !hasEqualityOperation) {
         return await datasource.languageProvider.fetchLabels({ timeRange });
       }
 
