@@ -110,6 +110,12 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
     if (!pluginInclude) {
       return true;
     }
+
+    // Check if action exists and give access if user has the required permission.
+    if (pluginInclude?.action) {
+      return contextSrv.hasPermission(pluginInclude.action);
+    }
+
     const pathRole: string = pluginInclude?.role || '';
     // Check if role exists  and give access to Editor to be able to see Viewer pages
     if (!pathRole || (contextSrv.isEditor && pathRole === OrgRole.Viewer)) {
