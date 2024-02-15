@@ -14,7 +14,7 @@
 # Documentation
 /.changelog-archive @grafana/docs-grafana
 /.codespellignore @grafana/docs-tooling
-/CHANGELOG.md @grafana/grafana-delivery
+/CHANGELOG.md @grafana/grafana-release-guild
 /CODE_OF_CONDUCT.md @grafana/docs-grafana
 /CONTRIBUTING.md @grafana/docs-grafana
 /GOVERNANCE.md @RichiH
@@ -223,15 +223,15 @@
 
 
 # Continuous Integration
-.drone.yml @grafana/grafana-delivery
-.drone.star @grafana/grafana-delivery
-/scripts/drone/ @grafana/grafana-delivery
-/pkg/build/ @grafana/grafana-delivery
-/.dockerignore @grafana/grafana-delivery
-/Dockerfile @grafana/grafana-delivery
-/Makefile @grafana/grafana-delivery
-/scripts/build/ @grafana/grafana-delivery
-/scripts/list-release-artifacts.sh @grafana/grafana-delivery
+.drone.yml @grafana/grafana-release-guild
+.drone.star @grafana/grafana-release-guild
+/scripts/drone/ @grafana/grafana-release-guild
+/pkg/build/ @grafana/grafana-release-guild
+/.dockerignore @grafana/grafana-release-guild
+/Dockerfile @grafana/grafana-release-guild
+/Makefile @grafana/grafana-release-guild
+/scripts/build/ @grafana/grafana-release-guild
+/scripts/list-release-artifacts.sh @grafana/grafana-release-guild
 
 # OSS Plugin Partnerships backend code
 /pkg/tsdb/cloudwatch/ @grafana/aws-datasources
@@ -466,26 +466,26 @@ lerna.json @grafana/frontend-ops
 
 /scripts/benchmark-access-control.sh @grafana/grafana-authnz-team
 /scripts/check-breaking-changes.sh @grafana/plugins-platform-frontend
-/scripts/ci-* @grafana/grafana-delivery
-/scripts/circle-* @grafana/grafana-delivery
-/scripts/publish-npm-packages.sh @grafana/grafana-delivery @grafana/plugins-platform-frontend
-/scripts/validate-npm-packages.sh @grafana/grafana-delivery @grafana/plugins-platform-frontend
+/scripts/ci-* @grafana/grafana-release-guild
+/scripts/circle-* @grafana/grafana-release-guild
+/scripts/publish-npm-packages.sh @grafana/grafana-release-guild @grafana/plugins-platform-frontend
+/scripts/validate-npm-packages.sh @grafana/grafana-release-guild @grafana/plugins-platform-frontend
 /scripts/ci-frontend-metrics.sh @grafana/grafana-frontend-platform @grafana/plugins-platform-frontend @grafana/grafana-bi-squad
 /scripts/cli/ @grafana/grafana-frontend-platform
 /scripts/clean-git-or-error.sh @grafana/grafana-as-code
 /scripts/grafana-server/ @grafana/grafana-frontend-platform
-/scripts/helpers/ @grafana/grafana-delivery
+/scripts/helpers/ @grafana/grafana-release-guild
 /scripts/import_many_dashboards.sh @torkelo
 /scripts/mixin-check.sh @bergquist
 /scripts/openapi3/ @grafana/grafana-operator-experience-squad
 /scripts/prepare-packagejson.js @grafana/frontend-ops
 /scripts/protobuf-check.sh @grafana/plugins-platform-backend
 /scripts/stripnulls.sh @grafana/grafana-as-code
-/scripts/tag_release.sh @grafana/grafana-delivery
-/scripts/trigger_docker_build.sh @grafana/grafana-delivery
-/scripts/trigger_grafana_packer.sh @grafana/grafana-delivery
-/scripts/trigger_windows_build.sh @grafana/grafana-delivery
-/scripts/verify-repo-update/ @grafana/grafana-delivery
+/scripts/tag_release.sh @grafana/grafana-release-guild
+/scripts/trigger_docker_build.sh @grafana/grafana-release-guild
+/scripts/trigger_grafana_packer.sh @grafana/grafana-release-guild
+/scripts/trigger_windows_build.sh @grafana/grafana-release-guild
+/scripts/verify-repo-update/ @grafana/grafana-release-guild
 
 /scripts/webpack/ @grafana/frontend-ops
 /scripts/generate-a11y-report.sh @grafana/grafana-frontend-platform
@@ -584,10 +584,10 @@ embed.go @grafana/grafana-as-code
 /.github/pr-commands.json @marefr
 /.github/renovate.json5 @grafana/frontend-ops
 /.github/teams.yml @armandgrillet
-/.github/workflows/auto-milestone.yml @grafana/grafana-delivery
-/.github/workflows/backport.yml @grafana/grafana-delivery
-/.github/workflows/bump-version.yml @grafana/grafana-delivery
-/.github/workflows/close-milestone.yml @grafana/grafana-delivery
+/.github/workflows/auto-milestone.yml @grafana/grafana-release-guild
+/.github/workflows/backport.yml @grafana/grafana-release-guild
+/.github/workflows/bump-version.yml @grafana/grafana-release-guild
+/.github/workflows/close-milestone.yml @grafana/grafana-release-guild
 /.github/workflows/cloud-data-sources-code-coverage.yml @grafana/partner-datasources @grafana/aws-datasources
 /.github/workflows/codeowners-validator.yml @tolzhabayev
 /.github/workflows/codeql-analysis.yml @DanCech
@@ -607,8 +607,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-codeql-analysis-python.yml @DanCech
 /.github/workflows/pr-commands-closed.yml @tolzhabayev
 /.github/workflows/pr-commands.yml @marefr
-/.github/workflows/pr-patch-check.yml @grafana/grafana-delivery
-/.github/workflows/sync-mirror.yml @grafana/grafana-delivery
+/.github/workflows/pr-patch-check.yml @grafana/grafana-release-guild
+/.github/workflows/sync-mirror.yml @grafana/grafana-release-guild
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-grafana
 /.github/workflows/publish-technical-documentation-release.yml @grafana/docs-grafana
 /.github/workflows/remove-milestone.yml @grafana/grafana-frontend-platform
@@ -616,9 +616,9 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/scripts/json-file-to-job-output.js @grafana/plugins-platform-frontend
 /.github/workflows/scripts/pr-get-job-link.js @grafana/plugins-platform-frontend
 /.github/workflows/stale.yml @grafana/grafana-frontend-platform
-/.github/workflows/update-changelog.yml @grafana/grafana-delivery
+/.github/workflows/update-changelog.yml @grafana/grafana-release-guild
 /.github/workflows/snyk.yml @grafana/security-team
-/.github/workflows/create-security-patch-from-security-mirror.yml @grafana/grafana-delivery
+/.github/workflows/create-security-patch-from-security-mirror.yml @grafana/grafana-release-guild
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
