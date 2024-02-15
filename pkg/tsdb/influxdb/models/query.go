@@ -14,9 +14,7 @@ import (
 var (
 	regexpOperatorPattern           = regexp.MustCompile(`^\/.*\/$`)
 	regexpMeasurementPattern        = regexp.MustCompile(`^\/.*\/$`)
-	regexMatcherSimple              = regexp.MustCompile(`^/(.*)/$`)
 	regexMatcherWithStartEndPattern = regexp.MustCompile(`^/\^(.*)\$/$`)
-	mustEscapeCharsMatcher          = regexp.MustCompile(`[\\^$*+?.()|[\]{}\/]`)
 )
 
 func (query *Query) Build(queryContext *backend.QueryDataRequest) (string, error) {
