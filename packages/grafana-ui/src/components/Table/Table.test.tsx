@@ -673,4 +673,19 @@ describe('Table', () => {
       expect(selected).toBeVisible();
     });
   });
+
+  describe('when mounted with custom row element', () => {
+    it('the custom component should be visible', async () => {
+      const expandedRows = new Map();
+      expandedRows.set(2, <span>Hello custom row component!</span>);
+
+      getTestContext({
+        expandedRows: expandedRows,
+      });
+      expect(getTable()).toBeInTheDocument();
+
+      const span = within(getTable()).getByText('Hello custom row component!');
+      expect(span).toBeVisible();
+    });
+  });
 });
