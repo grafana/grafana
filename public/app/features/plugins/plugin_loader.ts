@@ -30,7 +30,7 @@ const systemJSPrototype: SystemJSWithLoaderHooks = SystemJS.constructor.prototyp
 systemJSPrototype.shouldFetch = () => true;
 
 const originalImport = systemJSPrototype.import;
-
+// Hook Systemjs import to support plugins that only have a default export.
 systemJSPrototype.import = function (...args: Parameters<typeof originalImport>) {
   return originalImport.apply(this, args).then((module) => {
     if (module && module.__useDefault) {
