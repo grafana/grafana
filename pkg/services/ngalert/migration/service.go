@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
@@ -42,6 +43,7 @@ type UpgradeService interface {
 type migrationService struct {
 	lock           *serverlock.ServerLockService
 	cfg            *setting.Cfg
+	features       featuremgmt.FeatureToggles
 	log            log.Logger
 	store          db.DB
 	migrationStore migrationStore.Store
@@ -53,6 +55,7 @@ type migrationService struct {
 func ProvideService(
 	lock *serverlock.ServerLockService,
 	cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
 	store db.DB,
 	migrationStore migrationStore.Store,
 	encryptionService secrets.Service,
@@ -61,6 +64,7 @@ func ProvideService(
 		lock:              lock,
 		log:               log.New("ngalert.migration"),
 		cfg:               cfg,
+		features:          features,
 		store:             store,
 		migrationStore:    migrationStore,
 		encryptionService: encryptionService,
@@ -356,7 +360,7 @@ func (ms *migrationService) Run(ctx context.Context) error {
 			return
 		}
 
-		errMigration = ms.applyTransition(ctx, newTransition(currentType, ms.cfg))
+		errMigration = ms.applyTransition(ctx, ms.newTransition(currentType))
 	})
 	if errLock != nil {
 		ms.log.FromContext(ctx).Warn("Server lock for alerting migration already exists")
@@ -369,20 +373,20 @@ func (ms *migrationService) Run(ctx context.Context) error {
 }
 
 // newTransition creates a transition based on the current alerting type and the current configuration.
-func newTransition(currentType migrationStore.AlertingType, cfg *setting.Cfg) transition {
+func (ms *migrationService) newTransition(currentType migrationStore.AlertingType) transition {
 	desiredType := migrationStore.Legacy
-	if cfg.UnifiedAlerting.IsEnabled() {
+	if ms.cfg.UnifiedAlerting.IsEnabled() {
 		desiredType = migrationStore.UnifiedAlerting
 	}
 	return transition{
 		CurrentType:      currentType,
 		DesiredType:      desiredType,
-		CleanOnDowngrade: cfg.ForceMigration,
-		CleanOnUpgrade:   cfg.UnifiedAlerting.Upgrade.CleanUpgrade,
+		CleanOnDowngrade: ms.cfg.ForceMigration,
+		CleanOnUpgrade:   ms.cfg.UnifiedAlerting.Upgrade.CleanUpgrade,
 		// In 10.4.0+, even if legacy alerting is enabled and the user is not intending to update, we want to "test the waters".
 		// This is intended to surface any potential issues that would exist if the upgrade would be run right now but without
 		// risk of failing startup.
-		DryrunUpgrade: currentType == migrationStore.Legacy && desiredType == migrationStore.Legacy,
+		DryrunUpgrade: ms.features.IsEnabledGlobally(featuremgmt.FlagAlertingUpgradeDryrunOnStart) && currentType == migrationStore.Legacy && desiredType == migrationStore.Legacy,
 	}
 }
 

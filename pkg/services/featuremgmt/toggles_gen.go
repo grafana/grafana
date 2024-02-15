@@ -658,4 +658,8 @@ const (
 	// FlagGroupByVariable
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
+
+	// FlagAlertingUpgradeDryrunOnStart
+	// Dry-run Unified Alerting upgrade on startup
+	FlagAlertingUpgradeDryrunOnStart = "alertingUpgradeDryrunOnStart"
 )

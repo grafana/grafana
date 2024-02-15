@@ -2124,6 +2124,19 @@
         "codeowner": "@grafana/plugins-platform-backend",
         "requiresRestart": true
       }
+    },
+    {
+      "metadata": {
+        "name": "alertingUpgradeDryrunOnStart",
+        "resourceVersion": "1708030876229",
+        "creationTimestamp": "2024-02-15T21:01:16Z"
+      },
+      "spec": {
+        "description": "Dry-run Unified Alerting upgrade on startup",
+        "stage": "GA",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true
+      }
     }
   ]
 }

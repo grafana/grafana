@@ -58,6 +58,7 @@ Some features are enabled by default. You can disable these feature by setting t
 | `lokiQueryHints`                     | Enables query hints for Loki                                                                                                                                                                                                 | Yes                |
 | `alertingPreviewUpgrade`             | Show Unified Alerting preview and upgrade page in legacy alerting                                                                                                                                                            | Yes                |
 | `alertingQueryOptimization`          | Optimizes eligible queries in order to reduce load on datasources                                                                                                                                                            |                    |
+| `alertingUpgradeDryrunOnStart`       | Dry-run Unified Alerting upgrade on startup                                                                                                                                                                                  |                    |
 
 ## Preview feature toggles
 

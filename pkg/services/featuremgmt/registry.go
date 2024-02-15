@@ -1214,6 +1214,14 @@ var (
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
+		{
+			Name:            "alertingUpgradeDryrunOnStart",
+			Description:     "Dry-run Unified Alerting upgrade on startup",
+			FrontendOnly:    false,
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+		},
 	}
 )
 
