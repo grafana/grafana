@@ -89,7 +89,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   tweakScale = (opts) => opts,
   tweakAxis = (opts) => opts,
   eventsScope = '__global_',
-  hoverProximity = undefined,
+  hoverProximity,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -562,21 +562,25 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   const DEFAULT_HOVER_NULL_PROXIMITY = 15;
 
   let cursor: Partial<uPlot.Cursor> = {
+    // horizontal proximity / point hover behavior
     hover: {
       prox: (self, seriesIdx, hoveredIdx) => {
-        if (hoverProximity) {
+        if (hoverProximity != null) {
           return hoverProximity;
         }
 
+        // when hovering null values, scan data left/right up to 15px
         const yVal = self.data[seriesIdx][hoveredIdx];
         if (yVal === null) {
           return DEFAULT_HOVER_NULL_PROXIMITY;
         }
 
+        // no proximity limit
         return null;
       },
       skip: [null],
     },
+    // vertical proximity / series focus behavior
     focus: {
       prox: hoverProximity ?? 30,
     },
