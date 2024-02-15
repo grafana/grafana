@@ -1,4 +1,4 @@
-# Owned by grafana-delivery-squad
+# Owned by grafana-release-guild
 # Intended to be dropped into the base repo Ex: grafana/grafana
 name: Check for patch conflicts
 run-name: check-patch-conflicts-${{ github.base_ref }}-${{ github.head_ref }}
