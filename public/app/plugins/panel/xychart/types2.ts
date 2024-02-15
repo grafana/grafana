@@ -1,52 +1,28 @@
 import { Field } from '@grafana/data';
 import * as common from '@grafana/schema';
 
-export enum SeriesMapping2 {
-  Auto = 'auto',
-  Manual = 'manual',
-}
+import { SeriesMapping } from './panelcfg.gen';
 
 // panel save model
 export interface XYSeriesConfig {
-  name?: string; // if absent, gets name from y field
+  name?: string;
 
   // required in manual mode (can match same frame multiple times)
-  frame?: common.MatcherConfig;
-
+  frame?: {
+    matcher: common.MatcherConfig;
+  };
   x: {
-    field: {
-      matcher: common.MatcherConfig;
-    };
+    matcher: common.MatcherConfig;
   };
-  y: {
-    field: {
-      matcher: common.MatcherConfig; // include
-      exclude?: common.MatcherConfig;
-    };
+  y?: {
+    matcher?: common.MatcherConfig; // include
+    exclude?: common.MatcherConfig;
   };
-  color?: {  // if absent, falls back to classic palette index
-    fixed?: {
-      value?: string; // if absent, falls back to classic palette index
-    };
-
-    field?: {
-      matcher: common.MatcherConfig;
-    };
+  color?: {
+    matcher: common.MatcherConfig;
   };
-  size?: {  // if absent, falls back to mode: area, fixed.value: 5px
-    // mode: 'area' | 'dia';
-
-    fixed?: {
-      value?: number; // if absent, falls back to 5px
-    };
-
-    field?: {
-      matcher: common.MatcherConfig;
-
-      // pixels range
-      min?: number; // default to 5px
-      max?: number; // default to 100px
-    };
+  size?: {
+    matcher: common.MatcherConfig;
   };
 }
 
@@ -54,50 +30,71 @@ export interface XYSeriesConfig {
 export interface XYSeries {
   name: string;
 
+  showPoints: common.VisibilityMode;
+
+  showLine: boolean;
+  lineWidth: number;
+  lineStyle: common.LineStyle;
+
   x: {
-    field: {
-      value: Field;
-    };
+    field: Field;
   };
   y: {
-    field: {
-      value: Field
-    };
+    field: Field;
   };
   color: {
-    fixed: {
-      value: string;
-    };
+    field?: Field;
 
-    field?: {
-      value: Field
-    };
+    // fixed value extracted from fieldConfig + overrides of y field
+    fixed?: string;
   };
-  size: {  // if absent, falls back to mode: area, fixed.value: 5px
-    // mode: 'area' | 'dia';
+  size: {
+    field?: Field;
+    // extracted from fieldConfig + overrides of size field
+    min?: number;
+    max?: number;
 
-    fixed: {
-      value: number;
-    };
-
-    field?: {
-      value: Field;
-
-      // pixels range
-      min: number;
-      max: number;
-    };
+    // fixed value extracted from fieldConfig + overrides of y field
+    fixed?: number;
   };
 }
 
 export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip {
   // source: 'annotations' | 'series', // maybe render directly from annotations (exemplars)
-  mapping: SeriesMapping2;
+  mapping: SeriesMapping;
   series: XYSeriesConfig[]; // uses series[0] in auto mode to generate
 }
 
-// temp mock for testing
-export interface PanelOpts {
-  mapping: SeriesMapping2;
-  series: XYSeriesConfig[]; // uses series[0] in auto mode to generate
-}
+
+
+/*
+name                     // cache getFieldDisplayName
+
+// points, lines, points+lines
+show     = yField.config.custom.show  // hideFrom?
+
+// fixed, overrideable
+lineColor = yField.config.color
+lineStyle = yField.config.custom.lineStyle
+lineWidth = yField.config.custom.lineWidth
+
+// fixed or dynamic
+pointColor = (colorField ?? yField).config.color
+pointSize =  (sizeField  ?? yField).config.custom.pointSize (fixed, min, max)
+*/
+
+
+/*
+migration of manual, single frame
+
+displayName override in manual mode
+fixed color override in manual mode
+pointsize min/max/fixed override
+
+cue defs? seriesMapping default
+
+
+legend hookup
+datalinks
+y labels, units, formatter?
+*/

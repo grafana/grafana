@@ -1,7 +1,7 @@
 import { FieldMatcherID, FrameMatcherID, MatcherConfig, PanelModel } from '@grafana/data';
 
 import { Options, SeriesMapping } from './panelcfg.gen';
-import { XYSeriesConfig, Options as Options2, SeriesMapping2 } from './types2';
+import { XYSeriesConfig, Options as Options2 } from './types2';
 
 export const xyChartMigrationHandler = (panel: PanelModel<Options>): Options | Options2 => {
   const pluginVersion = panel?.pluginVersion ?? '';
@@ -10,7 +10,7 @@ export const xyChartMigrationHandler = (panel: PanelModel<Options>): Options | O
   // Initial plugin version is empty string for first migration
   if (pluginVersion === '') {
     const { dims, seriesMapping, series: oldSeries, ...cleanedOpts } = panel.options;
-    const { exclude, frame, x: xShared } = dims ?? {};
+    const { exclude = [], frame, x: xShared } = dims ?? {};
 
     let oldSeries2 = oldSeries;
 
@@ -32,6 +32,7 @@ export const xyChartMigrationHandler = (panel: PanelModel<Options>): Options | O
 
       // old auto mode did not require x field defined
       if (x == null && xShared == null) {
+        // TODO: this should just be the internal default. no need to store on save model
         xMatcherConfig = {
           id: FieldMatcherID.byType,
           options: 'number',
@@ -44,6 +45,7 @@ export const xyChartMigrationHandler = (panel: PanelModel<Options>): Options | O
       }
 
       if (y == null) {
+        // TODO: this should just be the internal default. no need to store on save model
         yMatcherConfig = {
           id: FieldMatcherID.byType,
           options: 'number',
@@ -55,62 +57,91 @@ export const xyChartMigrationHandler = (panel: PanelModel<Options>): Options | O
         };
       }
 
-      return {
-        frame: {
-          id: FrameMatcherID.byIndex,
-          options: seriesMapping === SeriesMapping.Manual ? 0 : frame ?? 0,
-        },
-        x: {
-          field: {
-            matcher: xMatcherConfig,
-          },
-        },
-        y: {
-          field: {
+      if (colorField == null && colorFixed) {
+        // if same as defaults, skip
+        if (panel.fieldConfig.defaults.custom.pointColor === colorFixed) {
+        }
+
+        let hasOverride = panel.fieldConfig.overrides.some(
+          (o) =>
+            o.matcher.id === yMatcherConfig.id &&
+            o.matcher.options === yMatcherConfig.options &&
+            o.properties.some((p) => p.id === 'custom.pointColor')
+        );
+
+        if (!hasOverride) {
+          panel.fieldConfig.overrides.push({
             matcher: yMatcherConfig,
-            ...(exclude &&
-              exclude.length && {
-                exclude: {
-                  id: FieldMatcherID.byNames,
-                  options: exclude,
-                },
-              }),
-          },
-        },
-        ...((colorFixed || colorField) && {
-          color: {
-            ...(colorFixed && {
-              fixed: {
+            properties: [
+              {
+                id: 'custom.pointColor',
                 value: colorFixed,
               },
-            }),
-            ...(colorField && {
-              field: {
-                matcher: {
-                  id: FieldMatcherID.byName,
-                  options: colorField,
-                },
-              },
-            }),
-          },
-        }),
-        ...((sizeFixed || sizeField) && {
-          size: {
-            ...(sizeFixed && {
-              fixed: {
+            ],
+          });
+        }
+      }
+
+      // add field overrides for custom size
+      if (sizeField == null && sizeFixed) {
+        // if same as defaults, skip
+        if (panel.fieldConfig.defaults.custom.pointSize === sizeFixed) {
+        }
+
+        let hasOverride = panel.fieldConfig.overrides.some(
+          (o) =>
+            o.matcher.id === yMatcherConfig.id &&
+            o.matcher.options === yMatcherConfig.options &&
+            o.properties.some((p) => p.id === 'custom.pointSize')
+        );
+
+        // if override already exists, ignore
+        if (!hasOverride) {
+          panel.fieldConfig.overrides.push({
+            matcher: yMatcherConfig,
+            properties: [
+              {
+                id: 'custom.pointSize',
                 value: sizeFixed,
               },
-            }),
-            ...(sizeField && {
-              field: {
-                matcher: {
-                  id: FieldMatcherID.byName,
-                  options: sizeField,
-                },
-                min: sizeMin,
-                max: sizeMax,
-              },
-            }),
+            ],
+          });
+        }
+      }
+
+      return {
+        frame: {
+          matcher: {
+            id: FrameMatcherID.byIndex,
+            options: seriesMapping === SeriesMapping.Manual ? 0 : frame ?? 0,
+          },
+        },
+        x: {
+          matcher: xMatcherConfig,
+        },
+        y: {
+          matcher: yMatcherConfig,
+          ...(exclude.length && {
+            exclude: {
+              id: FieldMatcherID.byNames,
+              options: exclude,
+            },
+          }),
+        },
+        ...(colorField && {
+          color: {
+            matcher: {
+              id: FieldMatcherID.byName,
+              options: colorField,
+            },
+          },
+        }),
+        ...(sizeField && {
+          size: {
+            matcher: {
+              id: FieldMatcherID.byName,
+              options: sizeField,
+            },
           },
         }),
       };
@@ -118,9 +149,14 @@ export const xyChartMigrationHandler = (panel: PanelModel<Options>): Options | O
 
     const newOptions: Options2 = {
       ...cleanedOpts,
-      mapping: seriesMapping === SeriesMapping.Auto ? SeriesMapping2.Auto : SeriesMapping2.Manual,
+      mapping: seriesMapping === SeriesMapping.Auto ? SeriesMapping.Auto : SeriesMapping.Manual,
       series: newSeries,
     };
+
+    // panel.fieldConfig = {
+    //   defaults,
+    //   overrides,
+    // };
 
     // console.log('xyChartMigrationHandler', panel.options, newOptions);
 

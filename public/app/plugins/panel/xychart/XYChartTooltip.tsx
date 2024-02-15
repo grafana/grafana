@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { DataFrame, Field, getFieldDisplayName, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { DataFrame, Field, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { useStyles2 } from '@grafana/ui';
 import { VizTooltipContent } from '@grafana/ui/src/components/VizTooltip/VizTooltipContent';
@@ -10,48 +10,31 @@ import { VizTooltipHeader } from '@grafana/ui/src/components/VizTooltip/VizToolt
 import { ColorIndicator, LabelValue } from '@grafana/ui/src/components/VizTooltip/types';
 import { getTitleFromHref } from 'app/features/explore/utils/links';
 
-import { Options } from './panelcfg.gen';
-import { ScatterSeries, YValue } from './types';
+import { YValue } from './types';
+import { XYSeries } from './types2';
 import { fmt } from './utils';
 
 export interface Props {
   dataIdxs: Array<number | null>;
-  seriesIdx: number | null | undefined;
+  seriesIdx: number;
   isPinned: boolean;
   dismiss: () => void;
-  options: Options;
   data: DataFrame[]; // source data
-  allSeries: ScatterSeries[];
+  series: XYSeries[];
 }
 
-export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, options, isPinned }: Props) => {
+export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, dismiss, series: xySeries, isPinned }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const rowIndex = dataIdxs.find((idx) => idx !== null);
-  // @todo: remove -1 when uPlot v2 arrive
-  // context: first value in dataIdxs always null and represent X series
-  const hoveredPointIndex = seriesIdx! - 1;
-
-  if (!allSeries || rowIndex == null) {
-    return null;
-  }
-
-  const series = allSeries[hoveredPointIndex];
-  const frame = series.frame(data);
-  const xField = series.x(frame);
-  const yField = series.y(frame);
+  const series = xySeries[seriesIdx - 1];
+  const rowIdx = dataIdxs[seriesIdx]!;
+  const xField = series.x.field;
+  const yField = series.y.field;
 
   const getHeaderLabel = (): LabelValue => {
     let label = series.name;
-    if (options.seriesMapping === 'manual') {
-      label = options.series?.[hoveredPointIndex]?.name ?? `Series ${hoveredPointIndex + 1}`;
-    }
 
-    let colorThing = series.pointColor(frame);
-
-    if (Array.isArray(colorThing)) {
-      colorThing = colorThing[rowIndex];
-    }
+    let colorThing = series.color.fixed; // todo: dynamic via field.display(value).color
 
     return {
       label,
@@ -63,15 +46,11 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
   };
 
   const getContentLabel = (): LabelValue[] => {
-    let colorThing = series.pointColor(frame);
-
-    if (Array.isArray(colorThing)) {
-      colorThing = colorThing[rowIndex];
-    }
+    let colorThing = series.color.fixed;
 
     const yValue: YValue = {
-      name: getFieldDisplayName(yField, frame),
-      val: yField.values[rowIndex],
+      name: yField.state?.displayName!,
+      val: yField.values[rowIdx],
       field: yField,
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       color: alpha(colorThing as string, 0.5),
@@ -79,8 +58,8 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
 
     const content: LabelValue[] = [
       {
-        label: getFieldDisplayName(xField, frame),
-        value: fmt(xField, xField.values[rowIndex]),
+        label: xField.state?.displayName!,
+        value: fmt(xField, xField.values[rowIdx]),
       },
       {
         label: yValue.name,
@@ -88,16 +67,18 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
       },
     ];
 
+    /*
     // add extra fields
     const extraFields: Field[] = frame.fields.filter((f) => f !== xField && f !== yField);
     if (extraFields) {
       extraFields.forEach((field) => {
         content.push({
           label: field.name,
-          value: fmt(field, field.values[rowIndex]),
+          value: fmt(field, field.values[rowIdx]),
         });
       });
     }
+    */
 
     return content;
   };
@@ -105,9 +86,9 @@ export const XYChartTooltip = ({ dataIdxs, seriesIdx, data, allSeries, dismiss, 
   const getLinks = (): Array<LinkModel<Field>> => {
     let links: Array<LinkModel<Field>> = [];
     if (yField.getLinks) {
-      const v = yField.values[rowIndex];
+      const v = yField.values[rowIdx];
       const disp = yField.display ? yField.display(v) : { text: `${v}`, numeric: +v };
-      links = yField.getLinks({ calculatedValue: disp, valueRowIndex: rowIndex }).map((linkModel) => {
+      links = yField.getLinks({ calculatedValue: disp, valueRowIndex: rowIdx }).map((linkModel) => {
         if (!linkModel.title) {
           linkModel.title = getTitleFromHref(linkModel.href);
         }

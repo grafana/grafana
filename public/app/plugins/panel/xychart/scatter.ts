@@ -1,329 +1,22 @@
-import { MutableRefObject } from 'react';
 import uPlot from 'uplot';
 
 import {
-  DataFrame,
-  FieldColorModeId,
-  fieldColorModeRegistry,
   formattedValueToString,
-  getDisplayProcessor,
-  getFieldColorModeForField,
-  getFieldDisplayName,
-  getFieldSeriesColor,
-  getFrameDisplayName,
   GrafanaTheme2,
 } from '@grafana/data';
-import { getSingleLabelName } from '@grafana/data/src/field/fieldState';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
-import { config } from '@grafana/runtime';
 import {
   AxisPlacement,
   ScaleDirection,
   ScaleOrientation,
   VisibilityMode,
-  ScaleDimensionConfig,
-  ScaleDimensionMode,
 } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
 import { FacetedData, FacetSeries } from '@grafana/ui/src/components/uPlot/types';
-import { findFieldIndex, getScaledDimensionForField } from 'app/features/dimensions';
 
 import { pointWithin, Quadtree, Rect } from '../barchart/quadtree';
 
-import { DEFAULT_POINT_SIZE } from './config';
-import { isGraphable } from './dims';
-import { FieldConfig, defaultFieldConfig, Options, ScatterShow } from './panelcfg.gen';
-import { DimensionValues, ScatterHoverCallback, ScatterSeries } from './types';
-
-export interface ScatterPanelInfo {
-  error?: string;
-  series: ScatterSeries[];
-  builder?: UPlotConfigBuilder;
-}
-
-/**
- * This is called when options or structure rev changes
- */
-export function prepScatter(
-  options: Options,
-  getData: () => DataFrame[],
-  theme: GrafanaTheme2,
-  ttip: null | ScatterHoverCallback,
-  onUPlotClick: null | ((evt?: Object) => void),
-  isToolTipOpen: null | MutableRefObject<boolean>
-): ScatterPanelInfo {
-  let series: ScatterSeries[];
-  let builder: UPlotConfigBuilder;
-
-  try {
-    series = prepSeries(options, getData());
-    builder = prepConfig(getData, series, theme, ttip, onUPlotClick, isToolTipOpen);
-  } catch (e) {
-    let errorMsg = 'Unknown error in prepScatter';
-    if (typeof e === 'string') {
-      errorMsg = e;
-    } else if (e instanceof Error) {
-      errorMsg = e.message;
-    }
-
-    return {
-      error: errorMsg,
-      series: [],
-    };
-  }
-
-  return {
-    series,
-    builder,
-  };
-}
-
-interface Dims {
-  pointColorIndex?: number;
-  pointColorFixed?: string;
-
-  pointSizeIndex?: number;
-  pointSizeConfig?: ScaleDimensionConfig;
-}
-
-function getScatterSeries(
-  seriesIndex: number,
-  frames: DataFrame[],
-  frameIndex: number,
-  xIndex: number,
-  yIndex: number,
-  dims: Dims,
-  nameOverride?: string
-): ScatterSeries {
-  const frame = frames[frameIndex];
-  const y = frame.fields[yIndex];
-  let state = y.state ?? {};
-  state.seriesIndex = seriesIndex;
-  y.state = state;
-
-  // Color configs
-  //----------------
-  let seriesColor = dims.pointColorFixed
-    ? config.theme2.visualization.getColorByName(dims.pointColorFixed)
-    : getFieldSeriesColor(y, config.theme2).color;
-  let pointColor: DimensionValues<string> = () => seriesColor;
-  const fieldConfig: FieldConfig = { ...defaultFieldConfig, ...y.config.custom };
-  let pointColorMode = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic);
-  if (dims.pointColorIndex) {
-    const f = frames[frameIndex].fields[dims.pointColorIndex];
-    if (f) {
-      pointColorMode = getFieldColorModeForField(y);
-      if (pointColorMode.isByValue) {
-        const index = dims.pointColorIndex;
-        pointColor = (frame: DataFrame) => {
-          const field = frame.fields[index];
-
-          if (field.state?.range) {
-            // this forces local min/max recalc, rather than using global min/max from field.state
-            field.state.range = undefined;
-          }
-
-          field.display = getDisplayProcessor({ field, theme: config.theme2 });
-
-          return field.values.map((v) => field.display!(v).color!); // slow!
-        };
-      } else {
-        seriesColor = pointColorMode.getCalculator(f, config.theme2)(f.values[0], 1);
-        pointColor = () => seriesColor;
-      }
-    }
-  }
-
-  // Size configs
-  //----------------
-  let pointSizeHints = dims.pointSizeConfig;
-  let pointSizeFixed = dims.pointSizeConfig?.fixed ?? y.config.custom?.pointSize?.fixed ?? DEFAULT_POINT_SIZE;
-  let pointSize: DimensionValues<number> = () => pointSizeFixed;
-  if (dims.pointSizeIndex) {
-    pointSize = (frame) => {
-      const s = getScaledDimensionForField(
-        frame.fields[dims.pointSizeIndex!],
-        dims.pointSizeConfig!,
-        ScaleDimensionMode.Quad
-      );
-      const vals = Array(frame.length);
-      for (let i = 0; i < frame.length; i++) {
-        vals[i] = s.get(i);
-      }
-      return vals;
-    };
-  } else {
-    pointSizeHints = {
-      fixed: pointSizeFixed,
-      min: pointSizeFixed,
-      max: pointSizeFixed,
-    };
-  }
-
-  // Series config
-  //----------------
-  const name = nameOverride ?? getFieldDisplayName(y, frame, frames);
-  return {
-    name,
-
-    frame: (frames) => frames[frameIndex],
-
-    x: (frame) => frame.fields[xIndex],
-    y: (frame) => frame.fields[yIndex],
-    legend: () => {
-      return [
-        {
-          label: name,
-          color: seriesColor, // single color for series?
-          getItemKey: () => name,
-          yAxis: yIndex, // << but not used
-        },
-      ];
-    },
-
-    showLine: fieldConfig.show !== ScatterShow.Points,
-    lineWidth: fieldConfig.lineWidth ?? 2,
-    lineStyle: fieldConfig.lineStyle!,
-    lineColor: () => seriesColor,
-
-    showPoints: fieldConfig.show !== ScatterShow.Lines ? VisibilityMode.Always : VisibilityMode.Never,
-    pointSize,
-    pointColor,
-    pointSymbol: (frame: DataFrame, from?: number) => 'circle', // single field, multiple symbols.... kinda equals multiple series 🤔
-
-    label: VisibilityMode.Never,
-    labelValue: () => '',
-    show: !frame.fields[yIndex].config.custom.hideFrom?.viz,
-
-    hints: {
-      pointSize: pointSizeHints!,
-      pointColor: {
-        mode: pointColorMode,
-      },
-    },
-  };
-}
-
-function prepSeries(options: Options, frames: DataFrame[]): ScatterSeries[] {
-  let seriesIndex = 0;
-  if (!frames.length) {
-    throw 'Missing data';
-  }
-
-  if (options.seriesMapping === 'dynamic') {
-    const dynamicConfig = options.dynamicConfig;
-    if (!dynamicConfig?.x) {
-      throw 'Select X dimension';
-    }
-
-    if (!dynamicConfig?.y) {
-      throw 'Select Y dimension';
-    }
-
-    const scatterSeries: ScatterSeries[] = [];
-    const labelName = getSingleLabelName(frames) ?? undefined;
-
-    for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
-      const frame = frames[frameIndex];
-      const xIndex = findFieldIndex(dynamicConfig.x, frame, frames);
-
-      if (xIndex != null) {
-        const yIndex = findFieldIndex(dynamicConfig.y, frame, frames);
-
-        if (yIndex == null) {
-          throw 'Y must be in the same frame as X';
-        }
-
-        const dims: Dims = {
-          pointColorFixed: dynamicConfig.pointColor?.fixed,
-          pointColorIndex: findFieldIndex(dynamicConfig.pointColor?.field, frame, frames),
-          pointSizeConfig: dynamicConfig.pointSize,
-          pointSizeIndex: findFieldIndex(dynamicConfig.pointSize?.field, frame, frames),
-        };
-
-        const nameOverride = getFrameDisplayName(frame, frameIndex, labelName);
-        scatterSeries.push(getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex, dims, nameOverride));
-      }
-    }
-    return scatterSeries;
-  }
-
-  if (options.seriesMapping === 'manual') {
-    if (!options.series?.length) {
-      throw 'Missing series config';
-    }
-
-    const scatterSeries: ScatterSeries[] = [];
-
-    for (const series of options.series) {
-      if (!series?.x) {
-        throw 'Select X dimension';
-      }
-
-      if (!series?.y) {
-        throw 'Select Y dimension';
-      }
-
-      for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
-        // When a frame filter is applied, only include matching frame index
-        if (series.frame !== undefined && series.frame !== frameIndex) {
-          continue;
-        }
-        const frame = frames[frameIndex];
-        const xIndex = findFieldIndex(series.x, frame, frames);
-
-        if (xIndex != null) {
-          // TODO: this should find multiple y fields
-          const yIndex = findFieldIndex(series.y, frame, frames);
-
-          if (yIndex == null) {
-            throw 'Y must be in the same frame as X';
-          }
-
-          const dims: Dims = {
-            pointColorFixed: series.pointColor?.fixed,
-            pointColorIndex: findFieldIndex(series.pointColor?.field, frame, frames),
-            pointSizeConfig: series.pointSize,
-            pointSizeIndex: findFieldIndex(series.pointSize?.field, frame, frames),
-          };
-          scatterSeries.push(getScatterSeries(seriesIndex++, frames, frameIndex, xIndex, yIndex, dims));
-        }
-      }
-    }
-
-    return scatterSeries;
-  }
-
-  // Default behavior
-  const dims = options.dims ?? {};
-  const frameIndex = dims.frame ?? 0;
-  const frame = frames[frameIndex];
-  const numericIndices: number[] = [];
-
-  let xIndex = findFieldIndex(dims.x, frame, frames);
-  for (let i = 0; i < frame.fields.length; i++) {
-    if (isGraphable(frame.fields[i])) {
-      if (xIndex == null || i === xIndex) {
-        xIndex = i;
-        continue;
-      }
-      if (dims.exclude && dims.exclude.includes(getFieldDisplayName(frame.fields[i], frame, frames))) {
-        continue; // skip
-      }
-
-      numericIndices.push(i);
-    }
-  }
-
-  if (xIndex == null) {
-    throw 'Missing X dimension';
-  }
-
-  if (!numericIndices.length) {
-    throw 'No Y values';
-  }
-  return numericIndices.map((yIndex) => getScatterSeries(seriesIndex++, frames, frameIndex, xIndex!, yIndex, {}));
-}
+import { XYSeries } from './types2';
 
 interface DrawBubblesOpts {
   each: (u: uPlot, seriesIdx: number, dataIdx: number, lft: number, top: number, wid: number, hgt: number) => void;
@@ -339,13 +32,9 @@ interface DrawBubblesOpts {
   };
 }
 
-const prepConfig = (
-  getData: () => DataFrame[],
-  scatterSeries: ScatterSeries[],
+export const prepConfig = (
+  xySeries: XYSeries[],
   theme: GrafanaTheme2,
-  ttip: null | ScatterHoverCallback,
-  onUPlotClick: null | ((evt?: Object) => void),
-  isToolTipOpen: null | MutableRefObject<boolean>
 ) => {
   let qt: Quadtree;
   let hRect: Rect | null;
@@ -373,8 +62,14 @@ const prepConfig = (
           arc
         ) => {
           const pxRatio = uPlot.pxRatio;
-          const scatterInfo = scatterSeries[seriesIdx - 1];
+          const scatterInfo = xySeries[seriesIdx - 1];
           let d = u.data[seriesIdx] as unknown as FacetSeries;
+
+          // showLine: boolean;
+          // lineStyle: common.LineStyle;
+          // showPoints: common.VisibilityMode;
+
+          // let showLine0 = scatterInfo.y.field.config.custom.showLine;
 
           let showLine = scatterInfo.showLine;
           let showPoints = scatterInfo.showPoints === VisibilityMode.Always;
@@ -403,8 +98,10 @@ const prepConfig = (
           let xKey = scaleX.key!;
           let yKey = scaleY.key!;
 
-          let pointHints = scatterInfo.hints.pointSize;
-          const colorByValue = scatterInfo.hints.pointColor.mode.isByValue;
+          // let pointHints = scatterInfo.hints.pointSize;
+          // const colorByValue = scatterInfo.hints.pointColor.mode.isByValue;
+          const pointHints = {max: undefined, fixed: 5};
+          const colorByValue = false;
 
           let maxSize = (pointHints.max ?? pointHints.fixed) * pxRatio;
 
@@ -468,8 +165,8 @@ const prepConfig = (
           }
 
           if (showLine) {
-            let frame = scatterInfo.frame(getData());
-            u.ctx.strokeStyle = scatterInfo.lineColor(frame);
+            // u.ctx.strokeStyle = scatterInfo.lineColor(frame);
+            u.ctx.strokeStyle = 'blue';
             u.ctx.lineWidth = scatterInfo.lineWidth * pxRatio;
 
             const { lineStyle } = scatterInfo;
@@ -565,38 +262,10 @@ const prepConfig = (
     },
   });
 
-  const clearPopupIfOpened = () => {
-    if (isToolTipOpen?.current) {
-      if (ttip) {
-        ttip(undefined);
-      }
-      if (onUPlotClick) {
-        onUPlotClick();
-      }
-    }
-  };
-
-  let ref_parent: HTMLElement | null = null;
-
   // clip hover points/bubbles to plotting area
   builder.addHook('init', (u, r) => {
-    const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
-
-    if (!showNewVizTooltips) {
-      u.over.style.overflow = 'hidden';
-    }
-    ref_parent = u.root.parentElement;
-
-    if (onUPlotClick) {
-      ref_parent?.addEventListener('click', onUPlotClick);
-    }
-  });
-
-  builder.addHook('destroy', (u) => {
-    if (onUPlotClick) {
-      ref_parent?.removeEventListener('click', onUPlotClick);
-      clearPopupIfOpened();
-    }
+    // TODO: re-enable once we global portal again
+    //u.over.style.overflow = 'hidden';
   });
 
   let rect: DOMRect;
@@ -606,32 +275,7 @@ const prepConfig = (
     rect = r;
   });
 
-  if (ttip) {
-    builder.addHook('setLegend', (u) => {
-      if (u.cursor.idxs != null) {
-        for (let i = 0; i < u.cursor.idxs.length; i++) {
-          const sel = u.cursor.idxs[i];
-          if (sel != null && !isToolTipOpen?.current) {
-            ttip({
-              scatterIndex: i - 1,
-              xIndex: sel,
-              pageX: rect.left + u.cursor.left!,
-              pageY: rect.top + u.cursor.top!,
-            });
-            return; // only show the first one
-          }
-        }
-      }
-
-      if (!isToolTipOpen?.current) {
-        ttip(undefined);
-      }
-    });
-  }
-
   builder.addHook('drawClear', (u) => {
-    clearPopupIfOpened();
-
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
 
     qt.clear();
@@ -647,8 +291,7 @@ const prepConfig = (
 
   builder.setMode(2);
 
-  const frames = getData();
-  let xField = scatterSeries[0].x(scatterSeries[0].frame(frames));
+  let xField = xySeries[0].x.field;
 
   let fieldConfig = xField.config;
   let customConfig = fieldConfig.custom;
@@ -672,14 +315,14 @@ const prepConfig = (
 
   // why does this fall back to '' instead of null or undef?
   let xAxisLabel = customConfig.axisLabel;
-  // If a shared common label exists across multiple frames, strip from axis label
-  const fieldDisplayName = getFieldDisplayName(xField, scatterSeries[0].frame(frames), frames);
-  if (xField.labels) {
-    const singleLabelName = getSingleLabelName(frames);
-    if (singleLabelName) {
-      xAxisLabel = fieldDisplayName.replace(xField.labels[singleLabelName], '');
-    }
-  }
+  // // If a shared common label exists across multiple frames, strip from axis label
+  // const fieldDisplayName = getFieldDisplayName(xField, xySeries[0].frame(frames), frames);
+  // if (xField.labels) {
+  //   const singleLabelName = getSingleLabelName(frames);
+  //   if (singleLabelName) {
+  //     xAxisLabel = fieldDisplayName.replace(xField.labels[singleLabelName], '');
+  //   }
+  // }
 
   builder.addAxis({
     scaleKey: 'x',
@@ -688,16 +331,16 @@ const prepConfig = (
     grid: { show: customConfig?.axisGridShow },
     border: { show: customConfig?.axisBorderShow },
     theme,
-    label: xAxisLabel == null || xAxisLabel === '' ? fieldDisplayName : xAxisLabel,
+    // label: xAxisLabel == null || xAxisLabel === '' ? fieldDisplayName : xAxisLabel,
+    label: xAxisLabel,
     formatValue: (v, decimals) => formattedValueToString(xField.display!(v, decimals)),
   });
 
-  scatterSeries.forEach((s, si) => {
-    let frame = s.frame(frames);
-    let field = s.y(frame);
+  xySeries.forEach((s, si) => {
+    let field = s.y.field;
 
-    const lineColor = s.lineColor(frame);
-    const pointColor = asSingleValue(frame, s.pointColor) as string;
+    const lineColor = s.color.fixed;
+    const pointColor = s.color.fixed;
     //const lineColor = s.lineColor(frame);
     //const lineWidth = s.lineWidth;
 
@@ -723,14 +366,14 @@ const prepConfig = (
 
     // why does this fall back to '' instead of null or undef?
     let yAxisLabel = customConfig?.axisLabel;
-    // If a shared common label exists across multiple frames, strip from axis label
-    const fieldDisplayName = getFieldDisplayName(field, scatterSeries[si].frame(frames), frames);
-    if (field.labels) {
-      const singleLabelName = getSingleLabelName(frames);
-      if (singleLabelName) {
-        yAxisLabel = fieldDisplayName.replace(field.labels[singleLabelName], '');
-      }
-    }
+    // // If a shared common label exists across multiple frames, strip from axis label
+    // const fieldDisplayName = getFieldDisplayName(field, scatterSeries[si].frame(frames), frames);
+    // if (field.labels) {
+    //   const singleLabelName = getSingleLabelName(frames);
+    //   if (singleLabelName) {
+    //     yAxisLabel = fieldDisplayName.replace(field.labels[singleLabelName], '');
+    //   }
+    // }
 
     builder.addAxis({
       scaleKey,
@@ -740,7 +383,8 @@ const prepConfig = (
       grid: { show: customConfig?.axisGridShow },
       border: { show: customConfig?.axisBorderShow },
       size: customConfig?.axisWidth,
-      label: yAxisLabel == null || yAxisLabel === '' ? fieldDisplayName : yAxisLabel,
+      // label: yAxisLabel == null || yAxisLabel === '' ? fieldDisplayName : yAxisLabel,
+      label: yAxisLabel ?? '',
       formatValue: (v, decimals) => formattedValueToString(field.display!(v, decimals)),
     });
 
@@ -759,7 +403,7 @@ const prepConfig = (
       theme,
       scaleKey: '', // facets' scales used (above)
       lineColor: alpha('' + lineColor, 1),
-      fillColor: alpha(pointColor, 0.5),
+      fillColor: alpha(pointColor ?? '#ffff', 0.5),
       show: !customConfig.hideFrom?.viz,
     });
   });
@@ -786,52 +430,32 @@ const prepConfig = (
   });
   */
 
-  return builder;
+  return { builder, prepData };
 };
+
+export type PrepData = (xySeries: XYSeries[]) => FacetedData;
 
 /**
  * This is called everytime the data changes
  *
  * from?  is this where we would support that?  -- need the previous values
  */
-export function prepData(info: ScatterPanelInfo, data: DataFrame[], from?: number): FacetedData {
-  if (info.error || !data.length) {
-    return [null];
-  }
+export function prepData(xySeries: XYSeries[]): FacetedData {
+  // if (info.error || !data.length) {
+  //   return [null];
+  // }
+
   return [
     null,
-    ...info.series.map((s, idx) => {
-      const frame = s.frame(data);
+    ...xySeries.map((s, idx) => {
+      let len = s.x.field.values.length;
 
-      let colorValues;
-      const r = s.pointColor(frame);
-      if (Array.isArray(r)) {
-        colorValues = r;
-      } else {
-        colorValues = Array(frame.length).fill(r);
-      }
       return [
-        s.x(frame).values, // X
-        s.y(frame).values, // Y
-        asArray(frame, s.pointSize),
-        colorValues,
+        s.x.field.values, // X
+        s.y.field.values, // Y
+        Array(len).fill(s.size.fixed!),
+        Array(len).fill(s.color.fixed!),
       ];
     }),
   ];
-}
-
-function asArray<T>(frame: DataFrame, lookup: DimensionValues<T>): T[] {
-  const r = lookup(frame);
-  if (Array.isArray(r)) {
-    return r;
-  }
-  return Array(frame.length).fill(r);
-}
-
-function asSingleValue<T>(frame: DataFrame, lookup: DimensionValues<T>): T {
-  const r = lookup(frame);
-  if (Array.isArray(r)) {
-    return r[0];
-  }
-  return r;
 }

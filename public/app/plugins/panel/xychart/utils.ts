@@ -7,10 +7,15 @@ import {
   DataFrame,
   FrameMatcherID,
   MatcherConfig,
+  FieldColorModeId,
+  cacheFieldDisplayNames,
+  FieldMatcherID,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { VisibilityMode } from '@grafana/schema';
 
-import { PanelOpts, SeriesMapping2, XYSeries } from './types2';
+import { ScatterShow, SeriesMapping } from './panelcfg.gen';
+import { XYSeries, XYSeriesConfig } from './types2';
 
 export function fmt(field: Field, val: number): string {
   if (field.display) {
@@ -29,19 +34,24 @@ function getFrameMatcher2(config: MatcherConfig) {
   return () => false;
 }
 
-export function prepXYSeries(panelOpts: PanelOpts, frames: DataFrame[]) {
+export function prepSeries(mapping: SeriesMapping, mappedSeries: XYSeriesConfig[], frames: DataFrame[]) {
+  cacheFieldDisplayNames(frames);
+
   let series: XYSeries[] = [];
 
   const { palette, getColorByName } = config.theme2.visualization;
 
-  panelOpts.series.forEach((seriesCfg) => {
-    let xMatcher = getFieldMatcher(seriesCfg.x.field.matcher);
-    let yMatcher = getFieldMatcher(seriesCfg.y.field.matcher);
-    let yExclude = seriesCfg.y.field.exclude ? getFieldMatcher(seriesCfg.y.field.exclude) : null;
-    let colorMatcher = seriesCfg.color?.field ? getFieldMatcher(seriesCfg.color.field.matcher) : null;
-    let sizeMatcher = seriesCfg.size?.field ? getFieldMatcher(seriesCfg.size.field.matcher) : null;
+  mappedSeries.forEach((seriesCfg) => {
+    let xMatcher = getFieldMatcher(seriesCfg.x.matcher);
+    let yMatcher = getFieldMatcher(seriesCfg.y?.matcher ?? {
+      id: FieldMatcherID.byType,
+      options: 'number',
+    });
+    let yExclude = seriesCfg.y?.exclude ? getFieldMatcher(seriesCfg.y.exclude) : null;
+    let colorMatcher = seriesCfg.color ? getFieldMatcher(seriesCfg.color.matcher) : null;
+    let sizeMatcher = seriesCfg.size ? getFieldMatcher(seriesCfg.size.matcher) : null;
     // let frameMatcher = seriesCfg.frame ? getFrameMatchers(seriesCfg.frame) : null;
-    let frameMatcher = seriesCfg.frame ? getFrameMatcher2(seriesCfg.frame) : null;
+    let frameMatcher = seriesCfg.frame ? getFrameMatcher2(seriesCfg.frame.matcher) : null;
 
     // loop over all frames and fields, adding a new series for each y dim
     frames.forEach((frame, frameIdx) => {
@@ -76,49 +86,44 @@ export function prepXYSeries(panelOpts: PanelOpts, frames: DataFrame[]) {
           }
 
           // in manual mode only add single series for this frame
-          if (panelOpts.mapping === SeriesMapping2.Manual && frameSeries.length > 0) {
+          if (mapping === SeriesMapping.Manual && frameSeries.length > 0) {
             return;
           }
 
           // if we match non-excluded y, create series
           if (yMatcher(field, frame, frames) && (yExclude == null || !yExclude(field, frame, frames))) {
             let y = field;
-            let name = seriesCfg.name ?? getFieldDisplayName(y, frame, frames); // `Series ${seriesIdx + 1}`
+            let name = getFieldDisplayName(y, frame, frames); // `Series ${seriesIdx + 1}`
 
             let ser: XYSeries = {
+              // these typically come from y field
               name,
+
+              showPoints: VisibilityMode.Always, // VisibilityMode.Always
+
+              showLine: y.config.custom.show !== ScatterShow.Points,
+              lineWidth: y.config.custom.lineWidth ?? 2,
+              lineStyle: y.config.custom.lineStyle,
+              // lineColor: () => seriesColor,
               x: {
-                field: {
-                  value: x!,
-                },
+                field: x!,
               },
               y: {
-                field: {
-                  value: y,
-                },
+                field: y,
               },
-              color: {
-                fixed: {
-                  value: seriesCfg.color?.fixed?.value ?? '', // default will be set after all series are added (below)
-                },
-              },
-              size: {
-                fixed: {
-                  value: seriesCfg.size?.fixed?.value ?? 5, // default fixed size
-                },
-              },
+              color: {},
+              size: {},
             };
 
             if (color != null) {
-              ser.color.field = { value: color };
+              ser.color.field = color;
             }
 
             if (size != null) {
-              ser.size.field = {
-                value: size,
-                min: seriesCfg.size?.field?.min ?? 5, // default min
-                max: seriesCfg.size?.field?.max ?? 100, // default max
-              }; // default range
+              ser.size.field = size;
+              ser.size.min = size.config.custom.pointSizeMin ?? 5;
+              ser.size.max = size.config.custom.pointSizeMax ?? 100;
+              // ser.size.mode =
             }
 
             frameSeries.push(ser);
@@ -140,14 +145,37 @@ export function prepXYSeries(panelOpts: PanelOpts, frames: DataFrame[]) {
     // TODO: could not create series, skip & show error?
   } else {
     // assign classic palette colors by index, as fallbacks for all series
+
+    let paletteIdx = 0;
+
+    // todo: populate min, max, mode from field + hints
     series.forEach((s, i) => {
-      s.color.fixed.value = getColorByName(palette[i % palette.length]);
+      if (s.color.field == null) {
+        // derive fixed color from y field config
+        let colorCfg = s.y.field.config.color!;
+
+        let value = '';
+
+        if (colorCfg.mode === FieldColorModeId.PaletteClassic) {
+          value = getColorByName(palette[paletteIdx++ % palette.length]); // todo: do this via state.seriesIdx and re-init displayProcessor
+        } else if (colorCfg.mode === FieldColorModeId.Fixed) {
+          value = getColorByName(colorCfg.fixedColor!);
+        }
+
+        s.color.fixed = value;
+      }
+
+      if (s.size.field == null) {
+        // derive fixed size from y field config
+        s.size.fixed = s.y.field.config.custom.pointSize.fixed ?? 5;
+        // ser.size.mode =
+      }
     });
 
     // strip common prefix from names
     let parts = series[0].name.split(' ');
 
-    if (parts.length > 1 && series.every(s => s.name.startsWith(parts[0]))) {
+    if (parts.length > 1 && series.every((s) => s.name.startsWith(parts[0]))) {
       series.forEach((s, i) => {
         s.name = s.name.slice(parts[0].length);
       });
