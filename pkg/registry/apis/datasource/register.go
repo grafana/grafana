@@ -61,6 +61,7 @@ func RegisterAPIService(
 	all := pluginStore.Plugins(context.Background(), plugins.TypeDataSource)
 	ids := []string{
 		"grafana-testdata-datasource",
+		//	"prometheus",
 	}
 
 	for _, ds := range all {
