@@ -121,7 +121,7 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 		CMDType: commandType,
 	}
 
-	if true { // toggles.IsEnabledGlobally(featuremgmt.FlagExpressionParser) {
+	if toggles.IsEnabledGlobally(featuremgmt.FlagExpressionParser) {
 		rn.QueryType, err = getExpressionCommandTypeString(rn.Query)
 		if err != nil {
 			return nil, err // should not happen because the command was parsed first thing
