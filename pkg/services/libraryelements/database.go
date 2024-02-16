@@ -284,7 +284,7 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		builder := db.NewSqlBuilder(cfg, features, store.GetDialect(), recursiveQueriesAreSupported)
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", ? as folder_name ", cmd.FolderName)
-		builder.Write(", IFNULL((SELECT folder.uid FROM folder WHERE folder.id = le.folder_id), '') as folder_uid ")
+		builder.Write(", COALESCE((SELECT folder.uid FROM folder WHERE folder.id = le.folder_id), '') as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 		// nolint:staticcheck
