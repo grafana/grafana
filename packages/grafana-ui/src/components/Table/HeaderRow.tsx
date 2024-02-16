@@ -24,7 +24,7 @@ export const HeaderRow = (props: HeaderRowProps) => {
       {headerGroups.map((headerGroup: HeaderGroup) => {
         const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
         return (
-          <div
+          <tr
             className={tableStyles.thead}
             {...headerGroupProps}
             key={key}
@@ -34,7 +34,7 @@ export const HeaderRow = (props: HeaderRowProps) => {
             {headerGroup.headers.map((column: Column, index: number) =>
               renderHeaderCell(column, tableStyles, showTypeIcons)
             )}
-          </div>
+          </tr>
         );
       })}
     </div>
@@ -53,7 +53,7 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?:
   headerProps.style.justifyContent = column.justifyContent;
 
   return (
-    <div className={tableStyles.headerCell} {...headerProps} role="columnheader">
+    <th className={tableStyles.headerCell} {...headerProps} role="columnheader">
       {column.canSort && (
         <>
           <button {...column.getSortByToggleProps()} className={tableStyles.headerCellLabel}>
@@ -74,6 +74,6 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?:
       {!column.canSort && column.render('Header')}
       {!column.canSort && column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
       {column.canResize && <div {...column.getResizerProps()} className={tableStyles.resizeHandle} />}
-    </div>
+    </th>
   );
 }

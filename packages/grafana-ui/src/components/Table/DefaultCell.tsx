@@ -62,7 +62,7 @@ export const DefaultCell = (props: TableCellProps) => {
   }
 
   return (
-    <div
+    <td
       {...cellProps}
       onMouseEnter={showActions ? onMouseEnter : undefined}
       onMouseLeave={showActions ? onMouseLeave : undefined}
@@ -90,7 +90,7 @@ export const DefaultCell = (props: TableCellProps) => {
       )}
 
       {hover && showActions && <CellActions {...props} previewMode="text" showFilters={showFilters} />}
-    </div>
+    </td>
   );
 };
 

@@ -230,22 +230,12 @@ export const RowsList = (props: RowsListProps) => {
         };
       }
       return (
-        <div
+        <tr
           {...row.getRowProps({ style, ...additionalProps })}
           className={cx(tableStyles.row, expandedRowStyle)}
           onMouseEnter={() => onRowHover(index, data)}
           onMouseLeave={onRowLeave}
         >
-          {/*add the nested data to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
-          {nestedDataField && tableState.expanded[row.id] && (
-            <ExpandedRow
-              nestedData={nestedDataField}
-              tableStyles={tableStyles}
-              rowIndex={index}
-              width={width}
-              cellHeight={cellHeight}
-            />
-          )}
           {row.cells.map((cell: Cell, index: number) => (
             <TableCell
               key={index}
@@ -259,7 +249,7 @@ export const RowsList = (props: RowsListProps) => {
               disableVirtualization={disableVirtualization}
             />
           ))}
-        </div>
+        </tr>
       );
     },
     [

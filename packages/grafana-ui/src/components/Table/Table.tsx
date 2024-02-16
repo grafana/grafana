@@ -285,7 +285,7 @@ export const Table = memo((props: Props) => {
   }
 
   return (
-    <div
+    <table
       {...getTableProps()}
       className={tableStyles.table}
       aria-label={ariaLabel}
@@ -339,7 +339,7 @@ export const Table = memo((props: Props) => {
         </div>
       </CustomScrollbar>
       {paginationEl}
-    </div>
+    </table>
   );
 });
 
