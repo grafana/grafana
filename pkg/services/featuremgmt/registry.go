@@ -1222,12 +1222,12 @@ var (
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 			Expression:      "true", // enabled by default
-		}
+		},
 		{
-			Name:         "scopes",
-			Description:  "Enables the use of scopes in Grafana",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDashboardsSquad,
+			Name:        "scopes",
+			Description: "Enables the use of scopes in Grafana",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
 		},
 	}
 )
