@@ -41,7 +41,6 @@ var SharedWithMeFolderPermission = accesscontrol.Permission{
 	Scope:  dashboards.ScopeFoldersProvider.GetResourceScopeUID(folder.SharedWithMeFolderUID),
 }
 
-// todo: Remove userSvc and userLogin from search
 func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, features featuremgmt.FeatureToggles) (*Service, error) {
 	service := ProvideOSSService(cfg, database.ProvideService(db), cache, features)
