@@ -3,15 +3,115 @@ package schedule
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
+
+// RulesStore is a store that provides alert rules for scheduling
+type RulesStore interface {
+	GetAlertRulesKeysForScheduling(ctx context.Context) ([]models.AlertRuleKeyWithVersion, error)
+	GetAlertRulesForScheduling(ctx context.Context, query *models.GetAlertRulesForSchedulingQuery) error
+}
+
+type FetcherCfg struct {
+	ReloadInterval       time.Duration
+	DisableGrafanaFolder bool
+}
+
+// BackgroundFetcher periodically refreshes rules and folders in the background.
+type BackgroundFetcher struct {
+	cfg       FetcherCfg
+	ticker    *time.Ticker
+	ruleStore RulesStore
+	metrics   *metrics.Scheduler
+	logger    log.Logger
+
+	mu                 sync.Mutex
+	latestRules        []*models.AlertRule
+	latestFolderTitles map[models.FolderKey]string
+}
+
+func NewBackgroundFetcher(cfg FetcherCfg, ruleStore RulesStore, metrics *metrics.Scheduler, logger log.Logger) *BackgroundFetcher {
+	if cfg.ReloadInterval <= 0 {
+		logger.Warn("A nonpositive reload interval was provided, falling back to the default")
+		cfg.ReloadInterval = setting.SchedulerBaseInterval
+	}
+	return &BackgroundFetcher{
+		cfg:                cfg,
+		ticker:             time.NewTicker(cfg.ReloadInterval),
+		ruleStore:          ruleStore,
+		metrics:            metrics,
+		logger:             logger,
+		latestRules:        make([]*models.AlertRule, 0),
+		latestFolderTitles: make(map[models.FolderKey]string),
+	}
+}
+
+// Refresh forces a synchronous refresh and blocks until the refresh is done.
+// This is thread-safe with the periodic background refresh.
+func (f *BackgroundFetcher) Refresh(ctx context.Context) {
+	f.updateSchedulableAlertRules(ctx)
+}
+
+func (f *BackgroundFetcher) Run(ctx context.Context) error {
+	f.logger.Info("Starting rules fetcher")
+	for {
+		select {
+		case <-f.ticker.C:
+			f.logger.Debug("Refreshing rules from storage")
+			f.updateSchedulableAlertRules(context.Background())
+		case <-ctx.Done():
+			f.ticker.Stop()
+			f.logger.Info("Fetcher is shut down")
+			return nil
+		}
+	}
+}
+
+func (f *BackgroundFetcher) Rules() ([]*models.AlertRule, map[models.FolderKey]string) {
+	return f.latestRules, f.latestFolderTitles
+}
+
+func (f *BackgroundFetcher) updateSchedulableAlertRules(ctx context.Context) {
+	start := time.Now()
+	defer func() {
+		f.metrics.UpdateSchedulableAlertRulesDuration.Observe(
+			time.Since(start).Seconds(),
+		)
+	}()
+
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	q := models.GetAlertRulesForSchedulingQuery{
+		PopulateFolders: !f.cfg.DisableGrafanaFolder,
+	}
+	if err := f.ruleStore.GetAlertRulesForScheduling(ctx, &q); err != nil {
+		f.logger.Error("Failed to fetch alert rules", "error", err)
+		return
+	}
+
+	f.latestRules = q.ResultRules
+	f.latestFolderTitles = q.ResultFoldersTitles
+
+	f.logger.Debug("Alert rules fetched", "rulesCount", len(f.latestRules), "foldersCount", len(f.latestFolderTitles))
+}
 
 // updateSchedulableAlertRules updates the alert rules for the scheduler.
 // It returns diff that contains rule keys that were updated since the last poll,
 // and an error if the database query encountered problems.
 func (sch *schedule) updateSchedulableAlertRules(ctx context.Context) (diff, error) {
+	if sch.fetchAsync {
+		r, f := sch.fetcher.Rules()
+		d := sch.schedulableAlertRules.set(r, f)
+		sch.log.Debug("Alert rules loaded for tick", "rulesCount", len(r), "foldersCount", len(f), "updatedRules", len(d.updated))
+		return d, nil
+	}
+
 	start := time.Now()
 	defer func() {
 		sch.metrics.UpdateSchedulableAlertRulesDuration.Observe(

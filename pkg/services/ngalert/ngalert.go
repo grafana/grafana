@@ -142,6 +142,7 @@ type AlertNG struct {
 	Log                 log.Logger
 	renderService       rendering.Service
 	ImageService        image.ImageService
+	fetcher             *schedule.BackgroundFetcher
 	schedule            schedule.ScheduleService
 	stateManager        *state.Manager
 	folderService       folder.Service
@@ -267,14 +268,16 @@ func (ng *AlertNG) init() error {
 
 	ng.AlertsRouter = alertsRouter
 
+	disableGrafanaFolder := ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel)
 	evalFactory := eval.NewEvaluatorFactory(ng.Cfg.UnifiedAlerting, ng.DataSourceCache, ng.ExpressionService, ng.pluginsStore)
 	schedCfg := schedule.SchedulerCfg{
 		MaxAttempts:          ng.Cfg.UnifiedAlerting.MaxAttempts,
 		C:                    clk,
 		BaseInterval:         ng.Cfg.UnifiedAlerting.BaseInterval,
 		MinRuleInterval:      ng.Cfg.UnifiedAlerting.MinInterval,
-		DisableGrafanaFolder: ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel),
+		DisableGrafanaFolder: disableGrafanaFolder,
 		JitterEvaluations:    schedule.JitterStrategyFrom(ng.Cfg.UnifiedAlerting, ng.FeatureToggles),
+		FetchAsync:           ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertingFetchRulesAsync),
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
 		RuleStore:            ng.store,
@@ -312,13 +315,19 @@ func (ng *AlertNG) init() error {
 		statePersister = state.NewAsyncStatePersister(logger, ticker, cfg)
 	}
 	stateManager := state.NewManager(cfg, statePersister)
-	scheduler := schedule.NewScheduler(schedCfg, stateManager)
+	fetcherCfg := schedule.FetcherCfg{
+		ReloadInterval:       ng.Cfg.UnifiedAlerting.BaseInterval,
+		DisableGrafanaFolder: disableGrafanaFolder,
+	}
+	fetcher := schedule.NewBackgroundFetcher(fetcherCfg, ng.store, ng.Metrics.GetSchedulerMetrics(), log.New("ngalert.scheduler.fetcher"))
+	scheduler := schedule.NewScheduler(schedCfg, stateManager, fetcher)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
 	if !ng.Cfg.UnifiedAlerting.ReservedLabels.IsReservedLabelDisabled(models.FolderTitleLabel) {
 		subscribeToFolderChanges(ng.Log, ng.bus, ng.store)
 	}
 
+	ng.fetcher = fetcher
 	ng.stateManager = stateManager
 	ng.schedule = scheduler
 
@@ -438,6 +447,14 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		//
 		ng.stateManager.Warm(ctx, ng.store)
 
+		if ng.FeatureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingFetchRulesAsync) {
+			// Make sure we've at least tried to load rules before the scheduler starts.
+			ng.fetcher.Refresh(ctx)
+
+			children.Go(func() error {
+				return ng.fetcher.Run(subCtx)
+			})
+		}
 		children.Go(func() error {
 			return ng.schedule.Run(subCtx)
 		})

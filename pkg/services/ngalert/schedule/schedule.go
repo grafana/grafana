@@ -44,10 +44,8 @@ type AlertsSender interface {
 	Send(ctx context.Context, key ngmodels.AlertRuleKey, alerts definitions.PostableAlerts)
 }
 
-// RulesStore is a store that provides alert rules for scheduling
-type RulesStore interface {
-	GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodels.AlertRuleKeyWithVersion, error)
-	GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error
+type RulesFetcher interface {
+	Rules() ([]*ngmodels.AlertRule, map[ngmodels.FolderKey]string)
 }
 
 type schedule struct {
@@ -75,6 +73,7 @@ type schedule struct {
 
 	evaluatorFactory eval.EvaluatorFactory
 
+	fetcher   RulesFetcher
 	ruleStore RulesStore
 
 	stateManager *state.Manager
@@ -82,6 +81,7 @@ type schedule struct {
 	appURL               *url.URL
 	disableGrafanaFolder bool
 	jitterEvaluations    JitterStrategy
+	fetchAsync           bool
 
 	metrics *metrics.Scheduler
 
@@ -106,6 +106,7 @@ type SchedulerCfg struct {
 	DisableGrafanaFolder bool
 	AppURL               *url.URL
 	JitterEvaluations    JitterStrategy
+	FetchAsync           bool
 	EvaluatorFactory     eval.EvaluatorFactory
 	RuleStore            RulesStore
 	Metrics              *metrics.Scheduler
@@ -115,7 +116,7 @@ type SchedulerCfg struct {
 }
 
 // NewScheduler returns a new schedule.
-func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
+func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager, fetcher RulesFetcher) *schedule {
 	const minMaxAttempts = int64(1)
 	if cfg.MaxAttempts < minMaxAttempts {
 		cfg.Log.Warn("Invalid scheduler maxAttempts, using a safe minimum", "configured", cfg.MaxAttempts, "actual", minMaxAttempts)
@@ -129,11 +130,13 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		baseInterval:          cfg.BaseInterval,
 		log:                   cfg.Log,
 		evaluatorFactory:      cfg.EvaluatorFactory,
+		fetcher:               fetcher,
 		ruleStore:             cfg.RuleStore,
 		metrics:               cfg.Metrics,
 		appURL:                cfg.AppURL,
 		disableGrafanaFolder:  cfg.DisableGrafanaFolder,
 		jitterEvaluations:     cfg.JitterEvaluations,
+		fetchAsync:            cfg.FetchAsync,
 		stateManager:          stateManager,
 		minRuleInterval:       cfg.MinRuleInterval,
 		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},

@@ -658,4 +658,8 @@ const (
 	// FlagGroupByVariable
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
+
+	// FlagAlertingFetchRulesAsync
+	// Eventually consistent loading of alert rules from the database
+	FlagAlertingFetchRulesAsync = "alertingFetchRulesAsync"
 )
