@@ -6,10 +6,10 @@ import { ManualEditor } from './ManualEditor';
 import { getScatterFieldConfig } from './config';
 import { xyChartMigrationHandler } from './migrations';
 import { FieldConfig, defaultFieldConfig } from './panelcfg.gen';
-import { Options2 } from './types2';
+import { Options } from './types2';
 import { XYChartPanel2 } from './v2/XYChartPanel';
 
-export const plugin = new PanelPlugin<Options2, FieldConfig>(XYChartPanel2)
+export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
   .setMigrationHandler(xyChartMigrationHandler)
   .useFieldConfig(getScatterFieldConfig(defaultFieldConfig))
   .setPanelOptions((builder) => {

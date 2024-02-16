@@ -101,6 +101,16 @@ export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsAr
           },
           showIf: (c) => c.show !== ScatterShow.Lines,
         })
+        .addNumberInput({
+          path: 'pointSize.min',
+          name: 'Min point size',
+          showIf: (c) => c.show !== ScatterShow.Lines,
+        })
+        .addNumberInput({
+          path: 'pointSize.max',
+          name: 'Max point size',
+          showIf: (c) => c.show !== ScatterShow.Lines,
+        })
         // .addSliderInput({
         //   path: 'fillOpacity',
         //   name: 'Fill opacity',

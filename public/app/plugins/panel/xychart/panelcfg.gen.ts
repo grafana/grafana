@@ -50,7 +50,7 @@ export interface FieldConfig extends common.HideableFieldConfig, common.AxisConf
 }
 
 export const defaultFieldConfig: Partial<FieldConfig> = {
-  label: common.VisibilityMode.Auto,
+  label: common.VisibilityMode.Always,
   show: ScatterShow.Points,
 };
 

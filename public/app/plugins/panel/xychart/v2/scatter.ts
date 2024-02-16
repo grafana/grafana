@@ -68,18 +68,8 @@ export const prepConfig = (
           // lineStyle: common.LineStyle;
           // showPoints: common.VisibilityMode;
 
-          // let showLine0 = scatterInfo.y.field.config.custom.showLine;
-
           let showLine = scatterInfo.showLine;
           let showPoints = scatterInfo.showPoints === VisibilityMode.Always;
-          if (!showPoints && scatterInfo.showPoints === VisibilityMode.Auto) {
-            showPoints = d[0].length < 1000;
-          }
-
-          // always show something
-          if (!showPoints && !showLine) {
-            showLine = true;
-          }
 
           let strokeWidth = 1;
 
@@ -448,11 +438,43 @@ export function prepData(xySeries: XYSeries[]): FacetedData {
     ...xySeries.map((s, idx) => {
       let len = s.x.field.values.length;
 
+      let diams: number[];
+
+      if (s.size.field != null) {
+        let { min, max } = s.size.field.config.custom.pointSize;
+
+        // todo: this scaling should be in renderer from raw values (not by passing css pixel diams via data)
+        let minPx = min ** 2;
+        let maxPx = max ** 2;
+        // use quadratic size scaling in byValue modes
+        let pxRange = maxPx - minPx;
+
+        // todo: add shared, local, or key-group min/max option?
+        // todo: better min/max with ignoring non-finite values
+        // todo: allow this to come from fieldConfig min/max ? or field.state.min/max (shared)
+        let vals = s.size.field.values;
+        let minVal = Math.min(...vals);
+        let maxVal = Math.max(...vals);
+        let valRange = maxVal - minVal;
+
+        diams = Array(len);
+
+        for (let i = 0; i < vals.length; i++) {
+          let val = vals[i];
+
+          let valPct = (val - minVal) / valRange;
+          let pxArea = minPx + valPct * pxRange;
+          diams[i] = pxArea ** 0.5;
+        }
+      } else {
+        diams = Array(len).fill(s.size.fixed!);
+      }
+
       return [
         s.x.field.values, // X
         s.y.field.values, // Y
-        Array(len).fill(s.size.fixed!),
-        Array(len).fill(s.color.fixed!),
+        diams,  // TODO: fails for by value
+        Array(len).fill(s.color.fixed!), // TODO: fails for by value
       ];
     }),
   ];
