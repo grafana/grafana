@@ -29,7 +29,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
     error: errorInContactPointStatus,
     contactPoints,
     refetchReceivers,
-  } = useContactPointsWithStatus({ includePoliciesCount: false });
+  } = useContactPointsWithStatus({ includePoliciesCount: false, skipFetchingReceiverStatus: true });
   const [selectedContactPointWithMetadata, setSelectedContactPointWithMetadata] = useState<
     ContactPointWithMetadata | undefined
   >();

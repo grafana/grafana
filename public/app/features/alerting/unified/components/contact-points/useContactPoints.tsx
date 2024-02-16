@@ -29,10 +29,14 @@ const RECEIVER_STATUS_POLLING_INTERVAL = 10 * 1000; // 10 seconds
  */
 interface UseContactPointsWithStatusOptions {
   includePoliciesCount: boolean;
+  skipFetchingReceiverStatus?: boolean;
 }
 
 export function useContactPointsWithStatus(
-  { includePoliciesCount }: UseContactPointsWithStatusOptions = { includePoliciesCount: true }
+  { includePoliciesCount, skipFetchingReceiverStatus }: UseContactPointsWithStatusOptions = {
+    includePoliciesCount: true,
+    skipFetchingReceiverStatus: false,
+  }
 ) {
   const { selectedAlertmanager, isGrafanaAlertmanager } = useAlertmanager();
   const { installed: onCallPluginInstalled, loading: onCallPluginStatusLoading } = usePluginBridge(
@@ -45,8 +49,8 @@ export function useContactPointsWithStatus(
     refetchOnReconnect: true,
     // re-fetch status every so often for up-to-date information
     pollingInterval: RECEIVER_STATUS_POLLING_INTERVAL,
-    // skip fetching receiver statuses if not Grafana AM
-    skip: !isGrafanaAlertmanager,
+    // skip fetching receiver statuses if not Grafana AM or if we're explicitly told to skip
+    skip: !isGrafanaAlertmanager || skipFetchingReceiverStatus,
   });
 
   // fetch notifier metadata from the Grafana API if we're using a Grafana AM – this will be used to add additional
