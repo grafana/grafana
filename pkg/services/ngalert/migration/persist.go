@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"sort"
 
-	alertingNotify "github.com/grafana/alerting/notify"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
@@ -558,24 +556,7 @@ func (sync *sync) extractChannels(ctx context.Context, alert *legacymodels.Alert
 func (sync *sync) validateAlertmanagerConfig(config *apiModels.PostableUserConfig) error {
 	for _, r := range config.AlertmanagerConfig.Receivers {
 		for _, gr := range r.GrafanaManagedReceivers {
-			data, err := gr.Settings.MarshalJSON()
-			if err != nil {
-				return err
-			}
-			var (
-				cfg = &alertingNotify.GrafanaIntegrationConfig{
-					UID:                   gr.UID,
-					Name:                  gr.Name,
-					Type:                  gr.Type,
-					DisableResolveMessage: gr.DisableResolveMessage,
-					Settings:              data,
-					SecureSettings:        gr.SecureSettings,
-				}
-			)
-
-			_, err = alertingNotify.BuildReceiverConfiguration(context.Background(), &alertingNotify.APIReceiver{
-				GrafanaIntegrations: alertingNotify.GrafanaIntegrations{Integrations: []*alertingNotify.GrafanaIntegrationConfig{cfg}},
-			}, sync.getDecryptedValue)
+			err := validateReceiver(gr, sync.getDecryptedValue)
 			if err != nil {
 				return err
 			}
