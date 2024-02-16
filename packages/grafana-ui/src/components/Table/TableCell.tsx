@@ -41,6 +41,8 @@ export const TableCell = ({
     if (disableVirtualization) {
       cellProps.style.position = 'relative';
       cellProps.style.left = undefined;
+      cellProps.style.height = 'auto';
+      cellProps.style.textWrap = 'pretty';
     }
   }
 
