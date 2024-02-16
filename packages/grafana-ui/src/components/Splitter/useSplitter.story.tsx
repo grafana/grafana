@@ -2,15 +2,15 @@ import { css, cx } from '@emotion/css';
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
-import { Splitter, useTheme2 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 
 import mdx from './Splitter.mdx';
+import { UseSplitterOptions, useSplitter } from './useSplitter';
 
 const meta: Meta = {
-  title: 'General/Layout/Splitter',
-  component: Splitter,
+  title: 'General/Layout/useSplitter',
   parameters: {
     docs: {
       page: mdx,
@@ -21,10 +21,12 @@ const meta: Meta = {
   },
   argTypes: {
     initialSize: { control: { type: 'number', min: 0.1, max: 1 } },
+    direction: { control: { type: 'radio' }, options: ['row', 'column'] },
+    dragPosition: { control: { type: 'radio' }, options: ['start', 'middle', 'end'] },
   },
 };
 
-export const Basic: StoryFn = (args) => {
+export const Basic: StoryFn<UseSplitterOptions> = (options) => {
   const theme = useTheme2();
   const paneStyles = css({
     display: 'flex',
@@ -35,13 +37,22 @@ export const Basic: StoryFn = (args) => {
     height: '100%',
   });
 
+  const { containerProps, firstPaneProps, secondPaneProps, splitterProps } = useSplitter({
+    ...options,
+  });
+
   return (
     <DashboardStoryCanvas>
       <div style={{ display: 'flex', width: '700px', height: '500px' }}>
-        <Splitter {...args}>
-          <div className={paneStyles}>Primary</div>
-          <div className={paneStyles}>Secondary</div>
-        </Splitter>
+        <div {...containerProps}>
+          <div {...firstPaneProps} className={cx(firstPaneProps.className, paneStyles)}>
+            Primary
+          </div>
+          <div {...splitterProps} />
+          <div {...secondPaneProps} className={cx(firstPaneProps.className, paneStyles)}>
+            Secondary
+          </div>
+        </div>
       </div>
     </DashboardStoryCanvas>
   );
