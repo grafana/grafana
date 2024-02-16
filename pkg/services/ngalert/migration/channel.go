@@ -3,10 +3,12 @@ package migration
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
+	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 
@@ -74,14 +76,38 @@ func (om *OrgMigration) createReceiver(c *legacymodels.AlertNotification) (*apim
 		return nil, err
 	}
 
-	return &apimodels.PostableGrafanaReceiver{
+	recv := &apimodels.PostableGrafanaReceiver{
 		UID:                   c.UID,
 		Name:                  c.Name,
 		Type:                  c.Type,
 		DisableResolveMessage: c.DisableResolveMessage,
 		Settings:              data,
 		SecureSettings:        secureSettings,
-	}, nil
+	}
+	err = validateReceiver(recv, om.encryptionService.GetDecryptedValue)
+	if err != nil {
+		return nil, err
+	}
+	return recv, nil
+}
+
+// validateReceiver validates a receiver by building the configuration and checking for errors.
+func validateReceiver(receiver *apimodels.PostableGrafanaReceiver, decrypt func(ctx context.Context, sjd map[string][]byte, key, fallback string) string) error {
+	var (
+		cfg = &alertingNotify.GrafanaIntegrationConfig{
+			UID:                   receiver.UID,
+			Name:                  receiver.Name,
+			Type:                  receiver.Type,
+			DisableResolveMessage: receiver.DisableResolveMessage,
+			Settings:              json.RawMessage(receiver.Settings),
+			SecureSettings:        receiver.SecureSettings,
+		}
+	)
+
+	_, err := alertingNotify.BuildReceiverConfiguration(context.Background(), &alertingNotify.APIReceiver{
+		GrafanaIntegrations: alertingNotify.GrafanaIntegrations{Integrations: []*alertingNotify.GrafanaIntegrationConfig{cfg}},
+	}, decrypt)
+	return err
 }
 
 // createRoute creates a route from a legacy notification channel, and matches using a label based on the channel UID.
