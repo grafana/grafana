@@ -718,10 +718,11 @@ var (
 		},
 		{
 			Name:         "angularDeprecationUI",
-			Description:  "Display new Angular deprecation-related UI features",
-			Stage:        FeatureStageExperimental,
+			Description:  "Display Angular warnings in dashboards and panels",
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "true", // Enabled by default
 		},
 		{
 			Name:         "dashgpt",
@@ -813,7 +814,8 @@ var (
 		{
 			Name:         "panelMonitoring",
 			Description:  "Enables panel monitoring through logs and measurements",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaDatavizSquad,
 			FrontendOnly: true,
 		},
@@ -1009,8 +1011,8 @@ var (
 		},
 		{
 			Name:         "ssoSettingsApi",
-			Description:  "Enables the SSO settings API",
-			Stage:        FeatureStageExperimental,
+			Description:  "Enables the SSO settings API and the OAuth configuration UIs in Grafana",
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        identityAccessTeam,
 		},
@@ -1053,11 +1055,10 @@ var (
 		},
 		{
 			Name:         "alertingSimplifiedRouting",
-			Description:  "Enables the simplified routing for alerting",
-			Stage:        FeatureStageExperimental,
+			Description:  "Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
 		},
 		{
 			Name:         "logRowsPopoverMenu",

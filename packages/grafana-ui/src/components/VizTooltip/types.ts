@@ -19,11 +19,14 @@ export enum ColorPlacement {
 
 export interface LabelValue {
   label: string;
-  value: string | number | null;
+  value: string;
   color?: string;
   colorIndicator?: ColorIndicator;
   colorPlacement?: ColorPlacement;
   isActive?: boolean;
+
+  // internal/tmp for sorting
+  numeric?: number;
 }
 
 export const DEFAULT_COLOR_INDICATOR = ColorIndicator.series;
