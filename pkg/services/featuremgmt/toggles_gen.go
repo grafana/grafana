@@ -388,7 +388,7 @@ const (
 	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
 
 	// FlagAngularDeprecationUI
-	// Display new Angular deprecation-related UI features
+	// Display Angular warnings in dashboards and panels
 	FlagAngularDeprecationUI = "angularDeprecationUI"
 
 	// FlagDashgpt

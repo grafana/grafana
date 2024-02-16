@@ -527,12 +527,15 @@
     {
       "metadata": {
         "name": "angularDeprecationUI",
-        "resourceVersion": "1707928895402",
-        "creationTimestamp": "2024-02-14T16:41:35Z"
+        "resourceVersion": "1708080773145",
+        "creationTimestamp": "2024-02-14T16:41:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-16 10:52:53.145203323 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Display new Angular deprecation-related UI features",
-        "stage": "experimental",
+        "description": "Display Angular warnings in dashboards and panels",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true
       }
