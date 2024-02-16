@@ -25,6 +25,12 @@ export interface UseSplitterOptions {
   // children: [React.ReactNode, React.ReactNode];
 }
 
+interface PaneOptions {
+  removed?: boolean;
+  defaultCollapsed?: boolean;
+  collapseSize?: number;
+}
+
 const PIXELS_PER_MS = 0.3 as const;
 const VERTICAL_KEYS = new Set(['ArrowUp', 'ArrowDown']);
 const HORIZONTAL_KEYS = new Set(['ArrowLeft', 'ArrowRight']);
@@ -371,8 +377,10 @@ function measureElement<T extends HTMLElement>(ref: T): MeasureResult {
   const savedWidth = ref.style.width;
   const savedHeight = ref.style.height;
   const savedFlex = ref.style.flexGrow;
+
   document.body.style.overflow = 'hidden';
   ref.style.flexGrow = '0';
+
   const { width: minWidth, height: minHeight } = ref.getBoundingClientRect();
 
   ref.style.flexGrow = '100';
@@ -382,6 +390,7 @@ function measureElement<T extends HTMLElement>(ref: T): MeasureResult {
   ref.style.width = savedWidth;
   ref.style.height = savedHeight;
   ref.style.flexGrow = savedFlex;
+  console.log('width', minWidth);
 
   return { minWidth, maxWidth, minHeight, maxHeight };
 }

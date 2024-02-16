@@ -23,10 +23,15 @@ const meta: Meta = {
     initialSize: { control: { type: 'number', min: 0.1, max: 1 } },
     direction: { control: { type: 'radio' }, options: ['row', 'column'] },
     dragPosition: { control: { type: 'radio' }, options: ['start', 'middle', 'end'] },
+    hasSecondPane: { type: 'boolean', options: [true, false] },
   },
 };
 
-export const Basic: StoryFn<UseSplitterOptions> = (options) => {
+interface StoryOptions extends UseSplitterOptions {
+  hasSecondPane: boolean;
+}
+
+export const Basic: StoryFn<StoryOptions> = (options) => {
   const theme = useTheme2();
   const paneStyles = css({
     display: 'flex',
@@ -49,9 +54,11 @@ export const Basic: StoryFn<UseSplitterOptions> = (options) => {
             Primary
           </div>
           <div {...splitterProps} />
-          <div {...secondPaneProps} className={cx(firstPaneProps.className, paneStyles)}>
-            Secondary
-          </div>
+          {options.hasSecondPane && (
+            <div {...secondPaneProps} className={cx(firstPaneProps.className, paneStyles)}>
+              Secondary
+            </div>
+          )}
         </div>
       </div>
     </DashboardStoryCanvas>
@@ -61,6 +68,7 @@ export const Basic: StoryFn<UseSplitterOptions> = (options) => {
 Basic.args = {
   direction: 'row',
   dragPosition: 'middle',
+  hasSecondPane: true,
 };
 
 export default meta;
