@@ -23,7 +23,7 @@ import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from '
 import { alertmanagerApi } from './api/alertmanagerApi';
 import { discoverAlertmanagerFeatures } from './api/buildInfo';
 import * as grafanaApp from './components/receivers/grafanaAppReceivers/grafanaApp';
-import { mockDataSource, MockDataSourceSrv, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
+import { MockDataSourceSrv, mockDataSource, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
 import { defaultGroupBy } from './utils/amroutes';
 import { getAllDataSources } from './utils/config';
 import { ALERTMANAGER_NAME_QUERY_KEY } from './utils/constants';
@@ -759,18 +759,22 @@ describe('findRoutesMatchingFilters', () => {
     ],
   };
 
+  it('should not filter when we do not have any valid filters', () => {
+    expect(findRoutesMatchingFilters(simpleRouteTree, {})).toHaveProperty('filtersApplied', false);
+  });
+
   it('should not match non-existing', () => {
     expect(
       findRoutesMatchingFilters(simpleRouteTree, {
         labelMatchersFilter: [['foo', MatcherOperator.equal, 'bar']],
-      })
-    ).toHaveLength(0);
+      }).matchedRoutesWithPath.size
+    ).toBe(0);
 
-    expect(
-      findRoutesMatchingFilters(simpleRouteTree, {
-        contactPointFilter: 'does-not-exist',
-      })
-    ).toHaveLength(0);
+    const matchingRoutes = findRoutesMatchingFilters(simpleRouteTree, {
+      contactPointFilter: 'does-not-exist',
+    });
+
+    expect(matchingRoutes).toMatchSnapshot();
   });
 
   it('should work with only label matchers', () => {
@@ -778,8 +782,7 @@ describe('findRoutesMatchingFilters', () => {
       labelMatchersFilter: [['hello', MatcherOperator.equal, 'world']],
     });
 
-    expect(matchingRoutes).toHaveLength(1);
-    expect(matchingRoutes[0]).toHaveProperty('id', '1');
+    expect(matchingRoutes).toMatchSnapshot();
   });
 
   it('should work with only contact point and inheritance', () => {
@@ -787,9 +790,7 @@ describe('findRoutesMatchingFilters', () => {
       contactPointFilter: 'simple-receiver',
     });
 
-    expect(matchingRoutes).toHaveLength(2);
-    expect(matchingRoutes[0]).toHaveProperty('id', '1');
-    expect(matchingRoutes[1]).toHaveProperty('id', '2');
+    expect(matchingRoutes).toMatchSnapshot();
   });
 
   it('should work with non-intersecting filters', () => {
@@ -798,7 +799,7 @@ describe('findRoutesMatchingFilters', () => {
       contactPointFilter: 'does-not-exist',
     });
 
-    expect(matchingRoutes).toHaveLength(0);
+    expect(matchingRoutes).toMatchSnapshot();
   });
 
   it('should work with all filters', () => {
@@ -807,8 +808,7 @@ describe('findRoutesMatchingFilters', () => {
       contactPointFilter: 'simple-receiver',
     });
 
-    expect(matchingRoutes).toHaveLength(1);
-    expect(matchingRoutes[0]).toHaveProperty('id', '1');
+    expect(matchingRoutes).toMatchSnapshot();
   });
 });
 
