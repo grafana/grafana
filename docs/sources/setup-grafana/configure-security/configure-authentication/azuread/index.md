@@ -13,15 +13,15 @@ labels:
     - enterprise
     - oss
 menuTitle: Azure AD OAuth2
-title: Configure Azure AD/Entra ID OAuth2 authentication
+title: Configure Azure AD OAuth2 authentication
 weight: 800
 ---
 
-# Configure Microsoft Entra ID OAuth2 authentication
+# Configure Azure AD OAuth2 authentication
 
 The Azure AD authentication allows you to use an Azure Active Directory tenant as an identity provider for Grafana. You can use Azure AD application roles to assign users and groups to Grafana roles from the Azure Portal.
 
-## Create the Microsoft Entra ID application
+## Create the Azure AD application
 
 To enable the Azure AD OAuth2, register your application with Azure AD.
 
@@ -163,15 +163,15 @@ If the setting is set to `false`, the user is assigned the role of `Admin` of th
 
 ## Before you begin
 
-Ensure that you have followed the steps in [Create the Azure AD/Entra ID application](#create-the-azure-adentra-id-application) before you begin.
+Ensure that you have followed the steps in [Create the Azure AD application](#create-the-azure-ad-application) before you begin.
 
-## Configure Microsoft Entra ID authentication client using the Grafana UI
+## Configure Azure AD authentication client using the Grafana UI
 
 {{% admonition type="note" %}}
 Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle.
 {{% /admonition %}}
 
-As a Grafana Admin, you can configure your Microsoft Entra ID (formerly Azure AD) OAuth2 client from within Grafana using the GitLab UI. To do this, navigate to **Administration > Authentication > Azure AD** page and fill in the form. If you have a current configuration in the Grafana configuration file, the form will be pre-populated with those values. Otherwise the form will contain default values.
+As a Grafana Admin, you can configure your Azure AD OAuth2 client from within Grafana using the GitLab UI. To do this, navigate to **Administration > Authentication > Azure AD** page and fill in the form. If you have a current configuration in the Grafana configuration file, the form will be pre-populated with those values. Otherwise the form will contain default values.
 
 After you have filled in the form, click **Save** to save the configuration. If the save was successful, Grafana will apply the new configurations.
 
@@ -181,7 +181,7 @@ If you need to reset changes you made in the UI back to the default values, clic
 If you run Grafana in high availability mode, configuration changes may not get applied to all Grafana instances immediately. You may need to wait a few minutes for the configuration to propagate to all Grafana instances.
 {{% /admonition %}}
 
-## Configure Azure AD/Entra ID authentication client using the Terraform provider
+## Configure Azure AD authentication client using the Terraform provider
 
 {{% admonition type="note" %}}
 Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle. Supported in the Terraform provider since v2.12.0.
@@ -210,11 +210,11 @@ resource "grafana_sso_settings" "azuread_sso_settings" {
 
 Refer to [Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/sso_settings) for a complete reference on using the `grafana_sso_settings` resource.
 
-## Configure Azure AD/Entra ID authentication client using the Grafana configuration file
+## Configure Azure AD authentication client using the Grafana configuration file
 
 Ensure that you have access to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}).
 
-### Enable Microsoft Entra ID OAuth in Grafana
+### Enable Azure AD OAuth in Grafana
 
 Add the following to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}):
 
