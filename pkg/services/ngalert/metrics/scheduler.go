@@ -97,7 +97,7 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Namespace: Namespace,
 				Subsystem: Subsystem,
 				Name:      "simple_notification_rules",
-				Help:      "The number of simple notification rules.",
+				Help:      "The number of alert rules using simplified routing.",
 			},
 			[]string{"org"},
 		),
