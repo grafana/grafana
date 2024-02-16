@@ -55,7 +55,7 @@ func NewBackgroundFetcher(cfg FetcherCfg, ruleStore RulesStore, metrics *metrics
 // Refresh forces a synchronous refresh and blocks until the refresh is done.
 // This is thread-safe with the periodic background refresh.
 func (f *BackgroundFetcher) Refresh(ctx context.Context) {
-	f.updateSchedulableAlertRules(context.Background())
+	f.updateSchedulableAlertRules(ctx)
 }
 
 func (f *BackgroundFetcher) Run(ctx context.Context) error {
