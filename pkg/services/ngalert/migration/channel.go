@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	migmodels "github.com/grafana/grafana/pkg/services/ngalert/migration/models"
@@ -27,16 +28,17 @@ const (
 var ErrDiscontinued = errors.New("discontinued")
 
 // migrateChannels creates Alertmanager configs with migrated receivers and routes.
-func (om *OrgMigration) migrateChannels(channels []*legacymodels.AlertNotification) ([]*migmodels.ContactPair, error) {
+func (om *OrgMigration) migrateChannels(channels []*legacymodels.AlertNotification, log log.Logger) ([]*migmodels.ContactPair, error) {
 	// Create all newly migrated receivers from legacy notification channels.
 	pairs := make([]*migmodels.ContactPair, 0, len(channels))
 	for _, c := range channels {
+		l := log.New("type", c.Type, "name", c.Name, "uid", c.UID)
 		pair := &migmodels.ContactPair{
 			Channel: c,
 		}
 		receiver, err := om.createReceiver(c)
 		if err != nil {
-			om.log.Warn("Failed to create receiver", "type", c.Type, "name", c.Name, "uid", c.UID, "error", err)
+			l.Warn("Failed to create receiver", "error", err)
 			pair.Error = err
 			pairs = append(pairs, pair)
 			continue
@@ -45,7 +47,7 @@ func (om *OrgMigration) migrateChannels(channels []*legacymodels.AlertNotificati
 
 		route, err := createRoute(c, receiver.Name)
 		if err != nil {
-			om.log.Warn("Failed to create route", "type", c.Type, "name", c.Name, "uid", c.UID, "error", err)
+			l.Warn("Failed to create route", "error", err)
 			pair.Error = err
 			pairs = append(pairs, pair)
 			continue
