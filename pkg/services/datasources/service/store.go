@@ -129,7 +129,7 @@ func (ss *SqlStore) GetDataSourcesByType(ctx context.Context, query *datasources
 // GetDataSourcesByType returns all datasources for a given type or an error if the specified type is an empty string
 func (ss *SqlStore) GetProvisionedDataSources(ctx context.Context, query *datasources.GetProvisionedDataSourcesQuery) ([]*datasources.DataSource, error) {
 
-	provisionedQuery := "provisioned_from IS NOT NULL"
+	provisionedQuery := "provisioned_from IS NOT NULL AND provisioned_from <> \"\""
 
 	dataSources := make([]*datasources.DataSource, 0)
 	return dataSources, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
