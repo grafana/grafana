@@ -116,7 +116,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[], isSnapshot:
         panels.push(gridItem);
       }
     } else {
-      // convert old snapshot data to new snapshot format to be compatible with Scenes
+      // when rendering a snapshot created with the legacy Dashboards convert data to new snapshot format to be compatible with Scenes
       if (panel.snapshotData) {
         convertOldSnapshotToScenesSnapshot(panel);
       }
@@ -559,7 +559,7 @@ const convertSnapshotData = (snapshotData: DataFrameDTO[]): DataFrameJSON[] => {
 };
 
 // override panel datasource and targets with snapshot data using the Grafana datasource
-const convertOldSnapshotToScenesSnapshot = (panel: PanelModel) => {
+export const convertOldSnapshotToScenesSnapshot = (panel: PanelModel) => {
   // only old snapshots created with old dashboards contains snapshotData
   if (panel.snapshotData) {
     panel.datasource = GRAFANA_DATASOURCE_REF;
