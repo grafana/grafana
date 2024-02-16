@@ -438,7 +438,7 @@ func (ms *migrationService) applyTransition(ctx context.Context, t transition) e
 		}
 
 		if t.DryrunUpgrade {
-			l.Info("Dry-running upgrade", "cleanOnUpgrade", t.CleanOnUpgrade)
+			l.Info(fmt.Sprintf("Dry-running upgrade. To deactivate on-start dry-run, disable the feature flag '%s'", featuremgmt.FlagAlertingUpgradeDryrunOnStart), "cleanOnUpgrade", t.CleanOnUpgrade)
 		} else {
 			l.Info("Applying transition", "currentType", t.CurrentType, "desiredType", t.DesiredType, "cleanOnDowngrade", t.CleanOnDowngrade, "cleanOnUpgrade", t.CleanOnUpgrade)
 		}
