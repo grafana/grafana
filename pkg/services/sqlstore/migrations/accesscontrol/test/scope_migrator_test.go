@@ -2,7 +2,6 @@ package test
 
 import (
 	"fmt"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	acmig "github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"

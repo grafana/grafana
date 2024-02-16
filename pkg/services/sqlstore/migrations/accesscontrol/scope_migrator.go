@@ -22,7 +22,7 @@ type alertingScopeRemovalMigrator struct {
 }
 
 func (p *alertingScopeRemovalMigrator) SQL(dialect migrator.Dialect) string {
-	return "code migration"
+	return CodeMigrationSQL
 }
 
 func (p *alertingScopeRemovalMigrator) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
