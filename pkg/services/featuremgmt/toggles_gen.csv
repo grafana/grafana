@@ -135,7 +135,7 @@ dashboardSceneSolo,experimental,@grafana/dashboards-squad,false,false,true
 dashboardScene,experimental,@grafana/dashboards-squad,false,false,true
 panelFilterVariable,experimental,@grafana/dashboards-squad,false,false,true
 pdfTables,preview,@grafana/sharing-squad,false,false,false
-ssoSettingsApi,experimental,@grafana/identity-access-team,false,false,false
+ssoSettingsApi,preview,@grafana/identity-access-team,false,false,false
 canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
 logsInfiniteScrolling,experimental,@grafana/observability-logs,false,false,true
 flameGraphItemCollapsing,experimental,@grafana/observability-traces-and-profiling,false,false,true

@@ -1385,12 +1385,15 @@
     {
       "metadata": {
         "name": "ssoSettingsApi",
-        "resourceVersion": "1707928895402",
-        "creationTimestamp": "2024-02-14T16:41:35Z"
+        "resourceVersion": "1707991575438",
+        "creationTimestamp": "2024-02-14T16:41:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-15 10:06:15.438523 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables the SSO settings API",
-        "stage": "experimental",
+        "description": "Enables the SSO settings API and the OAuth configuration UIs in Grafana",
+        "stage": "preview",
         "codeowner": "@grafana/identity-access-team"
       }
     },
