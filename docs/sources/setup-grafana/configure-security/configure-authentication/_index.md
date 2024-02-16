@@ -189,10 +189,11 @@ You can also enable email lookup using the API:
 {{% admonition type="note" %}}
 Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud]({{< relref "../../../introduction/grafana-cloud" >}}) since Grafana v10.4.
 {{% /admonition %}}
+
 ```
 curl --request PUT \
   --url http://{slug}.grafana.com/api/admin/settings \
-  --header 'Authorization: Basic YWRtaW46cGFzc3dvcmQ=' \
+  --header 'Authorization: Bearer glsa_yourserviceaccounttoken' \
   --header 'Content-Type: application/json' \
   --data '{ "updates": { "auth": { "oauth_allow_insecure_email_lookup": "true" }}}'
 ```

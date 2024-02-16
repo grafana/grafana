@@ -171,17 +171,15 @@ Ensure that you have followed the steps in [Create the Azure AD/Entra ID applica
 Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle.
 {{% /admonition %}}
 
-As a Grafana Admin, you can configure generic OAuth2 client from within Grafana using the GitLab UI. To do this, navigate to **Administration > Authentication > AzureAD** page and fill in the form. If you have a current configuration in the Grafana configuration file then the form will be pre-populated with those values otherwise the form will contain default values.
+As a Grafana Admin, you can configure Azure AD/Entra ID OAuth2 client from within Grafana using the GitLab UI. To do this, navigate to **Administration > Authentication > Azure AD** page and fill in the form. If you have a current configuration in the Grafana configuration file then the form will be pre-populated with those values otherwise the form will contain default values.
 
 After you have filled in the form, click **Save** to save the configuration. If the save was successful, Grafana will apply the new configurations.
 
-In case you would like to reset your changes you made on the UI back to the default values, click **Reset**. After you have reset the changes, Grafana will apply the configuration from the Grafana configuration file (if there is any configuration) or the default values.
+If you need to reset changes you made in the UI back to the default values, click **Reset**. After you have reset the changes, Grafana will apply the configuration from the Grafana configuration file (if there is any configuration) or the default values.
 
 {{% admonition type="note" %}}
-If you run Grafana in high availability mode, it can happen that the configuration is not applied to all Grafana instances immediately. In this case you need to wait a minute to let the configuration propagate to all Grafana instances.
+If you run Grafana in high availability mode, configuration changes may not get applied to all Grafana instances immediately. You may need to wait a few minutes for the configuration to propagate to all Grafana instances.
 {{% /admonition %}}
-
-Refer to [configuration options]({{< relref "#configuration-options" >}}) for more information.
 
 ## Configure Azure AD/Entra ID authentication client using the Terraform provider
 
@@ -213,8 +211,6 @@ resource "grafana_sso_settings" "azuread_sso_settings" {
 Refer to [Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/sso_settings) for a complete reference on using the `grafana_sso_settings` resource.
 
 ## Configure Azure AD/Entra ID authentication client using the Grafana configuration file
-
-### Before you begin
 
 Ensure that you have access to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}).
 
@@ -428,9 +424,3 @@ See [Configure Grafana]({{< relref "../../../configure-grafana#authazuread" >}})
 # prevents the sync of org roles from AzureAD
 skip_org_role_sync = true
 ```
-
-## Configuration options
-
-The table below describes all GitLab OAuth configuration options. Like any other Grafana configuration, you can apply these options as environment variables.
-
-TODO: Add table with all configuration options

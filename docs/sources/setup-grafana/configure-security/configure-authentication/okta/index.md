@@ -26,14 +26,14 @@ To follow this guide, ensure you have permissions in your Okta workspace to crea
 Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle.
 {{% /admonition %}}
 
-As a Grafana Admin, you can configure generic OAuth2 client from within Grafana using the Okta UI. To do this, navigate to **Administration > Authentication > Okta** page and fill in the form. If you have a current configuration in the Grafana configuration file then the form will be pre-populated with those values otherwise the form will contain default values.
+As a Grafana Admin, you can configure Okta OAuth2 client from within Grafana using the Okta UI. To do this, navigate to **Administration > Authentication > Okta** page and fill in the form. If you have a current configuration in the Grafana configuration file then the form will be pre-populated with those values otherwise the form will contain default values.
 
 After you have filled in the form, click **Save**. If the save was successful, Grafana will apply the new configurations.
 
 If you need to reset changes you made in the UI back to the default values, click **Reset**. After you have reset the changes, Grafana will apply the configuration from the Grafana configuration file (if there is any configuration) or the default values.
 
 {{% admonition type="note" %}}
-If you run Grafana in high availability mode, it can happen that the configuration is not applied to all Grafana instances immediately. In this case you need to wait a minute to let the configuration propagate to all Grafana instances.
+If you run Grafana in high availability mode, configuration changes may not get applied to all Grafana instances immediately. You may need to wait a few minutes for the configuration to propagate to all Grafana instances.
 {{% /admonition %}}
 
 Refer to [configuration options]({{< relref "#configuration-options" >}}) for more information.
@@ -67,8 +67,6 @@ resource "grafana_sso_settings" "okta_sso_settings" {
 Go to [Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/sso_settings) for a complete reference on using the `grafana_sso_settings` resource.
 
 ## Configure Okta authentication client using the Grafana configuration file
-
-### Before you begin
 
 Ensure that you have access to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}).
 
