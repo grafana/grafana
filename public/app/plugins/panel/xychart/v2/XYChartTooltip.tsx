@@ -12,6 +12,7 @@ import { getTitleFromHref } from 'app/features/explore/utils/links';
 
 import { YValue } from '../types';
 import { XYSeries } from '../types2';
+
 import { fmt } from './utils';
 
 export interface Props {

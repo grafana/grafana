@@ -14,10 +14,11 @@ import {
 } from '@grafana/ui';
 import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 
+import { Options } from '../types2';
+
 import { XYChartTooltip } from './XYChartTooltip';
 import { prepConfig } from './scatter';
 // import { autoOpts, manualOpts } from './testProps';
-import { Options } from '../types2';
 import { prepSeries } from './utils';
 
 type Props2 = PanelProps<Options>;
