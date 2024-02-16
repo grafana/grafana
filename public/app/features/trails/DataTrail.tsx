@@ -27,8 +27,9 @@ import { DataTrailSettings } from './DataTrailSettings';
 import { DataTrailHistory, DataTrailHistoryStep } from './DataTrailsHistory';
 import { MetricScene } from './MetricScene';
 import { MetricSelectScene } from './MetricSelectScene';
+import { MetricsHeader } from './MetricsHeader';
 import { getTrailStore } from './TrailStore/TrailStore';
-import { MetricSelectedEvent, trailDS, LOGS_METRIC, VAR_DATASOURCE, VAR_FILTERS } from './shared';
+import { LOGS_METRIC, MetricSelectedEvent, trailDS, VAR_DATASOURCE, VAR_FILTERS } from './shared';
 import { getUrlForTrail } from './utils';
 
 export interface DataTrailState extends SceneObjectState {
@@ -136,7 +137,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
     // Add metric to adhoc filters baseFilter
     const filterVar = sceneGraph.lookupVariable(VAR_FILTERS, this);
     if (filterVar instanceof AdHocFiltersVariable) {
-      filterVar.state.set.setState({
+      filterVar.setState({
         baseFilters: getBaseFiltersForMetric(evt.payload),
       });
     }
@@ -162,7 +163,7 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
       }
     } else if (values.metric === null) {
       stateUpdate.metric = undefined;
-      stateUpdate.topScene = new MetricSelectScene({ showHeading: true });
+      stateUpdate.topScene = new MetricSelectScene({});
     }
 
     this.setState(stateUpdate);
@@ -171,9 +172,11 @@ export class DataTrail extends SceneObjectBase<DataTrailState> {
   static Component = ({ model }: SceneComponentProps<DataTrail>) => {
     const { controls, topScene, history } = model.useState();
     const styles = useStyles2(getStyles);
+    const showHeaderForFirstTimeUsers = getTrailStore().recent.length < 2;
 
     return (
       <div className={styles.container}>
+        {showHeaderForFirstTimeUsers && <MetricsHeader />}
         <history.Component model={history} />
         {controls && (
           <div className={styles.controls}>
@@ -192,7 +195,7 @@ function getTopSceneFor(metric?: string) {
   if (metric) {
     return new MetricScene({ metric: metric });
   } else {
-    return new MetricSelectScene({ showHeading: true });
+    return new MetricSelectScene({});
   }
 }
 
@@ -205,7 +208,7 @@ function getVariableSet(initialDS?: string, metric?: string, initialFilters?: Ad
         value: initialDS,
         pluginId: metric === LOGS_METRIC ? 'loki' : 'prometheus',
       }),
-      AdHocFiltersVariable.create({
+      new AdHocFiltersVariable({
         name: VAR_FILTERS,
         datasource: trailDS,
         layout: 'vertical',
@@ -221,7 +224,7 @@ function getStyles(theme: GrafanaTheme2) {
     container: css({
       flexGrow: 1,
       display: 'flex',
-      gap: theme.spacing(2),
+      gap: theme.spacing(1),
       minHeight: '100%',
       flexDirection: 'column',
     }),

@@ -131,16 +131,14 @@ func (fm *FeatureManager) GetFlags() []FeatureFlag {
 	return v
 }
 
-func (fm *FeatureManager) GetState() *FeatureManagerState {
-	return &FeatureManagerState{
-		RestartRequired: fm.restartRequired,
-		AllowEditing:    fm.Settings.AllowEditing,
-	}
-}
-
 // isFeatureEditingAllowed checks if the backend is properly configured to allow feature toggle changes from the UI
 func (fm *FeatureManager) IsFeatureEditingAllowed() bool {
 	return fm.Settings.AllowEditing && fm.Settings.UpdateWebhook != ""
+}
+
+// indicate if a change has been made (not that accurate, but better than nothing)
+func (fm *FeatureManager) IsRestartRequired() bool {
+	return fm.restartRequired
 }
 
 // Flags that can be edited
@@ -153,6 +151,7 @@ func (fm *FeatureManager) IsEditableFromAdminPage(key string) bool {
 		return false
 	}
 	return flag.Stage == FeatureStageGeneralAvailability ||
+		flag.Stage == FeatureStagePublicPreview ||
 		flag.Stage == FeatureStageDeprecated
 }
 

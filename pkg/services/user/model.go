@@ -20,12 +20,13 @@ const (
 )
 
 type User struct {
-	ID            int64 `xorm:"pk autoincr 'id'"`
+	ID            int64  `xorm:"pk autoincr 'id'"`
+	UID           string `json:"uid" xorm:"uid"`
 	Version       int
 	Email         string
 	Name          string
 	Login         string
-	Password      string
+	Password      Password
 	Salt          string
 	Rands         string
 	Company       string
@@ -44,13 +45,14 @@ type User struct {
 }
 
 type CreateUserCommand struct {
+	UID              string
 	Email            string
 	Login            string
 	Name             string
 	Company          string
 	OrgID            int64
 	OrgName          string
-	Password         string
+	Password         Password
 	EmailVerified    bool
 	IsAdmin          bool
 	IsDisabled       bool
@@ -77,8 +79,8 @@ type UpdateUserCommand struct {
 }
 
 type ChangeUserPasswordCommand struct {
-	OldPassword string `json:"oldPassword"`
-	NewPassword string `json:"newPassword"`
+	OldPassword Password `json:"oldPassword"`
+	NewPassword Password `json:"newPassword"`
 
 	UserID int64 `json:"-"`
 }
@@ -115,6 +117,7 @@ type SearchUserQueryResult struct {
 
 type UserSearchHitDTO struct {
 	ID            int64                `json:"id" xorm:"id"`
+	UID           string               `json:"uid" xorm:"id"`
 	Name          string               `json:"name"`
 	Login         string               `json:"login"`
 	Email         string               `json:"email"`
@@ -133,6 +136,7 @@ type GetUserProfileQuery struct {
 
 type UserProfileDTO struct {
 	ID                             int64           `json:"id"`
+	UID                            string          `json:"uid"`
 	Email                          string          `json:"email"`
 	Name                           string          `json:"name"`
 	Login                          string          `json:"login"`
@@ -215,6 +219,7 @@ type ErrCaseInsensitiveLoginConflict struct {
 
 type UserDisplayDTO struct {
 	ID        int64  `json:"id,omitempty"`
+	UID       string `json:"uid,omitempty"`
 	Name      string `json:"name,omitempty"`
 	Login     string `json:"login,omitempty"`
 	AvatarURL string `json:"avatarUrl"`
@@ -274,10 +279,4 @@ const (
 type AdminCreateUserResponse struct {
 	ID      int64  `json:"id"`
 	Message string `json:"message"`
-}
-
-type Password string
-
-func (p Password) IsWeak() bool {
-	return len(p) <= 4
 }

@@ -148,9 +148,27 @@ func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*
 		}
 	}
 
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		qry.WithFullpath = false // do not request full path if nested folders are disabled
+		qry.WithFullpathUIDs = false
+	}
+
 	dashFolders, err := s.store.GetFolders(ctx, qry)
 	if err != nil {
 		return nil, folder.ErrInternal.Errorf("failed to fetch subfolders: %w", err)
+	}
+
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		if q.WithFullpathUIDs || q.WithFullpath {
+			for _, f := range dashFolders { // and fix the full path with folder title (unescaped)
+				if q.WithFullpath {
+					f.Fullpath = f.Title
+				}
+				if q.WithFullpathUIDs {
+					f.FullpathUIDs = f.UID
+				}
+			}
+		}
 	}
 
 	return dashFolders, nil
@@ -159,6 +177,10 @@ func (s *Service) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*
 func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Folder, error) {
 	if q.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
+	}
+
+	if q.UID != nil && *q.UID == accesscontrol.GeneralFolderUID {
+		return folder.RootFolder, nil
 	}
 
 	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) && q.UID != nil && *q.UID == folder.SharedWithMeFolderUID {
@@ -209,8 +231,10 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 	}
 
 	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		dashFolder.Fullpath = dashFolder.Title
 		return dashFolder, nil
 	}
+
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
 	// nolint:staticcheck
 	if q.ID != nil {
@@ -228,6 +252,10 @@ func (s *Service) Get(ctx context.Context, q *folder.GetFolderQuery) (*folder.Fo
 	// nolint:staticcheck
 	f.ID = dashFolder.ID
 	f.Version = dashFolder.Version
+
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+		f.Fullpath = f.Title // set full path to the folder title (unescaped)
+	}
 
 	return f, err
 }
@@ -454,7 +482,7 @@ func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*fo
 }
 
 func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
-	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
+	if !s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) || q.UID == accesscontrol.GeneralFolderUID {
 		return nil, nil
 	}
 	if q.UID == folder.SharedWithMeFolderUID {
@@ -610,7 +638,7 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 			namespace, id := cmd.SignedInUser.GetNamespacedID()
 
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Folder).Inc()
-			if err := s.bus.Publish(context.Background(), &events.FolderTitleUpdated{
+			if err := s.bus.Publish(ctx, &events.FolderTitleUpdated{
 				Timestamp: foldr.Updated,
 				Title:     foldr.Title,
 				ID:        dashFolder.ID, // nolint:staticcheck
