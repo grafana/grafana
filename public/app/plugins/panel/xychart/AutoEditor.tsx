@@ -58,17 +58,13 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYS
 
   // Component-did-mount callback to check if a new series should be created
   useEffect(() => {
-    console.log('yo');
     if (!value) {
       // create new series
       const defaultConfig: XYSeriesConfig = { x: { matcher: { id: FieldMatcherID.byName, options: undefined } } };
       onChange([defaultConfig]);
     }
-    console.log(value);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  console.log(value);
 
   return (
     value && (
@@ -85,7 +81,6 @@ export const AutoEditor = ({ value, onChange, context }: StandardEditorProps<XYS
                 }) ?? null
               }
               onChange={(val) => {
-                console.log(val);
                 onChange(
                   value.map((obj, i) => {
                     if (i === selected) {
