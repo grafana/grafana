@@ -1,6 +1,6 @@
 {
   "name": "@grafana/icons",
-  "version": "1.0.0-beta",
+  "version": "0.0.0",
   "description": "Icons for Grafana",
   "author": "Grafana Labs",
   "license": "Apache-2.0",
@@ -44,18 +44,18 @@
     "@svgr/plugin-svgo": "^8.1.0",
     "@types/node": "^20.11.10",
     "@types/react": "^18.2.48",
+    "@types/react-dom": "^18",
     "esbuild": "^0.20.0",
     "prettier": "^3.2.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "rimraf": "^5.0.5",
     "rollup": "2.79.1",
     "rollup-plugin-dts": "^6.1.0",
     "rollup-plugin-esbuild": "5.0.0",
     "rollup-plugin-node-externals": "5.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
-  },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
   },
   "peerDependencies": {
     "react": "^17.0.0 || ^18.0.0",

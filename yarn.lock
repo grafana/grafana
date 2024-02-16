@@ -3975,10 +3975,12 @@ __metadata:
     "@svgr/plugin-svgo": "npm:^8.1.0"
     "@types/node": "npm:^20.11.10"
     "@types/react": "npm:^18.2.48"
+    "@types/react-dom": "npm:^18"
     esbuild: "npm:^0.20.0"
     prettier: "npm:^3.2.4"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
+    rimraf: "npm:^5.0.5"
     rollup: "npm:2.79.1"
     rollup-plugin-dts: "npm:^6.1.0"
     rollup-plugin-esbuild: "npm:5.0.0"
@@ -3990,15 +3992,6 @@ __metadata:
     react-dom: ^17.0.0 || ^18.0.0
   languageName: unknown
   linkType: soft
-
-"@grafana/lezer-logql@npm:0.2.2":
-  version: 0.2.2
-  resolution: "@grafana/lezer-logql@npm:0.2.2"
-  peerDependencies:
-    "@lezer/lr": ^1.0.0
-  checksum: 10/4a2aa48c67a75a246a13e62854470aa36f15087e212b81cdba5fa1ac913a1bdd47da374fa47576c7db670a7333af460aff95465c61ed3cd48a77df6b918d812c
-  languageName: node
-  linkType: hard
 
 "@grafana/lezer-logql@npm:0.2.3":
   version: 0.2.3
@@ -9876,7 +9869,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:20.11.19, @types/node@npm:>=13.7.0, @types/node@npm:^20.11.16":
+"@types/node@npm:*, @types/node@npm:20.11.19, @types/node@npm:>=13.7.0, @types/node@npm:^20.11.10, @types/node@npm:^20.11.16":
   version: 20.11.19
   resolution: "@types/node@npm:20.11.19"
   dependencies:
@@ -10022,7 +10015,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:*, @types/react-dom@npm:18.2.19, @types/react-dom@npm:^18.0.0":
+"@types/react-dom@npm:*, @types/react-dom@npm:18.2.19, @types/react-dom@npm:^18, @types/react-dom@npm:^18.0.0":
   version: 18.2.19
   resolution: "@types/react-dom@npm:18.2.19"
   dependencies:
@@ -27774,7 +27767,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rimraf@npm:5.0.5":
+"rimraf@npm:5.0.5, rimraf@npm:^5.0.5":
   version: 5.0.5
   resolution: "rimraf@npm:5.0.5"
   dependencies:
