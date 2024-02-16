@@ -34,7 +34,7 @@ for file in "$ARTIFACTS_DIR"/*.tgz; do
   check_files=("LICENSE_APACHE2" "LICENSE")
   has_no_license=true
 	for check_file in "${check_files[@]}"; do
-		if [ ! -f "$check_file" ]; then
+		if [ -f "$check_file" ]; then
 			has_no_license=false
 		fi
 	done
