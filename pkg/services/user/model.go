@@ -26,7 +26,7 @@ type User struct {
 	Email         string
 	Name          string
 	Login         string
-	Password      string
+	Password      Password
 	Salt          string
 	Rands         string
 	Company       string
@@ -52,7 +52,7 @@ type CreateUserCommand struct {
 	Company          string
 	OrgID            int64
 	OrgName          string
-	Password         string
+	Password         Password
 	EmailVerified    bool
 	IsAdmin          bool
 	IsDisabled       bool
@@ -79,8 +79,8 @@ type UpdateUserCommand struct {
 }
 
 type ChangeUserPasswordCommand struct {
-	OldPassword string `json:"oldPassword"`
-	NewPassword string `json:"newPassword"`
+	OldPassword Password `json:"oldPassword"`
+	NewPassword Password `json:"newPassword"`
 
 	UserID int64 `json:"-"`
 }
@@ -279,10 +279,4 @@ const (
 type AdminCreateUserResponse struct {
 	ID      int64  `json:"id"`
 	Message string `json:"message"`
-}
-
-type Password string
-
-func (p Password) IsWeak() bool {
-	return len(p) <= 4
 }

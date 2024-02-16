@@ -490,24 +490,25 @@ func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Re
 		}
 	}
 
-	passwordHashed, err := util.EncodePassword(cmd.OldPassword, usr.Salt)
+	passwordHashed, err := util.EncodePassword(string(cmd.OldPassword), usr.Salt)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to encode password", err)
 	}
-	if passwordHashed != usr.Password {
+	if user.Password(passwordHashed) != usr.Password {
 		return response.Error(http.StatusUnauthorized, "Invalid old password", nil)
 	}
 
-	password := user.Password(cmd.NewPassword)
-	if password.IsWeak() {
-		return response.Error(http.StatusBadRequest, "New password is too short", nil)
+	if err := cmd.NewPassword.Validate(hs.Cfg); err != nil {
+		c.Logger.Warn("the new password doesn't meet the password policy criteria", "err", err)
+		return response.Err(err)
 	}
 
 	cmd.UserID = userID
-	cmd.NewPassword, err = util.EncodePassword(cmd.NewPassword, usr.Salt)
+	encodedPassword, err := util.EncodePassword(string(cmd.NewPassword), usr.Salt)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to encode password", err)
 	}
+	cmd.NewPassword = user.Password(encodedPassword)
 
 	if err := hs.userService.ChangePassword(c.Req.Context(), &cmd); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to change user password", err)

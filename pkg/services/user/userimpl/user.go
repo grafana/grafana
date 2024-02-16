@@ -72,11 +72,16 @@ func ProvideService(
 func (s *Service) GetUsageStats(ctx context.Context) map[string]any {
 	stats := map[string]any{}
 	caseInsensitiveLoginVal := 0
+	basicAuthStrongPasswordPolicyVal := 0
 	if s.cfg.CaseInsensitiveLogin {
 		caseInsensitiveLoginVal = 1
 	}
+	if s.cfg.BasicAuthStrongPasswordPolicy {
+		basicAuthStrongPasswordPolicyVal = 1
+	}
 
 	stats["stats.case_insensitive_login.count"] = caseInsensitiveLoginVal
+	stats["stats.password_policy.count"] = basicAuthStrongPasswordPolicyVal
 
 	count, err := s.store.CountUserAccountsWithEmptyRole(ctx)
 	if err != nil {
@@ -161,11 +166,11 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 	usr.Rands = rands
 
 	if len(cmd.Password) > 0 {
-		encodedPassword, err := util.EncodePassword(cmd.Password, usr.Salt)
+		encodedPassword, err := util.EncodePassword(string(cmd.Password), usr.Salt)
 		if err != nil {
 			return nil, err
 		}
-		usr.Password = encodedPassword
+		usr.Password = user.Password(encodedPassword)
 	}
 
 	_, err = s.store.Insert(ctx, usr)

@@ -219,13 +219,15 @@ func TestMetrics(t *testing.T) {
 
 		userService.cfg = setting.NewCfg()
 		userService.cfg.CaseInsensitiveLogin = true
+		userService.cfg.BasicAuthStrongPasswordPolicy = true
 
 		stats := userService.GetUsageStats(context.Background())
 		assert.NotEmpty(t, stats)
 
-		assert.Len(t, stats, 2, stats)
+		assert.Len(t, stats, 3, stats)
 		assert.Equal(t, 1, stats["stats.case_insensitive_login.count"])
 		assert.Equal(t, int64(1), stats["stats.user.role_none.count"])
+		assert.Equal(t, 1, stats["stats.password_policy.count"])
 	})
 }
 

@@ -2341,7 +2341,7 @@
             "type": "integer"
           },
           "password": {
-            "type": "string"
+            "$ref": "#/components/schemas/Password"
           }
         },
         "type": "object"
@@ -2462,7 +2462,7 @@
       "AdminUpdateUserPasswordForm": {
         "properties": {
           "password": {
-            "type": "string"
+            "$ref": "#/components/schemas/Password"
           }
         },
         "type": "object"
@@ -3764,10 +3764,10 @@
       "ChangeUserPasswordCommand": {
         "properties": {
           "newPassword": {
-            "type": "string"
+            "$ref": "#/components/schemas/Password"
           },
           "oldPassword": {
-            "type": "string"
+            "$ref": "#/components/schemas/Password"
           }
         },
         "type": "object"
@@ -7744,6 +7744,9 @@
           }
         },
         "type": "object"
+      },
+      "Password": {
+        "type": "string"
       },
       "PatchAnnotationsCmd": {
         "properties": {

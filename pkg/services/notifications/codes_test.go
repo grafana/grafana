@@ -18,7 +18,7 @@ func TestTimeLimitCodes(t *testing.T) {
 	user := &user.User{ID: 10, Email: "t@a.com", Login: "asd", Password: "1", Rands: "2"}
 
 	format := "200601021504"
-	mailPayload := strconv.FormatInt(user.ID, 10) + user.Email + user.Login + user.Password + user.Rands
+	mailPayload := strconv.FormatInt(user.ID, 10) + user.Email + user.Login + string(user.Password) + user.Rands
 	tenMinutesAgo := time.Now().Add(-time.Minute * 10)
 
 	tests := []struct {
