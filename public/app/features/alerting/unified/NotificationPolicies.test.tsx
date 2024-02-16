@@ -767,16 +767,14 @@ describe('findRoutesMatchingFilters', () => {
     expect(
       findRoutesMatchingFilters(simpleRouteTree, {
         labelMatchersFilter: [['foo', MatcherOperator.equal, 'bar']],
-      }).matchedRoutes
-    ).toHaveLength(0);
+      }).matchedRoutesWithPath.size
+    ).toBe(0);
 
     const matchingRoutes = findRoutesMatchingFilters(simpleRouteTree, {
       contactPointFilter: 'does-not-exist',
     });
 
-    expect(matchingRoutes.filtersApplied).toBe(true);
-    expect(matchingRoutes.matchedRoutes).toHaveLength(0);
-    expect(matchingRoutes.matchedRoutesWithPath).toEqual(new Map());
+    expect(matchingRoutes).toMatchSnapshot();
   });
 
   it('should work with only label matchers', () => {
@@ -784,13 +782,7 @@ describe('findRoutesMatchingFilters', () => {
       labelMatchersFilter: [['hello', MatcherOperator.equal, 'world']],
     });
 
-    expect(matchingRoutes.filtersApplied).toBe(true);
-    expect(matchingRoutes.matchedRoutes).toHaveLength(1);
-    expect(matchingRoutes.matchedRoutes[0]).toHaveProperty('id', '1');
-    expect(Array.from(matchingRoutes.matchedRoutesWithPath.keys()).map((value) => value.id)).toEqual(['1']);
-    expect(matchingRoutes.matchedRoutesWithPath.get(matchingRoutes.matchedRoutes[0])?.map((value) => value.id)).toEqual(
-      ['0', '1']
-    );
+    expect(matchingRoutes).toMatchSnapshot();
   });
 
   it('should work with only contact point and inheritance', () => {
@@ -798,16 +790,7 @@ describe('findRoutesMatchingFilters', () => {
       contactPointFilter: 'simple-receiver',
     });
 
-    expect(matchingRoutes.matchedRoutes).toHaveLength(2);
-    expect(matchingRoutes.matchedRoutes[0]).toHaveProperty('id', '1');
-    expect(matchingRoutes.matchedRoutes[1]).toHaveProperty('id', '2');
-
-    expect(
-      Array.from(matchingRoutes.matchedRoutesWithPath).map(([key, value]) => [key.id, value.map((value) => value.id)])
-    );
-    expect(matchingRoutes.matchedRoutesWithPath.get(matchingRoutes.matchedRoutes[0])?.map((value) => value.id)).toEqual(
-      ['0', '1']
-    );
+    expect(matchingRoutes).toMatchSnapshot();
   });
 
   it('should work with non-intersecting filters', () => {
@@ -816,8 +799,7 @@ describe('findRoutesMatchingFilters', () => {
       contactPointFilter: 'does-not-exist',
     });
 
-    expect(matchingRoutes.matchedRoutes).toHaveLength(0);
-    expect(matchingRoutes.matchedRoutesWithPath).toEqual(new Map());
+    expect(matchingRoutes).toMatchSnapshot();
   });
 
   it('should work with all filters', () => {
@@ -826,15 +808,7 @@ describe('findRoutesMatchingFilters', () => {
       contactPointFilter: 'simple-receiver',
     });
 
-    expect(matchingRoutes.matchedRoutes).toHaveLength(1);
-    expect(matchingRoutes.matchedRoutes[0]).toHaveProperty('id', '1');
-
-    expect(
-      Array.from(matchingRoutes.matchedRoutesWithPath).map(([key, value]) => [key.id, value.map((value) => value.id)])
-    );
-    expect(matchingRoutes.matchedRoutesWithPath.get(matchingRoutes.matchedRoutes[0])?.map((value) => value.id)).toEqual(
-      ['0', '1']
-    );
+    expect(matchingRoutes).toMatchSnapshot();
   });
 });
 

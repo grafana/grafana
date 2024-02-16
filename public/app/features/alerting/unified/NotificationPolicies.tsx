@@ -104,7 +104,6 @@ const AmRoutes = () => {
     if (!rootRoute) {
       const emptyResult: RoutesMatchingFilters = {
         filtersApplied: false,
-        matchedRoutes: [],
         matchedRoutesWithPath: new Map(),
       };
 
@@ -240,7 +239,7 @@ const AmRoutes = () => {
                       receivers={receivers}
                       onChangeMatchers={setLabelMatchersFilter}
                       onChangeReceiver={setContactPointFilter}
-                      matchingCount={routesMatchingFilters.matchedRoutes.length}
+                      matchingCount={routesMatchingFilters.matchedRoutesWithPath.size}
                     />
                   )}
                   {rootRoute && (
@@ -288,7 +287,6 @@ type FilterResult = Map<RouteWithID, RouteWithID[]>;
 
 export interface RoutesMatchingFilters {
   filtersApplied: boolean;
-  matchedRoutes: RouteWithID[];
   matchedRoutesWithPath: FilterResult;
 }
 
@@ -299,7 +297,7 @@ export const findRoutesMatchingFilters = (rootRoute: RouteWithID, filters: Route
 
   // if filters are empty we short-circuit this function
   if (!hasFilter) {
-    return { filtersApplied: false, matchedRoutes: [], matchedRoutesWithPath: new Map() };
+    return { filtersApplied: false, matchedRoutesWithPath: new Map() };
   }
 
   // we'll collect all of the routes matching the filters
@@ -337,12 +335,8 @@ export const findRoutesMatchingFilters = (rootRoute: RouteWithID, filters: Route
     ? findMapIntersection(matchingRoutesForLabelMatchers, matchingRoutesForContactPoint)
     : new Map([...matchingRoutesForLabelMatchers, ...matchingRoutesForContactPoint]);
 
-  // compute a flat list of matching routes from the map
-  const intersectedRoutes = Array.from(routesForAllFilterResults.keys());
-
   return {
     filtersApplied: true,
-    matchedRoutes: intersectedRoutes,
     matchedRoutesWithPath: routesForAllFilterResults,
   };
 };
