@@ -1221,6 +1221,7 @@ var (
 			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
+			Expression:      "true", // enabled by default
 		},
 	}
 )
