@@ -18,6 +18,10 @@ replace (
 	go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v1.22.0 // @grafana/backend-platform
 	go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v1.22.0 // @grafana/backend-platform
 )
+//
+//replace (
+//	github.com/grafana/grafana/pkg/tsdb/prometheus => ./pkg/tsdb/prometheus
+//)
 
 // Override Prometheus version because Prometheus v2.X is tagged as v0.X for Go modules purposes and Go assumes
 // that v1.Y is higher than v0.X, so when we resolve dependencies if any dependency imports v1.Y we'd
