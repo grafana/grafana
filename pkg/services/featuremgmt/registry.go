@@ -813,7 +813,8 @@ var (
 		{
 			Name:         "panelMonitoring",
 			Description:  "Enables panel monitoring through logs and measurements",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaDatavizSquad,
 			FrontendOnly: true,
 		},

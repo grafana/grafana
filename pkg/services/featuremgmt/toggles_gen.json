@@ -932,12 +932,15 @@
     {
       "metadata": {
         "name": "panelMonitoring",
-        "resourceVersion": "1707928895402",
-        "creationTimestamp": "2024-02-14T16:41:35Z"
+        "resourceVersion": "1707938948387",
+        "creationTimestamp": "2024-02-14T16:41:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-14 19:29:08.387414 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables panel monitoring through logs and measurements",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true
       }
