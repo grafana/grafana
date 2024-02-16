@@ -59,7 +59,7 @@ type SearchOptions struct {
 	ActionPrefix string // Needed for the PoC v1, it's probably going to be removed.
 	Action       string
 	Scope        string
-	NamespacedID string    // ID of the identity (ex: user:3, serviceaccount:4)
+	NamespacedID string    // ID of the identity (ex: user:3, service-account:4)
 	wildcards    Wildcards // private field computed based on the Scope
 }
 
