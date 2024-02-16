@@ -1,9 +1,9 @@
 import { FieldMatcherID, FrameMatcherID, MatcherConfig, PanelModel } from '@grafana/data';
 
-import { Options, SeriesMapping } from './panelcfg.gen';
-import { XYSeriesConfig, Options as Options2 } from './types2';
+import { ScatterSeriesConfig, SeriesMapping } from './panelcfg.gen';
+import { XYSeriesConfig, Options2 as Options2 } from './types2';
 
-export const xyChartMigrationHandler = (panel: PanelModel<Options>): Options | Options2 => {
+export const xyChartMigrationHandler = (panel: PanelModel): Options2 => {
   const pluginVersion = panel?.pluginVersion ?? '';
 
   // Update to new format for GA 10.4 release
@@ -23,7 +23,7 @@ export const xyChartMigrationHandler = (panel: PanelModel<Options>): Options | O
       ];
     }
 
-    const newSeries: XYSeriesConfig[] = oldSeries2.map(({ x, y, pointColor, pointSize }) => {
+    const newSeries: XYSeriesConfig[] = oldSeries2.map(({ x, y, pointColor, pointSize }: ScatterSeriesConfig) => {
       const { fixed: colorFixed, field: colorField } = pointColor ?? {};
       const { fixed: sizeFixed, field: sizeField, min: sizeMin, max: sizeMax } = pointSize ?? {};
 
