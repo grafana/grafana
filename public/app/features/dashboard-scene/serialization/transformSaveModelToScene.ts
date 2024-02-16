@@ -117,7 +117,7 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[], isSnapshot:
       }
     } else {
       // convert old snapshot data to new snapshot format to be compatible with Scenes
-      if (isSnapshot) {
+      if (panel.snapshotData) {
         convertOldSnapshotToScenesSnapshot(panel);
       }
 
@@ -383,7 +383,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else if (variable.type === 'textbox') {
     return new TextBoxVariable({
       ...commonProperties,
-      value: convertToString(variable.current?.value ?? ''),
+      value: variable?.current?.value ? variable?.current?.value[0] : variable.query,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
     });
@@ -401,13 +401,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else {
     throw new Error(`Scenes: Unsupported variable type ${variable.type}`);
   }
-}
-
-function convertToString(value: string | string[]): string {
-  if (Array.isArray(value)) {
-    return value.join(',');
-  }
-  return value;
 }
 
 export function buildGridItemForLibPanel(panel: PanelModel) {
