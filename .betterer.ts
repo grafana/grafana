@@ -31,9 +31,16 @@ function countUndocumentedStories() {
     await Promise.all(
       filePaths.map(async (filePath) => {
         // look for .mdx import in the story file
-        const regex = new RegExp("^import.*.mdx';$", 'gm');
+        const mdxImportRegex = new RegExp("^import.*\\.mdx';$", 'gm');
+        // Looks for the "autodocs" string in the file
+        const autodocsStringRegex = /autodocs/;
+
         const fileText = await fs.readFile(filePath, 'utf8');
-        if (!regex.test(fileText)) {
+
+        const hasMdxImport = mdxImportRegex.test(fileText);
+        const hasAutodocsString = autodocsStringRegex.test(fileText);
+        // If both .mdx import and autodocs string are missing, add an issue
+        if (!hasMdxImport && !hasAutodocsString) {
           // In this case the file contents don't matter:
           const file = fileTestResult.addFile(filePath, '');
           // Add the issue to the first character of the file:
