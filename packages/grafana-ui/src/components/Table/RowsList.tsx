@@ -308,7 +308,7 @@ export const RowsList = (props: RowsListProps) => {
 
         {
           disableVirtualization && (
-            <div
+            <tbody
               style={{
                 position: 'relative',
                 overflow: 'hidden',
@@ -323,7 +323,7 @@ export const RowsList = (props: RowsListProps) => {
                   })}
                 </>
               ))}
-            </div>
+            </tbody>
           )
 
           // <VariableSizeList
