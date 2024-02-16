@@ -25,9 +25,8 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => {
     return {
-      get: (v: any) => {
+      get: (v: string | DataSourceRef) => {
         const s = getStubInstanceSettings(v);
-        // console.log('GET', v, s);
         return Promise.resolve(s);
       },
       getInstanceSettings: getStubInstanceSettings,
@@ -169,7 +168,7 @@ it('replaces datasource ref in library panel', async () => {
 });
 
 it('If a panel queries has no datasource prop ignore it', async () => {
-  const dashboard: any = {
+  const dashboard = {
     panels: [
       {
         id: 1,
@@ -181,7 +180,7 @@ it('If a panel queries has no datasource prop ignore it', async () => {
         targets: [{ refId: 'A', a: 'A' }],
       },
     ],
-  };
+  } as unknown as Dashboard;
   const dashboardModel = new DashboardModel(dashboard, undefined, {
     getVariablesFromState: () => [],
   });
@@ -348,9 +347,9 @@ describe('given dashboard with repeated panels', () => {
   });
 
   it('should not include default datasource in __inputs unnecessarily', async () => {
-    const testJson: any = {
+    const testJson = {
       panels: [{ id: 1, datasource: { uid: 'other', type: 'other' }, type: 'graph' }],
-    };
+    } as unknown as Dashboard;
     const testDash = new DashboardModel(testJson);
     const exporter = new DashboardExporter();
     const exportedJson: any = await exporter.makeExportable(testDash);
@@ -380,7 +379,7 @@ describe('given dashboard with repeated panels', () => {
   });
 
   it('should add datasource to required', () => {
-    const require: any = find(exported.__requires, { name: 'TestDB' });
+    const require = find(exported.__requires, { name: 'TestDB' });
     expect(require.name).toBe('TestDB');
     expect(require.id).toBe('testdb');
     expect(require.type).toBe('datasource');
@@ -388,52 +387,52 @@ describe('given dashboard with repeated panels', () => {
   });
 
   it('should not add built in datasources to required', () => {
-    const require: any = find(exported.__requires, { name: 'Mixed' });
+    const require = find(exported.__requires, { name: 'Mixed' });
     expect(require).toBe(undefined);
   });
 
   it('should add datasources used in mixed mode', () => {
-    const require: any = find(exported.__requires, { name: 'OtherDB' });
+    const require = find(exported.__requires, { name: 'OtherDB' });
     expect(require).not.toBe(undefined);
   });
 
   it('should add graph panel to required', () => {
-    const require: any = find(exported.__requires, { name: 'Graph' });
+    const require = find(exported.__requires, { name: 'Graph' });
     expect(require.name).toBe('Graph');
     expect(require.id).toBe('graph');
     expect(require.version).toBe('1.1.0');
   });
 
   it('should add table panel to required', () => {
-    const require: any = find(exported.__requires, { name: 'Table' });
+    const require = find(exported.__requires, { name: 'Table' });
     expect(require.name).toBe('Table');
     expect(require.id).toBe('table');
     expect(require.version).toBe('1.1.1');
   });
 
   it('should add heatmap panel to required', () => {
-    const require: any = find(exported.__requires, { name: 'Heatmap' });
+    const require = find(exported.__requires, { name: 'Heatmap' });
     expect(require.name).toBe('Heatmap');
     expect(require.id).toBe('heatmap');
     expect(require.version).toBe('1.1.2');
   });
 
   it('should add grafana version', () => {
-    const require: any = find(exported.__requires, { name: 'Grafana' });
+    const require = find(exported.__requires, { name: 'Grafana' });
     expect(require.type).toBe('grafana');
     expect(require.id).toBe('grafana');
     expect(require.version).toBe('3.0.2');
   });
 
   it('should add constant template variables as inputs', () => {
-    const input: any = find(exported.__inputs, { name: 'VAR_PREFIX' });
+    const input = find(exported.__inputs, { name: 'VAR_PREFIX' });
     expect(input.type).toBe('constant');
     expect(input.label).toBe('prefix');
     expect(input.value).toBe('collectd');
   });
 
   it('should templatize constant variables', () => {
-    const variable: any = find(exported.templating.list, { name: 'prefix' });
+    const variable = find(exported.templating.list, { name: 'prefix' });
     expect(variable.query).toBe('${VAR_PREFIX}');
     expect(variable.current.text).toBe('${VAR_PREFIX}');
     expect(variable.current.value).toBe('${VAR_PREFIX}');
@@ -442,7 +441,7 @@ describe('given dashboard with repeated panels', () => {
   });
 
   it('should add datasources only use via datasource variable to requires', () => {
-    const require: any = find(exported.__requires, { name: 'OtherDB_2' });
+    const require = find(exported.__requires, { name: 'OtherDB_2' });
     expect(require.id).toBe('other2');
   });
 
@@ -472,25 +471,25 @@ describe('given dashboard with repeated panels', () => {
 
 function getStubInstanceSettings(v: string | DataSourceRef): DataSourceInstanceSettings {
   let key = (v as DataSourceRef)?.type ?? v;
-  return (stubs[(key as any) ?? 'gfdb'] ?? stubs['gfdb']) as any;
+  return stubs[(key as string) ?? 'gfdb'] ?? stubs['gfdb'];
 }
 
 // Stub responses
-const stubs: { [key: string]: {} } = {};
+const stubs: { [key: string]: DataSourceInstanceSettings } = {};
 stubs['gfdb'] = {
   name: 'gfdb',
   meta: { id: 'testdb', info: { version: '1.2.1' }, name: 'TestDB' },
-};
+} as DataSourceInstanceSettings;
 
 stubs['other'] = {
   name: 'other',
   meta: { id: 'other', info: { version: '1.2.1' }, name: 'OtherDB' },
-};
+} as DataSourceInstanceSettings;
 
 stubs['other2'] = {
   name: 'other2',
   meta: { id: 'other2', info: { version: '1.2.1' }, name: 'OtherDB_2' },
-};
+} as DataSourceInstanceSettings;
 
 stubs['mixed'] = {
   name: 'mixed',
@@ -500,7 +499,7 @@ stubs['mixed'] = {
     name: 'Mixed',
     builtIn: true,
   },
-};
+} as DataSourceInstanceSettings;
 
 stubs['grafana'] = {
   name: '-- Grafana --',
@@ -510,4 +509,4 @@ stubs['grafana'] = {
     name: 'grafana',
     builtIn: true,
   },
-};
+} as DataSourceInstanceSettings;

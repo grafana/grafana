@@ -621,7 +621,7 @@ describe('VizPanelManager', () => {
 });
 
 const setupTest = (panelId: string) => {
-  const scene = transformSaveModelToScene({ dashboard: testDashboard as any, meta: {} });
+  const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
   const panel = findVizPanelByKey(scene, panelId)!;
 
   const vizPanelManager = new VizPanelManager(panel.clone());

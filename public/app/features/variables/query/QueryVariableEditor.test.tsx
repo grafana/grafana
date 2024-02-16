@@ -32,7 +32,7 @@ const setupTestContext = (options: Partial<Props>) => {
     onPropChange: jest.fn(),
   };
 
-  const props: Props & Record<string, any> = { ...defaults, ...options };
+  const props: Props & Record<string, unknown> = { ...defaults, ...options };
   const { rerender } = render(<QueryVariableEditorUnConnected {...props} />);
 
   return { rerender, props };

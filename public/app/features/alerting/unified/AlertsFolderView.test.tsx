@@ -8,6 +8,7 @@ import { FolderState } from 'app/types';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { AlertsFolderView } from './AlertsFolderView';
+import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
 import { mockCombinedRule } from './mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
@@ -21,7 +22,7 @@ const ui = {
   },
 };
 
-const combinedNamespaceMock = jest.fn<CombinedRuleNamespace[], any>();
+const combinedNamespaceMock = jest.fn(useCombinedRuleNamespaces);
 jest.mock('./hooks/useCombinedRuleNamespaces', () => ({
   useCombinedRuleNamespaces: () => combinedNamespaceMock(),
 }));

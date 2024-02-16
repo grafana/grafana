@@ -5,11 +5,12 @@ import path from 'path';
 import { glob } from 'glob';
 
 // Why are we ignoring these?
-// They're all deprecated/being removed soon so doesn't make sense to fix types
+// They're all deprecated/being removed so doesn't make sense to fix types
 const eslintPathsToIgnore = [
   'packages/grafana-e2e', // deprecated.
   'public/app/angular', // will be removed in Grafana 11
   'public/app/plugins/panel/graph', // will be removed alongside angular
+  'public/app/plugins/panel/table-old', // will be removed alongside angular
 ];
 
 // Avoid using functions that report the position of the issues, as this causes a lot of merge conflicts
