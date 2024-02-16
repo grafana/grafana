@@ -264,10 +264,10 @@ var (
 		},
 	}
 
-	instanceConfigWriterRole = RoleDTO{
-		Name:        "fixed:server.config:writer",
-		DisplayName: "Instance config writer",
-		Description: "Read and update Grafana instance configuration.",
+	generalAuthConfigWriterRole = RoleDTO{
+		Name:        "fixed:general.auth.config:writer",
+		DisplayName: "General authentication config writer",
+		Description: "Read and update the Grafana instance's general authentication configuration.",
 		Group:       "Settings",
 		Permissions: []Permission{
 			{
@@ -312,8 +312,8 @@ func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
 		Role:   usersWriterRole,
 		Grants: []string{RoleGrafanaAdmin},
 	}
-	instanceConfigWriter := RoleRegistration{
-		Role:   instanceConfigWriterRole,
+	generalAuthConfigWriter := RoleRegistration{
+		Role:   generalAuthConfigWriterRole,
 		Grants: []string{RoleGrafanaAdmin},
 	}
 
@@ -328,7 +328,7 @@ func DeclareFixedRoles(service Service, cfg *setting.Cfg) error {
 	}
 
 	return service.DeclareFixedRoles(ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
-		settingsReader, statsReader, usersReader, usersWriter, authenticationConfigWriter, instanceConfigWriter)
+		settingsReader, statsReader, usersReader, usersWriter, authenticationConfigWriter, generalAuthConfigWriter)
 }
 
 func ConcatPermissions(permissions ...[]Permission) []Permission {
