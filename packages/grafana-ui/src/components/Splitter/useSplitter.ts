@@ -14,21 +14,12 @@ export interface UseSplitterOptions {
   initialSize?: number;
   direction: 'row' | 'column';
   dragPosition?: DragHandlePosition;
-  // primaryPaneStyles?: React.CSSProperties;
-  // secondaryPaneStyles?: React.CSSProperties;
   /**
    * Called when ever the size of the primary pane changes
    * @param flexSize (float from 0-1)
    */
-  // onSizeChanged?: (flexSize: number, pixelSize: number) => void;
-  // onResizing?: (flexSize: number, pixelSize: number) => void;
-  // children: [React.ReactNode, React.ReactNode];
-}
-
-interface PaneOptions {
-  removed?: boolean;
-  defaultCollapsed?: boolean;
-  collapseSize?: number;
+  onSizeChanged?: (flexSize: number, pixelSize: number) => void;
+  onResizing?: (flexSize: number, pixelSize: number) => void;
 }
 
 const PIXELS_PER_MS = 0.3 as const;
@@ -51,7 +42,7 @@ const propsForDirection = {
 } as const;
 
 export function useSplitter(options: UseSplitterOptions) {
-  const { direction, initialSize = 0.5, dragPosition = 'middle' } = options;
+  const { direction, initialSize = 0.5, dragPosition = 'middle', onResizing, onSizeChanged } = options;
 
   const handleSize = 16;
   const splitterRef = useRef<HTMLDivElement | null>(null);
@@ -67,9 +58,6 @@ export function useSplitter(options: UseSplitterOptions) {
   const clientAxis = propsForDirection[direction].axis;
   const minDimProp = propsForDirection[direction].min;
   const maxDimProp = propsForDirection[direction].max;
-
-  const onResizing = useCallback((flexSize, pixelSize) => {}, []);
-  const onSizeChanged = useCallback((flexSize, pixelSize) => {}, []);
 
   // Using a resize observer here, as with content or screen based width/height the ratio between panes might
   // change after a window resize, so ariaValueNow needs to be updated accordingly
@@ -88,11 +76,7 @@ export function useSplitter(options: UseSplitterOptions) {
         const curSize = firstPaneRef.current!.getBoundingClientRect()[measurementProp];
         const newDims = measureElement(firstPaneRef.current);
 
-        splitterRef.current!.ariaValueNow = `${clamp(
-          ((curSize - newDims[minDimProp]) / (newDims[maxDimProp] - newDims[minDimProp])) * 100,
-          0,
-          100
-        )}`;
+        splitterRef.current!.ariaValueNow = ariaValue(curSize, newDims[minDimProp], newDims[maxDimProp]);
       }
     },
     500,
@@ -130,10 +114,8 @@ export function useSplitter(options: UseSplitterOptions) {
 
         firstPaneRef.current!.style.flexGrow = `${newFlex}`;
         secondPaneRef.current!.style.flexGrow = `${1 - newFlex}`;
+        splitterRef.current!.ariaValueNow = ariaValue(newSize, dims[minDimProp], dims[maxDimProp]);
 
-        const ariaValueNow = ariaValue(newSize, dims[minDimProp], dims[maxDimProp] - dims[minDimProp]);
-
-        splitterRef.current!.ariaValueNow = `${ariaValueNow}`;
         onResizing?.(newFlex, newSize);
       }
     },
@@ -297,7 +279,7 @@ export function useSplitter(options: UseSplitterOptions) {
     const dim = measureElement(firstPaneRef.current);
     firstPaneMeasurements.current = dim;
     primarySizeRef.current = firstPaneRef.current!.getBoundingClientRect()[measurementProp];
-    splitterRef.current!.ariaValueNow = `${((primarySizeRef.current - dim[minDimProp]) / (dim[maxDimProp] - dim[minDimProp])) * 100}`;
+    splitterRef.current!.ariaValueNow = `${ariaValue(primarySizeRef.current, dim[minDimProp], dim[maxDimProp])}`;
   }, [maxDimProp, measurementProp, minDimProp]);
 
   const onBlur = useCallback(() => {
@@ -357,7 +339,6 @@ export function useSplitter(options: UseSplitterOptions) {
       tabIndex: 0,
       className: dragHandleStyle,
     },
-    secondPaneRef,
   };
 }
 

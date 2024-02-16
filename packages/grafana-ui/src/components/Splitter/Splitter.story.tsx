@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 

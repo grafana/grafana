@@ -2,15 +2,15 @@ import { css, cx } from '@emotion/css';
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
-import { useTheme2 } from '@grafana/ui';
+import { Button, useTheme2 } from '@grafana/ui';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 
 import mdx from './Splitter.mdx';
-import { UseSplitterOptions, useSplitter } from './useSplitter';
+import { UseSnappingSplitterOptions, useSnappingSplitter } from './useSnappingSpitter';
 
 const meta: Meta = {
-  title: 'General/Layout/useSplitter',
+  title: 'General/Layout/useSnappingSpitter',
   parameters: {
     docs: {
       page: mdx,
@@ -27,7 +27,7 @@ const meta: Meta = {
   },
 };
 
-interface StoryOptions extends UseSplitterOptions {
+interface StoryOptions extends UseSnappingSplitterOptions {
   hasSecondPane: boolean;
 }
 
@@ -42,13 +42,13 @@ export const Basic: StoryFn<StoryOptions> = (options) => {
     height: '100%',
   });
 
-  const { containerProps, firstPaneProps, secondPaneProps, splitterProps } = useSplitter({
+  const { containerProps, firstPaneProps, secondPaneProps, splitterProps, state } = useSnappingSplitter({
     ...options,
+    paneOptions: {
+      collapseBelowPixels: 150,
+      snapOpenToPixels: 300,
+    },
   });
-
-  if (!options.hasSecondPane) {
-    firstPaneProps.style.flexGrow = 1;
-  }
 
   return (
     <DashboardStoryCanvas>
@@ -57,15 +57,11 @@ export const Basic: StoryFn<StoryOptions> = (options) => {
           <div {...firstPaneProps} className={cx(firstPaneProps.className, paneStyles)}>
             Primary
           </div>
-          {options.hasSecondPane && (
-            <>
-              <div {...splitterProps} />
-
-              <div {...secondPaneProps} className={cx(firstPaneProps.className, paneStyles)}>
-                Secondary
-              </div>
-            </>
-          )}
+          <div {...splitterProps} />
+          <div {...secondPaneProps} className={cx(firstPaneProps.className, paneStyles)}>
+            {state.collapsed && <Button onClick={() => {}} icon="angle-left" variant="secondary" />}
+            {!state.collapsed && <div>Secondary pane open for business</div>}
+          </div>
         </div>
       </div>
     </DashboardStoryCanvas>

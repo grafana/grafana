@@ -266,6 +266,8 @@ export { InlineFormLabel } from './FormLabel/FormLabel';
 export { Divider } from './Divider/Divider';
 export { getDragStyles } from './DragHandle/DragHandle';
 export { Splitter } from './Splitter/Splitter';
+export { useSplitter } from './Splitter/useSplitter';
+export { useSnappingSplitter } from './Splitter/useSnappingSpitter';
 
 export { LayoutItemContext, type LayoutItemContextProps } from './Layout/LayoutItemContext';
 
