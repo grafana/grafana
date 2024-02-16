@@ -140,10 +140,6 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 		if err != nil {
 			return nil, err
 		}
-		q, err := reader.ReadQuery(rn, iter)
-		if err != nil {
-			return nil, err
-		}
 		node.Command = q.Command
 		return node, err
 	}
