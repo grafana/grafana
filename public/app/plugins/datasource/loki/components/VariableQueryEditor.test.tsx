@@ -3,10 +3,11 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { select } from 'react-select-event';
 
+import { TimeRange, dateTime } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
 import { createLokiDatasource } from '../__mocks__/datasource';
-import { LokiVariableQueryType } from '../types';
+import { LokiVariableQuery, LokiVariableQueryType } from '../types';
 
 import { LokiVariableQueryEditor, Props } from './VariableQueryEditor';
 
@@ -132,5 +133,28 @@ describe('LokiVariableQueryEditor', () => {
     await select(screen.getByLabelText('Label'), 'moon', { container: document.body });
     await select(screen.getByLabelText('Label'), 'luna', { container: document.body });
     await screen.findByText('luna');
+  });
+
+  test('Calls language provider fetchLabels with the time range received in props', async () => {
+    const now = dateTime('2023-09-16T21:26:00Z');
+    const range: TimeRange = {
+      from: dateTime(now).subtract(2, 'days'),
+      to: now,
+      raw: {
+        from: 'now-2d',
+        to: 'now',
+      },
+    };
+    props.range = range;
+    props.query = {
+      refId: 'test',
+      type: LokiVariableQueryType.LabelValues,
+      label: 'luna',
+    };
+
+    render(<LokiVariableQueryEditor {...props} />);
+    await waitFor(() =>
+      expect(props.datasource.languageProvider.fetchLabels).toHaveBeenCalledWith({ timeRange: range })
+    );
   });
 });
