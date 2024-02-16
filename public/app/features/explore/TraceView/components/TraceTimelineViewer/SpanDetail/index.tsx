@@ -21,12 +21,11 @@ import { DataFrame, dateTimeFormat, GrafanaTheme2, IconName, LinkModel } from '@
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
-import { DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
+import { DataLinkButton, Divider, Icon, TextArea, useStyles2 } from '@grafana/ui';
 import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
-import { Divider } from '../../common/Divider';
 import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
 import { SpanLinkFunc, TNil } from '../../types';
@@ -329,7 +328,7 @@ export default function SpanDetail(props: SpanDetailProps) {
       </div>
       <span style={{ marginRight: '10px' }}>{logLinkButton}</span>
       {profileLinkButton}
-      <Divider type={'horizontal'} />
+      <Divider spacing={1} />
       <div>
         <div>
           <AccordianKeyValues

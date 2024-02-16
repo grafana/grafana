@@ -53,7 +53,7 @@ type Folder struct {
 }
 
 var GeneralFolder = Folder{ID: 0, Title: "General"}
-
+var RootFolder = &Folder{ID: 0, Title: "Root", UID: GeneralFolderUID, ParentUID: ""}
 var SharedWithMeFolder = Folder{
 	Title:       "Shared with me",
 	Description: "Dashboards and folders shared with me",
@@ -147,10 +147,11 @@ type DeleteFolderCommand struct {
 type GetFolderQuery struct {
 	UID *string
 	// Deprecated: use FolderUID instead
-	ID        *int64
-	Title     *string
-	ParentUID *string
-	OrgID     int64
+	ID           *int64
+	Title        *string
+	ParentUID    *string
+	OrgID        int64
+	WithFullpath bool
 
 	SignedInUser identity.Requester `json:"-"`
 }

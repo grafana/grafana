@@ -2,12 +2,14 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
 	"golang.org/x/exp/maps"
+	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -18,8 +20,10 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/util"
+	"xorm.io/xorm"
 )
 
 // AlertRuleMaxTitleLength is the maximum length of the alert rule title
@@ -72,8 +76,8 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUI
 }
 
 // IncreaseVersionForAllRulesInNamespace Increases version for all rules that have specified namespace. Returns all rules that belong to the namespace
-func (st DBstore) IncreaseVersionForAllRulesInNamespace(ctx context.Context, orgID int64, namespaceUID string) ([]ngmodels.AlertRuleKeyWithVersionAndPauseStatus, error) {
-	var keys []ngmodels.AlertRuleKeyWithVersionAndPauseStatus
+func (st DBstore) IncreaseVersionForAllRulesInNamespace(ctx context.Context, orgID int64, namespaceUID string) ([]ngmodels.AlertRuleKeyWithVersion, error) {
+	var keys []ngmodels.AlertRuleKeyWithVersion
 	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		now := TimeNow()
 		_, err := sess.Exec("UPDATE alert_rule SET version = version + 1, updated = ? WHERE namespace_uid = ? AND org_id = ?", now, namespaceUID, orgID)
@@ -141,22 +145,23 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 			}
 			newRules = append(newRules, r)
 			ruleVersions = append(ruleVersions, ngmodels.AlertRuleVersion{
-				RuleUID:          r.UID,
-				RuleOrgID:        r.OrgID,
-				RuleNamespaceUID: r.NamespaceUID,
-				RuleGroup:        r.RuleGroup,
-				ParentVersion:    0,
-				Version:          r.Version,
-				Created:          r.Updated,
-				Condition:        r.Condition,
-				Title:            r.Title,
-				Data:             r.Data,
-				IntervalSeconds:  r.IntervalSeconds,
-				NoDataState:      r.NoDataState,
-				ExecErrState:     r.ExecErrState,
-				For:              r.For,
-				Annotations:      r.Annotations,
-				Labels:           r.Labels,
+				RuleUID:              r.UID,
+				RuleOrgID:            r.OrgID,
+				RuleNamespaceUID:     r.NamespaceUID,
+				RuleGroup:            r.RuleGroup,
+				ParentVersion:        0,
+				Version:              r.Version,
+				Created:              r.Updated,
+				Condition:            r.Condition,
+				Title:                r.Title,
+				Data:                 r.Data,
+				IntervalSeconds:      r.IntervalSeconds,
+				NoDataState:          r.NoDataState,
+				ExecErrState:         r.ExecErrState,
+				For:                  r.For,
+				Annotations:          r.Annotations,
+				Labels:               r.Labels,
+				NotificationSettings: r.NotificationSettings,
 			})
 		}
 		if len(newRules) > 0 {
@@ -216,23 +221,24 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 			}
 			parentVersion = r.Existing.Version
 			ruleVersions = append(ruleVersions, ngmodels.AlertRuleVersion{
-				RuleOrgID:        r.New.OrgID,
-				RuleUID:          r.New.UID,
-				RuleNamespaceUID: r.New.NamespaceUID,
-				RuleGroup:        r.New.RuleGroup,
-				RuleGroupIndex:   r.New.RuleGroupIndex,
-				ParentVersion:    parentVersion,
-				Version:          r.New.Version + 1,
-				Created:          r.New.Updated,
-				Condition:        r.New.Condition,
-				Title:            r.New.Title,
-				Data:             r.New.Data,
-				IntervalSeconds:  r.New.IntervalSeconds,
-				NoDataState:      r.New.NoDataState,
-				ExecErrState:     r.New.ExecErrState,
-				For:              r.New.For,
-				Annotations:      r.New.Annotations,
-				Labels:           r.New.Labels,
+				RuleOrgID:            r.New.OrgID,
+				RuleUID:              r.New.UID,
+				RuleNamespaceUID:     r.New.NamespaceUID,
+				RuleGroup:            r.New.RuleGroup,
+				RuleGroupIndex:       r.New.RuleGroupIndex,
+				ParentVersion:        parentVersion,
+				Version:              r.New.Version + 1,
+				Created:              r.New.Updated,
+				Condition:            r.New.Condition,
+				Title:                r.New.Title,
+				Data:                 r.New.Data,
+				IntervalSeconds:      r.New.IntervalSeconds,
+				NoDataState:          r.New.NoDataState,
+				ExecErrState:         r.New.ExecErrState,
+				For:                  r.New.For,
+				Annotations:          r.New.Annotations,
+				Labels:               r.New.Labels,
+				NotificationSettings: r.New.NotificationSettings,
 			})
 		}
 		if len(ruleVersions) > 0 {
@@ -365,6 +371,13 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 			q = q.Where("rule_group = ?", query.RuleGroup)
 		}
 
+		if query.ReceiverName != "" {
+			q, err = st.filterByReceiverName(query.ReceiverName, q)
+			if err != nil {
+				return err
+			}
+		}
+
 		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
 
 		alertRules := make([]*ngmodels.AlertRule, 0)
@@ -384,6 +397,13 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 			if err != nil {
 				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "ListAlertRules", "error", err)
 				continue
+			}
+			if query.ReceiverName != "" { // remove false-positive hits from the result
+				if !slices.ContainsFunc(rule.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
+					return settings.Receiver == query.ReceiverName
+				}) {
+					continue
+				}
 			}
 			alertRules = append(alertRules, rule)
 		}
@@ -647,4 +667,92 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 	}
 
 	return nil
+}
+
+// ListNotificationSettings fetches all notification settings for given organization
+func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListNotificationSettingsQuery) (map[ngmodels.AlertRuleKey][]ngmodels.NotificationSettings, error) {
+	var rules []ngmodels.AlertRule
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		query := sess.Table(ngmodels.AlertRule{}).Select("uid, notification_settings").Where("org_id = ?", q.OrgID)
+		if q.ReceiverName != "" {
+			var err error
+			query, err = st.filterByReceiverName(q.ReceiverName, query)
+			if err != nil {
+				return err
+			}
+		} else {
+			query = query.And("notification_settings IS NOT NULL AND notification_settings <> 'null'")
+		}
+		return query.Find(&rules)
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[ngmodels.AlertRuleKey][]ngmodels.NotificationSettings, len(rules))
+	for _, rule := range rules {
+		var ns []ngmodels.NotificationSettings
+		if q.ReceiverName != "" { // if filter by receiver name is specified, perform fine filtering on client to avoid false-positives
+			for _, setting := range rule.NotificationSettings {
+				if q.ReceiverName == setting.Receiver { // currently, there can be only one setting. If in future there are more, we will return all settings of a rule that has a setting with receiver
+					ns = rule.NotificationSettings
+					break
+				}
+			}
+		} else {
+			ns = rule.NotificationSettings
+		}
+		if len(ns) > 0 {
+			key := ngmodels.AlertRuleKey{
+				OrgID: q.OrgID,
+				UID:   rule.UID,
+			}
+			result[key] = rule.NotificationSettings
+		}
+	}
+	return result, nil
+}
+
+func (st DBstore) filterByReceiverName(receiver string, sess *xorm.Session) (*xorm.Session, error) {
+	if receiver == "" {
+		return sess, nil
+	}
+	// marshall string according to JSON rules so we follow escaping rules.
+	b, err := json.Marshal(receiver)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshall receiver name query: %w", err)
+	}
+	var search = string(b)
+	if st.SQLStore.GetDialect().DriverName() != migrator.SQLite {
+		// this escapes escaped double quote (\") to \\\"
+		search = strings.ReplaceAll(strings.ReplaceAll(search, `\`, `\\`), `"`, `\"`)
+	}
+	return sess.And(fmt.Sprintf("notification_settings %s ?", st.SQLStore.GetDialect().LikeStr()), "%"+search+"%"), nil
+}
+
+func (st DBstore) RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string) (int, error) {
+	// fetch entire rules because Update method requires it because it copies rules to version table
+	rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
+		OrgID:        orgID,
+		ReceiverName: oldReceiver,
+	})
+	if err != nil {
+		return 0, err
+	}
+	if len(rules) == 0 {
+		return 0, nil
+	}
+	var updates []ngmodels.UpdateRule
+	for _, rule := range rules {
+		r := ngmodels.CopyRule(rule)
+		for idx := range r.NotificationSettings {
+			if r.NotificationSettings[idx].Receiver == oldReceiver {
+				r.NotificationSettings[idx].Receiver = newReceiver
+			}
+		}
+		updates = append(updates, ngmodels.UpdateRule{
+			Existing: rule,
+			New:      *r,
+		})
+	}
+	return len(updates), st.UpdateAlertRules(ctx, updates)
 }
