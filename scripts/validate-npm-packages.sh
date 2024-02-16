@@ -22,13 +22,27 @@ for file in "$ARTIFACTS_DIR"/*.tgz; do
   pushd "./npm-artifacts/$dir_name" || exit
 
   # Check for required files
-	check_files=("package.json" "README.md" "CHANGELOG.md" "LICENSE_APACHE2")
+	check_files=("package.json" "README.md" "CHANGELOG.md")
 	for check_file in "${check_files[@]}"; do
 		if [ ! -f "$check_file" ]; then
 			echo -e "❌ Failed: Missing required file $check_file in package $dir_name.\n"
 			exit 1
 		fi
 	done
+
+  # Check license files
+  check_files=("LICENSE_APACHE2" "LICENSE")
+  has_no_license=true
+	for check_file in "${check_files[@]}"; do
+		if [ ! -f "$check_file" ]; then
+			has_license=false
+		fi
+	done
+
+  if [ has_no_license ]; then
+    echo -e "❌ Failed: Missing required file $check_file in package $dir_name.\n"
+    exit 1
+	fi
 
   # Assert commonjs builds
   if [ ! -d dist ] || [ ! -f dist/index.js ] || [ ! -f dist/index.d.ts ]; then
