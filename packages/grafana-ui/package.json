@@ -132,6 +132,7 @@
     "@testing-library/jest-dom": "6.4.2",
     "@testing-library/react": "14.2.1",
     "@testing-library/user-event": "14.5.2",
+    "@tokens-studio/sd-transforms": "^0.14.2",
     "@types/common-tags": "^1.8.0",
     "@types/d3": "7.4.3",
     "@types/hoist-non-react-statics": "3.3.5",
@@ -181,6 +182,7 @@
     "storybook": "7.4.5",
     "storybook-addon-turbo-build": "2.0.1",
     "storybook-dark-mode": "3.0.1",
+    "style-dictionary": "^3.9.2",
     "style-loader": "3.3.4",
     "typescript": "5.3.3",
     "webpack": "5.90.1"
