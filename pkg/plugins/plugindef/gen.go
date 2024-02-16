@@ -60,7 +60,7 @@ func (j *jennytypego) JennyName() string {
 }
 
 func (j *jennytypego) Generate(lin thema.Lineage) (*codejen.File, error) {
-	f, err := codegen.GoTypesJenny{}.Generate(codegen.SchemaForGen{
+	f, err := codegen.GoOldTypesJenny{}.Generate(codegen.SchemaForGen{
 		Name:    "PluginDef",
 		Schema:  lin.Latest(),
 		IsGroup: false,

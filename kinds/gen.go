@@ -38,10 +38,6 @@ func main() {
 
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
-		&codegen.ResourceGoTypesJenny{},
-		&codegen.SubresourceGoTypesJenny{},
-		codegen.CoreKindJenny(cuectx.GoCoreKindParentPath, nil),
-		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), cuectx.GoCoreKindParentPath),
 		codegen.LatestMajorsOrXJenny(
 			cuectx.TSCoreKindParentPath,
 			true, // forcing group so that we ignore the top level resource (for now)

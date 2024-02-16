@@ -44,4 +44,7 @@ type (
 		Version          string
 		SubresourceNames []string
 	}
+	tvars_metadata struct {
+		PackageName string
+	}
 )

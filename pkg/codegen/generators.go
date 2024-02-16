@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"bytes"
+	"cuelang.org/go/cue"
 	"fmt"
 	"path/filepath"
 
@@ -71,4 +72,10 @@ type SchemaForGen struct {
 	Schema thema.Schema
 	// Whether the schema is grouped. See https://github.com/grafana/thema/issues/62
 	IsGroup bool
+}
+
+type DataForGen struct {
+	Kind     string
+	Files    []string
+	CueFiles []cue.Value
 }

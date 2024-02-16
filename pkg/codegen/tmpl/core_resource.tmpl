@@ -7,10 +7,10 @@ import (
 )
 
 // Resource is the kubernetes style representation of {{ .KindName }}. (TODO be better)
-type K8sResource = kinds.GrafanaResource[Spec, Status]
+type K8sResource = kinds.GrafanaResource[{{ .KindName }}, Status]
 
 // NewResource creates a new instance of the resource with a given name (UID)
-func NewK8sResource(name string, s *Spec) K8sResource {
+func NewK8sResource(name string, s *{{ .KindName }}) K8sResource {
 	return K8sResource{
 		TypeMeta: v1.TypeMeta{
 			Kind:       "{{ .KindName }}",
@@ -28,6 +28,7 @@ func NewK8sResource(name string, s *Spec) K8sResource {
 // Resource is the wire representation of {{ .KindName }}.
 // It currently will soon be merged into the k8s flavor (TODO be better)
 type Resource struct {
-    {{- range .SubresourceNames }}
-	{{ . }} {{ . }} `json:"{{ . | ToLower }}"`{{end}}
+    Metadata Metadata `json:"metadata"`
+    Spec     {{ .KindName }}     `json:"spec"`
+    Status   Status   `json:"status"`
 }

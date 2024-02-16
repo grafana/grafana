@@ -77,7 +77,7 @@ func GetAccessPolicies(ctx context.Context, orgID int64, sql *session.SessionDB,
 					CreationTimestamp: created,
 					UpdateTimestamp:   updated,
 				},
-				Spec: accesspolicy.Spec{
+				Spec: accesspolicy.AccessPolicy{
 					Role: accesspolicy.RoleRef{
 						Kind:  accesspolicy.RoleRefKindRole,
 						Name:  info.RoleUID,
