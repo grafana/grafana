@@ -31,8 +31,7 @@ for file in "$ARTIFACTS_DIR"/*.tgz; do
 	done
 
   # Check license files
-  check_files=( )
-  if [ -f "LICENSE_APACHE2" ] || [ -f "LICENSE_AGPL"]; then
+  if [ -f "LICENSE_APACHE2" ] || [ -f "LICENSE_AGPL" ]; then
     echo -e "Found required license file in package $dir_name.\n"
   else
     echo -e "❌ Failed: Missing required license file in package $dir_name.\n"
