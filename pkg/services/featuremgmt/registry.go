@@ -221,7 +221,7 @@ var (
 		{
 			Name:         "returnToPrevious",
 			Description:  "Enables the return to previous context functionality",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
 		},
