@@ -443,6 +443,7 @@ var revertPermissions = []accesscontrol.Permission{
 func (ms *migrationStore) RevertOrg(ctx context.Context, orgID int64) error {
 	return ms.store.InTransaction(ctx, func(ctx context.Context) error {
 		return ms.store.WithDbSession(ctx, func(sess *db.Session) error {
+			l := ms.log.FromContext(ctx)
 			if _, err := sess.Exec("DELETE FROM alert_rule WHERE org_id = ?", orgID); err != nil {
 				return err
 			}
@@ -456,7 +457,7 @@ func (ms *migrationStore) RevertOrg(ctx context.Context, orgID int64) error {
 				return err
 			}
 			if err := ms.DeleteFolders(ctx, orgID, state.CreatedFolders...); err != nil {
-				ms.log.Warn("Failed to delete migrated folders", "orgId", orgID, "err", err)
+				l.Warn("Failed to delete migrated folders", "orgId", orgID, "err", err)
 			}
 
 			if _, err := sess.Exec("DELETE FROM alert_configuration WHERE org_id = ?", orgID); err != nil {
@@ -485,7 +486,7 @@ func (ms *migrationStore) RevertOrg(ctx context.Context, orgID int64) error {
 			}
 			for _, f := range files {
 				if err := os.Remove(f); err != nil {
-					ms.log.Error("Failed to remove silence file", "file", f, "err", err)
+					l.Error("Failed to remove silence file", "file", f, "err", err)
 				}
 			}
 
@@ -500,6 +501,7 @@ func (ms *migrationStore) RevertOrg(ctx context.Context, orgID int64) error {
 func (ms *migrationStore) RevertAllOrgs(ctx context.Context) error {
 	return ms.store.InTransaction(ctx, func(ctx context.Context) error {
 		return ms.store.WithDbSession(ctx, func(sess *db.Session) error {
+			l := ms.log.FromContext(ctx)
 			if _, err := sess.Exec("DELETE FROM alert_rule"); err != nil {
 				return err
 			}
@@ -518,7 +520,7 @@ func (ms *migrationStore) RevertAllOrgs(ctx context.Context) error {
 					return err
 				}
 				if err := ms.DeleteFolders(ctx, o.ID, state.CreatedFolders...); err != nil {
-					ms.log.Warn("Failed to delete migrated folders", "orgId", o.ID, "err", err)
+					l.Warn("Failed to delete migrated folders", "orgId", o.ID, "err", err)
 					continue
 				}
 			}
@@ -549,7 +551,7 @@ func (ms *migrationStore) RevertAllOrgs(ctx context.Context) error {
 			}
 			for _, f := range files {
 				if err := os.Remove(f); err != nil {
-					ms.log.Error("Failed to remove silence file", "file", f, "err", err)
+					l.Error("Failed to remove silence file", "file", f, "err", err)
 				}
 			}
 

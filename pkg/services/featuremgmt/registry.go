@@ -1214,6 +1214,15 @@ var (
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
+		{
+			Name:            "alertingUpgradeDryrunOnStart",
+			Description:     "When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.",
+			FrontendOnly:    false,
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+			Expression:      "true", // enabled by default
+		},
 	}
 )
 
