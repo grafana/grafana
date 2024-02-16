@@ -28,8 +28,9 @@ import { reportPanelInspectInteraction } from 'app/features/search/page/reportin
 
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { buildGridItemForPanel } from '../serialization/transformSaveModelToScene';
-import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
+import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 
 export type ShowContent = 'panel-json' | 'panel-data' | 'data-frames';
 
@@ -202,6 +203,10 @@ function getJsonText(show: ShowContent, panel: VizPanel): string {
 
       if (panel.parent instanceof SceneGridItem || panel.parent instanceof PanelRepeaterGridItem) {
         objToStringify = gridItemToPanel(panel.parent);
+      } else if (panel.parent instanceof LibraryVizPanel && panel.parent.parent) {
+        const libraryPanelObj = gridItemToPanel(panel.parent.parent);
+        const panelObj = vizPanelToPanel(panel);
+        objToStringify = { ...panelObj, ...libraryPanelObj };
       }
       break;
     }
