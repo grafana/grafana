@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -278,7 +279,7 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		builder := db.NewSqlBuilder(cfg, features, store.GetDialect(), recursiveQueriesAreSupported)
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", ? as folder_name ", cmd.FolderName)
-		builder.Write(", '' as folder_uid ")
+		builder.Write(", COALESCE((SELECT folder.uid FROM folder WHERE folder.id = le.folder_id), '') as folder_uid ")
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
 		// nolint:staticcheck
 		writeParamSelectorSQL(&builder, append(params, Pair{"folder_id", cmd.FolderID})...)
@@ -289,7 +290,7 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 		builder.Write(getFromLibraryElementDTOWithMeta(store.GetDialect()))
 		builder.Write(" INNER JOIN dashboard AS dashboard on le.folder_id = dashboard.id AND le.folder_id <> 0")
 		writeParamSelectorSQL(&builder, params...)
-		builder.WriteDashboardPermissionFilter(signedInUser, dashboardaccess.PERMISSION_VIEW, "")
+		builder.WriteDashboardPermissionFilter(signedInUser, dashboardaccess.PERMISSION_VIEW, searchstore.TypeFolder)
 		builder.Write(` OR dashboard.id=0`)
 		if err := session.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&libraryElements); err != nil {
 			return err
@@ -314,11 +315,15 @@ func (l *LibraryElementService) getLibraryElements(c context.Context, store db.D
 			}
 		}
 
+		folderUID := libraryElement.FolderUID
+		if libraryElement.FolderID == 0 { // nolint:staticcheck
+			folderUID = ac.GeneralFolderUID
+		}
 		leDtos[i] = model.LibraryElementDTO{
 			ID:          libraryElement.ID,
 			OrgID:       libraryElement.OrgID,
 			FolderID:    libraryElement.FolderID, // nolint:staticcheck
-			FolderUID:   libraryElement.FolderUID,
+			FolderUID:   folderUID,
 			UID:         libraryElement.UID,
 			Name:        libraryElement.Name,
 			Kind:        libraryElement.Kind,
