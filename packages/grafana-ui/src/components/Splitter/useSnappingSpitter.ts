@@ -18,7 +18,7 @@ interface PaneOptions {
   removed?: boolean;
   defaultCollapsed?: boolean;
   collapseBelowPixels: number;
-  snapOpenToPixels: number;
+  snapOpenToPixels?: number;
 }
 
 interface PaneState {
@@ -58,12 +58,13 @@ export function useSnappingSplitter(options: UseSnappingSplitterOptions) {
 
       const newSecondPaneSize = 1 - flexSize;
       const isSnappedClosed = state.sizeOverride === 0;
-      const fullWidth = pixelSize / flexSize;
-      const snapWidth = paneOptions.snapOpenToPixels / fullWidth;
+      const sizeOfBothPanes = pixelSize / flexSize;
+      const snapOpenToPixels = paneOptions.snapOpenToPixels ?? sizeOfBothPanes / 2;
+      const snapSize = snapOpenToPixels / sizeOfBothPanes;
 
       if (state.collapsed) {
         if (isSnappedClosed) {
-          setState({ sizeOverride: Math.max(newSecondPaneSize, snapWidth), collapsed: false });
+          setState({ sizeOverride: Math.max(newSecondPaneSize, snapSize), collapsed: false });
         } else {
           setState({ sizeOverride: 0, collapsed: true });
         }
@@ -73,6 +74,10 @@ export function useSnappingSplitter(options: UseSnappingSplitterOptions) {
     },
     [state, paneOptions.snapOpenToPixels]
   );
+
+  const onToggleCollapse = useCallback(() => {
+    setState({ collapsed: !state.collapsed });
+  }, [state.collapsed]);
 
   const { containerProps, firstPaneProps, secondPaneProps, splitterProps } = useSplitter({
     ...options,
@@ -97,5 +102,5 @@ export function useSnappingSplitter(options: UseSnappingSplitterOptions) {
     secondPaneProps.style.overflow = 'unset';
   }
 
-  return { containerProps, firstPaneProps, secondPaneProps, splitterProps, state };
+  return { containerProps, firstPaneProps, secondPaneProps, splitterProps, splitterState: state, onToggleCollapse };
 }

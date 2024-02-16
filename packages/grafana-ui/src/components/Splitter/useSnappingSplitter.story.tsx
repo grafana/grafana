@@ -42,7 +42,7 @@ export const Basic: StoryFn<StoryOptions> = (options) => {
     height: '100%',
   });
 
-  const { containerProps, firstPaneProps, secondPaneProps, splitterProps, state } = useSnappingSplitter({
+  const { containerProps, firstPaneProps, secondPaneProps, splitterProps, splitterState } = useSnappingSplitter({
     ...options,
     paneOptions: {
       collapseBelowPixels: 150,
@@ -59,8 +59,8 @@ export const Basic: StoryFn<StoryOptions> = (options) => {
           </div>
           <div {...splitterProps} />
           <div {...secondPaneProps} className={cx(firstPaneProps.className, paneStyles)}>
-            {state.collapsed && <Button onClick={() => {}} icon="angle-left" variant="secondary" />}
-            {!state.collapsed && <div>Secondary pane open for business</div>}
+            {splitterState.collapsed && <Button onClick={() => {}} icon="angle-left" variant="secondary" />}
+            {!splitterState.collapsed && <div>Secondary pane open for business</div>}
           </div>
         </div>
       </div>
