@@ -11773,7 +11773,7 @@
           "format": "int64"
         },
         "password": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         }
       }
     },
@@ -11894,7 +11894,7 @@
       "type": "object",
       "properties": {
         "password": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         }
       }
     },
@@ -13196,10 +13196,10 @@
       "type": "object",
       "properties": {
         "newPassword": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         },
         "oldPassword": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         }
       }
     },
@@ -17175,6 +17175,9 @@
           "type": "string"
         }
       }
+    },
+    "Password": {
+      "type": "string"
     },
     "PatchAnnotationsCmd": {
       "type": "object",
