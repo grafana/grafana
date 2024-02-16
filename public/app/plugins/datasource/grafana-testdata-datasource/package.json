@@ -27,12 +27,12 @@
     "@types/d3-random": "^3.0.2",
     "@types/jest": "29.5.12",
     "@types/lodash": "4.14.202",
-    "@types/node": "20.11.18",
+    "@types/node": "20.11.19",
     "@types/react": "18.2.55",
     "@types/testing-library__jest-dom": "5.14.9",
     "@types/uuid": "9.0.8",
     "ts-node": "10.9.2",
-    "webpack": "5.90.1"
+    "webpack": "5.90.2"
   },
   "peerDependencies": {
     "@grafana/runtime": "*"

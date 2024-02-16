@@ -140,7 +140,7 @@
     "@types/jquery": "3.5.29",
     "@types/lodash": "4.14.202",
     "@types/mock-raf": "1.0.6",
-    "@types/node": "20.11.18",
+    "@types/node": "20.11.19",
     "@types/prismjs": "1.26.3",
     "@types/react": "18.2.55",
     "@types/react-beautiful-dnd": "13.1.8",
@@ -183,7 +183,7 @@
     "storybook-dark-mode": "3.0.1",
     "style-loader": "3.3.4",
     "typescript": "5.3.3",
-    "webpack": "5.90.1"
+    "webpack": "5.90.2"
   },
   "peerDependencies": {
     "react": "^17.0.0 || ^18.0.0",
