@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { useLayoutEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
@@ -50,6 +51,9 @@ export const Page: PageType = ({
     }
   }, [navModel, pageNav, chrome, layout]);
 
+  // When the
+  // const applyPrimaryBgClass = config.featureToggles.removeCustomScrollbars && layout === PageLayoutType.Standard;
+
   return (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
@@ -97,6 +101,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     pageContent: css({
       label: 'page-content',
       flexGrow: 1,
+    }),
+    primaryBg: css({
+      background: theme.colors.background.primary,
     }),
     pageInner: css({
       label: 'page-inner',
