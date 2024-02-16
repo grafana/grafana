@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
+import { autoUpdate, flip, offset, shift, size, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { usePopper } from 'react-popper';
 import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
@@ -21,7 +21,6 @@ import { useDatasource } from '../../hooks';
 import { DataSourceList } from './DataSourceList';
 import { DataSourceLogo, DataSourceLogoPlaceHolder } from './DataSourceLogo';
 import { DataSourceModal } from './DataSourceModal';
-import { applyMaxSize, maxSize } from './popperModifiers';
 import { dataSourceLabel, matchDataSourceWithSearch } from './utils';
 
 const INTERACTION_EVENT_NAME = 'dashboards_dspicker_clicked';
@@ -81,8 +80,6 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
 
   // Used to position the popper correctly and to bring back the focus when navigating from footer to input
   const [markerElement, setMarkerElement] = useState<HTMLInputElement | null>();
-  // Used to position the popper correctly
-  const [selectorElement, setSelectorElement] = useState<HTMLDivElement | null>();
   // Used to move the focus to the footer when tabbing from the input
   const [footerRef, setFooterRef] = useState<HTMLElement | null>();
   const currentDataSourceInstanceSettings = useDatasource(current);
@@ -91,19 +88,42 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const prefixIcon =
     filterTerm && isOpen ? <DataSourceLogoPlaceHolder /> : <DataSourceLogo dataSource={currentValue} />;
 
-  const popper = usePopper(markerElement, selectorElement, {
-    placement: 'bottom-start',
-    modifiers: [
-      {
-        name: 'offset',
-        options: {
-          offset: [0, 4],
-        },
+  // the order of middleware is important!
+  const middleware = [
+    offset(4),
+    size({
+      apply({ availableHeight, elements }) {
+        const margin = 20;
+        const minSize = 200;
+        elements.floating.style.maxHeight = `${Math.max(minSize, availableHeight - margin)}px`;
+        elements.floating.style.minHeight = `${minSize}px`;
       },
-      maxSize,
-      applyMaxSize,
-    ],
+    }),
+    flip({
+      fallbackStrategy: 'initialPlacement',
+      // see https://floating-ui.com/docs/flip#combining-with-shift
+      crossAxis: false,
+      boundary: document.body,
+    }),
+    shift(),
+  ];
+
+  const { refs, floatingStyles } = useFloating({
+    open: isOpen,
+    placement: 'bottom-start',
+    onOpenChange: setOpen,
+    middleware,
+    whileElementsMounted: autoUpdate,
+    strategy: 'fixed',
   });
+
+  const handleReference = useCallback(
+    (element: HTMLInputElement | null) => {
+      refs.setReference(element);
+      setMarkerElement(element);
+    },
+    [refs]
+  );
 
   const onClose = useCallback(() => {
     setFilterTerm('');
@@ -215,7 +235,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
             openDropdown();
             setFilterTerm(e.currentTarget.value);
           }}
-          ref={setMarkerElement}
+          ref={handleReference}
           disabled={disabled}
         ></Input>
       </div>
@@ -225,9 +245,8 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
           <div ref={ref} {...overlayProps} {...dialogProps}>
             <PickerContent
               {...restProps}
-              {...popper.attributes.popper}
-              style={popper.styles.popper}
-              ref={setSelectorElement}
+              style={floatingStyles}
+              ref={refs.setFloating}
               footerRef={setFooterRef}
               current={currentValue}
               filterTerm={filterTerm}
