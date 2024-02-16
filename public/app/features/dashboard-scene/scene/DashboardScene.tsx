@@ -151,6 +151,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     window.__grafanaSceneContext = this;
 
+    if (this.state.isEditing) {
+      this.startTrackingChanges();
+    }
+
     if (!this.state.meta.isEmbedded && this.state.uid) {
       dashboardWatcher.watch(this.state.uid);
     }
@@ -421,6 +425,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   private postChangesMessage() {
     // FIXME: The test stops here, if you have a console log here, it works. And the changes _changesWorker exists, but postMessage is never called.
+    console.log('postChangesMessage');
+    debugger;
     this._changesWorker?.postMessage({ changed: transformSceneToSaveModel(this), initial: this._initialSaveModel });
   }
 
