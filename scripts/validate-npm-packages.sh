@@ -31,18 +31,13 @@ for file in "$ARTIFACTS_DIR"/*.tgz; do
 	done
 
   # Check license files
-  check_files=("LICENSE_APACHE2" "LICENSE")
-  has_no_license=true
-	for check_file in "${check_files[@]}"; do
-		if [ -f "$check_file" ]; then
-			has_no_license=false
-		fi
-	done
-
-  if [ has_no_license ]; then
-    echo -e "❌ Failed: Missing required file $check_file in package $dir_name.\n"
+  check_files=( )
+  if [ -f "LICENSE_APACHE2" ] || [ -f "LICENSE"]; then
+    echo -e "Found required license file in package $dir_name.\n"
+  else
+    echo -e "❌ Failed: Missing required license file in package $dir_name.\n"
     exit 1
-	fi
+  fi
 
   # Assert commonjs builds
   if [ ! -d dist ] || [ ! -f dist/index.js ] || [ ! -f dist/index.d.ts ]; then
