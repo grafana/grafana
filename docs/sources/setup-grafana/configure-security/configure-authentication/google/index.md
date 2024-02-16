@@ -47,12 +47,10 @@ If you need to reset changes made in the UI back to the default values, click **
 If you run Grafana in high availability mode, configuration changes may not get applied to all Grafana instances immediately. You may need to wait a few minutes for the configuration to propagate to all Grafana instances.
 {{% /admonition %}}
 
-Refer to [configuration options]({{< relref "#configuration-options" >}}) for more information.
-
 ## Configure Google authentication client using the Terraform provider
 
 {{% admonition type="note" %}}
-Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle. Supported in the Terraform provider since v<TODO:TF provider version>
+Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle. Supported in the Terraform provider since v2.12.0.
 {{% /admonition %}}
 
 ```terraform
@@ -243,9 +241,3 @@ In this example, all users will be assigned `Viewer` role regardless of the user
 role_attribute_path = "'Viewer'"
 skip_org_role_sync = false
 ```
-
-## Configuration options
-
-The table below describes all GitLab OAuth configuration options. Like any other Grafana configuration, you can apply these options as environment variables.
-
-TODO: Add table with configuration options

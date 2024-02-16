@@ -48,7 +48,7 @@ Refer to [configuration options]({{< relref "#configuration-options" >}}) for mo
 ## Configure GitHub authentication client using the Terraform provider
 
 {{% admonition type="note" %}}
-Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle. Supported in the Terraform provider since v<TODO:TF provider version>
+Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle. Supported in the Terraform provider since v2.12.0.
 {{% /admonition %}}
 
 ```terraform
