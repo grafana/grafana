@@ -29,7 +29,7 @@ We are greatly appreciative of the developers who have contributed plugins to th
 Refer to the [table below](#angularjs-based-plugins) and take the appropriate action for you.
 
 - Consider the advice on whether to update, migrate to a listed alternative, or explore the Grafana plugins [catalog](/grafana/plugins) to find the most suitable option for your use case.
-- Use our [open source tooling](https://github.com/grafana/detect-angular-dashboards) to list dashboards which have a dependency on Angular plugins.
+- Use our [detect-angular-dashboards](https://github.com/grafana/detect-angular-dashboards) open source tooling to list dashboards which have a dependency on Angular plugins.
 - Check your Grafana instances for usage of these plugins. Refer to the documentation on [browsing installed plugins]({{< relref "../../administration/plugin-management/#browse-plugins" >}}).
 - Customers of Grafana Enterprise and users of Grafana Cloud can also leverage [usage insights]({{< relref "../../dashboards/assess-dashboard-usage/" >}}) to prioritize any migration efforts.
 - Review the plugin source repositories to add your support to any migration issues or consider forking the repo.
@@ -42,7 +42,7 @@ If you want to add any specific migration guidance for your plugin here or updat
 
 Grafana OSS and Grafana Enterprise support the creation of private plugins for use on local instances. These plugins may have a dependency on AngularJS and require an update.
 
-The open source tooling listed above will include private plugins in its report **if the Grafana version is v10.1.0 or later**.
+The `detect-angular-dashboards` tool listed above will include private plugins in its report **if the Grafana version is v10.1.0 or later**.
 
 Additionally, warning icons and messages will be displayed when browsing the catalog via **Administration** > **Plugins and Data** > **Plugins** in your local instance.
 
