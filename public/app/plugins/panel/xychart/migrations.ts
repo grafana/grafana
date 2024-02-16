@@ -1,9 +1,9 @@
 import { FieldMatcherID, FrameMatcherID, MatcherConfig, PanelModel } from '@grafana/data';
 
 import { ScatterSeriesConfig, SeriesMapping, XYDimensionConfig } from './panelcfg.gen';
-import { XYSeriesConfig, Options2 as Options2 } from './types2';
+import { XYSeriesConfig, Options } from './types2';
 
-export const xyChartMigrationHandler = (panel: PanelModel): Options2 => {
+export const xyChartMigrationHandler = (panel: PanelModel): Options => {
   const pluginVersion = panel?.pluginVersion ?? '';
 
   // Update to new format for GA 10.4 release

@@ -59,7 +59,7 @@ export interface XYSeries {
   };
 }
 
-export interface Options2 extends common.OptionsWithLegend, common.OptionsWithTooltip {
+export interface Options extends common.OptionsWithLegend, common.OptionsWithTooltip {
   // source: 'annotations' | 'series', // maybe render directly from annotations (exemplars)
   mapping: SeriesMapping;
   series: XYSeriesConfig[]; // uses series[0] in auto mode to generate
