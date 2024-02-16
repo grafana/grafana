@@ -35,7 +35,7 @@ for file in "$ARTIFACTS_DIR"/*.tgz; do
   has_no_license=true
 	for check_file in "${check_files[@]}"; do
 		if [ ! -f "$check_file" ]; then
-			has_license=false
+			has_no_license=false
 		fi
 	done
 
