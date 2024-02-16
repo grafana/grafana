@@ -77,7 +77,7 @@ function applyOverrides(dataFrame: DataFrame) {
       defaults: {},
       overrides: [],
     },
-    replaceVariables: (value, vars, format) => {
+    replaceVariables: (value, vars, _format) => {
       return vars && value === '${__value.text}' ? '${__value.text} interpolation' : value;
     },
     timeZone: 'utc',
