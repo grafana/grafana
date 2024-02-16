@@ -158,16 +158,9 @@ type PanelLinkParams = {
   editPanel?: string;
   tab?: 'alert' | 'transform' | 'query';
 };
+
 export function makePanelLink(dashboardUID: string, panelId: string, queryParams: PanelLinkParams = {}): string {
-  const panelParams = new URLSearchParams({
-    viewPanel: panelId,
-  });
-
-  for (const key in queryParams) {
-    // @ts-ignore
-    panelParams.append(key, queryParams[key]);
-  }
-
+  const panelParams = new URLSearchParams(queryParams);
   return createUrl(`/d/${encodeURIComponent(dashboardUID)}`, panelParams);
 }
 

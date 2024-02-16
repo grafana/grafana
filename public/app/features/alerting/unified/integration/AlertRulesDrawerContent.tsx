@@ -21,7 +21,7 @@ export default function AlertRulesDrawerContent({ dashboardUid }: Props) {
   const dispatch = useDispatch();
   const dashboardStateManager = getDashboardScenePageStateManager();
 
-  const { value: dashboard } = useAsync(() => {
+  const { value: dashboard, loading: loadingDashboardState } = useAsync(() => {
     return dashboardStateManager
       .fetchDashboard({
         uid: dashboardUid,
@@ -30,7 +30,7 @@ export default function AlertRulesDrawerContent({ dashboardUid }: Props) {
       .then((data) => (data ? data.dashboard : undefined));
   }, [dashboardStateManager]);
 
-  const { loading: loadingRulesData } = useAsync(async () => {
+  const { loading: loadingAlertRules } = useAsync(async () => {
     await dispatch(fetchPromAndRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
   }, [dispatch]);
 
@@ -40,7 +40,7 @@ export default function AlertRulesDrawerContent({ dashboardUid }: Props) {
     .flatMap((g) => g.rules)
     .filter((rule) => rule.annotations[Annotation.dashboardUID] === dashboardUid);
 
-  const loading = loadingRulesData;
+  const loading = loadingDashboardState || loadingAlertRules;
 
   return (
     <>
