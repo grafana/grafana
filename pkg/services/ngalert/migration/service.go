@@ -471,9 +471,9 @@ func (ms *migrationService) applyTransition(ctx context.Context, t transition) e
 	})
 	if t.DryrunUpgrade {
 		if errors.Is(err, ErrSuccessRollback) {
-			ms.log.FromContext(ctx).Info("Dry-run upgrade succeeded. No changes were made.")
+			ms.log.FromContext(ctx).Info("Dry-run upgrade succeeded. No changes were made. Current legacy alerting setup is ready to upgrade.")
 		} else {
-			ms.log.FromContext(ctx).Warn("Dry-run upgrade failed. No changes were made.", "err", err)
+			ms.log.FromContext(ctx).Warn("Dry-run upgrade failed. No changes were made. Current legacy alerting setup will fail to upgrade, issues must be fixed before upgrading Grafana to v11 as legacy alerting will be removed. See https://grafana.com/docs/grafana/v10.4/alerting/set-up/migrating-alerts/ for more details.", "err", err)
 		}
 		// Dry should never error.
 		return nil
