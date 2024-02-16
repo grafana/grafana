@@ -16,9 +16,10 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.Scope":     schema_pkg_apis_scope_v0alpha1_Scope(ref),
-		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeList": schema_pkg_apis_scope_v0alpha1_ScopeList(ref),
-		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeSpec": schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.Scope":       schema_pkg_apis_scope_v0alpha1_Scope(ref),
+		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeFilter": schema_pkg_apis_scope_v0alpha1_ScopeFilter(ref),
+		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeList":   schema_pkg_apis_scope_v0alpha1_ScopeList(ref),
+		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeSpec":   schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref),
 	}
 }
 
@@ -59,6 +60,40 @@ func schema_pkg_apis_scope_v0alpha1_Scope(ref common.ReferenceCallback) common.O
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_scope_v0alpha1_ScopeFilter(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"key": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"value": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"operator": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"key", "value", "operator"},
+			},
+		},
 	}
 }
 
@@ -115,17 +150,52 @@ func schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref common.ReferenceCallback) comm
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"s": {
+					"name": {
 						SchemaProps: spec.SchemaProps{
-							Description: "S does nothing and is a stub",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"description": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"category": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"filters": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeFilter"),
+									},
+								},
+							},
 						},
 					},
 				},
-				Required: []string{"s"},
+				Required: []string{"name", "type", "description", "category", "filters"},
 			},
 		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeFilter"},
 	}
 }
