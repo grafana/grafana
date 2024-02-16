@@ -135,8 +135,11 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 			return nil, err
 		}
 
-		iter := jsoniter.ParseBytes(jsoniter.ConfigDefault, rn.QueryRaw)
-		q, err := reader.ReadQuery(rn, jsonitersdk.NewIterator(iter))
+		iter, err := jsonitersdk.ParseBytes(jsoniter.ConfigDefault, rn.QueryRaw)
+		if err != nil {
+			return nil, err
+		}
+		q, err := reader.ReadQuery(rn, iter)
 		if err != nil {
 			return nil, err
 		}
