@@ -16,10 +16,11 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.Scope":       schema_pkg_apis_scope_v0alpha1_Scope(ref),
-		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeFilter": schema_pkg_apis_scope_v0alpha1_ScopeFilter(ref),
-		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeList":   schema_pkg_apis_scope_v0alpha1_ScopeList(ref),
-		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeSpec":   schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref),
+		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.Scope":          schema_pkg_apis_scope_v0alpha1_Scope(ref),
+		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeDashboard": schema_pkg_apis_scope_v0alpha1_ScopeDashboard(ref),
+		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeFilter":    schema_pkg_apis_scope_v0alpha1_ScopeFilter(ref),
+		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeList":      schema_pkg_apis_scope_v0alpha1_ScopeList(ref),
+		"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeSpec":      schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref),
 	}
 }
 
@@ -60,6 +61,33 @@ func schema_pkg_apis_scope_v0alpha1_Scope(ref common.ReferenceCallback) common.O
 		},
 		Dependencies: []string{
 			"github.com/grafana/grafana/pkg/apis/scope/v0alpha1.ScopeSpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_scope_v0alpha1_ScopeDashboard(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"dashboardUid": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"scopeUid": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"dashboardUid", "scopeUid"},
+			},
+		},
 	}
 }
 

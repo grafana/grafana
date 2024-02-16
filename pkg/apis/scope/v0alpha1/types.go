@@ -26,6 +26,11 @@ type ScopeFilter struct {
 	Operator string `json:"operator"`
 }
 
+type ScopeDashboard struct {
+	DashboardUID string `json:"dashboardUid"`
+	ScopeUID     string `json:"scopeUid"`
+}
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type ScopeList struct {
 	metav1.TypeMeta `json:",inline"`
