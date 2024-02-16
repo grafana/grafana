@@ -84,24 +84,6 @@ export const browseDashboardsAPI = createApi({
     listFolders: builder.query<FolderDTO[], ListFolderArgs>({
       // TODO: provides tags
       query: ({ page, parentUid, limit }) => ({ url: '/folders', params: { page, parentUid, limit } }),
-
-      // serializeQueryArgs: ({ endpointName, queryArgs }) => {
-      //   return `${endpointName}?parentUid=${queryArgs.parentUid}&limit=${queryArgs.limit}`;
-      // },
-
-      // // Store store each page seperately, and then flat map it in the selector/view
-      // transformResponse: (response: FolderDTO[]) => {
-      //   return [response];
-      // },
-
-      // merge: (currentCache, newItems) => {
-      //   currentCache.push(newItems[0]);
-      // },
-
-      // // Refetch when the page arg changes
-      // forceRefetch({ currentArg, previousArg }) {
-      //   return currentArg.page !== previousArg.page;
-      // },
     }),
 
     // get folder info (e.g. title, parents) but *not* children

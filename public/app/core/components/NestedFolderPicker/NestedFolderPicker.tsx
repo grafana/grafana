@@ -518,17 +518,14 @@ function useFolderList() {
 
       const pageSet = parentUid ? state.pagesByParent[parentUid] : state.rootPages;
 
-      let page = 0;
-      if (!pageSet) {
-        page = 0;
-      } else {
-        page = pageSet.length;
+      let page = 1;
+      if (pageSet) {
+        page = pageSet.length + 1;
       }
 
       const args = { parentUid, page, limit: PAGE_SIZE };
-
       requestedArgs.current?.push(args);
-
+      // Actually make the api call
       const promise = dispatch(browseDashboardsAPI.endpoints.listFolders.initiate(args));
 
       console.log('promise-ish', promise);
@@ -539,9 +536,11 @@ function useFolderList() {
   );
 
   useEffect(() => {
-    for (const unsubscribe of unsubscribes.current ?? []) {
-      unsubscribe();
-    }
+    return () => {
+      for (const unsubscribe of unsubscribes.current ?? []) {
+        unsubscribe();
+      }
+    };
   }, []);
 
   return [rootCollection, loadNextPage] as const;

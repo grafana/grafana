@@ -70,6 +70,9 @@ export const TestStuffPage = () => {
       <Page.Contents>
         <FolderPicker />
 
+        <br />
+        <br />
+
         <div style={{ display: 'flex', gap: '1em' }}>
           <Button onClick={() => notifyApp.success('Success toast', 'some more text goes here')} variant="primary">
             Success
