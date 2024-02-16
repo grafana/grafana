@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { CSSProperties, UIEventHandler, useCallback, useEffect, useMemo, useState } from 'react';
 import { Cell, Row, TableState } from 'react-table';
-import { VariableSizeList } from 'react-window';
+import { VariableSizeGrid, VariableSizeList } from 'react-window';
 import { Subscription, debounceTime } from 'rxjs';
 
 import {
@@ -45,6 +45,7 @@ interface RowsListProps {
   timeRange?: TimeRange;
   footerPaginationEnabled: boolean;
   initialRowIndex?: number;
+  disableVirtualization: boolean;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -68,6 +69,7 @@ export const RowsList = (props: RowsListProps) => {
     listRef,
     enableSharedCrosshair = false,
     initialRowIndex = undefined,
+    disableVirtualization = true,
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
@@ -288,18 +290,35 @@ export const RowsList = (props: RowsListProps) => {
   return (
     <>
       <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true} scrollTop={scrollTop}>
-        <VariableSizeList
-          // This component needs an unmount/remount when row height or page changes
-          key={rowHeight + pageIndex}
-          height={listHeight}
-          itemCount={itemCount}
-          itemSize={getItemSize}
-          width={'100%'}
-          ref={listRef}
-          style={{ overflow: undefined }}
-        >
-          {({ index, style }) => RenderRow({ index, style, rowHighlightIndex })}
-        </VariableSizeList>
+        {!disableVirtualization && (
+          <VariableSizeList
+            // This component needs an unmount/remount when row height or page changes
+            key={rowHeight + pageIndex}
+            height={listHeight}
+            itemCount={itemCount}
+            itemSize={getItemSize}
+            width={'100%'}
+            ref={listRef}
+            style={{ overflow: undefined }}
+          >
+            {({ index, style }) => RenderRow({ index, style, rowHighlightIndex })}
+          </VariableSizeList>
+        )}
+        {disableVirtualization && (
+          <VariableSizeList
+            overscanCount={3000}
+            // This component needs an unmount/remount when row height or page changes
+            key={rowHeight + pageIndex}
+            height={listHeight}
+            itemCount={itemCount}
+            itemSize={getItemSize}
+            width={'100%'}
+            ref={listRef}
+            style={{ overflow: undefined }}
+          >
+            {({ index, style }) => RenderRow({ index, style, rowHighlightIndex })}
+          </VariableSizeList>
+        )}
       </CustomScrollbar>
     </>
   );
