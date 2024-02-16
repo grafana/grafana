@@ -1,8 +1,8 @@
 import { expect, test } from '@grafana/plugin-e2e';
 
-import { formatExpectError } from './errors';
-import { successfulDataQuery } from './mocks/queries';
-import { scenarios } from './mocks/resources';
+import { formatExpectError } from '../errors';
+import { successfulDataQuery } from '../mocks/queries';
+import { scenarios } from '../mocks/resources';
 
 const PANEL_TITLE = 'Table panel E2E test';
 const TABLE_VIZ_NAME = 'Table';

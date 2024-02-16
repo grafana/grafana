@@ -1,7 +1,7 @@
 import { expect, test } from '@grafana/plugin-e2e';
 
-import { formatExpectError } from './errors';
-import { prometheusLabels } from './mocks/resources';
+import { formatExpectError } from '../errors';
+import { prometheusLabels } from '../mocks/resources';
 
 test('variable query with mocked response', async ({ variableEditPage, page }) => {
   variableEditPage.mockResourceResponse('api/v1/labels?*', prometheusLabels);

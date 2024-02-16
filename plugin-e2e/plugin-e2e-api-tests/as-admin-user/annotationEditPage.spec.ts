@@ -1,7 +1,7 @@
 import { expect, test } from '@grafana/plugin-e2e';
 
-import { formatExpectError } from './errors';
-import { successfulAnnotationQuery } from './mocks/queries';
+import { formatExpectError } from '../errors';
+import { successfulAnnotationQuery } from '../mocks/queries';
 
 test('annotation query data with mocked response', async ({ annotationEditPage, page, readProvisionedDataSource }) => {
   const ds = await readProvisionedDataSource({ name: 'gdev-testdata', fileName: 'dev.yaml' });

@@ -1,6 +1,6 @@
 import { expect, test } from '@grafana/plugin-e2e';
 
-import { formatExpectError } from './errors';
+import { formatExpectError } from '../errors';
 
 test('query data response should be OK when query is valid', async ({ explorePage, page }) => {
   await explorePage.datasource.set('gdev-testdata');

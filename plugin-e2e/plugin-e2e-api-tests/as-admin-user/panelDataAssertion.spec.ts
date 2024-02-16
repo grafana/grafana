@@ -1,7 +1,7 @@
 import { expect, test, PanelEditPage, DashboardPage } from '@grafana/plugin-e2e';
 
-import { formatExpectError } from './errors';
-import { successfulDataQuery } from './mocks/queries';
+import { formatExpectError } from '../errors';
+import { successfulDataQuery } from '../mocks/queries';
 
 const REACT_TABLE_DASHBOARD = { uid: 'U_bZIMRMk' };
 

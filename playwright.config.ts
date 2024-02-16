@@ -33,20 +33,44 @@ export default defineConfig<PluginOptions>({
 
   /* Configure projects for major browsers */
   projects: [
-    // 1. Login to Grafana and store the cookie on disk for use in subsequent test projects.
+    // Login to Grafana with admin user and store the cookie on disk for use in other tests
     {
       name: 'authenticate',
       testDir: `${dirname(require.resolve('@grafana/plugin-e2e'))}/auth`,
       testMatch: [/.*\.js/],
     },
-    // 2. Run all tests in parallel using Chrome.
+    // Login to Grafana with new user with viewer role and store the cookie on disk for use in other tests
     {
-      name: 'chromium',
+      name: 'createUserAndAuthenticate',
+      testDir: `${dirname(require.resolve('@grafana/plugin-e2e'))}/auth`,
+      testMatch: [/.*\.js/],
+      use: {
+        user: {
+          user: 'viewer',
+          password: 'password',
+          role: 'Viewer',
+        },
+      },
+    },
+    // Run all tests in parallel using user with admin role
+    {
+      name: 'admin',
+      testDir: './plugin-e2e/plugin-e2e-api-tests/as-admin-user',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
       },
       dependencies: ['authenticate'],
+    },
+    // Run all tests in parallel using user with viewer role
+    {
+      name: 'viewer',
+      testDir: './plugin-e2e/plugin-e2e-api-tests/as-viewer-user',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'playwright/.auth/viewer.json',
+      },
+      dependencies: ['createUserAndAuthenticate'],
     },
   ],
 });

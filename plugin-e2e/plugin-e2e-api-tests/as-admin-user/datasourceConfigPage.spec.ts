@@ -1,6 +1,6 @@
 import { expect, test } from '@grafana/plugin-e2e';
 
-import { formatExpectError } from './errors';
+import { formatExpectError } from '../errors';
 
 test.describe('test createDataSourceConfigPage fixture, saveAndTest and toBeOK matcher', () => {
   test('invalid credentials should return an error', async ({ createDataSourceConfigPage, page }) => {
