@@ -135,17 +135,17 @@ func TestList(t *testing.T) {
 		errIsExpected bool
 	}{
 		{
-			"request with key and entity lister",
+			"request with key lister",
 			"/playlist.grafana.app/playlists",
 			false,
 		},
 		{
-			"request with key and entity lister",
+			"request with namespaced key lister",
 			"/playlist.grafana.app/playlists/default",
 			false,
 		},
 		{
-			"request with key and entity lister",
+			"request with specific item key lister",
 			"/playlist.grafana.app/playlists/default/set-minimum-uid",
 			false,
 		},
