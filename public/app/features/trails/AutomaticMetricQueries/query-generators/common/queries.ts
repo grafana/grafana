@@ -23,7 +23,7 @@ function getAggLabel(agg: string) {
 export function generateQueries({ agg, rate, unit }: AutoQueryParameters): AutoQueryInfo {
   const baseQuery = getGeneralBaseQuery(rate);
 
-  const aggregationDescription = rate ? `${getAggLabel(agg)} rate per second` : `${getAggLabel(agg)}`;
+  const aggregationDescription = rate ? `${getAggLabel(agg)} per-second rate` : `${getAggLabel(agg)}`;
 
   const description = `${VAR_METRIC_EXPR} (${aggregationDescription})`;
 

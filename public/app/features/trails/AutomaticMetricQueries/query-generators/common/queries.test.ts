@@ -34,7 +34,7 @@ describe('generateQueries', () => {
     const expectedBaseQuery = getGeneralBaseQuery(rate);
     const detectedBaseQuery = query.expr.substring(firstParen + 1, firstParen + 1 + expectedBaseQuery.length);
 
-    const inParentheses = rate ? 'overall rate per second' : 'overall';
+    const inParentheses = rate ? 'overall per-second rate' : 'overall';
     const description = `\${metric} (${inParentheses})`;
 
     describe(`since rate is ${rate}`, () => {
