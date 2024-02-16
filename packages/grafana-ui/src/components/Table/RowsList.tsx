@@ -204,7 +204,17 @@ export const RowsList = (props: RowsListProps) => {
   );
 
   const RenderRow = useCallback(
-    ({ index, style, rowHighlightIndex }: { index: number; style: CSSProperties; rowHighlightIndex?: number }) => {
+    ({
+      index,
+      style,
+      rowHighlightIndex,
+      disableVirtualization,
+    }: {
+      index: number;
+      style: CSSProperties;
+      rowHighlightIndex?: number;
+      disableVirtualization?: boolean;
+    }) => {
       const indexForPagination = rowIndexForPagination(index);
       const row = rows[indexForPagination];
       let additionalProps: React.HTMLAttributes<HTMLDivElement> = {};
@@ -246,6 +256,7 @@ export const RowsList = (props: RowsListProps) => {
               columnCount={row.cells.length}
               timeRange={timeRange}
               frame={data}
+              disableVirtualization={disableVirtualization}
             />
           ))}
         </div>
@@ -304,21 +315,41 @@ export const RowsList = (props: RowsListProps) => {
             {({ index, style }) => RenderRow({ index, style, rowHighlightIndex })}
           </VariableSizeList>
         )}
-        {disableVirtualization && (
-          <VariableSizeList
-            overscanCount={3000}
-            // This component needs an unmount/remount when row height or page changes
-            key={rowHeight + pageIndex}
-            height={listHeight}
-            itemCount={itemCount}
-            itemSize={getItemSize}
-            width={'100%'}
-            ref={listRef}
-            style={{ overflow: undefined }}
-          >
-            {({ index, style }) => RenderRow({ index, style, rowHighlightIndex })}
-          </VariableSizeList>
-        )}
+
+        {
+          disableVirtualization && (
+            <div
+              style={{
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              {rows.map((row) => (
+                <>
+                  {RenderRow({
+                    index: row.index,
+                    style: { overflow: undefined, position: 'relative', display: 'flex' },
+                    disableVirtualization: true,
+                  })}
+                </>
+              ))}
+            </div>
+          )
+
+          // <VariableSizeList
+          //   overscanCount={3000}
+          //   // This component needs an unmount/remount when row height or page changes
+          //   key={rowHeight + pageIndex}
+          //   height={listHeight}
+          //   itemCount={itemCount}
+          //   itemSize={getItemSize}
+          //   width={'100%'}
+          //   ref={listRef}
+          //   style={{ overflow: undefined }}
+          // >
+          //   {({ index, style }) => RenderRow({ index, style, rowHighlightIndex })}
+          // </VariableSizeList>
+        }
       </CustomScrollbar>
     </>
   );
