@@ -24,6 +24,7 @@ import { LogLabels } from './LogLabels';
 import { LogRowMessage } from './LogRowMessage';
 import { LogRowMessageDisplayedFields } from './LogRowMessageDisplayedFields';
 import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
+import { getAllFields } from './logParser';
 
 interface Props extends Themeable2 {
   row: LogRowModel;
@@ -232,6 +233,24 @@ class UnThemedLogRow extends PureComponent<Props, State> {
 
     const processedRow = this.escapeRow(row, forceEscape);
 
+    const fields = getAllFields(row, getFieldLinks);
+    const displayedColumns = displayedFields?.map((key) => {
+      const field = fields.find((field) => {
+        const { keys } = field;
+        return keys[0] === key;
+      });
+      let line = '';
+      if (field !== undefined && field !== null) {
+        line = `${key}=${field.values}`;
+      }
+
+      if (row.labels[key] !== undefined && row.labels[key] !== null) {
+        line = `${key}=${row.labels[key]}`;
+      }
+
+      return <td key={key}>{line}</td>;
+    });
+
     return (
       <>
         <tr
@@ -271,23 +290,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               <LogLabels labels={processedRow.uniqueLabels} />
             </td>
           )}
-          {displayedFields && displayedFields.length > 0 ? (
-            <LogRowMessageDisplayedFields
-              row={processedRow}
-              showContextToggle={showContextToggle}
-              detectedFields={displayedFields}
-              getFieldLinks={getFieldLinks}
-              wrapLogMessage={wrapLogMessage}
-              onOpenContext={this.onOpenContext}
-              onPermalinkClick={this.props.onPermalinkClick}
-              styles={styles}
-              onPinLine={this.props.onPinLine}
-              onUnpinLine={this.props.onUnpinLine}
-              pinned={this.props.pinned}
-              mouseIsOver={this.state.mouseIsOver}
-              onBlur={this.onMouseLeave}
-            />
-          ) : (
+          {
             <LogRowMessage
               row={processedRow}
               showContextToggle={showContextToggle}
@@ -304,7 +307,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               mouseIsOver={this.state.mouseIsOver}
               onBlur={this.onMouseLeave}
             />
-          )}
+          }
+          {displayedColumns}
         </tr>
         {this.state.showDetails && (
           <LogDetails
