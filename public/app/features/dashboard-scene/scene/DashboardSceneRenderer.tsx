@@ -14,7 +14,8 @@ import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions } from './NavToolbarActions';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { controls, overlay, editview, editPanel } = model.useState();
+  const { controls, overlay, editview, editPanel, scopeSelector } = model.useState();
+  const { isExpanded: isScopesExpanded } = scopeSelector?.useState() ?? {};
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
@@ -34,21 +35,28 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
   const emptyState = (
     <>
-      <div className={styles.controls}>{showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}</div>
+      <div className={styles.controlsWrapper}>
+        {scopeSelector && !isScopesExpanded && <scopeSelector.Component model={scopeSelector} />}
+        <div className={styles.controls}>{showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}</div>
+      </div>
       <DashboardEmpty dashboard={model} canCreate={!!model.state.meta.canEdit} />
     </>
   );
 
   const withPanels = (
     <>
-      {controls && (
-        <div className={styles.controls}>
-          {controls.map((control) => (
-            <control.Component key={control.state.key} model={control} />
-          ))}
-          {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
-        </div>
-      )}
+      <div className={styles.controlsWrapper}>
+        {scopeSelector && !isScopesExpanded && <scopeSelector.Component model={scopeSelector} />}
+
+        {controls && (
+          <div className={styles.controls}>
+            {controls.map((control) => (
+              <control.Component key={control.state.key} model={control} />
+            ))}
+            {showDebugger && <SceneDebugger scene={model} key={'scene-debugger'} />}
+          </div>
+        )}
+      </div>
       <div className={cx(styles.body)}>
         <bodyToRender.Component model={bodyToRender} />
       </div>
@@ -60,9 +68,12 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       {editPanel && <editPanel.Component model={editPanel} />}
       {!editPanel && (
         <CustomScrollbar autoHeightMin={'100%'}>
-          <div className={styles.canvasContent}>
-            <NavToolbarActions dashboard={model} />
-            {model.isEmpty() ? emptyState : withPanels}
+          <div className={styles.innerScrollbarContainer}>
+            {scopeSelector && isScopesExpanded && <scopeSelector.Component model={scopeSelector} />}
+            <div className={styles.canvasContent}>
+              <NavToolbarActions dashboard={model} />
+              {model.isEmpty() ? emptyState : withPanels}
+            </div>
           </div>
         </CustomScrollbar>
       )}
@@ -73,6 +84,11 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    innerScrollbarContainer: css({
+      display: 'flex',
+      flex: '100%',
+      flexDirection: 'row',
+    }),
     canvasContent: css({
       label: 'canvas-content',
       display: 'flex',
@@ -89,10 +105,10 @@ function getStyles(theme: GrafanaTheme2) {
       marginBottom: theme.spacing(2),
     }),
 
-    controls: css({
+    controlsWrapper: css({
       display: 'flex',
-      flexWrap: 'wrap',
-      alignItems: 'center',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
       gap: theme.spacing(1),
       position: 'sticky',
       top: 0,
@@ -100,6 +116,16 @@ function getStyles(theme: GrafanaTheme2) {
       zIndex: theme.zIndex.activePanel,
       padding: theme.spacing(2, 0),
       marginLeft: 'auto',
+      width: '100%',
+    }),
+
+    controls: css({
+      display: 'flex',
+      flex: '100%',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'center',
+      gap: theme.spacing(1),
     }),
   };
 }

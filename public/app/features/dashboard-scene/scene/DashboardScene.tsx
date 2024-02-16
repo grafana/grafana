@@ -2,7 +2,7 @@ import * as H from 'history';
 import { Unsubscribable } from 'rxjs';
 
 import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   dataLayers,
   getUrlSyncManager,
@@ -36,7 +36,6 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
-import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
@@ -48,8 +47,10 @@ import { getDashboardUrl } from '../utils/urlBuilders';
 import { forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel, isPanelClone } from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
+import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { PanelRepeaterGridItem } from './PanelRepeaterGridItem';
+import { ScopeSelectorScene } from './ScopeSelectorScene/ScopeSelectorScene';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 
@@ -94,6 +95,8 @@ export interface DashboardSceneState extends SceneObjectState {
   editPanel?: PanelEditor;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
+  /** Scene object that handles the scopes selector */
+  scopeSelector?: ScopeSelectorScene;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -125,6 +128,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    * change tracking subscription
    */
   private _changeTrackerSub?: Unsubscribable;
+  /**
+   * scopes tracking subscription
+   */
+  private _scopesTrackerSub?: Unsubscribable;
 
   public constructor(state: Partial<DashboardSceneState>) {
     super({
@@ -133,6 +140,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       editable: true,
       body: state.body ?? new SceneFlexLayout({ children: [] }),
       links: state.links ?? [],
+      scopeSelector: config.featureToggles.scopes ? new ScopeSelectorScene() : undefined,
       ...state,
     });
 
@@ -146,6 +154,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
     if (this.state.isEditing) {
       this.startTrackingChanges();
+    }
+
+    if (this.state.scopeSelector) {
+      this.startTrackingScopes();
     }
 
     if (!this.state.meta.isEmbedded && this.state.uid) {
@@ -166,6 +178,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.stopUrlSync();
       oldDashboardWrapper.destroy();
       dashboardWatcher.leave();
+      this.stopTrackingScopes();
     };
   }
 
@@ -400,6 +413,19 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     );
   }
 
+  private startTrackingScopes() {
+    this._scopesTrackerSub = this.subscribeToEvent(
+      SceneObjectStateChangedEvent,
+      (event: SceneObjectStateChangedEvent) => {
+        if (event.payload.changedObject instanceof ScopeSelectorScene) {
+          if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'isExpanded')) {
+            this.forceRender();
+          }
+        }
+      }
+    );
+  }
+
   private setIsDirty() {
     if (!this.state.isDirty) {
       this.setState({ isDirty: true });
@@ -408,6 +434,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   private stopTrackingChanges() {
     this._changeTrackerSub?.unsubscribe();
+  }
+
+  private stopTrackingScopes() {
+    this._scopesTrackerSub?.unsubscribe();
   }
 
   public getInitialState(): DashboardSceneState | undefined {
@@ -556,6 +586,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       dashboardUID: this.state.uid,
       panelId,
       panelPluginType: panel?.state.pluginId,
+      scope: this.state.scopeSelector?.getSelectedScope(),
     };
   }
 

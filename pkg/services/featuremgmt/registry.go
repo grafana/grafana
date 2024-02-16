@@ -1214,6 +1214,12 @@ var (
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
 		},
+		{
+			Name:         "scopes",
+			Description:  "Enables the use of scopes in Grafana",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+		},
 	}
 )
 
