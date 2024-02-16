@@ -7,6 +7,65 @@ import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame } f
 import { Table } from './Table';
 import { Props } from './types';
 
+const dataFrameData = {
+  name: 'A',
+  fields: [
+    {
+      name: 'time',
+      type: FieldType.time,
+      values: [1609459200000, 1609470000000, 1609462800000, 1609466400000],
+      config: {
+        custom: {
+          filterable: false,
+        },
+      },
+    },
+    {
+      name: 'temperature',
+      type: FieldType.number,
+      values: [10, NaN, 11, 12],
+      config: {
+        custom: {
+          filterable: false,
+        },
+        links: [
+          {
+            targetBlank: true,
+            title: 'Value link',
+            url: '${__value.text}',
+          },
+        ],
+      },
+    },
+    {
+      name: 'img',
+      type: FieldType.string,
+      values: ['data:image/png;base64,1', 'data:image/png;base64,2', 'data:image/png;base64,3'],
+      config: {
+        custom: {
+          filterable: false,
+          displayMode: 'image',
+        },
+        links: [
+          {
+            targetBlank: true,
+            title: 'Image link',
+            url: '${__value.text}',
+          },
+        ],
+      },
+    },
+  ],
+};
+
+const fullDataFrame = toDataFrame(dataFrameData);
+
+const emptyValuesDataFrame = toDataFrame({
+  ...dataFrameData,
+  // Remove all values
+  fields: dataFrameData.fields.map((field) => ({ ...field, values: [] })),
+});
+
 function getDataFrame(dataFrame: DataFrame): DataFrame {
   return applyOverrides(dataFrame);
 }
@@ -660,106 +719,4 @@ describe('Table', () => {
       expect(selected).toBeVisible();
     });
   });
-});
-
-const fullDataFrame = toDataFrame({
-  name: 'A',
-  fields: [
-    {
-      name: 'time',
-      type: FieldType.time,
-      values: [1609459200000, 1609470000000, 1609462800000, 1609466400000],
-      config: {
-        custom: {
-          filterable: false,
-        },
-      },
-    },
-    {
-      name: 'temperature',
-      type: FieldType.number,
-      values: [10, NaN, 11, 12],
-      config: {
-        custom: {
-          filterable: false,
-        },
-        links: [
-          {
-            targetBlank: true,
-            title: 'Value link',
-            url: '${__value.text}',
-          },
-        ],
-      },
-    },
-    {
-      name: 'img',
-      type: FieldType.string,
-      values: ['data:image/png;base64,1', 'data:image/png;base64,2', 'data:image/png;base64,3'],
-      config: {
-        custom: {
-          filterable: false,
-          displayMode: 'image',
-        },
-        links: [
-          {
-            targetBlank: true,
-            title: 'Image link',
-            url: '${__value.text}',
-          },
-        ],
-      },
-    },
-  ],
-});
-
-const emptyValuesDataFrame = toDataFrame({
-  name: 'A',
-  fields: [
-    {
-      name: 'time',
-      type: FieldType.time,
-      values: [],
-      config: {
-        custom: {
-          filterable: false,
-        },
-      },
-    },
-    {
-      name: 'temperature',
-      type: FieldType.number,
-      values: [],
-      config: {
-        custom: {
-          filterable: false,
-        },
-        links: [
-          {
-            targetBlank: true,
-            title: 'Value link',
-            url: '${__value.text}',
-          },
-        ],
-      },
-    },
-    {
-      name: 'img',
-      type: FieldType.string,
-      values: [],
-      config: {
-        custom: {
-          filterable: false,
-          displayMode: 'image',
-        },
-        links: [
-          {
-            targetBlank: true,
-            title: 'Image link',
-            url: '${__value.text}',
-          },
-        ],
-      },
-    },
-  ],
 });
