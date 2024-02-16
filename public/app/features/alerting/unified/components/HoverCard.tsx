@@ -53,7 +53,7 @@ export const HoverCard = ({
               <GrafanaPopover
                 {...popperProps}
                 {...rest}
-                wrapperClassName={classnames(styles.popover(arrow ? 1.25 : 0), wrapperClassName)}
+                wrapperClassName={classnames(styles.popover, wrapperClassName)}
                 onMouseLeave={hidePopper}
                 onMouseEnter={showPopper}
                 onFocus={showPopper}
@@ -78,27 +78,25 @@ export const HoverCard = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  popover: (offset: number) => css`
-    border-radius: ${theme.shape.radius.default};
-    box-shadow: ${theme.shadows.z3};
-    background: ${theme.colors.background.primary};
-    border: 1px solid ${theme.colors.border.medium};
-
-    margin-bottom: ${theme.spacing(offset)};
-  `,
+  popover: css({
+    borderRadius: theme.shape.radius.default,
+    boxShadow: theme.shadows.z3,
+    background: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.medium}`,
+  }),
   card: {
-    body: css`
-      padding: ${theme.spacing(1)};
-    `,
-    header: css`
-      padding: ${theme.spacing(1)};
-      background: ${theme.colors.background.secondary};
-      border-bottom: solid 1px ${theme.colors.border.medium};
-    `,
-    footer: css`
-      padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
-      background: ${theme.colors.background.secondary};
-      border-top: solid 1px ${theme.colors.border.medium};
-    `,
+    body: css({
+      padding: theme.spacing(1),
+    }),
+    header: css({
+      padding: theme.spacing(1),
+      background: theme.colors.background.secondary,
+      borderBottom: `solid 1px ${theme.colors.border.medium}`,
+    }),
+    footer: css({
+      padding: theme.spacing(0.5, 1),
+      background: theme.colors.background.secondary,
+      borderTop: `solid 1px ${theme.colors.border.medium}`,
+    }),
   },
 });
