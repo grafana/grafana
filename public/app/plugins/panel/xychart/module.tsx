@@ -26,8 +26,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(XYChartPanel2)
         },
       })
       .addCustomEditor({
-        id: 'xyPlotConfig',
-        path: 'dims',
+        id: 'series',
+        path: 'series',
         name: '',
         editor: AutoEditor,
         showIf: (cfg) => cfg.mapping === 'auto',
