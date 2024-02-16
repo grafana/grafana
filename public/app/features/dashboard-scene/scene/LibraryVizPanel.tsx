@@ -32,6 +32,10 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
         menu: new VizPanelMenu({
           $behaviors: [panelMenuBehavior],
         }),
+        titleItems: [
+          new VizPanelLinks({ rawLinks: [], menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }) }),
+          new PanelNotices(),
+        ],
       }),
     });
 
@@ -43,7 +47,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
   };
 
   private async loadLibraryPanelFromPanelModel() {
-    const vizPanel = this.state.panel;
+    let vizPanel = this.state.panel;
     try {
       const libPanel = await getLibraryPanel(this.state.uid, true);
       const libPanelModel = new PanelModel(libPanel.model);
@@ -56,9 +60,11 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
       );
 
       titleItems.push(new PanelNotices());
-      vizPanel.setState({
+      vizPanel = vizPanel.clone({
         options: libPanelModel.options ?? {},
         fieldConfig: libPanelModel.fieldConfig,
+        title: libPanelModel.title,
+        pluginId: libPanelModel.type,
         pluginVersion: libPanelModel.pluginVersion,
         displayMode: libPanelModel.transparent ? 'transparent' : undefined,
         description: libPanelModel.description,
