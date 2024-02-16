@@ -718,7 +718,7 @@ var (
 		},
 		{
 			Name:         "angularDeprecationUI",
-			Description:  "Display new Angular deprecation-related UI features",
+			Description:  "Display Angular warnings in dashboards and panels",
 			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
