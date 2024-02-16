@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	migrationStore "github.com/grafana/grafana/pkg/services/ngalert/migration/store"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -24,6 +25,7 @@ func NewTestMigrationService(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *set
 	svc, err := ProvideService(
 		serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
 		cfg,
+		featuremgmt.WithFeatures(),
 		sqlStore,
 		migrationStore.NewTestMigrationStore(t, sqlStore, cfg),
 		fake_secrets.NewFakeSecretsService(),

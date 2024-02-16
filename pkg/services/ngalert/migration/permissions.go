@@ -408,7 +408,7 @@ func (sync *sync) createFolder(ctx context.Context, orgID int64, title string, n
 			// but the only folders we should be creating here are ones with permission
 			// hash suffix or general alerting. Neither of which is likely to spuriously
 			// conflict with an existing folder.
-			sync.log.Warn("Folder already exists, using existing folder", "title", title)
+			sync.log.FromContext(ctx).Warn("Folder already exists, using existing folder", "title", title)
 			f, err := sync.migrationStore.GetFolder(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &title, SignedInUser: getMigrationUser(orgID)})
 			if err != nil {
 				return nil, err

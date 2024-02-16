@@ -417,7 +417,7 @@ func TestSetupAlertmanagerConfig(t *testing.T) {
 
 			service := NewTestMigrationService(t, sqlStore, nil)
 			m := service.newOrgMigration(1)
-			pairs, err := m.migrateChannels(tt.channels)
+			pairs, err := m.migrateChannels(tt.channels, m.log)
 			if tt.expErr != nil {
 				require.Error(t, err)
 				require.EqualError(t, err, tt.expErr.Error())

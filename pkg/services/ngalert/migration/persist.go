@@ -257,7 +257,7 @@ func (sync *sync) handleAlertmanager(ctx context.Context, state *migrationStore.
 		return nil, fmt.Errorf("validate AlertmanagerConfig: %w", err)
 	}
 
-	sync.log.Info("Writing alertmanager config", "receivers", len(config.AlertmanagerConfig.Receivers), "routes", len(config.AlertmanagerConfig.Route.Routes))
+	sync.log.FromContext(ctx).Info("Writing alertmanager config", "receivers", len(config.AlertmanagerConfig.Receivers), "routes", len(config.AlertmanagerConfig.Route.Routes))
 	if err := sync.migrationStore.SaveAlertmanagerConfiguration(ctx, sync.orgID, config); err != nil {
 		return nil, fmt.Errorf("write AlertmanagerConfig: %w", err)
 	}
@@ -350,7 +350,7 @@ func (sync *sync) handleDeleteRules(ctx context.Context, state *migrationStore.O
 						if !errors.Is(err, migrationStore.ErrFolderNotDeleted) {
 							return fmt.Errorf("delete folder '%s': %w", du.AlertFolderUID, err)
 						}
-						sync.log.Info("Failed to delete folder during cleanup", "error", err)
+						sync.log.FromContext(ctx).Info("Failed to delete folder during cleanup", "error", err)
 					} else {
 						delete(createdbyMigration, du.AlertFolderUID)
 					}
@@ -402,7 +402,7 @@ func (sync *sync) handleAddRules(ctx context.Context, state *migrationStore.OrgM
 			}
 
 			if len(pairsWithRules) > 0 {
-				l := sync.log.New("dashboardTitle", duToAdd.Title, "dashboardUid", duToAdd.UID)
+				l := sync.log.FromContext(ctx).New("dashboardTitle", duToAdd.Title, "dashboardUid", duToAdd.UID)
 				migratedFolder, err := sync.migratedFolder(ctx, l, duToAdd.UID, duToAdd.FolderID)
 				if err != nil {
 					return err
@@ -426,7 +426,7 @@ func (sync *sync) handleAddRules(ctx context.Context, state *migrationStore.OrgM
 	}
 
 	if len(pairs) > 0 {
-		sync.log.Debug("Inserting migrated alert rules", "count", len(pairs))
+		sync.log.FromContext(ctx).Debug("Inserting migrated alert rules", "count", len(pairs))
 
 		// We ensure consistency in title deduplication as well as insertions by sorting pairs first.
 		sort.SliceStable(pairs, func(i, j int) bool {
@@ -465,7 +465,7 @@ func (sync *sync) deduplicateTitles(ctx context.Context, pairs []*migmodels.Aler
 	// Populate deduplicators from database.
 	titles, err := sync.migrationStore.GetAlertRuleTitles(ctx, sync.orgID, namespaces...)
 	if err != nil {
-		sync.log.Warn("Failed to get alert rule titles for title deduplication", "error", err)
+		sync.log.FromContext(ctx).Warn("Failed to get alert rule titles for title deduplication", "error", err)
 	}
 
 	titleDedups := make(map[string]*migmodels.Deduplicator, len(namespaces))
@@ -474,7 +474,7 @@ func (sync *sync) deduplicateTitles(ctx context.Context, pairs []*migmodels.Aler
 	}
 
 	for _, pair := range pairs {
-		l := sync.log.New("legacyRuleId", pair.LegacyRule.ID, "ruleUid", pair.Rule.UID)
+		l := sync.log.FromContext(ctx).New("legacyRuleId", pair.LegacyRule.ID, "ruleUid", pair.Rule.UID)
 
 		// Here we ensure that the alert rule title is unique within the folder.
 		titleDeduplicator := titleDedups[pair.Rule.NamespaceUID]
@@ -495,7 +495,7 @@ func (sync *sync) deduplicateTitles(ctx context.Context, pairs []*migmodels.Aler
 func (sync *sync) attachContactPointLabels(ctx context.Context, state *migrationStore.OrgMigrationState, pairs []*migmodels.AlertPair, amConfig *migmodels.Alertmanager) ([]models.AlertRule, error) {
 	rules := make([]models.AlertRule, 0, len(pairs))
 	for _, pair := range pairs {
-		l := sync.log.New("legacyRuleId", pair.LegacyRule.ID, "ruleUid", pair.Rule.UID)
+		l := sync.log.FromContext(ctx).New("legacyRuleId", pair.LegacyRule.ID, "ruleUid", pair.Rule.UID)
 		alertChannels, err := sync.extractChannels(ctx, pair.LegacyRule)
 		if err != nil {
 			return nil, fmt.Errorf("extract channel IDs: %w", err)
@@ -524,7 +524,7 @@ func (sync *sync) attachContactPointLabels(ctx context.Context, state *migration
 
 // extractChannels extracts notification channels from the given legacy dashboard alert parsed settings.
 func (sync *sync) extractChannels(ctx context.Context, alert *legacymodels.Alert) ([]*legacymodels.AlertNotification, error) {
-	l := sync.log.New("ruleId", alert.ID, "ruleName", alert.Name)
+	l := sync.log.FromContext(ctx).New("ruleId", alert.ID, "ruleName", alert.Name)
 	rawSettings, err := json.Marshal(alert.Settings)
 	if err != nil {
 		return nil, fmt.Errorf("get settings: %w", err)
