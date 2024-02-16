@@ -46,7 +46,7 @@ const Options = ({ options, value, onChange, title }: Props) => {
 
   return (
     <>
-      <ul className={styles.list} aria-roledescription={t('time-picker.time-range.aria-role', 'Time range selection')}>
+      <ul aria-roledescription={t('time-picker.time-range.aria-role', 'Time range selection')}>
         {options.map((option, index) => (
           <TimeRangeOption
             key={keyForOption(option, index)}
@@ -73,24 +73,25 @@ function isEqual(x: TimeOption, y?: TimeOption): boolean {
   return y.from === x.from && y.to === x.to;
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   title: css({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: '8px 16px 5px 9px',
+
+    '+ ul': {
+      [theme.breakpoints.up('lg')]: {
+        height: '116px',
+        overflowY: 'scroll',
+      },
+    },
   }),
 });
 
-const getOptionsStyles = (theme: GrafanaTheme2) => ({
+const getOptionsStyles = () => ({
   grow: css({
     flexGrow: 1,
     alignItems: 'flex-start',
-  }),
-  list: css({
-    [theme.breakpoints.up('lg')]: {
-      height: '116px',
-      overflowY: 'scroll',
-    },
   }),
 });
