@@ -102,6 +102,7 @@ func (srv *CleanUpService) clean(ctx context.Context) {
 		{"expire old user invites", srv.expireOldUserInvites},
 		{"delete stale short URLs", srv.deleteStaleShortURLs},
 		{"delete stale query history", srv.deleteStaleQueryHistory},
+		{"expire old email verifications", srv.expireOldVerifications},
 	}
 
 	logger := srv.log.FromContext(ctx)
@@ -235,6 +236,21 @@ func (srv *CleanUpService) expireOldUserInvites(ctx context.Context) {
 		logger.Error("Problem expiring user invites", "error", err.Error())
 	} else {
 		logger.Debug("Expired user invites", "rows affected", cmd.NumExpired)
+	}
+}
+
+func (srv *CleanUpService) expireOldVerifications(ctx context.Context) {
+	logger := srv.log.FromContext(ctx)
+	maxVerificationLifetime := srv.Cfg.VerificationEmailMaxLifetime
+
+	cmd := tempuser.ExpireTempUsersCommand{
+		OlderThan: time.Now().Add(-maxVerificationLifetime),
+	}
+
+	if err := srv.tempUserService.ExpireOldVerifications(ctx, &cmd); err != nil {
+		logger.Error("Problem expiring email verifications", "error", err.Error())
+	} else {
+		logger.Debug("Expired email verifications", "rows affected", cmd.NumExpired)
 	}
 }
 

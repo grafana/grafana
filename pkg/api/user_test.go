@@ -5,8 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
+	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
+	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
+	"github.com/grafana/grafana/pkg/web/webtest"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,6 +49,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const newEmail = "newEmail@localhost"
+
 func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	settings := setting.NewCfg()
 	sqlStore := db.InitTestDB(t)
@@ -68,7 +79,6 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			authInfoStore, remotecache.NewFakeCacheStorage(), secretsService)
 		hs.authInfoService = srv
 		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
-		require.NoError(t, err)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sc.cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
@@ -361,6 +371,682 @@ func TestHTTPServer_UpdateUser(t *testing.T) {
 			assert.Equal(t, 403, sc.resp.Code)
 		},
 	}, hs)
+}
+
+func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPServer, *notifications.NotificationServiceMock) {
+	t.Helper()
+
+	sqlStore := db.InitTestDB(t)
+	sqlStore.Cfg = cfg
+
+	tempUserService := tempuserimpl.ProvideService(sqlStore, cfg)
+	orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotatest.New(false, nil))
+	require.NoError(t, err)
+	userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+	require.NoError(t, err)
+
+	// Create test user
+	createUserCmd := user.CreateUserCommand{
+		Email:   "testuser@localhost",
+		Name:    "testuser",
+		Login:   "loginuser",
+		Company: "testCompany",
+		IsAdmin: true,
+	}
+	usr, err := userSvc.Create(context.Background(), &createUserCmd)
+	require.NoError(t, err)
+
+	nsMock := notifications.MockNotificationService()
+
+	hs := &HTTPServer{
+		Cfg:                 cfg,
+		SQLStore:            sqlStore,
+		userService:         userSvc,
+		tempUserService:     tempUserService,
+		NotificationService: nsMock,
+	}
+	return usr, hs, nsMock
+}
+
+func TestUser_UpdateEmail(t *testing.T) {
+	cases := []struct {
+		Name  string
+		Field user.UpdateEmailActionType
+	}{
+		{
+			Name:  "Updating Email field",
+			Field: user.EmailUpdateAction,
+		},
+		{
+			Name:  "Updating Login (username) field",
+			Field: user.LoginUpdateAction,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.Name, func(t *testing.T) {
+			t.Run("With verification disabled should update without verifying", func(t *testing.T) {
+				tests := []struct {
+					name               string
+					smtpConfigured     bool
+					verifyEmailEnabled bool
+				}{
+					{
+						name:               "SMTP not configured",
+						smtpConfigured:     false,
+						verifyEmailEnabled: true,
+					},
+					{
+						name:               "config verify_email_enabled = false",
+						smtpConfigured:     true,
+						verifyEmailEnabled: false,
+					},
+					{
+						name:               "config verify_email_enabled = false and SMTP not configured",
+						smtpConfigured:     false,
+						verifyEmailEnabled: false,
+					},
+				}
+				for _, ttt := range tests {
+					settings := setting.NewCfg()
+					settings.Smtp.Enabled = ttt.smtpConfigured
+					settings.VerifyEmailEnabled = ttt.verifyEmailEnabled
+
+					usr, hs, nsMock := setupUpdateEmailTests(t, settings)
+
+					updateUserCommand := user.UpdateUserCommand{
+						Email:  usr.Email,
+						Name:   "newName",
+						Login:  usr.Login,
+						UserID: usr.ID,
+					}
+
+					switch tt.Field {
+					case user.LoginUpdateAction:
+						updateUserCommand.Login = newEmail
+					case user.EmailUpdateAction:
+						updateUserCommand.Email = newEmail
+					}
+
+					fn := func(sc *scenarioContext) {
+						// User is internal
+						sc.authInfoService.ExpectedError = user.ErrUserNotFound
+
+						sc.fakeReqWithParams("PUT", sc.url, nil).exec()
+						assert.Equal(t, http.StatusOK, sc.resp.Code)
+
+						// Verify that no email has been sent after update
+						require.False(t, nsMock.EmailVerified)
+
+						userQuery := user.GetUserByIDQuery{ID: usr.ID}
+						updatedUsr, err := hs.userService.GetByID(context.Background(), &userQuery)
+						require.NoError(t, err)
+
+						// Verify fields have been updated
+						require.NotEqual(t, usr.Name, updatedUsr.Name)
+						require.Equal(t, updateUserCommand.Name, updatedUsr.Name)
+
+						switch tt.Field {
+						case user.LoginUpdateAction:
+							require.Equal(t, usr.Email, updatedUsr.Email)
+							require.NotEqual(t, usr.Login, updatedUsr.Login)
+							require.Equal(t, updateUserCommand.Login, updatedUsr.Login)
+						case user.EmailUpdateAction:
+							require.Equal(t, usr.Login, updatedUsr.Login)
+							require.NotEqual(t, usr.Email, updatedUsr.Email)
+							require.Equal(t, updateUserCommand.Email, updatedUsr.Email)
+						}
+
+						// Verify other fields have been kept
+						require.Equal(t, usr.Company, updatedUsr.Company)
+					}
+
+					updateUserScenario(t, updateUserContext{
+						desc:         ttt.name,
+						url:          fmt.Sprintf("/api/users/%d", usr.ID),
+						routePattern: "/api/users/:id",
+						cmd:          updateUserCommand,
+						fn:           fn,
+					}, hs)
+
+					updateSignedInUserScenario(t, updateUserContext{
+						desc:         ttt.name,
+						url:          "/api/user",
+						routePattern: "/api/user",
+						cmd:          updateUserCommand,
+						fn:           fn,
+					}, hs)
+				}
+			})
+		})
+	}
+
+	doReq := func(req *http.Request, usr *user.User) (*http.Response, error) {
+		r := webtest.RequestWithSignedInUser(
+			req,
+			authedUserWithPermissions(
+				usr.ID,
+				usr.OrgID,
+				[]accesscontrol.Permission{
+					{
+						Action: accesscontrol.ActionUsersWrite,
+						Scope:  accesscontrol.ScopeGlobalUsersAll,
+					},
+				},
+			),
+		)
+		client := &http.Client{
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			}}
+		return client.Do(r)
+	}
+
+	sendUpdateReq := func(server *webtest.Server, usr *user.User, body string) {
+		req := server.NewRequest(
+			http.MethodPut,
+			"/api/user",
+			strings.NewReader(body),
+		)
+		req.Header.Add("Content-Type", "application/json")
+		res, err := doReq(req, usr)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	}
+
+	sendVerificationReq := func(server *webtest.Server, usr *user.User, code string) {
+		url := fmt.Sprintf("/user/email/update?code=%s", url.QueryEscape(code))
+		req := server.NewGetRequest(url)
+		res, err := doReq(req, usr)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusFound, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	}
+
+	getVerificationTempUser := func(tempUserSvc tempuser.Service, code string) *tempuser.TempUserDTO {
+		tmpUserQuery := tempuser.GetTempUserByCodeQuery{Code: code}
+		tmpUser, err := tempUserSvc.GetTempUserByCode(context.Background(), &tmpUserQuery)
+		require.NoError(t, err)
+		return tmpUser
+	}
+
+	verifyEmailData := func(tempUserSvc tempuser.Service, nsMock *notifications.NotificationServiceMock, originalUsr *user.User, newEmail string) {
+		verification := nsMock.EmailVerification
+		tmpUsr := getVerificationTempUser(tempUserSvc, verification.Code)
+
+		require.True(t, nsMock.EmailVerified)
+		require.Equal(t, newEmail, verification.Email)
+		require.Equal(t, originalUsr.ID, verification.User.ID)
+		require.Equal(t, tmpUsr.Code, verification.Code)
+	}
+
+	verifyUserNotUpdated := func(userSvc user.Service, usr *user.User) {
+		userQuery := user.GetUserByIDQuery{ID: usr.ID}
+		checkUsr, err := userSvc.GetByID(context.Background(), &userQuery)
+		require.NoError(t, err)
+		require.Equal(t, usr.Email, checkUsr.Email)
+		require.Equal(t, usr.Login, checkUsr.Login)
+		require.Equal(t, usr.Name, checkUsr.Name)
+	}
+
+	setupScenario := func(cfg *setting.Cfg) (*webtest.Server, user.Service, tempuser.Service, *notifications.NotificationServiceMock) {
+		settings := setting.NewCfg()
+		settings.Smtp.Enabled = true
+		settings.VerificationEmailMaxLifetime = 1 * time.Hour
+		settings.VerifyEmailEnabled = true
+
+		if cfg != nil {
+			settings = cfg
+		}
+
+		nsMock := notifications.MockNotificationService()
+		sqlStore := db.InitTestDB(t)
+		sqlStore.Cfg = settings
+
+		tempUserSvc := tempuserimpl.ProvideService(sqlStore, settings)
+		orgSvc, err := orgimpl.ProvideService(sqlStore, settings, quotatest.New(false, nil))
+		require.NoError(t, err)
+		userSvc, err := userimpl.ProvideService(sqlStore, orgSvc, settings, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+		require.NoError(t, err)
+
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.Cfg = settings
+
+			hs.SQLStore = sqlStore
+			hs.userService = userSvc
+			hs.tempUserService = tempUserSvc
+			hs.NotificationService = nsMock
+			hs.SecretsService = fakes.NewFakeSecretsService()
+			// User is internal
+			hs.authInfoService = &authinfotest.FakeService{ExpectedError: user.ErrUserNotFound}
+		})
+
+		return server, userSvc, tempUserSvc, nsMock
+	}
+
+	createUser := func(userSvc user.Service, name string, email string, login string) *user.User {
+		createUserCmd := user.CreateUserCommand{
+			Email:   email,
+			Name:    name,
+			Login:   login,
+			Company: "testCompany",
+			IsAdmin: true,
+		}
+		usr, err := userSvc.Create(context.Background(), &createUserCmd)
+		require.NoError(t, err)
+		return usr
+	}
+
+	t.Run("Update Email and disregard other fields", func(t *testing.T) {
+		server, userSvc, tempUserSvc, nsMock := setupScenario(nil)
+
+		originalUsr := createUser(userSvc, "name", "email@localhost", "login")
+
+		// Verify that no email has been sent yet
+		require.False(t, nsMock.EmailVerified)
+
+		// Start email update
+		newName := "newName"
+		body := fmt.Sprintf(`{"email": "%s", "name": "%s"}`, newEmail, newName)
+		sendUpdateReq(server, originalUsr, body)
+
+		// Verify email data
+		verifyEmailData(tempUserSvc, nsMock, originalUsr, newEmail)
+
+		// Verify user has not been updated yet
+		verifyUserNotUpdated(userSvc, originalUsr)
+
+		// Second part of the verification flow, when user clicks email button
+		code := nsMock.EmailVerification.Code
+		sendVerificationReq(server, originalUsr, code)
+
+		// Verify Email has been updated
+		userQuery := user.GetUserByIDQuery{ID: originalUsr.ID}
+		updatedUsr, err := userSvc.GetByID(context.Background(), &userQuery)
+		require.NoError(t, err)
+		require.NotEqual(t, originalUsr.Email, updatedUsr.Email)
+		require.Equal(t, newEmail, updatedUsr.Email)
+		// Fields unchanged
+		require.Equal(t, originalUsr.Login, updatedUsr.Login)
+		require.Equal(t, originalUsr.Name, updatedUsr.Name)
+		require.NotEqual(t, newName, updatedUsr.Name)
+	})
+
+	t.Run("Update Email when Login was also an email should update both", func(t *testing.T) {
+		server, userSvc, tempUserSvc, nsMock := setupScenario(nil)
+
+		originalUsr := createUser(userSvc, "name", "email@localhost", "email@localhost")
+
+		// Verify that no email has been sent yet
+		require.False(t, nsMock.EmailVerified)
+
+		// Start email update
+		body := fmt.Sprintf(`{"email": "%s"}`, newEmail)
+		sendUpdateReq(server, originalUsr, body)
+
+		// Verify email data
+		verifyEmailData(tempUserSvc, nsMock, originalUsr, newEmail)
+
+		// Verify user has not been updated yet
+		verifyUserNotUpdated(userSvc, originalUsr)
+
+		// Second part of the verification flow, when user clicks email button
+		code := nsMock.EmailVerification.Code
+		sendVerificationReq(server, originalUsr, code)
+
+		// Verify Email and Login have been updated
+		userQuery := user.GetUserByIDQuery{ID: originalUsr.ID}
+		updatedUsr, err := userSvc.GetByID(context.Background(), &userQuery)
+		require.NoError(t, err)
+		require.NotEqual(t, originalUsr.Email, updatedUsr.Email)
+		require.Equal(t, newEmail, updatedUsr.Email)
+		require.Equal(t, newEmail, updatedUsr.Login)
+		// Fields unchanged
+		require.Equal(t, originalUsr.Name, updatedUsr.Name)
+	})
+
+	t.Run("Update Login with an email should update Email too", func(t *testing.T) {
+		server, userSvc, tempUserSvc, nsMock := setupScenario(nil)
+
+		originalUsr := createUser(userSvc, "name", "email@localhost", "login")
+
+		// Verify that no email has been sent yet
+		require.False(t, nsMock.EmailVerified)
+
+		// Start email update
+		body := fmt.Sprintf(`{"login": "%s"}`, newEmail)
+		sendUpdateReq(server, originalUsr, body)
+
+		// Verify email data
+		verifyEmailData(tempUserSvc, nsMock, originalUsr, newEmail)
+
+		// Verify user has not been updated yet
+		verifyUserNotUpdated(userSvc, originalUsr)
+
+		// Second part of the verification flow, when user clicks email button
+		code := nsMock.EmailVerification.Code
+		sendVerificationReq(server, originalUsr, code)
+
+		// Verify Email and Login have been updated
+		userQuery := user.GetUserByIDQuery{ID: originalUsr.ID}
+		updatedUsr, err := userSvc.GetByID(context.Background(), &userQuery)
+		require.NoError(t, err)
+		require.NotEqual(t, originalUsr.Email, updatedUsr.Email)
+		require.NotEqual(t, originalUsr.Login, updatedUsr.Login)
+		require.Equal(t, newEmail, updatedUsr.Email)
+		require.Equal(t, newEmail, updatedUsr.Login)
+		// Fields unchanged
+		require.Equal(t, originalUsr.Name, updatedUsr.Name)
+	})
+
+	t.Run("Update Login should not need verification if it is not an email", func(t *testing.T) {
+		server, userSvc, _, nsMock := setupScenario(nil)
+
+		originalUsr := createUser(userSvc, "name", "email@localhost", "login")
+
+		// Verify that no email has been sent yet
+		require.False(t, nsMock.EmailVerified)
+
+		// Start email update
+		newLogin := "newLogin"
+		newName := "newName"
+		body := fmt.Sprintf(`{"login": "%s", "name": "%s"}`, newLogin, newName)
+		sendUpdateReq(server, originalUsr, body)
+
+		// Verify that email has not been sent
+		require.False(t, nsMock.EmailVerified)
+
+		// Verify Login has been updated
+		userQuery := user.GetUserByIDQuery{ID: originalUsr.ID}
+		updatedUsr, err := userSvc.GetByID(context.Background(), &userQuery)
+		require.NoError(t, err)
+		require.NotEqual(t, originalUsr.Login, updatedUsr.Login)
+		require.NotEqual(t, originalUsr.Name, updatedUsr.Name)
+		require.Equal(t, newLogin, updatedUsr.Login)
+		require.Equal(t, newName, updatedUsr.Name)
+		// Fields unchanged
+		require.Equal(t, originalUsr.Email, updatedUsr.Email)
+	})
+
+	t.Run("Update Login should not need verification if it is being updated to the already configured email", func(t *testing.T) {
+		server, userSvc, _, nsMock := setupScenario(nil)
+
+		originalUsr := createUser(userSvc, "name", "email@localhost", "login")
+
+		// Verify that no email has been sent yet
+		require.False(t, nsMock.EmailVerified)
+
+		// Start email update
+		body := fmt.Sprintf(`{"login": "%s"}`, originalUsr.Email)
+		sendUpdateReq(server, originalUsr, body)
+
+		// Verify that email has not been sent
+		require.False(t, nsMock.EmailVerified)
+
+		// Verify Login has been updated
+		userQuery := user.GetUserByIDQuery{ID: originalUsr.ID}
+		updatedUsr, err := userSvc.GetByID(context.Background(), &userQuery)
+		require.NoError(t, err)
+		require.NotEqual(t, originalUsr.Login, updatedUsr.Login)
+		require.Equal(t, originalUsr.Email, updatedUsr.Login)
+		require.Equal(t, originalUsr.Email, updatedUsr.Email)
+	})
+
+	t.Run("Update Login and Email with different email values at once should disregard the Login update", func(t *testing.T) {
+		server, userSvc, tempUserSvc, nsMock := setupScenario(nil)
+
+		originalUsr := createUser(userSvc, "name", "email@localhost", "login")
+
+		// Verify that no email has been sent yet
+		require.False(t, nsMock.EmailVerified)
+
+		// Start email update
+		newLogin := "newEmail2@localhost"
+		body := fmt.Sprintf(`{"email": "%s", "login": "%s"}`, newEmail, newLogin)
+		sendUpdateReq(server, originalUsr, body)
+
+		// Verify email data
+		verifyEmailData(tempUserSvc, nsMock, originalUsr, newEmail)
+
+		// Verify user has not been updated yet
+		verifyUserNotUpdated(userSvc, originalUsr)
+
+		// Second part of the verification flow, when user clicks email button
+		code := nsMock.EmailVerification.Code
+		sendVerificationReq(server, originalUsr, code)
+
+		// Verify only Email has been updated
+		userQuery := user.GetUserByIDQuery{ID: originalUsr.ID}
+		updatedUsr, err := userSvc.GetByID(context.Background(), &userQuery)
+		require.NoError(t, err)
+		require.NotEqual(t, originalUsr.Email, updatedUsr.Email)
+		require.Equal(t, newEmail, updatedUsr.Email)
+		// Fields unchanged
+		require.NotEqual(t, newLogin, updatedUsr.Login)
+		require.Equal(t, originalUsr.Login, updatedUsr.Login)
+		require.Equal(t, originalUsr.Name, updatedUsr.Name)
+	})
+
+	t.Run("Update Login and Email with different email values at once when Login was already an email should update both with Email", func(t *testing.T) {
+		server, userSvc, tempUserSvc, nsMock := setupScenario(nil)
+
+		originalUsr := createUser(userSvc, "name", "email@localhost", "email@localhost")
+
+		// Verify that no email has been sent yet
+		require.False(t, nsMock.EmailVerified)
+
+		// Start email update
+		newLogin := "newEmail2@localhost"
+		body := fmt.Sprintf(`{"email": "%s", "login": "%s"}`, newEmail, newLogin)
+		sendUpdateReq(server, originalUsr, body)
+
+		// Verify email data
+		verifyEmailData(tempUserSvc, nsMock, originalUsr, newEmail)
+
+		// Verify user has not been updated yet
+		verifyUserNotUpdated(userSvc, originalUsr)
+
+		// Second part of the verification flow, when user clicks email button
+		code := nsMock.EmailVerification.Code
+		sendVerificationReq(server, originalUsr, code)
+
+		// Verify only Email has been updated
+		userQuery := user.GetUserByIDQuery{ID: originalUsr.ID}
+		updatedUsr, err := userSvc.GetByID(context.Background(), &userQuery)
+		require.NoError(t, err)
+		require.NotEqual(t, originalUsr.Email, updatedUsr.Email)
+		require.NotEqual(t, originalUsr.Login, updatedUsr.Login)
+		require.NotEqual(t, newLogin, updatedUsr.Login)
+		require.Equal(t, newEmail, updatedUsr.Email)
+		require.Equal(t, newEmail, updatedUsr.Login)
+		// Fields unchanged
+		require.Equal(t, originalUsr.Name, updatedUsr.Name)
+	})
+
+	t.Run("Email verification should expire", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.Smtp.Enabled = true
+		cfg.VerificationEmailMaxLifetime = 0 // Expire instantly
+		cfg.VerifyEmailEnabled = true
+
+		server, userSvc, tempUserSvc, nsMock := setupScenario(cfg)
+
+		originalUsr := createUser(userSvc, "name", "email@localhost", "login")
+
+		// Verify that no email has been sent yet
+		require.False(t, nsMock.EmailVerified)
+
+		// Start email update
+		body := fmt.Sprintf(`{"email": "%s"}`, newEmail)
+		sendUpdateReq(server, originalUsr, body)
+
+		// Verify email data
+		verifyEmailData(tempUserSvc, nsMock, originalUsr, newEmail)
+
+		// Verify user has not been updated yet
+		verifyUserNotUpdated(userSvc, originalUsr)
+
+		// Second part of the verification flow, when user clicks email button
+		code := nsMock.EmailVerification.Code
+		sendVerificationReq(server, originalUsr, code)
+
+		// Verify user has not been updated
+		userQuery := user.GetUserByIDQuery{ID: originalUsr.ID}
+		updatedUsr, err := userSvc.GetByID(context.Background(), &userQuery)
+		require.NoError(t, err)
+		require.NotEqual(t, newEmail, updatedUsr.Email)
+		require.Equal(t, originalUsr.Email, updatedUsr.Email)
+		require.Equal(t, originalUsr.Login, updatedUsr.Login)
+	})
+
+	t.Run("A new verification should revoke other pending verifications", func(t *testing.T) {
+		server, userSvc, tempUserSvc, nsMock := setupScenario(nil)
+
+		originalUsr := createUser(userSvc, "name", "email@localhost", "login")
+
+		// Verify that no email has been sent yet
+		require.False(t, nsMock.EmailVerified)
+
+		// First email verification
+		firstNewEmail := "newEmail1@localhost"
+		body := fmt.Sprintf(`{"email": "%s"}`, firstNewEmail)
+		sendUpdateReq(server, originalUsr, body)
+		verifyEmailData(tempUserSvc, nsMock, originalUsr, firstNewEmail)
+		firstCode := nsMock.EmailVerification.Code
+
+		// Second email verification
+		secondNewEmail := "newEmail2@localhost"
+		body = fmt.Sprintf(`{"email": "%s"}`, secondNewEmail)
+		sendUpdateReq(server, originalUsr, body)
+		verifyEmailData(tempUserSvc, nsMock, originalUsr, secondNewEmail)
+		secondCode := nsMock.EmailVerification.Code
+
+		// Verify user has not been updated yet
+		verifyUserNotUpdated(userSvc, originalUsr)
+
+		// Try to follow through with the first verification unsuccessfully
+		sendVerificationReq(server, originalUsr, firstCode)
+		verifyUserNotUpdated(userSvc, originalUsr)
+
+		// Follow through with second verification successfully
+		sendVerificationReq(server, originalUsr, secondCode)
+
+		userQuery := user.GetUserByIDQuery{ID: originalUsr.ID}
+		updatedUsr, err := userSvc.GetByID(context.Background(), &userQuery)
+		require.NoError(t, err)
+		require.NotEqual(t, originalUsr.Email, updatedUsr.Email)
+		require.Equal(t, secondNewEmail, updatedUsr.Email)
+		// Fields unchanged
+		require.Equal(t, originalUsr.Login, updatedUsr.Login)
+	})
+
+	t.Run("Email verification should fail if code is not valid", func(t *testing.T) {
+		server, userSvc, tempUserSvc, nsMock := setupScenario(nil)
+
+		originalUsr := createUser(userSvc, "name", "email@localhost", "login")
+
+		// Verify that no email has been sent yet
+		require.False(t, nsMock.EmailVerified)
+
+		// Start email update
+		body := fmt.Sprintf(`{"email": "%s"}`, newEmail)
+		sendUpdateReq(server, originalUsr, body)
+
+		// Verify email data
+		verifyEmailData(tempUserSvc, nsMock, originalUsr, newEmail)
+
+		// Verify user has not been updated yet
+		verifyUserNotUpdated(userSvc, originalUsr)
+
+		// Second part of the verification flow should fail if using the wrong code
+		sendVerificationReq(server, originalUsr, "notTheRightCode")
+		verifyUserNotUpdated(userSvc, originalUsr)
+	})
+
+	t.Run("Email verification code can only be used once", func(t *testing.T) {
+		server, userSvc, _, nsMock := setupScenario(nil)
+
+		originalUsr := createUser(userSvc, "name", "email@localhost", "login")
+
+		// Start email update
+		require.NotEqual(t, originalUsr.Email, newEmail)
+
+		body := fmt.Sprintf(`{"email": "%s"}`, newEmail)
+		sendUpdateReq(server, originalUsr, body)
+
+		// Verify user has not been updated yet
+		verifyUserNotUpdated(userSvc, originalUsr)
+
+		// Use code to verify successfully
+		codeToReuse := nsMock.EmailVerification.Code
+		sendVerificationReq(server, originalUsr, codeToReuse)
+
+		// User should have an updated Email
+		userQuery := user.GetUserByIDQuery{ID: originalUsr.ID}
+		updatedUsr, err := userSvc.GetByID(context.Background(), &userQuery)
+		require.NoError(t, err)
+		require.Equal(t, newEmail, updatedUsr.Email)
+
+		// Change email back to what it was
+		body = fmt.Sprintf(`{"email": "%s"}`, originalUsr.Email)
+		sendUpdateReq(server, originalUsr, body)
+		sendVerificationReq(server, originalUsr, nsMock.EmailVerification.Code)
+		verifyUserNotUpdated(userSvc, originalUsr)
+
+		// Re-use code to verify new email again, unsuccessfully
+		sendVerificationReq(server, originalUsr, codeToReuse)
+		verifyUserNotUpdated(userSvc, originalUsr)
+	})
+
+	t.Run("Update Email with an email that is already being used should fail", func(t *testing.T) {
+		testCases := []struct {
+			description string
+			clashLogin  bool
+		}{
+			{
+				description: "when Email clashes",
+				clashLogin:  false,
+			},
+			{
+				description: "when Login clashes",
+				clashLogin:  true,
+			},
+		}
+		for _, tt := range testCases {
+			t.Run(tt.description, func(t *testing.T) {
+				server, userSvc, _, nsMock := setupScenario(nil)
+
+				originalUsr := createUser(userSvc, "name1", "email1@localhost", "login1@localhost")
+				badUsr := createUser(userSvc, "name2", "email2@localhost", "login2")
+
+				// Verify that no email has been sent yet
+				require.False(t, nsMock.EmailVerified)
+
+				// Update `badUsr` to use the same email as `originalUsr`
+				body := fmt.Sprintf(`{"email": "%s"}`, originalUsr.Email)
+				if tt.clashLogin {
+					body = fmt.Sprintf(`{"login": "%s"}`, originalUsr.Login)
+				}
+				req := server.NewRequest(
+					http.MethodPut,
+					"/api/user",
+					strings.NewReader(body),
+				)
+				req.Header.Add("Content-Type", "application/json")
+				res, err := doReq(req, badUsr)
+				require.NoError(t, err)
+				assert.Equal(t, http.StatusConflict, res.StatusCode)
+				require.NoError(t, res.Body.Close())
+
+				// Verify that no email has been sent
+				require.False(t, nsMock.EmailVerified)
+
+				// Verify user has not been updated
+				verifyUserNotUpdated(userSvc, badUsr)
+			})
+		}
+	})
 }
 
 type updateUserContext struct {
