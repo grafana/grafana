@@ -218,24 +218,25 @@ type Cfg struct {
 	DefaultHomeDashboardPath string
 
 	// Auth
-	LoginCookieName              string
-	LoginMaxInactiveLifetime     time.Duration
-	LoginMaxLifetime             time.Duration
-	TokenRotationIntervalMinutes int
-	SigV4AuthEnabled             bool
-	SigV4VerboseLogging          bool
-	AzureAuthEnabled             bool
-	AzureSkipOrgRoleSync         bool
-	BasicAuthEnabled             bool
-	AdminUser                    string
-	AdminPassword                string
-	DisableLogin                 bool
-	AdminEmail                   string
-	DisableLoginForm             bool
-	SignoutRedirectUrl           string
-	IDResponseHeaderEnabled      bool
-	IDResponseHeaderPrefix       string
-	IDResponseHeaderNamespaces   map[string]struct{}
+	LoginCookieName               string
+	LoginMaxInactiveLifetime      time.Duration
+	LoginMaxLifetime              time.Duration
+	TokenRotationIntervalMinutes  int
+	SigV4AuthEnabled              bool
+	SigV4VerboseLogging           bool
+	AzureAuthEnabled              bool
+	AzureSkipOrgRoleSync          bool
+	BasicAuthEnabled              bool
+	BasicAuthStrongPasswordPolicy bool
+	AdminUser                     string
+	AdminPassword                 string
+	DisableLogin                  bool
+	AdminEmail                    string
+	DisableLoginForm              bool
+	SignoutRedirectUrl            string
+	IDResponseHeaderEnabled       bool
+	IDResponseHeaderPrefix        string
+	IDResponseHeaderNamespaces    map[string]struct{}
 	// Not documented & not supported
 	// stand in until a more complete solution is implemented
 	AuthConfigUIAdminAccess bool
@@ -1591,6 +1592,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
 	cfg.BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
+	cfg.BasicAuthStrongPasswordPolicy = authBasic.Key("password_policy").MustBool(false)
 
 	// Extended JWT auth
 	authExtendedJWT := cfg.SectionWithEnvOverrides("auth.extended_jwt")

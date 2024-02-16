@@ -62,7 +62,7 @@ func newCommandStartExampleAPIServer(o *APIServerOptions, stopCh <-chan struct{}
 	}
 
 	cmd.Flags().StringVar(&runtimeConfig, "runtime-config", "", "A set of key=value pairs that enable or disable built-in APIs.")
-	o.factory.InitFlags(cmd.Flags())
+	o.factory.GetOptions().AddFlags(cmd.Flags())
 
 	// Register standard k8s flags with the command line
 	o.RecommendedOptions = options.NewRecommendedOptions(
