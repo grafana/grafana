@@ -4,14 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/entity/db/dbimpl"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
@@ -119,6 +120,70 @@ func TestCreate(t *testing.T) {
 			require.Equal(t, tc.ent.Labels, read.Labels)
 			require.Equal(t, tc.ent.Fields, read.Fields)
 			require.Equal(t, tc.ent.Errors, read.Errors)
+		})
+	}
+}
+
+func TestList(t *testing.T) {
+	s := setUpTestServer(t)
+
+	tests := []struct {
+		name string
+		key  string
+
+		errIsExpected bool
+	}{
+		{
+			"request with key and entity lister",
+			"/playlist.grafana.app/playlists",
+			false,
+		},
+		{
+			"request with key and entity lister",
+			"/playlist.grafana.app/playlists/default",
+			false,
+		},
+		{
+			"request with key and entity lister",
+			"/playlist.grafana.app/playlists/default/set-minimum-uid",
+			false,
+		},
+	}
+
+	entityToCreate := &entity.Entity{
+		Group:     "playlist.grafana.app",
+		Resource:  "playlists",
+		Namespace: "default",
+		Name:      "set-minimum-uid",
+		Key:       "/playlist.grafana.app/playlists/default/set-minimum-uid",
+		CreatedBy: "set-minimum-creator",
+	}
+
+	req := entity.CreateEntityRequest{
+		Entity: entityToCreate,
+	}
+	_, err := s.Create(context.Background(), &req)
+	require.Nil(t, err)
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			req := entity.EntityListRequest{
+				Key: []string{tc.key},
+			}
+			ctx := appcontext.WithUser(context.Background(), &user.SignedInUser{UserID: 1})
+			resp, err := s.List(ctx, &req)
+
+			if tc.errIsExpected {
+				require.Error(t, err)
+				return
+			}
+
+			require.Nil(t, err)
+			entityRead := resp.Results[0]
+			require.Equal(t, entityToCreate.Group, entityRead.Group)
+			require.Equal(t, entityToCreate.Resource, entityRead.Resource)
+			require.Equal(t, entityToCreate.Namespace, entityRead.Namespace)
+			require.Equal(t, entityToCreate.Name, entityRead.Name)
 		})
 	}
 }

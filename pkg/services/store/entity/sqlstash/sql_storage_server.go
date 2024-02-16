@@ -1021,15 +1021,21 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 				return nil, err
 			}
 
-			args = append(args, key.Namespace, key.Group, key.Resource)
-			whereclause := "(" + s.dialect.Quote("namespace") + "=? AND " + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?"
-			if key.Name != "" {
-				args = append(args, key.Name)
-				whereclause += " AND " + s.dialect.Quote("name") + "=?"
-			}
-			whereclause += ")"
+			if key.Namespace != "" {
+				args = append(args, key.Namespace, key.Group, key.Resource)
+				whereclause := "(" + s.dialect.Quote("namespace") + "=? AND " + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?"
+				if key.Name != "" {
+					args = append(args, key.Name)
+					whereclause += " AND " + s.dialect.Quote("name") + "=?"
+				}
+				whereclause += ")"
 
-			where = append(where, whereclause)
+				where = append(where, whereclause)
+			} else {
+				args = append(args, key.Group, key.Resource)
+				whereclause := "(" + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?)"
+				where = append(where, whereclause)
+			}
 		}
 
 		entityQuery.addWhere("("+strings.Join(where, " OR ")+")", args...)
