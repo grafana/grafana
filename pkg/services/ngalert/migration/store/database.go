@@ -1,7 +1,9 @@
 package store
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +13,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/matttproud/golang_protobuf_extensions/pbutil"
+	pb "github.com/prometheus/alertmanager/silence/silencepb"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -96,6 +100,8 @@ type WriteStore interface {
 	DeleteFolders(ctx context.Context, orgID int64, uids ...string) error
 
 	UpdateRuleLabels(ctx context.Context, key models.AlertRuleKeyWithVersion, labels data.Labels) error
+
+	SetSilences(ctx context.Context, orgID int64, silences []*pb.MeshSilence) error
 }
 
 type migrationStore struct {
@@ -271,6 +277,20 @@ func (ms *migrationStore) SetOrgMigrationState(ctx context.Context, orgID int64,
 	}
 
 	return kv.Set(ctx, stateKey, string(raw))
+}
+
+// SetSilences stores the given silences in the kvstore.
+func (ms *migrationStore) SetSilences(ctx context.Context, orgID int64, silences []*pb.MeshSilence) error {
+	kv := kvstore.WithNamespace(ms.kv, orgID, notifier.KVNamespace)
+
+	var buf bytes.Buffer
+	for _, e := range silences {
+		if _, err := pbutil.WriteDelimited(&buf, e); err != nil {
+			return err
+		}
+	}
+
+	return kv.Set(ctx, notifier.SilencesFilename, base64.StdEncoding.EncodeToString(buf.Bytes()))
 }
 
 // GetAlertRuleTitles returns a map of namespaceUID -> title for all alert rules in the given org and namespace uids.
