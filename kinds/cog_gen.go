@@ -51,8 +51,12 @@ func main() {
 	jennies.Append(
 		&codegen.K8ResourcesJenny{},
 		&codegen.K8MetadataJenny{},
+		&codegen.K8StatusJenny{},
 		&codegen.GoTypesJenny{},
 	)
+
+	header := codegen.SlashHeaderMapper("kinds/cog_gen.go")
+	jennies.AddPostprocessors(header)
 
 	fs, err := jennies.GenerateFS(input)
 	if err != nil {

@@ -33,6 +33,8 @@ func TSVeneerIndexJenny(dir string) ManyToOne {
 	}
 }
 
+var schPath = cue.MakePath(cue.Hid("_#schema", "github.com/grafana/thema"))
+
 type genTSVeneerIndex struct {
 	dir string
 }

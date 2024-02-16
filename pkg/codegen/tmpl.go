@@ -47,4 +47,7 @@ type (
 	tvars_metadata struct {
 		PackageName string
 	}
+	tvars_status struct {
+		PackageName string
+	}
 )
