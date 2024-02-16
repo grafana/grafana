@@ -210,7 +210,7 @@ describe('backendSrv', () => {
           expect(backendSrv.rotateToken).toHaveBeenCalledTimes(1);
           expect(fetchMock).toHaveBeenCalledTimes(2); // expecting 2 calls because of retry and because the tokenRotation is mocked
         });
-      })
+      });
     });
 
     describe('when making an unsuccessful call because of soft token revocation', () => {
