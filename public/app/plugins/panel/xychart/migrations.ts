@@ -184,7 +184,7 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
           frame: {
             matcher: {
               id: FrameMatcherID.byIndex,
-              options: seriesMapping === SeriesMapping.Manual ? i++ : frame ?? frameShared ?? 0,
+              options: frame ?? (seriesMapping === SeriesMapping.Manual ? i++ : frameShared ?? 0),
             },
           },
           x: {

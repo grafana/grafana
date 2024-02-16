@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
 import { PanelProps } from '@grafana/data';
+import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { config } from '@grafana/runtime';
 import {
   TooltipDisplayMode,
@@ -65,7 +66,7 @@ export const XYChartPanel2 = (props: Props2) => {
         items.push({
           yAxis: 1, // TODO: pull from y field
           label: s.name,
-          color: s.color.fixed,
+          color: alpha(s.color.fixed!, 1),
           getItemKey: () => s.name,
         });
       }
