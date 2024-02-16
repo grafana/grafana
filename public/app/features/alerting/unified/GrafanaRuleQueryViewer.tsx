@@ -5,7 +5,7 @@ import React from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, PanelData, RelativeTimeRange } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Badge, useStyles2, Stack } from '@grafana/ui';
+import { Badge, Stack, useStyles2 } from '@grafana/ui';
 import { mapRelativeTimeRangeToOption } from '@grafana/ui/src/components/DateTimePickers/RelativeTimeRangePicker/utils';
 
 import { AlertQuery } from '../../../types/unified-alerting-dto';
@@ -14,8 +14,8 @@ import {
   downsamplingTypes,
   ExpressionQuery,
   ExpressionQueryType,
-  reducerModes,
   ReducerMode,
+  reducerModes,
   reducerTypes,
   thresholdFunctions,
   upsamplingTypes,
@@ -51,7 +51,7 @@ export function GrafanaRuleQueryViewer({
   return (
     <Stack gap={2} direction="column">
       <div className={styles.maxWidthContainer}>
-        <Stack gap={2}>
+        <Stack gap={2} wrap="wrap" data-testid="queries-container">
           {dataQueries.map(({ model, relativeTimeRange, refId, datasourceUid }, index) => {
             const dataSource = dsByUid[datasourceUid];
 
@@ -73,7 +73,7 @@ export function GrafanaRuleQueryViewer({
         </Stack>
       </div>
       <div className={styles.maxWidthContainer}>
-        <Stack gap={1}>
+        <Stack gap={1} wrap="wrap" data-testid="expressions-container">
           {expressions.map(({ model, refId, datasourceUid }, index) => {
             const dataSource = dsByUid[datasourceUid];
 
