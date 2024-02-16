@@ -19,6 +19,7 @@ interface ExecutedQueryInfo {
 }
 
 interface Props {
+  instanceId?: string; // Must match the prefix of the requestId of the query being inspected. For updating only one instance of the inspector in case of multiple instances, ie Explore split view
   data: PanelData;
   onRefreshQuery: () => void;
 }
@@ -49,7 +50,15 @@ export class QueryInspector extends PureComponent<Props, State> {
   componentDidMount() {
     this.subs.add(
       backendSrv.getInspectorStream().subscribe({
-        next: (response) => this.onDataSourceResponse(response),
+        next: (response) => {
+          let update = true;
+          if (this.props.instanceId && response?.requestId) {
+            update = response.requestId.startsWith(this.props.instanceId);
+          }
+          if (update) {
+            return this.onDataSourceResponse(response.response);
+          }
+        },
       })
     );
   }
