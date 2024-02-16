@@ -16,7 +16,7 @@ type Props = {
   disabled?: boolean;
 };
 
-export default function ExemplarSetting({ value, onChange, onDelete, disabled }: Props) {
+export function ExemplarSetting({ value, onChange, onDelete, disabled }: Props) {
   const [isInternalLink, setIsInternalLink] = useState(Boolean(value.datasourceUid));
 
   const theme = useTheme2();

@@ -11,7 +11,7 @@ import {
   PrometheusQueryResultRegex,
 } from './migrations/variableMigration';
 
-export default class PrometheusMetricFindQuery {
+export class PrometheusMetricFindQuery {
   range: TimeRange;
 
   constructor(

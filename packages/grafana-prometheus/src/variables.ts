@@ -6,7 +6,7 @@ import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import { PromVariableQueryEditor } from './components/VariableQueryEditor';
 import { PrometheusDatasource } from './datasource';
-import PrometheusMetricFindQuery from './metric_find_query';
+import { PrometheusMetricFindQuery } from './metric_find_query';
 import { PromVariableQuery } from './types';
 
 export class PrometheusVariableSupport extends CustomVariableSupport<PrometheusDatasource> {

@@ -48,7 +48,7 @@ interface PromQueryFieldState {
   hint: QueryHint | null;
 }
 
-class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
+class PromQueryFieldClass extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
   declare languageProviderInitializationPromise: CancelablePromise<any>;
 
   constructor(props: PromQueryFieldProps) {
@@ -287,4 +287,4 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   }
 }
 
-export default withTheme2(PromQueryField);
+export const PromQueryField = withTheme2(PromQueryFieldClass);
