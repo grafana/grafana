@@ -23,7 +23,7 @@ import { prepSeries } from './utils';
 
 type Props2 = PanelProps<Options>;
 
-export const XYChartPanel = (props: Props2) => {
+export const XYChartPanel2 = (props: Props2) => {
   const styles = useStyles2(getStyles);
 
   let { mapping, series: mappedSeries } = props.options;
@@ -127,3 +127,18 @@ const getStyles = () => ({
     },
   }),
 });
+
+/*
+// import { autoOpts, manualOpts } from './testProps';
+import { Options as Options2 } from './types2';
+import { prepXYSeries } from './utils';
+
+export const XYChartPanel = (props: Props2) => {
+  let frames = props.data.series;
+  // console.log(prepXYSeries(autoOpts, frames));
+  // console.log(prepXYSeries(manualOpts, frames));
+  console.log(prepXYSeries(props.options, frames));
+};
+
+type Props2 = PanelProps<Options2>;
+*/
