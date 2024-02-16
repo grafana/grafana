@@ -5,14 +5,14 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState, sceneGraph } from '@grafana/scenes';
 import { Box, ButtonGroup, FilterInput, RadioButtonGroup, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { OptionFilter, RenderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
+import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
 import { getPanelFrameCategory2 } from 'app/features/dashboard/components/PanelEditor/getPanelFrameOptions';
 import { getVisualizationOptions2 } from 'app/features/dashboard/components/PanelEditor/getVisualizationOptions';
 import { getAllPanelPluginMeta } from 'app/features/panel/state/util';
 
+import { PanelEditor } from './PanelEditor';
 import { PanelVizTypePicker } from './PanelVizTypePicker';
-import { VizPanelManager } from './VizPanelManager';
 
 export interface PanelOptionsPaneState extends SceneObjectState {
   isVizPickerOpen?: boolean;
@@ -21,15 +21,16 @@ export interface PanelOptionsPaneState extends SceneObjectState {
 }
 
 export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
-  public panelManager: VizPanelManager;
-
-  public constructor(panelMgr: VizPanelManager) {
+  public constructor(state: Partial<PanelOptionsPaneState>) {
     super({
       searchQuery: '',
       listMode: OptionFilter.All,
+      ...state,
     });
+  }
 
-    this.panelManager = panelMgr;
+  public getVizManager() {
+    return sceneGraph.getAncestor(this, PanelEditor).state.vizManager;
   }
 
   onToggleVizPicker = () => {
@@ -44,11 +45,14 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     this.setState({ listMode });
   };
 
-  onCollapsePane = () => {};
+  onCollapsePane = () => {
+    const editor = sceneGraph.getAncestor(this, PanelEditor);
+    editor.toggleOptionsPane();
+  };
 
   static Component = ({ model }: SceneComponentProps<PanelOptionsPane>) => {
     const { isVizPickerOpen, searchQuery, listMode } = model.useState();
-    const { panelManager } = model;
+    const panelManager = model.getVizManager();
     const { panel } = panelManager.state;
     const dataObject = sceneGraph.getData(panel);
     const { data } = dataObject.useState();
@@ -93,29 +97,24 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
 
     if (isSearching) {
       mainBoxElements.push(
-        <RenderSearchHits
-          allOptions={[panelFrameOptions, ...(visualizationOptions ?? [])]}
-          overrides={justOverrides}
-          searchQuery={searchQuery}
-          key="render-search-hits"
-        />
+        renderSearchHits([panelFrameOptions, ...(visualizationOptions ?? [])], justOverrides, searchQuery)
       );
     } else {
       switch (listMode) {
         case OptionFilter.All:
-          mainBoxElements.push(<panelFrameOptions.Render key="panel-frame-options" />);
+          mainBoxElements.push(panelFrameOptions.render());
 
           for (const item of visualizationOptions ?? []) {
-            mainBoxElements.push(<item.Render key={item.props.id} />);
+            mainBoxElements.push(item.render());
           }
 
           for (const item of justOverrides) {
-            mainBoxElements.push(<item.Render key={item.props.id} />);
+            mainBoxElements.push(item.render());
           }
           break;
         case OptionFilter.Overrides:
           for (const item of justOverrides) {
-            mainBoxElements.push(<item.Render key={item.props.id} />);
+            mainBoxElements.push(item.render());
           }
         default:
           break;
