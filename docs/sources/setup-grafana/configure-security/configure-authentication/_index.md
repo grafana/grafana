@@ -78,9 +78,9 @@ In scenarios where you have multiple identity providers of the same type, there 
 
 ## Using the same email address to login with different identity providers
 
-If you have multiple identity providers and users would like to use the same email address to login with different providers (for example Grafana.Com OAuth and Google OAuth), you can configure Grafana to use the email address as the unique identifier for the user. This is done by enabling the `oauth_allow_insecure_email_lookup` option. This option is disabled by default. Please note that enabling this option can lower the security of your Grafana instance. If you enable this option, you should also ensure that the `Allowed organization`, `Allowed groups` and `Allowed domains` settings are configured correctly to prevent unauthorized access.
+If users want to use the same email address with multiple identity providers (for example, Grafana.Com OAuth and Google OAuth), you can configure Grafana to use the email address as the unique identifier for the user. This is done by enabling the `oauth_allow_insecure_email_lookup` option, which is disabled by default. Please note that enabling this option can lower the security of your Grafana instance. If you enable this option, you should also ensure that the `Allowed organization`, `Allowed groups` and `Allowed domains` settings are configured correctly to prevent unauthorized access.
 
-To enable this option, please refer to the [Enable email lookup](#enable-email-lookup) section.
+To enable this option, refer to the [Enable email lookup](#enable-email-lookup) section.
 
 ## Grafana Auth
 
