@@ -1011,8 +1011,8 @@ var (
 		},
 		{
 			Name:         "ssoSettingsApi",
-			Description:  "Enables the SSO settings API",
-			Stage:        FeatureStageExperimental,
+			Description:  "Enables the SSO settings API and the OAuth configuration UIs in Grafana",
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        identityAccessTeam,
 		},

@@ -64,7 +64,7 @@ func NewTestMigrationStore(t testing.TB, sqlStore *sqlstore.SQLStore, cfg *setti
 	userSvc, err := userimpl.ProvideService(sqlStore, orgService, cfg, teamSvc, cache, quotaService, bundleregistry.ProvideService())
 	require.NoError(t, err)
 
-	acSvc, err := acimpl.ProvideService(cfg, sqlStore, routing.ProvideRegister(), cache, ac, userSvc, features)
+	acSvc, err := acimpl.ProvideService(cfg, sqlStore, routing.ProvideRegister(), cache, ac, features)
 	require.NoError(t, err)
 
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore), quotaService)

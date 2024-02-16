@@ -270,6 +270,10 @@ func (hs *HTTPServer) CompleteInvite(c *contextmodel.ReqContext) response.Respon
 		}
 	}
 
+	if err := completeInvite.Password.Validate(hs.Cfg); err != nil {
+		return response.Err(err)
+	}
+
 	cmd := user.CreateUserCommand{
 		Email:        completeInvite.Email,
 		Name:         completeInvite.Name,
