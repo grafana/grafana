@@ -18,9 +18,10 @@ export interface Props {
   secondaryPaneStyles?: React.CSSProperties;
   /**
    * Called when ever the size of the primary pane changes
-   * @param size (float from 0-1)
+   * @param flexSize (float from 0-1)
    */
-  onSizeChange?: (size: number) => void;
+  onSizeChanged?: (flexSize: number, pixelSize: number) => void;
+  onResizing?: (flexSize: number, pixelSize: number) => void;
   children: [React.ReactNode, React.ReactNode];
 }
 
@@ -34,15 +35,16 @@ export function Splitter(props: Props) {
     initialSize = 0.5,
     primaryPaneStyles,
     secondaryPaneStyles,
-    onSizeChange,
+    onSizeChanged,
+    onResizing,
     dragPosition = 'middle',
     children,
   } = props;
 
   const { containerRef, firstPaneRef, minDimProp, splitterProps, secondPaneRef } = useSplitter(
     direction,
-    onSizeChange,
-    children
+    onSizeChanged,
+    onResizing
   );
 
   const kids = React.Children.toArray(children);
@@ -157,7 +159,11 @@ const propsForDirection = {
   },
 } as const;
 
-function useSplitter(direction: 'row' | 'column', onSizeChange: Props['onSizeChange'], children: Props['children']) {
+function useSplitter(
+  direction: 'row' | 'column',
+  onSizeChanged: Props['onSizeChanged'],
+  onResizing: Props['onResizing']
+) {
   const handleSize = 16;
   const splitterRef = useRef<HTMLDivElement | null>(null);
   const firstPaneRef = useRef<HTMLDivElement | null>(null);
@@ -230,29 +236,32 @@ function useSplitter(direction: 'row' | 'column', onSizeChange: Props['onSizeCha
         const dims = firstPaneMeasurements.current!;
         const newSize = clamp(primarySizeRef.current + diff, dims[minDimProp], dims[maxDimProp]);
         const newFlex = newSize / (containerSize.current! - handleSize);
+
         firstPaneRef.current!.style.flexGrow = `${newFlex}`;
         secondPaneRef.current!.style.flexGrow = `${1 - newFlex}`;
-        const ariaValueNow = clamp(
-          ((newSize - dims[minDimProp]) / (dims[maxDimProp] - dims[minDimProp])) * 100,
-          0,
-          100
-        );
+
+        const ariaValueNow = ariaValue(newSize, dims[minDimProp], dims[maxDimProp] - dims[minDimProp]);
 
         splitterRef.current!.ariaValueNow = `${ariaValueNow}`;
+        onResizing?.(newFlex, newSize);
       }
     },
-    [handleSize, clientAxis, minDimProp, maxDimProp]
+    [handleSize, clientAxis, minDimProp, maxDimProp, onResizing]
   );
 
   const onPointerUp = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
+
       splitterRef.current!.releasePointerCapture(e.pointerId);
       dragStart.current = null;
-      onSizeChange?.(parseFloat(firstPaneRef.current!.style.flexGrow));
+
+      if (typeof primarySizeRef.current === 'number') {
+        onSizeChanged?.(parseFloat(firstPaneRef.current!.style.flexGrow), primarySizeRef.current);
+      }
     },
-    [onSizeChange]
+    [onSizeChanged]
   );
 
   const pressedKeys = useRef(new Set<string>());
@@ -290,19 +299,18 @@ function useSplitter(direction: 'row' | 'column', onSizeChange: Props['onSizeCha
       const firstPaneDims = firstPaneMeasurements.current!;
       const curSize = firstPaneRef.current!.getBoundingClientRect()[measurementProp];
       const newSize = clamp(curSize + sizeChange, firstPaneDims[minDimProp], firstPaneDims[maxDimProp]);
-
       const newFlex = newSize / (containerSize.current! - handleSize);
 
       firstPaneRef.current!.style.flexGrow = `${newFlex}`;
       secondPaneRef.current!.style.flexGrow = `${1 - newFlex}`;
-      const ariaValueNow =
-        ((newSize - firstPaneDims[minDimProp]) / (firstPaneDims[maxDimProp] - firstPaneDims[minDimProp])) * 100;
-      splitterRef.current!.ariaValueNow = `${clamp(ariaValueNow, 0, 100)}`;
+      splitterRef.current!.ariaValueNow = ariaValue(newSize, firstPaneDims[minDimProp], firstPaneDims[maxDimProp]);
+
+      onResizing?.(newFlex, newSize);
 
       keysLastHandledAt.current = time;
       window.requestAnimationFrame(handlePressedKeys);
     },
-    [direction, handleSize, minDimProp, maxDimProp, measurementProp]
+    [direction, handleSize, minDimProp, maxDimProp, measurementProp, onResizing]
   );
 
   const onKeyDown = useCallback(
@@ -380,9 +388,12 @@ function useSplitter(direction: 'row' | 'column', onSizeChange: Props['onSizeCha
       }
 
       pressedKeys.current.delete(e.key);
-      onSizeChange?.(parseFloat(firstPaneRef.current!.style.flexGrow));
+
+      if (typeof primarySizeRef.current === 'number') {
+        onSizeChanged?.(parseFloat(firstPaneRef.current!.style.flexGrow), primarySizeRef.current);
+      }
     },
-    [direction, onSizeChange]
+    [direction, onSizeChanged]
   );
 
   const onDoubleClick = useCallback(() => {
@@ -403,9 +414,12 @@ function useSplitter(direction: 'row' | 'column', onSizeChange: Props['onSizeCha
     if (pressedKeys.current.size > 0) {
       pressedKeys.current.clear();
       dragStart.current = null;
-      onSizeChange?.(parseFloat(firstPaneRef.current!.style.flexGrow));
+
+      if (typeof primarySizeRef.current === 'number') {
+        onSizeChanged?.(parseFloat(firstPaneRef.current!.style.flexGrow), primarySizeRef.current);
+      }
     }
-  }, [onSizeChange]);
+  }, [onSizeChanged]);
 
   return {
     containerRef,
@@ -424,6 +438,10 @@ function useSplitter(direction: 'row' | 'column', onSizeChange: Props['onSizeCha
     },
     secondPaneRef,
   };
+}
+
+function ariaValue(value: number, min: number, max: number) {
+  return `${clamp(((value - min) / (max - min)) * 100, 0, 100)}`;
 }
 
 interface MeasureResult {
@@ -450,7 +468,7 @@ function measureElement<T extends HTMLElement>(ref: T): MeasureResult {
   ref.style.height = savedHeight;
   ref.style.flexGrow = savedFlex;
 
-  return { minWidth, maxWidth, minHeight, maxHeight } as MeasureResult;
+  return { minWidth, maxWidth, minHeight, maxHeight };
 }
 
 function useResizeObserver(

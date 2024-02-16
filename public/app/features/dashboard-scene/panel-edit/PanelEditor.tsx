@@ -20,7 +20,9 @@ export interface PanelEditorState extends SceneObjectState {
   controls?: SceneObject[];
   isDirty?: boolean;
   panelId: number;
-  optionsPane?: PanelOptionsPane;
+  optionsPane: PanelOptionsPane;
+  optionsCollapsed?: boolean;
+  optionsPaneSize: number;
   dataPane?: PanelDataPane;
   vizManager: VizPanelManager;
 }
@@ -60,11 +62,13 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _initDataPane(pluginId: string) {
     const skipDataQuery = config.panels[pluginId].skipDataQuery;
 
-    if (!skipDataQuery && !this.state.dataPane) {
-      this.setState({ dataPane: new PanelDataPane(this.state.vizManager) });
-    } else if (this.state.dataPane) {
+    if (skipDataQuery && this.state.dataPane) {
       locationService.partial({ tab: null }, true);
       this.setState({ dataPane: undefined });
+    }
+
+    if (!skipDataQuery && !this.state.dataPane) {
+      this.setState({ dataPane: new PanelDataPane(this.state.vizManager) });
     }
   }
 
@@ -99,18 +103,54 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     }
   }
 
-  public toggleOptionsPane(withOpenVizPicker?: boolean) {
-    if (this.state.optionsPane) {
-      this.setState({ optionsPane: undefined });
-    } else {
-      this.setState({
-        optionsPane: new PanelOptionsPane({
-          isVizPickerOpen: withOpenVizPicker,
-        }),
-      });
-    }
+  public toggleOptionsPane() {
+    this.setState({ optionsCollapsed: !this.state.optionsCollapsed, optionsPaneSize: OPTIONS_PANE_FLEX_DEFAULT });
   }
+
+  public onOptionsPaneResizing = (flexSize: number, pixelSize: number) => {
+    if (flexSize <= 0 && pixelSize <= 0) {
+      return;
+    }
+
+    const optionsPixelSize = (pixelSize / flexSize) * (1 - flexSize);
+
+    if (this.state.optionsCollapsed && optionsPixelSize > OPTIONS_PANE_PIXELS_MIN) {
+      this.setState({ optionsCollapsed: false });
+    }
+
+    if (!this.state.optionsCollapsed && optionsPixelSize < OPTIONS_PANE_PIXELS_MIN) {
+      this.setState({ optionsCollapsed: true });
+    }
+  };
+
+  public onOptionsPaneSizeChanged = (flexSize: number, pixelSize: number) => {
+    if (flexSize <= 0 && pixelSize <= 0) {
+      return;
+    }
+
+    const optionsPaneSize = 1 - flexSize;
+    const isSnappedClosed = this.state.optionsPaneSize === 0;
+    const fullWidth = pixelSize / flexSize;
+    const snapWidth = OPTIONS_PANE_PIXELS_SNAP / fullWidth;
+
+    if (this.state.optionsCollapsed) {
+      if (isSnappedClosed) {
+        this.setState({
+          optionsPaneSize: Math.max(optionsPaneSize, snapWidth),
+          optionsCollapsed: false,
+        });
+      } else {
+        this.setState({ optionsPaneSize: 0 });
+      }
+    } else if (isSnappedClosed) {
+      this.setState({ optionsPaneSize: optionsPaneSize });
+    }
+  };
 }
+
+export const OPTIONS_PANE_PIXELS_MIN = 300;
+export const OPTIONS_PANE_PIXELS_SNAP = 400;
+export const OPTIONS_PANE_FLEX_DEFAULT = 0.25;
 
 export function buildPanelEditScene(panel: VizPanel): PanelEditor {
   const panelClone = panel.clone();
@@ -120,5 +160,6 @@ export function buildPanelEditScene(panel: VizPanel): PanelEditor {
     panelId: getPanelIdForVizPanel(panel),
     optionsPane: new PanelOptionsPane({}),
     vizManager: vizPanelMgr,
+    optionsPaneSize: OPTIONS_PANE_FLEX_DEFAULT,
   });
 }

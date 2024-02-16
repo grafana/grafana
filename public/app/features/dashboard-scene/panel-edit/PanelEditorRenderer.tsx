@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
@@ -9,53 +9,54 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { PanelEditor } from './PanelEditor';
-import { VisualizationButton } from './PanelOptionsPane';
 
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
-  const { optionsPane, vizManager, dataPane } = model.useState();
+  const { optionsPane, vizManager, dataPane, optionsPaneSize } = model.useState();
   const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
+  const [vizPaneStyles, optionsPaneStyles] = useMemo(() => {
+    if (optionsPaneSize > 0) {
+      return [{ flexGrow: 1 - optionsPaneSize }, { minWidth: 'unset', overflow: 'hidden', flexGrow: optionsPaneSize }];
+    } else {
+      return [{ flexGrow: 1 }, { minWidth: 'unset', flexGrow: 0 }];
+    }
+  }, [optionsPaneSize]);
 
   return (
     <>
       <NavToolbarActions dashboard={dashboard} />
-      <div className={styles.canvasContent}>
-        {controls && (
-          <div className={styles.controls}>
-            {controls.map((control) => (
-              <control.Component key={control.state.key} model={control} />
-            ))}
-            {!optionsPane && (
-              <VisualizationButton
-                pluginId={vizManager.state.panel.state.pluginId}
-                onOpen={() => model.toggleOptionsPane(true)}
-                isOpen={false}
-                onTogglePane={() => model.toggleOptionsPane()}
-              />
-            )}
-          </div>
-        )}
+      <Splitter
+        direction="row"
+        dragPosition="end"
+        initialSize={0.75}
+        primaryPaneStyles={vizPaneStyles}
+        secondaryPaneStyles={optionsPaneStyles}
+        onResizing={model.onOptionsPaneResizing}
+        onSizeChanged={model.onOptionsPaneSizeChanged}
+      >
         <div className={styles.body}>
-          <Splitter
-            direction="row"
-            dragPosition="end"
-            initialSize={0.75}
-            primaryPaneStyles={{ paddingBottom: !dataPane ? 16 : 0 }}
-          >
+          <div className={styles.canvasContent}>
+            {controls && (
+              <div className={styles.controls}>
+                {controls.map((control) => (
+                  <control.Component key={control.state.key} model={control} />
+                ))}
+              </div>
+            )}
             <Splitter
               direction="column"
-              primaryPaneStyles={{ minHeight: 0, paddingRight: !optionsPane ? 16 : 0 }}
+              primaryPaneStyles={{ minHeight: 0, paddingBottom: !dataPane ? 16 : 0 }}
               secondaryPaneStyles={{ minHeight: 0, overflow: 'hidden' }}
               dragPosition="start"
             >
               <vizManager.Component model={vizManager} />
               {dataPane && <dataPane.Component model={dataPane} />}
             </Splitter>
-            {optionsPane && <optionsPane.Component model={optionsPane} />}
-          </Splitter>
+          </div>
         </div>
-      </div>
+        {optionsPane && <optionsPane.Component model={optionsPane} />}
+      </Splitter>
     </>
   );
 }
@@ -84,7 +85,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'wrap',
       alignItems: 'center',
       gap: theme.spacing(1),
-      padding: theme.spacing(2),
+      padding: theme.spacing(2, 0, 2, 2),
     }),
   };
 }
