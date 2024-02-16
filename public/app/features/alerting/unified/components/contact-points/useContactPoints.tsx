@@ -50,9 +50,9 @@ export function useContactPointsWithStatus({
   const fetchContactPointsStatus = alertmanagerApi.endpoints.getContactPointsStatus.useQuery(undefined, {
     refetchOnFocus: true,
     refetchOnReconnect: true,
-    // re-fetch status every so often for up-to-date information
+    // re-fetch status every so often for up-to-date information, allow disabling by passing "receiverStatusPollingInterval: 0"
     pollingInterval: receiverStatusPollingInterval,
-    // skip fetching receiver statuses if not Grafana AM or if we're explicitly told to skip
+    // skip fetching receiver statuses if not Grafana AM
     skip: !isGrafanaAlertmanager,
   });
 
