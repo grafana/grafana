@@ -13,8 +13,17 @@ type Scope struct {
 }
 
 type ScopeSpec struct {
-	// S does nothing and is a stub
-	S string `json:"s"`
+	Name        string        `json:"name"`
+	Type        string        `json:"type"`
+	Description string        `json:"description"`
+	Category    string        `json:"category"`
+	Filters     []ScopeFilter `json:"filters"`
+}
+
+type ScopeFilter struct {
+	Key      string `json:"key"`
+	Value    string `json:"value"`
+	Operator string `json:"operator"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
