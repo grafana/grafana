@@ -219,7 +219,7 @@ export const xyChartMigrationHandler = (panel: PanelModel): Options => {
       }
     );
 
-    const newOptions: Options2 = {
+    const newOptions: Options = {
       ...cleanedOpts,
       mapping: seriesMapping === SeriesMapping.Auto ? SeriesMapping.Auto : SeriesMapping.Manual,
       series: newSeries,
