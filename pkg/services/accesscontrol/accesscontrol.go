@@ -59,9 +59,7 @@ type SearchOptions struct {
 	ActionPrefix string // Needed for the PoC v1, it's probably going to be removed.
 	Action       string
 	Scope        string
-	UserLogin    string    // Login for which to return information, if none is specified information is returned for all users.
-	UserID       int64     // ID for the user for which to return information, if none is specified information is returned for all users.
-	NamespaceID  string    // ID of the identity (ex: user:3, serviceaccount:4)
+	NamespacedID string    // ID of the identity (ex: user:3, serviceaccount:4)
 	wildcards    Wildcards // private field computed based on the Scope
 }
 
@@ -80,42 +78,26 @@ func (s *SearchOptions) Wildcards() []string {
 	return s.wildcards
 }
 
-func (s *SearchOptions) ComputeUserID(ctx context.Context, userSvc user.Service) error {
-	if s.UserID > 0 {
-		return nil
+func (s *SearchOptions) ComputeUserID() (int64, error) {
+	if s.NamespacedID == "" {
+		return 0, errors.New("namespacedID must be set")
 	}
-
-	// Resolve namespaceID -> userID
-	if s.NamespaceID != "" {
-		parts := strings.Split(s.NamespaceID, ":")
-		// Validate namespace ID format
-		if len(parts) != 2 {
-			return fmt.Errorf("invalid namespace ID: %s", s.NamespaceID)
-		}
-		// Validate namespace type is user or service account
-		if parts[0] != identity.NamespaceUser && parts[0] != identity.NamespaceServiceAccount {
-			return fmt.Errorf("invalid namespace type: %s", parts[0])
-		}
-		// Validate namespace ID is a number
-		id, err := strconv.ParseInt(parts[1], 10, 64)
-		if err != nil {
-			return fmt.Errorf("invalid namespace ID: %s", s.NamespaceID)
-		}
-		s.UserID = id
-		return nil
+	// Split namespaceID into namespace and ID
+	parts := strings.Split(s.NamespacedID, ":")
+	// Validate namespace ID format
+	if len(parts) != 2 {
+		return 0, fmt.Errorf("invalid namespaced ID: %s", s.NamespacedID)
 	}
-
-	// Resolve userLogin -> userID
-	if s.UserLogin != "" {
-		dbUsr, err := userSvc.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: s.UserLogin})
-		if err != nil {
-			return err
-		}
-		s.UserID = dbUsr.ID
-		return nil
+	// Validate namespace type is user or service account
+	if parts[0] != identity.NamespaceUser && parts[0] != identity.NamespaceServiceAccount {
+		return 0, fmt.Errorf("invalid namespace: %s", parts[0])
 	}
-
-	return errors.New("either userID, userLogin or namespaceID must be set")
+	// Validate namespace ID is a number
+	id, err := strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("invalid namespaced ID: %s", s.NamespacedID)
+	}
+	return id, nil
 }
 
 type SyncUserRolesCommand struct {

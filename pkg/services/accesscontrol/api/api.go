@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -66,44 +65,20 @@ func (api *AccessControlAPI) getUserPermissions(c *contextmodel.ReqContext) resp
 	return response.JSON(http.StatusOK, ac.GroupScopesByAction(permissions))
 }
 
-func atMostOneOption(options ...bool) bool {
-	provided := 0
-	for i := 0; i < len(options) && provided <= 1; i++ {
-		if options[i] {
-			provided++
-		}
-	}
-	return provided <= 1
-}
-
 // GET /api/access-control/users/permissions/search
 func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) response.Response {
 	searchOptions := ac.SearchOptions{
-		UserLogin:    c.Query("userLogin"),
 		ActionPrefix: c.Query("actionPrefix"),
 		Action:       c.Query("action"),
 		Scope:        c.Query("scope"),
-		NamespaceID:  c.Query("namespaceId"),
-	}
-
-	userIDString := c.Query("userId")
-	if userIDString != "" {
-		userID, err := strconv.ParseInt(userIDString, 10, 64)
-		if err != nil {
-			return response.Error(http.StatusBadRequest, "user ID is invalid", err)
-		}
-		searchOptions.UserID = userID
+		NamespacedID: c.Query("namespacedId"),
 	}
 
 	// Validate inputs
-	if !atMostOneOption((searchOptions.ActionPrefix != ""), (searchOptions.Action != "")) {
+	if searchOptions.ActionPrefix != "" && searchOptions.Action != "" {
 		return response.JSON(http.StatusBadRequest, "'action' and 'actionPrefix' are mutually exclusive")
 	}
-	if !atMostOneOption((searchOptions.UserLogin != ""), (searchOptions.UserID > 0), (searchOptions.NamespaceID != "")) {
-		return response.JSON(http.StatusBadRequest, "'userId', 'userLogin' and 'namespaceID' are mutually exclusive")
-	}
-	if searchOptions.UserID <= 0 && searchOptions.UserLogin == "" && searchOptions.NamespaceID == "" &&
-		searchOptions.ActionPrefix == "" && searchOptions.Action == "" {
+	if searchOptions.NamespacedID == "" && searchOptions.ActionPrefix == "" && searchOptions.Action == "" {
 		return response.JSON(http.StatusBadRequest, "at least one search option must be provided")
 	}
 

@@ -246,8 +246,9 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 // SearchUsersPermissions returns all users' permissions filtered by action prefixes
 func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Requester,
 	options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
-	if options.UserLogin != "" || options.NamespaceID != "" || options.UserID > 0 {
-		if err := options.ComputeUserID(ctx, s.userSvc); err != nil {
+	if options.NamespacedID != "" {
+		userID, err := options.ComputeUserID()
+		if err != nil {
 			s.log.Error("Failed to resolve user ID", "error", err)
 			return nil, err
 		}
@@ -258,7 +259,7 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 		if err != nil {
 			return nil, err
 		}
-		return map[int64][]accesscontrol.Permission{options.UserID: userPerms}, nil
+		return map[int64][]accesscontrol.Permission{userID: userPerms}, nil
 	}
 
 	timer := prometheus.NewTimer(metrics.MAccessSearchPermissionsSummary)
@@ -345,15 +346,8 @@ func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, search
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
-	if searchOptions.UserLogin != "" || searchOptions.NamespaceID != "" {
-		if err := searchOptions.ComputeUserID(ctx, s.userSvc); err != nil {
-			s.log.Error("Failed to resolve user ID", "error", err)
-			return nil, err
-		}
-	}
-
-	if searchOptions.UserID == 0 {
-		return nil, fmt.Errorf("expected user ID, login or namespace ID to be specified")
+	if searchOptions.NamespacedID == "" {
+		return nil, fmt.Errorf("expected namespaced ID to be specified")
 	}
 
 	if permissions, success := s.searchUserPermissionsFromCache(orgID, searchOptions); success {
@@ -363,15 +357,20 @@ func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, search
 }
 
 func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
+	userID, err := searchOptions.ComputeUserID()
+	if err != nil {
+		return nil, err
+	}
+
 	// Get permissions for user's basic roles from RAM
-	roleList, err := s.store.GetUsersBasicRoles(ctx, []int64{searchOptions.UserID}, orgID)
+	roleList, err := s.store.GetUsersBasicRoles(ctx, []int64{userID}, orgID)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch basic roles for the user: %w", err)
 	}
 	var roles []string
 	var ok bool
-	if roles, ok = roleList[searchOptions.UserID]; !ok {
-		return nil, fmt.Errorf("found no basic roles for user %d in organisation %d", searchOptions.UserID, orgID)
+	if roles, ok = roleList[userID]; !ok {
+		return nil, fmt.Errorf("found no basic roles for user %d in organisation %d", userID, orgID)
 	}
 	permissions := make([]accesscontrol.Permission, 0)
 	for _, builtin := range roles {
@@ -389,15 +388,20 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 	if err != nil {
 		return nil, err
 	}
-	permissions = append(permissions, dbPermissions[searchOptions.UserID]...)
+	permissions = append(permissions, dbPermissions[userID]...)
 
 	return permissions, nil
 }
 
 func (s *Service) searchUserPermissionsFromCache(orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, bool) {
+	userID, err := searchOptions.ComputeUserID()
+	if err != nil {
+		return nil, false
+	}
+
 	// Create a temp signed in user object to retrieve cache key
 	tempUser := &user.SignedInUser{
-		UserID: searchOptions.UserID,
+		UserID: userID,
 		OrgID:  orgID,
 	}
 
