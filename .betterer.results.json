@@ -1028,6 +1028,12 @@
         "count": 5
       }
     ],
+    "/packages/grafana-ui/src/components/Splitter/Splitter.tsx": [
+      {
+        "message": "Do not use any type assertions.",
+        "count": 1
+      }
+    ],
     "/packages/grafana-ui/src/components/StatsPicker/StatsPicker.story.tsx": [
       {
         "message": "Unexpected any. Specify a different type.",
@@ -2078,12 +2084,6 @@
         "count": 4
       }
     ],
-    "/public/app/features/alerting/unified/components/notification-policies/Filters.tsx": [
-      {
-        "message": "Styles should be written using objects.",
-        "count": 1
-      }
-    ],
     "/public/app/features/alerting/unified/components/notification-policies/Matchers.tsx": [
       {
         "message": "Styles should be written using objects.",
@@ -2962,12 +2962,12 @@
     ],
     "/public/app/features/dashboard-scene/scene/PanelMenuBehavior.tsx": [
       {
-        "message": "Do not use any type assertions.",
+        "message": "Unexpected any. Specify a different type.",
         "count": 2
       },
       {
-        "message": "Unexpected any. Specify a different type.",
-        "count": 2
+        "message": "Do not use any type assertions.",
+        "count": 1
       }
     ],
     "/public/app/features/dashboard-scene/scene/setDashboardPanelContext.test.ts": [
@@ -3013,6 +3013,12 @@
       }
     ],
     "/public/app/features/dashboard-scene/utils/DashboardModelCompatibilityWrapper.ts": [
+      {
+        "message": "Do not use any type assertions.",
+        "count": 1
+      }
+    ],
+    "/public/app/features/dashboard-scene/utils/PanelModelCompatibilityWrapper.ts": [
       {
         "message": "Do not use any type assertions.",
         "count": 1
@@ -4058,12 +4064,6 @@
       {
         "message": "Styles should be written using objects.",
         "count": 1
-      }
-    ],
-    "/public/app/features/explore/TraceView/components/common/Divider.tsx": [
-      {
-        "message": "Styles should be written using objects.",
-        "count": 3
       }
     ],
     "/public/app/features/explore/TraceView/components/common/LabeledList.tsx": [
@@ -6597,11 +6597,11 @@
     "/public/app/plugins/datasource/tempo/datasource.ts": [
       {
         "message": "Do not use any type assertions.",
-        "count": 7
+        "count": 2
       },
       {
         "message": "Unexpected any. Specify a different type.",
-        "count": 5
+        "count": 4
       }
     ],
     "/public/app/plugins/datasource/tempo/language_provider.ts": [
@@ -7214,10 +7214,6 @@
     ],
     "/public/app/plugins/panel/timeseries/plugins/annotations/AnnotationEditor.tsx": [
       {
-        "message": "Styles should be written using objects.",
-        "count": 5
-      },
-      {
         "message": "Do not use any type assertions.",
         "count": 1
       }
@@ -7226,12 +7222,6 @@
       {
         "message": "Styles should be written using objects.",
         "count": 7
-      }
-    ],
-    "/public/app/plugins/panel/timeseries/plugins/annotations/AnnotationMarker.tsx": [
-      {
-        "message": "Styles should be written using objects.",
-        "count": 3
       }
     ],
     "/public/app/plugins/panel/timeseries/plugins/annotations/AnnotationTooltip.tsx": [

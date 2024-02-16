@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
+// Once we are comfortable with the parsing logic, this struct will
+// be merged/replace the existing Query struct in grafana/pkg/expr/transform.go
 type ExpressionQuery struct {
 	RefID   string
 	Command Command
