@@ -225,7 +225,8 @@ func (s *OAuth2ServiceImpl) handleJWTBearer(ctx context.Context, accessRequest f
 
 // filteredUserPermissions gets the user permissions and applies the actions filter
 func (s *OAuth2ServiceImpl) filteredUserPermissions(ctx context.Context, userID int64, actionsFilter map[string]bool) ([]ac.Permission, error) {
-	permissions, err := s.acService.SearchUserPermissions(ctx, oauthserver.TmpOrgID, ac.SearchOptions{NamespacedID: identity.NamespaceUser + ":1"})
+	permissions, err := s.acService.SearchUserPermissions(ctx, oauthserver.TmpOrgID,
+		ac.SearchOptions{NamespacedID: fmt.Sprintf("%s:%d", identity.NamespaceUser, userID)})
 	if err != nil {
 		return nil, &fosite.RFC6749Error{
 			DescriptionField: "The permissions scope could not be processed.",
