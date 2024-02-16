@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
@@ -41,7 +40,6 @@ func setupTestEnv(t testing.TB) *Service {
 		registrations: accesscontrol.RegistrationList{},
 		roles:         accesscontrol.BuildBasicRoleDefinitions(),
 		store:         database.ProvideService(db.InitTestDB(t)),
-		userSvc:       usertest.NewUserServiceFake(),
 	}
 	require.NoError(t, ac.RegisterFixedRoles(context.Background()))
 	return ac
@@ -66,7 +64,6 @@ func TestUsageMetrics(t *testing.T) {
 				cfg,
 				database.ProvideService(db.InitTestDB(t)),
 				localcache.ProvideService(),
-				usertest.NewUserServiceFake(),
 				featuremgmt.WithFeatures(),
 			)
 			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])
@@ -569,9 +566,6 @@ func TestService_SearchUsersPermissions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ac := setupTestEnv(t)
-
-			// Resolve user login to id 2
-			ac.userSvc = &usertest.FakeUserService{ExpectedUser: &user.User{ID: 2}}
 
 			ac.roles = tt.ramRoles
 			ac.store = actest.FakeStore{

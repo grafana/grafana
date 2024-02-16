@@ -43,8 +43,8 @@ var SharedWithMeFolderPermission = accesscontrol.Permission{
 
 // todo: Remove userSvc and userLogin from search
 func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
-	accessControl accesscontrol.AccessControl, userSvc user.Service, features featuremgmt.FeatureToggles) (*Service, error) {
-	service := ProvideOSSService(cfg, database.ProvideService(db), cache, userSvc, features)
+	accessControl accesscontrol.AccessControl, features featuremgmt.FeatureToggles) (*Service, error) {
+	service := ProvideOSSService(cfg, database.ProvideService(db), cache, features)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service, cfg); err != nil {
@@ -62,7 +62,7 @@ func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegis
 	return service, nil
 }
 
-func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService, userSvc user.Service, features featuremgmt.FeatureToggles) *Service {
+func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService, features featuremgmt.FeatureToggles) *Service {
 	s := &Service{
 		cache:    cache,
 		cfg:      cfg,
@@ -70,7 +70,6 @@ func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheSer
 		log:      log.New("accesscontrol.service"),
 		roles:    accesscontrol.BuildBasicRoleDefinitions(),
 		store:    store,
-		userSvc:  userSvc,
 	}
 
 	return s
@@ -95,7 +94,6 @@ type Service struct {
 	registrations accesscontrol.RegistrationList
 	roles         map[string]*accesscontrol.RoleDTO
 	store         store
-	userSvc       user.Service
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
