@@ -177,5 +177,6 @@ export interface FeatureToggles {
   kubernetesAggregator?: boolean;
   expressionParser?: boolean;
   groupByVariable?: boolean;
+  removeCustomScrollbars?: boolean;
   alertingUpgradeDryrunOnStart?: boolean;
 }

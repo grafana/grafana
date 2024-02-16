@@ -20,9 +20,15 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   subTitle?: React.ReactNode;
   /** Control the page layout. */
   layout?: PageLayoutType;
-  /** Can be used to get the scroll container element to access scroll position */
+  /**
+   * @deprecated - not used with removeCustomScrollbars feature flag
+   * Can be used to get the scroll container element to access scroll position
+   * */
   scrollRef?: RefCallback<HTMLDivElement>;
-  /** Can be used to update the current scroll position */
+  /**
+   * @deprecated - not used with removeCustomScrollbars feature flag
+   * Can be used to update the current scroll position
+   * */
   scrollTop?: number;
 }
 

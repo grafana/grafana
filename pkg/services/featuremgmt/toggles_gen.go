@@ -643,6 +643,10 @@ const (
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
 
+	// FlagRemoveCustomScrollbars
+	// Removes CustomScrollbar from the UI, relying on native browser scrollbars
+	FlagRemoveCustomScrollbars = "removeCustomScrollbars"
+
 	// FlagAlertingUpgradeDryrunOnStart
 	// When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.
 	FlagAlertingUpgradeDryrunOnStart = "alertingUpgradeDryrunOnStart"
