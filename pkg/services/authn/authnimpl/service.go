@@ -73,6 +73,7 @@ func ProvideService(
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, registerer prometheus.Registerer,
 	signingKeysService signingkeys.Service, oauthServer oauthserver.OAuth2Server,
+	settingsProviderService setting.Provider,
 ) *Service {
 	s := &Service{
 		log:             log.New("authn.service"),
@@ -141,7 +142,7 @@ func ProvideService(
 
 	for name := range socialService.GetOAuthProviders() {
 		clientName := authn.ClientWithPrefix(name)
-		s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService))
+		s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService))
 	}
 
 	// FIXME (jguer): move to User package
