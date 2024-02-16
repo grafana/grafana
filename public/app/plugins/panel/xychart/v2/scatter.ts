@@ -164,7 +164,7 @@ export const prepConfig = (
           }
 
           if (showLine) {
-            u.ctx.strokeStyle = 'blue';
+            u.ctx.strokeStyle = scatterInfo.color.fixed!;
             u.ctx.lineWidth = scatterInfo.lineWidth * pxRatio;
 
             const { lineStyle } = scatterInfo;

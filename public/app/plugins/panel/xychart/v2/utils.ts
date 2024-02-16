@@ -43,10 +43,12 @@ export function prepSeries(mapping: SeriesMapping, mappedSeries: XYSeriesConfig[
 
   mappedSeries.forEach((seriesCfg) => {
     let xMatcher = getFieldMatcher(seriesCfg.x.matcher);
-    let yMatcher = getFieldMatcher(seriesCfg.y?.matcher ?? {
-      id: FieldMatcherID.byType,
-      options: 'number',
-    });
+    let yMatcher = getFieldMatcher(
+      seriesCfg.y?.matcher ?? {
+        id: FieldMatcherID.byType,
+        options: 'number',
+      }
+    );
     let yExclude = seriesCfg.y?.exclude ? getFieldMatcher(seriesCfg.y.exclude) : null;
     let colorMatcher = seriesCfg.color ? getFieldMatcher(seriesCfg.color.matcher) : null;
     let sizeMatcher = seriesCfg.size ? getFieldMatcher(seriesCfg.size.matcher) : null;
@@ -99,7 +101,7 @@ export function prepSeries(mapping: SeriesMapping, mappedSeries: XYSeriesConfig[
               // these typically come from y field
               name,
 
-              showPoints: VisibilityMode.Always, // VisibilityMode.Always
+              showPoints: y.config.custom.show === ScatterShow.Lines ? VisibilityMode.Never : VisibilityMode.Always,
 
               showLine: y.config.custom.show !== ScatterShow.Points,
               lineWidth: y.config.custom.lineWidth ?? 2,
