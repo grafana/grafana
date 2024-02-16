@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -108,46 +107,6 @@ func TestContextHandler(t *testing.T) {
 
 		res, err := server.Send(server.NewGetRequest("/api/handler"))
 		require.NoError(t, err)
-		require.NoError(t, res.Body.Close())
-	})
-
-	t.Run("should delete session cookie on invalid session", func(t *testing.T) {
-		handler := contexthandler.ProvideService(
-			setting.NewCfg(),
-			tracing.InitializeTracerForTest(),
-			featuremgmt.WithFeatures(),
-			&authntest.FakeService{ExpectedErr: auth.ErrInvalidSessionToken},
-		)
-
-		server := webtest.NewServer(t, routing.NewRouteRegister())
-		server.Mux.Use(handler.Middleware)
-		server.Mux.Get("/api/handler", func(c *contextmodel.ReqContext) {})
-
-		res, err := server.Send(server.NewGetRequest("/api/handler"))
-		require.NoError(t, err)
-		cookies := res.Cookies()
-		require.Len(t, cookies, 1)
-		require.Equal(t, cookies[0].String(), "grafana_session_expiry=; Path=/; Max-Age=0")
-		require.NoError(t, res.Body.Close())
-	})
-
-	t.Run("should delete session cookie when oauth token refresh failed", func(t *testing.T) {
-		handler := contexthandler.ProvideService(
-			setting.NewCfg(),
-			tracing.InitializeTracerForTest(),
-			featuremgmt.WithFeatures(),
-			&authntest.FakeService{ExpectedErr: authn.ErrExpiredAccessToken.Errorf("")},
-		)
-
-		server := webtest.NewServer(t, routing.NewRouteRegister())
-		server.Mux.Use(handler.Middleware)
-		server.Mux.Get("/api/handler", func(c *contextmodel.ReqContext) {})
-
-		res, err := server.Send(server.NewGetRequest("/api/handler"))
-		require.NoError(t, err)
-		cookies := res.Cookies()
-		require.Len(t, cookies, 1)
-		require.Equal(t, cookies[0].String(), "grafana_session_expiry=; Path=/; Max-Age=0")
 		require.NoError(t, res.Body.Close())
 	})
 

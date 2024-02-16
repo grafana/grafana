@@ -213,10 +213,8 @@ func (hs *HTTPServer) registerRoutes() {
 	// add swagger support
 	registerSwaggerUI(r)
 
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagClientTokenRotation) {
-		r.Post("/api/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthToken))
-		r.Get("/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthTokenRedirect))
-	}
+	r.Post("/api/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthToken))
+	r.Get("/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthTokenRedirect))
 
 	adminAuthPageEvaluator := func() ac.Evaluator {
 		authnSettingsEval := ssoutils.EvalAuthenticationSettings(hs.Cfg)

@@ -3,7 +3,6 @@ package contexthandler
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -13,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
@@ -115,11 +113,6 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 
 		identity, err := h.authnService.Authenticate(reqContext.Req.Context(), &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
 		if err != nil {
-			if errors.Is(err, auth.ErrInvalidSessionToken) || errors.Is(err, authn.ErrExpiredAccessToken) {
-				// Burn the cookie in case of invalid, expired or missing token
-				reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
-			}
-
 			// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 			reqContext.LookupTokenErr = err
 		} else {
@@ -167,22 +160,6 @@ func (h *ContextHandler) addIDHeaderEndOfRequestFunc(ident identity.Requester) w
 
 		headerName := fmt.Sprintf("%s-Identity-Id", h.Cfg.IDResponseHeaderPrefix)
 		w.Header().Add(headerName, fmt.Sprintf("%s:%s", namespace, id))
-	}
-}
-
-func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *contextmodel.ReqContext) web.BeforeFunc {
-	return func(w web.ResponseWriter) {
-		if h.features.IsEnabled(reqContext.Req.Context(), featuremgmt.FlagClientTokenRotation) {
-			return
-		}
-
-		if w.Written() {
-			reqContext.Logger.Debug("Response written, skipping invalid cookie delete")
-			return
-		}
-
-		reqContext.Logger.Debug("Expiring invalid cookie")
-		authn.DeleteSessionCookie(reqContext.Resp, h.Cfg)
 	}
 }
 
