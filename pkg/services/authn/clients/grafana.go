@@ -100,7 +100,7 @@ func (c *Grafana) AuthenticatePassword(ctx context.Context, r *authn.Request, us
 	// user was found so set auth module in req metadata
 	r.SetMeta(authn.MetaKeyAuthModule, "grafana")
 
-	if ok := comparePassword(password, usr.Salt, usr.Password); !ok {
+	if ok := comparePassword(password, usr.Salt, string(usr.Password)); !ok {
 		return nil, errInvalidPassword.Errorf("invalid password")
 	}
 
@@ -112,7 +112,7 @@ func (c *Grafana) AuthenticatePassword(ctx context.Context, r *authn.Request, us
 	return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: true}, login.PasswordAuthModule), nil
 }
 
-func comparePassword(password, salt string, hash user.Password) bool {
+func comparePassword(password, salt, hash string) bool {
 	// It is ok to ignore the error here because util.EncodePassword can never return a error
 	hashedPassword, _ := util.EncodePassword(password, salt)
 	return subtle.ConstantTimeCompare([]byte(hashedPassword), []byte(hash)) == 1
