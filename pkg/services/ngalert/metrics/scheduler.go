@@ -96,7 +96,7 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 			prometheus.GaugeOpts{
 				Namespace: Namespace,
 				Subsystem: Subsystem,
-				Name:      "simple_notification_rules",
+				Name:      "simple_routing_rules",
 				Help:      "The number of alert rules using simplified routing.",
 			},
 			[]string{"org"},
