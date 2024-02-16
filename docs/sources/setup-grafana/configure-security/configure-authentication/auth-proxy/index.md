@@ -252,7 +252,7 @@ Once that's done. You can verify your mappings by querying the API.
 
 ```bash
 # First, inspect your teams and obtain the corresponding ID of the team we want to inspect the groups for.
-curl -H "X-WEBAUTH-USER: admin" http://localhost:3000/api/teams/search
+curl -H "X-WEBAUTH-USER: admin" -H "X-WEBAUTH-GROUPS: lokiteamOnExternalSystem" http://localhost:3000/api/teams/search
 {
   "totalCount": 2,
   "teams": [
@@ -280,7 +280,7 @@ curl -H "X-WEBAUTH-USER: admin" http://localhost:3000/api/teams/search
 }
 
 # Then, query the groups for that particular team. In our case, the Loki team which has an ID of "2".
-curl -H "X-WEBAUTH-USER: admin" http://localhost:3000/api/teams/2/groups
+curl -H "X-WEBAUTH-USER: admin" -H "X-WEBAUTH-GROUPS: lokiteamOnExternalSystem" http://localhost:3000/api/teams/2/groups
 [
   {
     "orgId": 1,
@@ -303,6 +303,10 @@ curl -H "X-WEBAUTH-USER: leonard" -H "X-WEBAUTH-GROUPS: lokiteamOnExternalSystem
 ```
 
 With this, the user `leonard` will be automatically placed into the Loki team as part of Grafana authentication.
+
+{{% admonition type="note" %}}
+An empty `X-WEBAUTH-GROUPS` or the absence of a groups header will remove the user from all teams.
+{{% /admonition %}}
 
 [Learn more about Team Sync]({{< relref "../../configure-team-sync" >}})
 
