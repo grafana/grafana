@@ -4,8 +4,6 @@ import {
   SceneGridLayout,
   SceneGridRow,
   SceneQueryRunner,
-  SceneRefreshPicker,
-  SceneTimePicker,
   SceneTimeRange,
   VizPanel,
 } from '@grafana/scenes';
@@ -93,13 +91,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
     title: 'hello',
     uid: 'dash-1',
     $timeRange: new SceneTimeRange({}),
-    controls: new DashboardControls({
-      variableControls: [],
-      timePicker: new SceneTimePicker({}),
-      refreshPicker: new SceneRefreshPicker({
-        intervals: ['1s'],
-      }),
-    }),
+    controls: new DashboardControls({}),
     $data: new SceneDataLayers({
       layers: [
         new DashboardAnnotationsDataLayer({

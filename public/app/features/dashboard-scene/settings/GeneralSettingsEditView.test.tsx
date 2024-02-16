@@ -1,11 +1,4 @@
-import {
-  behaviors,
-  SceneGridLayout,
-  SceneGridItem,
-  SceneRefreshPicker,
-  SceneTimeRange,
-  SceneTimePicker,
-} from '@grafana/scenes';
+import { behaviors, SceneGridLayout, SceneGridItem, SceneTimeRange } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
 
 import { DashboardControls } from '../scene/DashboardControls';
@@ -122,13 +115,7 @@ async function buildTestScene() {
   const dashboard = new DashboardScene({
     $timeRange: new SceneTimeRange({}),
     $behaviors: [new behaviors.CursorSync({ sync: DashboardCursorSync.Off })],
-    controls: new DashboardControls({
-      variableControls: [],
-      timePicker: new SceneTimePicker({}),
-      refreshPicker: new SceneRefreshPicker({
-        intervals: ['1s'],
-      }),
-    }),
+    controls: new DashboardControls({}),
     title: 'hello',
     uid: 'dash-1',
     meta: {

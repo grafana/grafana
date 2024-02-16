@@ -12,7 +12,6 @@ import {
   SceneDataTransformer,
   SceneVariableSet,
   LocalValueVariable,
-  SceneRefreshPicker,
 } from '@grafana/scenes';
 import {
   AnnotationQuery,

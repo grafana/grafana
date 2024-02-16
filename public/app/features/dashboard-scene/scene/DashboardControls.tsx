@@ -25,6 +25,15 @@ interface DashboardControlsState extends SceneObjectState {
 }
 export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
   static Component = DashboardControlsRenderer;
+
+  public constructor(state: Partial<DashboardControlsState>) {
+    super({
+      variableControls: [],
+      timePicker: state.timePicker ?? new SceneTimePicker({}),
+      refreshPicker: state.refreshPicker ?? new SceneRefreshPicker({}),
+      ...state,
+    });
+  }
 }
 
 function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardControls>) {

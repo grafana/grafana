@@ -3,7 +3,6 @@ import {
   sceneGraph,
   SceneGridItem,
   SceneGridLayout,
-  SceneRefreshPicker,
   SceneTimeRange,
   SceneQueryRunner,
   SceneVariableSet,
@@ -22,7 +21,6 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 
 import { DashboardControls } from './DashboardControls';
-import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 
 jest.mock('../settings/version-history/HistorySrv');
@@ -217,17 +215,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
     $timeRange: new SceneTimeRange({
       timeZone: 'browser',
     }),
-    controls: [
-      new DashboardControls({
-        variableControls: [],
-        linkControls: new DashboardLinksControls({}),
-        timeControls: [
-          new SceneRefreshPicker({
-            intervals: ['1s'],
-          }),
-        ],
-      }),
-    ],
+    controls: new DashboardControls({}),
     body: new SceneGridLayout({
       children: [
         new SceneGridItem({

@@ -26,8 +26,6 @@ import {
   SceneGridLayout,
   SceneGridRow,
   SceneQueryRunner,
-  SceneRefreshPicker,
-  SceneTimePicker,
   VizPanel,
 } from '@grafana/scenes';
 import {
@@ -44,7 +42,6 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 import { DashboardDataDTO } from 'app/types';
 
-import { DashboardControls } from '../scene/DashboardControls';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
