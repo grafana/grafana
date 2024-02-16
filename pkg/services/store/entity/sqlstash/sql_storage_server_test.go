@@ -2,6 +2,7 @@ package sqlstash
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -136,6 +137,11 @@ func TestList(t *testing.T) {
 	}{
 		{
 			"request with key lister",
+			"/playlist.grafana.app",
+			true,
+		},
+		{
+			"request with key lister",
 			"/playlist.grafana.app/playlists",
 			false,
 		},
@@ -175,7 +181,7 @@ func TestList(t *testing.T) {
 			resp, err := s.List(ctx, &req)
 
 			if tc.errIsExpected {
-				require.Error(t, err)
+				require.Equal(t, err, errors.New("invalid key (expecting at least 2 parts): "+tc.key))
 				return
 			}
 
