@@ -23,7 +23,7 @@ export const Messages = {
       nameRequired: 'Name is required.',
       passwordRequired: 'Password is required.',
       directoryRequired: 'Directory is required.',
-      addressPlaceholder: 'sftp.percona.com',
+      addressPlaceholder: 'address:port',
       savingButton: 'Saving...',
       sendButton: 'Send',
       cancelButton: 'Cancel',
