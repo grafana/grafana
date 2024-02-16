@@ -1,0 +1,189 @@
+{
+  "color": {
+    "background": {
+      "primary": {
+        "default": {
+          "value": "{color.blue.400}",
+          "type": "color"
+        },
+        "hover": {
+          "value": "{color.blue.300}",
+          "type": "color"
+        }
+      },
+      "error": {
+        "default": {
+          "value": "{color.magenta.400}",
+          "type": "color"
+        },
+        "hover": {
+          "value": "{color.magenta.300}",
+          "type": "color"
+        },
+        "text": {
+          "value": "{color.magenta.0}",
+          "type": "color"
+        }
+      },
+      "success": {
+        "default": {
+          "value": "{color.green.400}",
+          "type": "color"
+        },
+        "hover": {
+          "value": "{color.green.300}",
+          "type": "color"
+        },
+        "text": {
+          "value": "{color.green.0}",
+          "type": "color"
+        }
+      },
+      "warning": {
+        "default": {
+          "value": "{color.orange.400}",
+          "type": "color"
+        },
+        "hover": {
+          "value": "{color.orange.300}",
+          "type": "color"
+        },
+        "text": {
+          "value": "{color.orange.0}",
+          "type": "color"
+        }
+      },
+      "info": {
+        "default": {
+          "value": "{color.blue.400}",
+          "type": "color"
+        },
+        "hover": {
+          "value": "{color.blue.300}",
+          "type": "color"
+        },
+        "text": {
+          "value": "{color.blue.0}",
+          "type": "color"
+        }
+      }
+    },
+    "level": {
+      "background": {
+        "canvas": {
+          "value": "{color.gray.1300}",
+          "type": "color"
+        },
+        "primary": {
+          "value": "{color.gray.1200}",
+          "type": "color"
+        },
+        "secondary": {
+          "value": "{color.gray.1100}",
+          "type": "color"
+        }
+      }
+    },
+    "text": {
+      "primary": {
+        "value": "{color.gray.200}",
+        "type": "color"
+      },
+      "secondary": {
+        "value": "{color.gray.500}",
+        "type": "color"
+      },
+      "disabled": {
+        "value": "{color.gray.800}",
+        "type": "color"
+      },
+      "max-contrast": {
+        "value": "{color.gray.0}",
+        "type": "color"
+      },
+      "link": {
+        "value": "{color.blue.300}",
+        "type": "color"
+      }
+    },
+    "border": {
+      "weak": {
+        "value": "{color.gray.1100}",
+        "type": "color"
+      },
+      "medium": {
+        "value": "{color.gray.1000}",
+        "type": "color"
+      },
+      "strong": {
+        "value": "{color.gray.900}",
+        "type": "color"
+      }
+    }
+  },
+  "shadow": {
+    "z1": {
+      "value": {
+        "x": "{dimension.scale} *0",
+        "y": "{dimension.scale} *0.125",
+        "blur": "{dimension.scale} *0.25",
+        "spread": "{dimension.scale} *0",
+        "color": "#010409bf",
+        "type": "dropShadow"
+      },
+      "type": "boxShadow",
+      "oldValue": [
+        {
+          "x": "0px",
+          "y": "1px",
+          "blur": "2px",
+          "spread": "0px",
+          "color": "rgba( {color.gray.1400} ,0.75)",
+          "type": "dropShadow"
+        }
+      ]
+    },
+    "z2": {
+      "value": {
+        "color": "#010409bf",
+        "type": "dropShadow",
+        "x": 0,
+        "y": 4,
+        "blur": 8,
+        "spread": 0
+      },
+      "type": "boxShadow",
+      "oldValue": [
+        {
+          "x": "0px",
+          "y": "4px",
+          "blur": "8px",
+          "spread": "0px",
+          "color": "rgba( {color.gray.1400} ,0.75)",
+          "type": "dropShadow"
+        }
+      ]
+    },
+    "z3": {
+      "value": {
+        "color": "#010409",
+        "type": "dropShadow",
+        "x": 0,
+        "y": 8,
+        "blur": 24,
+        "spread": 0
+      },
+      "type": "boxShadow",
+      "oldValue": [
+        {
+          "x": "0px",
+          "y": "8px",
+          "blur": "24px",
+          "spread": "0px",
+          "color": "rgb( {color.gray.1400} )",
+          "type": "dropShadow"
+        }
+      ]
+    }
+  }
+}
