@@ -552,7 +552,7 @@ const (
 	FlagPdfTables = "pdfTables"
 
 	// FlagSsoSettingsApi
-	// Enables the SSO settings API
+	// Enables the SSO settings API and the OAuth configuration UIs in Grafana
 	FlagSsoSettingsApi = "ssoSettingsApi"
 
 	// FlagCanvasPanelPanZoom
