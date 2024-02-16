@@ -407,21 +407,5 @@ function getStyles(theme: GrafanaTheme2, direction: UseSplitterOptions['directio
       overflow: 'hidden',
     }),
     panel: css({ display: 'flex', position: 'relative', flexBasis: 0 }),
-    dragEdge: {
-      second: css({
-        top: 0,
-        left: theme.spacing(-1),
-        bottom: 0,
-        position: 'absolute',
-        zIndex: theme.zIndex.modal,
-      }),
-      first: css({
-        top: 0,
-        left: theme.spacing(-1),
-        bottom: 0,
-        position: 'absolute',
-        zIndex: theme.zIndex.modal,
-      }),
-    },
   };
 }

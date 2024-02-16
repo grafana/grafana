@@ -15,15 +15,13 @@ export interface UseSnappingSplitterOptions {
 }
 
 interface PaneOptions {
-  removed?: boolean;
-  defaultCollapsed?: boolean;
   collapseBelowPixels: number;
   snapOpenToPixels?: number;
 }
 
 interface PaneState {
   collapsed: boolean;
-  sizeOverride?: number;
+  snapSize?: number;
 }
 
 export function useSnappingSplitter(options: UseSnappingSplitterOptions) {
@@ -57,19 +55,19 @@ export function useSnappingSplitter(options: UseSnappingSplitterOptions) {
       }
 
       const newSecondPaneSize = 1 - flexSize;
-      const isSnappedClosed = state.sizeOverride === 0;
+      const isSnappedClosed = state.snapSize === 0;
       const sizeOfBothPanes = pixelSize / flexSize;
       const snapOpenToPixels = paneOptions.snapOpenToPixels ?? sizeOfBothPanes / 2;
       const snapSize = snapOpenToPixels / sizeOfBothPanes;
 
       if (state.collapsed) {
         if (isSnappedClosed) {
-          setState({ sizeOverride: Math.max(newSecondPaneSize, snapSize), collapsed: false });
+          setState({ snapSize: Math.max(newSecondPaneSize, snapSize), collapsed: false });
         } else {
-          setState({ sizeOverride: 0, collapsed: true });
+          setState({ snapSize: 0, collapsed: true });
         }
       } else if (isSnappedClosed) {
-        setState({ sizeOverride: newSecondPaneSize, collapsed: false });
+        setState({ snapSize: newSecondPaneSize, collapsed: false });
       }
     },
     [state, paneOptions.snapOpenToPixels]
@@ -85,20 +83,22 @@ export function useSnappingSplitter(options: UseSnappingSplitterOptions) {
     onSizeChanged,
   });
 
+  // This is to allow resizing it beyond the content dimensions
   secondPaneProps.style.overflow = 'hidden';
+  secondPaneProps.style.minWidth = 'unset';
+  secondPaneProps.style.minHeight = 'unset';
 
-  if (state.sizeOverride) {
+  if (state.snapSize) {
     firstPaneProps.style = {
       ...firstPaneProps.style,
-      flexGrow: 1 - state.sizeOverride,
+      flexGrow: 1 - state.snapSize,
     };
-    secondPaneProps.style.flexGrow = state.sizeOverride;
-    secondPaneProps.style.minWidth = 'unset';
-    secondPaneProps.style.overflow = 'hidden';
-  } else if (state.sizeOverride === 0) {
+    secondPaneProps.style.flexGrow = state.snapSize;
+  } else if (state.snapSize === 0) {
     firstPaneProps.style.flexGrow = 1;
     secondPaneProps.style.flexGrow = 0;
     secondPaneProps.style.minWidth = 'unset';
+    secondPaneProps.style.minHeight = 'unset';
     secondPaneProps.style.overflow = 'unset';
   }
 

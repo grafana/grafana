@@ -21,7 +21,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
       dragPosition: 'end',
       initialSize: 0.75,
       paneOptions: {
-        collapseBelowPixels: 300,
+        collapseBelowPixels: 250,
         snapOpenToPixels: 400,
       },
     });
