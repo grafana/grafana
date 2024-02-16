@@ -16,7 +16,7 @@ description: An annotated list of Grafana plugins using AngularJS.
 
 # Plugins using AngularJS
 
-The use of AngularJS in Grafana has been [deprecated]({{< relref "../angular_deprecation" >}}) in favor of React. Support for AngularJS will be removed by default in Grafana 11.
+The use of AngularJS in Grafana has been [deprecated]({{< relref "../angular_deprecation" >}}) in favor of React. Support for AngularJS will be turned off by default in Grafana 11.
 
 This page explains how Grafana users might be impacted by the removal of Angular support based on plugins dependent on this legacy framework. You will also see if there is a migration option available for a given plugin.
 
