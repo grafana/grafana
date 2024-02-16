@@ -47,6 +47,7 @@ type upsertDataSourceFromConfig struct {
 	SecureJSONData  map[string]string
 	Editable        bool
 	UID             string
+	ProvisionedFrom string
 }
 
 type configsV0 struct {
@@ -111,9 +112,10 @@ type upsertDataSourceFromConfigV1 struct {
 	SecureJSONData  values.StringMapValue `json:"secureJsonData" yaml:"secureJsonData"`
 	Editable        values.BoolValue      `json:"editable" yaml:"editable"`
 	UID             values.StringValue    `json:"uid" yaml:"uid"`
+	ProvisionedFrom string				  `json:"provisionedFrom" yaml:"provisionedFrom"`
 }
 
-func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
+func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64, filename string) *configs {
 	r := &configs{}
 
 	r.APIVersion = apiVersion
@@ -141,6 +143,7 @@ func (cfg *configsV1) mapToDatasourceFromConfig(apiVersion int64) *configs {
 			Editable:        ds.Editable.Value(),
 			Version:         ds.Version.Value(),
 			UID:             ds.UID.Value(),
+			ProvisionedFrom: filename,
 		})
 	}
 
@@ -218,6 +221,7 @@ func createInsertCommand(ds *upsertDataSourceFromConfig) *datasources.AddDataSou
 		SecureJsonData:  ds.SecureJSONData,
 		ReadOnly:        !ds.Editable,
 		UID:             ds.UID,
+		ProvisionedFrom: ds.ProvisionedFrom,
 	}
 
 	if cmd.UID == "" {

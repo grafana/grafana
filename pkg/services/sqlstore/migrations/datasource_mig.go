@@ -134,4 +134,8 @@ func addDataSourceMigration(mg *Migrator) {
 
 	mg.AddMigration("add unique index datasource_org_id_is_default", NewAddIndexMigration(tableV2, &Index{
 		Cols: []string{"org_id", "is_default"}}))
+
+	mg.AddMigration("Add provisioned_from column", NewAddColumnMigration(tableV2, &Column{
+		Name: "provisioned_from", Type: DB_NVarchar, Length: 40, Nullable: true,
+	}))
 }

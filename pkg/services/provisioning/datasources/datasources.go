@@ -14,6 +14,7 @@ import (
 
 type Store interface {
 	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
+	GetProvisionedDataSources(ctx context.Context, query *datasources.GetProvisionedDataSourcesQuery) ([]*datasources.DataSource, error)
 	AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error)
 	UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error)
 	DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error
@@ -152,6 +153,22 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 			willExistAfterProvisioning[DataSourceMapKey{Name: ds.Name, OrgId: ds.OrgID}] = true
 		}
 	}
+
+	provisionedDataSources, err := dc.store.GetProvisionedDataSources(ctx, &datasources.GetProvisionedDataSourcesQuery{})
+	staleProvisionedDataSources := []*deleteDatasourceConfig{}
+
+	for _, provisionedDataSource := range provisionedDataSources {
+		key := DataSourceMapKey{
+			OrgId: provisionedDataSource.OrgID,
+			Name:  provisionedDataSource.Name,
+		}
+		if _, ok := willExistAfterProvisioning[key]; !ok {
+			staleProvisionedDataSources = append(staleProvisionedDataSources, &deleteDatasourceConfig{OrgID: provisionedDataSource.OrgID, Name: provisionedDataSource.Name})
+			willExistAfterProvisioning[key] = false
+		}
+	}
+
+	dc.deleteDatasources(ctx, staleProvisionedDataSources, willExistAfterProvisioning)
 
 	for _, cfg := range configs {
 		if err := dc.provisionDataSources(ctx, cfg, willExistAfterProvisioning); err != nil {

@@ -21,6 +21,9 @@ type DataSourceService interface {
 	// GetAllDataSources gets all datasources.
 	GetAllDataSources(ctx context.Context, query *GetAllDataSourcesQuery) (res []*DataSource, err error)
 
+	// GetProvisionedDataSources gets all provisioned datasources.
+	GetProvisionedDataSources(ctx context.Context, query *GetProvisionedDataSourcesQuery) (res []*DataSource, err error)
+
 	// GetDataSourcesByType gets datasources by type.
 	GetDataSourcesByType(ctx context.Context, query *GetDataSourcesByTypeQuery) ([]*DataSource, error)
 

@@ -175,6 +175,10 @@ func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetA
 	return s.SQLStore.GetAllDataSources(ctx, query)
 }
 
+func (s *Service) GetProvisionedDataSources(ctx context.Context, query *datasources.GetProvisionedDataSourcesQuery) (res []*datasources.DataSource, err error) {
+	return s.SQLStore.GetProvisionedDataSources(ctx, query)
+}
+
 func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
 	if query.AliasIDs == nil {
 		// Populate alias IDs from plugin store

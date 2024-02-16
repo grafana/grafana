@@ -429,6 +429,10 @@ func (s *spyStore) GetDataSource(ctx context.Context, query *datasources.GetData
 	return nil, datasources.ErrDataSourceNotFound
 }
 
+func (s *spyStore) GetProvisionedDataSources(ctx context.Context, query *datasources.GetProvisionedDataSourcesQuery) ([]*datasources.DataSource, error) {
+	return s.items, nil
+}
+
 func (s *spyStore) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
 	s.deleted = append(s.deleted, cmd)
 	for i, v := range s.items {

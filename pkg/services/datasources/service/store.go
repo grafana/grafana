@@ -31,6 +31,7 @@ type Store interface {
 	AddDataSource(context.Context, *datasources.AddDataSourceCommand) (*datasources.DataSource, error)
 	UpdateDataSource(context.Context, *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error)
 	GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error)
+	GetProvisionedDataSources(ctx context.Context, query *datasources.GetProvisionedDataSourcesQuery) (res []*datasources.DataSource, err error)
 
 	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
 }
@@ -122,6 +123,17 @@ func (ss *SqlStore) GetDataSourcesByType(ctx context.Context, query *datasources
 			return sess.Where("org_id=? AND "+typeQuery, args...).Asc("id").Find(&dataSources)
 		}
 		return sess.Where(typeQuery, args...).Asc("id").Find(&dataSources)
+	})
+}
+
+// GetDataSourcesByType returns all datasources for a given type or an error if the specified type is an empty string
+func (ss *SqlStore) GetProvisionedDataSources(ctx context.Context, query *datasources.GetProvisionedDataSourcesQuery) ([]*datasources.DataSource, error) {
+
+	provisionedQuery := "provisioned_from IS NOT NULL"
+
+	dataSources := make([]*datasources.DataSource, 0)
+	return dataSources, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Where(provisionedQuery).Asc("id").Find(&dataSources)
 	})
 }
 
@@ -276,6 +288,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			Version:         1,
 			ReadOnly:        cmd.ReadOnly,
 			UID:             cmd.UID,
+			ProvisionedFrom: cmd.ProvisionedFrom,
 		}
 
 		if _, err := sess.Insert(ds); err != nil {

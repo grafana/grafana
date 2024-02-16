@@ -62,6 +62,7 @@ type DataSource struct {
 	SecureJsonData    map[string][]byte `json:"secureJsonData"`
 	ReadOnly          bool              `json:"readOnly"`
 	UID               string            `json:"uid" xorm:"uid"`
+	ProvisionedFrom   string            `json:"provisionedFrom" xorm:"provisioned_from"`
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
@@ -161,6 +162,7 @@ type AddDataSourceCommand struct {
 	JsonData        *simplejson.Json  `json:"jsonData"`
 	SecureJsonData  map[string]string `json:"secureJsonData"`
 	UID             string            `json:"uid"`
+	ProvisionedFrom string            `json:"provisionedFrom"`
 
 	OrgID                   int64             `json:"-"`
 	UserID                  int64             `json:"-"`
@@ -227,6 +229,8 @@ type GetDataSourcesQuery struct {
 }
 
 type GetAllDataSourcesQuery struct{}
+
+type GetProvisionedDataSourcesQuery struct {}
 
 type GetDataSourcesByTypeQuery struct {
 	OrgID    int64 // optional: filter by org_id
