@@ -6,7 +6,9 @@ import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 
-import { panelMenuBehavior } from './PanelMenuBehavior';
+import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
+import { panelLinksBehavior, panelMenuBehavior } from './PanelMenuBehavior';
+import { PanelNotices } from './PanelNotices';
 
 interface LibraryVizPanelState extends SceneObjectState {
   // Library panels use title from dashboard JSON's panel model, not from library panel definition, hence we pass it.
@@ -45,6 +47,15 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
     try {
       const libPanel = await getLibraryPanel(this.state.uid, true);
       const libPanelModel = new PanelModel(libPanel.model);
+      const titleItems = [];
+      titleItems.push(
+        new VizPanelLinks({
+          rawLinks: libPanelModel.links,
+          menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
+        })
+      );
+
+      titleItems.push(new PanelNotices());
       vizPanel.setState({
         options: libPanelModel.options ?? {},
         fieldConfig: libPanelModel.fieldConfig,
@@ -52,6 +63,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
         displayMode: libPanelModel.transparent ? 'transparent' : undefined,
         description: libPanelModel.description,
         $data: createPanelDataProvider(libPanelModel),
+        titleItems,
       });
     } catch (err) {
       vizPanel.setState({
