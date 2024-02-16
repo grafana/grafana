@@ -3,7 +3,7 @@ import { debounce, isEqual } from 'lodash';
 import React, { useCallback, useEffect, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { Button, Field, Icon, Input, Label as LabelElement, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Field, Icon, Input, Label, Select, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { ObjectMatcher, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
@@ -57,7 +57,7 @@ const NotificationPoliciesFilter = ({
       <Field
         className={styles.noBottom}
         label={
-          <LabelElement>
+          <Label>
             <Stack gap={0.5}>
               <span>Search by matchers</span>
               <Tooltip
@@ -71,7 +71,7 @@ const NotificationPoliciesFilter = ({
                 <Icon name="info-circle" size="sm" />
               </Tooltip>
             </Stack>
-          </LabelElement>
+          </Label>
         }
         invalid={inputInvalid}
         error={inputInvalid ? 'Query must use valid matcher syntax' : null}
@@ -106,9 +106,11 @@ const NotificationPoliciesFilter = ({
           <Button variant="secondary" icon="times" onClick={clearFilters}>
             Clear filters
           </Button>
-          {matchingCount === 0 && 'No policies matching filters.'}
-          {matchingCount === 1 && `${matchingCount} policy matches the filters.`}
-          {matchingCount > 1 && `${matchingCount} policies match the filters.`}
+          <Text variant="bodySmall" color="secondary">
+            {matchingCount === 0 && 'No policies matching filters.'}
+            {matchingCount === 1 && `${matchingCount} policy matches the filters.`}
+            {matchingCount > 1 && `${matchingCount} policies match the filters.`}
+          </Text>
         </Stack>
       )}
     </Stack>
