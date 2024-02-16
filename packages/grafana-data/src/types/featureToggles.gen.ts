@@ -34,6 +34,10 @@ export interface FeatureToggles {
   traceToMetrics?: boolean;
   autoMigrateOldPanels?: boolean;
   autoMigrateGraphPanel?: boolean;
+  autoMigrateTablePanel?: boolean;
+  autoMigratePiechartPanel?: boolean;
+  autoMigrateWorldmapPanel?: boolean;
+  autoMigrateStatPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
   newVizTooltips?: boolean;
@@ -177,4 +181,5 @@ export interface FeatureToggles {
   groupToNestedTableTransformation?: boolean;
   newPDFRendering?: boolean;
   kubernetesAggregator?: boolean;
+  groupByVariable?: boolean;
 }

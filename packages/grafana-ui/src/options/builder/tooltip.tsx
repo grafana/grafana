@@ -4,6 +4,7 @@ import { OptionsWithTooltip, TooltipDisplayMode, SortOrder } from '@grafana/sche
 export function addTooltipOptions<T extends OptionsWithTooltip>(
   builder: PanelOptionsEditorBuilder<T>,
   singleOnly = false,
+  setProximity = false,
   defaultOptions?: Partial<OptionsWithTooltip>
 ) {
   const category = ['Tooltip'];
@@ -43,7 +44,21 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       settings: {
         options: sortOptions,
       },
-    })
+    });
+
+  if (setProximity) {
+    builder.addNumberInput({
+      path: 'tooltip.hoverProximity',
+      name: 'Hover proximity',
+      description: 'How close the cursor must be to a point to trigger the tooltip, in pixels',
+      category,
+      settings: {
+        integer: true,
+      },
+    });
+  }
+
+  builder
     .addNumberInput({
       path: 'tooltip.maxWidth',
       name: 'Max width',
@@ -51,6 +66,7 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       settings: {
         integer: true,
       },
+      showIf: (options: T) => options.tooltip?.mode !== TooltipDisplayMode.None,
     })
     .addNumberInput({
       path: 'tooltip.maxHeight',
@@ -59,5 +75,6 @@ export function addTooltipOptions<T extends OptionsWithTooltip>(
       settings: {
         integer: true,
       },
+      showIf: (options: T) => options.tooltip?.mode !== TooltipDisplayMode.None,
     });
 }
