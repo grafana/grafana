@@ -199,6 +199,7 @@ export const ManualEditor = ({ value, onChange, context }: StandardEditorProps<X
                 })
               );
             }}
+            excludes={false}
             frameFilter={value[selected].frame?.matcher.options ?? undefined}
           />
         </>
