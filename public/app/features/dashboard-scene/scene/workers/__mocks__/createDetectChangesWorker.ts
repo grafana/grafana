@@ -4,14 +4,6 @@ const worker = {
   terminate: jest.fn(),
 };
 
-jest.mocked(worker.postMessage).mockImplementation(() => {
-  worker.onmessage?.({
-    hasChanges: true,
-    hasTimeChanges: false,
-    hasVariableValueChanges: false,
-  } as unknown as MessageEvent);
-});
-
 const createWorker = () => worker;
 
 export { createWorker };

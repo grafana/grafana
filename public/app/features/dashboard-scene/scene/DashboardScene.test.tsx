@@ -47,6 +47,29 @@ jest.mock('./getDashboardChangesFromScene', () => ({
 
 jest.mock('./workers/createDetectChangesWorker');
 
+const worker = createWorker();
+mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false });
+
+function mockResultsOfDetectChangesWorker({
+  hasChanges,
+  hasTimeChanges,
+  hasVariableValueChanges,
+}: {
+  hasChanges: boolean;
+  hasTimeChanges: boolean;
+  hasVariableValueChanges: boolean;
+}) {
+  jest.mocked(worker.postMessage).mockImplementation(() => {
+    worker.onmessage?.({
+      data: {
+        hasChanges: hasChanges ?? true,
+        hasTimeChanges: hasTimeChanges ?? true,
+        hasVariableValueChanges: hasVariableValueChanges ?? true,
+      },
+    } as unknown as MessageEvent);
+  });
+}
+
 describe('DashboardScene', () => {
   describe('DashboardSrv.getCurrent compatibility', () => {
     it('Should set to compatibility wrapper', () => {
@@ -58,8 +81,6 @@ describe('DashboardScene', () => {
   });
 
   describe('Editing and discarding', () => {
-    const worker = createWorker();
-
     describe('Given scene in edit mode', () => {
       let scene: DashboardScene;
       let deactivateScene: () => void;
@@ -91,6 +112,7 @@ describe('DashboardScene', () => {
         const gridItem = sceneGraph.findObject(scene, (p) => p.state.key === 'griditem-1') as SceneGridItem;
         gridItem.setState({ x: 10, y: 0, width: 10, height: 10 });
 
+        expect(worker.postMessage).toHaveBeenCalledTimes(1);
         expect(scene.state.isDirty).toBe(true);
 
         scene.exitEditMode({ skipConfirm: true });
@@ -152,7 +174,7 @@ describe('DashboardScene', () => {
       });
 
       it('should not set the state to true if there are not changes detected in the saving model', () => {
-        mockSaveDashboardChange({ hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: false });
+        mockResultsOfDetectChangesWorker({ hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: false });
         scene.setState({ title: 'hello' });
         expect(scene.state.isDirty).toBeFalsy();
       });
@@ -162,7 +184,7 @@ describe('DashboardScene', () => {
         { hasChanges: false, hasTimeChanges: true, hasVariableValueChanges: false },
         { hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: true },
       ])('should set the state to true if there are changes detected in the saving model', (diffResults) => {
-        mockSaveDashboardChange(diffResults);
+        mockResultsOfDetectChangesWorker(diffResults);
         scene.setState({ title: 'hello' });
         expect(scene.state.isDirty).toBeTruthy();
       });
@@ -231,7 +253,7 @@ describe('DashboardScene', () => {
     });
 
     it('A change to a variable state should set isDirty true', () => {
-      mockSaveDashboardChange({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: true });
+      mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: true });
       const variable = new TestVariable({ name: 'A' });
       const scene = buildTestScene({
         $variables: new SceneVariableSet({ variables: [variable] }),
@@ -255,10 +277,10 @@ describe('DashboardScene', () => {
       scene.activate();
       scene.onEnterEditMode();
 
-      mockSaveDashboardChange({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false });
+      mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false });
       variable.setState({ name: 'B' });
       expect(scene.state.isDirty).toBe(true);
-      mockSaveDashboardChange(
+      mockResultsOfDetectChangesWorker(
         // No changes, it is the same name than before comparing saving models
         { hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: false }
       );
@@ -390,25 +412,4 @@ function getVersionMock(): DecoratedRevisionModel {
     createdDateString: '2017-02-22 20:43:01',
     ageString: '7 years ago',
   };
-}
-
-function mockSaveDashboardChange({
-  hasChanges,
-  hasTimeChanges,
-  hasVariableValueChanges,
-}: {
-  hasChanges: boolean;
-  hasTimeChanges: boolean;
-  hasVariableValueChanges: boolean;
-}) {
-  jest.mocked(getDashboardChangesFromScene).mockReturnValue({
-    changedSaveModel: {} as Dashboard,
-    initialSaveModel: {} as Dashboard,
-    diffs: {} as Diffs,
-    diffCount: 0,
-    hasChanges,
-    hasTimeChanges,
-    isNew: false,
-    hasVariableValueChanges,
-  });
 }

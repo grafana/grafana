@@ -54,7 +54,7 @@ function getPanelLinks(panel: VizPanel) {
     return panel.state.titleItems[0];
   }
 
-  throw new Error('VizPanelLinks links not found');
+  return null;
 }
 
 function getVizPanels(scene: DashboardScene): VizPanel[] {

@@ -131,7 +131,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    */
   private _changeTrackerSub?: Unsubscribable;
 
-  private _changesWorker?: Worker;
+  private _changesWorker: Worker;
 
   public constructor(state: Partial<DashboardSceneState>) {
     super({
@@ -143,6 +143,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       ...state,
     });
 
+    this._changesWorker = createWorker();
     this.addActivationHandler(() => this._activationHandler());
   }
 
@@ -165,7 +166,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // @ts-expect-error
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
-    this._changesWorker = createWorker();
     this._changesWorker.onmessage = (e: MessageEvent<DashboardChangeInfo>) => {
       this.detectChanges(e.data);
     };
@@ -178,7 +178,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       this.stopUrlSync();
       oldDashboardWrapper.destroy();
       dashboardWatcher.leave();
-      this._changesWorker?.terminate();
+      this._changesWorker.terminate();
     };
   }
 
@@ -424,9 +424,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   private postChangesMessage() {
-    // FIXME: The test stops here, if you have a console log here, it works. And the changes _changesWorker exists, but postMessage is never called.
-    console.log('postChangesMessage');
-    debugger;
     this._changesWorker?.postMessage({ changed: transformSceneToSaveModel(this), initial: this._initialSaveModel });
   }
 
