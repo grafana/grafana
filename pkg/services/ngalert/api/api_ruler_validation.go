@@ -97,6 +97,13 @@ func validateRuleNode(
 		ExecErrState:    errorState,
 	}
 
+	if ruleNode.GrafanaManagedAlert.NotificationSettings != nil {
+		newAlertRule.NotificationSettings, err = validateNotificationSettings(ruleNode.GrafanaManagedAlert.NotificationSettings)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	newAlertRule.For, err = validateForInterval(ruleNode)
 	if err != nil {
 		return nil, err
@@ -104,6 +111,10 @@ func validateRuleNode(
 
 	if ruleNode.ApiRuleNode != nil {
 		newAlertRule.Annotations = ruleNode.ApiRuleNode.Annotations
+		err = validateLabels(ruleNode.Labels)
+		if err != nil {
+			return nil, err
+		}
 		newAlertRule.Labels = ruleNode.ApiRuleNode.Labels
 
 		err = newAlertRule.SetDashboardAndPanelFromAnnotations()
@@ -112,6 +123,15 @@ func validateRuleNode(
 		}
 	}
 	return &newAlertRule, nil
+}
+
+func validateLabels(l map[string]string) error {
+	for key := range l {
+		if _, ok := ngmodels.LabelsUserCannotSpecify[key]; ok {
+			return fmt.Errorf("system reserved labels cannot be defined in the rule. Label %s is the reserved", key)
+		}
+	}
+	return nil
 }
 
 func validateCondition(condition string, queries []apimodels.AlertQuery) error {
@@ -234,4 +254,22 @@ func validateRuleGroup(
 		result = append(result, &ruleWithOptionals)
 	}
 	return result, nil
+}
+
+func validateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) ([]ngmodels.NotificationSettings, error) {
+	s := ngmodels.NotificationSettings{
+		Receiver:          n.Receiver,
+		GroupBy:           n.GroupBy,
+		GroupWait:         n.GroupWait,
+		GroupInterval:     n.GroupInterval,
+		RepeatInterval:    n.RepeatInterval,
+		MuteTimeIntervals: n.MuteTimeIntervals,
+	}
+
+	if err := s.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid notification settings: %w", err)
+	}
+	return []ngmodels.NotificationSettings{
+		s,
+	}, nil
 }

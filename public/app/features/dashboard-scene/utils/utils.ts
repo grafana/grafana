@@ -1,4 +1,5 @@
-import { IntervalVariableModel } from '@grafana/data';
+import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import {
   MultiValueVariable,
   SceneDataTransformer,
@@ -6,10 +7,13 @@ import {
   SceneObject,
   SceneQueryRunner,
   VizPanel,
+  VizPanelMenu,
 } from '@grafana/scenes';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 
 export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
@@ -186,4 +190,27 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
 
 export function isPanelClone(key: string) {
   return key.includes('clone');
+}
+
+export function onCreateNewPanel(dashboard: DashboardScene): number {
+  const vizPanel = new VizPanel({
+    title: 'Panel Title',
+    key: 'panel-1', // the first panel should always be panel-1
+    pluginId: 'timeseries',
+    titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
+    menu: new VizPanelMenu({
+      $behaviors: [panelMenuBehavior],
+    }),
+    $data: new SceneDataTransformer({
+      $data: new SceneQueryRunner({
+        queries: [{ refId: 'A' }],
+        datasource: getDataSourceRef(getDataSourceSrv().getInstanceSettings(null)!),
+      }),
+      transformations: [],
+    }),
+  });
+  dashboard.addPanel(vizPanel);
+  const id = getPanelIdForVizPanel(vizPanel);
+
+  return id;
 }
