@@ -145,7 +145,6 @@
 /pkg/tsdb/legacydata/ @grafana/backend-platform
 /pkg/tsdb/opentsdb/ @grafana/backend-platform
 /pkg/tsdb/sqleng/ @grafana/partner-datasources @grafana/oss-big-tent
-/pkg/tsdb/sqleng/proxyutil @grafana/hosted-grafana-team
 /pkg/util/ @grafana/backend-platform
 /pkg/web/ @grafana/backend-platform
 
@@ -270,7 +269,6 @@
 /pkg/services/searchV2/ @grafana/grafana-app-platform-squad
 /pkg/services/store/ @grafana/grafana-app-platform-squad
 /pkg/infra/filestorage/ @grafana/grafana-app-platform-squad
-/pkg/util/converter/ @grafana/grafana-app-platform-squad
 /pkg/modules/ @grafana/grafana-app-platform-squad
 /pkg/kindsysreport/ @grafana/grafana-app-platform-squad
 /pkg/services/grpcserver/ @grafana/grafana-app-platform-squad
