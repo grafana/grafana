@@ -59,11 +59,7 @@ export const HoverCard = ({
                 onFocus={showPopper}
                 onBlur={hidePopper}
                 referenceElement={popoverRef.current}
-                renderArrow={
-                  arrow
-                    ? ({ arrowProps, placement }) => <div className={styles.arrow(placement)} {...arrowProps} />
-                    : () => <></>
-                }
+                renderArrow={arrow}
               />
             )}
 
@@ -104,33 +100,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
       background: ${theme.colors.background.secondary};
       border-top: solid 1px ${theme.colors.border.medium};
     `,
-  },
-  // TODO currently only works with bottom placement
-  arrow: (placement: string) => {
-    const ARROW_SIZE = '9px';
-
-    return css`
-      width: 0;
-      height: 0;
-
-      border-left: ${ARROW_SIZE} solid transparent;
-      border-right: ${ARROW_SIZE} solid transparent;
-      /* using hex colors here because the border colors use alpha transparency */
-      border-top: ${ARROW_SIZE} solid ${theme.isLight ? '#d2d3d4' : '#2d3037'};
-
-      &:after {
-        content: '';
-        position: absolute;
-
-        border: ${ARROW_SIZE} solid ${theme.colors.background.primary};
-        border-bottom: 0;
-        border-left-color: transparent;
-        border-right-color: transparent;
-
-        margin-top: 1px;
-        bottom: 1px;
-        left: -${ARROW_SIZE};
-      }
-    `;
   },
 });
