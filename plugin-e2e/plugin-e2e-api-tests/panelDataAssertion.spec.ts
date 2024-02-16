@@ -77,7 +77,7 @@ test.describe('dashboard page', () => {
     await expect(panel.fieldNames).toContainText(['Field', 'Max', 'Mean', 'Last']);
   });
 
-  test('getting panel by id', async ({ page, selectors, grafanaVersion, request, readProvision }) => {
+  test('getting panel by id', async ({ page, selectors, grafanaVersion, request }) => {
     const dashboardPage = new DashboardPage({ page, selectors, grafanaVersion, request }, REACT_TABLE_DASHBOARD);
     await dashboardPage.goto();
     const panel = await dashboardPage.getPanelById('4');

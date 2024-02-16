@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
-import path from 'path';
+import path, { dirname } from 'path';
 
 import { PluginOptions } from '@grafana/plugin-e2e';
 /**
@@ -36,7 +36,7 @@ export default defineConfig<PluginOptions>({
     // 1. Login to Grafana and store the cookie on disk for use in subsequent test projects.
     {
       name: 'authenticate',
-      testDir: 'node_modules/@grafana/plugin-e2e/dist/auth',
+      testDir: `${dirname(require.resolve('@grafana/plugin-e2e'))}/auth`,
       testMatch: [/.*\.js/],
     },
     // 2. Run all tests in parallel using Chrome.
@@ -44,7 +44,7 @@ export default defineConfig<PluginOptions>({
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        storageState: 'playwright/.auth/user.json',
+        storageState: 'playwright/.auth/admin.json',
       },
       dependencies: ['authenticate'],
     },
