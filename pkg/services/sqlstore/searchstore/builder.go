@@ -38,6 +38,7 @@ func (b *Builder) ToSQL(limit, page int64) (string, []any) {
 	b.sql.WriteString("\n")
 
 	if b.Features.IsEnabledGlobally(featuremgmt.FlagNestedFolders) {
+		// covered by UQE_folder_org_id_uid
 		b.sql.WriteString(
 			`LEFT OUTER JOIN folder ON folder.uid = dashboard.folder_uid AND folder.org_id = dashboard.org_id`)
 	} else {
