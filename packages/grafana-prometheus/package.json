@@ -19,7 +19,7 @@
     "./dist",
     "./README.md",
     "./CHANGELOG.md",
-    "./LICENSE"
+    "./LICENSE_AGPL"
   ],
   "publishConfig": {
     "main": "dist/index.js",
