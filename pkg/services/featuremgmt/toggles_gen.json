@@ -1287,7 +1287,8 @@
       "metadata": {
         "name": "clientTokenRotation",
         "resourceVersion": "1707928895402",
-        "creationTimestamp": "2024-02-14T16:41:35Z"
+        "creationTimestamp": "2024-02-14T16:41:35Z",
+        "deletionTimestamp": "2024-02-16T10:26:09Z"
       },
       "spec": {
         "description": "Replaces the current in-request token rotation so that the client initiates the rotation",
