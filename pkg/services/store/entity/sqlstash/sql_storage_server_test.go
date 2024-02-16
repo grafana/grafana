@@ -136,7 +136,7 @@ func TestList(t *testing.T) {
 		errIsExpected bool
 	}{
 		{
-			"request with key lister",
+			"request with invalid key lister",
 			"/playlist.grafana.app",
 			true,
 		},
