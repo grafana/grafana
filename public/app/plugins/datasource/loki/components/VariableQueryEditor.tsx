@@ -38,7 +38,7 @@ export const LokiVariableQueryEditor = ({ onChange, query, datasource, range }: 
       return;
     }
 
-    datasource.languageProvider.fetchLabels({ timeRange: range }).then((labelNames: string[]) => {
+    datasource.languageProvider.fetchLabels({ timeRange: range }).then((labelNames) => {
       setLabelOptions(labelNames.map((labelName) => ({ label: labelName, value: labelName })));
     });
   }, [datasource, type]);
