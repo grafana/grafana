@@ -759,6 +759,10 @@ describe('findRoutesMatchingFilters', () => {
     ],
   };
 
+  it('should not filter when we do not have any valid filters', () => {
+    expect(findRoutesMatchingFilters(simpleRouteTree, {})).toHaveProperty('filtersApplied', false);
+  });
+
   it('should not match non-existing', () => {
     expect(
       findRoutesMatchingFilters(simpleRouteTree, {
@@ -770,8 +774,8 @@ describe('findRoutesMatchingFilters', () => {
       contactPointFilter: 'does-not-exist',
     });
 
+    expect(matchingRoutes.filtersApplied).toBe(true);
     expect(matchingRoutes.matchedRoutes).toHaveLength(0);
-
     expect(matchingRoutes.matchedRoutesWithPath).toEqual(new Map());
   });
 
@@ -780,6 +784,7 @@ describe('findRoutesMatchingFilters', () => {
       labelMatchersFilter: [['hello', MatcherOperator.equal, 'world']],
     });
 
+    expect(matchingRoutes.filtersApplied).toBe(true);
     expect(matchingRoutes.matchedRoutes).toHaveLength(1);
     expect(matchingRoutes.matchedRoutes[0]).toHaveProperty('id', '1');
     expect(Array.from(matchingRoutes.matchedRoutesWithPath.keys()).map((value) => value.id)).toEqual(['1']);
@@ -812,7 +817,6 @@ describe('findRoutesMatchingFilters', () => {
     });
 
     expect(matchingRoutes.matchedRoutes).toHaveLength(0);
-
     expect(matchingRoutes.matchedRoutesWithPath).toEqual(new Map());
   });
 
