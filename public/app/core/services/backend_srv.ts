@@ -387,7 +387,7 @@ export class BackendSrv implements BackendService {
                 let authChecker = this.loginPing();
 
                 const expired = getSessionExpiry() * 1000 < Date.now();
-                if (config.featureToggles.clientTokenRotation && expired) {
+                if (expired) {
                   authChecker = this.rotateToken();
                 }
 

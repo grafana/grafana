@@ -100,7 +100,7 @@ func TestSession_Authenticate(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "should return error for token that needs rotation if ClientTokenRotation is enabled",
+			name: "should return error for token that needs rotation",
 			fields: fields{
 				sessionService: &authtest.FakeUserAuthTokenService{LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
 					return &auth.UserToken{
@@ -113,7 +113,7 @@ func TestSession_Authenticate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "should return identity for token that don't need rotation if ClientTokenRotation is enabled",
+			name: "should return identity for token that don't need rotation",
 			fields: fields{
 				sessionService: &authtest.FakeUserAuthTokenService{LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
 					return validToken, nil
