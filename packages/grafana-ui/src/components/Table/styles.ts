@@ -48,7 +48,10 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
 
       '&:hover': {
         overflow: overflowOnHover ? 'visible' : undefined,
-        width: overflowOnHover ? 'auto !important' : undefined,
+        width: overflowOnHover ? 'auto' : undefined,
+        height: overflowOnHover ? 'auto' : `${rowHeight - 1}px`,
+        minHeight: `${rowHeight - 1}px`,
+        whiteSpace: overflowOnHover ? 'normal' : 'nowrap',
         boxShadow: overflowOnHover ? `0 0 2px ${theme.colors.primary.main}` : undefined,
         background: overflowOnHover ? background ?? theme.components.table.rowHoverBackground : undefined,
         zIndex: overflowOnHover ? 1 : undefined,
