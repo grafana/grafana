@@ -3,9 +3,11 @@ import React from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { SceneComponentProps, SceneObjectBase, sceneUtils } from '@grafana/scenes';
+import { Dashboard } from '@grafana/schema';
 import { Button, CodeEditor, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { Trans } from 'app/core/internationalization';
+import LegacyAlertsDeprecationNotice from 'app/features/alerting/unified/integration/LegacyAlertsDeprecationNotice';
 import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 import { DashboardDTO } from 'app/types';
 
@@ -38,9 +40,13 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     return getDashboardSceneFor(this);
   }
 
-  public getJsonText(): string {
+  public getSaveModel(): Dashboard {
     const dashboard = this.getDashboard();
-    const jsonData = transformSceneToSaveModel(dashboard);
+    return transformSceneToSaveModel(dashboard);
+  }
+
+  public getJsonText(): string {
+    const jsonData = this.getSaveModel();
     return getPrettyJSON(jsonData);
   }
 
@@ -67,6 +73,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
     const { jsonText } = model.useState();
 
     const styles = useStyles2(getStyles);
+    const saveModel = model.getSaveModel();
 
     return (
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Standard}>
@@ -76,6 +83,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
             The JSON model below is the data structure that defines the dashboard. This includes dashboard settings,
             panel settings, layout, queries, and so on.
           </Trans>
+          <LegacyAlertsDeprecationNotice dashboard={saveModel} />
           <CodeEditor
             width="100%"
             value={jsonText}
