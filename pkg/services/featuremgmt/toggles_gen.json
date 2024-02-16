@@ -2124,6 +2124,22 @@
         "codeowner": "@grafana/plugins-platform-backend",
         "requiresRestart": true
       }
+    },
+    {
+      "metadata": {
+        "name": "alertingUpgradeDryrunOnStart",
+        "resourceVersion": "1708098586429",
+        "creationTimestamp": "2024-02-15T21:01:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-16 15:49:46.429030423 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.",
+        "stage": "GA",
+        "codeowner": "@grafana/alerting-squad",
+        "requiresRestart": true
+      }
     }
   ]
 }

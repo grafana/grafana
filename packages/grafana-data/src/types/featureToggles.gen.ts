@@ -181,5 +181,6 @@ export interface FeatureToggles {
   newPDFRendering?: boolean;
   kubernetesAggregator?: boolean;
   groupByVariable?: boolean;
+  alertingUpgradeDryrunOnStart?: boolean;
   scopes?: boolean;
 }
