@@ -660,6 +660,7 @@ steps:
   environment:
     HOST: grafana-server
     PORT: "3001"
+    PROV_DIR: /grafana/scripts/grafana-server/tmp/conf/provisioning
   failure: ignore
   image: mcr.microsoft.com/playwright:v1.40.0-jammy
   name: playwright-plugin-e2e
@@ -1968,6 +1969,7 @@ steps:
   environment:
     HOST: grafana-server
     PORT: "3001"
+    PROV_DIR: /grafana/scripts/grafana-server/tmp/conf/provisioning
   failure: ignore
   image: mcr.microsoft.com/playwright:v1.40.0-jammy
   name: playwright-plugin-e2e
@@ -4868,6 +4870,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 8e7335d72219a3c3d457b295fdd59b3cfa81de9675a0cd7414b3585c612a6fb5
+hmac: 1ce7f20926ebd4a34e8888e1500c5ce25333ae3f7ee56d062cf34986608f3906
 
 ...

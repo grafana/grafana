@@ -28,7 +28,7 @@ export default defineConfig<PluginOptions>({
       username: 'admin',
       password: 'admin',
     },
-    provisioningRootDir: path.join(process.cwd(), 'conf/provisioning'),
+    provisioningRootDir: path.join(process.cwd(), process.env.PROV_DIR ?? 'conf/provisioning'),
   },
 
   /* Configure projects for major browsers */

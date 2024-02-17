@@ -820,6 +820,7 @@ def playwright_e2e_tests_step():
         "environment": {
             "PORT": "3001",
             "HOST": "grafana-server",
+            "PROV_DIR": "/grafana/scripts/grafana-server/tmp/conf/provisioning",
         },
         "name": "playwright-plugin-e2e",
         "image": "mcr.microsoft.com/playwright:v1.40.0-jammy",
