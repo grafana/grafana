@@ -95,8 +95,8 @@ func (g GenericDataQuery) MarshalJSON() ([]byte, error) {
 	if g.Datasource != nil && (g.Datasource.Type != "" || g.Datasource.UID != "") {
 		vals["datasource"] = g.Datasource
 	}
-	if g.DatasourceId > 0 {
-		vals["datasourceId"] = g.DatasourceId
+	if g.DatasourceID > 0 {
+		vals["datasourceId"] = g.DatasourceID
 	}
 	if g.IntervalMS > 0 {
 		vals["intervalMs"] = g.IntervalMS
@@ -183,7 +183,7 @@ func (g *GenericDataQuery) unmarshal(vals map[string]any) error {
 		if !ok {
 			return fmt.Errorf("expected datasourceId as number (got: %t)", v)
 		}
-		g.DatasourceId = int64(count)
+		g.DatasourceID = int64(count)
 		delete(vals, key)
 	}
 
