@@ -1,7 +1,9 @@
 package store
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +13,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/matttproud/golang_protobuf_extensions/pbutil"
+	pb "github.com/prometheus/alertmanager/silence/silencepb"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -96,6 +100,8 @@ type WriteStore interface {
 	DeleteFolders(ctx context.Context, orgID int64, uids ...string) error
 
 	UpdateRuleLabels(ctx context.Context, key models.AlertRuleKeyWithVersion, labels data.Labels) error
+
+	SetSilences(ctx context.Context, orgID int64, silences []*pb.MeshSilence) error
 }
 
 type migrationStore struct {
@@ -273,6 +279,20 @@ func (ms *migrationStore) SetOrgMigrationState(ctx context.Context, orgID int64,
 	return kv.Set(ctx, stateKey, string(raw))
 }
 
+// SetSilences stores the given silences in the kvstore.
+func (ms *migrationStore) SetSilences(ctx context.Context, orgID int64, silences []*pb.MeshSilence) error {
+	kv := kvstore.WithNamespace(ms.kv, orgID, notifier.KVNamespace)
+
+	var buf bytes.Buffer
+	for _, e := range silences {
+		if _, err := pbutil.WriteDelimited(&buf, e); err != nil {
+			return err
+		}
+	}
+
+	return kv.Set(ctx, notifier.SilencesFilename, base64.StdEncoding.EncodeToString(buf.Bytes()))
+}
+
 // GetAlertRuleTitles returns a map of namespaceUID -> title for all alert rules in the given org and namespace uids.
 func (ms *migrationStore) GetAlertRuleTitles(ctx context.Context, orgID int64, namespaceUIDs ...string) (map[string][]string, error) {
 	res := make(map[string][]string)
@@ -423,6 +443,7 @@ var revertPermissions = []accesscontrol.Permission{
 func (ms *migrationStore) RevertOrg(ctx context.Context, orgID int64) error {
 	return ms.store.InTransaction(ctx, func(ctx context.Context) error {
 		return ms.store.WithDbSession(ctx, func(sess *db.Session) error {
+			l := ms.log.FromContext(ctx)
 			if _, err := sess.Exec("DELETE FROM alert_rule WHERE org_id = ?", orgID); err != nil {
 				return err
 			}
@@ -436,7 +457,7 @@ func (ms *migrationStore) RevertOrg(ctx context.Context, orgID int64) error {
 				return err
 			}
 			if err := ms.DeleteFolders(ctx, orgID, state.CreatedFolders...); err != nil {
-				ms.log.Warn("Failed to delete migrated folders", "orgId", orgID, "err", err)
+				l.Warn("Failed to delete migrated folders", "orgId", orgID, "err", err)
 			}
 
 			if _, err := sess.Exec("DELETE FROM alert_configuration WHERE org_id = ?", orgID); err != nil {
@@ -465,7 +486,7 @@ func (ms *migrationStore) RevertOrg(ctx context.Context, orgID int64) error {
 			}
 			for _, f := range files {
 				if err := os.Remove(f); err != nil {
-					ms.log.Error("Failed to remove silence file", "file", f, "err", err)
+					l.Error("Failed to remove silence file", "file", f, "err", err)
 				}
 			}
 
@@ -480,6 +501,7 @@ func (ms *migrationStore) RevertOrg(ctx context.Context, orgID int64) error {
 func (ms *migrationStore) RevertAllOrgs(ctx context.Context) error {
 	return ms.store.InTransaction(ctx, func(ctx context.Context) error {
 		return ms.store.WithDbSession(ctx, func(sess *db.Session) error {
+			l := ms.log.FromContext(ctx)
 			if _, err := sess.Exec("DELETE FROM alert_rule"); err != nil {
 				return err
 			}
@@ -498,7 +520,7 @@ func (ms *migrationStore) RevertAllOrgs(ctx context.Context) error {
 					return err
 				}
 				if err := ms.DeleteFolders(ctx, o.ID, state.CreatedFolders...); err != nil {
-					ms.log.Warn("Failed to delete migrated folders", "orgId", o.ID, "err", err)
+					l.Warn("Failed to delete migrated folders", "orgId", o.ID, "err", err)
 					continue
 				}
 			}
@@ -529,7 +551,7 @@ func (ms *migrationStore) RevertAllOrgs(ctx context.Context) error {
 			}
 			for _, f := range files {
 				if err := os.Remove(f); err != nil {
-					ms.log.Error("Failed to remove silence file", "file", f, "err", err)
+					l.Error("Failed to remove silence file", "file", f, "err", err)
 				}
 			}
 
