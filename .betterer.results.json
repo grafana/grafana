@@ -1028,6 +1028,12 @@
         "count": 5
       }
     ],
+    "/packages/grafana-ui/src/components/Splitter/Splitter.tsx": [
+      {
+        "message": "Do not use any type assertions.",
+        "count": 1
+      }
+    ],
     "/packages/grafana-ui/src/components/StatsPicker/StatsPicker.story.tsx": [
       {
         "message": "Unexpected any. Specify a different type.",
@@ -1558,6 +1564,12 @@
         "count": 1
       }
     ],
+    "/public/app/core/specs/time_series.test.ts": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 1
+      }
+    ],
     "/public/app/core/time_series2.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
@@ -1775,6 +1787,12 @@
     "/public/app/features/alerting/unified/AlertWarning.tsx": [
       {
         "message": "Styles should be written using objects.",
+        "count": 1
+      }
+    ],
+    "/public/app/features/alerting/unified/AlertsFolderView.test.tsx": [
+      {
+        "message": "Unexpected any. Specify a different type.",
         "count": 1
       }
     ],
@@ -2912,6 +2930,12 @@
         "count": 1
       }
     ],
+    "/public/app/features/dashboard-scene/panel-edit/VizPanelManager.test.tsx": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 1
+      }
+    ],
     "/public/app/features/dashboard-scene/saving/SaveDashboardForm.tsx": [
       {
         "message": "Use data-testid for E2E selectors instead of aria-label",
@@ -2930,6 +2954,12 @@
         "count": 1
       }
     ],
+    "/public/app/features/dashboard-scene/scene/DashboardScene.test.tsx": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 1
+      }
+    ],
     "/public/app/features/dashboard-scene/scene/PanelMenuBehavior.tsx": [
       {
         "message": "Unexpected any. Specify a different type.",
@@ -2938,6 +2968,18 @@
       {
         "message": "Do not use any type assertions.",
         "count": 1
+      }
+    ],
+    "/public/app/features/dashboard-scene/scene/setDashboardPanelContext.test.ts": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 1
+      }
+    ],
+    "/public/app/features/dashboard-scene/serialization/angularMigration.test.ts": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 2
       }
     ],
     "/public/app/features/dashboard-scene/serialization/transformSaveModelToScene.test.ts": [
@@ -3013,7 +3055,7 @@
     "/public/app/features/dashboard/components/DashExportModal/DashboardExporter.test.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
-        "count": 6
+        "count": 21
       }
     ],
     "/public/app/features/dashboard/components/DashExportModal/DashboardExporter.ts": [
@@ -3399,7 +3441,7 @@
     "/public/app/features/dashboard/state/DashboardMigrator.test.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
-        "count": 12
+        "count": 19
       }
     ],
     "/public/app/features/dashboard/state/DashboardMigrator.ts": [
@@ -3415,7 +3457,7 @@
     "/public/app/features/dashboard/state/DashboardModel.repeat.test.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
-        "count": 4
+        "count": 7
       }
     ],
     "/public/app/features/dashboard/state/DashboardModel.test.ts": [
@@ -3465,7 +3507,7 @@
     "/public/app/features/dashboard/state/initDashboard.test.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
-        "count": 1
+        "count": 2
       }
     ],
     "/public/app/features/dashboard/utils/getPanelMenu.test.ts": [
@@ -4601,7 +4643,7 @@
     "/public/app/features/plugins/tests/datasource_srv.test.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
-        "count": 3
+        "count": 4
       }
     ],
     "/public/app/features/plugins/utils.ts": [
@@ -4701,7 +4743,7 @@
     "/public/app/features/query/state/updateQueries.test.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
-        "count": 11
+        "count": 12
       }
     ],
     "/public/app/features/search/page/components/ActionRow.tsx": [
@@ -5061,7 +5103,7 @@
     "/public/app/features/transformers/prepareTimeSeries/prepareTimeSeries.test.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
-        "count": 1
+        "count": 2
       }
     ],
     "/public/app/features/transformers/prepareTimeSeries/prepareTimeSeries.ts": [
@@ -5224,6 +5266,12 @@
         "count": 1
       }
     ],
+    "/public/app/features/variables/query/QueryVariableEditor.test.tsx": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 1
+      }
+    ],
     "/public/app/features/variables/query/QueryVariableEditor.tsx": [
       {
         "message": "Unexpected any. Specify a different type.",
@@ -5261,7 +5309,7 @@
     "/public/app/features/variables/query/queryRunners.test.ts": [
       {
         "message": "Unexpected any. Specify a different type.",
-        "count": 1
+        "count": 7
       }
     ],
     "/public/app/features/variables/query/queryRunners.ts": [
@@ -7054,6 +7102,46 @@
       {
         "message": "Unexpected any. Specify a different type.",
         "count": 2
+      }
+    ],
+    "/public/app/plugins/panel/table-old/column_options.ts": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 22
+      }
+    ],
+    "/public/app/plugins/panel/table-old/editor.ts": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 9
+      }
+    ],
+    "/public/app/plugins/panel/table-old/module.ts": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 12
+      }
+    ],
+    "/public/app/plugins/panel/table-old/renderer.ts": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 12
+      },
+      {
+        "message": "Do not use any type assertions.",
+        "count": 1
+      }
+    ],
+    "/public/app/plugins/panel/table-old/transformers.ts": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 9
+      }
+    ],
+    "/public/app/plugins/panel/table-old/types.ts": [
+      {
+        "message": "Unexpected any. Specify a different type.",
+        "count": 13
       }
     ],
     "/public/app/plugins/panel/table/TablePanel.tsx": [
