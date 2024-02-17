@@ -55,6 +55,7 @@ export interface TimelineCoreOptions {
   getFieldConfig: (seriesIdx: number) => StateTimeLineFieldConfig | StatusHistoryFieldConfig;
   onHover: (seriesIdx: number, valueIdx: number, rect: Rect) => void;
   onLeave: () => void;
+  hoverMulti: boolean;
 }
 
 /**
@@ -79,6 +80,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     getFieldConfig,
     onHover,
     onLeave,
+    hoverMulti,
   } = opts;
 
   let qt: Quadtree;
@@ -404,8 +406,6 @@ export function getConfig(opts: TimelineCoreOptions) {
       });
     }
   }
-
-  const hoverMulti = mode === TimelineMode.Changes;
 
   const cursor: uPlot.Cursor = {
     x: mode === TimelineMode.Changes,

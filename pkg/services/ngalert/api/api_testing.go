@@ -111,7 +111,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		now,
 		rule,
 		results,
-		state.GetRuleExtraLabels(rule, folder.Fullpath, includeFolder),
+		state.GetRuleExtraLabels(log.New("testing"), rule, folder.Fullpath, includeFolder),
 	)
 
 	alerts := make([]*amv2.PostableAlert, 0, len(transitions))

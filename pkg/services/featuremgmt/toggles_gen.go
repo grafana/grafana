@@ -71,6 +71,22 @@ const (
 	// Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking
 	FlagAutoMigrateGraphPanel = "autoMigrateGraphPanel"
 
+	// FlagAutoMigrateTablePanel
+	// Migrate old table panel to supported table panel - broken out from autoMigrateOldPanels to enable granular tracking
+	FlagAutoMigrateTablePanel = "autoMigrateTablePanel"
+
+	// FlagAutoMigratePiechartPanel
+	// Migrate old piechart panel to supported piechart panel - broken out from autoMigrateOldPanels to enable granular tracking
+	FlagAutoMigratePiechartPanel = "autoMigratePiechartPanel"
+
+	// FlagAutoMigrateWorldmapPanel
+	// Migrate old worldmap panel to supported geomap panel - broken out from autoMigrateOldPanels to enable granular tracking
+	FlagAutoMigrateWorldmapPanel = "autoMigrateWorldmapPanel"
+
+	// FlagAutoMigrateStatPanel
+	// Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking
+	FlagAutoMigrateStatPanel = "autoMigrateStatPanel"
+
 	// FlagDisableAngular
 	// Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
 	FlagDisableAngular = "disableAngular"
@@ -190,10 +206,6 @@ const (
 	// FlagInfluxdbRunQueriesInParallel
 	// Enables running InfluxDB Influxql queries in parallel
 	FlagInfluxdbRunQueriesInParallel = "influxdbRunQueriesInParallel"
-
-	// FlagClientTokenRotation
-	// Replaces the current in-request token rotation so that the client initiates the rotation
-	FlagClientTokenRotation = "clientTokenRotation"
 
 	// FlagPrometheusDataplane
 	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from &#39;Value&#39; to the value of the `__name__` label.
@@ -372,7 +384,7 @@ const (
 	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
 
 	// FlagAngularDeprecationUI
-	// Display new Angular deprecation-related UI features
+	// Display Angular warnings in dashboards and panels
 	FlagAngularDeprecationUI = "angularDeprecationUI"
 
 	// FlagDashgpt
@@ -536,7 +548,7 @@ const (
 	FlagPdfTables = "pdfTables"
 
 	// FlagSsoSettingsApi
-	// Enables the SSO settings API
+	// Enables the SSO settings API and the OAuth configuration UIs in Grafana
 	FlagSsoSettingsApi = "ssoSettingsApi"
 
 	// FlagCanvasPanelPanZoom
@@ -560,7 +572,7 @@ const (
 	FlagDatatrails = "datatrails"
 
 	// FlagAlertingSimplifiedRouting
-	// Enables the simplified routing for alerting
+	// Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
 	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
 
 	// FlagLogRowsPopoverMenu
@@ -638,4 +650,16 @@ const (
 	// FlagNewPDFRendering
 	// New implementation for the dashboard to PDF rendering
 	FlagNewPDFRendering = "newPDFRendering"
+
+	// FlagKubernetesAggregator
+	// Enable grafana aggregator
+	FlagKubernetesAggregator = "kubernetesAggregator"
+
+	// FlagGroupByVariable
+	// Enable groupBy variable support in scenes dashboards
+	FlagGroupByVariable = "groupByVariable"
+
+	// FlagAlertingUpgradeDryrunOnStart
+	// When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.
+	FlagAlertingUpgradeDryrunOnStart = "alertingUpgradeDryrunOnStart"
 )

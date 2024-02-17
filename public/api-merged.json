@@ -9602,6 +9602,9 @@
           "403": {
             "$ref": "#/responses/forbiddenError"
           },
+          "409": {
+            "$ref": "#/responses/conflictError"
+          },
           "500": {
             "$ref": "#/responses/internalServerError"
           }
@@ -9628,6 +9631,21 @@
           },
           "500": {
             "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/user/email/update": {
+      "get": {
+        "description": "Update the email of user given a verification code.",
+        "tags": [
+          "user"
+        ],
+        "summary": "Update user email.",
+        "operationId": "updateUserEmail",
+        "responses": {
+          "302": {
+            "$ref": "#/responses/okResponse"
           }
         }
       }
@@ -10276,6 +10294,9 @@
           },
           "404": {
             "$ref": "#/responses/notFoundError"
+          },
+          "409": {
+            "$ref": "#/responses/conflictError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -11773,7 +11794,7 @@
           "format": "int64"
         },
         "password": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         }
       }
     },
@@ -11894,7 +11915,7 @@
       "type": "object",
       "properties": {
         "password": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         }
       }
     },
@@ -13196,10 +13217,10 @@
       "type": "object",
       "properties": {
         "newPassword": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         },
         "oldPassword": {
-          "type": "string"
+          "$ref": "#/definitions/Password"
         }
       }
     },
@@ -17175,6 +17196,9 @@
           "type": "string"
         }
       }
+    },
+    "Password": {
+      "type": "string"
     },
     "PatchAnnotationsCmd": {
       "type": "object",

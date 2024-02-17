@@ -344,6 +344,8 @@ def e2e_tests_artifacts():
             "GITHUB_TOKEN": from_secret("github_token"),
         },
         "commands": [
+            # if no videos found do nothing
+            "if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos'; false; fi",
             "apt-get update",
             "apt-get install -yq zip",
             "printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json",
