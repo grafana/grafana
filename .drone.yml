@@ -654,6 +654,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
+  - sleep 15s
   - yarn e2e:playwright
   depends_on:
   - grafana-server
@@ -1963,6 +1964,7 @@ steps:
     repo:
     - grafana/grafana
 - commands:
+  - sleep 15s
   - yarn e2e:playwright
   depends_on:
   - grafana-server
@@ -4870,6 +4872,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 1ce7f20926ebd4a34e8888e1500c5ce25333ae3f7ee56d062cf34986608f3906
+hmac: 1681d2b1bc5556f7b7991e68b0449f37f2613c5b6693058176aa70fc0111e559
 
 ...

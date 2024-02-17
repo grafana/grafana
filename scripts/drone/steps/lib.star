@@ -828,7 +828,7 @@ def playwright_e2e_tests_step():
         "depends_on": [
             "grafana-server",
         ],
-        "commands": ["yarn e2e:playwright"],
+        "commands": ["sleep 15s", "yarn e2e:playwright"],
     }
 
 def build_docs_website_step():
