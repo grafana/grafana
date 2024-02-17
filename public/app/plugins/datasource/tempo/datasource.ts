@@ -1044,7 +1044,7 @@ function makePromLink(title: string, expr: string, datasourceUid: string, instan
 }
 
 export function getEscapedSpanNames(values: string[]) {
-  return values.map((value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\\\$&'));
+  return values.map((value: string) => value.replace('/\\/g', '\\\\').replace(/[.*+?^${}()|[\]\\]/g, '\\\\$&'));
 }
 
 export function getFieldConfig(
