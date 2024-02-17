@@ -27,7 +27,7 @@ disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,true
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false
 dataConnectionsConsole,GA,@grafana/plugins-platform-backend,false,false,false
 topnav,deprecated,@grafana/grafana-frontend-platform,false,false,false
-returnToPrevious,experimental,@grafana/grafana-frontend-platform,false,false,true
+returnToPrevious,preview,@grafana/grafana-frontend-platform,false,false,true
 grpcServer,preview,@grafana/grafana-app-platform-squad,false,false,false
 unifiedStorage,experimental,@grafana/grafana-app-platform-squad,true,true,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
@@ -161,4 +161,6 @@ nodeGraphDotLayout,experimental,@grafana/observability-traces-and-profiling,fals
 groupToNestedTableTransformation,preview,@grafana/dataviz-squad,false,false,true
 newPDFRendering,experimental,@grafana/sharing-squad,false,false,false
 kubernetesAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
+expressionParser,experimental,@grafana/grafana-app-platform-squad,false,true,false
 groupByVariable,experimental,@grafana/dashboards-squad,false,false,false
+alertingUpgradeDryrunOnStart,GA,@grafana/alerting-squad,false,true,false

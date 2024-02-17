@@ -655,7 +655,15 @@ const (
 	// Enable grafana aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
 
+	// FlagExpressionParser
+	// Enable new expression parser
+	FlagExpressionParser = "expressionParser"
+
 	// FlagGroupByVariable
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
+
+	// FlagAlertingUpgradeDryrunOnStart
+	// When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.
+	FlagAlertingUpgradeDryrunOnStart = "alertingUpgradeDryrunOnStart"
 )
