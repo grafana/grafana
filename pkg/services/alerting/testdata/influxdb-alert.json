@@ -4,8 +4,7 @@
     "tags": [
       "apa"
     ],
-    "style": "dark",
-    "timezone": "browser",
+      "timezone": "browser",
     "editable": true,
     "sharedCrosshair": false,
     "rows": [

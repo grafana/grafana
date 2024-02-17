@@ -2,15 +2,12 @@ package playlist
 
 import (
 	"errors"
-
-	"github.com/grafana/grafana/pkg/kinds/playlist"
 )
 
 // Typed errors
 var (
-	ErrPlaylistNotFound                = errors.New("Playlist not found")
-	ErrPlaylistFailedGenerateUniqueUid = errors.New("failed to generate unique playlist UID")
-	ErrCommandValidationFailed         = errors.New("command missing required fields")
+	ErrPlaylistNotFound        = errors.New("Playlist not found")
+	ErrCommandValidationFailed = errors.New("command missing required fields")
 )
 
 // Playlist model
@@ -20,11 +17,58 @@ type Playlist struct {
 	Name     string `json:"name" db:"name"`
 	Interval string `json:"interval" db:"interval"`
 	OrgId    int64  `json:"-" db:"org_id"`
+
+	// Added for kubernetes migration + synchronization
+	// Hidden from json because this is used for openapi generation
+	// Using int64 rather than time.Time to avoid database issues with time support
+	CreatedAt int64 `json:"-" db:"created_at"`
+	UpdatedAt int64 `json:"-" db:"updated_at"`
 }
 
-type PlaylistDTO = playlist.Spec
-type PlaylistItemDTO = playlist.Item
-type PlaylistItemType = playlist.ItemType
+type PlaylistDTO struct {
+	// Unique playlist identifier. Generated on creation, either by the
+	// creator of the playlist of by the application.
+	Uid string `json:"uid" db:"uid"`
+
+	// Name of the playlist.
+	Name string `json:"name"`
+
+	// Interval sets the time between switching views in a playlist.
+	Interval string `json:"interval"`
+
+	// The ordered list of items that the playlist will iterate over.
+	Items []PlaylistItemDTO `json:"items,omitempty"`
+
+	// Returned for k8s
+	CreatedAt int64 `json:"-" db:"created_at"`
+
+	// Returned for k8s
+	UpdatedAt int64 `json:"-" db:"updated_at"`
+
+	// Returned for k8s
+	OrgID int64 `json:"-" db:"org_id"`
+
+	// Returned for k8s and added as an annotation
+	Id int64 `json:"-" db:"id"`
+}
+
+type PlaylistItemDTO struct {
+	// Title is an unused property -- it will be removed in the future
+	Title *string `json:"title,omitempty"`
+
+	// Type of the item.
+	Type string `json:"type"`
+
+	// Value depends on type and describes the playlist item.
+	//
+	//  - dashboard_by_id: The value is an internal numerical identifier set by Grafana. This
+	//  is not portable as the numerical identifier is non-deterministic between different instances.
+	//  Will be replaced by dashboard_by_uid in the future. (deprecated)
+	//  - dashboard_by_tag: The value is a tag which is set on any number of dashboards. All
+	//  dashboards behind the tag will be added to the playlist.
+	//  - dashboard_by_uid: The value is the dashboard UID
+	Value string `json:"value"`
+}
 
 type PlaylistItem struct {
 	Id         int64  `db:"id"`
@@ -54,6 +98,8 @@ type CreatePlaylistCommand struct {
 	Interval string         `json:"interval"`
 	Items    []PlaylistItem `json:"items"`
 	OrgId    int64          `json:"-"`
+	// Used to create playlists from kubectl with a known uid/name
+	UID string `json:"-"`
 }
 
 type DeletePlaylistCommand struct {
@@ -80,11 +126,4 @@ type GetPlaylistByUidQuery struct {
 type GetPlaylistItemsByUidQuery struct {
 	PlaylistUID string
 	OrgId       int64
-}
-
-func PlaylistToResource(p PlaylistDTO) playlist.K8sResource {
-	copy := p
-	r := playlist.NewK8sResource(p.Uid, &copy)
-	copy.Uid = "" // remove it from the payload
-	return r
 }

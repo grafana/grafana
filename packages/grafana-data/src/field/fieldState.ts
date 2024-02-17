@@ -29,7 +29,7 @@ export function getFrameDisplayName(frame: DataFrame, index?: number) {
   }
 
   // list all the
-  if (index === undefined) {
+  if (index === undefined && frame.fields.length > 0) {
     return frame.fields
       .filter((f) => f.type !== FieldType.time)
       .map((f) => getFieldDisplayName(f, frame))
@@ -72,15 +72,15 @@ export function getFieldDisplayName(field: Field, frame?: DataFrame, allFrames?:
  */
 export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: DataFrame[]): string {
   const hasConfigTitle = field.config?.displayName && field.config?.displayName.length;
-
+  const isComparisonSeries = Boolean(frame?.meta?.timeCompare?.isTimeShiftQuery);
   let displayName = hasConfigTitle ? field.config!.displayName! : field.name;
 
   if (hasConfigTitle) {
-    return displayName;
+    return isComparisonSeries ? `${displayName} (comparison)` : displayName;
   }
 
   if (frame && field.config?.displayNameFromDS) {
-    return field.config.displayNameFromDS;
+    return isComparisonSeries ? `${field.config.displayNameFromDS} (comparison)` : field.config.displayNameFromDS;
   }
 
   // This is an ugly exception for time field
@@ -166,10 +166,13 @@ export function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFr
     displayName = getUniqueFieldName(field, frame);
   }
 
+  if (isComparisonSeries) {
+    displayName = `${displayName} (comparison)`;
+  }
   return displayName;
 }
 
-function getUniqueFieldName(field: Field, frame?: DataFrame) {
+export function getUniqueFieldName(field: Field, frame?: DataFrame) {
   let dupeCount = 0;
   let foundSelf = false;
 

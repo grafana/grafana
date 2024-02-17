@@ -4,6 +4,7 @@
 process.env.TZ = 'Pacific/Easter'; // UTC-06:00 or UTC-05:00 depending on daylight savings
 
 const esModules = [
+  '@glideapps/glide-data-grid',
   'ol',
   'd3',
   'd3-color',
@@ -11,7 +12,9 @@ const esModules = [
   'delaunator',
   'internmap',
   'robust-predicates',
-  'sinon',
+  'leven',
+  'nanoid',
+  'monaco-promql',
 ].join('|');
 
 module.exports = {
@@ -23,7 +26,7 @@ module.exports = {
   transformIgnorePatterns: [
     `/node_modules/(?!${esModules})`, // exclude es modules to prevent TS complaining
   ],
-  moduleDirectories: ['public'],
+  moduleDirectories: ['public', 'node_modules'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages'],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
@@ -37,10 +40,13 @@ module.exports = {
   moduleNameMapper: {
     '\\.svg': '<rootDir>/public/test/mocks/svg.ts',
     '\\.css': '<rootDir>/public/test/mocks/style.ts',
+    'react-inlinesvg': '<rootDir>/public/test/mocks/react-inlinesvg.tsx',
     'monaco-editor/esm/vs/editor/editor.api': '<rootDir>/public/test/mocks/monaco.ts',
     // near-membrane-dom won't work in a nodejs environment.
     '@locker/near-membrane-dom': '<rootDir>/public/test/mocks/nearMembraneDom.ts',
     '^@grafana/schema/dist/esm/(.*)$': '<rootDir>/packages/grafana-schema/src/$1',
+    // prevent systemjs amd extra from breaking tests.
+    'systemjs/dist/extras/amd': '<rootDir>/public/test/mocks/systemjsAMDExtra.ts',
   },
   // Log the test results with dynamic Loki tags. Drone CI only
   reporters: ['default', ['<rootDir>/public/test/log-reporter.js', { enable: process.env.DRONE === 'true' }]],

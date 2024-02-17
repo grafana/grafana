@@ -89,7 +89,7 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
           display: flex;
 
           border: 1px solid ${theme.components.input.borderColor};
-          border-radius: ${theme.shape.borderRadius(1)};
+          border-radius: ${theme.shape.radius.default};
           background: ${theme.colors.background.secondary};
           min-height: ${theme.spacing.gridSize * 4}px;
 

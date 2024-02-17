@@ -12,7 +12,7 @@ describe('Worldmap Migrations', () => {
   });
 
   it('simple worldmap', () => {
-    const old: any = {
+    const old = {
       angular: simpleWorldmapConfig,
     };
     const panel = {} as PanelModel;
@@ -78,6 +78,10 @@ describe('Worldmap Migrations', () => {
                   "symbol": {
                     "fixed": "img/icons/marker/circle.svg",
                     "mode": "fixed",
+                  },
+                  "symbolAlign": {
+                    "horizontal": "center",
+                    "vertical": "center",
                   },
                   "textConfig": {
                     "fontSize": 12,
@@ -221,6 +225,10 @@ describe('geomap migrations', () => {
                   "symbol": {
                     "fixed": "img/icons/marker/triangle.svg",
                     "mode": "fixed",
+                  },
+                  "symbolAlign": {
+                    "horizontal": "center",
+                    "vertical": "center",
                   },
                   "textConfig": {
                     "fontSize": 12,

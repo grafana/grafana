@@ -84,13 +84,20 @@ export function useCombinedRuleNamespaces(
         }
         const namespaces: Record<string, CombinedRuleNamespace> = {};
 
-        // first get all the ruler rules in
+        // first get all the ruler rules from the data source
         Object.entries(rulerRules || {}).forEach(([namespaceName, groups]) => {
           const namespace: CombinedRuleNamespace = {
             rulesSource,
             name: namespaceName,
             groups: [],
           };
+
+          // We need to set the namespace_uid for grafana rules as it's required to obtain the rule's groups
+          // All rules from all groups have the same namespace_uid so we're taking the first one.
+          if (isGrafanaRulerRule(groups[0].rules[0])) {
+            namespace.uid = groups[0].rules[0].grafana_alert.namespace_uid;
+          }
+
           namespaces[namespaceName] = namespace;
           addRulerGroupsToCombinedNamespace(namespace, groups);
         });
@@ -113,6 +120,72 @@ export function useCombinedRuleNamespaces(
       })
       .flat();
   }, [promRulesResponses, rulerRulesResponses, rulesSources, grafanaPromRuleNamespaces]);
+}
+
+export function combineRulesNamespaces(
+  rulesSource: RulesSource,
+  promNamespaces: RuleNamespace[],
+  rulerRules?: RulerRulesConfigDTO
+): CombinedRuleNamespace[] {
+  const namespaces: Record<string, CombinedRuleNamespace> = {};
+
+  // first get all the ruler rules from the data source
+  Object.entries(rulerRules || {}).forEach(([namespaceName, groups]) => {
+    const namespace: CombinedRuleNamespace = {
+      rulesSource,
+      name: namespaceName,
+      groups: [],
+    };
+    namespaces[namespaceName] = namespace;
+    addRulerGroupsToCombinedNamespace(namespace, groups);
+  });
+
+  // then correlate with prometheus rules
+  promNamespaces?.forEach(({ name: namespaceName, groups }) => {
+    const ns = (namespaces[namespaceName] = namespaces[namespaceName] || {
+      rulesSource,
+      name: namespaceName,
+      groups: [],
+    });
+
+    addPromGroupsToCombinedNamespace(ns, groups);
+  });
+
+  return Object.values(namespaces);
+}
+
+export function attachRulerRulesToCombinedRules(
+  rulesSource: RulesSource,
+  promNamespace: RuleNamespace,
+  rulerGroups: RulerRuleGroupDTO[]
+): CombinedRuleNamespace {
+  const ns: CombinedRuleNamespace = {
+    rulesSource: rulesSource,
+    name: promNamespace.name,
+    groups: [],
+  };
+
+  // The order is important. Adding Ruler rules overrides Prometheus rules.
+  addRulerGroupsToCombinedNamespace(ns, rulerGroups);
+  addPromGroupsToCombinedNamespace(ns, promNamespace.groups);
+
+  // Remove ruler rules which does not have Prom rule counterpart
+  // This function should only attach Ruler rules to existing Prom rules
+  ns.groups.forEach((group) => {
+    group.rules = group.rules.filter((rule) => rule.promRule);
+  });
+
+  return ns;
+}
+
+export function addCombinedPromAndRulerGroups(
+  ns: CombinedRuleNamespace,
+  promGroups: RuleGroup[],
+  rulerGroups: RulerRuleGroupDTO[]
+): CombinedRuleNamespace {
+  addRulerGroupsToCombinedNamespace(ns, rulerGroups);
+  addPromGroupsToCombinedNamespace(ns, promGroups);
+  return ns;
 }
 
 // merge all groups in case of grafana managed, essentially treating namespaces (folders) as groups
@@ -209,11 +282,11 @@ export function calculateRuleTotals(rule: Pick<AlertingRule, 'alerts' | 'totals'
   }
 
   return {
-    alerting: result[AlertInstanceTotalState.Alerting],
+    alerting: result[AlertInstanceTotalState.Alerting] || result['firing'],
     pending: result[AlertInstanceTotalState.Pending],
     inactive: result[AlertInstanceTotalState.Normal],
     nodata: result[AlertInstanceTotalState.NoData],
-    error: result[AlertInstanceTotalState.Error] + result['err'], // Prometheus uses "err" instead of "error"
+    error: result[AlertInstanceTotalState.Error] || result['err'] || undefined, // Prometheus uses "err" instead of "error"
   };
 }
 
@@ -300,28 +373,28 @@ function rulerRuleToCombinedRule(
         filteredInstanceTotals: {},
       }
     : isRecordingRulerRule(rule)
-    ? {
-        name: rule.record,
-        query: rule.expr,
-        labels: rule.labels || {},
-        annotations: {},
-        rulerRule: rule,
-        namespace,
-        group,
-        instanceTotals: {},
-        filteredInstanceTotals: {},
-      }
-    : {
-        name: rule.grafana_alert.title,
-        query: '',
-        labels: rule.labels || {},
-        annotations: rule.annotations || {},
-        rulerRule: rule,
-        namespace,
-        group,
-        instanceTotals: {},
-        filteredInstanceTotals: {},
-      };
+      ? {
+          name: rule.record,
+          query: rule.expr,
+          labels: rule.labels || {},
+          annotations: {},
+          rulerRule: rule,
+          namespace,
+          group,
+          instanceTotals: {},
+          filteredInstanceTotals: {},
+        }
+      : {
+          name: rule.grafana_alert.title,
+          query: '',
+          labels: rule.labels || {},
+          annotations: rule.annotations || {},
+          rulerRule: rule,
+          namespace,
+          group,
+          instanceTotals: {},
+          filteredInstanceTotals: {},
+        };
 }
 
 // find existing rule in group that matches the given prom rule

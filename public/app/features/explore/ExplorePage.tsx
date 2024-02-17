@@ -1,35 +1,31 @@
-import { css } from '@emotion/css';
-import { inRange } from 'lodash';
-import React, { useEffect, useState } from 'react';
-import { useWindowSize } from 'react-use';
+import { css, cx } from '@emotion/css';
+import React, { useEffect } from 'react';
 
-import { ErrorBoundaryAlert } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { ErrorBoundaryAlert, useStyles2, useTheme2 } from '@grafana/ui';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { useDispatch, useSelector } from 'app/types';
+import { useSelector } from 'app/types';
 import { ExploreQueryParams } from 'app/types/explore';
 
+import { CorrelationEditorModeBar } from './CorrelationEditorModeBar';
 import { ExploreActions } from './ExploreActions';
 import { ExplorePaneContainer } from './ExplorePaneContainer';
 import { useExplorePageTitle } from './hooks/useExplorePageTitle';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useSplitSizeUpdater } from './hooks/useSplitSizeUpdater';
 import { useStateSync } from './hooks/useStateSync';
 import { useTimeSrvFix } from './hooks/useTimeSrvFix';
-import { splitSizeUpdateAction } from './state/main';
-import { isSplit, selectPanesEntries } from './state/selectors';
+import { isSplit, selectCorrelationDetails, selectPanesEntries } from './state/selectors';
 
-const styles = {
-  pageScrollbarWrapper: css`
-    width: 100%;
-    flex-grow: 1;
-    min-height: 0;
-    height: 100%;
-    position: relative;
-  `,
-};
+const MIN_PANE_WIDTH = 200;
 
 export default function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
+  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
   useTimeSrvFix();
   useStateSync(props.queryParams);
   // We want  to set the title according to the URL and not to the state because the URL itself may lag
@@ -38,16 +34,14 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
   // if we were to update the URL on state change, the title would not match the URL.
   // Ultimately the URL is the single source of truth from which state is derived, the page title is not different
   useExplorePageTitle(props.queryParams);
-  const dispatch = useDispatch();
-  const { keybindings, chrome } = useGrafana();
+  const { chrome } = useGrafana();
   const navModel = useNavModel('explore');
-  const [rightPaneWidthRatio, setRightPaneWidthRatio] = useState(0.5);
-  const { width: windowWidth } = useWindowSize();
-  const minWidth = 200;
-  const exploreState = useSelector((state) => state.explore);
+  const { updateSplitSize, widthCalc } = useSplitSizeUpdater(MIN_PANE_WIDTH);
 
   const panes = useSelector(selectPanesEntries);
   const hasSplit = useSelector(isSplit);
+  const correlationDetails = useSelector(selectCorrelationDetails);
+  const showCorrelationEditorBar = config.featureToggles.correlations && (correlationDetails?.editorMode || false);
 
   useEffect(() => {
     //This is needed for breadcrumbs and topnav.
@@ -55,48 +49,24 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
     chrome.update({ sectionNav: navModel });
   }, [chrome, navModel]);
 
-  useEffect(() => {
-    keybindings.setupTimeRangeBindings(false);
-  }, [keybindings]);
-
-  const updateSplitSize = (size: number) => {
-    const evenSplitWidth = windowWidth / 2;
-    const areBothSimilar = inRange(size, evenSplitWidth - 100, evenSplitWidth + 100);
-    if (areBothSimilar) {
-      dispatch(splitSizeUpdateAction({ largerExploreId: undefined }));
-    } else {
-      dispatch(
-        splitSizeUpdateAction({
-          largerExploreId: size > evenSplitWidth ? panes[1][0] : panes[0][0],
-        })
-      );
-    }
-
-    setRightPaneWidthRatio(size / windowWidth);
-  };
-
-  let widthCalc = 0;
-  if (hasSplit) {
-    if (!exploreState.evenSplitPanes && exploreState.maxedExploreId) {
-      widthCalc = exploreState.maxedExploreId === panes[1][0] ? windowWidth - minWidth : minWidth;
-    } else if (exploreState.evenSplitPanes) {
-      widthCalc = Math.floor(windowWidth / 2);
-    } else if (rightPaneWidthRatio !== undefined) {
-      widthCalc = windowWidth * rightPaneWidthRatio;
-    }
-  }
+  useKeyboardShortcuts();
 
   return (
-    <div className={styles.pageScrollbarWrapper}>
+    <div
+      className={cx(styles.pageScrollbarWrapper, {
+        [styles.correlationsEditorIndicator]: showCorrelationEditorBar,
+      })}
+    >
       <ExploreActions />
-
+      {showCorrelationEditorBar && <CorrelationEditorModeBar panes={panes} />}
       <SplitPaneWrapper
         splitOrientation="vertical"
         paneSize={widthCalc}
-        minSize={minWidth}
-        maxSize={minWidth * -1}
+        minSize={MIN_PANE_WIDTH}
+        maxSize={MIN_PANE_WIDTH * -1}
         primary="second"
         splitVisible={hasSplit}
+        parentStyle={showCorrelationEditorBar ? { height: `calc(100% - ${theme.spacing(6)}` } : {}} // button = 4, padding = 1 x 2
         paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
         onDragFinished={(size) => size && updateSplitSize(size)}
       >
@@ -111,3 +81,21 @@ export default function ExplorePage(props: GrafanaRouteComponentProps<{}, Explor
     </div>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    pageScrollbarWrapper: css({
+      width: '100%',
+      flexGrow: 1,
+      minHeight: 0,
+      height: '100%',
+      position: 'relative',
+    }),
+    correlationsEditorIndicator: css({
+      borderLeft: `4px solid ${theme.colors.primary.main}`,
+      borderRight: `4px solid ${theme.colors.primary.main}`,
+      borderBottom: `4px solid ${theme.colors.primary.main}`,
+      overflow: 'scroll',
+    }),
+  };
+};

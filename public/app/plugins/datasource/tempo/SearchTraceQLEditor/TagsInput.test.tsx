@@ -7,6 +7,7 @@ import { FetchError } from '@grafana/runtime';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
+import { initTemplateSrv } from '../test_utils';
 import { Scope } from '../types';
 
 import TagsInput from './TagsInput';
@@ -16,6 +17,14 @@ describe('TagsInput', () => {
   let user: ReturnType<typeof userEvent.setup>;
 
   beforeEach(() => {
+    const expectedValues = {
+      interpolationVar: 'interpolationText',
+      interpolationText: 'interpolationText',
+      interpolationVarWithPipe: 'interpolationTextOne|interpolationTextTwo',
+      scopedInterpolationText: 'scopedInterpolationText',
+    };
+    initTemplateSrv([{ name: 'templateVariable1' }, { name: 'templateVariable2' }], expectedValues);
+
     jest.useFakeTimers();
     // Need to use delay: null here to work with fakeTimers
     // see https://github.com/testing-library/user-event/issues/833
@@ -37,6 +46,8 @@ describe('TagsInput', () => {
       await waitFor(() => {
         expect(screen.getByText('foo')).toBeInTheDocument();
         expect(screen.getByText('bar')).toBeInTheDocument();
+        expect(screen.getByText('$templateVariable1')).toBeInTheDocument();
+        expect(screen.getByText('$templateVariable2')).toBeInTheDocument();
       });
     });
 
@@ -50,6 +61,8 @@ describe('TagsInput', () => {
       await waitFor(() => {
         expect(screen.getByText('cluster')).toBeInTheDocument();
         expect(screen.getByText('container')).toBeInTheDocument();
+        expect(screen.getByText('$templateVariable1')).toBeInTheDocument();
+        expect(screen.getByText('$templateVariable2')).toBeInTheDocument();
       });
     });
 
@@ -62,6 +75,8 @@ describe('TagsInput', () => {
       jest.advanceTimersByTime(1000);
       await waitFor(() => {
         expect(screen.getByText('db')).toBeInTheDocument();
+        expect(screen.getByText('$templateVariable1')).toBeInTheDocument();
+        expect(screen.getByText('$templateVariable2')).toBeInTheDocument();
       });
     });
 
@@ -76,6 +91,8 @@ describe('TagsInput', () => {
         expect(screen.getByText('cluster')).toBeInTheDocument();
         expect(screen.getByText('container')).toBeInTheDocument();
         expect(screen.getByText('db')).toBeInTheDocument();
+        expect(screen.getByText('$templateVariable1')).toBeInTheDocument();
+        expect(screen.getByText('$templateVariable2')).toBeInTheDocument();
       });
     });
   });
@@ -112,6 +129,7 @@ describe('TagsInput', () => {
         }}
         staticTags={[]}
         isTagsLoading={false}
+        query={''}
       />
     );
   };

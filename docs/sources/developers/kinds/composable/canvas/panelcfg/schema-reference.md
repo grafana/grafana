@@ -2,6 +2,11 @@
 keywords:
   - grafana
   - schema
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: CanvasPanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
@@ -23,6 +28,7 @@ title: CanvasPanelCfg kind
 | `ConnectionPath`        | string                           | **Yes**  |         | Possible values are: `straight`.                                      |
 | `Constraint`            | [object](#constraint)            | **Yes**  |         |                                                                       |
 | `HorizontalConstraint`  | string                           | **Yes**  |         | Possible values are: `left`, `right`, `leftright`, `center`, `scale`. |
+| `HttpRequestMethod`     | string                           | **Yes**  |         | Possible values are: `GET`, `POST`, `PUT`.                            |
 | `LineConfig`            | [object](#lineconfig)            | **Yes**  |         |                                                                       |
 | `Options`               | [object](#options)               | **Yes**  |         |                                                                       |
 | `Placement`             | [object](#placement)             | **Yes**  |         |                                                                       |
@@ -136,6 +142,7 @@ It extends [BaseDimensionConfig](#basedimensionconfig).
 | Property            | Type            | Required | Default | Description                                                                                                                          |
 |---------------------|-----------------|----------|---------|--------------------------------------------------------------------------------------------------------------------------------------|
 | `inlineEditing`     | boolean         | **Yes**  | `true`  | Enable inline editing                                                                                                                |
+| `panZoom`           | boolean         | **Yes**  | `true`  | Enable pan and zoom                                                                                                                  |
 | `root`              | [object](#root) | **Yes**  |         | The root element of canvas (frame), where all canvas elements are nested<br/>TODO: Figure out how to define a default value for this |
 | `showAdvancedTypes` | boolean         | **Yes**  | `true`  | Show all available element types                                                                                                     |
 

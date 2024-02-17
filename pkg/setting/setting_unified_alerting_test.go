@@ -39,6 +39,39 @@ func TestCfg_ReadUnifiedAlertingSettings(t *testing.T) {
 		require.Len(t, cfg.UnifiedAlerting.HAPeers, 3)
 		require.ElementsMatch(t, []string{"hostname1:9090", "hostname2:9090", "hostname3:9090"}, cfg.UnifiedAlerting.HAPeers)
 	}
+
+	t.Run("should read 'scheduler_tick_interval'", func(t *testing.T) {
+		tmp := cfg.IsFeatureToggleEnabled
+		t.Cleanup(func() {
+			cfg.IsFeatureToggleEnabled = tmp
+		})
+		cfg.IsFeatureToggleEnabled = func(key string) bool { return key == "configurableSchedulerTick" }
+
+		s, err := cfg.Raw.NewSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = s.NewKey("scheduler_tick_interval", "1m")
+		require.NoError(t, err)
+		_, err = s.NewKey("min_interval", "3m")
+		require.NoError(t, err)
+
+		require.NoError(t, cfg.ReadUnifiedAlertingSettings(cfg.Raw))
+		require.Equal(t, time.Minute, cfg.UnifiedAlerting.BaseInterval)
+		require.Equal(t, 3*time.Minute, cfg.UnifiedAlerting.MinInterval)
+
+		t.Run("and fail if it is wrong", func(t *testing.T) {
+			_, err = s.NewKey("scheduler_tick_interval", "test")
+			require.NoError(t, err)
+
+			require.Error(t, cfg.ReadUnifiedAlertingSettings(cfg.Raw))
+		})
+
+		t.Run("and use default if not specified", func(t *testing.T) {
+			s.DeleteKey("scheduler_tick_interval")
+			require.NoError(t, cfg.ReadUnifiedAlertingSettings(cfg.Raw))
+
+			require.Equal(t, SchedulerBaseInterval, cfg.UnifiedAlerting.BaseInterval)
+		})
+	})
 }
 
 func TestUnifiedAlertingSettings(t *testing.T) {
@@ -77,20 +110,19 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 			desc: "when the unified options equal the defaults, it should apply the legacy ones",
 			unifiedAlertingOptions: map[string]string{
 				"admin_config_poll_interval": "120s",
-				"max_attempts":               strconv.FormatInt(schedulerDefaultMaxAttempts, 10),
 				"min_interval":               SchedulerBaseInterval.String(),
 				"execute_alerts":             strconv.FormatBool(schedulereDefaultExecuteAlerts),
 				"evaluation_timeout":         evaluatorDefaultEvaluationTimeout.String(),
 			},
 			alertingOptions: map[string]string{
-				"max_attempts":               "12",
+				"max_attempts":               "1",
 				"min_interval_seconds":       "120",
 				"execute_alerts":             "true",
 				"evaluation_timeout_seconds": "160",
 			},
 			verifyCfg: func(t *testing.T, cfg Cfg) {
 				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.AdminConfigPollInterval)
-				require.Equal(t, int64(12), cfg.UnifiedAlerting.MaxAttempts)
+				require.Equal(t, int64(1), cfg.UnifiedAlerting.MaxAttempts)
 				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.MinInterval)
 				require.Equal(t, true, cfg.UnifiedAlerting.ExecuteAlerts)
 				require.Equal(t, 160*time.Second, cfg.UnifiedAlerting.EvaluationTimeout)
@@ -131,14 +163,14 @@ func TestUnifiedAlertingSettings(t *testing.T) {
 				"evaluation_timeout": "invalid",
 			},
 			alertingOptions: map[string]string{
-				"max_attempts":               "12",
+				"max_attempts":               "1",
 				"min_interval_seconds":       "120",
 				"execute_alerts":             "false",
 				"evaluation_timeout_seconds": "160",
 			},
 			verifyCfg: func(t *testing.T, cfg Cfg) {
 				require.Equal(t, alertmanagerDefaultConfigPollInterval, cfg.UnifiedAlerting.AdminConfigPollInterval)
-				require.Equal(t, int64(12), cfg.UnifiedAlerting.MaxAttempts)
+				require.Equal(t, int64(1), cfg.UnifiedAlerting.MaxAttempts)
 				require.Equal(t, 120*time.Second, cfg.UnifiedAlerting.MinInterval)
 				require.Equal(t, false, cfg.UnifiedAlerting.ExecuteAlerts)
 				require.Equal(t, 160*time.Second, cfg.UnifiedAlerting.EvaluationTimeout)

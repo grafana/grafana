@@ -120,27 +120,24 @@ describe('breadcrumb utils', () => {
       ]);
     });
 
-    it('does not match the home nav if the editview param is different', () => {
+    it('does ignore duplicates', () => {
       const pageNav: NavModelItem = {
         text: 'My page',
         url: '/my-page',
         parentItem: {
-          text: 'My parent page',
-          url: '/home?orgId=1&editview=settings',
+          text: 'My section',
+          // same url as section nav, but this one should win/overwrite it
+          url: '/my-section?from=1h&to=now',
         },
       };
+
       const sectionNav: NavModelItem = {
         text: 'My section',
         url: '/my-section',
-        parentItem: {
-          text: 'My parent section',
-          url: '/my-parent-section',
-        },
       };
+
       expect(buildBreadcrumbs(sectionNav, pageNav, mockHomeNav)).toEqual([
-        { text: 'My parent section', href: '/my-parent-section' },
-        { text: 'My section', href: '/my-section' },
-        { text: 'My parent page', href: '/home?orgId=1&editview=settings' },
+        { text: 'My section', href: '/my-section?from=1h&to=now' },
         { text: 'My page', href: '/my-page' },
       ]);
     });

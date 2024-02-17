@@ -1,13 +1,7 @@
 import { cloneDeep } from 'lodash';
 
-import {
-  buildRawQuery,
-  changeGroupByPart,
-  changeSelectPart,
-  normalizeQuery,
-  replaceHardCodedRetentionPolicy,
-} from './queryUtils';
-import { InfluxQuery } from './types';
+import { buildRawQuery, changeGroupByPart, changeSelectPart, normalizeQuery } from './queryUtils';
+import { DEFAULT_POLICY, InfluxQuery } from './types';
 
 describe('InfluxDB query utils', () => {
   describe('buildRawQuery', () => {
@@ -16,7 +10,7 @@ describe('InfluxDB query utils', () => {
         buildRawQuery({
           refId: 'A',
           hide: false,
-          policy: 'default',
+          policy: DEFAULT_POLICY,
           resultFormat: 'time_series',
           orderByTime: 'ASC',
           tags: [],
@@ -43,9 +37,7 @@ describe('InfluxDB query utils', () => {
             ],
           ],
         })
-      ).toBe(
-        'SELECT mean("value") FROM "default"."measurement" WHERE $timeFilter GROUP BY time($__interval)' + ' fill(null)'
-      );
+      ).toBe('SELECT mean("value") FROM "measurement" WHERE $timeFilter GROUP BY time($__interval)' + ' fill(null)');
     });
     it('should handle small query', () => {
       expect(
@@ -155,6 +147,18 @@ describe('InfluxDB query utils', () => {
               operator: '!~',
               value: '/cpu0/',
             },
+            {
+              condition: 'AND',
+              key: 'cpu',
+              operator: 'Is',
+              value: 'false',
+            },
+            {
+              condition: 'AND',
+              key: 'cpu',
+              operator: 'Is Not',
+              value: 'false',
+            },
           ],
           groupBy: [],
         })
@@ -162,7 +166,7 @@ describe('InfluxDB query utils', () => {
         `SELECT "value" ` +
           `FROM "autogen"."measurement" ` +
           `WHERE ("cpu" = 'cpu0' AND "cpu" != 'cpu0' AND "cpu" <> 'cpu0' AND "cpu" < cpu0 AND ` +
-          `"cpu" > cpu0 AND "cpu" =~ /cpu0/ AND "cpu" !~ /cpu0/) AND $timeFilter`
+          `"cpu" > cpu0 AND "cpu" =~ /cpu0/ AND "cpu" !~ /cpu0/ AND "cpu" = false AND "cpu" != false) AND $timeFilter`
       );
     });
     it('should handle a complex query', () => {
@@ -190,7 +194,7 @@ describe('InfluxDB query utils', () => {
           hide: false,
           measurement: 'cpu',
           orderByTime: 'DESC',
-          policy: 'default',
+          policy: DEFAULT_POLICY,
           rawQuery: false,
           refId: 'A',
           resultFormat: 'time_series',
@@ -245,7 +249,7 @@ describe('InfluxDB query utils', () => {
         })
       ).toBe(
         `SELECT holt_winters_with_fit(mean("usage_idle"), 30, 5), median("usage_guest") ` +
-          `FROM "default"."cpu" ` +
+          `FROM "cpu" ` +
           `WHERE ("cpu" = 'cpu2' OR "cpu" = 'cpu3' AND "cpu" = 'cpu1') ` +
           `AND $timeFilter ` +
           `GROUP BY time($__interval), "cpu", "host" fill(none) ` +
@@ -291,7 +295,7 @@ describe('InfluxDB query utils', () => {
         groupBy: [],
         measurement: 'cpu',
         orderByTime: 'ASC',
-        policy: 'default',
+        policy: DEFAULT_POLICY,
         resultFormat: 'table',
         select: [
           [
@@ -439,16 +443,6 @@ describe('InfluxDB query utils', () => {
           },
         ],
       });
-    });
-  });
-  describe('replaceHardCodedRetentionPolicy', () => {
-    it('should replace non-existing hardcoded retention policy', () => {
-      const hardCodedRetentionPolicy = 'default';
-      const fetchedRetentionPolicies = ['foo', 'fighters', 'nirvana'];
-      expect(replaceHardCodedRetentionPolicy(hardCodedRetentionPolicy, fetchedRetentionPolicies)).toBe('foo');
-      expect(replaceHardCodedRetentionPolicy('foo', fetchedRetentionPolicies)).toBe('foo');
-      expect(replaceHardCodedRetentionPolicy(undefined, fetchedRetentionPolicies)).toBe('foo');
-      expect(replaceHardCodedRetentionPolicy(hardCodedRetentionPolicy, [])).toBe('');
     });
   });
 });

@@ -3,7 +3,7 @@ aliases:
   - ../notifications/mute-timings/
   - ../unified-alerting/notifications/mute-timings/
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/mute-timings/
-description: Mute timings
+description: Create mute timings to prevent alerts from firing during a specific and reoccurring period of time
 keywords:
   - grafana
   - alerting
@@ -37,37 +37,37 @@ The following table highlights the key differences between mute timings and sile
 | Uses time interval definitions that can reoccur    | Has a fixed start and end time                                               |
 | Is created and then added to notification policies | Uses labels to match against an alert to determine whether to silence or not |
 
-## Create a mute timing
+## Add mute timings
 
 1. In the left-side menu, click **Alerts & IRM**, and then **Alerting**.
-1. Click **Notification policies**.
+1. Click **Notification policies** and then the **Mute Timings** tab.
 1. From the **Alertmanager** dropdown, select an external Alertmanager. By default, the **Grafana Alertmanager** is selected.
-1. Scroll down to the Mute timings section.
 1. Click **+ Add mute timing**.
 1. Fill out the form to create a [time interval](#time-intervals) to match against for your mute timing.
-1. Click **Submit** to create the mute timing.
+1. Save your mute timing.
 
 ## Add mute timing to a notification policy
 
 1. In the left-side menu, click **Alerts & IRM**, and then **Alerting**.
-1. Click **Notification policies**.
-1. Identify the notification policy you would like to add the mute timing to and click the **Edit** button for that policy.
-1. In the Specific routing section, from the **Mute timings** dropdown, select the mute timings you would like to add to the route.
-1. Click **Save policy**.
+1. Click **Notification policies** and make sure you are on the **Notification Policies** tab.
+1. Find the notification policy you would like to add the mute timing to and click **...** -> **Edit**.
+1. From the **Mute timings** dropdown, choose the mute timings you would like to add to the policy.
+1. Save your changes.
 
 ## Time intervals
 
-A time interval is a definition for a moment in time. If an alert fires during this interval it will be suppressed. All fields are lists, and at least one list element must be satisfied to match the field. Fields also support ranges using `:` (ex: `monday:thursday`). The fields available for a time interval are: mute timing can contain multiple time intervals. A time interval is a specific duration when alerts are suppressed from firing. The duration typically consists of a specific time range along with days of a week, month, or year.
-
-    All properties for the time interval are lists, and at least one list element must be satisfied to match the field. The fields support ranges using `:` (ex: `monday:thursday`). If you leave a field blank, it will match with any moment of time.
+A time interval is a specific duration during which alerts are suppressed. The duration typically consists of a specific time range and the days of the week, month, or year.
 
 Supported time interval options are:
 
-- Time range: The time inclusive of the starting time and exclusive of the end time in UTC.
+- Time range: The time inclusive of the start and exclusive of the end time (in UTC if no location has been selected, otherwise local time).
+- Location: Depending on the location you select, the time range is displayed in local time.
 - Days of the week: The day or range of days of the week. Example: `monday:thursday`.
 - Days of the month: The date 1-31 of a month. Negative values can also be used to represent days that begin at the end of the month. For example: `-1` for the last day of the month.
 - Months: The months of the year in either numerical or the full calendar month. For example: `1, may:august`.
 - Years: The year or years for the interval. For example: `2021:2024`.
+
+All fields are lists; to match the field, at least one list element must be satisfied. Fields also support ranges using `:` (e.g., `monday:thursday`).
 
 If a field is left blank, any moment of time will match the field. For an instant of time to match a complete time interval, all fields must match. A mute timing can contain multiple time intervals.
 
@@ -81,9 +81,9 @@ If you want to specify an exact duration, specify all the options. For example, 
 - Days of the month: `1:7`
 
 {{% docs/reference %}}
-[datasources/alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/alertmanager"
-[datasources/alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/alertmanager"
+[datasources/alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/alertmanager"
+[datasources/alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/alertmanager"
 
-[fundamentals/alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/alertmanager"
+[fundamentals/alertmanager]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alertmanager"
 [fundamentals/alertmanager]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alertmanager"
 {{% /docs/reference %}}

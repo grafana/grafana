@@ -1,14 +1,25 @@
 import { css, cx } from '@emotion/css';
+import {
+  arrow,
+  autoUpdate,
+  flip,
+  FloatingArrow,
+  FloatingFocusManager,
+  offset,
+  shift,
+  useClick,
+  useDismiss,
+  useFloating,
+  useInteractions,
+} from '@floating-ui/react';
 import { Placement } from '@popperjs/core';
-import React, { useCallback, useEffect, useRef } from 'react';
-import { usePopperTooltip } from 'react-popper-tooltip';
+import React, { useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
-import { buildTooltipTheme } from '../../utils/tooltipUtils';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { buildTooltipTheme, getPlacement } from '../../utils/tooltipUtils';
 import { IconButton } from '../IconButton/IconButton';
-import { Portal } from '../Portal/Portal';
 
 import { ToggletipContent } from './types';
 
@@ -20,7 +31,7 @@ export interface ToggletipProps {
   /** determine whether to show or not the close button **/
   closeButton?: boolean;
   /** Callback function to be called when the toggletip is closed */
-  onClose?: Function;
+  onClose?: () => void;
   /** The preferred placement of the toggletip */
   placement?: Placement;
   /** The text or component that houses the content of the toggleltip */
@@ -31,6 +42,10 @@ export interface ToggletipProps {
   children: JSX.Element;
   /** Determine whether the toggletip should fit its content or not */
   fitContent?: boolean;
+  /** Determine whether the toggletip should be shown or not */
+  show?: boolean;
+  /** Callback function to be called when the toggletip is opened */
+  onOpen?: () => void;
 }
 
 export const Toggletip = React.memo(
@@ -44,78 +59,103 @@ export const Toggletip = React.memo(
     onClose,
     footer,
     fitContent = false,
+    onOpen,
+    show,
   }: ToggletipProps) => {
+    const arrowRef = useRef(null);
+    const grafanaTheme = useTheme2();
     const styles = useStyles2(getStyles);
     const style = styles[theme];
-    const contentRef = useRef(null);
-    const [controlledVisible, setControlledVisible] = React.useState(false);
+    const [controlledVisible, setControlledVisible] = useState(show);
+    const isOpen = show ?? controlledVisible;
 
-    const closeToggletip = useCallback(() => {
-      setControlledVisible(false);
-      onClose?.();
-    }, [onClose]);
+    // the order of middleware is important!
+    // `arrow` should almost always be at the end
+    // see https://floating-ui.com/docs/arrow#order
+    const middleware = [
+      offset(8),
+      flip({
+        fallbackAxisSideDirection: 'end',
+        // see https://floating-ui.com/docs/flip#combining-with-shift
+        crossAxis: false,
+        boundary: document.body,
+      }),
+      shift(),
+      arrow({
+        element: arrowRef,
+      }),
+    ];
 
-    useEffect(() => {
-      if (controlledVisible) {
-        const handleKeyDown = (enterKey: KeyboardEvent) => {
-          if (enterKey.key === 'Escape') {
-            closeToggletip();
-          }
-        };
-        document.addEventListener('keydown', handleKeyDown);
-        return () => {
-          document.removeEventListener('keydown', handleKeyDown);
-        };
-      }
-      return;
-    }, [controlledVisible, closeToggletip]);
-
-    const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible, update } = usePopperTooltip({
-      visible: controlledVisible,
-      placement: placement,
-      interactive: true,
-      offset: [0, 8],
-      trigger: 'click',
-      onVisibleChange: (value: boolean) => {
-        setControlledVisible(value);
-        if (!value) {
+    const { context, refs, floatingStyles } = useFloating({
+      open: isOpen,
+      placement: getPlacement(placement),
+      onOpenChange: (open) => {
+        if (show === undefined) {
+          setControlledVisible(open);
+        }
+        if (!open) {
           onClose?.();
+        } else {
+          onOpen?.();
         }
       },
+      middleware,
+      whileElementsMounted: autoUpdate,
+      strategy: 'fixed',
     });
+
+    const click = useClick(context);
+    const dismiss = useDismiss(context);
+
+    const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
 
     return (
       <>
         {React.cloneElement(children, {
-          ref: setTriggerRef,
+          ref: refs.setReference,
           tabIndex: 0,
+          'aria-expanded': isOpen,
+          ...getReferenceProps(),
         })}
-        {visible && (
-          <Portal>
+        {isOpen && (
+          <FloatingFocusManager context={context} modal={false} closeOnFocusOut={false}>
             <div
               data-testid="toggletip-content"
-              ref={setTooltipRef}
-              {...getTooltipProps({ className: cx(style.container, fitContent && styles.fitContent) })}
+              className={cx(style.container, {
+                [styles.fitContent]: fitContent,
+              })}
+              ref={refs.setFloating}
+              style={floatingStyles}
+              {...getFloatingProps()}
             >
+              <FloatingArrow
+                strokeWidth={0.3}
+                stroke={grafanaTheme.colors.border.weak}
+                className={style.arrow}
+                ref={arrowRef}
+                context={context}
+              />
               {Boolean(title) && <div className={style.header}>{title}</div>}
               {closeButton && (
                 <div className={style.headerClose}>
                   <IconButton
-                    tooltip="Close"
+                    aria-label="Close"
                     name="times"
                     data-testid="toggletip-header-close"
-                    onClick={closeToggletip}
+                    onClick={() => {
+                      setControlledVisible(false);
+                      onClose?.();
+                    }}
                   />
                 </div>
               )}
-              <div ref={contentRef} {...getArrowProps({ className: style.arrow })} />
               <div className={style.body}>
                 {(typeof content === 'string' || React.isValidElement(content)) && content}
-                {typeof content === 'function' && update && content({ update })}
+                {typeof content === 'function' && content({})}
               </div>
               {Boolean(footer) && <div className={style.footer}>{footer}</div>}
             </div>
-          </Portal>
+          </FloatingFocusManager>
         )}
       </>
     );
@@ -127,17 +167,17 @@ Toggletip.displayName = 'Toggletip';
 export const getStyles = (theme: GrafanaTheme2) => {
   const info = buildTooltipTheme(
     theme,
-    theme.components.tooltip.background,
-    theme.components.tooltip.background,
+    theme.colors.background.primary,
+    theme.colors.border.weak,
     theme.components.tooltip.text,
-    { topBottom: 3, rightLeft: 3 }
+    { topBottom: 2, rightLeft: 2 }
   );
   const error = buildTooltipTheme(
     theme,
     theme.colors.error.main,
     theme.colors.error.main,
     theme.colors.error.contrastText,
-    { topBottom: 3, rightLeft: 3 }
+    { topBottom: 2, rightLeft: 2 }
   );
 
   return {

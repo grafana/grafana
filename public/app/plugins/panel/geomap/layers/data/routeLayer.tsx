@@ -1,3 +1,15 @@
+import { isNumber } from 'lodash';
+import Feature, { FeatureLike } from 'ol/Feature';
+import Map from 'ol/Map';
+import { LineString, Point, SimpleGeometry } from 'ol/geom';
+import { Group as LayerGroup } from 'ol/layer';
+import VectorLayer from 'ol/layer/Vector';
+import VectorSource from 'ol/source/Vector';
+import { Fill, Stroke, Style, Circle } from 'ol/style';
+import FlowLine from 'ol-ext/style/FlowLine';
+import { Subscription, throttleTime } from 'rxjs';
+import tinycolor from 'tinycolor2';
+
 import {
   MapLayerRegistryItem,
   PanelData,
@@ -7,30 +19,17 @@ import {
   DataHoverEvent,
   DataHoverClearEvent,
   DataFrame,
-  TIME_SERIES_TIME_FIELD_NAME,
+  FieldType,
 } from '@grafana/data';
-
-import { MapLayerOptions, FrameGeometrySourceMode } from '@grafana/schema';
-
-import Map from 'ol/Map';
-import { FeatureLike } from 'ol/Feature';
-import { Subscription, throttleTime } from 'rxjs';
-import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
-import { defaultStyleConfig, StyleConfig } from '../../style/types';
-import { StyleEditor } from '../../editor/StyleEditor';
-import { getStyleConfigState } from '../../style/utils';
-import VectorLayer from 'ol/layer/Vector';
-import { isNumber } from 'lodash';
-import { routeStyle } from '../../style/markers';
-import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
-import { Group as LayerGroup } from 'ol/layer';
-import VectorSource from 'ol/source/Vector';
-import { Fill, Stroke, Style, Circle } from 'ol/style';
-import Feature from 'ol/Feature';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
-import { LineString, Point, SimpleGeometry } from 'ol/geom';
-import FlowLine from 'ol-ext/style/FlowLine';
-import tinycolor from 'tinycolor2';
+import { MapLayerOptions, FrameGeometrySourceMode } from '@grafana/schema';
+import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
+import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
+
+import { StyleEditor } from '../../editor/StyleEditor';
+import { routeStyle } from '../../style/markers';
+import { defaultStyleConfig, StyleConfig } from '../../style/types';
+import { getStyleConfigState } from '../../style/utils';
 import { getStyleDimension, isSegmentVisible } from '../../utils/utils';
 
 // Configuration options for Circle overlays
@@ -61,6 +60,15 @@ export const defaultRouteConfig: MapLayerOptions<RouteConfig> = {
   tooltip: false,
 };
 
+enum mapIndex {
+  x1 = 0,
+  y1 = 1,
+  x2 = 2,
+  y2 = 3,
+}
+
+const crosshairColor = '#607D8B';
+
 /**
  * Map layer configuration for circle overlay
  */
@@ -70,7 +78,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
   description: 'Render data points as a route',
   isBaseMap: false,
   showLocation: true,
-  state: PluginState.alpha,
+  state: PluginState.beta,
 
   /**
    * Function that configures transformation and returns a transformer
@@ -87,7 +95,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource(location);
     const vectorLayer = new VectorLayer({ source });
-    const hasArrows = config.arrow == 1 || config.arrow == -1;
+    const hasArrows = config.arrow === 1 || config.arrow === -1;
 
     if (!style.fields && !hasArrows) {
       // Set a global style
@@ -99,7 +107,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
       vectorLayer.setStyle(styleBase);
     } else {
       vectorLayer.setStyle((feature: FeatureLike) => {
-        const idx = feature.get('rowIndex') as number;
+        const idx: number = feature.get('rowIndex');
         const dims = style.dims;
         if (!dims || !isNumber(idx)) {
           return routeStyle(style.base);
@@ -132,7 +140,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
 
               const flowStyle = new FlowLine({
                 visible: true,
-                lineCap: config.arrow == 0 ? 'round' : 'square',
+                lineCap: config.arrow === 0 ? 'round' : 'square',
                 color: color1,
                 color2: color2,
                 width: (dims.size && dims.size.get(startIndex)) ?? style.base.size,
@@ -191,15 +199,26 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
 
     // Crosshair layer
     const crosshairFeature = new Feature({});
-    const crosshairRadius = (style.base.lineWidth || 6) + 2;
+    const hLineFeature = new Feature({});
+    const vLineFeature = new Feature({});
+    const lineFeatures = [hLineFeature, vLineFeature];
+    const crosshairRadius = (style.base.lineWidth || 6) + 3;
     const crosshairStyle = new Style({
       image: new Circle({
         radius: crosshairRadius,
         stroke: new Stroke({
-          color: alpha(style.base.color, 0.4),
-          width: crosshairRadius + 2,
+          color: alpha(crosshairColor, 1),
+          width: 1,
         }),
-        fill: new Fill({ color: style.base.color }),
+        fill: new Fill({ color: alpha(crosshairColor, 0.4) }),
+      }),
+    });
+    const lineStyle = new Style({
+      stroke: new Stroke({
+        color: crosshairColor,
+        width: 1,
+        lineDash: [3, 3],
+        lineCap: 'square',
       }),
     });
 
@@ -210,8 +229,15 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
       style: crosshairStyle,
     });
 
+    const linesLayer = new VectorLayer({
+      source: new VectorSource({
+        features: lineFeatures,
+      }),
+      style: lineStyle,
+    });
+
     const layer = new LayerGroup({
-      layers: [vectorLayer, crosshairLayer],
+      layers: [vectorLayer, crosshairLayer, linesLayer],
     });
 
     // Crosshair sharing subscriptions
@@ -223,19 +249,35 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
         .pipe(throttleTime(8))
         .subscribe({
           next: (event) => {
+            const mapExtents = map.getView().calculateExtent(map.getSize());
             const feature = source.getFeatures()[0];
-            const frame = feature?.get('frame') as DataFrame;
-            const time = event.payload?.point?.time as number;
+            const frame: DataFrame = feature?.get('frame');
+            const time = event.payload?.point?.time;
             if (frame && time) {
-              const timeField = frame.fields.find((f) => f.name === TIME_SERIES_TIME_FIELD_NAME);
+              const timeField = frame.fields.find((f) => f.type === FieldType.time);
               if (timeField) {
                 const timestamps: number[] = timeField.values;
                 const pointIdx = findNearestTimeIndex(timestamps, time);
                 if (pointIdx !== null) {
                   const out = getGeometryField(frame, location);
                   if (out.field) {
-                    crosshairFeature.setGeometry(out.field.values[pointIdx]);
+                    const crosshairPoint: Point = out.field.values[pointIdx] as Point;
+                    const crosshairPointCoords = crosshairPoint.getCoordinates();
+                    crosshairFeature.setGeometry(crosshairPoint);
                     crosshairFeature.setStyle(crosshairStyle);
+                    hLineFeature.setGeometry(
+                      new LineString([
+                        [mapExtents[mapIndex.x1], crosshairPointCoords[mapIndex.y1]],
+                        [mapExtents[mapIndex.x2], crosshairPointCoords[mapIndex.y1]],
+                      ])
+                    );
+                    vLineFeature.setGeometry(
+                      new LineString([
+                        [crosshairPointCoords[mapIndex.x1], mapExtents[mapIndex.y1]],
+                        [crosshairPointCoords[mapIndex.x1], mapExtents[mapIndex.y2]],
+                      ])
+                    );
+                    lineFeatures.forEach((feature) => feature.setStyle(lineStyle));
                   }
                 }
               }
@@ -247,6 +289,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     subscriptions.add(
       eventBus.subscribe(DataHoverClearEvent, (event) => {
         crosshairFeature.setStyle(new Style({}));
+        lineFeatures.forEach((feature) => feature.setStyle(new Style({})));
       })
     );
 
@@ -318,14 +361,14 @@ function findNearestTimeIndex(timestamps: number[], time: number): number | null
   if (time < timestamps[probableIdx]) {
     for (let i = probableIdx; i > 0; i--) {
       if (time > timestamps[i]) {
-        return i;
+        return i < lastIdx ? i + 1 : lastIdx;
       }
     }
     return 0;
   } else {
     for (let i = probableIdx; i < lastIdx; i++) {
       if (time < timestamps[i]) {
-        return i;
+        return i > 0 ? i - 1 : 0;
       }
     }
     return lastIdx;

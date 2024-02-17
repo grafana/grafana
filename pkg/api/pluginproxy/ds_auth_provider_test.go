@@ -23,7 +23,7 @@ func TestApplyRoute_interpolateAuthParams(t *testing.T) {
 	}
 
 	validData := templateData{
-		JsonData: map[string]interface{}{
+		JsonData: map[string]any{
 			"clientEmail": "test@test.com",
 			"tokenUri":    "login.url.com/token",
 			"tenantId":    "f09c86ac",
@@ -34,7 +34,7 @@ func TestApplyRoute_interpolateAuthParams(t *testing.T) {
 	}
 
 	emptyData := templateData{
-		JsonData:       map[string]interface{}{},
+		JsonData:       map[string]any{},
 		SecureJsonData: map[string]string{},
 	}
 

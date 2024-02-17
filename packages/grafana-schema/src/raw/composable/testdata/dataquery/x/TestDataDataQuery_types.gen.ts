@@ -11,7 +11,7 @@
 
 import * as common from '@grafana/schema';
 
-export const pluginVersion = "10.1.0-pre";
+export const pluginVersion = "%VERSION%";
 
 export enum TestDataQueryType {
   Annotations = 'annotations',
@@ -50,7 +50,7 @@ export interface StreamingQuery {
   noise: number;
   speed: number;
   spread: number;
-  type: ('signal' | 'logs' | 'fetch');
+  type: ('signal' | 'logs' | 'fetch' | 'traces');
   url?: string;
 }
 
@@ -75,7 +75,8 @@ export interface SimulationQuery {
 
 export interface NodesQuery {
   count?: number;
-  type?: ('random' | 'response' | 'random edges');
+  seed?: number;
+  type?: ('random' | 'response_small' | 'response_medium' | 'random edges');
 }
 
 export interface USAQuery {
@@ -119,6 +120,7 @@ export interface TestDataDataQuery extends common.DataQuery {
    */
   dropPercent?: number;
   errorType?: ('server_panic' | 'frontend_exception' | 'frontend_observable');
+  flamegraphDiff?: boolean;
   labels?: string;
   levelColumn?: boolean;
   lines?: number;

@@ -1,7 +1,11 @@
 import React, { useCallback, useState } from 'react';
 
-import { ValueMatcherID, RangeValueMatcherOptions } from '@grafana/data';
+import { ValueMatcherID, RangeValueMatcherOptions, VariableOrigin } from '@grafana/data';
+import { getTemplateSrv, config as cfg } from '@grafana/runtime';
 import { Input } from '@grafana/ui';
+
+import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
+import { numberOrVariableValidator } from '../../utils';
 
 import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
 import { convertToType } from './utils';
@@ -16,6 +20,11 @@ export function rangeMatcherEditor<T = any>(
     const [isInvalid, setInvalid] = useState({
       from: !validator(options.from),
       to: !validator(options.to),
+    });
+
+    const templateSrv = getTemplateSrv();
+    const variables = templateSrv.getVariables().map((v) => {
+      return { value: v.name, label: v.label || v.name, origin: VariableOrigin.Template };
     });
 
     const onChangeValue = useCallback(
@@ -44,6 +53,49 @@ export function rangeMatcherEditor<T = any>(
       [options, onChange, isInvalid, field]
     );
 
+    const onChangeOptionsSuggestions = useCallback(
+      (value: string, prop: PropNames) => {
+        const invalid = !validator(value);
+
+        setInvalid({
+          ...isInvalid,
+          [prop]: invalid,
+        });
+
+        if (invalid) {
+          return;
+        }
+
+        onChange({
+          ...options,
+          [prop]: value,
+        });
+      },
+      [options, onChange, isInvalid, setInvalid, validator]
+    );
+    if (cfg.featureToggles.transformationsVariableSupport) {
+      return (
+        <>
+          <SuggestionsInput
+            value={String(options.from)}
+            invalid={isInvalid.from}
+            error={'Value needs to be an integer or a variable'}
+            placeholder="From"
+            onChange={(val) => onChangeOptionsSuggestions(val, 'from')}
+            suggestions={variables}
+          />
+          <div className="gf-form-label">and</div>
+          <SuggestionsInput
+            invalid={isInvalid.to}
+            error={'Value needs to be an integer or a variable'}
+            value={String(options.to)}
+            placeholder="To"
+            suggestions={variables}
+            onChange={(val) => onChangeOptionsSuggestions(val, 'to')}
+          />
+        </>
+      );
+    }
     return (
       <>
         <Input
@@ -73,10 +125,8 @@ export const getRangeValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<Rang
     {
       name: 'Is between',
       id: ValueMatcherID.between,
-      component: rangeMatcherEditor<number>({
-        validator: (value) => {
-          return !isNaN(value);
-        },
+      component: rangeMatcherEditor<string | number>({
+        validator: numberOrVariableValidator,
       }),
     },
   ];

@@ -1,31 +1,38 @@
 import { css } from '@emotion/css';
-import cx from 'classnames';
-import React, { useContext } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
+import { GrafanaTheme2, TimeRange } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { config, featureEnabled, reportInteraction } from '@grafana/runtime/src';
+import { config, featureEnabled } from '@grafana/runtime/src';
 import {
+  Button,
   ClipboardButton,
   Field,
   HorizontalGroup,
   Input,
   Label,
-  ModalsContext,
-  Spinner,
+  ModalsController,
   Switch,
   useStyles2,
 } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
+import { Trans, t } from 'app/core/internationalization';
+import {
+  useDeletePublicDashboardMutation,
+  useUpdatePublicDashboardMutation,
+} from 'app/features/dashboard/api/publicDashboardApi';
+import { DashboardModel } from 'app/features/dashboard/state';
+import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { DeletePublicDashboardModal } from 'app/features/manage-dashboards/components/PublicDashboardListTable/DeletePublicDashboardModal';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
 import { AccessControlAction, useSelector } from '../../../../../../types';
-import { DeletePublicDashboardButton } from '../../../../../manage-dashboards/components/PublicDashboardListTable/DeletePublicDashboardButton';
-import { isOrgAdmin } from '../../../../../plugins/admin/permissions';
-import { useGetPublicDashboardQuery, useUpdatePublicDashboardMutation } from '../../../../api/publicDashboardApi';
 import { useIsDesktop } from '../../../../utils/screen';
 import { ShareModal } from '../../ShareModal';
+import { shareDashboardType } from '../../utils';
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
 import { SaveDashboardChangesAlert } from '../ModalAlerts/SaveDashboardChangesAlert';
 import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';
@@ -33,11 +40,13 @@ import { UnsupportedTemplateVariablesAlert } from '../ModalAlerts/UnsupportedTem
 import {
   dashboardHasTemplateVariables,
   generatePublicDashboardUrl,
-  getUnsupportedDashboardDatasources,
+  PublicDashboard,
 } from '../SharePublicDashboardUtils';
 
 import { Configuration } from './Configuration';
 import { EmailSharingConfiguration } from './EmailSharingConfiguration';
+import { SettingsBar } from './SettingsBar';
+import { SettingsSummary } from './SettingsSummary';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
@@ -47,22 +56,33 @@ export interface ConfigPublicDashboardForm {
   isPaused: boolean;
 }
 
-const ConfigPublicDashboard = () => {
+interface Props {
+  unsupportedDatasources?: string[];
+  showSaveChangesAlert?: boolean;
+  publicDashboard?: PublicDashboard;
+  hasTemplateVariables?: boolean;
+  timeRange: TimeRange;
+  onRevoke: () => void;
+  dashboard: DashboardModel | DashboardScene;
+}
+
+export function ConfigPublicDashboardBase({
+  onRevoke,
+  timeRange,
+  hasTemplateVariables = false,
+  showSaveChangesAlert = false,
+  unsupportedDatasources = [],
+  publicDashboard,
+  dashboard,
+}: Props) {
   const styles = useStyles2(getStyles);
-  const { showModal, hideModal } = useContext(ModalsContext);
   const isDesktop = useIsDesktop();
 
-  const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
+  const [update, { isLoading }] = useUpdatePublicDashboardMutation();
+  const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
+  const disableInputs = !hasWritePermissions || isLoading;
   const hasEmailSharingEnabled =
     !!config.featureToggles.publicDashboardsEmailSharing && featureEnabled('publicDashboardsEmailSharing');
-  const dashboardState = useSelector((store) => store.dashboard);
-  const dashboard = dashboardState.getModel()!;
-  const dashboardVariables = dashboard.getVariables();
-  const unsupportedDataSources = getUnsupportedDashboardDatasources(dashboard.panels);
-
-  const { data: publicDashboard, isFetching: isGetLoading } = useGetPublicDashboardQuery(dashboard.uid);
-  const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
-  const disableInputs = !hasWritePermissions || isUpdateLoading || isGetLoading;
 
   const { handleSubmit, setValue, register } = useForm<ConfigPublicDashboardForm>({
     defaultValues: {
@@ -72,53 +92,44 @@ const ConfigPublicDashboard = () => {
     },
   });
 
-  const onUpdate = async (values: ConfigPublicDashboardForm) => {
+  const onPublicDashboardUpdate = async (values: ConfigPublicDashboardForm) => {
     const { isAnnotationsEnabled, isTimeSelectionEnabled, isPaused } = values;
 
-    const req = {
-      dashboard,
+    update({
+      dashboard: dashboard,
       payload: {
         ...publicDashboard!,
         annotationsEnabled: isAnnotationsEnabled,
         timeSelectionEnabled: isTimeSelectionEnabled,
         isEnabled: !isPaused,
       },
-    };
-
-    update(req);
+    });
   };
 
   const onChange = async (name: keyof ConfigPublicDashboardForm, value: boolean) => {
     setValue(name, value);
-    await handleSubmit((data) => onUpdate(data))();
+    await handleSubmit((data) => onPublicDashboardUpdate(data))();
   };
 
-  const onDismissDelete = () => {
-    showModal(ShareModal, {
-      dashboard,
-      onDismiss: hideModal,
-      activeTab: 'public-dashboard',
-    });
-  };
+  function onCopyURL() {
+    DashboardInteractions.publicDashboardUrlCopied();
+  }
 
   return (
-    <div>
-      {hasWritePermissions && dashboard.hasUnsavedChanges() && <SaveDashboardChangesAlert />}
+    <div className={styles.configContainer}>
+      {showSaveChangesAlert && <SaveDashboardChangesAlert />}
       {!hasWritePermissions && <NoUpsertPermissionsAlert mode="edit" />}
-      {dashboardHasTemplateVariables(dashboardVariables) && <UnsupportedTemplateVariablesAlert />}
-      {!!unsupportedDataSources.length && (
-        <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDataSources.join(', ')} />
+      {hasTemplateVariables && <UnsupportedTemplateVariablesAlert />}
+      {unsupportedDatasources.length > 0 && (
+        <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDatasources.join(', ')} />
       )}
-      <div className={styles.titleContainer}>
-        <HorizontalGroup spacing="sm" align="center">
-          <h4 className={styles.title}>Settings</h4>
-          {(isUpdateLoading || isGetLoading) && <Spinner size={14} />}
-        </HorizontalGroup>
-      </div>
-      <Configuration disabled={disableInputs} onChange={onChange} register={register} />
-      <hr />
+
       {hasEmailSharingEnabled && <EmailSharingConfiguration />}
-      <Field label="Dashboard URL" className={styles.publicUrl}>
+
+      <Field
+        label={t('public-dashboard.config.dashboard-url-field-label', 'Dashboard URL')}
+        className={styles.fieldSpace}
+      >
         <Input
           value={generatePublicDashboardUrl(publicDashboard!.accessToken!)}
           readOnly
@@ -130,24 +141,22 @@ const ConfigPublicDashboard = () => {
               variant="primary"
               disabled={!publicDashboard?.isEnabled}
               getText={() => generatePublicDashboardUrl(publicDashboard!.accessToken!)}
+              onClipboardCopy={onCopyURL}
             >
-              Copy
+              <Trans i18nKey="public-dashboard.config.copy-button">Copy</Trans>
             </ClipboardButton>
           }
         />
       </Field>
-      <Layout
-        orientation={isDesktop ? 0 : 1}
-        justify={isDesktop ? 'flex-end' : 'flex-start'}
-        align={isDesktop ? 'center' : 'normal'}
-      >
-        <HorizontalGroup spacing="sm">
+
+      <Field className={styles.fieldSpace}>
+        <Layout>
           <Switch
             {...register('isPaused')}
             disabled={disableInputs}
             onChange={(e) => {
-              reportInteraction('grafana_dashboards_public_enable_clicked', {
-                action: e.currentTarget.checked ? 'disable' : 'enable',
+              DashboardInteractions.publicDashboardPauseSharingClicked({
+                paused: e.currentTarget.checked,
               });
               onChange('isPaused', e.currentTarget.checked);
             }}
@@ -158,51 +167,117 @@ const ConfigPublicDashboard = () => {
               margin-bottom: 0;
             `}
           >
-            Pause sharing dashboard
+            <Trans i18nKey="public-dashboard.config.pause-sharing-dashboard-label">Pause sharing dashboard</Trans>
           </Label>
-        </HorizontalGroup>
+        </Layout>
+      </Field>
+
+      <Field className={styles.fieldSpace}>
+        <SettingsBar
+          title={t('public-dashboard.config.settings-title', 'Settings')}
+          headerElement={({ className }) => (
+            <SettingsSummary
+              className={className}
+              isDataLoading={isLoading}
+              timeRange={timeRange}
+              timeSelectionEnabled={publicDashboard?.timeSelectionEnabled}
+              annotationsEnabled={publicDashboard?.annotationsEnabled}
+            />
+          )}
+          data-testid={selectors.SettingsDropdown}
+        >
+          <Configuration disabled={disableInputs} onChange={onChange} register={register} timeRange={timeRange} />
+        </SettingsBar>
+      </Field>
+
+      <Layout
+        orientation={isDesktop ? 0 : 1}
+        justify={isDesktop ? 'flex-end' : 'flex-start'}
+        align={isDesktop ? 'center' : 'normal'}
+      >
         <HorizontalGroup justify="flex-end">
-          <DeletePublicDashboardButton
-            className={cx(styles.deleteButton, { [styles.deleteButtonMobile]: !isDesktop })}
+          <Button
+            title={t('public-dashboard.config.revoke-public-URL-button-title', 'Revoke public URL')}
+            onClick={onRevoke}
             type="button"
             disabled={disableInputs}
             data-testid={selectors.DeleteButton}
-            onDismiss={onDismissDelete}
             variant="destructive"
             fill="outline"
-            dashboard={dashboard}
-            publicDashboard={{
-              uid: publicDashboard!.uid,
-              dashboardUid: dashboard.uid,
-              title: dashboard.title,
-            }}
           >
-            Revoke public URL
-          </DeletePublicDashboardButton>
+            <Trans i18nKey="public-dashboard.config.revoke-public-URL-button">Revoke public URL</Trans>
+          </Button>
         </HorizontalGroup>
       </Layout>
     </div>
   );
-};
+}
+
+interface ConfigPublicDashboardProps {
+  publicDashboard: PublicDashboard;
+  unsupportedDatasources: string[];
+}
+
+export function ConfigPublicDashboard({ publicDashboard, unsupportedDatasources }: ConfigPublicDashboardProps) {
+  const dashboardState = useSelector((store) => store.dashboard);
+  const dashboard = dashboardState.getModel()!;
+  const timeRange = getTimeRange(dashboard.getDefaultTime(), dashboard);
+  const hasWritePermissions = contextSrv.hasPermission(AccessControlAction.DashboardsPublicWrite);
+  const hasTemplateVariables = dashboardHasTemplateVariables(dashboard.getVariables());
+  const [deletePublicDashboard] = useDeletePublicDashboardMutation();
+  const onDeletePublicDashboardClick = (onDelete: () => void) => {
+    deletePublicDashboard({
+      dashboard,
+      uid: publicDashboard!.uid,
+      dashboardUid: dashboard.uid,
+    });
+    onDelete();
+  };
+
+  return (
+    <ModalsController>
+      {({ showModal, hideModal }) => (
+        <ConfigPublicDashboardBase
+          publicDashboard={publicDashboard}
+          dashboard={dashboard}
+          unsupportedDatasources={unsupportedDatasources}
+          timeRange={timeRange}
+          showSaveChangesAlert={hasWritePermissions && dashboard.hasUnsavedChanges()}
+          hasTemplateVariables={hasTemplateVariables}
+          onRevoke={() => {
+            DashboardInteractions.revokePublicDashboardClicked();
+            showModal(DeletePublicDashboardModal, {
+              dashboardTitle: dashboard.title,
+              onConfirm: () => onDeletePublicDashboardClick(hideModal),
+              onDismiss: () => {
+                showModal(ShareModal, {
+                  dashboard,
+                  onDismiss: hideModal,
+                  activeTab: shareDashboardType.publicDashboard,
+                });
+              },
+            });
+          }}
+        />
+      )}
+    </ModalsController>
+  );
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  titleContainer: css`
-    margin-bottom: ${theme.spacing(2)};
+  configContainer: css`
+    label: config container;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    gap: ${theme.spacing(3)};
   `,
-  title: css`
-    margin: 0;
-  `,
-  publicUrl: css`
+  fieldSpace: css`
+    label: field space;
     width: 100%;
-    padding-top: ${theme.spacing(1)};
-    margin-bottom: ${theme.spacing(3)};
+    margin-bottom: 0;
   `,
-  deleteButton: css`
-    margin-left: ${theme.spacing(3)};
-  `,
-  deleteButtonMobile: css`
-    margin-top: ${theme.spacing(2)};
-  `,
+  timeRange: css({
+    display: 'inline-block',
+  }),
 });
-
-export default ConfigPublicDashboard;

@@ -1,7 +1,6 @@
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Button } from '../Button';
 import { IconButton } from '../IconButton/IconButton';
 import { VerticalGroup } from '../Layout/Layout';
@@ -15,7 +14,6 @@ const logo = 'https://grafana.com/static/assets/img/apple-touch-icon.png';
 const meta: Meta<typeof Card> = {
   title: 'General/Card',
   component: Card,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
@@ -26,9 +24,9 @@ const meta: Meta<typeof Card> = {
   },
 };
 
-export const Basic: StoryFn<typeof Card> = ({ disabled }) => {
+export const Basic: StoryFn<typeof Card> = (args) => {
   return (
-    <Card disabled={disabled}>
+    <Card {...args}>
       <Card.Heading>Filter by name</Card.Heading>
       <Card.Description>
         Filter data by query. This is useful if you are sharing the results from a different panel that has many queries
@@ -38,24 +36,24 @@ export const Basic: StoryFn<typeof Card> = ({ disabled }) => {
   );
 };
 
-export const AsLink: StoryFn<typeof Card> = ({ disabled }) => {
+export const AsLink: StoryFn<typeof Card> = (args) => {
   return (
     <VerticalGroup>
-      <Card href="https://grafana.com" disabled={disabled}>
+      <Card href="https://grafana.com" {...args}>
         <Card.Heading>Filter by name</Card.Heading>
         <Card.Description>
           Filter data by query. This is useful if you are sharing the results from a different panel that has many
           queries and you want to only visualize a subset of that in this panel.
         </Card.Description>
       </Card>
-      <Card href="https://grafana.com" disabled={disabled}>
+      <Card href="https://grafana.com" {...args}>
         <Card.Heading>Filter by name2</Card.Heading>
         <Card.Description>
           Filter data by query. This is useful if you are sharing the results from a different panel that has many
           queries and you want to only visualize a subset of that in this panel.
         </Card.Description>
       </Card>
-      <Card href="https://grafana.com" disabled={disabled}>
+      <Card href="https://grafana.com" {...args}>
         <Card.Heading>Production system overview</Card.Heading>
         <Card.Meta>Meta tags</Card.Meta>
       </Card>
@@ -63,9 +61,9 @@ export const AsLink: StoryFn<typeof Card> = ({ disabled }) => {
   );
 };
 
-export const WithTags: StoryFn<typeof Card> = ({ disabled }) => {
+export const WithTags: StoryFn<typeof Card> = (args) => {
   return (
-    <Card disabled={disabled}>
+    <Card {...args}>
       <Card.Heading>Elasticsearch – Custom Templated Query</Card.Heading>
       <Card.Meta>Elastic Search</Card.Meta>
       <Card.Tags>
@@ -75,9 +73,9 @@ export const WithTags: StoryFn<typeof Card> = ({ disabled }) => {
   );
 };
 
-export const WithMedia: StoryFn<typeof Card> = ({ disabled }) => {
+export const WithMedia: StoryFn<typeof Card> = (args) => {
   return (
-    <Card disabled={disabled}>
+    <Card {...args}>
       <Card.Heading>1-ops-tools1-fallback</Card.Heading>
       <Card.Meta>
         Prometheus
@@ -91,9 +89,9 @@ export const WithMedia: StoryFn<typeof Card> = ({ disabled }) => {
     </Card>
   );
 };
-export const WithActions: StoryFn<typeof Card> = ({ disabled }) => {
+export const WithActions: StoryFn<typeof Card> = (args) => {
   return (
-    <Card disabled={disabled}>
+    <Card {...args}>
       <Card.Heading>1-ops-tools1-fallback</Card.Heading>
       <Card.Meta>
         Prometheus
@@ -120,9 +118,9 @@ export const WithActions: StoryFn<typeof Card> = ({ disabled }) => {
   );
 };
 
-export const Full: StoryFn<typeof Card> = ({ disabled }) => {
+export const Full: StoryFn<typeof Card> = (args) => {
   return (
-    <Card disabled={disabled}>
+    <Card {...args}>
       <Card.Heading>Card title</Card.Heading>
       <Card.Description>
         Description, body text. Greetings! Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod

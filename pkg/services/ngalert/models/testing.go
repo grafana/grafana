@@ -4,11 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"slices"
+	"sync"
+	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -58,26 +65,32 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 			panelID = &p
 		}
 
+		var ns []NotificationSettings
+		if rand.Int63()%2 == 0 {
+			ns = append(ns, NotificationSettingsGen()())
+		}
+
 		rule := &AlertRule{
-			ID:              rand.Int63n(1500),
-			OrgID:           rand.Int63n(1500) + 1, // Prevent OrgID=0 as this does not pass alert rule validation.
-			Title:           "TEST-ALERT-" + util.GenerateShortUID(),
-			Condition:       "A",
-			Data:            []AlertQuery{GenerateAlertQuery()},
-			Updated:         time.Now().Add(-time.Duration(rand.Intn(100) + 1)),
-			IntervalSeconds: rand.Int63n(60) + 1,
-			Version:         rand.Int63n(1500), // Don't generate a rule ID too big for postgres
-			UID:             util.GenerateShortUID(),
-			NamespaceUID:    util.GenerateShortUID(),
-			DashboardUID:    dashUID,
-			PanelID:         panelID,
-			RuleGroup:       "TEST-GROUP-" + util.GenerateShortUID(),
-			RuleGroupIndex:  rand.Intn(1500),
-			NoDataState:     randNoDataState(),
-			ExecErrState:    randErrState(),
-			For:             forInterval,
-			Annotations:     annotations,
-			Labels:          labels,
+			ID:                   rand.Int63n(1500),
+			OrgID:                rand.Int63n(1500) + 1, // Prevent OrgID=0 as this does not pass alert rule validation.
+			Title:                "TEST-ALERT-" + util.GenerateShortUID(),
+			Condition:            "A",
+			Data:                 []AlertQuery{GenerateAlertQuery()},
+			Updated:              time.Now().Add(-time.Duration(rand.Intn(100) + 1)),
+			IntervalSeconds:      rand.Int63n(60) + 1,
+			Version:              rand.Int63n(1500), // Don't generate a rule ID too big for postgres
+			UID:                  util.GenerateShortUID(),
+			NamespaceUID:         util.GenerateShortUID(),
+			DashboardUID:         dashUID,
+			PanelID:              panelID,
+			RuleGroup:            "TEST-GROUP-" + util.GenerateShortUID(),
+			RuleGroupIndex:       rand.Intn(1500),
+			NoDataState:          randNoDataState(),
+			ExecErrState:         randErrState(),
+			For:                  forInterval,
+			Annotations:          annotations,
+			Labels:               labels,
+			NotificationSettings: ns,
 		}
 
 		for _, mutator := range mutators {
@@ -92,6 +105,7 @@ func WithNotEmptyLabels(count int, prefix string) AlertRuleMutator {
 		rule.Labels = GenerateAlertLabels(count, prefix)
 	}
 }
+
 func WithUniqueID() AlertRuleMutator {
 	usedID := make(map[int64]struct{})
 	return func(rule *AlertRule) {
@@ -155,6 +169,18 @@ func WithUniqueOrgID() AlertRuleMutator {
 	}
 }
 
+// WithNamespaceUIDNotIn generates a random namespace UID if it is among excluded
+func WithNamespaceUIDNotIn(exclude ...string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		for {
+			if !slices.Contains(exclude, rule.NamespaceUID) {
+				return
+			}
+			rule.NamespaceUID = uuid.NewString()
+		}
+	}
+}
+
 func WithNamespace(namespace *folder.Folder) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.NamespaceUID = namespace.UID
@@ -167,6 +193,12 @@ func WithInterval(interval time.Duration) AlertRuleMutator {
 	}
 }
 
+func WithIntervalBetween(min, max int64) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.IntervalSeconds = rand.Int63n(max-min) + min
+	}
+}
+
 func WithTitle(title string) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.Title = title
@@ -176,6 +208,111 @@ func WithTitle(title string) AlertRuleMutator {
 func WithFor(duration time.Duration) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.For = duration
+	}
+}
+
+func WithForNTimes(timesOfInterval int64) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.For = time.Duration(rule.IntervalSeconds*timesOfInterval) * time.Second
+	}
+}
+
+func WithNoDataExecAs(nodata NoDataState) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.NoDataState = nodata
+	}
+}
+
+func WithErrorExecAs(err ExecutionErrorState) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.ExecErrState = err
+	}
+}
+
+func WithAnnotations(a data.Labels) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Annotations = a
+	}
+}
+
+func WithAnnotation(key, value string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		if rule.Annotations == nil {
+			rule.Annotations = data.Labels{}
+		}
+		rule.Annotations[key] = value
+	}
+}
+
+func WithLabels(a data.Labels) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Labels = a
+	}
+}
+
+func WithLabel(key, value string) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		if rule.Labels == nil {
+			rule.Labels = data.Labels{}
+		}
+		rule.Labels[key] = value
+	}
+}
+
+func WithUniqueUID(knownUids *sync.Map) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		uid := rule.UID
+		for {
+			_, ok := knownUids.LoadOrStore(uid, struct{}{})
+			if !ok {
+				rule.UID = uid
+				return
+			}
+			uid = uuid.NewString()
+		}
+	}
+}
+
+func WithUniqueTitle(knownTitles *sync.Map) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		title := rule.Title
+		for {
+			_, ok := knownTitles.LoadOrStore(title, struct{}{})
+			if !ok {
+				rule.Title = title
+				return
+			}
+			title = uuid.NewString()
+		}
+	}
+}
+
+func WithQuery(query ...AlertQuery) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.Data = query
+		if len(query) > 1 {
+			rule.Condition = query[0].RefID
+		}
+	}
+}
+
+func WithGroupKey(groupKey AlertRuleGroupKey) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.RuleGroup = groupKey.RuleGroup
+		rule.OrgID = groupKey.OrgID
+		rule.NamespaceUID = groupKey.NamespaceUID
+	}
+}
+
+func WithNotificationSettingsGen(ns func() NotificationSettings) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.NotificationSettings = []NotificationSettings{ns()}
+	}
+}
+
+func WithNoNotificationSettings() AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.NotificationSettings = nil
 	}
 }
 
@@ -308,6 +445,10 @@ func CopyRule(r *AlertRule) *AlertRule {
 		}
 	}
 
+	for _, s := range r.NotificationSettings {
+		result.NotificationSettings = append(result.NotificationSettings, CopyNotificationSettings(s))
+	}
+
 	return &result
 }
 
@@ -353,6 +494,108 @@ func CreateClassicConditionExpression(refID string, inputRefID string, reducer s
 	}
 }
 
+func CreateReduceExpression(refID string, inputRefID string, reducer string) AlertQuery {
+	return AlertQuery{
+		RefID:         refID,
+		QueryType:     expr.DatasourceType,
+		DatasourceUID: expr.DatasourceUID,
+		Model: json.RawMessage(fmt.Sprintf(`
+		{
+			"refId": "%[1]s",
+            "hide": false,
+            "type": "reduce",
+			"expression": "%[2]s",
+			"reducer": "%[3]s",
+            "datasource": {
+                "uid": "%[4]s",
+                "type": "%[5]s"
+            }
+		}`, refID, inputRefID, reducer, expr.DatasourceUID, expr.DatasourceType)),
+	}
+}
+
+func CreatePrometheusQuery(refID string, expr string, intervalMs int64, maxDataPoints int64, isInstant bool, datasourceUID string) AlertQuery {
+	return AlertQuery{
+		RefID:         refID,
+		QueryType:     "",
+		DatasourceUID: datasourceUID,
+		Model: json.RawMessage(fmt.Sprintf(`
+		{
+			"refId": "%[1]s",
+			"expr": "%[2]s",
+            "intervalMs": %[3]d,
+            "maxDataPoints": %[4]d,
+			"exemplar": false,
+			"instant": %[5]t,
+			"range": %[6]t,
+            "datasource": {
+                "uid": "%[7]s",
+                "type": "%[8]s"
+            }
+		}`, refID, expr, intervalMs, maxDataPoints, isInstant, !isInstant, datasourceUID, datasources.DS_PROMETHEUS)),
+	}
+}
+
+func CreateLokiQuery(refID string, expr string, intervalMs int64, maxDataPoints int64, queryType string, datasourceUID string) AlertQuery {
+	return AlertQuery{
+		RefID:         refID,
+		QueryType:     queryType,
+		DatasourceUID: datasourceUID,
+		Model: json.RawMessage(fmt.Sprintf(`
+		{
+			"refId": "%[1]s",
+			"expr": "%[2]s",
+            "intervalMs": %[3]d,
+            "maxDataPoints": %[4]d,
+			"queryType": "%[5]s",
+            "datasource": {
+                "uid": "%[6]s",
+                "type": "%[7]s"
+            }
+		}`, refID, expr, intervalMs, maxDataPoints, queryType, datasourceUID, datasources.DS_LOKI)),
+	}
+}
+
+func CreateHysteresisExpression(t *testing.T, refID string, inputRefID string, threshold int, recoveryThreshold int) AlertQuery {
+	t.Helper()
+	q := AlertQuery{
+		RefID:         refID,
+		QueryType:     expr.DatasourceType,
+		DatasourceUID: expr.DatasourceUID,
+		Model: json.RawMessage(fmt.Sprintf(`
+		{
+			"refId": "%[1]s",
+            "type": "threshold",
+            "datasource": {
+                "uid": "%[5]s",
+                "type": "%[6]s"
+            },
+			"expression": "%[2]s",
+            "conditions": [
+                {
+                    "type": "query",
+                    "evaluator": {
+                        "params": [
+                            %[3]d
+                        ],
+                        "type": "gt"
+                    },
+					"unloadEvaluator": {
+                        "params": [
+                            %[4]d
+                        ],
+                        "type": "lt"
+					}
+                }
+            ]
+		}`, refID, inputRefID, threshold, recoveryThreshold, expr.DatasourceUID, expr.DatasourceType)),
+	}
+	h, err := q.IsHysteresisExpression()
+	require.NoError(t, err)
+	require.Truef(t, h, "test model is expected to be a hysteresis expression")
+	return q
+}
+
 type AlertInstanceMutator func(*AlertInstance)
 
 // AlertInstanceGen provides a factory function that generates a random AlertInstance.
@@ -394,4 +637,109 @@ func AlertInstanceGen(mutators ...AlertInstanceMutator) *AlertInstance {
 		mutator(instance)
 	}
 	return instance
+}
+
+type Mutator[T any] func(*T)
+
+// CopyNotificationSettings creates a deep copy of NotificationSettings.
+func CopyNotificationSettings(ns NotificationSettings, mutators ...Mutator[NotificationSettings]) NotificationSettings {
+	c := NotificationSettings{
+		Receiver: ns.Receiver,
+	}
+	if ns.GroupWait != nil {
+		c.GroupWait = util.Pointer(*ns.GroupWait)
+	}
+	if ns.GroupInterval != nil {
+		c.GroupInterval = util.Pointer(*ns.GroupInterval)
+	}
+	if ns.RepeatInterval != nil {
+		c.RepeatInterval = util.Pointer(*ns.RepeatInterval)
+	}
+	if ns.GroupBy != nil {
+		c.GroupBy = make([]string, len(ns.GroupBy))
+		copy(c.GroupBy, ns.GroupBy)
+	}
+	if ns.MuteTimeIntervals != nil {
+		c.MuteTimeIntervals = make([]string, len(ns.MuteTimeIntervals))
+		copy(c.MuteTimeIntervals, ns.MuteTimeIntervals)
+	}
+	for _, mutator := range mutators {
+		mutator(&c)
+	}
+	return c
+}
+
+// NotificationSettingsGen generates NotificationSettings using a base and mutators.
+func NotificationSettingsGen(mutators ...Mutator[NotificationSettings]) func() NotificationSettings {
+	return func() NotificationSettings {
+		c := NotificationSettings{
+			Receiver:          util.GenerateShortUID(),
+			GroupBy:           []string{model.AlertNameLabel, FolderTitleLabel, util.GenerateShortUID()},
+			GroupWait:         util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
+			GroupInterval:     util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
+			RepeatInterval:    util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
+			MuteTimeIntervals: []string{util.GenerateShortUID(), util.GenerateShortUID()},
+		}
+		for _, mutator := range mutators {
+			mutator(&c)
+		}
+		return c
+	}
+}
+
+var (
+	NSMuts = NotificationSettingsMutators{}
+)
+
+type NotificationSettingsMutators struct{}
+
+func (n NotificationSettingsMutators) WithReceiver(receiver string) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		ns.Receiver = receiver
+	}
+}
+
+func (n NotificationSettingsMutators) WithGroupWait(groupWait *time.Duration) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		if groupWait == nil {
+			ns.GroupWait = nil
+			return
+		}
+		dur := model.Duration(*groupWait)
+		ns.GroupWait = &dur
+	}
+}
+
+func (n NotificationSettingsMutators) WithGroupInterval(groupInterval *time.Duration) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		if groupInterval == nil {
+			ns.GroupInterval = nil
+			return
+		}
+		dur := model.Duration(*groupInterval)
+		ns.GroupInterval = &dur
+	}
+}
+
+func (n NotificationSettingsMutators) WithRepeatInterval(repeatInterval *time.Duration) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		if repeatInterval == nil {
+			ns.RepeatInterval = nil
+			return
+		}
+		dur := model.Duration(*repeatInterval)
+		ns.RepeatInterval = &dur
+	}
+}
+
+func (n NotificationSettingsMutators) WithGroupBy(groupBy ...string) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		ns.GroupBy = groupBy
+	}
+}
+
+func (n NotificationSettingsMutators) WithMuteTimeIntervals(muteTimeIntervals ...string) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		ns.MuteTimeIntervals = muteTimeIntervals
+	}
 }

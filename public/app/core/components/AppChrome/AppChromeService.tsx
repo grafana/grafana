@@ -2,7 +2,7 @@ import { useObservable } from 'react-use';
 import { BehaviorSubject } from 'rxjs';
 
 import { AppEvents, NavModel, NavModelItem, PageLayoutType, UrlQueryValue } from '@grafana/data';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import store from 'app/core/store';
@@ -11,38 +11,59 @@ import { KioskMode } from 'app/types';
 
 import { RouteDescriptor } from '../../navigation/types';
 
+import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
+
 export interface AppChromeState {
   chromeless?: boolean;
   sectionNav: NavModel;
   pageNav?: NavModelItem;
   actions?: React.ReactNode;
   searchBarHidden?: boolean;
-  megaMenuOpen?: boolean;
+  megaMenuOpen: boolean;
+  megaMenuDocked: boolean;
   kioskMode: KioskMode | null;
   layout: PageLayoutType;
+  returnToPrevious?: {
+    title: ReturnToPreviousProps['title'];
+    href: ReturnToPreviousProps['href'];
+  };
 }
+
+export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
+export const DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY = 'grafana.navigation.open';
 
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
   private currentRoute?: RouteDescriptor;
   private routeChangeHandled = true;
 
+  private megaMenuDocked = Boolean(
+    window.innerWidth >= config.theme2.breakpoints.values.xl &&
+      store.getBool(DOCKED_LOCAL_STORAGE_KEY, Boolean(window.innerWidth >= config.theme2.breakpoints.values.xxl))
+  );
+
+  private sessionStorageData = window.sessionStorage.getItem('returnToPrevious');
+  private returnToPreviousData = this.sessionStorageData ? JSON.parse(this.sessionStorageData) : undefined;
+
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
     sectionNav: { node: { text: t('nav.home.title', 'Home') }, main: { text: '' } },
     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
+    megaMenuOpen: this.megaMenuDocked && store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, true),
+    megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
     layout: PageLayoutType.Canvas,
+    returnToPrevious: this.returnToPreviousData,
   });
 
-  setMatchedRoute(route: RouteDescriptor) {
+  public setMatchedRoute(route: RouteDescriptor) {
     if (this.currentRoute !== route) {
       this.currentRoute = route;
       this.routeChangeHandled = false;
     }
   }
 
-  update(update: Partial<AppChromeState>) {
+  public update(update: Partial<AppChromeState>) {
     const current = this.state.getValue();
     const newState: AppChromeState = {
       ...current,
@@ -68,7 +89,31 @@ export class AppChromeService {
     }
   }
 
-  ignoreStateUpdate(newState: AppChromeState, current: AppChromeState) {
+  public setReturnToPrevious = (returnToPrevious: ReturnToPreviousProps) => {
+    const previousPage = this.state.getValue().returnToPrevious;
+    reportInteraction('grafana_return_to_previous_button_created', {
+      page: returnToPrevious.href,
+      previousPage: previousPage?.href,
+    });
+
+    this.update({ returnToPrevious });
+    window.sessionStorage.setItem('returnToPrevious', JSON.stringify(returnToPrevious));
+  };
+
+  public clearReturnToPrevious = (interactionAction: 'clicked' | 'dismissed' | 'auto_dismissed') => {
+    const existingRtp = this.state.getValue().returnToPrevious;
+    if (existingRtp) {
+      reportInteraction('grafana_return_to_previous_button_dismissed', {
+        action: interactionAction,
+        page: existingRtp.href,
+      });
+    }
+
+    this.update({ returnToPrevious: undefined });
+    window.sessionStorage.removeItem('returnToPrevious');
+  };
+
+  private ignoreStateUpdate(newState: AppChromeState, current: AppChromeState) {
     if (isShallowEqual(newState, current)) {
       return true;
     }
@@ -88,22 +133,33 @@ export class AppChromeService {
     return false;
   }
 
-  useState() {
+  public useState() {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     return useObservable(this.state, this.state.getValue());
   }
 
-  onToggleMegaMenu = () => {
-    const isOpen = !this.state.getValue().megaMenuOpen;
-    reportInteraction('grafana_toggle_menu_clicked', { action: isOpen ? 'open' : 'close' });
-    this.update({ megaMenuOpen: isOpen });
+  public setMegaMenuOpen = (newOpenState: boolean) => {
+    const { megaMenuDocked } = this.state.getValue();
+    if (megaMenuDocked) {
+      store.set(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, newOpenState);
+    }
+    reportInteraction('grafana_mega_menu_open', { state: newOpenState });
+    this.update({
+      megaMenuOpen: newOpenState,
+    });
   };
 
-  setMegaMenu = (megaMenuOpen: boolean) => {
-    this.update({ megaMenuOpen });
+  public setMegaMenuDocked = (newDockedState: boolean, updatePersistedState = true) => {
+    if (updatePersistedState) {
+      store.set(DOCKED_LOCAL_STORAGE_KEY, newDockedState);
+    }
+    reportInteraction('grafana_mega_menu_docked', { state: newDockedState });
+    this.update({
+      megaMenuDocked: newDockedState,
+    });
   };
 
-  onToggleSearchBar = () => {
+  public onToggleSearchBar = () => {
     const { searchBarHidden, kioskMode } = this.state.getValue();
     const newSearchBarHidden = !searchBarHidden;
     store.set(this.searchBarStorageKey, newSearchBarHidden);
@@ -115,18 +171,18 @@ export class AppChromeService {
     this.update({ searchBarHidden: newSearchBarHidden, kioskMode: null });
   };
 
-  onToggleKioskMode = () => {
+  public onToggleKioskMode = () => {
     const nextMode = this.getNextKioskMode();
     this.update({ kioskMode: nextMode });
     locationService.partial({ kiosk: this.getKioskUrlValue(nextMode) });
   };
 
-  exitKioskMode() {
+  public exitKioskMode() {
     this.update({ kioskMode: undefined });
     locationService.partial({ kiosk: null });
   }
 
-  setKioskModeFromUrl(kiosk: UrlQueryValue) {
+  public setKioskModeFromUrl(kiosk: UrlQueryValue) {
     switch (kiosk) {
       case 'tv':
         this.update({ kioskMode: KioskMode.TV });
@@ -137,7 +193,7 @@ export class AppChromeService {
     }
   }
 
-  getKioskUrlValue(mode: KioskMode | null) {
+  public getKioskUrlValue(mode: KioskMode | null) {
     switch (mode) {
       case KioskMode.TV:
         return 'tv';

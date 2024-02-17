@@ -6,16 +6,13 @@ import InfiniteLoader from 'react-window-infinite-loader';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2 } from '@grafana/ui';
-import { getSvgSize } from '@grafana/ui/src/components/Icon/utils';
 import { Text } from '@grafana/ui/src/components/Text/Text';
+import { Indent } from 'app/core/components/Indent/Indent';
 import { Trans } from 'app/core/internationalization';
-import { Indent } from 'app/features/browse-dashboards/components/Indent';
 import { childrenByParentUIDSelector, rootItemsSelector } from 'app/features/browse-dashboards/state';
 import { DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { DashboardViewItem } from 'app/features/search/types';
 import { useSelector } from 'app/types';
-
-import { FolderUID } from './types';
 
 const ROW_HEIGHT = 40;
 const CHEVRON_SIZE = 'md';
@@ -27,7 +24,7 @@ interface NestedFolderListProps {
   focusedItemIndex: number;
   foldersAreOpenable: boolean;
   idPrefix: string;
-  selectedFolder: FolderUID | undefined;
+  selectedFolder: string | undefined;
   onFolderExpand: (uid: string, newOpenState: boolean) => void;
   onFolderSelect: (item: DashboardViewItem) => void;
   isItemLoaded: (itemIndex: number) => boolean;
@@ -155,7 +152,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
   if (item.kind === 'ui' && item.uiKind === 'pagination-placeholder') {
     return (
       <span style={virtualStyles} className={styles.row}>
-        <Indent level={level} />
+        <Indent level={level} spacing={2} />
         <Skeleton width={SKELETON_WIDTHS[index % SKELETON_WIDTHS.length]} />
       </span>
     );
@@ -192,7 +189,8 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
       id={getDOMId(idPrefix, item.uid)}
     >
       <div className={styles.rowBody}>
-        <Indent level={level} />
+        <Indent level={level} spacing={2} />
+
         {foldersAreOpenable ? (
           <IconButton
             size={CHEVRON_SIZE}
@@ -209,9 +207,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
         )}
 
         <label className={styles.label} id={labelId}>
-          <Text as="span" truncate>
-            {item.title}
-          </Text>
+          <Text truncate>{item.title}</Text>
         </label>
       </div>
     </div>
@@ -241,9 +237,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '100%',
     }),
 
-    // Should be the same size as the <IconButton /> for proper alignment
     folderButtonSpacer: css({
-      paddingLeft: `calc(${getSvgSize(CHEVRON_SIZE)}px + ${theme.spacing(0.5)})`,
+      paddingLeft: theme.spacing(0.5),
     }),
 
     row: css({

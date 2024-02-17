@@ -73,10 +73,11 @@ export function toDataQueryResponse(
   }
 
   // If the response isn't in a correct shape we just ignore the data and pass empty DataQueryResponse.
-  if ((res as FetchResponse).data?.results) {
-    const results = (res as FetchResponse).data.results;
+  const fetchResponse = res as FetchResponse;
+  if (fetchResponse.data?.results) {
+    const results = fetchResponse.data.results;
     const refIDs = queries?.length ? queries.map((q) => q.refId) : Object.keys(results);
-    const cachedResponse = isCachedResponse(res as FetchResponse);
+    const cachedResponse = isCachedResponse(fetchResponse);
     const data: DataResponse[] = [];
 
     for (const refId of refIDs) {
@@ -144,7 +145,7 @@ export function toDataQueryResponse(
   }
 
   // When it is not an OK response, make sure the error gets added
-  if ((res as FetchResponse).status && (res as FetchResponse).status !== 200) {
+  if (fetchResponse.status && fetchResponse.status !== 200) {
     if (rsp.state !== LoadingState.Error) {
       rsp.state = LoadingState.Error;
     }

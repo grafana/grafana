@@ -31,6 +31,8 @@ const setup = () => {
     setShowSpanFilters: jest.fn(),
     showSpanFilterMatchesOnly: false,
     setShowSpanFilterMatchesOnly: jest.fn(),
+    showCriticalPathSpansOnly: false,
+    setShowCriticalPathSpansOnly: jest.fn(),
     spanFilterMatches: undefined,
     setFocusedSpanIdForSearch: jest.fn(),
     datasourceType: 'tempo',
@@ -86,6 +88,7 @@ export const trace = {
       hasChildren: false,
       childSpanCount: 0,
       warnings: [],
+      childSpanIds: [],
     },
     {
       traceID: '164afda25df92413',
@@ -125,6 +128,7 @@ export const trace = {
       hasChildren: false,
       childSpanCount: 0,
       warnings: [],
+      childSpanIds: [],
     },
     {
       traceID: '164afda25df92413',
@@ -164,6 +168,7 @@ export const trace = {
       hasChildren: false,
       childSpanCount: 0,
       warnings: [],
+      childSpanIds: [],
     },
   ],
   traceID: '8bb35a31-eb64-512d-aaed-ddd61887bb2b',

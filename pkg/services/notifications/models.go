@@ -21,7 +21,7 @@ type SendEmailCommand struct {
 	SingleEmail   bool
 	Template      string
 	Subject       string
-	Data          map[string]interface{}
+	Data          map[string]any
 	Info          string
 	ReplyTo       []string
 	EmbeddedFiles []string

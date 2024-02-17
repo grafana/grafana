@@ -1,21 +1,21 @@
 import { css } from '@emotion/css';
-import React, { MouseEvent, useCallback } from 'react';
+import React, { MouseEvent } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { reportInteraction } from '@grafana/runtime';
+import { useStyles2 } from '@grafana/ui';
 import store from 'app/core/store';
 
 import { TutorialCardType } from '../types';
 
-import { cardContent, cardStyle, iconStyle } from './sharedStyles';
+import { cardContent, cardStyle } from './sharedStyles';
 
 interface Props {
   card: TutorialCardType;
 }
 
 export const TutorialCard = ({ card }: Props) => {
-  const styles = useStyles2(useCallback((theme: GrafanaTheme2) => getStyles(theme, card.done), [card.done]));
-  const iconStyles = useStyles2(useCallback((theme: GrafanaTheme2) => iconStyle(theme, card.done), [card.done]));
+  const styles = useStyles2(getStyles, card.done);
 
   return (
     <a
@@ -30,7 +30,6 @@ export const TutorialCard = ({ card }: Props) => {
         <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
         <h4 className={styles.cardTitle}>{card.title}</h4>
         <div className={styles.info}>{card.info}</div>
-        <Icon className={iconStyles} name={card.icon} size="xxl" />
       </div>
     </a>
   );
@@ -42,6 +41,7 @@ const handleTutorialClick = (event: MouseEvent<HTMLAnchorElement>, card: Tutoria
   if (!isSet) {
     store.set(card.key, true);
   }
+  reportInteraction('grafana_getting_started_tutorial', { title: card.title });
 };
 
 const getStyles = (theme: GrafanaTheme2, complete: boolean) => {

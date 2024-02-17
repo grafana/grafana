@@ -9,11 +9,11 @@
 
 package dataquery
 
-// Defines values for PhlareQueryType.
+// Defines values for PyroscopeQueryType.
 const (
-	PhlareQueryTypeBoth    PhlareQueryType = "both"
-	PhlareQueryTypeMetrics PhlareQueryType = "metrics"
-	PhlareQueryTypeProfile PhlareQueryType = "profile"
+	PyroscopeQueryTypeBoth    PyroscopeQueryType = "both"
+	PyroscopeQueryTypeMetrics PyroscopeQueryType = "metrics"
+	PyroscopeQueryTypeProfile PyroscopeQueryType = "profile"
 )
 
 // These are the common properties available to all queries in all datasources.
@@ -79,7 +79,10 @@ type GrafanaPyroscopeDataQuery struct {
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId string `json:"refId"`
+
+	// Specifies the query span selectors.
+	SpanSelector []string `json:"spanSelector,omitempty"`
 }
 
-// PhlareQueryType defines model for PhlareQueryType.
-type PhlareQueryType string
+// PyroscopeQueryType defines model for PyroscopeQueryType.
+type PyroscopeQueryType string

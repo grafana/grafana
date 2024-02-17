@@ -23,7 +23,7 @@ import {
   GraphDrawStyle,
   GraphFieldConfig,
   GraphGradientMode,
-  GraphTresholdsStyleMode,
+  GraphThresholdsStyleMode,
   LineInterpolation,
   LineStyle,
   VisibilityMode,
@@ -222,10 +222,17 @@ export function graphToTimeseriesOptions(angular: any): {
             }
             break;
           case 'lines':
-            rule.properties.push({
-              id: 'custom.lineWidth',
-              value: 0, // don't show lines
-            });
+            if (v) {
+              rule.properties.push({
+                id: 'custom.drawStyle',
+                value: 'line',
+              });
+            } else {
+              rule.properties.push({
+                id: 'custom.lineWidth',
+                value: 0,
+              });
+            }
             break;
           case 'linewidth':
             rule.properties.push({
@@ -297,7 +304,7 @@ export function graphToTimeseriesOptions(angular: any): {
     }
   }
 
-  const graph = y1.custom ?? ({} as GraphFieldConfig);
+  const graph: GraphFieldConfig = y1.custom ?? {};
   graph.drawStyle = angular.bars ? GraphDrawStyle.Bars : angular.lines ? GraphDrawStyle.Line : GraphDrawStyle.Points;
 
   if (angular.points) {
@@ -344,7 +351,7 @@ export function graphToTimeseriesOptions(angular: any): {
   }
 
   y1.custom = omitBy(graph, isNil);
-  y1.nullValueMode = angular.nullPointMode as NullValueMode;
+  y1.nullValueMode = angular.nullPointMode;
 
   const options: Options = {
     legend: {
@@ -392,7 +399,7 @@ export function graphToTimeseriesOptions(angular: any): {
 
   // timeRegions migration
   if (angular.timeRegions?.length) {
-    let regions: any[] = angular.timeRegions.map((old: GraphTimeRegionConfig, idx: number) => ({
+    let regions = angular.timeRegions.map((old: GraphTimeRegionConfig, idx: number) => ({
       name: `T${idx + 1}`,
       color: old.colorMode !== 'custom' ? old.colorMode : old.fillColor,
       line: old.line,
@@ -522,9 +529,9 @@ export function graphToTimeseriesOptions(angular: any): {
       });
     }
 
-    let displayMode = area ? GraphTresholdsStyleMode.Area : GraphTresholdsStyleMode.Line;
+    let displayMode = area ? GraphThresholdsStyleMode.Area : GraphThresholdsStyleMode.Line;
     if (line && area) {
-      displayMode = GraphTresholdsStyleMode.LineAndArea;
+      displayMode = GraphThresholdsStyleMode.LineAndArea;
     }
 
     // TODO move into standard ThresholdConfig ?
@@ -616,7 +623,7 @@ function getFieldConfigFromOldAxis(obj: any): FieldConfig<GraphFieldConfig> {
     graph.axisLabel = obj.label;
   }
   if (obj.logBase) {
-    const log = obj.logBase as number;
+    const log: number = obj.logBase;
     if (log === 2 || log === 10) {
       graph.scaleDistribution = {
         type: ScaleDistribution.Log,
@@ -642,8 +649,7 @@ function fillY2DynamicValues(
   props: DynamicConfigValue[]
 ) {
   // The standard properties
-  for (const key of Object.keys(y2)) {
-    const value = (y2 as any)[key];
+  for (const [key, value] of Object.entries(y2)) {
     if (key !== 'custom' && value !== (y1 as any)[key]) {
       props.push({
         id: key,
@@ -655,8 +661,7 @@ function fillY2DynamicValues(
   // Add any custom property
   const y1G = y1.custom ?? {};
   const y2G = y2.custom ?? {};
-  for (const key of Object.keys(y2G)) {
-    const value = (y2G as any)[key];
+  for (const [key, value] of Object.entries(y2G)) {
     if (value !== (y1G as any)[key]) {
       props.push({
         id: `custom.${key}`,
@@ -666,7 +671,7 @@ function fillY2DynamicValues(
   }
 }
 
-function validNumber(val: any): number | undefined {
+function validNumber(val: unknown): number | undefined {
   if (isNumber(val)) {
     return val;
   }
@@ -679,7 +684,7 @@ function validNumber(val: any): number | undefined {
   return undefined;
 }
 
-function getReducersFromLegend(obj: Record<string, any>): string[] {
+function getReducersFromLegend(obj: Record<string, unknown>): string[] {
   const ids: string[] = [];
   for (const key of Object.keys(obj)) {
     const r = fieldReducers.getIfExists(key);

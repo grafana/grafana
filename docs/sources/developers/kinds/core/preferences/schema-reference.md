@@ -2,6 +2,11 @@
 keywords:
   - grafana
   - schema
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Preferences kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
@@ -16,7 +21,7 @@ The user or team frontend preferences
 | Property   | Type                | Required | Default | Description                                                                                                                                                                                                                                                                    |
 |------------|---------------------|----------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `metadata` | [object](#metadata) | **Yes**  |         | metadata contains embedded CommonMetadata and can be extended with custom string fields<br/>TODO: use CommonMetadata instead of redefining here; currently needs to be defined here<br/>without external reference as using the CommonMetadata reference breaks thema codegen. |
-| `spec`     | [object](#spec)     | **Yes**  |         |                                                                                                                                                                                                                                                                                |
+| `spec`     | [object](#spec)     | **Yes**  |         | Spec defines user, team or org Grafana preferences<br/>swagger:model Preferences                                                                                                                                                                                               |
 | `status`   | [object](#status)   | **Yes**  |         |                                                                                                                                                                                                                                                                                |
 
 ### Metadata
@@ -64,14 +69,41 @@ extraFields is reserved for any fields that are pulled from the API server metad
 
 ### Spec
 
-| Property           | Type                                              | Required | Default | Description                                                                     |
-|--------------------|---------------------------------------------------|----------|---------|---------------------------------------------------------------------------------|
-| `homeDashboardUID` | string                                            | No       |         | UID for the home dashboard                                                      |
-| `language`         | string                                            | No       |         | Selected language (beta)                                                        |
-| `queryHistory`     | [QueryHistoryPreference](#queryhistorypreference) | No       |         |                                                                                 |
-| `theme`            | string                                            | No       |         | light, dark, empty is default                                                   |
-| `timezone`         | string                                            | No       |         | The timezone selection<br/>TODO: this should use the timezone defined in common |
-| `weekStart`        | string                                            | No       |         | day of the week (sunday, monday, etc)                                           |
+Spec defines user, team or org Grafana preferences
+swagger:model Preferences
+
+| Property            | Type                                              | Required | Default | Description                                                                     |
+|---------------------|---------------------------------------------------|----------|---------|---------------------------------------------------------------------------------|
+| `cookiePreferences` | [CookiePreferences](#cookiepreferences)           | No       |         |                                                                                 |
+| `homeDashboardUID`  | string                                            | No       |         | UID for the home dashboard                                                      |
+| `language`          | string                                            | No       |         | Selected language (beta)                                                        |
+| `queryHistory`      | [QueryHistoryPreference](#queryhistorypreference) | No       |         |                                                                                 |
+| `theme`             | string                                            | No       |         | light, dark, empty is default                                                   |
+| `timezone`          | string                                            | No       |         | The timezone selection<br/>TODO: this should use the timezone defined in common |
+| `weekStart`         | string                                            | No       |         | day of the week (sunday, monday, etc)                                           |
+
+### CookiePreferences
+
+| Property      | Type                   | Required | Default | Description |
+|---------------|------------------------|----------|---------|-------------|
+| `analytics`   | [object](#analytics)   | No       |         |             |
+| `functional`  | [object](#functional)  | No       |         |             |
+| `performance` | [object](#performance) | No       |         |             |
+
+### Analytics
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+
+### Functional
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+
+### Performance
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
 
 ### QueryHistoryPreference
 

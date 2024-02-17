@@ -163,7 +163,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       ticks: Object.assign(
         {
           show: true,
-          stroke: gridColor,
+          stroke: border?.show ? color ?? theme.colors.text.primary : gridColor,
           width: 1 / devicePixelRatio,
           size: 4,
         },
@@ -180,8 +180,12 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       incrs,
     };
 
-    if (border != null) {
-      config.border = border;
+    if (border?.show) {
+      config.border = {
+        stroke: color ?? theme.colors.text.primary,
+        width: 1 / devicePixelRatio,
+        ...border,
+      };
     }
 
     if (label != null && label.length > 0) {

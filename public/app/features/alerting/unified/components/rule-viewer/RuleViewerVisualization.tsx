@@ -12,12 +12,13 @@ import {
   urlUtil,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { DataSourceRef } from '@grafana/schema';
 import { DateTimePicker, LinkButton, useStyles2 } from '@grafana/ui';
+import { contextSrv } from 'app/core/core';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { AccessControlAction } from 'app/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { Authorize } from '../Authorize';
+import { WithReturnButton } from '../WithReturnButton';
 import { VizWrapper } from '../rule-editor/VizWrapper';
 import { ThresholdDefinition } from '../rule-editor/util';
 
@@ -63,6 +64,8 @@ export function RuleViewerVisualization({
     return null;
   }
 
+  const allowedToExploreDataSources = contextSrv.hasAccessToExplore();
+
   return (
     <div className={className}>
       <div className={styles.header}>
@@ -70,19 +73,16 @@ export function RuleViewerVisualization({
           {!isExpression && relativeTimeRange ? (
             <DateTimePicker date={setDateTime(relativeTimeRange.to)} onChange={onTimeChange} maxDate={new Date()} />
           ) : null}
-          <Authorize actions={[AccessControlAction.DataSourcesExplore]}>
-            {!isExpression && (
-              <LinkButton
-                size="md"
-                variant="secondary"
-                icon="compass"
-                target="_blank"
-                href={createExploreLink(dsSettings, model)}
-              >
-                View in Explore
-              </LinkButton>
-            )}
-          </Authorize>
+
+          {allowedToExploreDataSources && !isExpression && (
+            <WithReturnButton
+              component={
+                <LinkButton size="md" variant="secondary" icon="compass" href={createExploreLink(dsSettings, model)}>
+                  View in Explore
+                </LinkButton>
+              }
+            />
+          )}
         </div>
       </div>
       <VizWrapper data={data} thresholds={thresholds?.config} thresholdsType={thresholds?.mode} />
@@ -90,22 +90,20 @@ export function RuleViewerVisualization({
   );
 }
 
-function createExploreLink(settings: DataSourceInstanceSettings, model: AlertDataQuery): string {
-  const { name } = settings;
+function createExploreLink(settings: DataSourceRef, model: AlertDataQuery): string {
+  const { uid, type } = settings;
   const { refId, ...rest } = model;
 
   /*
     In my testing I've found some alerts that don't have a data source embedded inside the model.
-
     At this moment in time it is unclear to me why some alert definitions not have a data source embedded in the model.
-    Ideally we'd resolve the datasource name to the proper datasource Ref "{ type: string, uid: string }" and pass that in to the model.
 
     I don't think that should happen here, the fact that the datasource ref is sometimes missing here is a symptom of another cause. (Gilles)
    */
   return urlUtil.renderUrl(`${config.appSubUrl}/explore`, {
     left: JSON.stringify({
-      datasource: name,
-      queries: [{ refId: 'A', ...rest }],
+      datasource: settings.uid,
+      queries: [{ refId: 'A', ...rest, datasource: { type, uid } }],
       range: { from: 'now-1h', to: 'now' },
     }),
   });

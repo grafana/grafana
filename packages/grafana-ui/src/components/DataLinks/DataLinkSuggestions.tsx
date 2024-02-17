@@ -6,7 +6,7 @@ import useClickAway from 'react-use/lib/useClickAway';
 import { VariableSuggestion, GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { List } from '../index';
+import { List } from '../List/List';
 
 interface DataLinkSuggestionsProps {
   activeRef?: React.RefObject<HTMLDivElement>;
@@ -31,6 +31,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     item: css({
       background: 'none',
       padding: '2px 8px',
+      userSelect: 'none',
       color: theme.colors.text.primary,
       cursor: 'pointer',
       '&:hover': {

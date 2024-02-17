@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { applyFieldOverrides, DataFrame, SelectableValue, SplitOpen, TimeZone, ValueLinkConfig } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime/src';
-import { Collapse, RadioButtonGroup, Table, AdHocFilterItem } from '@grafana/ui';
+import { applyFieldOverrides, DataFrame, SelectableValue, SplitOpen } from '@grafana/data';
+import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
+import { TimeZone } from '@grafana/schema';
+import { RadioButtonGroup, Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';
 import { StoreState, TABLE_RESULTS_STYLE } from 'app/types';
@@ -12,8 +13,7 @@ import { ExploreItemState, TABLE_RESULTS_STYLES, TableResultsStyle } from 'app/t
 
 import { MetaInfoText } from '../MetaInfoText';
 import RawListContainer from '../PrometheusListView/RawListContainer';
-import { selectIsWaitingForData } from '../state/query';
-import { getFieldLinksForExplore } from '../utils/links';
+import { exploreDataLinkPostProcessorFactory } from '../utils/links';
 
 interface RawPrometheusContainerProps {
   ariaLabel?: string;
@@ -32,11 +32,10 @@ interface PrometheusContainerState {
 function mapStateToProps(state: StoreState, { exploreId }: RawPrometheusContainerProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore.panes[exploreId]!;
-  const { tableResult, rawPrometheusResult, range } = item;
-  const loadingInState = selectIsWaitingForData(exploreId)(state);
+  const { tableResult, rawPrometheusResult, range, queryResponse } = item;
   const rawPrometheusFrame: DataFrame[] = rawPrometheusResult ? [rawPrometheusResult] : [];
-  const result = (tableResult?.length ?? false) > 0 && rawPrometheusResult ? tableResult : rawPrometheusFrame;
-  const loading = result && result.length > 0 ? false : loadingInState;
+  const result = (tableResult?.length ?? 0) > 0 && rawPrometheusResult ? tableResult : rawPrometheusFrame;
+  const loading = queryResponse.state;
 
   return { loading, tableResult: result, range };
 }
@@ -57,24 +56,19 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
     }
   }
 
-  getMainFrame(frames: DataFrame[] | null) {
-    return frames?.find((df) => df.meta?.custom?.parentRowIndex === undefined) || frames?.[0];
-  }
-
   onChangeResultsStyle = (resultsStyle: TableResultsStyle) => {
     this.setState({ resultsStyle });
   };
 
   getTableHeight() {
     const { tableResult } = this.props;
-    const mainFrame = this.getMainFrame(tableResult);
 
-    if (!mainFrame || mainFrame.length === 0) {
+    if (!tableResult || tableResult.length === 0) {
       return 200;
     }
 
     // tries to estimate table height
-    return Math.max(Math.min(600, mainFrame.length * 35) + 35);
+    return Math.max(Math.min(600, tableResult[0].length * 35) + 35);
   }
 
   renderLabel = () => {
@@ -91,7 +85,6 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
 
     return (
       <div className={spacing}>
-        {this.state.resultsStyle === TABLE_RESULTS_STYLE.raw ? 'Raw' : 'Table'}
         <RadioButtonGroup
           onClick={() => {
             const props = {
@@ -118,61 +111,50 @@ export class RawPrometheusContainer extends PureComponent<Props, PrometheusConta
 
     let dataFrames = tableResult;
 
+    const dataLinkPostProcessor = exploreDataLinkPostProcessorFactory(splitOpenFn, range);
+
     if (dataFrames?.length) {
       dataFrames = applyFieldOverrides({
         data: dataFrames,
         timeZone,
         theme: config.theme2,
-        replaceVariables: (v: string) => v,
+        replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
         fieldConfig: {
           defaults: {},
           overrides: [],
         },
+        dataLinkPostProcessor,
       });
-      // Bit of code smell here. We need to add links here to the frame modifying the frame on every render.
-      // Should work fine in essence but still not the ideal way to pass props. In logs container we do this
-      // differently and sidestep this getLinks API on a dataframe
-      for (const frame of dataFrames) {
-        for (const field of frame.fields) {
-          field.getLinks = (config: ValueLinkConfig) => {
-            return getFieldLinksForExplore({
-              field,
-              rowIndex: config.valueRowIndex!,
-              splitOpenFn,
-              range,
-              dataFrame: frame!,
-            });
-          };
-        }
-      }
     }
 
-    const mainFrame = this.getMainFrame(dataFrames);
-    const subFrames = dataFrames?.filter((df) => df.meta?.custom?.parentRowIndex !== undefined);
+    const frames = dataFrames?.filter(
+      (frame: DataFrame | undefined): frame is DataFrame => !!frame && frame.length !== 0
+    );
+
+    const title = this.state.resultsStyle === TABLE_RESULTS_STYLE.raw ? 'Raw' : 'Table';
     const label = this.state?.resultsStyle !== undefined ? this.renderLabel() : 'Table';
 
     // Render table as default if resultsStyle is not set.
     const renderTable = !this.state?.resultsStyle || this.state?.resultsStyle === TABLE_RESULTS_STYLE.table;
 
     return (
-      <Collapse label={label} loading={loading} isOpen>
-        {mainFrame?.length && (
+      <PanelChrome title={title} actions={label} loadingState={loading}>
+        {frames?.length && (
           <>
             {renderTable && (
               <Table
                 ariaLabel={ariaLabel}
-                data={mainFrame}
-                subData={subFrames}
+                data={frames[0]}
                 width={tableWidth}
                 height={height}
                 onCellFilterAdded={onCellFilterAdded}
               />
             )}
-            {this.state?.resultsStyle === TABLE_RESULTS_STYLE.raw && <RawListContainer tableResult={mainFrame} />}
+            {this.state?.resultsStyle === TABLE_RESULTS_STYLE.raw && <RawListContainer tableResult={frames[0]} />}
           </>
         )}
-        {!mainFrame?.length && <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
-      </Collapse>
+        {!frames?.length && <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
+      </PanelChrome>
     );
   }
 }

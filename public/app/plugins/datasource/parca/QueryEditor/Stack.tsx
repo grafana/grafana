@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { CSSProperties, useCallback } from 'react';
+import React, { CSSProperties } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -14,7 +14,7 @@ interface StackProps {
 }
 
 export function Stack(props: StackProps) {
-  const styles = useStyles2(useCallback((theme) => getStyles(theme, props), [props]));
+  const styles = useStyles2(getStyles, props);
   return <div className={styles.root}>{props.children}</div>;
 }
 

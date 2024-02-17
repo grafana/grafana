@@ -3,13 +3,14 @@ package cloudwatch
 import (
 	"context"
 	"fmt"
+	"regexp"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
 type responseWrapper struct {
@@ -17,8 +18,8 @@ type responseWrapper struct {
 	RefId        string
 }
 
-func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger log.Logger, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	logger.Debug("Executing time series query")
+func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	e.logger.FromContext(ctx).Debug("Executing time series query")
 	resp := backend.NewQueryDataResponse()
 
 	if len(req.Queries) == 0 {
@@ -36,8 +37,8 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 		return nil, err
 	}
 
-	requestQueries, err := models.ParseMetricDataQueries(req.Queries, startTime, endTime, instance.Settings.Region, logger,
-		e.features.IsEnabled(featuremgmt.FlagCloudWatchCrossAccountQuerying))
+	requestQueries, err := models.ParseMetricDataQueries(req.Queries, startTime, endTime, instance.Settings.Region, e.logger.FromContext(ctx),
+		features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying))
 	if err != nil {
 		return nil, err
 	}
@@ -56,49 +57,64 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 
 	resultChan := make(chan *responseWrapper, len(req.Queries))
 	eg, ectx := errgroup.WithContext(ctx)
-	for r, q := range requestQueriesByRegion {
-		requestQueries := q
+	for r, regionQueries := range requestQueriesByRegion {
 		region := r
-		eg.Go(func() error {
-			defer func() {
-				if err := recover(); err != nil {
-					logger.Error("Execute Get Metric Data Query Panic", "error", err, "stack", log.Stack(1))
-					if theErr, ok := err.(error); ok {
-						resultChan <- &responseWrapper{
-							DataResponse: &backend.DataResponse{
-								Error: theErr,
-							},
+
+		batches := [][]*models.CloudWatchQuery{regionQueries}
+		if features.IsEnabled(ctx, features.FlagCloudWatchBatchQueries) {
+			batches = getMetricQueryBatches(regionQueries, e.logger.FromContext(ctx))
+		}
+
+		for _, batch := range batches {
+			requestQueries := batch
+			eg.Go(func() error {
+				defer func() {
+					if err := recover(); err != nil {
+						e.logger.FromContext(ctx).Error("Execute Get Metric Data Query Panic", "error", err, "stack", utils.Stack(1))
+						if theErr, ok := err.(error); ok {
+							resultChan <- &responseWrapper{
+								DataResponse: &backend.DataResponse{
+									Error: theErr,
+								},
+							}
 						}
 					}
+				}()
+
+				client, err := e.getCWClient(ctx, req.PluginContext, region)
+				if err != nil {
+					return err
 				}
-			}()
 
-			client, err := e.getCWClient(ctx, req.PluginContext, region)
-			if err != nil {
-				return err
-			}
+				metricDataInput, err := e.buildMetricDataInput(startTime, endTime, requestQueries)
+				if err != nil {
+					return err
+				}
 
-			metricDataInput, err := e.buildMetricDataInput(logger, startTime, endTime, requestQueries)
-			if err != nil {
-				return err
-			}
+				mdo, err := e.executeRequest(ectx, client, metricDataInput)
+				if err != nil {
+					return err
+				}
 
-			mdo, err := e.executeRequest(ectx, client, metricDataInput)
-			if err != nil {
-				return err
-			}
+				if features.IsEnabled(ctx, features.FlagCloudWatchWildCardDimensionValues) {
+					requestQueries, err = e.getDimensionValuesForWildcards(ctx, req.PluginContext, region, client, requestQueries, instance.tagValueCache)
+					if err != nil {
+						return err
+					}
+				}
 
-			res, err := e.parseResponse(startTime, endTime, mdo, requestQueries)
-			if err != nil {
-				return err
-			}
+				res, err := e.parseResponse(startTime, endTime, mdo, requestQueries)
+				if err != nil {
+					return err
+				}
 
-			for _, responseWrapper := range res {
-				resultChan <- responseWrapper
-			}
+				for _, responseWrapper := range res {
+					resultChan <- responseWrapper
+				}
 
-			return nil
-		})
+				return nil
+			})
+		}
 	}
 
 	if err := eg.Wait(); err != nil {
@@ -106,6 +122,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 			Error: fmt.Errorf("metric request error: %q", err),
 		}
 		resultChan <- &responseWrapper{
+			RefId:        getQueryRefIdFromErrorString(err.Error(), requestQueries),
 			DataResponse: &dataResponse,
 		}
 	}
@@ -116,4 +133,18 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 	}
 
 	return resp, nil
+}
+
+func getQueryRefIdFromErrorString(err string, queries []*models.CloudWatchQuery) string {
+	// error can be in format "Error in expression 'test': Invalid syntax"
+	// so we can find the query id or ref id between the quotations
+	erroredRefId := ""
+
+	for _, query := range queries {
+		if regexp.MustCompile(`'`+query.RefId+`':`).MatchString(err) || regexp.MustCompile(`'`+query.Id+`':`).MatchString(err) {
+			erroredRefId = query.RefId
+		}
+	}
+	// if errorRefId is empty, it means the error concerns all queries (error metric limit exceeded, for example)
+	return erroredRefId
 }

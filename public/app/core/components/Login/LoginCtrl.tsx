@@ -1,8 +1,6 @@
 import React, { PureComponent } from 'react';
 
-import { AppEvents } from '@grafana/data';
 import { FetchError, getBackendSrv, isFetchError } from '@grafana/runtime';
-import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { t } from 'app/core/internationalization';
 
@@ -53,11 +51,8 @@ export class LoginCtrl extends PureComponent<Props, State> {
       isLoggingIn: false,
       isChangingPassword: false,
       showDefaultPasswordWarning: false,
+      loginErrorMessage: config.loginError,
     };
-
-    if (config.loginError) {
-      appEvents.emit(AppEvents.alertWarning, ['Login Failed', config.loginError]);
-    }
   }
 
   changePassword = (password: string) => {

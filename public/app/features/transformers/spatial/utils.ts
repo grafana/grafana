@@ -41,7 +41,7 @@ export function calculateBearings(values: Array<Geometry | undefined>): number[]
 
 export function getCenterPoint(geo: Geometry): number[] {
   if (geo instanceof Point) {
-    return (geo as Point).getCoordinates();
+    return geo.getCoordinates();
   }
   return getCenter(geo.getExtent());
 }

@@ -1,5 +1,4 @@
 import { ExploreUrlState } from '@grafana/data';
-import { safeParseJson } from 'app/core/utils/explore';
 import { DEFAULT_RANGE } from 'app/features/explore/state/utils';
 
 import { BaseExploreURL, MigrationHandler } from './types';
@@ -12,12 +11,51 @@ export interface ExploreURLV0 extends BaseExploreURL {
 
 export const v0Migrator: MigrationHandler<never, ExploreURLV0> = {
   parse: (params) => {
+    // If no params are provided, return the default state without errors
+    // This means the user accessed the explore page without any params
+    if (!params.left && !params.right) {
+      return {
+        to: {
+          left: {
+            datasource: null,
+            queries: [],
+            range: {
+              from: DEFAULT_RANGE.from,
+              to: DEFAULT_RANGE.to,
+            },
+          },
+          schemaVersion: 0,
+        },
+        error: false,
+      };
+    }
+
+    let left: ExploreUrlState | undefined;
+    let right: ExploreUrlState | undefined;
+    let leftError, rightError: boolean | undefined;
+
+    if (typeof params.left === 'string') {
+      [left, leftError] = parsePaneState(params.left);
+    }
+
+    if (typeof params.right === 'string') {
+      [right, rightError] = parsePaneState(params.right);
+    } else if (params.right) {
+      right = FALLBACK_PANE_VALUE;
+      rightError = true;
+    }
+
+    if (!left) {
+      left = FALLBACK_PANE_VALUE;
+    }
+
     return {
-      schemaVersion: 0,
-      left: parseUrlState(typeof params.left === 'string' ? params.left : undefined),
-      ...(params.right && {
-        right: parseUrlState(typeof params.right === 'string' ? params.right : undefined),
-      }),
+      to: {
+        schemaVersion: 0,
+        left,
+        ...(right && { right }),
+      },
+      error: !!leftError || !!rightError,
     };
   },
 };
@@ -32,25 +70,26 @@ enum ParseUrlStateIndex {
   SegmentsStart = 3,
 }
 
-function parseUrlState(initial: string | undefined): ExploreUrlState {
-  const parsed = safeParseJson(initial);
-  const errorResult = {
-    datasource: null,
-    queries: [],
-    range: DEFAULT_RANGE,
-  };
+const FALLBACK_PANE_VALUE: ExploreUrlState = {
+  datasource: null,
+  queries: [],
+  range: DEFAULT_RANGE,
+};
 
-  if (!parsed) {
-    return errorResult;
+function parsePaneState(initial: string): [ExploreUrlState, boolean] {
+  let parsed;
+  try {
+    parsed = JSON.parse(initial);
+  } catch {
+    return [FALLBACK_PANE_VALUE, true];
   }
 
   if (!Array.isArray(parsed)) {
-    return { queries: [], range: DEFAULT_RANGE, ...parsed };
+    return [{ queries: [], range: DEFAULT_RANGE, ...parsed }, false];
   }
 
   if (parsed.length <= ParseUrlStateIndex.SegmentsStart) {
-    console.error('Error parsing compact URL state for Explore.');
-    return errorResult;
+    return [FALLBACK_PANE_VALUE, true];
   }
 
   const range = {
@@ -62,5 +101,5 @@ function parseUrlState(initial: string | undefined): ExploreUrlState {
   const queries = parsedSegments.filter((segment) => !isSegment(segment, 'ui', 'mode', '__panelsState'));
 
   const panelsState = parsedSegments.find((segment) => isSegment(segment, '__panelsState'))?.__panelsState;
-  return { datasource, queries, range, panelsState };
+  return [{ datasource, queries, range, panelsState }, false];
 }

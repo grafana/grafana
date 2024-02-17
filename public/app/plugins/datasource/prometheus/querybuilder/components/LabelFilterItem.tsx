@@ -6,9 +6,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
 import { AsyncSelect, Select } from '@grafana/ui';
 
+import { truncateResult } from '../../language_utils';
 import { QueryBuilderLabelFilter } from '../shared/types';
-
-import { PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './MetricSelect';
 
 export interface Props {
   defaultOp: string;
@@ -53,9 +52,17 @@ export function LabelFilterItem({
 
   const getSelectOptionsFromString = (item?: string): string[] => {
     if (item) {
+      const regExp = /\(([^)]+)\)/;
+      const matches = item?.match(regExp);
+
+      if (matches && matches[0].indexOf('|') > 0) {
+        return [item];
+      }
+
       if (item.indexOf('|') > 0) {
         return item.split('|');
       }
+
       return [item];
     }
     return [];
@@ -66,13 +73,15 @@ export function LabelFilterItem({
     debounceDuration
   );
 
+  const itemValue = item?.value ?? '';
+
   return (
-    <div data-testid="prometheus-dimensions-filter-item">
+    <div key={itemValue} data-testid="prometheus-dimensions-filter-item">
       <InputGroup>
         {/* Label name select, loads all values at once */}
         <Select
           placeholder="Select label"
-          aria-label={selectors.components.QueryBuilder.labelSelect}
+          data-testid={selectors.components.QueryBuilder.labelSelect}
           inputId="prometheus-dimensions-filter-item-key"
           width="auto"
           value={item.label ? toOption(item.label) : null}
@@ -104,7 +113,7 @@ export function LabelFilterItem({
 
         {/* Operator select i.e.   = =~ != !~   */}
         <Select
-          aria-label={selectors.components.QueryBuilder.matchOperatorSelect}
+          data-testid={selectors.components.QueryBuilder.matchOperatorSelect}
           className="query-segment-operator"
           value={toOption(item.op ?? defaultOp)}
           options={operators}
@@ -124,21 +133,19 @@ export function LabelFilterItem({
         {/* Label value async select: autocomplete calls prometheus API */}
         <AsyncSelect
           placeholder="Select value"
-          aria-label={selectors.components.QueryBuilder.valueSelect}
+          data-testid={selectors.components.QueryBuilder.valueSelect}
           inputId="prometheus-dimensions-filter-item-value"
           width="auto"
           value={
             isMultiSelect()
-              ? getSelectOptionsFromString(item?.value).map(toOption)
-              : getSelectOptionsFromString(item?.value).map(toOption)[0]
+              ? getSelectOptionsFromString(itemValue).map(toOption)
+              : getSelectOptionsFromString(itemValue).map(toOption)[0]
           }
           allowCustomValue
           onOpenMenu={async () => {
             setState({ isLoadingLabelValues: true });
             const labelValues = await onGetLabelValues(item);
-            if (labelValues.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
-              labelValues.splice(0, labelValues.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
-            }
+            truncateResult(labelValues);
             setLabelValuesMenuOpen(true);
             setState({
               ...state,
@@ -174,7 +181,7 @@ export function LabelFilterItem({
           }}
           invalid={invalidValue}
         />
-        <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />
+        <AccessoryButton aria-label={`remove-${item.label}`} icon="times" variant="secondary" onClick={onDelete} />
       </InputGroup>
     </div>
   );

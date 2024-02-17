@@ -1,23 +1,10 @@
 import { cx } from '@emotion/css';
-import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
-import { Plugin } from 'slate';
-import { Editor } from 'slate-react';
 
 import { isDataFrame, QueryEditorProps, QueryHint, TimeRange, toLegacyResponseData } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime/src';
-import {
-  BracesPlugin,
-  DOMUtil,
-  Icon,
-  SlatePrism,
-  SuggestionsState,
-  TypeaheadInput,
-  TypeaheadOutput,
-  Themeable2,
-  withTheme2,
-  clearButtonStyles,
-} from '@grafana/ui';
+import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
+import { Icon, Themeable2, withTheme2, clearButtonStyles } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 import {
   CancelablePromise,
@@ -32,7 +19,6 @@ import { PromOptions, PromQuery } from '../types';
 import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
 import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
 
-export const RECORDING_RULES_GROUP = '__recording_rules__';
 const LAST_USED_LABELS_KEY = 'grafana.datasources.prometheus.browser.labels';
 
 function getChooserText(metricsLookupDisabled: boolean, hasSyntax: boolean, hasMetrics: boolean) {
@@ -51,33 +37,6 @@ function getChooserText(metricsLookupDisabled: boolean, hasSyntax: boolean, hasM
   return 'Metrics browser';
 }
 
-export function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadText }: SuggestionsState): string {
-  // Modify suggestion based on context
-  switch (typeaheadContext) {
-    case 'context-labels': {
-      const nextChar = DOMUtil.getNextCharacter();
-      if (!nextChar || nextChar === '}' || nextChar === ',') {
-        suggestion += '=';
-      }
-      break;
-    }
-
-    case 'context-label-values': {
-      // Always add quotes and remove existing ones instead
-      if (!typeaheadText.match(/^(!?=~?"|")/)) {
-        suggestion = `"${suggestion}`;
-      }
-      if (DOMUtil.getNextCharacter() !== '"') {
-        suggestion = `${suggestion}"`;
-      }
-      break;
-    }
-
-    default:
-  }
-  return suggestion;
-}
-
 interface PromQueryFieldProps extends QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions>, Themeable2 {
   ExtraFieldElement?: ReactNode;
   'data-testid'?: string;
@@ -90,22 +49,10 @@ interface PromQueryFieldState {
 }
 
 class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
-  plugins: Array<Plugin<Editor>>;
   declare languageProviderInitializationPromise: CancelablePromise<any>;
 
-  constructor(props: PromQueryFieldProps, context: React.Context<any>) {
-    super(props, context);
-
-    this.plugins = [
-      BracesPlugin(),
-      SlatePrism(
-        {
-          onlyIn: (node: any) => node.type === 'code_block',
-          getSyntax: (node: any) => 'promql',
-        },
-        { ...(prismLanguages as LanguageMap), promql: this.props.datasource.languageProvider.syntax }
-      ),
-    ];
+  constructor(props: PromQueryFieldProps) {
+    super(props);
 
     this.state = {
       labelBrowserVisible: false,
@@ -174,10 +121,11 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   refreshMetrics = async () => {
     const {
+      range,
       datasource: { languageProvider },
     } = this.props;
 
-    this.languageProviderInitializationPromise = makePromiseCancelable(languageProvider.start());
+    this.languageProviderInitializationPromise = makePromiseCancelable(languageProvider.start(range));
 
     try {
       const remainingTasks = await this.languageProviderInitializationPromise.promise;
@@ -254,26 +202,6 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     this.setState({ syntaxLoaded: true });
   };
 
-  onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
-    const {
-      datasource: { languageProvider },
-    } = this.props;
-
-    if (!languageProvider) {
-      return { suggestions: [] };
-    }
-
-    const { history } = this.props;
-    const { prefix, text, value, wrapperClasses, labelKey } = typeahead;
-
-    const result = await languageProvider.provideCompletionItems(
-      { text, value, prefix, wrapperClasses, labelKey },
-      { history }
-    );
-
-    return result;
-  };
-
   render() {
     const {
       datasource,
@@ -303,6 +231,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                   onClick={this.onClickChooserButton}
                   disabled={buttonDisabled}
                   type="button"
+                  data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.openButton}
                 >
                   {chooserText}
                   <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
@@ -316,6 +245,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                     onRunQuery={this.props.onRunQuery}
                     initialValue={query.expr ?? ''}
                     placeholder="Enter a PromQL query…"
+                    datasource={datasource}
                   />
                 </div>
               </div>
@@ -327,6 +257,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                     lastUsedLabels={lastUsedLabels || []}
                     storeLastUsedLabels={onLastUsedLabelsSave}
                     deleteLastUsedLabels={onLastUsedLabelsDelete}
+                    timeRange={this.props.range}
                   />
                 </div>
               )}

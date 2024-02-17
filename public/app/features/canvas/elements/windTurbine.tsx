@@ -113,17 +113,16 @@ export const windTurbineItem: CanvasElementItem = {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  blade: css`
-    @keyframes spin {
-      from {
-        transform: rotate(0deg);
-      }
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    transform-origin: 94.663px 94.663px;
-    transform: rotate(15deg);
-  `,
+  blade: css({
+    transformOrigin: '94.663px 94.663px',
+    transform: 'rotate(15deg)',
+    '@keyframes spin': {
+      from: {
+        transform: 'rotate(0deg)',
+      },
+      to: {
+        transform: 'rotate(360deg)',
+      },
+    },
+  }),
 });

@@ -262,13 +262,13 @@ describe('Query Response parser', () => {
       data: {
         results: {
           X: {
-            series: [{ name: 'Requests/s', points: [[13.594958983547151, 1611839862951]] }] as any,
+            series: [{ target: '', datapoints: [[13.594958983547151, 1611839862951]] }],
           },
           B: {
-            series: [{ name: 'Requests/s', points: [[13.594958983547151, 1611839862951]] }] as any,
+            series: [{ target: '', datapoints: [[13.594958983547151, 1611839862951]] }],
           },
           A: {
-            series: [{ name: 'Requests/s', points: [[13.594958983547151, 1611839862951]] }] as any,
+            series: [{ target: '', datapoints: [[13.594958983547151, 1611839862951]] }],
           },
         },
       },

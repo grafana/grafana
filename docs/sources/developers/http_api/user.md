@@ -18,15 +18,21 @@ title: User HTTP API
 
 # User API
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
+The Users HTTP API does not currently work with an API Token. API Tokens are linked to an organization and an organization role. They cannot be given
+the permission of server users access, only users can be given that permission. To use these API calls you can use Basic Auth and the Grafana
+user must have the Grafana Admin role.
+
+API Tokens can be used with Organization HTTP API to get users of specific organization.
+
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions][] for more information.
 
 ## Search Users
 
-`GET /api/users?perpage=10&page=1`
+`GET /api/users?perpage=10&page=1&sort=login-asc,email-asc`
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
+See note in the [introduction](#user-api) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
@@ -42,6 +48,8 @@ Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
 Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`. Requires basic authentication and that the authenticated user is a Grafana Admin.
+
+The `sort` param is an optional comma separated list of options to order the search result. Accepted values for the sort filter are: `login-asc`, `login-desc`, `email-asc`, `email-desc`, `name-asc`, `name-desc`, `lastSeenAtAge-asc`, `lastSeenAtAge-desc`. By default, if `sort` is not specified, the user list will be ordered by `login`, `email` in ascending order.
 
 **Example Response**:
 
@@ -77,11 +85,11 @@ Content-Type: application/json
 
 ## Search Users with Paging
 
-`GET /api/users/search?perpage=10&page=1&query=mygraf`
+`GET /api/users/search?perpage=10&page=1&query=mygraf&sort=login-asc,email-asc`
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
+See note in the [introduction](#user-api) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
@@ -97,6 +105,8 @@ Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
 Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`. The `totalCount` field in the response can be used for pagination of the user list E.g. if `totalCount` is equal to 100 users and the `perpage` parameter is set to 10 then there are 10 pages of users. The `query` parameter is optional and it will return results where the query value is contained in one of the `name`, `login` or `email` fields. Query values with spaces need to be URL encoded e.g. `query=Jane%20Doe`.
+
+The `sort` param is an optional comma separated list of options to order the search result. Accepted values for the sort filter are: `login-asc`, `login-desc`, `email-asc`, `email-desc`, `name-asc`, `name-desc`, `lastSeenAtAge-asc`, `lastSeenAtAge-desc`. By default, if `sort` is not specified, the user list will be ordered by `login`, `email` in ascending order.
 
 Requires basic authentication and that the authenticated user is a Grafana Admin.
 
@@ -142,7 +152,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
+See note in the [introduction](#user-api) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
@@ -188,7 +198,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
+See note in the [introduction](#user-api) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
@@ -200,7 +210,7 @@ See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
 GET /api/users/lookup?loginOrEmail=user@mygraf.com HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Basic YWRtaW46YWRtaW4=
 ```
 
 **Example Request using the username as option**:
@@ -243,7 +253,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
+See note in the [introduction](#user-api) for an explanation.
 
 | Action      | Scope           |
 | ----------- | --------------- |
@@ -282,7 +292,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
+See note in the [introduction](#user-api) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
@@ -320,7 +330,7 @@ Content-Type: application/json
 
 **Required permissions**
 
-See note in the [introduction]({{< ref "#user-api" >}}) for an explanation.
+See note in the [introduction](#user-api) for an explanation.
 
 | Action     | Scope           |
 | ---------- | --------------- |
@@ -673,3 +683,8 @@ Content-Type: application/json
   "message": "User auth token revoked"
 }
 ```
+
+{{% docs/reference %}}
+[Role-based access control permissions]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes"
+[Role-based access control permissions]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes"
+{{% /docs/reference %}}

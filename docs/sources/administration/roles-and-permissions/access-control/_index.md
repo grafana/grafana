@@ -53,6 +53,7 @@ Grafana includes the following basic roles:
 - Organization administrator
 - Editor
 - Viewer
+- None
 
 Each basic role is comprised of a number of _permissions_. For example, the viewer basic role contains the following permissions among others:
 
@@ -64,7 +65,7 @@ Each basic role is comprised of a number of _permissions_. For example, the view
 - `Action: annotations:delete, Scope: annotations:type:dashboard`: Enables the viewer to remove annotations from a dashboard.
 
 {{% admonition type="note" %}}
-You can't have a Grafana user without a basic role assigned.
+You can't have a Grafana user without a basic role assigned. The `None` role contains no permissions.
 {{% /admonition %}}
 
 #### Basic role modification
@@ -89,8 +90,10 @@ Assign fixed roles when the basic roles do not meet your permission requirements
 - [Dashboards and folders]({{< relref "../../../dashboards/" >}})
 - [Data sources]({{< relref "../../../datasources/" >}})
 - [Explore]({{< relref "../../../explore/" >}})
+- [Feature Toggles]({{< relref "../../feature-toggles/" >}})
 - [Folders]({{< relref "../../../dashboards/manage-dashboards/#create-a-dashboard-folder" >}})
 - [LDAP]({{< relref "../../../setup-grafana/configure-security/configure-authentication/ldap/" >}})
+- [Library panels]({{< relref "../../../dashboards/build-dashboards/manage-library-panels" >}})
 - [Licenses]({{< relref "../../stats-and-license/" >}})
 - [Organizations]({{< relref "../../organization-management/" >}})
 - [Provisioning]({{< relref "../../provisioning/" >}})

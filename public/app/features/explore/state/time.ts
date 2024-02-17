@@ -1,18 +1,26 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
 
-import { AbsoluteTimeRange, dateTimeForTimeZone, LoadingState, RawTimeRange, TimeRange } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  AppEvents,
+  dateTimeForTimeZone,
+  LoadingState,
+  RawTimeRange,
+  TimeRange,
+} from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
+import { t } from '@grafana/ui/src/utils/i18n';
+import appEvents from 'app/core/app_events';
 import { getTimeRange, refreshIntervalToSortOrder, stopQueryState } from 'app/core/utils/explore';
+import { getCopiedTimeRange, getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { sortLogsResult } from 'app/features/logs/utils';
 import { getFiscalYearStartMonth, getTimeZone } from 'app/features/profile/state/selectors';
-import { ExploreItemState, ThunkResult } from 'app/types';
-
-import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import { TimeModel } from '../../dashboard/state/TimeModel';
+import { ExploreItemState, ThunkDispatch, ThunkResult } from 'app/types';
 
 import { syncTimesAction } from './main';
-import { runQueries } from './query';
+import { runLoadMoreLogsQueries, runQueries } from './query';
 
 //
 // Actions and Payloads
@@ -23,6 +31,7 @@ export interface ChangeRangePayload {
   range: TimeRange;
   absoluteRange: AbsoluteTimeRange;
 }
+
 export const changeRangeAction = createAction<ChangeRangePayload>('explore/changeRange');
 
 /**
@@ -32,6 +41,7 @@ export interface ChangeRefreshIntervalPayload {
   exploreId: string;
   refreshInterval: string;
 }
+
 export const changeRefreshInterval = createAction<ChangeRefreshIntervalPayload>('explore/changeRefreshInterval');
 
 export const updateTimeRange = (options: {
@@ -50,6 +60,12 @@ export const updateTimeRange = (options: {
       dispatch(updateTime({ ...options }));
       dispatch(runQueries({ exploreId: options.exploreId, preserveCache: true }));
     }
+  };
+};
+
+export const loadMoreLogs = (options: { exploreId: string; absoluteRange: AbsoluteTimeRange }): ThunkResult<void> => {
+  return (dispatch) => {
+    dispatch(runLoadMoreLogsQueries({ ...options }));
   };
 };
 
@@ -79,21 +95,17 @@ export const updateTime = (config: {
 
     const range = getTimeRange(timeZone, rawRange, fiscalYearStartMonth);
     const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
-    const timeModel: TimeModel = {
-      time: range.raw,
-      refresh: false,
+
+    // @deprecated - set because some internal plugins read the range this way; please use QueryEditorProps.range instead
+    getTimeSrv().init({
       timepicker: {},
       getTimezone: () => timeZone,
-      timeRangeUpdated: (rawTimeRange: RawTimeRange) => {
-        dispatch(updateTimeRange({ exploreId: exploreId, rawRange: rawTimeRange }));
-      },
-    };
-
-    // We need to re-initialize TimeSrv because it might have been triggered by the other Explore pane (when split)
-    getTimeSrv().init(timeModel);
+      timeRangeUpdated(timeRange) {},
+      time: range.raw,
+    });
     // After re-initializing TimeSrv we need to update the time range in Template service for interpolation
     // of __from and __to variables
-    getTemplateSrv().updateTimeRange(getTimeSrv().timeRange());
+    getTemplateSrv().updateTimeRange(range);
 
     dispatch(changeRangeAction({ exploreId, range, absoluteRange }));
   };
@@ -118,21 +130,83 @@ export function syncTimes(exploreId: string): ThunkResult<void> {
   };
 }
 
-/**
- * Forces the timepicker's time into absolute time.
- * The conversion is applied to all Explore panes.
- * Useful to produce a bookmarkable URL that points to the same data.
- */
-export function makeAbsoluteTime(): ThunkResult<void> {
+function modifyExplorePanesTimeRange(
+  modifier: (
+    exploreId: string,
+    exploreItemState: ExploreItemState,
+    currentTimeRange: TimeRange,
+    dispatch: ThunkDispatch
+  ) => void
+): ThunkResult<void> {
   return (dispatch, getState) => {
     const timeZone = getTimeZone(getState().user);
     const fiscalYearStartMonth = getFiscalYearStartMonth(getState().user);
 
     Object.entries(getState().explore.panes).forEach(([exploreId, exploreItemState]) => {
       const range = getTimeRange(timeZone, exploreItemState!.range.raw, fiscalYearStartMonth);
-      const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
-      dispatch(updateTime({ exploreId, absoluteRange }));
+      modifier(exploreId, exploreItemState!, range, dispatch);
     });
+  };
+}
+
+/**
+ * Forces the timepicker's time into absolute time.
+ * The conversion is applied to all Explore panes.
+ * Useful to produce a bookmarkable URL that points to the same data.
+ */
+export function makeAbsoluteTime(): ThunkResult<void> {
+  return modifyExplorePanesTimeRange((exploreId, exploreItemState, range, dispatch) => {
+    const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
+    dispatch(updateTimeRange({ exploreId, absoluteRange }));
+  });
+}
+
+export function shiftTime(direction: number): ThunkResult<void> {
+  return modifyExplorePanesTimeRange((exploreId, exploreItemState, range, dispatch) => {
+    const shiftedRange = getShiftedTimeRange(direction, range);
+    dispatch(updateTimeRange({ exploreId, absoluteRange: shiftedRange }));
+  });
+}
+
+export function zoomOut(scale: number): ThunkResult<void> {
+  return modifyExplorePanesTimeRange((exploreId, exploreItemState, range, dispatch) => {
+    const zoomedRange = getZoomedTimeRange(range, scale);
+    dispatch(updateTimeRange({ exploreId, absoluteRange: zoomedRange }));
+  });
+}
+
+export function copyTimeRangeToClipboard(): ThunkResult<void> {
+  return (dispatch, getState) => {
+    const range = getState().explore.panes[Object.keys(getState().explore.panes)[0]]!.range.raw;
+    navigator.clipboard.writeText(JSON.stringify(range));
+
+    appEvents.emit(AppEvents.alertSuccess, [
+      t('time-picker.copy-paste.copy-success-message', 'Time range copied to clipboard'),
+    ]);
+  };
+}
+
+export function pasteTimeRangeFromClipboard(): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    const { range, isError } = await getCopiedTimeRange();
+
+    if (isError === true) {
+      appEvents.emit(AppEvents.alertError, [
+        t('time-picker.copy-paste.default-error-title', 'Invalid time range'),
+        t('time-picker.copy-paste.default-error-message', `{{error}} is not a valid time range`, { error: range }),
+      ]);
+      return;
+    }
+
+    const panesSynced = getState().explore.syncedTimes;
+
+    if (panesSynced) {
+      dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[0], rawRange: range }));
+      dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[1], rawRange: range }));
+      return;
+    }
+
+    dispatch(updateTimeRange({ exploreId: Object.keys(getState().explore.panes)[0], rawRange: range }));
   };
 }
 

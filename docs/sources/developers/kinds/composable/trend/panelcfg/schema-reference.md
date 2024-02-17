@@ -2,6 +2,11 @@
 keywords:
   - grafana
   - schema
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: TrendPanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
@@ -26,6 +31,7 @@ It extends [LineConfig](#lineconfig) and [FillConfig](#fillconfig) and [PointsCo
 
 | Property            | Type                                                      | Required | Default | Description                                                                                                                                                                                                                                                                   |
 |---------------------|-----------------------------------------------------------|----------|---------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `axisBorderShow`    | boolean                                                   | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                                                                                  |
 | `axisCenteredZero`  | boolean                                                   | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                                                                                  |
 | `axisColorMode`     | string                                                    | No       |         | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs<br/>Possible values are: `text`, `series`.                                                                                                                                                                         |
 | `axisGridShow`      | boolean                                                   | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                                                                                                                                                                  |
@@ -63,6 +69,7 @@ TODO docs
 
 | Property            | Type                                                | Required | Default | Description                                                                            |
 |---------------------|-----------------------------------------------------|----------|---------|----------------------------------------------------------------------------------------|
+| `axisBorderShow`    | boolean                                             | No       |         |                                                                                        |
 | `axisCenteredZero`  | boolean                                             | No       |         |                                                                                        |
 | `axisColorMode`     | string                                              | No       |         | TODO docs<br/>Possible values are: `text`, `series`.                                   |
 | `axisGridShow`      | boolean                                             | No       |         |                                                                                        |
@@ -208,9 +215,11 @@ TODO docs
 
 TODO docs
 
-| Property | Type   | Required | Default | Description                                                   |
-|----------|--------|----------|---------|---------------------------------------------------------------|
-| `mode`   | string | **Yes**  |         | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
-| `sort`   | string | **Yes**  |         | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
+| Property    | Type   | Required | Default | Description                                                   |
+|-------------|--------|----------|---------|---------------------------------------------------------------|
+| `mode`      | string | **Yes**  |         | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
+| `sort`      | string | **Yes**  |         | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
+| `maxHeight` | number | No       |         |                                                               |
+| `maxWidth`  | number | No       |         |                                                               |
 
 

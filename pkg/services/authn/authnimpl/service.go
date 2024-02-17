@@ -5,9 +5,11 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
@@ -16,17 +18,17 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl/sync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
+	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
-	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -43,12 +45,19 @@ const (
 )
 
 var (
-	errCantAuthenticateReq = errutil.NewBase(errutil.StatusUnauthorized, "auth.unauthorized")
-	errDisabledIdentity    = errutil.NewBase(errutil.StatusUnauthorized, "identity.disabled")
+	errCantAuthenticateReq = errutil.Unauthorized("auth.unauthorized")
+	errDisabledIdentity    = errutil.Unauthorized("identity.disabled")
 )
 
 // make sure service implements authn.Service interface
-var _ authn.Service = new(Service)
+func ProvideAuthnService(s *Service) authn.Service {
+	return s
+}
+
+// make sure service implements authn.IdentitySynchronizer interface
+func ProvideIdentitySynchronizer(s *Service) authn.IdentitySynchronizer {
+	return s
+}
 
 func ProvideService(
 	cfg *setting.Cfg, tracer tracing.Tracer,
@@ -57,7 +66,6 @@ func ProvideService(
 	apikeyService apikey.Service, userService user.Service,
 	jwtService auth.JWTVerifierService,
 	usageStats usagestats.Service,
-	anonSessionService anonymous.Service,
 	userProtectionService login.UserProtectionService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
@@ -65,17 +73,18 @@ func ProvideService(
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, registerer prometheus.Registerer,
 	signingKeysService signingkeys.Service, oauthServer oauthserver.OAuth2Server,
-) authn.Service {
+) *Service {
 	s := &Service{
-		log:            log.New("authn.service"),
-		cfg:            cfg,
-		clients:        make(map[string]authn.Client),
-		clientQueue:    newQueue[authn.ContextAwareClient](),
-		tracer:         tracer,
-		metrics:        newMetrics(registerer),
-		sessionService: sessionService,
-		postAuthHooks:  newQueue[authn.PostAuthHookFn](),
-		postLoginHooks: newQueue[authn.PostLoginHookFn](),
+		log:             log.New("authn.service"),
+		cfg:             cfg,
+		clients:         make(map[string]authn.Client),
+		clientQueue:     newQueue[authn.ContextAwareClient](),
+		tracer:          tracer,
+		metrics:         newMetrics(registerer),
+		authInfoService: authInfoService,
+		sessionService:  sessionService,
+		postAuthHooks:   newQueue[authn.PostAuthHookFn](),
+		postLoginHooks:  newQueue[authn.PostLoginHookFn](),
 	}
 
 	usageStats.RegisterMetricsFunc(s.getUsageStats)
@@ -87,14 +96,10 @@ func ProvideService(
 		s.RegisterClient(clients.ProvideSession(cfg, sessionService, features))
 	}
 
-	if s.cfg.AnonymousEnabled {
-		s.RegisterClient(clients.ProvideAnonymous(cfg, orgService, anonSessionService))
-	}
-
 	var proxyClients []authn.ProxyClient
 	var passwordClients []authn.PasswordClient
 	if s.cfg.LDAPAuthEnabled {
-		ldap := clients.ProvideLDAP(cfg, ldapService)
+		ldap := clients.ProvideLDAP(cfg, ldapService, userService, authInfoService)
 		proxyClients = append(proxyClients, ldap)
 		passwordClients = append(passwordClients, ldap)
 	}
@@ -126,43 +131,35 @@ func ProvideService(
 		}
 	}
 
-	if s.cfg.JWTAuthEnabled {
+	if s.cfg.JWTAuth.Enabled {
 		s.RegisterClient(clients.ProvideJWT(jwtService, cfg))
 	}
 
-	if s.cfg.ExtendedJWTAuthEnabled && features.IsEnabled(featuremgmt.FlagExternalServiceAuth) {
+	if s.cfg.ExtendedJWTAuthEnabled && features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAuth) {
 		s.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, signingKeysService, oauthServer))
 	}
 
 	for name := range socialService.GetOAuthProviders() {
-		oauthCfg := socialService.GetOAuthInfoProvider(name)
-		if oauthCfg != nil && oauthCfg.Enabled {
-			clientName := authn.ClientWithPrefix(name)
-
-			connector, errConnector := socialService.GetConnector(name)
-			httpClient, errHTTPClient := socialService.GetOAuthHttpClient(name)
-			if errConnector != nil || errHTTPClient != nil {
-				s.log.Error("Failed to configure oauth client", "client", clientName, "err", errors.Join(errConnector, errHTTPClient))
-			} else {
-				s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthCfg, connector, httpClient))
-			}
-		}
+		clientName := authn.ClientWithPrefix(name)
+		s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService))
 	}
 
 	// FIXME (jguer): move to User package
 	userSyncService := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService)
 	orgUserSyncService := sync.ProvideOrgSync(userService, orgService, accessControlService)
 	s.RegisterPostAuthHook(userSyncService.SyncUserHook, 10)
-	s.RegisterPostAuthHook(userSyncService.EnableDisabledUserHook, 20)
+	s.RegisterPostAuthHook(userSyncService.EnableUserHook, 20)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgRolesHook, 30)
-	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 40)
+	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 130)
+	s.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService).SyncOauthTokenHook, 60)
+	s.RegisterPostAuthHook(userSyncService.FetchSyncedUserHook, 100)
 
-	if features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
-		s.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService, socialService).SyncOauthTokenHook, 60)
+	rbacSync := sync.ProvideRBACSync(accessControlService)
+	if features.IsEnabledGlobally(featuremgmt.FlagCloudRBACRoles) {
+		s.RegisterPostAuthHook(rbacSync.SyncCloudRoles, 110)
 	}
 
-	s.RegisterPostAuthHook(userSyncService.FetchSyncedUserHook, 100)
-	s.RegisterPostAuthHook(sync.ProvidePermissionsSync(accessControlService).SyncPermissionsHook, 110)
+	s.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
 
 	return s
 }
@@ -177,7 +174,8 @@ type Service struct {
 	tracer  tracing.Tracer
 	metrics *metrics
 
-	sessionService auth.UserTokenService
+	authInfoService login.AuthInfoService
+	sessionService  auth.UserTokenService
 
 	// postAuthHooks are called after a successful authentication. They can modify the identity.
 	postAuthHooks *queue[authn.PostAuthHookFn]
@@ -188,6 +186,8 @@ type Service struct {
 func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.Authenticate")
 	defer span.End()
+
+	r.OrgID = orgIDFromRequest(r)
 
 	var authErr error
 	for _, item := range s.clientQueue.items {
@@ -221,18 +221,15 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 }
 
 func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Request) (*authn.Identity, error) {
-	r.OrgID = orgIDFromRequest(r)
 	identity, err := c.Authenticate(ctx, r)
 	if err != nil {
-		s.log.FromContext(ctx).Warn("Failed to authenticate request", "client", c.Name(), "error", err)
+		s.errorLogFunc(ctx, err)("Failed to authenticate request", "client", c.Name(), "error", err)
 		return nil, err
 	}
 
-	for _, hook := range s.postAuthHooks.items {
-		if err := hook.v(ctx, identity, r); err != nil {
-			s.log.FromContext(ctx).Warn("Failed to run post auth hook", "client", c.Name(), "id", identity.ID, "error", err)
-			return nil, err
-		}
+	if err := s.runPostAuthHooks(ctx, identity, r); err != nil {
+		s.errorLogFunc(ctx, err)("Failed to run post auth hook", "client", c.Name(), "id", identity.ID, "error", err)
+		return nil, err
 	}
 
 	if identity.IsDisabled {
@@ -241,7 +238,7 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 
 	if hc, ok := c.(authn.HookClient); ok {
 		if err := hc.Hook(ctx, identity, r); err != nil {
-			s.log.FromContext(ctx).Warn("Failed to run post client auth hook", "client", c.Name(), "id", identity.ID, "error", err)
+			s.errorLogFunc(ctx, err)("Failed to run post client auth hook", "client", c.Name(), "id", identity.ID, "error", err)
 			return nil, err
 		}
 	}
@@ -249,18 +246,30 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 	return identity, nil
 }
 
+func (s *Service) runPostAuthHooks(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+	for _, hook := range s.postAuthHooks.items {
+		if err := hook.v(ctx, identity, r); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn, priority uint) {
 	s.postAuthHooks.insert(hook, priority)
 }
 
-func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (identity *authn.Identity, err error) {
-	ctx, span := s.tracer.Start(ctx, "authn.Login")
+func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (id *authn.Identity, err error) {
+	ctx, span := s.tracer.Start(ctx, "authn.Login", trace.WithAttributes(
+		attribute.String(attributeKeyClient, client),
+	))
 	defer span.End()
-	span.SetAttributes(attributeKeyClient, client, attribute.Key(attributeKeyClient).String(client))
+
+	r.OrgID = orgIDFromRequest(r)
 
 	defer func() {
 		for _, hook := range s.postLoginHooks.items {
-			hook.v(ctx, identity, r, err)
+			hook.v(ctx, id, r, err)
 		}
 	}()
 
@@ -270,36 +279,41 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 		return nil, authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
 	}
 
-	identity, err = s.authenticate(ctx, c, r)
+	r.SetMeta(authn.MetaKeyIsLogin, "true")
+	id, err = s.authenticate(ctx, c, r)
 	if err != nil {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		return nil, err
 	}
 
-	namespace, id := identity.NamespacedID()
-
+	namespace, namespaceID := id.GetNamespacedID()
 	// Login is only supported for users
-	if namespace != authn.NamespaceUser || id <= 0 {
+	if namespace != authn.NamespaceUser {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		return nil, authn.ErrUnsupportedIdentity.Errorf("expected identity of type user but got: %s", namespace)
+	}
+
+	intId, err := identity.IntIdentifier(namespace, namespaceID)
+	if err != nil {
+		return nil, err
 	}
 
 	addr := web.RemoteAddr(r.HTTPRequest)
 	ip, err := network.GetIPFromAddress(addr)
 	if err != nil {
-		s.log.FromContext(ctx).Debug("Failed to parse ip from address", "client", c.Name(), "id", identity.ID, "addr", addr, "error", err)
+		s.log.FromContext(ctx).Debug("Failed to parse ip from address", "client", c.Name(), "id", id.ID, "addr", addr, "error", err)
 	}
 
-	sessionToken, err := s.sessionService.CreateToken(ctx, &user.User{ID: id}, ip, r.HTTPRequest.UserAgent())
+	sessionToken, err := s.sessionService.CreateToken(ctx, &user.User{ID: intId}, ip, r.HTTPRequest.UserAgent())
 	if err != nil {
 		s.metrics.failedLogin.WithLabelValues(client).Inc()
-		s.log.FromContext(ctx).Error("Failed to create session", "client", client, "id", identity.ID, "err", err)
+		s.log.FromContext(ctx).Error("Failed to create session", "client", client, "id", id.ID, "err", err)
 		return nil, err
 	}
 
 	s.metrics.successfulLogin.WithLabelValues(client).Inc()
-	identity.SessionToken = sessionToken
-	return identity, nil
+	id.SessionToken = sessionToken
+	return id, nil
 }
 
 func (s *Service) RegisterPostLoginHook(hook authn.PostLoginHookFn, priority uint) {
@@ -307,9 +321,10 @@ func (s *Service) RegisterPostLoginHook(hook authn.PostLoginHookFn, priority uin
 }
 
 func (s *Service) RedirectURL(ctx context.Context, client string, r *authn.Request) (*authn.Redirect, error) {
-	ctx, span := s.tracer.Start(ctx, "authn.RedirectURL")
+	ctx, span := s.tracer.Start(ctx, "authn.RedirectURL", trace.WithAttributes(
+		attribute.String(attributeKeyClient, client),
+	))
 	defer span.End()
-	span.SetAttributes(attributeKeyClient, client, attribute.Key(attributeKeyClient).String(client))
 
 	c, ok := s.clients[client]
 	if !ok {
@@ -324,11 +339,78 @@ func (s *Service) RedirectURL(ctx context.Context, client string, r *authn.Reque
 	return redirectClient.RedirectURL(ctx, r)
 }
 
+func (s *Service) Logout(ctx context.Context, user identity.Requester, sessionToken *auth.UserToken) (*authn.Redirect, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.Logout")
+	defer span.End()
+
+	redirect := &authn.Redirect{URL: s.cfg.AppSubURL + "/login"}
+
+	namespace, id := user.GetNamespacedID()
+	if namespace != authn.NamespaceUser {
+		return redirect, nil
+	}
+
+	userID, err := identity.IntIdentifier(namespace, id)
+	if err != nil {
+		s.log.FromContext(ctx).Debug("Invalid user id", "id", userID, "err", err)
+		return redirect, nil
+	}
+
+	info, _ := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: userID})
+	if info != nil {
+		client := authn.ClientWithPrefix(strings.TrimPrefix(info.AuthModule, "oauth_"))
+
+		c, ok := s.clients[client]
+		if !ok {
+			s.log.FromContext(ctx).Debug("No client configured for auth module", "client", client)
+			goto Default
+		}
+
+		logoutClient, ok := c.(authn.LogoutClient)
+		if !ok {
+			s.log.FromContext(ctx).Debug("Client do not support specialized logout logic", "client", client)
+			goto Default
+		}
+
+		clientRedirect, ok := logoutClient.Logout(ctx, user, info)
+		if !ok {
+			goto Default
+		}
+
+		redirect = clientRedirect
+	}
+
+Default:
+	if err = s.sessionService.RevokeToken(ctx, sessionToken, false); err != nil {
+		return nil, err
+	}
+
+	return redirect, nil
+}
+
 func (s *Service) RegisterClient(c authn.Client) {
 	s.clients[c.Name()] = c
 	if cac, ok := c.(authn.ContextAwareClient); ok {
 		s.clientQueue.insert(cac, cac.Priority())
 	}
+}
+
+func (s *Service) SyncIdentity(ctx context.Context, identity *authn.Identity) error {
+	r := &authn.Request{OrgID: identity.OrgID}
+	// hack to not update last seen on external syncs
+	r.SetMeta(authn.MetaKeyIsLogin, "true")
+	return s.runPostAuthHooks(ctx, identity, r)
+}
+
+func (s *Service) errorLogFunc(ctx context.Context, err error) func(msg string, ctx ...any) {
+	l := s.log.FromContext(ctx)
+
+	var grfErr errutil.Error
+	if errors.As(err, &grfErr) {
+		return grfErr.LogLevel.LogFunc(l)
+	}
+
+	return l.Warn
 }
 
 func orgIDFromRequest(r *authn.Request) int64 {

@@ -15,7 +15,7 @@ type zeroable interface {
 	IsZero() bool
 }
 
-func isZero(k interface{}) bool {
+func isZero(k any) bool {
 	switch k.(type) {
 	case int:
 		return k.(int) == 0
@@ -121,7 +121,7 @@ func isArrayValueZero(v reflect.Value) bool {
 }
 
 func int64ToIntValue(id int64, tp reflect.Type) reflect.Value {
-	var v interface{}
+	var v any
 	kind := tp.Kind()
 
 	if kind == reflect.Ptr {
@@ -161,11 +161,11 @@ func int64ToIntValue(id int64, tp reflect.Type) reflect.Value {
 	return reflect.ValueOf(v).Elem().Convert(tp)
 }
 
-func int64ToInt(id int64, tp reflect.Type) interface{} {
+func int64ToInt(id int64, tp reflect.Type) any {
 	return int64ToIntValue(id, tp).Interface()
 }
 
-func rValue(bean interface{}) reflect.Value {
+func rValue(bean any) reflect.Value {
 	return reflect.Indirect(reflect.ValueOf(bean))
 }
 

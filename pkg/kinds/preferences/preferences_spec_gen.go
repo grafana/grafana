@@ -9,14 +9,24 @@
 
 package preferences
 
+// CookiePreferences defines model for CookiePreferences.
+type CookiePreferences struct {
+	Analytics   map[string]any `json:"analytics,omitempty"`
+	Functional  map[string]any `json:"functional,omitempty"`
+	Performance map[string]any `json:"performance,omitempty"`
+}
+
 // QueryHistoryPreference defines model for QueryHistoryPreference.
 type QueryHistoryPreference struct {
 	// HomeTab one of: '' | 'query' | 'starred';
 	HomeTab *string `json:"homeTab,omitempty"`
 }
 
-// Spec defines model for Spec.
+// Spec defines user, team or org Grafana preferences
+// swagger:model Preferences
 type Spec struct {
+	CookiePreferences *CookiePreferences `json:"cookiePreferences,omitempty"`
+
 	// UID for the home dashboard
 	HomeDashboardUID *string `json:"homeDashboardUID,omitempty"`
 

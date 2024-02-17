@@ -4,7 +4,7 @@ import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
-import { AutoSizerProps } from 'react-virtualized-auto-sizer';
+import { Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
@@ -37,7 +37,13 @@ jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
 jest.mock('react-virtualized-auto-sizer', () => {
   //   //   // The size of the children need to be small enough to be outside the view.
   //   //   // So it does not trigger the query to be run by the PanelQueryRunner.
-  return ({ children }: AutoSizerProps) => children({ height: 1, width: 1 });
+  return ({ children }: AutoSizerProps) =>
+    children({
+      height: 1,
+      scaledHeight: 1,
+      scaledWidth: 1,
+      width: 1,
+    });
 });
 
 jest.mock('app/features/dashboard/state/initDashboard', () => ({
@@ -107,7 +113,6 @@ const getTestDashboard = (overrides?: Partial<Dashboard>, metaOverrides?: Partia
       editable: false,
       graphTooltip: DashboardCursorSync.Off,
       schemaVersion: 1,
-      style: 'dark',
       timepicker: { hidden: true },
       timezone: '',
       panels: [
@@ -125,10 +130,16 @@ const getTestDashboard = (overrides?: Partial<Dashboard>, metaOverrides?: Partia
   return new DashboardModel(data, metaOverrides);
 };
 
+const dashboardBase = {
+  getModel: getTestDashboard,
+  initError: null,
+  initPhase: DashboardInitPhase.Completed,
+  permissions: [],
+};
+
 describe('PublicDashboardPage', () => {
   beforeEach(() => {
     config.featureToggles.publicDashboards = true;
-    config.featureToggles.newPanelChromeUI = true;
 
     jest.clearAllMocks();
   });
@@ -145,12 +156,7 @@ describe('PublicDashboardPage', () => {
 
   describe('Given a simple public dashboard', () => {
     const newState = {
-      dashboard: {
-        getModel: getTestDashboard,
-        initError: null,
-        initPhase: DashboardInitPhase.Completed,
-        permissions: [],
-      },
+      dashboard: dashboardBase,
     };
 
     it('Should render panels', async () => {
@@ -221,10 +227,8 @@ describe('PublicDashboardPage', () => {
 
       const newState = {
         dashboard: {
+          ...dashboardBase,
           getModel: () => getTestDashboard({ panels }),
-          initError: null,
-          initPhase: DashboardInitPhase.Completed,
-          permissions: [],
         },
       };
       setup(undefined, newState);
@@ -248,13 +252,11 @@ describe('PublicDashboardPage', () => {
     it('Should render time range and refresh picker buttons', async () => {
       setup(undefined, {
         dashboard: {
+          ...dashboardBase,
           getModel: () =>
             getTestDashboard({
-              timepicker: { hidden: false, collapse: false, enable: true, refresh_intervals: [], time_options: [] },
+              timepicker: { hidden: false, refresh_intervals: [], time_options: [] },
             }),
-          initError: null,
-          initPhase: DashboardInitPhase.Completed,
-          permissions: [],
         },
       });
       expect(await screen.findByTestId(selectors.TimePicker.openButton)).toBeInTheDocument();
@@ -267,10 +269,8 @@ describe('PublicDashboardPage', () => {
     it('Should render public dashboard paused screen', async () => {
       setup(undefined, {
         dashboard: {
+          ...dashboardBase,
           getModel: () => getTestDashboard(undefined, { publicDashboardEnabled: false, dashboardNotFound: false }),
-          initError: null,
-          initPhase: DashboardInitPhase.Completed,
-          permissions: [],
         },
       });
 
@@ -286,10 +286,8 @@ describe('PublicDashboardPage', () => {
     it('Should render public dashboard deleted screen', async () => {
       setup(undefined, {
         dashboard: {
+          ...dashboardBase,
           getModel: () => getTestDashboard(undefined, { dashboardNotFound: true }),
-          initError: null,
-          initPhase: DashboardInitPhase.Completed,
-          permissions: [],
         },
       });
 

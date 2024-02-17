@@ -1,4 +1,4 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../../utils';
 
 type WithGrafanaRuntime<T> = T & {
   grafanaRuntime: {
@@ -16,7 +16,7 @@ const hasGrafanaRuntime = <T>(obj: T): obj is WithGrafanaRuntime<T> => {
 e2e.benchmark({
   name: 'Live performance benchmarking - 4x20hz panels',
   dashboard: {
-    folder: '/dashboards/live',
+    folder: '../benchmarks/dashboards/live',
     delayAfterOpening: 1000,
     skipPanelValidation: true,
   },

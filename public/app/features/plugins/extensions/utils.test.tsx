@@ -1,6 +1,24 @@
-import { PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
+import { render, screen } from '@testing-library/react';
+import React from 'react';
+import { type Unsubscribable } from 'rxjs';
 
-import { deepFreeze, isPluginExtensionLinkConfig, handleErrorsInFn, getReadOnlyProxy } from './utils';
+import { type PluginExtensionLinkConfig, PluginExtensionTypes, dateTime, usePluginContext } from '@grafana/data';
+import appEvents from 'app/core/app_events';
+import { ShowModalReactEvent } from 'app/types/events';
+
+import {
+  deepFreeze,
+  isPluginExtensionLinkConfig,
+  handleErrorsInFn,
+  getReadOnlyProxy,
+  getEventHelpers,
+  wrapWithPluginContext,
+} from './utils';
+
+jest.mock('app/features/plugins/pluginSettings', () => ({
+  ...jest.requireActual('app/features/plugins/pluginSettings'),
+  getPluginSettings: () => Promise.resolve({ info: { version: '1.0.0' } }),
+}));
 
 describe('Plugin Extensions / Utils', () => {
   describe('deepFreeze()', () => {
@@ -305,6 +323,146 @@ describe('Plugin Extensions / Utils', () => {
       });
 
       expect(proxy.a()).toBe('testing');
+    });
+
+    it('should return a clone of moment/datetime in context', () => {
+      const source = dateTime('2023-10-26T18:25:01Z');
+      const proxy = getReadOnlyProxy({
+        a: source,
+      });
+
+      expect(source.isSame(proxy.a)).toBe(true);
+      expect(source).not.toBe(proxy.a);
+    });
+  });
+
+  describe('getEventHelpers', () => {
+    describe('openModal', () => {
+      let renderModalSubscription: Unsubscribable | undefined;
+
+      beforeAll(() => {
+        renderModalSubscription = appEvents.subscribe(ShowModalReactEvent, (event) => {
+          const { payload } = event;
+          const Modal = payload.component;
+          render(<Modal />);
+        });
+      });
+
+      afterAll(() => {
+        renderModalSubscription?.unsubscribe();
+      });
+
+      it('should open modal with provided title and body', async () => {
+        const pluginId = 'grafana-worldmap-panel';
+        const { openModal } = getEventHelpers(pluginId);
+
+        openModal({
+          title: 'Title in modal',
+          body: () => <div>Text in body</div>,
+        });
+
+        expect(await screen.findByRole('dialog')).toBeVisible();
+        expect(screen.getByRole('heading')).toHaveTextContent('Title in modal');
+        expect(screen.getByText('Text in body')).toBeVisible();
+      });
+
+      it('should open modal with default width if not specified', async () => {
+        const pluginId = 'grafana-worldmap-panel';
+        const { openModal } = getEventHelpers(pluginId);
+
+        openModal({
+          title: 'Title in modal',
+          body: () => <div>Text in body</div>,
+        });
+
+        const modal = await screen.findByRole('dialog');
+        const style = window.getComputedStyle(modal);
+
+        expect(style.width).toBe('750px');
+        expect(style.height).toBe('');
+      });
+
+      it('should open modal with specified width', async () => {
+        const pluginId = 'grafana-worldmap-panel';
+        const { openModal } = getEventHelpers(pluginId);
+
+        openModal({
+          title: 'Title in modal',
+          body: () => <div>Text in body</div>,
+          width: '70%',
+        });
+
+        const modal = await screen.findByRole('dialog');
+        const style = window.getComputedStyle(modal);
+
+        expect(style.width).toBe('70%');
+      });
+
+      it('should open modal with specified height', async () => {
+        const pluginId = 'grafana-worldmap-panel';
+        const { openModal } = getEventHelpers(pluginId);
+
+        openModal({
+          title: 'Title in modal',
+          body: () => <div>Text in body</div>,
+          height: 600,
+        });
+
+        const modal = await screen.findByRole('dialog');
+        const style = window.getComputedStyle(modal);
+
+        expect(style.height).toBe('600px');
+      });
+
+      it('should open modal with the plugin context being available', async () => {
+        const pluginId = 'grafana-worldmap-panel';
+        const { openModal } = getEventHelpers(pluginId);
+
+        const ModalContent = () => {
+          const context = usePluginContext();
+
+          return <div>Version: {context.meta.info.version}</div>;
+        };
+
+        openModal({
+          title: 'Title in modal',
+          body: ModalContent,
+        });
+
+        const modal = await screen.findByRole('dialog');
+        expect(modal).toHaveTextContent('Version: 1.0.0');
+      });
+    });
+
+    describe('context', () => {
+      it('should return same object as passed to getEventHelpers', () => {
+        const pluginId = 'grafana-worldmap-panel';
+        const source = {};
+        const { context } = getEventHelpers(pluginId, source);
+        expect(context).toBe(source);
+      });
+    });
+  });
+
+  describe('wrapExtensionComponentWithContext()', () => {
+    const ExampleComponent = () => {
+      const { meta } = usePluginContext();
+
+      return (
+        <div>
+          <h1>Hello Grafana!</h1> Version: {meta.info.version}
+        </div>
+      );
+    };
+
+    it('should make the plugin context available for the wrapped component', async () => {
+      const pluginId = 'grafana-worldmap-panel';
+      const Component = wrapWithPluginContext(pluginId, ExampleComponent);
+
+      render(<Component />);
+
+      expect(await screen.findByText('Hello Grafana!')).toBeVisible();
+      expect(screen.getByText('Version: 1.0.0')).toBeVisible();
     });
   });
 });

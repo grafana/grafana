@@ -11,7 +11,6 @@ const setup = () => {
     isDefault: false,
     onDefaultChange: jest.fn(),
     onNameChange: jest.fn(),
-    alertingSupported: false,
   };
 
   return render(<BasicSettings {...props} />);
@@ -21,7 +20,7 @@ describe('<BasicSettings>', () => {
   it('should render component', () => {
     setup();
 
-    expect(screen.getByRole('textbox', { name: selectors.pages.DataSource.name })).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.pages.DataSource.name)).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: /Default/ })).toBeInTheDocument();
   });
 });

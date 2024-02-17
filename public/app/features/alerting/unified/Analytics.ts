@@ -1,8 +1,10 @@
 import { dateTime } from '@grafana/data';
-import { faro, LogLevel as GrafanaLogLevel } from '@grafana/faro-web-sdk';
-import { getBackendSrv } from '@grafana/runtime';
+import { createMonitoringLogger, getBackendSrv } from '@grafana/runtime';
 import { config, reportInteraction } from '@grafana/runtime/src';
 import { contextSrv } from 'app/core/core';
+
+import { RuleNamespace } from '../../../types/unified-alerting';
+import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
 export const USER_CREATION_MIN_DAYS = 7;
 
@@ -12,20 +14,21 @@ export const LogMessages = {
   leavingRuleGroupEdit: 'leaving rule group edit without saving',
   alertRuleFromPanel: 'creating alert rule from panel',
   alertRuleFromScratch: 'creating alert rule from scratch',
+  recordingRuleFromScratch: 'creating recording rule from scratch',
   clickingAlertStateFilters: 'clicking alert state filters',
   cancelSavingAlertRule: 'user canceled alert rule creation',
   successSavingAlertRule: 'alert rule saved successfully',
   unknownMessageFromError: 'unknown messageFromError',
 };
 
-// logInfo from '@grafana/runtime' should be used, but it doesn't handle Grafana JS Agent correctly
-export function logInfo(message: string, context: Record<string, string | number> = {}) {
-  if (config.grafanaJavascriptAgent.enabled) {
-    faro.api.pushLog([message], {
-      level: GrafanaLogLevel.INFO,
-      context: { ...context, module: 'Alerting' },
-    });
-  }
+const alertingLogger = createMonitoringLogger('features.alerting', { module: 'Alerting' });
+
+export function logInfo(message: string, context?: Record<string, string>) {
+  alertingLogger.logInfo(message, context);
+}
+
+export function logError(error: Error, context?: Record<string, string>) {
+  alertingLogger.logError(error, context);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -43,6 +46,78 @@ export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise
     });
 
     return response;
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function withPromRulesMetadataLogging<TFunc extends (...args: any[]) => Promise<RuleNamespace[]>>(
+  func: TFunc,
+  message: string,
+  context: Record<string, string>
+) {
+  return async (...args: Parameters<TFunc>) => {
+    const startLoadingTs = performance.now();
+    const response = await func(...args);
+
+    const { namespacesCount, groupsCount, rulesCount } = getPromRulesMetadata(response);
+
+    logInfo(message, {
+      loadTimeMs: (performance.now() - startLoadingTs).toFixed(0),
+      namespacesCount,
+      groupsCount,
+      rulesCount,
+      ...context,
+    });
+    return response;
+  };
+}
+
+function getPromRulesMetadata(promRules: RuleNamespace[]) {
+  const namespacesCount = promRules.length;
+  const groupsCount = promRules.flatMap((ns) => ns.groups).length;
+  const rulesCount = promRules.flatMap((ns) => ns.groups).flatMap((g) => g.rules).length;
+
+  const metadata = {
+    namespacesCount: namespacesCount.toFixed(0),
+    groupsCount: groupsCount.toFixed(0),
+    rulesCount: rulesCount.toFixed(0),
+  };
+
+  return metadata;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function withRulerRulesMetadataLogging<TFunc extends (...args: any[]) => Promise<RulerRulesConfigDTO>>(
+  func: TFunc,
+  message: string,
+  context: Record<string, string>
+) {
+  return async (...args: Parameters<TFunc>) => {
+    const startLoadingTs = performance.now();
+    const response = await func(...args);
+
+    const { namespacesCount, groupsCount, rulesCount } = getRulerRulesMetadata(response);
+
+    logInfo(message, {
+      loadTimeMs: (performance.now() - startLoadingTs).toFixed(0),
+      namespacesCount,
+      groupsCount,
+      rulesCount,
+      ...context,
+    });
+    return response;
+  };
+}
+
+function getRulerRulesMetadata(rulerRules: RulerRulesConfigDTO) {
+  const namespacesCount = Object.keys(rulerRules).length;
+  const groups = Object.values(rulerRules).flatMap((groups) => groups);
+  const rules = groups.flatMap((group) => group.rules);
+
+  return {
+    namespacesCount: namespacesCount.toFixed(0),
+    groupsCount: groups.length.toFixed(0),
+    rulesCount: rules.length.toFixed(0),
   };
 }
 
@@ -97,6 +172,15 @@ export const trackNewAlerRuleFormError = async (props: AlertRuleTrackingProps & 
     return;
   }
   reportInteraction('grafana_alerting_rule_form_error', props);
+};
+
+export const trackInsightsFeedback = async (props: { useful: boolean; panel: string }) => {
+  const defaults = {
+    grafana_version: config.buildInfo.version,
+    org_id: contextSrv.user.orgId,
+    user_id: contextSrv.user.id,
+  };
+  reportInteraction('grafana_alerting_insights', { ...defaults, ...props });
 };
 
 export type AlertRuleTrackingProps = {

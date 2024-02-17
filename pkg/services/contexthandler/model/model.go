@@ -30,8 +30,8 @@ type ReqContext struct {
 	Logger         log.Logger
 	Error          error
 	// RequestNonce is a cryptographic request identifier for use with Content Security Policy.
-	RequestNonce          string
-	IsPublicDashboardView bool
+	RequestNonce               string
+	PublicDashboardAccessToken string
 
 	PerfmonTimer   prometheus.Summary
 	LookupTokenErr error
@@ -43,14 +43,12 @@ func (ctx *ReqContext) Handle(cfg *setting.Cfg, status int, title string, err er
 		Title     string
 		AppTitle  string
 		AppSubUrl string
-		Theme     string
+		ThemeType string
 		ErrorMsg  error
 	}{title, "Grafana", cfg.AppSubURL, "dark", nil}
+
 	if err != nil {
 		ctx.Logger.Error(title, "error", err)
-		if setting.Env != setting.Prod {
-			data.ErrorMsg = err
-		}
 	}
 
 	ctx.HTML(status, cfg.ErrTemplateName, data)
@@ -58,6 +56,10 @@ func (ctx *ReqContext) Handle(cfg *setting.Cfg, status int, title string, err er
 
 func (ctx *ReqContext) IsApiRequest() bool {
 	return strings.HasPrefix(ctx.Req.URL.Path, "/api")
+}
+
+func (ctx *ReqContext) IsPublicDashboardView() bool {
+	return ctx.PublicDashboardAccessToken != ""
 }
 
 func (ctx *ReqContext) JsonApiErr(status int, message string, err error) {
@@ -70,10 +72,6 @@ func (ctx *ReqContext) JsonApiErr(status int, message string, err error) {
 			ctx.Logger.Error(message, "error", err, "traceID", traceID)
 		} else {
 			ctx.Logger.Warn(message, "error", err, "traceID", traceID)
-		}
-
-		if setting.Env != setting.Prod {
-			resp["error"] = err.Error()
 		}
 	}
 
@@ -155,7 +153,7 @@ func (ctx *ReqContext) writeErrOrFallback(status int, message string, err error)
 }
 
 func (ctx *ReqContext) HasUserRole(role org.RoleType) bool {
-	return ctx.OrgRole.Includes(role)
+	return ctx.SignedInUser.GetOrgRole().Includes(role)
 }
 
 func (ctx *ReqContext) HasHelpFlag(flag user.HelpFlags1) bool {

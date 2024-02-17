@@ -1,8 +1,4 @@
 ---
-labels:
-  products:
-    - enterprise
-    - oss
 title: Legend mode and legend placement
 ---
 
@@ -23,4 +19,4 @@ Choose where to display the legend.
 
 ### Legend values
 
-Choose which of the [standard calculations]({{< relref "../../panels-visualizations/calculation-types/" >}}) to show in the legend. You can have more than one.
+Choose which of the [standard calculations]({{< relref "../../panels-visualizations/query-transform-data/calculation-types/" >}}) to show in the legend. You can have more than one.

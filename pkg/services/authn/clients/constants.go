@@ -9,5 +9,5 @@ const (
 )
 
 var (
-	errIdentityNotFound = errutil.NewBase(errutil.StatusNotFound, "identity.not-found")
+	errIdentityNotFound = errutil.NotFound("identity.not-found")
 )

@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -30,7 +31,7 @@ func init() {
 }
 
 // NewTeamsNotifier is the constructor for Teams notifier.
-func NewTeamsNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
+func NewTeamsNotifier(_ *setting.Cfg, model *models.AlertNotification, _ alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
@@ -61,10 +62,10 @@ func (tn *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
-	fields := make([]map[string]interface{}, 0)
+	fields := make([]map[string]any, 0)
 	fieldLimitCount := 4
 	for index, evt := range evalContext.EvalMatches {
-		fields = append(fields, map[string]interface{}{
+		fields = append(fields, map[string]any{
 			"name":  evt.Metric,
 			"value": evt.Value,
 		})
@@ -74,7 +75,7 @@ func (tn *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	if evalContext.Error != nil {
-		fields = append(fields, map[string]interface{}{
+		fields = append(fields, map[string]any{
 			"name":  "Error message",
 			"value": evalContext.Error.Error(),
 		})
@@ -85,14 +86,14 @@ func (tn *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		message = evalContext.Rule.Message
 	}
 
-	images := make([]map[string]interface{}, 0)
+	images := make([]map[string]any, 0)
 	if tn.NeedsImage() && evalContext.ImagePublicURL != "" {
-		images = append(images, map[string]interface{}{
+		images = append(images, map[string]any{
 			"image": evalContext.ImagePublicURL,
 		})
 	}
 
-	body := map[string]interface{}{
+	body := map[string]any{
 		"@type":    "MessageCard",
 		"@context": "http://schema.org/extensions",
 		// summary MUST not be empty or the webhook request fails
@@ -100,7 +101,7 @@ func (tn *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"summary":    evalContext.GetNotificationTitle(),
 		"title":      evalContext.GetNotificationTitle(),
 		"themeColor": evalContext.GetStateModel().Color,
-		"sections": []map[string]interface{}{
+		"sections": []map[string]any{
 			{
 				"title":  "Details",
 				"facts":  fields,
@@ -108,12 +109,12 @@ func (tn *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 				"text":   message,
 			},
 		},
-		"potentialAction": []map[string]interface{}{
+		"potentialAction": []map[string]any{
 			{
 				"@context": "http://schema.org",
 				"@type":    "OpenUri",
 				"name":     "View Rule",
-				"targets": []map[string]interface{}{
+				"targets": []map[string]any{
 					{
 						"os": "default", "uri": ruleURL,
 					},
@@ -123,7 +124,7 @@ func (tn *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 				"@context": "http://schema.org",
 				"@type":    "OpenUri",
 				"name":     "View Graph",
-				"targets": []map[string]interface{}{
+				"targets": []map[string]any{
 					{
 						"os": "default", "uri": evalContext.ImagePublicURL,
 					},

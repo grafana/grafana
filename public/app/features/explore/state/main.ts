@@ -1,16 +1,17 @@
 import { createAction } from '@reduxjs/toolkit';
+import { isEqual } from 'lodash';
 import { AnyAction } from 'redux';
 
-import { SplitOpenOptions } from '@grafana/data';
-import { DataSourceSrv, locationService } from '@grafana/runtime';
+import { SplitOpenOptions, TimeRange, EventBusSrv } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { generateExploreId, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
-import { ExploreItemState, ExploreState } from 'app/types/explore';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
+import { CorrelationEditorDetailsUpdate, ExploreItemState, ExploreState } from 'app/types/explore';
 
 import { RichHistoryResults } from '../../../core/history/RichHistoryStorage';
 import { RichHistorySearchFilters, RichHistorySettings } from '../../../core/utils/richHistoryTypes';
 import { createAsyncThunk, ThunkResult } from '../../../types';
-import { TimeSrv } from '../../dashboard/services/TimeSrv';
 import { withUniqueRefIds } from '../utils/queries';
 
 import { initializeExplore, InitializeExploreOptions, paneReducer } from './explorePane';
@@ -64,7 +65,7 @@ export const clearPanes = createAction('explore/clearPanes');
  */
 export const splitOpen = createAsyncThunk(
   'explore/splitOpen',
-  async (options: SplitOpenOptions | undefined, { getState, dispatch, requestId }) => {
+  async (options: SplitOpenOptions | undefined, { getState, dispatch }) => {
     // we currently support showing only 2 panes in explore, so if this action is dispatched we know it has been dispatched from the "first" pane.
     const originState = Object.values(getState().explore.panes)[0];
 
@@ -77,18 +78,29 @@ export const splitOpen = createAsyncThunk(
       }
     });
 
+    const splitRange = options?.range || originState?.range.raw || DEFAULT_RANGE;
+
+    let newPaneId = generateExploreId();
+    // in case we have a duplicate id, generate a new one
+    while (getState().explore.panes[newPaneId]) {
+      newPaneId = generateExploreId();
+    }
+
     await dispatch(
       createNewSplitOpenPane({
-        exploreId: requestId,
+        exploreId: newPaneId,
         datasource: options?.datasourceUid || originState?.datasourceInstance?.getRef(),
         queries: withUniqueRefIds(queries),
-        range: options?.range || originState?.range.raw || DEFAULT_RANGE,
+        range: splitRange,
         panelsState: options?.panelsState || originState?.panelsState,
+        correlationHelperData: options?.correlationHelperData,
+        eventBridge: new EventBusSrv(),
       })
     );
-  },
-  {
-    idGenerator: generateExploreId,
+
+    if (originState?.range) {
+      await dispatch(syncTimesAction({ syncedTimes: isEqual(originState.range.raw, splitRange) })); // if time ranges are equal, mark times as synced
+    }
   }
 );
 
@@ -105,9 +117,15 @@ const createNewSplitOpenPane = createAsyncThunk(
   }
 );
 
+/**
+ * Moves explore into and out of correlations editor mode
+ */
+export const changeCorrelationEditorDetails = createAction<CorrelationEditorDetailsUpdate>(
+  'explore/changeCorrelationEditorDetails'
+);
+
 export interface NavigateToExploreDependencies {
-  getDataSourceSrv: () => DataSourceSrv;
-  getTimeSrv: () => TimeSrv;
+  timeRange: TimeRange;
   getExploreUrl: (args: GetExploreUrlArguments) => Promise<string | undefined>;
   openInNewWindow?: (url: string) => void;
 }
@@ -117,12 +135,14 @@ export const navigateToExplore = (
   dependencies: NavigateToExploreDependencies
 ): ThunkResult<void> => {
   return async (dispatch) => {
-    const { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow } = dependencies;
-    const datasourceSrv = getDataSourceSrv();
+    const { timeRange, getExploreUrl, openInNewWindow } = dependencies;
+
     const path = await getExploreUrl({
-      panel,
-      datasourceSrv,
-      timeSrv: getTimeSrv(),
+      queries: panel.targets,
+      dsRef: panel.datasource,
+      scopedVars: panel.scopedVars,
+      timeRange,
+      adhocFilters: getTemplateSrv().getAdhocFilters(panel.datasource?.uid ?? '', true),
     });
 
     if (openInNewWindow && path) {
@@ -141,6 +161,7 @@ const initialExploreItemState = makeExplorePaneState();
 export const initialExploreState: ExploreState = {
   syncedTimes: false,
   panes: {},
+  correlationEditorDetails: { editorMode: false, correlationDirty: false, queryEditorDirty: false, isExiting: false },
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
   largerExploreId: undefined,
@@ -250,6 +271,34 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return {
       ...state,
       panes: {},
+    };
+  }
+
+  if (changeCorrelationEditorDetails.match(action)) {
+    const {
+      editorMode,
+      label,
+      description,
+      canSave,
+      correlationDirty,
+      queryEditorDirty,
+      isExiting,
+      postConfirmAction,
+      transformations,
+    } = action.payload;
+    return {
+      ...state,
+      correlationEditorDetails: {
+        editorMode: Boolean(editorMode ?? state.correlationEditorDetails?.editorMode),
+        canSave: Boolean(canSave ?? state.correlationEditorDetails?.canSave),
+        label: label ?? state.correlationEditorDetails?.label,
+        description: description ?? state.correlationEditorDetails?.description,
+        transformations: transformations ?? state.correlationEditorDetails?.transformations,
+        correlationDirty: Boolean(correlationDirty ?? state.correlationEditorDetails?.correlationDirty),
+        queryEditorDirty: Boolean(queryEditorDirty ?? state.correlationEditorDetails?.queryEditorDirty),
+        isExiting: Boolean(isExiting ?? state.correlationEditorDetails?.isExiting),
+        postConfirmAction,
+      },
     };
   }
 

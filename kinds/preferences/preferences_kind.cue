@@ -8,6 +8,8 @@ description: "The user or team frontend preferences"
 lineage: schemas: [{
 	version: [0, 0]
 	schema: {
+		// Spec defines user, team or org Grafana preferences
+		// swagger:model Preferences
 		spec: {
 			// UID for the home dashboard
 			homeDashboardUID?: string
@@ -27,11 +29,20 @@ lineage: schemas: [{
 
 			// Explore query history preferences
 			queryHistory?: #QueryHistoryPreference
+
+			// Cookie preferences
+			cookiePreferences?: #CookiePreferences
 		} @cuetsy(kind="interface")
 
 		#QueryHistoryPreference: {
 			// one of: '' | 'query' | 'starred';
 			homeTab?: string
+		} @cuetsy(kind="interface")
+
+		#CookiePreferences: {
+			analytics?: {}
+			performance?: {}
+			functional?: {}
 		} @cuetsy(kind="interface")
 	}
 }]

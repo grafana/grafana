@@ -30,7 +30,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
       background: theme.colors.background.secondary,
-      borderRadius: theme.shape.borderRadius(8),
+      borderRadius: theme.shape.radius.pill,
       padding: theme.spacing(0, 2),
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,

@@ -350,19 +350,25 @@ describe('to nanoseconds', () => {
   it('should correctly display as minutes', () => {
     const eightMinutes = toNanoSeconds(480000000000);
     expect(eightMinutes.text).toBe('8');
+    expect(eightMinutes.suffix).toBe(' mins');
+  });
+
+  it('should correctly display as minute', () => {
+    const eightMinutes = toNanoSeconds(60000000000);
+    expect(eightMinutes.text).toBe('1');
     expect(eightMinutes.suffix).toBe(' min');
   });
 
   it('should correctly display as hours', () => {
     const nineHours = toNanoSeconds(32400000000000);
     expect(nineHours.text).toBe('9');
-    expect(nineHours.suffix).toBe(' hour');
+    expect(nineHours.suffix).toBe(' hours');
   });
 
   it('should correctly display as days', () => {
     const tenDays = toNanoSeconds(864000000000000);
     expect(tenDays.text).toBe('10');
-    expect(tenDays.suffix).toBe(' day');
+    expect(tenDays.suffix).toBe(' days');
   });
 });
 

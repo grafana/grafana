@@ -491,8 +491,7 @@
     ],
     "refresh": false,
     "schemaVersion": 37,
-    "style": "dark",
-    "tags": [
+      "tags": [
         "gdev",
         "panel-tests",
         "graph-ng"

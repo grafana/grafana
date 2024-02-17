@@ -56,6 +56,8 @@ type PublicDashboard struct {
 }
 
 type PublicDashboardDTO struct {
+	Uid                  string    `json:"uid"`
+	AccessToken          string    `json:"accessToken"`
 	TimeSelectionEnabled *bool     `json:"timeSelectionEnabled"`
 	IsEnabled            *bool     `json:"isEnabled"`
 	AnnotationsEnabled   *bool     `json:"annotationsEnabled"`
@@ -115,6 +117,7 @@ type PublicDashboardListResponse struct {
 	Title        string `json:"title" xorm:"title"`
 	DashboardUid string `json:"dashboardUid" xorm:"dashboard_uid"`
 	IsEnabled    bool   `json:"isEnabled" xorm:"is_enabled"`
+	Slug         string `json:"slug" xorm:"slug"`
 }
 
 type TimeSettings struct {

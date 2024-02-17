@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import React, { ErrorInfo, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { locationUtil, PageLayoutType } from '@grafana/data';
-import { Button, ErrorWithStack, stylesFactory } from '@grafana/ui';
+import { GrafanaTheme2, locationUtil, PageLayoutType } from '@grafana/data';
+import { Button, ErrorWithStack, useStyles2 } from '@grafana/ui';
 
 import { Page } from '../components/Page/Page';
 
@@ -15,6 +15,7 @@ interface Props {
 export function GrafanaRouteError({ error, errorInfo }: Props) {
   const location = useLocation();
   const isChunkLoadingError = error?.name === 'ChunkLoadError';
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     // Auto reload page 1 time if we have a chunk load error
@@ -27,18 +28,16 @@ export function GrafanaRouteError({ error, errorInfo }: Props) {
 
   return (
     <Page navId="error" layout={PageLayoutType.Canvas}>
-      <div className={getStyles()}>
+      <div className={styles.container}>
         {isChunkLoadingError && (
           <div>
             <h2>Unable to find application file</h2>
             <br />
             <h2 className="page-heading">Grafana has likely been updated. Please try reloading the page.</h2>
             <br />
-            <div className="gf-form-group">
-              <Button size="md" variant="secondary" icon="repeat" onClick={() => window.location.reload()}>
-                Reload
-              </Button>
-            </div>
+            <Button size="md" variant="secondary" icon="repeat" onClick={() => window.location.reload()}>
+              Reload
+            </Button>
             <ErrorWithStack title={'Error details'} error={error} errorInfo={errorInfo} />
           </div>
         )}
@@ -50,9 +49,9 @@ export function GrafanaRouteError({ error, errorInfo }: Props) {
   );
 }
 
-const getStyles = stylesFactory(() => {
-  return css`
-    width: 500px;
-    margin: 64px auto;
-  `;
+const getStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    width: '500px',
+    margin: theme.spacing(8, 'auto'),
+  }),
 });

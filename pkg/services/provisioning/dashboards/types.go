@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
@@ -16,23 +17,23 @@ type config struct {
 	Folder                string
 	FolderUID             string
 	Editable              bool
-	Options               map[string]interface{}
+	Options               map[string]any
 	DisableDeletion       bool
 	UpdateIntervalSeconds int64
 	AllowUIUpdates        bool
 }
 
 type configV0 struct {
-	Name                  string                 `json:"name" yaml:"name"`
-	Type                  string                 `json:"type" yaml:"type"`
-	OrgID                 int64                  `json:"org_id" yaml:"org_id"`
-	Folder                string                 `json:"folder" yaml:"folder"`
-	FolderUID             string                 `json:"folderUid" yaml:"folderUid"`
-	Editable              bool                   `json:"editable" yaml:"editable"`
-	Options               map[string]interface{} `json:"options" yaml:"options"`
-	DisableDeletion       bool                   `json:"disableDeletion" yaml:"disableDeletion"`
-	UpdateIntervalSeconds int64                  `json:"updateIntervalSeconds" yaml:"updateIntervalSeconds"`
-	AllowUIUpdates        bool                   `json:"allowUiUpdates" yaml:"allowUiUpdates"`
+	Name                  string         `json:"name" yaml:"name"`
+	Type                  string         `json:"type" yaml:"type"`
+	OrgID                 int64          `json:"org_id" yaml:"org_id"`
+	Folder                string         `json:"folder" yaml:"folder"`
+	FolderUID             string         `json:"folderUid" yaml:"folderUid"`
+	Editable              bool           `json:"editable" yaml:"editable"`
+	Options               map[string]any `json:"options" yaml:"options"`
+	DisableDeletion       bool           `json:"disableDeletion" yaml:"disableDeletion"`
+	UpdateIntervalSeconds int64          `json:"updateIntervalSeconds" yaml:"updateIntervalSeconds"`
+	AllowUIUpdates        bool           `json:"allowUiUpdates" yaml:"allowUiUpdates"`
 }
 
 type configVersion struct {
@@ -56,14 +57,17 @@ type configs struct {
 	AllowUIUpdates        values.BoolValue   `json:"allowUiUpdates" yaml:"allowUiUpdates"`
 }
 
-func createDashboardJSON(data *simplejson.Json, lastModified time.Time, cfg *config, folderID int64) (*dashboards.SaveDashboardDTO, error) {
+func createDashboardJSON(data *simplejson.Json, lastModified time.Time, cfg *config, folderID int64, folderUID string) (*dashboards.SaveDashboardDTO, error) {
 	dash := &dashboards.SaveDashboardDTO{}
 	dash.Dashboard = dashboards.NewDashboardFromJson(data)
 	dash.UpdatedAt = lastModified
 	dash.Overwrite = true
 	dash.OrgID = cfg.OrgID
 	dash.Dashboard.OrgID = cfg.OrgID
+	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Provisioning).Inc()
+	// nolint:staticcheck
 	dash.Dashboard.FolderID = folderID
+	dash.Dashboard.FolderUID = folderUID
 
 	if dash.Dashboard.Title == "" {
 		return nil, dashboards.ErrDashboardTitleEmpty

@@ -1,18 +1,27 @@
 import { isArray, isEqual } from 'lodash';
 
-import { UrlQueryMap, UrlQueryValue, VariableType } from '@grafana/data';
+import {
+  LegacyMetricFindQueryOptions,
+  ScopedVars,
+  UrlQueryMap,
+  UrlQueryValue,
+  VariableType,
+  VariableRefresh,
+  VariableWithOptions,
+  QueryVariableModel,
+} from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
 
 import { getState } from '../../store/store';
 import { StoreState } from '../../types';
-import { getTimeSrv } from '../dashboard/services/TimeSrv';
+import { TimeSrv } from '../dashboard/services/TimeSrv';
 
 import { variableAdapters } from './adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, VARIABLE_PREFIX } from './constants';
 import { getVariablesState } from './state/selectors';
 import { KeyedVariableIdentifier, VariableIdentifier, VariablePayload } from './state/types';
-import { QueryVariableModel, TransactionStatus, VariableModel, VariableRefresh, VariableWithOptions } from './types';
+import { TransactionStatus, VariableModel } from './types';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -131,8 +140,14 @@ export function getTemplatedRegex(variable: QueryVariableModel, templateSrv = ge
   return templateSrv.replace(variable.regex, {}, 'regex');
 }
 
-export function getLegacyQueryOptions(variable: QueryVariableModel, searchFilter?: string, timeSrv = getTimeSrv()) {
-  const queryOptions: any = { range: undefined, variable, searchFilter };
+export function getLegacyQueryOptions(
+  variable: QueryVariableModel,
+  searchFilter: string | undefined,
+  timeSrv: TimeSrv,
+  scopedVars: ScopedVars | undefined
+): LegacyMetricFindQueryOptions {
+  const queryOptions: LegacyMetricFindQueryOptions = { range: undefined, variable, searchFilter, scopedVars };
+
   if (variable.refresh === VariableRefresh.onTimeRangeChanged || variable.refresh === VariableRefresh.onDashboardLoad) {
     queryOptions.range = timeSrv.timeRange();
   }
@@ -169,7 +184,7 @@ export function getVariableTypes(): Array<{ label: string; value: VariableType }
     }));
 }
 
-function getUrlValueForComparison(value: any): any {
+function getUrlValueForComparison(value: unknown) {
   if (isArray(value)) {
     if (value.length === 0) {
       value = undefined;
@@ -226,7 +241,7 @@ export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): Ex
   return count ? changes : undefined;
 }
 
-export function ensureStringValues(value: any | any[]): string | string[] {
+export function ensureStringValues(value: unknown | unknown[]): string | string[] {
   if (Array.isArray(value)) {
     return value.map(String);
   }

@@ -2,12 +2,14 @@ package models
 
 import (
 	"net/http"
+	"time"
 )
 
 type DatasourceInfo struct {
 	HTTPClient *http.Client
-	Token      string
-	URL        string
+
+	Token string
+	URL   string
 
 	DbName        string `json:"dbName"`
 	Version       string `json:"version"`
@@ -16,4 +18,8 @@ type DatasourceInfo struct {
 	DefaultBucket string `json:"defaultBucket"`
 	Organization  string `json:"organization"`
 	MaxSeries     int    `json:"maxSeries"`
+	Timeout       time.Duration
+
+	// FlightSQL grpc connection
+	SecureGrpc bool `json:"secureGrpc"`
 }

@@ -1,6 +1,20 @@
+import { DateTime, toUtc } from '../datetime';
 import { DataLink, FieldType, TimeRange } from '../types';
 
 import { mapInternalLinkToExplore } from './dataLinks';
+
+const createTimeRange = (from: DateTime, to: DateTime): TimeRange => ({
+  from,
+  to,
+  raw: {
+    from,
+    to,
+  },
+});
+
+const DATE_AS_DATE_TIME = toUtc([2000, 1, 1]);
+const DATE_AS_MS = '949363200000';
+const TIME_RANGE = createTimeRange(DATE_AS_DATE_TIME, DATE_AS_DATE_TIME);
 
 describe('mapInternalLinkToExplore', () => {
   it('creates internal link', () => {
@@ -18,7 +32,6 @@ describe('mapInternalLinkToExplore', () => {
       link: dataLink,
       internalLink: dataLink.internal,
       scopedVars: {},
-      range: {} as unknown as TimeRange,
       field: {
         name: 'test',
         type: FieldType.number,
@@ -59,7 +72,6 @@ describe('mapInternalLinkToExplore', () => {
       link: dataLink,
       internalLink: dataLink.internal!,
       scopedVars: {},
-      range: {} as unknown as TimeRange,
       field: {
         name: 'test',
         type: FieldType.number,
@@ -106,7 +118,7 @@ describe('mapInternalLinkToExplore', () => {
       scopedVars: {
         var1: { text: '', value: 'val1' },
       },
-      range: {} as unknown as TimeRange,
+      range: TIME_RANGE,
       field: {
         name: 'test',
         type: FieldType.number,
@@ -118,6 +130,10 @@ describe('mapInternalLinkToExplore', () => {
 
     expect(decodeURIComponent(link.href)).toEqual(
       `/explore?left=${JSON.stringify({
+        range: {
+          from: DATE_AS_MS,
+          to: DATE_AS_MS,
+        },
         datasource: 'uid',
         queries: [
           {

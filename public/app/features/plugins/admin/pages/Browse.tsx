@@ -3,8 +3,8 @@ import React, { ReactElement } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { SelectableValue, GrafanaTheme2, PluginType } from '@grafana/data';
-import { config, locationSearchToObject } from '@grafana/runtime';
-import { LoadingPlaceholder, Select, RadioButtonGroup, useStyles2, Tooltip, Field } from '@grafana/ui';
+import { locationSearchToObject } from '@grafana/runtime';
+import { Select, RadioButtonGroup, useStyles2, Tooltip, Field } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -27,8 +27,8 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
   const styles = useStyles2(getStyles);
   const history = useHistory();
   const remotePluginsAvailable = useIsRemotePluginsAvailable();
-  const keyword = (locationSearch.q as string) || '';
-  const filterBy = (locationSearch.filterBy as string) || 'installed';
+  const keyword = locationSearch.q?.toString() || '';
+  const filterBy = locationSearch.filterBy?.toString() || 'installed';
   const filterByType = (locationSearch.filterByType as PluginType | 'all') || 'all';
   const sortBy = (locationSearch.sortBy as Sorters) || Sorters.nameAsc;
   const { isLoading, error, plugins } = useGetAll(
@@ -36,10 +36,10 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
       keyword,
       type: filterByType !== 'all' ? filterByType : undefined,
       isInstalled: filterBy === 'installed' ? true : undefined,
-      isCore: filterBy === 'installed' ? undefined : false, // We only would like to show core plugins when the user filters to installed plugins
     },
     sortBy
   );
+
   const filterByOptions = [
     { value: 'all', label: 'All' },
     { value: 'installed', label: 'Installed' },
@@ -67,7 +67,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
     return null;
   }
 
-  const subTitle = config.featureToggles.dataConnectionsConsole ? (
+  const subTitle = (
     <div>
       Extend the Grafana experience with panel plugins and apps. To find more data sources go to{' '}
       <a className="external-link" href={`${CONNECTIONS_ROUTES.AddNewConnection}?cat=data-source`}>
@@ -75,8 +75,6 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
       </a>
       .
     </div>
-  ) : (
-    <div>Extend the Grafana experience with panel plugins and apps.</div>
   );
 
   return (
@@ -162,16 +160,7 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
           </HorizontalGroup>
         </HorizontalGroup>
         <div className={styles.listWrap}>
-          {isLoading ? (
-            <LoadingPlaceholder
-              className={css`
-                margin-bottom: 0;
-              `}
-              text="Loading results"
-            />
-          ) : (
-            <PluginList plugins={plugins} displayMode={displayMode} />
-          )}
+          <PluginList plugins={plugins} displayMode={displayMode} isLoading={isLoading} />
         </div>
       </Page.Contents>
     </Page>
@@ -179,17 +168,17 @@ export default function Browse({ route }: GrafanaRouteComponentProps): ReactElem
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  actionBar: css`
-    ${theme.breakpoints.up('xl')} {
-      margin-left: auto;
-    }
-  `,
-  listWrap: css`
-    margin-top: ${theme.spacing(2)};
-  `,
-  displayAs: css`
-    svg {
-      margin-right: 0;
-    }
-  `,
+  actionBar: css({
+    [theme.breakpoints.up('xl')]: {
+      marginLeft: 'auto',
+    },
+  }),
+  listWrap: css({
+    marginTop: theme.spacing(2),
+  }),
+  displayAs: css({
+    svg: {
+      marginRight: 0,
+    },
+  }),
 });

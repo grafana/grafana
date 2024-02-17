@@ -11,16 +11,16 @@ on:
   workflow_dispatch:
 jobs:
   sync:
-    if: "github.repository == 'grafana/grafana'"
+    if: github.repository == 'grafana/grafana'
     runs-on: "ubuntu-latest"
     steps:
       - name: "Checkout Grafana repo"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           fetch-depth: 0
 
       - name: "Checkout Actions library"
-        uses: "actions/checkout@v3"
+        uses: "actions/checkout@v4"
         with:
           repository: "grafana/grafana-github-actions"
           path: "./actions"
@@ -50,6 +50,12 @@ jobs:
         # GitHub administrator to update the organization secret.
         # The IT helpdesk can update the organization secret.
         run: "git clone --single-branch --no-tags --depth 1 -b master https://grafanabot:${{ secrets.WEBSITE_SYNC_TOKEN }}@github.com/grafana/website-sync ./.github/actions/website-sync"
+
+      - name: "Switch to HEAD of version branch for tags"
+        # Tags aren't necessarily made to the HEAD of the version branch.
+        # The documentation to be published is always on the HEAD of the version branch.
+        if: "steps.has-matching-release-tag.outputs.bool == 'true' && github.ref_type == 'tag'"
+        run: "git switch --detach origin/${{ steps.target.outputs.target }}.x"
 
       - name: "Publish to website repository (release)"
         if: "steps.has-matching-release-tag.outputs.bool == 'true'"

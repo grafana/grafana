@@ -4,8 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, Field, FieldSet, Icon, Input, useStyles2 } from '@grafana/ui';
+import { Button, Field, FieldSet, Icon, Input, useStyles2, Stack } from '@grafana/ui';
 
 import { MuteTimingFields } from '../../types/mute-timing-form';
 import { DAYS_OF_THE_WEEK, defaultTimeInterval, MONTHS, validateArrayField } from '../../utils/mute-timings';
@@ -15,12 +14,12 @@ import { TimezoneSelect } from './timezones';
 
 export const MuteTimingTimeInterval = () => {
   const styles = useStyles2(getStyles);
-  const { formState, register, setValue } = useFormContext();
+  const { formState, register, setValue } = useFormContext<MuteTimingFields>();
   const {
     fields: timeIntervals,
     append: addTimeInterval,
     remove: removeTimeInterval,
-  } = useFieldArray<MuteTimingFields>({
+  } = useFieldArray({
     name: 'time_intervals',
   });
 
@@ -44,7 +43,11 @@ export const MuteTimingTimeInterval = () => {
             return (
               <div key={timeInterval.id} className={styles.timeIntervalSection}>
                 <MuteTimingTimeRange intervalIndex={timeIntervalIndex} />
-                <Field label="Location" invalid={Boolean(errors.location)} error={errors.location?.message}>
+                <Field
+                  label="Location"
+                  invalid={Boolean(errors.time_intervals?.[timeIntervalIndex]?.location)}
+                  error={errors.time_intervals?.[timeIntervalIndex]?.location?.message}
+                >
                   <TimezoneSelect
                     prefix={<Icon name="map-marker" />}
                     width={50}
@@ -236,7 +239,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
     border: solid 1px ${theme.colors.border.medium};
     background: none;
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
 
     color: ${theme.colors.text.secondary};
 

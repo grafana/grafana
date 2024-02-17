@@ -1,21 +1,18 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 const PANEL_UNDER_TEST = 'Lines 500 data points';
 
-e2e.scenario({
-  describeName: 'Panel edit tests',
-  itName: 'Tests various Panel edit scenarios',
-  addScenarioDataSource: false,
-  addScenarioDashBoard: false,
-  skipScenario: false,
-  scenario: () => {
-    e2e()
-      .intercept({
-        pathname: '/api/ds/query',
-      })
-      .as('query');
+describe('Panel edit tests', () => {
+  beforeEach(() => {
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+  });
+
+  it('Tests various Panel edit scenarios', () => {
+    cy.intercept({
+      pathname: '/api/ds/query',
+    }).as('query');
     e2e.flows.openDashboard({ uid: 'TkZXxlNG3' });
-    e2e().wait('@query');
+    cy.wait('@query');
 
     e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Edit, PANEL_UNDER_TEST);
 
@@ -38,11 +35,11 @@ e2e.scenario({
 
         //  Bottom pane tabs
         //  Can change to Transform tab
-        e2e.components.Tab.title('Transform').should('be.visible').click();
+        e2e.components.Tab.title('Transform data').should('be.visible').click();
         e2e.components.Tab.active().within((li: JQuery<HTMLLIElement>) => {
-          expect(li.text()).equals('Transform0'); // there's no transform so therefore Transform + 0
+          expect(li.text()).equals('Transform data0'); // there's no transform so therefore Transform + 0
         });
-        e2e.components.Transforms.card('Merge').scrollIntoView().should('be.visible');
+        e2e.components.Transforms.addTransformationButton().scrollIntoView().should('be.visible');
         e2e.components.QueryTab.content().should('not.exist');
         e2e.components.AlertTab.content().should('not.exist');
         e2e.components.PanelAlertTabContent.content().should('not.exist');
@@ -70,8 +67,6 @@ e2e.scenario({
     // close options pane
     e2e.components.PanelEditor.toggleVizOptions().click();
     e2e.components.PanelEditor.OptionsPane.content().should('not.exist');
-
-    e2e().wait(100);
 
     // open options pane
     e2e.components.PanelEditor.toggleVizOptions().should('be.visible').click();
@@ -109,5 +104,5 @@ e2e.scenario({
     // Field & Overrides tabs (need to switch to React based vis, i.e. Table)
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Table Show table header').should('be.visible');
     e2e.components.PanelEditor.OptionsPane.fieldLabel('Table Column width').should('be.visible');
-  },
+  });
 });

@@ -4,25 +4,35 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"path"
 	"strconv"
+	"syscall"
+	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	jsoniter "github.com/json-iterator/go"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/util/converter"
+	"github.com/grafana/grafana/pkg/tsdb/loki/instrumentation"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/converter"
 )
 
 type LokiAPI struct {
-	client *http.Client
-	url    string
-	log    log.Logger
+	client                    *http.Client
+	url                       string
+	log                       log.Logger
+	tracer                    tracing.Tracer
+	requestStructuredMetadata bool
 }
 
 type RawLokiResponse struct {
@@ -31,11 +41,11 @@ type RawLokiResponse struct {
 	Encoding string
 }
 
-func newLokiAPI(client *http.Client, url string, log log.Logger) *LokiAPI {
-	return &LokiAPI{client: client, url: url, log: log}
+func newLokiAPI(client *http.Client, url string, log log.Logger, tracer tracing.Tracer, requestStructuredMetadata bool) *LokiAPI {
+	return &LokiAPI{client: client, url: url, log: log, tracer: tracer, requestStructuredMetadata: requestStructuredMetadata}
 }
 
-func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.Request, error) {
+func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, categorizeLabels bool) (*http.Request, error) {
 	qs := url.Values{}
 	qs.Set("query", query.Expr)
 
@@ -95,6 +105,10 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*h
 		}
 	}
 
+	if categorizeLabels {
+		req.Header.Set("X-Loki-Response-Encoding-Flags", "categorize-labels")
+	}
+
 	return req, nil
 }
 
@@ -148,35 +162,78 @@ func readLokiError(body io.ReadCloser) error {
 	return makeLokiError(bytes)
 }
 
-func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts ResponseOpts) (data.Frames, error) {
-	req, err := makeDataRequest(ctx, api.url, query)
+func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery, responseOpts ResponseOpts) (*backend.DataResponse, error) {
+	req, err := makeDataRequest(ctx, api.url, query, api.requestStructuredMetadata)
 	if err != nil {
 		return nil, err
 	}
 
+	queryAttrs := []any{"start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr, "queryType", query.QueryType, "direction", query.Direction, "maxLines", query.MaxLines, "supportingQueryType", query.SupportingQueryType, "lokiHost", req.URL.Host, "lokiPath", req.URL.Path}
+	api.log.Debug("Sending query to loki", queryAttrs...)
+	start := time.Now()
 	resp, err := api.client.Do(req)
 	if err != nil {
-		return nil, err
+		status := "error"
+		if errors.Is(err, context.Canceled) {
+			status = "cancelled"
+		}
+		lp := []any{"error", err, "status", status, "duration", time.Since(start), "stage", stageDatabaseRequest}
+		lp = append(lp, queryAttrs...)
+		if resp != nil {
+			lp = append(lp, "statusCode", resp.StatusCode)
+		}
+		api.log.Error("Error received from Loki", lp...)
+		res := backend.DataResponse{
+			Error: err,
+		}
+		if errors.Is(err, syscall.ECONNREFUSED) {
+			res.ErrorSource = backend.ErrorSourceDownstream
+		}
+		return &res, nil
 	}
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			api.log.Warn("Failed to close response body", "err", err)
+			api.log.Warn("Failed to close response body", "error", err)
 		}
 	}()
 
+	lp := []any{"duration", time.Since(start), "stage", stageDatabaseRequest, "statusCode", resp.StatusCode, "contentLength", resp.Header.Get("Content-Length")}
+	lp = append(lp, queryAttrs...)
 	if resp.StatusCode/100 != 2 {
-		return nil, readLokiError(resp.Body)
+		err := readLokiError(resp.Body)
+		res := backend.DataResponse{
+			Error:       err,
+			ErrorSource: backend.ErrorSourceFromHTTPStatus(resp.StatusCode),
+		}
+		lp = append(lp, "status", "error", "error", err, "statusSource", res.ErrorSource)
+		api.log.Error("Error received from Loki", lp...)
+		return &res, nil
+	} else {
+		lp = append(lp, "status", "ok")
+		api.log.Info("Response received from loki", lp...)
 	}
+
+	start = time.Now()
+	_, span := api.tracer.Start(ctx, "datasource.loki.parseResponse", trace.WithAttributes(
+		attribute.Bool("metricDataplane", responseOpts.metricDataplane),
+	))
+	defer span.End()
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, resp.Body, 1024)
-	res := converter.ReadPrometheusStyleResult(iter, converter.Options{MatrixWideSeries: false, VectorWideSeries: false, Dataplane: responseOpts.metricDataplane})
+	res := converter.ReadPrometheusStyleResult(iter, converter.Options{Dataplane: responseOpts.metricDataplane})
 
 	if res.Error != nil {
+		span.RecordError(res.Error)
+		span.SetStatus(codes.Error, res.Error.Error())
+		instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "error")
+		api.log.Error("Error parsing response from loki", "error", res.Error, "metricDataplane", responseOpts.metricDataplane, "duration", time.Since(start), "stage", stageParseResponse)
 		return nil, res.Error
 	}
+	instrumentation.UpdatePluginParsingResponseDurationSeconds(ctx, time.Since(start), "ok")
+	api.log.Info("Response parsed from loki", "duration", time.Since(start), "metricDataplane", responseOpts.metricDataplane, "framesLength", len(res.Frames), "stage", stageParseResponse)
 
-	return res.Frames, nil
+	return &res, nil
 }
 
 func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string) (*http.Request, error) {
@@ -204,21 +261,34 @@ func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string) 
 }
 
 func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiResponse, error) {
+	api.log.Debug("Sending raw query to loki", "resourcePath", resourcePath)
 	req, err := makeRawRequest(ctx, api.url, resourcePath)
 	if err != nil {
+		api.log.Error("Failed to prepare request to loki", "error", err, "resourcePath", resourcePath)
 		return RawLokiResponse{}, err
 	}
-
+	start := time.Now()
 	resp, err := api.client.Do(req)
 	if err != nil {
+		status := "error"
+		if errors.Is(err, context.Canceled) {
+			status = "cancelled"
+		}
+		lp := []any{"error", err, "resourcePath", resourcePath, "status", status, "duration", time.Since(start), "stage", stageDatabaseRequest}
+		if resp != nil {
+			lp = append(lp, "statusCode", resp.StatusCode)
+		}
+		api.log.Error("Error received from Loki", lp...)
 		return RawLokiResponse{}, err
 	}
 
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			api.log.Warn("Failed to close response body", "err", err)
+			api.log.Warn("Failed to close response body", "error", err)
 		}
 	}()
+
+	api.log.Info("Response received from loki", "status", "ok", "statusCode", resp.StatusCode, "contentLength", resp.Header.Get("Content-Length"), "duration", time.Since(start), "contentEncoding", resp.Header.Get("Content-Encoding"), "stage", stageDatabaseRequest)
 
 	// server errors are handled by the plugin-proxy to hide the error message
 	if resp.StatusCode/100 == 5 {
@@ -227,12 +297,14 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
+		api.log.Error("Error reading response body bytes", "error", err)
 		return RawLokiResponse{}, err
 	}
 
 	// client errors are passed as a json struct to the client
 	if resp.StatusCode/100 != 2 {
 		lokiResponseErr := lokiResponseError{Message: makeLokiError(body).Error()}
+		api.log.Warn("Non 200 HTTP status received from loki", "error", lokiResponseErr.Message, "statusCode", resp.StatusCode, "resourcePath", resourcePath)
 		traceID := tracing.TraceIDFromContext(ctx, false)
 		if traceID != "" {
 			lokiResponseErr.TraceID = traceID
@@ -261,7 +333,9 @@ func getSupportingQueryHeaderValue(req *http.Request, supportingQueryType Suppor
 		value = "logsample"
 	case SupportingQueryDataSample:
 		value = "datasample"
-	default: //ignore
+	case SupportingQueryInfiniteScroll:
+		value = "infinitescroll"
+	default: // ignore
 	}
 
 	return value

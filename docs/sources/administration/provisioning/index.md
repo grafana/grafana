@@ -59,13 +59,14 @@ If you have a literal `$` in your value and want to avoid interpolation, `$$` ca
 
 Currently we do not provide any scripts/manifests for configuring Grafana. Rather than spending time learning and creating scripts/manifests for each tool, we think our time is better spent making Grafana easier to provision. Therefore, we heavily rely on the expertise of the community.
 
-| Tool      | Project                                                                                                        |
-| --------- | -------------------------------------------------------------------------------------------------------------- |
-| Puppet    | [https://forge.puppet.com/puppet/grafana](https://forge.puppet.com/puppet/grafana)                             |
-| Ansible   | [https://github.com/cloudalchemy/ansible-grafana](https://github.com/cloudalchemy/ansible-grafana)             |
-| Chef      | [https://github.com/sous-chefs/chef-grafana](https://github.com/sous-chefs/chef-grafana)                       |
-| Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://github.com/salt-formulas/salt-formula-grafana) |
-| Jsonnet   | [https://github.com/grafana/grafonnet-lib/](https://github.com/grafana/grafonnet-lib/)                         |
+| Tool      | Project                                                                                                                         |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Puppet    | [https://forge.puppet.com/puppet/grafana](https://forge.puppet.com/puppet/grafana)                                              |
+| Ansible   | [https://github.com/grafana/grafana-ansible-collection](https://github.com/grafana/grafana-ansible-collection)                  |
+| Chef      | [https://github.com/sous-chefs/chef-grafana](https://github.com/sous-chefs/chef-grafana)                                        |
+| Saltstack | [https://github.com/salt-formulas/salt-formula-grafana](https://github.com/salt-formulas/salt-formula-grafana)                  |
+| Jsonnet   | [https://github.com/grafana/grafonnet-lib/](https://github.com/grafana/grafonnet-lib/)                                          |
+| NixOS     | [services.grafana.provision module](https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/services/monitoring/grafana.nix) |
 
 ## Data sources
 
@@ -156,6 +157,8 @@ datasources:
       password:
       # <string> Sets the basic authorization password.
       basicAuthPassword:
+    # <int> Sets the version. Used to compare versions when
+    # updating. Ignored when creating a new data source.
     version: 1
     # <bool> Allows users to edit data sources from the
     # Grafana UI.
@@ -343,7 +346,7 @@ providers:
 
 When Grafana starts, it will update/insert all dashboards available in the configured path. Then later on poll that path every **updateIntervalSeconds** and look for updated json files and update/insert those into the database.
 
-> **Note:** Dashboards are provisioned to the General folder if the `folder` option is missing or empty.
+> **Note:** Dashboards are provisioned to the root level if the `folder` option is missing or empty.
 
 #### Making changes to a provisioned dashboard
 
@@ -371,8 +374,8 @@ By default, Grafana deletes dashboards in the database if the file is removed. Y
 
 {{% admonition type="note" %}}
 Provisioning allows you to overwrite existing dashboards
-which leads to problems if you re-use settings that are supposed to be unique.
-Be careful not to re-use the same `title` multiple times within a folder
+which leads to problems if you reuse settings that are supposed to be unique.
+Be careful not to reuse the same `title` multiple times within a folder
 or `uid` within the same installation as this will cause weird behaviors.
 {{% /admonition %}}
 
@@ -413,8 +416,12 @@ providers:
 {{% /admonition %}}
 
 {{% admonition type="note" %}}
-To provision dashboards to the General folder, store them in the root of your `path`.
+To provision dashboards to the root level, store them in the root of your `path`.
 {{% /admonition %}}
+
+{{< admonition type="note" >}}
+This feature doesn't currently allow you to create nested folder structures, that is, where you have folders within folders.
+{{< /admonition >}}
 
 ## Alerting
 

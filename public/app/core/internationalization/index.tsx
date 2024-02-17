@@ -35,8 +35,6 @@ export function initializeI18n(language: string) {
 
     // If translations are empty strings (no translation), fall back to the default value in source code
     returnEmptyString: false,
-
-    pluralSeparator: '__',
   };
   let init = i18n;
   if (language === 'detect') {
@@ -58,7 +56,7 @@ export function changeLanguage(locale: string) {
 }
 
 export const Trans: typeof I18NextTrans = (props) => {
-  return <I18NextTrans {...props} />;
+  return <I18NextTrans shouldUnescape {...props} />;
 };
 
 // Reassign t() so i18next-parser doesn't warn on dynamic key, and we can have 'failOnWarnings' enabled

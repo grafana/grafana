@@ -6,7 +6,7 @@ aliases:
   - ../../visualizations/table/
   - ../../visualizations/table/filter-table-columns/
   - /docs/grafana/next/panels/visualizations/table/table-field-options/
-description: Learn about table panel visualization features.
+description: Configure options for Grafana's table visualization
 keywords:
   - grafana
   - dashboard
@@ -21,20 +21,19 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Table
 title: Table
-weight: 1000
+weight: 100
 ---
 
 # Table
 
-The table panel visualization is very flexible, supporting multiple modes for time series and for tables, annotation, and raw JSON data. This panel also provides date formatting, value formatting, and coloring options.
+Tables are very flexible, supporting multiple modes for time series and for tables, annotation, and raw JSON data. This visualization also provides date formatting, value formatting, and coloring options.
 
 {{< figure src="/static/img/docs/tables/table_visualization.png" max-width="1200px" lightbox="true" caption="Table visualization" >}}
 
 ## Annotation and alert support
 
-Annotations and alerts are not currently supported in the new table panel.
+Annotations and alerts are not currently supported in tables.
 
 ## Sort column
 
@@ -45,7 +44,7 @@ Click a column title to change the sort order from default to descending to asce
 ## Table options
 
 {{% admonition type="note" %}}
-If you are using a table visualization created before Grafana 7.0, then you need to migrate to the new table version in order to see these options. To migrate, on the Panel tab, click **Table** visualization. Grafana updates the table version and you can then access all table options.
+If you are using a table created before Grafana 7.0, then you need to migrate to the new table version in order to see these options. To migrate, on the Panel tab, click **Table** visualization. Grafana updates the table version and you can then access all table options.
 {{% /admonition %}}
 
 ### Show header
@@ -60,11 +59,11 @@ For example, if you enter `100` in the field, then when you click outside the fi
 
 ## Minimum column width
 
-By default, the minimum width of the table column is 150 pixels. This field option can override that default and will define the new minimum column width for the table panel in pixels.
+By default, the minimum width of the table column is 150 pixels. This field option can override that default and will define the new minimum column width for the table in pixels.
 
 For example, if you enter `75` in the field, then when you click outside the field, all the columns will scale to no smaller than 75 pixels wide.
 
-For small-screen devices, such as smartphones or tablets, reduce the default `150` pixel value to`50` to allow table based panels to render correctly in dashboards.
+For small-screen devices, such as smartphones or tablets, reduce the default `150` pixel value to`50` to allow table-based panels to render correctly in dashboards.
 
 ## Column alignment
 
@@ -149,13 +148,9 @@ If you have a field value that is an image URL or a base64 encoded image you can
 
 ### Sparkline
 
-{{% admonition type="note" %}}
-This cell type is available in Grafana 9.5+ as an opt-in beta feature. Modify Grafana [configuration file]({{< relref "../../../setup-grafana/configure-grafana/#configuration-file-location" >}}) to enable the `timeSeriesTable` [feature toggle]({{< relref "../../../setup-grafana/configure-grafana/#feature_toggles" >}}) to use it.
-{{% /admonition %}}
+Shows value rendered as a sparkline. Requires [time series to table][] data transform.
 
-Shows value rendered as a sparkline. Requires [time series to table]({{< relref "../../query-transform-data/transform-data/#time-series-to-table-transform" >}}) data transform.
-
-{{< figure src="/static/img/docs/tables/sparkline.png" max-width="500px" caption="Sparkline" class="docs-image--no-shadow" >}}
+{{< figure src="/static/img/docs/tables/sparkline2.png" max-width="500px" caption="Sparkline" class="docs-image--no-shadow" >}}
 
 ## Cell value inspect
 
@@ -167,7 +162,7 @@ Cell value inspection is only available when cell display mode is set to Auto, C
 
 ## Column filter
 
-You can temporarily change how column data is displayed. For example, you can order values from highest to lowest or hide specific values. For more information, refer to [Filter table columns]({{< relref "#filter-table-columns" >}}).
+You can temporarily change how column data is displayed. For example, you can order values from highest to lowest or hide specific values. For more information, refer to [Filter table columns](#filter-table-columns).
 
 ## Pagination
 
@@ -196,6 +191,14 @@ To filter column values, click the filter (funnel) icon next to a column title. 
 
 Click the check box next to the values that you want to display. Enter text in the search field at the top to show those values in the display so that you can select them rather than scroll to find them.
 
+Choose from several operators to display column values:
+
+- **Contains** - Matches a regex pattern (operator by default).
+- **Expression** - Evaluates a boolean expression. The character `$` represents the column value in the expression (for example, "$ >= 10 && $ <= 12").
+- The typical comparison operators: `=`, `!=`, `<`, `<=`, `>`, `>=`.
+
+Click the check box above the **Ok** and **Cancel** buttons to add or remove all displayed values to/from the filter.
+
 ### Clear column filters
 
 Columns with filters applied have a blue funnel displayed next to the title.
@@ -206,7 +209,7 @@ To remove the filter, click the blue funnel icon and then click **Clear filter**
 
 ## Table footer
 
-You can use the table footer to show [calculations]({{< relref "../../calculation-types/" >}}) on fields.
+You can use the table footer to show [calculations][] on fields.
 
 After you enable the table footer:
 
@@ -218,3 +221,14 @@ The system applies the calculation to all numeric fields if you do not select a 
 ### Count rows
 
 If you want to show the number of rows in the dataset instead of the number of values in the selected fields, select the **Count** calculation and enable **Count rows**.
+
+{{% docs/reference %}}
+[calculations]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/calculation-types"
+[calculations]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/calculation-types"
+
+[time series to table]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data#time-series-to-table-transform"
+[time series to table]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/transform-data#time-series-to-table-transform"
+
+[configuration file]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#configuration-file-location"
+[configuration file]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#configuration-file-location"
+{{% /docs/reference %}}

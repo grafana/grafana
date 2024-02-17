@@ -53,8 +53,7 @@
     ],
     "refresh": "",
     "schemaVersion": 38,
-    "style": "dark",
-    "tags": [],
+      "tags": [],
     "templating": {
       "list": []
     },
@@ -69,4 +68,3 @@
     "version": 3,
     "weekStart": ""
   }
-  

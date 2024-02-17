@@ -2,19 +2,28 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps, GrafanaTheme2 } from '@grafana/data';
-import { ConfigSection, ConfigSubSection, DataSourceDescription } from '@grafana/experimental';
+import {
+  AdvancedHttpSettings,
+  Auth,
+  ConfigSection,
+  ConfigDescriptionLink,
+  ConfigSubSection,
+  ConnectionSettings,
+  convertLegacyAuthProps,
+  DataSourceDescription,
+} from '@grafana/experimental';
+import {
+  NodeGraphSection,
+  SpanBarSection,
+  TraceToLogsSection,
+  TraceToMetricsSection,
+  TraceToProfilesSection,
+} from '@grafana/o11y-ds-frontend';
 import { config } from '@grafana/runtime';
-import { DataSourceHttpSettings, useStyles2 } from '@grafana/ui';
-import { ConfigDescriptionLink } from 'app/core/components/ConfigDescriptionLink';
-import { Divider } from 'app/core/components/Divider';
-import { NodeGraphSection } from 'app/core/components/NodeGraphSettings';
-import { TraceToLogsSection } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
-import { TraceToMetricsSection } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
-import { SpanBarSection } from 'app/features/explore/TraceView/components/settings/SpanBarSettings';
+import { SecureSocksProxySettings, useStyles2, Divider, Stack } from '@grafana/ui';
 
 import { LokiSearchSettings } from './LokiSearchSettings';
 import { QuerySettings } from './QuerySettings';
-import { SearchSettings } from './SearchSettings';
 import { ServiceGraphSettings } from './ServiceGraphSettings';
 import { TraceQLSearchSettings } from './TraceQLSearchSettings';
 
@@ -31,28 +40,30 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
         hasRequiredFields={false}
       />
 
-      <Divider />
+      <Divider spacing={4} />
+      <ConnectionSettings config={options} onChange={onOptionsChange} urlPlaceholder="http://localhost:3200" />
 
-      <DataSourceHttpSettings
-        defaultUrl="http://tempo"
-        dataSourceConfig={options}
-        showAccessOptions={false}
-        onChange={onOptionsChange}
-        secureSocksDSProxyEnabled={config.secureSocksDSProxyEnabled}
+      <Divider spacing={4} />
+      <Auth
+        {...convertLegacyAuthProps({
+          config: options,
+          onChange: onOptionsChange,
+        })}
       />
 
-      <Divider />
-
+      <Divider spacing={4} />
       <TraceToLogsSection options={options} onOptionsChange={onOptionsChange} />
 
-      <Divider />
-
+      <Divider spacing={4} />
       {config.featureToggles.traceToMetrics ? (
         <>
           <TraceToMetricsSection options={options} onOptionsChange={onOptionsChange} />
-          <Divider />
+          <Divider spacing={4} />
         </>
       ) : null}
+
+      <TraceToProfilesSection options={options} onOptionsChange={onOptionsChange} />
+      <Divider spacing={4} />
 
       <ConfigSection
         title="Additional settings"
@@ -60,83 +71,80 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
         isCollapsible={true}
         isInitiallyOpen={false}
       >
-        <ConfigSubSection
-          title="Service graph"
-          description={
-            <ConfigDescriptionLink
-              description="Select a Prometheus data source that contains the service graph data."
-              suffix="tempo/#service-graph"
-              feature="the service graph"
-            />
-          }
-        >
-          <ServiceGraphSettings options={options} onOptionsChange={onOptionsChange} />
-        </ConfigSubSection>
+        <Stack gap={5} direction="column">
+          <AdvancedHttpSettings config={options} onChange={onOptionsChange} />
 
-        <Divider hideLine={true} />
-
-        <NodeGraphSection options={options} onOptionsChange={onOptionsChange} />
-        <Divider hideLine={true} />
-
-        <ConfigSubSection
-          title="Tempo search"
-          description={
-            <ConfigDescriptionLink
-              description="Modify how traces are searched."
-              suffix="tempo/#tempo-search"
-              feature="Tempo search"
-            />
-          }
-        >
-          {config.featureToggles.traceqlSearch ? (
-            <TraceQLSearchSettings options={options} onOptionsChange={onOptionsChange} />
-          ) : (
-            <SearchSettings options={options} onOptionsChange={onOptionsChange} />
+          {config.secureSocksDSProxyEnabled && (
+            <>
+              <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+            </>
           )}
-        </ConfigSubSection>
 
-        <Divider hideLine={true} />
+          <ConfigSubSection
+            title="Service graph"
+            description={
+              <ConfigDescriptionLink
+                description="Select a Prometheus data source that contains the service graph data."
+                suffix="tempo/configure-tempo-data-source/#service-graph"
+                feature="the service graph"
+              />
+            }
+          >
+            <ServiceGraphSettings options={options} onOptionsChange={onOptionsChange} />
+          </ConfigSubSection>
 
-        <ConfigSubSection
-          title="Loki search"
-          description={
-            <ConfigDescriptionLink
-              description="Select a Loki data source to search for traces. Derived fields must be configured in the Loki data source."
-              suffix="tempo/#loki-search"
-              feature="Loki search"
-            />
-          }
-        >
-          <LokiSearchSettings options={options} onOptionsChange={onOptionsChange} />
-        </ConfigSubSection>
+          <NodeGraphSection options={options} onOptionsChange={onOptionsChange} />
 
-        <Divider hideLine={true} />
+          <ConfigSubSection
+            title="Tempo search"
+            description={
+              <ConfigDescriptionLink
+                description="Modify how traces are searched."
+                suffix="tempo/configure-tempo-data-source/#tempo-search"
+                feature="Tempo search"
+              />
+            }
+          >
+            <TraceQLSearchSettings options={options} onOptionsChange={onOptionsChange} />
+          </ConfigSubSection>
 
-        <ConfigSubSection
-          title="TraceID query"
-          description={
-            <ConfigDescriptionLink
-              description="Modify how TraceID queries are run."
-              suffix="tempo/#traceid-query"
-              feature="the TraceID query"
-            />
-          }
-        >
-          <QuerySettings options={options} onOptionsChange={onOptionsChange} />
-        </ConfigSubSection>
+          <ConfigSubSection
+            title="Loki search"
+            description={
+              <ConfigDescriptionLink
+                description="Select a Loki data source to search for traces. Derived fields must be configured in the Loki data source."
+                suffix="tempo/configure-tempo-data-source/#loki-search"
+                feature="Loki search"
+              />
+            }
+          >
+            <LokiSearchSettings options={options} onOptionsChange={onOptionsChange} />
+          </ConfigSubSection>
 
-        <Divider hideLine={true} />
+          <ConfigSubSection
+            title="TraceID query"
+            description={
+              <ConfigDescriptionLink
+                description="Modify how TraceID queries are run."
+                suffix="tempo/configure-tempo-data-source/#traceid-query"
+                feature="the TraceID query"
+              />
+            }
+          >
+            <QuerySettings options={options} onOptionsChange={onOptionsChange} />
+          </ConfigSubSection>
 
-        <SpanBarSection options={options} onOptionsChange={onOptionsChange} />
+          <SpanBarSection options={options} onOptionsChange={onOptionsChange} />
+        </Stack>
       </ConfigSection>
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    label: container;
-    margin-bottom: ${theme.spacing(2)};
-    max-width: 900px;
-  `,
+  container: css({
+    label: 'container',
+    marginBottom: theme.spacing(2),
+    maxWidth: '900px',
+  }),
 });

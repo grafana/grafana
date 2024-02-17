@@ -68,13 +68,12 @@ export const VizLegendListItem = <T = unknown,>({
   return (
     <div
       className={cx(styles.itemWrapper, item.disabled && styles.itemDisabled, className)}
-      aria-label={selectors.components.VizLegend.seriesName(item.label)}
+      data-testid={selectors.components.VizLegend.seriesName(item.label)}
     >
       <VizLegendSeriesIcon seriesName={item.label} color={item.color} gradient={item.gradient} readonly={readonly} />
       <button
         disabled={readonly}
         type="button"
-        title={item.label}
         onBlur={onMouseOut}
         onFocus={onMouseOver}
         onMouseOver={onMouseOver}
@@ -101,9 +100,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: 'inherit',
     padding: 0,
     userSelect: 'text',
-    maxWidth: '600px',
-    textOverflow: 'ellipsis',
-    overflow: 'hidden',
   }),
   itemDisabled: css({
     label: 'LegendLabelDisabled',

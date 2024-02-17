@@ -8,10 +8,10 @@ import {
   DataQueryResponse,
   DataSourceInstanceSettings,
   LoadingState,
+  QueryFixAction,
   ScopedVars,
 } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
@@ -197,6 +197,27 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
 
   getVariablesRaw() {
     return this.templateSrv.getVariables();
+  }
+
+  modifyQuery(query: AzureMonitorQuery, action: QueryFixAction): AzureMonitorQuery {
+    if (!action.options) {
+      return query;
+    }
+    let expression = query.azureLogAnalytics?.query;
+    if (expression === undefined) {
+      return query;
+    }
+    switch (action.type) {
+      case 'ADD_FILTER': {
+        expression += `\n| where ${action.options.key} == "${action.options.value}"`;
+        break;
+      }
+      case 'ADD_FILTER_OUT': {
+        expression += `\n| where ${action.options.key} != "${action.options.value}"`;
+        break;
+      }
+    }
+    return { ...query, azureLogAnalytics: { ...query.azureLogAnalytics, query: expression } };
   }
 }
 

@@ -24,9 +24,9 @@ import (
 )
 
 var skipPlugins = map[string]bool{
-	"influxdb":    true, // plugin.json fails validation (defaultMatchFormat)
-	"mixed":       true, // plugin.json fails validation (mixed)
-	"opentsdb":    true, // plugin.json fails validation (defaultMatchFormat)
+	"influxdb": true, // plugin.json fails validation (defaultMatchFormat)
+	"mixed":    true, // plugin.json fails validation (mixed)
+	"opentsdb": true, // plugin.json fails validation (defaultMatchFormat)
 }
 
 const sep = string(filepath.Separator)
@@ -110,9 +110,10 @@ func splitSchiffer(names []string) codejen.FileMapper {
 	}
 	return func(f codejen.File) (codejen.File, error) {
 		// TODO it's terrible that this has to exist, CODEJEN NEEDS TO BE BETTER
+		path := filepath.ToSlash(f.RelativePath)
 		for _, name := range names {
-			if idx := strings.Index(f.RelativePath, name); idx != -1 {
-				f.RelativePath = fmt.Sprintf("%s/%s", f.RelativePath[:idx], f.RelativePath[idx:])
+			if idx := strings.Index(path, name); idx != -1 {
+				f.RelativePath = fmt.Sprintf("%s/%s", path[:idx], path[idx:])
 				break
 			}
 		}

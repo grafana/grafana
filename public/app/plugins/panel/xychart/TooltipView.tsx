@@ -72,8 +72,8 @@ export const TooltipView = ({
   let yValue: YValue | null = null;
   let extraFacets: ExtraFacets | null = null;
   if (seriesMapping === SeriesMapping.Manual && manualSeriesConfigs) {
-    const colorFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointColor?.field ?? '';
-    const sizeFacetFieldName = manualSeriesConfigs[hoveredPointIndex].pointSize?.field ?? '';
+    const colorFacetFieldName = manualSeriesConfigs[hoveredPointIndex]?.pointColor?.field ?? '';
+    const sizeFacetFieldName = manualSeriesConfigs[hoveredPointIndex]?.pointSize?.field ?? '';
 
     const colorFacet = colorFacetFieldName ? findField(frame, colorFacetFieldName) : undefined;
     const sizeFacet = sizeFacetFieldName ? findField(frame, sizeFacetFieldName) : undefined;
@@ -163,22 +163,22 @@ function fmt(field: Field, val: number): string {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  infoWrap: css`
-    padding: 8px;
-    width: 100%;
-    th {
-      font-weight: ${theme.typography.fontWeightMedium};
-      padding: ${theme.spacing(0.25, 2)};
-    }
-  `,
-  highlight: css`
-    background: ${theme.colors.action.hover};
-  `,
-  xVal: css`
-    font-weight: ${theme.typography.fontWeightBold};
-  `,
-  icon: css`
-    margin-right: ${theme.spacing(1)};
-    vertical-align: middle;
-  `,
+  infoWrap: css({
+    padding: '8px',
+    width: '100%',
+    th: {
+      fontWeight: theme.typography.fontWeightMedium,
+      padding: theme.spacing(0.25, 2),
+    },
+  }),
+  highlight: css({
+    background: theme.colors.action.hover,
+  }),
+  xVal: css({
+    fontWeight: theme.typography.fontWeightBold,
+  }),
+  icon: css({
+    marginRight: theme.spacing(1),
+    verticalAlign: 'middle',
+  }),
 });

@@ -10,10 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -21,7 +21,7 @@ import (
 // GET /api/user/signup/options
 func (hs *HTTPServer) GetSignUpOptions(c *contextmodel.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, util.DynMap{
-		"verifyEmailEnabled": setting.VerifyEmailEnabled,
+		"verifyEmailEnabled": hs.Cfg.VerifyEmailEnabled,
 		"autoAssignOrg":      hs.Cfg.AutoAssignOrg,
 	})
 }
@@ -33,7 +33,7 @@ func (hs *HTTPServer) SignUp(c *contextmodel.ReqContext) response.Response {
 	if err = web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if !setting.AllowUserSignUp {
+	if !hs.Cfg.AllowUserSignUp {
 		return response.Error(401, "User signup is disabled", nil)
 	}
 
@@ -48,11 +48,16 @@ func (hs *HTTPServer) SignUp(c *contextmodel.ReqContext) response.Response {
 		return response.Error(422, "User with same email address already exists", nil)
 	}
 
+	userID, errID := identity.UserIdentifier(c.SignedInUser.GetNamespacedID())
+	if errID != nil {
+		hs.log.Error("Failed to parse user id", "err", errID)
+	}
+
 	cmd := tempuser.CreateTempUserCommand{}
 	cmd.OrgID = -1
 	cmd.Email = form.Email
 	cmd.Status = tempuser.TmpUserSignUpStarted
-	cmd.InvitedByUserID = c.UserID
+	cmd.InvitedByUserID = userID
 	cmd.Code, err = util.GetRandomString(20)
 	if err != nil {
 		return response.Error(500, "Failed to generate random string", err)
@@ -80,7 +85,7 @@ func (hs *HTTPServer) SignUpStep2(c *contextmodel.ReqContext) response.Response 
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if !setting.AllowUserSignUp {
+	if !hs.Cfg.AllowUserSignUp {
 		return response.Error(401, "User signup is disabled", nil)
 	}
 
@@ -96,7 +101,7 @@ func (hs *HTTPServer) SignUpStep2(c *contextmodel.ReqContext) response.Response 
 	}
 
 	// verify email
-	if setting.VerifyEmailEnabled {
+	if hs.Cfg.VerifyEmailEnabled {
 		if ok, rsp := hs.verifyUserSignUpEmail(c.Req.Context(), form.Email, form.Code); !ok {
 			return rsp
 		}

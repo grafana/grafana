@@ -2,16 +2,15 @@ package prometheus
 
 import (
 	"context"
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	sdkHttpClient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,10 +26,19 @@ type healthCheckFailRoundTripper struct {
 
 func (rt *healthCheckSuccessRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	return &http.Response{
-		Status:        "200",
-		StatusCode:    200,
-		Header:        nil,
-		Body:          nil,
+		Status:     "200",
+		StatusCode: 200,
+		Header:     nil,
+		Body: io.NopCloser(strings.NewReader(`{
+			"status": "success",
+			"data": {
+				"resultType": "scalar",
+				"result": [
+					1692969348.331,
+					"2"
+				]
+			}
+		}`)),
 		ContentLength: 0,
 		Request:       req,
 	}, nil
@@ -47,28 +55,34 @@ func (rt *healthCheckFailRoundTripper) RoundTrip(req *http.Request) (*http.Respo
 	}, nil
 }
 
-func (provider *healthCheckProvider[T]) New(opts ...sdkHttpClient.Options) (*http.Client, error) {
+func (provider *healthCheckProvider[T]) New(opts ...httpclient.Options) (*http.Client, error) {
 	client := &http.Client{}
 	provider.RoundTripper = new(T)
 	client.Transport = *provider.RoundTripper
 	return client, nil
 }
 
-func (provider *healthCheckProvider[T]) GetTransport(opts ...sdkHttpClient.Options) (http.RoundTripper, error) {
+func (provider *healthCheckProvider[T]) GetTransport(opts ...httpclient.Options) (http.RoundTripper, error) {
 	return *new(T), nil
 }
 
-func getMockProvider[T http.RoundTripper]() *healthCheckProvider[T] {
-	return &healthCheckProvider[T]{
+func getMockProvider[T http.RoundTripper]() *httpclient.Provider {
+	p := &healthCheckProvider[T]{
 		RoundTripper: new(T),
 	}
+	anotherFN := func(o httpclient.Options, next http.RoundTripper) http.RoundTripper {
+		return *p.RoundTripper
+	}
+	fn := httpclient.MiddlewareFunc(anotherFN)
+	mid := httpclient.NamedMiddlewareFunc("mock", fn)
+	return httpclient.NewProvider(httpclient.ProviderOptions{Middlewares: []httpclient.Middleware{mid}})
 }
 
 func Test_healthcheck(t *testing.T) {
 	t.Run("should do a successful health check", func(t *testing.T) {
 		httpProvider := getMockProvider[*healthCheckSuccessRoundTripper]()
 		s := &Service{
-			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, nil)),
+			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, backend.NewLoggerWith("logger", "test"))),
 		}
 
 		req := &backend.CheckHealthRequest{
@@ -84,7 +98,7 @@ func Test_healthcheck(t *testing.T) {
 	t.Run("should return an error for an unsuccessful health check", func(t *testing.T) {
 		httpProvider := getMockProvider[*healthCheckFailRoundTripper]()
 		s := &Service{
-			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, nil)),
+			im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, backend.NewLoggerWith("logger", "test"))),
 		}
 
 		req := &backend.CheckHealthRequest{

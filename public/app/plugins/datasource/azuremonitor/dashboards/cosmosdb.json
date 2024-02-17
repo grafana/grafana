@@ -4873,7 +4873,6 @@
   ],
   "refresh": false,
   "schemaVersion": 27,
-  "style": "dark",
   "tags": [],
   "templating": {
     "list": [
@@ -4922,7 +4921,7 @@
         "allValue": null,
         "current": {},
         "datasource": "$ds",
-        "definition": "ResourceGroups($sub)",
+        "definition": "",
         "description": null,
         "error": null,
         "hide": 0,
@@ -4931,7 +4930,14 @@
         "multi": false,
         "name": "rg",
         "options": [],
-        "query": "ResourceGroups($sub)",
+        "query": {
+          "azureResourceGraph": {
+            "query": "resources\r\n|  where [\"type\"] =~ \"Microsoft.DocumentDb/databaseAccounts\"\r\n| distinct resourceGroup"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "subscriptions": ["$sub"]
+        },
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -4943,35 +4949,37 @@
         "useTags": false
       },
       {
-        "allValue": null,
-        "current": {
-          "selected": false,
-          "text": "Microsoft.DocumentDb/databaseAccounts",
-          "value": "Microsoft.DocumentDb/databaseAccounts"
+        "current": {},
+        "datasource": {
+          "type": "grafana-azure-monitor-datasource",
+          "uid": "${ds}"
         },
-        "description": null,
-        "error": null,
+        "definition": "",
         "hide": 0,
         "includeAll": false,
-        "label": "Name Space",
+        "label": "Namespace",
         "multi": false,
         "name": "ns",
-        "options": [
-          {
-            "selected": true,
-            "text": "Microsoft.DocumentDb/databaseAccounts",
-            "value": "Microsoft.DocumentDb/databaseAccounts"
-          }
-        ],
-        "query": "Microsoft.DocumentDb/databaseAccounts",
+        "options": [],
+        "query": {
+          "azureResourceGraph": {
+            "query": "resources\r\n| where [\"type\"] =~ \"Microsoft.DocumentDb/databaseAccounts\"\r\n| distinct [\"type\"]"
+          },
+          "queryType": "Azure Resource Graph",
+          "refId": "A",
+          "subscriptions": ["$sub"]
+        },
+        "refresh": 1,
+        "regex": "",
         "skipUrlSync": false,
-        "type": "custom"
+        "sort": 5,
+        "type": "query"
       },
       {
         "allValue": null,
         "current": {},
         "datasource": "$ds",
-        "definition": "ResourceNames($sub, $rg, $ns)",
+        "definition": "",
         "description": null,
         "error": null,
         "hide": 0,
@@ -4980,7 +4988,13 @@
         "multi": false,
         "name": "resource",
         "options": [],
-        "query": "ResourceNames($sub, $rg, $ns)",
+        "query": {
+          "namespace": "$ns",
+          "queryType": "Azure Resource Names",
+          "refId": "A",
+          "resourceGroup": "$rg",
+          "subscription": "$sub"
+        },
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,

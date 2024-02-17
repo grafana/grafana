@@ -1,6 +1,12 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
-//  Frame[0] 
+//  Frame[0] {
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          1
+//      ]
+//  }
 //  Name: 
 //  Dimensions: 2 Fields by 5 Rows
 //  +-------------------------------+------------------------------------------------------+
@@ -17,7 +23,13 @@
 //  
 //  
 //  
-//  Frame[1] 
+//  Frame[1] {
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          1
+//      ]
+//  }
 //  Name: 
 //  Dimensions: 2 Fields by 5 Rows
 //  +-------------------------------+------------------------------------------------------+
@@ -34,7 +46,13 @@
 //  
 //  
 //  
-//  Frame[2] 
+//  Frame[2] {
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          1
+//      ]
+//  }
 //  Name: 
 //  Dimensions: 2 Fields by 5 Rows
 //  +-------------------------------+--------------------------------------------------------+
@@ -51,7 +69,13 @@
 //  
 //  
 //  
-//  Frame[3] 
+//  Frame[3] {
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          1
+//      ]
+//  }
 //  Name: 
 //  Dimensions: 2 Fields by 5 Rows
 //  +-------------------------------+--------------------------------------------------------+
@@ -73,6 +97,13 @@
   "frames": [
     {
       "schema": {
+        "meta": {
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            1
+          ]
+        },
         "fields": [
           {
             "name": "Time",
@@ -135,6 +166,13 @@
     },
     {
       "schema": {
+        "meta": {
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            1
+          ]
+        },
         "fields": [
           {
             "name": "Time",
@@ -197,6 +235,13 @@
     },
     {
       "schema": {
+        "meta": {
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            1
+          ]
+        },
         "fields": [
           {
             "name": "Time",
@@ -259,6 +304,13 @@
     },
     {
       "schema": {
+        "meta": {
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            1
+          ]
+        },
         "fields": [
           {
             "name": "Time",

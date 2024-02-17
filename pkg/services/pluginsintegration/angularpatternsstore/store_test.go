@@ -12,7 +12,7 @@ import (
 )
 
 func TestAngularPatternsStore(t *testing.T) {
-	mockPatterns := []map[string]interface{}{
+	mockPatterns := []map[string]any{
 		{"name": "PanelCtrl", "type": "contains", "pattern": "PanelCtrl"},
 		{"name": "ConfigCtrl", "type": "contains", "pattern": "ConfigCtrl"},
 	}
@@ -41,7 +41,8 @@ func TestAngularPatternsStore(t *testing.T) {
 	})
 
 	t.Run("latest update", func(t *testing.T) {
-		svc := ProvideService(kvstore.NewFakeKVStore())
+		underlyingKv := kvstore.NewFakeKVStore()
+		svc := ProvideService(underlyingKv)
 
 		t.Run("empty", func(t *testing.T) {
 			lastUpdated, err := svc.GetLastUpdated(context.Background())
@@ -59,7 +60,7 @@ func TestAngularPatternsStore(t *testing.T) {
 		})
 
 		t.Run("invalid timestamp stored", func(t *testing.T) {
-			err := svc.(*KVStoreService).kv.Set(context.Background(), keyLastUpdated, "abcd")
+			err := underlyingKv.Set(context.Background(), 0, kvNamespace, "last_updated", "abcd")
 			require.NoError(t, err)
 
 			lastUpdated, err := svc.GetLastUpdated(context.Background())

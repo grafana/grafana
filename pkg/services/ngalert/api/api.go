@@ -7,14 +7,17 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/backtesting"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/migration"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -33,30 +36,15 @@ type ExternalAlertmanagerProvider interface {
 	DroppedAlertmanagersFor(orgID int64) []*url.URL
 }
 
-type Alertmanager interface {
-	// Configuration
-	SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error
-	SaveAndApplyDefaultConfig(ctx context.Context) error
-	GetStatus() apimodels.GettableStatus
-
-	// Silences
-	CreateSilence(ps *apimodels.PostableSilence) (string, error)
-	DeleteSilence(silenceID string) error
-	GetSilence(silenceID string) (apimodels.GettableSilence, error)
-	ListSilences(filter []string) (apimodels.GettableSilences, error)
-
-	// Alerts
-	GetAlerts(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.GettableAlerts, error)
-	GetAlertGroups(active, silenced, inhibited bool, filter []string, receiver string) (apimodels.AlertGroups, error)
-
-	// Receivers
-	GetReceivers(ctx context.Context) []apimodels.Receiver
-	TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*notifier.TestReceiversResult, error)
-	TestTemplate(ctx context.Context, c apimodels.TestTemplatesConfigBodyParams) (*notifier.TestTemplatesResults, error)
+type AlertingStore interface {
+	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
 }
 
-type AlertingStore interface {
-	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) (*models.AlertConfiguration, error)
+type RuleAccessControlService interface {
+	HasAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) (bool, error)
+	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
+	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
+	AuthorizeDatasourceAccessForRule(ctx context.Context, user identity.Requester, rule *models.AlertRule) error
 }
 
 // API handlers.
@@ -69,13 +57,14 @@ type API struct {
 	TransactionManager   provisioning.TransactionManager
 	ProvenanceStore      provisioning.ProvisioningStore
 	RuleStore            RuleStore
-	AlertingStore        AlertingStore
+	AlertingStore        store.AlertingStore
 	AdminConfigStore     store.AdminConfigurationStore
 	DataProxy            *datasourceproxy.DataSourceProxyService
 	MultiOrgAlertmanager *notifier.MultiOrgAlertmanager
 	StateManager         *state.Manager
-	AccessControl        accesscontrol.AccessControl
+	AccessControl        ac.AccessControl
 	Policies             *provisioning.NotificationPolicyService
+	ReceiverService      *notifier.ReceiverService
 	ContactPointService  *provisioning.ContactPointService
 	Templates            *provisioning.TemplateService
 	MuteTimings          *provisioning.MuteTimingService
@@ -84,8 +73,9 @@ type API struct {
 	EvaluatorFactory     eval.EvaluatorFactory
 	FeatureManager       featuremgmt.FeatureToggles
 	Historian            Historian
-
-	AppUrl *url.URL
+	Tracer               tracing.Tracer
+	AppUrl               *url.URL
+	UpgradeService       migration.UpgradeService
 
 	// Hooks can be used to replace API handlers for specific paths.
 	Hooks *Hooks
@@ -98,6 +88,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		DataProxy: api.DataProxy,
 		ac:        api.AccessControl,
 	}
+	ruleAuthzService := accesscontrol.NewRuleService(api.AccessControl)
 
 	// Register endpoints for proxying to Alertmanager-compatible backends.
 	api.RegisterAlertmanagerApiEndpoints(NewForkingAM(
@@ -109,7 +100,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 	api.RegisterPrometheusApiEndpoints(NewForkingProm(
 		api.DatasourceCache,
 		NewLotexProm(proxy, logger),
-		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore, ac: api.AccessControl},
+		&PrometheusSrv{log: logger, manager: api.StateManager, store: api.RuleStore, authz: ruleAuthzService},
 	), m)
 	// Register endpoints for proxying to Cortex Ruler-compatible backends.
 	api.RegisterRulerApiEndpoints(NewForkingRuler(
@@ -123,7 +114,10 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			xactManager:        api.TransactionManager,
 			log:                logger,
 			cfg:                &api.Cfg.UnifiedAlerting,
-			ac:                 api.AccessControl,
+			authz:              ruleAuthzService,
+			amConfigStore:      api.AlertingStore,
+			amRefresher:        api.MultiOrgAlertmanager,
+			featureManager:     api.FeatureManager,
 		},
 	), m)
 	api.RegisterTestingApiEndpoints(NewTestingApi(
@@ -131,12 +125,14 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 			AlertingProxy:   proxy,
 			DatasourceCache: api.DatasourceCache,
 			log:             logger,
-			accessControl:   api.AccessControl,
+			authz:           ruleAuthzService,
 			evaluator:       api.EvaluatorFactory,
 			cfg:             &api.Cfg.UnifiedAlerting,
-			backtesting:     backtesting.NewEngine(api.AppUrl, api.EvaluatorFactory),
+			backtesting:     backtesting.NewEngine(api.AppUrl, api.EvaluatorFactory, api.Tracer),
 			featureManager:  api.FeatureManager,
 			appUrl:          api.AppUrl,
+			tracer:          api.Tracer,
+			folderService:   api.RuleStore,
 		}), m)
 	api.RegisterConfigurationApiEndpoints(NewConfiguration(
 		&ConfigSrv{
@@ -160,35 +156,19 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		logger: logger,
 		hist:   api.Historian,
 	}), m)
-}
 
-func (api *API) Usage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
-	u := &quota.Map{}
+	api.RegisterNotificationsApiEndpoints(NewNotificationsApi(&NotificationSrv{
+		logger:            logger,
+		receiverService:   api.ReceiverService,
+		muteTimingService: api.MuteTimings,
+	}), m)
 
-	var orgID int64 = 0
-	if scopeParams != nil {
-		orgID = scopeParams.OrgID
+	// Inject upgrade endpoints if legacy alerting is enabled and the feature flag is enabled.
+	if !api.Cfg.UnifiedAlerting.IsEnabled() && api.FeatureManager.IsEnabledGlobally(featuremgmt.FlagAlertingPreviewUpgrade) {
+		api.RegisterUpgradeApiEndpoints(NewUpgradeApi(NewUpgradeSrc(
+			logger,
+			api.UpgradeService,
+			api.Cfg,
+		)), m)
 	}
-
-	if orgUsage, err := api.RuleStore.Count(ctx, orgID); err != nil {
-		return u, err
-	} else {
-		tag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)
-		if err != nil {
-			return u, err
-		}
-		u.Set(tag, orgUsage)
-	}
-
-	if globalUsage, err := api.RuleStore.Count(ctx, 0); err != nil {
-		return u, err
-	} else {
-		tag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.GlobalScope)
-		if err != nil {
-			return u, err
-		}
-		u.Set(tag, globalUsage)
-	}
-
-	return u, nil
 }

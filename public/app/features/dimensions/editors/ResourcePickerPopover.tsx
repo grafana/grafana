@@ -20,13 +20,14 @@ interface Props {
   onChange: (value?: string) => void;
   mediaType: MediaType;
   folderName: ResourceFolderName;
+  maxFiles?: number;
 }
 
 interface ErrorResponse {
   message: string;
 }
 export const ResourcePickerPopover = (props: Props) => {
-  const { value, onChange, mediaType, folderName } = props;
+  const { value, onChange, mediaType, folderName, maxFiles } = props;
   const styles = useStyles2(getStyles);
 
   const onClose = () => {
@@ -55,6 +56,7 @@ export const ResourcePickerPopover = (props: Props) => {
       folderName={folderName}
       newValue={newValue}
       setNewValue={setNewValue}
+      maxFiles={maxFiles}
     />
   );
 
@@ -142,7 +144,7 @@ export const ResourcePickerPopover = (props: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   resourcePickerPopover: css`
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
     box-shadow: ${theme.shadows.z3};
     background: ${theme.colors.background.primary};
     border: 1px solid ${theme.colors.border.weak};
@@ -182,7 +184,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   resourcePickerPopoverTabs: css`
     display: flex;
     width: 100%;
-    border-radius: ${theme.shape.borderRadius()} ${theme.shape.borderRadius()} 0 0;
+    border-radius: ${theme.shape.radius.default} ${theme.shape.radius.default} 0 0;
   `,
   buttonRow: css({
     display: 'flex',

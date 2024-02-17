@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/kinds/dataquery"
 )
 
@@ -30,22 +31,10 @@ type AzRoute struct {
 	Headers map[string]string
 }
 
-type AzureSettings struct {
-	AzureMonitorSettings
-	AzureClientSettings
-}
-
 type AzureMonitorSettings struct {
 	SubscriptionId               string `json:"subscriptionId"`
 	LogAnalyticsDefaultWorkspace string `json:"logAnalyticsDefaultWorkspace"`
 	AppInsightsAppId             string `json:"appInsightsAppId"`
-}
-
-type AzureClientSettings struct {
-	AzureAuthType string
-	CloudName     string
-	TenantId      string
-	ClientId      string
 }
 
 // AzureMonitorCustomizedCloudSettings is the extended Azure Monitor settings for customized cloud
@@ -56,16 +45,16 @@ type AzureMonitorCustomizedCloudSettings struct {
 type DatasourceService struct {
 	URL        string
 	HTTPClient *http.Client
+	Logger     log.Logger
 }
 
 type DatasourceInfo struct {
-	Cloud       string
 	Credentials azcredentials.AzureCredentials
 	Settings    AzureMonitorSettings
 	Routes      map[string]AzRoute
 	Services    map[string]DatasourceService
 
-	JSONData                map[string]interface{}
+	JSONData                map[string]any
 	DecryptedSecureJSONData map[string]string
 	DatasourceID            int64
 	OrgID                   int64
@@ -131,7 +120,7 @@ type AzureResponseTable struct {
 		Name string `json:"name"`
 		Type string `json:"type"`
 	} `json:"columns"`
-	Rows [][]interface{} `json:"rows"`
+	Rows [][]any `json:"rows"`
 }
 
 type AzureMonitorResource struct {
@@ -190,7 +179,7 @@ type MetricVisualization struct {
 }
 
 type ServiceProxy interface {
-	Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) http.ResponseWriter
+	Do(rw http.ResponseWriter, req *http.Request, cli *http.Client) (http.ResponseWriter, error)
 }
 
 type LogAnalyticsWorkspaceFeatures struct {

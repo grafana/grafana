@@ -236,7 +236,7 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     }
   }
 
-  return options as SingleStatBaseOptions;
+  return options;
 }
 
 export function moveThresholdsAndMappingsToField(old: any) {

@@ -33,8 +33,7 @@
 //      ],
 //      "custom": {
 //          "resultType": "matrix"
-//      },
-//      "executedQueryString": "Expr: \nStep: 1s"
+//      }
 //  }
 //  Name: prometheus_http_requests_total{code="400", handler="/api/v1/query_range", job="prometheus"}
 //  Dimensions: 2 Fields by 2 Rows
@@ -121,8 +120,7 @@
           ],
           "custom": {
             "resultType": "matrix"
-          },
-          "executedQueryString": "Expr: \nStep: 1s"
+          }
         },
         "fields": [
           {

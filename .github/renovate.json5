@@ -4,31 +4,25 @@
   ],
   "enabledManagers": ["npm"],
   "ignoreDeps": [
-    "@types/systemjs",
-    "commander", // we are planning to remove this, so no need to update it
-    "execa", // we should bump this once we move to esm modules
-    "history", // we should bump this together with react-router-dom
-    "@mdx-js/react", // storybook peer-depends on its 1.x version, we should upgrade this when we upgrade storybook
+    "history", // we should bump this together with react-router-dom (see https://github.com/grafana/grafana/issues/76744)
+    "react-router-dom", // we should bump this together with history (see https://github.com/grafana/grafana/issues/76744)
+    "loader-utils", // v3 requires upstream changes in ngtemplate-loader. ignore, and remove when we remove angular.
     "monaco-editor", // due to us exposing this via @grafana/ui/CodeEditor's props bumping can break plugins
-    "react-hook-form", // due to us exposing these hooks via @grafana/ui form components bumping can break plugins
-    "react-redux", // react-beautiful-dnd depends on react-redux 7.x, we need to update that one first
-    "react-router-dom", // we should bump this together with history
-    "systemjs",
-    "ts-loader", // we should remove ts-loader and use babel-loader instead
-    "ora", // we should bump this once we move to esm modules
+    "@fingerprintjs/fingerprintjs", // we don't want to bump to v4 due to licensing changes
   ],
-  "includePaths": ["package.json", "packages/**"],
-  "ignorePaths": ["packages/grafana-toolkit/package.json", "emails/**", "plugins-bundled/**", "**/mocks/**"],
-  "labels": ["area/frontend", "dependencies", "no-backport", "no-changelog"],
+  "includePaths": ["package.json", "packages/**", "public/app/plugins/**"],
+  "ignorePaths": ["emails/**", "plugins-bundled/**", "**/mocks/**", "packages/grafana-e2e/**"],
+  "labels": ["area/frontend", "dependencies", "no-changelog"],
+  "postUpdateOptions": ["yarnDedupeHighest"],
   "packageRules": [
     {
+      "automerge": true,
+      "matchCurrentVersion": "!/^0/",
       "matchUpdateTypes": ["patch"],
-      "excludePackagePatterns": ["@storybook"],
-      "extends": ["schedule:monthly"],
-      "groupName": "Monthly patch updates"
+      "excludePackagePatterns": ["^@?storybook", "^@locker"]
     },
     {
-      "matchPackagePatterns": ["@storybook"],
+      "matchPackagePatterns": ["^@?storybook"],
       "extends": ["schedule:monthly"],
       "groupName": "Storybook updates"
     },
@@ -75,6 +69,13 @@
         "uplot"
       ],
       "reviewers": ["leeoniya"],
+    },
+    {
+      "groupName": "locker",
+      "matchPackagePrefixes": [
+        "@locker/"
+      ],
+      "reviewers": ["team:grafana/plugins-platform-frontend"],
     },
   ],
   "pin": {

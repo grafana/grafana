@@ -276,12 +276,12 @@ export class Parser {
     return this.tokens[this.index - 1];
   }
 
-  matchToken(type: any, index: number) {
+  matchToken(type: string, index: number) {
     const token = this.tokens[this.index + index];
     return (token === undefined && type === '') || (token && token.type === type);
   }
 
-  match(token1: any, token2?: any) {
+  match(token1: string, token2?: string) {
     return this.matchToken(token1, 0) && (!token2 || this.matchToken(token2, 1));
   }
 }

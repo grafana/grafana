@@ -1,6 +1,3 @@
-//go:build go1.3
-// +build go1.3
-
 // Copyright 2014 The Macaron Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License"): you may
@@ -45,7 +42,7 @@ func Version() string {
 // Handler can be any callable function.
 // Macaron attempts to inject services into the handler's argument list,
 // and panics if an argument could not be fulfilled via dependency injection.
-type Handler interface{}
+type Handler any
 
 //go:linkname hack_wrap github.com/grafana/grafana/pkg/api/response.wrap_handler
 func hack_wrap(Handler) http.HandlerFunc

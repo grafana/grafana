@@ -11,11 +11,8 @@ export default function useActions(searchQuery: string) {
   const [navTreeActions, setNavTreeActions] = useState<CommandPaletteAction[]>([]);
   const [recentDashboardActions, setRecentDashboardActions] = useState<CommandPaletteAction[]>([]);
 
-  const { navBarTree } = useSelector((state) => {
-    return {
-      navBarTree: state.navBarTree,
-    };
-  });
+  const navBarTree = useSelector((state) => state.navBarTree);
+
   // Load standard static actions
   useEffect(() => {
     const staticActionsResp = getStaticActions(navBarTree);

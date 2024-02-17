@@ -12,28 +12,27 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	jsoniter "github.com/json-iterator/go"
 
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/converter"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata/exemplar"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
-	"github.com/grafana/grafana/pkg/util/converter"
 )
 
-func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) backend.DataResponse {
+func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response, enablePrometheusDataplaneFlag bool) backend.DataResponse {
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			s.log.FromContext(ctx).Error("Failed to close response body", "err", err)
 		}
 	}()
 
-	ctx, endSpan := utils.StartTrace(ctx, s.tracer, "datasource.prometheus.parseResponse", []utils.Attribute{})
+	ctx, endSpan := utils.StartTrace(ctx, s.tracer, "datasource.prometheus.parseResponse")
 	defer endSpan()
 
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, res.Body, 1024)
 	r := converter.ReadPrometheusStyleResult(iter, converter.Options{
-		MatrixWideSeries: s.enableWideSeries,
-		VectorWideSeries: s.enableWideSeries,
-		Dataplane:        s.enableDataplane,
+		Dataplane: enablePrometheusDataplaneFlag,
 	})
+	r.Status = backend.Status(res.StatusCode)
 
 	// Add frame to attach metadata
 	if len(r.Frames) == 0 && !q.ExemplarQuery {
@@ -41,11 +40,10 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 	}
 
 	// The ExecutedQueryString can be viewed in QueryInspector in UI
-	for _, frame := range r.Frames {
-		if s.enableWideSeries {
-			addMetadataToWideFrame(q, frame)
-		} else {
-			addMetadataToMultiFrame(q, frame, s.enableDataplane)
+	for i, frame := range r.Frames {
+		addMetadataToMultiFrame(q, frame, enablePrometheusDataplaneFlag)
+		if i == 0 {
+			frame.Meta.ExecutedQueryString = executedQueryString(q)
 		}
 	}
 
@@ -57,7 +55,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 }
 
 func (s *QueryData) processExemplars(ctx context.Context, q *models.Query, dr backend.DataResponse) backend.DataResponse {
-	_, endSpan := utils.StartTrace(ctx, s.tracer, "datasource.prometheus.processExemplars", []utils.Attribute{})
+	_, endSpan := utils.StartTrace(ctx, s.tracer, "datasource.prometheus.processExemplars")
 	defer endSpan()
 	sampler := s.exemplarSampler()
 	labelTracker := exemplar.NewLabelTracker()
@@ -112,7 +110,6 @@ func addMetadataToMultiFrame(q *models.Query, frame *data.Frame, enableDataplane
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
 	}
-	frame.Meta.ExecutedQueryString = executedQueryString(q)
 	if len(frame.Fields) < 2 {
 		return
 	}
@@ -130,22 +127,6 @@ func addMetadataToMultiFrame(q *models.Query, frame *data.Frame, enableDataplane
 		}
 	} else {
 		frame.Name = customName
-	}
-}
-
-func addMetadataToWideFrame(q *models.Query, frame *data.Frame) {
-	if frame.Meta == nil {
-		frame.Meta = &data.FrameMeta{}
-	}
-	frame.Meta.ExecutedQueryString = executedQueryString(q)
-	if len(frame.Fields) < 2 {
-		return
-	}
-	frame.Fields[0].Config = &data.FieldConfig{Interval: float64(q.Step.Milliseconds())}
-	for _, f := range frame.Fields {
-		if f.Type() == data.FieldTypeFloat64 || f.Type() == data.FieldTypeNullableFloat64 {
-			f.Name = getName(q, f)
-		}
 	}
 }
 

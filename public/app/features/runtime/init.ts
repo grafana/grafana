@@ -29,7 +29,7 @@ export function initWindowRuntime() {
       if (!d) {
         return undefined;
       }
-      return d.getSaveModelClone();
+      return d.getSaveModelCloneOld();
     },
 
     /** The selected time range */

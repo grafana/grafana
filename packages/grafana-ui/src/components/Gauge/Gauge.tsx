@@ -10,7 +10,7 @@ import {
   GAUGE_DEFAULT_MINIMUM,
   GrafanaTheme2,
 } from '@grafana/data';
-import { VizTextDisplayOptions } from '@grafana/schema';
+import { VizTextDisplayOptions, VizOrientation } from '@grafana/schema';
 
 import { calculateFontSize } from '../../utils/measureText';
 import { clearButtonStyles } from '../Button';
@@ -28,6 +28,7 @@ export interface Props {
   onClick?: React.MouseEventHandler<HTMLElement>;
   className?: string;
   theme: GrafanaTheme2;
+  orientation?: VizOrientation;
 }
 
 export class Gauge extends PureComponent<Props> {
@@ -52,17 +53,19 @@ export class Gauge extends PureComponent<Props> {
   }
 
   draw() {
-    const { field, showThresholdLabels, showThresholdMarkers, width, height, theme, value } = this.props;
+    const { field, showThresholdLabels, showThresholdMarkers, width, height, theme, value, orientation } = this.props;
 
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
-    const dimension = Math.min(width, autoProps.gaugeHeight);
+    // If the gauge is in vertical layout, we need to set the width of the gauge to the height of the gauge
+    const calculatedGaugeWidth = orientation === VizOrientation.Vertical ? autoProps.gaugeHeight : width;
+    const dimension = Math.min(calculatedGaugeWidth, autoProps.gaugeHeight);
     const backgroundColor = theme.colors.background.secondary;
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 5.5, 40) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
     const text = formattedValueToString(value);
     // This not 100% accurate as I am unsure of flot's calculations here
-    const valueWidthBase = Math.min(width, dimension * 1.3) * 0.9;
+    const valueWidthBase = Math.min(calculatedGaugeWidth, dimension * 1.3) * 0.9;
     // remove gauge & marker width (on left and right side)
     // and 10px is some padding that flot adds to the outer canvas
     const valueWidth =
@@ -145,11 +148,15 @@ export class Gauge extends PureComponent<Props> {
   }
 
   renderVisualization = () => {
-    const { width, value, height, onClick, text, theme } = this.props;
-    const autoProps = calculateGaugeAutoProps(width, height, value.title);
+    const { width, value, height, onClick, text, theme, orientation } = this.props;
+    const autoProps = calculateGaugeAutoProps(width, height, value.title, orientation);
+
+    // If the gauge is in vertical layout, we need to set the width of the gauge to the height of the gauge
+    const gaugeWidth = orientation === VizOrientation.Vertical ? `${autoProps.gaugeHeight}px` : '100%';
+
     const gaugeElement = (
       <div
-        style={{ height: `${autoProps.gaugeHeight}px`, width: '100%' }}
+        style={{ height: `${autoProps.gaugeHeight}px`, width: gaugeWidth }}
         ref={(element) => (this.canvasElement = element)}
       />
     );
@@ -172,7 +179,7 @@ export class Gauge extends PureComponent<Props> {
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
               position: 'relative',
-              width: '100%',
+              width: gaugeWidth,
               top: '-4px',
               cursor: 'default',
             }}

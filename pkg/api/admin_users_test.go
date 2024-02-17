@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,10 +14,13 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -226,9 +230,123 @@ func TestAdminAPIEndpoint(t *testing.T) {
 
 			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 			require.NoError(t, err)
-			assert.Equal(t, "user already exists", respJSON.Get("error").MustString())
+			assert.Equal(t, "User with email '' or username 'existing@example.com' already exists", respJSON.Get("message").MustString())
 		})
 	})
+}
+
+func Test_AdminUpdateUserPermissions(t *testing.T) {
+	testcases := []struct {
+		name                    string
+		authModule              string
+		allowAssignGrafanaAdmin bool
+		authEnabled             bool
+		skipOrgRoleSync         bool
+		expectedRespCode        int
+	}{
+		{
+			name:                    "Should allow updating an externally synced OAuth user if Grafana Admin role is not synced",
+			authModule:              login.GenericOAuthModule,
+			authEnabled:             true,
+			allowAssignGrafanaAdmin: false,
+			skipOrgRoleSync:         false,
+			expectedRespCode:        http.StatusOK,
+		},
+		{
+			name:                    "Should allow updating an externally synced OAuth user if OAuth provider is not enabled",
+			authModule:              login.GenericOAuthModule,
+			authEnabled:             false,
+			allowAssignGrafanaAdmin: true,
+			skipOrgRoleSync:         false,
+			expectedRespCode:        http.StatusOK,
+		},
+		{
+			name:                    "Should allow updating an externally synced OAuth user if org roles are not being synced",
+			authModule:              login.GenericOAuthModule,
+			authEnabled:             true,
+			allowAssignGrafanaAdmin: true,
+			skipOrgRoleSync:         true,
+			expectedRespCode:        http.StatusOK,
+		},
+		{
+			name:                    "Should not allow updating an externally synced OAuth user",
+			authModule:              login.GenericOAuthModule,
+			authEnabled:             true,
+			allowAssignGrafanaAdmin: true,
+			skipOrgRoleSync:         false,
+			expectedRespCode:        http.StatusForbidden,
+		},
+		{
+			name:                    "Should allow updating an externally synced JWT user if Grafana Admin role is not synced",
+			authModule:              login.JWTModule,
+			authEnabled:             true,
+			allowAssignGrafanaAdmin: false,
+			skipOrgRoleSync:         false,
+			expectedRespCode:        http.StatusOK,
+		},
+		{
+			name:                    "Should allow updating an externally synced JWT user if JWT provider is not enabled",
+			authModule:              login.JWTModule,
+			authEnabled:             false,
+			allowAssignGrafanaAdmin: true,
+			skipOrgRoleSync:         false,
+			expectedRespCode:        http.StatusOK,
+		},
+		{
+			name:                    "Should allow updating an externally synced JWT user if org roles are not being synced",
+			authModule:              login.JWTModule,
+			authEnabled:             true,
+			allowAssignGrafanaAdmin: true,
+			skipOrgRoleSync:         true,
+			expectedRespCode:        http.StatusOK,
+		},
+		{
+			name:                    "Should not allow updating an externally synced JWT user",
+			authModule:              login.JWTModule,
+			authEnabled:             true,
+			allowAssignGrafanaAdmin: true,
+			skipOrgRoleSync:         false,
+			expectedRespCode:        http.StatusForbidden,
+		},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			userAuth := &login.UserAuth{AuthModule: tc.authModule}
+			authInfoService := &authinfotest.FakeService{ExpectedUserAuth: userAuth}
+			socialService := &socialtest.FakeSocialService{}
+			cfg := setting.NewCfg()
+
+			switch tc.authModule {
+			case login.GenericOAuthModule:
+				socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{AllowAssignGrafanaAdmin: tc.allowAssignGrafanaAdmin, Enabled: tc.authEnabled, SkipOrgRoleSync: tc.skipOrgRoleSync}
+			case login.JWTModule:
+				cfg.JWTAuth.Enabled = tc.authEnabled
+				cfg.JWTAuth.SkipOrgRoleSync = tc.skipOrgRoleSync
+				cfg.JWTAuth.AllowAssignGrafanaAdmin = tc.allowAssignGrafanaAdmin
+			}
+
+			hs := &HTTPServer{
+				Cfg:             cfg,
+				authInfoService: authInfoService,
+				SocialService:   socialService,
+				userService:     usertest.NewUserServiceFake(),
+			}
+
+			sc := setupScenarioContext(t, "/api/admin/users/1/permissions")
+			sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+				c.Req.Body = mockRequestBody(dtos.AdminUpdateUserPermissionsForm{IsGrafanaAdmin: true})
+				c.Req.Header.Add("Content-Type", "application/json")
+				sc.context = c
+				return hs.AdminUpdateUserPermissions(c)
+			})
+
+			sc.m.Put("/api/admin/users/:id/permissions", sc.defaultHandler)
+
+			sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
+
+			assert.Equal(t, tc.expectedRespCode, sc.resp.Code)
+		})
+	}
 }
 
 func putAdminScenario(t *testing.T, desc string, url string, routePattern string, role org.RoleType,
@@ -237,7 +355,7 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 		hs := &HTTPServer{
 			Cfg:             setting.NewCfg(),
 			SQLStore:        sqlStore,
-			authInfoService: &logintest.AuthInfoServiceFake{},
+			authInfoService: &authinfotest.FakeService{},
 			userService:     userSvc,
 		}
 
@@ -342,7 +460,7 @@ func adminDisableUserScenario(t *testing.T, desc string, action string, url stri
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		fakeAuthTokenService := authtest.NewFakeUserAuthTokenService()
 
-		authInfoService := &logintest.AuthInfoServiceFake{}
+		authInfoService := &authinfotest.FakeService{}
 
 		hs := HTTPServer{
 			SQLStore:         dbtest.NewFakeDB(),
@@ -380,7 +498,7 @@ func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		sc := setupScenarioContext(t, url)
 		sc.sqlStore = hs.SQLStore
-		sc.authInfoService = &logintest.AuthInfoServiceFake{}
+		sc.authInfoService = &authinfotest.FakeService{}
 		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserID = testUserID

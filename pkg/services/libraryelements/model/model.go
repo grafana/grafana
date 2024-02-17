@@ -3,13 +3,9 @@ package model
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/kinds"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type LibraryConnectionKind int
@@ -20,8 +16,9 @@ const (
 
 // LibraryElement is the model for library element definitions.
 type LibraryElement struct {
-	ID          int64  `xorm:"pk autoincr 'id'"`
-	OrgID       int64  `xorm:"org_id"`
+	ID    int64 `xorm:"pk autoincr 'id'"`
+	OrgID int64 `xorm:"org_id"`
+	// Deprecated: use FolderUID instead
 	FolderID    int64  `xorm:"folder_id"`
 	UID         string `xorm:"uid"`
 	Name        string
@@ -40,8 +37,9 @@ type LibraryElement struct {
 
 // LibraryElementWithMeta is the model used to retrieve entities with additional meta information.
 type LibraryElementWithMeta struct {
-	ID          int64  `xorm:"pk autoincr 'id'"`
-	OrgID       int64  `xorm:"org_id"`
+	ID    int64 `xorm:"pk autoincr 'id'"`
+	OrgID int64 `xorm:"org_id"`
+	// Deprecated: use FolderUID instead
 	FolderID    int64  `xorm:"folder_id"`
 	UID         string `xorm:"uid"`
 	Name        string
@@ -67,8 +65,9 @@ type LibraryElementWithMeta struct {
 
 // LibraryElementDTO is the frontend DTO for entities.
 type LibraryElementDTO struct {
-	ID            int64                 `json:"id"`
-	OrgID         int64                 `json:"orgId"`
+	ID    int64 `json:"id"`
+	OrgID int64 `json:"orgId"`
+	// Deprecated: use FolderUID instead
 	FolderID      int64                 `json:"folderId"`
 	FolderUID     string                `json:"folderUid"`
 	UID           string                `json:"uid"`
@@ -80,32 +79,6 @@ type LibraryElementDTO struct {
 	Version       int64                 `json:"version"`
 	Meta          LibraryElementDTOMeta `json:"meta"`
 	SchemaVersion int64                 `json:"schemaVersion,omitempty"`
-}
-
-func (dto *LibraryElementDTO) ToResource() kinds.GrafanaResource[simplejson.Json, simplejson.Json] {
-	body := &simplejson.Json{}
-	_ = body.FromDB(dto.Model)
-	parent := librarypanel.NewK8sResource(dto.UID, nil)
-	res := kinds.GrafanaResource[simplejson.Json, simplejson.Json]{
-		Kind:       parent.Kind,
-		APIVersion: parent.APIVersion,
-		Metadata: kinds.GrafanaResourceMetadata{
-			Name:              dto.UID,
-			Annotations:       make(map[string]string),
-			Labels:            make(map[string]string),
-			ResourceVersion:   fmt.Sprintf("%d", dto.Version),
-			CreationTimestamp: v1.NewTime(dto.Meta.Created),
-		},
-		Spec: body,
-	}
-
-	if dto.FolderUID != "" {
-		res.Metadata.SetFolder(dto.FolderUID)
-	}
-	res.Metadata.SetCreatedBy(fmt.Sprintf("user:%d", dto.Meta.CreatedBy.Id))
-	res.Metadata.SetUpdatedBy(fmt.Sprintf("user:%d", dto.Meta.UpdatedBy.Id))
-	res.Metadata.SetUpdatedTimestamp(&dto.Meta.Updated)
-	return res
 }
 
 // LibraryElementSearchResult is the search result for entities.
@@ -190,6 +163,8 @@ var (
 // swagger:model
 type CreateLibraryElementCommand struct {
 	// ID of the folder where the library element is stored.
+	//
+	// Deprecated: use FolderUID instead
 	FolderID int64 `json:"folderId"`
 	// UID of the folder where the library element is stored.
 	FolderUID *string `json:"folderUid"`
@@ -211,6 +186,8 @@ type CreateLibraryElementCommand struct {
 // PatchLibraryElementCommand is the command for patching a LibraryElement
 type PatchLibraryElementCommand struct {
 	// ID of the folder where the library element is stored.
+	//
+	// Deprecated: use FolderUID instead
 	FolderID int64 `json:"folderId" binding:"Default(-1)"`
 	// UID of the folder where the library element is stored.
 	FolderUID *string `json:"folderUid"`
@@ -228,6 +205,14 @@ type PatchLibraryElementCommand struct {
 	Version int64 `json:"version" binding:"Required"`
 	// required: false
 	UID string `json:"uid"`
+}
+
+// GetLibraryElementCommand is the command for getting a library element.
+type GetLibraryElementCommand struct {
+	FolderName string
+	// Deprecated: use FolderUID instead
+	FolderID int64
+	UID      string
 }
 
 // SearchLibraryElementsQuery is the query used for searching for Elements

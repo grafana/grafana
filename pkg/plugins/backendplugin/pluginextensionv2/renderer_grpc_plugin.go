@@ -20,7 +20,7 @@ func (p *RendererGRPCPlugin) GRPCServer(broker *plugin.GRPCBroker, s *grpc.Serve
 	return nil
 }
 
-func (p *RendererGRPCPlugin) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, c *grpc.ClientConn) (interface{}, error) {
+func (p *RendererGRPCPlugin) GRPCClient(ctx context.Context, broker *plugin.GRPCBroker, c *grpc.ClientConn) (any, error) {
 	return &RendererGRPCClient{NewRendererClient(c), NewSanitizerClient(c)}, nil
 }
 

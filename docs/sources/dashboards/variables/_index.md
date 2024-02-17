@@ -1,14 +1,15 @@
 ---
 aliases:
-  - ../variables/
-  - ../variables/variable-examples/
-  - ./
+  - ../variables/ # /docs/grafana/<GRAFANA VERSION>/variables/
+  - ../variables/templates-and-variables/ # /docs/grafana/<GRAFANA VERSION>/variables/templates-and-variables/
+  - ../variables/variable-examples/ # /docs/grafana/<GRAFANA VERSION>/variables/variable-examples/
 labels:
   products:
     - cloud
     - enterprise
     - oss
 title: Variables
+description: Add variables to metric queries and panel titles to create interactive and dynamic dashboards
 weight: 130
 ---
 
@@ -24,7 +25,8 @@ the value, using the dropdown at the top of the dashboard, your panel's metric q
 Variables allow you to create more interactive and dynamic dashboards. Instead of hard-coding things like server, application,
 and sensor names in your metric queries, you can use variables in their place. Variables are displayed as dropdown lists at the top of
 the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
-{{< figure src="/static/img/docs/v50/variables_dashboard.png" >}}
+
+{{< figure src="/static/img/docs/v50/variables_dashboard.png" alt="Variable drop-down open and two values selected" >}}
 
 These can be especially useful for administrators who want to allow Grafana viewers to quickly adjust visualizations but do not want to give them full editing permissions. Grafana Viewers can use variables.
 
@@ -63,3 +65,6 @@ The following dashboards in Grafana Play provide examples of template variables:
 
 - Variable drop-down lists are displayed in the order they are listed in the variable list in Dashboard settings.
 - Put the variables that you will change often at the top, so they will be shown first (far left on the dashboard).
+- By default, variables don't have a default value. This means that the topmost value in the drop-down is always preselected. If you want to pre-populate a variable with an empty value, you can use the following workaround in the variable settings:
+  1. Select the **Include All Option** checkbox.
+  2. In the **Custom all value** field, enter a value like `+`.

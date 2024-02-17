@@ -41,9 +41,9 @@ export const TREE_ROOT_ID = '__root__';
  * @return {TreeNode}    A tree of spanIDs derived from the relationships
  *                       between spans in the trace.
  */
-export function getTraceSpanIdsAsTree(trace: TraceResponse) {
+export function getTraceSpanIdsAsTree(trace: TraceResponse, spanMap: Map<string, TraceSpanData> | null = null) {
   const nodesById = new Map(trace.spans.map((span: TraceSpanData) => [span.spanID, new TreeNode(span.spanID)]));
-  const spansById = new Map(trace.spans.map((span: TraceSpanData) => [span.spanID, span]));
+  const spansById = spanMap ?? new Map(trace.spans.map((span: TraceSpanData) => [span.spanID, span]));
   const root = new TreeNode(TREE_ROOT_ID);
   trace.spans.forEach((span: TraceSpanData) => {
     const node = nodesById.get(span.spanID)!;
@@ -59,13 +59,13 @@ export function getTraceSpanIdsAsTree(trace: TraceResponse) {
       root.children.push(node);
     }
   });
-  const comparator = (nodeA: TreeNode | undefined, nodeB: TreeNode | undefined) => {
+  const comparator = (nodeA: TreeNode<string>, nodeB: TreeNode<string>) => {
     const a: TraceSpanData | undefined = nodeA?.value ? spansById.get(nodeA.value.toString()) : undefined;
     const b: TraceSpanData | undefined = nodeB?.value ? spansById.get(nodeB.value.toString()) : undefined;
     return +(a?.startTime! > b?.startTime!) || +(a?.startTime === b?.startTime) - 1;
   };
   trace.spans.forEach((span: TraceSpanData) => {
-    const node: TreeNode | undefined = nodesById.get(span.spanID);
+    const node = nodesById.get(span.spanID);
     if (node!.children.length > 1) {
       node?.children.sort(comparator);
     }
@@ -73,17 +73,3 @@ export function getTraceSpanIdsAsTree(trace: TraceResponse) {
   root.children.sort(comparator);
   return root;
 }
-
-export const omitCollapsedSpans = createSelector(
-  ({ spans }: { spans: TraceSpanData[] }) => spans,
-  createSelector(({ trace }: { trace: TraceResponse }) => trace, getTraceSpanIdsAsTree),
-  ({ collapsed }: { collapsed: string[] }) => collapsed,
-  (spans, tree, collapse) => {
-    const hiddenSpanIds = collapse.reduce((result, collapsedSpanId) => {
-      tree.find(collapsedSpanId)!.walk((id: string | number | undefined) => id !== collapsedSpanId && result.add(id));
-      return result;
-    }, new Set());
-
-    return hiddenSpanIds.size > 0 ? spans.filter((span) => !hiddenSpanIds.has(getSpanId(span))) : spans;
-  }
-);

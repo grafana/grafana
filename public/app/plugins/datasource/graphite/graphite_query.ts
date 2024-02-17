@@ -159,11 +159,11 @@ export default class GraphiteQuery {
     this.segments.push({ value: 'select metric' });
   }
 
-  addFunction(newFunc: any) {
+  addFunction(newFunc: FuncInstance) {
     this.functions.push(newFunc);
   }
 
-  addFunctionParameter(func: any, value: string) {
+  addFunctionParameter(func: FuncInstance, value: string) {
     if (func.params.length >= func.def.params.length && !get(last(func.def.params), 'multiple', false)) {
       throw { message: 'too many parameters for function ' + func.def.name };
     }
@@ -174,13 +174,13 @@ export default class GraphiteQuery {
     this.functions = without(this.functions, func);
   }
 
-  moveFunction(func: any, offset: number) {
+  moveFunction(func: FuncInstance, offset: number) {
     const index = this.functions.indexOf(func);
     arrayMove(this.functions, index, index + offset);
   }
 
   updateModelTarget(targets: any) {
-    const wrapFunction = (target: string, func: any) => {
+    const wrapFunction = (target: string, func: FuncInstance) => {
       return func.render(target, (value: string) => {
         return this.templateSrv.replace(value, this.scopedVars);
       });

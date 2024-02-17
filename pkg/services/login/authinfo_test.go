@@ -3,165 +3,56 @@ package login
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestIsExternallySynced(t *testing.T) {
 	testcases := []struct {
-		name     string
-		cfg      *setting.Cfg
-		provider string
-		expected bool
+		name      string
+		cfg       *setting.Cfg
+		oauthInfo *social.OAuthInfo
+		provider  string
+		expected  bool
 	}{
-		// azure
+		// Same for all of the OAuth providers
 		{
-			name:     "AzureAD synced user should return that it is externally synced",
-			cfg:      &setting.Cfg{AzureADEnabled: true, AzureADSkipOrgRoleSync: false},
-			provider: AzureADAuthModule,
-			expected: true,
+			name:      "AzureAD external user should return that it is externally synced",
+			cfg:       &setting.Cfg{},
+			oauthInfo: &social.OAuthInfo{Enabled: true, SkipOrgRoleSync: false},
+			provider:  AzureADAuthModule,
+			expected:  true,
 		},
 		{
-			name:     "AzureAD synced user should return that it is not externally synced when org role sync is set",
-			cfg:      &setting.Cfg{AzureADEnabled: true, AzureADSkipOrgRoleSync: true},
-			provider: AzureADAuthModule,
-			expected: false,
-		},
-		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
-		{
-			name:     "azuread external user should return that it is not externally synced when oauth org role sync is set",
-			cfg:      &setting.Cfg{AzureADEnabled: true, AzureADSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
-			provider: AzureADAuthModule,
-			expected: false,
-		},
-		// google
-		{
-			name:     "Google synced user should return that it is externally synced",
-			cfg:      &setting.Cfg{GoogleAuthEnabled: true, GoogleSkipOrgRoleSync: false},
-			provider: GoogleAuthModule,
-			expected: true,
-		},
-		{
-			name:     "Google synced user should return that it is not externally synced when org role sync is set",
-			cfg:      &setting.Cfg{GoogleAuthEnabled: true, GoogleSkipOrgRoleSync: true},
-			provider: GoogleAuthModule,
-			expected: false,
+			name:      "AzureAD external user should return that it is not externally synced when org role sync is set",
+			cfg:       &setting.Cfg{},
+			oauthInfo: &social.OAuthInfo{Enabled: true, SkipOrgRoleSync: true},
+			provider:  AzureADAuthModule,
+			expected:  false,
 		},
 		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
 		{
-			name:     "google external user should return that it is not externally synced when oauth org role sync is set",
-			cfg:      &setting.Cfg{GoogleAuthEnabled: true, GoogleSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
-			provider: GoogleAuthModule,
-			expected: false,
+			name:      "AzureAD external user should return that it is not externally synced when oauth org role sync is set",
+			cfg:       &setting.Cfg{OAuthSkipOrgRoleUpdateSync: true},
+			oauthInfo: &social.OAuthInfo{Enabled: true, SkipOrgRoleSync: false},
+			provider:  AzureADAuthModule,
+			expected:  false,
 		},
 		{
-			name:     "external user should return that it is not externally synced when oauth org role sync is set and google skip org role sync set",
-			cfg:      &setting.Cfg{GoogleAuthEnabled: true, GoogleSkipOrgRoleSync: true, OAuthSkipOrgRoleUpdateSync: true},
-			provider: GoogleAuthModule,
-			expected: false,
-		},
-		// okta
-		{
-			name:     "Okta synced user should return that it is externally synced",
-			cfg:      &setting.Cfg{OktaAuthEnabled: true, OktaSkipOrgRoleSync: false},
-			provider: OktaAuthModule,
-			expected: true,
+			name:      "AzureAD external user should return that it is not externally synced when the provider is not enabled",
+			cfg:       &setting.Cfg{},
+			oauthInfo: &social.OAuthInfo{Enabled: false, SkipOrgRoleSync: false},
+			provider:  AzureADAuthModule,
+			expected:  false,
 		},
 		{
-			name: "Okta synced user should return that it is not externally synced when org role sync is set",
-			cfg:  &setting.Cfg{OktaAuthEnabled: true, OktaSkipOrgRoleSync: true},
-
-			provider: OktaAuthModule,
-			expected: false,
-		},
-		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
-		{
-			name:     "okta external user should return that it is not externally synced when oauth org role sync is set",
-			cfg:      &setting.Cfg{OktaAuthEnabled: true, OktaSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
-			provider: OktaAuthModule,
-			expected: false,
-		},
-		// github
-		{
-			name:     "Github synced user should return that it is externally synced",
-			cfg:      &setting.Cfg{GitHubAuthEnabled: true, GitHubSkipOrgRoleSync: false},
-			provider: GithubAuthModule,
-			expected: true,
-		},
-		{
-			name:     "Github synced user should return that it is not externally synced when org role sync is set",
-			cfg:      &setting.Cfg{GitHubAuthEnabled: true, GitHubSkipOrgRoleSync: true},
-			provider: GithubAuthModule,
-			expected: false,
-		},
-		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
-		{
-			name:     "github external user should return that it is not externally synced when oauth org role sync is set",
-			cfg:      &setting.Cfg{GitHubAuthEnabled: true, GitHubSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
-			provider: GithubAuthModule,
-			expected: false,
-		},
-		// gitlab
-		{
-			name:     "Gitlab synced user should return that it is externally synced",
-			cfg:      &setting.Cfg{GitLabAuthEnabled: true, GitLabSkipOrgRoleSync: false},
-			provider: GitLabAuthModule,
-			expected: true,
-		},
-		{
-			name:     "Gitlab synced user should return that it is not externally synced when org role sync is set",
-			cfg:      &setting.Cfg{GitLabAuthEnabled: true, GitLabSkipOrgRoleSync: true},
-			provider: GitLabAuthModule,
-			expected: false,
-		},
-		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
-		{
-			name:     "gitlab external user should return that it is not externally synced when oauth org role sync is set",
-			cfg:      &setting.Cfg{GitLabAuthEnabled: true, GitLabSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
-			provider: GitLabAuthModule,
-			expected: false,
-		},
-		// grafana.com
-		{
-			name:     "Grafana.com synced user should return that it is externally synced",
-			cfg:      &setting.Cfg{GrafanaComAuthEnabled: true, GrafanaComSkipOrgRoleSync: false},
-			provider: GrafanaComAuthModule,
-			expected: true,
-		},
-		{
-			name:     "Grafana.com synced user should return that it is not externally synced when org role sync is set",
-			cfg:      &setting.Cfg{GrafanaComAuthEnabled: true, GrafanaComSkipOrgRoleSync: true},
-			provider: GrafanaComAuthModule,
-			expected: false,
-		},
-		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
-		{
-			name:     "grafanacom external user should return that it is not externally synced when oauth org role sync is set",
-			cfg:      &setting.Cfg{GrafanaComAuthEnabled: true, GrafanaComSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
-			provider: GrafanaComAuthModule,
-			expected: false,
-		},
-		// generic oauth
-		{
-			name: "OAuth synced user should return that it is externally synced",
-			cfg:  &setting.Cfg{GenericOAuthAuthEnabled: true, OAuthSkipOrgRoleUpdateSync: false},
-			// this could be any of the external oauth providers
-			provider: GenericOAuthModule,
-			expected: true,
-		},
-		{
-			name: "OAuth synced user should return that it is not externally synced when org role sync is set",
-			cfg:  &setting.Cfg{GenericOAuthAuthEnabled: true, OAuthSkipOrgRoleUpdateSync: true},
-			// this could be any of the external oauth providers
-			provider: GenericOAuthModule,
-			expected: false,
-		},
-		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
-		{
-			name:     "generic oauth external user should return that it is not externally synced when oauth org role sync is set",
-			cfg:      &setting.Cfg{GenericOAuthAuthEnabled: true, GenericOAuthSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
-			provider: GenericOAuthModule,
-			expected: false,
+			name:      "AzureAD synced user should return that it is not externally synced when the provider is not enabled and nil",
+			cfg:       &setting.Cfg{},
+			oauthInfo: nil,
+			provider:  AzureADAuthModule,
+			expected:  false,
 		},
 		// saml
 		{
@@ -192,20 +83,20 @@ func TestIsExternallySynced(t *testing.T) {
 		// jwt
 		{
 			name:     "JWT synced user should return that it is externally synced",
-			cfg:      &setting.Cfg{JWTAuthEnabled: true, JWTAuthSkipOrgRoleSync: false},
+			cfg:      &setting.Cfg{JWTAuth: setting.AuthJWTSettings{Enabled: true, SkipOrgRoleSync: false}},
 			provider: JWTModule,
 			expected: true,
 		},
 		{
 			name:     "JWT synced user should return that it is not externally synced when org role sync is set",
-			cfg:      &setting.Cfg{JWTAuthEnabled: true, JWTAuthSkipOrgRoleSync: true},
+			cfg:      &setting.Cfg{JWTAuth: setting.AuthJWTSettings{Enabled: true, SkipOrgRoleSync: true}},
 			provider: JWTModule,
 			expected: false,
 		},
 		// IsProvider test
 		{
 			name:     "If no provider enabled should return false",
-			cfg:      &setting.Cfg{JWTAuthSkipOrgRoleSync: true},
+			cfg:      &setting.Cfg{JWTAuth: setting.AuthJWTSettings{Enabled: false, SkipOrgRoleSync: true}},
 			provider: JWTModule,
 			expected: false,
 		},
@@ -213,36 +104,36 @@ func TestIsExternallySynced(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, IsExternallySynced(tc.cfg, tc.provider))
+			assert.Equal(t, tc.expected, IsExternallySynced(tc.cfg, tc.provider, tc.oauthInfo))
 		})
 	}
 }
 
 func TestIsProviderEnabled(t *testing.T) {
 	testcases := []struct {
-		name     string
-		cfg      *setting.Cfg
-		provider string
-		expected bool
+		name      string
+		oauthInfo *social.OAuthInfo
+		provider  string
+		expected  bool
 	}{
 		// github
 		{
-			name:     "Github should return true if enabled",
-			cfg:      &setting.Cfg{GitHubAuthEnabled: true},
-			provider: GithubAuthModule,
-			expected: true,
+			name:      "Github should return true if enabled",
+			oauthInfo: &social.OAuthInfo{Enabled: true},
+			provider:  GithubAuthModule,
+			expected:  true,
 		},
 		{
-			name:     "Github should return false if not enabled",
-			cfg:      &setting.Cfg{},
-			provider: GithubAuthModule,
-			expected: false,
+			name:      "Github should return false if not enabled",
+			oauthInfo: &social.OAuthInfo{Enabled: false},
+			provider:  GithubAuthModule,
+			expected:  false,
 		},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.expected, IsProviderEnabled(tc.cfg, tc.provider))
+			assert.Equal(t, tc.expected, IsProviderEnabled(setting.NewCfg(), tc.provider, tc.oauthInfo))
 		})
 	}
 }

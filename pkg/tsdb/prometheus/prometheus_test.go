@@ -9,12 +9,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
-	sdkHttpClient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type fakeSender struct{}
@@ -43,24 +39,35 @@ type fakeHTTPClientProvider struct {
 	Roundtripper *fakeRoundtripper
 }
 
-func (provider *fakeHTTPClientProvider) New(opts ...sdkHttpClient.Options) (*http.Client, error) {
+func (provider *fakeHTTPClientProvider) New(opts ...httpclient.Options) (*http.Client, error) {
 	client := &http.Client{}
 	provider.Roundtripper = &fakeRoundtripper{}
 	client.Transport = provider.Roundtripper
 	return client, nil
 }
 
-func (provider *fakeHTTPClientProvider) GetTransport(opts ...sdkHttpClient.Options) (http.RoundTripper, error) {
+func (provider *fakeHTTPClientProvider) GetTransport(opts ...httpclient.Options) (http.RoundTripper, error) {
 	return &fakeRoundtripper{}, nil
+}
+
+func getMockPromTestSDKProvider(f *fakeHTTPClientProvider) *httpclient.Provider {
+	anotherFN := func(o httpclient.Options, next http.RoundTripper) http.RoundTripper {
+		_, _ = f.New()
+		return f.Roundtripper
+	}
+	fn := httpclient.MiddlewareFunc(anotherFN)
+	mid := httpclient.NamedMiddlewareFunc("mock", fn)
+	return httpclient.NewProvider(httpclient.ProviderOptions{Middlewares: []httpclient.Middleware{mid}})
 }
 
 func TestService(t *testing.T) {
 	t.Run("Service", func(t *testing.T) {
 		t.Run("CallResource", func(t *testing.T) {
 			t.Run("creates correct request", func(t *testing.T) {
-				httpProvider := &fakeHTTPClientProvider{}
+				f := &fakeHTTPClientProvider{}
+				httpProvider := getMockPromTestSDKProvider(f)
 				service := &Service{
-					im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, &setting.Cfg{}, &featuremgmt.FeatureManager{}, nil)),
+					im: datasource.NewInstanceManager(newInstanceSettings(httpProvider, backend.NewLoggerWith("logger", "test"))),
 				}
 
 				req := &backend.CallResourceRequest{
@@ -98,12 +105,12 @@ func TestService(t *testing.T) {
 						"Content-Type":    {"application/x-www-form-urlencoded"},
 						"Idempotency-Key": []string(nil),
 					},
-					httpProvider.Roundtripper.Req.Header)
-				require.Equal(t, http.MethodPost, httpProvider.Roundtripper.Req.Method)
-				body, err := io.ReadAll(httpProvider.Roundtripper.Req.Body)
+					f.Roundtripper.Req.Header)
+				require.Equal(t, http.MethodPost, f.Roundtripper.Req.Method)
+				body, err := io.ReadAll(f.Roundtripper.Req.Body)
 				require.NoError(t, err)
 				require.Equal(t, []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"), body)
-				require.Equal(t, "http://localhost:9090/api/v1/series", httpProvider.Roundtripper.Req.URL.String())
+				require.Equal(t, "http://localhost:9090/api/v1/series", f.Roundtripper.Req.URL.String())
 			})
 		})
 	})

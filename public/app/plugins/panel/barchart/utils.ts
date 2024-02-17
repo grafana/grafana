@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import uPlot, { Padding } from 'uplot';
 
 import {
@@ -13,12 +14,14 @@ import {
   outerJoinDataFrames,
   TimeZone,
   VizOrientation,
+  getFieldDisplayName,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import {
+  AxisColorMode,
   AxisPlacement,
   GraphTransform,
-  GraphTresholdsStyleMode,
+  GraphThresholdsStyleMode,
   ScaleDirection,
   ScaleDistribution,
   ScaleOrientation,
@@ -26,6 +29,7 @@ import {
   VizLegendOptions,
 } from '@grafana/schema';
 import { FIXED_UNIT, measureText, UPlotConfigBuilder, UPlotConfigPrepFn, UPLOT_AXIS_FONT_SIZE } from '@grafana/ui';
+import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 import { findField } from 'app/features/dimensions';
 
@@ -205,8 +209,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
     // Render thresholds in graph
     if (customConfig.thresholdsStyle && field.config.thresholds) {
-      const thresholdDisplay = customConfig.thresholdsStyle.mode ?? GraphTresholdsStyleMode.Off;
-      if (thresholdDisplay !== GraphTresholdsStyleMode.Off) {
+      const thresholdDisplay = customConfig.thresholdsStyle.mode ?? GraphThresholdsStyleMode.Off;
+      if (thresholdDisplay !== GraphThresholdsStyleMode.Off) {
         builder.addThresholds({
           config: customConfig.thresholdsStyle,
           thresholds: field.config.thresholds,
@@ -234,8 +238,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
       thresholds: field.config.thresholds,
       hardMin: field.config.min,
       hardMax: field.config.max,
-      softMin,
-      softMax,
+      softMin: customConfig.axisSoftMin,
+      softMax: customConfig.axisSoftMax,
 
       // The following properties are not used in the uPlot config, but are utilized as transport for legend config
       // PlotLegend currently gets unfiltered DataFrame[], so index must be into that field array, not the prepped frame's which we're iterating here
@@ -256,6 +260,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
       max: field.config.max,
       softMin,
       softMax,
+      centeredZero: customConfig.axisCenteredZero,
       orientation: vizOrientation.yOri,
       direction: vizOrientation.yDir,
       distribution: customConfig.scaleDistribution?.type,
@@ -276,7 +281,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
         }
       }
 
-      builder.addAxis({
+      let axisOpts: AxisProps = {
         scaleKey,
         label: customConfig.axisLabel,
         size: customConfig.axisWidth,
@@ -286,7 +291,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
         tickLabelRotation: vizOrientation.xOri === 1 ? xTickLabelRotation * -1 : 0,
         theme,
         grid: { show: customConfig.axisGridShow },
-      });
+      };
+
+      if (customConfig.axisBorderShow) {
+        axisOpts.border = {
+          show: true,
+        };
+      }
+
+      if (customConfig.axisColorMode === AxisColorMode.Series) {
+        axisOpts.color = seriesColor;
+      }
+
+      builder.addAxis(axisOpts);
     }
   }
 
@@ -359,7 +376,7 @@ export function prepareBarChartDisplayValues(
   theme: GrafanaTheme2,
   options: Options
 ): BarChartDisplayValues | BarChartDisplayWarning {
-  if (!series?.length) {
+  if (!series.length || series.every((fr) => fr.length === 0)) {
     return { warn: 'No data in response' };
   }
 
@@ -475,37 +492,30 @@ export function prepareBarChartDisplayValues(
     }
   }
 
-  let legendFields: Field[] = fields;
+  // If stacking is percent, we need to correct the legend fields unit and display
+  let legendFields: Field[] = cloneDeep(fields);
   if (options.stacking === StackingMode.Percent) {
-    legendFields = fields.map((field) => {
-      const alignedFrameField = frame.fields.find((f) => f.state?.displayName === field.state?.displayName)!;
+    legendFields.map((field) => {
+      const alignedFrameField = frame.fields.find(
+        (f) => getFieldDisplayName(f, frame) === getFieldDisplayName(f, frame)
+      );
 
-      const copy = {
-        ...field,
-        config: {
-          ...alignedFrameField.config,
-        },
-        values: field.values,
-      };
-
-      copy.display = getDisplayProcessor({ field: copy, theme });
-
-      return copy;
+      field.config.unit = alignedFrameField?.config?.unit ?? undefined;
+      field.display = getDisplayProcessor({ field: field, theme });
     });
-
-    legendFields.unshift(firstField);
   }
 
-  // String field is first
+  // String field is first, make sure fields / legend fields indexes match
   fields.unshift(firstField);
+  legendFields.unshift(firstField);
 
   return {
     aligned: frame,
     colorByField,
     viz: [
       {
-        length: firstField.values.length,
         fields: fields, // ideally: fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.viz)),
+        length: firstField.values.length,
       },
     ],
     legend: {

@@ -31,7 +31,7 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 					OrgID: 1,
 					Type:  datasources.DS_ALERTMANAGER,
 					URL:   "http://localhost:9000",
-					JsonData: simplejson.NewFromAny(map[string]interface{}{
+					JsonData: simplejson.NewFromAny(map[string]any{
 						definitions.HandleGrafanaManagedAlerts: true,
 					}),
 				},
@@ -47,7 +47,7 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 					OrgID:    1,
 					Type:     datasources.DS_ALERTMANAGER,
 					URL:      "http://localhost:9000",
-					JsonData: simplejson.NewFromAny(map[string]interface{}{}),
+					JsonData: simplejson.NewFromAny(map[string]any{}),
 				},
 			},
 			statusCode: http.StatusBadRequest,
@@ -83,7 +83,7 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 			resp := sut.RoutePostNGalertConfig(ctx, definitions.PostableNGalertConfig{
 				AlertmanagersChoice: test.alertmanagerChoice,
 			})
-			var res map[string]interface{}
+			var res map[string]any
 			err := json.Unmarshal(resp.Body(), &res)
 			require.NoError(t, err)
 			require.Equal(t, test.message, res["message"])

@@ -6,6 +6,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	pubdash "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -80,15 +81,6 @@ var (
 	// MAlertingNotificationSent is a metric counter for how many alert notifications that failed
 	MAlertingNotificationFailed *prometheus.CounterVec
 
-	// MAwsCloudWatchGetMetricStatistics is a metric counter for getting metric statistics from aws
-	MAwsCloudWatchGetMetricStatistics prometheus.Counter
-
-	// MAwsCloudWatchListMetrics is a metric counter for getting list of metrics from aws
-	MAwsCloudWatchListMetrics prometheus.Counter
-
-	// MAwsCloudWatchGetMetricData is a metric counter for getting metric data time series from aws
-	MAwsCloudWatchGetMetricData prometheus.Counter
-
 	// MDBDataSourceQueryByID is a metric counter for getting datasource by id
 	MDBDataSourceQueryByID prometheus.Counter
 
@@ -104,11 +96,23 @@ var (
 	// MAccessEvaluationCount is a metric gauge for total number of evaluation requests
 	MAccessEvaluationCount prometheus.Counter
 
+	// MAccessPermissionsCacheUsage is a metric counter for cache usage
+	MAccessPermissionsCacheUsage *prometheus.CounterVec
+
+	// MAccessSearchUserPermissionsCacheUsage is a metric counter for cache usage
+	MAccessSearchUserPermissionsCacheUsage *prometheus.CounterVec
+
 	// MPublicDashboardRequestCount is a metric counter for public dashboards requests
 	MPublicDashboardRequestCount prometheus.Counter
 
 	// MPublicDashboardDatasourceQuerySuccess is a metric counter for successful queries labelled by datasource
 	MPublicDashboardDatasourceQuerySuccess *prometheus.CounterVec
+
+	// MFolderIDsAPICount is a metric counter for folder ids count in the api package
+	MFolderIDsAPICount *prometheus.CounterVec
+
+	// MFolderIDsServicesCount is a metric counter for folder ids count in the services package
+	MFolderIDsServiceCount *prometheus.CounterVec
 )
 
 // Timers
@@ -127,6 +131,9 @@ var (
 
 	// MAccessPermissionsSummary is a metric summary for loading permissions request duration when evaluating access
 	MAccessPermissionsSummary prometheus.Histogram
+
+	// MSearchPermissionsSummary is a metric summary for searching permissions request duration
+	MAccessSearchPermissionsSummary prometheus.Histogram
 
 	// MAccessEvaluationsSummary is a metric summary for loading permissions request duration when evaluating access
 	MAccessEvaluationsSummary prometheus.Histogram
@@ -185,6 +192,9 @@ var (
 	// StatsTotalAlertRules is a metric of total number of alert rules stored in Grafana.
 	StatsTotalAlertRules prometheus.Gauge
 
+	// StatsTotalRuleGroups is a metric of total number of alert rule groups stored in Grafana.
+	StatsTotalRuleGroups prometheus.Gauge
+
 	// StatsTotalDashboardVersions is a metric of total number of dashboard versions stored in Grafana.
 	StatsTotalDashboardVersions prometheus.Gauge
 
@@ -206,9 +216,39 @@ var (
 	MStatTotalCorrelations prometheus.Gauge
 )
 
+const (
+	// FolderID API
+	GetAlerts                 string = "GetAlerts"
+	GetDashboard              string = "GetDashboard"
+	RestoreDashboardVersion   string = "RestoreDashboardVersion"
+	GetFolderByID             string = "GetFolderByID"
+	GetFolderDescendantCounts string = "GetFolderDescendantCounts"
+	SearchFolders             string = "searchFolders"
+	GetFolderPermissionList   string = "GetFolderPermissionList"
+	UpdateFolderPermissions   string = "UpdateFolderPermissions"
+	GetFolderACL              string = "getFolderACL"
+	Search                    string = "Search"
+	GetDashboardACL           string = "getDashboardACL"
+	NewToFolderDTO            string = "newToFolderDto"
+	GetFolders                string = "GetFolders"
+	// FolderID services
+	Folder           string = "folder"
+	Dashboard        string = "dashboards"
+	LibraryElements  string = "libraryelements"
+	LibraryPanels    string = "librarypanels"
+	NGAlerts         string = "ngalert"
+	Provisioning     string = "provisioning"
+	PublicDashboards string = "publicdashboards"
+	AccessControl    string = "accesscontrol"
+	Guardian         string = "guardian"
+	DashboardImport  string = "dashboardimport"
+)
+
 func init() {
 	httpStatusCodes := []string{"200", "404", "500", "unknown"}
 	objectiveMap := map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001}
+	apiFolderIDMethods := []string{GetAlerts, GetDashboard, RestoreDashboardVersion, GetFolderByID, GetFolderDescendantCounts, SearchFolders, GetFolderPermissionList, UpdateFolderPermissions, GetFolderACL, Search, GetDashboardACL, NewToFolderDTO, GetFolders}
+	folderIDServices := []string{Folder, Dashboard, LibraryElements, LibraryPanels, NGAlerts, Provisioning, PublicDashboards, AccessControl, Guardian, Search, DashboardImport}
 
 	MInstanceStart = prometheus.NewCounter(prometheus.CounterOpts{
 		Name:      "instance_start_total",
@@ -348,24 +388,6 @@ func init() {
 		Namespace: ExporterName,
 	}, []string{"type"})
 
-	MAwsCloudWatchGetMetricStatistics = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
-		Name:      "aws_cloudwatch_get_metric_statistics_total",
-		Help:      "counter for getting metric statistics from aws",
-		Namespace: ExporterName,
-	})
-
-	MAwsCloudWatchListMetrics = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
-		Name:      "aws_cloudwatch_list_metrics_total",
-		Help:      "counter for getting list of metrics from aws",
-		Namespace: ExporterName,
-	})
-
-	MAwsCloudWatchGetMetricData = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
-		Name:      "aws_cloudwatch_get_metric_data_total",
-		Help:      "counter for getting metric data time series from aws",
-		Namespace: ExporterName,
-	})
-
 	MDBDataSourceQueryByID = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
 		Name:      "db_datasource_query_by_id_total",
 		Help:      "counter for getting datasource by id",
@@ -445,6 +467,18 @@ func init() {
 		Help:      "counter for queries to public dashboard datasources labelled by datasource type and success status success/failed",
 		Namespace: ExporterName,
 	}, []string{"datasource", "status"}, map[string][]string{"status": pubdash.QueryResultStatuses})
+
+	MFolderIDsAPICount = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
+		Name:      "folder_id_api_count",
+		Help:      "counter for folder id usage in api package",
+		Namespace: ExporterName,
+	}, []string{"method"}, map[string][]string{"method": apiFolderIDMethods})
+
+	MFolderIDsServiceCount = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
+		Name:      "folder_id_service_count",
+		Help:      "counter for folder id usage in service package",
+		Namespace: ExporterName,
+	}, []string{"service"}, map[string][]string{"service": folderIDServices})
 
 	MStatTotalDashboards = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard",
@@ -554,6 +588,12 @@ func init() {
 		Namespace: ExporterName,
 	})
 
+	StatsTotalRuleGroups = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_totals_rule_groups",
+		Help:      "total amount of alert rule groups in the database",
+		Namespace: ExporterName,
+	})
+
 	MAccessPermissionsSummary = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Name:    "access_permissions_duration",
 		Help:    "Histogram for the runtime of permissions check function.",
@@ -571,6 +611,24 @@ func init() {
 		Help:      "number of evaluation calls",
 		Namespace: ExporterName,
 	})
+
+	MAccessSearchPermissionsSummary = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "access_search_permissions_duration",
+		Help:    "Histogram for the runtime of permissions search function",
+		Buckets: prometheus.ExponentialBuckets(0.001, 10, 6),
+	})
+
+	MAccessPermissionsCacheUsage = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
+		Name:      "access_permissions_cache_usage",
+		Help:      "access control permissions cache hit/miss",
+		Namespace: ExporterName,
+	}, []string{"status"}, map[string][]string{"status": accesscontrol.CacheUsageStatuses})
+
+	MAccessSearchUserPermissionsCacheUsage = metricutil.NewCounterVecStartingAtZero(prometheus.CounterOpts{
+		Name:      "access_search_user_permissions_cache_usage",
+		Help:      "access control search user permissions cache hit/miss",
+		Namespace: ExporterName,
+	}, []string{"status"}, map[string][]string{"status": accesscontrol.CacheUsageStatuses})
 
 	StatsTotalLibraryPanels = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_library_panels",
@@ -604,7 +662,7 @@ func init() {
 }
 
 // SetBuildInformation sets the build information for this binary
-func SetBuildInformation(version, revision, branch string, buildTimestamp int64) {
+func SetBuildInformation(reg prometheus.Registerer, version, revision, branch string, buildTimestamp int64) {
 	edition := "oss"
 	if setting.IsEnterprise {
 		edition = "enterprise"
@@ -622,7 +680,7 @@ func SetBuildInformation(version, revision, branch string, buildTimestamp int64)
 		Namespace: ExporterName,
 	}, []string{"version", "revision", "branch", "goversion", "edition"})
 
-	prometheus.MustRegister(grafanaBuildVersion, grafanaBuildTimestamp)
+	reg.MustRegister(grafanaBuildVersion, grafanaBuildTimestamp)
 
 	grafanaBuildVersion.WithLabelValues(version, revision, branch, runtime.Version(), edition).Set(1)
 	grafanaBuildTimestamp.WithLabelValues(version, revision, branch, runtime.Version(), edition).Set(float64(buildTimestamp))
@@ -630,7 +688,7 @@ func SetBuildInformation(version, revision, branch string, buildTimestamp int64)
 
 // SetEnvironmentInformation exposes environment values provided by the operators as an `_info` metric.
 // If there are no environment metrics labels configured, this metric will not be exposed.
-func SetEnvironmentInformation(labels map[string]string) error {
+func SetEnvironmentInformation(reg prometheus.Registerer, labels map[string]string) error {
 	if len(labels) == 0 {
 		return nil
 	}
@@ -642,7 +700,7 @@ func SetEnvironmentInformation(labels map[string]string) error {
 		ConstLabels: labels,
 	})
 
-	prometheus.MustRegister(grafanaEnvironmentInfo)
+	reg.MustRegister(grafanaEnvironmentInfo)
 
 	grafanaEnvironmentInfo.Set(1)
 	return nil
@@ -652,8 +710,8 @@ func SetPluginBuildInformation(pluginID, pluginType, version, signatureStatus st
 	grafanaPluginBuildInfoDesc.WithLabelValues(pluginID, pluginType, version, signatureStatus).Set(1)
 }
 
-func initMetricVars() {
-	prometheus.MustRegister(
+func initMetricVars(reg prometheus.Registerer) {
+	reg.MustRegister(
 		MInstanceStart,
 		MPageStatus,
 		MApiStatus,
@@ -678,9 +736,6 @@ func initMetricVars() {
 		MAlertingResultState,
 		MAlertingNotificationSent,
 		MAlertingNotificationFailed,
-		MAwsCloudWatchGetMetricStatistics,
-		MAwsCloudWatchListMetrics,
-		MAwsCloudWatchGetMetricData,
 		MDBDataSourceQueryByID,
 		LDAPUsersSyncExecutionTime,
 		MRenderingRequestTotal,
@@ -689,6 +744,10 @@ func initMetricVars() {
 		MRenderingQueue,
 		MAccessPermissionsSummary,
 		MAccessEvaluationsSummary,
+		MAccessSearchPermissionsSummary,
+		MAccessEvaluationCount,
+		MAccessPermissionsCacheUsage,
+		MAccessSearchUserPermissionsCacheUsage,
 		MAlertingActiveAlerts,
 		MStatTotalDashboards,
 		MStatTotalFolders,
@@ -707,7 +766,8 @@ func initMetricVars() {
 		grafanaPluginBuildInfoDesc,
 		StatsTotalDashboardVersions,
 		StatsTotalAnnotations,
-		MAccessEvaluationCount,
+		StatsTotalAlertRules,
+		StatsTotalRuleGroups,
 		StatsTotalLibraryPanels,
 		StatsTotalLibraryVariables,
 		StatsTotalDataKeys,
@@ -715,5 +775,7 @@ func initMetricVars() {
 		MPublicDashboardRequestCount,
 		MPublicDashboardDatasourceQuerySuccess,
 		MStatTotalCorrelations,
+		MFolderIDsAPICount,
+		MFolderIDsServiceCount,
 	)
 }

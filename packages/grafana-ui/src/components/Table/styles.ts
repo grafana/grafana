@@ -11,14 +11,30 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
   const rowHeight = cellHeight + 2;
   const headerHeight = 28;
 
-  const buildCellContainerStyle = (color?: string, background?: string, overflowOnHover?: boolean) => {
+  const buildCellContainerStyle = (
+    color?: string,
+    background?: string,
+    overflowOnHover?: boolean,
+    asCellText?: boolean
+  ) => {
     return css({
       label: overflowOnHover ? 'cellContainerOverflow' : 'cellContainerNoOverflow',
       padding: `${cellPadding}px`,
       width: '100%',
       // Cell height need to account for row border
       height: `${rowHeight - 1}px`,
+
       display: 'flex',
+
+      ...(asCellText
+        ? {
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            userSelect: 'text',
+            whiteSpace: 'nowrap',
+          }
+        : {}),
+
       alignItems: 'center',
       borderRight: `1px solid ${borderColor}`,
 
@@ -141,8 +157,11 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         color: theme.colors.text.link,
       },
     }),
-    cellContainer: buildCellContainerStyle(undefined, undefined, true),
-    cellContainerNoOverflow: buildCellContainerStyle(undefined, undefined, false),
+    cellContainerText: buildCellContainerStyle(undefined, undefined, true, true),
+    cellContainerTextNoOverflow: buildCellContainerStyle(undefined, undefined, false, true),
+
+    cellContainer: buildCellContainerStyle(undefined, undefined, true, false),
+    cellContainerNoOverflow: buildCellContainerStyle(undefined, undefined, false, false),
     cellText: css({
       overflow: 'hidden',
       textOverflow: 'ellipsis',
@@ -160,6 +179,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       whiteSpace: 'nowrap',
       color: theme.colors.text.link,
       fontWeight: theme.typography.fontWeightMedium,
+      paddingRight: theme.spacing(1.5),
       '&:hover': {
         textDecoration: 'underline',
         color: theme.colors.text.link,

@@ -4,14 +4,12 @@ import React from 'react';
 import { Badge } from '@grafana/ui';
 
 import { iconOptions } from '../../utils/storybook/icons';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Badge.mdx';
 
 const meta: Meta<typeof Badge> = {
   title: 'Data Display/Badge',
   component: Badge,
-  decorators: [withCenteredStory],
   parameters: {
     docs: { page: mdx },
   },

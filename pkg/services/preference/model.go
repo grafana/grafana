@@ -12,8 +12,7 @@ import (
 )
 
 var ErrPrefNotFound = errors.New("preference not found")
-var ErrUnknownCookieType = errutil.NewBase(
-	errutil.StatusBadRequest,
+var ErrUnknownCookieType = errutil.BadRequest(
 	"preferences.unknownCookieType",
 	errutil.WithPublicMessage("Got an unknown cookie preference type. Expected a set containing one or more of 'functional', 'performance', or 'analytics'}"),
 )
@@ -101,7 +100,7 @@ func (j *PreferenceJSONData) FromDB(data []byte) error {
 	return dec.Decode(j)
 }
 
-func (j *PreferenceJSONData) Scan(val interface{}) error {
+func (j *PreferenceJSONData) Scan(val any) error {
 	switch v := val.(type) {
 	case []byte:
 		if len(v) == 0 {

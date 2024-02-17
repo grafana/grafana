@@ -78,27 +78,29 @@ Grafana uses the following roles to control user access:
 
 - **Organization administrator**: Has access to all organization resources, including dashboards, users, and teams.
 - **Editor**: Can view and edit dashboards, folders, and playlists.
-- **Viewer**: Can view dashboards and playlists.
+- **Viewer**: Can view dashboards, playlists, and query data sources.
+- **No Basic Role**: Has no permissions. Permissions will be added with RBAC as needed.
 
 The following table lists permissions for each role.
 
-| Permission                     | Organization administrator | Editor | Viewer |
-| :----------------------------- | :------------------------: | :----: | :----: |
-| View dashboards                |             x              |   x    |   x    |
-| Add, edit, delete dashboards   |             x              |   x    |        |
-| Add, edit, delete folders      |             x              |   x    |        |
-| View playlists                 |             x              |   x    |   x    |
-| Add, edit, delete playlists    |             x              |   x    |        |
-| Create library panels          |             x              |   x    |        |
-| View annotations               |             x              |   x    |   x    |
-| Add, edit, delete annotations  |             x              |   x    |        |
-| Access Explore                 |             x              |   x    |        |
-| Add, edit, delete data sources |             x              |        |        |
-| Add and edit users             |             x              |        |        |
-| Add and edit teams             |             x              |        |        |
-| Change organizations settings  |             x              |        |        |
-| Change team settings           |             x              |        |        |
-| Configure application plugins  |             x              |        |        |
+| Permission                     | Organization administrator | Editor | Viewer | No Basic Role |
+| :----------------------------- | :------------------------: | :----: | :----: | :-----------: |
+| View dashboards                |            yes             |  yes   |  yes   |               |
+| Add, edit, delete dashboards   |            yes             |  yes   |        |               |
+| Add, edit, delete folders      |            yes             |  yes   |        |               |
+| View playlists                 |            yes             |  yes   |  yes   |               |
+| Add, edit, delete playlists    |            yes             |  yes   |        |               |
+| Create library panels          |            yes             |  yes   |        |               |
+| View annotations               |            yes             |  yes   |  yes   |               |
+| Add, edit, delete annotations  |            yes             |  yes   |        |               |
+| Access Explore                 |            yes             |  yes   |        |               |
+| Query data sources directly    |            yes             |  yes   |  yes   |               |
+| Add, edit, delete data sources |            yes             |        |        |               |
+| Add and edit users             |            yes             |        |        |               |
+| Add and edit teams             |            yes             |        |        |               |
+| Change organizations settings  |            yes             |        |        |               |
+| Change team settings           |            yes             |        |        |               |
+| Configure application plugins  |            yes             |        |        |               |
 
 ## Dashboard permissions
 
@@ -112,7 +114,7 @@ You can specify the following permissions to dashboards and folders.
 - **Edit**: Can create, edit, or delete a dashboard. Can edit or delete a folder, and create dashboards and subfolders in a folder. Editors _cannot_ change folder or dashboard permissions.
 - **View**: Can only view dashboards and folders.
 
-> Important: When a user creates a dashboard or a folder, he is set as **Admin** of it.
+> Important: When a user creates a dashboard or a folder they are automatically granted **Admin** permissions for it.
 
 For more information about assigning dashboard folder permissions, refer to [Grant dashboard folder permissions]({{< relref "../user-management/manage-dashboard-permissions/#grant-dashboard-folder-permissions" >}}).
 
@@ -167,7 +169,7 @@ While Grafana OSS includes a robust set of permissions and settings that you can
 
 By default, a user can query any data source in an organization, even if the data source is not linked to the user's dashboards.
 
-Data source permissions enable you to restrict data source query permissions to specific **Users** and **Teams**. For more information about assigning data source permissions, refer to [Data source permissions]({{< relref "../data-source-management/#data-source-permissions/" >}}).
+Data source permissions enable you to restrict data source query permissions to specific **Users**, **Service Accounts**, and **Teams**. For more information about assigning data source permissions, refer to [Data source permissions]({{< relref "../data-source-management/#data-source-permissions/" >}}).
 
 ### Role-based access control
 

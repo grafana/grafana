@@ -13,10 +13,10 @@ import {
   LiveChannelLeaveEvent,
   LiveChannelScope,
   LoadingState,
+  StreamingDataFrame,
 } from '@grafana/data';
 import { StreamingFrameAction } from '@grafana/runtime';
 
-import { StreamingDataFrame } from '../data/StreamingDataFrame';
 import { isStreamingResponseData, StreamingResponseData, StreamingResponseDataType } from '../data/utils';
 
 import { DataStreamHandlerDeps, LiveDataStream } from './LiveDataStream';
@@ -25,9 +25,9 @@ type SubjectsInsteadOfObservables<T> = {
   [key in keyof T]: T[key] extends Observable<infer U> ? Subject<U> : T[key];
 };
 
-type DepsWithSubjectsInsteadOfObservables<T = any> = SubjectsInsteadOfObservables<DataStreamHandlerDeps<T>>;
+type DepsWithSubjectsInsteadOfObservables<T = unknown> = SubjectsInsteadOfObservables<DataStreamHandlerDeps<T>>;
 
-const createDeps = <T = any>(
+const createDeps = <T = unknown>(
   overrides?: Partial<DepsWithSubjectsInsteadOfObservables<T>>
 ): DepsWithSubjectsInsteadOfObservables<T> => {
   return {
@@ -43,7 +43,7 @@ const createDeps = <T = any>(
 
 class ValuesCollection<T> implements Unsubscribable {
   values: T[] = [];
-  errors: any[] = [];
+  errors: unknown[] = [];
   receivedComplete = false;
   subscription: Subscription | undefined;
 
@@ -253,7 +253,7 @@ describe('LiveDataStream', () => {
 
   describe('happy path with a single subscriber in `append` mode', () => {
     let deps: ReturnType<typeof createDeps>;
-    let liveDataStream: LiveDataStream<any>;
+    let liveDataStream: LiveDataStream;
     const valuesCollection = new ValuesCollection<DataQueryResponse>();
 
     beforeAll(() => {
@@ -494,7 +494,7 @@ describe('LiveDataStream', () => {
 
   describe('happy path with a single subscriber in `replace` mode', () => {
     let deps: ReturnType<typeof createDeps>;
-    let liveDataStream: LiveDataStream<any>;
+    let liveDataStream: LiveDataStream;
     const valuesCollection = new ValuesCollection<DataQueryResponse>();
 
     beforeAll(() => {
@@ -850,7 +850,7 @@ describe('LiveDataStream', () => {
 
   describe('happy path with multiple subscribers', () => {
     let deps: ReturnType<typeof createDeps>;
-    let liveDataStream: LiveDataStream<any>;
+    let liveDataStream: LiveDataStream;
     const valuesCollections = {
       withTimeBFilter: new ValuesCollection<DataQueryResponse>(),
       withTimeAFilter: new ValuesCollection<DataQueryResponse>(),
@@ -898,8 +898,8 @@ describe('LiveDataStream', () => {
             return isStreamingResponseData(data, StreamingResponseDataType.FullFrame)
               ? fieldsOf(data)
               : isStreamingResponseData(data, StreamingResponseDataType.NewValuesSameSchema)
-              ? data.values
-              : response;
+                ? data.values
+                : response;
           })
         )
       ).toEqual({

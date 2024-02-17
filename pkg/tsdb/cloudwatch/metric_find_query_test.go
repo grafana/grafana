@@ -12,41 +12,49 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
 func TestQuery_Regions(t *testing.T) {
-	origNewEC2Client := newEC2Client
+	origNewEC2Client := NewEC2Client
 	t.Cleanup(func() {
-		newEC2Client = origNewEC2Client
+		NewEC2Client = origNewEC2Client
 	})
 
-	var cli fakeEC2Client
-
-	newEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
-		return cli
+	ec2Mock := &mocks.EC2Mock{}
+	NewEC2Client = func(provider client.ConfigProvider) models.EC2APIProvider {
+		return ec2Mock
 	}
-
 	t.Run("An extra region", func(t *testing.T) {
 		const regionName = "xtra-region"
-		cli = fakeEC2Client{
-			regions: []string{regionName},
-		}
+		ec2Mock.On("DescribeRegionsWithContext", mock.Anything, mock.Anything).Return(&ec2.DescribeRegionsOutput{
+			Regions: []*ec2.Region{
+				{
+					RegionName: utils.Pointer(regionName),
+				},
+			},
+		}, nil)
 
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}}, nil
+		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+			return DataSource{Settings: models.CloudWatchSettings{
+				AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "us-east-2"},
+				GrafanaSettings:       awsds.AuthSettings{ListMetricsPageLimit: 1000},
+			}}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
 		resp, err := executor.handleGetRegions(
 			context.Background(),
 			backend.PluginContext{
@@ -65,7 +73,7 @@ func TestQuery_Regions(t *testing.T) {
 			data.NewField("value", nil, expRegions),
 		)
 		expFrame.Meta = &data.FrameMeta{
-			Custom: map[string]interface{}{
+			Custom: map[string]any{
 				"rowCount": len(constants.Regions()) + 1,
 			},
 		}
@@ -91,21 +99,24 @@ func buildSortedSliceOfDefaultAndExtraRegions(t *testing.T, regionName string) [
 }
 
 func Test_handleGetRegions_regionCache(t *testing.T) {
-	origNewEC2Client := newEC2Client
+	origNewEC2Client := NewEC2Client
 	t.Cleanup(func() {
-		newEC2Client = origNewEC2Client
+		NewEC2Client = origNewEC2Client
 	})
 	cli := mockEC2Client{}
-	newEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
+	NewEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
 		return &cli
 	}
-	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: models.CloudWatchSettings{}}, nil
+	im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		return DataSource{Settings: models.CloudWatchSettings{
+			AWSDatasourceSettings: awsds.AWSDatasourceSettings{Region: "us-east-2"},
+			GrafanaSettings:       awsds.AuthSettings{ListMetricsPageLimit: 1000},
+		}}, nil
 	})
 
 	t.Run("AWS only called once for multiple calls to handleGetRegions", func(t *testing.T) {
-		cli.On("DescribeRegions", mock.Anything, mock.Anything).Return(&ec2.DescribeRegionsOutput{}, nil)
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		cli.On("DescribeRegionsWithContext", mock.Anything, mock.Anything).Return(&ec2.DescribeRegionsOutput{}, nil)
+		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
 		_, err := executor.handleGetRegions(
 			context.Background(),
 			backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}}, nil)
@@ -116,25 +127,24 @@ func Test_handleGetRegions_regionCache(t *testing.T) {
 			backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}}, nil)
 		require.NoError(t, err)
 
-		cli.AssertNumberOfCalls(t, "DescribeRegions", 1)
+		cli.AssertNumberOfCalls(t, "DescribeRegionsWithContext", 1)
 	})
 }
-
 func TestQuery_InstanceAttributes(t *testing.T) {
-	origNewEC2Client := newEC2Client
+	origNewEC2Client := NewEC2Client
 	t.Cleanup(func() {
-		newEC2Client = origNewEC2Client
+		NewEC2Client = origNewEC2Client
 	})
 
-	var cli fakeEC2Client
+	var cli oldEC2Client
 
-	newEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
+	NewEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
 		return cli
 	}
 
 	t.Run("Get instance ID", func(t *testing.T) {
 		const instanceID = "i-12345678"
-		cli = fakeEC2Client{
+		cli = oldEC2Client{
 			reservations: []*ec2.Reservation{
 				{
 					Instances: []*ec2.Instance{
@@ -152,7 +162,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 			},
 		}
 
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 
@@ -162,7 +172,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 		filterJson, err := json.Marshal(filterMap)
 		require.NoError(t, err)
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
 		resp, err := executor.handleGetEc2InstanceAttribute(
 			context.Background(),
 			backend.PluginContext{
@@ -183,19 +193,19 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 }
 
 func TestQuery_EBSVolumeIDs(t *testing.T) {
-	origNewEC2Client := newEC2Client
+	origNewEC2Client := NewEC2Client
 	t.Cleanup(func() {
-		newEC2Client = origNewEC2Client
+		NewEC2Client = origNewEC2Client
 	})
 
-	var cli fakeEC2Client
+	var cli oldEC2Client
 
-	newEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
+	NewEC2Client = func(client.ConfigProvider) models.EC2APIProvider {
 		return cli
 	}
 
 	t.Run("", func(t *testing.T) {
-		cli = fakeEC2Client{
+		cli = oldEC2Client{
 			reservations: []*ec2.Reservation{
 				{
 					Instances: []*ec2.Instance{
@@ -236,11 +246,11 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 			},
 		}
 
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
 		resp, err := executor.handleGetEbsVolumeIds(
 			context.Background(),
 			backend.PluginContext{
@@ -297,7 +307,7 @@ func TestQuery_ResourceARNs(t *testing.T) {
 			},
 		}
 
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+		im := datasource.NewInstanceManager(func(ctx context.Context, s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 
@@ -307,7 +317,7 @@ func TestQuery_ResourceARNs(t *testing.T) {
 		tagJson, err := json.Marshal(tagMap)
 		require.NoError(t, err)
 
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
+		executor := newExecutor(im, &fakeSessionCache{}, log.NewNullLogger())
 		resp, err := executor.handleGetResourceArns(
 			context.Background(),
 			backend.PluginContext{

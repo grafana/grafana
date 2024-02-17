@@ -17,8 +17,8 @@ type Template struct {
 // TemplateData contains data for constructing an Error based on a
 // Template.
 type TemplateData struct {
-	Private map[string]interface{}
-	Public  map[string]interface{}
+	Private map[string]any
+	Public  map[string]any
 	Error   error
 }
 

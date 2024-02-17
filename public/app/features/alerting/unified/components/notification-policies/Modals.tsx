@@ -1,8 +1,7 @@
 import { groupBy } from 'lodash';
 import React, { FC, useCallback, useMemo, useState } from 'react';
 
-import { Stack } from '@grafana/experimental';
-import { Button, Icon, Modal, ModalProps, Spinner } from '@grafana/ui';
+import { Button, Icon, Modal, ModalProps, Spinner, Stack } from '@grafana/ui';
 import {
   AlertmanagerGroup,
   AlertState,
@@ -12,6 +11,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../../types/amroutes';
+import { MatcherFormatter } from '../../utils/matchers';
 import { AlertGroup } from '../alert-groups/AlertGroup';
 import { useGetAmRouteReceiverWithGrafanaAppTypes } from '../receivers/grafanaAppReceivers/grafanaApp';
 
@@ -211,6 +211,7 @@ const useAlertGroupsModal = (): [
   const [showModal, setShowModal] = useState(false);
   const [alertGroups, setAlertGroups] = useState<AlertmanagerGroup[]>([]);
   const [matchers, setMatchers] = useState<ObjectMatcher[]>([]);
+  const [formatter, setFormatter] = useState<MatcherFormatter>('default');
 
   const handleDismiss = useCallback(() => {
     setShowModal(false);
@@ -218,13 +219,19 @@ const useAlertGroupsModal = (): [
     setMatchers([]);
   }, []);
 
-  const handleShow = useCallback((alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[]) => {
-    setAlertGroups(alertGroups);
-    if (matchers) {
-      setMatchers(matchers);
-    }
-    setShowModal(true);
-  }, []);
+  const handleShow = useCallback(
+    (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[], formatter?: MatcherFormatter) => {
+      setAlertGroups(alertGroups);
+      if (matchers) {
+        setMatchers(matchers);
+      }
+      if (formatter) {
+        setFormatter(formatter);
+      }
+      setShowModal(true);
+    },
+    []
+  );
 
   const instancesByState = useMemo(() => {
     const instances = alertGroups.flatMap((group) => group.alerts);
@@ -239,11 +246,11 @@ const useAlertGroupsModal = (): [
         closeOnBackdropClick={true}
         closeOnEscape={true}
         title={
-          <Stack direction="row" alignItems="center" gap={1} flexGrow={1}>
+          <Stack direction="row" alignItems="center" gap={1} wrap={'wrap'}>
             <Stack direction="row" alignItems="center" gap={0.5}>
               <Icon name="x" /> Matchers
             </Stack>
-            <Matchers matchers={matchers} />
+            <Matchers matchers={matchers} formatter={formatter} />
           </Stack>
         }
       >
@@ -266,7 +273,7 @@ const useAlertGroupsModal = (): [
         </Modal.ButtonRow>
       </Modal>
     ),
-    [alertGroups, handleDismiss, instancesByState, matchers, showModal]
+    [alertGroups, handleDismiss, instancesByState, matchers, formatter, showModal]
   );
 
   return [modalElement, handleShow, handleDismiss];

@@ -1,14 +1,15 @@
 import React from 'react';
 
-import { PanelPlugin } from '@grafana/data';
-import { config, DataSourcePicker } from '@grafana/runtime';
-import { TagsInput } from '@grafana/ui';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { DataSourceInstanceSettings, PanelPlugin } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Button, Stack, TagsInput } from '@grafana/ui';
+import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
 import {
   ALL_FOLDER,
   GENERAL_FOLDER,
   ReadonlyFolderPicker,
 } from 'app/core/components/Select/ReadonlyFolderPicker/ReadonlyFolderPicker';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { PermissionLevelString } from 'app/types';
 
 import { GRAFANA_DATASOURCE_NAME } from '../../../features/alerting/unified/utils/datasource';
@@ -227,8 +228,8 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
     })
     .addBooleanSwitch({
       path: 'dashboardAlerts',
-      name: 'Alerts from this dashboard',
-      description: 'Show alerts from this dashboard',
+      name: 'Alerts linked to this dashboard',
+      description: 'Only show alerts linked to this dashboard',
       defaultValue: false,
       category: ['Options'],
     })
@@ -249,19 +250,23 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
     .addCustomEditor({
       path: 'datasource',
       name: 'Datasource',
-      description: 'Filter alerts from selected datasource',
+      description: 'Filter from alert source',
       id: 'datasource',
       defaultValue: null,
       editor: function RenderDatasourcePicker(props) {
         return (
-          <DataSourcePicker
-            {...props}
-            type={['prometheus', 'loki', 'grafana']}
-            noDefault
-            current={props.value}
-            onChange={(ds) => props.onChange(ds.name)}
-            onClear={() => props.onChange(null)}
-          />
+          <Stack gap={1}>
+            <DataSourcePicker
+              {...props}
+              type={['prometheus', 'loki', 'grafana']}
+              noDefault
+              current={props.value}
+              onChange={(ds: DataSourceInstanceSettings) => props.onChange(ds.name)}
+            />
+            <Button variant="secondary" onClick={() => props.onChange(null)}>
+              Clear
+            </Button>
+          </Stack>
         );
       },
       category: ['Filter'],
@@ -275,7 +280,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
       defaultValue: null,
       editor: function RenderFolderPicker(props) {
         return (
-          <FolderPicker
+          <OldFolderPicker
             enableReset={true}
             showRoot={false}
             allowEmpty={true}

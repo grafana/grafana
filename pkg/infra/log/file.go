@@ -78,7 +78,7 @@ func NewFileWriter() *FileLogWriter {
 	return w
 }
 
-func (w *FileLogWriter) Log(keyvals ...interface{}) error {
+func (w *FileLogWriter) Log(keyvals ...any) error {
 	return w.logger.Log(keyvals...)
 }
 

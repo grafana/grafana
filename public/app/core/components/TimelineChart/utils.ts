@@ -23,6 +23,8 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
+import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
+import { nullToValue } from '@grafana/data/src/transformations/transformers/nulls/nullToValue';
 import {
   VizLegendOptions,
   AxisPlacement,
@@ -40,8 +42,6 @@ import {
   UPlotConfigPrepFn,
   VizLegendItem,
 } from '@grafana/ui';
-import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
-import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
 import { preparePlotData2, getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 
@@ -63,6 +63,7 @@ interface UPlotConfigOptions {
   getValueColor: (frameIdx: number, fieldIdx: number, value: unknown) => string;
   // Identifies the shared key for uPlot cursor sync
   eventsScope?: string;
+  hoverMulti: boolean;
 }
 
 /**
@@ -105,6 +106,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
   mergeValues,
   getValueColor,
   eventsScope = '__global_',
+  hoverMulti,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -165,6 +167,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
       hoveredDataIdx = null;
       shouldChangeHover = true;
     },
+    hoverMulti,
   };
 
   let shouldChangeHover = false;
@@ -180,9 +183,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     data: frame,
   };
 
+  const hoverEvent = new DataHoverEvent(payload).setTags(['uplot']);
+  const clearEvent = new DataHoverClearEvent().setTags(['uplot']);
+
   builder.addHook('init', coreConfig.init);
   builder.addHook('drawClear', coreConfig.drawClear);
-  builder.addHook('setCursor', coreConfig.setCursor);
 
   // in TooltipPlugin, this gets invoked and the result is bound to a setCursor hook
   // which fires after the above setCursor hook, so can take advantage of hoveringOver
@@ -294,14 +299,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
           }
           payload.rowIndex = dataIdx;
           if (x < 0 && y < 0) {
-            payload.point[xScaleUnit] = null;
-            payload.point[FIXED_UNIT] = null;
-            eventBus.publish(new DataHoverClearEvent());
+            eventBus.publish(clearEvent);
           } else {
             payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
             payload.point.panelRelY = y > 0 ? y / h : 1; // used for old graph panel to position tooltip
             payload.down = undefined;
-            eventBus.publish(new DataHoverEvent(payload));
+            eventBus.publish(hoverEvent);
           }
           return true;
         },
@@ -466,6 +469,7 @@ export function prepareTimelineFields(
           hasTimeseries = true;
           fields.push(field);
           break;
+        case FieldType.enum:
         case FieldType.number:
           if (mergeValues && field.config.color?.mode === FieldColorModeId.Thresholds) {
             const f = mergeThresholdValues(field, theme);
@@ -524,9 +528,10 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
   }
 
   const steps = thresholds.steps;
-  const disp = getValueFormat(thresholds.mode === ThresholdsMode.Percentage ? 'percent' : fieldConfig.unit ?? '');
+  const getDisplay = getValueFormat(thresholds.mode === ThresholdsMode.Percentage ? 'percent' : fieldConfig.unit ?? '');
 
-  const fmt = (v: number) => formattedValueToString(disp(v));
+  // `undefined` value for decimals will use `auto`
+  const format = (value: number) => formattedValueToString(getDisplay(value, fieldConfig.decimals ?? undefined));
 
   for (let i = 0; i < steps.length; i++) {
     let step = steps[i];
@@ -542,7 +547,7 @@ export function getThresholdItems(fieldConfig: FieldConfig, theme: GrafanaTheme2
     }
 
     items.push({
-      label: `${pre}${fmt(value)}${suf}`,
+      label: `${pre}${format(value)}${suf}`,
       color: theme.visualization.getColorByName(step.color),
       yAxis: 1,
     });
@@ -692,19 +697,19 @@ export function fmtDuration(milliSeconds: number): string {
     yr > 0
       ? yr + 'y ' + (mo > 0 ? mo + 'mo ' : '') + (wk > 0 ? wk + 'w ' : '') + (d > 0 ? d + 'd ' : '')
       : mo > 0
-      ? mo + 'mo ' + (wk > 0 ? wk + 'w ' : '') + (d > 0 ? d + 'd ' : '')
-      : wk > 0
-      ? wk + 'w ' + (d > 0 ? d + 'd ' : '')
-      : d > 0
-      ? d + 'd ' + (h > 0 ? h + 'h ' : '')
-      : h > 0
-      ? h + 'h ' + (m > 0 ? m + 'm ' : '')
-      : m > 0
-      ? m + 'm ' + (s > 0 ? s + 's ' : '')
-      : s > 0
-      ? s + 's ' + (ms > 0 ? ms + 'ms ' : '')
-      : ms > 0
-      ? ms + 'ms '
-      : '0'
+        ? mo + 'mo ' + (wk > 0 ? wk + 'w ' : '') + (d > 0 ? d + 'd ' : '')
+        : wk > 0
+          ? wk + 'w ' + (d > 0 ? d + 'd ' : '')
+          : d > 0
+            ? d + 'd ' + (h > 0 ? h + 'h ' : '')
+            : h > 0
+              ? h + 'h ' + (m > 0 ? m + 'm ' : '')
+              : m > 0
+                ? m + 'm ' + (s > 0 ? s + 's ' : '')
+                : s > 0
+                  ? s + 's ' + (ms > 0 ? ms + 'ms ' : '')
+                  : ms > 0
+                    ? ms + 'ms '
+                    : '0'
   ).trim();
 }

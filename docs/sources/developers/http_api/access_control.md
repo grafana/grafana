@@ -21,7 +21,7 @@ title: RBAC HTTP API
 
 # RBAC API
 
-> Role-based access control API is only available in Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "/docs/grafana/latest/introduction/grafana-enterprise" >}}).
+> Role-based access control API is only available in Grafana Cloud or Grafana Enterprise. Read more about [Grafana Enterprise]({{< relref "/docs/grafana/latest/introduction/grafana-enterprise" >}}).
 
 The API can be used to create, update, delete, get, and list roles.
 
@@ -311,14 +311,84 @@ Content-Type: application/json; charset=UTF-8
 }
 ```
 
+#### Create role validation errors
+
+Permission validation only occurs when permission validation is enabled (`rbac.permission_validation_enabled = true`).
+
+> It has been enabled by default since Grafana 10.2.
+
+##### Invalid action
+
+The following example shows a request with an invalid action. The action `serviceaccounts.permissions:reader` is not a valid action. The valid action should be `serviceaccounts.permissions:read`.
+
+```http
+POST /api/access-control/roles HTTP/1.1
+Content-Type: application/json
+{
+	"Name": "Read Service Account with id 6",
+	"Permissions": [
+			{
+			"action": "serviceaccounts.permissions:reader",
+			"scope": "serviceaccounts:uid:6"
+		}
+	]
+}
+```
+
+```http
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+{
+	"extra": {
+		"validationError": "the provided action was not found in the list of valid actions: serviceaccounts.permissions:reader"
+	},
+	"message": "Permission contains an invalid action",
+	"messageId": "accesscontrol.permission-invalid-action",
+	"statusCode": 400,
+	"traceID": ""
+}
+```
+
+##### Invalid scope
+
+The following example shows a request with an invalid scope. The scope `serviceaccounts:serviceaccount6` is not a valid scope for the action `serviceaccounts.permissions:read`. The valid scopes for this action are `*`, `serviceaccounts:*` and `serviceaccounts:id:*`.
+
+```http
+POST /api/access-control/roles HTTP/1.1
+Content-Type: application/json
+{
+	"Name": "Read Service Account with id 6",
+	"Permissions": [
+			{
+			"action": "serviceaccounts.permissions:read",
+			"scope": "serviceaccounts:serviceaccount6"
+		}
+	]
+}
+```
+
+```http
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+{
+	"extra": {
+		"validationError": "unknown scope: serviceaccounts:serviceaccount6 for action: serviceaccounts.permissions:read provided, expected prefixes are [* serviceaccounts:* serviceaccounts:id:*]"
+	},
+	"message": "Invalid scope",
+	"messageId": "accesscontrol.permission-invalid-scope",
+	"statusCode": 400,
+	"traceID": ""
+}
+```
+
 #### Status codes
 
-| Code | Description                                                                        |
-| ---- | ---------------------------------------------------------------------------------- |
-| 200  | Role is updated.                                                                   |
-| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.). |
-| 403  | Access denied                                                                      |
-| 500  | Unexpected error. Refer to body and/or server logs for more details.               |
+| Code | Description                                                                           |
+| ---- | ------------------------------------------------------------------------------------- |
+| 200  | Role is updated.                                                                      |
+| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).    |
+| 403  | Access denied (one of the specified permissions is not assigned to the the requester) |
+| 500  | Unexpected error. Refer to body and/or server logs for more details.                  |
 
 ### Update a role
 
@@ -418,15 +488,23 @@ Content-Type: application/json; charset=UTF-8
 }
 ```
 
+#### Update role validation errors
+
+Permission validation only occurs when permission validation is enabled (`rbac.permission_validation_enabled = true`).
+
+> It has been enabled by default since Grafana 10.2.
+
+For more information, refer to [Create role validation errors]({{< ref "#create-role-validation-errors" >}}).
+
 #### Status codes
 
-| Code | Description                                                                        |
-| ---- | ---------------------------------------------------------------------------------- |
-| 200  | Role is updated.                                                                   |
-| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.). |
-| 403  | Access denied                                                                      |
-| 404  | Role was not found to update.                                                      |
-| 500  | Unexpected error. Refer to body and/or server logs for more details.               |
+| Code | Description                                                                           |
+| ---- | ------------------------------------------------------------------------------------- |
+| 200  | Role is updated.                                                                      |
+| 400  | Bad request (invalid json, missing content-type, missing or invalid fields, etc.).    |
+| 403  | Access denied (one of the specified permissions is not assigned to the the requester) |
+| 404  | Role was not found to update.                                                         |
+| 500  | Unexpected error. Refer to body and/or server logs for more details.                  |
 
 ### Delete a custom role
 
@@ -533,7 +611,7 @@ Content-Type: application/json; charset=UTF-8
 
 ### List your permissions
 
-`GET /api/access-control/users/permissions`
+`GET /api/access-control/user/permissions`
 
 Lists the permissions granted to the signed in user.
 

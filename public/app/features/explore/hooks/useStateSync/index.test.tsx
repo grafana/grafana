@@ -213,6 +213,69 @@ describe('useStateSync', () => {
     expect(queries?.[0].datasource?.uid).toBe('loki-uid');
   });
 
+  it('inits with mixed datasource if there are multiple datasources in queries and no root level datasource is defined', async () => {
+    const { location, waitForNextUpdate, store } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: {
+            queries: [
+              { datasource: { name: 'loki', uid: 'loki-uid' } },
+              { datasource: { name: 'elastic', uid: 'elastic-uid' } },
+            ],
+          },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    const initialHistoryLength = location.getHistory().length;
+
+    await waitForNextUpdate();
+
+    expect(location.getHistory().length).toBe(initialHistoryLength);
+
+    const search = location.getSearchObject();
+    expect(search.panes).toBeDefined();
+
+    const paneState = store.getState().explore.panes['one'];
+    expect(paneState?.datasourceInstance?.name).toBe(MIXED_DATASOURCE_NAME);
+
+    expect(paneState?.queries).toHaveLength(2);
+    expect(paneState?.queries?.[0].datasource?.uid).toBe('loki-uid');
+    expect(paneState?.queries?.[1].datasource?.uid).toBe('elastic-uid');
+  });
+
+  it("inits with a query's datasource if there are multiple datasources in queries, no root level datasource, and only one query has a valid datsource", async () => {
+    const { location, waitForNextUpdate, store } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: {
+            queries: [
+              { datasource: { name: 'loki', uid: 'loki-uid' } },
+              { datasource: { name: 'UNKNOWN', uid: 'UNKNOWN-UID' } },
+            ],
+          },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    const initialHistoryLength = location.getHistory().length;
+
+    await waitForNextUpdate();
+
+    expect(location.getHistory().length).toBe(initialHistoryLength);
+
+    const search = location.getSearchObject();
+    expect(search.panes).toBeDefined();
+
+    const paneState = store.getState().explore.panes['one'];
+    expect(paneState?.datasourceInstance?.getRef().uid).toBe('loki-uid');
+
+    expect(paneState?.queries).toHaveLength(1);
+    expect(paneState?.queries?.[0].datasource?.uid).toBe('loki-uid');
+  });
+
   it('inits with the last used datasource from localStorage', async () => {
     setLastUsedDatasourceUID(1, 'elastic-uid');
     const { waitForNextUpdate, store } = setup({
@@ -394,6 +457,40 @@ describe('useStateSync', () => {
     await waitForNextUpdate();
 
     expect(store.getState().explore.panes['one']?.range.raw).toMatchObject({ from: 'now-6h', to: 'now' });
+  });
+
+  it('Changes time range when the range in the URL is updated to absolute range', async () => {
+    const { waitForNextUpdate, rerender, store } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: { datasource: 'loki-uid', queries: [{ expr: 'a' }], range: { from: 'now-1h', to: 'now' } },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitForNextUpdate();
+
+    expect(store.getState().explore.panes['one']?.range.raw).toMatchObject({ from: 'now-1h', to: 'now' });
+
+    rerender({
+      children: null,
+      params: {
+        panes: JSON.stringify({
+          one: {
+            datasource: 'loki-uid',
+            queries: [{ expr: 'a' }],
+            range: { from: '1500000000000', to: '1500000001000' },
+          },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitForNextUpdate();
+
+    expect(store.getState().explore.panes['one']?.range.raw.from.valueOf().toString()).toEqual('1500000000000');
+    expect(store.getState().explore.panes['one']?.range.raw.to.valueOf().toString()).toEqual('1500000001000');
   });
 
   it('uses the first query datasource if no root datasource is specified in the URL', async () => {

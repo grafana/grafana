@@ -11,7 +11,6 @@ import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { DashboardModel } from 'app/features/dashboard/state';
 
 import { getTimeSrv } from '../../features/dashboard/services/TimeSrv';
-import { getDatasourceSrv } from '../../features/plugins/datasource_srv';
 import {
   RemovePanelEvent,
   ShiftTimeEvent,
@@ -19,6 +18,8 @@ import {
   ShowModalReactEvent,
   ZoomOutEvent,
   AbsoluteTimeEvent,
+  CopyTimeEvent,
+  PasteTimeEvent,
 } from '../../types/events';
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
 import { HelpModal } from '../components/help/HelpModal';
@@ -39,13 +40,12 @@ export class KeybindingSrv {
 
     // Chromeless pages like login and signup page don't get any global bindings
     if (!route.chromeless) {
-      this.bind(['?', 'h'], this.showHelpModal);
+      this.bind(['?', 'mod+h'], this.showHelpModal);
       this.bind('g h', this.goToHome);
       this.bind('g d', this.goToDashboards);
       this.bind('g e', this.goToExplore);
       this.bind('g a', this.openAlerting);
       this.bind('g p', this.goToProfile);
-      this.bind('t a', this.makeAbsoluteTime);
       this.bind('esc', this.exit);
       this.bindGlobalEsc();
     }
@@ -106,10 +106,6 @@ export class KeybindingSrv {
 
   private goToExplore() {
     this.locationService.push('/explore');
-  }
-
-  private makeAbsoluteTime() {
-    appEvents.publish(new AbsoluteTimeEvent());
   }
 
   private showHelpModal() {
@@ -190,6 +186,10 @@ export class KeybindingSrv {
   }
 
   setupTimeRangeBindings(updateUrl = true) {
+    this.bind('t a', () => {
+      appEvents.publish(new AbsoluteTimeEvent({ updateUrl }));
+    });
+
     this.bind('t z', () => {
       appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
     });
@@ -204,6 +204,14 @@ export class KeybindingSrv {
 
     this.bind('t right', () => {
       appEvents.publish(new ShiftTimeEvent({ direction: ShiftTimeEventDirection.Right, updateUrl }));
+    });
+
+    this.bind('t c', () => {
+      appEvents.publish(new CopyTimeEvent());
+    });
+
+    this.bind('t v', () => {
+      appEvents.publish(new PasteTimeEvent({ updateUrl }));
     });
   }
 
@@ -259,12 +267,13 @@ export class KeybindingSrv {
 
     // jump to explore if permissions allow
     if (contextSrv.hasAccessToExplore()) {
-      this.bindWithPanelId('x', async (panelId) => {
+      this.bindWithPanelId('p x', async (panelId) => {
         const panel = dashboard.getPanelById(panelId)!;
         const url = await getExploreUrl({
-          panel,
-          datasourceSrv: getDatasourceSrv(),
-          timeSrv: getTimeSrv(),
+          queries: panel.targets,
+          dsRef: panel.datasource,
+          scopedVars: panel.scopedVars,
+          timeRange: getTimeSrv().timeRange(),
         });
 
         if (url) {
@@ -311,6 +320,11 @@ export class KeybindingSrv {
     // toggle all panel legends
     this.bind('d l', () => {
       dashboard.toggleLegendsForAll();
+    });
+
+    // toggle all exemplars
+    this.bind('d x', () => {
+      dashboard.toggleExemplarsForAll();
     });
 
     // collapse all rows

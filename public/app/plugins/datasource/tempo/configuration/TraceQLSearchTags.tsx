@@ -77,6 +77,8 @@ export function TraceQLSearchTags({ options, onOptionsChange, datasource }: Prop
   // filter out tags that already exist in TraceQLSearch editor
   const staticTags = ['duration'];
 
+  const missingTag = options.jsonData.search?.filters?.find((f) => !f.tag);
+
   return (
     <>
       {datasource ? (
@@ -89,6 +91,7 @@ export function TraceQLSearchTags({ options, onOptionsChange, datasource }: Prop
           staticTags={staticTags}
           isTagsLoading={loading}
           hideValues={true}
+          query={'{}'}
         />
       ) : (
         <div>Invalid data source, please create a valid data source and try again</div>
@@ -97,6 +100,9 @@ export function TraceQLSearchTags({ options, onOptionsChange, datasource }: Prop
         <Alert title={'Unable to fetch TraceQL tags'} severity={'error'} topSpacing={1}>
           {error.message}
         </Alert>
+      )}
+      {missingTag && (
+        <Alert title={'Please ensure each filter has a selected tag'} severity={'warning'} topSpacing={1}></Alert>
       )}
     </>
   );

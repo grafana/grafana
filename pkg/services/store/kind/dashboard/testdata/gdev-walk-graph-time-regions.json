@@ -6,11 +6,11 @@
     "panel-tests": ""
   },
   "fields": {
-    "schemaVersion": 18
+    "schemaVersion": "18"
   },
   "nested": [
     {
-      "uid": "graph-time-regions.json#2",
+      "UID": "graph-time-regions.json#2",
       "kind": "panel",
       "name": "Business Hours",
       "fields": {
@@ -19,17 +19,17 @@
       "references": [
         {
           "family": "ds",
-          "ID": "gdev-testdata"
+          "identifier": "gdev-testdata"
         },
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph-time-regions.json#4",
+      "UID": "graph-time-regions.json#4",
       "kind": "panel",
       "name": "Sunday's 20-23",
       "fields": {
@@ -38,17 +38,17 @@
       "references": [
         {
           "family": "ds",
-          "ID": "gdev-testdata"
+          "identifier": "gdev-testdata"
         },
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph-time-regions.json#3",
+      "UID": "graph-time-regions.json#3",
       "kind": "panel",
       "name": "Each day of week",
       "fields": {
@@ -57,17 +57,17 @@
       "references": [
         {
           "family": "ds",
-          "ID": "gdev-testdata"
+          "identifier": "gdev-testdata"
         },
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph-time-regions.json#5",
+      "UID": "graph-time-regions.json#5",
       "kind": "panel",
       "name": "05:00",
       "fields": {
@@ -76,17 +76,17 @@
       "references": [
         {
           "family": "ds",
-          "ID": "gdev-testdata"
+          "identifier": "gdev-testdata"
         },
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     },
     {
-      "uid": "graph-time-regions.json#7",
+      "UID": "graph-time-regions.json#7",
       "kind": "panel",
       "name": "From 22:00 to 00:30 (crossing midnight)",
       "fields": {
@@ -95,12 +95,12 @@
       "references": [
         {
           "family": "ds",
-          "ID": "gdev-testdata"
+          "identifier": "gdev-testdata"
         },
         {
           "family": "plugin",
           "type": "panel",
-          "ID": "graph"
+          "identifier": "graph"
         }
       ]
     }
@@ -108,12 +108,12 @@
   "references": [
     {
       "family": "ds",
-      "ID": "gdev-testdata"
+      "identifier": "gdev-testdata"
     },
     {
       "family": "plugin",
       "type": "panel",
-      "ID": "graph"
+      "identifier": "graph"
     }
   ]
 }

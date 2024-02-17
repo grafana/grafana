@@ -3,7 +3,6 @@ import { find, startsWith } from 'lodash';
 
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { getAuthType, getAzureCloud, getAzurePortalUrl } from '../credentials';
 import TimegrainConverter from '../time_grain_converter';
@@ -49,14 +48,13 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   azurePortalUrl: string;
   declare resourceGroup: string;
   declare resourceName: string;
-  timeSrv: TimeSrv;
-  templateSrv: TemplateSrv;
 
-  constructor(private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
+  constructor(
+    private instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+  ) {
     super(instanceSettings);
 
-    this.timeSrv = getTimeSrv();
-    this.templateSrv = getTemplateSrv();
     this.defaultSubscriptionId = instanceSettings.jsonData.subscriptionId;
 
     const cloud = getAzureCloud(instanceSettings);
@@ -92,14 +90,12 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       throw new Error('Query is not a valid Azure Monitor Metrics query');
     }
 
-    const templateSrv = getTemplateSrv();
-
     // These properties need to be replaced pre-migration to ensure values are correctly interpolated
     if (preMigrationQuery.resourceUri) {
-      preMigrationQuery.resourceUri = templateSrv.replace(preMigrationQuery.resourceUri, scopedVars);
+      preMigrationQuery.resourceUri = this.templateSrv.replace(preMigrationQuery.resourceUri, scopedVars);
     }
     if (preMigrationQuery.metricDefinition) {
-      preMigrationQuery.metricDefinition = templateSrv.replace(preMigrationQuery.metricDefinition, scopedVars);
+      preMigrationQuery.metricDefinition = this.templateSrv.replace(preMigrationQuery.metricDefinition, scopedVars);
     }
 
     // fix for timeGrainUnit which is a deprecated/removed field name
@@ -117,20 +113,23 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       throw new Error('Query is not a valid Azure Monitor Metrics query');
     }
 
-    const subscriptionId = templateSrv.replace(migratedTarget.subscription || this.defaultSubscriptionId, scopedVars);
+    const subscriptionId = this.templateSrv.replace(
+      migratedTarget.subscription || this.defaultSubscriptionId,
+      scopedVars
+    );
     const resources = migratedQuery.resources?.map((r) => this.replaceTemplateVariables(r, scopedVars)).flat();
-    const metricNamespace = templateSrv.replace(migratedQuery.metricNamespace, scopedVars);
-    const customNamespace = templateSrv.replace(migratedQuery.customNamespace, scopedVars);
-    const timeGrain = templateSrv.replace((migratedQuery.timeGrain || '').toString(), scopedVars);
-    const aggregation = templateSrv.replace(migratedQuery.aggregation, scopedVars);
-    const top = templateSrv.replace(migratedQuery.top || '', scopedVars);
+    const metricNamespace = this.templateSrv.replace(migratedQuery.metricNamespace, scopedVars);
+    const customNamespace = this.templateSrv.replace(migratedQuery.customNamespace, scopedVars);
+    const timeGrain = this.templateSrv.replace((migratedQuery.timeGrain || '').toString(), scopedVars);
+    const aggregation = this.templateSrv.replace(migratedQuery.aggregation, scopedVars);
+    const top = this.templateSrv.replace(migratedQuery.top || '', scopedVars);
 
     const dimensionFilters = (migratedQuery.dimensionFilters ?? [])
       .filter((f) => f.dimension && f.dimension !== 'None')
       .map((f) => {
-        const filters = f.filters?.map((filter) => templateSrv.replace(filter ?? '', scopedVars));
+        const filters = f.filters?.map((filter) => this.templateSrv.replace(filter ?? '', scopedVars));
         return {
-          dimension: templateSrv.replace(f.dimension, scopedVars),
+          dimension: this.templateSrv.replace(f.dimension, scopedVars),
           operator: f.operator || 'eq',
           filters: filters || [],
         };
@@ -143,8 +142,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       customNamespace,
       timeGrain,
       allowedTimeGrainsMs: migratedQuery.allowedTimeGrainsMs,
-      metricName: templateSrv.replace(migratedQuery.metricName, scopedVars),
-      region: templateSrv.replace(migratedQuery.region, scopedVars),
+      metricName: this.templateSrv.replace(migratedQuery.metricName, scopedVars),
+      region: this.templateSrv.replace(migratedQuery.region, scopedVars),
       aggregation: aggregation,
       dimensionFilters,
       top: top || '10',

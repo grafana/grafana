@@ -6,6 +6,7 @@ import { ConstantVector } from './ConstantVector';
 
 describe('ScaledVector', () => {
   it('should support multiply operations', () => {
+    jest.spyOn(console, 'warn').mockImplementation();
     const source = new ArrayVector([1, 2, 3, 4]);
     const scale = 2.456;
     const operation = binaryOperators.get(BinaryOperationID.Multiply).operation;

@@ -2,7 +2,7 @@ import { DataSourcePlugin, DashboardLoadedEvent } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 
 import CheatSheet from './CheatSheet';
-import { TempoQueryField } from './QueryEditor/QueryField';
+import { TempoQueryField } from './QueryField';
 import { ConfigEditor } from './configuration/ConfigEditor';
 import { TempoDatasource } from './datasource';
 import { onDashboardLoadedHandler } from './tracking';

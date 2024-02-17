@@ -2,6 +2,11 @@
 keywords:
   - grafana
   - schema
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: AccessPolicy kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
@@ -74,7 +79,7 @@ extraFields is reserved for any fields that are pulled from the API server metad
 
 | Property | Type   | Required | Default | Description                                                                                                                             |
 |----------|--------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| `kind`   | string | **Yes**  |         | The kind this rule applies to (dashboars, alert, etc)                                                                                   |
+| `kind`   | string | **Yes**  |         | The kind this rule applies to (dashboards, alert, etc)                                                                                  |
 | `verb`   | string | **Yes**  |         | READ, WRITE, CREATE, DELETE, ...<br/>should move to k8s style verbs like: "get", "list", "watch", "create", "update", "patch", "delete" |
 | `target` | string | No       |         | Specific sub-elements like "alert.rules" or "dashboard.permissions"????                                                                 |
 

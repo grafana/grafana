@@ -2,6 +2,11 @@
 keywords:
   - grafana
   - schema
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: StateTimelinePanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
@@ -104,9 +109,11 @@ TODO docs
 
 TODO docs
 
-| Property | Type   | Required | Default | Description                                                   |
-|----------|--------|----------|---------|---------------------------------------------------------------|
-| `mode`   | string | **Yes**  |         | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
-| `sort`   | string | **Yes**  |         | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
+| Property    | Type   | Required | Default | Description                                                   |
+|-------------|--------|----------|---------|---------------------------------------------------------------|
+| `mode`      | string | **Yes**  |         | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
+| `sort`      | string | **Yes**  |         | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
+| `maxHeight` | number | No       |         |                                                               |
+| `maxWidth`  | number | No       |         |                                                               |
 
 

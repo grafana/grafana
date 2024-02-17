@@ -205,8 +205,7 @@ Content-Length: 1300
       }
     ],
     "schemaVersion": 14,
-    "style": "dark",
-    "tags": [
+      "tags": [
 
     ],
     "templating": {
@@ -317,8 +316,7 @@ Content-Length: 1300
       }
     ],
     "schemaVersion": 14,
-    "style": "dark",
-    "tags": [
+      "tags": [
 
     ],
     "templating": {

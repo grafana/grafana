@@ -1,14 +1,13 @@
 import React from 'react';
 
 import { DataQueryError } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { Alert, JSONFormatter } from '@grafana/ui';
 
 interface InspectErrorTabProps {
   errors?: DataQueryError[];
 }
 
-const parseErrorMessage = (message: string): { msg: string; json?: any } => {
+const parseErrorMessage = (message: string) => {
   try {
     const [msg, json] = message.split(/(\{.+)/);
     const jsonError = JSON.parse(json);
@@ -37,7 +36,7 @@ function renderError(error: DataQueryError) {
         <>
           {error.status && <>Status: {error.status}. Message: </>}
           {msg}
-          {config.featureToggles.showTraceId && error.traceId != null && (
+          {error.traceId != null && (
             <>
               <br />
               (Trace ID: {error.traceId})
@@ -68,7 +67,7 @@ export const InspectErrorTab = ({ errors }: InspectErrorTabProps) => {
   return (
     <>
       {errors.map((error, index) => (
-        <Alert title={error.refId || `Query ${index + 1}`} severity="error" key={index}>
+        <Alert title={error.refId || `Error ${index + 1}`} severity="error" key={index}>
           {renderError(error)}
         </Alert>
       ))}

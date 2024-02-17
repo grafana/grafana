@@ -10,26 +10,19 @@ import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardF
 
 import { SaveDashboardDrawer } from './SaveDashboardDrawer';
 
+const saveDashboardMutationMock = jest.fn();
+
 jest.mock('app/core/core', () => ({
   ...jest.requireActual('app/core/core'),
   contextSrv: {},
 }));
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => ({
-    post: mockPost,
-  }),
-}));
-
-jest.mock('app/core/services/backend_srv', () => ({
-  backendSrv: {
-    getDashboardByUid: jest.fn().mockResolvedValue({ dashboard: {} }),
-  },
+jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
+  ...jest.requireActual('app/features/browse-dashboards/api/browseDashboardsAPI'),
+  useSaveDashboardMutation: () => [saveDashboardMutationMock],
 }));
 
 const store = configureStore();
-const mockPost = jest.fn();
 const buildMocks = () => ({
   dashboard: createDashboardModelFixture({
     uid: 'mockDashboardUid',
@@ -59,13 +52,15 @@ const setup = (options: CompProps) => waitFor(() => render(<CompWithProvider {..
 
 describe('SaveDashboardDrawer', () => {
   beforeEach(() => {
-    mockPost.mockClear();
+    saveDashboardMutationMock.mockClear();
     jest.spyOn(console, 'error').mockImplementation();
   });
 
   it("renders a modal if there's an unhandled error", async () => {
     const { onDismiss, dashboard, error } = buildMocks();
-    mockPost.mockRejectedValueOnce(error);
+    saveDashboardMutationMock.mockResolvedValue({
+      error,
+    });
 
     await setup({ dashboard, onDismiss });
 
@@ -76,17 +71,22 @@ describe('SaveDashboardDrawer', () => {
     expect(screen.getByRole('button', { name: /overwrite/i })).toBeInTheDocument();
   });
 
-  it('should render corresponding save modal once the errror is handled', async () => {
+  it('should render corresponding save modal once the error is handled', async () => {
     const { onDismiss, dashboard, error } = buildMocks();
-    mockPost.mockRejectedValueOnce(error);
+    saveDashboardMutationMock.mockResolvedValue({
+      error,
+    });
 
     const { rerender } = await setup({ dashboard, onDismiss });
 
     await userEvent.click(screen.getByRole('button', { name: /save/i }));
     rerender(<CompWithProvider dashboard={dashboard} onDismiss={onDismiss} />);
 
-    mockPost.mockClear();
-    mockPost.mockRejectedValueOnce({ ...error, isHandled: true });
+    saveDashboardMutationMock.mockClear();
+    saveDashboardMutationMock.mockResolvedValue({
+      error,
+      isHandled: true,
+    });
 
     await userEvent.click(screen.getByRole('button', { name: /save/i }));
 

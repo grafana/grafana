@@ -22,7 +22,7 @@ func DimensionValuesHandler(ctx context.Context, pluginCtx backend.PluginContext
 		return nil, models.NewHttpError("error in DimensionValuesHandler", http.StatusInternalServerError, err)
 	}
 
-	response, err := service.GetDimensionValuesByDimensionFilter(dimensionValuesRequest)
+	response, err := service.GetDimensionValuesByDimensionFilter(ctx, dimensionValuesRequest)
 	if err != nil {
 		return nil, models.NewHttpError("error in DimensionValuesHandler", http.StatusInternalServerError, err)
 	}

@@ -1,4 +1,11 @@
 import { DataSourceInstanceSettings, DataSourceJsonData, DataSourceRef } from '@grafana/data';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import {
+  initLastUsedDatasourceKeyForDashboard,
+  setLastUsedDatasourceKeyForDashboard,
+} from 'app/features/dashboard/utils/dashboard';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { QueryGroupDataSource } from 'app/types';
 
 export function isDataSourceMatch(
   ds: DataSourceInstanceSettings | undefined,
@@ -44,6 +51,9 @@ export function getDataSourceCompareFn(
   dataSourceVariablesIDs: string[]
 ) {
   const cmpDataSources = (a: DataSourceInstanceSettings, b: DataSourceInstanceSettings) => {
+    const nameA = a.name.toUpperCase();
+    const nameB = b.name.toUpperCase();
+
     // Sort the current ds before everything else.
     if (current && isDataSourceMatch(a, current)) {
       return -1;
@@ -68,8 +78,6 @@ export function getDataSourceCompareFn(
       return -1;
     } else if (bIsVariable && !aIsVariable) {
       return 1;
-    } else if (bIsVariable && aIsVariable) {
-      return a.name < b.name ? -1 : 1;
     }
 
     // Sort built in DataSources to the bottom and alphabetically by name.
@@ -77,12 +85,10 @@ export function getDataSourceCompareFn(
       return 1;
     } else if (b.meta.builtIn && !a.meta.builtIn) {
       return -1;
-    } else if (a.meta.builtIn && b.meta.builtIn) {
-      return a.name < b.name ? -1 : 1;
     }
 
     // Sort the rest alphabetically by name.
-    return a.name < b.name ? -1 : 1;
+    return nameA < nameB ? -1 : 1;
   };
 
   return cmpDataSources;
@@ -97,4 +103,18 @@ export function getDataSourceCompareFn(
  */
 export function matchDataSourceWithSearch(ds: DataSourceInstanceSettings, searchTerm = '') {
   return ds.name.toLowerCase().includes(searchTerm.toLowerCase());
+}
+
+export function storeLastUsedDataSourceInLocalStorage(datasource: QueryGroupDataSource) {
+  if (!datasource.uid) {
+    return;
+  }
+
+  const dashboardUid = getDashboardSrv().getCurrent()?.uid ?? '';
+  // if datasource is MIXED reset datasource uid in storage, because Mixed datasource can contain multiple ds
+  if (datasource.uid === MIXED_DATASOURCE_NAME) {
+    return initLastUsedDatasourceKeyForDashboard(dashboardUid!);
+  }
+
+  setLastUsedDatasourceKeyForDashboard(dashboardUid, datasource.uid);
 }

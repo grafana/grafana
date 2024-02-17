@@ -1,64 +1,113 @@
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useLayoutEffect } from 'react';
 
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
-import { PlotSelection } from '../types';
-import { pluginLog } from '../utils';
 
 interface ZoomPluginProps {
   onZoom: (range: { from: number; to: number }) => void;
+  withZoomY?: boolean;
   config: UPlotConfigBuilder;
 }
 
 // min px width that triggers zoom
 const MIN_ZOOM_DIST = 5;
 
+const maybeZoomAction = (e?: MouseEvent | null) => e != null && !e.ctrlKey && !e.metaKey;
+
 /**
  * @alpha
  */
-export const ZoomPlugin = ({ onZoom, config }: ZoomPluginProps) => {
-  const [selection, setSelection] = useState<PlotSelection | null>(null);
-
-  useEffect(() => {
-    if (selection) {
-      pluginLog('ZoomPlugin', false, 'selected', selection);
-      if (selection.bbox.width < MIN_ZOOM_DIST) {
-        return;
-      }
-      onZoom({ from: selection.min, to: selection.max });
-    }
-  }, [selection]);
-
+export const ZoomPlugin = ({ onZoom, config, withZoomY = false }: ZoomPluginProps) => {
   useLayoutEffect(() => {
-    config.addHook('setSelect', (u) => {
-      const min = u.posToVal(u.select.left, 'x');
-      const max = u.posToVal(u.select.left + u.select.width, 'x');
+    let yZoomed = false;
+    let yDrag = false;
 
-      setSelection({
-        min,
-        max,
-        bbox: {
-          left: u.bbox.left / window.devicePixelRatio + u.select.left,
-          top: u.bbox.top / window.devicePixelRatio,
-          height: u.bbox.height / window.devicePixelRatio,
-          width: u.select.width,
-        },
+    if (withZoomY) {
+      config.addHook('init', (u) => {
+        u.over!.addEventListener(
+          'mousedown',
+          (e) => {
+            if (!maybeZoomAction(e)) {
+              return;
+            }
+
+            if (e.button === 0 && e.shiftKey) {
+              yDrag = true;
+
+              u.cursor!.drag!.x = false;
+              u.cursor!.drag!.y = true;
+
+              let onUp = (e: MouseEvent) => {
+                u.cursor!.drag!.x = true;
+                u.cursor!.drag!.y = false;
+                document.removeEventListener('mouseup', onUp, true);
+              };
+
+              document.addEventListener('mouseup', onUp, true);
+            }
+          },
+          true
+        );
       });
+    }
+
+    config.addHook('setSelect', (u) => {
+      if (maybeZoomAction(u.cursor!.event)) {
+        if (withZoomY && yDrag) {
+          if (u.select.height >= MIN_ZOOM_DIST) {
+            for (let key in u.scales!) {
+              if (key !== 'x') {
+                const maxY = u.posToVal(u.select.top, key);
+                const minY = u.posToVal(u.select.top + u.select.height, key);
+
+                u.setScale(key, { min: minY, max: maxY });
+              }
+            }
+
+            yZoomed = true;
+          }
+
+          yDrag = false;
+        } else {
+          if (u.select.width >= MIN_ZOOM_DIST) {
+            const minX = u.posToVal(u.select.left, 'x');
+            const maxX = u.posToVal(u.select.left + u.select.width, 'x');
+
+            onZoom({ from: minX, to: maxX });
+
+            yZoomed = false;
+          }
+        }
+      }
 
       // manually hide selected region (since cursor.drag.setScale = false)
-      /* @ts-ignore */
-      u.setSelect({ left: 0, width: 0 }, false);
+      u.setSelect({ left: 0, width: 0, top: 0, height: 0 }, false);
     });
 
     config.setCursor({
       bind: {
         dblclick: (u) => () => {
-          let xScale = u.scales.x;
+          if (!maybeZoomAction(u.cursor!.event)) {
+            return null;
+          }
 
-          const frTs = xScale.min!;
-          const toTs = xScale.max!;
-          const pad = (toTs - frTs) / 2;
+          if (withZoomY && yZoomed) {
+            for (let key in u.scales!) {
+              if (key !== 'x') {
+                // @ts-ignore (this is not typed correctly in uPlot, assigning nulls means auto-scale / reset)
+                u.setScale(key, { min: null, max: null });
+              }
+            }
 
-          onZoom({ from: frTs - pad, to: toTs + pad });
+            yZoomed = false;
+          } else {
+            let xScale = u.scales.x;
+
+            const frTs = xScale.min!;
+            const toTs = xScale.max!;
+            const pad = (toTs - frTs) / 2;
+
+            onZoom({ from: frTs - pad, to: toTs + pad });
+          }
 
           return null;
         },

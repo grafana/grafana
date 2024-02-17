@@ -2,7 +2,15 @@ import { config } from '@grafana/runtime';
 import { TextDimensionMode } from '@grafana/schema';
 
 import { getMarkerMaker } from './markers';
-import { defaultStyleConfig, StyleConfig, StyleConfigFields, StyleConfigState } from './types';
+import {
+  HorizontalAlign,
+  VerticalAlign,
+  defaultStyleConfig,
+  StyleConfig,
+  StyleConfigFields,
+  StyleConfigState,
+  SymbolAlign,
+} from './types';
 
 /** Indicate if the style wants to show text values */
 export function styleUsesText(config: StyleConfig): boolean {
@@ -37,6 +45,7 @@ export async function getStyleConfigState(cfg?: StyleConfig): Promise<StyleConfi
       lineWidth: cfg.lineWidth ?? 1,
       size: cfg.size?.fixed ?? defaultStyleConfig.size.fixed,
       rotation: cfg.rotation?.fixed ?? defaultStyleConfig.rotation.fixed, // add ability follow path later
+      symbolAlign: cfg.symbolAlign ?? defaultStyleConfig.symbolAlign,
     },
     maker,
   };
@@ -65,4 +74,20 @@ export async function getStyleConfigState(cfg?: StyleConfig): Promise<StyleConfi
     state.fields = undefined;
   }
   return state;
+}
+
+/** Return a displacment array depending on alignment and icon radius */
+export function getDisplacement(symbolAlign: SymbolAlign, radius: number) {
+  const displacement = [0, 0];
+  if (symbolAlign?.horizontal === HorizontalAlign.Left) {
+    displacement[0] = -radius;
+  } else if (symbolAlign?.horizontal === HorizontalAlign.Right) {
+    displacement[0] = radius;
+  }
+  if (symbolAlign?.vertical === VerticalAlign.Top) {
+    displacement[1] = radius;
+  } else if (symbolAlign?.vertical === VerticalAlign.Bottom) {
+    displacement[1] = -radius;
+  }
+  return displacement;
 }

@@ -1,5 +1,8 @@
 /** @beta */
 export interface ThemeShape {
+  /**
+   * @deprecated Use `theme.shape.radius.default`, `theme.shape.radius.pill` or `theme.shape.radius.circle` instead
+   */
   borderRadius: (amount?: number) => string;
   radius: Radii;
 }

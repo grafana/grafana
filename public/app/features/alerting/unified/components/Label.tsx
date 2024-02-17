@@ -3,8 +3,7 @@ import React, { ReactNode } from 'react';
 import tinycolor2 from 'tinycolor2';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2, Stack } from '@grafana/ui';
 
 export type LabelSize = 'md' | 'sm';
 
@@ -18,11 +17,12 @@ interface Props {
 
 // TODO allow customization with color prop
 const Label = ({ label, value, icon, color, size = 'md' }: Props) => {
-  const styles = useStyles2((theme) => getStyles(theme, color, size));
+  const styles = useStyles2(getStyles, color, size);
+  const ariaLabel = `${label}: ${value}`;
 
   return (
-    <div className={styles.wrapper} role="listitem">
-      <Stack direction="row" gap={0} alignItems="stretch" wrap={false}>
+    <div className={styles.wrapper} role="listitem" aria-label={ariaLabel}>
+      <Stack direction="row" gap={0} alignItems="stretch">
         <div className={styles.label}>
           <Stack direction="row" gap={0.5} alignItems="center">
             {icon && <Icon name={icon} />} {label ?? ''}

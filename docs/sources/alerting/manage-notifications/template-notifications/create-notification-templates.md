@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/create-notification-templates/
-description: How to create notification templates
+description: Create notification templates to sent to your contact points
 keywords:
   - grafana
   - alerting
@@ -26,29 +26,28 @@ You can add one or more templates to your notification template.
 
 Your notification template name must be unique. You cannot have two templates with the same name in the same notification template or in different notification templates. Avoid defining templates with the same name as default templates, such as: `__subject`, `__text_values_list`, `__text_alert_list`, `default.title` and `default.message`.
 
-In the Contact points tab, you can see a list of your notification templates.
+To create a notification template, complete the following steps.
 
-To create a template, complete the following steps.
+1. Click **Alerts & IRM** -> **Contact points**.
+1. Click the **Notification Templates** tab and then **+ Add notification template**.
 
-1. Click **Add template**.
+1. Enter a name for the notification template.
 
-2. Choose a name for the notification template.
+1. Write the content of the template in the content field.
 
-3. Write the content of the template in the content field.
-
-4. Click **Save**.
+1. Save your changes.
 
 `{{ define "email.subject" }}` and `{{ end }}` is automatically added to the start and end of the content:
 
 To create a notification template that contains more than one template:
 
-1. Click **Add Template**.
+1. Click **+ Add notification template**.
 
 2. Enter a name for the notification template.
 
 3. Write each template in the Content field, including `{{ define "name-of-template" }}` and `{{ end }}` at the start and end of each template.
 
-4. Click **Save**.
+4. Save your changes.
 
 ## Preview notification templates
 
@@ -58,33 +57,33 @@ Preview how your notification templates will look before using them in your cont
 
 To preview your notification templates:
 
-1. Navigate to **Alerts&IRM** -> **Alerting** -> **Contact points**.
-1. Click **+Add template** or edit an existing template.
+1. Navigate to **Alerts&IRM** -> **Alerting** -> **Contact points** -> **Notification Templates**.
+1. Click **+ Add notification template** or edit an existing template.
 1. Add or update your template content.
 
-   Default data is provided and you can add or edit alert data to it as well as alert instances. You can add alert data directly in the Payload data window itself or click **Choose alert instances** or **Add alert data**.
+   Default data is provided and you can add or edit alert data to it as well as alert instances. You can add alert data directly in the Payload data window itself or click **Select alert instances** or **Add custom alerts**.
 
 1. [Optional] To add alert data from existing alert instances:
 
-   a. Click **Choose alert instances**.
+   a. Click **Select alert instances**.
 
    b. Hover over the alert instances to view more information on each alert instance.
 
    c. Click **Confirm** to add the alert instance(s) to the payload.
 
-1. [Optional] To add alert data using the Alert data editor, click **Add alert data:**
+1. [Optional] To add alert data using the Alert data editor, click **Add custom data:**
 
    a. Add annotations, custom labels and/or set a dashboard or a panel.
 
    b. Toggle Firing/resolved depending on whether you want to add firing or resolved alerts to your notification.
 
-   c. Click **Add alert data to payload**.
+   c. Click **Add alert data**.
 
    d. Click **Refresh preview** to see what your template content will look like and the corresponding payload data.
 
    If there are any errors in your template, they are displayed in the Preview and you can correct them before saving.
 
-1. Click **Save.**
+1. Save your changes.
 
 ## Template the subject of an email
 

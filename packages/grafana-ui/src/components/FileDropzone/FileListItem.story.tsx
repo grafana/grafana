@@ -1,15 +1,12 @@
 import { Meta, Story } from '@storybook/react';
 import React from 'react';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 import { FileListItem as FileListItemComponent, FileListItemProps } from './FileListItem';
 import mdx from './FileListItem.mdx';
 
 const meta: Meta = {
   title: 'Forms/FileListItem',
   component: FileListItemComponent,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

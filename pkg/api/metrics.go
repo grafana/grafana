@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -9,10 +10,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -23,9 +28,6 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 	if errors.Is(err, datasources.ErrDataSourceNotFound) {
 		return response.Error(http.StatusNotFound, "Data source not found", err)
 	}
-	if errors.Is(err, plugincontext.ErrPluginNotFound) {
-		return response.Error(http.StatusNotFound, "Plugin not found", err)
-	}
 
 	var secretsPlugin datasources.ErrDatasourceSecretsPluginUserFriendly
 	if errors.As(err, &secretsPlugin) {
@@ -33,6 +35,26 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 	}
 
 	return response.ErrOrFallback(http.StatusInternalServerError, "Query data error", err)
+}
+
+// metrics.go
+func (hs *HTTPServer) getDSQueryEndpoint() web.Handler {
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesQueryServiceRewrite) {
+		// DEV ONLY FEATURE FLAG!
+		// rewrite requests from /ds/query to the new query service
+		namespaceMapper := request.GetNamespaceMapper(hs.Cfg)
+		return func(w http.ResponseWriter, r *http.Request) {
+			user, err := appcontext.User(r.Context())
+			if err != nil || user == nil {
+				errhttp.Write(r.Context(), fmt.Errorf("no user"), w)
+				return
+			}
+			r.URL.Path = "/apis/query.grafana.app/v0alpha1/namespaces/" + namespaceMapper(user.OrgID) + "/query"
+			hs.clientConfigProvider.DirectlyServeHTTP(w, r)
+		}
+	}
+
+	return routing.Wrap(hs.QueryMetricsV2)
 }
 
 // QueryMetricsV2 returns query metrics.
@@ -60,12 +82,12 @@ func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Respon
 	if err != nil {
 		return hs.handleQueryMetricsError(err)
 	}
-	return hs.toJsonStreamingResponse(resp)
+	return hs.toJsonStreamingResponse(c.Req.Context(), resp)
 }
 
-func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) response.Response {
+func (hs *HTTPServer) toJsonStreamingResponse(ctx context.Context, qdr *backend.QueryDataResponse) response.Response {
 	statusWhenError := http.StatusBadRequest
-	if hs.Features.IsEnabled(featuremgmt.FlagDatasourceQueryMultiStatus) {
+	if hs.Features.IsEnabled(ctx, featuremgmt.FlagDatasourceQueryMultiStatus) {
 		statusWhenError = http.StatusMultiStatus
 	}
 
@@ -74,6 +96,11 @@ func (hs *HTTPServer) toJsonStreamingResponse(qdr *backend.QueryDataResponse) re
 		if res.Error != nil {
 			statusCode = statusWhenError
 		}
+	}
+
+	if statusCode == statusWhenError {
+		// an error in the response we treat as downstream.
+		requestmeta.WithDownstreamStatusSource(ctx)
 	}
 
 	return response.JSONStreaming(statusCode, qdr)

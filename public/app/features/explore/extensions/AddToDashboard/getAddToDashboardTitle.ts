@@ -2,8 +2,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 
 export function getAddToDashboardTitle(): string {
-  const canCreateDashboard = contextSrv.hasAccess(AccessControlAction.DashboardsCreate, contextSrv.isEditor);
-  const canWriteDashboard = contextSrv.hasAccess(AccessControlAction.DashboardsWrite, contextSrv.isEditor);
+  const canCreateDashboard = contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
+  const canWriteDashboard = contextSrv.hasPermission(AccessControlAction.DashboardsWrite);
 
   if (canCreateDashboard && !canWriteDashboard) {
     return 'Add panel to new dashboard';

@@ -10,12 +10,13 @@ interface CloudWatchLogsLanguage extends monacoType.languages.IMonarchLanguage {
 export const DISPLAY = 'display';
 export const FIELDS = 'fields';
 export const FILTER = 'filter';
+export const PATTERN = 'pattern';
 export const STATS = 'stats';
 export const SORT = 'sort';
 export const LIMIT = 'limit';
 export const PARSE = 'parse';
 export const DEDUP = 'dedup';
-export const LOGS_COMMANDS = [DISPLAY, FIELDS, FILTER, STATS, SORT, LIMIT, PARSE, DEDUP];
+export const LOGS_COMMANDS = [DISPLAY, FIELDS, FILTER, PATTERN, STATS, SORT, LIMIT, PARSE, DEDUP];
 
 export const LOGS_LOGIC_OPERATORS = ['and', 'or', 'not'];
 

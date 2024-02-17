@@ -3,7 +3,8 @@ import React, { MouseEvent, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
+import { LoadingIndicator } from '@grafana/ui/src/components/PanelChrome/LoadingIndicator';
 import { t } from 'app/core/internationalization';
 
 import { ALL_VARIABLE_TEXT } from '../../constants';
@@ -40,7 +41,7 @@ export const VariableLink = ({ loading, disabled, onClick: propsOnClick, text, o
         id={id}
       >
         <VariableLinkText text={text} />
-        <LoadingIndicator onCancel={onCancel} />
+        <LoadingIndicator loading onCancel={onCancel} />
       </div>
     );
   }
@@ -75,28 +76,6 @@ const VariableLinkText = ({ text }: VariableLinkTextProps) => {
   );
 };
 
-const LoadingIndicator = ({ onCancel }: Pick<Props, 'onCancel'>) => {
-  const onClick = useCallback(
-    (event: MouseEvent) => {
-      event.preventDefault();
-      onCancel();
-    },
-    [onCancel]
-  );
-
-  return (
-    <Tooltip content="Cancel query">
-      <Icon
-        className="spin-clockwise"
-        name="sync"
-        size="xs"
-        onClick={onClick}
-        aria-label={selectors.components.LoadingIndicator.icon}
-      />
-    </Tooltip>
-  );
-};
-
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
     max-width: 500px;
@@ -104,7 +83,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: 0 ${theme.spacing(1)};
     background-color: ${theme.components.input.background};
     border: 1px solid ${theme.components.input.borderColor};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
     display: flex;
     align-items: center;
     color: ${theme.colors.text};

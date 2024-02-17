@@ -10,7 +10,8 @@ import (
 	"github.com/grafana/kindsys"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
+
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
@@ -19,7 +20,7 @@ const (
 	refID = "__healthcheck__"
 )
 
-var logger log.Logger = log.New("tsdb.prometheus")
+var logger log.Logger = backend.NewLoggerWith("logger", "tsdb.prometheus")
 
 func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult,
 	error) {
@@ -37,17 +38,17 @@ func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthReque
 
 	hc, err := healthcheck(ctx, req, ds)
 	if err != nil {
-		logger.Warn("error performing prometheus healthcheck", "err", err.Error())
+		logger.Warn("Error performing prometheus healthcheck", "err", err.Error())
 		return nil, err
 	}
 
 	heuristics, err := getHeuristics(ctx, ds)
 	if err != nil {
-		logger.Warn("failed to get prometheus heuristics", "err", err.Error())
+		logger.Warn("Failed to get prometheus heuristics", "err", err.Error())
 	} else {
 		jsonDetails, err := json.Marshal(heuristics)
 		if err != nil {
-			logger.Warn("failed to marshal heuristics", "err", err)
+			logger.Warn("Failed to marshal heuristics", "err", err)
 		} else {
 			hc.JSONDetails = jsonDetails
 		}

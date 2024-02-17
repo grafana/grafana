@@ -7,10 +7,15 @@ import (
 	"fmt"
 	"io"
 
+	"google.golang.org/grpc/metadata"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 const SearchPathPrefix = "search/"
@@ -27,12 +32,17 @@ type StreamSender interface {
 }
 
 func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender, datasource *Datasource) error {
+	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.runSearchStream")
+	defer span.End()
+
 	response := &backend.DataResponse{}
 
 	var backendQuery *backend.DataQuery
 	err := json.Unmarshal(req.Data, &backendQuery)
 	if err != nil {
 		response.Error = fmt.Errorf("error unmarshaling backend query model: %v", err)
+		span.RecordError(response.Error)
+		span.SetStatus(codes.Error, response.Error.Error())
 		return err
 	}
 
@@ -40,6 +50,8 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 	err = json.Unmarshal(req.Data, &sr)
 	if err != nil {
 		response.Error = fmt.Errorf("error unmarshaling Tempo query model: %v", err)
+		span.RecordError(response.Error)
+		span.SetStatus(codes.Error, response.Error.Error())
 		return err
 	}
 
@@ -50,48 +62,67 @@ func (s *Service) runSearchStream(ctx context.Context, req *backend.RunStreamReq
 	sr.Start = uint32(backendQuery.TimeRange.From.Unix())
 	sr.End = uint32(backendQuery.TimeRange.To.Unix())
 
+	// Setting the user agent for the gRPC call. When DS is decoupled we don't recreate instance when grafana config
+	// changes or updates, so we have to get it from context.
+	// Ideally this would be pushed higher, so it's set once for all rpc calls, but we have only one now.
+	ctx = metadata.AppendToOutgoingContext(ctx, "User-Agent", backend.UserAgentFromContext(ctx).String())
+
 	stream, err := datasource.StreamingClient.Search(ctx, sr)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		s.logger.Error("Error Search()", "err", err)
 		return err
 	}
 
-	return s.processStream(stream, sender)
+	return s.processStream(ctx, stream, sender)
 }
 
-func (s *Service) processStream(stream tempopb.StreamingQuerier_SearchClient, sender StreamSender) error {
+func (s *Service) processStream(ctx context.Context, stream tempopb.StreamingQuerier_SearchClient, sender StreamSender) error {
+	ctx, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.processStream")
+	defer span.End()
 	var traceList []*tempopb.TraceSearchMetadata
 	var metrics *tempopb.SearchMetrics
+	messageCount := 0
 	for {
 		msg, err := stream.Recv()
+		messageCount++
+		span.SetAttributes(attribute.Int("message_count", messageCount))
 		if errors.Is(err, io.EOF) {
-			if err := sendResponse(&ExtendedResponse{
+			if err := s.sendResponse(ctx, &ExtendedResponse{
 				State: dataquery.SearchStreamingStateDone,
 				SearchResponse: &tempopb.SearchResponse{
 					Metrics: metrics,
 					Traces:  traceList,
 				},
 			}, sender); err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
 				return err
 			}
 			break
 		}
 		if err != nil {
 			s.logger.Error("Error receiving message", "err", err)
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return err
 		}
 
 		metrics = msg.Metrics
 		traceList = append(traceList, msg.Traces...)
 		traceList = removeDuplicates(traceList)
+		span.SetAttributes(attribute.Int("traces_count", len(traceList)))
 
-		if err := sendResponse(&ExtendedResponse{
+		if err := s.sendResponse(ctx, &ExtendedResponse{
 			State: dataquery.SearchStreamingStateStreaming,
 			SearchResponse: &tempopb.SearchResponse{
 				Metrics: metrics,
 				Traces:  traceList,
 			},
 		}, sender); err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
 			return err
 		}
 	}
@@ -99,10 +130,14 @@ func (s *Service) processStream(stream tempopb.StreamingQuerier_SearchClient, se
 	return nil
 }
 
-func sendResponse(response *ExtendedResponse, sender StreamSender) error {
+func (s *Service) sendResponse(ctx context.Context, response *ExtendedResponse, sender StreamSender) error {
+	_, span := tracing.DefaultTracer().Start(ctx, "datasource.tempo.sendResponse")
+	defer span.End()
 	frame := createResponseDataFrame()
 
 	if response != nil {
+		span.SetAttributes(attribute.Int("trace_count", len(response.Traces)), attribute.String("state", string(response.State)))
+
 		tracesAsJson, err := json.Marshal(response.Traces)
 		if err != nil {
 			return err

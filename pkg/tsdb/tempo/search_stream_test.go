@@ -11,29 +11,31 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"github.com/grafana/tempo/pkg/tempopb"
 	"google.golang.org/grpc/metadata"
 )
 
 func TestProcessStream_ValidInput_ReturnsNoError(t *testing.T) {
-	service := &Service{}
+	logger := backend.NewLoggerWith("logger", "tsdb.tempo.test")
+	service := &Service{
+		logger: logger,
+	}
 	searchClient := &mockStreamer{}
 	streamSender := &mockSender{}
-	err := service.processStream(searchClient, streamSender)
+	err := service.processStream(context.Background(), searchClient, streamSender)
 	if err != nil {
 		t.Errorf("Expected no error, but got %s", err)
 	}
 }
 func TestProcessStream_InvalidInput_ReturnsError(t *testing.T) {
-	logger := log.New("tsdb.tempo.test")
+	logger := backend.NewLoggerWith("logger", "tsdb.tempo.test")
 	service := &Service{
 		logger: logger,
 	}
 	searchClient := &mockStreamer{err: errors.New("invalid input")}
 	streamSender := &mockSender{}
-	err := service.processStream(searchClient, streamSender)
+	err := service.processStream(context.Background(), searchClient, streamSender)
 	if err != nil {
 		if !strings.Contains(err.Error(), "invalid input") {
 			t.Errorf("Expected error message to contain 'invalid input', but got %s", err)
@@ -41,7 +43,7 @@ func TestProcessStream_InvalidInput_ReturnsError(t *testing.T) {
 	}
 }
 func TestProcessStream_ValidInput_ReturnsExpectedOutput(t *testing.T) {
-	logger := log.New("tsdb.tempo.test")
+	logger := backend.NewLoggerWith("logger", "tsdb.tempo.test")
 	service := &Service{
 		logger: logger,
 	}
@@ -109,7 +111,7 @@ func TestProcessStream_ValidInput_ReturnsExpectedOutput(t *testing.T) {
 		},
 	}
 	streamSender := &mockSender{}
-	err := service.processStream(searchClient, streamSender)
+	err := service.processStream(context.Background(), searchClient, streamSender)
 	if err != nil {
 		t.Errorf("Expected no error, but got %s", err)
 		return
@@ -220,10 +222,10 @@ func (m *mockStreamer) Context() context.Context {
 	panic("implement me")
 }
 
-func (m *mockStreamer) SendMsg(a interface{}) error {
+func (m *mockStreamer) SendMsg(a any) error {
 	panic("implement me")
 }
 
-func (m *mockStreamer) RecvMsg(a interface{}) error {
+func (m *mockStreamer) RecvMsg(a any) error {
 	panic("implement me")
 }

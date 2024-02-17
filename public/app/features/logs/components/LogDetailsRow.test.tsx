@@ -1,16 +1,15 @@
-import { screen, render, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React, { ComponentProps } from 'react';
 
-import { LogRowModel } from '@grafana/data';
-
 import { LogDetailsRow } from './LogDetailsRow';
+import { createLogRow } from './__mocks__/logRow';
 
 type Props = ComponentProps<typeof LogDetailsRow>;
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
-    parsedValues: [''],
-    parsedKeys: [''],
+    parsedValues: ['value'],
+    parsedKeys: ['key'],
     isLabel: true,
     wrapLogMessage: false,
     getStats: () => null,
@@ -19,7 +18,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     onClickShowField: () => {},
     onClickHideField: () => {},
     displayedFields: [],
-    row: {} as LogRowModel,
+    row: createLogRow(),
     disableActions: false,
   };
 
@@ -54,14 +53,52 @@ describe('LogDetailsRow', () => {
     expect(screen.getAllByRole('button', { name: 'Ad-hoc statistics' })).toHaveLength(1);
   });
 
-  describe('if props is a label', () => {
-    it('should render filter label button', () => {
+  describe('toggleable filters', () => {
+    it('should render filter buttons', () => {
       setup();
-      expect(screen.getAllByRole('button', { name: 'Filter for value' })).toHaveLength(1);
+      expect(screen.getAllByRole('button', { name: 'Filter for value in query A' })).toHaveLength(1);
+      expect(screen.getAllByRole('button', { name: 'Filter out value in query A' })).toHaveLength(1);
+      expect(screen.queryByRole('button', { name: 'Remove filter in query A' })).not.toBeInTheDocument();
     });
-    it('should render filter out label button', () => {
-      setup();
-      expect(screen.getAllByRole('button', { name: 'Filter out value' })).toHaveLength(1);
+    it('should render remove filter button when the filter is active', async () => {
+      setup({
+        isFilterLabelActive: jest.fn().mockResolvedValue(true),
+      });
+      expect(await screen.findByRole('button', { name: 'Remove filter in query A' })).toBeInTheDocument();
+    });
+    it('should trigger a call to `onClickFilterOutLabel` when the filter out button is clicked', () => {
+      const onClickFilterOutLabel = jest.fn();
+      setup({ onClickFilterOutLabel });
+      fireEvent.click(screen.getByRole('button', { name: 'Filter out value in query A' }));
+      expect(onClickFilterOutLabel).toHaveBeenCalledWith(
+        'key',
+        'value',
+        expect.objectContaining({
+          fields: [
+            expect.objectContaining({ values: [0] }),
+            expect.objectContaining({ values: ['line1'] }),
+            expect.objectContaining({ values: [{ app: 'app01' }] }),
+          ],
+          length: 1,
+        })
+      );
+    });
+    it('should trigger a call to `onClickFilterLabel` when the filter  button is clicked', () => {
+      const onClickFilterLabel = jest.fn();
+      setup({ onClickFilterLabel });
+      fireEvent.click(screen.getByRole('button', { name: 'Filter for value in query A' }));
+      expect(onClickFilterLabel).toHaveBeenCalledWith(
+        'key',
+        'value',
+        expect.objectContaining({
+          fields: [
+            expect.objectContaining({ values: [0] }),
+            expect.objectContaining({ values: ['line1'] }),
+            expect.objectContaining({ values: [{ app: 'app01' }] }),
+          ],
+          length: 1,
+        })
+      );
     });
   });
 
@@ -97,5 +134,14 @@ describe('LogDetailsRow', () => {
     fireEvent.click(adHocStatsButton);
     expect(screen.getByTestId('logLabelStats')).toBeInTheDocument();
     expect(screen.getByTestId('logLabelStats')).toHaveTextContent('another value');
+  });
+
+  describe('copy button', () => {
+    it('should be invisible unless mouse is over', () => {
+      setup({ parsedValues: ['test value'] });
+      // This tests a regression where the button was always visible.
+      expect(screen.getByTitle('Copy value to clipboard')).not.toBeVisible();
+      // Asserting visibility on mouse-over is currently not possible.
+    });
   });
 });

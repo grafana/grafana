@@ -170,4 +170,30 @@ func AddMigration(mg *migrator.Migrator) {
 	mg.AddMigration("add column hidden to role table", migrator.NewAddColumnMigration(roleV1, &migrator.Column{
 		Name: "hidden", Type: migrator.DB_Bool, Nullable: false, Default: "0",
 	}))
+
+	mg.AddMigration("permission kind migration", migrator.NewAddColumnMigration(permissionV1, &migrator.Column{
+		Name: "kind", Type: migrator.DB_NVarchar, Length: 40, Default: "''",
+	}))
+
+	mg.AddMigration("permission attribute migration", migrator.NewAddColumnMigration(permissionV1, &migrator.Column{
+		Name: "attribute", Type: migrator.DB_NVarchar, Length: 40, Default: "''",
+	}))
+
+	mg.AddMigration("permission identifier migration", migrator.NewAddColumnMigration(permissionV1, &migrator.Column{
+		Name: "identifier", Type: migrator.DB_NVarchar, Length: 40, Default: "''",
+	}))
+
+	mg.AddMigration("add permission identifier index", migrator.NewAddIndexMigration(permissionV1, &migrator.Index{
+		Cols: []string{"identifier"},
+	}))
+
+	mg.AddMigration("add permission action scope role_id index", migrator.NewAddIndexMigration(permissionV1, &migrator.Index{
+		Type: migrator.UniqueIndex,
+		Cols: []string{"action", "scope", "role_id"},
+	}))
+
+	mg.AddMigration("remove permission role_id action scope index", migrator.NewDropIndexMigration(permissionV1, &migrator.Index{
+		Type: migrator.UniqueIndex,
+		Cols: []string{"role_id", "action", "scope"},
+	}))
 }

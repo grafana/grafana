@@ -21,7 +21,7 @@ aliases:
   - ../../panels/visualizations/geomap/osm/
   - ../../panels/visualizations/geomap/zyx/
   - ../../visualizations/geomap/
-description: Geomap visualization documentation
+description: Configure options for Grafana's geomap visualization
 keywords:
   - grafana
   - Geomap
@@ -33,14 +33,14 @@ labels:
     - enterprise
     - oss
 title: Geomap
-weight: 600
+weight: 100
 ---
 
 # Geomap
 
-The Geomap panel visualization allows you to view and customize the world map using geospatial data. You can configure various overlay styles and map view settings to easily focus on the important location-based characteristics of the data.
+Geomaps allow you to view and customize the world map using geospatial data. You can configure various overlay styles and map view settings to easily focus on the important location-based characteristics of the data.
 
-> We would love your feedback on Geomap. Please check out the [Github discussion](https://github.com/grafana/grafana/discussions/62159) and join the conversation.
+> We would love your feedback on geomaps. Please check out the [open Github issues](https://github.com/grafana/grafana/issues?page=1&q=is%3Aopen+is%3Aissue+label%3Aarea%2Fpanel%2Fgeomap) and [submit a new feature request](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request,area%2Fpanel%2Fgeomap&title=Geomap:&projects=grafana-dataviz&template=1-feature_requests.md) as needed.
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-example-8-1-0.png" max-width="1200px" caption="Geomap panel" >}}
 
@@ -50,7 +50,7 @@ The map view controls the initial view of the map when the dashboard loads.
 
 ### Initial View
 
-The initial view configures how the GeoMap panel renders when the panel is first loaded.
+The initial view configures how the geomap renders when the panel is first loaded.
 
 - **View** sets the center for the map when the panel first loads.
   - **Fit to data** fits the map view based on the data extents of Map layers and updates when data changes.
@@ -77,43 +77,65 @@ The initial view configures how the GeoMap panel renders when the panel is first
 
 ## Map layers
 
-The Geomap visualization supports showing multiple layers. Each layer determines how you visualize geospatial data on top of the base map.
+Geomaps support showing multiple layers. Each layer determines how you visualize geospatial data on top of the base map.
 
 ### Types
 
-There are three map layer types to choose from in the Geomap visualization.
+There are seven map layer types to choose from in a geomap.
 
-- [Markers]({{< relref "#markers-layer" >}}) renders a marker at each data point.
-- [Heatmap]({{< relref "#heatmap-layer" >}}) visualizes a heatmap of the data.
-- [GeoJSON]({{< relref "#geojson-layer" >}}) renders static data from a GeoJSON file.
-
-There are also five alpha layer types.
-
-- [Night / Day layer]({{< relref "#night--day-layer" >}}) renders a night / day region.
-- **Icon at last point (alpha)** renders an icon at the last data point.
-- **Dynamic GeoJSON (alpha)** styles a GeoJSON file based on query results.
-- [Route layer (Alpha)]({{< relref "#route-layer-alpha" >}}) render data points as a route.
-- [Photos layer (Alpha)]({{< relref "#photos-layer-alpha" >}}) renders a photo at each data point.
+- [Markers](#markers-layer) renders a marker at each data point.
+- [Heatmap](#heatmap-layer) visualizes a heatmap of the data.
+- [GeoJSON](#geojson-layer) renders static data from a GeoJSON file.
+- [Night / Day](#night--day-layer) renders a night / day region.
+- [Route (Beta)](#route-layer-beta) render data points as a route.
+- [Photos (Beta)](#photos-layer-beta) renders a photo at each data point.
+- [Network (Beta)](#network-layer-beta) visualizes a network graph from the data.
 
 {{% admonition type="note" %}}
-[Basemap layer types]({{< relref "#types-1" >}}) can also be added as layers. You can specify an opacity.
+Beta is equivalent to the [public preview](/docs/release-life-cycle/) release stage.
+{{% /admonition %}}
+
+There are also two experimental (or alpha) layer types.
+
+- **Icon at last point (alpha)** renders an icon at the last data point.
+- **Dynamic GeoJSON (alpha)** styles a GeoJSON file based on query results.
+
+{{% admonition type="note" %}}
+To enable experimental layers:
+Set `enable_alpha` to `true` in your configuration file:
+
+```
+[panels]
+enable_alpha = true
+```
+
+To enable the experimental layers using Docker, run the following command:
+
+```
+docker run -p 3000:3000 -e "GF_PANELS_ENABLE_ALPHA=true" grafana/grafana:<VERSION>
+```
+
+{{% /admonition %}}
+
+{{% admonition type="note" %}}
+[Basemap layer types](#types-1) can also be added as layers. You can specify an opacity.
 {{% /admonition %}}
 
 ### Layer Controls
 
 The layer controls allow you to create layers, change their name, reorder and delete layers.
 
-- **Add layer** creates an additional, configurable data layer for the Geomap visualization. When you add a layer, you are prompted to select a layer type. You can change the layer type at any point during panel configuration. See the **Layer Types** section above for details on each layer type.
-- The layer controls allow you to rename, delete, and reorder the layers of the panel.
+- **Add layer** creates an additional, configurable data layer for the geomap. When you add a layer, you are prompted to select a layer type. You can change the layer type at any point during panel configuration. See the **Layer Types** section above for details on each layer type.
+- The layer controls allow you to rename, delete, and reorder the layers of the visualization.
   - **Edit layer name (pencil icon)** renames the layer.
   - **Trash Bin** deletes the layer.
-  - **Reorder (six dots/grab handle)** allows you to change the layer order. Data on higher layers will appear above data on lower layers. The panel will update the layer order as you drag and drop to help simplify choosing a layer order.
+  - **Reorder (six dots/grab handle)** allows you to change the layer order. Data on higher layers will appear above data on lower layers. The visualization will update the layer order as you drag and drop to help simplify choosing a layer order.
 
-You can add multiple layers of data to a single Geomap panel in order to create rich, detailed visualizations.
+You can add multiple layers of data to a single geomap in order to create rich, detailed visualizations.
 
 ### Location
 
-The Geomap panel needs a source of geographical data. This data comes from a database query, and there are four mapping options for your data.
+Geomaps need a source of geographical data. This data comes from a database query, and there are four mapping options for your data.
 
 - **Auto** automatically searches for location data. Use this option when your query is based on one of the following names for data fields.
   - geohash: “geohash”
@@ -131,22 +153,22 @@ are available each with specific configuration options to style the base map.
 
 ### Types
 
-There are four basemap layer types to choose from in the Geomap visualization.
+There are four basemap layer types to choose from in a geomap.
 
-- [Open Street Map]({{< relref "#open-street-map-layer" >}}) adds a map from a collaborative free geographic world database.
-- [CARTO]({{< relref "#carto-layer" >}}) adds a layer from CARTO Raster basemaps.
-- [ArcGIS]({{< relref "#arcgis-layer" >}}) adds a layer from an ESRI ArcGIS MapServer.
-- [XYZ]({{< relref "#xyz-tile-layer" >}}) adds a map from a generic tile layer.
+- [Open Street Map](#open-street-map-layer) adds a map from a collaborative free geographic world database.
+- [CARTO](#carto-layer) adds a layer from CARTO Raster basemaps.
+- [ArcGIS](#arcgis-layer) adds a layer from an ESRI ArcGIS MapServer.
+- [XYZ](#xyz-tile-layer) adds a map from a generic tile layer.
 
 ### Default
 
-The default base layer uses the [CARTO]({{< relref "#carto-layer" >}}) map. You can define custom default base layers in the `.ini` configuration file.
+The default base layer uses the [CARTO](#carto-layer) map. You can define custom default base layers in the `.ini` configuration file.
 
 ![Basemap layer options](/static/img/docs/geomap-panel/geomap-baselayer-8-1-0.png)
 
 #### Configure the default base layer with provisioning
 
-You can configure the default base map using config files with Grafana’s provisioning system. For more information on all the settings, refer to the [provisioning docs page]({{< relref "../../../administration/provisioning/" >}}).
+You can configure the default base map using config files with Grafana’s provisioning system. For more information on all the settings, refer to the [provisioning docs page][].
 
 Use the JSON configuration option `default_baselayer_config` to define the default base map. There are currently four base map options to choose from: `carto`, `esri-xyz`, `osm-standard`, `xyz`. Here are some provisioning examples for each base map option.
 
@@ -215,10 +237,16 @@ The markers layer allows you to display data points as different marker shapes s
 
 ![Markers Layer Options](/static/img/docs/geomap-panel/geomap-markers-options-8-1-0.png)
 
-- **Marker Color** configures the color of the marker. The default `Single color` keeps all points a single color. There is an alternate option to have multiple colors depending on the data point values and the threshold set at the `Thresholds` section.
-- **Marker Size** configures the size of the marker. The default is `Fixed size`, which makes all marker sizes the same regardless of the data points. However, there is also an option to scale the circles to the corresponding data points. `Min` and `Max` marker size has to be set such that the Marker layer can scale within this range.
-- **Marker Shape** allows you to choose the shape, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple shapes or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG).
+- **Size** configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range.
+- **Symbol** allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG).
+- **Symbol Vertical Align** configures the vertical alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the vertical alignment is applied relative to the rotation of the symbol.
+- **Symbol Horizontal Align** configures the horizontal alignment of the symbol relative to the data point. Note that the symbol's rotation angle is applied first around the data point, then the horizontal alignment is applied relative to the rotation of the symbol.
+- **Color** configures the color of the markers. The default `Fixed color` sets all markers to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section.
 - **Fill opacity** configures the transparency of each marker.
+- **Rotation angle** configures the rotation angle of each marker. The default is `Fixed value`, which makes all markers rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the markers based on data corresponding to a selected field.
+- **Text label** configures a text label for each marker.
+- **Show legend** allows you to toggle the legend for the layer.
+- **Display tooltip** allows you to toggle tooltips for the layer.
 
 ## Heatmap layer
 
@@ -236,6 +264,8 @@ Similar to `Markers`, you are prompted with various options to determine which d
 - **Weight values** configure the intensity of the heatmap clusters. `Fixed value` keeps a constant weight value throughout all data points. This value should be in the range of 0~1. Similar to Markers, there is an alternate option in the drop-down to automatically scale the weight values depending on data values.
 - **Radius** configures the size of the heatmap clusters.
 - **Blur** configures the amount of blur on each cluster.
+- **Opacity** configures the opacity of each cluster.
+- **Display tooltip** allows you to toggle tooltips for the layer.
 
 ## GeoJSON layer
 
@@ -250,6 +280,145 @@ The GeoJSON layer allows you to select and load a static GeoJSON file from the f
   - **Color** configures the color of the style for the current rule
   - **Opacity** configures the transparency level for the current rule
 - **Add style rule** creates additional style rules.
+- **Display tooltip** allows you to toggle tooltips for the layer.
+
+{{% admonition type="note" %}}
+Styles can be set within the "properties" object of the GeoJSON with support for the following geometries:
+
+- Polygon, MultiPolygon
+
+  - **"fill"** - The color of the interior of the polygon(s)
+  - **"fill-opacity"** - The opacity of the interior of the polygon(s)
+  - **"stroke-width"** - The width of the line component of the polygon(s)
+
+- Point, MultiPoint
+
+  - **"marker-color"** - The color of the point(s)
+  - **"marker-size"** - The size of the point(s)
+
+- LineString, MultiLineString
+  - **"stroke"** - The color of the line(s)
+  - **"stroke-width"** - The width of the line(s)
+
+{{% /admonition %}}
+
+## Night / Day layer
+
+The Night / Day layer displays night and day regions based on the current time range.
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-day-night-9-1-0.png" max-width="1200px" caption="Geomap panel Night / Day" >}}
+
+### Options
+
+- **Show** toggles the time source from panel time range.
+- **Night region color** picks the color for the night region.
+- **Display sun** toggles the sun icon.
+- **Opacity** set the opacity from `0` (transparent) to `1` (opaque).
+- **Display tooltip** allows you to toggle tooltips for the layer.
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-day-night-options-9-1-0.png" max-width="1200px" caption="Geomap panel Night / Day options" >}}
+
+### More information
+
+- [**Extensions for OpenLayers - DayNight**](https://viglino.github.io/ol-ext/examples/layer/map.daynight.html)
+
+## Route layer (Beta)
+
+{{% admonition type="caution" %}}
+The Route layer is currently in [public preview](/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+{{% /admonition %}}
+
+The Route layer renders data points as a route.
+
+{{< figure src="/media/docs/grafana/geomap-route-layer-basic-9-4-0.png" max-width="1200px" caption="Geomap panel Route" >}}
+
+### Options
+
+- **Size** sets the route thickness. Fixed value by default. When field data is selected you can set the Min and Max range in which field data can scale.
+- **Color** sets the route color. Set to `Fixed color` by default. You can also tie the color to field data.
+- **Fill opacity** configures the opacity of the route.
+- **Text label** configures a text label for each route.
+- **Arrow** sets the arrow styling to display along route, in order of data.
+  - **None**
+  - **Forward**
+  - **Reverse**
+- **Display tooltip** allows you to toggle tooltips for the layer.
+
+{{< figure src="/media/docs/grafana/geomap-route-layer-arrow-size-9-4-0.png" max-width="1200px" caption="Geomap panel Route arrows with size" >}}
+
+### More information
+
+- [**Extensions for OpenLayers - Flow Line Style**](http://viglino.github.io/ol-ext/examples/style/map.style.gpxline.html)
+
+## Photos layer (Beta)
+
+{{% admonition type="caution" %}}
+The Photos layer is currently in [public preview](/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+{{% /admonition %}}
+
+The Photos layer renders a photo at each data point.
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-photos-9-3-0.png" max-width="1200px" caption="Geomap panel Photos" >}}
+
+### Options
+
+- **Image Source field** allows you to select a string field containing image data in either of the following formats:
+  - **Image URLs**
+  - **Base64 encoded** - Image binary ("data:image/png;base64,...")
+- **Kind** sets the frame style around the images. Choose from:
+  - **Square**
+  - **Circle**
+  - **Anchored**
+  - **Folio**
+- **Crop** toggles whether the images are cropped to fit.
+- **Shadow** toggles a box shadow behind the images.
+- **Border** sets the border size around images.
+- **Border color** sets the border color around images.
+- **Radius** sets the overall size of images in pixels.
+- **Display tooltip** allows you to toggle tooltips for the layer.
+
+{{< figure src="/static/img/docs/geomap-panel/geomap-photos-options-9-3-0.png" max-width="1200px" caption="Geomap panel Photos options" >}}
+
+### More information
+
+- [**Extensions for OpenLayers - Image Photo Style**](http://viglino.github.io/ol-ext/examples/style/map.style.photo.html)
+
+## Network layer (Beta)
+
+{{% admonition type="caution" %}}
+The Network layer is currently in [public preview](/docs/release-life-cycle/). Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+{{% /admonition %}}
+
+The Network layer renders a network graph. This layer supports the same [data format supported by the node graph visualization][] with the addition of [geospatial data]({{< relref "#location">}}) included in the nodes data. The geospatial data is used to locate and render the nodes on the map.
+
+{{< figure src="/media/docs/grafana/screenshot-grafana-10-1-geomap-network-layer-v2.png" max-width="750px" caption="Geomap network layer" >}}
+{{< video-embed src="/media/docs/grafana/screen-recording-10-1-geomap-network-layer-from-node-graph.mp4" max-width="750px" caption="Node graph to Geomap network layer" >}}
+
+### Options
+
+- **Arrow** sets the arrow direction to display for each edge, with forward meaning source to target. Choose from:
+  - **None**
+  - **Forward**
+  - **Reverse**
+  - **Both**
+- **Show legend** allows you to toggle the legend for the layer. **Note:** The legend currently only supports node data.
+- **Display tooltip** allows you to toggle tooltips for the layer.
+
+#### Node styles
+
+- **Size** configures the size of the nodes. The default is `Fixed size`, which makes all node sizes the same regardless of the data; however, there is also an option to size the nodes based on data corresponding to a selected field. `Min` and `Max` node sizes have to be set such that the nodes can scale within this range.
+- **Symbol** allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. Choose from assets that are included with Grafana such as simple symbols or the Unicon library. You can also specify a URL containing an image asset. The image must be a scalable vector graphic (SVG).
+- **Color** configures the color of the nodes. The default `Fixed color` sets all nodes to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section.
+- **Fill opacity** configures the transparency of each node.
+- **Rotation angle** configures the rotation angle of each node. The default is `Fixed value`, which makes all nodes rotate to the same angle regardless of the data; however, there is also an option to set the rotation of the nodes based on data corresponding to a selected field.
+- **Text label** configures a text label for each node.
+
+#### Edge styles
+
+- **Size** configures the line width of the edges. The default is `Fixed size`, which makes all edge line widths the same regardless of the data; however, there is also an option to size the edges based on data corresponding to a selected field. `Min` and `Max` eges sizes have to be set such that the edges can scale within this range.
+- **Color** configures the color of the edges. The default `Fixed color` sets all edges to a specific color. There is also an option to have conditional colors depending on the selected field data point values and the color scheme set in the `Standard options` section.
+- **Fill opacity** configures the transparency of each edge.
+- **Text label** configures a text label for each edge.
 
 ## CARTO layer
 
@@ -284,7 +453,7 @@ The XYZ tile layer is a map from a generic tile layer.
 
   > **Note:** Set a valid tile server url, with {z}/{x}/{y} for example: https://tile.openstreetmap.org/{z}/{x}/{y}.png
 
-- **Attribution** sets the reference string for the layer if displayed in [map controls]({{< relref "#show-attribution" >}})
+- **Attribution** sets the reference string for the layer if displayed in [map controls](#show-attribution)
 - **Opacity** from 0 (transparent) to 1 (opaque)
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-xyz-options-9-1-0.png" max-width="1200px" caption="Geomap panel xyz options" >}}
@@ -308,7 +477,7 @@ A map from a collaborative free geographic world database.
 
 ### More Information
 
-- [**About Open Street Map**](https://www.openstreetmap.org/about)\
+- [**About Open Street Map**](https://www.openstreetmap.org/about)
 
 ## ArcGIS layer
 
@@ -329,7 +498,7 @@ An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
     {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-usa-topographic-9-1-0.png" max-width="1200px" caption="Geomap panel ArcGIS USA Topographic" >}}
   - World Ocean
     {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-ocean-9-1-0.png" max-width="1200px" caption="Geomap panel ArcGIS World Ocean" >}}
-  - Custom MapServer (see [XYZ]({{< relref "#xyz-tile-layer" >}}) for formatting)
+  - Custom MapServer (see [XYZ](#xyz-tile-layer) for formatting)
     - URL template
     - Attribution
 - **Opacity** from 0 (transparent) to 1 (opaque)
@@ -340,100 +509,6 @@ An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
 
 - [**ArcGIS Services**](https://services.arcgisonline.com/arcgis/rest/services)
 - [**About ESRI**](https://www.esri.com/en-us/about/about-esri/overview)
-
-## Night / Day layer
-
-The Night / Day layer displays night and day regions based on the current time range.
-
-{{< figure src="/static/img/docs/geomap-panel/geomap-day-night-9-1-0.png" max-width="1200px" caption="Geomap panel Night / Day" >}}
-
-### Options
-
-- **Show** toggles time source from panel time range
-- **Night region color** picks color for night region
-- **Display sun** toggles sun icon
-- **Opacity** from 0 (transparent) to 1 (opaque)
-
-{{< figure src="/static/img/docs/geomap-panel/geomap-day-night-options-9-1-0.png" max-width="1200px" caption="Geomap panel Night / Day options" >}}
-
-### More information
-
-- [**Extensions for OpenLayers - DayNight**](https://viglino.github.io/ol-ext/examples/layer/map.daynight.html)
-
-## Route layer (Alpha)
-
-The Route layer renders data points as a route.
-
-{{< figure src="/media/docs/grafana/geomap-route-layer-basic-9-4-0.png" max-width="1200px" caption="Geomap panel Route" >}}
-
-To enable the Route layer, set `enable_alpha` to `true` in your configuration file:
-
-```
-[panels]
-enable_alpha = true
-```
-
-To enable the Route layer using Docker, run the following command:
-
-```
-docker run -p 3000:3000 -e "GF_PANELS_ENABLE_ALPHA=true" grafana/grafana:<VERSION>
-```
-
-### Options
-
-- **Size** sets the route thickness. Fixed by default, or Min and Max range of selected field.
-- **Color** sets the route color. Fixed by default or Standard Options color scheme on selected field.
-- **Arrow** sets the arrow styling to display along route, in order of data.
-  - **None**
-  - **Forward**
-  - **Reverse**
-
-{{< figure src="/media/docs/grafana/geomap-route-layer-arrow-size-9-4-0.png" max-width="1200px" caption="Geomap panel Route arrows with size" >}}
-
-### More information
-
-- [**Extensions for OpenLayers - Flow Line Style**](http://viglino.github.io/ol-ext/examples/style/map.style.gpxline.html)
-
-## Photos layer (Alpha)
-
-The Photos layer renders a photo at each data point.
-
-{{< figure src="/static/img/docs/geomap-panel/geomap-photos-9-3-0.png" max-width="1200px" caption="Geomap panel Photos" >}}
-
-To enable the Photos layer, set `enable_alpha` to `true` in your configuration file:
-
-```
-[panels]
-enable_alpha = true
-```
-
-To enable the Photos layer using Docker, run the following command:
-
-```
-docker run -p 3000:3000 -e "GF_PANELS_ENABLE_ALPHA=true" grafana/grafana:<VERSION>
-```
-
-### Options
-
-- **Image Source Field** select a string field containing image data in either of the following formats
-  - **Image URLs**
-  - **Base64 encoded** image binary ("data:image/png;base64,...")
-- **Kind** select the frame style around the images
-  - **Square**
-  - **Circle**
-  - **Anchored**
-  - **Folio**
-- **Crop** toggle if the images are cropped to fit
-- **Shadow** toggle a box shadow behind the images
-- **Border** set the border size around images
-- **Border color** set the border color around images
-- **Radius** set the overall size of images in pixels
-
-{{< figure src="/static/img/docs/geomap-panel/geomap-photos-options-9-3-0.png" max-width="1200px" caption="Geomap panel Photos options" >}}
-
-### More information
-
-- [**Extensions for OpenLayers - Image Photo Style**](http://viglino.github.io/ol-ext/examples/style/map.style.photo.html)
 
 ## Map Controls
 
@@ -481,7 +556,7 @@ Displays measure tools in the upper right corner. Measurements appear only when 
 - **Double-click** to end measurement
 
 {{% admonition type="note" %}}
-<br /- When you change measurement type or units, the previous measurement is removed from the map. <br /- If the control is closed and then re-opened, the most recent measurement is displayed. <br /- A measurement can be modified by clicking and dragging on it.
+When you change measurement type or units, the previous measurement is removed from the map. If the control is closed and then re-opened, the most recent measurement is displayed. A measurement can be modified by clicking and dragging on it.
 {{% /admonition %}}
 
 #### Length
@@ -521,3 +596,11 @@ Displays debug information in the upper right corner. This can be useful for deb
 
 - **None** displays tooltips only when a data point is clicked.
 - **Details** displays tooltips when a mouse pointer hovers over a data point.
+
+{{% docs/reference %}}
+[provisioning docs page]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning"
+[provisioning docs page]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning"
+
+[data format supported by the node graph visualization]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/node-graph#data-api"
+[data format supported by the node graph visualization]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/visualizations/node-graph#data-api"
+{{% /docs/reference %}}

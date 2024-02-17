@@ -28,14 +28,14 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
   });
 
   const formErrors = formState.errors.time_intervals?.[intervalIndex];
-  const timeRangeInvalid = formErrors?.times?.some((value) => value?.start_time || value?.end_time) ?? false;
+  const timeRangeInvalid = formErrors?.times?.some?.((value) => value?.start_time || value?.end_time) ?? false;
 
   return (
     <div>
       <Field
         className={styles.field}
         label="Time range"
-        description="The time inclusive of the starting time and exclusive of the end time in UTC"
+        description="The time inclusive of the start and exclusive of the end time (in UTC if no location has been selected, otherwise local time)"
         invalid={timeRangeInvalid}
       >
         <>

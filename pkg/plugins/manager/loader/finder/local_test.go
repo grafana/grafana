@@ -14,8 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/config"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -25,13 +23,10 @@ func TestFinder_Find(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	cfg := setting.NewCfg()
-	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg, featuremgmt.WithFeatures())
-	require.NoError(t, err)
-
 	testCases := []struct {
 		name            string
 		pluginDirs      []string
+		pluginClass     plugins.Class
 		expectedBundles []*plugins.FoundBundle
 		err             error
 	}{
@@ -148,6 +143,7 @@ func TestFinder_Find(t *testing.T) {
 									{Name: "img1", Path: "img/screenshot1.png"},
 									{Name: "img2", Path: "img/screenshot2.png"},
 								},
+								Keywords: []string{"test"},
 							},
 							Dependencies: plugins.Dependencies{
 								GrafanaVersion: "3.x.x",
@@ -181,40 +177,19 @@ func TestFinder_Find(t *testing.T) {
 		{
 			name:       "Multiple plugin dirs",
 			pluginDirs: []string{"../../testdata/duplicate-plugins", "../../testdata/invalid-v1-signature"},
-			expectedBundles: []*plugins.FoundBundle{{
-				Primary: plugins.FoundPlugin{
-					JSONData: plugins.JSONData{
-						ID:   "test-app",
-						Type: plugins.TypeDataSource,
-						Name: "Parent",
-						Info: plugins.Info{
-							Author: plugins.InfoLink{
-								Name: "Grafana Labs",
-								URL:  "http://grafana.com",
-							},
-							Description: "Parent plugin",
-							Version:     "1.0.0",
-							Updated:     "2020-10-20",
-						},
-						Dependencies: plugins.Dependencies{
-							GrafanaVersion: "*",
-							Plugins:        []plugins.Dependency{},
-						},
-					},
-					FS: mustNewStaticFSForTests(t, filepath.Join(testData, "duplicate-plugins/nested")),
-				},
-				Children: []*plugins.FoundPlugin{
-					{
+			expectedBundles: []*plugins.FoundBundle{
+				{
+					Primary: plugins.FoundPlugin{
 						JSONData: plugins.JSONData{
 							ID:   "test-app",
 							Type: plugins.TypeDataSource,
-							Name: "Child",
+							Name: "Parent",
 							Info: plugins.Info{
 								Author: plugins.InfoLink{
 									Name: "Grafana Labs",
 									URL:  "http://grafana.com",
 								},
-								Description: "Child plugin",
+								Description: "Parent plugin",
 								Version:     "1.0.0",
 								Updated:     "2020-10-20",
 							},
@@ -223,10 +198,32 @@ func TestFinder_Find(t *testing.T) {
 								Plugins:        []plugins.Dependency{},
 							},
 						},
-						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "duplicate-plugins/nested/nested")),
+						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "duplicate-plugins/nested")),
+					},
+					Children: []*plugins.FoundPlugin{
+						{
+							JSONData: plugins.JSONData{
+								ID:   "test-app",
+								Type: plugins.TypeDataSource,
+								Name: "Child",
+								Info: plugins.Info{
+									Author: plugins.InfoLink{
+										Name: "Grafana Labs",
+										URL:  "http://grafana.com",
+									},
+									Description: "Child plugin",
+									Version:     "1.0.0",
+									Updated:     "2020-10-20",
+								},
+								Dependencies: plugins.Dependencies{
+									GrafanaVersion: "*",
+									Plugins:        []plugins.Dependency{},
+								},
+							},
+							FS: mustNewStaticFSForTests(t, filepath.Join(testData, "duplicate-plugins/nested/nested")),
+						},
 					},
 				},
-			},
 				{
 					Primary: plugins.FoundPlugin{
 						JSONData: plugins.JSONData{
@@ -252,11 +249,46 @@ func TestFinder_Find(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:        "Plugin with dist folder (core class)",
+			pluginDirs:  []string{filepath.Join(testData, "plugin-with-dist")},
+			pluginClass: plugins.ClassCore,
+			expectedBundles: []*plugins.FoundBundle{
+				{
+					Primary: plugins.FoundPlugin{
+						JSONData: plugins.JSONData{
+							ID:   "test-datasource",
+							Type: plugins.TypeDataSource,
+							Name: "Test",
+							Info: plugins.Info{
+								Author: plugins.InfoLink{
+									Name: "Will Browne",
+									URL:  "https://willbrowne.com",
+								},
+								Description: "Test",
+								Version:     "1.0.0",
+							},
+							Dependencies: plugins.Dependencies{
+								GrafanaVersion: "*",
+								Plugins:        []plugins.Dependency{},
+							},
+							State:      plugins.ReleaseStateAlpha,
+							Backend:    true,
+							Executable: "test",
+						},
+						FS: mustNewStaticFSForTests(t, filepath.Join(testData, "plugin-with-dist/plugin/dist")),
+					},
+				},
+			},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			f := NewLocalFinder(pCfg.DevMode)
+			f := NewLocalFinder(false, featuremgmt.WithFeatures(featuremgmt.FlagExternalCorePlugins))
 			pluginBundles, err := f.Find(context.Background(), &fakes.FakePluginSource{
+				PluginClassFunc: func(ctx context.Context) plugins.Class {
+					return tc.pluginClass
+				},
 				PluginURIsFunc: func(ctx context.Context) []string {
 					return tc.pluginDirs
 				},
@@ -279,53 +311,83 @@ func TestFinder_Find(t *testing.T) {
 }
 
 func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
-	cfg := setting.NewCfg()
-	pCfg, err := config.ProvideConfig(setting.ProvideProvider(cfg), cfg, featuremgmt.WithFeatures())
-	require.NoError(t, err)
-
 	t.Run("When scanning a folder that doesn't exists shouldn't return an error", func(t *testing.T) {
 		origWalk := walk
-		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
+		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop, followDistFolder bool, walkFn util.WalkFunc) error {
 			return walkFn(path, nil, os.ErrNotExist)
 		}
 		t.Cleanup(func() {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder(pCfg.DevMode)
-		paths, err := finder.getAbsPluginJSONPaths("test")
+		finder := NewLocalFinder(false, featuremgmt.WithFeatures())
+		paths, err := finder.getAbsPluginJSONPaths("test", true)
 		require.NoError(t, err)
 		require.Empty(t, paths)
 	})
 
 	t.Run("When scanning a folder that lacks permission shouldn't return an error", func(t *testing.T) {
 		origWalk := walk
-		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
+		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop, followDistFolder bool, walkFn util.WalkFunc) error {
 			return walkFn(path, nil, os.ErrPermission)
 		}
 		t.Cleanup(func() {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder(pCfg.DevMode)
-		paths, err := finder.getAbsPluginJSONPaths("test")
+		finder := NewLocalFinder(false, featuremgmt.WithFeatures())
+		paths, err := finder.getAbsPluginJSONPaths("test", true)
 		require.NoError(t, err)
 		require.Empty(t, paths)
 	})
 
 	t.Run("When scanning a folder that returns a non-handled error should return that error", func(t *testing.T) {
 		origWalk := walk
-		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop bool, walkFn util.WalkFunc) error {
+		walk = func(path string, followSymlinks, detectSymlinkInfiniteLoop, followDistFolder bool, walkFn util.WalkFunc) error {
 			return walkFn(path, nil, errors.New("random error"))
 		}
 		t.Cleanup(func() {
 			walk = origWalk
 		})
 
-		finder := NewLocalFinder(pCfg.DevMode)
-		paths, err := finder.getAbsPluginJSONPaths("test")
+		finder := NewLocalFinder(false, featuremgmt.WithFeatures())
+		paths, err := finder.getAbsPluginJSONPaths("test", true)
 		require.Error(t, err)
 		require.Empty(t, paths)
+	})
+
+	t.Run("The followDistFolder state controls whether certain folders are followed", func(t *testing.T) {
+		dir, err := filepath.Abs("../../testdata/pluginRootWithDist")
+		require.NoError(t, err)
+
+		tcs := []struct {
+			name       string
+			followDist bool
+			expected   []string
+		}{
+			{
+				name:       "When followDistFolder is enabled, only the nested dist folder will be followed",
+				followDist: true,
+				expected: []string{
+					filepath.Join(dir, "dist/plugin.json"),
+				},
+			},
+			{
+				name:       "When followDistFolder is disabled, no dist folders will be followed",
+				followDist: false,
+				expected: []string{
+					filepath.Join(dir, "datasource/plugin.json"),
+					filepath.Join(dir, "panel/src/plugin.json"),
+				},
+			},
+		}
+		for _, tc := range tcs {
+			pluginBundles, err := NewLocalFinder(false, featuremgmt.WithFeatures()).getAbsPluginJSONPaths(dir, tc.followDist)
+			require.NoError(t, err)
+
+			sort.Strings(pluginBundles)
+			require.Equal(t, tc.expected, pluginBundles)
+		}
 	})
 }
 

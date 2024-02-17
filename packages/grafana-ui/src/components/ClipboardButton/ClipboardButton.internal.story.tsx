@@ -1,7 +1,6 @@
 import { Story, Meta } from '@storybook/react';
 import React from 'react';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Field } from '../Forms/Field';
 import { Input } from '../Input/Input';
 
@@ -11,7 +10,6 @@ import mdx from './ClipboardButton.mdx';
 const meta: Meta = {
   title: 'Buttons/ClipboardButton',
   component: ClipboardButtonImpl,
-  decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,

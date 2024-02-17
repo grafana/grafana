@@ -1,6 +1,13 @@
 import { MatcherOperator, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
-import { findMatchingRoutes, normalizeRoute, getInheritedProperties } from './notification-policies';
+import {
+  InheritableProperties,
+  computeInheritedTree,
+  findMatchingRoutes,
+  getInheritedProperties,
+  matchLabels,
+  normalizeRoute,
+} from './notification-policies';
 
 import 'core-js/stable/structured-clone';
 
@@ -17,6 +24,7 @@ describe('findMatchingRoutes', () => {
     routes: [
       {
         receiver: 'A',
+        object_matchers: [['team', MatcherOperator.equal, 'operations']],
         routes: [
           {
             receiver: 'B1',
@@ -24,10 +32,9 @@ describe('findMatchingRoutes', () => {
           },
           {
             receiver: 'B2',
-            object_matchers: [['region', MatcherOperator.notEqual, 'europe']],
+            object_matchers: [['region', MatcherOperator.equal, 'nasa']],
           },
         ],
-        object_matchers: [['team', MatcherOperator.equal, 'operations']],
       },
       {
         receiver: 'C',
@@ -48,6 +55,19 @@ describe('findMatchingRoutes', () => {
     const matches = findMatchingRoutes(policies, [['team', 'operations']]);
     expect(matches).toHaveLength(1);
     expect(matches[0].route).toHaveProperty('receiver', 'A');
+  });
+
+  it('should match route with negative matchers', () => {
+    const policiesWithNegative = {
+      ...policies,
+      routes: policies.routes?.concat({
+        receiver: 'D',
+        object_matchers: [['name', MatcherOperator.notEqual, 'gilles']],
+      }),
+    };
+    const matches = findMatchingRoutes(policiesWithNegative, [['name', 'konrad']]);
+    expect(matches).toHaveLength(1);
+    expect(matches[0].route).toHaveProperty('receiver', 'D');
   });
 
   it('should match child route of matching parent', () => {
@@ -184,9 +204,19 @@ describe('getInheritedProperties()', () => {
       const childInherited = getInheritedProperties(parent, child);
       expect(childInherited).toHaveProperty('group_by', ['label']);
     });
+
+    it('should inherit from grandparent when parent is inheriting', () => {
+      const parentInheritedProperties: InheritableProperties = { receiver: 'grandparent' };
+      const parent: Route = { receiver: null, group_by: ['foo'] };
+      const child: Route = { receiver: null };
+
+      const childInherited = getInheritedProperties(parent, child, parentInheritedProperties);
+      expect(childInherited).toHaveProperty('receiver', 'grandparent');
+      expect(childInherited.group_by).toEqual(['foo']);
+    });
   });
 
-  describe('regular "undefined" values', () => {
+  describe('regular "undefined" or "null" values', () => {
     it('should compute inherited properties being undefined', () => {
       const parent: Route = {
         receiver: 'PARENT',
@@ -199,6 +229,20 @@ describe('getInheritedProperties()', () => {
 
       const childInherited = getInheritedProperties(parent, child);
       expect(childInherited).toHaveProperty('group_wait', '10s');
+    });
+
+    it('should compute inherited properties being null', () => {
+      const parent: Route = {
+        receiver: 'PARENT',
+        group_wait: '10s',
+      };
+
+      const child: Route = {
+        receiver: null,
+      };
+
+      const childInherited = getInheritedProperties(parent, child);
+      expect(childInherited).toHaveProperty('receiver', 'PARENT');
     });
 
     it('should compute inherited properties being undefined from parent inherited properties', () => {
@@ -257,6 +301,99 @@ describe('getInheritedProperties()', () => {
       expect(childInherited).toHaveProperty('receiver', 'PARENT');
     });
   });
+
+  describe('timing options', () => {
+    it('should inherit timing options', () => {
+      const parent: Route = {
+        receiver: 'PARENT',
+        group_wait: '1m',
+        group_interval: '2m',
+      };
+
+      const child: Route = {
+        repeat_interval: '999s',
+      };
+
+      const childInherited = getInheritedProperties(parent, child);
+      expect(childInherited).toHaveProperty('group_wait', '1m');
+      expect(childInherited).toHaveProperty('group_interval', '2m');
+    });
+  });
+  it('should not inherit mute timings from parent route', () => {
+    const parent: Route = {
+      receiver: 'PARENT',
+      group_by: ['parentLabel'],
+      mute_time_intervals: ['Mon-Fri 09:00-17:00'],
+    };
+
+    const child: Route = {
+      receiver: 'CHILD',
+      group_by: ['childLabel'],
+    };
+
+    const childInherited = getInheritedProperties(parent, child);
+    expect(childInherited).not.toHaveProperty('mute_time_intervals');
+  });
+});
+
+describe('computeInheritedTree', () => {
+  it('should merge properties from parent', () => {
+    const parent: Route = {
+      receiver: 'PARENT',
+      group_wait: '1m',
+      group_interval: '2m',
+      repeat_interval: '3m',
+      routes: [
+        {
+          repeat_interval: '999s',
+        },
+      ],
+    };
+
+    const treeRoot = computeInheritedTree(parent);
+    expect(treeRoot).toHaveProperty('group_wait', '1m');
+    expect(treeRoot).toHaveProperty('group_interval', '2m');
+    expect(treeRoot).toHaveProperty('repeat_interval', '3m');
+
+    expect(treeRoot).toHaveProperty('routes.0.group_wait', '1m');
+    expect(treeRoot).toHaveProperty('routes.0.group_interval', '2m');
+    expect(treeRoot).toHaveProperty('routes.0.repeat_interval', '999s');
+  });
+
+  it('should not regress #73573', () => {
+    const parent: Route = {
+      routes: [
+        {
+          group_wait: '1m',
+          group_interval: '2m',
+          repeat_interval: '3m',
+          routes: [
+            {
+              group_wait: '10m',
+              group_interval: '20m',
+              repeat_interval: '30m',
+            },
+            {
+              repeat_interval: '999m',
+            },
+          ],
+        },
+      ],
+    };
+
+    const treeRoot = computeInheritedTree(parent);
+    expect(treeRoot).toHaveProperty('routes.0.group_wait', '1m');
+    expect(treeRoot).toHaveProperty('routes.0.group_interval', '2m');
+    expect(treeRoot).toHaveProperty('routes.0.repeat_interval', '3m');
+
+    expect(treeRoot).toHaveProperty('routes.0.routes.0.group_wait', '10m');
+    expect(treeRoot).toHaveProperty('routes.0.routes.0.group_interval', '20m');
+    expect(treeRoot).toHaveProperty('routes.0.routes.0.repeat_interval', '30m');
+
+    expect(treeRoot).toHaveProperty('routes.0.routes.1.group_wait', '1m');
+    expect(treeRoot).toHaveProperty('routes.0.routes.1.group_interval', '2m');
+    expect(treeRoot).toHaveProperty('routes.0.routes.1.repeat_interval', '999m');
+  });
 });
 
 describe('normalizeRoute', () => {
@@ -293,5 +430,49 @@ describe('normalizeRoute', () => {
 
     expect(normalized).not.toHaveProperty('match');
     expect(normalized).not.toHaveProperty('match_re');
+  });
+});
+
+describe('matchLabels', () => {
+  it('should match with non-matching matchers', () => {
+    const result = matchLabels(
+      [
+        ['foo', MatcherOperator.equal, ''],
+        ['team', MatcherOperator.equal, 'operations'],
+      ],
+      [['team', 'operations']]
+    );
+
+    expect(result).toHaveProperty('matches', true);
+    expect(result.labelsMatch).toMatchSnapshot();
+  });
+
+  it('should match with non-equal matchers', () => {
+    const result = matchLabels(
+      [
+        ['foo', MatcherOperator.notEqual, 'bar'],
+        ['team', MatcherOperator.equal, 'operations'],
+      ],
+      [['team', 'operations']]
+    );
+
+    expect(result).toHaveProperty('matches', true);
+    expect(result.labelsMatch).toMatchSnapshot();
+  });
+
+  it('should not match with a set of matchers', () => {
+    const result = matchLabels(
+      [
+        ['foo', MatcherOperator.notEqual, 'bar'],
+        ['team', MatcherOperator.equal, 'operations'],
+      ],
+      [
+        ['team', 'operations'],
+        ['foo', 'bar'],
+      ]
+    );
+
+    expect(result).toHaveProperty('matches', false);
+    expect(result.labelsMatch).toMatchSnapshot();
   });
 });

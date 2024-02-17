@@ -104,7 +104,7 @@ func (p *AlertingProxy) withReq(
 	method string,
 	u *url.URL,
 	body io.Reader,
-	extractor func(*response.NormalResponse) (interface{}, error),
+	extractor func(*response.NormalResponse) (any, error),
 	headers map[string]string,
 ) response.Response {
 	req, err := http.NewRequest(method, u.String(), body)
@@ -140,7 +140,7 @@ func (p *AlertingProxy) withReq(
 		// and it is successfully decoded and contains a message
 		// return this as response error message
 		if strings.HasPrefix(resp.Header().Get("Content-Type"), "application/json") {
-			var m map[string]interface{}
+			var m map[string]any
 			if err := json.Unmarshal(resp.Body(), &m); err == nil {
 				if message, ok := m["message"]; ok {
 					errMessageStr, isString := message.(string)
@@ -170,8 +170,8 @@ func (p *AlertingProxy) withReq(
 	return response.JSON(status, b)
 }
 
-func yamlExtractor(v interface{}) func(*response.NormalResponse) (interface{}, error) {
-	return func(resp *response.NormalResponse) (interface{}, error) {
+func yamlExtractor(v any) func(*response.NormalResponse) (any, error) {
+	return func(resp *response.NormalResponse) (any, error) {
 		contentType := resp.Header().Get("Content-Type")
 		if !strings.Contains(contentType, "yaml") {
 			return nil, fmt.Errorf("unexpected content type from upstream. expected YAML, got %v", contentType)
@@ -185,12 +185,12 @@ func yamlExtractor(v interface{}) func(*response.NormalResponse) (interface{}, e
 	}
 }
 
-func jsonExtractor(v interface{}) func(*response.NormalResponse) (interface{}, error) {
+func jsonExtractor(v any) func(*response.NormalResponse) (any, error) {
 	if v == nil {
 		// json unmarshal expects a pointer
-		v = &map[string]interface{}{}
+		v = &map[string]any{}
 	}
-	return func(resp *response.NormalResponse) (interface{}, error) {
+	return func(resp *response.NormalResponse) (any, error) {
 		contentType := resp.Header().Get("Content-Type")
 		if !strings.Contains(contentType, "json") {
 			return nil, fmt.Errorf("unexpected content type from upstream. expected JSON, got %v", contentType)
@@ -199,12 +199,12 @@ func jsonExtractor(v interface{}) func(*response.NormalResponse) (interface{}, e
 	}
 }
 
-func messageExtractor(resp *response.NormalResponse) (interface{}, error) {
+func messageExtractor(resp *response.NormalResponse) (any, error) {
 	return map[string]string{"message": string(resp.Body())}, nil
 }
 
 // ErrorResp creates a response with a visible error
-func ErrResp(status int, err error, msg string, args ...interface{}) *response.NormalResponse {
+func ErrResp(status int, err error, msg string, args ...any) *response.NormalResponse {
 	if msg != "" {
 		formattedMsg := fmt.Sprintf(msg, args...)
 		err = fmt.Errorf("%s: %w", formattedMsg, err)

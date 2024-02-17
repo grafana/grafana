@@ -19,12 +19,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fake_ds "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
@@ -56,7 +57,7 @@ func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 		URL:   fakeAM.Server.URL,
 		OrgID: ruleKey.OrgID,
 		Type:  datasources.DS_ALERTMANAGER,
-		JsonData: simplejson.NewFromAny(map[string]interface{}{
+		JsonData: simplejson.NewFromAny(map[string]any{
 			"handleGrafanaManagedAlerts": true,
 			"implementation":             "prometheus",
 		}),
@@ -84,7 +85,7 @@ func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 		alerts.PostableAlerts = append(alerts.PostableAlerts, alert)
 	}
 
-	alertsRouter.Send(ruleKey, alerts)
+	alertsRouter.Send(context.Background(), ruleKey, alerts)
 
 	// Eventually, our Alertmanager should have received at least one alert.
 	assertAlertsDelivered(t, fakeAM, expected)
@@ -126,7 +127,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 		URL:   fakeAM.Server.URL,
 		OrgID: ruleKey1.OrgID,
 		Type:  datasources.DS_ALERTMANAGER,
-		JsonData: simplejson.NewFromAny(map[string]interface{}{
+		JsonData: simplejson.NewFromAny(map[string]any{
 			"handleGrafanaManagedAlerts": true,
 			"implementation":             "prometheus",
 		}),
@@ -153,7 +154,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 		URL:   fakeAM.Server.URL,
 		OrgID: ruleKey2.OrgID,
 		Type:  datasources.DS_ALERTMANAGER,
-		JsonData: simplejson.NewFromAny(map[string]interface{}{
+		JsonData: simplejson.NewFromAny(map[string]any{
 			"handleGrafanaManagedAlerts": true,
 			"implementation":             "prometheus",
 		}),
@@ -188,8 +189,8 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 		alerts2.PostableAlerts = append(alerts2.PostableAlerts, alert)
 	}
 
-	alertsRouter.Send(ruleKey1, alerts1)
-	alertsRouter.Send(ruleKey2, alerts2)
+	alertsRouter.Send(context.Background(), ruleKey1, alerts1)
+	alertsRouter.Send(context.Background(), ruleKey2, alerts2)
 
 	assertAlertsDelivered(t, fakeAM, expected)
 
@@ -199,7 +200,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 		URL:   fakeAM2.Server.URL,
 		OrgID: ruleKey2.OrgID,
 		Type:  datasources.DS_ALERTMANAGER,
-		JsonData: simplejson.NewFromAny(map[string]interface{}{
+		JsonData: simplejson.NewFromAny(map[string]any{
 			"handleGrafanaManagedAlerts": true,
 			"implementation":             "prometheus",
 		}),
@@ -286,7 +287,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 		URL:   fakeAM.Server.URL,
 		OrgID: ruleKey.OrgID,
 		Type:  datasources.DS_ALERTMANAGER,
-		JsonData: simplejson.NewFromAny(map[string]interface{}{
+		JsonData: simplejson.NewFromAny(map[string]any{
 			"handleGrafanaManagedAlerts": true,
 			"implementation":             "prometheus",
 		}),
@@ -314,7 +315,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 		expected = append(expected, &alert)
 		alerts.PostableAlerts = append(alerts.PostableAlerts, alert)
 	}
-	alertsRouter.Send(ruleKey, alerts)
+	alertsRouter.Send(context.Background(), ruleKey, alerts)
 
 	// Eventually, our Alertmanager should have received at least one alert.
 	assertAlertsDelivered(t, fakeAM, expected)
@@ -346,11 +347,11 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 	assertAlertmanagersStatusForOrg(t, alertsRouter, ruleKey.OrgID, 1, 0)
 	require.Equal(t, models.InternalAlertmanager, alertsRouter.sendAlertsTo[ruleKey.OrgID])
 
-	alertsRouter.Send(ruleKey, alerts)
+	alertsRouter.Send(context.Background(), ruleKey, alerts)
 
 	am, err := moa.AlertmanagerFor(ruleKey.OrgID)
 	require.NoError(t, err)
-	actualAlerts, err := am.GetAlerts(true, true, true, nil, "")
+	actualAlerts, err := am.GetAlerts(context.Background(), true, true, true, nil, "")
 	require.NoError(t, err)
 	require.Len(t, actualAlerts, len(expected))
 }
@@ -405,12 +406,12 @@ func createMultiOrgAlertmanager(t *testing.T, orgs []int64) *notifier.MultiOrgAl
 	}
 
 	cfgStore := notifier.NewFakeConfigStore(t, make(map[int64]*models.AlertConfiguration))
-	kvStore := notifier.NewFakeKVStore(t)
+	kvStore := fakes.NewFakeKVStore(t)
 	registry := prometheus.NewPedanticRegistry()
 	m := metrics.NewNGAlert(registry)
 	secretsService := secretsManager.SetupTestService(t, fake_secrets.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
-	moa, err := notifier.NewMultiOrgAlertmanager(cfg, cfgStore, &orgStore, kvStore, provisioning.NewFakeProvisioningStore(), decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	moa, err := notifier.NewMultiOrgAlertmanager(cfg, cfgStore, orgStore, kvStore, fakes.NewFakeProvisioningStore(), decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService, &featuremgmt.FeatureManager{})
 	require.NoError(t, err)
 	require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
 	require.Eventually(t, func() bool {
@@ -566,7 +567,7 @@ func TestAlertManagers_buildRedactedAMs(t *testing.T) {
 		amUrls   []string
 		errCalls int
 		errLog   string
-		errCtx   []interface{}
+		errCtx   []any
 		expected []string
 	}{
 		{
@@ -589,10 +590,10 @@ func TestAlertManagers_buildRedactedAMs(t *testing.T) {
 
 	for _, tt := range tc {
 		t.Run(tt.name, func(t *testing.T) {
-			var cfgs []externalAMcfg
+			var cfgs []ExternalAMcfg
 			for _, url := range tt.amUrls {
-				cfgs = append(cfgs, externalAMcfg{
-					amURL: url,
+				cfgs = append(cfgs, ExternalAMcfg{
+					URL: url,
 				})
 			}
 			require.Equal(t, tt.expected, buildRedactedAMs(&fakeLogger, cfgs, tt.orgId))

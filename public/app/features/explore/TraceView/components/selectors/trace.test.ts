@@ -37,7 +37,7 @@ describe('getTraceSpanIdsAsTree()', () => {
     const tree = traceSelectors.getTraceSpanIdsAsTree(generatedTrace);
     const spanMap = traceSelectors.getTraceSpansAsMap(generatedTrace);
 
-    tree.walk((value: string | number | undefined, node: TreeNode) => {
+    tree.walk((value: string, node: TreeNode<string>) => {
       const expectedParentValue = value === traceSelectors.TREE_ROOT_ID ? null : value;
       node.children.forEach((childNode) => {
         expect(getSpanParentId(spanMap.get(childNode.value))).toBe(expectedParentValue);

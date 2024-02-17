@@ -31,14 +31,23 @@ import {
   SupplementaryQueryOptions,
   toUtc,
   AnnotationEvent,
-  FieldType,
+  DataSourceWithToggleableQueryFiltersSupport,
+  QueryFilterOptions,
+  ToggleFilterAction,
+  DataSourceGetTagValuesOptions,
+  AdHocVariableFilter,
+  DataSourceWithQueryModificationSupport,
+  AdHocVariableModel,
+  TypedVariableModel,
 } from '@grafana/data';
-import { DataSourceWithBackend, getDataSourceSrv, config, BackendSrvRequest } from '@grafana/runtime';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-
-import { queryLogsSample, queryLogsVolume } from '../../../features/logs/logsModel';
-import { getLogLevelFromKey } from '../../../features/logs/utils';
+import {
+  DataSourceWithBackend,
+  getDataSourceSrv,
+  config,
+  BackendSrvRequest,
+  TemplateSrv,
+  getTemplateSrv,
+} from '@grafana/runtime';
 
 import { IndexPattern, intervalMap } from './IndexPattern';
 import LanguageProvider from './LanguageProvider';
@@ -53,7 +62,13 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { isMetricAggregationWithMeta } from './guards';
-import { addFilterToQuery, escapeFilter, queryHasFilter, removeFilterFromQuery } from './modifyQuery';
+import {
+  addAddHocFilter,
+  addFilterToQuery,
+  addStringFilterToQuery,
+  queryHasFilter,
+  removeFilterFromQuery,
+} from './modifyQuery';
 import { trackAnnotationQuery, trackQuery } from './tracking';
 import {
   Logs,
@@ -90,7 +105,9 @@ export class ElasticDatasource
   implements
     DataSourceWithLogsContextSupport,
     DataSourceWithQueryImportSupport<ElasticsearchQuery>,
-    DataSourceWithSupplementaryQueriesSupport<ElasticsearchQuery>
+    DataSourceWithSupplementaryQueriesSupport<ElasticsearchQuery>,
+    DataSourceWithToggleableQueryFiltersSupport<ElasticsearchQuery>,
+    DataSourceWithQueryModificationSupport<ElasticsearchQuery>
 {
   basicAuth?: string;
   withCredentials?: boolean;
@@ -110,7 +127,6 @@ export class ElasticDatasource
   languageProvider: LanguageProvider;
   includeFrozen: boolean;
   isProxyAccess: boolean;
-  timeSrv: TimeSrv;
   databaseVersion: SemVer | null;
   legacyQueryRunner: LegacyQueryRunner;
 
@@ -124,7 +140,7 @@ export class ElasticDatasource
     this.url = instanceSettings.url!;
     this.name = instanceSettings.name;
     this.isProxyAccess = instanceSettings.access === 'proxy';
-    const settingsData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
+    const settingsData = instanceSettings.jsonData || {};
 
     this.index = settingsData.index ?? instanceSettings.database ?? '';
     this.timeField = settingsData.timeField;
@@ -153,7 +169,6 @@ export class ElasticDatasource
       this.logLevelField = undefined;
     }
     this.languageProvider = new LanguageProvider(this);
-    this.timeSrv = getTimeSrv();
     this.legacyQueryRunner = new LegacyQueryRunner(this, this.templateSrv);
   }
 
@@ -178,17 +193,24 @@ export class ElasticDatasource
    *
    * When multiple indices span the provided time range, the request is sent starting from the newest index,
    * and then going backwards until an index is found.
-   *
-   * @param url the url to query the index on, for example `/_mapping`.
    */
-
-  private requestAllIndices(url: string, range = getDefaultTimeRange()): Observable<any> {
+  private requestAllIndices(range = getDefaultTimeRange()) {
     let indexList = this.indexPattern.getIndexList(range.from, range.to);
     if (!Array.isArray(indexList)) {
       indexList = [this.indexPattern.getIndexForToday()];
     }
 
-    const indexUrlList = indexList.map((index) => index + url);
+    const url = '_mapping';
+
+    const indexUrlList = indexList.map((index) => {
+      // make sure `index` does not end with a slash
+      index = index.replace(/\/$/, '');
+      if (index === '') {
+        return url;
+      }
+
+      return `${index}/${url}`;
+    });
 
     const maxTraversals = 7; // do not go beyond one week (for a daily pattern)
     const listLen = indexUrlList.length;
@@ -240,10 +262,21 @@ export class ElasticDatasource
     );
   }
 
-  private prepareAnnotationRequest(options: { annotation: ElasticsearchAnnotationQuery; range: TimeRange }) {
+  private prepareAnnotationRequest(options: {
+    annotation: ElasticsearchAnnotationQuery;
+    // Should be DashboardModel but cannot import that here from the main app. This is a temporary solution as we need to move from deprecated annotations.
+    dashboard: { getVariables: () => TypedVariableModel[] };
+    range: TimeRange;
+  }) {
     const annotation = options.annotation;
     const timeField = annotation.timeField || '@timestamp';
     const timeEndField = annotation.timeEndField || null;
+    const dashboard = options.dashboard;
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const adhocVariables = dashboard.getVariables().filter((v) => v.type === 'adhoc') as AdHocVariableModel[];
+    const annotationRelatedVariables = adhocVariables.filter((v) => v.datasource?.uid === annotation.datasource.uid);
+    const filters = annotationRelatedVariables.map((v) => v.filters).flat();
 
     // the `target.query` is the "new" location for the query.
     // normally we would write this code as
@@ -276,6 +309,8 @@ export class ElasticDatasource
     }
 
     const queryInterpolated = this.interpolateLuceneQuery(queryString);
+    const finalQuery = this.addAdHocFilters(queryInterpolated, filters);
+
     const query: {
       bool: { filter: Array<Record<string, Record<string, string | number | Array<{ range: RangeMap }>>>> };
     } = {
@@ -291,10 +326,10 @@ export class ElasticDatasource
       },
     };
 
-    if (queryInterpolated) {
+    if (finalQuery) {
       query.bool.filter.push({
         query_string: {
-          query: queryInterpolated,
+          query: finalQuery,
         },
       });
     }
@@ -395,8 +430,12 @@ export class ElasticDatasource
     return this.templateSrv.replace(queryString, scopedVars, 'lucene');
   }
 
-  interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars | {}): ElasticsearchQuery[] {
-    return queries.map((q) => this.applyTemplateVariables(q, scopedVars));
+  interpolateVariablesInQueries(
+    queries: ElasticsearchQuery[],
+    scopedVars: ScopedVars,
+    filters?: AdHocVariableFilter[]
+  ): ElasticsearchQuery[] {
+    return queries.map((q) => this.applyTemplateVariables(q, scopedVars, filters));
   }
 
   async testDatasource() {
@@ -488,10 +527,6 @@ export class ElasticDatasource
     return text;
   }
 
-  showContextToggle(): boolean {
-    return true;
-  }
-
   getLogRowContext = async (row: LogRowModel, options?: LogRowContextOptions): Promise<{ data: DataFrame[] }> => {
     const { enableElasticsearchBackendQuerying } = config.featureToggles;
     if (enableElasticsearchBackendQuerying) {
@@ -514,13 +549,15 @@ export class ElasticDatasource
     }
   };
 
-  getDataProvider(
+  /**
+   * Implemented for DataSourceWithSupplementaryQueriesSupport.
+   * It generates a DataQueryRequest for a specific supplementary query type.
+   * @returns A DataQueryRequest for the supplementary queries or undefined if not supported.
+   */
+  getSupplementaryRequest(
     type: SupplementaryQueryType,
     request: DataQueryRequest<ElasticsearchQuery>
-  ): Observable<DataQueryResponse> | undefined {
-    if (!this.getSupportedSupplementaryQueryTypes().includes(type)) {
-      return undefined;
-    }
+  ): DataQueryRequest<ElasticsearchQuery> | undefined {
     switch (type) {
       case SupplementaryQueryType.LogsVolume:
         return this.getLogsVolumeDataProvider(request);
@@ -536,10 +573,6 @@ export class ElasticDatasource
   }
 
   getSupplementaryQuery(options: SupplementaryQueryOptions, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
-    if (!this.getSupportedSupplementaryQueryTypes().includes(options.type)) {
-      return undefined;
-    }
-
     let isQuerySuitable = false;
 
     switch (options.type) {
@@ -611,7 +644,9 @@ export class ElasticDatasource
     }
   }
 
-  getLogsVolumeDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
+  private getLogsVolumeDataProvider(
+    request: DataQueryRequest<ElasticsearchQuery>
+  ): DataQueryRequest<ElasticsearchQuery> | undefined {
     const logsVolumeRequest = cloneDeep(request);
     const targets = logsVolumeRequest.targets
       .map((target) => this.getSupplementaryQuery({ type: SupplementaryQueryType.LogsVolume }, target))
@@ -621,18 +656,12 @@ export class ElasticDatasource
       return undefined;
     }
 
-    return queryLogsVolume(
-      this,
-      { ...logsVolumeRequest, targets },
-      {
-        range: request.range,
-        targets: request.targets,
-        extractLevel,
-      }
-    );
+    return { ...logsVolumeRequest, targets };
   }
 
-  getLogsSampleDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
+  private getLogsSampleDataProvider(
+    request: DataQueryRequest<ElasticsearchQuery>
+  ): DataQueryRequest<ElasticsearchQuery> | undefined {
     const logsSampleRequest = cloneDeep(request);
     const targets = logsSampleRequest.targets;
     const queries = targets.map((query) => {
@@ -643,7 +672,7 @@ export class ElasticDatasource
     if (!elasticQueries.length) {
       return undefined;
     }
-    return queryLogsSample(this, { ...logsSampleRequest, targets: elasticQueries });
+    return { ...logsSampleRequest, targets: elasticQueries };
   }
 
   query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
@@ -691,7 +720,7 @@ export class ElasticDatasource
       nested: 'nested',
       histogram: 'number',
     };
-    return this.requestAllIndices('/_mapping', range).pipe(
+    return this.requestAllIndices(range).pipe(
       map((result) => {
         const shouldAddField = (obj: any, key: string) => {
           if (this.isMetadataField(key)) {
@@ -828,9 +857,8 @@ export class ElasticDatasource
     return lastValueFrom(this.getFields());
   }
 
-  getTagValues(options: { key: string }) {
-    const range = this.timeSrv.timeRange();
-    return lastValueFrom(this.getTerms({ field: options.key }, range));
+  getTagValues(options: DataSourceGetTagValuesOptions) {
+    return lastValueFrom(this.getTerms({ field: options.key }, options.timeRange));
   }
 
   targetContainsTemplate(target: ElasticsearchQuery) {
@@ -892,85 +920,84 @@ export class ElasticDatasource
     return false;
   }
 
-  modifyQuery(query: ElasticsearchQuery, action: QueryFixAction): ElasticsearchQuery {
-    if (!action.options) {
-      return query;
-    }
-
+  toggleQueryFilter(query: ElasticsearchQuery, filter: ToggleFilterAction): ElasticsearchQuery {
     let expression = query.query ?? '';
-    if (config.featureToggles.elasticToggleableFilters) {
-      switch (action.type) {
-        case 'ADD_FILTER': {
-          // This gives the user the ability to toggle a filter on and off.
-          expression = queryHasFilter(expression, action.options.key, action.options.value)
-            ? removeFilterFromQuery(expression, action.options.key, action.options.value)
-            : addFilterToQuery(expression, action.options.key, action.options.value);
-          break;
-        }
-        case 'ADD_FILTER_OUT': {
-          // If the opposite filter is present, remove it before adding the new one.
-          if (queryHasFilter(expression, action.options.key, action.options.value)) {
-            expression = removeFilterFromQuery(expression, action.options.key, action.options.value);
-          }
-          expression = addFilterToQuery(expression, action.options.key, action.options.value, '-');
-          break;
-        }
+    switch (filter.type) {
+      case 'FILTER_FOR': {
+        // This gives the user the ability to toggle a filter on and off.
+        expression = queryHasFilter(expression, filter.options.key, filter.options.value)
+          ? removeFilterFromQuery(expression, filter.options.key, filter.options.value)
+          : addFilterToQuery(expression, filter.options.key, filter.options.value);
+        break;
       }
-    } else {
-      // Legacy behavior
-      switch (action.type) {
-        case 'ADD_FILTER': {
-          expression = addFilterToQuery(expression, action.options.key, action.options.value);
-          break;
+      case 'FILTER_OUT': {
+        // If the opposite filter is present, remove it before adding the new one.
+        if (queryHasFilter(expression, filter.options.key, filter.options.value)) {
+          expression = removeFilterFromQuery(expression, filter.options.key, filter.options.value);
         }
-        case 'ADD_FILTER_OUT': {
-          expression = addFilterToQuery(expression, action.options.key, action.options.value, '-');
-          break;
-        }
+        expression = addFilterToQuery(expression, filter.options.key, filter.options.value, '-');
+        break;
       }
     }
 
     return { ...query, query: expression };
   }
 
-  addAdHocFilters(query: string) {
-    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
-    if (adhocFilters.length === 0) {
+  queryHasFilter(query: ElasticsearchQuery, options: QueryFilterOptions): boolean {
+    let expression = query.query ?? '';
+    return queryHasFilter(expression, options.key, options.value);
+  }
+
+  modifyQuery(query: ElasticsearchQuery, action: QueryFixAction): ElasticsearchQuery {
+    if (!action.options) {
       return query;
     }
-    const esFilters = adhocFilters.map((filter) => {
-      let { key, operator, value } = filter;
-      if (!key || !value) {
-        return;
+
+    let expression = query.query ?? '';
+    switch (action.type) {
+      case 'ADD_FILTER': {
+        expression = addFilterToQuery(expression, action.options.key, action.options.value);
+        break;
       }
-      /**
-       * Keys and values in ad hoc filters may contain characters such as
-       * colons, which needs to be escaped.
-       */
-      key = escapeFilter(key);
-      switch (operator) {
-        case '=':
-          return `${key}:"${value}"`;
-        case '!=':
-          return `-${key}:"${value}"`;
-        case '=~':
-          return `${key}:/${value}/`;
-        case '!~':
-          return `-${key}:/${value}/`;
-        case '>':
-          return `${key}:>${value}`;
-        case '<':
-          return `${key}:<${value}`;
+      case 'ADD_FILTER_OUT': {
+        expression = addFilterToQuery(expression, action.options.key, action.options.value, '-');
+        break;
       }
-      return;
+      case 'ADD_STRING_FILTER': {
+        expression = addStringFilterToQuery(expression, action.options.value);
+        break;
+      }
+      case 'ADD_STRING_FILTER_OUT': {
+        expression = addStringFilterToQuery(expression, action.options.value, false);
+        break;
+      }
+    }
+
+    return { ...query, query: expression };
+  }
+
+  getSupportedQueryModifications() {
+    return ['ADD_FILTER', 'ADD_FILTER_OUT', 'ADD_STRING_FILTER', 'ADD_STRING_FILTER_OUT'];
+  }
+
+  addAdHocFilters(query: string, adhocFilters?: AdHocVariableFilter[]) {
+    if (!adhocFilters) {
+      return query;
+    }
+    let finalQuery = query;
+    adhocFilters.forEach((filter) => {
+      finalQuery = addAddHocFilter(finalQuery, filter);
     });
 
-    const finalQuery = [query, ...esFilters].filter((f) => f).join(' AND ');
     return finalQuery;
   }
 
   // Used when running queries through backend
-  applyTemplateVariables(query: ElasticsearchQuery, scopedVars: ScopedVars): ElasticsearchQuery {
+  applyTemplateVariables(
+    query: ElasticsearchQuery,
+    scopedVars: ScopedVars,
+    filters?: AdHocVariableFilter[]
+  ): ElasticsearchQuery {
     // We need a separate interpolation format for lucene queries, therefore we first interpolate any
     // lucene query string and then everything else
     const interpolateBucketAgg = (bucketAgg: BucketAggregation): BucketAggregation => {
@@ -993,7 +1020,7 @@ export class ElasticDatasource
     const expandedQuery = {
       ...query,
       datasource: this.getRef(),
-      query: this.addAdHocFilters(this.interpolateLuceneQuery(query.query || '', scopedVars)),
+      query: this.addAdHocFilters(this.interpolateLuceneQuery(query.query || '', scopedVars), filters),
       bucketAggs: query.bucketAggs?.map(interpolateBucketAgg),
     };
 
@@ -1155,10 +1182,4 @@ function createContextTimeRange(rowTimeEpochMs: number, direction: string, inter
       };
     }
   }
-}
-
-function extractLevel(dataFrame: DataFrame): LogLevel {
-  const valueField = dataFrame.fields.find((f) => f.type === FieldType.number);
-  const name = valueField?.labels?.['level'] ?? '';
-  return getLogLevelFromKey(name);
 }

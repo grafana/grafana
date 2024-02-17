@@ -1,9 +1,9 @@
-import uPlot, { Cursor, Series } from 'uplot';
+import uPlot, { Series } from 'uplot';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
-import { VisibilityMode, TimelineValueAlignment } from '@grafana/schema';
-import { FIXED_UNIT } from '@grafana/ui/src/components/GraphNG/GraphNG';
+import { TimelineValueAlignment, VisibilityMode } from '@grafana/schema';
+import { FIXED_UNIT } from '@grafana/ui';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
 import { pointWithin, Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree';
 import { FieldConfig as StateTimeLineFieldConfig } from 'app/plugins/panel/state-timeline/panelcfg.gen';
@@ -55,6 +55,7 @@ export interface TimelineCoreOptions {
   getFieldConfig: (seriesIdx: number) => StateTimeLineFieldConfig | StatusHistoryFieldConfig;
   onHover: (seriesIdx: number, valueIdx: number, rect: Rect) => void;
   onLeave: () => void;
+  hoverMulti: boolean;
 }
 
 /**
@@ -79,19 +80,10 @@ export function getConfig(opts: TimelineCoreOptions) {
     getFieldConfig,
     onHover,
     onLeave,
+    hoverMulti,
   } = opts;
 
   let qt: Quadtree;
-
-  const hoverMarks = Array(numSeries)
-    .fill(null)
-    .map(() => {
-      let mark = document.createElement('div');
-      mark.classList.add('bar-mark');
-      mark.style.position = 'absolute';
-      mark.style.background = 'rgba(255,255,255,0.2)';
-      return mark;
-    });
 
   // Needed for to calculate text positions
   let boxRectsBySeries: TimelineBoxRect[][];
@@ -104,6 +96,7 @@ export function getConfig(opts: TimelineCoreOptions) {
 
   const font = `500 ${Math.round(12 * devicePixelRatio)}px ${theme.typography.fontFamily}`;
   const hovered: Array<Rect | null> = Array(numSeries).fill(null);
+  let hoveredAtCursor: Rect | null = null;
 
   const size = [colWidth, Infinity];
   const gapFactor = 1 - size[0];
@@ -142,10 +135,8 @@ export function getConfig(opts: TimelineCoreOptions) {
     value: number | null,
     discrete: boolean
   ) {
-    // do not render super small boxes
-    if (boxWidth < 1) {
-      return;
-    }
+    // clamp width to allow small boxes to be rendered
+    boxWidth = Math.max(1, boxWidth);
 
     const valueColor = getValueColor(seriesIdx + 1, value);
     const fieldConfig = getFieldConfig(seriesIdx);
@@ -366,7 +357,6 @@ export function getConfig(opts: TimelineCoreOptions) {
         };
 
   const init = (u: uPlot) => {
-    let over = u.over;
     let chars = '';
     for (let i = 32; i <= 126; i++) {
       chars += String.fromCharCode(i);
@@ -376,9 +366,8 @@ export function getConfig(opts: TimelineCoreOptions) {
     // be a bit more conservtive to prevent overlap
     pxPerChar += 2.5;
 
-    over.style.overflow = 'hidden';
-    hoverMarks.forEach((m) => {
-      over.appendChild(m);
+    u.root.querySelectorAll<HTMLDivElement>('.u-cursor-pt').forEach((el) => {
+      el.style.borderRadius = '0';
     });
   };
 
@@ -395,112 +384,79 @@ export function getConfig(opts: TimelineCoreOptions) {
     });
   };
 
-  function setHoverMark(i: number, o: Rect | null) {
-    let h = hoverMarks[i];
+  function setHovered(cx: number, cy: number, cys: number[]) {
+    hovered.fill(null);
+    hoveredAtCursor = null;
 
-    let pxRatio = uPlot.pxRatio;
-
-    if (o) {
-      h.style.display = '';
-      h.style.left = round(o.x / pxRatio) + 'px';
-      h.style.top = round(o.y / pxRatio) + 'px';
-      h.style.width = round(o.w / pxRatio) + 'px';
-      h.style.height = round(o.h / pxRatio) + 'px';
-    } else {
-      h.style.display = 'none';
+    if (cx < 0) {
+      return;
     }
 
-    hovered[i] = o;
+    for (let i = 0; i < cys.length; i++) {
+      let cy2 = cys[i];
+
+      qt.get(cx, cy2, 1, 1, (o) => {
+        if (pointWithin(cx, cy2, o.x, o.y, o.x + o.w, o.y + o.h)) {
+          hovered[o.sidx] = o;
+
+          if (Math.abs(cy - cy2) <= o.h / 2) {
+            hoveredAtCursor = o;
+          }
+        }
+      });
+    }
   }
 
-  let hoveredAtCursor: Rect | undefined;
-
-  function hoverMulti(cx: number, cy: number) {
-    let foundAtCursor: Rect | undefined;
-
-    for (let i = 0; i < numSeries; i++) {
-      let found: Rect | undefined;
-
-      if (cx >= 0) {
-        let cy2 = yMids[i];
-
-        qt.get(cx, cy2, 1, 1, (o) => {
-          if (pointWithin(cx, cy2, o.x, o.y, o.x + o.w, o.y + o.h)) {
-            found = o;
-
-            if (Math.abs(cy - cy2) <= o.h / 2) {
-              foundAtCursor = o;
+  const cursor: uPlot.Cursor = {
+    x: mode === TimelineMode.Changes,
+    y: false,
+    dataIdx: (u, seriesIdx) => {
+      if (seriesIdx === 1) {
+        // if quadtree is empty, fill it
+        if (qt.o.length === 0 && qt.q == null) {
+          for (const seriesRects of boxRectsBySeries) {
+            for (const rect of seriesRects) {
+              rect && qt.add(rect);
             }
           }
-        });
-      }
-
-      if (found) {
-        if (found !== hovered[i]) {
-          setHoverMark(i, found);
         }
-      } else if (hovered[i] != null) {
-        setHoverMark(i, null);
-      }
-    }
 
-    if (foundAtCursor) {
-      if (foundAtCursor !== hoveredAtCursor) {
-        hoveredAtCursor = foundAtCursor;
-        onHover(foundAtCursor.sidx, foundAtCursor.didx, foundAtCursor);
-      }
-    } else if (hoveredAtCursor) {
-      hoveredAtCursor = undefined;
-      onLeave();
-    }
-  }
+        let cx = u.cursor.left! * uPlot.pxRatio;
+        let cy = u.cursor.top! * uPlot.pxRatio;
 
-  function hoverOne(cx: number, cy: number) {
-    let foundAtCursor: Rect | undefined;
+        let prevHovered = hoveredAtCursor;
 
-    qt.get(cx, cy, 1, 1, (o) => {
-      if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
-        foundAtCursor = o;
-      }
-    });
+        setHovered(cx, cy, hoverMulti ? yMids : [cy]);
 
-    if (foundAtCursor) {
-      setHoverMark(0, foundAtCursor);
-
-      if (foundAtCursor !== hoveredAtCursor) {
-        hoveredAtCursor = foundAtCursor;
-        onHover(foundAtCursor.sidx, foundAtCursor.didx, foundAtCursor);
-      }
-    } else if (hoveredAtCursor) {
-      setHoverMark(0, null);
-      hoveredAtCursor = undefined;
-      onLeave();
-    }
-  }
-
-  const doHover = mode === TimelineMode.Changes ? hoverMulti : hoverOne;
-
-  const setCursor = (u: uPlot) => {
-    let cx = round(u.cursor.left! * uPlot.pxRatio);
-    let cy = round(u.cursor.top! * uPlot.pxRatio);
-
-    // if quadtree is empty, fill it
-    if (!qt.o.length && qt.q == null) {
-      for (const seriesRects of boxRectsBySeries) {
-        for (const rect of seriesRects) {
-          rect && qt.add(rect);
+        if (hoveredAtCursor != null) {
+          if (hoveredAtCursor !== prevHovered) {
+            onHover(hoveredAtCursor.sidx, hoveredAtCursor.didx, hoveredAtCursor);
+          }
+        } else if (prevHovered != null) {
+          onLeave();
         }
       }
-    }
 
-    doHover(cx, cy);
-  };
+      return hovered[seriesIdx]?.didx;
+    },
+    focus: {
+      prox: 1e3,
+      dist: (u, seriesIdx) => (hoveredAtCursor?.sidx === seriesIdx ? 0 : Infinity),
+    },
+    points: {
+      fill: 'rgba(255,255,255,0.2)',
+      bbox: (u, seriesIdx) => {
+        let hRect = hovered[seriesIdx];
+        let isHovered = hRect != null;
 
-  // hide y crosshair & hover points
-  const cursor: Partial<Cursor> = {
-    y: false,
-    x: mode === TimelineMode.Changes,
-    points: { show: false },
+        return {
+          left: isHovered ? hRect!.x / uPlot.pxRatio : -10,
+          top: isHovered ? hRect!.y / uPlot.pxRatio : -10,
+          width: isHovered ? hRect!.w / uPlot.pxRatio : 0,
+          height: isHovered ? hRect!.h / uPlot.pxRatio : 0,
+        };
+      },
+    },
   };
 
   const yMids: number[] = Array(numSeries).fill(0);
@@ -575,7 +531,6 @@ export function getConfig(opts: TimelineCoreOptions) {
     // hooks
     init,
     drawClear,
-    setCursor,
   };
 }
 

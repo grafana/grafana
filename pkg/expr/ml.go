@@ -15,8 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/ml"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/httpresponsesender"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
 
 var (
@@ -49,6 +49,11 @@ func (m *MLNode) NodeType() NodeType {
 	return TypeMLNode
 }
 
+// NodeType returns the data pipeline node type.
+func (m *MLNode) NeedsVars() []string {
+	return []string{}
+}
+
 // Execute initializes plugin API client,  executes a ml.Command and then converts the result of the execution.
 // Returns non-empty mathexp.Results if evaluation was successful. Returns QueryError if command execution failed
 func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *Service) (r mathexp.Results, e error) {
@@ -59,7 +64,7 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 	// get the plugin configuration that will be used by client (auth, host, etc)
 	pCtx, err := s.pCtxProvider.Get(ctx, mlPluginID, m.request.User, m.request.OrgId)
 	if err != nil {
-		if errors.Is(err, plugincontext.ErrPluginNotFound) {
+		if errors.Is(err, plugins.ErrPluginNotRegistered) {
 			return result, errMLPluginDoesNotExist
 		}
 		return result, fmt.Errorf("failed to get plugin settings: %w", err)
@@ -81,7 +86,7 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 		}
 		logger.Debug("Data source queried", "responseType", responseType)
 		useDataplane := strings.HasPrefix("dataplane-", responseType)
-		s.metrics.dsRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane)).Inc()
+		s.metrics.dsRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), mlPluginID).Inc()
 	}()
 
 	// Execute the command and provide callback function for sending a request via plugin API.
@@ -111,10 +116,7 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 	})
 
 	if err != nil {
-		return result, QueryError{
-			RefID: m.refID,
-			Err:   err,
-		}
+		return result, MakeQueryError(m.refID, "ml", err)
 	}
 
 	// data is not guaranteed to be specified. In this case simulate NoData scenario
@@ -124,11 +126,7 @@ func (m *MLNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s *
 
 	dataFrames, err := getResponseFrame(data, m.refID)
 	if err != nil {
-		return mathexp.Results{}, QueryError{
-			RefID:         m.refID,
-			DatasourceUID: mlPluginID,
-			Err:           err,
-		}
+		return mathexp.Results{}, MakeQueryError(m.refID, "ml", err)
 	}
 
 	// process the response the same way DSNode does. Use plugin ID as data source type. Semantically, they are the same.
@@ -148,7 +146,7 @@ func (s *Service) buildMLNode(dp *simple.DirectedGraph, rn *rawNode, req *Reques
 
 	return &MLNode{
 		baseNode: baseNode{
-			id:    dp.NewNode().ID(),
+			id:    rn.idx,
 			refID: rn.RefID,
 		},
 		TimeRange: rn.TimeRange,

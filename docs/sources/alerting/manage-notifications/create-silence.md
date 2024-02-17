@@ -7,7 +7,7 @@ aliases:
   - ../unified-alerting/silences/
   - ../silences/
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/create-silence/
-description: Add silence alert notification
+description: Create silences to stop notifications from getting created for a specified window of time
 keywords:
   - grafana
   - alerting
@@ -71,4 +71,4 @@ To remove a silence, complete the following steps.
 
 ## Useful links
 
-[Aggregation operators](/docs/prometheus/latest/querying/operators/#aggregation-operators)
+[Aggregation operators](https://prometheus.io/docs/prometheus/latest/querying/operators/#aggregation-operators)

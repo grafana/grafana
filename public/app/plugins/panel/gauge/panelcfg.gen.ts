@@ -11,11 +11,17 @@
 import * as common from '@grafana/schema';
 
 export interface Options extends common.SingleStatBaseOptions {
+  minVizHeight: number;
+  minVizWidth: number;
   showThresholdLabels: boolean;
   showThresholdMarkers: boolean;
+  sizing: common.BarGaugeSizing;
 }
 
 export const defaultOptions: Partial<Options> = {
+  minVizHeight: 75,
+  minVizWidth: 75,
   showThresholdLabels: false,
   showThresholdMarkers: true,
+  sizing: common.BarGaugeSizing.Auto,
 };

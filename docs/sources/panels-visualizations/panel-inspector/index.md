@@ -10,7 +10,8 @@ labels:
     - enterprise
     - oss
 title: The panel inspect view
-weight: 1200
+description: Inspect the raw data of your panels to understand and troubleshoot them
+weight: 30
 ---
 
 # The panel inspect view

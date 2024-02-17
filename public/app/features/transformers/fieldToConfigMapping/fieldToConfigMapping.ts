@@ -135,7 +135,7 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
   {
     key: 'displayName',
     name: 'Display name',
-    processor: (value: any) => value.toString(),
+    processor: (value) => value.toString(),
   },
   {
     key: 'color',
@@ -247,7 +247,7 @@ export function getConfigMapHandlersIndex() {
   return configMapHandlersIndex;
 }
 
-function toNumericOrUndefined(value: any) {
+function toNumericOrUndefined(value: unknown) {
   const numeric = anyToNumber(value);
 
   if (isNaN(numeric)) {

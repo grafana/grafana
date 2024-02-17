@@ -48,7 +48,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 
 	setup := func(t *testing.T) {
 		ss := db.InitTestDB(t)
-		tagService := tagimpl.ProvideService(ss, ss.Cfg)
+		tagService := tagimpl.ProvideService(ss)
 		cfg := setting.NewCfg()
 		store = &sqlStore{
 			db:         ss,
@@ -58,7 +58,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 			features:   featuremgmt.WithFeatures(),
 		}
 
-		testDash = insertTestDashboard(t, store.db, "dashboard with alerts", 1, 0, false, "alert")
+		testDash = insertTestDashboard(t, store.db, "dashboard with alerts", 1, 0, "", false, "alert")
 		evalData, err := simplejson.NewJson([]byte(`{"test": "test"}`))
 		require.Nil(t, err)
 		items = []*models.Alert{
@@ -335,9 +335,9 @@ func TestIntegrationPausingAlerts(t *testing.T) {
 	t.Run("Given an alert", func(t *testing.T) {
 		ss := db.InitTestDB(t)
 		cfg := setting.NewCfg()
-		sqlStore := sqlStore{db: ss, cfg: cfg, log: log.New(), tagService: tagimpl.ProvideService(ss, ss.Cfg)}
+		sqlStore := sqlStore{db: ss, cfg: cfg, log: log.New(), tagService: tagimpl.ProvideService(ss), features: featuremgmt.WithFeatures()}
 
-		testDash := insertTestDashboard(t, sqlStore.db, "dashboard with alerts", 1, 0, false, "alert")
+		testDash := insertTestDashboard(t, sqlStore.db, "dashboard with alerts", 1, 0, "", false, "alert")
 		alert, err := insertTestAlert("Alerting title", "Alerting message", testDash.OrgID, testDash.ID, simplejson.New(), sqlStore)
 		require.Nil(t, err)
 
@@ -434,14 +434,14 @@ func (ss *sqlStore) pauseAllAlerts(t *testing.T, pauseState bool) error {
 	return err
 }
 
-func insertTestDashboard(t *testing.T, store db.DB, title string, orgId int64,
-	folderId int64, isFolder bool, tags ...interface{}) *dashboards.Dashboard {
+func insertTestDashboard(t *testing.T, store db.DB, title string, orgID int64,
+	folderId int64, folderUID string, isFolder bool, tags ...any) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
-		OrgID:    orgId,
-		FolderID: folderId,
-		IsFolder: isFolder,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+		OrgID:     orgID,
+		FolderUID: folderUID,
+		IsFolder:  isFolder,
+		Dashboard: simplejson.NewFromAny(map[string]any{
 			"id":    nil,
 			"title": title,
 			"tags":  tags,

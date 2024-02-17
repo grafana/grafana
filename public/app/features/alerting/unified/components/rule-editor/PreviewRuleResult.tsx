@@ -84,7 +84,7 @@ function getStyles(theme: GrafanaTheme2) {
       height: 135px;
       margin-top: ${theme.spacing(2)};
       border: 1px solid ${theme.colors.border.medium};
-      border-radius: ${theme.shape.borderRadius(1)};
+      border-radius: ${theme.shape.radius.default};
     `,
   };
 }

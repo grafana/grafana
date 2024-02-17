@@ -27,7 +27,7 @@ func TestEmailIntegrationTest(t *testing.T) {
 		t.Run("When sending reset email password", func(t *testing.T) {
 			cmd := &SendEmailCommand{
 
-				Data: map[string]interface{}{
+				Data: map[string]any{
 					"Title":         "[CRITICAL] Imaginary timeseries alert",
 					"State":         "Firing",
 					"Name":          "Imaginary timeseries alert",

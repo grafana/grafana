@@ -6,8 +6,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 )
 
-func (s *Service) getUsageStats(ctx context.Context) (map[string]interface{}, error) {
-	m := map[string]interface{}{}
+func (s *Service) getUsageStats(ctx context.Context) (map[string]any, error) {
+	m := map[string]any{}
 
 	// Add stats about auth configuration
 	authTypes := map[string]bool{}
@@ -15,7 +15,7 @@ func (s *Service) getUsageStats(ctx context.Context) (map[string]interface{}, er
 	authTypes["ldap"] = s.cfg.LDAPAuthEnabled
 	authTypes["auth_proxy"] = s.cfg.AuthProxyEnabled
 	authTypes["anonymous"] = s.cfg.AnonymousEnabled
-	authTypes["jwt"] = s.cfg.JWTAuthEnabled
+	authTypes["jwt"] = s.cfg.JWTAuth.Enabled
 	authTypes["grafana_password"] = !s.cfg.DisableLogin
 	authTypes["login_form"] = !s.cfg.DisableLoginForm
 

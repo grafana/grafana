@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/screenshot"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type State struct {
@@ -32,6 +34,9 @@ type State struct {
 
 	// StateReason is a textual description to explain why the state has its current state.
 	StateReason string
+
+	// ResultFingerprint is a hash of labels of the result before it is processed by
+	ResultFingerprint data.Fingerprint
 
 	// Results contains the result of the current and previous evaluations.
 	Results []Evaluation
@@ -267,7 +272,7 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 		resultAlerting(state, rule, result, logger)
 		// This is a special case where Alerting and Pending should also have an error and reason
 		state.Error = result.Error
-		state.StateReason = "error"
+		state.StateReason = models.StateReasonError
 	case models.ErrorErrState:
 		if state.State == eval.Error {
 			prevEndsAt := state.EndsAt
@@ -297,10 +302,11 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 				state.Annotations["Error"] = result.Error.Error()
 				// If the evaluation failed because a query returned an error then add the Ref ID and
 				// Datasource UID as labels
-				var queryError expr.QueryError
-				if errors.As(state.Error, &queryError) {
+				var utilError errutil.Error
+				if errors.As(state.Error, &utilError) &&
+					(errors.Is(state.Error, expr.QueryError) || errors.Is(state.Error, expr.ConversionError)) {
 					for _, next := range rule.Data {
-						if next.RefID == queryError.RefID {
+						if next.RefID == utilError.PublicPayload["refId"].(string) {
 							state.Labels["ref_id"] = next.RefID
 							state.Labels["datasource_uid"] = next.DatasourceUID
 							break
@@ -324,7 +330,7 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logg
 	case models.Alerting:
 		logger.Debug("Execution no data state is Alerting", "handler", "resultAlerting", "previous_handler", "resultNoData")
 		resultAlerting(state, rule, result, logger)
-		state.StateReason = models.NoData.String()
+		state.StateReason = models.StateReasonNoData
 	case models.NoData:
 		if state.State == eval.NoData {
 			prevEndsAt := state.EndsAt
@@ -353,7 +359,7 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, logg
 	case models.OK:
 		logger.Debug("Execution no data state is Normal", "handler", "resultNormal", "previous_handler", "resultNoData")
 		resultNormal(state, rule, result, logger)
-		state.StateReason = models.NoData.String()
+		state.StateReason = models.StateReasonNoData
 	default:
 		err := fmt.Errorf("unsupported no data state: %s", rule.NoDataState)
 		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
@@ -408,7 +414,10 @@ func nextEndsTime(interval int64, evaluatedAt time.Time) time.Time {
 	if intv > ResendDelay {
 		ends = intv
 	}
-	return evaluatedAt.Add(3 * ends)
+	// Allow for at least two evaluation cycles to pass before expiring, every time.
+	// Synchronized with Prometheus:
+	// https://github.com/prometheus/prometheus/blob/6a9b3263ffdba5ea8c23e6f9ef69fb7a15b566f8/rules/alerting.go#L493
+	return evaluatedAt.Add(4 * ends)
 }
 
 func (a *State) GetLabels(opts ...models.LabelOption) map[string]string {
@@ -474,8 +483,29 @@ func FormatStateAndReason(state eval.State, reason string) string {
 	return s
 }
 
+// ParseFormattedState parses a state string in the format "state (reason)"
+// and returns the state and reason separately.
+func ParseFormattedState(stateStr string) (eval.State, string, error) {
+	split := strings.Split(stateStr, " ")
+	if len(split) == 0 {
+		return -1, "", errors.New("invalid state format")
+	}
+
+	state, err := eval.ParseStateString(split[0])
+	if err != nil {
+		return -1, "", err
+	}
+
+	var reason string
+	if len(split) > 1 {
+		reason = strings.Trim(split[1], "()")
+	}
+
+	return state, reason, nil
+}
+
 // GetRuleExtraLabels returns a map of built-in labels that should be added to an alert before it is sent to the Alertmanager or its state is cached.
-func GetRuleExtraLabels(rule *models.AlertRule, folderTitle string, includeFolder bool) map[string]string {
+func GetRuleExtraLabels(l log.Logger, rule *models.AlertRule, folderTitle string, includeFolder bool) map[string]string {
 	extraLabels := make(map[string]string, 4)
 
 	extraLabels[alertingModels.NamespaceUIDLabel] = rule.NamespaceUID
@@ -484,6 +514,16 @@ func GetRuleExtraLabels(rule *models.AlertRule, folderTitle string, includeFolde
 
 	if includeFolder {
 		extraLabels[models.FolderTitleLabel] = folderTitle
+	}
+
+	if len(rule.NotificationSettings) > 0 {
+		// Notification settings are defined as a slice to workaround xorm behavior.
+		// Any items past the first should not exist so we ignore them.
+		if len(rule.NotificationSettings) > 1 {
+			ignored, _ := json.Marshal(rule.NotificationSettings[1:])
+			l.Error("Detected multiple notification settings, which is not supported. Only the first will be applied", "ignored_settings", string(ignored))
+		}
+		return mergeLabels(extraLabels, rule.NotificationSettings[0].ToLabels())
 	}
 	return extraLabels
 }

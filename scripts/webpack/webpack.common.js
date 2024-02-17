@@ -33,7 +33,16 @@ module.exports = {
         '@locker/near-membrane-dom/custom-devtools-formatter.js'
       ),
     },
-    modules: ['node_modules', path.resolve('public')],
+    modules: [
+      // default value
+      'node_modules',
+
+      // required for grafana enterprise resolution
+      path.resolve('node_modules'),
+
+      // required to for 'bare' imports (like 'app/core/utils' etc)
+      path.resolve('public'),
+    ],
     fallback: {
       buffer: false,
       fs: false,
@@ -42,7 +51,6 @@ module.exports = {
       https: false,
       string_decoder: false,
     },
-    symlinks: false,
   },
   ignoreWarnings: [/export .* was not found in/],
   stats: {
@@ -118,6 +126,13 @@ module.exports = {
       {
         test: /(unicons|mono|custom)[\\/].*\.svg$/,
         type: 'asset/source',
+      },
+      {
+        // Required for msagl library (used in Nodegraph panel) to work
+        test: /\.m?js$/,
+        resolve: {
+          fullySpecified: false,
+        },
       },
     ],
   },

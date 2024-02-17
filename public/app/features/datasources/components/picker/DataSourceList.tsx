@@ -3,8 +3,10 @@ import React, { useRef } from 'react';
 import { Observable } from 'rxjs';
 
 import { DataSourceInstanceSettings, DataSourceRef, GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { getTemplateSrv } from '@grafana/runtime';
 import { useStyles2, useTheme2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { useDatasources, useKeyboardNavigatableList, useRecentlyUsedDataSources } from '../../hooks';
 
@@ -71,7 +73,11 @@ export function DataSourceList(props: DataSourceListProps) {
   const filteredDataSources = props.filter ? dataSources.filter(props.filter) : dataSources;
 
   return (
-    <div ref={containerRef} className={cx(className, styles.container)} data-testid="data-sources-list">
+    <div
+      ref={containerRef}
+      className={cx(className, styles.container)}
+      data-testid={selectors.components.DataSourcePicker.dataSourceList}
+    >
       {filteredDataSources.length === 0 && (
         <EmptyState className={styles.emptyState} onClickCTA={onClickEmptyStateCTA} />
       )}
@@ -98,7 +104,9 @@ function EmptyState({ className, onClickCTA }: { className?: string; onClickCTA?
   const styles = useStyles2(getEmptyStateStyles);
   return (
     <div className={cx(className, styles.container)}>
-      <p className={styles.message}>No data sources found</p>
+      <p className={styles.message}>
+        <Trans i18nKey="data-source-picker.list.no-data-source-message">No data sources found</Trans>
+      </p>
       <AddNewDataSourceButton onClick={onClickCTA} />
     </div>
   );

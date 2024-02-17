@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useState } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { DisplayValue, formattedValueToString } from '@grafana/data';
@@ -12,22 +12,29 @@ import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
 import { TableStyles } from './styles';
-import { TableCellProps, TableFieldOptions, CustomCellRendererProps, TableCellOptions } from './types';
+import { TableCellProps, CustomCellRendererProps, TableCellOptions } from './types';
 import { getCellOptions } from './utils';
 
 export const DefaultCell = (props: TableCellProps) => {
   const { field, cell, tableStyles, row, cellProps, frame } = props;
 
-  const inspectEnabled = Boolean((field.config.custom as TableFieldOptions)?.inspect);
+  const inspectEnabled = Boolean(field.config.custom?.inspect);
   const displayValue = field.display!(cell.value);
 
   const showFilters = props.onCellFilterAdded && field.config.filterable;
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
   const cellOptions = getCellOptions(field);
-  const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled);
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
+  const [hover, setHover] = useState(false);
   let value: string | ReactElement;
+
+  const onMouseLeave = () => {
+    setHover(false);
+  };
+  const onMouseEnter = () => {
+    setHover(true);
+  };
 
   if (cellOptions.type === TableCellDisplayMode.Custom) {
     const CustomCellComponent: React.ComponentType<CustomCellRendererProps> = cellOptions.cellComponent;
@@ -40,9 +47,28 @@ export const DefaultCell = (props: TableCellProps) => {
     }
   }
 
+  const isStringValue = typeof value === 'string';
+
+  const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled, isStringValue);
+
+  if (isStringValue) {
+    let justifyContent = cellProps.style?.justifyContent;
+
+    if (justifyContent === 'flex-end') {
+      cellProps.style = { ...cellProps.style, textAlign: 'right' };
+    } else if (justifyContent === 'center') {
+      cellProps.style = { ...cellProps.style, textAlign: 'center' };
+    }
+  }
+
   return (
-    <div {...cellProps} className={cellStyle}>
-      {!hasLinks && <div className={tableStyles.cellText}>{value}</div>}
+    <div
+      {...cellProps}
+      onMouseEnter={showActions ? onMouseEnter : undefined}
+      onMouseLeave={showActions ? onMouseLeave : undefined}
+      className={cellStyle}
+    >
+      {!hasLinks && (isStringValue ? `${value}` : <div className={tableStyles.cellText}>{value}</div>)}
 
       {hasLinks && (
         <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
@@ -63,7 +89,7 @@ export const DefaultCell = (props: TableCellProps) => {
         </DataLinksContextMenu>
       )}
 
-      {showActions && <CellActions {...props} previewMode="text" showFilters={showFilters} />}
+      {hover && showActions && <CellActions {...props} previewMode="text" showFilters={showFilters} />}
     </div>
   );
 };
@@ -72,7 +98,8 @@ function getCellStyle(
   tableStyles: TableStyles,
   cellOptions: TableCellOptions,
   displayValue: DisplayValue,
-  disableOverflowOnHover = false
+  disableOverflowOnHover = false,
+  isStringValue = false
 ) {
   // How much to darken elements depends upon if we're in dark mode
   const darkeningFactor = tableStyles.theme.isDark ? 1 : -0.7;
@@ -101,10 +128,14 @@ function getCellStyle(
   // If we have definied colors return those styles
   // Otherwise we return default styles
   if (textColor !== undefined || bgColor !== undefined) {
-    return tableStyles.buildCellContainerStyle(textColor, bgColor, !disableOverflowOnHover);
+    return tableStyles.buildCellContainerStyle(textColor, bgColor, !disableOverflowOnHover, isStringValue);
   }
 
-  return disableOverflowOnHover ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer;
+  if (isStringValue) {
+    return disableOverflowOnHover ? tableStyles.cellContainerTextNoOverflow : tableStyles.cellContainerText;
+  } else {
+    return disableOverflowOnHover ? tableStyles.cellContainerNoOverflow : tableStyles.cellContainer;
+  }
 }
 
 function getLinkStyle(tableStyles: TableStyles, cellOptions: TableCellOptions, targetClassName: string | undefined) {

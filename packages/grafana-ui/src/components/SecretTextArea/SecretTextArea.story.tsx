@@ -1,14 +1,11 @@
 import { StoryFn, Meta } from '@storybook/react';
 import React, { useState, ChangeEvent } from 'react';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-
 import { SecretTextArea } from './SecretTextArea';
 
 const meta: Meta<typeof SecretTextArea> = {
   title: 'Forms/SecretTextArea',
   component: SecretTextArea,
-  decorators: [withCenteredStory],
   parameters: {
     controls: {
       exclude: [

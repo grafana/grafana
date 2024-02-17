@@ -6,6 +6,8 @@ import { emptyQuery, filterQuery, newCommandQuery, sortQuery } from '../../../__
 import MonacoMock from '../../../__mocks__/monarch/Monaco';
 import TextModel from '../../../__mocks__/monarch/TextModel';
 import { ResourcesAPI } from '../../../resources/ResourcesAPI';
+import { ResourceResponse } from '../../../resources/types';
+import { LogGroup, LogGroupField } from '../../../types';
 import cloudWatchLogsLanguageDefinition from '../definition';
 import { LOGS_COMMANDS, LOGS_FUNCTION_OPERATORS, SORT_DIRECTION_KEYWORDS } from '../language';
 
@@ -18,14 +20,19 @@ jest.mock('monaco-editor/esm/vs/editor/editor.api', () => ({
 const getSuggestions = async (
   value: string,
   position: monacoTypes.IPosition,
-  variables: CustomVariableModel[] = []
+  variables: CustomVariableModel[] = [],
+  logGroups: LogGroup[] = [],
+  fields: Array<ResourceResponse<LogGroupField>> = []
 ) => {
   const setup = new LogsCompletionItemProvider(
     {
       getActualRegion: () => 'us-east-2',
     } as ResourcesAPI,
-    setupMockedTemplateService(variables)
+    setupMockedTemplateService(variables),
+    { region: 'default', logGroups }
   );
+
+  setup.resources.getLogGroupFields = jest.fn().mockResolvedValue(fields);
   const monaco = MonacoMock as Monaco;
   const provider = setup.getCompletionProvider(monaco, cloudWatchLogsLanguageDefinition);
   const { suggestions } = await provider.provideCompletionItems(
@@ -75,6 +82,18 @@ describe('LogsCompletionItemProvider', () => {
       const expectedTemplateVariableLabel = `$${logGroupNamesVariable.name}`;
       const expectedLabels = [...LOGS_COMMANDS, expectedTemplateVariableLabel];
       expect(suggestionLabels).toEqual(expect.arrayContaining(expectedLabels));
+    });
+
+    it('fetches fields when logGroups are set', async () => {
+      const suggestions = await getSuggestions(
+        sortQuery.query,
+        sortQuery.position,
+        [],
+        [{ arn: 'foo', name: 'bar' }],
+        [{ value: { name: '@field' } }]
+      );
+      const suggestionLabels = suggestions.map((s) => s.label);
+      expect(suggestionLabels).toEqual(expect.arrayContaining(['@field']));
     });
   });
 });

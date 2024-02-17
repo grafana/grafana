@@ -33,7 +33,13 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { backendSrv } from '../../../../core/services/backend_srv';
-import { logInfo, LogMessages, withPerformanceLogging } from '../Analytics';
+import {
+  logInfo,
+  LogMessages,
+  withPerformanceLogging,
+  withPromRulesMetadataLogging,
+  withRulerRulesMetadataLogging,
+} from '../Analytics';
 import {
   addAlertManagers,
   createOrUpdateSilence,
@@ -115,10 +121,11 @@ export const fetchPromRulesAction = createAsyncThunk(
   ): Promise<RuleNamespace[]> => {
     await thunkAPI.dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
 
-    const fetchRulesWithLogging = withPerformanceLogging(fetchRules, `[${rulesSourceName}] Prometheus rules loaded`, {
-      dataSourceName: rulesSourceName,
-      thunk: 'unifiedalerting/fetchPromRules',
-    });
+    const fetchRulesWithLogging = withPromRulesMetadataLogging(
+      fetchRules,
+      `[${rulesSourceName}] Prometheus rules loaded`,
+      { dataSourceName: rulesSourceName, thunk: 'unifiedalerting/fetchPromRules' }
+    );
 
     return await withSerializedError(
       fetchRulesWithLogging(rulesSourceName, filter, limitAlerts, matcher, state, identifier)
@@ -155,7 +162,7 @@ export const fetchRulerRulesAction = createAsyncThunk(
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
     const rulerConfig = getDataSourceRulerConfig(getState, rulesSourceName);
 
-    const fetchRulerRulesWithLogging = withPerformanceLogging(
+    const fetchRulerRulesWithLogging = withRulerRulesMetadataLogging(
       fetchRulerRules,
       `[${rulesSourceName}] Ruler rules loaded`,
       {
@@ -182,7 +189,7 @@ export function fetchPromAndRulerRulesAction({
   limitAlerts?: number;
   matcher?: Matcher[];
   state?: string[];
-}): ThunkResult<void> {
+}): ThunkResult<Promise<void>> {
   return async (dispatch, getState) => {
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
     const dsConfig = getDataSourceConfig(getState, rulesSourceName);
@@ -382,6 +389,8 @@ export function deleteRuleAction(
    * reload ruler rules
    */
   return async (dispatch, getState) => {
+    await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName: ruleIdentifier.ruleSourceName }));
+
     withAppEvents(
       (async () => {
         const rulerConfig = getDataSourceRulerConfig(getState, ruleIdentifier.ruleSourceName);
@@ -498,13 +507,12 @@ interface UpdateAlertManagerConfigActionOptions {
   successMessage?: string; // show toast on success
   redirectPath?: string; // where to redirect on success
   redirectSearch?: string; // additional redirect query params
-  refetch?: boolean; // refetch config on success
 }
 
 export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlertManagerConfigActionOptions, {}>(
   'unifiedalerting/updateAMConfig',
   (
-    { alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath, redirectSearch, refetch },
+    { alertManagerSourceName, oldConfig, newConfig, successMessage, redirectPath, redirectSearch },
     thunkAPI
   ): Promise<void> =>
     withAppEvents(
@@ -523,9 +531,7 @@ export const updateAlertManagerConfigAction = createAsyncThunk<void, UpdateAlert
             );
           }
           await updateAlertManagerConfig(alertManagerSourceName, addDefaultsToAlertmanagerConfig(newConfig));
-          if (refetch) {
-            thunkAPI.dispatch(alertmanagerApi.util.invalidateTags(['AlertmanagerConfiguration']));
-          }
+          thunkAPI.dispatch(alertmanagerApi.util.invalidateTags(['AlertmanagerConfiguration']));
           if (redirectPath) {
             const options = new URLSearchParams(redirectSearch ?? '');
             locationService.push(makeAMLink(redirectPath, alertManagerSourceName, options));
@@ -569,7 +575,7 @@ export const createOrUpdateSilenceAction = createAsyncThunk<void, UpdateSilenceA
         (async () => {
           await createOrUpdateSilence(alertManagerSourceName, payload);
           if (exitOnSave) {
-            locationService.push('/alerting/silences');
+            locationService.push(makeAMLink('/alerting/silences', alertManagerSourceName));
           }
         })()
       ),
@@ -604,7 +610,6 @@ export const deleteReceiverAction = (receiverName: string, alertManagerSourceNam
         oldConfig: config,
         alertManagerSourceName,
         successMessage: 'Contact point deleted.',
-        refetch: true,
       })
     );
   };
@@ -638,7 +643,6 @@ export const deleteTemplateAction = (templateName: string, alertManagerSourceNam
         oldConfig: config,
         alertManagerSourceName,
         successMessage: 'Template deleted.',
-        refetch: true,
       })
     );
   };
@@ -707,7 +711,6 @@ export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimin
                 mute_time_intervals: muteIntervals,
               },
             },
-            refetch: true,
           })
         ),
         {
@@ -742,6 +745,7 @@ interface UpdateNamespaceAndGroupOptions {
   newNamespaceName: string;
   newGroupName: string;
   groupInterval?: string;
+  folderUid?: string;
 }
 
 export const rulesInSameGroupHaveInvalidFor = (rules: RulerRuleDTO[], everyDuration: string) => {
@@ -765,13 +769,22 @@ export const updateLotexNamespaceAndGroupAction: AsyncThunk<
     return withAppEvents(
       withSerializedError(
         (async () => {
-          const { rulesSourceName, namespaceName, groupName, newNamespaceName, newGroupName, groupInterval } = options;
+          const {
+            rulesSourceName,
+            namespaceName,
+            groupName,
+            newNamespaceName,
+            newGroupName,
+            groupInterval,
+            folderUid,
+          } = options;
 
           const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, rulesSourceName);
           // fetch rules and perform sanity checks
           const rulesResult = await fetchRulerRules(rulerConfig);
 
           const existingNamespace = Boolean(rulesResult[namespaceName]);
+
           if (!existingNamespace) {
             throw new Error(`Namespace "${namespaceName}" not found.`);
           }
@@ -831,19 +844,19 @@ export const updateLotexNamespaceAndGroupAction: AsyncThunk<
                   : group
               );
             }
-            await deleteNamespace(rulerConfig, namespaceName);
+            await deleteNamespace(rulerConfig, folderUid || namespaceName);
 
             // if only modifying group...
           } else {
             // save updated group
-            await setRulerRuleGroup(rulerConfig, namespaceName, {
+            await setRulerRuleGroup(rulerConfig, folderUid || namespaceName, {
               ...existingGroup,
               name: newGroupName,
               interval: groupInterval,
             });
             // if group name was changed, delete old group
             if (newGroupName !== groupName) {
-              await deleteRulerRulesGroup(rulerConfig, namespaceName, groupName);
+              await deleteRulerRulesGroup(rulerConfig, folderUid || namespaceName, groupName);
             }
           }
 
@@ -864,6 +877,7 @@ interface UpdateRulesOrderOptions {
   namespaceName: string;
   groupName: string;
   newRules: RulerRuleDTO[];
+  folderUid: string;
 }
 
 export const updateRulesOrder = createAsyncThunk(
@@ -872,7 +886,7 @@ export const updateRulesOrder = createAsyncThunk(
     return withAppEvents(
       withSerializedError(
         (async () => {
-          const { rulesSourceName, namespaceName, groupName, newRules } = options;
+          const { rulesSourceName, namespaceName, groupName, newRules, folderUid } = options;
 
           const rulerConfig = getDataSourceRulerConfig(thunkAPI.getState, rulesSourceName);
           const rulesResult = await fetchRulerRules(rulerConfig);
@@ -888,7 +902,7 @@ export const updateRulesOrder = createAsyncThunk(
             rules: newRules,
           };
 
-          await setRulerRuleGroup(rulerConfig, namespaceName, payload);
+          await setRulerRuleGroup(rulerConfig, folderUid ?? namespaceName, payload);
 
           await thunkAPI.dispatch(fetchRulerRulesAction({ rulesSourceName }));
         })()

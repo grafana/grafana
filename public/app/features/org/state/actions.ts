@@ -8,7 +8,7 @@ type OrganizationDependencies = { getBackendSrv: typeof getBackendSrv };
 
 export function loadOrganization(
   dependencies: OrganizationDependencies = { getBackendSrv: getBackendSrv }
-): ThunkResult<any> {
+): ThunkResult<void> {
   return async (dispatch) => {
     const organizationResponse = await dependencies.getBackendSrv().get('/api/org');
     dispatch(organizationLoaded(organizationResponse));
@@ -19,7 +19,7 @@ export function loadOrganization(
 
 export function updateOrganization(
   dependencies: OrganizationDependencies = { getBackendSrv: getBackendSrv }
-): ThunkResult<any> {
+): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const organization = getStore().organization.organization;
 
@@ -33,7 +33,7 @@ export function updateOrganization(
 export function setUserOrganization(
   orgId: number,
   dependencies: OrganizationDependencies = { getBackendSrv: getBackendSrv }
-): ThunkResult<any> {
+): ThunkResult<void> {
   return async (dispatch) => {
     const organizationResponse = await dependencies.getBackendSrv().post('/api/user/using/' + orgId);
 
@@ -44,7 +44,7 @@ export function setUserOrganization(
 export function createOrganization(
   newOrg: { name: string },
   dependencies: OrganizationDependencies = { getBackendSrv: getBackendSrv }
-): ThunkResult<any> {
+): ThunkResult<void> {
   return async (dispatch) => {
     const result = await dependencies.getBackendSrv().post('/api/orgs/', newOrg);
 

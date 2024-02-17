@@ -599,7 +599,7 @@ func TestConditionsCmd(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := tt.cmd.Execute(context.Background(), time.Now(), tt.vars, tracing.NewFakeTracer())
+			res, err := tt.cmd.Execute(context.Background(), time.Now(), tt.vars, tracing.InitializeTracerForTest())
 			require.NoError(t, err)
 			require.Equal(t, tt.expected(), res)
 		})
@@ -695,7 +695,7 @@ func TestUnmarshalConditionsCmd(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var rq map[string]interface{}
+			var rq map[string]any
 
 			err := json.Unmarshal([]byte(tt.rawJSON), &rq)
 			require.NoError(t, err)

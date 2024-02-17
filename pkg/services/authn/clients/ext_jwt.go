@@ -4,17 +4,18 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/go-jose/go-jose/v3"
 	"github.com/go-jose/go-jose/v3/jwt"
-	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -172,7 +173,13 @@ func (s *ExtendedJWT) verifyRFC9068Token(ctx context.Context, rawToken string) (
 	}
 
 	var claims ExtendedJWTClaims
-	err = parsedToken.Claims(s.signingKeys.GetServerPublicKey(), &claims)
+	_, key, err := s.signingKeys.GetOrCreatePrivateKey(ctx,
+		signingkeys.ServerPrivateKeyID, jose.ES256)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get public key: %w", err)
+	}
+
+	err = parsedToken.Claims(key.Public(), &claims)
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify the signature: %w", err)
 	}

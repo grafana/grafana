@@ -25,7 +25,7 @@ Instead of hard-coding details such as server, application, and sensor names in 
 Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
 Grafana refers to such variables as template variables.
 
-For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../../dashboards/variables" >}}) and [Add and manage variables]({{< relref "../../../dashboards/variables/add-template-variables" >}}) documentation.
+For an introduction to templating and template variables, refer to the [Templating][variables] and [Add and manage variables][add-template-variables] documentation.
 
 ## Use query variables
 
@@ -52,7 +52,7 @@ For details about the metrics CloudWatch provides, refer to the [CloudWatch docu
 ### Use variables in queries
 
 Use Grafana's variable syntax to include variables in queries.
-For details, refer to the [variable syntax documentation]({{< relref "../../../dashboards/variables/variable-syntax" >}}).
+For details, refer to the [variable syntax documentation][variable-syntax].
 
 ## Use ec2_instance_attribute
 
@@ -97,3 +97,14 @@ You can select any attribute that has a single value and isn't an object or arra
 
 You can select tags by prepending the tag name with `Tags.`.
 For example, select the tag `Name` by using `Tags.Name`.
+
+{{% docs/reference %}}
+[add-template-variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
+[add-template-variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/add-template-variables"
+
+[variable-syntax]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax"
+[variable-syntax]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables/variable-syntax"
+
+[variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+{{% /docs/reference %}}

@@ -21,7 +21,7 @@ const (
 // Find retrieve records from table, condiBeans's non-empty fields
 // are conditions. beans could be []Struct, []*Struct, map[int64]Struct
 // map[int64]*Struct
-func (session *Session) Find(rowsSlicePtr interface{}, condiBean ...interface{}) error {
+func (session *Session) Find(rowsSlicePtr any, condiBean ...any) error {
 	if session.isAutoClose {
 		defer session.Close()
 	}
@@ -29,7 +29,7 @@ func (session *Session) Find(rowsSlicePtr interface{}, condiBean ...interface{})
 }
 
 // FindAndCount find the results and also return the counts
-func (session *Session) FindAndCount(rowsSlicePtr interface{}, condiBean ...interface{}) (int64, error) {
+func (session *Session) FindAndCount(rowsSlicePtr any, condiBean ...any) (int64, error) {
 	if session.isAutoClose {
 		defer session.Close()
 	}
@@ -61,7 +61,7 @@ func (session *Session) FindAndCount(rowsSlicePtr interface{}, condiBean ...inte
 	return session.Count(reflect.New(sliceElementType).Interface())
 }
 
-func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{}) error {
+func (session *Session) find(rowsSlicePtr any, condiBean ...any) error {
 	defer session.resetStatement()
 
 	if session.statement.lastError != nil {
@@ -126,7 +126,7 @@ func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{})
 	}
 
 	var sqlStr string
-	var args []interface{}
+	var args []any
 	// var err error
 	if session.statement.RawSQL == "" {
 		if len(session.statement.TableName()) <= 0 {
@@ -183,7 +183,7 @@ func (session *Session) find(rowsSlicePtr interface{}, condiBean ...interface{})
 	return session.noCacheFind(table, sliceValue, sqlStr, args...)
 }
 
-func (session *Session) noCacheFind(table *core.Table, containerValue reflect.Value, sqlStr string, args ...interface{}) error {
+func (session *Session) noCacheFind(table *core.Table, containerValue reflect.Value, sqlStr string, args ...any) error {
 	rows, err := session.queryRows(sqlStr, args...)
 	if err != nil {
 		return err
@@ -296,7 +296,7 @@ func (session *Session) noCacheFind(table *core.Table, containerValue reflect.Va
 	return rows.Err()
 }
 
-func convertPKToValue(table *core.Table, dst interface{}, pk core.PK) error {
+func convertPKToValue(table *core.Table, dst any, pk core.PK) error {
 	cols := table.PKColumns()
 	if len(cols) == 1 {
 		return convertAssign(dst, pk[0])

@@ -2,13 +2,13 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { getInstanceState } from '../state/selectors';
 import { initialVariablesState, VariablePayload, VariablesState } from '../state/types';
-import { initialVariableModelState, TextBoxVariableModel, VariableOption } from '../types';
+import { initialVariableModelState, TextBoxVariableModel } from '../types';
 
 export const initialTextBoxVariableModelState: TextBoxVariableModel = {
   ...initialVariableModelState,
   type: 'textbox',
   query: '',
-  current: {} as VariableOption,
+  current: {},
   options: [],
   originalQuery: null,
 };

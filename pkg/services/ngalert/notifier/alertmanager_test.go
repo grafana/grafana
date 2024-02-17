@@ -13,12 +13,18 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
-func setupAMTest(t *testing.T) *Alertmanager {
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
+func setupAMTest(t *testing.T) *alertmanager {
 	dir := t.TempDir()
 	cfg := &setting.Cfg{
 		DataPath: dir,
@@ -37,10 +43,10 @@ func setupAMTest(t *testing.T) *Alertmanager {
 		DashboardService: dashboards.NewFakeDashboardService(t),
 	}
 
-	kvStore := NewFakeKVStore(t)
+	kvStore := fakes.NewFakeKVStore(t)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 	decryptFn := secretsService.GetDecryptedValue
-	am, err := newAlertmanager(context.Background(), 1, cfg, s, kvStore, &NilPeer{}, decryptFn, nil, m)
+	am, err := NewAlertmanager(context.Background(), 1, cfg, s, kvStore, &NilPeer{}, decryptFn, nil, m, false)
 	require.NoError(t, err)
 	return am
 }

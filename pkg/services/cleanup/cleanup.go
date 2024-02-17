@@ -134,11 +134,12 @@ func (srv *CleanUpService) cleanUpTmpFiles(ctx context.Context) {
 	folders := []string{
 		srv.Cfg.ImagesDir,
 		srv.Cfg.CSVsDir,
+		srv.Cfg.PDFsDir,
 	}
 
 	for _, f := range folders {
 		ctx, span := srv.tracer.Start(ctx, "delete stale files in temporary directory")
-		span.SetAttributes("directory", f, attribute.Key("directory").String(f))
+		span.SetAttributes(attribute.String("directory", f))
 		srv.cleanUpTmpFolder(ctx, f)
 		span.End()
 	}

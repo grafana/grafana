@@ -32,7 +32,7 @@ export const formatValueName = (name: string): string => {
 };
 
 export const ItemLabels = ({ valueLabels, expanded }: { valueLabels: Field[]; expanded: boolean }) => {
-  const styles = useStyles2((theme) => getItemLabelsStyles(theme, expanded));
+  const styles = useStyles2(getItemLabelsStyles, expanded);
 
   return (
     <div className={styles.itemLabelsWrap}>

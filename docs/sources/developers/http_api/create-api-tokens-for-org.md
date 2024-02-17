@@ -14,11 +14,11 @@ labels:
   products:
     - enterprise
     - oss
-title: 'API Tutorial: Create API tokens and dashboards for an organization'
+title: 'API Tutorial: Create Service Account tokens and dashboards for an organization'
 weight: 150
 ---
 
-# Create API tokens and dashboards for an organization
+# Create Service Account tokens and dashboards for an organization
 
 Use the Grafana API to set up new Grafana organizations or to add dynamically generated dashboards to an existing organization.
 
@@ -27,9 +27,9 @@ Use the Grafana API to set up new Grafana organizations or to add dynamically ge
 There are two authentication methods to access the API:
 
 - Basic authentication: A Grafana Admin user can access some parts of the Grafana API through basic authentication.
-- API Tokens: All organization actions are accessed through an API Token. An API Token is associated with an organization. It can be used to create dashboards and other components specific for that organization.
+- Service Account tokens: All organization actions can be accessed through a Service Account token. A Service Account token is associated with an organization. It can be used to create dashboards and other components specific for that organization.
 
-## How to create a new organization and an API Token
+## How to create a new organization and a Service Account Token
 
 The task is to create a new organization and then add a Token that can be used by other users. In the examples below which use basic auth, the user is `admin` and the password is `admin`.
 
@@ -53,13 +53,30 @@ The task is to create a new organization and then add a Token that can be used b
    curl -X POST http://admin:admin@localhost:3000/api/user/using/<id of new org>
    ```
 
-1. [Create the API token](http://docs.grafana.org/http_api/auth/#create-api-key):
+1. [Create a Service Account]({{< relref "./serviceaccount/#create-service-account" >}}):
 
    ```bash
-   curl -X POST -H "Content-Type: application/json" -d '{"name":"apikeycurl", "role": "Admin"}' http://admin:admin@localhost:3000/api/auth/keys
+   curl -X POST -H "Content-Type: application/json" -d '{"name":"test", "role": "Admin"}' http://admin:admin@localhost:3000/api/serviceaccounts
    ```
 
-   This should return a response: `{"name":"apikeycurl","key":"eyJrIjoiR0ZXZmt1UFc0OEpIOGN5RWdUalBJTllUTk83VlhtVGwiLCJuIjoiYXBpa2V5Y3VybCIsImlkIjo2fQ=="}`.
+1. [Create a Service Account token]({{< relref "./serviceaccount/#create-service-account-tokens" >}}) for the service account created in the previous step:
+
+   ```bash
+   curl -X POST -H "Content-Type: application/json" -d '{"name":"test-token"}' http://admin:admin@localhost:3000/api/serviceaccounts/<service account id>/tokens
+   ```
+
+   This should return a response:
+
+   ```http
+   HTTP/1.1 200
+   Content-Type: application/json
+
+   {
+     "id": 7,
+     "name": "test-token",
+     "key": "eyJrIjoiVjFxTHZ6dGdPSjg5Um92MjN1RlhjMkNqYkZUbm9jYkwiLCJuIjoiZ3JhZmFuYSIsImlkIjoxfQ=="
+   }
+   ```
 
    Save the key returned here in your password manager as it is not possible to fetch again it in the future.
 

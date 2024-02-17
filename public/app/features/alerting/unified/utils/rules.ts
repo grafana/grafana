@@ -161,7 +161,8 @@ const alertStateToStateMap: Record<PromAlertingRuleState | GrafanaAlertState | A
   [AlertState.Paused]: 'warning',
   [AlertState.Alerting]: 'bad',
   [AlertState.OK]: 'good',
-  [AlertState.Pending]: 'warning',
+  // AlertState.Pending is not included because the 'pending' value is already covered by `PromAlertingRuleState.Pending`
+  // [AlertState.Pending]: 'warning',
   [AlertState.Unknown]: 'info',
 };
 
@@ -169,20 +170,16 @@ export function getFirstActiveAt(promRule?: AlertingRule) {
   if (!promRule?.alerts) {
     return null;
   }
-  return promRule.alerts.reduce(
-    (prev, alert) => {
-      const isNotNormal =
-        mapStateWithReasonToBaseState(alert.state as GrafanaAlertStateWithReason) !== GrafanaAlertState.Normal;
-      if (alert.activeAt && isNotNormal) {
-        const activeAt = new Date(alert.activeAt);
-        if (prev === null || prev.getTime() > activeAt.getTime()) {
-          return activeAt;
-        }
+  return promRule.alerts.reduce<Date | null>((prev, alert) => {
+    const isNotNormal = mapStateWithReasonToBaseState(alert.state) !== GrafanaAlertState.Normal;
+    if (alert.activeAt && isNotNormal) {
+      const activeAt = new Date(alert.activeAt);
+      if (prev === null || prev.getTime() > activeAt.getTime()) {
+        return activeAt;
       }
-      return prev;
-    },
-    null as Date | null
-  );
+    }
+    return prev;
+  }, null);
 }
 
 /**
@@ -232,8 +229,8 @@ export const getAlertInfo = (alert: RulerRuleDTO, currentEvaluation: string): Al
   if (isAlertingRulerRule(alert)) {
     return {
       alertName: alert.alert,
-      forDuration: alert.for ?? '1m',
-      evaluationsToFire: getNumberEvaluationsToStartAlerting(alert.for ?? '1m', currentEvaluation),
+      forDuration: alert.for ?? '0s',
+      evaluationsToFire: getNumberEvaluationsToStartAlerting(alert.for ?? '0s', currentEvaluation),
     };
   }
   return emptyAlert;

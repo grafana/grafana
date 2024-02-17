@@ -1,12 +1,14 @@
-import { dateTime, locationUtil, PanelModel, TimeRange, urlUtil } from '@grafana/data';
+import { dateTime, locationUtil, TimeRange, urlUtil, rangeUtil } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { createShortLink } from 'app/core/utils/shortLinks';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
+import { PanelModel } from '../../state';
+
 export interface BuildParamsArgs {
   useCurrentTimeRange: boolean;
   selectedTheme?: string;
-  panel?: PanelModel;
+  panel?: { timeFrom?: string; id: number };
   search?: string;
   range?: TimeRange;
   orgId?: number;
@@ -21,9 +23,17 @@ export function buildParams({
   orgId = config.bootData.user.orgId,
 }: BuildParamsArgs): URLSearchParams {
   const searchParams = new URLSearchParams(search);
+  const relative = panel?.timeFrom;
 
-  searchParams.set('from', String(range.from.valueOf()));
-  searchParams.set('to', String(range.to.valueOf()));
+  // Use panel's relative time if it's set
+  if (relative) {
+    const { from, to } = rangeUtil.describeTextRange(relative);
+    searchParams.set('from', from);
+    searchParams.set('to', to);
+  } else {
+    searchParams.set('from', String(range.from.valueOf()));
+    searchParams.set('to', String(range.to.valueOf()));
+  }
   searchParams.set('orgId', String(orgId));
 
   if (!useCurrentTimeRange) {
@@ -38,6 +48,13 @@ export function buildParams({
   if (panel && !searchParams.has('editPanel')) {
     searchParams.set('viewPanel', String(panel.id));
   }
+
+  // Token is unique to the authenticated identity and should not be shared with the URL,
+  // so we are stripping it from the query params as a safety measure.
+  searchParams.delete('auth_token');
+
+  // The shareView param is used to indicate that the sharing modal is open and should never be included in the URL
+  searchParams.delete('shareView');
 
   return searchParams;
 }
@@ -72,10 +89,11 @@ export function buildSoloUrl(
   useCurrentTimeRange: boolean,
   dashboardUid: string,
   selectedTheme?: string,
-  panel?: PanelModel
+  panel?: { timeFrom?: string; id: number },
+  range?: TimeRange
 ) {
   const baseUrl = buildBaseUrl();
-  const params = buildParams({ useCurrentTimeRange, selectedTheme, panel });
+  const params = buildParams({ useCurrentTimeRange, selectedTheme, panel, range });
 
   let soloUrl = baseUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
   soloUrl = soloUrl.replace(config.appSubUrl + '/d/', config.appSubUrl + '/d-solo/');
@@ -111,10 +129,11 @@ export function buildIframeHtml(
   useCurrentTimeRange: boolean,
   dashboardUid: string,
   selectedTheme?: string,
-  panel?: PanelModel
+  panel?: { timeFrom?: string; id: number },
+  range?: TimeRange
 ) {
-  let soloUrl = buildSoloUrl(useCurrentTimeRange, dashboardUid, selectedTheme, panel);
-  return '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
+  let soloUrl = buildSoloUrl(useCurrentTimeRange, dashboardUid, selectedTheme, panel, range);
+  return `<iframe src="${soloUrl}" width="450" height="200" frameborder="0"></iframe>`;
 }
 
 export function getLocalTimeZone() {
@@ -137,3 +156,16 @@ export function getLocalTimeZone() {
 
   return '&tz=' + encodeURIComponent(options.timeZone);
 }
+
+export const shareDashboardType: {
+  [key: string]: string;
+} = {
+  link: 'link',
+  snapshot: 'snapshot',
+  export: 'export',
+  embed: 'embed',
+  libraryPanel: 'library_panel',
+  pdf: 'pdf',
+  report: 'report',
+  publicDashboard: 'public_dashboard',
+};

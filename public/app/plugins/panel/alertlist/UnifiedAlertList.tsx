@@ -104,6 +104,8 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   const somePromRulesDispatched = isAsyncRequestMapSlicePartiallyDispatched(promRulesRequests);
 
+  const hideViewRuleLinkText = props.width < 320;
+
   // backwards compat for "Inactive" state filter
   useEffect(() => {
     if (props.options.stateFilter.inactive === true) {
@@ -133,18 +135,53 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     [parsedOptions.alertInstanceLabelFilter]
   );
 
+  // If the datasource is not defined we should NOT skip the query
+  // Undefined dataSourceName means that there is no datasource filter applied and we should fetch all the rules
+  const shouldFetchGrafanaRules = !dataSourceName || dataSourceName === GRAFANA_RULES_SOURCE_NAME;
+
+  //For grafana managed rules, get the result using RTK Query to avoid the need of using the redux store
+  //See https://github.com/grafana/grafana/pull/70482
+  const {
+    currentData: grafanaPromRules = [],
+    isLoading: grafanaRulesLoading,
+    refetch: refetchGrafanaPromRules,
+  } = usePrometheusRulesByNamespaceQuery(
+    {
+      limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
+      matcher: matcherList,
+      state: stateList,
+    },
+    { skip: !shouldFetchGrafanaRules }
+  );
+
   useEffect(() => {
     //we need promRules and rulerRules for getting the uid when creating the alert link in panel in case of being a rulerRule.
     if (!promRulesRequests.loading) {
       fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList });
     }
-    const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () =>
-      fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList })
-    );
+    const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () => {
+      if (shouldFetchGrafanaRules) {
+        refetchGrafanaPromRules();
+      }
+
+      if (!dataSourceName || dataSourceName !== GRAFANA_RULES_SOURCE_NAME) {
+        fetchPromAndRuler({ dispatch, limitInstances, matcherList, dataSourceName, stateList });
+      }
+    });
     return () => {
       sub?.unsubscribe();
     };
-  }, [dispatch, dashboard, matcherList, stateList, limitInstances, dataSourceName, promRulesRequests.loading]);
+  }, [
+    dispatch,
+    dashboard,
+    matcherList,
+    stateList,
+    limitInstances,
+    dataSourceName,
+    refetchGrafanaPromRules,
+    shouldFetchGrafanaRules,
+    promRulesRequests.loading,
+  ]);
 
   const handleInstancesLimit = (limit: boolean) => {
     if (limit) {
@@ -156,18 +193,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     }
   };
 
-  //For grafana managed rules, get the result using RTK Query to avoid the need of using the redux store
-  //See https://github.com/grafana/grafana/pull/70482
-  const { currentData: promRules = [], isLoading: grafanaRulesLoading } = usePrometheusRulesByNamespaceQuery(
-    {
-      limitAlerts: limitInstances ? INSTANCES_DISPLAY_LIMIT : undefined,
-      matcher: matcherList,
-      state: stateList,
-    },
-    { skip: dataSourceName !== GRAFANA_RULES_SOURCE_NAME }
-  );
-
-  const combinedRules = useCombinedRuleNamespaces(undefined, promRules);
+  const combinedRules = useCombinedRuleNamespaces(undefined, grafanaPromRules);
 
   const someRulerRulesDispatched = isAsyncRequestMapSlicePartiallyDispatched(rulerRulesRequests);
   const haveResults = isAsyncRequestMapSlicePartiallyFulfilled(promRulesRequests);
@@ -187,6 +213,10 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
 
   const noAlertsMessage = rules.length === 0 ? 'No alerts matching filters' : undefined;
 
+  const renderLoading = grafanaRulesLoading || (dispatched && loading && !haveResults);
+
+  const havePreviousResults = Object.values(promRulesRequests).some((state) => state.result);
+
   if (
     !contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
     !contextSrv.hasPermission(AccessControlAction.AlertingRuleExternalRead)
@@ -199,32 +229,36 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
       <div className={styles.container}>
-        {(grafanaRulesLoading || (dispatched && loading && !haveResults)) && <LoadingPlaceholder text="Loading..." />}
-        {noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
-        <section>
-          {props.options.viewMode === ViewMode.Stat && haveResults && (
-            <BigValue
-              width={props.width}
-              height={props.height}
-              graphMode={BigValueGraphMode.None}
-              textMode={BigValueTextMode.Auto}
-              justifyMode={BigValueJustifyMode.Auto}
-              theme={config.theme2}
-              value={{ text: `${rules.length}`, numeric: rules.length }}
-            />
-          )}
-          {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Custom && haveResults && (
-            <GroupedModeView rules={rules} options={parsedOptions} />
-          )}
-          {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && haveResults && (
-            <UngroupedModeView
-              rules={rules}
-              options={parsedOptions}
-              handleInstancesLimit={handleInstancesLimit}
-              limitInstances={limitInstances}
-            />
-          )}
-        </section>
+        {havePreviousResults && noAlertsMessage && <div className={styles.noAlertsMessage}>{noAlertsMessage}</div>}
+        {havePreviousResults && (
+          <section>
+            {props.options.viewMode === ViewMode.Stat && (
+              <BigValue
+                width={props.width}
+                height={props.height}
+                graphMode={BigValueGraphMode.None}
+                textMode={BigValueTextMode.Auto}
+                justifyMode={BigValueJustifyMode.Auto}
+                theme={config.theme2}
+                value={{ text: `${rules.length}`, numeric: rules.length }}
+              />
+            )}
+            {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Custom && (
+              <GroupedModeView rules={rules} options={parsedOptions} />
+            )}
+            {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && (
+              <UngroupedModeView
+                rules={rules}
+                options={parsedOptions}
+                handleInstancesLimit={handleInstancesLimit}
+                limitInstances={limitInstances}
+                hideViewRuleLinkText={hideViewRuleLinkText}
+              />
+            )}
+          </section>
+        )}
+        {/* loading moved here to avoid twitching  */}
+        {renderLoading && <LoadingPlaceholder text="Loading..." />}
       </div>
     </CustomScrollbar>
   );
@@ -347,7 +381,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     height: 100%;
     background: ${theme.colors.background.secondary};
     padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
     margin-bottom: ${theme.spacing(0.5)};
 
     gap: ${theme.spacing(2)};
@@ -414,5 +448,11 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   link: css`
     word-break: break-all;
     color: ${theme.colors.primary.text};
+    display: flex;
+    align-items: center;
+    gap: ${theme.spacing(1)};
+  `,
+  hidden: css`
+    display: none;
   `,
 });

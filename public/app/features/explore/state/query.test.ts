@@ -16,6 +16,7 @@ import {
   SupplementaryQueryType,
 } from '@grafana/data';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { queryLogsSample, queryLogsVolume } from 'app/features/logs/logsModel';
 import { createAsyncThunk, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
@@ -48,6 +49,8 @@ import {
 } from './query';
 import * as actions from './query';
 import { makeExplorePaneState } from './utils';
+
+jest.mock('app/features/logs/logsModel');
 
 const { testRange, defaultInitialState } = createDefaultInitialState();
 
@@ -162,11 +165,11 @@ describe('runQueries', () => {
     expect(getState().explore.panes.left!.graphResult).toBeDefined();
   });
 
-  it('should modify the request-id for all supplementary queries', () => {
+  it('should modify the request-id for all supplementary queries', async () => {
     const { dispatch, getState } = setupTests();
     setupQueryResponse(getState());
     dispatch(saveCorrelationsAction({ exploreId: 'left', correlations: [] }));
-    dispatch(runQueries({ exploreId: 'left' }));
+    await dispatch(runQueries({ exploreId: 'left' }));
 
     const state = getState().explore.panes.left!;
     expect(state.queryResponse.request?.requestId).toBe('explore_left');
@@ -241,6 +244,16 @@ describe('running queries', () => {
       cleanSupplementaryQueryDataProviderAction({ exploreId, type: SupplementaryQueryType.LogsSample }),
       cleanSupplementaryQueryAction({ exploreId, type: SupplementaryQueryType.LogsSample }),
     ]);
+  });
+  it('should cancel running query when a new query is issued', async () => {
+    const initialState = {
+      ...makeExplorePaneState(),
+    };
+    const dispatchedActions = await thunkTester(initialState)
+      .givenThunk(runQueries)
+      .whenThunkIsDispatched({ exploreId });
+
+    expect(dispatchedActions).toContainEqual(cancelQueriesAction({ exploreId }));
   });
 });
 
@@ -614,6 +627,94 @@ describe('reducer', () => {
           queryKeys: ['initialRow-0', 'mockKey-1'],
         } as unknown as ExploreItemState);
     });
+
+    describe('addQueryRow', () => {
+      it('adds a query from root datasource if root is not mixed and there are no queries', async () => {
+        const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+          ...defaultInitialState,
+          explore: {
+            ...defaultInitialState.explore,
+            panes: {
+              left: {
+                ...defaultInitialState.explore.panes.left,
+                queries: [],
+                datasourceInstance: {
+                  meta: {
+                    mixed: false,
+                  },
+                  getRef() {
+                    return { type: 'loki', uid: 'uid-loki' };
+                  },
+                },
+              },
+            },
+          },
+        } as unknown as Partial<StoreState>);
+
+        await dispatch(addQueryRow('left', 0));
+
+        expect(getState().explore.panes.left?.queries).toEqual([
+          expect.objectContaining({ datasource: { type: 'loki', uid: 'uid-loki' } }),
+        ]);
+      });
+
+      it('adds a query from root datasource if root is not mixed and there are queries without a datasource specified', async () => {
+        const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+          ...defaultInitialState,
+          explore: {
+            panes: {
+              left: {
+                ...defaultInitialState.explore.panes.left,
+                queries: [{ expr: 1 }],
+                datasourceInstance: {
+                  meta: {
+                    mixed: false,
+                  },
+                  getRef() {
+                    return { type: 'loki', uid: 'uid-loki' };
+                  },
+                },
+              },
+            },
+          },
+        } as unknown as Partial<StoreState>);
+
+        await dispatch(addQueryRow('left', 0));
+
+        expect(getState().explore.panes.left?.queries).toEqual([
+          expect.anything(),
+          expect.objectContaining({ datasource: { type: 'loki', uid: 'uid-loki' } }),
+        ]);
+      });
+
+      it('adds a query from default datasource if root is mixed and there are no queries', async () => {
+        const { dispatch, getState }: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+          ...defaultInitialState,
+          explore: {
+            panes: {
+              left: {
+                ...defaultInitialState.explore.panes.left,
+                queries: [],
+                datasourceInstance: {
+                  meta: {
+                    mixed: true,
+                  },
+                  getRef() {
+                    return { type: 'mixed', uid: '-- Mixed --' };
+                  },
+                },
+              },
+            },
+          },
+        } as unknown as Partial<StoreState>);
+
+        await dispatch(addQueryRow('left', 0));
+
+        expect(getState().explore.panes.left?.queries).toEqual([
+          expect.objectContaining({ datasource: { type: 'postgres', uid: 'ds1' } }),
+        ]);
+      });
+    });
   });
 
   describe('caching', () => {
@@ -748,7 +849,7 @@ describe('reducer', () => {
     });
   });
 
-  describe('supplementary queries', () => {
+  describe('legacy supplementary queries', () => {
     let dispatch: ThunkDispatch,
       getState: () => StoreState,
       unsubscribes: Function[],
@@ -780,7 +881,7 @@ describe('reducer', () => {
                 meta: {
                   id: 'something',
                 },
-                getDataProvider: () => {
+                getDataProvider: (_: SupplementaryQueryType, request: DataQueryRequest<DataQuery>) => {
                   return mockDataProvider();
                 },
                 getSupportedSupplementaryQueryTypes: () => [
@@ -800,8 +901,69 @@ describe('reducer', () => {
       setupQueryResponse(getState());
     });
 
+    it('should load supplementary queries after running the query', async () => {
+      await dispatch(runQueries({ exploreId: 'left' }));
+      expect(unsubscribes).toHaveLength(2);
+    });
+  });
+
+  describe('supplementary queries', () => {
+    let dispatch: ThunkDispatch,
+      getState: () => StoreState,
+      unsubscribes: Function[],
+      mockDataProvider: () => Observable<DataQueryResponse>;
+
+    beforeEach(() => {
+      unsubscribes = [];
+      mockDataProvider = () => {
+        return {
+          subscribe: () => {
+            const unsubscribe = jest.fn();
+            unsubscribes.push(unsubscribe);
+            return {
+              unsubscribe,
+            };
+          },
+        } as unknown as Observable<DataQueryResponse>;
+      };
+
+      jest.mocked(queryLogsVolume).mockImplementation(() => mockDataProvider());
+      jest.mocked(queryLogsSample).mockImplementation(() => mockDataProvider());
+
+      const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+        ...defaultInitialState,
+        explore: {
+          panes: {
+            left: {
+              ...defaultInitialState.explore.panes.left,
+              datasourceInstance: {
+                query: jest.fn(),
+                getRef: jest.fn(),
+                meta: {
+                  id: 'something',
+                },
+                getSupplementaryRequest: (_: SupplementaryQueryType, request: DataQueryRequest<DataQuery>) => {
+                  return request;
+                },
+                getSupportedSupplementaryQueryTypes: () => [
+                  SupplementaryQueryType.LogsVolume,
+                  SupplementaryQueryType.LogsSample,
+                ],
+                getSupplementaryQuery: jest.fn(),
+              },
+            },
+          },
+        },
+      } as unknown as Partial<StoreState>);
+
+      dispatch = store.dispatch;
+      getState = store.getState;
+
+      setupQueryResponse(getState());
+    });
+
     it('should cancel any unfinished supplementary queries when a new query is run', async () => {
-      dispatch(runQueries({ exploreId: 'left' }));
+      await dispatch(runQueries({ exploreId: 'left' }));
       // first query is run automatically
       // loading in progress - subscriptions for both supplementary queries are created, not cleaned up yet
       expect(unsubscribes).toHaveLength(2);
@@ -809,7 +971,7 @@ describe('reducer', () => {
       expect(unsubscribes[1]).not.toBeCalled();
 
       setupQueryResponse(getState());
-      dispatch(runQueries({ exploreId: 'left' }));
+      await dispatch(runQueries({ exploreId: 'left' }));
       // a new query is run while supplementary queries are not resolve yet...
       expect(unsubscribes[0]).toBeCalled();
       expect(unsubscribes[1]).toBeCalled();
@@ -819,8 +981,8 @@ describe('reducer', () => {
       expect(unsubscribes[3]).not.toBeCalled();
     });
 
-    it('should cancel all supported supplementary queries when the main query is canceled', () => {
-      dispatch(runQueries({ exploreId: 'left' }));
+    it('should cancel all supported supplementary queries when the main query is canceled', async () => {
+      await dispatch(runQueries({ exploreId: 'left' }));
       expect(unsubscribes).toHaveLength(2);
       expect(unsubscribes[0]).not.toBeCalled();
       expect(unsubscribes[1]).not.toBeCalled();
@@ -836,16 +998,16 @@ describe('reducer', () => {
       }
     });
 
-    it('should load supplementary queries after running the query', () => {
-      dispatch(runQueries({ exploreId: 'left' }));
+    it('should load supplementary queries after running the query', async () => {
+      await dispatch(runQueries({ exploreId: 'left' }));
       expect(unsubscribes).toHaveLength(2);
     });
 
-    it('should clean any incomplete supplementary queries data when main query is canceled', () => {
+    it('should clean any incomplete supplementary queries data when main query is canceled', async () => {
       mockDataProvider = () => {
         return of({ state: LoadingState.Loading, error: undefined, data: [] });
       };
-      dispatch(runQueries({ exploreId: 'left' }));
+      await dispatch(runQueries({ exploreId: 'left' }));
 
       for (const type of supplementaryQueryTypes) {
         expect(getState().explore.panes.left!.supplementaryQueries[type].data).toBeDefined();
@@ -872,7 +1034,7 @@ describe('reducer', () => {
           { state: LoadingState.Done, error: undefined, data: [{}] }
         );
       };
-      dispatch(runQueries({ exploreId: 'left' }));
+      await dispatch(runQueries({ exploreId: 'left' }));
 
       for (const types of supplementaryQueryTypes) {
         expect(getState().explore.panes.left!.supplementaryQueries[types].data).toBeDefined();
@@ -889,7 +1051,7 @@ describe('reducer', () => {
       }
     });
 
-    it('do not load disabled supplementary query data', () => {
+    it('do not load disabled supplementary query data', async () => {
       mockDataProvider = () => {
         return of({ state: LoadingState.Done, error: undefined, data: [{}] });
       };
@@ -901,7 +1063,7 @@ describe('reducer', () => {
       expect(getState().explore.panes.left!.supplementaryQueries[SupplementaryQueryType.LogsSample].enabled).toBe(true);
 
       // verify that if we run a query, it will: 1) not do logs volume, 2) do logs sample 3) provider will still be set for both
-      dispatch(runQueries({ exploreId: 'left' }));
+      await dispatch(runQueries({ exploreId: 'left' }));
 
       expect(
         getState().explore.panes.left!.supplementaryQueries[SupplementaryQueryType.LogsVolume].data
@@ -928,7 +1090,7 @@ describe('reducer', () => {
       dispatch(setSupplementaryQueryEnabled('left', false, SupplementaryQueryType.LogsSample));
 
       // runQueries sets up providers, but does not run queries
-      dispatch(runQueries({ exploreId: 'left' }));
+      await dispatch(runQueries({ exploreId: 'left' }));
       expect(
         getState().explore.panes.left!.supplementaryQueries[SupplementaryQueryType.LogsVolume].dataProvider
       ).toBeDefined();

@@ -4,7 +4,7 @@ aliases:
   - ../view-alert-rules/
   - rule-list/
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/view-alert-rules/
-description: Manage alerting rules
+description: View and filter by alert rules
 keywords:
   - grafana
   - alerting
@@ -40,8 +40,8 @@ When managing large volumes of alerts, you can use extended alert rule search ca
 
 To view alerting details:
 
-1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page. By default, the List view displays.
-1. In **View as**, toggle between Grouped or State views by clicking the relevant option. See [Grouped view](#grouped-view) and [State view](#state-view) for more information.
+1. Click **Alerts & IRM** -> **Alert rules**. By default, the List view displays.
+1. In **View as**, toggle between Grouped, List, or State views by clicking the relevant option. See [Grouped view](#grouped-view) and [State view](#state-view) for more information.
 1. Expand the rule row to view the rule labels, annotations, data sources the rule queries, and a list of alert instances resulting from this rule.
 
 {{< figure src="/static/img/docs/alerting/unified/rule-details-8-0.png" max-width="650px" caption="Alerting rule details" >}}
@@ -50,9 +50,11 @@ From the Alert list page, you can also make copies of alert rules to help you re
 
 ## Export alert rules
 
-Click **Export** to create and tune an alert rule in the UI, then export to YAML or JSON, and use in the provisioning API or files. You can also export an entire rule group to review or use.
+Click the **Export rule group** icon next to each alert rule group to export to YAML, JSON, or Terraform.
 
-**Note:** This is supported in both the UI and provisioning API.
+Click **Export rules** to export all Grafana-managed alert rules to YAML, JSON, or Terraform.
+
+Click **More** -> **Modify export** next to each individual alert rule within a group to edit provisioned alert rules and export a modified version.
 
 ## View query definitions for provisioned alerts
 

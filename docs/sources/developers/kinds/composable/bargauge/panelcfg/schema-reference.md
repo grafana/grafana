@@ -2,6 +2,11 @@
 keywords:
   - grafana
   - schema
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: BarGaugePanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
@@ -24,9 +29,12 @@ It extends [SingleStatBaseOptions](#singlestatbaseoptions).
 | Property        | Type                                            | Required | Default | Description                                                                                                                                   |
 |-----------------|-------------------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------|
 | `displayMode`   | string                                          | **Yes**  |         | Enum expressing the possible display modes<br/>for the bar gauge component of Grafana UI<br/>Possible values are: `basic`, `lcd`, `gradient`. |
-| `minVizHeight`  | uint32                                          | **Yes**  | `10`    |                                                                                                                                               |
-| `minVizWidth`   | uint32                                          | **Yes**  | `0`     |                                                                                                                                               |
+| `maxVizHeight`  | uint32                                          | **Yes**  | `300`   |                                                                                                                                               |
+| `minVizHeight`  | uint32                                          | **Yes**  | `16`    |                                                                                                                                               |
+| `minVizWidth`   | uint32                                          | **Yes**  | `8`     |                                                                                                                                               |
+| `namePlacement` | string                                          | **Yes**  |         | Allows for the bar gauge name to be placed explicitly<br/>Possible values are: `auto`, `top`, `left`.                                         |
 | `showUnfilled`  | boolean                                         | **Yes**  | `true`  |                                                                                                                                               |
+| `sizing`        | string                                          | **Yes**  |         | Allows for the bar gauge size to be set explicitly<br/>Possible values are: `auto`, `manual`.                                                 |
 | `valueMode`     | string                                          | **Yes**  |         | Allows for the table cell gauge display type to set the gauge mode.<br/>Possible values are: `color`, `text`, `hidden`.                       |
 | `orientation`   | string                                          | No       |         | *(Inherited from [SingleStatBaseOptions](#singlestatbaseoptions))*<br/>TODO docs<br/>Possible values are: `auto`, `vertical`, `horizontal`.   |
 | `reduceOptions` | [ReduceDataOptions](#reducedataoptions)         | No       |         | *(Inherited from [SingleStatBaseOptions](#singlestatbaseoptions))*<br/>TODO docs                                                              |

@@ -75,7 +75,7 @@ async function initGeojsonFiles() {
 }
 
 export const getNewOpenLayersMap = (panel: GeomapPanel, options: Options, div: HTMLDivElement) => {
-  const [view] = panel.initMapView(options.view, undefined);
+  const view = panel.initMapView(options.view);
   return (panel.map = new OpenLayersMap({
     view: view,
     pixelRatio: 1, // or zoom?

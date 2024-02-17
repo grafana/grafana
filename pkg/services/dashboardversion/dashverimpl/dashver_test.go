@@ -36,11 +36,13 @@ func TestDashboardVersionService(t *testing.T) {
 
 func TestDeleteExpiredVersions(t *testing.T) {
 	versionsToKeep := 5
-	setting.DashboardVersionsToKeep = versionsToKeep
+	cfg := setting.NewCfg()
+	cfg.DashboardVersionsToKeep = versionsToKeep
 
 	dashboardVersionStore := newDashboardVersionStoreFake()
 	dashboardService := dashboards.NewFakeDashboardService(t)
-	dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService}
+	dashboardVersionService := Service{
+		cfg: cfg, store: dashboardVersionStore, dashSvc: dashboardService}
 
 	t.Run("Don't delete anything if there are no expired versions", func(t *testing.T) {
 		err := dashboardVersionService.DeleteExpired(context.Background(), &dashver.DeleteExpiredVersionsCommand{DeletedRows: 4})
@@ -49,7 +51,7 @@ func TestDeleteExpiredVersions(t *testing.T) {
 
 	t.Run("Clean up old dashboard versions successfully", func(t *testing.T) {
 		dashboardVersionStore.ExptectedDeletedVersions = 4
-		dashboardVersionStore.ExpectedVersions = []interface{}{1, 2, 3, 4}
+		dashboardVersionStore.ExpectedVersions = []any{1, 2, 3, 4}
 		err := dashboardVersionService.DeleteExpired(context.Background(), &dashver.DeleteExpiredVersionsCommand{DeletedRows: 4})
 		require.Nil(t, err)
 	})
@@ -147,7 +149,7 @@ func TestListDashboardVersions(t *testing.T) {
 type FakeDashboardVersionStore struct {
 	ExpectedDashboardVersion *dashver.DashboardVersion
 	ExptectedDeletedVersions int64
-	ExpectedVersions         []interface{}
+	ExpectedVersions         []any
 	ExpectedListVersions     []*dashver.DashboardVersion
 	ExpectedError            error
 }
@@ -160,11 +162,11 @@ func (f *FakeDashboardVersionStore) Get(ctx context.Context, query *dashver.GetD
 	return f.ExpectedDashboardVersion, f.ExpectedError
 }
 
-func (f *FakeDashboardVersionStore) GetBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, perBatch int, versionsToKeep int) ([]interface{}, error) {
+func (f *FakeDashboardVersionStore) GetBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, perBatch int, versionsToKeep int) ([]any, error) {
 	return f.ExpectedVersions, f.ExpectedError
 }
 
-func (f *FakeDashboardVersionStore) DeleteBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, versionIdsToDelete []interface{}) (int64, error) {
+func (f *FakeDashboardVersionStore) DeleteBatch(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand, versionIdsToDelete []any) (int64, error) {
 	return f.ExptectedDeletedVersions, f.ExpectedError
 }
 

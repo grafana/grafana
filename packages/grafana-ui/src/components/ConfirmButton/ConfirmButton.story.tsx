@@ -4,7 +4,6 @@ import React from 'react';
 
 import { ConfirmButton } from '@grafana/ui';
 
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Button } from '../Button';
 
 import { Props } from './ConfirmButton';
@@ -14,7 +13,6 @@ import { DeleteButton } from './DeleteButton';
 const meta: Meta = {
   title: 'Buttons/ConfirmButton',
   component: ConfirmButton,
-  decorators: [withCenteredStory],
   // SB7 has broken subcomponent types due to dropping support for the feature
   // https://github.com/storybookjs/storybook/issues/20782
   // @ts-ignore

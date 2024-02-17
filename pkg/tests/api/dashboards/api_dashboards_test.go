@@ -15,9 +15,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
@@ -28,7 +30,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/util"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationDashboardQuota(t *testing.T) {
 	if testing.Short() {
@@ -271,4 +279,166 @@ providers:
 			assert.Equal(t, dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason, dashboardErr.Message)
 		})
 	})
+}
+
+func TestIntegrationCreate(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+	})
+
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+	// Create user
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleAdmin),
+		Password:       "admin",
+		Login:          "admin",
+	})
+
+	t.Run("create dashboard should succeed", func(t *testing.T) {
+		dashboardDataOne, err := simplejson.NewJson([]byte(`{"title":"just testing"}`))
+		require.NoError(t, err)
+		buf1 := &bytes.Buffer{}
+		err = json.NewEncoder(buf1).Encode(dashboards.SaveDashboardCommand{
+			Dashboard: dashboardDataOne,
+		})
+		require.NoError(t, err)
+		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Post(u, "application/json", buf1)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		var m util.DynMap
+		err = json.Unmarshal(b, &m)
+		require.NoError(t, err)
+		assert.NotEmpty(t, m["id"])
+		assert.NotEmpty(t, m["uid"])
+	})
+
+	t.Run("create dashboard under folder should succeed", func(t *testing.T) {
+		folder := createFolder(t, grafanaListedAddr, "test folder")
+
+		dashboardDataOne, err := simplejson.NewJson([]byte(`{"title":"just testing"}`))
+		require.NoError(t, err)
+		buf1 := &bytes.Buffer{}
+		err = json.NewEncoder(buf1).Encode(dashboards.SaveDashboardCommand{
+			Dashboard: dashboardDataOne,
+			OrgID:     0,
+			FolderUID: folder.UID,
+		})
+		require.NoError(t, err)
+		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Post(u, "application/json", buf1)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		var m util.DynMap
+		err = json.Unmarshal(b, &m)
+		require.NoError(t, err)
+		assert.NotEmpty(t, m["id"])
+		assert.NotEmpty(t, m["uid"])
+		assert.Equal(t, folder.UID, m["folderUid"])
+	})
+
+	t.Run("create dashboard under folder (using deprecated folder sequential ID) should succeed", func(t *testing.T) {
+		folder := createFolder(t, grafanaListedAddr, "test folder 2")
+
+		dashboardDataOne, err := simplejson.NewJson([]byte(`{"title":"just testing"}`))
+		require.NoError(t, err)
+		buf1 := &bytes.Buffer{}
+		err = json.NewEncoder(buf1).Encode(dashboards.SaveDashboardCommand{
+			Dashboard: dashboardDataOne,
+			OrgID:     0,
+			FolderUID: folder.UID,
+		})
+		require.NoError(t, err)
+		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Post(u, "application/json", buf1)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		var m util.DynMap
+		err = json.Unmarshal(b, &m)
+		require.NoError(t, err)
+		assert.NotEmpty(t, m["id"])
+		assert.NotEmpty(t, m["uid"])
+		assert.Equal(t, folder.UID, m["folderUid"])
+	})
+
+	t.Run("create dashboard under unknow folder should fail", func(t *testing.T) {
+		folderUID := "unknown"
+		// Import dashboard
+		dashboardDataOne, err := simplejson.NewJson([]byte(`{"title":"just testing"}`))
+		require.NoError(t, err)
+		buf1 := &bytes.Buffer{}
+		err = json.NewEncoder(buf1).Encode(dashboards.SaveDashboardCommand{
+			Dashboard: dashboardDataOne,
+			FolderUID: folderUID,
+		})
+		require.NoError(t, err)
+		u := fmt.Sprintf("http://admin:admin@%s/api/dashboards/db", grafanaListedAddr)
+		// nolint:gosec
+		resp, err := http.Post(u, "application/json", buf1)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			require.NoError(t, err)
+		})
+		b, err := io.ReadAll(resp.Body)
+		require.NoError(t, err)
+		var m util.DynMap
+		err = json.Unmarshal(b, &m)
+		require.NoError(t, err)
+		assert.Equal(t, dashboards.ErrFolderNotFound.Error(), m["message"])
+	})
+}
+
+func createFolder(t *testing.T, grafanaListedAddr string, title string) *dtos.Folder {
+	t.Helper()
+
+	buf1 := &bytes.Buffer{}
+	err := json.NewEncoder(buf1).Encode(folder.CreateFolderCommand{
+		Title: title,
+	})
+	require.NoError(t, err)
+	u := fmt.Sprintf("http://admin:admin@%s/api/folders", grafanaListedAddr)
+	// nolint:gosec
+	resp, err := http.Post(u, "application/json", buf1)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	t.Cleanup(func() {
+		err := resp.Body.Close()
+		require.NoError(t, err)
+	})
+	b, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+	var f *dtos.Folder
+	err = json.Unmarshal(b, &f)
+	require.NoError(t, err)
+
+	return f
 }

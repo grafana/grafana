@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
 
 const (
@@ -31,6 +32,10 @@ const (
 )
 
 var updateSnapshotFlag = false
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationPlugins(t *testing.T) {
 	if testing.Short() {
@@ -145,14 +150,14 @@ func TestIntegrationPluginAssets(t *testing.T) {
 			{
 				desc:            "should return no-cache settings for Dev env",
 				env:             setting.Dev,
-				url:             "http://%s/public/plugins/testdata/img/testdata.svg",
+				url:             "http://%s/public/plugins/grafana-testdata-datasource/img/testdata.svg",
 				expStatus:       http.StatusOK,
 				expCacheControl: "max-age=0, must-revalidate, no-cache",
 			},
 			{
 				desc:            "should return cache settings for Prod env",
 				env:             setting.Prod,
-				url:             "http://%s/public/plugins/testdata/img/testdata.svg",
+				url:             "http://%s/public/plugins/grafana-testdata-datasource/img/testdata.svg",
 				expStatus:       http.StatusOK,
 				expCacheControl: "public, max-age=3600",
 			},

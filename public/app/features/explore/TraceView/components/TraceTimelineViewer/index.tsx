@@ -15,20 +15,21 @@
 import { css } from '@emotion/css';
 import React, { RefObject } from 'react';
 
-import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
+import { GrafanaTheme2, LinkModel } from '@grafana/data';
+import { SpanBarOptions, TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, reportInteraction } from '@grafana/runtime';
+import { TimeZone } from '@grafana/schema';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
-import { Accessors } from '../ScrollManager';
 import { autoColor } from '../Theme';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
-import { SpanBarOptions } from '../settings/SpanBarSettings';
-import { SpanLinkFunc, TNil } from '../types';
+import { CriticalPathSection, SpanLinkFunc, TNil } from '../types';
 import TTraceTimeline from '../types/TTraceTimeline';
 import { TraceSpan, Trace, TraceLog, TraceKeyValuePair, TraceLink, TraceSpanReference } from '../types/trace';
 
+import { TraceFlameGraphs } from './SpanDetail';
 import TimelineHeaderRow from './TimelineHeaderRow';
-import VirtualizedTraceView, { TopOfViewRefType } from './VirtualizedTraceView';
+import VirtualizedTraceView from './VirtualizedTraceView';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from './types';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
@@ -68,10 +69,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
 });
 
 export type TProps = {
-  registerAccessors: (accessors: Accessors) => void;
   findMatchesIDs: Set<string> | TNil;
   traceTimeline: TTraceTimeline;
   trace: Trace;
+  traceToProfilesOptions?: TraceToProfilesOptions;
   datasourceType: string;
   spanBarOptions: SpanBarOptions | undefined;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
@@ -104,10 +105,15 @@ export type TProps = {
   focusedSpanId?: string;
   focusedSpanIdForSearch: string;
   showSpanFilterMatchesOnly: boolean;
+  showCriticalPathSpansOnly: boolean;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement>;
-  topOfViewRefType?: TopOfViewRefType;
   headerHeight: number;
+  criticalPath: CriticalPathSection[];
+  traceFlameGraphs: TraceFlameGraphs;
+  setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
+  redrawListView: {};
+  setRedrawListView: (redraw: {}) => void;
 };
 
 type State = {

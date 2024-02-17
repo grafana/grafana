@@ -13,6 +13,7 @@ export interface VariableModel {
 export type TypedVariableModel =
   | QueryVariableModel
   | AdHocVariableModel
+  | GroupByVariableModel
   | ConstantVariableModel
   | DataSourceVariableModel
   | IntervalVariableModel
@@ -36,6 +37,8 @@ export enum VariableSort {
   numericalDesc,
   alphabeticalCaseInsensitiveAsc,
   alphabeticalCaseInsensitiveDesc,
+  naturalAsc,
+  naturalDesc,
 }
 
 export enum VariableHide {
@@ -48,13 +51,24 @@ export interface AdHocVariableFilter {
   key: string;
   operator: string;
   value: string;
-  condition: string;
+  /** @deprecated  */
+  condition?: string;
 }
 
 export interface AdHocVariableModel extends BaseVariableModel {
   type: 'adhoc';
   datasource: DataSourceRef | null;
   filters: AdHocVariableFilter[];
+  /**
+   * Filters that are always applied to the lookup of keys. Not shown in the AdhocFilterBuilder UI.
+   */
+  baseFilters?: AdHocVariableFilter[];
+}
+
+export interface GroupByVariableModel extends VariableWithOptions {
+  type: 'groupby';
+  datasource: DataSourceRef | null;
+  multi: true;
 }
 
 export interface VariableOption {
@@ -157,4 +171,5 @@ export interface BaseVariableModel {
   state: LoadingState;
   error: any | null;
   description: string | null;
+  usedInRepeat?: boolean;
 }

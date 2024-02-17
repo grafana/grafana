@@ -31,9 +31,9 @@ export const annotationLabels: Record<Annotation, string> = {
 };
 
 export const annotationDescriptions: Record<Annotation, string> = {
-  [Annotation.description]: 'Description of what the alert rule does',
-  [Annotation.summary]: 'Short summary of what happened and why',
-  [Annotation.runbookURL]: 'Webpage where you keep your runbook for the alert',
+  [Annotation.description]: 'Description of what the alert rule does.',
+  [Annotation.summary]: 'Short summary of what happened and why.',
+  [Annotation.runbookURL]: 'Webpage where you keep your runbook for the alert.',
   [Annotation.dashboardUID]: '',
   [Annotation.panelID]: '',
   [Annotation.alertId]: '',

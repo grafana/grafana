@@ -24,6 +24,10 @@ type Account struct {
 	IsMonitoringAccount bool   `json:"isMonitoringAccount"`
 }
 
+type Region struct {
+	Name string `json:"name"`
+}
+
 type Metric struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`

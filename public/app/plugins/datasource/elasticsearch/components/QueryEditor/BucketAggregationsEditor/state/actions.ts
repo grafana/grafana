@@ -15,5 +15,5 @@ export const changeBucketAggregationField = createAction<{
 export const changeBucketAggregationSetting = createAction<{
   bucketAgg: BucketAggregation;
   settingName: string;
-  newValue: any;
+  newValue: unknown;
 }>('@bucketAggs/change_setting');

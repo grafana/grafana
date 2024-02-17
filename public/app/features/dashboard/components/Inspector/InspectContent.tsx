@@ -1,7 +1,16 @@
 import { isEmpty } from 'lodash';
 import React, { useState } from 'react';
 
-import { CoreApp, DataSourceApi, formattedValueToString, getValueFormat, PanelData, PanelPlugin } from '@grafana/data';
+import {
+  CoreApp,
+  DataSourceApi,
+  formattedValueToString,
+  getValueFormat,
+  PanelData,
+  PanelPlugin,
+  LoadingState,
+  DataQueryError,
+} from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
@@ -51,10 +60,7 @@ export const InspectContent = ({
     return null;
   }
 
-  let errors = data?.errors;
-  if (!errors?.length && data?.error) {
-    errors = [data.error];
-  }
+  let errors = getErrors(data);
 
   // Validate that the active tab is actually valid and allowed
   let activeTab = currentTab;
@@ -70,7 +76,6 @@ export const InspectContent = ({
       title={title}
       subtitle={data && formatStats(data)}
       onClose={onClose}
-      scrollableContent
       tabs={
         <TabsBar>
           {tabs.map((tab, index) => {
@@ -88,7 +93,10 @@ export const InspectContent = ({
     >
       {activeTab === InspectTab.Data && (
         <InspectDataTab
-          panel={panel}
+          dataName={panel.getDisplayTitle()}
+          panelPluginId={panel.type}
+          fieldConfig={panel.fieldConfig}
+          hasTransformations={Boolean(panel.transformations?.length)}
           data={data && data.series}
           isLoading={isDataLoading}
           options={dataOptions}
@@ -106,12 +114,26 @@ export const InspectContent = ({
       )}
       {activeTab === InspectTab.Error && <InspectErrorTab errors={errors} />}
       {data && activeTab === InspectTab.Stats && <InspectStatsTab data={data} timeZone={dashboard.getTimezone()} />}
-      {data && activeTab === InspectTab.Query && (
-        <QueryInspector panel={panel} data={data.series} onRefreshQuery={() => panel.refresh()} />
-      )}
+      {data && activeTab === InspectTab.Query && <QueryInspector data={data} onRefreshQuery={() => panel.refresh()} />}
     </Drawer>
   );
 };
+
+// This will combine
+function getErrors(data: PanelData | undefined): DataQueryError[] {
+  let errors = data?.errors ?? [];
+  if (data?.error && !errors.includes(data.error)) {
+    errors = [data.error, ...errors];
+  }
+  if (!errors.length && data?.state === LoadingState.Error) {
+    return [
+      {
+        message: 'Error loading data',
+      },
+    ];
+  }
+  return errors;
+}
 
 function formatStats(data: PanelData) {
   const { request } = data;

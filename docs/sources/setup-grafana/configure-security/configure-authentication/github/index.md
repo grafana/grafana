@@ -19,7 +19,7 @@ weight: 900
 
 # Configure GitHub OAuth2 authentication
 
-{{< docs/shared "auth/intro.md" >}}
+{{< docs/shared lookup="auth/intro.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 This topic describes how to configure GitHub OAuth2 authentication.
 
@@ -79,7 +79,7 @@ The table below describes all GitHub OAuth configuration options. Like any other
 | `skip_org_role_sync`         | No       | Set to `true` to stop automatically syncing user roles.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `false`                                       |
 | `allowed_organizations`      | No       | List of comma- or space-separated organizations. User must be a member of at least one organization to log in.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |                                               |
 | `allowed_domains`            | No       | List of comma- or space-separated domains. User must belong to at least one domain to log in.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |                                               |
-| `team_ids`                   | No       | String list of team IDs. If set, user has to be a member of one of the given teams to log in.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |                                               |
+| `team_ids`                   | No       | Integer list of team IDs. If set, user has to be a member of one of the given teams to log in.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |                                               |
 | `tls_skip_verify_insecure`   | No       | If set to `true`, the client accepts any certificate presented by the server and any host name in that certificate. _You should only use this for testing_, because this mode leaves SSL/TLS susceptible to man-in-the-middle attacks.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `false`                                       |
 | `tls_client_cert`            | No       | The path to the certificate.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |                                               |
 | `tls_client_key`             | No       | The path to the key.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |                                               |
@@ -130,6 +130,15 @@ All other users are granted the `Viewer` role.
 role_attribute_path = [login=='octocat'][0] && 'GrafanaAdmin' || 'Viewer'
 ```
 
+#### Map one role to all users
+
+In this example, all users will be assigned `Viewer` role regardless of the user information received from the identity provider.
+
+```ini
+role_attribute_path = "'Viewer'"
+skip_org_role_sync = false
+```
+
 ## Configure team synchronization
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise" >}}) and [Grafana Cloud](/docs/grafana-cloud/).
@@ -146,7 +155,7 @@ For example, `https://github.com/orgs/grafana/teams/developers` or `@grafana/dev
 
 To learn more about Team Sync, refer to [Configure team sync]({{< relref "../../configure-team-sync" >}}).
 
-## Examples of GitHub configuration in Grafana
+## Example of GitHub configuration in Grafana
 
 This section includes an example of GitHub configuration in the Grafana configuration file.
 

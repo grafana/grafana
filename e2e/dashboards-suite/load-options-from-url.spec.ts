@@ -1,19 +1,20 @@
-import { e2e } from '@grafana/e2e';
+import { e2e } from '../utils';
 
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
 
 describe('Variables - Load options from Url', () => {
-  it('default options should be correct', () => {
-    e2e.flows.login('admin', 'admin');
-    e2e.flows.openDashboard({ uid: PAGE_UNDER_TEST });
-    e2e()
-      .intercept({
-        method: 'POST',
-        pathname: '/api/ds/query*',
-      })
-      .as('query');
+  beforeEach(() => {
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+  });
 
-    e2e().wait('@query');
+  it('default options should be correct', () => {
+    e2e.flows.openDashboard({ uid: PAGE_UNDER_TEST });
+    cy.intercept({
+      method: 'POST',
+      pathname: '/api/ds/query*',
+    }).as('query');
+
+    cy.wait('@query');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A').should('be.visible').click();
 
@@ -56,16 +57,13 @@ describe('Variables - Load options from Url', () => {
   });
 
   it('options set in url should load correct options', () => {
-    e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&var-datacenter=B&var-server=BB&var-pod=BBB` });
-    e2e()
-      .intercept({
-        method: 'POST',
-        pathname: '/api/ds/query',
-      })
-      .as('query');
+    cy.intercept({
+      method: 'POST',
+      pathname: '/api/ds/query',
+    }).as('query');
 
-    e2e().wait('@query');
+    cy.wait('@query');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B').should('be.visible').click();
 
@@ -108,9 +106,8 @@ describe('Variables - Load options from Url', () => {
   });
 
   it('options set in url that do not exist should load correct options', () => {
-    e2e.flows.login('admin', 'admin');
     // @ts-ignore some typing issue
-    e2e().on('uncaught:exception', (err) => {
+    cy.on('uncaught:exception', (err) => {
       if (err.stack?.indexOf("Couldn't find any field of type string in the results.") !== -1) {
         // return false to prevent the error from
         // failing this test
@@ -121,14 +118,12 @@ describe('Variables - Load options from Url', () => {
     });
 
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1&var-datacenter=X` });
-    e2e()
-      .intercept({
-        method: 'POST',
-        pathname: '/api/ds/query',
-      })
-      .as('query');
+    cy.intercept({
+      method: 'POST',
+      pathname: '/api/ds/query',
+    }).as('query');
 
-    e2e().wait('@query');
+    cy.wait('@query');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('X').should('be.visible').click();
 

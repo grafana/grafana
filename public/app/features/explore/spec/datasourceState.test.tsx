@@ -1,14 +1,35 @@
 import { screen, waitFor } from '@testing-library/react';
+import { Props } from 'react-virtualized-auto-sizer';
+
+import { EventBusSrv } from '@grafana/data';
 
 import { changeDatasource } from './helper/interactions';
 import { makeLogsQueryResponse } from './helper/query';
 import { setupExplore, tearDown, waitForExplore } from './helper/setup';
 
-jest.mock('../../correlations/utils', () => {
-  return {
-    getCorrelationsBySourceUIDs: jest.fn().mockReturnValue({ correlations: [] }),
-  };
+const testEventBus = new EventBusSrv();
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getAppEvents: () => testEventBus,
+}));
+
+jest.mock('react-virtualized-auto-sizer', () => {
+  return ({ children }: Props) =>
+    children({
+      height: 1,
+      scaledHeight: 1,
+      scaledWidth: 1,
+      width: 1,
+    });
 });
+
+jest.mock('app/core/core', () => ({
+  contextSrv: {
+    hasPermission: () => true,
+    getValidIntervals: (defaultIntervals: string[]) => defaultIntervals,
+  },
+}));
 
 describe('Explore: handle datasource states', () => {
   afterEach(() => {

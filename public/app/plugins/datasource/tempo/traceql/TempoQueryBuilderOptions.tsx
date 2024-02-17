@@ -1,11 +1,11 @@
 import React from 'react';
 
 import { EditorField, EditorRow } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
-import { AutoSizeInput, Switch } from '@grafana/ui';
-import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
+import { AutoSizeInput, RadioButtonGroup } from '@grafana/ui';
 
-import { DEFAULT_LIMIT } from '../datasource';
+import { QueryOptionGroup } from '../_importedDependencies/datasources/prometheus/QueryOptionGroup';
+import { SearchTableType } from '../dataquery.gen';
+import { DEFAULT_LIMIT, DEFAULT_SPSS } from '../datasource';
 import { TempoQuery } from '../types';
 
 interface Props {
@@ -13,27 +13,43 @@ interface Props {
   query: Partial<TempoQuery> & TempoQuery;
 }
 
+/**
+ * Parse a string value to integer. If the conversion fails, for example because we are prosessing an empty value for
+ * a field, return a fallback (default) value.
+ *
+ * @param val the value to be parsed to an integer
+ * @param fallback the fallback value
+ * @returns the converted value or the fallback value if the conversion fails
+ */
+const parseIntWithFallback = (val: string, fallback: number) => {
+  const parsed = parseInt(val, 10);
+  return isNaN(parsed) ? fallback : parsed;
+};
+
 export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) => {
   if (!query.hasOwnProperty('limit')) {
     query.limit = DEFAULT_LIMIT;
   }
 
-  if (!query.hasOwnProperty('streaming')) {
-    query.streaming = !config.featureToggles.disableTraceQLStreaming;
+  if (!query.hasOwnProperty('tableType')) {
+    query.tableType = SearchTableType.Traces;
   }
 
   const onLimitChange = (e: React.FormEvent<HTMLInputElement>) => {
-    onChange({ ...query, limit: parseInt(e.currentTarget.value, 10) });
+    onChange({ ...query, limit: parseIntWithFallback(e.currentTarget.value, DEFAULT_LIMIT) });
+  };
+  const onSpssChange = (e: React.FormEvent<HTMLInputElement>) => {
+    onChange({ ...query, spss: parseIntWithFallback(e.currentTarget.value, DEFAULT_SPSS) });
+  };
+  const onTableTypeChange = (val: SearchTableType) => {
+    onChange({ ...query, tableType: val });
   };
 
-  const onStreamingChange = (e: React.FormEvent<HTMLInputElement>) => {
-    onChange({ ...query, streaming: e.currentTarget.checked });
-  };
-
-  const collapsedInfoList = [`Limit: ${query.limit || DEFAULT_LIMIT}`];
-  if (!config.featureToggles.disableTraceQLStreaming) {
-    collapsedInfoList.push(`Streaming: ${query.streaming ? 'Yes' : 'No'}`);
-  }
+  const collapsedInfoList = [
+    `Limit: ${query.limit || DEFAULT_LIMIT}`,
+    `Spans Limit: ${query.spss || DEFAULT_SPSS}`,
+    `Table Format: ${query.tableType === SearchTableType.Traces ? 'Traces' : 'Spans'}`,
+  ];
 
   return (
     <>
@@ -50,11 +66,27 @@ export const TempoQueryBuilderOptions = React.memo<Props>(({ onChange, query }) 
               value={query.limit}
             />
           </EditorField>
-          {!config.featureToggles.disableTraceQLStreaming && (
-            <EditorField label="Stream response" tooltip="Stream the query response to receive partial results sooner">
-              <Switch value={query.streaming || false} onChange={onStreamingChange} />
-            </EditorField>
-          )}
+          <EditorField label="Span Limit" tooltip="Maximum number of spans to return for each span set.">
+            <AutoSizeInput
+              className="width-4"
+              placeholder="auto"
+              type="number"
+              min={1}
+              defaultValue={query.spss || DEFAULT_SPSS}
+              onCommitChange={onSpssChange}
+              value={query.spss}
+            />
+          </EditorField>
+          <EditorField label="Table Format" tooltip="How the query data should be displayed in the results table">
+            <RadioButtonGroup
+              options={[
+                { label: 'Traces', value: SearchTableType.Traces },
+                { label: 'Spans', value: SearchTableType.Spans },
+              ]}
+              value={query.tableType}
+              onChange={onTableTypeChange}
+            />
+          </EditorField>
         </QueryOptionGroup>
       </EditorRow>
     </>

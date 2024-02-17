@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/images-in-notifications/
-description: How to use images in notifications
+description: Use images in notifications to help users better understand why alerts are firing or have been resolved
 keywords:
   - grafana
   - alerting
@@ -69,9 +69,7 @@ If screenshots should be uploaded to cloud storage then `upload_external_image_s
     # will be persisted to disk for up to temp_data_lifetime.
     upload_external_image_storage = false
 
-Please see [`[external_image_storage]`]({{< relref "../../setup-grafana/configure-grafana#external_image_storage" >}}) for instructions on how to configure cloud storage. Grafana will not start if `upload_external_image_storage` is `true` and `[external_image_storage]` contains missing or invalid configuration.
-
-If Grafana is acting as its own cloud storage then `[upload_external_image_storage]` should be set to `true` and the `local` provider should be set in [`[external_image_storage]`]({{< relref "../../setup-grafana/configure-grafana#external_image_storage" >}}).
+For more information on image rendering, refer to [image rendering][image-rendering].
 
 Restart Grafana for the changes to take effect.
 
@@ -94,7 +92,7 @@ Grafana supports a wide range of contact points with varied support for images i
 | DingDing                | No                                                         | No                                                       |
 | Discord                 | Yes (Maximum of 10 per notification)                       | Yes (Maximum of 10 per notification)                     |
 | Email                   | Yes (Embedded in the email)                                | Yes                                                      |
-| Google Hangouts Chat    | No                                                         | Yes                                                      |
+| Google Chat             | No                                                         | Yes                                                      |
 | Kafka                   | No                                                         | No                                                       |
 | Line                    | No                                                         | No                                                       |
 | Microsoft Teams         | No                                                         | Yes                                                      |
@@ -141,9 +139,9 @@ For example, if a screenshot could not be taken within the expected time (10 sec
 - `grafana_screenshot_upload_successes_total`
 
 {{% docs/reference %}}
-[image-rendering]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering"
-[image-rendering]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering"
+[image-rendering]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering"
+[image-rendering]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering"
 
-[paths]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#paths"
-[paths]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#paths"
+[paths]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#paths"
+[paths]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#paths"
 {{% /docs/reference %}}

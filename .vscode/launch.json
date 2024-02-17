@@ -12,6 +12,18 @@
       "args": ["server", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
     },
     {
+      "name": "Run API Server (testdata)",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/pkg/cmd/grafana/",
+      "env": {},
+      "cwd": "${workspaceFolder}",
+      "args": ["apiserver", 
+          "--secure-port=8443", 
+          "--runtime-config=testdata.datasource.grafana.app/v0alpha1=true"]
+    },
+    {
       "name": "Attach to Chrome",
       "port": 9222,
       "request": "attach",

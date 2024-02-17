@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -21,7 +21,7 @@ jest.mock('app/core/services/context_srv', () => ({
   },
 }));
 
-function getTestContext() {
+function setup() {
   return render(
     <TestProvider>
       <PlaylistPage />
@@ -37,30 +37,34 @@ describe('PlaylistPage', () => {
   describe('when mounted without a playlist', () => {
     it('page should load', () => {
       fnMock.mockResolvedValue([]);
-      const { getByText } = getTestContext();
-      expect(getByText(/loading/i)).toBeInTheDocument();
+      setup();
+      expect(screen.getByTestId('playlist-page-list-skeleton')).toBeInTheDocument();
     });
+
     it('then show empty list', async () => {
-      const { getByText } = getTestContext();
-      await waitFor(() => getByText('There are no playlists created yet'));
+      setup();
+      expect(await screen.findByText('There are no playlists created yet')).toBeInTheDocument();
     });
+
     describe('and signed in user is not a viewer', () => {
       it('then create playlist button should not be disabled', async () => {
         contextSrv.isEditor = true;
-        const { getByRole } = getTestContext();
-        const createPlaylistButton = await waitFor(() => getByRole('link', { name: /create playlist/i }));
+        setup();
+        const createPlaylistButton = await screen.findByRole('link', { name: /create playlist/i });
         expect(createPlaylistButton).not.toHaveStyle('pointer-events: none');
       });
     });
+
     describe('and signed in user is a viewer', () => {
       it('then create playlist button should be disabled', async () => {
         contextSrv.isEditor = false;
-        const { getByRole } = getTestContext();
-        const createPlaylistButton = await waitFor(() => getByRole('link', { name: /create playlist/i }));
+        setup();
+        const createPlaylistButton = await screen.findByRole('link', { name: /create playlist/i });
         expect(createPlaylistButton).toHaveStyle('pointer-events: none');
       });
     });
   });
+
   describe('when mounted with a playlist', () => {
     it('page should load', () => {
       fnMock.mockResolvedValue([
@@ -76,29 +80,31 @@ describe('PlaylistPage', () => {
           uid: 'playlist-0',
         },
       ]);
-      const { getByText } = getTestContext();
-      expect(getByText(/loading/i)).toBeInTheDocument();
+      setup();
+      expect(screen.getByTestId('playlist-page-list-skeleton')).toBeInTheDocument();
     });
+
     describe('and signed in user is not a viewer', () => {
       it('then playlist title and all playlist buttons should appear on the page', async () => {
         contextSrv.isEditor = true;
-        const { getByRole, getByText } = getTestContext();
-        await waitFor(() => getByText('A test playlist'));
-        expect(getByRole('link', { name: /New playlist/i })).toBeInTheDocument();
-        expect(getByRole('button', { name: /Start playlist/i })).toBeInTheDocument();
-        expect(getByRole('link', { name: /Edit playlist/i })).toBeInTheDocument();
-        expect(getByRole('button', { name: /Delete playlist/i })).toBeInTheDocument();
+        setup();
+        expect(await screen.findByText('A test playlist'));
+        expect(await screen.findByRole('link', { name: /New playlist/i })).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: /Start playlist/i })).toBeInTheDocument();
+        expect(await screen.findByRole('link', { name: /Edit playlist/i })).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: /Delete playlist/i })).toBeInTheDocument();
       });
     });
+
     describe('and signed in user is a viewer', () => {
       it('then playlist title and only start playlist button should appear on the page', async () => {
         contextSrv.isEditor = false;
-        const { getByRole, getByText, queryByRole } = getTestContext();
-        await waitFor(() => getByText('A test playlist'));
-        expect(queryByRole('link', { name: /New playlist/i })).not.toBeInTheDocument();
-        expect(getByRole('button', { name: /Start playlist/i })).toBeInTheDocument();
-        expect(queryByRole('link', { name: /Edit playlist/i })).not.toBeInTheDocument();
-        expect(queryByRole('button', { name: /Delete playlist/i })).not.toBeInTheDocument();
+        setup();
+        expect(await screen.findByText('A test playlist')).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: /New playlist/i })).not.toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: /Start playlist/i })).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: /Edit playlist/i })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /Delete playlist/i })).not.toBeInTheDocument();
       });
     });
   });

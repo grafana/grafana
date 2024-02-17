@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
 import React, { useCallback, useState } from 'react';
 
-import { Stack } from '@grafana/experimental';
-import { Button, ClipboardButton, HorizontalGroup, TextArea } from '@grafana/ui';
+import { Button, ClipboardButton, HorizontalGroup, TextArea, Stack } from '@grafana/ui';
 
 import { SaveDashboardFormProps } from '../types';
 

@@ -1,5 +1,5 @@
 {
- "basePath": "/api/v1",
+ "basePath": "/api",
  "consumes": [
   "application/json"
  ],
@@ -96,6 +96,20 @@
    "title": "AlertManagersResult contains the result from querying the alertmanagers endpoint.",
    "type": "object"
   },
+  "AlertPair": {
+   "properties": {
+    "alertRule": {
+     "$ref": "#/definitions/AlertRuleUpgrade"
+    },
+    "error": {
+     "type": "string"
+    },
+    "legacyAlert": {
+     "$ref": "#/definitions/LegacyAlert"
+    }
+   },
+   "type": "object"
+  },
   "AlertQuery": {
    "properties": {
     "datasourceUid": {
@@ -137,7 +151,7 @@
      "type": "string"
     },
     "relativeTimeRange": {
-     "$ref": "#/definitions/RelativeTimeRange"
+     "$ref": "#/definitions/RelativeTimeRangeExport"
     }
    },
    "title": "AlertQueryExport is the provisioned export of models.AlertQuery.",
@@ -280,15 +294,50 @@
    },
    "type": "object"
   },
+  "AlertRuleUpgrade": {
+   "properties": {
+    "sendsTo": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "title": {
+     "type": "string"
+    },
+    "uid": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "AlertingFileExport": {
    "properties": {
     "apiVersion": {
      "format": "int64",
      "type": "integer"
     },
+    "contactPoints": {
+     "items": {
+      "$ref": "#/definitions/ContactPointExport"
+     },
+     "type": "array"
+    },
     "groups": {
      "items": {
       "$ref": "#/definitions/AlertRuleGroupExport"
+     },
+     "type": "array"
+    },
+    "muteTimes": {
+     "items": {
+      "$ref": "#/definitions/MuteTimeIntervalExport"
+     },
+     "type": "array"
+    },
+    "policies": {
+     "items": {
+      "$ref": "#/definitions/NotificationPolicyExport"
      },
      "type": "array"
     }
@@ -406,6 +455,9 @@
     "for": {
      "type": "string"
     },
+    "keep_firing_for": {
+     "type": "string"
+    },
     "labels": {
      "additionalProperties": {
       "type": "string"
@@ -497,6 +549,9 @@
     },
     "username": {
      "type": "string"
+    },
+    "username_file": {
+     "type": "string"
     }
    },
    "title": "BasicAuth contains basic HTTP authentication credentials.",
@@ -537,6 +592,53 @@
    "title": "Config is the top-level configuration for Alertmanager's config files.",
    "type": "object"
   },
+  "ContactPair": {
+   "properties": {
+    "contactPoint": {
+     "$ref": "#/definitions/ContactPointUpgrade"
+    },
+    "error": {
+     "type": "string"
+    },
+    "legacyChannel": {
+     "$ref": "#/definitions/LegacyChannel"
+    }
+   },
+   "type": "object"
+  },
+  "ContactPointExport": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "orgId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "receivers": {
+     "items": {
+      "$ref": "#/definitions/ReceiverExport"
+     },
+     "type": "array"
+    }
+   },
+   "title": "ContactPointExport is the provisioned file export of alerting.ContactPointV1.",
+   "type": "object"
+  },
+  "ContactPointUpgrade": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "routeMatchers": {
+     "$ref": "#/definitions/ObjectMatchers"
+    },
+    "type": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "ContactPoints": {
    "items": {
     "$ref": "#/definitions/EmbeddedContactPoint"
@@ -548,6 +650,48 @@
    "format": "uint8",
    "title": "CounterResetHint contains the known information about a counter reset,",
    "type": "integer"
+  },
+  "DashboardUpgrade": {
+   "properties": {
+    "dashboardId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "dashboardName": {
+     "type": "string"
+    },
+    "dashboardUid": {
+     "type": "string"
+    },
+    "error": {
+     "type": "string"
+    },
+    "folderName": {
+     "type": "string"
+    },
+    "folderUid": {
+     "type": "string"
+    },
+    "migratedAlerts": {
+     "items": {
+      "$ref": "#/definitions/AlertPair"
+     },
+     "type": "array"
+    },
+    "newFolderName": {
+     "type": "string"
+    },
+    "newFolderUid": {
+     "type": "string"
+    },
+    "provisioned": {
+     "type": "boolean"
+    },
+    "warning": {
+     "type": "string"
+    }
+   },
+   "type": "object"
   },
   "DataLink": {
    "description": "DataLink define what",
@@ -573,6 +717,9 @@
     "Error": {
      "description": "Error is a property to be set if the corresponding DataQuery has an error.",
      "type": "string"
+    },
+    "ErrorSource": {
+     "$ref": "#/definitions/ErrorSource"
     },
     "Frames": {
      "$ref": "#/definitions/Frames"
@@ -733,6 +880,9 @@
     "uid": {
      "description": "UID is the unique identifier of the contact point. The UID can be\nset by the user.",
      "example": "my_external_reference",
+     "maxLength": 40,
+     "minLength": 1,
+     "pattern": "^[a-zA-Z0-9\\-\\_]+$",
      "type": "string"
     }
    },
@@ -776,6 +926,10 @@
    },
    "type": "object"
   },
+  "ErrorSource": {
+   "description": "ErrorSource type defines the source of the error",
+   "type": "string"
+  },
   "ErrorType": {
    "title": "ErrorType models the different API error types.",
    "type": "string"
@@ -801,6 +955,9 @@
   },
   "EvalQueriesPayload": {
    "properties": {
+    "condition": {
+     "type": "string"
+    },
     "data": {
      "items": {
       "$ref": "#/definitions/AlertQuery"
@@ -1008,6 +1165,14 @@
    "title": "FloatHistogram is similar to Histogram but uses float64 for all\ncounts. Additionally, bucket counts are absolute and not deltas.",
    "type": "object"
   },
+  "ForbiddenError": {
+   "properties": {
+    "body": {
+     "$ref": "#/definitions/PublicError"
+    }
+   },
+   "type": "object"
+  },
   "Frame": {
    "description": "Each Field is well typed by its FieldType and supports optional Labels.\n\nA Frame is a general data container for Grafana. A Frame can be table data\nor time series data depending on its content and field types.",
    "properties": {
@@ -1072,6 +1237,10 @@
      "description": "PathSeparator defines the separator pattern to decode a hierarchy. The default separator is '/'.",
      "type": "string"
     },
+    "preferredVisualisationPluginId": {
+     "description": "PreferredVisualizationPluginId sets the panel plugin id to use to render the data when using Explore. If\nthe plugin cannot be found will fall back to PreferredVisualization.",
+     "type": "string"
+    },
     "preferredVisualisationType": {
      "$ref": "#/definitions/VisType"
     },
@@ -1087,6 +1256,15 @@
     },
     "typeVersion": {
      "$ref": "#/definitions/FrameTypeVersion"
+    },
+    "uniqueRowIdFields": {
+     "description": "Array of field indices which values create a unique id for each row. Ideally this should be globally unique ID\nbut that isn't guarantied. Should help with keeping track and deduplicating rows in visualizations, especially\nwith streaming data with frequent updates.",
+     "example": "TraceID in Tempo, table name + primary key in SQL",
+     "items": {
+      "format": "int64",
+      "type": "integer"
+     },
+     "type": "array"
     }
    },
    "title": "FrameMeta matches:",
@@ -1111,6 +1289,14 @@
    },
    "title": "Frames is a slice of Frame pointers.",
    "type": "array"
+  },
+  "GenericPublicError": {
+   "properties": {
+    "body": {
+     "$ref": "#/definitions/PublicError"
+    }
+   },
+   "type": "object"
   },
   "GettableAlertmanagers": {
    "properties": {
@@ -1182,6 +1368,12 @@
     "grafana_managed_receiver_configs": {
      "items": {
       "$ref": "#/definitions/GettableGrafanaReceiver"
+     },
+     "type": "array"
+    },
+    "msteams_configs": {
+     "items": {
+      "$ref": "#/definitions/MSTeamsConfig"
      },
      "type": "array"
     },
@@ -1272,6 +1464,9 @@
     "grafana_alert": {
      "$ref": "#/definitions/GettableGrafanaRule"
     },
+    "keep_firing_for": {
+     "type": "string"
+    },
     "labels": {
      "additionalProperties": {
       "type": "string"
@@ -1353,10 +1548,6 @@
     },
     "is_paused": {
      "type": "boolean"
-    },
-    "namespace_id": {
-     "format": "int64",
-     "type": "integer"
     },
     "namespace_uid": {
      "type": "string"
@@ -1483,6 +1674,23 @@
     "uptime",
     "versionInfo"
    ],
+   "type": "object"
+  },
+  "GettableTimeIntervals": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeIntervalItem"
+     },
+     "type": "array"
+    }
+   },
    "type": "object"
   },
   "GettableUserConfig": {
@@ -1760,6 +1968,41 @@
    },
    "type": "array"
   },
+  "LegacyAlert": {
+   "properties": {
+    "dashboardId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "id": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "name": {
+     "type": "string"
+    },
+    "panelId": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "type": "object"
+  },
+  "LegacyChannel": {
+   "properties": {
+    "id": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "name": {
+     "type": "string"
+    },
+    "type": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "LinkTransformationConfig": {
    "properties": {
     "expression": {
@@ -1777,9 +2020,29 @@
    },
    "type": "object"
   },
+  "MSTeamsConfig": {
+   "properties": {
+    "http_config": {
+     "$ref": "#/definitions/HTTPClientConfig"
+    },
+    "send_resolved": {
+     "type": "boolean"
+    },
+    "text": {
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "webhook_url": {
+     "$ref": "#/definitions/SecretURL"
+    }
+   },
+   "type": "object"
+  },
   "MatchRegexps": {
    "additionalProperties": {
-    "$ref": "#/definitions/Regexp"
+    "type": "string"
    },
    "title": "MatchRegexps represents a map of Regexp.",
    "type": "object"
@@ -1829,6 +2092,24 @@
    "title": "MuteTimeInterval represents a named set of time intervals for which a route should be muted.",
    "type": "object"
   },
+  "MuteTimeIntervalExport": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "orgId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeInterval"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "MuteTimings": {
    "items": {
     "$ref": "#/definitions/MuteTimeInterval"
@@ -1871,6 +2152,65 @@
    "format": "int64",
    "title": "NoticeSeverity is a type for the Severity property of a Notice.",
    "type": "integer"
+  },
+  "NotificationPolicyExport": {
+   "properties": {
+    "continue": {
+     "type": "boolean"
+    },
+    "group_by": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "group_interval": {
+     "type": "string"
+    },
+    "group_wait": {
+     "type": "string"
+    },
+    "match": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "description": "Deprecated. Remove before v1.0 release.",
+     "type": "object"
+    },
+    "match_re": {
+     "$ref": "#/definitions/MatchRegexps"
+    },
+    "matchers": {
+     "$ref": "#/definitions/Matchers"
+    },
+    "mute_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "object_matchers": {
+     "$ref": "#/definitions/ObjectMatchers"
+    },
+    "orgId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "receiver": {
+     "type": "string"
+    },
+    "repeat_interval": {
+     "type": "string"
+    },
+    "routes": {
+     "items": {
+      "$ref": "#/definitions/RouteExport"
+     },
+     "type": "array"
+    }
+   },
+   "title": "NotificationPolicyExport is the provisioned file export of alerting.NotificiationPolicyV1.",
+   "type": "object"
   },
   "NotificationTemplate": {
    "properties": {
@@ -1956,9 +2296,18 @@
    "title": "OAuth2 is the oauth2 client configuration.",
    "type": "object"
   },
+  "ObjectMatcher": {
+   "items": {
+    "type": "string"
+   },
+   "title": "ObjectMatcher is a matcher that can be used to filter alerts.",
+   "type": "array"
+  },
   "ObjectMatchers": {
-   "$ref": "#/definitions/Matchers",
-   "description": "ObjectMatchers is Matchers with a different Unmarshal and Marshal methods that accept matchers as objects\nthat have already been parsed."
+   "items": {
+    "$ref": "#/definitions/ObjectMatcher"
+   },
+   "type": "array"
   },
   "OpsGenieConfig": {
    "properties": {
@@ -2035,6 +2384,50 @@
     },
     "username": {
      "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "OrgMigrationState": {
+   "properties": {
+    "migratedChannels": {
+     "items": {
+      "$ref": "#/definitions/ContactPair"
+     },
+     "type": "array"
+    },
+    "migratedDashboards": {
+     "items": {
+      "$ref": "#/definitions/DashboardUpgrade"
+     },
+     "type": "array"
+    },
+    "orgId": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "type": "object"
+  },
+  "OrgMigrationSummary": {
+   "properties": {
+    "hasErrors": {
+     "type": "boolean"
+    },
+    "newAlerts": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "newChannels": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "newDashboards": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "removed": {
+     "type": "boolean"
     }
    },
    "type": "object"
@@ -2212,6 +2605,12 @@
      },
      "type": "array"
     },
+    "msteams_configs": {
+     "items": {
+      "$ref": "#/definitions/MSTeamsConfig"
+     },
+     "type": "array"
+    },
     "name": {
      "description": "A unique identifier for this receiver.",
      "type": "string"
@@ -2298,6 +2697,9 @@
     },
     "grafana_alert": {
      "$ref": "#/definitions/PostableGrafanaRule"
+    },
+    "keep_firing_for": {
+     "type": "string"
     },
     "labels": {
      "additionalProperties": {
@@ -2434,6 +2836,20 @@
     "rules": {
      "items": {
       "$ref": "#/definitions/PostableExtendedRuleNode"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "PostableTimeIntervals": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "time_intervals": {
+     "items": {
+      "$ref": "#/definitions/TimeIntervalItem"
      },
      "type": "array"
     }
@@ -2583,6 +2999,9 @@
      "type": "string"
     },
     "uid": {
+     "maxLength": 40,
+     "minLength": 1,
+     "pattern": "^[a-zA-Z0-9-_]+$",
      "type": "string"
     },
     "updated": {
@@ -2629,6 +3048,26 @@
    },
    "type": "object"
   },
+  "PublicError": {
+   "description": "PublicError is derived from Error and only contains information\navailable to the end user.",
+   "properties": {
+    "extra": {
+     "additionalProperties": {},
+     "type": "object"
+    },
+    "message": {
+     "type": "string"
+    },
+    "messageId": {
+     "type": "string"
+    },
+    "statusCode": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "type": "object"
+  },
   "PushoverConfig": {
    "properties": {
     "device": {
@@ -2665,6 +3104,9 @@
      "$ref": "#/definitions/Secret"
     },
     "token_file": {
+     "type": "string"
+    },
+    "ttl": {
      "type": "string"
     },
     "url": {
@@ -2783,6 +3225,12 @@
      },
      "type": "array"
     },
+    "msteams_configs": {
+     "items": {
+      "$ref": "#/definitions/MSTeamsConfig"
+     },
+     "type": "array"
+    },
     "name": {
      "description": "A unique identifier for this receiver.",
      "type": "string"
@@ -2851,9 +3299,22 @@
    "title": "Receiver configuration provides configuration on how to contact a receiver.",
    "type": "object"
   },
-  "Regexp": {
-   "description": "A Regexp is safe for concurrent use by multiple goroutines,\nexcept for configuration methods, such as Longest.",
-   "title": "Regexp is the representation of a compiled regular expression.",
+  "ReceiverExport": {
+   "properties": {
+    "disableResolveMessage": {
+     "type": "boolean"
+    },
+    "settings": {
+     "$ref": "#/definitions/RawMessage"
+    },
+    "type": {
+     "type": "string"
+    },
+    "uid": {
+     "type": "string"
+    }
+   },
+   "title": "ReceiverExport is the provisioned file export of alerting.ReceiverV1.",
    "type": "object"
   },
   "RelativeTimeRange": {
@@ -2864,6 +3325,19 @@
     },
     "to": {
      "$ref": "#/definitions/Duration"
+    }
+   },
+   "type": "object"
+  },
+  "RelativeTimeRangeExport": {
+   "properties": {
+    "from": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "to": {
+     "format": "int64",
+     "type": "integer"
     }
    },
    "type": "object"
@@ -2936,6 +3410,61 @@
     "routes": {
      "items": {
       "$ref": "#/definitions/Route"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "RouteExport": {
+   "description": "RouteExport is the provisioned file export of definitions.Route. This is needed to hide fields that aren't useable in\nprovisioning file format. An alternative would be to define a custom MarshalJSON and MarshalYAML that excludes them.",
+   "properties": {
+    "continue": {
+     "type": "boolean"
+    },
+    "group_by": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "group_interval": {
+     "type": "string"
+    },
+    "group_wait": {
+     "type": "string"
+    },
+    "match": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "description": "Deprecated. Remove before v1.0 release.",
+     "type": "object"
+    },
+    "match_re": {
+     "$ref": "#/definitions/MatchRegexps"
+    },
+    "matchers": {
+     "$ref": "#/definitions/Matchers"
+    },
+    "mute_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "object_matchers": {
+     "$ref": "#/definitions/ObjectMatchers"
+    },
+    "receiver": {
+     "type": "string"
+    },
+    "repeat_interval": {
+     "type": "string"
+    },
+    "routes": {
+     "items": {
+      "$ref": "#/definitions/RouteExport"
      },
      "type": "array"
     }
@@ -3356,8 +3885,16 @@
   },
   "TLSConfig": {
    "properties": {
+    "ca": {
+     "description": "Text of the CA cert to use for the targets.",
+     "type": "string"
+    },
     "ca_file": {
      "description": "The CA cert to use for the targets.",
+     "type": "string"
+    },
+    "cert": {
+     "description": "Text of the client cert file for the targets.",
      "type": "string"
     },
     "cert_file": {
@@ -3367,6 +3904,9 @@
     "insecure_skip_verify": {
      "description": "Disable target certificate validation.",
      "type": "boolean"
+    },
+    "key": {
+     "$ref": "#/definitions/Secret"
     },
     "key_file": {
      "description": "The client key file for the targets.",
@@ -3666,6 +4206,55 @@
    },
    "type": "object"
   },
+  "TimeIntervalItem": {
+   "properties": {
+    "days_of_month": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "location": {
+     "type": "string"
+    },
+    "months": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "times": {
+     "items": {
+      "$ref": "#/definitions/TimeIntervalTimeRange"
+     },
+     "type": "array"
+    },
+    "weekdays": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "years": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "TimeIntervalTimeRange": {
+   "properties": {
+    "end_time": {
+     "type": "string"
+    },
+    "start_time": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
   "TimeRange": {
    "description": "Redefining this to avoid an import cycle",
    "properties": {
@@ -3717,6 +4306,32 @@
     }
    },
    "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "type": "object"
+  },
+  "UpdateRuleGroupResponse": {
+   "properties": {
+    "created": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "deleted": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "message": {
+     "type": "string"
+    },
+    "updated": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    }
+   },
    "type": "object"
   },
   "Userinfo": {
@@ -3919,7 +4534,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -4079,13 +4693,13 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4141,6 +4755,7 @@
    "type": "array"
   },
   "integration": {
+   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -4284,7 +4899,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -4441,7 +5055,7 @@
   "version": "1.1.0"
  },
  "paths": {
-  "/api/v1/provisioning/alert-rules": {
+  "/v1/provisioning/alert-rules": {
    "get": {
     "operationId": "RouteGetAlertRules",
     "responses": {
@@ -4496,7 +5110,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/export": {
+  "/v1/provisioning/alert-rules/export": {
    "get": {
     "operationId": "RouteGetAlertRulesExport",
     "parameters": [
@@ -4512,6 +5126,27 @@
       "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
       "in": "query",
       "name": "format",
+      "type": "string"
+     },
+     {
+      "description": "UIDs of folders from which to export rules",
+      "in": "query",
+      "items": {
+       "type": "string"
+      },
+      "name": "folderUid",
+      "type": "array"
+     },
+     {
+      "description": "Name of group of rules to export. Must be specified only together with a single folder UID",
+      "in": "query",
+      "name": "group",
+      "type": "string"
+     },
+     {
+      "description": "UID of alert rule to export. If specified, parameters folderUid and group must be empty.",
+      "in": "query",
+      "name": "ruleUid",
       "type": "string"
      }
     ],
@@ -4532,7 +5167,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/{UID}": {
+  "/v1/provisioning/alert-rules/{UID}": {
    "delete": {
     "operationId": "RouteDeleteAlertRule",
     "parameters": [
@@ -4541,6 +5176,11 @@
       "in": "path",
       "name": "UID",
       "required": true,
+      "type": "string"
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
       "type": "string"
      }
     ],
@@ -4627,17 +5267,10 @@
     ]
    }
   },
-  "/api/v1/provisioning/alert-rules/{UID}/export": {
+  "/v1/provisioning/alert-rules/{UID}/export": {
    "get": {
     "operationId": "RouteGetAlertRuleExport",
     "parameters": [
-     {
-      "description": "Alert rule UID",
-      "in": "path",
-      "name": "UID",
-      "required": true,
-      "type": "string"
-     },
      {
       "default": false,
       "description": "Whether to initiate a download of the file or not.",
@@ -4650,6 +5283,13 @@
       "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
       "in": "query",
       "name": "format",
+      "type": "string"
+     },
+     {
+      "description": "Alert rule UID",
+      "in": "path",
+      "name": "UID",
+      "required": true,
       "type": "string"
      }
     ],
@@ -4675,7 +5315,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/contact-points": {
+  "/v1/provisioning/contact-points": {
    "get": {
     "operationId": "RouteGetContactpoints",
     "parameters": [
@@ -4711,6 +5351,11 @@
       "schema": {
        "$ref": "#/definitions/EmbeddedContactPoint"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -4733,7 +5378,59 @@
     ]
    }
   },
-  "/api/v1/provisioning/contact-points/{UID}": {
+  "/v1/provisioning/contact-points/export": {
+   "get": {
+    "operationId": "RouteGetContactpointsExport",
+    "parameters": [
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
+     },
+     {
+      "default": false,
+      "description": "Whether any contained secure settings should be decrypted or left redacted. Redacted settings will contain RedactedValue instead. Currently, only org admin can view decrypted secure settings.",
+      "in": "query",
+      "name": "decrypt",
+      "type": "boolean"
+     },
+     {
+      "description": "Filter by name",
+      "in": "query",
+      "name": "name",
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "403": {
+      "description": "PermissionDenied",
+      "schema": {
+       "$ref": "#/definitions/PermissionDenied"
+      }
+     }
+    },
+    "summary": "Export all contact points in provisioning file format.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/v1/provisioning/contact-points/{UID}": {
    "delete": {
     "consumes": [
      "application/json"
@@ -4749,7 +5446,7 @@
      }
     ],
     "responses": {
-     "204": {
+     "202": {
       "description": " The contact point was deleted successfully."
      }
     },
@@ -4777,6 +5474,11 @@
       "schema": {
        "$ref": "#/definitions/EmbeddedContactPoint"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -4799,7 +5501,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
+  "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}": {
    "get": {
     "operationId": "RouteGetAlertRuleGroup",
     "parameters": [
@@ -4838,6 +5540,11 @@
     ],
     "operationId": "RoutePutAlertRuleGroup",
     "parameters": [
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
+     },
      {
       "in": "path",
       "name": "FolderUID",
@@ -4878,22 +5585,10 @@
     ]
    }
   },
-  "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
+  "/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
    "get": {
     "operationId": "RouteGetAlertRuleGroupExport",
     "parameters": [
-     {
-      "in": "path",
-      "name": "FolderUID",
-      "required": true,
-      "type": "string"
-     },
-     {
-      "in": "path",
-      "name": "Group",
-      "required": true,
-      "type": "string"
-     },
      {
       "default": false,
       "description": "Whether to initiate a download of the file or not.",
@@ -4906,6 +5601,18 @@
       "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
       "in": "query",
       "name": "format",
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "FolderUID",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Group",
+      "required": true,
       "type": "string"
      }
     ],
@@ -4931,7 +5638,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/mute-timings": {
+  "/v1/provisioning/mute-timings": {
    "get": {
     "operationId": "RouteGetMuteTimings",
     "responses": {
@@ -4959,6 +5666,11 @@
       "schema": {
        "$ref": "#/definitions/MuteTimeInterval"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -4981,7 +5693,46 @@
     ]
    }
   },
-  "/api/v1/provisioning/mute-timings/{name}": {
+  "/v1/provisioning/mute-timings/export": {
+   "get": {
+    "operationId": "RouteExportMuteTimings",
+    "parameters": [
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "403": {
+      "description": "PermissionDenied",
+      "schema": {
+       "$ref": "#/definitions/PermissionDenied"
+      }
+     }
+    },
+    "summary": "Export all mute timings in provisioning format.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/v1/provisioning/mute-timings/{name}": {
    "delete": {
     "operationId": "RouteDeleteMuteTiming",
     "parameters": [
@@ -4996,6 +5747,12 @@
     "responses": {
      "204": {
       "description": " The mute timing was deleted successfully."
+     },
+     "409": {
+      "description": "GenericPublicError",
+      "schema": {
+       "$ref": "#/definitions/GenericPublicError"
+      }
      }
     },
     "summary": "Delete a mute timing.",
@@ -5049,10 +5806,15 @@
       "schema": {
        "$ref": "#/definitions/MuteTimeInterval"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
-     "200": {
+     "202": {
       "description": "MuteTimeInterval",
       "schema": {
        "$ref": "#/definitions/MuteTimeInterval"
@@ -5071,7 +5833,53 @@
     ]
    }
   },
-  "/api/v1/provisioning/policies": {
+  "/v1/provisioning/mute-timings/{name}/export": {
+   "get": {
+    "operationId": "RouteExportMuteTiming",
+    "parameters": [
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
+     },
+     {
+      "description": "Mute timing name",
+      "in": "path",
+      "name": "name",
+      "required": true,
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "403": {
+      "description": "PermissionDenied",
+      "schema": {
+       "$ref": "#/definitions/PermissionDenied"
+      }
+     }
+    },
+    "summary": "Export a mute timing in provisioning format.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/v1/provisioning/policies": {
    "delete": {
     "consumes": [
      "application/json"
@@ -5118,6 +5926,11 @@
       "schema": {
        "$ref": "#/definitions/Route"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5140,7 +5953,30 @@
     ]
    }
   },
-  "/api/v1/provisioning/templates": {
+  "/v1/provisioning/policies/export": {
+   "get": {
+    "operationId": "RouteGetPolicyTreeExport",
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "404": {
+      "description": "NotFound",
+      "schema": {
+       "$ref": "#/definitions/NotFound"
+      }
+     }
+    },
+    "summary": "Export the notification policy tree in provisioning file format.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/v1/provisioning/templates": {
    "get": {
     "operationId": "RouteGetTemplates",
     "responses": {
@@ -5160,7 +5996,7 @@
     ]
    }
   },
-  "/api/v1/provisioning/templates/{name}": {
+  "/v1/provisioning/templates/{name}": {
    "delete": {
     "operationId": "RouteDeleteTemplate",
     "parameters": [
@@ -5228,6 +6064,11 @@
       "schema": {
        "$ref": "#/definitions/NotificationTemplateContent"
       }
+     },
+     {
+      "in": "header",
+      "name": "X-Disable-Provenance",
+      "type": "string"
      }
     ],
     "responses": {
@@ -5255,6 +6096,36 @@
   "application/json"
  ],
  "responses": {
+  "GetAllIntervalsResponse": {
+   "description": "",
+   "schema": {
+    "items": {
+     "$ref": "#/definitions/GettableTimeIntervals"
+    },
+    "type": "array"
+   }
+  },
+  "GetIntervalsByNameResponse": {
+   "description": "",
+   "schema": {
+    "$ref": "#/definitions/GettableTimeIntervals"
+   }
+  },
+  "GetReceiverResponse": {
+   "description": "",
+   "schema": {
+    "$ref": "#/definitions/GettableApiReceiver"
+   }
+  },
+  "GetReceiversResponse": {
+   "description": "",
+   "schema": {
+    "items": {
+     "$ref": "#/definitions/GettableApiReceiver"
+    },
+    "type": "array"
+   }
+  },
   "GettableHistoricUserConfigs": {
    "description": "",
    "schema": {

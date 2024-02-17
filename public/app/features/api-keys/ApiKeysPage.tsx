@@ -16,7 +16,7 @@ import { setSearchQuery } from './state/reducers';
 import { getApiKeys, getApiKeysCount, getIncludeExpired, getIncludeExpiredDisabled } from './state/selectors';
 
 function mapStateToProps(state: StoreState) {
-  const canCreate = contextSrv.hasAccess(AccessControlAction.ActionAPIKeysCreate, true);
+  const canCreate = contextSrv.hasPermission(AccessControlAction.ActionAPIKeysCreate);
   return {
     apiKeys: getApiKeys(state.apiKeys),
     searchQuery: state.apiKeys.searchQuery,
@@ -113,18 +113,10 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
       migrationResult,
     } = this.props;
 
-    if (!hasFetched) {
-      return (
-        <Page {...defaultPageProps}>
-          <Page.Contents isLoading={true}>{}</Page.Contents>
-        </Page>
-      );
-    }
-
     const showTable = apiKeysCount > 0;
     return (
       <Page {...defaultPageProps}>
-        <Page.Contents isLoading={false}>
+        <Page.Contents isLoading={!hasFetched}>
           <>
             <MigrateToServiceAccountsCard onMigrate={this.onMigrateApiKeys} apikeysCount={apiKeysCount} />
             {showTable ? (

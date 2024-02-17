@@ -19,7 +19,7 @@ export function getVariablesUrlParams(scopedVars?: ScopedVars): UrlQueryMap {
     if (scopedVar) {
       params[VARIABLE_PREFIX + variable.name] = scopedVar.value;
     } else {
-      params[VARIABLE_PREFIX + variable.name] = variableAdapters.get(variable.type).getValueForUrl(variable as any);
+      params[VARIABLE_PREFIX + variable.name] = variableAdapters.get(variable.type).getValueForUrl(variable);
     }
   }
 

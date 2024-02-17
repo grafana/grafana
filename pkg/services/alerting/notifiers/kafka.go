@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -40,7 +41,7 @@ func init() {
 }
 
 // NewKafkaNotifier is the constructor function for the Kafka notifier.
-func NewKafkaNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
+func NewKafkaNotifier(_ *setting.Cfg, model *models.AlertNotification, _ alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
 	endpoint := model.Settings.Get("kafkaRestProxy").MustString()
 	if endpoint == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find kafka rest proxy endpoint property in settings"}
@@ -79,7 +80,7 @@ func (kn *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 	kn.log.Info("Notifying Kafka", "alert_state", state)
 
 	recordJSON := simplejson.New()
-	records := make([]interface{}, 1)
+	records := make([]any, 1)
 
 	bodyJSON := simplejson.New()
 	// get alert state in the kafka output issue #11401
@@ -97,7 +98,7 @@ func (kn *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 	bodyJSON.Set("client_url", ruleURL)
 
 	if kn.NeedsImage() && evalContext.ImagePublicURL != "" {
-		contexts := make([]interface{}, 1)
+		contexts := make([]any, 1)
 		imageJSON := simplejson.New()
 		imageJSON.Set("type", "image")
 		imageJSON.Set("src", evalContext.ImagePublicURL)

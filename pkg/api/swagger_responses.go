@@ -81,3 +81,56 @@ type UnauthorizedError GenericError
 //
 // swagger:response acceptedResponse
 type AcceptedResponse GenericError
+
+// documentation for PublicError defined in errutil.Error
+
+// swagger:response publicErrorResponse
+type PublicErrorResponse struct {
+	// The response message
+	// in: body
+	Body PublicError `json:"body"`
+}
+
+// PublicError is derived from Error and only contains information
+// available to the end user.
+// swagger:model publicError
+type PublicError struct {
+	// StatusCode The HTTP status code returned
+	// required: true
+	StatusCode int `json:"statusCode"`
+
+	// MessageID A unique identifier for the error
+	// required: true
+	MessageID string `json:"messageId"`
+
+	// Message A human readable message
+	Message string `json:"message"`
+
+	// Extra Additional information about the error
+	Extra map[string]any `json:"extra"`
+}
+
+// NotFoundPublicError is returned when the requested resource was not found.
+//
+// swagger:response notFoundPublicError
+type NotFoundPublicError PublicErrorResponse
+
+// BadRequestPublicError is returned when the request is invalid and it cannot be processed.
+//
+// swagger:response badRequestPublicError
+type BadRequestPublicError PublicErrorResponse
+
+// UnauthorisedPublicError is returned when the request is not authenticated.
+//
+// swagger:response unauthorisedPublicError
+type UnauthorisedPublicError PublicErrorResponse
+
+// ForbiddenPublicError is returned if the user/token has insufficient permissions to access the requested resource.
+//
+// swagger:response forbiddenPublicError
+type ForbiddenPublicError PublicErrorResponse
+
+// InternalServerPublicError is a general error indicating something went wrong internally.
+//
+// swagger:response internalServerPublicError
+type InternalServerPublicError PublicErrorResponse

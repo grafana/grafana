@@ -7,8 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -105,14 +103,34 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 	return key
 }
 
-func SetupMockAccesscontrol(t *testing.T,
-	userpermissionsfunc func(c context.Context, siu *user.SignedInUser, opt accesscontrol.Options) ([]accesscontrol.Permission, error),
-	disableAccessControl bool) *accesscontrolmock.Mock {
-	t.Helper()
-	acmock := accesscontrolmock.New()
-	if disableAccessControl {
-		acmock = acmock.WithDisabled()
+// SetupUsersServiceAccounts creates in "test org" all users or service accounts passed in parameter
+// To achieve this, it sets the AutoAssignOrg and AutoAssignOrgId settings.
+func SetupUsersServiceAccounts(t *testing.T, sqlStore *sqlstore.SQLStore, testUsers []TestUser) (orgID int64) {
+	role := string(org.RoleNone)
+
+	quotaService := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
+	orgService, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
+	require.NoError(t, err)
+	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	require.NoError(t, err)
+
+	org, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{
+		Name: "test org",
+	})
+	require.NoError(t, err)
+
+	sqlStore.Cfg.AutoAssignOrg = true
+	sqlStore.Cfg.AutoAssignOrgId = int(org.ID)
+
+	for i := range testUsers {
+		_, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
+			Login:            testUsers[i].Login,
+			IsServiceAccount: testUsers[i].IsServiceAccount,
+			DefaultOrgRole:   role,
+			Name:             testUsers[i].Name,
+			OrgID:            org.ID,
+		})
+		require.NoError(t, err)
 	}
-	acmock.GetUserPermissionsFunc = userpermissionsfunc
-	return acmock
+	return org.ID
 }

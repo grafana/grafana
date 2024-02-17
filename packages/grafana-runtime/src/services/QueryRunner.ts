@@ -48,7 +48,7 @@ let runRequest: RunRequestFn | undefined;
  * @internal
  */
 export function setRunRequest(fn: RunRequestFn): void {
-  if (runRequest) {
+  if (runRequest && process.env.NODE_ENV !== 'test') {
     throw new Error('runRequest function should only be set once, when Grafana is starting.');
   }
   runRequest = fn;

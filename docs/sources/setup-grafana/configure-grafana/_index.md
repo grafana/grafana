@@ -148,9 +148,19 @@ Options are `production` and `development`. Default is `production`. _Do not_ ch
 Set the name of the grafana-server instance. Used in logging, internal metrics, and clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
 environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use system calls to get the machine name.
 
-### force_migration
+## force_migration
 
-Force migration will run migrations that might cause data loss. Default is `false`.
+{{% admonition type="note" %}}
+This option is deprecated - [See `clean_upgrade` option]({{< relref "#clean_upgrade" >}}) instead.
+{{% /admonition %}}
+
+When you restart Grafana to rollback from Grafana Alerting to legacy alerting, delete any existing Grafana Alerting data, such as alert rules, contact points, and notification policies. Default is `false`.
+
+If `false` or unset, existing Grafana Alerting data is not changed or deleted when rolling back to legacy alerting.
+
+{{% admonition type="note" %}}
+It should be kept false or unset when not needed, as it may cause unintended data loss if left enabled.
+{{% /admonition %}}
 
 <hr />
 
@@ -359,7 +369,7 @@ The maximum number of connections in the idle connection pool.
 
 ### max_open_conn
 
-The maximum number of open connections to the database.
+The maximum number of open connections to the database. For MYSQL, configure this setting on both Grafana and the database. For more information, refer to [`sysvar_max_connections`](https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html#sysvar_max_connections).
 
 ### conn_max_lifetime
 
@@ -514,6 +524,10 @@ Sets a custom value for the `User-Agent` header for outgoing data proxy requests
 
 ## [analytics]
 
+### enabled
+
+This option is also known as _usage analytics_. When `false`, this option disables the writers that write to the Grafana database and the associated features, such as dashboard and data source insights, presence indicators, and advanced dashboard search. The default value is `true`.
+
 ### reporting_enabled
 
 When enabled Grafana will send anonymous usage statistics to
@@ -567,6 +581,12 @@ URL to load the Rudderstack SDK.
 
 Optional. If tracking with Rudderstack is enabled, you can provide a custom
 URL to load the Rudderstack config.
+
+### rudderstack_integrations_url
+
+Optional. If tracking with Rudderstack is enabled, you can provide a custom
+URL to load the SDK for destinations running in device mode. This setting is only valid for
+Rudderstack version 1.1 and higher.
 
 ### application_insights_connection_string
 
@@ -805,9 +825,9 @@ that this organization already exists. Default is 1.
 
 ### auto_assign_org_role
 
-The role new users will be assigned for the main organization (if the
-`auto_assign_org` setting is set to true). Defaults to `Viewer`, other valid
-options are `Admin` and `Editor`. e.g.:
+The `auto_assign_org_role` setting determines the default role assigned to new users
+in the main organization (if `auto_assign_org` setting is set to true).
+The available options are `Viewer` (default), `Admin`, `Editor`, and `None`. For example:
 
 `auto_assign_org_role = Viewer`
 
@@ -896,7 +916,11 @@ Set to `true` to disable the signout link in the side menu. This is useful if yo
 
 ### signout_redirect_url
 
-URL to redirect the user to after they sign out.
+The URL the user is redirected to upon signing out. To support [OpenID Connect RP-Initiated Logout](https://openid.net/specs/openid-connect-rpinitiated-1_0.html), the user must add `post_logout_redirect_uri` to the `signout_redirect_url`.
+
+Example:
+
+signout_redirect_url = http://localhost:8087/realms/grafana/protocol/openid-connect/logout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Flogin
 
 ### oauth_auto_login
 
@@ -930,11 +954,13 @@ reset to the default organization role on every login. [See `auto_assign_org_rol
 
 `skip_org_role_sync` prevents the synchronization of organization roles for a specific OAuth integration, while the deprecated setting `oauth_skip_org_role_update_sync` affects all configured OAuth providers.
 
-`skip_org_role_sync` default value is `false`.
+The default value for `skip_org_role_sync` is `false`.
 
 With `skip_org_role_sync` set to `false`, the users' organization and role is reset on every new login, based on the external provider's role. See your provider in the tables below.
 
 With `skip_org_role_sync` set to `true`, when a user logs in for the first time, Grafana sets the organization role based on the value specified in `auto_assign_org_role` and forces the organization to `auto_assign_org_id` when specified, otherwise it falls back to OrgID `1`.
+
+> **Note**: Enabling `skip_org_role_sync` also disables the synchronization of Grafana Admins from the external provider, as such `allow_assign_grafana_admin` is ignored.
 
 Use this setting when you want to manage the organization roles of your users from within Grafana and be able to manually assign them to multiple organizations, or to prevent synchronization conflicts when they can be synchronized from another provider.
 
@@ -1145,6 +1171,32 @@ The client ID to use for user-assigned managed identity.
 
 Should be set for user-assigned identity and should be empty for system-assigned identity.
 
+### workload_identity_enabled
+
+Specifies whether Azure AD Workload Identity authentication should be enabled in datasources that support it.
+
+For more documentation on Azure AD Workload Identity, review [Azure AD Workload Identity](https://azure.github.io/azure-workload-identity/docs/) documentation.
+
+Disabled by default, needs to be explicitly enabled.
+
+### workload_identity_tenant_id
+
+Tenant ID of the Azure AD Workload Identity.
+
+Allows to override default tenant ID of the Azure AD identity associated with the Kubernetes service account.
+
+### workload_identity_client_id
+
+Client ID of the Azure AD Workload Identity.
+
+Allows to override default client ID of the Azure AD identity associated with the Kubernetes service account.
+
+### workload_identity_token_file
+
+Custom path to token file for the Azure AD Workload Identity.
+
+Allows to set a custom path to the projected service account token file.
+
 ### user_identity_enabled
 
 Specifies whether user identity authentication (on behalf of currently signed-in user) should be enabled in datasources that support it (requires AAD authentication).
@@ -1168,6 +1220,12 @@ By default is the same as used in AAD authentication or can be set to another ap
 Override the AAD application client secret.
 
 By default is the same as used in AAD authentication or can be set to another application (for OBO flow).
+
+### forward_settings_to_plugins
+
+Set plugins that will receive Azure settings via plugin context.
+
+By default, this will include all Grafana Labs owned Azure plugins or those that use Azure settings (Azure Monitor, Azure Data Explorer, Prometheus, MSSQL).
 
 ## [auth.jwt]
 
@@ -1222,6 +1280,17 @@ Name to be used as client identity for EHLO in SMTP dialog, default is `<instanc
 ### startTLS_policy
 
 Either "OpportunisticStartTLS", "MandatoryStartTLS", "NoStartTLS". Default is `empty`.
+
+### enable_tracing
+
+Enable trace propagation in e-mail headers, using the `traceparent`, `tracestate` and (optionally) `baggage` fields. Default is `false`. To enable, you must first configure tracing in one of the `tracing.oentelemetry.*` sections.
+
+<hr>
+
+## [smtp.static_headers]
+
+Enter key-value pairs on their own lines to be included as headers on outgoing emails. All keys must be in canonical mail header format.
+Examples: `Foo=bar`, `Foo-Header=bar`.
 
 <hr>
 
@@ -1445,7 +1514,7 @@ For more information about the Grafana alerts, refer to [About Grafana Alerting]
 
 ### enabled
 
-Enable or disable Grafana Alerting. If disabled, all your legacy alerting data will be available again, but the data you created using Grafana Alerting will be deleted. Set force_migration=true to avoid deletion of data. The default value is `true`.
+Enable or disable Grafana Alerting. If disabled, all your legacy alerting data will be available again. The default value is `true`.
 
 Alerting Rules migrated from dashboards and panels will include a link back via the `annotations`.
 
@@ -1464,6 +1533,34 @@ The interval string is a possibly signed sequence of decimal numbers, followed b
 Specify the frequency of polling for Alertmanager config changes. The default value is `60s`.
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
+
+### ha_redis_address
+
+The Redis server address that should be connected to.
+
+### ha_redis_username
+
+The username that should be used to authenticate with the Redis server.
+
+### ha_redis_password
+
+The password that should be used to authenticate with the Redis server.
+
+### ha_redis_db
+
+The Redis database. The default value is `0`.
+
+### ha_redis_prefix
+
+A prefix that is used for every key or channel that is created on the Redis server as part of HA for alerting.
+
+### ha_redis_peer_name
+
+The name of the cluster peer that will be used as an identifier. If none is provided, a random one will be generated.
+
+### ha_redis_max_conns
+
+The maximum number of simultaneous Redis connections.
 
 ### ha_listen_address
 
@@ -1485,6 +1582,10 @@ each instance wait before sending the notification to take into account replicat
 
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
+### ha_label
+
+The label is an optional string to include on each packet and stream. It uniquely identifies the cluster and prevents cross-communication issues when sending gossip messages in an environment with multiple clusters.
+
 ### ha_gossip_interval
 
 The interval between sending gossip messages. By lowering this value (more frequent) gossip messages are propagated
@@ -1505,13 +1606,13 @@ Enable or disable alerting rule execution. The default value is `true`. The aler
 
 ### evaluation_timeout
 
-Sets the alert evaluation timeout when fetching data from the datasource. The default value is `30s`. This option has a [legacy version in the alerting section]({{< relref "#evaluation_timeout_seconds" >}}) that takes precedence.
+Sets the alert evaluation timeout when fetching data from the data source. The default value is `30s`. This option has a [legacy version in the alerting section]({{< relref "#evaluation_timeout_seconds" >}}) that takes precedence.
 
 The timeout string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. 30s or 1m.
 
 ### max_attempts
 
-Sets a maximum number of times we'll attempt to evaluate an alert rule before giving up on that evaluation. The default value is `3`. This option has a [legacy version in the alerting section]({{< relref "#max_attempts-1" >}}) that takes precedence.
+Sets a maximum number of times we'll attempt to evaluate an alert rule before giving up on that evaluation. The default value is `1`.
 
 ### min_interval
 
@@ -1550,6 +1651,22 @@ For more information about Grafana Reserved Labels, refer to [Labels in Grafana 
 Comma-separated list of reserved labels added by the Grafana Alerting engine that should be disabled.
 
 For example: `disabled_labels=grafana_folder`
+
+<hr>
+
+## [unified_alerting.upgrade]
+
+For more information about upgrading to Grafana Alerting, refer to [Upgrade Alerting](/docs/grafana/next/alerting/set-up/migrating-alerts/).
+
+### clean_upgrade
+
+When you restart Grafana to upgrade from legacy alerting to Grafana Alerting, delete any existing Grafana Alerting data from a previous upgrade, such as alert rules, contact points, and notification policies. Default is `false`.
+
+If `false` or unset, existing Grafana Alerting data is not changed or deleted when you switch between legacy and Unified Alerting.
+
+{{% admonition type="note" %}}
+It should be kept false when not needed, as it may cause unintended data loss if left enabled.
+{{% /admonition %}}
 
 <hr>
 
@@ -1709,6 +1826,10 @@ Flush/write interval when sending metrics to external TSDB. Defaults to `10`.
 
 If set to `true`, then total stats generation (`stat_totals_*` metrics) is disabled. Default is `false`.
 
+### total_stats_collector_interval_seconds
+
+Sets the total stats collector interval. The default is 1800 seconds (30 minutes).
+
 ### basic_auth_username and basic_auth_password
 
 If both are set, then basic authentication is required to access the metrics endpoint.
@@ -1786,6 +1907,8 @@ Refer to https://www.jaegertracing.io/docs/1.16/sampling/#client-sampling-config
 
 Can be set with the environment variable `JAEGER_SAMPLER_TYPE`.
 
+_To override this setting, enter `sampler_type` in the `tracing.opentelemetry` section._
+
 ### sampler_param
 
 Default value is `1`.
@@ -1801,9 +1924,13 @@ This is the sampler configuration parameter. Depending on the value of `sampler_
 
 May be set with the environment variable `JAEGER_SAMPLER_PARAM`.
 
+_Setting `sampler_param` in the `tracing.opentelemetry` section will override this setting._
+
 ### sampling_server_url
 
 sampling_server_url is the URL of a sampling manager providing a sampling strategy.
+
+_Setting `sampling_server_url` in the `tracing.opentelemetry` section will override this setting._
 
 ### zipkin_propagation
 
@@ -1830,6 +1957,31 @@ Configure general parameters shared between OpenTelemetry providers.
 Comma-separated list of attributes to include in all new spans, such as `key1:value1,key2:value2`.
 
 Can be set with the environment variable `OTEL_RESOURCE_ATTRIBUTES` (use `=` instead of `:` with the environment variable).
+
+### sampler_type
+
+Default value is `const`.
+
+Specifies the type of sampler: `const`, `probabilistic`, `ratelimiting`, or `remote`.
+
+### sampler_param
+
+Default value is `1`.
+
+Depending on the value of `sampler_type`, the sampler configuration parameter can be `0`, `1`, or any decimal value between `0` and `1`.
+
+- For the `const` sampler, use `0` to never sample or `1` to always sample
+- For the `probabilistic` sampler, you can use a decimal value between `0.0` and `1.0`
+- For the `rateLimiting` sampler, enter the number of spans per second
+- For the `remote` sampler, use a decimal value between `0.0` and `1.0`
+  to specify the initial sampling rate used before the first update
+  is received from the sampling server
+
+### sampling_server_url
+
+When `sampler_type` is `remote`, this specifies the URL of the sampling server. This can be used by all tracing providers.
+
+Use a sampling server that supports the Jaeger remote sampling API, such as jaeger-agent, jaeger-collector, opentelemetry-collector-contrib, or [Grafana Agent](/oss/agent/).
 
 <hr>
 
@@ -1935,7 +2087,7 @@ Basic auth password.
 
 ### public_url
 
-Optional URL to send to users in notifications. If the string contains the sequence `${file}`, it is replaced with the uploaded filename. Otherwise, the file name is appended to the path part of the URL, leaving any query string unchanged.
+Optional URL to send to users in notifications. If the string contains the sequence `{{file}}`, it is replaced with the uploaded filename. Otherwise, the file name is appended to the path part of the URL, leaving any query string unchanged.
 
 <hr>
 
@@ -2064,6 +2216,10 @@ Disable download of the public key for verifying plugin signature. The default i
 
 Force download of the public key for verifying plugin signature on startup. The default is `false`. If disabled, the public key will be retrieved every 10 days. Requires `public_key_retrieval_disabled` to be false to have any effect.
 
+### disable_plugins
+
+Enter a comma-separated list of plugin identifiers to avoid loading (including core plugins). These plugins will be hidden in the catalog.
+
 <hr>
 
 ## [live]
@@ -2143,6 +2299,12 @@ Available in Grafana v9.5.0 or later, and [OpenTelemetry must be configured as w
 
 If `true`, propagate the tracing context to the plugin backend and enable tracing (if the backend supports it).
 
+## as_external
+
+Load an external version of a core plugin if it has been installed.
+
+Experimental. Requires the feature toggle `externalCorePlugins` to be enabled.
+
 <hr>
 
 ## [plugin.grafana-image-renderer]
@@ -2180,6 +2342,14 @@ For the verbose information to be included in the Grafana server log you have to
 Instruct headless browser instance whether to output its debug and error messages into running process of remote rendering service. Default is `false`.
 
 It can be useful to set this to `true` when troubleshooting.
+
+### rendering_timing_metrics
+
+> **Note:** Available from grafana-image-renderer v3.9.0+
+
+Instruct a headless browser instance on whether to record metrics for the duration of every rendering step. Default is `false`.
+
+Setting this to `true` when optimizing the rendering mode settings to improve the plugin performance or when troubleshooting can be useful.
 
 ### rendering_args
 
@@ -2249,7 +2419,41 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space.
+Keys of features to enable, separated by space.
+
+### FEATURE_TOGGLE_NAME = false
+
+Some feature toggles for stable features are on by default. Use this setting to disable an on-by-default feature toggle with the name FEATURE_TOGGLE_NAME, for example, `exploreMixedDatasource = false`.
+
+<hr>
+
+## [feature_management]
+
+The options in this section configure the experimental Feature Toggle Admin Page feature, which is enabled using the `featureToggleAdminPage` feature toggle. Grafana Labs offers support on a best-effort basis, and breaking changes might occur prior to the feature being made generally available.
+
+Please see [Configure feature toggles]({{< relref "./feature-toggles" >}}) for more information.
+
+### allow_editing
+
+Lets you switch the feature toggle state in the feature management page. The default is `false`.
+
+### update_webhook
+
+Set the URL of the controller that manages the feature toggle updates. If not set, feature toggles in the feature management page will be read-only.
+
+{{% admonition type="note" %}}
+The API for feature toggle updates has not been defined yet.
+{{% /admonition %}}
+
+### hidden_toggles
+
+Hide additional specific feature toggles from the feature management page. By default, feature toggles in the `unknown`, `experimental`, and `private preview` stages are hidden from the UI. Use this option to hide toggles in the `public preview`, `general availability`, and `deprecated` stages.
+
+### read_only_toggles
+
+Use to disable updates for additional specific feature toggles in the feature management page. By default, feature toggles can only be updated if they are in the `general availability` and `deprecated`stages. Use this option to disable updates for toggles in those stages.
+
+<hr>
 
 ## [date_formats]
 
@@ -2332,9 +2536,17 @@ Refer to [Role-based access control]({{< relref "../../administration/roles-and-
 
 ## [navigation.app_sections]
 
-Move an app plugin (referenced by its id), including all its pages, to a specific navigation section. Format: <pluginId> = <sectionId> <sortWeight>
+Move an app plugin (referenced by its id), including all its pages, to a specific navigation section. Format: `<pluginId> = <sectionId> <sortWeight>`
 
 ## [navigation.app_standalone_pages]
 
 Move an individual app plugin page (referenced by its `path` field) to a specific navigation section.
-Format: <pageUrl> = <sectionId> <sortWeight>
+Format: `<pageUrl> = <sectionId> <sortWeight>`
+
+## [public_dashboards]
+
+This section configures the [public dashboards]({{< relref "../../dashboards/dashboard-public" >}}) feature.
+
+### enabled
+
+Set this to `false` to disable the public dashboards feature. This prevents users from creating new public dashboards and disables existing ones.

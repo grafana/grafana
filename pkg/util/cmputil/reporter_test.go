@@ -12,7 +12,7 @@ import (
 )
 
 type subStruct struct {
-	Data interface{}
+	Data any
 }
 
 type testStruct struct {

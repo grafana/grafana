@@ -23,7 +23,7 @@ func writeStarredSQL(query SearchInQueryHistoryQuery, sqlStore db.DB, builder *d
 }
 
 func writeFiltersSQL(query SearchInQueryHistoryQuery, user *user.SignedInUser, sqlStore db.DB, builder *db.SQLBuilder) {
-	params := []interface{}{user.OrgID, user.UserID, query.From, query.To, "%" + query.SearchString + "%", "%" + query.SearchString + "%"}
+	params := []any{user.OrgID, user.UserID, query.From, query.To, "%" + query.SearchString + "%", "%" + query.SearchString + "%"}
 	var sql bytes.Buffer
 	sql.WriteString(" WHERE query_history.org_id = ? AND query_history.created_by = ? AND query_history.created_at >= ? AND query_history.created_at <= ? AND (query_history.queries " + sqlStore.GetDialect().LikeStr() + " ? OR query_history.comment " + sqlStore.GetDialect().LikeStr() + " ?) ")
 

@@ -7,6 +7,7 @@
     "import/external-module-folders": ["node_modules", ".yarn"]
   },
   "rules": {
+    "@grafana/no-border-radius-literal": "error",
     "react/prop-types": "off",
     // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
     "react/no-unknown-property": ["error", { "ignore": ["css"] }],
@@ -34,6 +35,10 @@
             "name": "react-i18next",
             "importNames": ["Trans", "t"],
             "message": "Please import from app/core/internationalization instead"
+          },
+          {
+            "name": "@grafana/e2e",
+            "message": "@grafana/e2e is deprecated. Please import from ./e2e/utils instead"
           }
         ]
       }
@@ -85,6 +90,52 @@
           {
             "controlComponents": ["NumberInput"],
             "depth": 2
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "public/app/plugins/datasource/grafana-postgresql-datasource/*.{ts,tsx}",
+        "public/app/plugins/datasource/grafana-postgresql-datasource/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/grafana-pyroscope-datasource/*.{ts,tsx}",
+        "public/app/plugins/datasource/grafana-pyroscope-datasource/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/grafana-testdata-datasource/*.{ts,tsx}",
+        "public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/azuremonitor/*.{ts,tsx}",
+        "public/app/plugins/datasource/azuremonitor/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/cloud-monitoring/*.{ts,tsx}",
+        "public/app/plugins/datasource/cloud-monitoring/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/mysql/*.{ts,tsx}",
+        "public/app/plugins/datasource/mysql/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/parca/*.{ts,tsx}",
+        "public/app/plugins/datasource/parca/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/tempo/*.{ts,tsx}",
+        "public/app/plugins/datasource/tempo/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/loki/*.{ts,tsx}",
+        "public/app/plugins/datasource/loki/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/elasticsearch/*.{ts,tsx}",
+        "public/app/plugins/datasource/elasticsearch/**/*.{ts,tsx}"
+      ],
+      "settings": {
+        "import/resolver": {
+          "node": {
+            "extensions": [".ts", ".tsx"]
+          }
+        }
+      },
+      "rules": {
+        "import/no-restricted-paths": [
+          "error",
+          {
+            "zones": [
+              {
+                "target": "./public/app/plugins",
+                "from": "./public",
+                "except": ["./app/plugins"],
+                "message": "Core plugins are not allowed to depend on Grafana core packages"
+              }
+            ]
           }
         ]
       }

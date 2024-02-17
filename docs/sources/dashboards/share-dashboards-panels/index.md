@@ -31,6 +31,7 @@ labels:
     - oss
 menuTitle: Sharing
 title: Share dashboards and panels
+description: Share Grafana dashboards and panels within your organization and publicly
 weight: 85
 ---
 
@@ -63,7 +64,7 @@ If you change a dashboard, ensure that you save the changes before sharing.
 
 1. Click **Dashboards** in the left-side menu.
 1. Click the dashboard you want to share.
-1. Click the share icon at the top of the screen.
+1. Click the **Share** button at the top right of the screen.
 
    The share dialog opens and shows the Link tab.
 
@@ -94,19 +95,17 @@ If you created a snapshot by mistake, click **Delete snapshot** to remove the sn
 
 ### Dashboard export
 
-Grafana dashboards can easily be exported and imported. For more information, refer to [Export and import dashboards]({{< relref "./manage-dashboards/#export-and-import-dashboards" >}}).
+Grafana dashboards can easily be exported and imported. For more information, refer to [Export and import dashboards][].
 
 ## Export dashboard as PDF
 
 You can generate and save PDF files of any dashboard.
 
-{{% admonition type="note" %}}
-Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}).
-{{% /admonition %}}
+> **Note:** Available in [Grafana Enterprise][] and [Grafana Cloud](/docs/grafana-cloud/).
 
 1. Click **Dashboards** in the left-side menu.
 1. Click the dashboard you want to share.
-1. Click the share icon at the top of the screen.
+1. Click the **Share** button at the top right of the screen.
 1. On the PDF tab, select a layout option for the exported dashboard: **Portrait** or **Landscape**.
 1. Click **Save as PDF** to render the dashboard as a PDF file.
 
@@ -132,7 +131,7 @@ The **Link** tab shows the current time range, template variables, and the defau
 1. Send the copied URL to a Grafana user with authorization to view the link.
 1. You also optionally click **Direct link rendered image** to share an image of the panel.
 
-For more information, refer to [Image rendering]({{< relref "../../setup-grafana/image-rendering/" >}}).
+For more information, refer to [Image rendering][].
 
 The following example shows a link to a server-side rendered PNG:
 
@@ -188,6 +187,17 @@ To create a library panel from the **Share Panel** dialog:
 
 1. Click **Library panel**.
 1. In **Library panel name**, enter the name.
-1. In **Save in folder**, select the folder in which to save the library panel. By default, the General folder is selected.
+1. In **Save in folder**, select the folder in which to save the library panel. By default, the root level is selected.
 1. Click **Create library panel** to save your changes.
 1. Save the dashboard.
+
+{{% docs/reference %}}
+[Export and import dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards#export-and-import-dashboards"
+[Export and import dashboards]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards#export-and-import-dashboards"
+
+[Grafana Enterprise]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
+[Grafana Enterprise]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/introduction/grafana-enterprise"
+
+[Image rendering]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering"
+[Image rendering]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering"
+{{% /docs/reference %}}

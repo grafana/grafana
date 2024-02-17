@@ -19,7 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationStatsDataAccess(t *testing.T) {
 	if testing.Short() {
@@ -92,7 +97,7 @@ func populateDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 			OrgId:     1,
 			Config: correlations.CorrelationConfig{
 				Field:  "field",
-				Target: map[string]interface{}{},
+				Target: map[string]any{},
 				Type:   correlations.ConfigTypeQuery,
 			},
 		}

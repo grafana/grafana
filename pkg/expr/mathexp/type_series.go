@@ -181,7 +181,7 @@ func NewSeriesFromRef(refID string, s timeseries.MetricRef) (Series, error) {
 func (s Series) Type() parse.ReturnType { return parse.TypeSeriesSet }
 
 // Value returns the actual value allows it to fulfill the Value interface.
-func (s Series) Value() interface{} { return &s }
+func (s Series) Value() any { return &s }
 
 func (s Series) GetLabels() data.Labels { return s.Frame.Fields[seriesTypeValIdx].Labels }
 
@@ -189,11 +189,11 @@ func (s Series) SetLabels(ls data.Labels) { s.Frame.Fields[seriesTypeValIdx].Lab
 
 func (s Series) GetName() string { return s.Frame.Fields[seriesTypeValIdx].Name }
 
-func (s Series) GetMeta() interface{} {
+func (s Series) GetMeta() any {
 	return s.Frame.Meta.Custom
 }
 
-func (s Series) SetMeta(v interface{}) {
+func (s Series) SetMeta(v any) {
 	m := s.Frame.Meta
 	if m == nil {
 		m = &data.FrameMeta{}

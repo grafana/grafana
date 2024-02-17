@@ -1,16 +1,16 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 
-import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { Button, Icon, InlineField, Tooltip, useTheme2 } from '@grafana/ui';
+import { DataSourceApi, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { Button, Icon, InlineField, Tooltip, useTheme2, Stack } from '@grafana/ui';
 import { isConflictingFilter } from 'app/plugins/datasource/loki/querybuilder/operationUtils';
 import { LokiOperationId } from 'app/plugins/datasource/loki/querybuilder/types';
 
+import { getOperationParamId } from '../operationUtils';
+
 import { OperationHeader } from './OperationHeader';
 import { getOperationParamEditor } from './OperationParamEditor';
-import { getOperationParamId } from './operationUtils';
 import {
   QueryBuilderOperation,
   QueryBuilderOperationDef,
@@ -30,6 +30,7 @@ export interface Props {
   onRunQuery: () => void;
   flash?: boolean;
   highlight?: boolean;
+  timeRange?: TimeRange;
 }
 
 export function OperationEditor({
@@ -43,9 +44,11 @@ export function OperationEditor({
   datasource,
   flash,
   highlight,
+  timeRange,
 }: Props) {
   const def = queryModeller.getOperationDef(operation.id);
   const shouldFlash = useFlash(flash);
+  const id = useId();
 
   const isConflicting =
     operation.id === LokiOperationId.LabelFilter && isConflictingFilter(operation, query.operations);
@@ -86,7 +89,7 @@ export function OperationEditor({
       <div className={styles.paramRow} key={`${paramIndex}-1`}>
         {!paramDef.hideName && (
           <div className={styles.paramName}>
-            <label htmlFor={getOperationParamId(index, paramIndex)}>{paramDef.name}</label>
+            <label htmlFor={getOperationParamId(id, paramIndex)}>{paramDef.name}</label>
             {paramDef.description && (
               <Tooltip placement="top" content={paramDef.description} theme="info">
                 <Icon name="info-circle" size="sm" className={styles.infoIcon} />
@@ -95,17 +98,18 @@ export function OperationEditor({
           </div>
         )}
         <div className={styles.paramValue}>
-          <Stack gap={0.5} direction="row" alignItems="center" wrap={false}>
+          <Stack gap={0.5} direction="row" alignItems="center">
             <Editor
               index={paramIndex}
               paramDef={paramDef}
               value={operation.params[paramIndex]}
               operation={operation}
-              operationIndex={index}
+              operationId={id}
               onChange={onParamValueChanged}
               onRunQuery={onRunQuery}
               query={query}
               datasource={datasource}
+              timeRange={timeRange}
             />
             {paramDef.restParam && (operation.params.length > def.params.length || paramDef.optional) && (
               <Button
@@ -218,7 +222,7 @@ function renderAddRestParamButton(
       <Button
         size="sm"
         icon="plus"
-        title={`Add ${paramDef.name}`}
+        title={`Add ${paramDef.name}`.trimEnd()}
         variant="secondary"
         onClick={onAddRestParam}
         data-testid={`operations.${operationIndex}.add-rest-param`}
@@ -254,10 +258,8 @@ const getStyles = (theme: GrafanaTheme2, isConflicting: boolean) => {
     card: css({
       background: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.medium}`,
-      display: 'flex',
-      flexDirection: 'column',
       cursor: 'grab',
-      borderRadius: theme.shape.borderRadius(1),
+      borderRadius: theme.shape.radius.default,
       position: 'relative',
       transition: 'all 0.5s ease-in 0s',
       height: isConflicting ? 'auto' : '100%',

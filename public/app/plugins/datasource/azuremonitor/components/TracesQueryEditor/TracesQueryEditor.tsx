@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
+import { TimeRange } from '@grafana/data';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
 
@@ -25,6 +26,7 @@ interface TracesQueryEditorProps {
   onChange: (newQuery: AzureMonitorQuery) => void;
   variableOptionGroup: { label: string; options: AzureMonitorOption[] };
   setError: (source: string, error: AzureMonitorErrorish | undefined) => void;
+  range?: TimeRange;
 }
 
 const TracesQueryEditor = ({
@@ -34,6 +36,7 @@ const TracesQueryEditor = ({
   variableOptionGroup,
   onChange,
   setError,
+  range,
 }: TracesQueryEditorProps) => {
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
@@ -102,6 +105,7 @@ const TracesQueryEditor = ({
                 <AdvancedResourcePicker resources={resources as string[]} onChange={onChange} />
               )}
               selectionNotice={() => 'You may only choose items of the same resource type.'}
+              range={range}
             />
           </EditorFieldGroup>
         </EditorRow>
@@ -113,6 +117,7 @@ const TracesQueryEditor = ({
               query={query}
               setError={setError}
               variableOptionGroup={variableOptionGroup}
+              range={range}
             />
             <Field label="Operation ID">
               <Input
@@ -133,6 +138,7 @@ const TracesQueryEditor = ({
               query={query}
               setError={setError}
               variableOptionGroup={variableOptionGroup}
+              range={range}
             />
           </EditorFieldGroup>
         </EditorRow>
@@ -152,6 +158,7 @@ const TracesQueryEditor = ({
               defaultValue={ResultFormat.Table}
               setFormatAs={setFormatAs}
               resultFormat={query.azureTraces?.resultFormat}
+              range={range}
             />
           </EditorFieldGroup>
         </EditorRow>

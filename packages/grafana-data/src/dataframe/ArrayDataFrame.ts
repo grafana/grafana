@@ -16,7 +16,7 @@ export class ArrayDataFrame<T = any> implements DataFrame {
   meta?: QueryResultMeta;
 
   constructor(source: T[], names?: string[]) {
-    return arrayToDataFrame(source, names) as ArrayDataFrame<T>; // returns a standard DataFrame
+    return arrayToDataFrame(source, names); // returns a standard DataFrame
   }
 }
 

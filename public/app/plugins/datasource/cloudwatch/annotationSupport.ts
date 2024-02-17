@@ -1,6 +1,6 @@
 import { AnnotationQuery } from '@grafana/data';
 
-import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
+import { AnnotationQueryEditor } from './components/AnnotationQueryEditor/AnnotationQueryEditor';
 import { DEFAULT_ANNOTATIONS_QUERY } from './defaultQueries';
 import { isCloudWatchAnnotation } from './guards';
 import { CloudWatchAnnotationQuery, CloudWatchQuery, LegacyAnnotationQuery } from './types';

@@ -140,6 +140,18 @@ describe('LokiQueryBuilderOptions', () => {
     await userEvent.click(screen.getByRole('button', { name: /Options/ }));
     expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
   });
+
+  it('does not shows error when valid millisecond value in step', async () => {
+    setup({ expr: 'rate({foo="bar"}[5m]', step: '1ms' });
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
+  });
+
+  it('does not shows error when valid day value in step', async () => {
+    setup({ expr: 'rate({foo="bar"}[5m]', step: '1d' });
+    await userEvent.click(screen.getByRole('button', { name: /Options/ }));
+    expect(screen.queryByText(/Invalid step/)).not.toBeInTheDocument();
+  });
 });
 
 function setup(queryOverrides: Partial<LokiQuery> = {}) {

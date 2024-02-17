@@ -1,17 +1,25 @@
+import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { ValueLinkConfig, applyFieldOverrides, TimeZone, SplitOpen, DataFrame, LoadingState } from '@grafana/data';
-import { Table, AdHocFilterItem, PanelChrome } from '@grafana/ui';
+import { applyFieldOverrides, SplitOpen, DataFrame, LoadingState, FieldType } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+import { TimeZone } from '@grafana/schema';
+import { Table, AdHocFilterItem, PanelChrome, withTheme2, Themeable2 } from '@grafana/ui';
 import { config } from 'app/core/config';
+import { t, Trans } from 'app/core/internationalization';
+import {
+  hasDeprecatedParentRowIndex,
+  migrateFromParentRowIndexToNestedFrames,
+} from 'app/plugins/panel/table/migrations';
 import { StoreState } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';
 
 import { MetaInfoText } from '../MetaInfoText';
 import { selectIsWaitingForData } from '../state/query';
-import { getFieldLinksForExplore } from '../utils/links';
+import { exploreDataLinkPostProcessorFactory } from '../utils/links';
 
-interface TableContainerProps {
+interface TableContainerProps extends Themeable2 {
   ariaLabel?: string;
   exploreId: string;
   width: number;
@@ -34,11 +42,9 @@ const connector = connect(mapStateToProps, {});
 type Props = TableContainerProps & ConnectedProps<typeof connector>;
 
 export class TableContainer extends PureComponent<Props> {
-  getMainFrames(frames: DataFrame[] | null) {
-    return frames?.filter((df) => df.meta?.custom?.parentRowIndex === undefined) || [frames?.[0]];
-  }
+  hasSubFrames = (data: DataFrame) => data.fields.some((f) => f.type === FieldType.nestedFrames);
 
-  getTableHeight(rowCount: number, hasSubFrames = true) {
+  getTableHeight(rowCount: number, hasSubFrames: boolean) {
     if (rowCount === 0) {
       return 200;
     }
@@ -47,84 +53,81 @@ export class TableContainer extends PureComponent<Props> {
     return Math.min(600, Math.max(rowCount * 36, hasSubFrames ? 300 : 0) + 40 + 46);
   }
 
-  render() {
-    const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone } = this.props;
+  getTableTitle(dataFrames: DataFrame[] | null, data: DataFrame, i: number) {
+    let name = data.name;
+    if (!name && (dataFrames?.length ?? 0) > 1) {
+      name = data.refId || `${i}`;
+    }
 
-    let dataFrames = tableResult;
+    return name ? (
+      <Trans i18nKey="explore.table.title-with-name">Table - {{ name }}</Trans>
+    ) : (
+      t('explore.table.title', 'Table')
+    );
+  }
+
+  render() {
+    const { loading, onCellFilterAdded, tableResult, width, splitOpenFn, range, ariaLabel, timeZone, theme } =
+      this.props;
+
+    let dataFrames = hasDeprecatedParentRowIndex(tableResult)
+      ? migrateFromParentRowIndexToNestedFrames(tableResult)
+      : tableResult;
+    const dataLinkPostProcessor = exploreDataLinkPostProcessorFactory(splitOpenFn, range);
 
     if (dataFrames?.length) {
       dataFrames = applyFieldOverrides({
         data: dataFrames,
         timeZone,
         theme: config.theme2,
-        replaceVariables: (v: string) => v,
+        replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
         fieldConfig: {
           defaults: {},
           overrides: [],
         },
+        dataLinkPostProcessor,
       });
-      // Bit of code smell here. We need to add links here to the frame modifying the frame on every render.
-      // Should work fine in essence but still not the ideal way to pass props. In logs container we do this
-      // differently and sidestep this getLinks API on a dataframe
-      for (const frame of dataFrames) {
-        for (const field of frame.fields) {
-          field.getLinks = (config: ValueLinkConfig) => {
-            return getFieldLinksForExplore({
-              field,
-              rowIndex: config.valueRowIndex!,
-              splitOpenFn,
-              range,
-              dataFrame: frame!,
-            });
-          };
-        }
-      }
     }
 
-    // move dataframes to be grouped by table, with optional sub-tables for a row
-    const tableData: Array<{ main: DataFrame; sub?: DataFrame[] }> = [];
-    const mainFrames = this.getMainFrames(dataFrames).filter(
+    const frames = dataFrames?.filter(
       (frame: DataFrame | undefined): frame is DataFrame => !!frame && frame.length !== 0
     );
 
-    mainFrames?.forEach((frame) => {
-      const subFrames =
-        dataFrames?.filter((df) => frame.refId === df.refId && df.meta?.custom?.parentRowIndex !== undefined) ||
-        undefined;
-      tableData.push({ main: frame, sub: subFrames });
-    });
-
     return (
       <>
-        {tableData.length === 0 && (
-          <PanelChrome title={'Table'} width={width} height={200}>
-            {() => <MetaInfoText metaItems={[{ value: '0 series returned' }]} />}
+        {frames && frames.length === 0 && (
+          <PanelChrome title={t('explore.table.title', 'Table')} width={width} height={200}>
+            {() => <MetaInfoText metaItems={[{ value: t('explore.table.no-data', '0 series returned') }]} />}
           </PanelChrome>
         )}
-        {tableData.length > 0 &&
-          tableData.map((data, i) => (
-            <PanelChrome
-              key={data.main.refId || `table-${i}`}
-              title={tableData.length > 1 ? `Table - ${data.main.name || data.main.refId || i}` : 'Table'}
-              width={width}
-              height={this.getTableHeight(data.main.length, (data.sub?.length || 0) > 0)}
-              loadingState={loading ? LoadingState.Loading : undefined}
-            >
-              {(innerWidth, innerHeight) => (
-                <Table
-                  ariaLabel={ariaLabel}
-                  data={data.main}
-                  subData={data.sub}
-                  width={innerWidth}
-                  height={innerHeight}
-                  onCellFilterAdded={onCellFilterAdded}
-                />
-              )}
-            </PanelChrome>
-          ))}
+        {frames && frames.length > 0 && (
+          <div className={css({ display: 'flex', flexDirection: 'column', gap: theme.spacing(1) })}>
+            {frames.map((data, i) => (
+              <PanelChrome
+                key={data.refId || `table-${i}`}
+                title={this.getTableTitle(dataFrames, data, i)}
+                width={width}
+                height={this.getTableHeight(data.length, this.hasSubFrames(data))}
+                loadingState={loading ? LoadingState.Loading : undefined}
+              >
+                {(innerWidth, innerHeight) => (
+                  <Table
+                    ariaLabel={ariaLabel}
+                    data={data}
+                    width={innerWidth}
+                    height={innerHeight}
+                    onCellFilterAdded={onCellFilterAdded}
+                  />
+                )}
+              </PanelChrome>
+            ))}
+          </div>
+        )}
       </>
     );
   }
 }
 
-export default connector(TableContainer);
+export const TableContainerWithTheme = withTheme2(TableContainer);
+
+export default withTheme2(connector(TableContainer));

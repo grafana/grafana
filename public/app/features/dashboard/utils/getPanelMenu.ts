@@ -1,17 +1,17 @@
-import { PanelMenuItem, PluginExtensionPoints, type PluginExtensionPanelContext } from '@grafana/data';
 import {
-  isPluginExtensionLink,
-  AngularComponent,
-  getDataSourceSrv,
-  getPluginExtensions,
-  locationService,
-  reportInteraction,
-} from '@grafana/runtime';
+  getTimeZone,
+  PanelMenuItem,
+  PluginExtensionPoints,
+  urlUtil,
+  type PluginExtensionPanelContext,
+} from '@grafana/data';
+import { AngularComponent, getPluginLinkExtensions, locationService } from '@grafana/runtime';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getExploreUrl } from 'app/core/utils/explore';
+import { panelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
@@ -23,12 +23,14 @@ import {
   toggleLegend,
   unlinkLibraryPanel,
 } from 'app/features/dashboard/utils/panel';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
-import { truncateTitle } from 'app/features/plugins/extensions/utils';
+import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { store } from 'app/store/store';
 
+import { getCreateAlertInMenuAvailability } from '../../alerting/unified/utils/access-control';
 import { navigateToExplore } from '../../explore/state/main';
 import { getTimeSrv } from '../services/TimeSrv';
 
@@ -42,7 +44,7 @@ export function getPanelMenu(
     locationService.partial({
       viewPanel: panel.id,
     });
-    reportInteraction('dashboards_panelheader_menu', { item: 'view' });
+    DashboardInteractions.panelMenuItemClicked('view');
   };
 
   const onEditPanel = (event: React.MouseEvent) => {
@@ -51,25 +53,25 @@ export function getPanelMenu(
       editPanel: panel.id,
     });
 
-    reportInteraction('dashboards_panelheader_menu', { item: 'edit' });
+    DashboardInteractions.panelMenuItemClicked('edit');
   };
 
   const onSharePanel = (event: React.MouseEvent) => {
     event.preventDefault();
     sharePanel(dashboard, panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'share' });
+    DashboardInteractions.panelMenuItemClicked('share');
   };
 
   const onAddLibraryPanel = (event: React.MouseEvent) => {
     event.preventDefault();
     addLibraryPanel(dashboard, panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'createLibraryPanel' });
+    DashboardInteractions.panelMenuItemClicked('createLibraryPanel');
   };
 
   const onUnlinkLibraryPanel = (event: React.MouseEvent) => {
     event.preventDefault();
     unlinkLibraryPanel(panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'unlinkLibraryPanel' });
+    DashboardInteractions.panelMenuItemClicked('unlinkLibraryPanel');
   };
 
   const onInspectPanel = (tab?: InspectTab) => {
@@ -77,7 +79,7 @@ export function getPanelMenu(
       inspect: panel.id,
       inspectTab: tab,
     });
-    reportInteraction('dashboards_panelheader_menu', { item: 'inspect', tab: tab ?? InspectTab.Data });
+    DashboardInteractions.panelMenuInspectClicked(tab ?? InspectTab.Data);
   };
 
   const onMore = (event: React.MouseEvent) => {
@@ -87,33 +89,39 @@ export function getPanelMenu(
   const onDuplicatePanel = (event: React.MouseEvent) => {
     event.preventDefault();
     duplicatePanel(dashboard, panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'duplicate' });
+    DashboardInteractions.panelMenuItemClicked('duplicate');
   };
 
   const onCopyPanel = (event: React.MouseEvent) => {
     event.preventDefault();
     copyPanel(panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'copy' });
+    DashboardInteractions.panelMenuItemClicked('copy');
   };
 
   const onRemovePanel = (event: React.MouseEvent) => {
     event.preventDefault();
     removePanel(dashboard, panel, true);
-    reportInteraction('dashboards_panelheader_menu', { item: 'remove' });
+    DashboardInteractions.panelMenuItemClicked('remove');
   };
 
   const onNavigateToExplore = (event: React.MouseEvent) => {
     event.preventDefault();
     const openInNewWindow =
       event.ctrlKey || event.metaKey ? (url: string) => window.open(`${config.appSubUrl}${url}`) : undefined;
-    store.dispatch(navigateToExplore(panel, { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow }) as any);
-    reportInteraction('dashboards_panelheader_menu', { item: 'explore' });
+    store.dispatch(
+      navigateToExplore(panel, {
+        timeRange: getTimeSrv().timeRange(),
+        getExploreUrl,
+        openInNewWindow,
+      }) as any
+    );
+    DashboardInteractions.panelMenuItemClicked('explore');
   };
 
   const onToggleLegend = (event: React.MouseEvent) => {
     event.preventDefault();
     toggleLegend(panel);
-    reportInteraction('dashboards_panelheader_menu', { item: 'toggleLegend' });
+    DashboardInteractions.panelMenuItemClicked('toggleLegend');
   };
 
   const menu: PanelMenuItem[] = [];
@@ -152,7 +160,7 @@ export function getPanelMenu(
       text: t('panel.header-menu.explore', `Explore`),
       iconClassName: 'compass',
       onClick: onNavigateToExplore,
-      shortcut: 'x',
+      shortcut: 'p x',
     });
   }
 
@@ -184,10 +192,12 @@ export function getPanelMenu(
     iconClassName: 'info-circle',
     onClick: (e: React.MouseEvent<HTMLElement>) => {
       const currentTarget = e.currentTarget;
-      const target = e.target as HTMLElement;
-      const closestMenuItem = target.closest('[role="menuitem"]');
+      const target = e.target;
 
-      if (target === currentTarget || closestMenuItem === currentTarget) {
+      if (
+        target === currentTarget ||
+        (target instanceof HTMLElement && target.closest('[role="menuitem"]') === currentTarget)
+      ) {
         onInspectPanel();
       }
     },
@@ -195,8 +205,27 @@ export function getPanelMenu(
     subMenu: inspectMenu,
   });
 
+  const createAlert = async () => {
+    const formValues = await panelToRuleFormValues(panel, dashboard);
+
+    const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
+      defaults: JSON.stringify(formValues),
+      returnTo: location.pathname + location.search,
+    });
+
+    locationService.push(ruleFormUrl);
+  };
+
+  const onCreateAlert = (event: React.MouseEvent) => {
+    event.preventDefault();
+    createAlert();
+    DashboardInteractions.panelMenuItemClicked('create-alert');
+  };
+
   const subMenu: PanelMenuItem[] = [];
   const canEdit = dashboard.canEditPanel(panel);
+  const isCreateAlertMenuOptionAvailable = getCreateAlertInMenuAvailability();
+
   if (!(panel.isViewing || panel.isEditing)) {
     if (canEdit) {
       subMenu.push({
@@ -228,6 +257,13 @@ export function getPanelMenu(
         onClick: onCopyPanel,
       });
     }
+  }
+
+  if (isCreateAlertMenuOptionAvailable) {
+    subMenu.push({
+      text: t('panel.header-menu.new-alert-rule', `New alert rule`),
+      onClick: onCreateAlert,
+    });
   }
 
   // add old angular panel options
@@ -266,6 +302,12 @@ export function getPanelMenu(
   // When editing hide most actions
   if (panel.isEditing) {
     subMenu.length = 0;
+    if (isCreateAlertMenuOptionAvailable) {
+      subMenu.push({
+        text: t('panel.header-menu.new-alert-rule', `New alert rule`),
+        onClick: onCreateAlert,
+      });
+    }
   }
 
   if (canEdit && panel.plugin && !panel.plugin.meta.skipDataQuery) {
@@ -275,31 +317,18 @@ export function getPanelMenu(
     });
   }
 
-  const { extensions } = getPluginExtensions({
+  const { extensions } = getPluginLinkExtensions({
     extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
     context: createExtensionContext(panel, dashboard),
-    limitPerPlugin: 2,
+    limitPerPlugin: 3,
   });
 
   if (extensions.length > 0 && !panel.isEditing) {
-    const extensionsMenu: PanelMenuItem[] = [];
-
-    for (const extension of extensions) {
-      if (isPluginExtensionLink(extension)) {
-        extensionsMenu.push({
-          text: truncateTitle(extension.title, 25),
-          href: extension.path,
-          onClick: extension.onClick,
-        });
-        continue;
-      }
-    }
-
     menu.push({
       text: 'Extensions',
       iconClassName: 'plug',
       type: 'submenu',
-      subMenu: extensionsMenu,
+      subMenu: createExtensionSubMenu(extensions),
     });
   }
 
@@ -333,7 +362,9 @@ function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): P
     pluginId: panel.type,
     title: panel.title,
     timeRange: dashboard.time,
-    timeZone: dashboard.timezone,
+    timeZone: getTimeZone({
+      timeZone: dashboard.timezone,
+    }),
     dashboard: {
       uid: dashboard.uid,
       title: dashboard.title,

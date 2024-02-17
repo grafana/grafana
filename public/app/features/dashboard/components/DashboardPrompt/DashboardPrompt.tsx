@@ -1,5 +1,5 @@
 import * as H from 'history';
-import { each, find } from 'lodash';
+import { find } from 'lodash';
 import React, { useContext, useEffect, useState } from 'react';
 import { Prompt } from 'react-router-dom';
 
@@ -37,12 +37,12 @@ export const DashboardPrompt = React.memo(({ dashboard }: Props) => {
     // This is to minimize unsaved changes warnings due to automatic schema migrations
     const timeoutId = setTimeout(() => {
       const originalPath = locationService.getLocation().pathname;
-      const original = dashboard.getSaveModelClone();
+      const original = dashboard.getSaveModelCloneOld();
       setState({ originalPath, original });
     }, 1000);
 
     const savedEventUnsub = appEvents.subscribe(DashboardSavedEvent, () => {
-      const original = dashboard.getSaveModelClone();
+      const original = dashboard.getSaveModelCloneOld();
       setState({ originalPath, original });
     });
 
@@ -146,6 +146,11 @@ export function ignoreChanges(current: DashboardModel | null, original: object |
     return true;
   }
 
+  // Ignore changes if original is unsaved
+  if ((original as DashboardModel).version === 0) {
+    return true;
+  }
+
   // Ignore changes if the user has been signed out
   if (!contextSrv.isSignedIn) {
     return true;
@@ -177,19 +182,22 @@ function cleanDashboardFromIgnoredChanges(dashData: Dashboard) {
   const dash = model.getSaveModelClone();
 
   // ignore time and refresh
-  dash.time = 0;
-  dash.refresh = '';
+  delete dash.time;
+  delete dash.refresh;
   dash.schemaVersion = 0;
-  dash.timezone = 0;
+  delete dash.timezone;
 
   dash.panels = [];
 
   // ignore template variable values
-  each(dash.getVariables(), (variable: any) => {
-    variable.current = null;
-    variable.options = null;
-    variable.filters = null;
-  });
+  if (dash.templating?.list) {
+    for (const variable of dash.templating.list) {
+      delete variable.current;
+      delete variable.options;
+      // @ts-expect-error
+      delete variable.filters;
+    }
+  }
 
   return dash;
 }
@@ -199,8 +207,9 @@ export function hasChanges(current: DashboardModel, original: unknown) {
   if (current.hasUnsavedChanges()) {
     return true;
   }
+
   // TODO: Make getSaveModelClone return Dashboard type instead
-  const currentClean = cleanDashboardFromIgnoredChanges(current.getSaveModelClone() as unknown as Dashboard);
+  const currentClean = cleanDashboardFromIgnoredChanges(current.getSaveModelCloneOld() as unknown as Dashboard);
   const originalClean = cleanDashboardFromIgnoredChanges(original as Dashboard);
 
   const currentTimepicker = find((currentClean as any).nav, { type: 'timepicker' });

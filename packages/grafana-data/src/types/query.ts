@@ -1,4 +1,8 @@
-import { DataQuery as SchemaDataQuery, DataSourceRef as SchemaDataSourceRef } from '@grafana/schema';
+import {
+  DataQuery as SchemaDataQuery,
+  DataSourceRef as SchemaDataSourceRef,
+  DataTopic as SchemaDataTopic,
+} from '@grafana/schema';
 
 /**
  * @deprecated use the type from @grafana/schema
@@ -13,11 +17,9 @@ export interface DataSourceRef extends SchemaDataSourceRef {}
 /**
  * Attached to query results (not persisted)
  *
- * @public
+ * @deprecated use the type from @grafana/schema
  */
-export enum DataTopic {
-  Annotations = 'annotations',
-}
+export { SchemaDataTopic as DataTopic };
 
 /**
  * Abstract representation of any label-based query
@@ -66,7 +68,11 @@ export interface DataSourceWithQueryExportSupport<TQuery extends SchemaDataQuery
 export const hasQueryImportSupport = <TQuery extends SchemaDataQuery>(
   datasource: unknown
 ): datasource is DataSourceWithQueryImportSupport<TQuery> => {
-  return (datasource as DataSourceWithQueryImportSupport<TQuery>).importFromAbstractQueries !== undefined;
+  if (!datasource || typeof datasource !== 'object') {
+    return false;
+  }
+
+  return 'importFromAbstractQueries' in datasource;
 };
 
 /**
@@ -75,5 +81,8 @@ export const hasQueryImportSupport = <TQuery extends SchemaDataQuery>(
 export const hasQueryExportSupport = <TQuery extends SchemaDataQuery>(
   datasource: unknown
 ): datasource is DataSourceWithQueryExportSupport<TQuery> => {
-  return (datasource as DataSourceWithQueryExportSupport<TQuery>).exportToAbstractQueries !== undefined;
+  if (!datasource || typeof datasource !== 'object') {
+    return false;
+  }
+  return 'exportToAbstractQueries' in datasource;
 };

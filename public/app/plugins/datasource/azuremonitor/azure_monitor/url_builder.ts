@@ -104,10 +104,10 @@ export default class UrlBuilder {
 
     if (multipleResources && !customNamespace && metricNamespace) {
       url += `&metricnamespace=${encodeURIComponent(metricNamespace)}`;
+    }
 
-      if (region) {
-        url += `&region=${region}`;
-      }
+    if (region && multipleResources) {
+      url += `&region=${region}`;
     }
 
     return url;

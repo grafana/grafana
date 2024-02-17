@@ -1,8 +1,10 @@
+import { css } from '@emotion/css';
 import React, { ReactNode } from 'react';
 import Highlighter from 'react-highlight-words';
 
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Field, Label } from '@grafana/ui';
+import { Field, Label, useStyles2 } from '@grafana/ui';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemOverrides } from './OptionsPaneItemOverrides';
@@ -17,6 +19,7 @@ export interface OptionsPaneItemProps {
   skipField?: boolean;
   showIf?: () => boolean;
   overrides?: OptionPaneItemOverrideInfo[];
+  addon?: ReactNode;
 }
 
 /**
@@ -28,7 +31,7 @@ export class OptionsPaneItemDescriptor {
   constructor(public props: OptionsPaneItemProps) {}
 
   getLabel(searchQuery?: string): ReactNode {
-    const { title, description, overrides } = this.props;
+    const { title, description, overrides, addon } = this.props;
 
     if (!searchQuery) {
       // Do not render label for categories with only one child
@@ -36,12 +39,7 @@ export class OptionsPaneItemDescriptor {
         return null;
       }
 
-      return (
-        <Label description={description}>
-          {title}
-          {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
-        </Label>
-      );
+      return <OptionPaneLabel title={title} description={description} overrides={overrides} addon={addon} />;
     }
 
     const categories: React.ReactNode[] = [];
@@ -98,4 +96,33 @@ export class OptionsPaneItemDescriptor {
       </Field>
     );
   }
+}
+
+interface OptionPanelLabelProps {
+  title: string;
+  description?: string;
+  overrides?: OptionPaneItemOverrideInfo[];
+  addon: ReactNode;
+}
+
+function OptionPaneLabel({ title, description, overrides, addon }: OptionPanelLabelProps) {
+  const styles = useStyles2(getLabelStyles);
+  return (
+    <div className={styles.container}>
+      <Label description={description}>
+        {title}
+        {overrides && overrides.length > 0 && <OptionsPaneItemOverrides overrides={overrides} />}
+      </Label>
+      {addon}
+    </div>
+  );
+}
+
+function getLabelStyles(theme: GrafanaTheme2) {
+  return {
+    container: css`
+      display: flex;
+      justify-content: space-between;
+    `,
+  };
 }

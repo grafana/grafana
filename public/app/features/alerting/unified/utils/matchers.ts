@@ -108,35 +108,41 @@ export const normalizeMatchers = (route: Route): ObjectMatcher[] => {
   return matchers;
 };
 
+/**
+ * Quotes string and escapes double quote and backslash characters
+ */
+export function quoteWithEscape(input: string) {
+  const escaped = input.replace(/[\\"]/g, (c) => `\\${c}`);
+  return `"${escaped}"`;
+}
+
+/**
+ * Unquotes and unescapes a string **if it has been quoted**
+ */
+export function unquoteWithUnescape(input: string) {
+  if (!/^"(.*)"$/.test(input)) {
+    return input;
+  }
+
+  return input
+    .replace(/^"(.*)"$/, '$1')
+    .replace(/\\"/g, '"')
+    .replace(/\\\\/g, '\\');
+}
+
+export const matcherFormatter = {
+  default: ([name, operator, value]: ObjectMatcher): string => {
+    // Value can be an empty string which we want to display as ""
+    const formattedValue = value || '';
+    return `${name} ${operator} ${formattedValue}`;
+  },
+  unquote: ([name, operator, value]: ObjectMatcher): string => {
+    // Unquoted value can be an empty string which we want to display as ""
+    const unquotedValue = unquoteWithUnescape(value) || '""';
+    return `${name} ${operator} ${unquotedValue}`;
+  },
+} as const;
+
+export type MatcherFormatter = keyof typeof matcherFormatter;
+
 export type Label = [string, string];
-type OperatorPredicate = (labelValue: string, matcherValue: string) => boolean;
-const OperatorFunctions: Record<MatcherOperator, OperatorPredicate> = {
-  [MatcherOperator.equal]: (lv, mv) => lv === mv,
-  [MatcherOperator.notEqual]: (lv, mv) => lv !== mv,
-  [MatcherOperator.regex]: (lv, mv) => new RegExp(mv).test(lv),
-  [MatcherOperator.notRegex]: (lv, mv) => !new RegExp(mv).test(lv),
-};
-
-function isLabelMatch(matcher: ObjectMatcher, label: Label) {
-  const [labelKey, labelValue] = label;
-  const [matcherKey, operator, matcherValue] = matcher;
-
-  // not interested, keys don't match
-  if (labelKey !== matcherKey) {
-    return false;
-  }
-
-  const matchFunction = OperatorFunctions[operator];
-  if (!matchFunction) {
-    throw new Error(`no such operator: ${operator}`);
-  }
-
-  return matchFunction(labelValue, matcherValue);
-}
-
-// check if every matcher returns "true" for the set of labels
-export function labelsMatchObjectMatchers(matchers: ObjectMatcher[], labels: Label[]) {
-  return matchers.every((matcher) => {
-    return labels.some((label) => isLabelMatch(matcher, label));
-  });
-}

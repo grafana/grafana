@@ -14,7 +14,7 @@ export class IndexVector extends Array<number> {
     for (let i = 0; i < len; i++) {
       arr[i] = i;
     }
-    return arr as IndexVector;
+    return arr;
   }
 
   /**

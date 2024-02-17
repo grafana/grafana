@@ -11,7 +11,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 type configReader interface {
@@ -20,10 +20,10 @@ type configReader interface {
 
 type configReaderImpl struct {
 	log         log.Logger
-	pluginStore plugins.Store
+	pluginStore pluginstore.Store
 }
 
-func newConfigReader(logger log.Logger, pluginStore plugins.Store) configReader {
+func newConfigReader(logger log.Logger, pluginStore pluginstore.Store) configReader {
 	return &configReaderImpl{log: logger, pluginStore: pluginStore}
 }
 

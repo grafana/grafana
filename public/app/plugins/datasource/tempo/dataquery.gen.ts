@@ -13,23 +13,27 @@ import * as common from '@grafana/schema';
 export interface TempoQuery extends common.DataQuery {
   filters: Array<TraceqlFilter>;
   /**
+   * Filters that are used to query the metrics summary
+   */
+  groupBy?: Array<TraceqlFilter>;
+  /**
    * Defines the maximum number of traces that are returned from Tempo
    */
   limit?: number;
   /**
-   * Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
+   * @deprecated Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
    */
   maxDuration?: string;
   /**
-   * Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
+   * @deprecated Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
    */
   minDuration?: string;
   /**
    * TraceQL query or trace ID
    */
-  query: string;
+  query?: string;
   /**
-   * Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
+   * @deprecated Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
    */
   search?: string;
   /**
@@ -37,25 +41,30 @@ export interface TempoQuery extends common.DataQuery {
    */
   serviceMapIncludeNamespace?: boolean;
   /**
-   * Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}
+   * Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}. Providing multiple values will produce union of results for each filter, using PromQL OR operator internally.
    */
-  serviceMapQuery?: string;
+  serviceMapQuery?: (string | Array<string>);
   /**
-   * Query traces by service name
+   * @deprecated Query traces by service name
    */
   serviceName?: string;
   /**
-   * Query traces by span name
+   * @deprecated Query traces by span name
    */
   spanName?: string;
   /**
-   * Use the streaming API to get partial results as they are available
+   * Defines the maximum number of spans per spanset that are returned from Tempo
    */
-  streaming?: boolean;
+  spss?: number;
+  /**
+   * The type of the table that is used to display the search results
+   */
+  tableType?: SearchTableType;
 }
 
 export const defaultTempoQuery: Partial<TempoQuery> = {
   filters: [],
+  groupBy: [],
 };
 
 /**
@@ -74,9 +83,18 @@ export enum SearchStreamingState {
 }
 
 /**
+ * The type of the table that is used to display the search results
+ */
+export enum SearchTableType {
+  Spans = 'spans',
+  Traces = 'traces',
+}
+
+/**
  * static fields are pre-set in the UI, dynamic fields are added by the user
  */
 export enum TraceqlSearchScope {
+  Intrinsic = 'intrinsic',
   Resource = 'resource',
   Span = 'span',
   Unscoped = 'unscoped',

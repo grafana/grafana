@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useId } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -78,17 +78,36 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
   } = props;
 
   const [isAccessHelpVisible, setIsAccessHelpVisible] = useState(false);
+  const [azureAuthEnabled, setAzureAuthEnabled] = useState(false);
   const theme = useTheme2();
   let urlTooltip;
 
   const onSettingsChange = useCallback(
     (change: Partial<typeof dataSourceConfig>) => {
+      // Azure Authentication doesn't work correctly when Forward OAuth Identity is enabled.
+      // The Authorization header that has been set by the ApplyAzureAuth middleware gets overwritten
+      // with the Authorization header set by the OAuthTokenMiddleware.
+      const isAzureAuthEnabled =
+        (azureAuthSettings?.azureAuthSupported && azureAuthSettings.getAzureAuthEnabled(dataSourceConfig)) || false;
+      setAzureAuthEnabled(isAzureAuthEnabled);
+      if (isAzureAuthEnabled) {
+        const tmpOauthPassThru =
+          dataSourceConfig.jsonData.oauthPassThru !== undefined ? dataSourceConfig.jsonData.oauthPassThru : false;
+        change = {
+          ...change,
+          jsonData: {
+            ...dataSourceConfig.jsonData,
+            oauthPassThru: isAzureAuthEnabled ? false : tmpOauthPassThru,
+          },
+        };
+      }
+
       onChange({
         ...dataSourceConfig,
         ...change,
       });
     },
-    [dataSourceConfig, onChange]
+    [azureAuthSettings, dataSourceConfig, onChange]
   );
 
   switch (dataSourceConfig.access) {
@@ -134,25 +153,19 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
 
   const inputStyle = cx({ [`width-20`]: true, [notValidStyle]: !isValidUrl });
 
+  const fromFieldId = useId();
+
   const urlInput = (
     <Input
+      id={fromFieldId}
       className={inputStyle}
       placeholder={defaultUrl}
       value={dataSourceConfig.url}
-      aria-label={selectors.components.DataSource.DataSourceHttpSettings.urlInput}
+      data-testid={selectors.components.DataSource.DataSourceHttpSettings.urlInput}
       onChange={(event) => onSettingsChange({ url: event.currentTarget.value })}
       disabled={dataSourceConfig.readOnly}
     />
   );
-
-  const azureAuthEnabled: boolean =
-    (azureAuthSettings?.azureAuthSupported && azureAuthSettings.getAzureAuthEnabled(dataSourceConfig)) || false;
-
-  // Azure Authentication doesn't work correctly when Forward OAuth Identity is enabled.
-  // The Authorization header that has been set by the ApplyAzureAuth middleware gets overwritten
-  // with the Authorization header set by the OAuthTokenMiddleware.
-  dataSourceConfig.jsonData.oauthPassThru = azureAuthEnabled ? false : dataSourceConfig.jsonData.oauthPassThru;
-  const shouldShowForwardOAuthIdentityOption = azureAuthEnabled ? false : showForwardOAuthIdentityOption;
 
   return (
     <div className="gf-form-group">
@@ -301,7 +314,7 @@ export const DataSourceHttpSettings = (props: HttpSettingsProps) => {
             <HttpProxySettings
               dataSourceConfig={dataSourceConfig}
               onChange={(jsonData) => onSettingsChange({ jsonData })}
-              showForwardOAuthIdentityOption={shouldShowForwardOAuthIdentityOption}
+              showForwardOAuthIdentityOption={azureAuthEnabled ? false : showForwardOAuthIdentityOption}
             />
           )}
         </div>

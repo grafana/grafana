@@ -23,6 +23,7 @@ import {
   PanelData,
   LoadingState,
   GraphSeriesValue,
+  DataFrameWithValue,
 } from '../types/index';
 
 import { arrayToDataFrame } from './ArrayDataFrame';
@@ -32,10 +33,11 @@ function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map((c) => {
     // TODO: should be Column but type does not exists there so not sure whats up here.
     const { text, type, ...disp } = c as any;
+    const values: unknown[] = [];
     return {
       name: text?.length ? text : c, // rename 'text' to the 'name' field
       config: (disp || {}) as FieldConfig,
-      values: [] as unknown[],
+      values,
       type: type && Object.values(FieldType).includes(type as FieldType) ? (type as FieldType) : FieldType.other,
     };
   });
@@ -303,6 +305,9 @@ export const isTableData = (data: unknown): data is DataFrame => Boolean(data &&
 
 export const isDataFrame = (data: unknown): data is DataFrame => Boolean(data && data.hasOwnProperty('fields'));
 
+export const isDataFrameWithValue = (data: unknown): data is DataFrameWithValue =>
+  Boolean(isDataFrame(data) && data.hasOwnProperty('value'));
+
 /**
  * Inspect any object and return the results as a DataFrame
  */
@@ -431,10 +436,17 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
   return {
     ...data,
     fields: data.fields.map((f) => {
-      return {
+      const newF = {
         ...f,
         values: f.values.map((v, i) => f.values[index[i]]),
       };
+
+      // only add .nanos if it exists
+      const { nanos } = f;
+      if (nanos !== undefined) {
+        newF.nanos = nanos.map((n, i) => nanos[index[i]]);
+      }
+      return newF;
     }),
   };
 }
@@ -448,10 +460,20 @@ export function reverseDataFrame(data: DataFrame): DataFrame {
     fields: data.fields.map((f) => {
       const values = [...f.values];
       values.reverse();
-      return {
+
+      const newF = {
         ...f,
         values,
       };
+
+      // only add .nanos if it exists
+      const { nanos } = f;
+      if (nanos !== undefined) {
+        const revNanos = [...nanos];
+        revNanos.reverse();
+        newF.nanos = revNanos;
+      }
+      return newF;
     }),
   };
 }

@@ -4,7 +4,7 @@ export function convertTagsLogfmt(tags: string | undefined) {
   if (!tags) {
     return '';
   }
-  const data: any = logfmt.parse(tags);
+  const data = logfmt.parse(tags);
   Object.keys(data).forEach((key) => {
     const value = data[key];
     if (typeof value !== 'string') {

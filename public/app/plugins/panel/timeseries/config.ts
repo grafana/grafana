@@ -15,7 +15,7 @@ import {
   LineStyle,
   VisibilityMode,
   StackingMode,
-  GraphTresholdsStyleMode,
+  GraphThresholdsStyleMode,
   GraphTransform,
 } from '@grafana/schema';
 import { graphFieldOptions, commonOptionsBuilder } from '@grafana/ui';
@@ -38,6 +38,7 @@ export const defaultGraphConfig: GraphFieldConfig = {
   },
   axisGridShow: true,
   axisCenteredZero: false,
+  axisBorderShow: false,
 };
 
 const categoryStyles = ['Graph styles'];
@@ -227,7 +228,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig, isTime = true): SetFi
         path: 'thresholdsStyle',
         name: 'Show thresholds',
         category: ['Thresholds'],
-        defaultValue: { mode: GraphTresholdsStyleMode.Off },
+        defaultValue: { mode: GraphThresholdsStyleMode.Off },
         settings: {
           options: graphFieldOptions.thresholdsDisplayModes,
         },

@@ -70,7 +70,20 @@ const config = async (env: Record<string, string>): Promise<Configuration> => ({
         exclude: /(node_modules)/,
         test: /\.[tj]sx?$/,
         use: {
-          loader: 'ts-loader',
+          loader: 'swc-loader',
+          options: {
+            jsc: {
+              baseUrl: path.resolve(__dirname),
+              target: 'es2015',
+              loose: false,
+              parser: {
+                syntax: 'typescript',
+                tsx: true,
+                decorators: false,
+                dynamicImport: true,
+              },
+            },
+          },
         },
       },
       {

@@ -27,7 +27,7 @@ export const AlertLabel = ({ labelKey, value, operator = '=', onRemoveLabel }: P
 export const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     padding: ${theme.spacing(0.5, 1)};
-    border-radius: ${theme.shape.borderRadius(1)};
+    border-radius: ${theme.shape.radius.default};
     border: solid 1px ${theme.colors.border.medium};
     font-size: ${theme.typography.bodySmall.fontSize};
     background-color: ${theme.colors.background.secondary};

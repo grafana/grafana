@@ -1,0 +1,96 @@
+apiVersion: 1
+groups:
+    - orgId: 1
+      name: group101
+      folder: foo bar
+      interval: 10s
+      rules:
+        - title: prom query with SSE - 2
+          condition: condition
+          data:
+            - refId: query
+              relativeTimeRange:
+                from: 18000
+                to: 10800
+              datasourceUid: "000000002"
+              model:
+                expr: http_request_duration_microseconds_count
+                hide: false
+                interval: ""
+                intervalMs: 1000
+                legendFormat: ""
+                maxDataPoints: 100
+                refId: query
+            - refId: reduced
+              relativeTimeRange:
+                from: 18000
+                to: 10800
+              datasourceUid: __expr__
+              model:
+                expression: query
+                hide: false
+                intervalMs: 1000
+                maxDataPoints: 100
+                reducer: mean
+                refId: reduced
+                type: reduce
+            - refId: condition
+              relativeTimeRange:
+                from: 18000
+                to: 10800
+              datasourceUid: __expr__
+              model:
+                expression: $reduced > 10
+                hide: false
+                intervalMs: 1000
+                maxDataPoints: 100
+                refId: condition
+                type: math
+          noDataState: NoData
+          execErrState: Alerting
+          for: 2m
+          isPaused: false
+        - title: reduced testdata query - 2
+          condition: B
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 18000
+                to: 10800
+              datasourceUid: "000000004"
+              model:
+                alias: just-testing
+                intervalMs: 1000
+                maxDataPoints: 100
+                orgId: 0
+                refId: A
+                scenarioId: csv_metric_values
+                stringInput: 1,20,90,30,5,0
+            - refId: B
+              relativeTimeRange:
+                from: 18000
+                to: 10800
+              datasourceUid: __expr__
+              model:
+                expression: $A
+                intervalMs: 2000
+                maxDataPoints: 200
+                orgId: 0
+                reducer: mean
+                refId: B
+                type: reduce
+          noDataState: NoData
+          execErrState: Alerting
+          for: 0s
+          isPaused: false
+          notification_settings:
+            receiver: Test-Receiver
+            group_by:
+                - alertname
+                - grafana_folder
+                - test
+            group_wait: 1s
+            group_interval: 5s
+            repeat_interval: 5m
+            mute_time_intervals:
+                - test-mute

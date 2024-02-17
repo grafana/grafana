@@ -1,41 +1,41 @@
-import { nanoid } from '@reduxjs/toolkit';
-import { omit } from 'lodash';
+import { customAlphabet } from 'nanoid';
 import { Unsubscribable } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
+  AdHocVariableFilter,
   CoreApp,
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
   DataSourceRef,
   DefaultTimeZone,
-  ExploreUrlState,
   HistoryItem,
   IntervalValues,
   LogsDedupStrategy,
   LogsSortOrder,
   rangeUtil,
   RawTimeRange,
+  ScopedVars,
   TimeRange,
   TimeZone,
+  toURLRange,
   urlUtil,
 } from '@grafana/data';
-import { DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import store from 'app/core/store';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { QueryOptions, QueryTransaction } from 'app/types/explore';
-
-import { config } from '../config';
 
 import { getNextRefIdChar } from './query';
 
 export const DEFAULT_UI_STATE = {
   dedupStrategy: LogsDedupStrategy.none,
 };
+
+export const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz';
+const nanoid = customAlphabet(ID_ALPHABET, 3);
 
 const MAX_HISTORY_ITEMS = 100;
 
@@ -47,57 +47,58 @@ export const setLastUsedDatasourceUID = (orgId: number, datasourceUID: string) =
   store.setObject(lastUsedDatasourceKeyForOrgId(orgId), datasourceUID);
 
 export interface GetExploreUrlArguments {
-  panel: PanelModel;
-  /** Datasource service to query other datasources in case the panel datasource is mixed */
-  datasourceSrv: DataSourceSrv;
-  /** Time service to get the current dashboard range from */
-  timeSrv: TimeSrv;
+  queries: DataQuery[];
+  dsRef: DataSourceRef | null | undefined;
+  timeRange: TimeRange;
+  scopedVars: ScopedVars | undefined;
+  adhocFilters?: AdHocVariableFilter[];
 }
 
 export function generateExploreId() {
-  return nanoid(3);
+  while (true) {
+    const id = nanoid(3);
+
+    if (!/^\d+$/.test(id)) {
+      return id;
+    }
+  }
 }
 
 /**
  * Returns an Explore-URL that contains a panel's queries and the dashboard time range.
  */
 export async function getExploreUrl(args: GetExploreUrlArguments): Promise<string | undefined> {
-  const { panel, datasourceSrv, timeSrv } = args;
-  let exploreDatasource = await datasourceSrv.get(panel.datasource);
+  const { queries, dsRef, timeRange, scopedVars, adhocFilters } = args;
+  const interpolatedQueries = (
+    await Promise.allSettled(
+      queries
+        // Explore does not support expressions so filter those out
+        .filter((q) => q.datasource?.uid !== ExpressionDatasourceUID)
+        .map(async (q) => {
+          // if the query defines a datasource, use that one, otherwise use the one from the panel, which should always be defined.
+          // this will rejects if the datasource is not found, or return the default one if dsRef is not provided.
+          const queryDs = await getDataSourceSrv().get(q.datasource || dsRef);
 
-  /** In Explore, we don't have legend formatter and we don't want to keep
-   * legend formatting as we can't change it
-   *
-   * We also don't have expressions, so filter those out
-   */
-  let exploreTargets: DataQuery[] = panel.targets
-    .map((t) => omit(t, 'legendFormat'))
-    .filter((t) => t.datasource?.uid !== ExpressionDatasourceUID);
-  let url: string | undefined;
+          return {
+            // interpolate the query using its datasource `interpolateVariablesInQueries` method if defined, othewise return the query as-is.
+            ...(queryDs.interpolateVariablesInQueries?.([q], scopedVars ?? {}, adhocFilters)[0] || q),
+            // But always set the datasource as it's  required in Explore.
+            // NOTE: if for some reason the query has the "mixed" datasource, we omit the property;
+            // Upon initialization, Explore use its own logic to determine the datasource.
+            ...(!queryDs.meta.mixed && { datasource: queryDs.getRef() }),
+          };
+        })
+    )
+  )
+    .filter(
+      <T>(promise: PromiseSettledResult<T>): promise is PromiseFulfilledResult<T> => promise.status === 'fulfilled'
+    )
+    .map((q) => q.value);
 
-  if (exploreDatasource) {
-    const range = timeSrv.timeRangeForUrl();
-    let state: Partial<ExploreUrlState> = { range };
-    if (exploreDatasource.interpolateVariablesInQueries) {
-      const scopedVars = panel.scopedVars || {};
-      state = {
-        ...state,
-        datasource: exploreDatasource.uid,
-        queries: exploreDatasource.interpolateVariablesInQueries(exploreTargets, scopedVars),
-      };
-    } else {
-      state = {
-        ...state,
-        datasource: exploreDatasource.uid,
-        queries: exploreTargets,
-      };
-    }
-
-    const exploreState = JSON.stringify({ [generateExploreId()]: state });
-    url = urlUtil.renderUrl('/explore', { panes: exploreState, schemaVersion: 1 });
-  }
-
-  return url;
+  const exploreState = JSON.stringify({
+    [generateExploreId()]: { range: toURLRange(timeRange.raw), queries: interpolatedQueries, datasource: dsRef?.uid },
+  });
+  return urlUtil.renderUrl('/explore', { panes: exploreState, schemaVersion: 1 });
 }
 
 export function buildQueryTransaction(
@@ -106,20 +107,11 @@ export function buildQueryTransaction(
   queryOptions: QueryOptions,
   range: TimeRange,
   scanning: boolean,
-  timeZone?: TimeZone
+  timeZone?: TimeZone,
+  scopedVars?: ScopedVars
 ): QueryTransaction {
-  const key = queries.reduce((combinedKey, query) => {
-    combinedKey += query.key;
-    return combinedKey;
-  }, '');
-
+  const panelId = Number.parseInt(exploreId, 36);
   const { interval, intervalMs } = getIntervals(range, queryOptions.minInterval, queryOptions.maxDataPoints);
-
-  // Most datasource is using `panelId + query.refId` for cancellation logic.
-  // Using `format` here because it relates to the view panel that the request is for.
-  // However, some datasources don't use `panelId + query.refId`, but only `panelId`.
-  // Therefore panel id has to be unique.
-  const panelId = `${key}`;
 
   const request: DataQueryRequest = {
     app: CoreApp.Explore,
@@ -128,9 +120,7 @@ export function buildQueryTransaction(
     startTime: Date.now(),
     interval,
     intervalMs,
-    // TODO: the query request expects number and we are using string here. Seems like it works so far but can create
-    // issues down the road.
-    panelId: panelId as any,
+    panelId,
     targets: queries, // Datasources rely on DataQueries being passed under the targets key.
     range,
     requestId: 'explore_' + exploreId,
@@ -138,6 +128,7 @@ export function buildQueryTransaction(
     scopedVars: {
       __interval: { text: interval, value: interval },
       __interval_ms: { text: intervalMs, value: intervalMs },
+      ...scopedVars,
     },
     maxDataPoints: queryOptions.maxDataPoints,
     liveStreaming: queryOptions.liveStreaming,
@@ -153,18 +144,6 @@ export function buildQueryTransaction(
 }
 
 export const clearQueryKeys: (query: DataQuery) => DataQuery = ({ key, ...rest }) => rest;
-
-export const safeParseJson = (text?: string): any | undefined => {
-  if (!text) {
-    return;
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch (error) {
-    console.error(error);
-  }
-};
 
 export const safeStringifyValue = (value: unknown, space?: number) => {
   if (value === undefined || value === null) {
@@ -284,12 +263,11 @@ const validKeys = ['refId', 'key', 'context', 'datasource'];
 export function hasNonEmptyQuery<TQuery extends DataQuery>(queries: TQuery[]): boolean {
   return (
     queries &&
-    queries.some((query: any) => {
-      const keys = Object.keys(query)
-        .filter((key) => validKeys.indexOf(key) === -1)
-        .map((k) => query[k])
-        .filter((v) => v);
-      return keys.length > 0;
+    queries.some((query) => {
+      const entries = Object.entries(query)
+        .filter(([key, _]) => validKeys.indexOf(key) === -1)
+        .filter(([_, value]) => value);
+      return entries.length > 0;
     })
   );
 }
@@ -335,24 +313,11 @@ export const getQueryKeys = (queries: DataQuery[]): string[] => {
 export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange, fiscalYearStartMonth: number): TimeRange => {
   let range = rangeUtil.convertRawToRange(rawRange, timeZone, fiscalYearStartMonth);
 
-  if (range.to.isBefore(range.from)) {
-    range = rangeUtil.convertRawToRange({ from: range.raw.to, to: range.raw.from }, timeZone, fiscalYearStartMonth);
-  }
-
   return range;
 };
 
 export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
   RefreshPicker.isLive(refreshInterval) ? LogsSortOrder.Ascending : LogsSortOrder.Descending;
-
-export const convertToWebSocketUrl = (url: string) => {
-  const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-  let backend = `${protocol}${window.location.host}${config.appSubUrl}`;
-  if (backend.endsWith('/')) {
-    backend = backend.slice(0, -1);
-  }
-  return `${backend}${url}`;
-};
 
 export const stopQueryState = (querySubscription: Unsubscribable | undefined) => {
   if (querySubscription) {
@@ -369,10 +334,14 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
 }
 
 export const copyStringToClipboard = (string: string) => {
-  const el = document.createElement('textarea');
-  el.value = string;
-  document.body.appendChild(el);
-  el.select();
-  document.execCommand('copy');
-  document.body.removeChild(el);
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(string);
+  } else {
+    const el = document.createElement('textarea');
+    el.value = string;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+  }
 };

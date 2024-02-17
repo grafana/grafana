@@ -21,7 +21,7 @@ import { ColumnRender, TableRenderModel, ColumnStyle } from './types';
 
 export class TableRenderer {
   formatters: any[] = [];
-  colorState: any;
+  colorState: Record<string, string | null> = {};
 
   constructor(
     private panel: { styles: ColumnStyle[]; pageSize: number },
@@ -136,7 +136,7 @@ export class TableRenderer {
     }
 
     if (column.style.type === 'string') {
-      return (v: any): any => {
+      return (v: any) => {
         if (isArray(v)) {
           v = v.join(', ');
         }
@@ -192,7 +192,7 @@ export class TableRenderer {
     if (column.style.type === 'number') {
       const valueFormatter = getValueFormat(column.unit || column.style.unit);
 
-      return (v: any): any => {
+      return (v: any) => {
         if (v === null || v === void 0) {
           return '-';
         }
@@ -211,7 +211,7 @@ export class TableRenderer {
     };
   }
 
-  setColorState(value: any, style: ColumnStyle) {
+  setColorState(value: unknown, style: ColumnStyle) {
     if (!style.colorMode) {
       return;
     }

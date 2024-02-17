@@ -2,6 +2,11 @@
 keywords:
   - grafana
   - schema
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: GaugePanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
@@ -23,8 +28,11 @@ It extends [SingleStatBaseOptions](#singlestatbaseoptions).
 
 | Property               | Type                                            | Required | Default | Description                                                                                                                                 |
 |------------------------|-------------------------------------------------|----------|---------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| `minVizHeight`         | uint32                                          | **Yes**  | `75`    |                                                                                                                                             |
+| `minVizWidth`          | uint32                                          | **Yes**  | `75`    |                                                                                                                                             |
 | `showThresholdLabels`  | boolean                                         | **Yes**  | `false` |                                                                                                                                             |
 | `showThresholdMarkers` | boolean                                         | **Yes**  | `true`  |                                                                                                                                             |
+| `sizing`               | string                                          | **Yes**  |         | Allows for the bar gauge size to be set explicitly<br/>Possible values are: `auto`, `manual`.                                               |
 | `orientation`          | string                                          | No       |         | *(Inherited from [SingleStatBaseOptions](#singlestatbaseoptions))*<br/>TODO docs<br/>Possible values are: `auto`, `vertical`, `horizontal`. |
 | `reduceOptions`        | [ReduceDataOptions](#reducedataoptions)         | No       |         | *(Inherited from [SingleStatBaseOptions](#singlestatbaseoptions))*<br/>TODO docs                                                            |
 | `text`                 | [VizTextDisplayOptions](#viztextdisplayoptions) | No       |         | *(Inherited from [SingleStatBaseOptions](#singlestatbaseoptions))*<br/>TODO docs                                                            |

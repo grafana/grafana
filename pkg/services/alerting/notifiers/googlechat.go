@@ -33,7 +33,7 @@ func init() {
 	})
 }
 
-func newGoogleChatNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
+func newGoogleChatNotifier(_ *setting.Cfg, model *models.AlertNotification, _ alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
@@ -129,7 +129,7 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
-		gcn.log.Error("evalContext returned an invalid rule URL")
+		gcn.log.Error("EvalContext returned an invalid rule URL")
 	}
 
 	widgets := []widget{}

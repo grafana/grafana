@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/util"
@@ -28,14 +28,14 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	page := c.QueryInt64("page")
 	dashboardType := c.Query("type")
 	sort := c.Query("sort")
-	permission := dashboards.PERMISSION_VIEW
+	permission := dashboardaccess.PERMISSION_VIEW
 
 	if limit > 5000 {
 		return response.Error(422, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
 	}
 
 	if c.Query("permission") == "Edit" {
-		permission = dashboards.PERMISSION_EDIT
+		permission = dashboardaccess.PERMISSION_EDIT
 	}
 
 	dbIDs := make([]int64, 0)
@@ -57,10 +57,16 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		folderID, err := strconv.ParseInt(id, 10, 64)
 		if err == nil {
 			folderIDs = append(folderIDs, folderID)
+			metrics.MFolderIDsAPICount.WithLabelValues(metrics.Search).Inc()
 		}
 	}
 
-	if len(dbIDs) > 0 && len(dbUIDs) > 0 {
+	folderUIDs := c.QueryStrings("folderUIDs")
+
+	bothDashboardIds := len(dbIDs) > 0 && len(dbUIDs) > 0
+	bothFolderIds := len(folderIDs) > 0 && len(folderUIDs) > 0
+
+	if bothDashboardIds || bothFolderIds {
 		return response.Error(400, "search supports UIDs or IDs, not both", nil)
 	}
 
@@ -71,11 +77,12 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 		Limit:         limit,
 		Page:          page,
 		IsStarred:     starred == "true",
-		OrgId:         c.OrgID,
+		OrgId:         c.SignedInUser.GetOrgID(),
 		DashboardIds:  dbIDs,
 		DashboardUIDs: dbUIDs,
 		Type:          dashboardType,
-		FolderIds:     folderIDs,
+		FolderIds:     folderIDs, // nolint:staticcheck
+		FolderUIDs:    folderUIDs,
 		Permission:    permission,
 		Sort:          sort,
 	}
@@ -136,17 +143,29 @@ type SearchParams struct {
 	// Enum: dash-folder,dash-db
 	Type string `json:"type"`
 	// List of dashboard id’s to search for
+	// This is deprecated: users should use the `dashboardUIDs` query parameter instead
 	// in:query
 	// required: false
+	// deprecated: true
 	DashboardIds []int64 `json:"dashboardIds"`
 	// List of dashboard uid’s to search for
 	// in:query
 	// required: false
 	DashboardUIDs []string `json:"dashboardUIDs"`
 	// List of folder id’s to search in for dashboards
+	// If it's `0` then it will query for the top level folders
+	// This is deprecated: users should use the `folderUIDs` query parameter instead
 	// in:query
 	// required: false
+	// deprecated: true
+	//
+	// Deprecated: use FolderUIDs instead
 	FolderIds []int64 `json:"folderIds"`
+	// List of folder UID’s to search in for dashboards
+	// If it's an empty string then it will query for the top level folders
+	// in:query
+	// required: false
+	FolderUIDs []string `json:"folderUIDs"`
 	// Flag indicating if only starred Dashboards should be returned
 	// in:query
 	// required: false

@@ -9,6 +9,16 @@
 
 
 /**
+ * A topic is attached to DataFrame metadata in query results.
+ * This specifies where the data should be used.
+ */
+export enum DataTopic {
+  AlertStates = 'alertStates',
+  Annotations = 'annotations',
+  Series = 'series',
+}
+
+/**
  * TODO docs
  */
 export interface DataSourceJsonData {
@@ -353,6 +363,7 @@ export interface ScaleDistributionConfig {
  * TODO docs
  */
 export interface AxisConfig {
+  axisBorderShow?: boolean;
   axisCenteredZero?: boolean;
   axisColorMode?: AxisColorMode;
   axisGridShow?: boolean;
@@ -398,7 +409,7 @@ export interface HideableFieldConfig {
 /**
  * TODO docs
  */
-export enum GraphTresholdsStyleMode {
+export enum GraphThresholdsStyleMode {
   Area = 'area',
   Dashed = 'dashed',
   DashedAndArea = 'dashed+area',
@@ -412,7 +423,7 @@ export enum GraphTresholdsStyleMode {
  * TODO docs
  */
 export interface GraphThresholdsStyleConfig {
-  mode: GraphTresholdsStyleMode;
+  mode: GraphThresholdsStyleMode;
 }
 
 /**
@@ -635,9 +646,28 @@ export enum BarGaugeValueMode {
 }
 
 /**
+ * Allows for the bar gauge name to be placed explicitly
+ */
+export enum BarGaugeNamePlacement {
+  Auto = 'auto',
+  Left = 'left',
+  Top = 'top',
+}
+
+/**
+ * Allows for the bar gauge size to be set explicitly
+ */
+export enum BarGaugeSizing {
+  Auto = 'auto',
+  Manual = 'manual',
+}
+
+/**
  * TODO docs
  */
 export interface VizTooltipOptions {
+  maxHeight?: number;
+  maxWidth?: number;
   mode: TooltipDisplayMode;
   sort: SortOrder;
 }
@@ -657,6 +687,7 @@ export enum TableCellDisplayMode {
   ColorBackgroundSolid = 'color-background-solid',
   ColorText = 'color-text',
   Custom = 'custom',
+  DataLinks = 'data-links',
   Gauge = 'gauge',
   GradientGauge = 'gradient-gauge',
   Image = 'image',
@@ -734,6 +765,13 @@ export interface TableImageCellOptions {
 }
 
 /**
+ * Show data links in the cell
+ */
+export interface TableDataLinksCellOptions {
+  type: TableCellDisplayMode.DataLinks;
+}
+
+/**
  * Gauge cell options
  */
 export interface TableBarGaugeCellOptions {
@@ -746,6 +784,7 @@ export interface TableBarGaugeCellOptions {
  * Sparkline cell options
  */
 export interface TableSparklineCellOptions extends GraphFieldConfig {
+  hideValue?: boolean;
   type: TableCellDisplayMode.Sparkline;
 }
 
@@ -770,7 +809,7 @@ export enum TableCellHeight {
  * Table cell options. Each cell has a display mode
  * and other potential options for that display.
  */
-export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions);
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableDataLinksCellOptions | TableJsonViewCellOptions);
 
 /**
  * Use UTC/GMT timezone
@@ -885,7 +924,7 @@ export interface TableFieldOptions {
   filterable?: boolean;
   hidden?: boolean; // ?? default is missing or false ??
   /**
-   * Hides any header for a column, usefull for columns that show some static content or buttons.
+   * Hides any header for a column, useful for columns that show some static content or buttons.
    */
   hideHeader?: boolean;
   inspect: boolean;

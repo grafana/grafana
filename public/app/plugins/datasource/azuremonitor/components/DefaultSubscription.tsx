@@ -1,13 +1,11 @@
 import React, { useEffect, useReducer } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { InlineField, Select, Button } from '@grafana/ui';
+import { Select, Button, Field } from '@grafana/ui';
 
 import { isCredentialsComplete } from '../credentials';
 import { selectors } from '../e2e/selectors';
 import { AzureCredentials, AzureDataSourceJsonData } from '../types';
-
-const LABEL_WIDTH = 18;
 
 export interface Props {
   options: AzureDataSourceJsonData;
@@ -70,9 +68,8 @@ export const DefaultSubscription = (props: Props) => {
 
   return (
     <>
-      <InlineField
+      <Field
         label="Default Subscription"
-        labelWidth={LABEL_WIDTH}
         data-testid={selectors.components.configEditor.defaultSubscription.input}
         htmlFor="default-subscription"
       >
@@ -97,7 +94,7 @@ export const DefaultSubscription = (props: Props) => {
             Load Subscriptions
           </Button>
         </div>
-      </InlineField>
+      </Field>
     </>
   );
 };

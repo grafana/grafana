@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -29,7 +28,7 @@ type PrometheusSrv struct {
 	log     log.Logger
 	manager state.AlertInstanceManager
 	store   RuleStore
-	ac      accesscontrol.AccessControl
+	authz   RuleAccessControlService
 }
 
 const queryIncludeInternalLabels = "includeInternalLabels"
@@ -49,7 +48,7 @@ func (srv PrometheusSrv) RouteGetAlertStatuses(c *contextmodel.ReqContext) respo
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
-	for _, alertState := range srv.manager.GetAll(c.OrgID) {
+	for _, alertState := range srv.manager.GetAll(c.SignedInUser.GetOrgID()) {
 		startsAt := alertState.StartsAt
 		valString := ""
 
@@ -185,13 +184,13 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		labelOptions = append(labelOptions, ngmodels.WithoutInternalLabels())
 	}
 
-	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.OrgID, c.SignedInUser)
+	namespaceMap, err := srv.store.GetUserVisibleNamespaces(c.Req.Context(), c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "failed to get namespaces visible to the user")
 	}
 
 	if len(namespaceMap) == 0 {
-		srv.log.Debug("user does not have access to any namespaces")
+		srv.log.Debug("User does not have access to any namespaces")
 		return response.JSON(http.StatusOK, ruleResponse)
 	}
 
@@ -201,7 +200,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	}
 
 	alertRuleQuery := ngmodels.ListAlertRulesQuery{
-		OrgID:         c.SignedInUser.OrgID,
+		OrgID:         c.SignedInUser.GetOrgID(),
 		NamespaceUIDs: namespaceUIDs,
 		DashboardUID:  dashboardUID,
 		PanelID:       panelID,
@@ -212,9 +211,6 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 		ruleResponse.DiscoveryBase.Error = fmt.Sprintf("failure getting rules: %s", err.Error())
 		ruleResponse.DiscoveryBase.ErrorType = apiv1.ErrServer
 		return response.JSON(http.StatusInternalServerError, ruleResponse)
-	}
-	hasAccess := func(evaluator accesscontrol.Evaluator) bool {
-		return accesscontrol.HasAccess(srv.ac, c)(evaluator)
 	}
 
 	// Group rules together by Namespace and Rule Group. Rules are also grouped by Org ID,
@@ -236,10 +232,14 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	for groupKey, rules := range groupedRules {
 		folder := namespaceMap[groupKey.NamespaceUID]
 		if folder == nil {
-			srv.log.Warn("query returned rules that belong to folder the user does not have access to. All rules that belong to that namespace will not be added to the response", "folder_uid", groupKey.NamespaceUID)
+			srv.log.Warn("Query returned rules that belong to folder the user does not have access to. All rules that belong to that namespace will not be added to the response", "folder_uid", groupKey.NamespaceUID)
 			continue
 		}
-		if !authorizeAccessToRuleGroup(rules, hasAccess) {
+		ok, err := srv.authz.HasAccessToRuleGroup(c.Req.Context(), c.SignedInUser, rules)
+		if err != nil {
+			return response.ErrOrFallback(http.StatusInternalServerError, "cannot authorize access to rule group", err)
+		}
+		if !ok {
 			continue
 		}
 		ruleGroup, totals := srv.toRuleGroup(groupKey, folder, rules, limitAlertsPerRule, withStatesFast, matchers, labelOptions)
@@ -304,7 +304,7 @@ func (srv PrometheusSrv) toRuleGroup(groupKey ngmodels.AlertRuleGroupKey, folder
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
-		File: folder.Title,
+		File: folder.Fullpath,
 	}
 
 	rulesTotals := make(map[string]int64, len(rules))
@@ -443,7 +443,7 @@ func ruleToQuery(logger log.Logger, rule *ngmodels.AlertRule) string {
 			}
 
 			// For any other type of error, it is unexpected abort and return the whole JSON.
-			logger.Debug("failed to parse a query", "error", err)
+			logger.Debug("Failed to parse a query", "error", err)
 			queryErr = err
 			break
 		}

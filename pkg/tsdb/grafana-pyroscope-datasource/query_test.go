@@ -1,4 +1,4 @@
-package phlare
+package pyroscope
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 // This is where the tests for the datasource backend live.
 func Test_query(t *testing.T) {
 	client := &FakeClient{}
-	ds := &PhlareDatasource{
+	ds := &PyroscopeDatasource{
 		client: client,
 	}
 
@@ -135,7 +135,7 @@ func Test_profileToDataFrame(t *testing.T) {
 	require.Equal(t, data.NewField("value", nil, []int64{20, 10, 5}).SetConfig(&data.FieldConfig{Unit: "short"}), frame.Fields[1])
 	require.Equal(t, data.NewField("self", nil, []int64{1, 3, 5}).SetConfig(&data.FieldConfig{Unit: "short"}), frame.Fields[2])
 	require.Equal(t, "label", frame.Fields[3].Name)
-	require.Equal(t, []int64{0, 1, 2}, fieldValues[int64](frame.Fields[3]))
+	require.Equal(t, []data.EnumItemIndex{0, 1, 2}, fieldValues[data.EnumItemIndex](frame.Fields[3]))
 	require.Equal(t, []string{"func1", "func2", "func3"}, frame.Fields[3].Config.TypeConfig.Enum.Text)
 }
 
@@ -196,6 +196,7 @@ func Test_treeToNestedDataFrame(t *testing.T) {
 				},
 				{Value: 30, Level: 1, Self: 3, Name: "func2", Nodes: []*ProfileTree{
 					{Value: 15, Level: 2, Self: 4, Name: "func1:func3"},
+					{Value: 10, Level: 2, Self: 4, Name: "func1"},
 				}},
 			},
 		}
@@ -211,10 +212,10 @@ func Test_treeToNestedDataFrame(t *testing.T) {
 		}
 		require.Equal(t,
 			[]*data.Field{
-				data.NewField("level", nil, []int64{0, 1, 1, 2}),
-				data.NewField("value", nil, []int64{100, 40, 30, 15}).SetConfig(&data.FieldConfig{Unit: "short"}),
-				data.NewField("self", nil, []int64{1, 2, 3, 4}).SetConfig(&data.FieldConfig{Unit: "short"}),
-				data.NewField("label", nil, []int64{0, 1, 2, 3}).SetConfig(labelConfig),
+				data.NewField("level", nil, []int64{0, 1, 1, 2, 2}),
+				data.NewField("value", nil, []int64{100, 40, 30, 15, 10}).SetConfig(&data.FieldConfig{Unit: "short"}),
+				data.NewField("self", nil, []int64{1, 2, 3, 4, 4}).SetConfig(&data.FieldConfig{Unit: "short"}),
+				data.NewField("label", nil, []data.EnumItemIndex{0, 1, 2, 3, 1}).SetConfig(labelConfig),
 			}, frame.Fields)
 	})
 
@@ -271,10 +272,10 @@ func Test_seriesToDataFrame(t *testing.T) {
 }
 
 type FakeClient struct {
-	Args []interface{}
+	Args []any
 }
 
-func (f *FakeClient) ProfileTypes(ctx context.Context) ([]*ProfileType, error) {
+func (f *FakeClient) ProfileTypes(ctx context.Context, start int64, end int64) ([]*ProfileType, error) {
 	return []*ProfileType{
 		{
 			ID:    "type:1",
@@ -287,11 +288,11 @@ func (f *FakeClient) ProfileTypes(ctx context.Context) ([]*ProfileType, error) {
 	}, nil
 }
 
-func (f *FakeClient) LabelValues(ctx context.Context, query string, label string, start int64, end int64) ([]string, error) {
+func (f *FakeClient) LabelValues(ctx context.Context, label string, labelSelector string, start int64, end int64) ([]string, error) {
 	panic("implement me")
 }
 
-func (f *FakeClient) LabelNames(ctx context.Context, query string, start int64, end int64) ([]string, error) {
+func (f *FakeClient) LabelNames(ctx context.Context, labelSelector string, start int64, end int64) ([]string, error) {
 	panic("implement me")
 }
 
@@ -311,8 +312,24 @@ func (f *FakeClient) GetProfile(ctx context.Context, profileTypeID, labelSelecto
 	}, nil
 }
 
+func (f *FakeClient) GetSpanProfile(ctx context.Context, profileTypeID, labelSelector string, spanSelector []string, start, end int64, maxNodes *int64) (*ProfileResponse, error) {
+	return &ProfileResponse{
+		Flamebearer: &Flamebearer{
+			Names: []string{"foo", "bar", "baz"},
+			Levels: []*Level{
+				{Values: []int64{0, 10, 0, 0}},
+				{Values: []int64{0, 9, 0, 1}},
+				{Values: []int64{0, 8, 8, 2}},
+			},
+			Total:   100,
+			MaxSelf: 56,
+		},
+		Units: "count",
+	}, nil
+}
+
 func (f *FakeClient) GetSeries(ctx context.Context, profileTypeID, labelSelector string, start, end int64, groupBy []string, step float64) (*SeriesResponse, error) {
-	f.Args = []interface{}{profileTypeID, labelSelector, start, end, groupBy, step}
+	f.Args = []any{profileTypeID, labelSelector, start, end, groupBy, step}
 	return &SeriesResponse{
 		Series: []*Series{
 			{

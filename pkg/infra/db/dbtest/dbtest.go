@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"xorm.io/core"
+	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -40,6 +41,10 @@ func (f *FakeDB) GetDBType() core.DbType {
 }
 
 func (f *FakeDB) GetDialect() migrator.Dialect {
+	return nil
+}
+
+func (f *FakeDB) GetEngine() *xorm.Engine {
 	return nil
 }
 

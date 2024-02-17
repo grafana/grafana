@@ -1,13 +1,14 @@
 package migrator
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golang-migrate/migrate/v4/database"
 	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/mattn/go-sqlite3"
 	"go.uber.org/atomic"
 	"xorm.io/xorm"
 
@@ -59,7 +60,7 @@ func NewScopedMigrator(engine *xorm.Engine, cfg *setting.Cfg, scope string) *Mig
 		mg.Logger = log.New("migrator")
 	} else {
 		mg.tableName = scope + "_migration_log"
-		mg.Logger = log.New(scope + " migrator")
+		mg.Logger = log.New(scope + "-migrator")
 	}
 	return mg
 }
@@ -208,6 +209,13 @@ func (mg *Migrator) run() (err error) {
 
 		err := mg.InTransaction(func(sess *xorm.Session) error {
 			err := mg.exec(m, sess)
+			// if we get an sqlite busy/locked error, sleep 100ms and try again
+			if errors.Is(err, sqlite3.ErrLocked) || errors.Is(err, sqlite3.ErrBusy) {
+				mg.Logger.Debug("Database locked, sleeping then retrying", "error", err, "sql", sql)
+				time.Sleep(100 * time.Millisecond)
+				err = mg.exec(m, sess)
+			}
+
 			if err != nil {
 				mg.Logger.Error("Exec failed", "error", err, "sql", sql)
 				record.Error = err.Error()
@@ -239,6 +247,7 @@ func (mg *Migrator) run() (err error) {
 }
 
 func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
+	start := time.Now()
 	mg.Logger.Info("Executing migration", "id", m.Id())
 
 	condition := m.GetCondition()
@@ -271,9 +280,11 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 	}
 
 	if err != nil {
-		mg.Logger.Error("Executing migration failed", "id", m.Id(), "error", err)
+		mg.Logger.Error("Executing migration failed", "id", m.Id(), "error", err, "duration", time.Since(start))
 		return err
 	}
+
+	mg.Logger.Info("Migration successfully executed", "id", m.Id(), "duration", time.Since(start))
 
 	return nil
 }

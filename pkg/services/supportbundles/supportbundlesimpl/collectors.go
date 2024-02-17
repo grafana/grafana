@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -105,7 +106,7 @@ func settingsCollector(settings setting.Provider) supportbundles.Collector {
 	}
 }
 
-func pluginInfoCollector(pluginStore plugins.Store, pluginSettings pluginsettings.Service, logger log.Logger) supportbundles.Collector {
+func pluginInfoCollector(pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, logger log.Logger) supportbundles.Collector {
 	return supportbundles.Collector{
 		UID:               "plugins",
 		DisplayName:       "Plugin information",
@@ -135,7 +136,7 @@ func pluginInfoCollector(pluginStore plugins.Store, pluginSettings pluginsetting
 			// plugin settings
 			settings, err := pluginSettings.GetPluginSettings(ctx, &pluginsettings.GetArgs{})
 			if err != nil {
-				logger.Debug("failed to fetch plugin settings:", "err", err)
+				logger.Debug("Failed to fetch plugin settings:", "err", err)
 			}
 
 			settingMap := make(map[string][]*pluginsettings.InfoDTO)

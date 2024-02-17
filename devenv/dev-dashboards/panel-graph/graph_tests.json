@@ -1630,7 +1630,6 @@
   ],
   "refresh": false,
   "schemaVersion": 16,
-  "style": "dark",
   "tags": ["gdev", "panel-tests", "graph"],
   "templating": {
     "list": []

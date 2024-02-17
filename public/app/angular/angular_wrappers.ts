@@ -11,7 +11,7 @@ import {
   UnitPicker,
 } from '@grafana/ui';
 import { react2AngularDirective } from 'app/angular/react2angular';
-import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { OldFolderPicker } from 'app/core/components/Select/OldFolderPicker';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import { QueryEditor as CloudMonitoringQueryEditor } from 'app/plugins/datasource/cloud-monitoring/components/QueryEditor';
 
@@ -119,7 +119,7 @@ export function registerAngularDirectives() {
     'showForwardOAuthIdentityOption',
     ['onChange', { watchDepth: 'reference', wrapApply: true }],
   ]);
-  react2AngularDirective('folderPicker', FolderPicker, [
+  react2AngularDirective('folderPicker', OldFolderPicker, [
     'labelClass',
     'rootName',
     'enableCreateNew',

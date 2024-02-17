@@ -4,7 +4,7 @@ import React from 'react';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { getInputStyles } from '../Input/Input';
 
-export const IndicatorsContainer = React.forwardRef<HTMLDivElement, React.PropsWithChildren<any>>((props, ref) => {
+export const IndicatorsContainer = React.forwardRef<HTMLDivElement, React.PropsWithChildren>((props, ref) => {
   const { children } = props;
   const theme = useTheme2();
   const styles = getInputStyles({ theme, invalid: false });

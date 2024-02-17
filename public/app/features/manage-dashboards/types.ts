@@ -1,16 +1,6 @@
-export interface Snapshot {
-  created: string;
-  expires: string;
-  external: boolean;
-  externalUrl: string;
-  id: number;
-  key: string;
-  name: string;
-  orgId: number;
-  updated: string;
-  url?: string;
-  userId: number;
-}
+import { Dashboard } from '@grafana/schema/src/veneer/dashboard.types';
+
+import { ExternalDashboard } from '../dashboard/components/DashExportModal/DashboardExporter';
 
 export type DeleteDashboardResponse = {
   id: number;
@@ -30,9 +20,12 @@ export interface PublicDashboardListResponse {
   accessToken: string;
   dashboardUid: string;
   title: string;
+  slug: string;
   isEnabled: boolean;
 }
 
 export interface PublicDashboardListWithPagination extends PublicDashboardListWithPaginationResponse {
   totalPages: number;
 }
+
+export type DashboardJson = ExternalDashboard & Omit<Dashboard, 'panels'>;

@@ -74,12 +74,12 @@ describe('ValueMappingsEditorModal', () => {
     });
   });
 
-  describe('When adding and updating value mapp', () => {
+  describe('When adding and updating value map', () => {
     it('should be 3', async () => {
       const onChangeSpy = jest.fn();
       setup(onChangeSpy);
 
-      await userEvent.click(screen.getByLabelText(selectors.components.ValuePicker.button('Add a new mapping')));
+      await userEvent.click(screen.getByTestId(selectors.components.ValuePicker.button('Add a new mapping')));
       const selectComponent = await screen.findByLabelText(
         selectors.components.ValuePicker.select('Add a new mapping')
       );
@@ -129,7 +129,7 @@ describe('ValueMappingsEditorModal', () => {
       setup(onChangeSpy, { value: [] });
       await userEvent.click(screen.getAllByTestId('remove-value-mapping')[0]);
 
-      await userEvent.click(screen.getByLabelText(selectors.components.ValuePicker.button('Add a new mapping')));
+      await userEvent.click(screen.getByTestId(selectors.components.ValuePicker.button('Add a new mapping')));
       const selectComponent = await screen.findByLabelText(
         selectors.components.ValuePicker.select('Add a new mapping')
       );
@@ -168,7 +168,7 @@ describe('ValueMappingsEditorModal', () => {
       setup(onChangeSpy, { value: [] });
       await userEvent.click(screen.getAllByTestId('remove-value-mapping')[0]);
 
-      await userEvent.click(screen.getByLabelText(selectors.components.ValuePicker.button('Add a new mapping')));
+      await userEvent.click(screen.getByTestId(selectors.components.ValuePicker.button('Add a new mapping')));
       const selectComponent = await screen.findByLabelText(
         selectors.components.ValuePicker.select('Add a new mapping')
       );

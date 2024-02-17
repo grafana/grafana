@@ -8,9 +8,9 @@
       <h2>📁 {{ .GroupLabels.grafana_folder }} &rsaquo; {{ .GroupLabels.alertname }}</h2>
     </mj-text>
     <mj-raw>
-      {{ else }}
+      {{ else if gt (len .GroupLabels.SortedPairs) 0 }}
     </mj-raw>
-    <!-- non-default grouping labels are just printed verbatim -->
+    <!-- non-default grouping labels are just printed verbatim, if we are grouping at all -->
     <mj-text padding="0" align="left">
       <h2>
         📁 Grouped by&nbsp;

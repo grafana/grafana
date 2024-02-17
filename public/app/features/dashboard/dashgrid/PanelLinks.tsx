@@ -50,7 +50,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       background: 'inherit',
       border: 'none',
-      borderRadius: `${theme.shape.borderRadius()}`,
+      borderRadius: `${theme.shape.radius.default}`,
       cursor: 'context-menu',
     }),
   };

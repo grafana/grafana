@@ -2,6 +2,11 @@
 keywords:
   - grafana
   - schema
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: HeatmapPanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
@@ -119,10 +124,13 @@ Controls legend options
 
 Controls tooltip options
 
-| Property     | Type    | Required | Default | Description                                                    |
-|--------------|---------|----------|---------|----------------------------------------------------------------|
-| `show`       | boolean | **Yes**  |         | Controls if the tooltip is shown                               |
-| `yHistogram` | boolean | No       |         | Controls if the tooltip shows a histogram of the y-axis values |
+| Property         | Type    | Required | Default | Description                                                    |
+|------------------|---------|----------|---------|----------------------------------------------------------------|
+| `mode`           | string  | **Yes**  |         | TODO docs<br/>Possible values are: `single`, `multi`, `none`.  |
+| `maxHeight`      | number  | No       |         |                                                                |
+| `maxWidth`       | number  | No       |         |                                                                |
+| `showColorScale` | boolean | No       |         | Controls if the tooltip shows a color scale in header          |
+| `yHistogram`     | boolean | No       |         | Controls if the tooltip shows a histogram of the y-axis values |
 
 ### Options
 
@@ -132,7 +140,7 @@ Controls tooltip options
 | `exemplars`    | [ExemplarConfig](#exemplarconfig)                       | **Yes**  |                                                                            | Controls exemplar options                                                                                                                                                                       |
 | `legend`       | [HeatmapLegend](#heatmaplegend)                         | **Yes**  |                                                                            | Controls legend options                                                                                                                                                                         |
 | `showValue`    | string                                                  | **Yes**  |                                                                            | &#124; *{<br/>	layout: ui.HeatmapCellLayout & "auto" // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed<br/>}<br/>Controls the display of the value in the cell |
-| `tooltip`      | [HeatmapTooltip](#heatmaptooltip)                       | **Yes**  |                                                                            | Controls tooltip options                                                                                                                                                                        |
+| `tooltip`      | [object](#tooltip)                                      | **Yes**  | `map[mode:single showColorScale:false yHistogram:false]`                   | Controls tooltip options                                                                                                                                                                        |
 | `yAxis`        | [YAxisConfig](#yaxisconfig)                             | **Yes**  |                                                                            | Configuration options for the yAxis                                                                                                                                                             |
 | `calculate`    | boolean                                                 | No       | `false`                                                                    | Controls if the heatmap should be calculated from data                                                                                                                                          |
 | `calculation`  | [HeatmapCalculationOptions](#heatmapcalculationoptions) | No       |                                                                            |                                                                                                                                                                                                 |
@@ -174,6 +182,7 @@ It extends [AxisConfig](#axisconfig).
 
 | Property            | Type                                                | Required | Default | Description                                                                                                                             |
 |---------------------|-----------------------------------------------------|----------|---------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `axisBorderShow`    | boolean                                             | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
 | `axisCenteredZero`  | boolean                                             | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
 | `axisColorMode`     | string                                              | No       |         | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs<br/>Possible values are: `text`, `series`.                                   |
 | `axisGridShow`      | boolean                                             | No       |         | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
@@ -195,6 +204,7 @@ TODO docs
 
 | Property            | Type                                                | Required | Default | Description                                                                            |
 |---------------------|-----------------------------------------------------|----------|---------|----------------------------------------------------------------------------------------|
+| `axisBorderShow`    | boolean                                             | No       |         |                                                                                        |
 | `axisCenteredZero`  | boolean                                             | No       |         |                                                                                        |
 | `axisColorMode`     | string                                              | No       |         | TODO docs<br/>Possible values are: `text`, `series`.                                   |
 | `axisGridShow`      | boolean                                             | No       |         |                                                                                        |
@@ -224,6 +234,14 @@ Controls the color options
 ### FilterValues
 
 Filters values between a given range
+
+| Property | Type                              | Required | Default | Description |
+|----------|-----------------------------------|----------|---------|-------------|
+| `object` | Possible types are: [](#), [](#). |          |         |
+
+### Tooltip
+
+Controls tooltip options
 
 | Property | Type                              | Required | Default | Description |
 |----------|-----------------------------------|----------|---------|-------------|

@@ -3,18 +3,26 @@ import { compact } from 'lodash';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Modal, Stack, useStyles2 } from '@grafana/ui';
 
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
-import { Stack } from '../../../../../../plugins/datasource/parca/QueryEditor/Stack';
-import { getNotificationsPermissions } from '../../../utils/access-control';
+import { AlertmanagerAction } from '../../../hooks/useAbilities';
+import { AlertmanagerProvider } from '../../../state/AlertmanagerContext';
+import { getAmMatcherFormatter } from '../../../utils/alertmanager';
+import { MatcherFormatter } from '../../../utils/matchers';
 import { makeAMLink } from '../../../utils/misc';
 import { Authorize } from '../../Authorize';
 import { Matchers } from '../../notification-policies/Matchers';
 
 import { hasEmptyMatchers, isDefaultPolicy, RouteWithPath } from './route';
 
-function PolicyPath({ route, routesByIdMap }: { routesByIdMap: Map<string, RouteWithPath>; route: RouteWithPath }) {
+interface Props {
+  routesByIdMap: Map<string, RouteWithPath>;
+  route: RouteWithPath;
+  matcherFormatter: MatcherFormatter;
+}
+
+function PolicyPath({ route, routesByIdMap, matcherFormatter }: Props) {
   const styles = useStyles2(getStyles);
   const routePathIds = route.path?.slice(1) ?? [];
   const routePathObjects = [...compact(routePathIds.map((id) => routesByIdMap.get(id))), route];
@@ -29,7 +37,7 @@ function PolicyPath({ route, routesByIdMap }: { routesByIdMap: Map<string, Route
               {hasEmptyMatchers(pathRoute) ? (
                 <div className={styles.textMuted}>No matchers</div>
               ) : (
-                <Matchers matchers={pathRoute.object_matchers ?? []} />
+                <Matchers matchers={pathRoute.object_matchers ?? []} formatter={matcherFormatter} />
               )}
             </div>
           </div>
@@ -57,54 +65,61 @@ export function NotificationRouteDetailsModal({
   const styles = useStyles2(getStyles);
   const isDefault = isDefaultPolicy(route);
 
-  const permissions = getNotificationsPermissions(alertManagerSourceName);
   return (
-    <Modal
-      className={styles.detailsModal}
-      isOpen={true}
-      title="Routing details"
-      onDismiss={onClose}
-      onClickBackdrop={onClose}
-    >
-      <Stack gap={0} direction="column">
-        <div className={cx(styles.textMuted, styles.marginBottom(2))}>Your alert instances are routed as follows.</div>
-        <div>Notification policy path</div>
-        {isDefault && <div className={styles.textMuted}>Default policy</div>}
-        <div className={styles.separator(1)} />
-        {!isDefault && (
-          <>
-            <PolicyPath route={route} routesByIdMap={routesByIdMap} />
-          </>
-        )}
-        <div className={styles.separator(4)} />
-        <div className={styles.contactPoint}>
-          <Stack gap={1} direction="row" alignItems="center">
-            Contact point:
-            <span className={styles.textMuted}>{receiver.name}</span>
-          </Stack>
-          <Authorize actions={[permissions.update]}>
+    <AlertmanagerProvider accessType="notification" alertmanagerSourceName={alertManagerSourceName}>
+      <Modal
+        className={styles.detailsModal}
+        isOpen={true}
+        title="Routing details"
+        onDismiss={onClose}
+        onClickBackdrop={onClose}
+      >
+        <Stack gap={0} direction="column">
+          <div className={cx(styles.textMuted, styles.marginBottom(2))}>
+            Your alert instances are routed as follows.
+          </div>
+          <div>Notification policy path</div>
+          {isDefault && <div className={styles.textMuted}>Default policy</div>}
+          <div className={styles.separator(1)} />
+          {!isDefault && (
+            <>
+              <PolicyPath
+                route={route}
+                routesByIdMap={routesByIdMap}
+                matcherFormatter={getAmMatcherFormatter(alertManagerSourceName)}
+              />
+            </>
+          )}
+          <div className={styles.separator(4)} />
+          <div className={styles.contactPoint}>
             <Stack gap={1} direction="row" alignItems="center">
-              <a
-                href={makeAMLink(
-                  `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
-                  alertManagerSourceName
-                )}
-                className={styles.link}
-                target="_blank"
-                rel="noreferrer"
-              >
-                See details <Icon name="external-link-alt" />
-              </a>
+              Contact point:
+              <span className={styles.textMuted}>{receiver.name}</span>
             </Stack>
-          </Authorize>
-        </div>
-        <div className={styles.button}>
-          <Button variant="primary" type="button" onClick={onClose}>
-            Close
-          </Button>
-        </div>
-      </Stack>
-    </Modal>
+            <Authorize actions={[AlertmanagerAction.UpdateContactPoint]}>
+              <Stack gap={1} direction="row" alignItems="center">
+                <a
+                  href={makeAMLink(
+                    `/alerting/notifications/receivers/${encodeURIComponent(receiver.name)}/edit`,
+                    alertManagerSourceName
+                  )}
+                  className={styles.link}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  See details <Icon name="external-link-alt" />
+                </a>
+              </Stack>
+            </Authorize>
+          </div>
+          <div className={styles.button}>
+            <Button variant="primary" type="button" onClick={onClose}>
+              Close
+            </Button>
+          </div>
+        </Stack>
+      </Modal>
+    </AlertmanagerProvider>
   );
 }
 

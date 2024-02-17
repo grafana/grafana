@@ -2,6 +2,11 @@
 keywords:
   - grafana
   - schema
+labels:
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: TestDataDataQuery kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
@@ -24,6 +29,7 @@ title: TestDataDataQuery kind
 | `datasource`      |                                     | No       |         | For mixed data sources the selected datasource is on the query level.<br/>For non mixed scenarios this is undefined.<br/>TODO find a better way to do this ^ that's friendly to schema<br/>TODO this shouldn't be unknown but DataSourceRef &#124; null                                                                                                                                                                                                                                                                                |
 | `dropPercent`     | number                              | No       |         | Drop percentage (the chance we will lose a point 0-100)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `errorType`       | string                              | No       |         | Possible values are: `server_panic`, `frontend_exception`, `frontend_observable`.                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `flamegraphDiff`  | boolean                             | No       |         |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `hide`            | boolean                             | No       |         | true if query is disabled (ie should not be returned to the dashboard)<br/>Note this does not always imply that the query should not be executed since<br/>the results from a hidden query may be used as the input to other queries (SSE etc)                                                                                                                                                                                                                                                                                         |
 | `labels`          | string                              | No       |         |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `levelColumn`     | boolean                             | No       |         |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
@@ -52,10 +58,11 @@ title: TestDataDataQuery kind
 
 ### NodesQuery
 
-| Property | Type    | Required | Default | Description                                                |
-|----------|---------|----------|---------|------------------------------------------------------------|
-| `count`  | integer | No       |         |                                                            |
-| `type`   | string  | No       |         | Possible values are: `random`, `response`, `random edges`. |
+| Property | Type    | Required | Default | Description                                                                         |
+|----------|---------|----------|---------|-------------------------------------------------------------------------------------|
+| `count`  | integer | No       |         |                                                                                     |
+| `seed`   | integer | No       |         |                                                                                     |
+| `type`   | string  | No       |         | Possible values are: `random`, `response_small`, `response_medium`, `random edges`. |
 
 ### PulseWaveQuery
 
@@ -91,14 +98,14 @@ title: TestDataDataQuery kind
 
 ### StreamingQuery
 
-| Property | Type    | Required | Default | Description                                     |
-|----------|---------|----------|---------|-------------------------------------------------|
-| `noise`  | integer | **Yes**  |         |                                                 |
-| `speed`  | integer | **Yes**  |         |                                                 |
-| `spread` | integer | **Yes**  |         |                                                 |
-| `type`   | string  | **Yes**  |         | Possible values are: `signal`, `logs`, `fetch`. |
-| `bands`  | integer | No       |         |                                                 |
-| `url`    | string  | No       |         |                                                 |
+| Property | Type    | Required | Default | Description                                               |
+|----------|---------|----------|---------|-----------------------------------------------------------|
+| `noise`  | integer | **Yes**  |         |                                                           |
+| `speed`  | integer | **Yes**  |         |                                                           |
+| `spread` | integer | **Yes**  |         |                                                           |
+| `type`   | string  | **Yes**  |         | Possible values are: `signal`, `logs`, `fetch`, `traces`. |
+| `bands`  | integer | No       |         |                                                           |
+| `url`    | string  | No       |         |                                                           |
 
 ### USAQuery
 

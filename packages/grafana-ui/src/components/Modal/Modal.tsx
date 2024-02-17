@@ -4,8 +4,9 @@ import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
 import React, { PropsWithChildren, useRef } from 'react';
 
-import { useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { IconName } from '../../types';
+import { t } from '../../utils/i18n';
 import { IconButton } from '../IconButton/IconButton';
 import { HorizontalGroup } from '../Layout/Layout';
 
@@ -45,8 +46,7 @@ export function Modal(props: PropsWithChildren<Props>) {
     onClickBackdrop,
     trapFocus = true,
   } = props;
-  const theme = useTheme2();
-  const styles = getModalStyles(theme);
+  const styles = useStyles2(getModalStyles);
 
   const ref = useRef<HTMLDivElement>(null);
 
@@ -84,7 +84,12 @@ export function Modal(props: PropsWithChildren<Props>) {
               typeof title !== 'string' && title
             }
             <div className={styles.modalHeaderClose}>
-              <IconButton name="times" size="xl" onClick={onDismiss} tooltip="Close" />
+              <IconButton
+                name="times"
+                size="xl"
+                onClick={onDismiss}
+                aria-label={t('grafana-ui.modal.close-tooltip', 'Close')}
+              />
             </div>
           </div>
           <div className={cx(styles.modalContent, contentClassName)}>{children}</div>
@@ -95,8 +100,7 @@ export function Modal(props: PropsWithChildren<Props>) {
 }
 
 function ModalButtonRow({ leftItems, children }: { leftItems?: React.ReactNode; children: React.ReactNode }) {
-  const theme = useTheme2();
-  const styles = getModalStyles(theme);
+  const styles = useStyles2(getModalStyles);
 
   if (leftItems) {
     return (
@@ -115,7 +119,7 @@ function ModalButtonRow({ leftItems, children }: { leftItems?: React.ReactNode; 
 
   return (
     <div className={styles.modalButtonRow}>
-      <HorizontalGroup justify="flex-end" spacing="md">
+      <HorizontalGroup justify="flex-end" spacing="md" wrap={true}>
         {children}
       </HorizontalGroup>
     </div>

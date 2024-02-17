@@ -140,13 +140,15 @@ If you want to guarantee the existence of metrics before any observations has ha
 
 ### How to collect and visualize metrics locally
 
+1. Ensure you have Docker installed and running on your machine
 1. Start Prometheus
 
    ```bash
    make devenv sources=prometheus
    ```
 
-2. Use Grafana Explore or dashboards to query any exported Grafana metrics
+1. Run Grafana, and create a Prometheus datasource if you do not have one yet. Set the server URL to `http://localhost:9090`, enable basic auth, and type in the same auth you have for local Grafana
+1. Use Grafana Explore or dashboards to query any exported Grafana metrics. You can also view them at http://localhost:3000/metrics
 
 ## Traces
 
@@ -154,7 +156,7 @@ A distributed trace is data that tracks an application request as it flows throu
 
 ### Usage
 
-Grafana currently supports two tracing implementations, [OpenTelemetry](https://opentelemetry.io/) and [OpenTracing](https://opentracing.io/). OpenTracing is deprecated, but still supported until we remove it. The two different implementations implements the `Tracer` and `Span` interfaces, defined in the _pkg/infra/tracing_ package, which you can use to create traces and spans. To get a hold of a `Tracer` you would need to get it injected as dependency into your service, see [Services](services.md) for more details.
+Grafana uses [OpenTelemetry](https://opentelemetry.io/) for distributed tracing. There's an interface `Tracer` in the _pkg/infra/tracing_ package that implements the [OpenTelemetry Tracer interface](go.opentelemetry.io/otel/trace), which you can use to create traces and spans. To get a hold of a `Tracer` you would need to get it injected as dependency into your service, see [Services](services.md) for more details. For more information, see https://opentelemetry.io/docs/instrumentation/go/manual/.
 
 Example:
 
@@ -164,6 +166,7 @@ import (
 
    "github.com/grafana/grafana/pkg/infra/tracing"
    "go.opentelemetry.io/otel/attribute"
+   "go.opentelemetry.io/otel/trace"
 )
 
 type MyService struct {
@@ -177,36 +180,36 @@ func ProvideService(tracer tracing.Tracer) *MyService {
 }
 
 func (s *MyService) Hello(ctx context.Context, name string) (string, error) {
-   ctx, span := s.tracer.Start(ctx, "MyService.Hello")
+   ctx, span := s.tracer.Start(ctx, "MyService.Hello", trace.WithAttributes(
+      attribute.String("my_attribute", "val"),
+   ))
    // this make sure the span is marked as finished when this
    // method ends to allow the span to be flushed and sent to
    // storage backend.
    defer span.End()
 
    // Add some event to show Events usage
-   span.AddEvents(
-      []string{"message"},
-      []tracing.EventValue{
-         {Str: "checking name..."},
-      })
+   span.AddEvent("checking name...")
 
    if name == "" {
       err := fmt.Errorf("name cannot be empty")
 
+      // sets the span’s status to Error to make the span tracking
+      // a failed operation as an error span.
+      span.SetStatus(codes.Error, "failed to check name")
       // record err as an exception span event for this span
       span.RecordError(err)
       return "", err
    }
 
    // Add some other event to show Events usage
-   span.AddEvents(
-      []string{"message"},
-      []tracing.EventValue{
-         {Str: "name checked"},
-      })
+   span.AddEvent("name checked")
 
    // Add attribute to show Attributes usage
-   span.SetAttributes("my_service.name", name, attribute.Key("my_service.name").String(name))
+   span.SetAttributes(
+      attribute.String("my_service.name", name),
+      attribute.Int64("my_service.some_other", int64(1337)),
+   )
 
    return fmt.Sprintf("Hello %s", name), nil
 }
@@ -241,6 +244,22 @@ If span names, attribute or event values originates from user input they **shoul
 
 Be **careful** to not expose any sensitive information in span names, attribute or event values, e.g. secrets, credentials etc.
 
+### Span attributes
+
+Consider using `attributes.<Type>("<key>", <value>)` in favor of `attributes.Key("<key>").<Type>(<value>)` since it requires less characters and thereby reads easier.
+
+Example:
+
+```go
+attribute.String("datasource_name", proxy.ds.Name)
+// vs
+attribute.Key("datasource_name").String(proxy.ds.Name)
+
+attribute.Int64("org_id", proxy.ctx.SignedInUser.OrgID)
+// vs
+attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID)
+```
+
 ### How to collect, visualize and query traces (and correlate logs with traces) locally
 
 #### 1. Start Jaeger
@@ -253,18 +272,9 @@ make devenv sources=jaeger
 
 To enable tracing in Grafana, you must set the address in your config.ini file
 
-opentelemetry tracing (recommended):
-
 ```ini
 [tracing.opentelemetry.jaeger]
 address = http://localhost:14268/api/traces
-```
-
-opentracing tracing (deprecated/not recommended):
-
-```ini
-[tracing.jaeger]
-address = localhost:6831
 ```
 
 #### 3. Search/browse collected logs and traces in Grafana Explore

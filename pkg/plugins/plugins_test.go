@@ -49,7 +49,8 @@ func Test_ReadPluginJSON(t *testing.T) {
 						{Path: "img/screenshot1.png", Name: "img1"},
 						{Path: "img/screenshot2.png", Name: "img2"},
 					},
-					Updated: "2015-02-10",
+					Updated:  "2015-02-10",
+					Keywords: []string{"test"},
 				},
 				Dependencies: Dependencies{
 					GrafanaVersion: "3.x.x",
@@ -107,19 +108,38 @@ func Test_ReadPluginJSON(t *testing.T) {
 			pluginJSON: func(t *testing.T) io.ReadCloser {
 				pJSON := `{
 					"id": "grafana-pyroscope-datasource",
-					"type": "datasource"
+					"type": "datasource",
+					"aliasIDs": ["phlare"]
 				}`
 				return io.NopCloser(strings.NewReader(pJSON))
 			},
 			expected: JSONData{
-				ID:    "grafana-pyroscope-datasource",
-				Alias: "phlare", // Hardcoded from the parser
-				Type:  TypeDataSource,
+				ID:       "grafana-pyroscope-datasource",
+				AliasIDs: []string{"phlare"}, // Hardcoded from the parser
+				Type:     TypeDataSource,
 				Dependencies: Dependencies{
 					GrafanaDependency: "",
 					GrafanaVersion:    "*",
 					Plugins:           []Dependency{},
 				},
+			},
+		},
+		{
+			name: "do not allow alias except for our hardcoded set",
+			pluginJSON: func(t *testing.T) io.ReadCloser {
+				pJSON := `{
+					"id": "my-custom-app",
+					"type": "app",
+					"aliasIDs": ["phlare"]
+				}`
+				return io.NopCloser(strings.NewReader(pJSON))
+			},
+			err: ErrUnsupportedAlias,
+			expected: JSONData{
+				ID:           "my-custom-app",
+				AliasIDs:     []string{"phlare"}, // Hardcoded from the parser
+				Type:         "app",
+				Dependencies: Dependencies{},
 			},
 		},
 	}

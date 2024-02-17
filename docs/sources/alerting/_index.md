@@ -4,7 +4,7 @@ aliases:
   - ./unified-alerting/alerting/
   - ./alerting/unified-alerting/
 canonical: https://grafana.com/docs/grafana/latest/alerting/
-description: Intro to key benefits and features of Grafana Alerting
+description: Learn about the key benefits and features of Grafana Alerting
 labels:
   products:
     - cloud
@@ -92,9 +92,9 @@ Here are some tips on how to create an effective alert management set up for you
 - [Introduction to Alerting][fundamentals]
 
 {{% docs/reference %}}
-[alerting-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules"
+[alerting-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules"
 [alerting-rules]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules"
 
-[fundamentals]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals"
+[fundamentals]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals"
 [fundamentals]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals"
 {{% /docs/reference %}}

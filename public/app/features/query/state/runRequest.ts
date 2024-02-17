@@ -18,12 +18,14 @@ import {
   PanelData,
   TimeRange,
 } from '@grafana/data';
-import { toDataQueryError } from '@grafana/runtime';
+import { config, toDataQueryError } from '@grafana/runtime';
 import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { queryIsEmpty } from 'app/core/utils/query';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery } from 'app/features/expressions/types';
+
+import { queryLogger } from '../utils';
 
 import { cancelNetworkRequestsOnUnsubscribe } from './processing/canceler';
 import { emitDataRequestEvent } from './queryAnalytics';
@@ -156,8 +158,8 @@ export function runRequest(
     }),
     // handle errors
     catchError((err) => {
-      const errLog = typeof err === 'string' ? err : JSON.stringify(err);
-      console.error('runRequest.catchError', errLog);
+      console.error('runRequest.catchError', err);
+      queryLogger.logError(err);
       return of({
         ...state.panelData,
         state: LoadingState.Error,
@@ -194,7 +196,7 @@ export function callQueryMethod(
   );
 
   // If its a public datasource, just return the result. Expressions will be handled on the backend.
-  if (datasource.type === 'public-ds') {
+  if (config.publicDashboardAccessToken) {
     return from(datasource.query(request));
   }
 

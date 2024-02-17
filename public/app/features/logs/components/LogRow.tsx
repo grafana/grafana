@@ -1,10 +1,20 @@
 import { cx } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { PureComponent } from 'react';
+import memoizeOne from 'memoize-one';
+import React, { PureComponent, MouseEvent } from 'react';
 
-import { Field, LinkModel, LogRowModel, LogsSortOrder, dateTimeFormat, CoreApp, DataFrame } from '@grafana/data';
+import {
+  Field,
+  LinkModel,
+  LogRowModel,
+  LogsSortOrder,
+  dateTimeFormat,
+  CoreApp,
+  DataFrame,
+  LogRowContextOptions,
+} from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { TimeZone } from '@grafana/schema';
+import { DataQuery, TimeZone } from '@grafana/schema';
 import { withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
 
 import { checkLogsError, escapeUnescapedString } from '../utils';
@@ -29,26 +39,35 @@ interface Props extends Themeable2 {
   app?: CoreApp;
   displayedFields?: string[];
   getRows: () => LogRowModel[];
-  onClickFilterLabel?: (key: string, value: string) => void;
-  onClickFilterOutLabel?: (key: string, value: string) => void;
+  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onContextClick?: () => void;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
-  showContextToggle?: (row?: LogRowModel) => boolean;
+  showContextToggle?: (row: LogRowModel) => boolean;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
   onOpenContext: (row: LogRowModel, onClose: () => void) => void;
+  getRowContextQuery?: (
+    row: LogRowModel,
+    options?: LogRowContextOptions,
+    cacheFilters?: boolean
+  ) => Promise<DataQuery | null>;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   styles: LogRowStyles;
   permalinkedRowId?: string;
   scrollIntoView?: (element: HTMLElement) => void;
+  isFilterLabelActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   onPinLine?: (row: LogRowModel) => void;
   onUnpinLine?: (row: LogRowModel) => void;
   pinned?: boolean;
+  containerRendered?: boolean;
+  handleTextSelection?: (e: MouseEvent<HTMLTableRowElement>, row: LogRowModel) => boolean;
 }
 
 interface State {
-  highlightBackround: boolean;
+  permalinked: boolean;
+  showingContext: boolean;
   showDetails: boolean;
   mouseIsOver: boolean;
 }
@@ -62,7 +81,8 @@ interface State {
  */
 class UnThemedLogRow extends PureComponent<Props, State> {
   state: State = {
-    highlightBackround: false,
+    permalinked: false,
+    showingContext: false,
     showDetails: false,
     mouseIsOver: false,
   };
@@ -75,15 +95,20 @@ class UnThemedLogRow extends PureComponent<Props, State> {
 
   // we are debouncing the state change by 3 seconds to highlight the logline after the context closed.
   debouncedContextClose = debounce(() => {
-    this.setState({ highlightBackround: false });
+    this.setState({ showingContext: false });
   }, 3000);
 
   onOpenContext = (row: LogRowModel) => {
-    this.setState({ highlightBackround: true });
+    this.setState({ showingContext: true });
     this.props.onOpenContext(row, this.debouncedContextClose);
   };
 
-  toggleDetails = () => {
+  onRowClick = (e: MouseEvent<HTMLTableRowElement>) => {
+    if (this.props.handleTextSelection?.(e, this.props.row)) {
+      // Event handled by the parent.
+      return;
+    }
+
     if (!this.props.enableLogDetails) {
       return;
     }
@@ -116,6 +141,17 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     }
   };
 
+  onMouseMove = (e: MouseEvent) => {
+    // No need to worry about text selection.
+    if (!this.props.handleTextSelection) {
+      return;
+    }
+    // The user is selecting text, so hide the log row menu so it doesn't interfere.
+    if (document.getSelection()?.toString() && e.buttons > 0) {
+      this.setState({ mouseIsOver: false });
+    }
+  };
+
   onMouseLeave = () => {
     this.setState({ mouseIsOver: false });
     if (this.props.onLogRowHover) {
@@ -132,28 +168,32 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   }
 
   scrollToLogRow = (prevState: State, mounted = false) => {
-    const { row, permalinkedRowId, scrollIntoView } = this.props;
+    const { row, permalinkedRowId, scrollIntoView, containerRendered } = this.props;
 
     if (permalinkedRowId !== row.uid) {
       // only set the new state if the row is not permalinked anymore or if the component was mounted.
-      if (prevState.highlightBackround || mounted) {
-        this.setState({ highlightBackround: false });
+      if (prevState.permalinked || mounted) {
+        this.setState({ permalinked: false });
       }
       return;
     }
 
-    // at this point this row is the permalinked row, so we need to scroll to it and highlight it if possible.
-    if (this.logLineRef.current && scrollIntoView) {
+    if (!this.state.permalinked && containerRendered && this.logLineRef.current && scrollIntoView) {
+      // at this point this row is the permalinked row, so we need to scroll to it and highlight it if possible.
       scrollIntoView(this.logLineRef.current);
-    }
-    if (!this.state.highlightBackround) {
       reportInteraction('grafana_explore_logs_permalink_opened', {
         datasourceType: row.datasourceType ?? 'unknown',
         logRowUid: row.uid,
       });
-      this.setState({ highlightBackround: true });
+      this.setState({ permalinked: true });
     }
   };
+
+  escapeRow = memoizeOne((row: LogRowModel, forceEscape: boolean | undefined) => {
+    return row.hasUnescapedContent && forceEscape
+      ? { ...row, entry: escapeUnescapedString(row.entry), raw: escapeUnescapedString(row.raw) }
+      : row;
+  });
 
   render() {
     const {
@@ -176,32 +216,37 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       forceEscape,
       app,
       styles,
+      getRowContextQuery,
     } = this.props;
-    const { showDetails, highlightBackround } = this.state;
+    const { showDetails, showingContext, permalinked } = this.state;
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const { errorMessage, hasError } = checkLogsError(row);
     const logRowBackground = cx(styles.logsRow, {
       [styles.errorLogRow]: hasError,
-      [styles.highlightBackground]: highlightBackround,
+      [styles.highlightBackground]: showingContext || permalinked,
     });
     const logRowDetailsBackground = cx(styles.logsRow, {
       [styles.errorLogRow]: hasError,
-      [styles.highlightBackground]: highlightBackround && !this.state.showDetails,
+      [styles.highlightBackground]: permalinked && !this.state.showDetails,
     });
 
-    const processedRow =
-      row.hasUnescapedContent && forceEscape
-        ? { ...row, entry: escapeUnescapedString(row.entry), raw: escapeUnescapedString(row.raw) }
-        : row;
+    const processedRow = this.escapeRow(row, forceEscape);
 
     return (
       <>
         <tr
           ref={this.logLineRef}
           className={logRowBackground}
-          onClick={this.toggleDetails}
+          onClick={this.onRowClick}
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}
+          onMouseMove={this.onMouseMove}
+          /**
+           * For better accessibility support, we listen to the onFocus event here (to display the LogRowMenuCell), and
+           * to onBlur event in the LogRowMenuCell (to hide it). This way, the LogRowMenuCell is displayed when the user navigates
+           * using the keyboard.
+           */
+          onFocus={this.onMouseEnter}
         >
           {showDuplicates && (
             <td className={styles.logsRowDuplicates}>
@@ -240,11 +285,13 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               onUnpinLine={this.props.onUnpinLine}
               pinned={this.props.pinned}
               mouseIsOver={this.state.mouseIsOver}
+              onBlur={this.onMouseLeave}
             />
           ) : (
             <LogRowMessage
               row={processedRow}
               showContextToggle={showContextToggle}
+              getRowContextQuery={getRowContextQuery}
               wrapLogMessage={wrapLogMessage}
               prettifyLogMessage={prettifyLogMessage}
               onOpenContext={this.onOpenContext}
@@ -255,6 +302,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               onUnpinLine={this.props.onUnpinLine}
               pinned={this.props.pinned}
               mouseIsOver={this.state.mouseIsOver}
+              onBlur={this.onMouseLeave}
             />
           )}
         </tr>
@@ -274,6 +322,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             displayedFields={displayedFields}
             app={app}
             styles={styles}
+            isFilterLabelActive={this.props.isFilterLabelActive}
           />
         )}
       </>

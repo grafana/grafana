@@ -3,21 +3,24 @@ import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 
 import {
+  DataFrame,
   EventBusSrv,
   ExploreLogsPanelState,
-  FieldType,
+  ExplorePanelsState,
   LoadingState,
   LogLevel,
   LogRowModel,
-  MutableDataFrame,
   standardTransformersRegistry,
   toUtc,
+  createDataFrame,
 } from '@grafana/data';
 import { organizeFieldsTransformer } from '@grafana/data/src/transformations/transformers/organize';
 import { config } from '@grafana/runtime';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
 import { Logs } from './Logs';
+import { visualisationTypeKey } from './utils/logs';
+import { getMockElasticFrame, getMockLokiFrame } from './utils/testMocks.test';
 
 const reportInteraction = jest.fn();
 jest.mock('@grafana/runtime', () => ({
@@ -95,39 +98,18 @@ describe('Logs', () => {
     });
   });
 
-  const getComponent = (partialProps?: Partial<ComponentProps<typeof Logs>>, logs?: LogRowModel[]) => {
+  const getComponent = (
+    partialProps?: Partial<ComponentProps<typeof Logs>>,
+    dataFrame?: DataFrame,
+    logs?: LogRowModel[]
+  ) => {
     const rows = [
       makeLog({ uid: '1', rowId: 'id1', timeEpochMs: 1 }),
       makeLog({ uid: '2', rowId: 'id2', timeEpochMs: 2 }),
       makeLog({ uid: '3', rowId: 'id3', timeEpochMs: 3 }),
     ];
 
-    const testDataFrame = {
-      fields: [
-        {
-          config: {},
-          name: 'Time',
-          type: FieldType.time,
-          values: ['2019-01-01 10:00:00', '2019-01-01 11:00:00', '2019-01-01 12:00:00'],
-        },
-        {
-          config: {},
-          name: 'line',
-          type: FieldType.string,
-          values: ['log message 1', 'log message 2', 'log message 3'],
-        },
-        {
-          config: {},
-          name: 'labels',
-          type: FieldType.other,
-          typeInfo: {
-            frame: 'json.RawMessage',
-          },
-          values: ['{"foo":"bar"}', '{"foo":"bar"}', '{"foo":"bar"}'],
-        },
-      ],
-      length: 3,
-    };
+    const testDataFrame = dataFrame ?? getMockLokiFrame();
     return (
       <Logs
         exploreId={'left'}
@@ -159,14 +141,48 @@ describe('Logs', () => {
           return [];
         }}
         eventBus={new EventBusSrv()}
+        isFilterLabelActive={jest.fn()}
         logsFrames={[testDataFrame]}
         {...partialProps}
       />
     );
   };
-  const setup = (partialProps?: Partial<ComponentProps<typeof Logs>>, logs?: LogRowModel[]) => {
-    return render(getComponent(partialProps, logs));
+  const setup = (partialProps?: Partial<ComponentProps<typeof Logs>>, dataFrame?: DataFrame, logs?: LogRowModel[]) => {
+    return render(getComponent(partialProps, dataFrame ? dataFrame : getMockLokiFrame(), logs));
   };
+
+  describe('scrolling behavior', () => {
+    let originalInnerHeight: number;
+    beforeEach(() => {
+      originalInnerHeight = window.innerHeight;
+      window.innerHeight = 1000;
+      window.HTMLElement.prototype.scrollIntoView = jest.fn();
+      window.HTMLElement.prototype.scroll = jest.fn();
+    });
+    afterEach(() => {
+      window.innerHeight = originalInnerHeight;
+    });
+
+    it('should call `scrollElement.scroll`', () => {
+      const logs = [];
+      for (let i = 0; i < 50; i++) {
+        logs.push(makeLog({ uid: `uid${i}`, rowId: `id${i}`, timeEpochMs: i }));
+      }
+      const scrollElementMock = {
+        scroll: jest.fn(),
+        scrollTop: 920,
+      };
+      setup(
+        { scrollElement: scrollElementMock as unknown as HTMLDivElement, panelState: { logs: { id: 'uid47' } } },
+        undefined,
+        logs
+      );
+
+      // element.getBoundingClientRect().top will always be 0 for jsdom
+      // calc will be `scrollElement.scrollTop - window.innerHeight / 2` -> 920 - 500 = 420
+      expect(scrollElementMock.scroll).toBeCalledWith({ behavior: 'smooth', top: 420 });
+    });
+  });
 
   it('should render logs', () => {
     setup();
@@ -178,7 +194,7 @@ describe('Logs', () => {
   });
 
   it('should render no logs found', () => {
-    setup({}, []);
+    setup({}, undefined, []);
 
     expect(screen.getByText(/no logs found\./i)).toBeInTheDocument();
     expect(
@@ -222,6 +238,7 @@ describe('Logs', () => {
           return [];
         }}
         eventBus={new EventBusSrv()}
+        isFilterLabelActive={jest.fn()}
       />
     );
     const button = screen.getByRole('button', {
@@ -264,6 +281,7 @@ describe('Logs', () => {
           return [];
         }}
         eventBus={new EventBusSrv()}
+        isFilterLabelActive={jest.fn()}
       />
     );
 
@@ -310,6 +328,7 @@ describe('Logs', () => {
           return [];
         }}
         eventBus={new EventBusSrv()}
+        isFilterLabelActive={jest.fn()}
       />
     );
 
@@ -375,8 +394,8 @@ describe('Logs', () => {
       });
     });
 
-    it('should call createAndCopyShortLink on permalinkClick', async () => {
-      const panelState = { logs: { id: 'not-included' } };
+    it('should call createAndCopyShortLink on permalinkClick - logs', async () => {
+      const panelState: Partial<ExplorePanelsState> = { logs: { id: 'not-included', visualisationType: 'logs' } };
       setup({ loading: false, panelState });
 
       const row = screen.getAllByRole('row');
@@ -386,8 +405,11 @@ describe('Logs', () => {
       await userEvent.click(linkButton);
 
       expect(createAndCopyShortLink).toHaveBeenCalledWith(
-        'http://localhost:3000/explore?left=%7B%22datasource%22:%22%22,%22queries%22:%5B%7B%22refId%22:%22A%22,%22expr%22:%22%22,%22queryType%22:%22range%22,%22datasource%22:%7B%22type%22:%22loki%22,%22uid%22:%22id%22%7D%7D%5D,%22range%22:%7B%22from%22:%222019-01-01T10:00:00.000Z%22,%22to%22:%222019-01-01T16:00:00.000Z%22%7D,%22panelsState%22:%7B%22logs%22:%7B%22id%22:%221%22%7D%7D%7D'
+        expect.stringMatching(
+          'range%22:%7B%22from%22:%222019-01-01T10:00:00.000Z%22,%22to%22:%222019-01-01T16:00:00.000Z%22%7D'
+        )
       );
+      expect(createAndCopyShortLink).toHaveBeenCalledWith(expect.stringMatching('visualisationType%22:%22logs'));
     });
   });
 
@@ -409,8 +431,31 @@ describe('Logs', () => {
       expect(logsSection).toBeInTheDocument();
     });
 
-    it('should change visualisation to table on toggle', async () => {
-      setup();
+    it('should change visualisation to table on toggle (loki)', async () => {
+      setup({});
+      const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
+      await userEvent.click(logsSection);
+
+      const table = screen.getByTestId('logRowsTable');
+      expect(table).toBeInTheDocument();
+    });
+
+    it('should use default state from localstorage - table', async () => {
+      localStorage.setItem(visualisationTypeKey, 'table');
+      setup({});
+      const table = await screen.findByTestId('logRowsTable');
+      expect(table).toBeInTheDocument();
+    });
+
+    it('should use default state from localstorage - logs', async () => {
+      localStorage.setItem(visualisationTypeKey, 'logs');
+      setup({});
+      const table = await screen.findByTestId('logRows');
+      expect(table).toBeInTheDocument();
+    });
+
+    it('should change visualisation to table on toggle (elastic)', async () => {
+      setup({}, getMockElasticFrame());
       const logsSection = screen.getByRole('radio', { name: 'Show results in table visualisation' });
       await userEvent.click(logsSection);
 
@@ -427,7 +472,7 @@ const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
     uid,
     entryFieldIndex: 0,
     rowIndex: 0,
-    dataFrame: new MutableDataFrame(),
+    dataFrame: createDataFrame({ fields: [] }),
     logLevel: LogLevel.debug,
     entry,
     hasAnsi: false,

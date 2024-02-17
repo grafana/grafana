@@ -1,9 +1,9 @@
 import { capitalize } from 'lodash';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { Observable, of } from 'rxjs';
 
-import { FieldConfigPropertyItem, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
+import { FieldConfigPropertyItem, StandardEditorProps, StandardEditorsRegistryItem, FrameMatcher } from '@grafana/data';
 import {
   ScaleDimensionConfig,
   ResourceDimensionConfig,
@@ -31,7 +31,15 @@ import {
 } from 'app/features/dimensions/editors';
 import { ResourceFolderName, defaultTextConfig, MediaType } from 'app/features/dimensions/types';
 
-import { defaultStyleConfig, GeometryTypeId, StyleConfig, TextAlignment, TextBaseline } from '../style/types';
+import {
+  HorizontalAlign,
+  VerticalAlign,
+  defaultStyleConfig,
+  GeometryTypeId,
+  StyleConfig,
+  TextAlignment,
+  TextBaseline,
+} from '../style/types';
 import { styleUsesText } from '../style/utils';
 import { LayerContentInfo } from '../utils/getFeatures';
 
@@ -39,11 +47,22 @@ export interface StyleEditorOptions {
   layerInfo?: Observable<LayerContentInfo>;
   simpleFixedValues?: boolean;
   displayRotation?: boolean;
+  hideSymbol?: boolean;
+  frameMatcher?: FrameMatcher;
 }
 
 type Props = StandardEditorProps<StyleConfig, StyleEditorOptions>;
 
-export const StyleEditor = ({ value, context, onChange, item }: Props) => {
+export const StyleEditor = (props: Props) => {
+  const { value, onChange, item } = props;
+  const context = useMemo(() => {
+    if (!item.settings?.frameMatcher) {
+      return props.context;
+    }
+
+    return { ...props.context, data: props.context.data.filter(item.settings.frameMatcher) };
+  }, [props.context, item.settings]);
+
   const settings = item.settings;
 
   const onSizeChange = (sizeValue: ScaleDimensionConfig | undefined) => {
@@ -90,9 +109,18 @@ export const StyleEditor = ({ value, context, onChange, item }: Props) => {
     onChange({ ...value, textConfig: { ...value.textConfig, textBaseline: textBaseline } });
   };
 
+  const onAlignHorizontalChange = (alignHorizontal: HorizontalAlign) => {
+    onChange({ ...value, symbolAlign: { ...value?.symbolAlign, horizontal: alignHorizontal } });
+  };
+
+  const onAlignVerticalChange = (alignVertical: VerticalAlign) => {
+    onChange({ ...value, symbolAlign: { ...value?.symbolAlign, vertical: alignVertical } });
+  };
+
   const propertyOptions = useObservable(settings?.layerInfo ?? of());
   const featuresHavePoints = propertyOptions?.geometryType === GeometryTypeId.Point;
   const hasTextLabel = styleUsesText(value);
+  const maxFiles = 2000;
 
   // Simple fixed value display
   if (settings?.simpleFixedValues) {
@@ -114,6 +142,7 @@ export const StyleEditor = ({ value, context, onChange, item }: Props) => {
                         placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
                         placeholderValue: defaultStyleConfig.symbol.fixed,
                         showSourceRadio: false,
+                        maxFiles,
                       },
                     } as StandardEditorsRegistryItem
                   }
@@ -188,24 +217,51 @@ export const StyleEditor = ({ value, context, onChange, item }: Props) => {
           }
         />
       </Field>
-      <Field label={'Symbol'}>
-        <ResourceDimensionEditor
-          value={value?.symbol ?? defaultStyleConfig.symbol}
-          context={context}
-          onChange={onSymbolChange}
-          item={
-            {
-              settings: {
-                resourceType: MediaType.Icon,
-                folderName: ResourceFolderName.Marker,
-                placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
-                placeholderValue: defaultStyleConfig.symbol.fixed,
-                showSourceRadio: false,
-              },
-            } as StandardEditorsRegistryItem
-          }
-        />
-      </Field>
+      {!settings?.hideSymbol && (
+        <>
+          <Field label={'Symbol'}>
+            <ResourceDimensionEditor
+              value={value?.symbol ?? defaultStyleConfig.symbol}
+              context={context}
+              onChange={onSymbolChange}
+              item={
+                {
+                  settings: {
+                    resourceType: MediaType.Icon,
+                    folderName: ResourceFolderName.Marker,
+                    placeholderText: hasTextLabel ? 'Select a symbol' : 'Select a symbol or add a text label',
+                    placeholderValue: defaultStyleConfig.symbol.fixed,
+                    showSourceRadio: false,
+                    maxFiles,
+                  },
+                } as StandardEditorsRegistryItem
+              }
+            />
+          </Field>
+          <Field label={'Symbol Vertical Align'}>
+            <RadioButtonGroup
+              value={value?.symbolAlign?.vertical ?? defaultStyleConfig.symbolAlign.vertical}
+              onChange={onAlignVerticalChange}
+              options={[
+                { value: VerticalAlign.Top, label: capitalize(VerticalAlign.Top) },
+                { value: VerticalAlign.Center, label: capitalize(VerticalAlign.Center) },
+                { value: VerticalAlign.Bottom, label: capitalize(VerticalAlign.Bottom) },
+              ]}
+            />
+          </Field>
+          <Field label={'Symbol Horizontal Align'}>
+            <RadioButtonGroup
+              value={value?.symbolAlign?.horizontal ?? defaultStyleConfig.symbolAlign.horizontal}
+              onChange={onAlignHorizontalChange}
+              options={[
+                { value: HorizontalAlign.Left, label: capitalize(HorizontalAlign.Left) },
+                { value: HorizontalAlign.Center, label: capitalize(HorizontalAlign.Center) },
+                { value: HorizontalAlign.Right, label: capitalize(HorizontalAlign.Right) },
+              ]}
+            />
+          </Field>
+        </>
+      )}
       <Field label={'Color'}>
         <ColorDimensionEditor
           value={value?.color ?? defaultStyleConfig.color}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -19,7 +20,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 // Service Account should not create an org on its own
 func TestStore_CreateServiceAccountOrgNonExistant(t *testing.T) {
@@ -365,6 +371,195 @@ func TestStore_MigrateAllApiKeys(t *testing.T) {
 				}
 				require.Equal(t, c.expectedMigratedResults, results)
 			}
+		})
+	}
+}
+func TestServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing.T) {
+	initUsers := []tests.TestUser{
+		{Name: "satest-1", Role: string(org.RoleViewer), Login: "sa-satest-1", IsServiceAccount: true},
+		{Name: "usertest-2", Role: string(org.RoleEditor), Login: "usertest-2", IsServiceAccount: false},
+		{Name: "satest-3", Role: string(org.RoleEditor), Login: "sa-satest-3", IsServiceAccount: true},
+		{Name: "satest-4", Role: string(org.RoleAdmin), Login: "sa-satest-4", IsServiceAccount: true},
+		{Name: "extsvc-test-5", Role: string(org.RoleNone), Login: "sa-extsvc-test-5", IsServiceAccount: true},
+		{Name: "extsvc-test-6", Role: string(org.RoleNone), Login: "sa-extsvc-test-6", IsServiceAccount: true},
+		{Name: "extsvc-test-7", Role: string(org.RoleNone), Login: "sa-extsvc-test-7", IsServiceAccount: true},
+		{Name: "extsvc-test-8", Role: string(org.RoleNone), Login: "sa-extsvc-test-8", IsServiceAccount: true},
+	}
+
+	db, store := setupTestDatabase(t)
+	orgID := tests.SetupUsersServiceAccounts(t, db, initUsers)
+
+	userWithPerm := &user.SignedInUser{
+		OrgID:       orgID,
+		Permissions: map[int64]map[string][]string{orgID: {serviceaccounts.ActionRead: {serviceaccounts.ScopeAll}}},
+	}
+
+	tt := []struct {
+		desc          string
+		query         *serviceaccounts.SearchOrgServiceAccountsQuery
+		expectedTotal int64 // Value of the result.TotalCount
+		expectedCount int   // Length of the result.ServiceAccounts slice
+		expectedErr   error
+	}{
+		{
+			desc: "should list all service accounts",
+			query: &serviceaccounts.SearchOrgServiceAccountsQuery{
+				OrgID:        orgID,
+				SignedInUser: userWithPerm,
+				Filter:       serviceaccounts.FilterIncludeAll,
+			},
+			expectedTotal: 7,
+			expectedCount: 7,
+		},
+		{
+			desc: "should list no service accounts without permissions",
+			query: &serviceaccounts.SearchOrgServiceAccountsQuery{
+				OrgID: orgID,
+				SignedInUser: &user.SignedInUser{
+					OrgID:       orgID,
+					Permissions: map[int64]map[string][]string{orgID: {}},
+				},
+				Filter: serviceaccounts.FilterIncludeAll,
+			},
+			expectedTotal: 0,
+			expectedCount: 0,
+		},
+		{
+			desc: "should list one service accounts with restricted permissions",
+			query: &serviceaccounts.SearchOrgServiceAccountsQuery{
+				OrgID: orgID,
+				SignedInUser: &user.SignedInUser{
+					OrgID: orgID,
+					Permissions: map[int64]map[string][]string{orgID: {serviceaccounts.ActionRead: {
+						ac.Scope("serviceaccounts", "id", "1"),
+						ac.Scope("serviceaccounts", "id", "7"),
+					}}},
+				},
+				Filter: serviceaccounts.FilterIncludeAll,
+			},
+			expectedTotal: 2,
+			expectedCount: 2,
+		},
+		{
+			desc: "should list only external service accounts",
+			query: &serviceaccounts.SearchOrgServiceAccountsQuery{
+				OrgID:        orgID,
+				SignedInUser: userWithPerm,
+				Filter:       serviceaccounts.FilterOnlyExternal,
+			},
+			expectedTotal: 4,
+			expectedCount: 4,
+		},
+		{
+			desc: "should return service accounts with sa-satest login",
+			query: &serviceaccounts.SearchOrgServiceAccountsQuery{
+				OrgID:        orgID,
+				Query:        "sa-satest",
+				SignedInUser: userWithPerm,
+				Filter:       serviceaccounts.FilterIncludeAll,
+			},
+			expectedTotal: 3,
+			expectedCount: 3,
+		},
+		{
+			desc: "should only count service accounts",
+			query: &serviceaccounts.SearchOrgServiceAccountsQuery{
+				OrgID:        orgID,
+				SignedInUser: userWithPerm,
+				Filter:       serviceaccounts.FilterIncludeAll,
+				CountOnly:    true,
+			},
+			expectedTotal: 7,
+			expectedCount: 0,
+		},
+		{
+			desc: "should paginate result",
+			query: &serviceaccounts.SearchOrgServiceAccountsQuery{
+				OrgID:        orgID,
+				Page:         4,
+				Limit:        2,
+				SignedInUser: userWithPerm,
+				Filter:       serviceaccounts.FilterIncludeAll,
+			},
+			expectedTotal: 7,
+			expectedCount: 1,
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.desc, func(t *testing.T) {
+			ctx := context.Background()
+
+			got, err := store.SearchOrgServiceAccounts(ctx, tc.query)
+			if tc.expectedErr != nil {
+				require.ErrorIs(t, err, tc.expectedErr)
+				return
+			}
+
+			require.Equal(t, tc.expectedTotal, got.TotalCount)
+			require.Len(t, got.ServiceAccounts, tc.expectedCount)
+		})
+	}
+}
+
+func TestServiceAccountsStoreImpl_EnableServiceAccounts(t *testing.T) {
+	ctx := context.Background()
+
+	initUsers := []tests.TestUser{
+		{Name: "satest-1", Role: string(org.RoleViewer), Login: "sa-satest-1", IsServiceAccount: true},
+		{Name: "satest-2", Role: string(org.RoleEditor), Login: "sa-satest-2", IsServiceAccount: true},
+		{Name: "usertest-3", Role: string(org.RoleEditor), Login: "usertest-3", IsServiceAccount: false},
+	}
+
+	db, store := setupTestDatabase(t)
+	orgID := tests.SetupUsersServiceAccounts(t, db, initUsers)
+
+	fetchStates := func() map[int64]bool {
+		sa1, err := store.RetrieveServiceAccount(ctx, orgID, 1)
+		require.NoError(t, err)
+		sa2, err := store.RetrieveServiceAccount(ctx, orgID, 2)
+		require.NoError(t, err)
+		user, err := store.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: 3})
+		require.NoError(t, err)
+		return map[int64]bool{1: !sa1.IsDisabled, 2: !sa2.IsDisabled, 3: !user.IsDisabled}
+	}
+
+	tt := []struct {
+		desc       string
+		id         int64
+		enable     bool
+		wantStates map[int64]bool
+	}{
+		{
+			desc:       "should disable service account",
+			id:         1,
+			enable:     false,
+			wantStates: map[int64]bool{1: false, 2: true, 3: true},
+		},
+		{
+			desc:       "should disable service account again",
+			id:         1,
+			enable:     false,
+			wantStates: map[int64]bool{1: false, 2: true, 3: true},
+		},
+		{
+			desc:       "should enable service account",
+			id:         1,
+			enable:     true,
+			wantStates: map[int64]bool{1: true, 2: true, 3: true},
+		},
+		{
+			desc:       "should not disable user",
+			id:         3,
+			enable:     false,
+			wantStates: map[int64]bool{1: true, 2: true, 3: true},
+		},
+	}
+	for _, tc := range tt {
+		t.Run(tc.desc, func(t *testing.T) {
+			err := store.EnableServiceAccount(ctx, orgID, tc.id, tc.enable)
+			require.NoError(t, err)
+
+			require.Equal(t, tc.wantStates, fetchStates())
 		})
 	}
 }

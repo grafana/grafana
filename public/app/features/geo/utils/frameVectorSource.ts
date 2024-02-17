@@ -9,7 +9,7 @@ import { getGeometryField, LocationFieldMatchers } from './location';
 export interface FrameVectorSourceOptions {}
 
 export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSource<T> {
-  constructor(private location: LocationFieldMatchers) {
+  constructor(public location: LocationFieldMatchers) {
     super({});
   }
 
@@ -45,7 +45,7 @@ export class FrameVectorSource<T extends Geometry = Geometry> extends VectorSour
 
     //eslint-disable-next-line
     const field = info.field as unknown as Field<Point>;
-    const geometry = new LineString(field.values.map((p) => p.getCoordinates())) as Geometry;
+    const geometry: Geometry = new LineString(field.values.map((p) => p.getCoordinates()));
     this.addFeatureInternal(
       new Feature({
         frame,

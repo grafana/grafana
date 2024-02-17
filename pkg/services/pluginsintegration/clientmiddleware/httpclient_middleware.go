@@ -26,7 +26,7 @@ type HTTPClientMiddleware struct {
 	next plugins.Client
 }
 
-func (m *HTTPClientMiddleware) applyHeaders(ctx context.Context, pReq interface{}) context.Context {
+func (m *HTTPClientMiddleware) applyHeaders(ctx context.Context, pReq any) context.Context {
 	if pReq == nil {
 		return ctx
 	}
@@ -50,7 +50,10 @@ func (m *HTTPClientMiddleware) applyHeaders(ctx context.Context, pReq interface{
 
 			if h, ok := pReq.(backend.ForwardHTTPHeaders); ok {
 				for k, v := range h.GetHTTPHeaders() {
-					req.Header[k] = v
+					// Only set a header if it is not already set.
+					if req.Header.Get(k) == "" {
+						req.Header[k] = v
+					}
 				}
 			}
 

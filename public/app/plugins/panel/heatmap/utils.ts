@@ -64,7 +64,7 @@ interface PrepConfigOpts {
   onhover?: null | ((evt?: HeatmapHoverEvent | null) => void);
   onclick?: null | ((evt?: Object) => void);
   onzoom?: null | ((evt: HeatmapZoomEvent) => void);
-  isToolTipOpen: MutableRefObject<boolean>;
+  isToolTipOpen?: MutableRefObject<boolean>;
   timeZone: string;
   getTimeRange: () => TimeRange;
   exemplarColor: string;
@@ -85,7 +85,6 @@ export function prepConfig(opts: PrepConfigOpts) {
     eventBus,
     onhover,
     onclick,
-    onzoom,
     isToolTipOpen,
     timeZone,
     getTimeRange,
@@ -143,15 +142,6 @@ export function prepConfig(opts: PrepConfigOpts) {
       );
   });
 
-  onzoom &&
-    builder.addHook('setSelect', (u) => {
-      onzoom({
-        xMin: u.posToVal(u.select.left, xScaleKey),
-        xMax: u.posToVal(u.select.left + u.select.width, xScaleKey),
-      });
-      u.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
-    });
-
   if (isTime) {
     // this is a tmp hack because in mode: 2, uplot does not currently call scales.x.range() for setData() calls
     // scales.x.range() typically reads back from drilled-down panelProps.timeRange via getTimeRange()
@@ -182,7 +172,9 @@ export function prepConfig(opts: PrepConfigOpts) {
     },
     data: dataRef.current?.heatmap,
   };
-  const hoverEvent = new DataHoverEvent(payload);
+
+  const hoverEvent = new DataHoverEvent(payload).setTags(['uplot']);
+  const clearEvent = new DataHoverClearEvent().setTags(['uplot']);
 
   let pendingOnleave: ReturnType<typeof setTimeout> | 0;
 
@@ -197,7 +189,7 @@ export function prepConfig(opts: PrepConfigOpts) {
             payload.point[xScaleUnit] = u.posToVal(left!, xScaleKey);
             eventBus.publish(hoverEvent);
 
-            if (!isToolTipOpen.current) {
+            if (!isToolTipOpen?.current) {
               if (pendingOnleave) {
                 clearTimeout(pendingOnleave);
                 pendingOnleave = 0;
@@ -214,14 +206,12 @@ export function prepConfig(opts: PrepConfigOpts) {
         }
       }
 
-      if (!isToolTipOpen.current) {
+      if (!isToolTipOpen?.current) {
         // if tiles have gaps, reduce flashing / re-render (debounce onleave by 100ms)
         if (!pendingOnleave) {
           pendingOnleave = setTimeout(() => {
             onhover(null);
-            payload.rowIndex = undefined;
-            payload.point[xScaleUnit] = null;
-            eventBus.publish(hoverEvent);
+            eventBus.publish(clearEvent);
           }, 100);
         }
       }
@@ -314,6 +304,12 @@ export function prepConfig(opts: PrepConfigOpts) {
       // sparse already accounts for le/ge by explicit yMin & yMax cell bounds, so no need to expand y range
       isSparseHeatmap
         ? (u, dataMin, dataMax) => {
+            // ...but uPlot currently only auto-ranges from the yMin facet data, so we have to grow by 1 extra factor
+            // @ts-ignore
+            let bucketFactor = u.data[1][2][0] / u.data[1][1][0];
+
+            dataMax *= bucketFactor;
+
             let scaleMin: number | null, scaleMax: number | null;
 
             [scaleMin, scaleMax] = shouldUseLogScale
@@ -516,13 +512,13 @@ export function prepConfig(opts: PrepConfigOpts) {
         dataRef.current?.xLayout === HeatmapCellLayout.le
           ? -1
           : dataRef.current?.xLayout === HeatmapCellLayout.ge
-          ? 1
-          : 0,
+            ? 1
+            : 0,
       yAlign: ((dataRef.current?.yLayout === HeatmapCellLayout.le
         ? -1
         : dataRef.current?.yLayout === HeatmapCellLayout.ge
-        ? 1
-        : 0) * (yAxisReverse ? -1 : 1)) as -1 | 0 | 1,
+          ? 1
+          : 0) * (yAxisReverse ? -1 : 1)) as -1 | 0 | 1,
       ySizeDivisor,
       disp: {
         fill: {
@@ -607,7 +603,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   if (sync && sync() !== DashboardCursorSync.Off) {
     cursor.sync = {
       key: eventsScope,
-      scales: [xScaleKey, yScaleKey],
+      scales: [xScaleKey, null],
       filters: {
         pub: (type: string, src: uPlot, x: number, y: number, w: number, h: number, dataIdx: number) => {
           if (x < 0) {
@@ -778,10 +774,19 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: strin
 
         for (let i = 0; i < dataX.length; i++) {
           let yVal = dataY[i]!;
-          yVal -= 0.5; // center vertically in bucket (when tiles are le)
-          // y-randomize vertically to distribute exemplars in same bucket at same time
-          let randSign = Math.round(Math.random()) * 2 - 1;
-          yVal += randSign * 0.5 * Math.random();
+
+          // this is a hacky by-proxy check
+          // works okay since we have no exemplars in calculated heatmaps and...
+          //  - heatmap-rows has ordinal y
+          //  - heatmap-cells has log2 y
+          let isSparseHeatmap = scaleY.distr === 3 && scaleY.log === 2;
+
+          if (!isSparseHeatmap) {
+            yVal -= 0.5; // center vertically in bucket (when tiles are le)
+            // y-randomize vertically to distribute exemplars in same bucket at same time
+            let randSign = Math.round(Math.random()) * 2 - 1;
+            yVal += randSign * 0.5 * Math.random();
+          }
 
           let x = valToPosX(dataX[i], scaleX, xDim, xOff);
           let y = valToPosY(yVal, scaleY, yDim, yOff);
@@ -900,8 +905,8 @@ export function heatmapPathsSparse(opts: PathbuilderOpts) {
           xSize = Math.max(1, xSize - cellGap);
           ySize = Math.max(1, ySize - cellGap);
 
-          let x = xMaxPx;
-          let y = yMinPx;
+          let x = xMaxPx - cellGap / 2 - xSize;
+          let y = yMaxPx + cellGap / 2;
 
           let fillPath = fillPaths[fills[i]];
 
@@ -970,8 +975,8 @@ export const valuesToFills = (values: number[], palette: string[], minValue: num
       values[i] < minValue
         ? 0
         : values[i] > maxValue
-        ? paletteSize - 1
-        : Math.min(paletteSize - 1, Math.floor((paletteSize * (values[i] - minValue)) / range));
+          ? paletteSize - 1
+          : Math.min(paletteSize - 1, Math.floor((paletteSize * (values[i] - minValue)) / range));
   }
 
   return indexedFills;

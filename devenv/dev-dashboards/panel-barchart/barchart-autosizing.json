@@ -602,7 +602,6 @@
   ],
   "refresh": "",
   "schemaVersion": 36,
-  "style": "dark",
   "tags": [
     "gdev",
     "panel-tests",

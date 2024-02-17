@@ -14,7 +14,6 @@ type ReplaceFn = (
 export async function addDataLinksToLogsResponse(
   response: DataQueryResponse,
   request: DataQueryRequest<CloudWatchQuery>,
-  range: TimeRange,
   replaceFn: ReplaceFn,
   getVariableValueFn: (value: string, scopedVars: ScopedVars) => string[],
   getRegion: (region: string) => string,
@@ -37,13 +36,15 @@ export async function addDataLinksToLogsResponse(
       } else {
         // Right now we add generic link to open the query in xray console to every field so it shows in the logs row
         // details. Unfortunately this also creates link for all values inside table which look weird.
-        field.config.links = [createAwsConsoleLink(curTarget, range, interpolatedRegion, replace, getVariableValue)];
+        field.config.links = [
+          createAwsConsoleLink(curTarget, request.range, interpolatedRegion, replace, getVariableValue),
+        ];
       }
     }
   }
 }
 
-async function createInternalXrayLink(datasourceUid: string, region: string) {
+async function createInternalXrayLink(datasourceUid: string, region: string): Promise<DataLink | undefined> {
   let ds;
   try {
     ds = await getDataSourceSrv().get(datasourceUid);
@@ -60,7 +61,7 @@ async function createInternalXrayLink(datasourceUid: string, region: string) {
       datasourceUid: datasourceUid,
       datasourceName: ds.name,
     },
-  } as DataLink;
+  };
 }
 
 function createAwsConsoleLink(

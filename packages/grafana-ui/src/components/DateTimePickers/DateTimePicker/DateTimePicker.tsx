@@ -8,10 +8,16 @@ import { usePopper } from 'react-popper';
 import { useMedia } from 'react-use';
 
 import { dateTimeFormat, DateTime, dateTime, GrafanaTheme2, isDateTime } from '@grafana/data';
+import { Components } from '@grafana/e2e-selectors';
 
-import { Button, HorizontalGroup, Icon, InlineField, Input, Portal } from '../..';
 import { useStyles2, useTheme2 } from '../../../themes';
+import { Button } from '../../Button/Button';
+import { InlineField } from '../../Forms/InlineField';
+import { Icon } from '../../Icon/Icon';
+import { Input } from '../../Input/Input';
+import { HorizontalGroup } from '../../Layout/Layout';
 import { getModalStyles } from '../../Modal/getModalStyles';
+import { Portal } from '../../Portal/Portal';
 import { TimeOfDayPicker, POPUP_CLASS_NAME } from '../TimeOfDayPicker';
 import { getBodyStyles } from '../TimeRangePicker/CalendarBody';
 import { isValid } from '../utils';
@@ -66,7 +72,7 @@ export const DateTimePicker = ({
   const { dialogProps } = useDialog({}, ref);
 
   const theme = useTheme2();
-  const { modalBackdrop } = getModalStyles(theme);
+  const { modalBackdrop } = useStyles2(getModalStyles);
   const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.values.lg}px)`);
   const styles = useStyles2(getStyles);
 
@@ -183,7 +189,7 @@ type InputState = {
 };
 
 const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ date, label, onChange, isFullscreen, onOpen, showSeconds = true }, ref) => {
+  ({ date, label, onChange, onOpen, showSeconds = true }, ref) => {
     const format = showSeconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm';
     const [internalDate, setInternalDate] = useState<InputState>(() => {
       return { value: date ? dateTimeFormat(date) : dateTimeFormat(dateTime()), invalid: false };
@@ -207,10 +213,11 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
     }, []);
 
     const onBlur = useCallback(() => {
-      if (isDateTime(internalDate.value)) {
-        onChange(dateTime(internalDate.value));
+      if (!internalDate.invalid) {
+        const date = dateTime(internalDate.value);
+        onChange(date);
       }
-    }, [internalDate.value, onChange]);
+    }, [internalDate, onChange]);
 
     const icon = <Button aria-label="Time picker" icon="calendar-alt" variant="secondary" onClick={onOpen} />;
     return (
@@ -226,7 +233,7 @@ const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
           addonAfter={icon}
           value={internalDate.value}
           onBlur={onBlur}
-          data-testid="date-time-input"
+          data-testid={Components.DateTimePicker.input}
           placeholder="Select date/time"
           ref={ref}
         />
@@ -328,7 +335,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     padding: theme.spacing(1),
     border: `1px ${theme.colors.border.weak} solid`,
-    borderRadius: theme.shape.borderRadius(1),
+    borderRadius: theme.shape.radius.default,
     backgroundColor: theme.colors.background.primary,
     zIndex: theme.zIndex.modal,
   }),

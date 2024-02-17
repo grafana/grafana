@@ -28,7 +28,7 @@ import { getRollupNotice, getRuntimeConsolidationNotice } from 'app/plugins/data
 
 import { AnnotationEditor } from './components/AnnotationsEditor';
 import { convertToGraphiteQueryObject } from './components/helpers';
-import gfunc, { FuncDefs, FuncInstance } from './gfunc';
+import gfunc, { FuncDef, FuncDefs, FuncInstance } from './gfunc';
 import GraphiteQueryModel from './graphite_query';
 import { prepareAnnotation } from './migrations';
 // Types
@@ -78,7 +78,7 @@ export class GraphiteDatasource
   cacheTimeout: any;
   withCredentials: boolean;
   funcDefs: FuncDefs | null = null;
-  funcDefsPromise: Promise<any> | null = null;
+  funcDefsPromise: Promise<FuncDefs> | null = null;
   _seriesRefLetters: string;
   requestCounter = 100;
   private readonly metricMappings: GraphiteLokiMapping[];
@@ -246,7 +246,10 @@ export class GraphiteDatasource
     return this.doGraphiteRequest(httpOptions).pipe(map(this.convertResponseToDataFrames));
   }
 
-  addTracingHeaders(httpOptions: { headers: any }, options: { dashboardId?: number; panelId?: number }) {
+  addTracingHeaders(
+    httpOptions: { headers: any },
+    options: { dashboardId?: number; panelId?: number; panelPluginType?: string }
+  ) {
     const proxyMode = !this.url.match(/^http/);
     if (proxyMode) {
       if (options.dashboardId) {
@@ -254,6 +257,9 @@ export class GraphiteDatasource
       }
       if (options.panelId) {
         httpOptions.headers['X-Panel-Id'] = options.panelId;
+      }
+      if (options.panelPluginType) {
+        httpOptions.headers['X-Panel-Plugin-Id'] = options.panelPluginType;
       }
     }
   }
@@ -371,7 +377,7 @@ export class GraphiteDatasource
 
       return lastValueFrom(
         this.query(graphiteQuery).pipe(
-          map((result: any) => {
+          map((result) => {
             const list = [];
 
             for (let i = 0; i < result.data.length; i++) {
@@ -400,7 +406,7 @@ export class GraphiteDatasource
     } else {
       // Graphite event/tag as annotation
       const tags = this.templateSrv.replace(target.tags?.join(' '));
-      return this.events({ range: range, tags: tags }).then((results: any) => {
+      return this.events({ range: range, tags: tags }).then((results) => {
         const list = [];
         if (!isArray(results.data)) {
           console.error(`Unable to get annotations from ${results.url}.`);
@@ -827,7 +833,7 @@ export class GraphiteDatasource
     );
   }
 
-  createFuncInstance(funcDef: any, options?: any): FuncInstance {
+  createFuncInstance(funcDef: string | FuncDef, options?: any): FuncInstance {
     return gfunc.createFuncInstance(funcDef, options, this.funcDefs);
   }
 
@@ -870,7 +876,7 @@ export class GraphiteDatasource
           this.funcDefs = gfunc.parseFuncDefs(fixedData);
           return this.funcDefs;
         }),
-        catchError((error: any) => {
+        catchError((error) => {
           console.error('Fetching graphite functions error', error);
           this.funcDefs = gfunc.getFuncDefs(this.graphiteVersion);
           return of(this.funcDefs);
@@ -924,7 +930,7 @@ export class GraphiteDatasource
     return getBackendSrv()
       .fetch(options)
       .pipe(
-        catchError((err: any) => {
+        catchError((err) => {
           return throwError(reduceError(err));
         })
       );
@@ -941,7 +947,7 @@ export class GraphiteDatasource
 
     options['format'] = 'json';
 
-    function fixIntervalFormat(match: any) {
+    function fixIntervalFormat(match: string) {
       return match.replace('m', 'min').replace('M', 'mon');
     }
 
@@ -1007,7 +1013,7 @@ function supportsFunctionIndex(version: string): boolean {
 
 function mapToTags(): OperatorFunction<any, Array<{ text: string }>> {
   return pipe(
-    map((results: any) => {
+    map((results) => {
       if (results.data) {
         return _map(results.data, (value) => {
           return { text: value };

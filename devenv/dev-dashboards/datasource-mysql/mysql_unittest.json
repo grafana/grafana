@@ -2545,7 +2545,6 @@
   ],
   "refresh": false,
   "schemaVersion": 16,
-  "style": "dark",
   "tags": ["gdev", "mysql", "datasource-test"],
   "templating": {
     "list": [

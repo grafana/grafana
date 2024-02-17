@@ -12,10 +12,10 @@ import (
 )
 
 // HandlerFunc defines a handler function interface.
-type HandlerFunc interface{}
+type HandlerFunc any
 
 // Msg defines a message interface.
-type Msg interface{}
+type Msg any
 
 // ErrHandlerNotFound defines an error if a handler is not found.
 var ErrHandlerNotFound = errors.New("handler not found")
@@ -55,7 +55,7 @@ func (b *InProcBus) Publish(ctx context.Context, msg Msg) error {
 	_, span := b.tracer.Start(ctx, "bus - "+msgName)
 	defer span.End()
 
-	span.SetAttributes("msg", msgName, attribute.Key("msg").String(msgName))
+	span.SetAttributes(attribute.String("msg", msgName))
 
 	return nil
 }

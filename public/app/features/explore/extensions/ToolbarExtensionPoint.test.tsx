@@ -60,7 +60,8 @@ describe('ToolbarExtensionPoint', () => {
             pluginId: 'grafana',
             id: '1',
             type: PluginExtensionTypes.link,
-            title: 'Dashboard',
+            title: 'Add to dashboard',
+            category: 'Dashboards',
             description: 'Add the current query as a panel to a dashboard',
             onClick: jest.fn(),
           },
@@ -82,12 +83,13 @@ describe('ToolbarExtensionPoint', () => {
       expect(screen.getByRole('button', { name: 'Add' })).toBeVisible();
     });
 
-    it('should render "Add" extension point menu button in split mode', async () => {
+    it('should render menu with extensions when "Add" is clicked in split mode', async () => {
       renderWithExploreStore(<ToolbarExtensionPoint exploreId={'left'} timeZone="browser" splitted={true} />);
 
       await userEvent.click(screen.getByRole('button', { name: 'Add' }));
 
-      expect(screen.getByRole('menuitem', { name: 'Dashboard' })).toBeVisible();
+      expect(screen.getByRole('group', { name: 'Dashboards' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'Add to dashboard' })).toBeVisible();
       expect(screen.getByRole('menuitem', { name: 'ML: Forecast' })).toBeVisible();
     });
 
@@ -96,7 +98,8 @@ describe('ToolbarExtensionPoint', () => {
 
       await userEvent.click(screen.getByRole('button', { name: 'Add' }));
 
-      expect(screen.getByRole('menuitem', { name: 'Dashboard' })).toBeVisible();
+      expect(screen.getByRole('group', { name: 'Dashboards' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'Add to dashboard' })).toBeVisible();
       expect(screen.getByRole('menuitem', { name: 'ML: Forecast' })).toBeVisible();
     });
 
@@ -104,7 +107,7 @@ describe('ToolbarExtensionPoint', () => {
       renderWithExploreStore(<ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} />);
 
       await userEvent.click(screen.getByRole('button', { name: 'Add' }));
-      await userEvent.click(screen.getByRole('menuitem', { name: 'Dashboard' }));
+      await userEvent.click(screen.getByRole('menuitem', { name: 'Add to dashboard' }));
 
       const { extensions } = getPluginLinkExtensions({ extensionPointId: PluginExtensionPoints.ExploreToolbarAction });
       const [extension] = extensions;
@@ -144,7 +147,23 @@ describe('ToolbarExtensionPoint', () => {
         }),
         timeZone: 'browser',
         timeRange: { from: 'now-1h', to: 'now' },
+        shouldShowAddCorrelation: false,
       });
+    });
+
+    it('should pass a context with correct timeZone when fetching extensions', async () => {
+      const targets = [{ refId: 'A' }];
+      const data = createEmptyQueryResponse();
+
+      renderWithExploreStore(<ToolbarExtensionPoint exploreId="left" timeZone="" splitted={false} />, {
+        targets,
+        data,
+      });
+
+      const [options] = getPluginLinkExtensionsMock.mock.calls[0];
+      const { context } = options;
+
+      expect(context).toHaveProperty('timeZone', 'browser');
     });
 
     it('should correct extension point id when fetching extensions', async () => {
@@ -157,9 +176,62 @@ describe('ToolbarExtensionPoint', () => {
     });
   });
 
+  describe('with extension points without categories', () => {
+    beforeAll(() => {
+      getPluginLinkExtensionsMock.mockReturnValue({
+        extensions: [
+          {
+            pluginId: 'grafana',
+            id: '1',
+            type: PluginExtensionTypes.link,
+            title: 'Dashboard',
+            description: 'Add the current query as a panel to a dashboard',
+            onClick: jest.fn(),
+          },
+          {
+            pluginId: 'grafana-ml-app',
+            id: '2',
+            type: PluginExtensionTypes.link,
+            title: 'ML: Forecast',
+            description: 'Add the query as a ML forecast',
+            path: '/a/grafana-ml-ap/forecast',
+          },
+        ],
+      });
+    });
+
+    it('should render "Add" extension point menu button', () => {
+      renderWithExploreStore(<ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} />);
+
+      expect(screen.getByRole('button', { name: 'Add' })).toBeVisible();
+    });
+
+    it('should render "Add" extension point menu button in split mode', async () => {
+      renderWithExploreStore(<ToolbarExtensionPoint exploreId={'left'} timeZone="browser" splitted={true} />);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+
+      // Make sure we don't have anything related to categories rendered
+      expect(screen.queryAllByRole('group').length).toBe(0);
+      expect(screen.getByRole('menuitem', { name: 'Dashboard' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'ML: Forecast' })).toBeVisible();
+    });
+
+    it('should render menu with extensions when "Add" is clicked', async () => {
+      renderWithExploreStore(<ToolbarExtensionPoint exploreId="left" timeZone="browser" splitted={false} />);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+
+      // Make sure we don't have anything related to categories rendered
+      expect(screen.queryAllByRole('group').length).toBe(0);
+      expect(screen.getByRole('menuitem', { name: 'Dashboard' })).toBeVisible();
+      expect(screen.getByRole('menuitem', { name: 'ML: Forecast' })).toBeVisible();
+    });
+  });
+
   describe('without extension points', () => {
     beforeAll(() => {
-      contextSrvMock.hasAccess.mockReturnValue(true);
+      contextSrvMock.hasPermission.mockReturnValue(true);
       getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
     });
 
@@ -177,7 +249,7 @@ describe('ToolbarExtensionPoint', () => {
 
   describe('with insufficient permissions', () => {
     beforeAll(() => {
-      contextSrvMock.hasAccess.mockReturnValue(false);
+      contextSrvMock.hasPermission.mockReturnValue(false);
       getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
     });
 

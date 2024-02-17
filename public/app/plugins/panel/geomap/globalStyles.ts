@@ -46,39 +46,39 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
   //   border: 2px dotted rgba(0,60,136,0.7);
   // }
 
-  return css`
-    .ol-scale-line {
-      background: ${theme.colors.border.weak}; // rgba(0,60,136,0.3);
-    }
-    .ol-scale-line-inner {
-      border: 1px solid ${theme.colors.text.primary}; // #eee;
-      border-top: 0px;
-      color: ${theme.colors.text.primary}; //  #eee;
-    }
-    .ol-control {
-      background-color: ${theme.colors.background.primary}; //rgba(255,255,255,0.4);
-    }
-    .ol-control:hover {
-      background-color: ${theme.colors.background.secondary}; // rgba(255,255,255,0.6);
-    }
-    .ol-control button {
-      color: ${theme.colors.secondary.text}; // white;
-      background-color: ${theme.colors.secondary.main}; // rgba(0,60,136,0.5);
-    }
-    .ol-control button:hover {
-      color: ${theme.colors.secondary.text};
-      background-color: ${theme.colors.secondary.shade}; // rgba(0,60,136,0.5);
-    }
-    .ol-control button:focus {
-      color: ${theme.colors.secondary.text};
-      background-color: ${theme.colors.secondary.main}; // rgba(0,60,136,0.5);
-    }
-    .ol-attribution ul {
-      color: ${theme.colors.text.primary}; //  #000;
-      text-shadow: none;
-    }
-    .ol-attribution:not(.ol-collapsed) {
-      background-color: ${theme.colors.background.secondary}; // rgba(255,255,255,0.8);
-    }
-  `;
+  return css({
+    '.ol-scale-line': {
+      background: theme.colors.border.weak, // rgba(0,60,136,0.3);
+    },
+    '.ol-scale-line-inner': {
+      border: `1px solid ${theme.colors.text.primary}`, // #eee;
+      borderTop: 0, // 0px;
+      color: theme.colors.text.primary, //  #eee;
+    },
+    '.ol-control': {
+      backgroundColor: theme.colors.background.primary, // rgba(255,255,255,0.4);
+    },
+    '.ol-control:hover': {
+      backgroundColor: theme.colors.background.secondary, // rgba(255,255,255,0.6);
+    },
+    '.ol-control button': {
+      color: theme.colors.secondary.text, // white;
+      backgroundColor: theme.colors.secondary.main, // rgba(0,60,136,0.5);
+    },
+    '.ol-control button:hover': {
+      color: theme.colors.secondary.text,
+      backgroundColor: theme.colors.secondary.shade, // rgba(0,60,136,0.5);
+    },
+    '.ol-control button:focus': {
+      color: theme.colors.secondary.text,
+      backgroundColor: theme.colors.secondary.main, // rgba(0,60,136,0.5);
+    },
+    '.ol-attribution ul': {
+      color: theme.colors.text.primary, //  #000;
+      textShadow: 'none',
+    },
+    '.ol-attribution:not(.ol-collapsed)': {
+      backgroundColor: theme.colors.background.secondary, // rgba(255,255,255,0.8);
+    },
+  });
 }

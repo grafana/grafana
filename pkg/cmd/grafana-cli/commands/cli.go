@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 )
 
+const DefaultCommitValue = "NA"
+
 // CLICommand is the entrypoint for the grafana-cli command. It returns the exit code for the grafana-cli program.
 func CLICommand(version string) *cli.Command {
 	return &cli.Command{

@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
 import React, { FC, useCallback, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { DataFrame, dateTimeFormat, GrafanaTheme2, isTimeSeriesFrames, LoadingState, PanelData } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
-import { AutoSizeInput, Button, clearButtonStyles, IconButton, useStyles2 } from '@grafana/ui';
+import { Alert, AutoSizeInput, Button, clearButtonStyles, IconButton, Stack, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -23,7 +23,7 @@ import { HoverCard } from '../HoverCard';
 import { Spacer } from '../Spacer';
 import { AlertStateTag } from '../rules/AlertStateTag';
 
-import { AlertConditionIndicator } from './AlertConditionIndicator';
+import { ExpressionStatusIndicator } from './ExpressionStatusIndicator';
 import { formatLabels, getSeriesLabels, getSeriesName, getSeriesValue, isEmptySeries } from './util';
 
 interface ExpressionProps {
@@ -57,17 +57,26 @@ export const Expression: FC<ExpressionProps> = ({
 
   const queryType = query?.type;
 
+  const { setError, clearErrors } = useFormContext();
+
+  const onQueriesValidationError = useCallback(
+    (errorMsg: string | undefined) => {
+      if (errorMsg) {
+        setError('queries', { type: 'custom', message: errorMsg });
+      } else {
+        clearErrors('queries');
+      }
+    },
+    [setError, clearErrors]
+  );
+
   const isLoading = data && Object.values(data).some((d) => Boolean(d) && d.state === LoadingState.Loading);
   const hasResults = Array.isArray(data?.series) && !isLoading;
   const series = data?.series ?? [];
-  const seriesCount = series.length;
 
   const alertCondition = isAlertCondition ?? false;
 
-  const groupedByState = {
-    [PromAlertingRuleState.Firing]: series.filter((serie) => getSeriesValue(serie) !== 0),
-    [PromAlertingRuleState.Inactive]: series.filter((serie) => getSeriesValue(serie) === 0),
-  };
+  const { seriesCount, groupedByState } = getGroupedByStateAndSeriesCount(series);
 
   const renderExpressionType = useCallback(
     (query: ExpressionQuery) => {
@@ -90,13 +99,22 @@ export const Expression: FC<ExpressionProps> = ({
           return <ClassicConditions onChange={onChangeQuery} query={query} refIds={availableRefIds} />;
 
         case ExpressionQueryType.threshold:
-          return <Threshold onChange={onChangeQuery} query={query} labelWidth={'auto'} refIds={availableRefIds} />;
+          return (
+            <Threshold
+              onChange={onChangeQuery}
+              query={query}
+              labelWidth={'auto'}
+              refIds={availableRefIds}
+              onError={onQueriesValidationError}
+              useHysteresis={true}
+            />
+          );
 
         default:
           return <>Expression not supported: {query.type}</>;
       }
     },
-    [onChangeQuery, queries]
+    [onChangeQuery, queries, onQueriesValidationError]
   );
   const selectedExpressionType = expressionTypes.find((o) => o.value === queryType);
   const selectedExpressionDescription = selectedExpressionType?.description ?? '';
@@ -118,12 +136,20 @@ export const Expression: FC<ExpressionProps> = ({
           onUpdateRefId={(newRefId) => onUpdateRefId(query.refId, newRefId)}
           onUpdateExpressionType={(type) => onUpdateExpressionType(query.refId, type)}
           onSetCondition={onSetCondition}
-          warning={warning}
-          error={error}
           query={query}
           alertCondition={alertCondition}
         />
         <div className={styles.expression.body}>
+          {error && (
+            <Alert title="Expression failed" severity="error">
+              {error.message}
+            </Alert>
+          )}
+          {warning && (
+            <Alert title="Expression warning" severity="warning">
+              {warning.message}
+            </Alert>
+          )}
           <div className={styles.expression.description}>{selectedExpressionDescription}</div>
           {renderExpressionType(query)}
         </div>
@@ -236,14 +262,27 @@ export const PreviewSummary: FC<{ firing: number; normal: number; isCondition: b
   return <span className={mutedText}>{`${seriesCount} series`}</span>;
 };
 
+export function getGroupedByStateAndSeriesCount(series: DataFrame[]) {
+  const noDataSeries = series.filter((serie) => getSeriesValue(serie) === undefined).length;
+  const groupedByState = {
+    // we need to filter out series with no data (undefined) or zero value
+    [PromAlertingRuleState.Firing]: series.filter(
+      (serie) => getSeriesValue(serie) !== undefined && getSeriesValue(serie) !== 0
+    ),
+    [PromAlertingRuleState.Inactive]: series.filter((serie) => getSeriesValue(serie) === 0),
+  };
+
+  const seriesCount = series.length - noDataSeries;
+
+  return { groupedByState, seriesCount };
+}
+
 interface HeaderProps {
   refId: string;
   queryType: ExpressionQueryType;
   onUpdateRefId: (refId: string) => void;
   onRemoveExpression: () => void;
   onUpdateExpressionType: (type: ExpressionQueryType) => void;
-  warning?: Error;
-  error?: Error;
   onSetCondition: (refId: string) => void;
   query: ExpressionQuery;
   alertCondition: boolean;
@@ -254,11 +293,9 @@ const Header: FC<HeaderProps> = ({
   queryType,
   onUpdateRefId,
   onRemoveExpression,
-  warning,
   onSetCondition,
   alertCondition,
   query,
-  error,
 }) => {
   const styles = useStyles2(getStyles);
   const clearButton = useStyles2(clearButtonStyles);
@@ -277,7 +314,7 @@ const Header: FC<HeaderProps> = ({
   return (
     <header className={styles.header.wrapper}>
       <Stack direction="row" gap={0.5} alignItems="center">
-        <Stack direction="row" gap={1} alignItems="center" wrap={false}>
+        <Stack direction="row" gap={1} alignItems="center">
           {!editingRefId && (
             <button type="button" className={cx(clearButton, styles.editable)} onClick={() => setEditMode('refId')}>
               <div className={styles.expression.refId}>{refId}</div>
@@ -302,12 +339,7 @@ const Header: FC<HeaderProps> = ({
           <div>{getExpressionLabel(queryType)}</div>
         </Stack>
         <Spacer />
-        <AlertConditionIndicator
-          onSetCondition={() => onSetCondition(query.refId)}
-          enabled={alertCondition}
-          error={error}
-          warning={warning}
-        />
+        <ExpressionStatusIndicator onSetCondition={() => onSetCondition(query.refId)} isCondition={alertCondition} />
         <IconButton
           name="trash-alt"
           variant="secondary"
@@ -427,7 +459,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       border: solid 1px ${theme.colors.border.medium};
       flex: 1;
       flex-basis: 400px;
-      border-radius: ${theme.shape.borderRadius()};
+      border-radius: ${theme.shape.radius.default};
     `,
     stack: css`
       display: flex;
@@ -532,7 +564,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   editable: css`
     padding: ${theme.spacing(0.5)} ${theme.spacing(1)};
     border: solid 1px ${theme.colors.border.weak};
-    border-radius: ${theme.shape.borderRadius()};
+    border-radius: ${theme.shape.radius.default};
 
     display: flex;
     flex-direction: row;

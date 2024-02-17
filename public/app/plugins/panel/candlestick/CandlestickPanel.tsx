@@ -1,24 +1,28 @@
 // this file is pretty much a copy-paste of TimeSeriesPanel.tsx :(
 // with some extra renderers passed to the <TimeSeries> component
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import uPlot from 'uplot';
 
-import { Field, getDisplayProcessor, getLinksSupplier, PanelProps } from '@grafana/data';
+import { DashboardCursorSync, Field, getDisplayProcessor, getLinksSupplier, PanelProps } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
-import { TimeSeries, TooltipPlugin, UPlotConfigBuilder, usePanelContext, useTheme2, ZoomPlugin } from '@grafana/ui';
+import { TooltipPlugin, TooltipPlugin2, UPlotConfigBuilder, usePanelContext, useTheme2, ZoomPlugin } from '@grafana/ui';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
+import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
-import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 
+import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
+import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from '../timeseries/plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
+import { isTooltipScrollable } from '../timeseries/utils';
 
 import { prepareCandlestickFields } from './fields';
 import { Options, defaultCandlestickColors, VizDisplayMode } from './types';
@@ -38,18 +42,16 @@ export const CandlestickPanel = ({
   onChangeTimeRange,
   replaceVariables,
 }: CandlestickPanelProps) => {
-  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds, onSplitOpen } =
-    usePanelContext();
-
-  const getFieldLinks = (field: Field, rowIndex: number) => {
-    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
-  };
+  const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds } = usePanelContext();
 
   const theme = useTheme2();
 
   const info = useMemo(() => {
     return prepareCandlestickFields(data.series, options, theme, timeRange);
   }, [data.series, options, theme, timeRange]);
+
+  // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
+  const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
 
   const { renderers, tweakScale, tweakAxis, shouldRenderPrice } = useMemo(() => {
     let tweakScale = (opts: ScaleProps, forField: Field) => opts;
@@ -116,12 +118,12 @@ export const CandlestickPanel = ({
             if (forField.name === info.volume?.name) {
               let filter = (u: uPlot, splits: number[]) => {
                 let _splits = [];
-                let max = u.series[volumeIdx].max as number;
+                let max = u.series[volumeIdx].max;
 
                 for (let i = 0; i < splits.length; i++) {
                   _splits.push(splits[i]);
 
-                  if (splits[i] > max) {
+                  if (max && splits[i] > max) {
                     break;
                   }
                 }
@@ -220,7 +222,7 @@ export const CandlestickPanel = ({
   if (shouldRenderPrice) {
     // hide series from legend that are rendered as composite markers
     for (let key in renderers[0].fieldMap) {
-      let field = (info as any)[key] as Field;
+      let field: Field = (info as any)[key];
       field.config = {
         ...field.config,
         custom: {
@@ -232,6 +234,8 @@ export const CandlestickPanel = ({
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
+  const showNewVizTooltips =
+    config.featureToggles.newVizTooltips && (sync == null || sync() !== DashboardCursorSync.Tooltip);
 
   return (
     <TimeSeries
@@ -247,7 +251,7 @@ export const CandlestickPanel = ({
       tweakScale={tweakScale}
       options={options}
     >
-      {(config, alignedDataFrame) => {
+      {(uplotConfig, alignedDataFrame) => {
         alignedDataFrame.fields.forEach((field) => {
           field.getLinks = getLinksSupplier(
             alignedDataFrame,
@@ -260,80 +264,134 @@ export const CandlestickPanel = ({
 
         return (
           <>
-            <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
-            <TooltipPlugin
-              data={alignedDataFrame}
-              config={config}
-              mode={TooltipDisplayMode.Multi}
-              sync={sync}
-              timeZone={timeZone}
-            />
-            {/* Renders annotation markers*/}
-            {data.annotations && (
-              <AnnotationsPlugin annotations={data.annotations} config={config} timeZone={timeZone} />
-            )}
-            {/* Enables annotations creation*/}
-            {enableAnnotationCreation ? (
-              <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={config}>
-                {({ startAnnotating }) => {
+            {showNewVizTooltips ? (
+              <TooltipPlugin2
+                config={uplotConfig}
+                hoverMode={
+                  options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
+                }
+                queryZoom={onChangeTimeRange}
+                clientZoom={true}
+                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
+                  if (viaSync) {
+                    return null;
+                  }
+
+                  if (enableAnnotationCreation && timeRange2 != null) {
+                    setNewAnnotationRange(timeRange2);
+                    dismiss();
+                    return;
+                  }
+
+                  const annotate = () => {
+                    let xVal = u.posToVal(u.cursor.left!, 'x');
+
+                    setNewAnnotationRange({ from: xVal, to: xVal });
+                    dismiss();
+                  };
+
                   return (
-                    <ContextMenuPlugin
-                      data={alignedDataFrame}
-                      config={config}
-                      timeZone={timeZone}
-                      replaceVariables={replaceVariables}
-                      defaultItems={
-                        enableAnnotationCreation
-                          ? [
-                              {
-                                items: [
-                                  {
-                                    label: 'Add annotation',
-                                    ariaLabel: 'Add annotation',
-                                    icon: 'comment-alt',
-                                    onClick: (e, p) => {
-                                      if (!p) {
-                                        return;
-                                      }
-                                      startAnnotating({ coords: p.coords });
-                                    },
-                                  },
-                                ],
-                              },
-                            ]
-                          : []
-                      }
+                    <TimeSeriesTooltip
+                      frames={[info.frame]}
+                      seriesFrame={alignedDataFrame}
+                      dataIdxs={dataIdxs}
+                      seriesIdx={seriesIdx}
+                      mode={options.tooltip.mode}
+                      sortOrder={options.tooltip.sort}
+                      isPinned={isPinned}
+                      annotate={enableAnnotationCreation ? annotate : undefined}
+                      scrollable={isTooltipScrollable(options.tooltip)}
                     />
                   );
                 }}
-              </AnnotationEditorPlugin>
+                maxWidth={options.tooltip.maxWidth}
+                maxHeight={options.tooltip.maxHeight}
+              />
             ) : (
-              <ContextMenuPlugin
-                data={alignedDataFrame}
-                config={config}
-                timeZone={timeZone}
-                replaceVariables={replaceVariables}
-                defaultItems={[]}
-              />
+              <>
+                <ZoomPlugin config={uplotConfig} onZoom={onChangeTimeRange} withZoomY={true} />
+                <TooltipPlugin
+                  data={alignedDataFrame}
+                  config={uplotConfig}
+                  mode={TooltipDisplayMode.Multi}
+                  sync={sync}
+                  timeZone={timeZone}
+                />
+              </>
             )}
-            {data.annotations && (
-              <ExemplarsPlugin
-                config={config}
-                exemplars={data.annotations}
+            {/* Renders annotation markers*/}
+            {showNewVizTooltips ? (
+              <AnnotationsPlugin2
+                annotations={data.annotations ?? []}
+                config={uplotConfig}
                 timeZone={timeZone}
-                getFieldLinks={getFieldLinks}
+                newRange={newAnnotationRange}
+                setNewRange={setNewAnnotationRange}
               />
+            ) : (
+              data.annotations && (
+                <AnnotationsPlugin annotations={data.annotations} config={uplotConfig} timeZone={timeZone} />
+              )
+            )}
+            {/* Enables annotations creation*/}
+            {!showNewVizTooltips ? (
+              enableAnnotationCreation ? (
+                <AnnotationEditorPlugin data={alignedDataFrame} timeZone={timeZone} config={uplotConfig}>
+                  {({ startAnnotating }) => {
+                    return (
+                      <ContextMenuPlugin
+                        data={alignedDataFrame}
+                        config={uplotConfig}
+                        timeZone={timeZone}
+                        replaceVariables={replaceVariables}
+                        defaultItems={
+                          enableAnnotationCreation
+                            ? [
+                                {
+                                  items: [
+                                    {
+                                      label: 'Add annotation',
+                                      ariaLabel: 'Add annotation',
+                                      icon: 'comment-alt',
+                                      onClick: (e, p) => {
+                                        if (!p) {
+                                          return;
+                                        }
+                                        startAnnotating({ coords: p.coords });
+                                      },
+                                    },
+                                  ],
+                                },
+                              ]
+                            : []
+                        }
+                      />
+                    );
+                  }}
+                </AnnotationEditorPlugin>
+              ) : (
+                <ContextMenuPlugin
+                  data={alignedDataFrame}
+                  config={uplotConfig}
+                  timeZone={timeZone}
+                  replaceVariables={replaceVariables}
+                  defaultItems={[]}
+                />
+              )
+            ) : undefined}
+            {data.annotations && (
+              <ExemplarsPlugin config={uplotConfig} exemplars={data.annotations} timeZone={timeZone} />
             )}
 
             {((canEditThresholds && onThresholdsChange) || showThresholds) && (
               <ThresholdControlsPlugin
-                config={config}
+                config={uplotConfig}
                 fieldConfig={fieldConfig}
                 onThresholdsChange={canEditThresholds ? onThresholdsChange : undefined}
               />
             )}
 
-            <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
+            <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
           </>
         );
       }}

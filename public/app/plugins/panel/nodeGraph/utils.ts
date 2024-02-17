@@ -9,29 +9,38 @@ import {
   NodeGraphDataFrameFieldNames,
 } from '@grafana/data';
 
-import { EdgeDatum, NodeDatum, NodeDatumFromEdge, NodeGraphOptions } from './types';
+import { nodeR } from './Node';
+import { EdgeDatum, GraphFrame, NodeDatum, NodeDatumFromEdge, NodeGraphOptions } from './types';
 
 type Line = { x1: number; y1: number; x2: number; y2: number };
 
 /**
- * Makes line shorter while keeping the middle in he same place.
+ * Makes line shorter while keeping its middle in the same place.
+ * This is manly used to add some empty space between an edge line and its source and target nodes, to make it nicer.
+ *
+ * @param line a line, where x1 and y1 are the coordinates of the source node center, and x2 and y2 are the coordinates of the target node center
+ * @param sourceNodeRadius radius of the source node (possibly taking into account the thickness of the node circumference line, etc.)
+ * @param targetNodeRadius radius of the target node (possibly taking into account the thickness of the node circumference line, etc.)
+ * @param arrowHeadHeight height of the arrow head (in pixels)
  */
-export function shortenLine(line: Line, length: number): Line {
+export function shortenLine(line: Line, sourceNodeRadius: number, targetNodeRadius: number, arrowHeadHeight = 1): Line {
   const vx = line.x2 - line.x1;
   const vy = line.y2 - line.y1;
   const mag = Math.sqrt(vx * vx + vy * vy);
-  const ratio = Math.max((mag - length) / mag, 0);
-  const vx2 = vx * ratio;
-  const vy2 = vy * ratio;
-  const xDiff = vx - vx2;
-  const yDiff = vy - vy2;
-  const newx1 = line.x1 + xDiff / 2;
-  const newy1 = line.y1 + yDiff / 2;
+  const cosine = (line.x2 - line.x1) / mag;
+  const sine = (line.y2 - line.y1) / mag;
+  const scaledThickness = arrowHeadHeight - arrowHeadHeight / 10;
+
+  // Reduce the line length (along its main direction) by:
+  // - the radius of the source node
+  // - the radius of the target node,
+  // - a constant value, just to add some empty space
+  // - the height of the arrow head; the bigger the arrow head, the better is to add even more empty space
   return {
-    x1: newx1,
-    y1: newy1,
-    x2: newx1 + vx2,
-    y2: newy1 + vy2,
+    x1: line.x1 + cosine * (sourceNodeRadius + 5),
+    y1: line.y1 + sine * (sourceNodeRadius + 5),
+    x2: line.x2 - cosine * (targetNodeRadius + 3 + scaledThickness),
+    y2: line.y2 - sine * (targetNodeRadius + 3 + scaledThickness),
   };
 }
 
@@ -45,6 +54,8 @@ export type NodeFields = {
   details: Field[];
   color?: Field;
   icon?: Field;
+  nodeRadius?: Field;
+  highlighted?: Field;
 };
 
 export function getNodeFields(nodes: DataFrame): NodeFields {
@@ -63,6 +74,8 @@ export function getNodeFields(nodes: DataFrame): NodeFields {
     details: findFieldsByPrefix(nodes, NodeGraphDataFrameFieldNames.detail),
     color: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.color),
     icon: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.icon),
+    nodeRadius: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.nodeRadius.toLowerCase()),
+    highlighted: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlighted.toLowerCase()),
   };
 }
 
@@ -73,6 +86,8 @@ export type EdgeFields = {
   mainStat?: Field;
   secondaryStat?: Field;
   details: Field[];
+  highlighted?: Field;
+  thickness?: Field;
 };
 
 export function getEdgeFields(edges: DataFrame): EdgeFields {
@@ -88,6 +103,8 @@ export function getEdgeFields(edges: DataFrame): EdgeFields {
     mainStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.mainStat.toLowerCase()),
     secondaryStat: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.secondaryStat.toLowerCase()),
     details: findFieldsByPrefix(edges, NodeGraphDataFrameFieldNames.detail.toLowerCase()),
+    highlighted: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlighted.toLowerCase()),
+    thickness: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.thickness.toLowerCase()),
   };
 }
 
@@ -127,7 +144,7 @@ export function processNodes(
     }
 
     // We may not have edges in case of single node
-    let edgeDatums: EdgeDatum[] = edges ? processEdges(edges, getEdgeFields(edges)) : [];
+    let edgeDatums: EdgeDatum[] = edges ? processEdges(edges, getEdgeFields(edges), nodesMap) : [];
 
     for (const e of edgeDatums) {
       // We are adding incoming edges count, so we can later on find out which nodes are the roots
@@ -153,11 +170,9 @@ export function processNodes(
     const nodesMap: { [id: string]: NodeDatumFromEdge } = {};
 
     const edgeFields = getEdgeFields(edges);
-    let edgeDatums = processEdges(edges, edgeFields);
 
     // Turn edges into reasonable filled in nodes
-    for (let i = 0; i < edgeDatums.length; i++) {
-      const edge = edgeDatums[i];
+    for (let i = 0; i < edges.length; i++) {
       const { source, target } = makeNodeDatumsFromEdge(edgeFields, i);
 
       nodesMap[target.id] = nodesMap[target.id] || target;
@@ -176,8 +191,10 @@ export function processNodes(
       }
 
       // We are adding incoming edges count, so we can later on find out which nodes are the roots
-      nodesMap[edge.target].incoming++;
+      nodesMap[target.id].incoming++;
     }
+
+    let edgeDatums = processEdges(edges, edgeFields, nodesMap);
 
     // It is expected for stats to be Field, so we have to create them.
     const nodes = normalizeStatsForNodes(nodesMap, edgeFields);
@@ -194,7 +211,7 @@ export function processNodes(
  * @param edges
  * @param edgeFields
  */
-function processEdges(edges: DataFrame, edgeFields: EdgeFields): EdgeDatum[] {
+function processEdges(edges: DataFrame, edgeFields: EdgeFields, nodesMap: { [id: string]: NodeDatum }): EdgeDatum[] {
   if (!edgeFields.id) {
     throw new Error('id field is required for edges data frame.');
   }
@@ -203,15 +220,22 @@ function processEdges(edges: DataFrame, edgeFields: EdgeFields): EdgeDatum[] {
     const target = edgeFields.target?.values[index];
     const source = edgeFields.source?.values[index];
 
+    const sourceNode = nodesMap[source];
+    const targetNode = nodesMap[target];
+
     return {
       id,
       dataFrameRowIndex: index,
       source,
       target,
+      sourceNodeRadius: !sourceNode.nodeRadius ? nodeR : sourceNode.nodeRadius.values[sourceNode.dataFrameRowIndex],
+      targetNodeRadius: !targetNode.nodeRadius ? nodeR : targetNode.nodeRadius.values[targetNode.dataFrameRowIndex],
       mainStat: edgeFields.mainStat ? statToString(edgeFields.mainStat.config, edgeFields.mainStat.values[index]) : '',
       secondaryStat: edgeFields.secondaryStat
         ? statToString(edgeFields.secondaryStat.config, edgeFields.secondaryStat.values[index])
         : '',
+      highlighted: edgeFields.highlighted?.values[index] || false,
+      thickness: edgeFields.thickness?.values[index] || 1,
     };
   });
 }
@@ -227,8 +251,8 @@ function computableField(field?: Field) {
  * @param edgeFields
  */
 function normalizeStatsForNodes(nodesMap: { [id: string]: NodeDatumFromEdge }, edgeFields: EdgeFields): NodeDatum[] {
-  const secondaryStatValues: any[] = [];
-  const mainStatValues: any[] = [];
+  const secondaryStatValues: Array<number | undefined> = [];
+  const mainStatValues: Array<number | undefined> = [];
   const secondaryStatField = computableField(edgeFields.secondaryStat)
     ? {
         ...edgeFields.secondaryStat!,
@@ -283,6 +307,7 @@ function makeSimpleNodeDatum(name: string, index: number): NodeDatumFromEdge {
     dataFrameRowIndex: index,
     incoming: 0,
     arcSections: [],
+    highlighted: false,
   };
 }
 
@@ -298,6 +323,8 @@ function makeNodeDatum(id: string, nodeFields: NodeFields, index: number): NodeD
     arcSections: nodeFields.arc,
     color: nodeFields.color,
     icon: nodeFields.icon?.values[index] || '',
+    nodeRadius: nodeFields.nodeRadius,
+    highlighted: nodeFields.highlighted?.values[index] || false,
   };
 }
 
@@ -338,11 +365,12 @@ function makeNode(index: number) {
     secondarystat: 2,
     color: 0.5,
     icon: 'database',
+    noderadius: 40,
   };
 }
 
 function nodesFrame() {
-  const fields: any = {
+  const fields = {
     [NodeGraphDataFrameFieldNames.id]: {
       values: [],
       type: FieldType.string,
@@ -366,28 +394,32 @@ function nodesFrame() {
     [NodeGraphDataFrameFieldNames.arc + 'success']: {
       values: [],
       type: FieldType.number,
-      config: { color: { fixedColor: 'green' } },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'green' } },
     },
     [NodeGraphDataFrameFieldNames.arc + 'errors']: {
       values: [],
       type: FieldType.number,
-      config: { color: { fixedColor: 'red' } },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' } },
     },
     [NodeGraphDataFrameFieldNames.color]: {
       values: [],
       type: FieldType.number,
-      config: { color: { mode: 'continuous-GrYlRd' } },
+      config: { color: { mode: FieldColorModeId.ContinuousGrYlRd } },
     },
     [NodeGraphDataFrameFieldNames.icon]: {
       values: [],
       type: FieldType.string,
     },
+    [NodeGraphDataFrameFieldNames.nodeRadius]: {
+      values: [],
+      type: FieldType.number,
+    },
   };
 
   return new MutableDataFrame({
     name: 'nodes',
-    fields: Object.keys(fields).map((key) => ({
-      ...fields[key],
+    fields: Object.entries(fields).map(([key, value]) => ({
+      ...value,
       name: key,
     })),
   });
@@ -408,7 +440,7 @@ export function makeEdgesDataFrame(
 }
 
 function edgesFrame() {
-  const fields: any = {
+  const fields = {
     [NodeGraphDataFrameFieldNames.id]: {
       values: [],
       type: FieldType.string,
@@ -433,8 +465,8 @@ function edgesFrame() {
 
   return new MutableDataFrame({
     name: 'edges',
-    fields: Object.keys(fields).map((key) => ({
-      ...fields[key],
+    fields: Object.entries(fields).map(([key, value]) => ({
+      ...value,
       name: key,
     })),
   });
@@ -592,4 +624,19 @@ export const findConnectedNodesForNode = (nodes: NodeDatum[], edges: EdgeDatum[]
     ];
   }
   return [];
+};
+
+export const getGraphFrame = (frames: DataFrame[]) => {
+  return frames.reduce<GraphFrame>(
+    (acc, frame) => {
+      const sourceField = frame.fields.filter((f) => f.name === 'source');
+      if (frame.name === 'edges' || sourceField.length) {
+        acc.edges.push(frame);
+      } else {
+        acc.nodes.push(frame);
+      }
+      return acc;
+    },
+    { edges: [], nodes: [] }
+  );
 };

@@ -13,6 +13,7 @@ labels:
     - oss
 menuTitle: Build dashboards
 title: Build dashboards
+description: Build dashboards including managing settings, links, and version history
 weight: 2
 ---
 
@@ -24,4 +25,9 @@ This section includes the following topics:
 
 ## Dynamic dashboards
 
-You can create more interactive and dynamic dashboards by adding and using [variables]({{< relref "../variables" >}}). Instead of hard-coding things like server, application, and sensor names in your metric queries, you can use variables in their place. Read more about variables [here]({{< relref "../variables" >}}).
+You can create more interactive and dynamic dashboards by adding and using [variables][]. Instead of hard-coding things like server, application, and sensor names in your metric queries, you can use variables in their place. Read more about variables [here][variables].
+
+{{% docs/reference %}}
+[variables]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+[variables]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/variables"
+{{% /docs/reference %}}

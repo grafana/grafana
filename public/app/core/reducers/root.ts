@@ -1,3 +1,4 @@
+import { ReducersMapObject } from '@reduxjs/toolkit';
 import { AnyAction, combineReducers } from 'redux';
 
 import sharedReducers from 'app/core/reducers';
@@ -58,7 +59,7 @@ const rootReducers = {
 
 const addedReducers = {};
 
-export const addReducer = (newReducers: any) => {
+export const addReducer = (newReducers: ReducersMapObject) => {
   Object.assign(addedReducers, newReducers);
 };
 

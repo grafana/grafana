@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 
 import { arrayUtils } from '@grafana/data';
-import { DeleteButton, HorizontalGroup, Icon, IconButton, TagList } from '@grafana/ui';
-import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
+import { DashboardLink } from '@grafana/schema';
+import { DashboardLinkList } from 'app/features/dashboard-scene/settings/links/DashboardLinkList';
 
-import { DashboardModel, DashboardLink } from '../../state/DashboardModel';
-import { ListNewButton } from '../DashboardSettings/ListNewButton';
+import { DashboardModel } from '../../state/DashboardModel';
 
 type LinkSettingsListProps = {
   dashboard: DashboardModel;
@@ -13,6 +12,10 @@ type LinkSettingsListProps = {
   onEdit: (idx: number) => void;
 };
 
+/**
+ * Used in DashboardSettings to display the list of links.
+ * It updates the DashboardModel instance when links are added, edited, duplicated or deleted.
+ */
 export const LinkSettingsList = ({ dashboard, onNew, onEdit }: LinkSettingsListProps) => {
   const [links, setLinks] = useState(dashboard.links);
 
@@ -21,7 +24,7 @@ export const LinkSettingsList = ({ dashboard, onNew, onEdit }: LinkSettingsListP
     setLinks(dashboard.links);
   };
 
-  const duplicateLink = (link: DashboardLink, idx: number) => {
+  const duplicateLink = (link: DashboardLink) => {
     dashboard.links = [...links, { ...link }];
     setLinks(dashboard.links);
   };
@@ -31,72 +34,14 @@ export const LinkSettingsList = ({ dashboard, onNew, onEdit }: LinkSettingsListP
     setLinks(dashboard.links);
   };
 
-  const isEmptyList = dashboard.links.length === 0;
-
-  if (isEmptyList) {
-    return (
-      <div>
-        <EmptyListCTA
-          onClick={onNew}
-          title="There are no dashboard links added yet"
-          buttonIcon="link"
-          buttonTitle="Add dashboard link"
-          infoBoxTitle="What are dashboard links?"
-          infoBox={{
-            __html:
-              '<p>Dashboard Links allow you to place links to other dashboards and web sites directly below the dashboard header.</p>',
-          }}
-        />
-      </div>
-    );
-  }
-
   return (
-    <>
-      <table role="grid" className="filter-table filter-table--hover">
-        <thead>
-          <tr>
-            <th>Type</th>
-            <th>Info</th>
-            <th colSpan={3} />
-          </tr>
-        </thead>
-        <tbody>
-          {links.map((link, idx) => (
-            <tr key={`${link.title}-${idx}`}>
-              <td role="gridcell" className="pointer" onClick={() => onEdit(idx)}>
-                <Icon name="external-link-alt" /> &nbsp; {link.type}
-              </td>
-              <td role="gridcell">
-                <HorizontalGroup>
-                  {link.title && <span>{link.title}</span>}
-                  {link.type === 'link' && <span>{link.url}</span>}
-                  {link.type === 'dashboards' && <TagList tags={link.tags ?? []} />}
-                </HorizontalGroup>
-              </td>
-              <td style={{ width: '1%' }} role="gridcell">
-                {idx !== 0 && <IconButton name="arrow-up" onClick={() => moveLink(idx, -1)} tooltip="Move link up" />}
-              </td>
-              <td style={{ width: '1%' }} role="gridcell">
-                {links.length > 1 && idx !== links.length - 1 ? (
-                  <IconButton name="arrow-down" onClick={() => moveLink(idx, 1)} tooltip="Move link down" />
-                ) : null}
-              </td>
-              <td style={{ width: '1%' }} role="gridcell">
-                <IconButton name="copy" onClick={() => duplicateLink(link, idx)} tooltip="Copy link" />
-              </td>
-              <td style={{ width: '1%' }} role="gridcell">
-                <DeleteButton
-                  aria-label={`Delete link with title "${link.title}"`}
-                  size="sm"
-                  onConfirm={() => deleteLink(idx)}
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <ListNewButton onClick={onNew}>New link</ListNewButton>
-    </>
+    <DashboardLinkList
+      links={links}
+      onNew={onNew}
+      onEdit={onEdit}
+      onDuplicate={duplicateLink}
+      onDelete={deleteLink}
+      onOrderChange={moveLink}
+    />
   );
 };

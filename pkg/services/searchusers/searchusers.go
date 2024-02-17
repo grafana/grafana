@@ -7,7 +7,9 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service interface {
@@ -16,13 +18,15 @@ type Service interface {
 }
 
 type OSSService struct {
+	cfg              *setting.Cfg
 	searchUserFilter user.SearchUserFilter
 	userService      user.Service
 }
 
-func ProvideUsersService(searchUserFilter user.SearchUserFilter, userService user.Service,
+func ProvideUsersService(cfg *setting.Cfg, searchUserFilter user.SearchUserFilter, userService user.Service,
 ) *OSSService {
 	return &OSSService{
+		cfg:              cfg,
 		searchUserFilter: searchUserFilter,
 		userService:      userService,
 	}
@@ -42,7 +46,7 @@ func ProvideUsersService(searchUserFilter user.SearchUserFilter, userService use
 func (s *OSSService) SearchUsers(c *contextmodel.ReqContext) response.Response {
 	result, err := s.SearchUser(c)
 	if err != nil {
-		return response.Error(500, "Failed to fetch users", err)
+		return response.ErrOrFallback(500, "Failed to fetch users", err)
 	}
 
 	return response.JSON(http.StatusOK, result.Users)
@@ -61,7 +65,7 @@ func (s *OSSService) SearchUsers(c *contextmodel.ReqContext) response.Response {
 func (s *OSSService) SearchUsersWithPaging(c *contextmodel.ReqContext) response.Response {
 	result, err := s.SearchUser(c)
 	if err != nil {
-		return response.Error(500, "Failed to fetch users", err)
+		return response.ErrOrFallback(500, "Failed to fetch users", err)
 	}
 
 	return response.JSON(http.StatusOK, result)
@@ -87,6 +91,11 @@ func (s *OSSService) SearchUser(c *contextmodel.ReqContext) (*user.SearchUserQue
 		}
 	}
 
+	sortOpts, err := sortopts.ParseSortQueryParam(c.Query("sort"))
+	if err != nil {
+		return nil, err
+	}
+
 	query := &user.SearchUsersQuery{
 		// added SignedInUser to the query, as to only list the users that the user has permission to read
 		SignedInUser: c.SignedInUser,
@@ -94,6 +103,7 @@ func (s *OSSService) SearchUser(c *contextmodel.ReqContext) (*user.SearchUserQue
 		Filters:      filters,
 		Page:         page,
 		Limit:        perPage,
+		SortOpts:     sortOpts,
 	}
 	res, err := s.userService.Search(c.Req.Context(), query)
 	if err != nil {
@@ -101,7 +111,7 @@ func (s *OSSService) SearchUser(c *contextmodel.ReqContext) (*user.SearchUserQue
 	}
 
 	for _, user := range res.Users {
-		user.AvatarURL = dtos.GetGravatarUrl(user.Email)
+		user.AvatarURL = dtos.GetGravatarUrl(s.cfg, user.Email)
 		user.AuthLabels = make([]string, 0)
 		if user.AuthModule != nil && len(user.AuthModule) > 0 {
 			for _, authModule := range user.AuthModule {

@@ -50,6 +50,7 @@ export function compareDataFrameStructures(a: DataFrame, b: DataFrame, skipConfi
     // see e.g. https://github.com/Microsoft/TypeScript/issues/12870
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     let aKeys = Object.keys(cfgA) as Array<keyof typeof cfgA>;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     let bKeys = Object.keys(cfgB) as Array<keyof typeof cfgB>;
 
     if (aKeys.length !== bKeys.length) {

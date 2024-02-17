@@ -1,21 +1,17 @@
 import React, { useMemo } from 'react';
 
-import { DataFrame, FieldType, getFieldDisplayName, PanelProps, TimeRange } from '@grafana/data';
+import { DataFrame, FieldMatcherID, fieldMatchers, FieldType, PanelProps, TimeRange } from '@grafana/data';
 import { isLikelyAscendingVector } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import { config, PanelDataErrorView } from '@grafana/runtime';
-import {
-  KeyboardPlugin,
-  preparePlotFrame,
-  TimeSeries,
-  TooltipDisplayMode,
-  TooltipPlugin,
-  usePanelContext,
-} from '@grafana/ui';
-import { XYFieldMatchers } from '@grafana/ui/src/components/GraphNG/types';
+import { KeyboardPlugin, TooltipDisplayMode, usePanelContext, TooltipPlugin, TooltipPlugin2 } from '@grafana/ui';
+import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { XYFieldMatchers } from 'app/core/components/GraphNG/types';
+import { preparePlotFrame } from 'app/core/components/GraphNG/utils';
+import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { findFieldIndex } from 'app/features/dimensions';
 
-import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
-import { prepareGraphableFields, regenerateLinksSupplier } from '../timeseries/utils';
+import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
+import { isTooltipScrollable, prepareGraphableFields, regenerateLinksSupplier } from '../timeseries/utils';
 
 import { Options } from './panelcfg.gen';
 
@@ -30,7 +26,9 @@ export const TrendPanel = ({
   replaceVariables,
   id,
 }: PanelProps<Options>) => {
-  const { sync } = usePanelContext();
+  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
+
+  const { dataLinkPostProcessor } = usePanelContext();
   // Need to fallback to first number field if no xField is set in options otherwise panel crashes 😬
   const trendXFieldName =
     options.xField ?? data.series[0].fields.find((field) => field.type === FieldType.number)?.name;
@@ -38,9 +36,7 @@ export const TrendPanel = ({
   const preparePlotFrameTimeless = (frames: DataFrame[], dimFields: XYFieldMatchers, timeRange?: TimeRange | null) => {
     dimFields = {
       ...dimFields,
-      x: (field, frame, frames) => {
-        return getFieldDisplayName(field, frame, frames) === trendXFieldName;
-      },
+      x: fieldMatchers.get(FieldMatcherID.byName).get(trendXFieldName),
     };
 
     return preparePlotFrame(frames, dimFields);
@@ -57,7 +53,7 @@ export const TrendPanel = ({
     let frames = data.series;
     let xFieldIdx: number | undefined;
     if (options.xField) {
-      xFieldIdx = findFieldIndex(frames[0], options.xField);
+      xFieldIdx = findFieldIndex(options.xField, frames[0]);
       if (xFieldIdx == null) {
         return {
           warning: 'Unable to find field: ' + options.xField,
@@ -114,34 +110,57 @@ export const TrendPanel = ({
       options={options}
       preparePlotFrame={preparePlotFrameTimeless}
     >
-      {(config, alignedDataFrame) => {
+      {(uPlotConfig, alignedDataFrame) => {
         if (alignedDataFrame.fields.some((f) => Boolean(f.config.links?.length))) {
-          alignedDataFrame = regenerateLinksSupplier(alignedDataFrame, info.frames!, replaceVariables, timeZone);
+          alignedDataFrame = regenerateLinksSupplier(
+            alignedDataFrame,
+            info.frames!,
+            replaceVariables,
+            timeZone,
+            dataLinkPostProcessor
+          );
         }
 
         return (
           <>
-            <KeyboardPlugin config={config} />
-            {options.tooltip.mode === TooltipDisplayMode.None || (
-              <TooltipPlugin
-                frames={info.frames!}
-                data={alignedDataFrame}
-                config={config}
-                mode={options.tooltip.mode}
-                sortOrder={options.tooltip.sort}
-                sync={sync}
-                timeZone={timeZone}
-              />
+            <KeyboardPlugin config={uPlotConfig} />
+            {options.tooltip.mode !== TooltipDisplayMode.None && (
+              <>
+                {showNewVizTooltips ? (
+                  <TooltipPlugin2
+                    config={uPlotConfig}
+                    hoverMode={
+                      options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
+                    }
+                    render={(u, dataIdxs, seriesIdx, isPinned = false) => {
+                      return (
+                        <TimeSeriesTooltip
+                          frames={info.frames!}
+                          seriesFrame={alignedDataFrame}
+                          dataIdxs={dataIdxs}
+                          seriesIdx={seriesIdx}
+                          mode={options.tooltip.mode}
+                          sortOrder={options.tooltip.sort}
+                          isPinned={isPinned}
+                          scrollable={isTooltipScrollable(options.tooltip)}
+                        />
+                      );
+                    }}
+                    maxWidth={options.tooltip.maxWidth}
+                    maxHeight={options.tooltip.maxHeight}
+                  />
+                ) : (
+                  <TooltipPlugin
+                    frames={info.frames!}
+                    data={alignedDataFrame}
+                    config={uPlotConfig}
+                    mode={options.tooltip.mode}
+                    sortOrder={options.tooltip.sort}
+                    timeZone={timeZone}
+                  />
+                )}
+              </>
             )}
-
-            <ContextMenuPlugin
-              data={alignedDataFrame}
-              frames={info.frames!}
-              config={config}
-              timeZone={timeZone}
-              replaceVariables={replaceVariables}
-              defaultItems={[]}
-            />
           </>
         );
       }}

@@ -1,18 +1,21 @@
 import { css, cx } from '@emotion/css';
 import React, { ComponentProps, HTMLAttributes } from 'react';
 
-import { Stack } from '@grafana/experimental';
-import { Icon, IconName, useStyles2 } from '@grafana/ui';
-import { Span } from '@grafana/ui/src/unstable';
+import { Icon, IconName, useStyles2, Text, Stack } from '@grafana/ui';
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
   icon?: IconName;
-  color?: ComponentProps<typeof Span>['color'];
+  direction?: 'row' | 'column';
+  color?: ComponentProps<typeof Text>['color'];
 }
 
-const MetaText = ({ children, icon, color = 'secondary', ...rest }: Props) => {
+const MetaText = ({ children, icon, color = 'secondary', direction = 'row', ...rest }: Props) => {
   const styles = useStyles2(getStyles);
   const interactive = typeof rest.onClick === 'function';
+
+  const rowDirection = direction === 'row';
+  const alignItems = rowDirection ? 'center' : 'flex-start';
+  const gap = rowDirection ? 0.5 : 0;
 
   return (
     <div
@@ -22,12 +25,12 @@ const MetaText = ({ children, icon, color = 'secondary', ...rest }: Props) => {
       // allow passing ARIA and data- attributes
       {...rest}
     >
-      <Span variant="bodySmall" color={color}>
-        <Stack direction="row" alignItems="center" gap={0.5}>
-          {icon && <Icon name={icon} />}
+      <Text variant="bodySmall" color={color}>
+        <Stack direction={direction} alignItems={alignItems} gap={gap} wrap={'wrap'}>
+          {icon && <Icon size="sm" name={icon} />}
           {children}
         </Stack>
-      </Span>
+      </Text>
     </div>
   );
 };

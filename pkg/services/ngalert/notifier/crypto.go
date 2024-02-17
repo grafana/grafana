@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
@@ -19,6 +18,7 @@ type Crypto interface {
 	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
 
 	getDecryptedSecret(r *definitions.PostableGrafanaReceiver, key string) (string, error)
+	ProcessSecureSettings(ctx context.Context, orgId int64, recvs []*definitions.PostableApiReceiver) error
 }
 
 // alertmanagerCrypto implements decryption of Alertmanager configuration and encryption of arbitrary payloads based on Grafana's encryptions.
@@ -36,11 +36,50 @@ func NewCrypto(secrets secrets.Service, configs configurationStore, log log.Logg
 	}
 }
 
+// ProcessSecureSettings encrypts new secure settings and loads existing secure settings from the database.
+func (c *alertmanagerCrypto) ProcessSecureSettings(ctx context.Context, orgId int64, recvs []*definitions.PostableApiReceiver) error {
+	// First, we encrypt the new or updated secure settings. Then, we load the existing secure settings from the database
+	// and add back any that weren't updated.
+	// We perform these steps in this order to ensure the hash of the secure settings remains stable when no secure
+	// settings were modified.
+	if err := EncryptReceiverConfigs(recvs, func(ctx context.Context, payload []byte) ([]byte, error) {
+		return c.Encrypt(ctx, payload, secrets.WithoutScope())
+	}); err != nil {
+		return fmt.Errorf("failed to encrypt receivers: %w", err)
+	}
+
+	if err := c.LoadSecureSettings(ctx, orgId, recvs); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// EncryptReceiverConfigs encrypts all SecureSettings in the given receivers.
+func EncryptReceiverConfigs(c []*definitions.PostableApiReceiver, encrypt definitions.EncryptFn) error {
+	// encrypt secure settings for storing them in DB
+	for _, r := range c {
+		switch r.Type() {
+		case definitions.GrafanaReceiverType:
+			for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
+				for k, v := range gr.SecureSettings {
+					encryptedData, err := encrypt(context.Background(), []byte(v))
+					if err != nil {
+						return fmt.Errorf("failed to encrypt secure settings: %w", err)
+					}
+					gr.SecureSettings[k] = base64.StdEncoding.EncodeToString(encryptedData)
+				}
+			}
+		default:
+		}
+	}
+	return nil
+}
+
 // LoadSecureSettings adds the corresponding unencrypted secrets stored to the list of input receivers.
 func (c *alertmanagerCrypto) LoadSecureSettings(ctx context.Context, orgId int64, receivers []*definitions.PostableApiReceiver) error {
 	// Get the last known working configuration.
-	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: orgId}
-	amConfig, err := c.configs.GetLatestAlertmanagerConfiguration(ctx, &query)
+	amConfig, err := c.configs.GetLatestAlertmanagerConfiguration(ctx, orgId)
 	if err != nil {
 		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one.
 		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {

@@ -9,8 +9,8 @@ import { TimePickerWithHistory } from './TimePickerWithHistory';
 describe('TimePickerWithHistory', () => {
   // In some of the tests we close and re-open the picker. When we do that we must re-find these inputs
   // as new elements will have been mounted
-  const getFromField = () => screen.getByLabelText('Time Range from field');
-  const getToField = () => screen.getByLabelText('Time Range to field');
+  const getFromField = () => screen.getByLabelText('From');
+  const getToField = () => screen.getByLabelText('To');
   const getApplyButton = () => screen.getByRole('button', { name: 'Apply time range' });
 
   const LOCAL_STORAGE_KEY = 'grafana.dashboard.timepicker.history';
@@ -113,7 +113,6 @@ describe('TimePickerWithHistory', () => {
 
     const timeRange = getDefaultTimeRange();
     render(<TimePickerWithHistory value={timeRange} {...props} />);
-    await userEvent.click(screen.getByLabelText(/Time range selected/));
 
     for (const [inputFrom, inputTo] of inputRanges) {
       await userEvent.click(screen.getByLabelText(/Time range selected/));
@@ -129,7 +128,7 @@ describe('TimePickerWithHistory', () => {
 
   it('Should display handle timezones correctly', async () => {
     const timeRange = getDefaultTimeRange();
-    render(<TimePickerWithHistory value={timeRange} {...props} {...{ timeZone: 'Eastern/Pacific' }} />);
+    render(<TimePickerWithHistory value={timeRange} {...props} {...{ timeZone: 'Asia/Tokyo' }} />);
     await userEvent.click(screen.getByLabelText(/Time range selected/));
 
     await clearAndType(getFromField(), '2022-12-10 00:00:00');

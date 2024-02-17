@@ -3,23 +3,27 @@ import { uniq } from 'lodash';
 import {
   AbsoluteTimeRange,
   DataSourceApi,
+  dateMath,
+  DateTime,
   EventBusExtended,
   getDefaultTimeRange,
   HistoryItem,
+  isDateTime,
   LoadingState,
   LogRowModel,
   PanelData,
   RawTimeRange,
+  ScopedVars,
   TimeFragment,
   TimeRange,
-  dateMath,
-  DateTime,
-  isDateTime,
   toUtc,
+  URLRange,
+  URLRangeValue,
 } from '@grafana/data';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { DataQuery, DataSourceRef, TimeZone } from '@grafana/schema';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { ExplorePanelData } from 'app/types';
+import { ExplorePanelData, StoreState } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';
 
 import store from '../../../core/store';
@@ -28,7 +32,7 @@ import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 
 export const DEFAULT_RANGE = {
-  from: 'now-6h',
+  from: 'now-1h',
   to: 'now',
 };
 
@@ -40,7 +44,7 @@ export const storeGraphStyle = (graphStyle: string): void => {
 /**
  * Returns a fresh Explore area state
  */
-export const makeExplorePaneState = (): ExploreItemState => ({
+export const makeExplorePaneState = (overrides?: Partial<ExploreItemState>): ExploreItemState => ({
   containerWidth: 0,
   datasourceInstance: null,
   history: [],
@@ -71,6 +75,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
   correlations: undefined,
+  ...overrides,
 });
 
 export const createEmptyQueryResponse = (): ExplorePanelData => ({
@@ -144,12 +149,7 @@ export function getResultsFromCache(
   return cacheValue;
 }
 
-export function getRange(range: RawTimeRange, timeZone: TimeZone): TimeRange {
-  const raw = {
-    from: parseRawTime(range.from)!,
-    to: parseRawTime(range.to)!,
-  };
-
+export function getRange(raw: RawTimeRange, timeZone: TimeZone): TimeRange {
   return {
     from: dateMath.parse(raw.from, false, timeZone)!,
     to: dateMath.parse(raw.to, true, timeZone)!,
@@ -157,14 +157,33 @@ export function getRange(range: RawTimeRange, timeZone: TimeZone): TimeRange {
   };
 }
 
-function parseRawTime(value: string | DateTime): TimeFragment | null {
-  if (value === null) {
+export function fromURLRange(range: URLRange): RawTimeRange {
+  let rawTimeRange: RawTimeRange = DEFAULT_RANGE;
+  let parsedRange = {
+    from: parseRawTime(range.from),
+    to: parseRawTime(range.to),
+  };
+  if (parsedRange.from !== null && parsedRange.to !== null) {
+    rawTimeRange = { from: parsedRange.from, to: parsedRange.to };
+  }
+  return rawTimeRange;
+}
+
+function parseRawTime(urlRangeValue: URLRangeValue | DateTime): TimeFragment | null {
+  if (urlRangeValue === null) {
     return null;
   }
 
-  if (isDateTime(value)) {
-    return value;
+  if (isDateTime(urlRangeValue)) {
+    return urlRangeValue;
   }
+
+  if (typeof urlRangeValue !== 'string') {
+    return null;
+  }
+
+  // it can only be a string now
+  const value = urlRangeValue;
 
   if (value.indexOf('now') !== -1) {
     return value;
@@ -218,3 +237,23 @@ export const getDatasourceUIDs = (datasourceUID: string, queries: DataQuery[]): 
     return [datasourceUID];
   }
 };
+
+export async function getCorrelationsData(state: StoreState, exploreId: string) {
+  const correlationEditorHelperData = state.explore.panes[exploreId]!.correlationEditorHelperData;
+
+  const isCorrelationEditorMode = state.explore.correlationEditorDetails?.editorMode || false;
+  const isLeftPane = Object.keys(state.explore.panes)[0] === exploreId;
+  const showCorrelationEditorLinks = isCorrelationEditorMode && isLeftPane;
+  const defaultCorrelationEditorDatasource = showCorrelationEditorLinks ? await getDataSourceSrv().get() : undefined;
+  const interpolateCorrelationHelperVars =
+    isCorrelationEditorMode && !isLeftPane && correlationEditorHelperData !== undefined;
+
+  let scopedVars: ScopedVars = {};
+  if (interpolateCorrelationHelperVars && correlationEditorHelperData !== undefined) {
+    Object.entries(correlationEditorHelperData?.vars).forEach((variable) => {
+      scopedVars[variable[0]] = { value: variable[1] };
+    });
+  }
+
+  return { defaultCorrelationEditorDatasource, scopedVars, showCorrelationEditorLinks };
+}

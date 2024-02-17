@@ -1,11 +1,13 @@
 package util
 
 import (
+	"fmt"
 	"sync"
 	"testing"
 
-	"github.com/google/uuid"
+	"cuelang.org/go/pkg/strings"
 	"github.com/stretchr/testify/require"
+	"github.com/teris-io/shortid"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
@@ -47,12 +49,25 @@ func TestRandomUIDs(t *testing.T) {
 			t.Fatalf("created invalid name: %v", validation)
 		}
 
-		_, err := uuid.Parse(v)
-		require.NoError(t, err)
-
-		//fmt.Println(v)
+		//	fmt.Println(v)
 	}
 	// t.FailNow()
+}
+
+func TestCaseInsensitiveCollisionsUIDs(t *testing.T) {
+	history := make(map[string]bool, 0)
+	for i := 0; i < 100000; i++ {
+		v := GenerateShortUID()
+		if false {
+			v, _ = shortid.Generate() // collides in less then 500 iterations
+		}
+
+		lower := strings.ToLower(v)
+		_, exists := history[lower]
+		require.False(t, exists, fmt.Sprintf("already found: %s (index:%d)", v, i))
+
+		history[lower] = true
+	}
 }
 
 func TestIsShortUIDTooLong(t *testing.T) {
@@ -81,6 +96,50 @@ func TestIsShortUIDTooLong(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			require.Equal(t, tt.expected, IsShortUIDTooLong(tt.uid))
+		})
+	}
+}
+
+func TestValidateUID(t *testing.T) {
+	var tests = []struct {
+		name     string
+		uid      string
+		expected error
+	}{
+		{
+			name:     "no error when string is of correct length",
+			uid:      "f8cc010c-ee72-4681-89d2-d46e1bd47d33",
+			expected: nil,
+		},
+		{
+			name:     "error when string is empty",
+			uid:      "",
+			expected: ErrUIDEmpty,
+		},
+		{
+			name:     "error when string is too long",
+			uid:      strings.Repeat("1", MaxUIDLength+1),
+			expected: ErrUIDTooLong,
+		},
+		{
+			name:     "error when string has invalid characters",
+			uid:      "f8cc010c.ee72.4681;89d2+d46e1bd47d33",
+			expected: ErrUIDFormatInvalid,
+		},
+		{
+			name:     "error when string has only whitespaces",
+			uid:      " ",
+			expected: ErrUIDFormatInvalid,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateUID(tt.uid)
+			if tt.expected == nil {
+				require.NoError(t, err)
+			} else {
+				require.ErrorIs(t, err, tt.expected)
+			}
 		})
 	}
 }

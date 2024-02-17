@@ -2,16 +2,22 @@ import { omit } from 'lodash';
 import React, { PureComponent, useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
-import { DataQuery, DataSourceInstanceSettings, LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
-import { Stack } from '@grafana/experimental';
+import {
+  DataQuery,
+  DataSourceInstanceSettings,
+  LoadingState,
+  PanelData,
+  rangeUtil,
+  RelativeTimeRange,
+} from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { Button, Card, Icon } from '@grafana/ui';
+import { Button, Card, Icon, Stack } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { AlertQueryOptions, EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
-import { errorFromSeries, getThresholdsForQueries } from './util';
+import { errorFromCurrentCondition, errorFromPreviewData, getThresholdsForQueries } from './util';
 
 interface Props {
   // The query configuration
@@ -61,7 +67,11 @@ export class QueryRows extends PureComponent<Props> {
         }
         return {
           ...item,
-          model: { ...item.model, maxDataPoints: options.maxDataPoints },
+          model: {
+            ...item.model,
+            maxDataPoints: options.maxDataPoints,
+            intervalMs: options.minInterval ? rangeUtil.intervalToMs(options.minInterval) : undefined,
+          },
         };
       })
     );
@@ -134,8 +144,8 @@ export class QueryRows extends PureComponent<Props> {
   };
 
   render() {
-    const { queries, expressions } = this.props;
-    const thresholdByRefId = getThresholdsForQueries([...queries, ...expressions]);
+    const { queries, expressions, condition } = this.props;
+    const thresholdByRefId = getThresholdsForQueries([...queries, ...expressions], condition);
 
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
@@ -145,14 +155,18 @@ export class QueryRows extends PureComponent<Props> {
               <div ref={provided.innerRef} {...provided.droppableProps}>
                 <Stack direction="column">
                   {queries.map((query, index) => {
+                    const isCondition = this.props.condition === query.refId;
                     const data: PanelData = this.props.data?.[query.refId] ?? {
                       series: [],
                       state: LoadingState.NotStarted,
                     };
                     const dsSettings = this.getDataSourceSettings(query);
-
-                    const isAlertCondition = this.props.condition === query.refId;
-                    const error = isAlertCondition ? errorFromSeries(data.series) : undefined;
+                    let error: Error | undefined = undefined;
+                    if (data && isCondition) {
+                      error = errorFromCurrentCondition(data);
+                    } else if (data) {
+                      error = errorFromPreviewData(data);
+                    }
 
                     if (!dsSettings) {
                       return (

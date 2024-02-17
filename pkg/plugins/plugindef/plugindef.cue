@@ -16,8 +16,12 @@ schemas: [{
 		// grafana.com, then the plugin `id` has to follow the naming
 		// conventions.
 		id: string & strings.MinRunes(1)
-		id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([ for t in _types {t}], "|"))))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|datagrid|gauge|geomap|gettingstarted|graph|heatmap|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|trend|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|testdata|zipkin|phlare|parca)$"
+		id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([ for t in _types {t}], "|"))))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|datagrid|gauge|geomap|gettingstarted|graph|heatmap|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|trend|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|stackdriver|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|grafana-testdata-datasource|zipkin|phlare|parca)$"
 
+		// An alias is useful when migrating from one plugin id to another (rebranding etc)
+		// This should be used sparingly, and is currently only supported though a hardcoded checklist
+		aliasIDs?: [...string]
+		
 		// Human-readable name of the plugin that is shown to the user in
 		// the UI.
 		name: string
@@ -125,7 +129,7 @@ schemas: [{
 
 			// Required Grafana version for this plugin. Validated using
 			// https://github.com/npm/node-semver.
-			grafanaDependency: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?$"
+			grafanaDependency?: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?(\\-[0-9]+)?$"
 
 			// An array of required plugins on which this plugin depends
 			plugins?: [...#Dependency]
@@ -341,7 +345,7 @@ schemas: [{
 		// A proxy route used in datasource plugins for plugin authentication
 		// and adding headers to HTTP requests made by the plugin.
 		// For more information, refer to [Authentication for data source
-		// plugins](https://grafana.com/docs/grafana/latest/developers/plugins/authentication/).
+		// plugins](https://grafana.com/developers/plugin-tools/create-a-plugin/extend-a-plugin/add-authentication-for-data-source-plugins).
 		#Route: {
 			// For data source plugins. The route path that is replaced by the
 			// route URL field when proxying the call.
@@ -359,6 +363,9 @@ schemas: [{
 			urlParams?: [...#URLParam]
 			reqSignedIn?: bool
 			reqRole?:     string
+
+			// RBAC action the user must have to access the route. i.e. plugin-id.projects:read
+			reqAction?: string
 
 			// For data source plugins. Route headers adds HTTP headers to the
 			// proxied request.
@@ -406,34 +413,28 @@ schemas: [{
 			params: [string]: string
 		}
 
-		// External service registration information
-		externalServiceRegistration: #ExternalServiceRegistration
+		// Identity and Access Management information.
+		// Allows the plugin to define the permissions it requires to have on Grafana.
+		iam: #IAM
 
-		#ExternalServiceRegistration: {
+		// IAM allows the plugin to get a service account with tailored permissions and a token
+		// (or to use the client_credentials grant if the token provider is the OAuth2 Server)
+		#IAM: {
+			// Permissions are the permissions that the external service needs its associated service account to have.
+			permissions?: [...#Permission]
+
 			// Impersonation describes the permissions that the external service will have on behalf of the user
+			// This is only available with the OAuth2 Server
 			impersonation?: #Impersonation
-			// Self describes the permissions that the external service will have on behalf of itself
-			self?: 		#Self
 		}
 
 		#Impersonation: {
-			// Enabled allows the service to request access tokens to impersonate users using the jwtbearer grant
-			// Defaults to true.
-			enabled?: bool
 			// Groups allows the service to list the impersonated user's teams.
 			// Defaults to true.
 			groups?: bool
 			// Permissions are the permissions that the external service needs when impersonating a user.
 			// The intersection of this set with the impersonated user's permission guarantees that the client will not
 			// gain more privileges than the impersonated user has.
-			permissions?: [...#Permission]
-		}
-
-		#Self: {
-			// Enabled allows the service to request access tokens for itself using the client_credentials grant
-			// Defaults to true.
-			enabled?: bool
-			// Permissions are the permissions that the external service needs its associated service account to have.
 			permissions?: [...#Permission]
 		}
 	}

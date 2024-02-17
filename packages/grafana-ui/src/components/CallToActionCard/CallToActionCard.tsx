@@ -27,7 +27,6 @@ export const CallToActionCard = ({ message, callToActionElement, footer, classNa
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     label: 'call-to-action-card',
-    padding: theme.spacing(3),
     background: theme.colors.background.secondary,
     borderRadius: theme.shape.radius.default,
     display: 'flex',
@@ -35,6 +34,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
     justifyContent: 'center',
     flexGrow: 1,
+    padding: theme.spacing(3),
+    [theme.breakpoints.down('sm')]: {
+      padding: theme.spacing(3, 1),
+    },
   }),
   message: css({
     marginBottom: theme.spacing(3),

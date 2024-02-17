@@ -15,12 +15,14 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/login/social/socialtest"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -66,10 +68,10 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	orgService := orgtest.NewOrgServiceFake()
 	orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{}
 	hs.orgService = orgService
+	setUpGetOrgUsersDB(t, sqlStore)
 	mock := dbtest.NewFakeDB()
 
 	loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
-		setUpGetOrgUsersDB(t, sqlStore)
 		orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
 			OrgUsers: []*org.OrgUserDTO{
 				{Login: testUserLogin, Email: "testUser@grafana.com"},
@@ -89,8 +91,6 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET on", "api/org/users/search", "api/org/users/search", func(sc *scenarioContext) {
-		setUpGetOrgUsersDB(t, sqlStore)
-
 		orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
 			OrgUsers: []*org.OrgUserDTO{
 				{
@@ -123,8 +123,6 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	}, mock)
 
 	loggedInUserScenario(t, "When calling GET with page and limit query parameters on", "api/org/users/search", "api/org/users/search", func(sc *scenarioContext) {
-		setUpGetOrgUsersDB(t, sqlStore)
-
 		orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
 			OrgUsers: []*org.OrgUserDTO{
 				{
@@ -159,7 +157,6 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 		t.Cleanup(func() { settings.HiddenUsers = make(map[string]struct{}) })
 
 		loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
-			setUpGetOrgUsersDB(t, sqlStore)
 			orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{
 				OrgUsers: []*org.OrgUserDTO{
 					{Login: testUserLogin, Email: "testUser@grafana.com"},
@@ -183,8 +180,6 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 		loggedInUserScenarioWithRole(t, "When calling GET as an admin on", "GET", "api/org/users/lookup",
 			"api/org/users/lookup", org.RoleAdmin, func(sc *scenarioContext) {
-				setUpGetOrgUsersDB(t, sqlStore)
-
 				sc.handlerFunc = hs.GetOrgUsersForCurrentOrgLookup
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 
@@ -230,10 +225,10 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 			expectedCode:    http.StatusForbidden,
 		},
 		{
-			desc:            "should not be able to change basicRole with a different provider",
+			desc:            "should not be able to change basicRole for a user synced through an OAuth provider",
 			SkipOrgRoleSync: false,
 			AuthEnabled:     true,
-			AuthModule:      login.GenericOAuthModule,
+			AuthModule:      login.GrafanaComAuthModule,
 			expectedCode:    http.StatusForbidden,
 		},
 		{
@@ -263,21 +258,17 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 				if tt.AuthModule == login.LDAPAuthModule {
 					hs.Cfg.LDAPAuthEnabled = tt.AuthEnabled
 					hs.Cfg.LDAPSkipOrgRoleSync = tt.SkipOrgRoleSync
-				} else if tt.AuthModule == login.GenericOAuthModule {
-					hs.Cfg.GenericOAuthAuthEnabled = tt.AuthEnabled
-					hs.Cfg.GenericOAuthSkipOrgRoleSync = tt.SkipOrgRoleSync
-				} else if tt.AuthModule == "" {
-					// authmodule empty means basic auth
-				} else {
-					t.Errorf("invalid auth module for test: %s", tt.AuthModule)
 				}
+				// AuthModule empty means basic auth
 
-				hs.authInfoService = &logintest.AuthInfoServiceFake{
+				hs.authInfoService = &authinfotest.FakeService{
 					ExpectedUserAuth: &login.UserAuth{AuthModule: tt.AuthModule},
 				}
-				hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagOnlyExternalOrgRoleSync, true)
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions}
 				hs.orgService = &orgtest.FakeOrgService{}
+				hs.SocialService = &socialtest.FakeSocialService{
+					ExpectedAuthInfoProvider: &social.OAuthInfo{Enabled: tt.AuthEnabled, SkipOrgRoleSync: tt.SkipOrgRoleSync},
+				}
 				hs.accesscontrolService = &actest.FakeService{
 					ExpectedPermissions: permissions,
 				}
@@ -317,7 +308,7 @@ func TestOrgUsersAPIEndpoint(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.orgService = &orgtest.FakeOrgService{ExpectedSearchOrgUsersResult: &org.SearchOrgUsersQueryResult{}}
-				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+				hs.authInfoService = &authinfotest.FakeService{}
 			})
 			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/org/users/lookup"), userWithPermissions(1, tt.permissions)))
 			require.NoError(t, err)
@@ -375,7 +366,7 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 				hs.orgService = &orgtest.FakeOrgService{
 					ExpectedSearchOrgUsersResult: &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{{UserID: 1}}},
 				}
-				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+				hs.authInfoService = &authinfotest.FakeService{}
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions(1, tt.permissions)}
 			})
 
@@ -433,8 +424,9 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				hs.orgService = &orgtest.FakeOrgService{
 					ExpectedSearchOrgUsersResult: &org.SearchOrgUsersQueryResult{},
 				}
-				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+				hs.authInfoService = &authinfotest.FakeService{}
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions(1, tc.permissions)}
+				hs.accesscontrolService = &actest.FakeService{}
 			})
 
 			u := userWithPermissions(1, tc.permissions)
@@ -475,11 +467,12 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.orgService = &orgtest.FakeOrgService{}
-				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+				hs.authInfoService = &authinfotest.FakeService{}
 				hs.userService = &usertest.FakeUserService{
 					ExpectedUser:         &user.User{},
 					ExpectedSignedInUser: userWithPermissions(1, tt.permissions),
 				}
+				hs.accesscontrolService = &actest.FakeService{}
 			})
 
 			u := userWithPermissions(1, tt.permissions)
@@ -599,7 +592,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.orgService = &orgtest.FakeOrgService{}
-				hs.authInfoService = &logintest.AuthInfoServiceFake{
+				hs.authInfoService = &authinfotest.FakeService{
 					ExpectedUserAuth: &login.UserAuth{
 						AuthModule: "",
 					},
@@ -661,7 +654,7 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.orgService = &orgtest.FakeOrgService{}
-				hs.authInfoService = &logintest.AuthInfoServiceFake{
+				hs.authInfoService = &authinfotest.FakeService{
 					ExpectedUserAuth: &login.UserAuth{
 						AuthModule: "",
 					},
@@ -714,7 +707,7 @@ func TestDeleteOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 						Response error
 					}{OrgID: 1, Response: nil}},
 				}
-				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+				hs.authInfoService = &authinfotest.FakeService{}
 				hs.userService = &usertest.FakeUserService{
 					ExpectedUser:         &user.User{},
 					ExpectedSignedInUser: userWithPermissions(1, tt.permissions),

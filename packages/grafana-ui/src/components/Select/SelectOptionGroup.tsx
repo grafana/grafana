@@ -81,11 +81,11 @@ class UnthemedSelectOptionGroup extends PureComponent<ExtendedGroupProps, State>
 
     return (
       <div>
-        {/* TODO: fix keyboard a11y */}
-        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-        <div className={styles.header} onClick={this.onToggleChildren}>
+        {/*React Select doesn't support focusable option group headers, this will be skipped when using
+      the keyboard */}
+        <div className={styles.header} onClick={this.onToggleChildren} role="presentation">
           <span className={styles.label}>{label}</span>
-          <Icon className={styles.icon} name={expanded ? 'angle-up' : 'angle-down'} />{' '}
+          <Icon className={styles.icon} name={expanded ? 'angle-up' : 'angle-down'} />
         </div>
         {expanded && children}
       </div>

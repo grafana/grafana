@@ -5,6 +5,7 @@ import { DashboardViewItem } from 'app/features/search/types';
 import { useSelector, StoreState, useDispatch } from 'app/types';
 
 import { PAGE_SIZE } from '../api/services';
+import { isSharedWithMe } from '../components/utils';
 import {
   BrowseDashboardsState,
   DashboardsTreeItem,
@@ -130,7 +131,7 @@ export function useLoadNextChildrenPage(
 }
 
 /**
- * Creates a list of items, with level indicating it's 'nested' in the tree structure
+ * Creates a list of items, with level indicating it's nesting in the tree structure
  *
  * @param folderUID The UID of the folder being viewed, or undefined if at root Browse Dashboards page
  * @param rootItems Array of loaded items at the root level (without a parent). If viewing a folder, we expect this to be empty and unused
@@ -144,10 +145,11 @@ export function createFlatTree(
   childrenByUID: BrowseDashboardsState['childrenByParentUID'],
   openFolders: Record<string, boolean>,
   level = 0,
-  excludeKinds: Array<DashboardViewItemWithUIItems['kind'] | UIDashboardViewItem['uiKind']> = []
+  excludeKinds: Array<DashboardViewItemWithUIItems['kind'] | UIDashboardViewItem['uiKind']> = [],
+  excludeUIDs: string[] = []
 ): DashboardsTreeItem[] {
   function mapItem(item: DashboardViewItem, parentUID: string | undefined, level: number): DashboardsTreeItem[] {
-    if (excludeKinds.includes(item.kind)) {
+    if (excludeKinds.includes(item.kind) || excludeUIDs.includes(item.uid)) {
       return [];
     }
 
@@ -157,7 +159,8 @@ export function createFlatTree(
       childrenByUID,
       openFolders,
       level + 1,
-      excludeKinds
+      excludeKinds,
+      excludeUIDs
     );
 
     const isOpen = Boolean(openFolders[item.uid]);
@@ -178,7 +181,22 @@ export function createFlatTree(
       isOpen,
     };
 
-    return [thisItem, ...mappedChildren];
+    const items = [thisItem, ...mappedChildren];
+
+    if (isSharedWithMe(thisItem.item.uid)) {
+      items.push({
+        item: {
+          kind: 'ui',
+          uiKind: 'divider',
+          uid: 'shared-with-me-divider',
+        },
+        parentUID,
+        level: level + 1,
+        isOpen: false,
+      });
+    }
+
+    return items;
   }
 
   const isOpen = (folderUID && openFolders[folderUID]) || level === 0;
@@ -193,7 +211,16 @@ export function createFlatTree(
     return mapItem(item, folderUID, level);
   });
 
-  if ((level === 0 && !collection) || (isOpen && collection && !collection.isFullyLoaded)) {
+  // this is very custom to the folder picker right now
+  // we exclude dashboards, but if you have more than 1 page of dashboards collection.isFullyLoaded is false
+  // so we need to check that we're ignoring dashboards and we've fetched all the folders
+  // TODO generalize this properly (e.g. split state by kind?)
+  const isConsideredLoaded = excludeKinds.includes('dashboard') && collection?.lastFetchedKind === 'dashboard';
+
+  const showPlaceholders =
+    (level === 0 && !collection) || (isOpen && collection && !(collection.isFullyLoaded || isConsideredLoaded));
+
+  if (showPlaceholders) {
     children = children.concat(getPaginationPlaceholders(PAGE_SIZE, folderUID, level));
   }
 

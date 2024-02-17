@@ -17,6 +17,10 @@ weight: 700
 
 # API keys
 
+{{% admonition type="note" %}}
+Deprecated: [Service accounts]({{< relref "../service-accounts/" >}}) have replaced API keys as the primary way to authenticate applications that interact with Grafana.
+{{% /admonition %}}
+
 An API key is a randomly generated string that external systems use to interact with Grafana HTTP APIs.
 
 When you create an API key, you specify a **Role** that determines the permissions associated with the API key. Role permissions control that actions the API key can perform on Grafana resources.
@@ -48,7 +52,7 @@ To follow these instructions, you need at least one of the following:
 To create an API, complete the following steps:
 
 1. Sign in to Grafana.
-1. Click **Administration** in the left-side menu and select **API Keys**.
+1. Click **Administration** in the left-side menu, **Users and access**, and select **API Keys**.
 1. Click **Add API key**.
 1. Enter a unique name for the key.
 1. In the **Role** field, select one of the following access levels you want to assign to the key.
@@ -101,7 +105,7 @@ For more information about permissions, refer to [Roles and permissions]({{< rel
 
 To migrate all API keys to service accounts, complete the following steps:
 
-1. Sign in to Grafana, point to **Configuration** (the gear icon), and click **API Keys**.
+1. Sign in to Grafana, point to **Administration**, **Users and access**, and click **API Keys**.
 1. In the top of the page, find the section which says **Switch from API keys to service accounts**
 1. Click **Migrate to service accounts now**.
 1. A confirmation window will appear, asking to confirm the migration. Click **Yes, migrate now** if you are willing to continue.
@@ -110,7 +114,7 @@ To migrate all API keys to service accounts, complete the following steps:
 To migrate a single API key to a service account, complete the following steps:
 
 1. Sign in to Grafana.
-1. Click **Administration** in the left-side menu and select **API Keys**.
+1. Click **Administration** in the left-side menu, **Users and access**, and select **API Keys**.
 1. Find the API Key you want to migrate.
 1. Click **Migrate to service account**.
 
@@ -135,7 +139,7 @@ Complete the following steps to migrate from API keys to service accounts for AP
    This action generates a service account token.
 
 1. Store the ID and secret that the system returns to you.
-1. Pass the token in the `Authrorization` header, prefixed with `Bearer`.
+1. Pass the token in the `Authorization` header, prefixed with `Bearer`.
 
    This action authenticates API requests.
 

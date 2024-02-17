@@ -4,14 +4,22 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
-// swagger:route GET /api/v1/provisioning/contact-points provisioning stable RouteGetContactpoints
+// swagger:route GET /v1/provisioning/contact-points provisioning stable RouteGetContactpoints
 //
 // Get all the contact points.
 //
 //     Responses:
 //       200: ContactPoints
 
-// swagger:route POST /api/v1/provisioning/contact-points provisioning stable RoutePostContactpoints
+// swagger:route GET /v1/provisioning/contact-points/export provisioning stable RouteGetContactpointsExport
+//
+// Export all contact points in provisioning file format.
+//
+//     Responses:
+//       200: AlertingFileExport
+//       403: PermissionDenied
+
+// swagger:route POST /v1/provisioning/contact-points provisioning stable RoutePostContactpoints
 //
 // Create a contact point.
 //
@@ -22,7 +30,7 @@ import (
 //       202: EmbeddedContactPoint
 //       400: ValidationError
 
-// swagger:route PUT /api/v1/provisioning/contact-points/{UID} provisioning stable RoutePutContactpoint
+// swagger:route PUT /v1/provisioning/contact-points/{UID} provisioning stable RoutePutContactpoint
 //
 // Update an existing contact point.
 //
@@ -33,7 +41,7 @@ import (
 //       202: Ack
 //       400: ValidationError
 
-// swagger:route DELETE /api/v1/provisioning/contact-points/{UID} provisioning stable RouteDeleteContactpoints
+// swagger:route DELETE /v1/provisioning/contact-points/{UID} provisioning stable RouteDeleteContactpoints
 //
 // Delete a contact point.
 //
@@ -41,7 +49,7 @@ import (
 //     - application/json
 //
 //     Responses:
-//       204: description: The contact point was deleted successfully.
+//       202: description: The contact point was deleted successfully.
 
 // swagger:parameters RoutePutContactpoint RouteDeleteContactpoints
 type ContactPointUIDReference struct {
@@ -50,7 +58,7 @@ type ContactPointUIDReference struct {
 	UID string
 }
 
-// swagger:parameters RouteGetContactpoints
+// swagger:parameters RouteGetContactpoints RouteGetContactpointsExport
 type ContactPointParams struct {
 	// Filter by name
 	// in: query
@@ -67,12 +75,22 @@ type ContactPointPayload struct {
 // swagger:model
 type ContactPoints []EmbeddedContactPoint
 
+// swagger:parameters RoutePostContactpoints RoutePutContactpoint
+type ContactPointHeaders struct {
+	// in:header
+	XDisableProvenance string `json:"X-Disable-Provenance"`
+}
+
 // EmbeddedContactPoint is the contact point type that is used
 // by grafanas embedded alertmanager implementation.
 // swagger:model
 type EmbeddedContactPoint struct {
 	// UID is the unique identifier of the contact point. The UID can be
 	// set by the user.
+	// required: false
+	// minLength: 1
+	// maxLength: 40
+	// pattern: ^[a-zA-Z0-9\-\_]+$
 	// example: my_external_reference
 	UID string `json:"uid"`
 	// Name is used as grouping key in the UI. Contact points with the
@@ -89,6 +107,21 @@ type EmbeddedContactPoint struct {
 	DisableResolveMessage bool `json:"disableResolveMessage"`
 	// readonly: true
 	Provenance string `json:"provenance,omitempty"`
+}
+
+// ContactPointExport is the provisioned file export of alerting.ContactPointV1.
+type ContactPointExport struct {
+	OrgID     int64            `json:"orgId" yaml:"orgId"`
+	Name      string           `json:"name" yaml:"name"`
+	Receivers []ReceiverExport `json:"receivers" yaml:"receivers"`
+}
+
+// ReceiverExport is the provisioned file export of alerting.ReceiverV1.
+type ReceiverExport struct {
+	UID                   string     `json:"uid" yaml:"uid"`
+	Type                  string     `json:"type" yaml:"type"`
+	Settings              RawMessage `json:"settings" yaml:"settings"`
+	DisableResolveMessage bool       `json:"disableResolveMessage" yaml:"disableResolveMessage"`
 }
 
 const RedactedValue = "[REDACTED]"

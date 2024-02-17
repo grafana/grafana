@@ -1,30 +1,31 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { Card } from '../types';
 
-import { cardContent, cardStyle, iconStyle } from './sharedStyles';
+import { cardContent, cardStyle } from './sharedStyles';
 
 interface Props {
   card: Card;
 }
 
 export const DocsCard = ({ card }: Props) => {
-  const styles = useStyles2(useCallback((theme: GrafanaTheme2) => getStyles(theme, card.done), [card.done]));
-  const iconStyles = useStyles2(useCallback((theme: GrafanaTheme2) => iconStyle(theme, card.done), [card.done]));
+  const styles = useStyles2(getStyles, card.done);
 
   return (
     <div className={styles.card}>
       <div className={cardContent}>
-        <a href={`${card.href}?utm_source=grafana_gettingstarted`} className={styles.url}>
+        <a
+          href={`${card.href}?utm_source=grafana_gettingstarted`}
+          className={styles.url}
+          onClick={() => reportInteraction('grafana_getting_started_docs', { title: card.title, link: card.href })}
+        >
           <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
           <h4 className={styles.title}>{card.title}</h4>
-          <div>
-            <Icon className={iconStyles} name={card.icon} size="xxl" />
-          </div>
         </a>
       </div>
       <a
@@ -32,6 +33,7 @@ export const DocsCard = ({ card }: Props) => {
         className={styles.learnUrl}
         target="_blank"
         rel="noreferrer"
+        onClick={() => reportInteraction('grafana_getting_started_docs', { title: card.title, link: card.learnHref })}
       >
         Learn how in the docs <Icon name="external-link-alt" />
       </a>

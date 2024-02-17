@@ -1228,7 +1228,6 @@
     }
   ],
   "schemaVersion": 29,
-  "style": "dark",
   "tags": [
     "gdev",
     "panel-tests",

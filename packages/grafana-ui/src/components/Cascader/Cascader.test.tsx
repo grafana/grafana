@@ -122,7 +122,7 @@ describe('Cascader', () => {
     await userEvent.click(screen.getByText('First'), { pointerEventsCheck: PointerEventsCheckLevel.Never });
     await userEvent.click(screen.getByText('Second'), { pointerEventsCheck: PointerEventsCheckLevel.Never });
 
-    expect(screen.getByDisplayValue('First/Second')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('First / Second')).toBeInTheDocument();
   });
 
   it('displays all levels selected with separator passed in when displayAllSelectedLevels is true', async () => {

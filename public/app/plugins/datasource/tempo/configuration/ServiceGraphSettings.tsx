@@ -1,6 +1,10 @@
 import React from 'react';
 
-import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
+import {
+  DataSourceInstanceSettings,
+  DataSourcePluginOptionsEditorProps,
+  updateDatasourcePluginJsonDataOption,
+} from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
 import { Button, InlineField, InlineFieldRow, useStyles2 } from '@grafana/ui';
 
@@ -27,7 +31,7 @@ export function ServiceGraphSettings({ options, onOptionsChange }: Props) {
             current={options.jsonData.serviceMap?.datasourceUid}
             noDefault={true}
             width={40}
-            onChange={(ds) =>
+            onChange={(ds: DataSourceInstanceSettings) =>
               updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'serviceMap', {
                 datasourceUid: ds.uid,
               })

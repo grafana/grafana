@@ -4,9 +4,10 @@ import React, { ReactNode, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { Icon, Spinner } from '..';
 import { useStyles2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
+import { Icon } from '../Icon/Icon';
+import { Spinner } from '../Spinner/Spinner';
 
 export interface Props {
   label: ReactNode;

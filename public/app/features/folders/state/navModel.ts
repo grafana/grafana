@@ -1,8 +1,8 @@
 import { NavModel, NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getNavSubTitle } from 'app/core/components/AppChrome/MegaMenu/navBarItem-translations';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getNavSubTitle } from 'app/core/utils/navBarItem-translations';
 import { AccessControlAction, FolderDTO } from 'app/types';
 
 export const FOLDER_ID = 'manage-folder';
@@ -45,7 +45,10 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
     url: `${folder.url}/library-panels`,
   });
 
-  if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) && config.unifiedAlertingEnabled) {
+  if (
+    contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
+    (config.unifiedAlertingEnabled || config.featureToggles.alertingPreviewUpgrade)
+  ) {
     model.children!.push({
       active: false,
       icon: 'bell',
@@ -53,28 +56,6 @@ export function buildNavModel(folder: FolderDTO, parents = folder.parents): NavM
       text: t('browse-dashboards.manage-folder-nav.alert-rules', 'Alert rules'),
       url: `${folder.url}/alerting`,
     });
-  }
-
-  if (!config.featureToggles.nestedFolders) {
-    if (folder.canAdmin) {
-      model.children!.push({
-        active: false,
-        icon: 'lock',
-        id: getPermissionsTabID(folder.uid),
-        text: t('browse-dashboards.manage-folder-nav.permissions', 'Permissions'),
-        url: `${folder.url}/permissions`,
-      });
-    }
-
-    if (folder.canSave) {
-      model.children!.push({
-        active: false,
-        icon: 'cog',
-        id: getSettingsTabID(folder.uid),
-        text: t('browse-dashboards.manage-folder-nav.settings', 'Settings'),
-        url: `${folder.url}/settings`,
-      });
-    }
   }
 
   return model;

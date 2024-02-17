@@ -6,14 +6,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { LoadingBar, LoadingBarProps, useStyles2 } from '@grafana/ui';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
-import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './LoadingBar.mdx';
 
 const meta: Meta<typeof LoadingBar> = {
   title: 'General/LoadingBar',
   component: LoadingBar,
-  decorators: [withCenteredStory],
   parameters: {
     controls: {},
     docs: {
@@ -31,7 +29,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '400px',
       height: '200px',
       border: `1px solid ${borderColor}`,
-      borderRadius: '3px',
+      borderRadius: theme.shape.radius.default,
     }),
   };
 };
