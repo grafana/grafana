@@ -15,7 +15,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
   const { optionsPane } = model.useState();
   const styles = useStyles2(getStyles);
 
-  const { containerProps, firstPaneProps, secondPaneProps, splitterProps, splitterState, onToggleCollapse } =
+  const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
     useSnappingSplitter({
       direction: 'row',
       dragPosition: 'end',
@@ -30,11 +30,11 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
     <>
       <NavToolbarActions dashboard={dashboard} />
       <div {...containerProps}>
-        <div {...firstPaneProps} className={cx(firstPaneProps.className, styles.body)}>
+        <div {...primaryProps} className={cx(primaryProps.className, styles.body)}>
           <VizAndDataPane model={model} />
         </div>
         <div {...splitterProps} />
-        <div {...secondPaneProps} className={cx(secondPaneProps.className, styles.optionsPane)}>
+        <div {...secondaryProps} className={cx(secondaryProps.className, styles.optionsPane)}>
           {splitterState.collapsed && (
             <div className={styles.expandOptionsWrapper}>
               <ToolbarButton
@@ -60,7 +60,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
   const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles);
 
-  const { containerProps, firstPaneProps, secondPaneProps, splitterProps, splitterState, onToggleCollapse } =
+  const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
     useSnappingSplitter({
       direction: 'column',
       dragPosition: 'start',
@@ -71,7 +71,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
     });
 
   if (!dataPane) {
-    firstPaneProps.style.flexGrow = 1;
+    primaryProps.style.flexGrow = 1;
   }
 
   return (
@@ -84,13 +84,13 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
         </div>
       )}
       <div {...containerProps}>
-        <div {...firstPaneProps}>
+        <div {...primaryProps}>
           <vizManager.Component model={vizManager} />
         </div>
         {dataPane && (
           <>
             <div {...splitterProps} />
-            <div {...secondPaneProps}>
+            <div {...secondaryProps}>
               {splitterState.collapsed && (
                 <div className={styles.expandDataPane}>
                   <Button

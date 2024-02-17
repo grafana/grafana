@@ -6,15 +6,12 @@ import { useTheme2 } from '@grafana/ui';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 
-import mdx from './Splitter.mdx';
 import { UseSplitterOptions, useSplitter } from './useSplitter';
 
 const meta: Meta = {
   title: 'General/Layout/useSplitter',
   parameters: {
-    docs: {
-      page: mdx,
-    },
+    docs: {},
     controls: {
       exclude: [],
     },
@@ -42,26 +39,25 @@ export const Basic: StoryFn<StoryOptions> = (options) => {
     height: '100%',
   });
 
-  const { containerProps, firstPaneProps, secondPaneProps, splitterProps } = useSplitter({
+  const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
     ...options,
   });
 
   if (!options.hasSecondPane) {
-    firstPaneProps.style.flexGrow = 1;
+    primaryProps.style.flexGrow = 1;
   }
 
   return (
     <DashboardStoryCanvas>
       <div style={{ display: 'flex', width: '700px', height: '500px' }}>
         <div {...containerProps}>
-          <div {...firstPaneProps} className={cx(firstPaneProps.className, paneStyles)}>
+          <div {...primaryProps} className={cx(primaryProps.className, paneStyles)}>
             Primary
           </div>
           {options.hasSecondPane && (
             <>
               <div {...splitterProps} />
-
-              <div {...secondPaneProps} className={cx(firstPaneProps.className, paneStyles)}>
+              <div {...secondaryProps} className={cx(secondaryProps.className, paneStyles)}>
                 Secondary
               </div>
             </>

@@ -304,7 +304,7 @@ export function useSplitter(options: UseSplitterOptions) {
       ref: containerRef,
       className: styles.container,
     },
-    firstPaneProps: {
+    primaryProps: {
       ref: firstPaneRef,
       className: styles.panel,
       style: {
@@ -312,7 +312,7 @@ export function useSplitter(options: UseSplitterOptions) {
         flexGrow: clamp(initialSize ?? 0.5, 0, 1),
       },
     },
-    secondPaneProps: {
+    secondaryProps: {
       ref: secondPaneRef,
       className: styles.panel,
       style: {

@@ -6,15 +6,12 @@ import { Button, useTheme2 } from '@grafana/ui';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 
-import mdx from './Splitter.mdx';
 import { UseSnappingSplitterOptions, useSnappingSplitter } from './useSnappingSpitter';
 
 const meta: Meta = {
   title: 'General/Layout/useSnappingSpitter',
   parameters: {
-    docs: {
-      page: mdx,
-    },
+    docs: {},
     controls: {
       exclude: [],
     },
@@ -42,7 +39,7 @@ export const Basic: StoryFn<StoryOptions> = (options) => {
     height: '100%',
   });
 
-  const { containerProps, firstPaneProps, secondPaneProps, splitterProps, splitterState } = useSnappingSplitter({
+  const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState } = useSnappingSplitter({
     ...options,
     paneOptions: {
       collapseBelowPixels: 150,
@@ -54,11 +51,11 @@ export const Basic: StoryFn<StoryOptions> = (options) => {
     <DashboardStoryCanvas>
       <div style={{ display: 'flex', width: '700px', height: '500px' }}>
         <div {...containerProps}>
-          <div {...firstPaneProps} className={cx(firstPaneProps.className, paneStyles)}>
+          <div {...primaryProps} className={cx(primaryProps.className, paneStyles)}>
             Primary
           </div>
           <div {...splitterProps} />
-          <div {...secondPaneProps} className={cx(firstPaneProps.className, paneStyles)}>
+          <div {...secondaryProps} className={cx(secondaryProps.className, paneStyles)}>
             {splitterState.collapsed && <Button onClick={() => {}} icon="angle-left" variant="secondary" />}
             {!splitterState.collapsed && <div>Secondary pane open for business</div>}
           </div>

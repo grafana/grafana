@@ -77,30 +77,30 @@ export function useSnappingSplitter(options: UseSnappingSplitterOptions) {
     setState({ collapsed: !state.collapsed });
   }, [state.collapsed]);
 
-  const { containerProps, firstPaneProps, secondPaneProps, splitterProps } = useSplitter({
+  const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
     ...options,
     onResizing,
     onSizeChanged,
   });
 
   // This is to allow resizing it beyond the content dimensions
-  secondPaneProps.style.overflow = 'hidden';
-  secondPaneProps.style.minWidth = 'unset';
-  secondPaneProps.style.minHeight = 'unset';
+  secondaryProps.style.overflow = 'hidden';
+  secondaryProps.style.minWidth = 'unset';
+  secondaryProps.style.minHeight = 'unset';
 
   if (state.snapSize) {
-    firstPaneProps.style = {
-      ...firstPaneProps.style,
+    primaryProps.style = {
+      ...primaryProps.style,
       flexGrow: 1 - state.snapSize,
     };
-    secondPaneProps.style.flexGrow = state.snapSize;
+    secondaryProps.style.flexGrow = state.snapSize;
   } else if (state.snapSize === 0) {
-    firstPaneProps.style.flexGrow = 1;
-    secondPaneProps.style.flexGrow = 0;
-    secondPaneProps.style.minWidth = 'unset';
-    secondPaneProps.style.minHeight = 'unset';
-    secondPaneProps.style.overflow = 'unset';
+    primaryProps.style.flexGrow = 1;
+    secondaryProps.style.flexGrow = 0;
+    secondaryProps.style.minWidth = 'unset';
+    secondaryProps.style.minHeight = 'unset';
+    secondaryProps.style.overflow = 'unset';
   }
 
-  return { containerProps, firstPaneProps, secondPaneProps, splitterProps, splitterState: state, onToggleCollapse };
+  return { containerProps, primaryProps, secondaryProps, splitterProps, splitterState: state, onToggleCollapse };
 }
