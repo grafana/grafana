@@ -10,6 +10,7 @@ import {
   isBooleanUnit,
   SortedVector,
   TimeRange,
+  cacheFieldDisplayNames,
 } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
@@ -81,6 +82,8 @@ export function prepareGraphableFields(
   if (!series?.length) {
     return null;
   }
+
+  cacheFieldDisplayNames(series);
 
   let useNumericX = xNumFieldIdx != null;
 
