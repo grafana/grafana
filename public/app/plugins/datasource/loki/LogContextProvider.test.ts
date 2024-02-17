@@ -20,7 +20,7 @@ import { LokiQuery } from './types';
 
 const defaultLanguageProviderMock = {
   start: jest.fn(),
-  fetchSeriesLabels: jest.fn(() => ({ bar: ['baz'], xyz: ['abc'] })),
+  fetchLabels: jest.fn(() => ['bar', 'xyz']),
   getLabelKeys: jest.fn(() => ['bar', 'xyz']),
 } as unknown as LokiLanguageProvider;
 
@@ -419,14 +419,14 @@ describe('LogContextProvider', () => {
         expect(filters).toEqual([]);
       });
 
-      it('should call fetchSeriesLabels if parser', async () => {
+      it('should call fetchLabels with stream selector if parser', async () => {
         await logContextProvider.getInitContextFilters(defaultLogRow.labels, queryWithParser);
-        expect(defaultLanguageProviderMock.fetchSeriesLabels).toBeCalled();
+        expect(defaultLanguageProviderMock.fetchLabels).toBeCalledWith({ streamSelector: `{bar="baz"}` });
       });
 
-      it('should call fetchSeriesLabels with given time range', async () => {
+      it('should call fetchLabels with given time range', async () => {
         await logContextProvider.getInitContextFilters(defaultLogRow.labels, queryWithParser, timeRange);
-        expect(defaultLanguageProviderMock.fetchSeriesLabels).toBeCalledWith(`{bar="baz"}`, { timeRange });
+        expect(defaultLanguageProviderMock.fetchLabels).toBeCalledWith({ streamSelector: `{bar="baz"}`, timeRange });
       });
 
       it('should call `languageProvider.start` if no parser with given time range', async () => {

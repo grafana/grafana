@@ -33,6 +33,7 @@ const makeJsonUpdater =
   };
 
 const setMaxLines = makeJsonUpdater('maxLines');
+const setHasLabelsMatchAPISupport = makeJsonUpdater('hasLabelsMatchAPISupport');
 const setPredefinedOperations = makeJsonUpdater('predefinedOperations');
 const setDerivedFields = makeJsonUpdater('derivedFields');
 
@@ -79,6 +80,8 @@ export const ConfigEditor = (props: Props) => {
           <QuerySettings
             maxLines={options.jsonData.maxLines || ''}
             onMaxLinedChange={(value) => onOptionsChange(setMaxLines(options, value))}
+            hasLabelsMatchAPISupport={options.jsonData.hasLabelsMatchAPISupport || false}
+            onHasLabelsMatchAPISupportChange={(value) => onOptionsChange(setHasLabelsMatchAPISupport(options, value))}
             predefinedOperations={options.jsonData.predefinedOperations || ''}
             onPredefinedOperationsChange={updatePredefinedOperations}
           />

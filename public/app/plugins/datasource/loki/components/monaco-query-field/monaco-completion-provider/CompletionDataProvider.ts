@@ -39,24 +39,19 @@ export class CompletionDataProvider {
   }
 
   async getLabelNames(otherLabels: Label[] = []) {
-    if (otherLabels.length === 0) {
-      // if there is no filtering, we have to use a special endpoint
-      return this.languageProvider.getLabelKeys();
-    }
-    const data = await this.getSeriesLabels(otherLabels);
-    const possibleLabelNames = Object.keys(data); // all names from datasource
+    const possibleLabelNames = await this.languageProvider.fetchLabels({
+      streamSelector: this.buildSelector(otherLabels),
+      timeRange: this.timeRange,
+    });
     const usedLabelNames = new Set(otherLabels.map((l) => l.name)); // names used in the query
     return possibleLabelNames.filter((label) => !usedLabelNames.has(label));
   }
 
   async getLabelValues(labelName: string, otherLabels: Label[]) {
-    if (otherLabels.length === 0) {
-      // if there is no filtering, we have to use a special endpoint
-      return await this.languageProvider.fetchLabelValues(labelName, { timeRange: this.timeRange });
-    }
-
-    const data = await this.getSeriesLabels(otherLabels);
-    return data[labelName] ?? [];
+    return await this.languageProvider.fetchLabelValues(labelName, {
+      streamSelector: this.buildSelector(otherLabels),
+      timeRange: this.timeRange,
+    });
   }
 
   /**
@@ -88,11 +83,5 @@ export class CompletionDataProvider {
       this.queryToLabelKeysCache.set(logQuery, labelKeys);
       return labelKeys;
     }
-  }
-
-  async getSeriesLabels(labels: Label[]) {
-    return await this.languageProvider
-      .fetchSeriesLabels(this.buildSelector(labels), { timeRange: this.timeRange })
-      .then((data) => data ?? {});
   }
 }

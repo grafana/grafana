@@ -35,6 +35,7 @@ export interface LokiQuery extends LokiQueryFromSchema {
 
 export interface LokiOptions extends DataSourceJsonData {
   maxLines?: string;
+  hasLabelsMatchAPISupport?: boolean;
   derivedFields?: DerivedFieldConfig[];
   alertmanager?: string;
   keepCookies?: string[];

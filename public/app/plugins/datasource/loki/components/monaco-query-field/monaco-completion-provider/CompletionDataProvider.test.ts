@@ -47,7 +47,6 @@ const otherLabels: Label[] = [
     op: '=',
   },
 ];
-const seriesLabels = { place: ['series', 'labels'], source: [], other: [] };
 const parserAndLabelKeys = {
   extractedLabelKeys: ['extracted', 'label', 'keys'],
   unwrapLabelKeys: ['unwrap', 'labels'],
@@ -76,9 +75,8 @@ describe('CompletionDataProvider', () => {
 
     completionProvider = new CompletionDataProvider(languageProvider, historyRef, mockTimeRange);
 
-    jest.spyOn(languageProvider, 'getLabelKeys').mockReturnValue(labelKeys);
+    jest.spyOn(languageProvider, 'fetchLabels').mockResolvedValue(labelKeys);
     jest.spyOn(languageProvider, 'fetchLabelValues').mockResolvedValue(labelValues);
-    jest.spyOn(languageProvider, 'fetchSeriesLabels').mockResolvedValue(seriesLabels);
     jest.spyOn(languageProvider, 'getParserAndLabelKeys').mockResolvedValue(parserAndLabelKeys);
   });
 
@@ -102,21 +100,32 @@ describe('CompletionDataProvider', () => {
     expect(completionProvider.getHistory()).toEqual(['{value="other"}']);
   });
 
-  test('Returns the expected label names with no other labels', async () => {
+  test('Returns the expected label names', async () => {
     expect(await completionProvider.getLabelNames([])).toEqual(labelKeys);
   });
 
-  test('Returns the expected label names with other labels', async () => {
-    expect(await completionProvider.getLabelNames(otherLabels)).toEqual(['source', 'other']);
+  test('Returns the list of label names without labels used in selector', async () => {
+    expect(await completionProvider.getLabelNames(otherLabels)).toEqual(['source']);
   });
 
-  test('Returns the expected label values with no other labels', async () => {
+  test('Correctly build stream selector in getLabelNames and pass it to fetchLabels call', async () => {
+    await completionProvider.getLabelNames([{ name: 'job', op: '=', value: '"a\\b\n' }]);
+    expect(languageProvider.fetchLabels).toHaveBeenCalledWith({
+      streamSelector: '{job="\\"a\\\\b\\n"}',
+      timeRange: mockTimeRange,
+    });
+  });
+
+  test('Returns the expected label values', async () => {
     expect(await completionProvider.getLabelValues('label', [])).toEqual(labelValues);
   });
 
-  test('Returns the expected label values with other labels', async () => {
-    expect(await completionProvider.getLabelValues('place', otherLabels)).toEqual(['series', 'labels']);
-    expect(await completionProvider.getLabelValues('other label', otherLabels)).toEqual([]);
+  test('Correctly build stream selector in getLabelValues and pass it to fetchLabelValues call', async () => {
+    await completionProvider.getLabelValues('place', [{ name: 'job', op: '=', value: '"a\\b\n' }]);
+    expect(languageProvider.fetchLabelValues).toHaveBeenCalledWith('place', {
+      streamSelector: '{job="\\"a\\\\b\\n"}',
+      timeRange: mockTimeRange,
+    });
   });
 
   test('Returns the expected parser and label keys', async () => {
@@ -177,16 +186,5 @@ describe('CompletionDataProvider', () => {
   test('Uses time range from CompletionProvider', async () => {
     completionProvider.getParserAndLabelKeys('');
     expect(languageProvider.getParserAndLabelKeys).toHaveBeenCalledWith('', { timeRange: mockTimeRange });
-  });
-
-  test('Returns the expected series labels', async () => {
-    expect(await completionProvider.getSeriesLabels([])).toEqual(seriesLabels);
-  });
-
-  test('Escapes correct characters when building stream selector in getSeriesLabels', async () => {
-    completionProvider.getSeriesLabels([{ name: 'job', op: '=', value: '"a\\b\n' }]);
-    expect(languageProvider.fetchSeriesLabels).toHaveBeenCalledWith('{job="\\"a\\\\b\\n"}', {
-      timeRange: mockTimeRange,
-    });
   });
 });
