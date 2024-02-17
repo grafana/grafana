@@ -450,7 +450,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			e.scheduledAt,
 			e.rule,
 			results,
-			state.GetRuleExtraLabels(e.rule, e.folderTitle, !sch.disableGrafanaFolder),
+			state.GetRuleExtraLabels(logger, e.rule, e.folderTitle, !sch.disableGrafanaFolder),
 		)
 		processDuration.Observe(sch.clock.Now().Sub(start).Seconds())
 

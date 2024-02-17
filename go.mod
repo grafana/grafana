@@ -38,7 +38,7 @@ require (
 	github.com/aws/aws-sdk-go v1.50.8 // @grafana/aws-datasources
 	github.com/beevik/etree v1.2.0 // @grafana/backend-platform
 	github.com/benbjohnson/clock v1.3.5 // @grafana/alerting-squad-backend
-	github.com/blang/semver/v4 v4.0.0 // @grafana/grafana-delivery
+	github.com/blang/semver/v4 v4.0.0 // @grafana/grafana-release-guild
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b // @grafana/backend-platform
 	github.com/centrifugal/centrifuge v0.30.2 // @grafana/grafana-app-platform-squad
 	github.com/crewjam/saml v0.4.13 // @grafana/grafana-authnz-team
@@ -76,7 +76,7 @@ require (
 	github.com/lib/pq v1.10.9 // @grafana/backend-platform
 	github.com/linkedin/goavro/v2 v2.10.0 // @grafana/backend-platform
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/backend-platform
-	github.com/magefile/mage v1.15.0 // @grafana/grafana-delivery
+	github.com/magefile/mage v1.15.0 // @grafana/grafana-release-guild
 	github.com/mattn/go-isatty v0.0.19 // @grafana/backend-platform
 	github.com/mattn/go-sqlite3 v1.14.19 // @grafana/backend-platform
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // @grafana/alerting-squad-backend
@@ -232,11 +232,11 @@ require (
 	github.com/blugelabs/bluge_segment_api v0.2.0 // @grafana/backend-platform
 	github.com/bufbuild/connect-go v1.10.0 // @grafana/observability-traces-and-profiling
 	github.com/dlmiddlecote/sqlstats v1.0.2 // @grafana/backend-platform
-	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-delivery
+	github.com/drone/drone-cli v1.6.1 // @grafana/grafana-release-guild
 	github.com/getkin/kin-openapi v0.120.0 // @grafana/grafana-operator-experience-squad
 	github.com/golang-migrate/migrate/v4 v4.7.0 // @grafana/backend-platform
-	github.com/google/go-github v17.0.0+incompatible // @grafana/grafana-delivery
-	github.com/google/go-github/v45 v45.2.0 // @grafana/grafana-delivery
+	github.com/google/go-github v17.0.0+incompatible // @grafana/grafana-release-guild
+	github.com/google/go-github/v45 v45.2.0 // @grafana/grafana-release-guild
 	github.com/grafana/codejen v0.0.3 // @grafana/dataviz-squad
 	github.com/grafana/dskit v0.0.0-20240104111617-ea101a3b86eb // @grafana/backend-platform
 	github.com/huandu/xstrings v1.3.2 // @grafana/partner-datasources
@@ -253,7 +253,7 @@ require (
 require (
 	buf.build/gen/go/parca-dev/parca/bufbuild/connect-go v1.4.1-20221222094228-8b1d3d0f62e6.1 // @grafana/observability-traces-and-profiling
 	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.28.1-20221222094228-8b1d3d0f62e6.4 // @grafana/observability-traces-and-profiling
-	github.com/Masterminds/semver/v3 v3.1.1 // @grafana/grafana-delivery
+	github.com/Masterminds/semver/v3 v3.1.1 // @grafana/grafana-release-guild
 	github.com/alicebob/miniredis/v2 v2.30.1 // @grafana/alerting-squad-backend
 	github.com/dave/dst v0.27.2 // @grafana/grafana-as-code
 	github.com/go-jose/go-jose/v3 v3.0.1 // @grafana/grafana-authnz-team
@@ -449,7 +449,7 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20230802225258-3cf4e6d46a89 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140 // indirect
-	github.com/docker/docker v24.0.7+incompatible // @grafana/grafana-delivery
+	github.com/docker/docker v24.0.7+incompatible // @grafana/grafana-release-guild
 	github.com/elazarl/goproxy v0.0.0-20230731152917-f99041a5c027 // indirect
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32 // indirect
 	github.com/go-logr/logr v1.4.1 // @grafana/grafana-app-platform-squad

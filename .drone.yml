@@ -654,6 +654,8 @@ steps:
     repo:
     - grafana/grafana
 - commands:
+  - if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos';
+    false; fi
   - apt-get update
   - apt-get install -yq zip
   - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
@@ -1928,6 +1930,8 @@ steps:
     repo:
     - grafana/grafana
 - commands:
+  - if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos';
+    false; fi
   - apt-get update
   - apt-get install -yq zip
   - printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json
@@ -4800,6 +4804,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: c5243aaa05fbb21c64d03465f079ad710c9dcddb81db19b89ebb61cc9b60bc72
+hmac: 2a70d8442b85841e1b882c9562e8cc42b0c4b697a49ee03d086218f79cdff660
 
 ...

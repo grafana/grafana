@@ -113,10 +113,13 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 				params = append(params, scopes[i])
 			}
 		}
-
-		if options.UserID != 0 {
+		if options.NamespacedID != "" {
+			userID, err := options.ComputeUserID()
+			if err != nil {
+				return err
+			}
 			q += ` AND user_id = ?`
-			params = append(params, options.UserID)
+			params = append(params, userID)
 		}
 
 		return sess.SQL(q, params...).

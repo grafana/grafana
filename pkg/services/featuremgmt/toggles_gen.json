@@ -527,12 +527,15 @@
     {
       "metadata": {
         "name": "angularDeprecationUI",
-        "resourceVersion": "1707928895402",
-        "creationTimestamp": "2024-02-14T16:41:35Z"
+        "resourceVersion": "1708080773145",
+        "creationTimestamp": "2024-02-14T16:41:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-16 10:52:53.145203323 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Display new Angular deprecation-related UI features",
-        "stage": "experimental",
+        "description": "Display Angular warnings in dashboards and panels",
+        "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true
       }
@@ -869,12 +872,15 @@
     {
       "metadata": {
         "name": "returnToPrevious",
-        "resourceVersion": "1707928895402",
-        "creationTimestamp": "2024-02-14T16:41:35Z"
+        "resourceVersion": "1708097934301",
+        "creationTimestamp": "2024-02-14T16:41:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-16 15:38:54.301079 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the return to previous context functionality",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true
       }
@@ -932,12 +938,15 @@
     {
       "metadata": {
         "name": "panelMonitoring",
-        "resourceVersion": "1707928895402",
-        "creationTimestamp": "2024-02-14T16:41:35Z"
+        "resourceVersion": "1707938948387",
+        "creationTimestamp": "2024-02-14T16:41:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-14 19:29:08.387414 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables panel monitoring through logs and measurements",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true
       }
@@ -1281,7 +1290,8 @@
       "metadata": {
         "name": "clientTokenRotation",
         "resourceVersion": "1707928895402",
-        "creationTimestamp": "2024-02-14T16:41:35Z"
+        "creationTimestamp": "2024-02-14T16:41:35Z",
+        "deletionTimestamp": "2024-02-16T15:38:59Z"
       },
       "spec": {
         "description": "Replaces the current in-request token rotation so that the client initiates the rotation",
@@ -1382,12 +1392,15 @@
     {
       "metadata": {
         "name": "ssoSettingsApi",
-        "resourceVersion": "1707928895402",
-        "creationTimestamp": "2024-02-14T16:41:35Z"
+        "resourceVersion": "1707991575438",
+        "creationTimestamp": "2024-02-14T16:41:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-15 10:06:15.438523 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables the SSO settings API",
-        "stage": "experimental",
+        "description": "Enables the SSO settings API and the OAuth configuration UIs in Grafana",
+        "stage": "preview",
         "codeowner": "@grafana/identity-access-team"
       }
     },
@@ -2087,14 +2100,16 @@
     {
       "metadata": {
         "name": "alertingSimplifiedRouting",
-        "resourceVersion": "1707928895402",
-        "creationTimestamp": "2024-02-14T16:41:35Z"
+        "resourceVersion": "1708033557575",
+        "creationTimestamp": "2024-02-14T16:41:35Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-15 21:45:57.5750554 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables the simplified routing for alerting",
-        "stage": "experimental",
-        "codeowner": "@grafana/alerting-squad",
-        "hideFromDocs": true
+        "description": "Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",
+        "stage": "preview",
+        "codeowner": "@grafana/alerting-squad"
       }
     },
     {
@@ -2107,6 +2122,22 @@
         "description": "Enable plugin tracing for all external plugins",
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
+        "requiresRestart": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingUpgradeDryrunOnStart",
+        "resourceVersion": "1708098586429",
+        "creationTimestamp": "2024-02-15T21:01:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2024-02-16 15:49:46.429030423 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.",
+        "stage": "GA",
+        "codeowner": "@grafana/alerting-squad",
         "requiresRestart": true
       }
     }
