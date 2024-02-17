@@ -2,19 +2,20 @@
   "kind": "QueryTypeDefinitionList",
   "apiVersion": "query.grafana.app/v0alpha1",
   "metadata": {
-    "resourceVersion": "1707863642773"
+    "resourceVersion": "1708133072599"
   },
   "items": [
     {
       "metadata": {
         "name": "math",
-        "resourceVersion": "1707975515186",
-        "creationTimestamp": "2024-02-13T05:40:45Z"
+        "resourceVersion": "1708133072599",
+        "creationTimestamp": "2024-02-17T01:24:32Z"
       },
       "spec": {
         "discriminatorField": "queryType",
         "discriminatorValue": "math",
-        "schema": {
+        "querySchema": {
+          "$schema": "https://json-schema.org/draft-04/schema",
           "properties": {
             "expression": {
               "type": "string",
@@ -34,13 +35,13 @@
         "examples": [
           {
             "name": "constant addition",
-            "query": {
+            "queryPayload": {
               "expression": "$A + 10"
             }
           },
           {
             "name": "math with two queries",
-            "query": {
+            "queryPayload": {
               "expression": "$A - $B"
             }
           }
@@ -50,13 +51,14 @@
     {
       "metadata": {
         "name": "reduce",
-        "resourceVersion": "1707975515186",
-        "creationTimestamp": "2024-02-13T05:40:45Z"
+        "resourceVersion": "1708133072599",
+        "creationTimestamp": "2024-02-17T01:24:32Z"
       },
       "spec": {
         "discriminatorField": "queryType",
         "discriminatorValue": "reduce",
-        "schema": {
+        "querySchema": {
+          "$schema": "https://json-schema.org/draft-04/schema",
           "properties": {
             "expression": {
               "type": "string",
@@ -94,7 +96,7 @@
         "examples": [
           {
             "name": "get max value",
-            "query": {
+            "queryPayload": {
               "expression": "$A",
               "reducer": "max",
               "settings": {
@@ -108,13 +110,14 @@
     {
       "metadata": {
         "name": "resample",
-        "resourceVersion": "1707975515186",
-        "creationTimestamp": "2024-02-13T05:40:45Z"
+        "resourceVersion": "1708133072599",
+        "creationTimestamp": "2024-02-17T01:24:32Z"
       },
       "spec": {
         "discriminatorField": "queryType",
         "discriminatorValue": "resample",
-        "schema": {
+        "querySchema": {
+          "$schema": "https://json-schema.org/draft-04/schema",
           "properties": {
             "expression": {
               "type": "string",
@@ -151,7 +154,7 @@
         "examples": [
           {
             "name": "resample at a every day",
-            "query": {
+            "queryPayload": {
               "expression": "$A",
               "window": "1d",
               "downsampler": "",
@@ -163,22 +166,20 @@
     },
     {
       "metadata": {
-        "name": "classic",
-        "resourceVersion": "1707874908423",
-        "creationTimestamp": "2024-02-13T22:34:02Z"
+        "name": "classic_conditions",
+        "resourceVersion": "1708133072599",
+        "creationTimestamp": "2024-02-17T01:24:32Z"
       },
       "spec": {
         "discriminatorField": "queryType",
-        "discriminatorValue": "classic",
-        "schema": {
-          "additionalProperties": false,
+        "discriminatorValue": "classic_conditions",
+        "querySchema": {
+          "$schema": "https://json-schema.org/draft-04/schema",
           "properties": {
             "conditions": {
               "items": {
-                "additionalProperties": false,
                 "properties": {
                   "evaluator": {
-                    "additionalProperties": false,
                     "properties": {
                       "params": {
                         "items": {
@@ -190,26 +191,26 @@
                         "type": "string"
                       }
                     },
+                    "additionalProperties": false,
+                    "type": "object",
                     "required": [
                       "params",
                       "type"
-                    ],
-                    "type": "object"
+                    ]
                   },
                   "operator": {
-                    "additionalProperties": false,
                     "properties": {
                       "type": {
                         "type": "string"
                       }
                     },
+                    "additionalProperties": false,
+                    "type": "object",
                     "required": [
                       "type"
-                    ],
-                    "type": "object"
+                    ]
                   },
                   "query": {
-                    "additionalProperties": false,
                     "properties": {
                       "params": {
                         "items": {
@@ -218,44 +219,47 @@
                         "type": "array"
                       }
                     },
+                    "additionalProperties": false,
+                    "type": "object",
                     "required": [
                       "params"
-                    ],
-                    "type": "object"
+                    ]
                   },
                   "reducer": {
-                    "additionalProperties": false,
                     "properties": {
                       "type": {
                         "type": "string"
                       }
                     },
+                    "additionalProperties": false,
+                    "type": "object",
                     "required": [
                       "type"
-                    ],
-                    "type": "object"
+                    ]
                   }
                 },
+                "additionalProperties": false,
+                "type": "object",
                 "required": [
                   "evaluator",
                   "operator",
                   "query",
                   "reducer"
-                ],
-                "type": "object"
+                ]
               },
               "type": "array"
             }
           },
+          "additionalProperties": false,
+          "type": "object",
           "required": [
             "conditions"
-          ],
-          "type": "object"
+          ]
         },
         "examples": [
           {
             "name": "do classic query (TODO)",
-            "query": {
+            "queryPayload": {
               "conditions": []
             }
           }
@@ -265,13 +269,14 @@
     {
       "metadata": {
         "name": "threshold",
-        "resourceVersion": "1707975515186",
-        "creationTimestamp": "2024-02-13T22:34:02Z"
+        "resourceVersion": "1708133072599",
+        "creationTimestamp": "2024-02-17T01:24:32Z"
       },
       "spec": {
         "discriminatorField": "queryType",
         "discriminatorValue": "threshold",
-        "schema": {
+        "querySchema": {
+          "$schema": "https://json-schema.org/draft-04/schema",
           "properties": {
             "expression": {
               "type": "string",
@@ -348,7 +353,7 @@
         "examples": [
           {
             "name": "TODO... a threshold query",
-            "query": {
+            "queryPayload": {
               "expression": "$A",
               "conditions": null
             }

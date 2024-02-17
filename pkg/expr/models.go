@@ -2,6 +2,7 @@ package expr
 
 import (
 	"github.com/grafana/grafana/pkg/expr/classic"
+	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
 // Supported expression types
@@ -19,7 +20,7 @@ const (
 	QueryTypeResample QueryType = "resample"
 
 	// Classic query
-	QueryTypeClassic QueryType = "classic"
+	QueryTypeClassic QueryType = "classic_conditions"
 
 	// Threshold
 	QueryTypeThreshold QueryType = "threshold"
@@ -35,7 +36,7 @@ type ReduceQuery struct {
 	Expression string `json:"expression" jsonschema:"minLength=1,example=$A"`
 
 	// The reducer
-	Reducer ReducerID `json:"reducer"`
+	Reducer mathexp.ReducerID `json:"reducer"`
 
 	// Reducer Options
 	Settings *ReduceSettings `json:"settings,omitempty"`
@@ -79,19 +80,6 @@ type ReduceSettings struct {
 	// Only valid when mode is replace
 	ReplaceWithValue *float64 `json:"replaceWithValue,omitempty"`
 }
-
-// The reducer function
-// +enum
-type ReducerID string
-
-const (
-	ReducerSum   ReducerID = "sum"
-	ReducerMean  ReducerID = "mean"
-	ReducerMin   ReducerID = "min"
-	ReducerMax   ReducerID = "max"
-	ReducerCount ReducerID = "count"
-	ReducerLast  ReducerID = "last"
-)
 
 // Non-Number behavior mode
 // +enum

@@ -4,15 +4,15 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/query"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/query/schema"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/schema"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr/classic"
+	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
 func TestQueryTypeDefinitions(t *testing.T) {
-	builder, err := schema.NewBuilder(
+	builder, err := schema.NewSchemaBuilder(
 		schema.BuilderOptions{
 			BasePackage:        "github.com/grafana/grafana/pkg/registry/apis/query/expr",
 			CodePath:           "./",
@@ -20,23 +20,25 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			// We need to identify the enum fields explicitly :(
 			// *AND* have the +enum common for this to work
 			Enums: []reflect.Type{
-				reflect.TypeOf(ReducerSum),     // pick an example value (not the root)
-				reflect.TypeOf(ReduceModeDrop), // pick an example value (not the root)
+				reflect.TypeOf(mathexp.ReducerSum), // pick an example value (not the root)
+				reflect.TypeOf(ReduceModeDrop),     // pick an example value (not the root)
 			},
-		},
+		})
+	require.NoError(t, err)
+	err = builder.AddQueries(
 		schema.QueryTypeInfo{
 			Discriminator: string(QueryTypeMath),
 			GoType:        reflect.TypeOf(&MathQuery{}),
-			Examples: []query.QueryExample{
+			Examples: []schema.QueryExample{
 				{
 					Name: "constant addition",
-					Query: MathQuery{
+					QueryPayload: MathQuery{
 						Expression: "$A + 10",
 					},
 				},
 				{
 					Name: "math with two queries",
-					Query: MathQuery{
+					QueryPayload: MathQuery{
 						Expression: "$A - $B",
 					},
 				},
@@ -45,12 +47,12 @@ func TestQueryTypeDefinitions(t *testing.T) {
 		schema.QueryTypeInfo{
 			Discriminator: string(QueryTypeReduce),
 			GoType:        reflect.TypeOf(&ReduceQuery{}),
-			Examples: []query.QueryExample{
+			Examples: []schema.QueryExample{
 				{
 					Name: "get max value",
-					Query: ReduceQuery{
+					QueryPayload: ReduceQuery{
 						Expression: "$A",
-						Reducer:    ReducerMax,
+						Reducer:    mathexp.ReducerMax,
 						Settings: &ReduceSettings{
 							Mode: ReduceModeDrop,
 						},
@@ -61,10 +63,10 @@ func TestQueryTypeDefinitions(t *testing.T) {
 		schema.QueryTypeInfo{
 			Discriminator: string(QueryTypeResample),
 			GoType:        reflect.TypeOf(&ResampleQuery{}),
-			Examples: []query.QueryExample{
+			Examples: []schema.QueryExample{
 				{
 					Name: "resample at a every day",
-					Query: ResampleQuery{
+					QueryPayload: ResampleQuery{
 						Expression: "$A",
 						Window:     "1d",
 					},
@@ -74,10 +76,10 @@ func TestQueryTypeDefinitions(t *testing.T) {
 		schema.QueryTypeInfo{
 			Discriminator: string(QueryTypeClassic),
 			GoType:        reflect.TypeOf(&ClassicQuery{}),
-			Examples: []query.QueryExample{
+			Examples: []schema.QueryExample{
 				{
 					Name: "do classic query (TODO)",
-					Query: ClassicQuery{
+					QueryPayload: ClassicQuery{
 						// ????
 						Conditions: []classic.ConditionJSON{},
 					},
@@ -87,10 +89,10 @@ func TestQueryTypeDefinitions(t *testing.T) {
 		schema.QueryTypeInfo{
 			Discriminator: string(QueryTypeThreshold),
 			GoType:        reflect.TypeOf(&ThresholdQuery{}),
-			Examples: []query.QueryExample{
+			Examples: []schema.QueryExample{
 				{
 					Name: "TODO... a threshold query",
-					Query: ThresholdQuery{
+					QueryPayload: ThresholdQuery{
 						Expression: "$A",
 					},
 				},
@@ -99,7 +101,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	builder.UpdateSchemaDefinition(t, "models.json")
+	builder.UpdateQueryDefinition(t, "models.json")
 
 	// qt, err := NewExpressionQueryReader(featuremgmt.WithFeatures())
 	// require.NoError(t, err)
@@ -109,6 +111,6 @@ func TestQueryTypeDefinitions(t *testing.T) {
 	// out, err := json.MarshalIndent(s, "", "  ")
 	// require.NoError(t, err)
 
-	// err = os.WriteFile("query.jsonschema", out, 0644)
+	// err = os.WriteFile("schema.jsonschema", out, 0644)
 	// require.NoError(t, err, "error writing file")
 }

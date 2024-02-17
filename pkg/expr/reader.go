@@ -1,26 +1,22 @@
 package expr
 
 import (
-	"embed"
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/query"
 
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
+// Once we are comfortable with the parsing logic, this struct will
+// be merged/replace the existing Query struct in grafana/pkg/expr/transform.go
 type ExpressionQuery struct {
 	RefID   string
 	Command Command
 }
-
-var _ query.TypedQueryReader[ExpressionQuery] = (*ExpressionQueryReader)(nil)
 
 type ExpressionQueryReader struct {
 	features featuremgmt.FeatureToggles
@@ -33,18 +29,10 @@ func NewExpressionQueryReader(features featuremgmt.FeatureToggles) (*ExpressionQ
 	return h, nil
 }
 
-//go:embed models.json
-var f embed.FS
-
-// QueryTypes implements query.TypedQueryHandler.
-func (h *ExpressionQueryReader) QueryTypeDefinitionListJSON() (json.RawMessage, error) {
-	return f.ReadFile("models.json")
-}
-
 // ReadQuery implements query.TypedQueryHandler.
 func (h *ExpressionQueryReader) ReadQuery(
 	// Properties that have been parsed off the same node
-	common query.CommonQueryProperties,
+	common *rawNode, // common query.CommonQueryProperties
 	// An iterator with context for the full node (include common values)
 	iter *jsoniter.Iterator,
 ) (eq ExpressionQuery, err error) {
@@ -81,7 +69,7 @@ func (h *ExpressionQueryReader) ReadQuery(
 		}
 		if err == nil {
 			eq.Command, err = NewReduceCommand(common.RefID,
-				string(q.Reducer), referenceVar, mapper)
+				q.Reducer, referenceVar, mapper)
 		}
 
 	case QueryTypeResample:
@@ -94,16 +82,17 @@ func (h *ExpressionQueryReader) ReadQuery(
 			referenceVar, err = getReferenceVar(q.Expression, common.RefID)
 		}
 		if err == nil {
-			tr := legacydata.NewDataTimeRange(common.TimeRange.From, common.TimeRange.To)
+			// tr := legacydata.NewDataTimeRange(common.TimeRange.From, common.TimeRange.To)
+			// AbsoluteTimeRange{
+			// 	From: tr.GetFromAsTimeUTC(),
+			// 	To:   tr.GetToAsTimeUTC(),
+			// })
 			eq.Command, err = NewResampleCommand(common.RefID,
 				q.Window,
 				referenceVar,
 				q.Downsampler,
 				q.Upsampler,
-				AbsoluteTimeRange{
-					From: tr.GetFromAsTimeUTC(),
-					To:   tr.GetToAsTimeUTC(),
-				})
+				common.TimeRange)
 		}
 
 	case QueryTypeClassic:
@@ -153,7 +142,7 @@ func (h *ExpressionQueryReader) ReadQuery(
 		}
 
 	default:
-		err = fmt.Errorf("unknown query type")
+		err = fmt.Errorf("unknown query type (%s)", common.QueryType)
 	}
 	return eq, err
 }
