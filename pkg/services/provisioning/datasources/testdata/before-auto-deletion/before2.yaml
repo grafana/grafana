@@ -1,0 +1,4 @@
+apiVersion: 1
+datasources:
+  - name: testdata
+    type: testdata

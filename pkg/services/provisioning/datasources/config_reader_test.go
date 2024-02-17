@@ -28,6 +28,8 @@ var (
 	multipleOrgsWithDefault         = "testdata/multiple-org-default"
 	withoutDefaults                 = "testdata/appliedDefaults"
 	invalidAccess                   = "testdata/invalid-access"
+	beforeAutoDeletion              = "testdata/before-auto-deletion"
+	afterAutoDeletion               = "testdata/after-auto-deletion"
 
 	oneDatasourceWithTwoCorrelations   = "testdata/one-datasource-two-correlations"
 	correlationsDifferentOrganizations = "testdata/correlations-different-organizations"
@@ -167,6 +169,26 @@ func TestDatasourceAsConfig(t *testing.T) {
 		require.Equal(t, len(store.deleted), 0)
 		require.Equal(t, len(store.inserted), 1)
 		require.Equal(t, len(store.updated), 1)
+	})
+
+	t.Run("Delete datasources when removing them from provision files", func(t *testing.T) {
+		store := &spyStore{}
+		orgFake := &orgtest.FakeOrgService{}
+		correlationsStore := &mockCorrelationsStore{}
+		dc := newDatasourceProvisioner(logger, store, correlationsStore, orgFake)
+		if err := dc.applyChanges(context.Background(), beforeAutoDeletion); err != nil {
+			t.Fatalf("applyChanges return an error %v", err)
+		}
+
+		require.Equal(t, len(store.deleted), 0)
+		require.Equal(t, len(store.inserted), 3)
+		require.Equal(t, len(store.updated), 0)
+
+		if err := dc.applyChanges(context.Background(), afterAutoDeletion); err != nil {
+			t.Fatalf("applyChanges return an error %v", err)
+		}
+
+		require.Equal(t, len(store.deleted), 2)
 	})
 
 	t.Run("broken yaml should return error", func(t *testing.T) {
@@ -430,7 +452,13 @@ func (s *spyStore) GetDataSource(ctx context.Context, query *datasources.GetData
 }
 
 func (s *spyStore) GetProvisionedDataSources(ctx context.Context, query *datasources.GetProvisionedDataSourcesQuery) ([]*datasources.DataSource, error) {
-	return s.items, nil
+	provisionedDataSources := []*datasources.DataSource{}
+	for _, item := range s.items {
+		if item.ProvisionedFrom != "" {
+			provisionedDataSources = append(provisionedDataSources, item)
+		}
+	}
+	return provisionedDataSources, nil
 }
 
 func (s *spyStore) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
@@ -447,7 +475,7 @@ func (s *spyStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delete
 
 func (s *spyStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
 	s.inserted = append(s.inserted, cmd)
-	newDataSource := &datasources.DataSource{UID: cmd.UID, Name: cmd.Name, OrgID: cmd.OrgID}
+	newDataSource := &datasources.DataSource{UID: cmd.UID, Name: cmd.Name, OrgID: cmd.OrgID, ProvisionedFrom: cmd.ProvisionedFrom}
 	s.items = append(s.items, newDataSource)
 	return newDataSource, nil
 }
