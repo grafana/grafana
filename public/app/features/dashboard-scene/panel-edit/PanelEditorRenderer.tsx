@@ -13,7 +13,7 @@ import { PanelEditor } from './PanelEditor';
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
   const { optionsPane, vizManager, dataPane, optionsPaneSize } = model.useState();
-  const { controls } = dashboard.useState();
+  const { controls } = model.useState();
   const styles = useStyles2(getStyles);
   const [vizPaneStyles, optionsPaneStyles] = useMemo(() => {
     if (optionsPaneSize > 0) {
@@ -86,6 +86,7 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       gap: theme.spacing(1),
       padding: theme.spacing(2, 0, 2, 2),
+      maringLeft: 'auto',
     }),
   };
 }
