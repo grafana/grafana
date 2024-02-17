@@ -6,14 +6,14 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/query"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/schema"
 
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 
-var _ query.TypedQueryReader[TestDataDataQuery] = (*PrometheusQueyHandler)(nil)
+var _ schema.TypedQueryParser[TestDataDataQuery] = (*TestdataQueryHandler)(nil)
 
-type PrometheusQueyHandler struct {
+type TestdataQueryHandler struct {
 	k8s   *v0alpha1.QueryTypeDefinitionList
 	field string
 }
@@ -21,8 +21,8 @@ type PrometheusQueyHandler struct {
 //go:embed dataquery.json
 var f embed.FS
 
-func NewQueryHandler() (*PrometheusQueyHandler, error) {
-	h := &PrometheusQueyHandler{
+func NewQueryHandler() (*TestdataQueryHandler, error) {
+	h := &TestdataQueryHandler{
 		k8s: &v0alpha1.QueryTypeDefinitionList{},
 	}
 
@@ -49,19 +49,19 @@ func NewQueryHandler() (*PrometheusQueyHandler, error) {
 }
 
 // QueryTypes implements query.TypedQueryHandler.
-func (h *PrometheusQueyHandler) QueryTypeDefinitionsJSON() (json.RawMessage, error) {
+func (h *TestdataQueryHandler) QueryTypeDefinitionsJSON() (json.RawMessage, error) {
 	return f.ReadFile("dataquery.json")
 }
 
 // QueryTypes implements query.TypedQueryHandler.
-func (h *PrometheusQueyHandler) QueryTypeDefinitionList() *v0alpha1.QueryTypeDefinitionList {
+func (h *TestdataQueryHandler) QueryTypeDefinitionList() *v0alpha1.QueryTypeDefinitionList {
 	return h.k8s
 }
 
 // ReadQuery implements query.TypedQueryHandler.
-func (*PrometheusQueyHandler) ReadQuery(
+func (*TestdataQueryHandler) ParseQuery(
 	// Properties that have been parsed off the same node
-	common query.CommonQueryProperties,
+	common schema.CommonQueryProperties,
 	// An iterator with context for the full node (include common values)
 	iter *jsoniter.Iterator,
 ) (TestDataDataQuery, error) {

@@ -36,7 +36,7 @@ func GetQuerySchema(defs *query.QueryTypeDefinitionList) (*spec.Schema, error) {
 		}
 
 		node := &spec.Schema{}
-		err := json.Unmarshal(qt.Spec.Schema, node)
+		err := json.Unmarshal(qt.Spec.QuerySchema, node)
 		if err != nil {
 			return nil, fmt.Errorf("error reading query types schema: %s // %w", qt.Spec.DiscriminatorValue, err)
 		}

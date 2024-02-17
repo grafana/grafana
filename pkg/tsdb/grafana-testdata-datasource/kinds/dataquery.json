@@ -2,17 +2,18 @@
   "kind": "QueryTypeDefinitionList",
   "apiVersion": "query.grafana.app/v0alpha1",
   "metadata": {
-    "resourceVersion": "1707943210026"
+    "resourceVersion": "1708131915397"
   },
   "items": [
     {
       "metadata": {
         "name": "default",
-        "resourceVersion": "1707943210026",
-        "creationTimestamp": "2024-02-14T20:40:10Z"
+        "resourceVersion": "1708131915397",
+        "creationTimestamp": "2024-02-17T01:05:15Z"
       },
       "spec": {
-        "schema": {
+        "querySchema": {
+          "$schema": "https://json-schema.org/draft-04/schema",
           "properties": {
             "alias": {
               "type": "string"
@@ -224,7 +225,7 @@
         "examples": [
           {
             "name": "example timeseries",
-            "query": {
+            "queryPayload": {
               "nodes": {},
               "scenarioId": "manual_entry"
             }

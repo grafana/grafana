@@ -6,12 +6,12 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/query"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/schema"
 
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 )
 
-var _ query.TypedQueryReader[PrometheusDataQuery] = (*PrometheusQueyHandler)(nil)
+var _ schema.TypedQueryParser[PrometheusDataQuery] = (*PrometheusQueyHandler)(nil)
 
 type PrometheusQueyHandler struct {
 	k8s   *v0alpha1.QueryTypeDefinitionList
@@ -59,9 +59,9 @@ func (h *PrometheusQueyHandler) QueryTypeDefinitionList() *v0alpha1.QueryTypeDef
 }
 
 // ReadQuery implements query.TypedQueryHandler.
-func (*PrometheusQueyHandler) ReadQuery(
+func (*PrometheusQueyHandler) ParseQuery(
 	// Properties that have been parsed off the same node
-	common query.CommonQueryProperties,
+	common schema.CommonQueryProperties,
 	// An iterator with context for the full node (include common values)
 	iter *jsoniter.Iterator,
 ) (PrometheusDataQuery, error) {

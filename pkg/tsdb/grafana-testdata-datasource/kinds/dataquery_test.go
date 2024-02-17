@@ -6,16 +6,15 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/query"
-	extschema "github.com/grafana/grafana-plugin-sdk-go/experimental/query/schema"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/schema"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/registry/apis/query/schema"
+	schemaex "github.com/grafana/grafana/pkg/registry/apis/query/schema"
 )
 
 func TestQueryTypeDefinitions(t *testing.T) {
-	builder, err := extschema.NewBuilder(
-		extschema.BuilderOptions{
+	builder, err := schema.NewSchemaBuilder(
+		schema.BuilderOptions{
 			BasePackage: "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource/kinds",
 			CodePath:    "./",
 			// We need to identify the enum fields explicitly :(
@@ -26,14 +25,16 @@ func TestQueryTypeDefinitions(t *testing.T) {
 				reflect.TypeOf(ErrorTypeServerPanic),         // pick an example value (not the root)
 				reflect.TypeOf(TestDataQueryTypeAnnotations), // pick an example value (not the root)
 			},
-		},
-		extschema.QueryTypeInfo{
+		})
+	require.NoError(t, err)
+	err = builder.AddQueries(
+		schema.QueryTypeInfo{
 			Name:   "default",
 			GoType: reflect.TypeOf(&TestDataDataQuery{}),
-			Examples: []query.QueryExample{
+			Examples: []schema.QueryExample{
 				{
 					Name: "example timeseries",
-					Query: TestDataDataQuery{
+					QueryPayload: TestDataDataQuery{
 						ScenarioId: TestDataQueryTypeManualEntry,
 					},
 				},
@@ -42,16 +43,16 @@ func TestQueryTypeDefinitions(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	builder.UpdateSchemaDefinition(t, "dataquery.json")
+	builder.UpdateQueryDefinition(t, "dataquery.json")
 
 	qt, err := NewQueryHandler()
 	require.NoError(t, err)
-	s, err := schema.GetQuerySchema(qt.QueryTypeDefinitionList())
+	s, err := schemaex.GetQuerySchema(qt.QueryTypeDefinitionList())
 	require.NoError(t, err)
 
 	out, err := json.MarshalIndent(s, "", "  ")
 	require.NoError(t, err)
 
-	err = os.WriteFile("dataquery.jsonschema", out, 0644)
+	err = os.WriteFile("dataquery.schema.json", out, 0644)
 	require.NoError(t, err, "error writing file")
 }

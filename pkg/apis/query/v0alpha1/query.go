@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/query"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/schema"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	openapi "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
@@ -37,7 +37,7 @@ type GenericQueryRequest struct {
 
 // GenericDataQuery is a replacement for `dtos.MetricRequest` that provides more explicit types
 type GenericDataQuery struct {
-	query.CommonQueryProperties `json:",inline"`
+	schema.CommonQueryProperties `json:",inline"`
 
 	// Additional Properties (that live at the root)
 	Additional map[string]any `json:",inline"`
@@ -46,7 +46,7 @@ type GenericDataQuery struct {
 // Produce an API definition that represents map[string]any
 func (g GenericDataQuery) OpenAPIDefinition() openapi.OpenAPIDefinition {
 	s := spec.Schema{}
-	_ = json.Unmarshal(query.GetCommonJSONSchema(), &s)
+	_ = json.Unmarshal(schema.GetCommonJSONSchema(), &s)
 	s.SchemaProps.Type = []string{"object"}
 	s.SchemaProps.AdditionalProperties = &spec.SchemaOrBool{Allows: true}
 	s.VendorExtensible = spec.VendorExtensible{
@@ -139,7 +139,7 @@ func (g *GenericDataQuery) unmarshal(vals map[string]any) error {
 	if ok {
 		wrap, ok := v.(map[string]any)
 		if ok {
-			g.Datasource = &query.DataSourceRef{}
+			g.Datasource = &schema.DataSourceRef{}
 			g.Datasource.Type, _ = wrap["type"].(string)
 			g.Datasource.UID, _ = wrap["uid"].(string)
 			delete(vals, key)
@@ -149,7 +149,7 @@ func (g *GenericDataQuery) unmarshal(vals map[string]any) error {
 			if !ok {
 				return fmt.Errorf("expected datasource as object (got: %t)", v)
 			}
-			g.Datasource = &query.DataSourceRef{}
+			g.Datasource = &schema.DataSourceRef{}
 			g.Datasource.UID = name // Not great, but the lookup function will try its best to resolve
 			delete(vals, key)
 		}

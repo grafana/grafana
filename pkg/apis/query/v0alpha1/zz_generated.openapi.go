@@ -233,15 +233,21 @@ func schema_pkg_apis_query_v0alpha1_QueryExample(ref common.ReferenceCallback) c
 							Format:      "",
 						},
 					},
-					"query": {
+					"queryPayload": {
 						SchemaProps: spec.SchemaProps{
-							Description: "An example query",
+							Description: "An example payload -- this should not require the frontend code to pre-process anything",
+							Type:        []string{"string"},
+							Format:      "byte",
+						},
+					},
+					"saveModel": {
+						SchemaProps: spec.SchemaProps{
+							Description: "An example save model -- this will require frontend code to convert it into a valid query payload",
 							Type:        []string{"string"},
 							Format:      "byte",
 						},
 					},
 				},
-				Required: []string{"query"},
 			},
 		},
 	}
@@ -362,9 +368,16 @@ func schema_pkg_apis_query_v0alpha1_QueryTypeDefinitionSpec(ref common.Reference
 							Format:      "",
 						},
 					},
-					"schema": {
+					"querySchema": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The JSONSchema definition for the non-common fields",
+							Description: "The query schema represents the properties that can be sent to the API In many cases, this may be the same properties that are saved in a dashboard In the case where the save model is different, we must also specify a save model",
+							Type:        []string{"string"},
+							Format:      "byte",
+						},
+					},
+					"saveModel": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The save model defines properties that can be saved into dashboard or similar These values are processed by frontend components and then sent to the api When specified, this schema will be used to validate saved objects rather than the query schema",
 							Type:        []string{"string"},
 							Format:      "byte",
 						},
@@ -399,7 +412,7 @@ func schema_pkg_apis_query_v0alpha1_QueryTypeDefinitionSpec(ref common.Reference
 						},
 					},
 				},
-				Required: []string{"schema"},
+				Required: []string{"querySchema"},
 			},
 		},
 		Dependencies: []string{

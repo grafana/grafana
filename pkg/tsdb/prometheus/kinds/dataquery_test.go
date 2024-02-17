@@ -6,16 +6,15 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/query"
-	extschema "github.com/grafana/grafana-plugin-sdk-go/experimental/query/schema"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/schema"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/registry/apis/query/schema"
+	schemaex "github.com/grafana/grafana/pkg/registry/apis/query/schema"
 )
 
 func TestQueryTypeDefinitions(t *testing.T) {
-	builder, err := extschema.NewBuilder(
-		extschema.BuilderOptions{
+	builder, err := schema.NewSchemaBuilder(
+		schema.BuilderOptions{
 			BasePackage: "github.com/grafana/grafana/pkg/tsdb/prometheus/kinds",
 			CodePath:    "./",
 			// We need to identify the enum fields explicitly :(
@@ -24,21 +23,23 @@ func TestQueryTypeDefinitions(t *testing.T) {
 				reflect.TypeOf(PromQueryFormatTimeSeries), // pick an example value (not the root)
 				reflect.TypeOf(QueryEditorModeCode),       // pick an example value (not the root)
 			},
-		},
-		extschema.QueryTypeInfo{
+		})
+	require.NoError(t, err)
+	err = builder.AddQueries(
+		schema.QueryTypeInfo{
 			Name:   "default",
 			GoType: reflect.TypeOf(&PrometheusDataQuery{}),
-			Examples: []query.QueryExample{
+			Examples: []schema.QueryExample{
 				{
 					Name: "example timeseries",
-					Query: PrometheusDataQuery{
+					QueryPayload: PrometheusDataQuery{
 						Format: PromQueryFormatTimeSeries,
 						Expr:   "???",
 					},
 				},
 				{
 					Name: "example table",
-					Query: PrometheusDataQuery{
+					QueryPayload: PrometheusDataQuery{
 						Format: PromQueryFormatTable,
 						Expr:   "???",
 					},
@@ -48,16 +49,16 @@ func TestQueryTypeDefinitions(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	builder.UpdateSchemaDefinition(t, "dataquery.json")
+	builder.UpdateQueryDefinition(t, "dataquery.json")
 
 	qt, err := NewQueryHandler()
 	require.NoError(t, err)
-	s, err := schema.GetQuerySchema(qt.QueryTypeDefinitionList())
+	s, err := schemaex.GetQuerySchema(qt.QueryTypeDefinitionList())
 	require.NoError(t, err)
 
 	out, err := json.MarshalIndent(s, "", "  ")
 	require.NoError(t, err)
 
-	err = os.WriteFile("dataquery.jsonschema", out, 0644)
+	err = os.WriteFile("dataquery.schema.json", out, 0644)
 	require.NoError(t, err, "error writing file")
 }
