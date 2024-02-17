@@ -230,7 +230,7 @@ type GetDataSourcesQuery struct {
 
 type GetAllDataSourcesQuery struct{}
 
-type GetProvisionedDataSourcesQuery struct {}
+type GetProvisionedDataSourcesQuery struct{}
 
 type GetDataSourcesByTypeQuery struct {
 	OrgID    int64 // optional: filter by org_id

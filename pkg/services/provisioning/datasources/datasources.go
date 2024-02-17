@@ -155,6 +155,10 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 	}
 
 	provisionedDataSources, err := dc.store.GetProvisionedDataSources(ctx, &datasources.GetProvisionedDataSourcesQuery{})
+	if err != nil {
+		return err
+	}
+
 	staleProvisionedDataSources := []*deleteDatasourceConfig{}
 
 	for _, provisionedDataSource := range provisionedDataSources {
@@ -168,7 +172,9 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 		}
 	}
 
-	dc.deleteDatasources(ctx, staleProvisionedDataSources, willExistAfterProvisioning)
+	if err := dc.deleteDatasources(ctx, staleProvisionedDataSources, willExistAfterProvisioning); err != nil {
+		return err
+	}
 
 	for _, cfg := range configs {
 		if err := dc.provisionDataSources(ctx, cfg, willExistAfterProvisioning); err != nil {
