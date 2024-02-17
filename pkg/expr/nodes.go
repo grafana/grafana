@@ -10,6 +10,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	jsonitersdk "github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
+	jsoniter "github.com/json-iterator/go"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"gonum.org/v1/gonum/graph/simple"
@@ -46,14 +48,22 @@ type rawNode struct {
 	idx int64
 }
 
-func GetExpressionCommandType(rawQuery map[string]any) (c CommandType, err error) {
+func getExpressionCommandTypeString(rawQuery map[string]any) (string, error) {
 	rawType, ok := rawQuery["type"]
 	if !ok {
-		return c, errors.New("no expression command type in query")
+		return "", errors.New("no expression command type in query")
 	}
 	typeString, ok := rawType.(string)
 	if !ok {
-		return c, fmt.Errorf("expected expression command type to be a string, got type %T", rawType)
+		return "", fmt.Errorf("expected expression command type to be a string, got type %T", rawType)
+	}
+	return typeString, nil
+}
+
+func GetExpressionCommandType(rawQuery map[string]any) (c CommandType, err error) {
+	typeString, err := getExpressionCommandTypeString(rawQuery)
+	if err != nil {
+		return c, err
 	}
 	return ParseCommandType(typeString)
 }
@@ -109,6 +119,29 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles) (*CMDNode, er
 			refID: rn.RefID,
 		},
 		CMDType: commandType,
+	}
+
+	if toggles.IsEnabledGlobally(featuremgmt.FlagExpressionParser) {
+		rn.QueryType, err = getExpressionCommandTypeString(rn.Query)
+		if err != nil {
+			return nil, err // should not happen because the command was parsed first thing
+		}
+
+		// NOTE: this structure of this is weird now, because it is targeting a structure
+		// where this is actually run in the root loop, however we want to verify the individual
+		// node parsing before changing the full tree parser
+		reader, err := NewExpressionQueryReader(toggles)
+		if err != nil {
+			return nil, err
+		}
+
+		iter := jsoniter.ParseBytes(jsoniter.ConfigDefault, rn.QueryRaw)
+		q, err := reader.ReadQuery(rn, jsonitersdk.NewIterator(iter))
+		if err != nil {
+			return nil, err
+		}
+		node.Command = q.Command
+		return node, err
 	}
 
 	switch commandType {

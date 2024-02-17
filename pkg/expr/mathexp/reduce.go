@@ -3,12 +3,29 @@ package mathexp
 import (
 	"fmt"
 	"math"
-	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 type ReducerFunc = func(fv *Float64Field) *float64
+
+// The reducer function
+// +enum
+type ReducerID string
+
+const (
+	ReducerSum   ReducerID = "sum"
+	ReducerMean  ReducerID = "mean"
+	ReducerMin   ReducerID = "min"
+	ReducerMax   ReducerID = "max"
+	ReducerCount ReducerID = "count"
+	ReducerLast  ReducerID = "last"
+)
+
+// GetSupportedReduceFuncs returns collection of supported function names
+func GetSupportedReduceFuncs() []ReducerID {
+	return []ReducerID{ReducerSum, ReducerMean, ReducerMin, ReducerMax, ReducerCount, ReducerLast}
+}
 
 func Sum(fv *Float64Field) *float64 {
 	var sum float64
@@ -81,34 +98,29 @@ func Last(fv *Float64Field) *float64 {
 	return fv.GetValue(fv.Len() - 1)
 }
 
-func GetReduceFunc(rFunc string) (ReducerFunc, error) {
-	switch strings.ToLower(rFunc) {
-	case "sum":
+func GetReduceFunc(rFunc ReducerID) (ReducerFunc, error) {
+	switch rFunc {
+	case ReducerSum:
 		return Sum, nil
-	case "mean":
+	case ReducerMean:
 		return Avg, nil
-	case "min":
+	case ReducerMin:
 		return Min, nil
-	case "max":
+	case ReducerMax:
 		return Max, nil
-	case "count":
+	case ReducerCount:
 		return Count, nil
-	case "last":
+	case ReducerLast:
 		return Last, nil
 	default:
 		return nil, fmt.Errorf("reduction %v not implemented", rFunc)
 	}
 }
 
-// GetSupportedReduceFuncs returns collection of supported function names
-func GetSupportedReduceFuncs() []string {
-	return []string{"sum", "mean", "min", "max", "count", "last"}
-}
-
 // Reduce turns the Series into a Number based on the given reduction function
 // if ReduceMapper is defined it applies it to the provided series and performs reduction of the resulting series.
 // Otherwise, the reduction operation is done against the original series.
-func (s Series) Reduce(refID, rFunc string, mapper ReduceMapper) (Number, error) {
+func (s Series) Reduce(refID string, rFunc ReducerID, mapper ReduceMapper) (Number, error) {
 	var l data.Labels
 	if s.GetLabels() != nil {
 		l = s.GetLabels().Copy()
