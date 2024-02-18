@@ -2,7 +2,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Input, Field, HorizontalGroup } from '@grafana/ui';
+import { Button, Input, Field, Stack } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
@@ -65,14 +65,14 @@ export function NewFolderForm({ onCancel, onConfirm }: Props) {
           })}
         />
       </Field>
-      <HorizontalGroup>
+      <Stack>
         <Button variant="secondary" fill="outline" onClick={onCancel}>
           <Trans i18nKey="browse-dashboards.new-folder-form.cancel-label">Cancel</Trans>
         </Button>
         <Button type="submit">
           <Trans i18nKey="browse-dashboards.new-folder-form.create-label">Create</Trans>
         </Button>
-      </HorizontalGroup>
+      </Stack>
     </form>
   );
 }
