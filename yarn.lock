@@ -18455,7 +18455,6 @@ __metadata:
     jest-matcher-utils: "npm:29.7.0"
     jquery: "npm:3.7.1"
     js-yaml: "npm:^4.1.0"
-    jsdom-worker: "npm:^0.3.0"
     json-markup: "npm:^1.1.0"
     json-source-map: "npm:0.6.1"
     jsurl: "npm:^0.1.5"
@@ -21095,18 +21094,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsdom-worker@npm:^0.3.0":
-  version: 0.3.0
-  resolution: "jsdom-worker@npm:0.3.0"
-  dependencies:
-    mitt: "npm:^3.0.0"
-    uuid-v4: "npm:^0.1.0"
-  peerDependencies:
-    node-fetch: "*"
-  checksum: 10/43bc1777752cbc5c5bf9a1dc456300e853b0b0c2ef274b31ce0f4bbdaf093f0837e25e654f6fc173addaef22213c0329eaaf925c18aa580de46bfcc1ac145167
-  languageName: node
-  linkType: hard
-
 "jsdom@npm:^20.0.0":
   version: 20.0.2
   resolution: "jsdom@npm:20.0.2"
@@ -22695,13 +22682,6 @@ __metadata:
     minipass: "npm:^3.0.0"
     yallist: "npm:^4.0.0"
   checksum: 10/ae0f45436fb51344dcb87938446a32fbebb540d0e191d63b35e1c773d47512e17307bf54aa88326cc6d176594d00e4423563a091f7266c2f9a6872cdc1e234d1
-  languageName: node
-  linkType: hard
-
-"mitt@npm:^3.0.0":
-  version: 3.0.1
-  resolution: "mitt@npm:3.0.1"
-  checksum: 10/287c70d8e73ffc25624261a4989c783768aed95ecb60900f051d180cf83e311e3e59865bfd6e9d029cdb149dc20ba2f128a805e9429c5c4ce33b1416c65bbd14
   languageName: node
   linkType: hard
 
@@ -30694,13 +30674,6 @@ __metadata:
   dependencies:
     base64-arraybuffer: "npm:^1.0.2"
   checksum: 10/0c9458380bf3113f425a268e3d605aef163bfbaea62bf24de517b62b6e6744394d8ef1cdd9b07423359aec5ed402baab4bb2c5beec64f674ec635dc2f8dbd4bf
-  languageName: node
-  linkType: hard
-
-"uuid-v4@npm:^0.1.0":
-  version: 0.1.0
-  resolution: "uuid-v4@npm:0.1.0"
-  checksum: 10/f107fd9a271ab512a645ad658775cd34abcb388bb39c20633056c48a0901f008a6393362ec19073aa150f52d01458f7ca9e32d594902693e7bde416c153a9f8c
   languageName: node
   linkType: hard
 

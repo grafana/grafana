@@ -30,7 +30,7 @@ module.exports = {
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages'],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
-  setupFiles: ['jsdom-worker', 'jest-canvas-mock', './public/test/jest-setup.ts'],
+  setupFiles: ['jest-canvas-mock', './public/test/jest-setup.ts'],
   testTimeout: 30000,
   resolver: `<rootDir>/public/test/jest-resolver.js`,
   setupFilesAfterEnv: ['./public/test/setupTests.ts'],

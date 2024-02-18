@@ -83,10 +83,10 @@ describe('dashboardSceneGraph', () => {
   });
 
   describe('getPanelLinks', () => {
-    it('should throw if no links object defined', () => {
+    it('should return null if no links object defined', () => {
       const scene = buildTestScene();
       const panelWithNoLinks = findVizPanelByKey(scene, 'panel-1')!;
-      expect(() => dashboardSceneGraph.getPanelLinks(panelWithNoLinks)).toThrow();
+      expect(dashboardSceneGraph.getPanelLinks(panelWithNoLinks)).toBeNull();
     });
 
     it('should resolve VizPanelLinks object', () => {

@@ -182,7 +182,6 @@
     "jest-fail-on-console": "3.1.2",
     "jest-junit": "16.0.0",
     "jest-matcher-utils": "29.7.0",
-    "jsdom-worker": "^0.3.0",
     "lerna": "7.4.1",
     "mini-css-extract-plugin": "2.8.0",
     "msw": "2.2.1",
