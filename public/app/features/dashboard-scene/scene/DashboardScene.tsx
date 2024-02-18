@@ -58,7 +58,7 @@ import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { createWorker } from './workers/createDetectChangesWorker';
 
-export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links'];
+export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta'];
 
 export interface DashboardSceneState extends SceneObjectState {
   /** The title */

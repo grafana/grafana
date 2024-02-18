@@ -249,7 +249,7 @@ export function getPanelFrameCategory2(panel: VizPanel): OptionsPaneCategoryDesc
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: 'Panel links',
-          render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject} />,
+          render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject ?? undefined} />,
         })
       )
     );
