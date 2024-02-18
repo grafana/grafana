@@ -59,7 +59,7 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses() 
 
 		if len(toCheck) > 0 {
 			if !useSelfContainedPermissions {
-				builder.WriteString("(dashboard.uid IN (SELECT substr(scope, 16) FROM permission WHERE scope LIKE 'dashboards:uid:%'")
+				builder.WriteString("(dashboard.uid IN (SELECT identifier FROM permission WHERE kind = 'dashboards' AND attribute = 'uid'")
 				builder.WriteString(rolesFilter)
 				args = append(args, params...)
 
@@ -67,7 +67,7 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses() 
 					builder.WriteString(" AND action = ?")
 					args = append(args, toCheck[0])
 				} else {
-					builder.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope HAVING COUNT(action) = ?")
+					builder.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope, identifier HAVING COUNT(action) = ?")
 					args = append(args, toCheck...)
 					args = append(args, len(toCheck))
 				}
@@ -89,7 +89,7 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses() 
 			builder.WriteString(" OR ")
 
 			if !useSelfContainedPermissions {
-				permSelector.WriteString("(SELECT substr(scope, 13) FROM permission WHERE scope LIKE 'folders:uid:%' ")
+				permSelector.WriteString("(SELECT identifier FROM permission WHERE kind = 'folders' AND attribute = 'uid'")
 				permSelector.WriteString(rolesFilter)
 				permSelectorArgs = append(permSelectorArgs, params...)
 
@@ -97,7 +97,7 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses() 
 					permSelector.WriteString(" AND action = ?")
 					permSelectorArgs = append(permSelectorArgs, toCheck[0])
 				} else {
-					permSelector.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope HAVING COUNT(action) = ?")
+					permSelector.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope, identifier HAVING COUNT(action) = ?")
 					permSelectorArgs = append(permSelectorArgs, toCheck...)
 					permSelectorArgs = append(permSelectorArgs, len(toCheck))
 				}
@@ -169,14 +169,14 @@ func (f *accessControlDashboardPermissionFilterNoFolderSubquery) buildClauses() 
 		toCheck := actionsToCheck(f.folderActions, f.user.GetPermissions(), folderWildcards)
 		if len(toCheck) > 0 {
 			if !useSelfContainedPermissions {
-				permSelector.WriteString("(SELECT substr(scope, 13) FROM permission WHERE scope LIKE 'folders:uid:%'")
+				permSelector.WriteString("(SELECT identifier FROM permission WHERE kind = 'folders' AND attribute = 'uid'")
 				permSelector.WriteString(rolesFilter)
 				permSelectorArgs = append(permSelectorArgs, params...)
 				if len(toCheck) == 1 {
 					permSelector.WriteString(" AND action = ?")
 					permSelectorArgs = append(permSelectorArgs, toCheck[0])
 				} else {
-					permSelector.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope HAVING COUNT(action) = ?")
+					permSelector.WriteString(" AND action IN (?" + strings.Repeat(", ?", len(toCheck)-1) + ") GROUP BY role_id, scope, identifier HAVING COUNT(action) = ?")
 					permSelectorArgs = append(permSelectorArgs, toCheck...)
 					permSelectorArgs = append(permSelectorArgs, len(toCheck))
 				}
