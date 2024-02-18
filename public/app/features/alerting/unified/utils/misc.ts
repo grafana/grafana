@@ -2,7 +2,7 @@ import { sortBy } from 'lodash';
 
 import { UrlQueryMap, Labels } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/src/types/config';
-import { config } from '@grafana/runtime';
+import { config, isFetchError } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
 import { alertInstanceKey } from 'app/features/alerting/unified/utils/rules';
@@ -157,8 +157,15 @@ export function makeDashboardLink(dashboardUID: string): string {
   return createUrl(`/d/${encodeURIComponent(dashboardUID)}`);
 }
 
-export function makePanelLink(dashboardUID: string, panelId: string): string {
-  return createUrl(`/d/${encodeURIComponent(dashboardUID)}`, { viewPanel: panelId });
+type PanelLinkParams = {
+  viewPanel?: string;
+  editPanel?: string;
+  tab?: 'alert' | 'transform' | 'query';
+};
+
+export function makePanelLink(dashboardUID: string, panelId: string, queryParams: PanelLinkParams = {}): string {
+  const panelParams = new URLSearchParams(queryParams);
+  return createUrl(`/d/${encodeURIComponent(dashboardUID)}`, panelParams);
 }
 
 // keep retrying fn if it's error passes shouldRetry(error) and timeout has not elapsed yet
@@ -231,5 +238,10 @@ export function isErrorLike(error: unknown): error is Error {
 }
 
 export function stringifyErrorLike(error: unknown): string {
+  const fetchError = isFetchError(error);
+  if (fetchError) {
+    return error.data.message;
+  }
+
   return isErrorLike(error) ? error.message : String(error);
 }

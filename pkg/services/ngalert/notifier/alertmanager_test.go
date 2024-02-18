@@ -17,7 +17,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func setupAMTest(t *testing.T) *alertmanager {
 	dir := t.TempDir()
@@ -41,7 +46,7 @@ func setupAMTest(t *testing.T) *alertmanager {
 	kvStore := fakes.NewFakeKVStore(t)
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 	decryptFn := secretsService.GetDecryptedValue
-	am, err := NewAlertmanager(context.Background(), 1, cfg, s, kvStore, &NilPeer{}, decryptFn, nil, m)
+	am, err := NewAlertmanager(context.Background(), 1, cfg, s, kvStore, &NilPeer{}, decryptFn, nil, m, false)
 	require.NoError(t, err)
 	return am
 }

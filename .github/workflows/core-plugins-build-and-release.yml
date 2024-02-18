@@ -9,9 +9,10 @@ on:
         type: choice
         options:
           - grafana-azure-monitor-datasource
-          - grafana-cloud-monitoring-datasource
+          - grafana-pyroscope-datasource
           - grafana-testdata-datasource
           - parca
+          - stackdriver
           - tempo
 
 concurrency:

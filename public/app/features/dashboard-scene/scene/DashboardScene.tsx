@@ -1,12 +1,12 @@
-import { css } from '@emotion/css';
 import * as H from 'history';
-import React from 'react';
 import { Unsubscribable } from 'rxjs';
 
-import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil, textUtil } from '@grafana/data';
-import { locationService, config } from '@grafana/runtime';
+import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import {
+  dataLayers,
   getUrlSyncManager,
+  SceneDataLayers,
   SceneFlexLayout,
   sceneGraph,
   SceneGridItem,
@@ -23,7 +23,6 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink } from '@grafana/schema';
-import { ConfirmModal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { getNavModel } from 'app/core/selectors/navModel';
@@ -33,7 +32,7 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
-import { ShowModalReactEvent, ShowConfirmModalEvent } from 'app/types/events';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
@@ -373,6 +372,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
             this.setIsDirty();
           }
         }
+        if (event.payload.changedObject instanceof SceneDataLayers) {
+          this.setIsDirty();
+        }
+        if (event.payload.changedObject instanceof dataLayers.AnnotationsDataLayer) {
+          if (!Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'data')) {
+            this.setIsDirty();
+          }
+        }
         if (event.payload.changedObject instanceof SceneGridItem) {
           this.setIsDirty();
         }
@@ -405,6 +412,24 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   public getInitialState(): DashboardSceneState | undefined {
     return this._initialState;
+  }
+
+  public addPanel(vizPanel: VizPanel): void {
+    // TODO: need logic for adding a panel when other panels exist
+    // This is the logic when dashboard is empty
+    this.setState({
+      body: new SceneGridLayout({
+        children: [
+          new SceneGridItem({
+            height: 10,
+            width: 10,
+            x: 0.2,
+            y: 0,
+            body: vizPanel,
+          }),
+        ],
+      }),
+    });
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
@@ -493,49 +518,22 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     }
   }
 
-  public onOpenSnapshotOriginalDashboard = () => {
-    // @ts-ignore
-    const relativeURL = this.getInitialSaveModel()?.snapshot?.originalUrl ?? '';
-    const sanitizedRelativeURL = textUtil.sanitizeUrl(relativeURL);
-    try {
-      const sanitizedAppUrl = new URL(sanitizedRelativeURL, config.appUrl);
-      const appUrl = new URL(config.appUrl);
-      if (sanitizedAppUrl.host !== appUrl.host) {
-        appEvents.publish(
-          new ShowModalReactEvent({
-            component: ConfirmModal,
-            props: {
-              title: 'Proceed to external site?',
-              modalClass: css({
-                width: 'max-content',
-                maxWidth: '80vw',
-              }),
-              body: (
-                <>
-                  <p>
-                    {`This link connects to an external website at`} <code>{relativeURL}</code>
-                  </p>
-                  <p>{"Are you sure you'd like to proceed?"}</p>
-                </>
-              ),
-              confirmVariant: 'primary',
-              confirmText: 'Proceed',
-              onConfirm: () => {
-                window.location.href = sanitizedAppUrl.href;
-              },
-            },
-          })
-        );
-      } else {
-        locationService.push(sanitizedRelativeURL);
-      }
-    } catch (err) {
-      console.error('Failed to open original dashboard', err);
-    }
-  };
-
   public onOpenSettings = () => {
     locationService.partial({ editview: 'settings' });
+  };
+
+  public isEmpty = (): boolean => {
+    const { body, viewPanelScene } = this.state;
+
+    if (!!viewPanelScene) {
+      return !!viewPanelScene.state.body;
+    }
+
+    if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
+      return body.state.children.length === 0;
+    }
+
+    throw new Error('Invalid body type');
   };
 
   /**

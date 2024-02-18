@@ -11,8 +11,8 @@ import {
   convertLegacyAuthProps,
   DataSourceDescription,
 } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { Alert, SecureSocksProxySettings, Divider, Stack } from '@grafana/ui';
-import { config } from 'app/core/config';
 
 import { ElasticsearchOptions } from '../types';
 
