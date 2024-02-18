@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useContext, useEffect } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { AnnotationEventUIModel, GrafanaTheme2 } from '@grafana/data';
+import { AnnotationEventUIModel, GrafanaTheme2, dateTimeFormat, systemDateFormats } from '@grafana/data';
 import {
   Button,
   Field,
@@ -20,7 +20,7 @@ import { getAnnotationTags } from 'app/features/annotations/api';
 interface Props {
   annoVals: Record<string, any[]>;
   annoIdx: number;
-  timeFormatter: (v: number) => string;
+  timeZone: string;
   dismiss: () => void;
 }
 
@@ -29,24 +29,38 @@ interface AnnotationEditFormDTO {
   tags: string[];
 }
 
-export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeFormatter, ...otherProps }: Props) => {
+export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...otherProps }: Props) => {
   const styles = useStyles2(getStyles);
-  const panelContext = usePanelContext();
+  const { onAnnotationCreate, onAnnotationUpdate } = usePanelContext();
+
+  // const clickAwayRef = useRef(null);
+
+  // useClickAway(clickAwayRef, () => {
+  //   if (state === STATE_EDITING) {
+  //     setIsEditingWrap(false);
+  //   }
+  // });
 
   const layoutCtx = useContext(LayoutItemContext);
   useEffect(() => layoutCtx.boostZIndex(), [layoutCtx]);
 
   const [createAnnotationState, createAnnotation] = useAsyncFn(async (event: AnnotationEventUIModel) => {
-    const result = await panelContext.onAnnotationCreate!(event);
+    const result = await onAnnotationCreate!(event);
     dismiss();
     return result;
   });
 
   const [updateAnnotationState, updateAnnotation] = useAsyncFn(async (event: AnnotationEventUIModel) => {
-    const result = await panelContext.onAnnotationUpdate!(event);
+    const result = await onAnnotationUpdate!(event);
     dismiss();
     return result;
   });
+
+  const timeFormatter = (value: number) =>
+    dateTimeFormat(value, {
+      format: systemDateFormats.fullDate,
+      timeZone,
+    });
 
   const isUpdatingAnnotation = annoVals.id?.[annoIdx] != null;
   const isRegionAnnotation = annoVals.isRegion?.[annoIdx];

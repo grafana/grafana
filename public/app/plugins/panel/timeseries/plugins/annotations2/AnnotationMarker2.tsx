@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
-import useClickAway from 'react-use/lib/useClickAway';
+import React, { useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
-import { dateTimeFormat, GrafanaTheme2, systemDateFormats } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
-import { usePanelContext, useStyles2 } from '@grafana/ui';
+import { getPortalContainer, useStyles2 } from '@grafana/ui';
 
 import { AnnotationEditor2 } from './AnnotationEditor2';
 import { AnnotationTooltip2 } from './AnnotationTooltip2';
@@ -14,7 +14,7 @@ interface AnnoBoxProps {
   annoIdx: number;
   style: React.CSSProperties | null;
   className: string;
-  timezone: TimeZone;
+  timeZone: TimeZone;
   exitWipEdit?: null | (() => void);
 }
 
@@ -22,98 +22,42 @@ const STATE_DEFAULT = 0;
 const STATE_EDITING = 1;
 const STATE_HOVERED = 2;
 
-export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, exitWipEdit, timezone }: AnnoBoxProps) => {
-  const { canEditAnnotations, canDeleteAnnotations, ...panelCtx } = usePanelContext();
-
+export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, exitWipEdit, timeZone }: AnnoBoxProps) => {
   const styles = useStyles2(getStyles);
 
-  const [state, setState] = useState(STATE_DEFAULT);
-
-  const clickAwayRef = useRef(null);
-
-  useClickAway(clickAwayRef, () => {
-    if (state === STATE_EDITING) {
-      setIsEditingWrap(false);
-    }
-  });
+  const [state, setState] = useState(exitWipEdit != null ? STATE_EDITING : STATE_DEFAULT);
 
   const domRef = React.createRef<HTMLDivElement>();
 
-  // similar to TooltipPlugin2, when editing annotation (pinned), it should boost z-index
-  const setIsEditingWrap = useCallback(
-    (isEditing: boolean) => {
-      setState(isEditing ? STATE_EDITING : STATE_DEFAULT);
-      if (!isEditing && exitWipEdit != null) {
-        exitWipEdit();
-      }
-    },
-    [exitWipEdit]
-  );
+  const portalRoot = useRef<HTMLElement | null>(null);
 
-  const onAnnotationEdit = useCallback(() => {
-    setIsEditingWrap(true);
-  }, [setIsEditingWrap]);
+  if (portalRoot.current == null) {
+    portalRoot.current = getPortalContainer();
+  }
 
-  const onAnnotationDelete = useCallback(() => {
-    if (panelCtx.onAnnotationDelete) {
-      panelCtx.onAnnotationDelete(annoVals.id?.[annoIdx]);
-    }
-  }, [annoIdx, annoVals.id, panelCtx]);
+  const containerStyle: React.CSSProperties = {
+    transform: 'translateX(300px) translateY(300px)',
+  };
 
-  const timeFormatter = useCallback(
-    (value: number) => {
-      return dateTimeFormat(value, {
-        format: systemDateFormats.fullDate,
-        timeZone: timezone,
-      });
-    },
-    [timezone]
-  );
-
-  useLayoutEffect(
-    () => {
-      if (exitWipEdit != null) {
-        setIsEditingWrap(true);
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
-
-  const renderAnnotationTooltip = useCallback(() => {
-    let dashboardUID = annoVals.dashboardUID?.[annoIdx];
-
-    return (
+  const contents =
+    state === STATE_HOVERED ? (
       <AnnotationTooltip2
-        timeFormatter={timeFormatter}
-        onEdit={onAnnotationEdit}
-        onDelete={onAnnotationDelete}
-        canEdit={canEditAnnotations ? canEditAnnotations(dashboardUID) : false}
-        canDelete={canDeleteAnnotations ? canDeleteAnnotations(dashboardUID) : false}
         annoIdx={annoIdx}
         annoVals={annoVals}
+        timeZone={timeZone}
+        onEdit={() => setState(STATE_EDITING)}
       />
-    );
-  }, [
-    timeFormatter,
-    onAnnotationEdit,
-    onAnnotationDelete,
-    canEditAnnotations,
-    annoVals,
-    annoIdx,
-    canDeleteAnnotations,
-  ]);
-
-  const renderAnnotationEditor = useCallback(() => {
-    return (
+    ) : state === STATE_EDITING ? (
       <AnnotationEditor2
-        dismiss={() => setIsEditingWrap(false)}
-        timeFormatter={timeFormatter}
         annoIdx={annoIdx}
         annoVals={annoVals}
+        timeZone={timeZone}
+        dismiss={() => {
+          exitWipEdit?.();
+          setState(STATE_DEFAULT);
+        }}
       />
-    );
-  }, [annoIdx, annoVals, timeFormatter, setIsEditingWrap]);
+    ) : null;
 
   return (
     <div
@@ -123,22 +67,29 @@ export const AnnotationMarker2 = ({ annoVals, annoIdx, className, style, exitWip
       onMouseEnter={() => state !== STATE_EDITING && setState(STATE_HOVERED)}
       onMouseLeave={() => state !== STATE_EDITING && setState(STATE_DEFAULT)}
     >
-      <div className={styles.annoInfo} ref={clickAwayRef}>
-        {state === STATE_HOVERED && renderAnnotationTooltip()}
-        {state === STATE_EDITING && renderAnnotationEditor()}
-      </div>
+      {contents &&
+        createPortal(
+          <div className={styles.annoBox} style={containerStyle}>
+            {contents}
+          </div>,
+          portalRoot.current!
+        )}
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  annoInfo: css({
-    background: theme.colors.background.secondary,
-    minWidth: '300px',
-    // maxWidth: '400px',
+  // NOTE: shares much with TooltipPlugin2
+  annoBox: css({
+    top: 0,
+    left: 0,
+    zIndex: theme.zIndex.tooltip,
+    borderRadius: theme.shape.radius.default,
     position: 'absolute',
-    top: '5px',
-    left: '50%',
-    transform: 'translateX(-50%)',
+    background: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.weak}`,
+    boxShadow: theme.shadows.z2,
+    userSelect: 'text',
+    minWidth: '300px',
   }),
 });
