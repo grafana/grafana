@@ -18,7 +18,6 @@ export abstract class BusEventBase implements BusEvent {
   readonly type: string;
   readonly payload?: any;
   readonly origin?: EventBus;
-  tags?: Set<string>;
 
   /** @internal */
   tags?: Set<string>;
