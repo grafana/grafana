@@ -18,14 +18,12 @@ import { VariablesChanged } from 'app/features/variables/types';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { historySrv } from '../settings/version-history/HistorySrv';
-import { Diffs } from '../settings/version-history/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
-import { getDashboardChangesFromScene } from './getDashboardChangesFromScene';
 import { createWorker } from './workers/createDetectChangesWorker';
 
 jest.mock('../settings/version-history/HistorySrv');
@@ -59,7 +57,7 @@ function mockResultsOfDetectChangesWorker({
   hasTimeChanges: boolean;
   hasVariableValueChanges: boolean;
 }) {
-  jest.mocked(worker.postMessage).mockImplementation(() => {
+  jest.mocked(worker.postMessage).mockImplementationOnce(() => {
     worker.onmessage?.({
       data: {
         hasChanges: hasChanges ?? true,
@@ -173,20 +171,24 @@ describe('DashboardScene', () => {
         expect(sceneGraph.getTimeRange(scene)!.state.timeZone).toBe(prevState);
       });
 
-      it('should not set the state to true if there are not changes detected in the saving model', () => {
-        mockResultsOfDetectChangesWorker({ hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: false });
-        scene.setState({ title: 'hello' });
-        expect(scene.state.isDirty).toBeFalsy();
-      });
-
       it.each([
         { hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false },
-        { hasChanges: false, hasTimeChanges: true, hasVariableValueChanges: false },
-        { hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: true },
+        { hasChanges: true, hasTimeChanges: true, hasVariableValueChanges: false },
+        { hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: true },
       ])('should set the state to true if there are changes detected in the saving model', (diffResults) => {
         mockResultsOfDetectChangesWorker(diffResults);
         scene.setState({ title: 'hello' });
         expect(scene.state.isDirty).toBeTruthy();
+      });
+
+      it.each([
+        { hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: false },
+        { hasChanges: false, hasTimeChanges: true, hasVariableValueChanges: false },
+        { hasChanges: false, hasTimeChanges: false, hasVariableValueChanges: true },
+      ])('should not set the state to true if there are no change detected in the dashboard', (diffResults) => {
+        mockResultsOfDetectChangesWorker(diffResults);
+        scene.setState({ title: 'hello' });
+        expect(scene.state.isDirty).toBeFalsy();
       });
     });
   });
