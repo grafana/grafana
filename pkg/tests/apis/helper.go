@@ -390,7 +390,7 @@ func (c K8sTestHelper) createTestUsers(orgName string) OrgUsers {
 	createUser := func(key string, role org.RoleType) User {
 		u, err := userSvc.Create(context.Background(), &user.CreateUserCommand{
 			DefaultOrgRole: string(role),
-			Password:       key,
+			Password:       user.Password(key),
 			Login:          fmt.Sprintf("%s-%d", key, orgId),
 			OrgID:          orgId,
 		})

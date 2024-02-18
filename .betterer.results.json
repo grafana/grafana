@@ -2084,12 +2084,6 @@
         "count": 4
       }
     ],
-    "/public/app/features/alerting/unified/components/notification-policies/Filters.tsx": [
-      {
-        "message": "Styles should be written using objects.",
-        "count": 1
-      }
-    ],
     "/public/app/features/alerting/unified/components/notification-policies/Matchers.tsx": [
       {
         "message": "Styles should be written using objects.",

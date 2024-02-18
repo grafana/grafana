@@ -41,16 +41,17 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
   };
 
   private async loadLibraryPanelFromPanelModel() {
-    const vizPanel = this.state.panel;
+    let vizPanel = this.state.panel;
     try {
       const libPanel = await getLibraryPanel(this.state.uid, true);
       const libPanelModel = new PanelModel(libPanel.model);
-      vizPanel.setState({
+      vizPanel = vizPanel.clone({
         options: libPanelModel.options ?? {},
         fieldConfig: libPanelModel.fieldConfig,
         pluginVersion: libPanelModel.pluginVersion,
         displayMode: libPanelModel.transparent ? 'transparent' : undefined,
         description: libPanelModel.description,
+        pluginId: libPanel.type,
         $data: createPanelDataProvider(libPanelModel),
       });
     } catch (err) {
