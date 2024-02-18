@@ -189,7 +189,7 @@ Content-Type: application/json
   "what": "Event - deploy",
   "tags": ["deploy", "production"],
   "when": 1467844481,
-  "data": "deploy of master branch happened at Wed Jul 6 22:34:41 UTC 2016"
+  "data": "deploy of main branch happened at Wed Jul 6 22:34:41 UTC 2016"
 }
 ```
 
