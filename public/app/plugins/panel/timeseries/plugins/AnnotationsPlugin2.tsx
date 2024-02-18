@@ -238,7 +238,7 @@ export const AnnotationsPlugin2 = ({
   return null;
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = () => ({
   annoMarker: css({
     position: 'absolute',
     width: 0,
