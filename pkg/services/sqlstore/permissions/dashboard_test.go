@@ -678,6 +678,7 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 			permissions[i].RoleID = role.ID
 			permissions[i].Created = time.Now()
 			permissions[i].Updated = time.Now()
+			permissions[i].Kind, permissions[i].Attribute, permissions[i].Identifier = permissions[i].SplitScope()
 		}
 		if len(permissions) > 0 {
 			_, err = sess.InsertMulti(&permissions)
@@ -769,6 +770,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 			perms[i].RoleID = role.ID
 			perms[i].Created = time.Now()
 			perms[i].Updated = time.Now()
+			perms[i].Kind, perms[i].Attribute, perms[i].Identifier = perms[i].SplitScope()
 		}
 		if len(perms) > 0 {
 			_, err = sess.InsertMulti(&perms)
