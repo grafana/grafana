@@ -23,7 +23,6 @@ To resolve a technical issue within the Grafana release package management proce
 
 ### Features and enhancements
 
-- **Loki:** Add label values API selector to setting and use label_values API when selected. [TBD], [@yuri-rs](https://github.com/yuri-rs)
 - **Alerting:** Guided legacy alerting upgrade dry-run. [#80071](https://github.com/grafana/grafana/issues/80071), [@JacobsonMT](https://github.com/JacobsonMT)
 - **Explore:** Preserve time range when creating a dashboard panel from Explore. [#80070](https://github.com/grafana/grafana/issues/80070), [@Elfo404](https://github.com/Elfo404)
 - **Explore:** Init with mixed DS if there's no root DS in the URL and queries have multiple datasources. [#80068](https://github.com/grafana/grafana/issues/80068), [@Elfo404](https://github.com/Elfo404)
