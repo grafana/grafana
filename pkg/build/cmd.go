@@ -320,7 +320,6 @@ func setBuildEnv(opts BuildOpts) error {
 				return err
 			}
 		}
-
 	}
 
 	if opts.gocc == "" {

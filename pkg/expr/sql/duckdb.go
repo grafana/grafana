@@ -46,11 +46,18 @@ func (d *DuckDB) Query(ctx context.Context, query string) (*data.Frame, error) {
 		fmt.Printf("failed to query db: %v\n", err)
 		return nil, err
 	}
-	defer results.Close()
+
+	defer func() {
+		err := results.Close()
+		if err != nil {
+			fmt.Println("failed to close query results")
+		}
+	}()
 
 	// TODO - add any needed converters for duckdb?
 	frame, err := sqlutil.FrameFromRows(results, -1, DuckConverters...)
 	if err != nil {
+		err := results.Close()
 		return nil, err
 	}
 
@@ -166,7 +173,11 @@ func (d *DuckDB) createTables(ctx context.Context, frames data.Frames, fieldLook
 		if err != nil {
 			return nil, err
 		}
-		defer res.Close()
+
+		err = res.Close()
+		if err != nil {
+			return nil, err
+		}
 	}
 	return unknown, nil
 }
@@ -214,7 +225,6 @@ func connector(ctx context.Context, name string) (driver.Connector, error) {
 
 func (d *DuckDB) doAppend(c driver.Conn, frames data.Frames, u Unknown, fl TableFields) error {
 	tables, nullFields := buildTables(frames, fl, u)
-
 	for name, t := range tables {
 
 		appender, err := duckdb.NewAppenderFromConn(c, "", name)
