@@ -62,7 +62,7 @@ export const QuerySettings = (props: Props) => {
         labelWidth={22}
         tooltip={
           <>
-            Choose the query endpoint for fetching label values: Check Labels match API to use /label/__name__/values
+            Choose the query endpoint for fetching label values. Check Labels match API to use /label/__name__/values
             endpoint for all label values queries. If unchecked (default), the /series endpoint will be used for queries
             with stream selectors.
           </>
