@@ -13,6 +13,9 @@ import React from 'react';
 
 /**
  * Base component for rendering an icon.
+ * @param title
+ * @param size
+ * @param color
  * @param {IconProps} props - Props for the IconBase component
  * @returns {JSX.Element} IconBase component
  */
