@@ -10,13 +10,13 @@
     "url": "https://github.com/grafana/grafana.git",
     "directory": "packages/grafana-icons"
   },
-  "main": "src/index.js",
   "types": "dist/types/src/index.d.ts",
   "publishConfig": {
-    "main": "dist/index.js",
+    "main": "dist/esm/index.js",
     "module": "dist/esm/index.js",
     "types": "dist/types/src/index.d.ts",
-    "access": "public"
+    "access": "public",
+    "registry": "http://localhost:4873"
   },
   "files": [
     "./dist",
