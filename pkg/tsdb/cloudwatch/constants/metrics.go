@@ -426,7 +426,7 @@ var NamespaceDimensionKeysMap = map[string][]string{
 	"AWS/AppSync":                 {"GraphQLAPIId"},
 	"AWS/ApplicationELB":          {"AvailabilityZone", "LoadBalancer", "TargetGroup"},
 	"AWS/Athena":                  {"QueryState", "QueryType", "WorkGroup"},
-	"AWS/AutoScaling":             {"AutoScalingGroupName"},
+	"AWS/AutoScaling":             {"AutoScalingGroupName", "PairIndex", "PolicyName"},
 	"AWS/Backup":                  {"BackupVaultName", "ResourceType"},
 	"AWS/Bedrock":                 {"BucketedStepSize", "ImageSize", "ModelId"},
 	"AWS/Billing":                 {"Currency", "LinkedAccount", "ServiceName"},
