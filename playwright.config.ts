@@ -2,8 +2,10 @@ import { defineConfig, devices } from '@playwright/test';
 import path, { dirname } from 'path';
 
 import { PluginOptions } from '@grafana/plugin-e2e';
+
+const testDirRoot = 'e2e/plugin-e2e/plugin-e2e-api-tests/';
+
 export default defineConfig<PluginOptions>({
-  testDir: './plugin-e2e',
   fullyParallel: true,
   /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
@@ -42,7 +44,7 @@ export default defineConfig<PluginOptions>({
     // Run all tests in parallel using user with admin role
     {
       name: 'admin',
-      testDir: './plugin-e2e/plugin-e2e-api-tests/as-admin-user',
+      testDir: path.join(testDirRoot, '/as-admin-user'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/admin.json',
@@ -52,7 +54,7 @@ export default defineConfig<PluginOptions>({
     // Run all tests in parallel using user with viewer role
     {
       name: 'viewer',
-      testDir: './plugin-e2e/plugin-e2e-api-tests/as-viewer-user',
+      testDir: path.join(testDirRoot, '/as-viewer-user'),
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'playwright/.auth/viewer.json',
