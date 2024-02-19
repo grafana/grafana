@@ -53,6 +53,15 @@ func TestContactPointService(t *testing.T) {
 		require.Equal(t, "slack receiver", cps[0].Name)
 	})
 
+	t.Run("service filters contact points by name, returns empty when no match", func(t *testing.T) {
+		sut := createContactPointServiceSut(t, secretsService)
+
+		cps, err := sut.GetContactPoints(context.Background(), cpsQueryWithName(1, "unknown"), nil)
+		require.NoError(t, err)
+
+		require.Len(t, cps, 0)
+	})
+
 	t.Run("service stitches contact point into org's AM config", func(t *testing.T) {
 		sut := createContactPointServiceSut(t, secretsService)
 		newCp := createTestContactPoint()
