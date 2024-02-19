@@ -1,7 +1,10 @@
 import { css } from '@emotion/css';
 import { autoUpdate, flip, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { createSelector } from '@reduxjs/toolkit';
+import { QueryDefinition, BaseQueryFn } from '@reduxjs/toolkit/dist/query';
+import { QueryActionCreatorResult } from '@reduxjs/toolkit/dist/query/core/buildInitiate';
 import debounce from 'debounce-promise';
+import { RequestOptions } from 'http';
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -13,24 +16,16 @@ import {
   browseDashboardsAPI,
   skipToken,
   useGetFolderQuery,
-  useLazyListFoldersQuery,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
-import {
-  childrenByParentUIDSelector,
-  createFlatTree,
-  rootItemsSelector,
-  useBrowseLoadingStatus,
-} from 'app/features/browse-dashboards/state';
+import { useBrowseLoadingStatus } from 'app/features/browse-dashboards/state';
 import { getPaginationPlaceholders } from 'app/features/browse-dashboards/state/utils';
-import {
-  DashboardViewItemCollection,
-  DashboardViewItemWithUIItems,
-  DashboardsTreeItem,
-} from 'app/features/browse-dashboards/types';
+import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { QueryResponse, getGrafanaSearcher } from 'app/features/search/service';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
+import { RootState } from 'app/store/configureStore';
+import { FolderDTO } from 'app/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { getDOMId, NestedFolderList } from './NestedFolderList';
@@ -56,8 +51,6 @@ export interface NestedFolderPickerProps {
   /* Whether the picker should be clearable */
   clearable?: boolean;
 }
-
-const EXCLUDED_KINDS = ['empty-folder' as const, 'dashboard' as const];
 
 const debouncedSearch = debounce(getSearchResults, 300);
 
@@ -96,7 +89,7 @@ export function NestedFolderPicker({
   const [error] = useState<Error | undefined>(undefined); // TODO: error not populated anymore
   const lastSearchTimestamp = useRef<number>(0);
 
-  const [flatTree, fetchFolderPage] = useFolderList();
+  const [flatTree, fetchFolderPage] = useFolderList(folderOpenState);
 
   useEffect(() => {
     if (!search) {
@@ -156,11 +149,12 @@ export function NestedFolderPicker({
       setFolderOpenState((old) => ({ ...old, [uid]: newOpenState }));
 
       if (newOpenState && !folderOpenState[uid]) {
-        console.log('TODO: fetch next children page here', { parentUID: uid, pageSize: PAGE_SIZE });
+        console.log('Fetching folder', { parentUID: uid, pageSize: PAGE_SIZE });
+        fetchFolderPage(uid);
         // dispatch(fetchNextChildrenPage({ parentUID: uid, pageSize: PAGE_SIZE, excludeKinds: EXCLUDED_KINDS }));
       }
     },
-    [folderOpenState]
+    [fetchFolderPage, folderOpenState]
   );
 
   const handleFolderSelect = useCallback(
@@ -397,56 +391,49 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-// const listFoldersSelector = createSelector(
-//   (parentUid: string | undefined, page: number) => ({ parentUid, page }),
-//   (args) => browseDashboardsAPI.endpoints.listFolders.select(args)
-// );
+type TODOFolderListPage = ReturnType<typeof listFoldersSelector>;
+type TODORequestPromise = QueryActionCreatorResult<
+  QueryDefinition<ListFolderArgs, BaseQueryFn<RequestOptions>, 'getFolder', FolderDTO[], 'browseDashboardsAPI'>
+>;
 
-// export type DashboardViewItemCollection = {
-//   items: DashboardViewItem[];
-//   lastFetchedKind: 'folder' | 'dashboard';
-//   lastFetchedPage: number;
-//   lastKindHasMoreItems: boolean;
-//   isFullyLoaded: boolean;
-// };
-
-const listFolderSelector = createSelector(
+const createListFoldersSelector = createSelector(
   [
-    (state: any) => state,
-    (state, parentUid: ListFolderArgs['parentUid']) => parentUid,
-    (state, parentUid: ListFolderArgs['parentUid'], page: ListFolderArgs['page']) => page,
-    (state, parentUid: ListFolderArgs['parentUid'], page: ListFolderArgs['page'], limit: ListFolderArgs['limit']) =>
-      limit,
+    (parentUid: ListFolderArgs['parentUid']) => parentUid,
+    (parentUid: ListFolderArgs['parentUid'], page: ListFolderArgs['page']) => page,
+    (parentUid: ListFolderArgs['parentUid'], page: ListFolderArgs['page'], limit: ListFolderArgs['limit']) => limit,
   ],
-  (state, parentUid, page, limit) => {
-    return browseDashboardsAPI.endpoints.listFolders.select({ parentUid, page, limit })(state);
+  (parentUid, page, limit) => {
+    return browseDashboardsAPI.endpoints.listFolders.select({ parentUid, page, limit });
   }
 );
 
-function useFolderList() {
-  const requestedArgs = useRef<ListFolderArgs[] | null>(null);
-  if (requestedArgs.current === null) {
-    requestedArgs.current = [];
-  }
+const listFoldersSelector = createSelector(
+  (state: RootState) => state,
+  (
+    state: RootState,
+    parentUid: ListFolderArgs['parentUid'],
+    page: ListFolderArgs['page'],
+    limit: ListFolderArgs['limit']
+  ) => createListFoldersSelector(parentUid, page, limit),
+  (state, selectFolderList) => selectFolderList(state)
+);
 
-  // TODO: propertly memoize this into a stable selector
-  const state = useSelector((rxState) => {
-    const requests = requestedArgs.current ?? [];
+const listAllFoldersSelector = createSelector(
+  [(state: RootState) => state, (state: RootState, requests: TODORequestPromise[]) => requests],
+  (state: RootState, requests: TODORequestPromise[]) => {
+    const seenRequests = new Set<string>();
 
-    const pages = requests
-      .map((args) => {
-        return listFolderSelector(rxState, args.parentUid, args.page, args.limit);
-      })
-      .filter((page, index, all) => {
-        return all.findIndex((otherPage) => otherPage.requestId === page.requestId) === index;
-      });
+    const rootPages: TODOFolderListPage[] = [];
+    const pagesByParent: Record<string, TODOFolderListPage[]> = {};
 
-    const rootPages: Array<(typeof pages)[number]> = [];
-    const pagesByParent: Record<string, Array<(typeof pages)[number]>> = {};
+    for (const req of requests) {
+      if (seenRequests.has(req.requestId)) {
+        continue;
+      }
 
-    for (const page of pages) {
+      const page = listFoldersSelector(state, req.arg.parentUid, req.arg.page, req.arg.limit);
+
       const parentUid = page.originalArgs?.parentUid;
-
       if (parentUid) {
         if (!pagesByParent[parentUid]) {
           pagesByParent[parentUid] = [];
@@ -462,86 +449,120 @@ function useFolderList() {
       rootPages,
       pagesByParent,
     };
+  }
+);
+
+/**
+ * Returns the whether the set of pages are 'fully loaded', and the last page number
+ */
+function getPagesLoadStatus(pages: TODOFolderListPage[]): [boolean, number] {
+  const lastPage = pages.at(-1);
+  const fullyLoaded = lastPage && (lastPage.data?.length ?? 0) < (lastPage.originalArgs?.limit ?? 0);
+
+  return [Boolean(fullyLoaded), lastPage?.originalArgs?.page ?? 1];
+}
+
+/**
+ * Returns a loaded folder hierarchy as a flat list and a function to load more pages.
+ */
+function useFolderList(openFolders: Record<string, boolean>) {
+  const dispatch = useDispatch();
+
+  // Keep a list of all requests so we can
+  //   a) unsubscribe from them when the component is unmounted
+  //   b) use them to select the responses out of the state
+  const requestsRef = useRef<TODORequestPromise[]>([]);
+
+  const state = useSelector((rootState: RootState) => {
+    return listAllFoldersSelector(rootState, requestsRef.current);
   });
 
-  console.log('state', state);
-
-  const rootCollection = useMemo(() => {
-    const rrr = state.rootPages;
-
-    let flatTree: Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> = rrr.flatMap((page) => {
-      return (page.data ?? []).map((item) => {
-        const ddddd: DashboardsTreeItem<DashboardViewItemWithUIItems> = {
-          isOpen: false,
-          level: 1,
-          item: {
-            kind: 'folder' as const,
-            title: item.title,
-            uid: item.uid,
-          },
-        };
-
-        return ddddd;
-      });
-    });
-
-    flatTree.unshift({
-      isOpen: true,
-      level: 0,
-      item: {
-        kind: 'folder',
-        title: 'Dashboards',
-        uid: '',
-      },
-    });
-
-    const lastPage = rrr.at(-1);
-    const fullyLoaded = (lastPage?.data?.length ?? 0) < (lastPage?.originalArgs?.limit ?? 0);
-
-    if (!fullyLoaded) {
-      flatTree = flatTree.concat(getPaginationPlaceholders(PAGE_SIZE, undefined, 1));
-    }
-
-    return flatTree;
-  }, [state]);
-
-  const dispatch = useDispatch();
-  const unsubscribes = useRef<Function[] | null>();
-
-  if (!unsubscribes.current) {
-    unsubscribes.current = [];
-  }
-
-  const loadNextPage = useCallback(
+  // Loads the next page of folders for the given parent UID by inspecting the
+  // state to determine what the next page is
+  const requestNextPage = useCallback(
     (parentUid: string | undefined) => {
-      console.log('loadNextPage', { parentUid });
-
-      const pageSet = parentUid ? state.pagesByParent[parentUid] : state.rootPages;
-
-      let page = 1;
-      if (pageSet) {
-        page = pageSet.length + 1;
+      const pages = parentUid ? state.pagesByParent[parentUid] : state.rootPages;
+      const [fullyLoaded, pageNumber] = getPagesLoadStatus(pages);
+      if (fullyLoaded) {
+        return;
       }
 
-      const args = { parentUid, page, limit: PAGE_SIZE };
-      requestedArgs.current?.push(args);
-      // Actually make the api call
+      const args = { parentUid, page: pageNumber + 1, limit: PAGE_SIZE };
       const promise = dispatch(browseDashboardsAPI.endpoints.listFolders.initiate(args));
 
-      console.log('promise-ish', promise);
-
-      unsubscribes.current?.push(promise.unsubscribe);
+      // It's important that we create a new array so we can correctly memoize with it
+      requestsRef.current = requestsRef.current.concat([promise]);
     },
     [state, dispatch]
   );
 
+  // Unsubscribe from all requests when the component is unmounted
   useEffect(() => {
     return () => {
-      for (const unsubscribe of unsubscribes.current ?? []) {
-        unsubscribe();
+      for (const req of requestsRef.current) {
+        req.unsubscribe();
       }
     };
   }, []);
 
-  return [rootCollection, loadNextPage] as const;
+  // Convert the individual responses into a flat list of folders, with level indicating
+  // the depth in the hierarchy.
+  // TODO: this will probably go up in the parent component so it can also do search
+  const treeList = useMemo(() => {
+    function createFlatList(
+      parentUid: string | undefined,
+      pages: TODOFolderListPage[],
+      level: number
+    ): Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> {
+      const flatList = pages.flatMap((page) => {
+        const pageItems = page.data ?? [];
+
+        return pageItems.flatMap((item) => {
+          const folderIsOpen = openFolders[item.uid];
+
+          const flatItem: DashboardsTreeItem<DashboardViewItemWithUIItems> = {
+            isOpen: Boolean(folderIsOpen),
+            level: level,
+            item: {
+              kind: 'folder' as const,
+              title: item.title,
+              uid: item.uid,
+            },
+          };
+
+          const childPages = folderIsOpen && state.pagesByParent[item.uid];
+          if (childPages) {
+            const childFlatItems = createFlatList(item.uid, childPages, level + 1);
+            return [flatItem, ...childFlatItems];
+          }
+
+          return flatItem;
+        });
+      });
+
+      const [fullyLoaded] = getPagesLoadStatus(pages);
+      if (!fullyLoaded) {
+        flatList.push(...getPaginationPlaceholders(PAGE_SIZE, parentUid, level));
+      }
+
+      return flatList;
+    }
+
+    const rootFlatTree = createFlatList(undefined, state.rootPages, 1);
+    rootFlatTree.unshift(ROOT_FOLDER_ITEM);
+
+    return rootFlatTree;
+  }, [state, openFolders]);
+
+  return [treeList, requestNextPage] as const;
 }
+
+const ROOT_FOLDER_ITEM = {
+  isOpen: true,
+  level: 0,
+  item: {
+    kind: 'folder' as const,
+    title: 'Dashboards',
+    uid: '',
+  },
+};
