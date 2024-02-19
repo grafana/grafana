@@ -11,11 +11,11 @@
     "directory": "packages/grafana-icons"
   },
   "main": "src/index.js",
-  "types": "src/index.js",
+  "types": "dist/types/index.d.ts",
   "publishConfig": {
     "main": "dist/index.js",
     "module": "dist/esm/index.js",
-    "types": "dist/index.d.ts",
+    "types": "dist/types/index.d.ts",
     "access": "public"
   },
   "files": [

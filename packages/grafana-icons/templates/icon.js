@@ -34,6 +34,10 @@ const template = ({ exports, jsx, componentName }, { tpl }) => {
 ${comments}
 ${imports}
 
+/**
+ * @param {import('../IconBase').IconProps} props - Props for the component
+ * @returns {JSX.Element} component
+ */
 const ${componentName} = (props) => (
   ${modifyJSX(jsx)}
 );

@@ -1,13 +1,22 @@
 {
+  // Change this to match your project
+  "include": ["src/**/*"],
+  "exclude": ["dist", "node_modules", "test", "**/*.test.ts*"],
   "compilerOptions": {
-    "baseUrl": "./",
-    "declarationDir": "./compiled",
+    // Tells TypeScript to read JS files, as
+    // normally they are ignored as source files
+    "allowJs": true,
+    // Generate d.ts files
+    "declaration": true,
+    // This compiler run should
+    // only output d.ts files
     "emitDeclarationOnly": true,
-    "isolatedModules": true,
-    "rootDirs": ["."],
-    "resolveJsonModule": true
-  },
-  "exclude": ["dist/**/*"],
-  "extends": "@grafana/tsconfig",
-  "include": ["src/**/*.ts"]
+    // Types should go into this directory.
+    // Removing this would place the .d.ts files
+    // next to the .js files
+    "outFile": "index.d.ts",
+    // go to js file when using IDE functions like
+    // "Go to Definition" in VSCode
+    "declarationMap": true,
+  }
 }

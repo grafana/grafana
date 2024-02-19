@@ -1,6 +1,27 @@
 import React from 'react';
 
+/**
+ * @typedef {('xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | 'xxxl')} IconSize
+ */
+
+/**
+ * @typedef {object} IconProps
+ * @property {IconSize} [size] - Size (width and height) of the icon. Defaults to "md" or 16x16px
+ * @property {string} [title] - Render the title element with the provided text.
+ * @property {string} [color] - Color of the icon. Defaults to "currentColor"
+ */
+
+/**
+ * Base component for rendering an icon.
+ * @param {IconProps} props - Props for the IconBase component
+ * @returns {JSX.Element} IconBase component
+ */
 export const IconBase = ({ title, size = 'md', color = 'currentColor', ...props }) => {
+  /**
+   * Function to get the size of the SVG based on the provided IconSize.
+   * @param {IconSize} size - Size of the icon
+   * @returns {number} Size of the SVG
+   */
   const getSvgSize = (size) => {
     const sizeMap = {
       xs: 12,
