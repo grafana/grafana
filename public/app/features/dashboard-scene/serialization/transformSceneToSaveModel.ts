@@ -22,6 +22,7 @@ import {
   defaultDashboard,
   defaultTimePickerConfig,
   FieldConfigSource,
+  GridPos,
   Panel,
   RowPanel,
   TimePickerConfig,
@@ -200,11 +201,22 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
     throw new Error('Unsupported grid item type');
   }
 
+  const panel: Panel = vizPanelToPanel(vizPanel, { x, y, h, w }, isSnapshot, gridItem);
+
+  return panel;
+}
+
+export function vizPanelToPanel(
+  vizPanel: VizPanel,
+  gridPos?: GridPos,
+  isSnapshot = false,
+  gridItem?: SceneGridItemLike
+) {
   const panel: Panel = {
     id: getPanelIdForVizPanel(vizPanel),
     type: vizPanel.state.pluginId,
     title: vizPanel.state.title,
-    gridPos: { x, y, w, h },
+    gridPos,
     options: vizPanel.state.options,
     fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
     transformations: [],
@@ -241,7 +253,6 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
   if (!panel.transparent) {
     delete panel.transparent;
   }
-
   return panel;
 }
 
