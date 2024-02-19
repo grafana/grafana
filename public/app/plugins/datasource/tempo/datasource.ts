@@ -127,6 +127,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
   ) {
     super(instanceSettings);
 
+    console.log('change');
+
     this.tracesToLogs = instanceSettings.jsonData.tracesToLogs;
     this.serviceMap = instanceSettings.jsonData.serviceMap;
     this.search = instanceSettings.jsonData.search;
