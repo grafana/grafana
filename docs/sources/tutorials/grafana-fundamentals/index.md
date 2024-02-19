@@ -254,7 +254,7 @@ Grafana also lets you annotate a time interval, with _region annotations_.
 
 Add a region annotation:
 
-1. Press Ctrl (or Cmd on macOS) and hold, then click and drag across the graph to select an area. 
+1. Press Ctrl (or Cmd on macOS) and hold, then click and drag across the graph to select an area.
 1. In **Description**, enter **Performed load tests**.
 1. In **Tags**, enter **testing**.
 1. Click **Save**.
