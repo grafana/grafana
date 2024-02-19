@@ -77,7 +77,7 @@
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.11",
     "@react-types/button": "3.9.2",
     "@react-types/menu": "3.9.7",
-    "@react-types/overlays": "3.8.4",
+    "@react-types/overlays": "3.8.5",
     "@react-types/shared": "3.22.0",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@swc/core": "1.4.1",
