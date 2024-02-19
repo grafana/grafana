@@ -20,7 +20,7 @@
     "@opentelemetry/api": "1.7.0",
     "@opentelemetry/exporter-collector": "0.25.0",
     "@opentelemetry/semantic-conventions": "1.21.0",
-    "@reduxjs/toolkit": "1.9.5",
+    "@reduxjs/toolkit": "2.2.1",
     "buffer": "6.0.3",
     "events": "3.3.0",
     "i18next": "^23.0.0",

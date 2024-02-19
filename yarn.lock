@@ -3445,7 +3445,7 @@ __metadata:
     "@opentelemetry/api": "npm:1.7.0"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@opentelemetry/semantic-conventions": "npm:1.21.0"
-    "@reduxjs/toolkit": "npm:1.9.5"
+    "@reduxjs/toolkit": "npm:2.2.1"
     "@testing-library/jest-dom": "npm:6.4.2"
     "@testing-library/react": "npm:14.2.1"
     "@testing-library/user-event": "npm:14.5.2"
@@ -3897,7 +3897,7 @@ __metadata:
     "@lezer/highlight": "npm:1.2.0"
     "@lezer/lr": "npm:1.3.3"
     "@prometheus-io/lezer-promql": "npm:^0.37.0-rc.1"
-    "@reduxjs/toolkit": "npm:1.9.5"
+    "@reduxjs/toolkit": "npm:2.2.1"
     "@rollup/plugin-image": "npm:3.0.3"
     "@rollup/plugin-node-resolve": "npm:15.2.3"
     "@swc/core": "npm:1.4.0"
@@ -6932,23 +6932,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@reduxjs/toolkit@npm:1.9.5":
-  version: 1.9.5
-  resolution: "@reduxjs/toolkit@npm:1.9.5"
+"@reduxjs/toolkit@npm:2.2.1":
+  version: 2.2.1
+  resolution: "@reduxjs/toolkit@npm:2.2.1"
   dependencies:
-    immer: "npm:^9.0.21"
-    redux: "npm:^4.2.1"
-    redux-thunk: "npm:^2.4.2"
-    reselect: "npm:^4.1.8"
+    immer: "npm:^10.0.3"
+    redux: "npm:^5.0.1"
+    redux-thunk: "npm:^3.1.0"
+    reselect: "npm:^5.0.1"
   peerDependencies:
     react: ^16.9.0 || ^17.0.0 || ^18
-    react-redux: ^7.2.1 || ^8.0.2
+    react-redux: ^7.2.1 || ^8.1.3 || ^9.0.0
   peerDependenciesMeta:
     react:
       optional: true
     react-redux:
       optional: true
-  checksum: 10/ac24173de599b830232da5e040ea2b898c34cc803cb219e537ce15c5b914c85dfdb97f8f7015ea4e8cc9110430e2a081766b0dcbc1e71f99639b8bec136d3499
+  checksum: 10/a9d6c921596c17eacafaf8aa649b405ca2833008d734028b7114456db87d465a6d88a5d28dc868132fabdd5d481ba9428ac86a20077ea568e8c61d0999ecbfb9
   languageName: node
   linkType: hard
 
@@ -18314,7 +18314,7 @@ __metadata:
     "@react-types/menu": "npm:3.9.7"
     "@react-types/overlays": "npm:3.8.5"
     "@react-types/shared": "npm:3.22.0"
-    "@reduxjs/toolkit": "npm:1.9.5"
+    "@reduxjs/toolkit": "npm:2.2.1"
     "@remix-run/router": "npm:^1.5.0"
     "@rtsao/plugin-proposal-class-properties": "npm:7.0.1-patch.1"
     "@swc/core": "npm:1.4.1"
@@ -19403,17 +19403,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immer@npm:10.0.3":
+"immer@npm:10.0.3, immer@npm:^10.0.3":
   version: 10.0.3
   resolution: "immer@npm:10.0.3"
   checksum: 10/0be07be2f278bd1988112613648e0cf9a64fc316d5b4817f273b519fbfed0f1714275b041911f0b8c560c199b2e3430824ce620c23262c96c9d4efc9909ff1cc
-  languageName: node
-  linkType: hard
-
-"immer@npm:^9.0.21":
-  version: 9.0.21
-  resolution: "immer@npm:9.0.21"
-  checksum: 10/8455d6b4dc8abfe40f06eeec9bcc944d147c81279424c0f927a4d4905ae34e5af19ab6da60bcc700c14f51c452867d7089b3b9236f5a9a2248e39b4a09ee89de
   languageName: node
   linkType: hard
 
@@ -26931,7 +26924,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redux-thunk@npm:2.4.2, redux-thunk@npm:^2.4.2":
+"redux-thunk@npm:2.4.2":
   version: 2.4.2
   resolution: "redux-thunk@npm:2.4.2"
   peerDependencies:
@@ -26940,12 +26933,28 @@ __metadata:
   languageName: node
   linkType: hard
 
-"redux@npm:4.2.1, redux@npm:^4.0.0, redux@npm:^4.0.4, redux@npm:^4.0.5, redux@npm:^4.2.0, redux@npm:^4.2.1":
+"redux-thunk@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "redux-thunk@npm:3.1.0"
+  peerDependencies:
+    redux: ^5.0.0
+  checksum: 10/38c563db5f0bbec90d2e65cc27f3c870c1b6102e0c071258734fac41cb0e51d31d894125815c2f4133b20aff231f51f028ad99bccc05a7e3249f1a5d5a959ed3
+  languageName: node
+  linkType: hard
+
+"redux@npm:4.2.1, redux@npm:^4.0.0, redux@npm:^4.0.4, redux@npm:^4.0.5, redux@npm:^4.2.0":
   version: 4.2.1
   resolution: "redux@npm:4.2.1"
   dependencies:
     "@babel/runtime": "npm:^7.9.2"
   checksum: 10/371e4833b671193303a7dea7803c8fdc8e0d566740c78f580e0a3b77b4161da25037626900a2205a5d616117fa6ad09a4232e5a110bd437186b5c6355a041750
+  languageName: node
+  linkType: hard
+
+"redux@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "redux@npm:5.0.1"
+  checksum: 10/a373f9ed65693ead58bea5ef61c1d6bef39da9f2706db3be6f84815f3a1283230ecd1184efb1b3daa7f807d8211b0181564ca8f336fc6ee0b1e2fa0ba06737c2
   languageName: node
   linkType: hard
 
@@ -27186,10 +27195,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"reselect@npm:4.1.8, reselect@npm:^4.1.8":
+"reselect@npm:4.1.8":
   version: 4.1.8
   resolution: "reselect@npm:4.1.8"
   checksum: 10/199984d9872f71cd207f4aa6e6fd2bd48d95154f7aa9b3aee3398335f39f5491059e732f28c12e9031d5d434adab2c458dc8af5afb6564d0ad37e1644445e09c
+  languageName: node
+  linkType: hard
+
+"reselect@npm:^5.0.1":
+  version: 5.1.0
+  resolution: "reselect@npm:5.1.0"
+  checksum: 10/657c379d9461781b7cb5f0a32133e23b4266886660c94fcc77c102bec8abe484b32bf43a911b99b747ecf7439f157696561d744d40dc920024611beb1a0d921f
   languageName: node
   linkType: hard
 
