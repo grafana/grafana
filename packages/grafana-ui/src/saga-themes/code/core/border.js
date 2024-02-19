@@ -1,7 +1,7 @@
 export default {
   border: {
     borderRadius: {
-      default: '8px *0.25',
+      default: '2px',
       circle: '100000px',
       pill: '9999px',
     },

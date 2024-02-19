@@ -7,7 +7,7 @@ const { minifyDictionary } = StyleDictionary.formatHelpers;
 StyleDictionary.registerFormat({
   name: 'javascript/nested',
   formatter: function (dictionary) {
-    return `export default ${JSON.stringify(minifyDictionary(dictionary.tokens), null, 2)};`;
+    return `export default ${JSON.stringify(minifyDictionary(dictionary.tokens), null, 2)};\n`;
   },
 });
 

@@ -1,6 +1,6 @@
 export default {
   font: {
-    h1: '400 16px *1.75/40px Inter',
+    h1: '400 28px/40px Inter',
     h2: '400 24px/32px Inter',
     h3: '400 22px/32px Inter',
     h4: '400 18px/24px Inter',
