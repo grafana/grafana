@@ -185,7 +185,7 @@ func doBuild(binaryName, pkg string, opts BuildOpts) error {
 		args = append(args, "-buildmode=exe")
 	}
 
-	opts.buildTags = append(opts.buildTags, "duckdb_use_libdb")
+	opts.buildTags = append(opts.buildTags, "duckdb_use_lib")
 	if len(opts.buildTags) > 0 {
 		args = append(args, "-tags", strings.Join(opts.buildTags, ","))
 	}
