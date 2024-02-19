@@ -1,5 +1,6 @@
-// This file exists so we can import the layout function for mocks in jest without
-// errors caused by addEventListener.
+// This file is a workaround so the layout function can be imported in Jest mocks. If the jest mock imports the
+// layout.worker.js file it will attach the eventlistener and then call the layout function with undefined data
+// which causes tests to fail.
 
 import { forceSimulation, forceLink, forceCollide, forceX } from 'd3-force';
 
