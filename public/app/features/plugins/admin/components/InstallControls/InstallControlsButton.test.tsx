@@ -98,7 +98,7 @@ describe('InstallControlsButton', () => {
       plugins: getPluginsStateMock([]),
     });
 
-    it('should be disable when is Installing', () => {
+    it('should be disabled when is Installing', () => {
       store.dispatch({ type: 'plugins/install/pending' });
       render(
         <TestProvider store={store}>
@@ -109,7 +109,7 @@ describe('InstallControlsButton', () => {
       expect(button).toBeDisabled();
     });
 
-    it('should be enabled when not is Installing', () => {
+    it('should be enabled when it is not Installing', () => {
       store.dispatch({ type: 'plugins/install/fulfilled', payload: { id: '', changes: {} } });
       render(
         <TestProvider store={store}>
@@ -121,7 +121,7 @@ describe('InstallControlsButton', () => {
     });
   });
 
-  describe('update button on manage instance', () => {
+  describe('update button on managed instance', () => {
     const oldFeatureTogglesManagedPluginsInstall = config.featureToggles.managedPluginsInstall;
     const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
 
@@ -139,7 +139,7 @@ describe('InstallControlsButton', () => {
       plugins: getPluginsStateMock([]),
     });
 
-    it('should be disabled when is Installing=false but isUpdatingFromInstance=true', () => {
+    it('should be disabled when isInstalling=false but isUpdatingFromInstance=true', () => {
       store.dispatch({ type: 'plugins/install/fulfilled', payload: { id: '', changes: {} } });
       render(
         <TestProvider store={store}>
@@ -153,7 +153,7 @@ describe('InstallControlsButton', () => {
       expect(button).toBeDisabled();
     });
 
-    it('should be disabled when is Installing=false but isUpdatingFromInstance=false', () => {
+    it('should be enabled when isInstalling=false and isUpdatingFromInstance=false', () => {
       store.dispatch({ type: 'plugins/install/fulfilled', payload: { id: '', changes: {} } });
       render(
         <TestProvider store={store}>
