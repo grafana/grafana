@@ -383,7 +383,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   } else if (variable.type === 'textbox') {
     return new TextBoxVariable({
       ...commonProperties,
-      value: variable?.current?.value ? variable?.current?.value[0] : variable.query,
+      value: variable?.current?.value?.[0] ?? variable.query,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
     });
