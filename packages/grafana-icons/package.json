@@ -1,6 +1,6 @@
 {
   "name": "@grafana/icons",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Icons for Grafana",
   "author": "Grafana Labs",
   "license": "Apache-2.0",
