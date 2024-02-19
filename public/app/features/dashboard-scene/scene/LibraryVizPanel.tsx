@@ -15,28 +15,17 @@ interface LibraryVizPanelState extends SceneObjectState {
   title: string;
   uid: string;
   name: string;
-  panel: VizPanel;
+  panel?: VizPanel;
+  _loadedVersion?: number;
 }
 
 export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
   static Component = LibraryPanelRenderer;
 
-  constructor({ uid, title, key, name }: Pick<LibraryVizPanelState, 'uid' | 'title' | 'key' | 'name'>) {
+  constructor(state: LibraryVizPanelState) {
     super({
-      uid,
-      title,
-      key,
-      name,
-      panel: new VizPanel({
-        title,
-        menu: new VizPanelMenu({
-          $behaviors: [panelMenuBehavior],
-        }),
-        titleItems: [
-          new VizPanelLinks({ rawLinks: [], menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }) }),
-          new PanelNotices(),
-        ],
-      }),
+      panel: state.panel ?? getLoadingPanel(state.title),
+      ...state,
     });
 
     this.addActivationHandler(this._onActivate);
@@ -47,38 +36,52 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
   };
 
   private async loadLibraryPanelFromPanelModel() {
-    let vizPanel = this.state.panel;
+    let vizPanel = this.state.panel!;
+
     try {
       const libPanel = await getLibraryPanel(this.state.uid, true);
-      const libPanelModel = new PanelModel(libPanel.model);
-      const titleItems = [];
-      titleItems.push(
-        new VizPanelLinks({
-          rawLinks: libPanelModel.links,
-          menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
-        })
-      );
 
-      titleItems.push(new PanelNotices());
-      vizPanel = vizPanel.clone({
+      if (this.state._loadedVersion === libPanel.version) {
+        return;
+      }
+
+      const libPanelModel = new PanelModel(libPanel.model);
+
+      const panel = new VizPanel({
+        title: this.state.title,
         options: libPanelModel.options ?? {},
         fieldConfig: libPanelModel.fieldConfig,
-        title: libPanelModel.title,
         pluginId: libPanelModel.type,
         pluginVersion: libPanelModel.pluginVersion,
         displayMode: libPanelModel.transparent ? 'transparent' : undefined,
         description: libPanelModel.description,
         $data: createPanelDataProvider(libPanelModel),
-        titleItems,
+        menu: new VizPanelMenu({ $behaviors: [panelMenuBehavior] }),
+        titleItems: [
+          new VizPanelLinks({
+            rawLinks: libPanelModel.links,
+            menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
+          }),
+          new PanelNotices(),
+        ],
       });
+
+      this.setState({ panel, _loadedVersion: libPanel.version });
     } catch (err) {
       vizPanel.setState({
         _pluginLoadError: 'Unable to load library panel: ' + this.state.uid,
       });
     }
-
-    this.setState({ panel: vizPanel });
   }
+}
+
+function getLoadingPanel(title: string) {
+  return new VizPanel({
+    title,
+    menu: new VizPanelMenu({
+      $behaviors: [panelMenuBehavior],
+    }),
+  });
 }
 
 function LibraryPanelRenderer({ model }: SceneComponentProps<LibraryVizPanel>) {

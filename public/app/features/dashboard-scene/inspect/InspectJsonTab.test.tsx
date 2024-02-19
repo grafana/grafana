@@ -225,7 +225,7 @@ async function buildTestSceneWithLibraryPanel() {
   await new Promise((r) => setTimeout(r, 1));
 
   const tab = new InspectJsonTab({
-    panelRef: libraryPanel.state.panel.getRef(),
+    panelRef: libraryPanel.state.panel!.getRef(),
     onClose: jest.fn(),
   });
 
