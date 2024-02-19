@@ -200,6 +200,19 @@ func (m *tlsManager) writeCertFiles(dsInfo sqleng.DataSourceInfo, tlsconfig *tls
 		return err
 	}
 
+	// we do not want to point to cert-files that do not exist
+	if tlsRootCert == "" {
+		tlsconfig.RootCertFile = ""
+	}
+
+	if tlsClientCert == "" {
+		tlsconfig.CertFile = ""
+	}
+
+	if tlsClientKey == "" {
+		tlsconfig.CertKeyFile = ""
+	}
+
 	// Update datasource cache
 	m.dsCacheInstance.cache.Store(cacheKey, dsInfo.Updated)
 	return nil
