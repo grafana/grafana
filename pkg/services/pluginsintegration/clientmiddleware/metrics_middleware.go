@@ -32,10 +32,7 @@ type MetricsMiddleware struct {
 }
 
 func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry registry.Service, features featuremgmt.FeatureToggles) *MetricsMiddleware {
-	var additionalLabels []string
-	if features.IsEnabledGlobally(featuremgmt.FlagPluginsInstrumentationStatusSource) {
-		additionalLabels = []string{"status_source"}
-	}
+	additionalLabels := []string{"status_source"}
 	pluginRequestCounter := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "grafana",
 		Name:      "plugin_request_total",
@@ -119,15 +116,11 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 	status, err := fn(ctx)
 	elapsed := time.Since(start)
 
-	pluginRequestDurationLabels := []string{pluginCtx.PluginID, endpoint, target}
-	pluginRequestCounterLabels := []string{pluginCtx.PluginID, endpoint, status.String(), target}
-	pluginRequestDurationSecondsLabels := []string{"grafana-backend", pluginCtx.PluginID, endpoint, status.String(), target}
-	if m.features.IsEnabled(ctx, featuremgmt.FlagPluginsInstrumentationStatusSource) {
-		statusSource := pluginrequestmeta.StatusSourceFromContext(ctx)
-		pluginRequestDurationLabels = append(pluginRequestDurationLabels, string(statusSource))
-		pluginRequestCounterLabels = append(pluginRequestCounterLabels, string(statusSource))
-		pluginRequestDurationSecondsLabels = append(pluginRequestDurationSecondsLabels, string(statusSource))
-	}
+	statusSource := pluginrequestmeta.StatusSourceFromContext(ctx)
+
+	pluginRequestDurationLabels := []string{pluginCtx.PluginID, endpoint, target, string(statusSource)}
+	pluginRequestCounterLabels := []string{pluginCtx.PluginID, endpoint, status.String(), target, string(statusSource)}
+	pluginRequestDurationSecondsLabels := []string{"grafana-backend", pluginCtx.PluginID, endpoint, status.String(), target, string(statusSource)}
 
 	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginRequestDurationLabels...)
 	pluginRequestCounterWithLabels := m.pluginRequestCounter.WithLabelValues(pluginRequestCounterLabels...)

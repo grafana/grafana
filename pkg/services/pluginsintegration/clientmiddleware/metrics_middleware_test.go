@@ -90,7 +90,7 @@ func TestInstrumentationMiddleware(t *testing.T) {
 				require.Equal(t, 1, testutil.CollectAndCount(promRegistry, metricRequestDurationMs))
 				require.Equal(t, 1, testutil.CollectAndCount(promRegistry, metricRequestDurationS))
 
-				counter := mw.pluginMetrics.pluginRequestCounter.WithLabelValues(pluginID, tc.expEndpoint, requestStatusOK.String(), string(backendplugin.TargetUnknown))
+				counter := mw.pluginMetrics.pluginRequestCounter.WithLabelValues(pluginID, tc.expEndpoint, requestStatusOK.String(), string(backendplugin.TargetUnknown), string(pluginrequestmeta.DefaultStatusSource))
 				require.Equal(t, 1.0, testutil.ToFloat64(counter))
 				for _, m := range []string{metricRequestDurationMs, metricRequestDurationS} {
 					require.NoError(t, checkHistogram(promRegistry, m, map[string]string{
@@ -159,8 +159,7 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 	require.NoError(t, pluginsRegistry.Add(context.Background(), &plugins.Plugin{
 		JSONData: plugins.JSONData{ID: pluginID, Backend: true},
 	}))
-	features := featuremgmt.WithFeatures(featuremgmt.FlagPluginsInstrumentationStatusSource)
-	metricsMw := newMetricsMiddleware(promRegistry, pluginsRegistry, features)
+	metricsMw := newMetricsMiddleware(promRegistry, pluginsRegistry, featuremgmt.WithFeatures())
 	cdt := clienttest.NewClientDecoratorTest(t, clienttest.WithMiddlewares(
 		NewPluginRequestMetaMiddleware(),
 		plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
