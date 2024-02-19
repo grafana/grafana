@@ -6891,15 +6891,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/menu@npm:3.9.6":
-  version: 3.9.6
-  resolution: "@react-types/menu@npm:3.9.6"
+"@react-types/menu@npm:3.9.7":
+  version: 3.9.7
+  resolution: "@react-types/menu@npm:3.9.7"
   dependencies:
-    "@react-types/overlays": "npm:^3.8.4"
-    "@react-types/shared": "npm:^3.22.0"
+    "@react-types/overlays": "npm:^3.8.5"
+    "@react-types/shared": "npm:^3.22.1"
   peerDependencies:
     react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
-  checksum: 10/14812700f810a75a1b6f85077c35292c50783fbaf404d6ee3ab21ca73151cb95f527824e45cb4c0dd02ce5b99d5a4eba21f78da53093000a003e848b06690b86
+  checksum: 10/97cec66432e6c53909dab25d9a7d5c2646d484caeb6c4eff402f152baf667079ef5774c31098f29d66045a1b0f841b0cd579aaa1948353631739ddf61042a0e7
   languageName: node
   linkType: hard
 
@@ -6914,7 +6914,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-types/overlays@npm:^3.8.4, @react-types/overlays@npm:^3.8.5":
+"@react-types/overlays@npm:^3.8.5":
   version: 3.8.5
   resolution: "@react-types/overlays@npm:3.8.5"
   dependencies:
@@ -18322,7 +18322,7 @@ __metadata:
     "@react-awesome-query-builder/core": "npm:6.4.2"
     "@react-awesome-query-builder/ui": "npm:6.4.2"
     "@react-types/button": "npm:3.9.2"
-    "@react-types/menu": "npm:3.9.6"
+    "@react-types/menu": "npm:3.9.7"
     "@react-types/overlays": "npm:3.8.4"
     "@react-types/shared": "npm:3.22.0"
     "@reduxjs/toolkit": "npm:1.9.5"
