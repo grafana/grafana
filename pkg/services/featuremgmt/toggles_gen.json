@@ -2122,6 +2122,19 @@
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true
       }
+    },
+    {
+      "metadata": {
+        "name": "sqlExpressions",
+        "resourceVersion": "1708382771272",
+        "creationTimestamp": "2024-02-19T22:46:11Z"
+      },
+      "spec": {
+        "description": "Enables using SQL and DuckDB functions as Expressions.",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "requiresDevMode": true
+      }
     }
   ]
 }

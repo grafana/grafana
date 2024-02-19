@@ -1184,8 +1184,7 @@ var (
 			RequiresDevMode: true,
 			Stage:           FeatureStageExperimental,
 			FrontendOnly:    false,
-			Owner:           grafanaBiSquad,
-			Created:         time.Date(2024, time.January, 31, 12, 0, 0, 0, time.UTC),
+			Owner:           grafanaDatavizSquad,
 		},
 		{
 			Name:         "nodeGraphDotLayout",
