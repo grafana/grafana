@@ -6,7 +6,7 @@ import uPlot from 'uplot';
 
 import { arrayToDataFrame, colorManipulator, DataFrame, DataTopic } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
-import { DEFAULT_ANNOTATION_COLOR, UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
+import { DEFAULT_ANNOTATION_COLOR, getPortalContainer, UPlotConfigBuilder, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { AnnotationMarker2 } from './annotations2/AnnotationMarker2';
 
@@ -64,6 +64,8 @@ export const AnnotationsPlugin2 = ({
   canvasRegionRendering = true,
 }: AnnotationsPluginProps) => {
   const [plot, setPlot] = useState<uPlot>();
+
+  const [portalRoot] = useState(() => getPortalContainer());
 
   const styles = useStyles2(getStyles);
   const getColorByName = useTheme2().visualization.getColorByName;
@@ -224,6 +226,7 @@ export const AnnotationsPlugin2 = ({
               timeZone={timeZone}
               key={`${frameIdx}:${i}`}
               exitWipEdit={isWip ? exitWipEdit : null}
+              portalRoot={portalRoot}
             />
           );
         }
