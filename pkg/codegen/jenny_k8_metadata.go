@@ -33,7 +33,7 @@ func (jenny *K8MetadataJenny) Generate(data DataForGen) (codejen.Files, error) {
 			return nil, fmt.Errorf("failed executing core resource template: %w", err)
 		}
 
-		files[i] = *codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_gen.go", pkg, pkg), buf.Bytes(), jenny)
+		files[i] = *codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_metadata_gen.go", pkg, pkg), buf.Bytes(), jenny)
 	}
 
 	return files, nil

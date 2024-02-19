@@ -13,9 +13,9 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-
-	"github.com/grafana/grafana/pkg/cuectx"
 )
+
+var CoreDefParentPath = "kinds"
 
 //go:generate go run cog_gen.go
 
@@ -26,12 +26,12 @@ func main() {
 		os.Exit(1)
 	}
 	groot := filepath.Dir(cwd)
-	dir := filepath.Join(groot, cuectx.CoreDefParentPath)
+	dir := filepath.Join(groot, CoreDefParentPath)
 
 	var kindDirs []string
 	err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
-		if d.IsDir() && d.Name() != cuectx.CoreDefParentPath {
-			rel := filepath.Join("../", cuectx.CoreDefParentPath, d.Name())
+		if d.IsDir() && d.Name() != CoreDefParentPath {
+			rel := filepath.Join("../", CoreDefParentPath, d.Name())
 			kindDirs = append(kindDirs, rel)
 		}
 

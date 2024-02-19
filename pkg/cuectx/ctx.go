@@ -5,7 +5,6 @@
 package cuectx
 
 import (
-	"path/filepath"
 	"sync"
 
 	"cuelang.org/go/cue"
@@ -13,19 +12,6 @@ import (
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/vmux"
 )
-
-// CoreDefParentPath is the path, relative to the repository root, where
-// each child directory is expected to contain .cue files defining one
-// Core kind.
-var CoreDefParentPath = "kinds"
-
-// GoCoreKindParentPath is the path, relative to the repository root, to the directory
-// containing one directory per kind, full of generated Go kind output: types and bindings.
-var GoCoreKindParentPath = filepath.Join("pkg", "kinds")
-
-// TSCoreKindParentPath is the path, relative to the repository root, to the directory that
-// contains one directory per kind, full of generated TS kind output: types and default consts.
-var TSCoreKindParentPath = filepath.Join("packages", "grafana-schema", "src", "raw")
 
 var (
 	ctx  *cue.Context

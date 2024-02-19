@@ -24,6 +24,12 @@ import (
 	"github.com/grafana/grafana/pkg/cuectx"
 )
 
+var CoreDefParentPath = "kinds"
+
+// TSCoreKindParentPath is the path, relative to the repository root, to the directory that
+// contains one directory per kind, full of generated TS kind output: types and default consts.
+var TSCoreKindParentPath = filepath.Join("packages", "grafana-schema", "src", "raw")
+
 func main() {
 	if len(os.Args) > 1 {
 		fmt.Fprintf(os.Stderr, "plugin thema code generator does not currently accept any arguments\n, got %q", os.Args)
@@ -39,7 +45,7 @@ func main() {
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
 		codegen.LatestMajorsOrXJenny(
-			cuectx.TSCoreKindParentPath,
+			TSCoreKindParentPath,
 			true, // forcing group so that we ignore the top level resource (for now)
 			codegen.TSResourceJenny{}),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
@@ -59,13 +65,13 @@ func main() {
 	rt := cuectx.GrafanaThemaRuntime()
 	var all []kindsys.Kind
 
-	f := os.DirFS(filepath.Join(groot, cuectx.CoreDefParentPath))
+	f := os.DirFS(filepath.Join(groot, CoreDefParentPath))
 	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading core kind fs root directory")
 	for _, kinddir := range kinddirs {
 		if !kinddir.IsDir() {
 			continue
 		}
-		rel := filepath.Join(cuectx.CoreDefParentPath, kinddir.Name())
+		rel := filepath.Join(CoreDefParentPath, kinddir.Name())
 		def, err := cuectx.LoadCoreKindDef(rel, rt.Context(), nil)
 		if err != nil {
 			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))

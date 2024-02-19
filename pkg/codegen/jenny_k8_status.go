@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// K8StatusJenny generates the status information for each core kind.
 type K8StatusJenny struct {
 }
 

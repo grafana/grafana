@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// K8ResourcesJenny generates the resource information for each core kind.
 type K8ResourcesJenny struct {
 }
 
@@ -45,7 +46,7 @@ func (jenny *K8ResourcesJenny) Generate(data DataForGen) (codejen.Files, error) 
 			return nil, err
 		}
 
-		files[i] = *codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_metadata_gen.go", pkgName, pkgName), content, jenny)
+		files[i] = *codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_gen.go", pkgName, pkgName), content, jenny)
 	}
 
 	return files, nil
