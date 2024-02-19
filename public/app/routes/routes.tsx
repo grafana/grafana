@@ -362,6 +362,12 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')
       ),
     },
+    {
+      path: '/admin/migrate-to-cloud',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/migrate-to-cloud/MigrateToCloud')
+      ),
+    },
     // LOGIN / SIGNUP
     {
       path: '/login',
