@@ -7,6 +7,14 @@ import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame } f
 import { Table } from './Table';
 import { Props } from './types';
 
+// mock transition styles to ensure consistent behaviour in unit tests
+jest.mock('@floating-ui/react', () => ({
+  ...jest.requireActual('@floating-ui/react'),
+  useTransitionStyles: () => ({
+    styles: {},
+  }),
+}));
+
 function getDefaultDataFrame(): DataFrame {
   const dataFrame = toDataFrame({
     name: 'A',
@@ -211,7 +219,7 @@ describe('Table', () => {
       await userEvent.click(screen.getByText('Ok'));
 
       // 3 + header row
-      expect(screen.getAllByRole('row')).toHaveLength(4);
+      expect(within(getTable()).getAllByRole('row')).toHaveLength(4);
     });
 
     it('should redo footer calculations', async () => {
