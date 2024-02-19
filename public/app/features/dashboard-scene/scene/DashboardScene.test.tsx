@@ -71,7 +71,7 @@ describe('DashboardScene', () => {
         ${'links'}       | ${[]}
       `(
         'A change to $prop should set isDirty true',
-        ({ prop, value }: { prop: keyof DashboardSceneState; value: any }) => {
+        ({ prop, value }: { prop: keyof DashboardSceneState; value: unknown }) => {
           const prevState = scene.state[prop];
           scene.setState({ [prop]: value });
 
