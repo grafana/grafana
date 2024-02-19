@@ -10,6 +10,7 @@
     "url": "https://github.com/grafana/grafana.git",
     "directory": "packages/grafana-icons"
   },
+  "main": "dist/index.js",
   "types": "dist/types/src/index.d.ts",
   "publishConfig": {
     "main": "dist/index.js",
