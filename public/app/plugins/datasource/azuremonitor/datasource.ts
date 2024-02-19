@@ -31,6 +31,8 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
   resourcePickerData: ResourcePickerData;
   azureResourceGraphDatasource: AzureResourceGraphDatasource;
+  currentUserAuth: boolean;
+  currentUserAuthFallbackAvailable: boolean;
 
   pseudoDatasource: {
     [key in AzureQueryType]?: AzureMonitorDatasource | AzureLogAnalyticsDatasource | AzureResourceGraphDatasource;
@@ -55,6 +57,9 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
     };
 
     this.variables = new VariableSupport(this);
+
+    this.currentUserAuth = instanceSettings.jsonData.azureAuthType === 'currentuser';
+    this.currentUserAuthFallbackAvailable = false;
   }
 
   filterQuery(item: AzureMonitorQuery): boolean {

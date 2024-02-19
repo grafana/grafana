@@ -28,6 +28,8 @@ export const components = {
     header: {
       select: 'data-testid azure-monitor-experimental-header',
     },
+    userAuthAlert: 'data-testid azure-monitor-user-auth-invalid-auth-provider-alert',
+    userAuthFallbackAlert: 'data-testid azure-monitor-user-auth-fallback-alert',
     resourcePicker: {
       select: {
         button: 'data-testid resource-picker-select',
