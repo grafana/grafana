@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"regexp"
+	"sort"
 
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/graphitebridge"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -60,17 +60,12 @@ func (im *InternalMetricsService) Run(ctx context.Context) error {
 }
 
 func ProvideRegisterer(cfg *setting.Cfg) prometheus.Registerer {
-	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer) {
-		return legacyregistry.Registerer()
-	}
-	return prometheus.DefaultRegisterer
+	return legacyregistry.Registerer()
 }
 
 func ProvideGatherer(cfg *setting.Cfg) prometheus.Gatherer {
-	if cfg.IsFeatureToggleEnabled(featuremgmt.FlagGrafanaAPIServer) {
-		return newAddPrefixWrapper(legacyregistry.DefaultGatherer)
-	}
-	return prometheus.DefaultGatherer
+	k8sGatherer := newAddPrefixWrapper(legacyregistry.DefaultGatherer)
+	return newMultiRegistry(k8sGatherer, prometheus.DefaultGatherer)
 }
 
 func ProvideRegistererForTest() prometheus.Registerer {
@@ -121,4 +116,41 @@ func (g *addPrefixWrapper) Gather() ([]*dto.MetricFamily, error) {
 	}
 
 	return mf, nil
+}
+
+var _ prometheus.Gatherer = (*multiRegistry)(nil)
+
+type multiRegistry struct {
+	gatherers []prometheus.Gatherer
+}
+
+func newMultiRegistry(gatherers ...prometheus.Gatherer) *multiRegistry {
+	return &multiRegistry{
+		gatherers: gatherers,
+	}
+}
+
+func (r *multiRegistry) Gather() (mfs []*dto.MetricFamily, err error) {
+	errs := prometheus.MultiError{}
+
+	names := make(map[string]struct{})
+	for _, g := range r.gatherers {
+		mf, err := g.Gather()
+		errs.Append(err)
+
+		for i := 0; i < len(mf); i++ {
+			m := mf[i]
+			// prevent duplicate metric names
+			if _, exists := names[*m.Name]; !exists {
+				names[*m.Name] = struct{}{}
+				mfs = append(mfs, m)
+			}
+		}
+	}
+
+	sort.Slice(mfs, func(i, j int) bool {
+		return *mfs[i].Name < *mfs[j].Name
+	})
+
+	return mfs, errs.MaybeUnwrap()
 }

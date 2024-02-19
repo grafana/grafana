@@ -14,6 +14,7 @@ labels:
     - cloud
     - enterprise
     - oss
+description: Configure options for Grafana's node graph visualization
 title: Node graph
 weight: 100
 ---

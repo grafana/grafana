@@ -1,6 +1,8 @@
-import { QueryBuilderOperation, QueryBuilderOperationDef } from '../../prometheus/querybuilder/shared/types';
+import { QueryBuilderOperation, QueryBuilderOperationDefinition } from '@grafana/experimental';
 
 import {
+  createAggregationOperation,
+  createAggregationOperationWithParam,
   createRangeOperation,
   createRangeOperationWithGrouping,
   getLineFilterRenderer,
@@ -8,7 +10,7 @@ import {
   labelFilterRenderer,
   pipelineRenderer,
 } from './operationUtils';
-import { getOperationDefinitions } from './operations';
+import { operationDefinitions } from './operations';
 import { LokiOperationId, LokiVisualQueryOperationCategory } from './types';
 
 describe('createRangeOperation', () => {
@@ -142,8 +144,12 @@ describe('getLineFilterRenderer', () => {
     id: '__line_contains_case_insensitive',
     params: ['ERrOR'],
   };
+  const MOCK_MODEL_BACKTICKS = {
+    id: '__line_contains',
+    params: ['`error`'],
+  };
 
-  const MOCK_DEF = undefined as unknown as QueryBuilderOperationDef;
+  const MOCK_DEF = undefined as unknown as QueryBuilderOperationDefinition;
 
   const MOCK_INNER_EXPR = '{job="grafana"}';
 
@@ -157,6 +163,11 @@ describe('getLineFilterRenderer', () => {
     expect(lineFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} !~ `error`');
   });
 
+  it('lineFilterRenderer returns the correct query for line contains, containing backticks', () => {
+    const lineFilterRenderer = getLineFilterRenderer('!~');
+    expect(lineFilterRenderer(MOCK_MODEL_BACKTICKS, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} !~ "`error`"');
+  });
+
   it('lineFilterRenderer returns the correct query for line contains case insensitive', () => {
     const lineFilterRenderer = getLineFilterRenderer('!~', true);
     expect(lineFilterRenderer(MOCK_MODEL_INSENSITIVE, MOCK_DEF, MOCK_INNER_EXPR)).toBe(
@@ -167,7 +178,7 @@ describe('getLineFilterRenderer', () => {
 
 describe('labelFilterRenderer', () => {
   const MOCK_MODEL = { id: '__label_filter', params: ['label', '', 'value'] };
-  const MOCK_DEF = undefined as unknown as QueryBuilderOperationDef;
+  const MOCK_DEF = undefined as unknown as QueryBuilderOperationDefinition;
   const MOCK_INNER_EXPR = '{job="grafana"}';
 
   it.each`
@@ -209,17 +220,12 @@ describe('isConflictingFilter', () => {
 });
 
 describe('pipelineRenderer', () => {
-  let definitions: QueryBuilderOperationDef[];
-  beforeEach(() => {
-    definitions = getOperationDefinitions();
-  });
-
   it('correctly renders unpack expressions', () => {
     const model: QueryBuilderOperation = {
       id: LokiOperationId.Unpack,
       params: [],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Unpack);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Unpack);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | unpack');
   });
 
@@ -228,7 +234,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Unpack,
       params: [],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Unpack);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Unpack);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | unpack');
   });
 
@@ -237,7 +243,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Logfmt,
       params: [],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Logfmt);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Logfmt);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | logfmt');
   });
 
@@ -246,7 +252,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Logfmt,
       params: [true, false, 'foo', ''],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Logfmt);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Logfmt);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | logfmt --strict foo');
   });
 
@@ -255,7 +261,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Logfmt,
       params: [true, false, 'foo', 'bar', 'baz'],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Logfmt);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Logfmt);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | logfmt --strict foo, bar, baz');
   });
 
@@ -264,7 +270,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Json,
       params: [],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Json);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Json);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | json');
   });
 
@@ -273,7 +279,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Json,
       params: ['foo', ''],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Json);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Json);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | json foo');
   });
 
@@ -282,7 +288,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Json,
       params: ['foo', 'bar', 'baz'],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Json);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Json);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | json foo, bar, baz');
   });
 
@@ -291,7 +297,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Keep,
       params: ['foo', ''],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Keep);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Keep);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | keep foo');
   });
 
@@ -300,7 +306,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Keep,
       params: ['foo', 'bar', 'baz'],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Keep);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Keep);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | keep foo, bar, baz');
   });
 
@@ -309,7 +315,7 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Drop,
       params: ['foo', ''],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Drop);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Drop);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | drop foo');
   });
 
@@ -318,7 +324,172 @@ describe('pipelineRenderer', () => {
       id: LokiOperationId.Drop,
       params: ['foo', 'bar', 'baz'],
     };
-    const definition = definitions.find((def) => def.id === LokiOperationId.Drop);
+    const definition = operationDefinitions.find((def) => def.id === LokiOperationId.Drop);
     expect(pipelineRenderer(model, definition!, '{}')).toBe('{} | drop foo, bar, baz');
+  });
+});
+
+describe('createAggregationOperation', () => {
+  it('returns correct aggregation definitions with overrides', () => {
+    expect(createAggregationOperation('test_aggregation', { category: 'test_category' })).toMatchObject([
+      {
+        addOperationHandler: {},
+        alternativesKey: 'plain aggregations',
+        category: 'test_category',
+        defaultParams: [],
+        explainHandler: {},
+        id: 'test_aggregation',
+        name: 'Test aggregation',
+        paramChangedHandler: {},
+        params: [
+          {
+            name: 'By label',
+            optional: true,
+            restParam: true,
+            type: 'string',
+          },
+        ],
+        renderer: {},
+      },
+      {
+        alternativesKey: 'aggregations by',
+        category: 'test_category',
+        defaultParams: [''],
+        explainHandler: {},
+        hideFromList: true,
+        id: '__test_aggregation_by',
+        name: 'Test aggregation by',
+        paramChangedHandler: {},
+        params: [
+          {
+            editor: {},
+            name: 'Label',
+            optional: true,
+            restParam: true,
+            type: 'string',
+          },
+        ],
+        renderer: {},
+      },
+      {
+        alternativesKey: 'aggregations by',
+        category: 'test_category',
+        defaultParams: [''],
+        explainHandler: {},
+        hideFromList: true,
+        id: '__test_aggregation_without',
+        name: 'Test aggregation without',
+        paramChangedHandler: {},
+        params: [
+          {
+            name: 'Label',
+            optional: true,
+            restParam: true,
+            type: 'string',
+          },
+        ],
+        renderer: {},
+      },
+    ]);
+  });
+});
+
+describe('createAggregationOperationWithParams', () => {
+  it('returns correct aggregation definitions with overrides and params', () => {
+    expect(
+      createAggregationOperationWithParam(
+        'test_aggregation',
+        {
+          params: [{ name: 'K-value', type: 'number' }],
+          defaultParams: [5],
+        },
+        { category: 'test_category' }
+      )
+    ).toMatchObject([
+      {
+        addOperationHandler: {},
+        alternativesKey: 'plain aggregations',
+        category: 'test_category',
+        defaultParams: [5],
+        explainHandler: {},
+        id: 'test_aggregation',
+        name: 'Test aggregation',
+        paramChangedHandler: {},
+        params: [
+          { name: 'K-value', type: 'number' },
+          { name: 'By label', optional: true, restParam: true, type: 'string' },
+        ],
+        renderer: {},
+      },
+      {
+        alternativesKey: 'aggregations by',
+        category: 'test_category',
+        defaultParams: [5, ''],
+        explainHandler: {},
+        hideFromList: true,
+        id: '__test_aggregation_by',
+        name: 'Test aggregation by',
+        paramChangedHandler: {},
+        params: [
+          { name: 'K-value', type: 'number' },
+          { editor: {}, name: 'Label', optional: true, restParam: true, type: 'string' },
+        ],
+        renderer: {},
+      },
+      {
+        alternativesKey: 'aggregations by',
+        category: 'test_category',
+        defaultParams: [5, ''],
+        explainHandler: {},
+        hideFromList: true,
+        id: '__test_aggregation_without',
+        name: 'Test aggregation without',
+        paramChangedHandler: {},
+        params: [
+          { name: 'K-value', type: 'number' },
+          { name: 'Label', optional: true, restParam: true, type: 'string' },
+        ],
+        renderer: {},
+      },
+    ]);
+  });
+  it('returns correct query string using aggregation definitions with overrides and number type param', () => {
+    const def = createAggregationOperationWithParam(
+      'test_aggregation',
+      {
+        params: [{ name: 'K-value', type: 'number' }],
+        defaultParams: [5],
+      },
+      { category: 'test_category' }
+    );
+
+    const topKByDefinition = def[1];
+    expect(
+      topKByDefinition.renderer(
+        { id: '__topk_by', params: ['5', 'source', 'place'] },
+        def[1],
+        'rate({place="luna"} |= `` [5m])'
+      )
+    ).toBe('test_aggregation by(source, place) (5, rate({place="luna"} |= `` [5m]))');
+  });
+
+  it('returns correct query string using aggregation definitions with overrides and string type param', () => {
+    const def = createAggregationOperationWithParam(
+      'test_aggregation',
+      {
+        params: [{ name: 'Identifier', type: 'string' }],
+        defaultParams: ['count'],
+      },
+      { category: 'test_category' }
+    );
+
+    const countValueDefinition = def[1];
+    expect(
+      countValueDefinition.renderer(
+        { id: 'count_values', params: ['5', 'source', 'place'] },
+        def[1],
+        'rate({place="luna"} |= `` [5m])'
+      )
+    ).toBe('test_aggregation by(source, place) ("5", rate({place="luna"} |= `` [5m]))');
   });
 });

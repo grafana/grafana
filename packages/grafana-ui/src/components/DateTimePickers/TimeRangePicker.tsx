@@ -39,6 +39,7 @@ export interface TimeRangePickerProps {
   onMoveBackward: () => void;
   onMoveForward: () => void;
   onZoom: () => void;
+  onError?: (error?: string) => void;
   history?: TimeRange[];
   hideQuickRanges?: boolean;
   widthOverride?: number;
@@ -58,6 +59,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     onMoveBackward,
     onMoveForward,
     onZoom,
+    onError,
     timeZone,
     fiscalYearStartMonth,
     timeSyncButton,
@@ -111,6 +113,9 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
 
   const variant = isSynced ? 'active' : isOnCanvas ? 'canvas' : 'default';
 
+  const isFromAfterTo = value?.to?.isBefore(value.from);
+  const timePickerIcon = isFromAfterTo ? 'exclamation-triangle' : 'clock-nine';
+
   const currentTimeRange = formattedRange(value, timeZone);
 
   return (
@@ -138,7 +143,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
           })}
           aria-controls="TimePickerContent"
           onClick={onToolbarButtonSwitch}
-          icon="clock-nine"
+          icon={timePickerIcon}
           isOpen={isOpen}
           variant={variant}
         >
@@ -148,7 +153,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
       {isOpen && (
         <div data-testid={selectors.components.TimePicker.overlayContent}>
           <div role="presentation" className={cx(modalBackdrop, styles.backdrop)} {...underlayProps} />
-          <FocusScope contain autoFocus>
+          <FocusScope contain autoFocus restoreFocus>
             <section className={styles.content} ref={overlayRef} {...overlayProps} {...dialogProps}>
               <TimePickerContent
                 timeZone={timeZone}
@@ -162,6 +167,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                 onChangeTimeZone={onChangeTimeZone}
                 onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
                 hideQuickRanges={hideQuickRanges}
+                onError={onError}
               />
             </section>
           </FocusScope>

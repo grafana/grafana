@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import uPlot, { Padding } from 'uplot';
 
 import {
@@ -13,13 +14,14 @@ import {
   outerJoinDataFrames,
   TimeZone,
   VizOrientation,
+  getFieldDisplayName,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import {
   AxisColorMode,
   AxisPlacement,
   GraphTransform,
-  GraphTresholdsStyleMode,
+  GraphThresholdsStyleMode,
   ScaleDirection,
   ScaleDistribution,
   ScaleOrientation,
@@ -207,8 +209,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
     // Render thresholds in graph
     if (customConfig.thresholdsStyle && field.config.thresholds) {
-      const thresholdDisplay = customConfig.thresholdsStyle.mode ?? GraphTresholdsStyleMode.Off;
-      if (thresholdDisplay !== GraphTresholdsStyleMode.Off) {
+      const thresholdDisplay = customConfig.thresholdsStyle.mode ?? GraphThresholdsStyleMode.Off;
+      if (thresholdDisplay !== GraphThresholdsStyleMode.Off) {
         builder.addThresholds({
           config: customConfig.thresholdsStyle,
           thresholds: field.config.thresholds,
@@ -374,7 +376,7 @@ export function prepareBarChartDisplayValues(
   theme: GrafanaTheme2,
   options: Options
 ): BarChartDisplayValues | BarChartDisplayWarning {
-  if (!series?.length) {
+  if (!series.length || series.every((fr) => fr.length === 0)) {
     return { warn: 'No data in response' };
   }
 
@@ -490,37 +492,30 @@ export function prepareBarChartDisplayValues(
     }
   }
 
-  let legendFields: Field[] = fields;
+  // If stacking is percent, we need to correct the legend fields unit and display
+  let legendFields: Field[] = cloneDeep(fields);
   if (options.stacking === StackingMode.Percent) {
-    legendFields = fields.map((field) => {
-      const alignedFrameField = frame.fields.find((f) => f.state?.displayName === field.state?.displayName)!;
+    legendFields.map((field) => {
+      const alignedFrameField = frame.fields.find(
+        (f) => getFieldDisplayName(f, frame) === getFieldDisplayName(f, frame)
+      );
 
-      const copy = {
-        ...field,
-        config: {
-          ...alignedFrameField.config,
-        },
-        values: field.values,
-      };
-
-      copy.display = getDisplayProcessor({ field: copy, theme });
-
-      return copy;
+      field.config.unit = alignedFrameField?.config?.unit ?? undefined;
+      field.display = getDisplayProcessor({ field: field, theme });
     });
-
-    legendFields.unshift(firstField);
   }
 
-  // String field is first
+  // String field is first, make sure fields / legend fields indexes match
   fields.unshift(firstField);
+  legendFields.unshift(firstField);
 
   return {
     aligned: frame,
     colorByField,
     viz: [
       {
-        length: firstField.values.length,
         fields: fields, // ideally: fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.viz)),
+        length: firstField.values.length,
       },
     ],
     legend: {

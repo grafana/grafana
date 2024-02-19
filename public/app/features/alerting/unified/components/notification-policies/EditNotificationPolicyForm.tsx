@@ -3,20 +3,20 @@ import React, { ReactNode, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import {
+  Badge,
   Button,
   Field,
   FieldArray,
+  FieldValidationMessage,
   Form,
   IconButton,
   Input,
   InputControl,
   MultiSelect,
   Select,
+  Stack,
   Switch,
   useStyles2,
-  Badge,
-  FieldValidationMessage,
-  Stack,
 } from '@grafana/ui';
 import { MatcherOperator, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
@@ -25,20 +25,21 @@ import { FormAmRoute } from '../../types/amroutes';
 import { SupportedPlugin } from '../../types/pluginBridges';
 import { matcherFieldOptions } from '../../utils/alertmanager';
 import {
+  amRouteToFormAmRoute,
+  commonGroupByOptions,
   emptyArrayFieldMatcher,
   mapMultiSelectValueToStrings,
   mapSelectValueToString,
-  stringToSelectableValue,
-  stringsToSelectableValues,
-  commonGroupByOptions,
-  amRouteToFormAmRoute,
   promDurationValidator,
   repeatIntervalValidator,
+  stringToSelectableValue,
+  stringsToSelectableValues,
 } from '../../utils/amroutes';
 import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
 import { PromDurationInput } from './PromDurationInput';
 import { getFormStyles } from './formStyles';
+import { routeTimingsFields } from './routeTimingsFields';
 
 export interface AmRoutesExpandedFormProps {
   receivers: AmRouteReceiver[];
@@ -133,7 +134,7 @@ export const AmRoutesExpandedForm = ({
                               error={errors.object_matchers?.[index]?.value?.message}
                             >
                               <Input
-                                {...register(`object_matchers.${index}.value`, { required: 'Field is required' })}
+                                {...register(`object_matchers.${index}.value`)}
                                 defaultValue={field.value}
                                 placeholder="value"
                               />
@@ -226,43 +227,43 @@ export const AmRoutesExpandedForm = ({
           {watch().overrideTimings && (
             <>
               <Field
-                label="Group wait"
-                description="The waiting time until the initial notification is sent for a new group created by an incoming alert. If empty it will be inherited from the parent policy."
+                label={routeTimingsFields.groupWait.label}
+                description={routeTimingsFields.groupWait.description}
                 invalid={!!errors.groupWaitValue}
                 error={errors.groupWaitValue?.message}
               >
                 <PromDurationInput
                   {...register('groupWaitValue', { validate: promDurationValidator })}
-                  aria-label="Group wait value"
+                  aria-label={routeTimingsFields.groupWait.ariaLabel}
                   className={formStyles.promDurationInput}
                 />
               </Field>
               <Field
-                label="Group interval"
-                description="The waiting time to send a batch of new alerts for that group after the first notification was sent. If empty it will be inherited from the parent policy."
+                label={routeTimingsFields.groupInterval.label}
+                description={routeTimingsFields.groupInterval.description}
                 invalid={!!errors.groupIntervalValue}
                 error={errors.groupIntervalValue?.message}
               >
                 <PromDurationInput
                   {...register('groupIntervalValue', { validate: promDurationValidator })}
-                  aria-label="Group interval value"
+                  aria-label={routeTimingsFields.groupInterval.ariaLabel}
                   className={formStyles.promDurationInput}
                 />
               </Field>
               <Field
-                label="Repeat interval"
-                description="The waiting time to resend an alert after they have successfully been sent."
+                label={routeTimingsFields.repeatInterval.label}
+                description={routeTimingsFields.repeatInterval.description}
                 invalid={!!errors.repeatIntervalValue}
                 error={errors.repeatIntervalValue?.message}
               >
                 <PromDurationInput
                   {...register('repeatIntervalValue', {
-                    validate: (value: string) => {
+                    validate: (value = '') => {
                       const groupInterval = getValues('groupIntervalValue');
                       return repeatIntervalValidator(value, groupInterval);
                     },
                   })}
-                  aria-label="Repeat interval value"
+                  aria-label={routeTimingsFields.repeatInterval.ariaLabel}
                   className={formStyles.promDurationInput}
                 />
               </Field>
@@ -321,6 +322,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     noMatchersWarning: css`
       padding: ${theme.spacing(1)} ${theme.spacing(2)};
+      margin-bottom: ${theme.spacing(1)};
     `,
   };
 };

@@ -66,23 +66,23 @@ func (_m *FakeDashboardService) CleanUpDeletedDashboards(ctx context.Context) (i
 	return r0, r1
 }
 
-// CountInFolder provides a mock function with given fields: ctx, orgID, folderUID, user
-func (_m *FakeDashboardService) CountInFolder(ctx context.Context, orgID int64, folderUID string, user identity.Requester) (int64, error) {
-	ret := _m.Called(ctx, orgID, folderUID, user)
+// CountInFolders provides a mock function with given fields: ctx, orgID, folderUIDs, user
+func (_m *FakeDashboardService) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error) {
+	ret := _m.Called(ctx, orgID, folderUIDs, user)
 
 	var r0 int64
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string, identity.Requester) (int64, error)); ok {
-		return rf(ctx, orgID, folderUID, user)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, []string, identity.Requester) (int64, error)); ok {
+		return rf(ctx, orgID, folderUIDs, user)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string, identity.Requester) int64); ok {
-		r0 = rf(ctx, orgID, folderUID, user)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, []string, identity.Requester) int64); ok {
+		r0 = rf(ctx, orgID, folderUIDs, user)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, int64, string, identity.Requester) error); ok {
-		r1 = rf(ctx, orgID, folderUID, user)
+	if rf, ok := ret.Get(1).(func(context.Context, int64, []string, identity.Requester) error); ok {
+		r1 = rf(ctx, orgID, folderUIDs, user)
 	} else {
 		r1 = ret.Error(1)
 	}

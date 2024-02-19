@@ -25,7 +25,7 @@ export function setupForLogs() {
     return toDataQueryResponse({ data: { results: { a: { refId: 'a', frames: [dataFrameToJSON(frame)] } } } });
   }
 
-  const { datasource, queryMock, timeSrv } = setupMockedDataSource();
+  const { datasource, queryMock } = setupMockedDataSource();
 
   const startQueryFrame: DataFrame = createDataFrame({ fields: [{ name: 'queryId', values: ['queryid'] }] });
   queryMock.mockReturnValueOnce(of(envelope(startQueryFrame)));
@@ -89,5 +89,5 @@ export function setupForLogs() {
     },
   });
 
-  return { datasource, queryMock, timeSrv };
+  return { datasource, queryMock };
 }

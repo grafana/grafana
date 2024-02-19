@@ -10,7 +10,6 @@ import {
   DataQueryRequest,
   LogRowContextQueryDirection,
 } from '@grafana/data';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import {
   CloudWatchSettings,
@@ -25,6 +24,15 @@ import { CloudWatchLogsQuery, LogAction, StartQueryRequest } from '../types';
 import * as rxjsUtils from '../utils/rxjs/increasingInterval';
 
 import { LOG_IDENTIFIER_INTERNAL, LOGSTREAM_IDENTIFIER_INTERNAL } from './CloudWatchLogsQueryRunner';
+
+jest.mock('@grafana/data', () => ({
+  ...jest.requireActual('@grafana/data'),
+  getDefaultTimeRange: jest.fn().mockImplementation(() => {
+    const from = dateTime(1111);
+    const to = dateTime(2222);
+    return { from, to, raw: { from, to } };
+  }),
+}));
 
 describe('CloudWatchLogsQueryRunner', () => {
   beforeEach(() => {
@@ -58,15 +66,14 @@ describe('CloudWatchLogsQueryRunner', () => {
         timeUtc: '',
         uid: '1',
       };
-      await runner.getLogRowContext(row);
+      await runner.getLogRowContext(row, undefined, queryMock);
       expect(queryMock.mock.calls[0][0].targets[0].endTime).toBe(4);
       expect(queryMock.mock.calls[0][0].targets[0].region).toBe('');
 
-      await runner.getLogRowContext(
-        row,
-        { direction: LogRowContextQueryDirection.Forward },
-        { ...validLogsQuery, region: 'eu-east' }
-      );
+      await runner.getLogRowContext(row, { direction: LogRowContextQueryDirection.Forward }, queryMock, {
+        ...validLogsQuery,
+        region: 'eu-east',
+      });
       expect(queryMock.mock.calls[1][0].targets[0].startTime).toBe(4);
       expect(queryMock.mock.calls[1][0].targets[0].region).toBe('eu-east');
     });
@@ -78,10 +85,11 @@ describe('CloudWatchLogsQueryRunner', () => {
     });
 
     it('should stop querying when timed out', async () => {
-      const { runner } = setupMockedLogsQueryRunner();
+      const { runner, queryMock } = setupMockedLogsQueryRunner();
       const fakeFrames = genMockFrames(20);
-      const initialRecordsMatched = fakeFrames[0].meta!.stats!.find((stat) => stat.displayName === 'Records scanned')!
-        .value!;
+      const initialRecordsMatched = fakeFrames[0].meta!.stats!.find(
+        (stat) => stat.displayName === 'Records scanned'
+      )!.value!;
       for (let i = 1; i < 4; i++) {
         fakeFrames[i].meta!.stats = [
           {
@@ -91,8 +99,9 @@ describe('CloudWatchLogsQueryRunner', () => {
         ];
       }
 
-      const finalRecordsMatched = fakeFrames[9].meta!.stats!.find((stat) => stat.displayName === 'Records scanned')!
-        .value!;
+      const finalRecordsMatched = fakeFrames[9].meta!.stats!.find(
+        (stat) => stat.displayName === 'Records scanned'
+      )!.value!;
       for (let i = 10; i < fakeFrames.length; i++) {
         fakeFrames[i].meta!.stats = [
           {
@@ -119,7 +128,7 @@ describe('CloudWatchLogsQueryRunner', () => {
         return i >= iterations;
       };
       const myResponse = await lastValueFrom(
-        runner.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }], timeoutFunc)
+        runner.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }], timeoutFunc, queryMock)
       );
 
       const expectedData = [
@@ -147,7 +156,7 @@ describe('CloudWatchLogsQueryRunner', () => {
     });
 
     it('should continue querying as long as new data is being received', async () => {
-      const { runner } = setupMockedLogsQueryRunner();
+      const { runner, queryMock } = setupMockedLogsQueryRunner();
       const fakeFrames = genMockFrames(15);
 
       let i = 0;
@@ -166,7 +175,7 @@ describe('CloudWatchLogsQueryRunner', () => {
         return Date.now() >= startTime.valueOf() + 6000;
       };
       const myResponse = await lastValueFrom(
-        runner.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }], timeoutFunc)
+        runner.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }], timeoutFunc, queryMock)
       );
       expect(myResponse).toEqual({
         data: [fakeFrames[fakeFrames.length - 1]],
@@ -177,7 +186,7 @@ describe('CloudWatchLogsQueryRunner', () => {
     });
 
     it('should stop querying when results come back with status "Complete"', async () => {
-      const { runner } = setupMockedLogsQueryRunner();
+      const { runner, queryMock } = setupMockedLogsQueryRunner();
       const fakeFrames = genMockFrames(3);
       let i = 0;
       jest.spyOn(runner, 'makeLogActionRequest').mockImplementation((subtype: LogAction) => {
@@ -195,7 +204,7 @@ describe('CloudWatchLogsQueryRunner', () => {
         return Date.now() >= startTime.valueOf() + 6000;
       };
       const myResponse = await lastValueFrom(
-        runner.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }], timeoutFunc)
+        runner.logsQuery([{ queryId: 'fake-query-id', region: 'default', refId: 'A' }], timeoutFunc, queryMock)
       );
 
       expect(myResponse).toEqual({
@@ -237,12 +246,12 @@ describe('CloudWatchLogsQueryRunner', () => {
     id: '',
     region: '$' + regionVariable.name,
     refId: 'A',
-    expression: `stats count(*) by queryType, bin($__interval)`,
+    expression: `stats count(*) by queryType, bin(20s)`,
   };
 
   describe('handleLogQueries', () => {
     it('should map log queries to start query requests correctly', async () => {
-      const { runner } = setupMockedLogsQueryRunner({
+      const { runner, queryMock } = setupMockedLogsQueryRunner({
         variables: [logGroupNamesVariable, regionVariable, limitVariable],
         settings: {
           ...CloudWatchSettings,
@@ -255,7 +264,11 @@ describe('CloudWatchLogsQueryRunner', () => {
       });
       const spy = jest.spyOn(runner, 'makeLogActionRequest');
       await lastValueFrom(
-        runner.handleLogQueries([legacyLogGroupNamesQuery, logGroupNamesQuery, logsScopedVarQuery], LogsRequestMock)
+        runner.handleLogQueries(
+          [legacyLogGroupNamesQuery, logGroupNamesQuery, logsScopedVarQuery],
+          LogsRequestMock,
+          queryMock
+        )
       );
       const startQueryRequests: StartQueryRequest[] = [
         {
@@ -286,7 +299,7 @@ describe('CloudWatchLogsQueryRunner', () => {
           region: regionVariable.current.value as string,
         },
       ];
-      expect(spy).toHaveBeenNthCalledWith(1, 'StartQuery', startQueryRequests, LogsRequestMock);
+      expect(spy).toHaveBeenNthCalledWith(1, 'StartQuery', startQueryRequests, queryMock, LogsRequestMock);
     });
   });
 
@@ -299,22 +312,18 @@ describe('CloudWatchLogsQueryRunner', () => {
         ...LogsRequestMock,
         range: { from, to, raw: { from, to } },
       };
-      await lastValueFrom(runner.makeLogActionRequest('StartQuery', [genMockCloudWatchLogsRequest()], options));
+      await lastValueFrom(
+        runner.makeLogActionRequest('StartQuery', [genMockCloudWatchLogsRequest()], queryMock, options)
+      );
       expect(queryMock.mock.calls[0][0].skipQueryCache).toBe(true);
       expect(queryMock.mock.calls[0][0]).toEqual(expect.objectContaining({ range: { from, to, raw: { from, to } } }));
     });
 
-    it('should use the time range from the timeSrv if the time range in the options is not available', async () => {
-      const timeSrv = getTimeSrv();
+    it('should use the default time range if the time range in the options is not available', async () => {
       const from = dateTime(1111);
       const to = dateTime(2222);
-      timeSrv.timeRange = jest.fn().mockReturnValue({
-        from,
-        to,
-        raw: { from, to },
-      });
-      const { runner, queryMock } = setupMockedLogsQueryRunner({ timeSrv });
-      await lastValueFrom(runner.makeLogActionRequest('StartQuery', [genMockCloudWatchLogsRequest()]));
+      const { runner, queryMock } = setupMockedLogsQueryRunner();
+      await lastValueFrom(runner.makeLogActionRequest('StartQuery', [genMockCloudWatchLogsRequest()], queryMock));
 
       expect(queryMock.mock.calls[0][0].skipQueryCache).toBe(true);
       expect(queryMock.mock.calls[0][0]).toEqual(expect.objectContaining({ range: { from, to, raw: { from, to } } }));

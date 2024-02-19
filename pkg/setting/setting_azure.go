@@ -2,6 +2,7 @@ package setting
 
 import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func (cfg *Cfg) readAzureSettings() {
@@ -62,6 +63,8 @@ func (cfg *Cfg) readAzureSettings() {
 
 		azureSettings.UserIdentityTokenEndpoint = tokenEndpointSettings
 	}
+
+	azureSettings.ForwardSettingsPlugins = util.SplitString(azureSection.Key("forward_settings_to_plugins").String())
 
 	cfg.Azure = azureSettings
 }

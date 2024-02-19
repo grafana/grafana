@@ -506,7 +506,11 @@ export const validateVariableSelectionState = (
       // if none pick first
       if (selected.length === 0) {
         const option = variableInState.options[0];
-        return setValue(variableInState, option);
+        return setValue(variableInState, {
+          value: typeof option.value === 'string' ? [option.value] : option.value,
+          text: typeof option.text === 'string' ? [option.text] : option.text,
+          selected: true,
+        });
       }
 
       const option: VariableOption = {

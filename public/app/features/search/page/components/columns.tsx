@@ -190,6 +190,7 @@ export const generateColumns = (
                       className={classNames(styles.locationItem, { [styles.preventClick]: preventClickOnRow })}
                     >
                       <Icon name={getIconForKind(info.kind)} />
+
                       <Text variant="body" truncate>
                         {info.name}
                       </Text>

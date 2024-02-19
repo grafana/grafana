@@ -9,6 +9,16 @@
 
 
 /**
+ * A topic is attached to DataFrame metadata in query results.
+ * This specifies where the data should be used.
+ */
+export enum DataTopic {
+  AlertStates = 'alertStates',
+  Annotations = 'annotations',
+  Series = 'series',
+}
+
+/**
  * TODO docs
  */
 export interface DataSourceJsonData {
@@ -399,7 +409,7 @@ export interface HideableFieldConfig {
 /**
  * TODO docs
  */
-export enum GraphTresholdsStyleMode {
+export enum GraphThresholdsStyleMode {
   Area = 'area',
   Dashed = 'dashed',
   DashedAndArea = 'dashed+area',
@@ -413,7 +423,7 @@ export enum GraphTresholdsStyleMode {
  * TODO docs
  */
 export interface GraphThresholdsStyleConfig {
-  mode: GraphTresholdsStyleMode;
+  mode: GraphThresholdsStyleMode;
 }
 
 /**
@@ -656,6 +666,8 @@ export enum BarGaugeSizing {
  * TODO docs
  */
 export interface VizTooltipOptions {
+  maxHeight?: number;
+  maxWidth?: number;
   mode: TooltipDisplayMode;
   sort: SortOrder;
 }
@@ -675,6 +687,7 @@ export enum TableCellDisplayMode {
   ColorBackgroundSolid = 'color-background-solid',
   ColorText = 'color-text',
   Custom = 'custom',
+  DataLinks = 'data-links',
   Gauge = 'gauge',
   GradientGauge = 'gradient-gauge',
   Image = 'image',
@@ -752,6 +765,13 @@ export interface TableImageCellOptions {
 }
 
 /**
+ * Show data links in the cell
+ */
+export interface TableDataLinksCellOptions {
+  type: TableCellDisplayMode.DataLinks;
+}
+
+/**
  * Gauge cell options
  */
 export interface TableBarGaugeCellOptions {
@@ -789,7 +809,7 @@ export enum TableCellHeight {
  * Table cell options. Each cell has a display mode
  * and other potential options for that display.
  */
-export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions);
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableDataLinksCellOptions | TableJsonViewCellOptions);
 
 /**
  * Use UTC/GMT timezone

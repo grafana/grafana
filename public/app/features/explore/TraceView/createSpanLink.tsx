@@ -14,12 +14,15 @@ import {
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
+import {
+  TraceToProfilesOptions,
+  TraceToMetricsOptions,
+  TraceToLogsOptionsV2,
+  TraceToLogsTag,
+} from '@grafana/o11y-ds-frontend';
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
-import { TraceToLogsOptionsV2, TraceToLogsTag } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
-import { TraceToMetricQuery, TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
-import { TraceToProfilesOptions } from 'app/core/components/TraceToProfiles/TraceToProfilesSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
@@ -55,7 +58,7 @@ export function createSpanLinkFactory({
     return undefined;
   }
 
-  let scopedVars = scopedVarsFromTrace(trace);
+  let scopedVars = scopedVarsFromTrace(trace.duration, trace.traceName, trace.traceID);
   const hasLinks = dataFrame.fields.some((f) => Boolean(f.config.links?.length));
 
   const createSpanLinks = legacyCreateSpanLinkFactory(
@@ -134,7 +137,7 @@ const formatDefaultKeys = (keys: string[]) => {
   }));
 };
 const defaultKeys = formatDefaultKeys(['cluster', 'hostname', 'namespace', 'pod', 'service.name', 'service.namespace']);
-const defaultProfilingKeys = formatDefaultKeys(['service.name', 'service.namespace']);
+export const defaultProfilingKeys = formatDefaultKeys(['service.name', 'service.namespace']);
 export const pyroscopeProfileIdTagKey = 'pyroscope.profile.id';
 
 function legacyCreateSpanLinkFactory(
@@ -254,7 +257,9 @@ function legacyCreateSpanLinkFactory(
     // Get metrics links
     if (metricsDataSourceSettings && traceToMetricsOptions?.queries) {
       for (const query of traceToMetricsOptions.queries) {
-        const expr = buildMetricsQuery(query, traceToMetricsOptions?.tags || [], span);
+        const expr =
+          query.query ||
+          `histogram_quantile(0.5, sum(rate(traces_spanmetrics_latency_bucket{service="${span.process.serviceName}"}[5m])) by (le))`;
         const dataLink: DataLink<PromQuery> = {
           title: metricsDataSourceSettings.name,
           url: '',
@@ -268,10 +273,23 @@ function legacyCreateSpanLinkFactory(
           },
         };
 
+        const tagsToUse =
+          traceToMetricsOptions.tags && traceToMetricsOptions.tags.length > 0
+            ? traceToMetricsOptions.tags
+            : defaultKeys;
+
+        scopedVars = {
+          ...scopedVars,
+          __tags: {
+            text: 'Tags',
+            value: getFormattedTags(span, tagsToUse),
+          },
+        };
+
         const link = mapInternalLinkToExplore({
           link: dataLink,
           internalLink: dataLink.internal!,
-          scopedVars: {},
+          scopedVars,
           range: getTimeRangeFromSpan(span, {
             startMs: traceToMetricsOptions.spanStartTimeShift
               ? rangeUtil.intervalToMs(traceToMetricsOptions.spanStartTimeShift)
@@ -499,7 +517,7 @@ function getQueryForFalconLogScale(span: TraceSpan, options: TraceToLogsOptionsV
  * Creates a string representing all the tags already formatted for use in the query. The tags are filtered so that
  * only intersection of tags that exist in a span and tags that you want are serialized into the string.
  */
-function getFormattedTags(
+export function getFormattedTags(
   span: TraceSpan,
   tags: TraceToLogsTag[],
   { labelValueSign = '=', joinBy = ', ' }: { labelValueSign?: string; joinBy?: string } = {}
@@ -564,46 +582,18 @@ function getTimeRangeFromSpan(
   };
 }
 
-// Interpolates span attributes into trace to metric query, or returns default query
-function buildMetricsQuery(
-  query: TraceToMetricQuery,
-  tags: Array<{ key: string; value?: string }> = [],
-  span: TraceSpan
-): string {
-  if (!query.query) {
-    return `histogram_quantile(0.5, sum(rate(traces_spanmetrics_latency_bucket{service="${span.process.serviceName}"}[5m])) by (le))`;
-  }
-
-  let expr = query.query;
-  if (tags.length && expr.indexOf('$__tags') !== -1) {
-    const spanTags = [...span.process.tags, ...span.tags];
-    const labels = tags.reduce<string[]>((acc, tag) => {
-      const tagValue = spanTags.find((t) => t.key === tag.key)?.value;
-      if (tagValue) {
-        acc.push(`${tag.value ? tag.value : tag.key}="${tagValue}"`);
-      }
-      return acc;
-    }, []);
-
-    const labelsQuery = labels?.join(', ');
-    expr = expr.replace(/\$__tags/g, labelsQuery);
-  }
-
-  return expr;
-}
-
 /**
  * Variables from trace that can be used in the query
  * @param trace
  */
-function scopedVarsFromTrace(trace: Trace): ScopedVars {
+export function scopedVarsFromTrace(duration: number, name: string, traceId: string): ScopedVars {
   return {
     __trace: {
       text: 'Trace',
       value: {
-        duration: trace.duration,
-        name: trace.traceName,
-        traceId: trace.traceID,
+        duration,
+        name,
+        traceId,
       },
     },
   };
@@ -613,7 +603,7 @@ function scopedVarsFromTrace(trace: Trace): ScopedVars {
  * Variables from span that can be used in the query
  * @param span
  */
-function scopedVarsFromSpan(span: TraceSpan): ScopedVars {
+export function scopedVarsFromSpan(span: TraceSpan): ScopedVars {
   const tags: ScopedVars = {};
 
   // We put all these tags together similar way we do for the __tags variable. This means there can be some overriding
@@ -643,7 +633,10 @@ function scopedVarsFromSpan(span: TraceSpan): ScopedVars {
  * Variables from tags that can be used in the query
  * @param span
  */
-function scopedVarsFromTags(span: TraceSpan, traceToProfilesOptions: TraceToProfilesOptions | undefined): ScopedVars {
+export function scopedVarsFromTags(
+  span: TraceSpan,
+  traceToProfilesOptions: TraceToProfilesOptions | undefined
+): ScopedVars {
   let tags: ScopedVars = {};
 
   if (traceToProfilesOptions) {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -31,9 +32,15 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 
 	ctxLogger := s.log.FromContext(ctx)
 
-	namespace, userID := id.NamespacedID()
-	if namespace != authn.NamespaceUser || userID <= 0 {
+	namespace, identifier := id.GetNamespacedID()
+	if namespace != authn.NamespaceUser {
 		ctxLogger.Warn("Failed to sync org role, invalid namespace for identity", "id", id.ID, "namespace", namespace)
+		return nil
+	}
+
+	userID, err := identity.IntIdentifier(namespace, identifier)
+	if err != nil {
+		ctxLogger.Warn("Failed to sync org role, invalid ID for identity", "id", id.ID, "namespace", namespace, "err", err)
 		return nil
 	}
 

@@ -38,10 +38,13 @@ export const histogramBucketSizes = [
 ];
 /* eslint-enable */
 
+const DEFAULT_BUCKET_COUNT = 30;
+
 const histFilter: number[] = [];
 const histSort = (a: number, b: number) => a - b;
 
 export interface HistogramTransformerInputs {
+  bucketCount?: number;
   bucketSize?: string | number;
   bucketOffset?: string | number;
   combine?: boolean;
@@ -51,6 +54,7 @@ export interface HistogramTransformerInputs {
  * @alpha
  */
 export interface HistogramTransformerOptions {
+  bucketCount?: number;
   bucketSize?: number; // 0 is auto
   bucketOffset?: number;
   // xMin?: number;
@@ -64,6 +68,10 @@ export interface HistogramTransformerOptions {
  * @internal
  */
 export const histogramFieldInfo = {
+  bucketCount: {
+    name: 'Bucket count',
+    description: 'approx bucket count',
+  },
   bucketSize: {
     name: 'Bucket size',
     description: undefined,
@@ -318,13 +326,12 @@ export function getHistogramFields(frame: DataFrame): HistogramFields | undefine
   return undefined;
 }
 
-const APPROX_BUCKETS = 20;
-
 /**
  * @alpha
  */
 export function buildHistogram(frames: DataFrame[], options?: HistogramTransformerOptions): HistogramFields | null {
   let bucketSize = options?.bucketSize;
+  let bucketCount = options?.bucketCount ?? DEFAULT_BUCKET_COUNT;
   let bucketOffset = options?.bucketOffset ?? 0;
 
   // if bucket size is auto, try to calc from all numeric fields
@@ -364,7 +371,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
 
     let range = max - min;
 
-    const targetSize = range / APPROX_BUCKETS;
+    const targetSize = range / bucketCount;
 
     // choose bucket
     for (let i = 0; i < histogramBucketSizes.length; i++) {

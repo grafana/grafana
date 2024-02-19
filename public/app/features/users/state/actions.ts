@@ -6,7 +6,7 @@ import { contextSrv } from 'app/core/core';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { OrgUser } from 'app/types';
 
-import { ThunkResult } from '../../../types';
+import { AccessControlAction, ThunkResult } from '../../../types';
 
 import {
   usersLoaded,
@@ -29,7 +29,10 @@ export function loadUsers(): ThunkResult<void> {
         accessControlQueryParam({ perpage: perPage, page, query: searchQuery, sort })
       );
 
-      if (contextSrv.licensedAccessControlEnabled()) {
+      if (
+        contextSrv.licensedAccessControlEnabled() &&
+        contextSrv.hasPermission(AccessControlAction.ActionUserRolesList)
+      ) {
         dispatch(rolesFetchBegin());
         const orgId = contextSrv.user.orgId;
         const userIds = users?.orgUsers.map((u: OrgUser) => u.userId);

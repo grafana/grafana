@@ -19,6 +19,7 @@ labels:
     - oss
 menuTitle: Configure panel options
 title: Configure panel options
+description: Add titles, descriptions, repeating rows and panel links
 weight: 50
 ---
 
@@ -71,7 +72,7 @@ Add a title and description to a panel to share with users any important informa
 
    You can use [variables you have defined][] in the **Title** and **Description** field, but not [global variables][].
 
-   ![](/static/img/docs/panels/panel-options-8-0.png)
+   ![Panel editor pane with Panel options section expanded](/static/img/docs/panels/panel-options-8-0.png)
 
 ## View a panel JSON model
 

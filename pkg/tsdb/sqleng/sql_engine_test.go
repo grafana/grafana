@@ -12,46 +12,52 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng/util"
 )
 
 func TestSQLEngine(t *testing.T) {
 	dt := time.Date(2018, 3, 14, 21, 20, 6, int(527345*time.Microsecond), time.UTC)
 
+	t.Run("Handle interpolating $__interval and $__interval_ms", func(t *testing.T) {
+		from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
+		to := from.Add(5 * time.Minute)
+		timeRange := backend.TimeRange{From: from, To: to}
+
+		text := "$__interval $__timeGroupAlias(time,$__interval) $__interval_ms"
+
+		t.Run("interpolate 10 minutes $__interval", func(t *testing.T) {
+			query := backend.DataQuery{JSON: []byte("{}"), MaxDataPoints: 1500, Interval: time.Minute * 10}
+			sql := Interpolate(query, timeRange, "", text)
+			require.Equal(t, "10m $__timeGroupAlias(time,10m) 600000", sql)
+		})
+
+		t.Run("interpolate 4seconds $__interval", func(t *testing.T) {
+			query := backend.DataQuery{JSON: []byte("{}"), MaxDataPoints: 1500, Interval: time.Second * 4}
+			sql := Interpolate(query, timeRange, "", text)
+			require.Equal(t, "4s $__timeGroupAlias(time,4s) 4000", sql)
+		})
+
+		t.Run("interpolate 200 milliseconds $__interval", func(t *testing.T) {
+			query := backend.DataQuery{JSON: []byte("{}"), MaxDataPoints: 1500, Interval: time.Millisecond * 200}
+			sql := Interpolate(query, timeRange, "", text)
+			require.Equal(t, "200ms $__timeGroupAlias(time,200ms) 200", sql)
+		})
+	})
+
 	t.Run("Given a time range between 2018-04-12 00:00 and 2018-04-12 00:05", func(t *testing.T) {
 		from := time.Date(2018, 4, 12, 18, 0, 0, 0, time.UTC)
 		to := from.Add(5 * time.Minute)
 		timeRange := backend.TimeRange{From: from, To: to}
-		query := backend.DataQuery{JSON: []byte("{}")}
-
-		t.Run("interpolate $__interval", func(t *testing.T) {
-			sql, err := Interpolate(query, timeRange, "", "select $__interval ")
-			require.NoError(t, err)
-			require.Equal(t, "select 1m ", sql)
-		})
-
-		t.Run("interpolate $__interval in $__timeGroup", func(t *testing.T) {
-			sql, err := Interpolate(query, timeRange, "", "select $__timeGroupAlias(time,$__interval)")
-			require.NoError(t, err)
-			require.Equal(t, "select $__timeGroupAlias(time,1m)", sql)
-		})
-
-		t.Run("interpolate $__interval_ms", func(t *testing.T) {
-			sql, err := Interpolate(query, timeRange, "", "select $__interval_ms ")
-			require.NoError(t, err)
-			require.Equal(t, "select 60000 ", sql)
-		})
+		query := backend.DataQuery{JSON: []byte("{}"), MaxDataPoints: 1500, Interval: time.Second * 60}
 
 		t.Run("interpolate __unixEpochFrom function", func(t *testing.T) {
-			sql, err := Interpolate(query, timeRange, "", "select $__unixEpochFrom()")
-			require.NoError(t, err)
+			sql := Interpolate(query, timeRange, "", "select $__unixEpochFrom()")
 			require.Equal(t, fmt.Sprintf("select %d", from.Unix()), sql)
 		})
 
 		t.Run("interpolate __unixEpochTo function", func(t *testing.T) {
-			sql, err := Interpolate(query, timeRange, "", "select $__unixEpochTo()")
-			require.NoError(t, err)
+			sql := Interpolate(query, timeRange, "", "select $__unixEpochTo()")
 			require.Equal(t, fmt.Sprintf("select %d", to.Unix()), sql)
 		})
 	})
@@ -389,28 +395,32 @@ func TestSQLEngine(t *testing.T) {
 		}
 	})
 
-	t.Run("Should handle connection errors", func(t *testing.T) {
-		randomErr := fmt.Errorf("random error")
-
-		tests := []struct {
-			err                                   error
-			expectedErr                           error
-			expectQueryResultTransformerWasCalled bool
-		}{
-			{err: &net.OpError{Op: "Dial"}, expectedErr: ErrConnectionFailed, expectQueryResultTransformerWasCalled: false},
-			{err: randomErr, expectedErr: randomErr, expectQueryResultTransformerWasCalled: true},
+	t.Run("Should not return raw connection errors", func(t *testing.T) {
+		err := net.OpError{Op: "Dial", Err: fmt.Errorf("inner-error")}
+		transformer := &testQueryResultTransformer{}
+		dp := DataSourceHandler{
+			log:                    backend.NewLoggerWith("logger", "test"),
+			queryResultTransformer: transformer,
 		}
+		resultErr := dp.TransformQueryError(dp.log, &err)
+		assert.False(t, transformer.transformQueryErrorWasCalled)
+		errorText := resultErr.Error()
+		assert.NotEqual(t, err, resultErr)
+		assert.NotContains(t, errorText, "inner-error")
+		assert.Contains(t, errorText, "failed to connect to server")
+	})
 
-		for _, tc := range tests {
-			transformer := &testQueryResultTransformer{}
-			dp := DataSourceHandler{
-				log:                    log.New("test"),
-				queryResultTransformer: transformer,
-			}
-			resultErr := dp.TransformQueryError(dp.log, tc.err)
-			assert.ErrorIs(t, resultErr, tc.expectedErr)
-			assert.Equal(t, tc.expectQueryResultTransformerWasCalled, transformer.transformQueryErrorWasCalled)
+	t.Run("Should return non-connection errors unmodified", func(t *testing.T) {
+		err := fmt.Errorf("normal error")
+		transformer := &testQueryResultTransformer{}
+		dp := DataSourceHandler{
+			log:                    backend.NewLoggerWith("logger", "test"),
+			queryResultTransformer: transformer,
 		}
+		resultErr := dp.TransformQueryError(dp.log, err)
+		assert.True(t, transformer.transformQueryErrorWasCalled)
+		assert.Equal(t, err, resultErr)
+		assert.ErrorIs(t, err, resultErr)
 	})
 }
 

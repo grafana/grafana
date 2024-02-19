@@ -1,4 +1,4 @@
-import { isArray, merge, pick, reduce } from 'lodash';
+import { isArray, pick, reduce } from 'lodash';
 
 import {
   AlertmanagerGroup,
@@ -9,7 +9,7 @@ import {
 } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 
-import { Label, normalizeMatchers } from './matchers';
+import { Label, normalizeMatchers, unquoteWithUnescape } from './matchers';
 
 // If a policy has no matchers it still can be a match, hence matchers can be empty and match can be true
 // So we cannot use null as an indicator of no match
@@ -17,6 +17,10 @@ interface LabelMatchResult {
   match: boolean;
   matcher: ObjectMatcher | null;
 }
+
+export const INHERITABLE_KEYS = ['receiver', 'group_by', 'group_wait', 'group_interval', 'repeat_interval'] as const;
+export type InheritableKeys = typeof INHERITABLE_KEYS;
+export type InheritableProperties = Pick<Route, InheritableKeys[number]>;
 
 type LabelsMatch = Map<Label, LabelMatchResult>;
 
@@ -120,6 +124,20 @@ export function normalizeRoute(rootRoute: RouteWithID): RouteWithID {
   return normalizedRootRoute;
 }
 
+export function unquoteRouteMatchers(route: RouteWithID): RouteWithID {
+  function unquoteRoute(route: RouteWithID) {
+    route.object_matchers = route.object_matchers?.map(([name, operator, value]) => {
+      return [name, operator, unquoteWithUnescape(value)];
+    });
+    route.routes?.forEach(unquoteRoute);
+  }
+
+  const unwrappedRootRoute = structuredClone(route);
+  unquoteRoute(unwrappedRootRoute);
+
+  return unwrappedRootRoute;
+}
+
 /**
  * find all of the groups that have instances that match the route, thay way we can find all instances
  * (and their grouping) for the given route
@@ -150,38 +168,27 @@ function findMatchingAlertGroups(
   }, matchingGroups);
 }
 
-export type InhertitableProperties = Pick<
-  Route,
-  'receiver' | 'group_by' | 'group_wait' | 'group_interval' | 'repeat_interval' | 'mute_time_intervals'
->;
-
 // inherited properties are config properties that exist on the parent route (or its inherited properties) but not on the child route
 function getInheritedProperties(
   parentRoute: Route,
   childRoute: Route,
-  propertiesParentInherited?: Partial<InhertitableProperties>
-) {
-  const fullParentProperties = merge({}, parentRoute, propertiesParentInherited);
+  propertiesParentInherited?: InheritableProperties
+): InheritableProperties {
+  const propsFromParent: InheritableProperties = pick(parentRoute, INHERITABLE_KEYS);
+  const inheritableProperties: InheritableProperties = {
+    ...propsFromParent,
+    ...propertiesParentInherited,
+  };
 
-  const inheritableProperties: InhertitableProperties = pick(fullParentProperties, [
-    'receiver',
-    'group_by',
-    'group_wait',
-    'group_interval',
-    'repeat_interval',
-    'mute_time_intervals',
-  ]);
-
-  // TODO how to solve this TypeScript mystery?
   const inherited = reduce(
     inheritableProperties,
-    (inheritedProperties: Partial<Route> = {}, parentValue, property) => {
-      const parentHasValue = parentValue !== undefined;
+    (inheritedProperties: InheritableProperties, parentValue, property) => {
+      const parentHasValue = parentValue != null;
 
+      const inheritableValues = [undefined, '', null];
       // @ts-ignore
-      const inheritFromParentUndefined = parentHasValue && childRoute[property] === undefined;
-      // @ts-ignore
-      const inheritFromParentEmptyString = parentHasValue && childRoute[property] === '';
+      const childIsInheriting = inheritableValues.some((value) => childRoute[property] === value);
+      const inheritFromValue = childIsInheriting && parentHasValue;
 
       const inheritEmptyGroupByFromParent =
         property === 'group_by' &&
@@ -189,8 +196,7 @@ function getInheritedProperties(
         isArray(childRoute[property]) &&
         childRoute[property]?.length === 0;
 
-      const inheritFromParent =
-        inheritFromParentUndefined || inheritFromParentEmptyString || inheritEmptyGroupByFromParent;
+      const inheritFromParent = inheritFromValue || inheritEmptyGroupByFromParent;
 
       if (inheritFromParent) {
         // @ts-ignore

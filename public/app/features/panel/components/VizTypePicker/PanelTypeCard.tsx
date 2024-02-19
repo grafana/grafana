@@ -5,6 +5,7 @@ import Skeleton from 'react-loading-skeleton';
 import { GrafanaTheme2, isUnsignedPluginSignature, PanelPluginMeta, PluginState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
+import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 interface Props {
@@ -20,7 +21,7 @@ interface Props {
 
 const IMAGE_SIZE = 38;
 
-export const PanelTypeCard = ({
+const PanelTypeCardComponent = ({
   isCurrent,
   title,
   plugin,
@@ -76,17 +77,23 @@ export const PanelTypeCard = ({
     </div>
   );
 };
+PanelTypeCardComponent.displayName = 'PanelTypeCard';
 
 interface SkeletonProps {
   hasDescription?: boolean;
   hasDelete?: boolean;
 }
 
-const PanelTypeCardSkeleton = ({ children, hasDescription, hasDelete }: React.PropsWithChildren<SkeletonProps>) => {
+const PanelTypeCardSkeleton: SkeletonComponent<React.PropsWithChildren<SkeletonProps>> = ({
+  children,
+  hasDescription,
+  hasDelete,
+  rootProps,
+}) => {
   const styles = useStyles2(getStyles);
   const skeletonStyles = useStyles2(getSkeletonStyles);
   return (
-    <div className={styles.item}>
+    <div className={styles.item} {...rootProps}>
       <Skeleton className={cx(styles.img, skeletonStyles.image)} width={IMAGE_SIZE} height={IMAGE_SIZE} />
 
       <div className={styles.itemContent}>
@@ -103,8 +110,7 @@ const PanelTypeCardSkeleton = ({ children, hasDescription, hasDelete }: React.Pr
   );
 };
 
-PanelTypeCard.displayName = 'PanelTypeCard';
-PanelTypeCard.Skeleton = PanelTypeCardSkeleton;
+export const PanelTypeCard = attachSkeleton(PanelTypeCardComponent, PanelTypeCardSkeleton);
 
 const getSkeletonStyles = () => {
   return {

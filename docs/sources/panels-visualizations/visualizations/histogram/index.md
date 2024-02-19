@@ -3,7 +3,7 @@ aliases:
   - ../../features/panels/histogram/
   - ../../panels/visualizations/histogram/
   - ../../visualizations/histogram/
-description: Histogram visualization
+description: Configure options for Grafana's histogram visualization
 keywords:
   - grafana
   - docs
@@ -70,8 +70,6 @@ Transparency of the gradient is calculated based on the values on the Y-axis. Th
 #### Hue
 
 Gradient color is generated based on the hue of the line color.
-
-{{< docs/shared lookup="visualizations/tooltip-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 
 {{< docs/shared lookup="visualizations/legend-mode.md" source="grafana" version="<GRAFANA VERSION>" >}}
 

@@ -15,6 +15,7 @@ labels:
     - cloud
     - enterprise
     - oss
+description: Configure options for Grafana's dashboard list visualization
 title: Dashboard list
 weight: 100
 ---
@@ -23,7 +24,7 @@ weight: 100
 
 Dashboard lists allow you to display dynamic links to other dashboards. The list can be configured to use starred dashboards, recently viewed dashboards, a search query, and dashboard tags.
 
-{{< figure src="/static/img/docs/v45/dashboard-list-panels.png" max-width="850px">}}
+{{< figure src="/static/img/docs/v45/dashboard-list-panels.png" max-width="850px" alt="A dashboard list visualization" >}}
 
 On each dashboard load, this panel queries the dashboard list, always providing the most up-to-date results.
 

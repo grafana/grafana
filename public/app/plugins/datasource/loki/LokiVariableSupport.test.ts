@@ -1,12 +1,19 @@
+import { firstValueFrom } from 'rxjs';
+
+import { dateTime, getDefaultTimeRange } from '@grafana/data';
+
 import { LokiVariableSupport } from './LokiVariableSupport';
-import { createLokiDatasource, createMetadataRequest } from './mocks';
+import { createLokiDatasource } from './__mocks__/datasource';
+import { createMetadataRequest } from './__mocks__/metadataRequest';
+import { LokiDatasource } from './datasource';
 import { LokiVariableQueryType } from './types';
 
 describe('LokiVariableSupport', () => {
   let lokiVariableSupport: LokiVariableSupport;
+  let datasource: LokiDatasource;
 
   beforeEach(() => {
-    const datasource = createLokiDatasource();
+    datasource = createLokiDatasource();
     jest
       .spyOn(datasource, 'metadataRequest')
       .mockImplementation(
@@ -21,7 +28,11 @@ describe('LokiVariableSupport', () => {
 
   it('should return label names for Loki', async () => {
     // label_names()
-    const response = await lokiVariableSupport.execute({ refId: 'test', type: LokiVariableQueryType.LabelNames }, {});
+    const response = await lokiVariableSupport.execute(
+      { refId: 'test', type: LokiVariableQueryType.LabelNames },
+      {},
+      getDefaultTimeRange()
+    );
 
     expect(response).toEqual([{ text: 'label1' }, { text: 'label2' }]);
   });
@@ -34,7 +45,8 @@ describe('LokiVariableSupport', () => {
         type: LokiVariableQueryType.LabelValues,
         label: 'label1',
       },
-      {}
+      {},
+      getDefaultTimeRange()
     );
 
     expect(response).toEqual([{ text: 'value1' }, { text: 'value2' }]);
@@ -49,9 +61,54 @@ describe('LokiVariableSupport', () => {
         stream: '{label1="value1", label2="value2"}',
         label: 'label5',
       },
-      {}
+      {},
+      getDefaultTimeRange()
     );
 
     expect(response).toEqual([{ text: 'value5' }]);
+  });
+
+  it('should call `metricFindQuery` with the correct parameters', async () => {
+    // label_values({label1="value1", label2="value2"},label5)
+    const spy = jest.spyOn(datasource, 'metricFindQuery');
+    const range = getDefaultTimeRange();
+    const scopedVars = { foo: { value: 'bar' } };
+    range.from = dateTime(new Date('2020-01-01T00:00:00Z'));
+    range.to = dateTime(new Date('2020-01-01T01:00:00Z'));
+    await firstValueFrom(
+      lokiVariableSupport.query({
+        targets: [
+          {
+            refId: 'test',
+            type: LokiVariableQueryType.LabelValues,
+            stream: '{label1="value1", label2="value2"}',
+            label: 'label5',
+          },
+        ],
+        range,
+        scopedVars,
+        requestId: 'test',
+        interval: '1m',
+        intervalMs: 60000,
+        timezone: 'utc',
+        app: 'explore',
+        startTime: 0,
+      })
+    );
+
+    expect(spy).toHaveBeenCalledWith(
+      {
+        refId: 'test',
+        type: LokiVariableQueryType.LabelValues,
+        stream: '{label1="value1", label2="value2"}',
+        label: 'label5',
+      },
+      {
+        range,
+        scopedVars,
+      }
+    );
+
+    spy.mockRestore();
   });
 });

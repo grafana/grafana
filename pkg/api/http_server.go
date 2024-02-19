@@ -25,8 +25,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/grafana/grafana/pkg/services/anonymous"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -126,7 +126,7 @@ type HTTPServer struct {
 	RouteRegister                routing.RouteRegister
 	RenderService                rendering.Service
 	Cfg                          *setting.Cfg
-	Features                     *featuremgmt.FeatureManager
+	Features                     featuremgmt.FeatureToggles
 	SettingsProvider             setting.Provider
 	HooksService                 *hooks.HooksService
 	navTreeService               navtree.Service
@@ -179,7 +179,7 @@ type HTTPServer struct {
 	queryDataService             query.Service
 	serviceAccountsService       serviceaccounts.Service
 	authInfoService              login.AuthInfoService
-	NotificationService          *notifications.NotificationService
+	NotificationService          notifications.Service
 	DashboardService             dashboards.DashboardService
 	dashboardProvisioningService dashboards.DashboardProvisioningService
 	folderService                folder.Service
@@ -234,7 +234,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	correlationsService correlations.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
 	accessControl accesscontrol.AccessControl, dataSourceProxy *datasourceproxy.DataSourceProxyService, searchService *search.SearchService,
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
-	contextHandler *contexthandler.ContextHandler, loggerMiddleware loggermw.Logger, features *featuremgmt.FeatureManager,
+	contextHandler *contexthandler.ContextHandler, loggerMiddleware loggermw.Logger, features featuremgmt.FeatureToggles,
 	alertNG *ngalert.AlertNG, libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
 	quotaService quota.Service, socialService social.Service, tracer tracing.Tracer,
 	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
@@ -242,7 +242,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	dataSourcesService datasources.DataSourceService, queryDataService query.Service, pluginFileStore plugins.FileStore,
 	serviceaccountsService serviceaccounts.Service,
 	authInfoService login.AuthInfoService, storageService store.StorageService,
-	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
+	notificationService notifications.Service, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
 	dsGuardian guardian.DatasourceGuardianProvider, alertNotificationService *alerting.AlertNotificationService,
 	dashboardsnapshotsService dashboardsnapshots.Service, pluginSettings pluginSettings.Service,
@@ -290,7 +290,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		ShortURLService:              shortURLService,
 		QueryHistoryService:          queryHistoryService,
 		CorrelationsService:          correlationsService,
-		Features:                     features,
+		Features:                     features, // a read only view of the managers state
 		StorageService:               storageService,
 		RemoteCacheService:           remoteCache,
 		ProvisioningService:          provisioningService,
@@ -656,7 +656,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		m.UseMiddleware(middleware.Gziper())
 	}
 
-	m.UseMiddleware(middleware.Recovery(hs.Cfg))
+	m.UseMiddleware(middleware.Recovery(hs.Cfg, hs.License))
 	m.UseMiddleware(hs.Csrf.Middleware())
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "build", "public/build")

@@ -4,7 +4,7 @@ aliases:
   - ../old-alerting/notifications/
   - ../unified-alerting/notifications/
 canonical: https://grafana.com/docs/grafana/latest/alerting/alerting-rules/create-notification-policy/
-description: Notification policies
+description: Configure notification policies to determine how alerts are routed to contact points
 keywords:
   - grafana
   - alerting
@@ -111,6 +111,6 @@ An example of an alert configuration.
 - Create specific routes for particular teams that handle their own on-call rotations.
 
 {{% docs/reference %}}
-[notification-policies]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/notification-policies"
+[notification-policies]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notification-policies"
 [notification-policies]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notification-policies"
 {{% /docs/reference %}}

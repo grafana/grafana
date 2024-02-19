@@ -210,9 +210,9 @@ function useInternalMatches(filtered: ActionImpl[], search: string): Match[] {
     } else {
       const termCount = ufuzzy.split(throttledSearch).length;
       const infoThresh = Infinity;
-      const oooSearch = termCount < 5;
+      const oooLimit = termCount < 5 ? 4 : 0;
 
-      const [, info, order] = ufuzzy.search(haystack, throttledSearch, oooSearch, infoThresh);
+      const [, info, order] = ufuzzy.search(haystack, throttledSearch, oooLimit, infoThresh);
 
       if (info && order) {
         for (let orderIndex = 0; orderIndex < order.length; orderIndex++) {

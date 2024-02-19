@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,15 +18,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 )
 
 const (
@@ -45,7 +44,7 @@ func characterEscape(s string, escapeChar string) string {
 }
 
 func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) *Service {
-	logger := log.New("tsdb.mysql")
+	logger := backend.NewLoggerWith("logger", "tsdb.mysql")
 	return &Service{
 		im:     datasource.NewInstanceManager(newInstanceSettings(cfg, logger)),
 		logger: logger,
@@ -88,12 +87,20 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 			protocol = "unix"
 		}
 
+		proxyClient, err := settings.ProxyClient(ctx)
+		if err != nil {
+			return nil, err
+		}
+
 		// register the secure socks proxy dialer context, if enabled
-		proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo)
-		if sdkproxy.New(proxyOpts).SecureSocksProxyEnabled() {
+		if proxyClient.SecureSocksProxyEnabled() {
+			dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
+			if err != nil {
+				return nil, err
+			}
 			// UID is only unique per org, the only way to ensure uniqueness is to do it by connection information
 			uniqueIdentifier := dsInfo.User + dsInfo.DecryptedSecureJSONData["password"] + dsInfo.URL + dsInfo.Database
-			protocol, err = registerProxyDialerContext(protocol, uniqueIdentifier, proxyOpts)
+			protocol, err = registerProxyDialerContext(protocol, uniqueIdentifier, dialer)
 			if err != nil {
 				return nil, err
 			}
@@ -133,13 +140,7 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 			cnnstr += fmt.Sprintf("&time_zone='%s'", url.QueryEscape(dsInfo.JsonData.Timezone))
 		}
 
-		if cfg.Env == setting.Dev {
-			logger.Debug("GetEngine", "connection", cnnstr)
-		}
-
 		config := sqleng.DataPluginConfiguration{
-			DriverName:        "mysql",
-			ConnectionString:  cnnstr,
 			DSInfo:            dsInfo,
 			TimeColumnNames:   []string{"time", "time_sec"},
 			MetricColumnTypes: []string{"CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"},
@@ -150,7 +151,16 @@ func newInstanceSettings(cfg *setting.Cfg, logger log.Logger) datasource.Instanc
 			userError: cfg.UserFacingDefaultError,
 		}
 
-		return sqleng.NewQueryDataHandler(cfg, config, &rowTransformer, newMysqlMacroEngine(logger, cfg), logger)
+		db, err := sql.Open("mysql", cnnstr)
+		if err != nil {
+			return nil, err
+		}
+
+		db.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
+		db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
+		db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
+
+		return sqleng.NewQueryDataHandler(cfg.UserFacingDefaultError, db, config, &rowTransformer, newMysqlMacroEngine(logger, cfg), logger)
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 const (
@@ -98,20 +100,23 @@ func (s *Service) Get(ctx context.Context, p *plugins.Plugin) []string {
 }
 
 // GetConfigMap returns a map of configuration that should be passed in a plugin request.
-func (s *Service) GetConfigMap(ctx context.Context, _ string, _ *auth.ExternalService) map[string]string {
+func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.ExternalService) map[string]string {
 	m := make(map[string]string)
 
 	if s.cfg.GrafanaAppURL != "" {
 		m[backend.AppURL] = s.cfg.GrafanaAppURL
 	}
+	if s.cfg.ConcurrentQueryCount != 0 {
+		m[backend.ConcurrentQueryCount] = strconv.Itoa(s.cfg.ConcurrentQueryCount)
+	}
 
 	// TODO add support via plugin SDK
-	//if externalService != nil {
+	// if externalService != nil {
 	//	m[oauthtokenretriever.AppURL] = s.cfg.GrafanaAppURL
 	//	m[oauthtokenretriever.AppClientID] = externalService.ClientID
 	//	m[oauthtokenretriever.AppClientSecret] = externalService.ClientSecret
 	//	m[oauthtokenretriever.AppPrivateKey] = externalService.PrivateKey
-	//}
+	// }
 
 	if s.cfg.Features != nil {
 		enabledFeatures := s.cfg.Features.GetEnabled(ctx)
@@ -124,16 +129,24 @@ func (s *Service) GetConfigMap(ctx context.Context, _ string, _ *auth.ExternalSe
 			m[featuretoggles.EnabledFeatures] = strings.Join(features, ",")
 		}
 	}
-	// TODO add support via plugin SDK
-	//if s.cfg.AWSAssumeRoleEnabled {
-	//	m[awsds.AssumeRoleEnabledEnvVarKeyName] = "true"
-	//}
-	//if len(s.cfg.AWSAllowedAuthProviders) > 0 {
-	//	m[awsds.AllowedAuthProvidersEnvVarKeyName] = strings.Join(s.cfg.AWSAllowedAuthProviders, ",")
-	//}
-	//if s.cfg.AWSExternalId != "" {
-	//	m[awsds.GrafanaAssumeRoleExternalIdKeyName] = s.cfg.AWSExternalId
-	//}
+
+	if slices.Contains[[]string, string](s.cfg.AWSForwardSettingsPlugins, pluginID) {
+		if !s.cfg.AWSAssumeRoleEnabled {
+			m[awsds.AssumeRoleEnabledEnvVarKeyName] = "false"
+		}
+		if len(s.cfg.AWSAllowedAuthProviders) > 0 {
+			m[awsds.AllowedAuthProvidersEnvVarKeyName] = strings.Join(s.cfg.AWSAllowedAuthProviders, ",")
+		}
+		if s.cfg.AWSExternalId != "" {
+			m[awsds.GrafanaAssumeRoleExternalIdKeyName] = s.cfg.AWSExternalId
+		}
+		if s.cfg.AWSSessionDuration != "" {
+			m[awsds.SessionDurationEnvVarKeyName] = s.cfg.AWSSessionDuration
+		}
+		if s.cfg.AWSListMetricsPageLimit != "" {
+			m[awsds.ListMetricsPageLimitKeyName] = s.cfg.AWSListMetricsPageLimit
+		}
+	}
 
 	if s.cfg.ProxySettings.Enabled {
 		m[proxy.PluginSecureSocksProxyEnabled] = "true"
@@ -142,55 +155,75 @@ func (s *Service) GetConfigMap(ctx context.Context, _ string, _ *auth.ExternalSe
 		m[proxy.PluginSecureSocksProxyRootCACert] = s.cfg.ProxySettings.RootCA
 		m[proxy.PluginSecureSocksProxyProxyAddress] = s.cfg.ProxySettings.ProxyAddress
 		m[proxy.PluginSecureSocksProxyServerName] = s.cfg.ProxySettings.ServerName
+		m[proxy.PluginSecureSocksProxyAllowInsecure] = strconv.FormatBool(s.cfg.ProxySettings.AllowInsecure)
+	}
+
+	// Settings here will be extracted by grafana-azure-sdk-go from the plugin context
+	if s.cfg.AzureAuthEnabled {
+		m[azsettings.AzureAuthEnabled] = strconv.FormatBool(s.cfg.AzureAuthEnabled)
+	}
+	azureSettings := s.cfg.Azure
+	if azureSettings != nil && slices.Contains[[]string, string](azureSettings.ForwardSettingsPlugins, pluginID) {
+		if azureSettings.Cloud != "" {
+			m[azsettings.AzureCloud] = azureSettings.Cloud
+		}
+
+		if azureSettings.ManagedIdentityEnabled {
+			m[azsettings.ManagedIdentityEnabled] = "true"
+
+			if azureSettings.ManagedIdentityClientId != "" {
+				m[azsettings.ManagedIdentityClientID] = azureSettings.ManagedIdentityClientId
+			}
+		}
+
+		if azureSettings.UserIdentityEnabled {
+			m[azsettings.UserIdentityEnabled] = "true"
+
+			if azureSettings.UserIdentityTokenEndpoint != nil {
+				if azureSettings.UserIdentityTokenEndpoint.TokenUrl != "" {
+					m[azsettings.UserIdentityTokenURL] = azureSettings.UserIdentityTokenEndpoint.TokenUrl
+				}
+				if azureSettings.UserIdentityTokenEndpoint.ClientId != "" {
+					m[azsettings.UserIdentityClientID] = azureSettings.UserIdentityTokenEndpoint.ClientId
+				}
+				if azureSettings.UserIdentityTokenEndpoint.ClientSecret != "" {
+					m[azsettings.UserIdentityClientSecret] = azureSettings.UserIdentityTokenEndpoint.ClientSecret
+				}
+				if azureSettings.UserIdentityTokenEndpoint.UsernameAssertion {
+					m[azsettings.UserIdentityAssertion] = "username"
+				}
+			}
+		}
+
+		if azureSettings.WorkloadIdentityEnabled {
+			m[azsettings.WorkloadIdentityEnabled] = "true"
+
+			if azureSettings.WorkloadIdentitySettings != nil {
+				if azureSettings.WorkloadIdentitySettings.ClientId != "" {
+					m[azsettings.WorkloadIdentityClientID] = azureSettings.WorkloadIdentitySettings.ClientId
+				}
+				if azureSettings.WorkloadIdentitySettings.TenantId != "" {
+					m[azsettings.WorkloadIdentityTenantID] = azureSettings.WorkloadIdentitySettings.TenantId
+				}
+				if azureSettings.WorkloadIdentitySettings.TokenFile != "" {
+					m[azsettings.WorkloadIdentityTokenFile] = azureSettings.WorkloadIdentitySettings.TokenFile
+				}
+			}
+		}
 	}
 
 	// TODO add support via plugin SDK
-	//azureSettings := s.cfg.Azure
-	//if azureSettings != nil {
-	//	if azureSettings.Cloud != "" {
-	//		m[azsettings.AzureCloud] = azureSettings.Cloud
-	//	}
-	//
-	//	if azureSettings.ManagedIdentityEnabled {
-	//		m[azsettings.ManagedIdentityEnabled] = "true"
-	//
-	//		if azureSettings.ManagedIdentityClientId != "" {
-	//			m[azsettings.ManagedIdentityClientID] = azureSettings.ManagedIdentityClientId
-	//		}
-	//	}
-	//
-	//	if azureSettings.UserIdentityEnabled {
-	//		m[azsettings.UserIdentityEnabled] = "true"
-	//
-	//		if azureSettings.UserIdentityTokenEndpoint != nil {
-	//			if azureSettings.UserIdentityTokenEndpoint.TokenUrl != "" {
-	//				m[azsettings.UserIdentityTokenURL] = azureSettings.UserIdentityTokenEndpoint.TokenUrl
-	//			}
-	//			if azureSettings.UserIdentityTokenEndpoint.ClientId != "" {
-	//				m[azsettings.UserIdentityClientID] = azureSettings.UserIdentityTokenEndpoint.ClientId
-	//			}
-	//			if azureSettings.UserIdentityTokenEndpoint.ClientSecret != "" {
-	//				m[azsettings.UserIdentityClientSecret] = azureSettings.UserIdentityTokenEndpoint.ClientSecret
-	//			}
-	//			if azureSettings.UserIdentityTokenEndpoint.UsernameAssertion {
-	//				m[azsettings.UserIdentityAssertion] = "username"
-	//			}
-	//		}
-	//	}
-	//}
-
-	// TODO add support via plugin SDK
-	//ps := getPluginSettings(pluginID, s.cfg)
-	//for k, v := range ps {
+	// ps := getPluginSettings(pluginID, s.cfg)
+	// for k, v := range ps {
 	//	m[fmt.Sprintf("%s_%s", customConfigPrefix, strings.ToUpper(k))] = v
-	//}
+	// }
 
 	return m
 }
 
 func (s *Service) tracingEnvVars(plugin *plugins.Plugin) []string {
-	var pluginTracingEnabled bool
-	if v, exists := s.cfg.PluginSettings[plugin.ID]["tracing"]; exists {
+	pluginTracingEnabled := s.cfg.Features != nil && s.cfg.Features.IsEnabledGlobally(featuremgmt.FlagEnablePluginsTracingByDefault)
+	if v, exists := s.cfg.PluginSettings[plugin.ID]["tracing"]; exists && !pluginTracingEnabled {
 		pluginTracingEnabled = v == "true"
 	}
 	if !s.cfg.Tracing.IsEnabled() || !pluginTracingEnabled {
@@ -232,14 +265,20 @@ func (s *Service) featureToggleEnableVar(ctx context.Context) []string {
 
 func (s *Service) awsEnvVars() []string {
 	var variables []string
-	if s.cfg.AWSAssumeRoleEnabled {
-		variables = append(variables, awsds.AssumeRoleEnabledEnvVarKeyName+"=true")
+	if !s.cfg.AWSAssumeRoleEnabled {
+		variables = append(variables, awsds.AssumeRoleEnabledEnvVarKeyName+"=false")
 	}
 	if len(s.cfg.AWSAllowedAuthProviders) > 0 {
 		variables = append(variables, awsds.AllowedAuthProvidersEnvVarKeyName+"="+strings.Join(s.cfg.AWSAllowedAuthProviders, ","))
 	}
 	if s.cfg.AWSExternalId != "" {
 		variables = append(variables, awsds.GrafanaAssumeRoleExternalIdKeyName+"="+s.cfg.AWSExternalId)
+	}
+	if s.cfg.AWSSessionDuration != "" {
+		variables = append(variables, awsds.SessionDurationEnvVarKeyName+"="+s.cfg.AWSSessionDuration)
+	}
+	if s.cfg.AWSListMetricsPageLimit != "" {
+		variables = append(variables, awsds.ListMetricsPageLimitKeyName+"="+s.cfg.AWSListMetricsPageLimit)
 	}
 
 	return variables
@@ -254,6 +293,7 @@ func (s *Service) secureSocksProxyEnvVars() []string {
 			proxy.PluginSecureSocksProxyProxyAddress + "=" + s.cfg.ProxySettings.ProxyAddress,
 			proxy.PluginSecureSocksProxyServerName + "=" + s.cfg.ProxySettings.ServerName,
 			proxy.PluginSecureSocksProxyEnabled + "=" + strconv.FormatBool(s.cfg.ProxySettings.Enabled),
+			proxy.PluginSecureSocksProxyAllowInsecure + "=" + strconv.FormatBool(s.cfg.ProxySettings.AllowInsecure),
 		}
 	}
 	return nil

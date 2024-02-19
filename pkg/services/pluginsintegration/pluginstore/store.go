@@ -18,6 +18,7 @@ var _ Store = (*Service)(nil)
 // Store is the publicly accessible storage for plugins.
 type Store interface {
 	// Plugin finds a plugin by its ID.
+	// Note: version is not required since Grafana only supports single versions of a plugin.
 	Plugin(ctx context.Context, pluginID string) (Plugin, bool)
 	// Plugins returns plugins by their requested type.
 	Plugins(ctx context.Context, pluginTypes ...plugins.Type) []Plugin
@@ -93,15 +94,6 @@ func (s *Service) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []Pl
 	return pluginsList
 }
 
-func (s *Service) Renderer(ctx context.Context) *plugins.Plugin {
-	for _, p := range s.availablePlugins(ctx) {
-		if p.IsRenderer() {
-			return p
-		}
-	}
-	return nil
-}
-
 func (s *Service) SecretsManager(ctx context.Context) *plugins.Plugin {
 	for _, p := range s.availablePlugins(ctx) {
 		if p.IsSecretsManager() {
@@ -113,7 +105,7 @@ func (s *Service) SecretsManager(ctx context.Context) *plugins.Plugin {
 
 // plugin finds a plugin with `pluginID` from the registry that is not decommissioned
 func (s *Service) plugin(ctx context.Context, pluginID string) (*plugins.Plugin, bool) {
-	p, exists := s.pluginRegistry.Plugin(ctx, pluginID)
+	p, exists := s.pluginRegistry.Plugin(ctx, pluginID, "") // version is not required since Grafana only supports single versions of a plugin
 	if !exists {
 		return nil, false
 	}

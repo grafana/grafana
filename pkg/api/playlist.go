@@ -12,12 +12,13 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apis/playlist/v0alpha1"
 	"github.com/grafana/grafana/pkg/middleware"
 	internalplaylist "github.com/grafana/grafana/pkg/registry/apis/playlist"
+	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	grafanaapiserver "github.com/grafana/grafana/pkg/services/grafana-apiserver"
-	"github.com/grafana/grafana/pkg/services/grafana-apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
 	"github.com/grafana/grafana/pkg/web"
@@ -329,11 +330,7 @@ type playlistK8sHandler struct {
 
 func newPlaylistK8sHandler(hs *HTTPServer) *playlistK8sHandler {
 	return &playlistK8sHandler{
-		gvr: schema.GroupVersionResource{
-			Group:    internalplaylist.GroupName,
-			Version:  "v0alpha1",
-			Resource: "playlists",
-		},
+		gvr:                  v0alpha1.PlaylistResourceInfo.GroupVersionResource(),
 		namespacer:           request.GetNamespaceMapper(hs.Cfg),
 		clientConfigProvider: hs.clientConfigProvider,
 	}

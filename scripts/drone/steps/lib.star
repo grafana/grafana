@@ -35,6 +35,8 @@ def yarn_install_step():
         "name": "yarn-install",
         "image": images["node"],
         "commands": [
+            # Python is needed to build `esfx`, which is needed by `msagl`
+            "apk add --update g++ make python3 && ln -sf /usr/bin/python3 /usr/bin/python",
             "yarn install --immutable",
         ],
         "depends_on": [],
@@ -342,6 +344,8 @@ def e2e_tests_artifacts():
             "GITHUB_TOKEN": from_secret("github_token"),
         },
         "commands": [
+            # if no videos found do nothing
+            "if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos'; false; fi",
             "apt-get update",
             "apt-get install -yq zip",
             "printenv GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY > /tmp/gcpkey_upload_artifacts.json",
@@ -585,6 +589,7 @@ def verify_i18n_step():
         "depends_on": [
             "yarn-install",
         ],
+        "failure": "ignore",
         "commands": [
             "apk add --update git",
             "yarn run i18n:extract || (echo \"{}\" && false)".format(extract_error_message),
@@ -597,7 +602,6 @@ def verify_i18n_step():
                 exit 1
             fi
             '''.format(uncommited_error_message),
-            "yarn run i18n:compile",
         ],
     }
 

@@ -113,16 +113,14 @@ Click the document icon to open a split view in Explore with the configured data
 This feature is currently in beta and behind the `traceToMetrics` feature toggle.
 {{% /admonition %}}
 
-You can navigate from a span in a trace view directly to metrics relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/configure-tempo-data-source#trace-to-metrics) for configuration instructions.
+You can navigate from a span in a trace view directly to metrics relevant for that span. This feature is available for Tempo, Jaeger, and Zipkin data sources. Refer to their [relevant documentation](/docs/grafana/latest/datasources/tempo/configure-tempo-data-source/#trace-to-metrics) for configuration instructions.
 
 ### Trace to profiles
-
-{{< docs/experimental product="Trace to profiles" featureFlag="traceToProfiles" >}}
 
 Using Trace to profiles, you can use Grafana’s ability to correlate different signals by adding the functionality to link between traces and profiles.
 Refer to the [relevant documentation](/docs/grafana/latest/datasources/tempo/configure-tempo-data-source#trace-to-profiles) for configuration instructions.
 
-![Selecting a link in the span queries the profile data source](/static/img/docs/tempo/profiles/tempo-profiles-Span-link-profile-data-source.png)
+{{< figure src="/static/img/docs/tempo/profiles/tempo-trace-to-profile.png" max-width="900px" class="docs-image--no-shadow" alt="Selecting a link in the span queries the profile data source" >}}
 
 ## Node graph
 

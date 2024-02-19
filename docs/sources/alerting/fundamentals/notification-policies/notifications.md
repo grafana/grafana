@@ -3,7 +3,7 @@ aliases:
   - ../notifications/
   - alerting/manage-notifications/create-notification-policy/
 canonical: https://grafana.com/docs/grafana/latest/alerting/fundamentals/notification-policies/notifications/
-description: Notification policies
+description: Learn about how notification policies work and are structured
 keywords:
   - grafana
   - alerting
@@ -44,7 +44,7 @@ To determine which notification policy will handle which alert instances, you ha
 
 If no policies other than the default policy are configured, the default policy will handle the alert instance.
 
-If policies other than the default policy are defined, it will inspect those notification policies in descending order.
+If policies other than the default policy are defined, it will evaluate those notification policies in the order they are displayed.
 
 If a notification policy has label matchers that match the labels of the alert instance, it will descend in to its child policies and, if there are any, will continue to look for any child policies that might have label matchers that further narrow down the set of labels, and so forth until no more child policies have been found.
 
@@ -132,6 +132,6 @@ Repeat interval decides how often notifications are repeated if the group has no
 **Default** 4 hours
 
 {{% docs/reference %}}
-[labels-and-label-matchers]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label/labels-and-label-matchers"
+[labels-and-label-matchers]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/annotation-label/labels-and-label-matchers"
 [labels-and-label-matchers]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label/labels-and-label-matchers"
 {{% /docs/reference %}}

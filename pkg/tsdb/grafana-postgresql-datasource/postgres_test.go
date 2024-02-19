@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"math/rand"
 	"os"
@@ -15,7 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 
@@ -141,7 +139,7 @@ func TestIntegrationGenerateConnectionString(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			svc := Service{
 				tlsManager: &tlsTestManager{settings: tt.tlsSettings},
-				logger:     log.New("tsdb.postgres"),
+				logger:     backend.NewLoggerWith("logger", "tsdb.postgres"),
 			}
 
 			ds := sqleng.DataSourceInfo{
@@ -185,23 +183,17 @@ func TestIntegrationPostgres(t *testing.T) {
 		t.Skip()
 	}
 
-	x := InitPostgresTestDB(t)
-
-	origDB := sqleng.NewDB
 	origInterpolate := sqleng.Interpolate
 	t.Cleanup(func() {
-		sqleng.NewDB = origDB
 		sqleng.Interpolate = origInterpolate
 	})
-	sqleng.NewDB = func(d, c string) (*sql.DB, error) {
-		return x, nil
-	}
-	sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) (string, error) {
-		return sql, nil
+	sqleng.Interpolate = func(query backend.DataQuery, timeRange backend.TimeRange, timeInterval string, sql string) string {
+		return sql
 	}
 
 	cfg := setting.NewCfg()
 	cfg.DataPath = t.TempDir()
+	cfg.DataProxyRowLimit = 10000
 
 	jsonData := sqleng.JsonData{
 		MaxOpenConns:        0,
@@ -216,23 +208,14 @@ func TestIntegrationPostgres(t *testing.T) {
 		DecryptedSecureJSONData: map[string]string{},
 	}
 
-	config := sqleng.DataPluginConfiguration{
-		DriverName:        "postgres",
-		ConnectionString:  "",
-		DSInfo:            dsInfo,
-		MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
-		RowLimit:          1000000,
-	}
+	logger := backend.NewLoggerWith("logger", "postgres.test")
 
-	queryResultTransformer := postgresQueryResultTransformer{}
+	cnnstr := postgresTestDBConnString()
 
-	logger := log.New("postgres.test")
-	exe, err := sqleng.NewQueryDataHandler(cfg, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
-		logger)
+	db, exe, err := newPostgres(context.Background(), cfg, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
 
 	require.NoError(t, err)
 
-	db := x
 	fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 
 	t.Run("Given a table with different native data types", func(t *testing.T) {
@@ -428,7 +411,8 @@ func TestIntegrationPostgres(t *testing.T) {
 							"rawSql": "SELECT $__timeGroup(time, $__interval) AS time, avg(value) as value FROM metric GROUP BY 1 ORDER BY 1",
 							"format": "time_series"
 						}`),
-						RefID: "A",
+						RefID:    "A",
+						Interval: time.Second * 60,
 						TimeRange: backend.TimeRange{
 							From: fromStart,
 							To:   fromStart.Add(30 * time.Minute),
@@ -1282,17 +1266,10 @@ func TestIntegrationPostgres(t *testing.T) {
 
 		t.Run("When row limit set to 1", func(t *testing.T) {
 			dsInfo := sqleng.DataSourceInfo{}
-			config := sqleng.DataPluginConfiguration{
-				DriverName:        "postgres",
-				ConnectionString:  "",
-				DSInfo:            dsInfo,
-				MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
-				RowLimit:          1,
-			}
+			conf := setting.NewCfg()
+			conf.DataProxyRowLimit = 1
+			_, handler, err := newPostgres(context.Background(), conf, dsInfo, cnnstr, logger, backend.DataSourceInstanceSettings{})
 
-			queryResultTransformer := postgresQueryResultTransformer{}
-
-			handler, err := sqleng.NewQueryDataHandler(setting.NewCfg(), config, &queryResultTransformer, newPostgresMacroEngine(false), logger)
 			require.NoError(t, err)
 
 			t.Run("When doing a table query that returns 2 rows should limit the result to 1 row", func(t *testing.T) {
@@ -1391,13 +1368,6 @@ func TestIntegrationPostgres(t *testing.T) {
 			require.Empty(t, frames[0].Fields)
 		})
 	})
-}
-
-func InitPostgresTestDB(t *testing.T) *sql.DB {
-	connStr := postgresTestDBConnString()
-	x, err := sql.Open("postgres", connStr)
-	require.NoError(t, err, "Failed to init postgres DB")
-	return x
 }
 
 func genTimeRangeByInterval(from time.Time, duration time.Duration, interval time.Duration) []time.Time {

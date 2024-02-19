@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	alertingCluster "github.com/grafana/alerting/cluster"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-	"github.com/prometheus/alertmanager/cluster"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/util"
@@ -17,8 +17,8 @@ import (
 const (
 	alertmanagerDefaultClusterAddr        = "0.0.0.0:9094"
 	alertmanagerDefaultPeerTimeout        = 15 * time.Second
-	alertmanagerDefaultGossipInterval     = cluster.DefaultGossipInterval
-	alertmanagerDefaultPushPullInterval   = cluster.DefaultPushPullInterval
+	alertmanagerDefaultGossipInterval     = alertingCluster.DefaultGossipInterval
+	alertmanagerDefaultPushPullInterval   = alertingCluster.DefaultPushPullInterval
 	alertmanagerDefaultConfigPollInterval = time.Minute
 	alertmanagerRedisDefaultMaxConns      = 5
 	// To start, the alertmanager needs at least one route defined.
@@ -83,6 +83,7 @@ type UnifiedAlertingSettings struct {
 	MaxAttempts                    int64
 	MinInterval                    time.Duration
 	EvaluationTimeout              time.Duration
+	DisableJitter                  bool
 	ExecuteAlerts                  bool
 	DefaultConfiguration           string
 	Enabled                        *bool // determines whether unified alerting is enabled. If it is nil then user did not define it and therefore its value will be determined during migration. Services should not use it directly.
@@ -98,16 +99,19 @@ type UnifiedAlertingSettings struct {
 	RemoteAlertmanager            RemoteAlertmanagerSettings
 	Upgrade                       UnifiedAlertingUpgradeSettings
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
-	MaxStateSaveConcurrency int
+	MaxStateSaveConcurrency   int
+	StatePeriodicSaveInterval time.Duration
+	RulesPerRuleGroupLimit    int64
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
 // to disable the internal Alertmanager and use an external one instead.
 type RemoteAlertmanagerSettings struct {
-	Enable   bool
-	URL      string
-	TenantID string
-	Password string
+	Enable       bool
+	URL          string
+	TenantID     string
+	Password     string
+	SyncInterval time.Duration
 }
 
 type UnifiedAlertingScreenshotSettings struct {
@@ -169,20 +173,20 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 			cfg.Logger.Warn("ngalert feature flag is deprecated: use unified alerting enabled setting instead")
 			// feature flag overrides the legacy alerting setting
 			legacyAlerting := false
-			AlertingEnabled = &legacyAlerting
+			cfg.AlertingEnabled = &legacyAlerting
 			unifiedAlerting := true
 			return &unifiedAlerting, nil
 		}
 
 		// if legacy alerting has not been configured then enable unified alerting
-		if AlertingEnabled == nil {
+		if cfg.AlertingEnabled == nil {
 			unifiedAlerting := true
 			return &unifiedAlerting, nil
 		}
 
 		// enable unified alerting and disable legacy alerting
 		legacyAlerting := false
-		AlertingEnabled = &legacyAlerting
+		cfg.AlertingEnabled = &legacyAlerting
 		unifiedAlerting := true
 		return &unifiedAlerting, nil
 	}
@@ -191,18 +195,18 @@ func (cfg *Cfg) readUnifiedAlertingEnabledSetting(section *ini.Section) (*bool, 
 	if err != nil {
 		// the value for unified alerting is invalid so disable all alerting
 		legacyAlerting := false
-		AlertingEnabled = &legacyAlerting
+		cfg.AlertingEnabled = &legacyAlerting
 		return nil, fmt.Errorf("invalid value %s, should be either true or false", section.Key("enabled"))
 	}
 
 	// If both legacy and unified alerting are enabled then return an error
-	if AlertingEnabled != nil && *AlertingEnabled && unifiedAlerting {
+	if cfg.AlertingEnabled != nil && *(cfg.AlertingEnabled) && unifiedAlerting {
 		return nil, errors.New("legacy and unified alerting cannot both be enabled at the same time, please disable one of them and restart Grafana")
 	}
 
-	if AlertingEnabled == nil {
+	if cfg.AlertingEnabled == nil {
 		legacyAlerting := !unifiedAlerting
-		AlertingEnabled = &legacyAlerting
+		cfg.AlertingEnabled = &legacyAlerting
 	}
 
 	return &unifiedAlerting, nil
@@ -298,6 +302,10 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	uaCfg.BaseInterval = SchedulerBaseInterval
 
+	// TODO: This was promoted from a feature toggle and is now the default behavior.
+	// We can consider removing the knob entirely in a release after 10.4.
+	uaCfg.DisableJitter = ua.Key("disable_jitter").MustBool(false)
+
 	// The base interval of the scheduler for evaluating alerts.
 	// 1. It is used by the internal scheduler's timer to tick at this interval.
 	// 2. to spread evaluations of rules that need to be evaluated at the current tick T. In other words, the evaluation of rules at the tick T will be evenly spread in the interval from T to T+scheduler_tick_interval.
@@ -345,6 +353,9 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		uaCfg.DefaultRuleEvaluationInterval = uaMinInterval
 	}
 
+	quotas := iniFile.Section("quota")
+	uaCfg.RulesPerRuleGroupLimit = quotas.Key("alerting_rule_group_rules").MustInt64(100)
+
 	remoteAlertmanager := iniFile.Section("remote.alertmanager")
 	uaCfgRemoteAM := RemoteAlertmanagerSettings{
 		Enable:   remoteAlertmanager.Key("enabled").MustBool(false),
@@ -352,6 +363,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		TenantID: remoteAlertmanager.Key("tenant").MustString(""),
 		Password: remoteAlertmanager.Key("password").MustString(""),
 	}
+	uaCfgRemoteAM.SyncInterval, err = gtime.ParseDuration(valueAsString(remoteAlertmanager, "sync_interval", (schedulerDefaultAdminConfigPollInterval).String()))
+	if err != nil {
+		return err
+	}
+
 	uaCfg.RemoteAlertmanager = uaCfgRemoteAM
 
 	screenshots := iniFile.Section("unified_alerting.screenshots")
@@ -396,6 +412,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.StateHistory = uaCfgStateHistory
 
 	uaCfg.MaxStateSaveConcurrency = ua.Key("max_state_save_concurrency").MustInt(1)
+
+	uaCfg.StatePeriodicSaveInterval, err = gtime.ParseDuration(valueAsString(ua, "state_periodic_save_interval", (time.Minute * 5).String()))
+	if err != nil {
+		return err
+	}
 
 	upgrade := iniFile.Section("unified_alerting.upgrade")
 	uaCfgUpgrade := UnifiedAlertingUpgradeSettings{

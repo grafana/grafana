@@ -63,8 +63,8 @@ export function addFilterToQuery(query: string, key: string, value: string, modi
     return query;
   }
 
-  key = lucene.term.escape(key);
-  value = lucene.phrase.escape(value);
+  key = escapeFilter(key);
+  value = escapeFilterValue(value);
   const filter = `${modifier}${key}:"${value}"`;
 
   return concatenate(query, filter);
@@ -187,6 +187,7 @@ export function escapeFilter(value: string) {
  * Use this function to escape filter values.
  */
 export function escapeFilterValue(value: string) {
+  value = value.replace(/\\/g, '\\\\');
   return lucene.phrase.escape(value);
 }
 

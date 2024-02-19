@@ -19,6 +19,7 @@ labels:
     - oss
 menuTitle: Configure standard options
 title: Configure standard options
+description: Configure standard options like units, min, max, and colors
 weight: 60
 ---
 

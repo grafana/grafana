@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/manage-notifications/images-in-notifications/
-description: How to use images in notifications
+description: Use images in notifications to help users better understand why alerts are firing or have been resolved
 keywords:
   - grafana
   - alerting
@@ -139,9 +139,9 @@ For example, if a screenshot could not be taken within the expected time (10 sec
 - `grafana_screenshot_upload_successes_total`
 
 {{% docs/reference %}}
-[image-rendering]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering"
-[image-rendering]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/image-rendering"
+[image-rendering]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering"
+[image-rendering]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/image-rendering"
 
-[paths]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#paths"
-[paths]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#paths"
+[paths]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#paths"
+[paths]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#paths"
 {{% /docs/reference %}}

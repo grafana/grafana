@@ -101,16 +101,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 			service.On("GetPublicDashboardForView", mock.Anything, mock.AnythingOfType("string")).
 				Return(test.DashboardResult, test.Err).Maybe()
 
-			cfg := setting.NewCfg()
-
-			testServer := setupTestServer(
-				t,
-				cfg,
-				featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards),
-				service,
-				nil,
-				anonymousUser,
-			)
+			testServer := setupTestServer(t, nil, service, anonymousUser, true)
 
 			response := callAPI(testServer, http.MethodGet,
 				fmt.Sprintf("/api/public/dashboards/%s", test.AccessToken),
@@ -202,16 +193,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 
 	setup := func(enabled bool) (*web.Mux, *publicdashboards.FakePublicDashboardService) {
 		service := publicdashboards.NewFakePublicDashboardService(t)
-		cfg := setting.NewCfg()
-
-		testServer := setupTestServer(
-			t,
-			cfg,
-			featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards, enabled),
-			service,
-			nil,
-			anonymousUser,
-		)
+		testServer := setupTestServer(t, nil, service, anonymousUser, true)
 
 		return testServer, service
 	}
@@ -294,7 +276,6 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	// Create Dashboard
 	saveDashboardCmd := dashboards.SaveDashboardCommand{
 		OrgID:     1,
-		FolderID:  1, // nolint:staticcheck
 		FolderUID: "1",
 		IsFolder:  false,
 		Dashboard: simplejson.NewFromAny(map[string]any{
@@ -338,6 +319,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	// create public dashboard
 	store := publicdashboardsStore.ProvideStore(db, db.Cfg, featuremgmt.WithFeatures())
 	cfg := setting.NewCfg()
+	cfg.PublicDashboardsEnabled = true
 	ac := acmock.New()
 	ws := publicdashboardsService.ProvideServiceWrapper(store)
 	folderStore := folderimpl.ProvideDashboardFolderStore(db)
@@ -354,13 +336,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	require.NoError(t, err)
 
 	// setup test server
-	server := setupTestServer(t,
-		cfg,
-		featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards),
-		pds,
-		db,
-		anonymousUser,
-	)
+	server := setupTestServer(t, cfg, pds, anonymousUser, true)
 
 	resp := callAPI(server, http.MethodPost,
 		fmt.Sprintf("/api/public/dashboards/%s/panels/1/query", pubdash.AccessToken),
@@ -436,7 +412,6 @@ func TestAPIGetAnnotations(t *testing.T) {
 	}
 	for _, test := range testCases {
 		t.Run(test.Name, func(t *testing.T) {
-			cfg := setting.NewCfg()
 			service := publicdashboards.NewFakePublicDashboardService(t)
 
 			if test.ExpectedServiceCalled {
@@ -444,7 +419,7 @@ func TestAPIGetAnnotations(t *testing.T) {
 					Return(test.Annotations, test.ServiceError).Once()
 			}
 
-			testServer := setupTestServer(t, cfg, featuremgmt.WithFeatures(featuremgmt.FlagPublicDashboards), service, nil, anonymousUser)
+			testServer := setupTestServer(t, nil, service, anonymousUser, true)
 
 			path := fmt.Sprintf("/api/public/dashboards/%s/annotations?from=%s&to=%s", test.AccessToken, test.From, test.To)
 			response := callAPI(testServer, http.MethodGet, path, nil, t)

@@ -12,7 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	example "github.com/grafana/grafana/pkg/apis/example/v0alpha1"
-	grafanaregistry "github.com/grafana/grafana/pkg/services/grafana-apiserver/registry/generic"
+	grafanaregistry "github.com/grafana/grafana/pkg/services/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -29,26 +29,24 @@ type staticStorage struct {
 }
 
 func newDeploymentInfoStorage(gv schema.GroupVersion, scheme *runtime.Scheme) *staticStorage {
+	var resourceInfo = example.RuntimeResourceInfo
 	strategy := grafanaregistry.NewStrategy(scheme)
 	store := &genericregistry.Store{
-		NewFunc:                   func() runtime.Object { return &example.RuntimeInfo{} }, // getter not supported
-		NewListFunc:               func() runtime.Object { return &example.RuntimeInfo{} }, // both list and get return the same thing
+		NewFunc:                   resourceInfo.NewFunc,
+		NewListFunc:               resourceInfo.NewListFunc,
 		PredicateFunc:             grafanaregistry.Matcher,
-		DefaultQualifiedResource:  gv.WithResource("runtime").GroupResource(),
-		SingularQualifiedResource: gv.WithResource("runtime").GroupResource(),
+		DefaultQualifiedResource:  resourceInfo.GroupResource(),
+		SingularQualifiedResource: resourceInfo.SingularGroupResource(),
+		TableConvertor:            rest.NewDefaultTableConvertor(resourceInfo.GroupResource()),
 		CreateStrategy:            strategy,
 		UpdateStrategy:            strategy,
 		DeleteStrategy:            strategy,
 	}
-	store.TableConvertor = rest.NewDefaultTableConvertor(store.DefaultQualifiedResource)
 
 	return &staticStorage{
 		Store: store,
 		info: example.RuntimeInfo{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: APIVersion,
-				Kind:       "DeploymentInfo",
-			},
+			TypeMeta:              example.RuntimeResourceInfo.TypeMeta(),
 			BuildVersion:          setting.BuildVersion,
 			BuildCommit:           setting.BuildCommit,
 			BuildBranch:           setting.BuildBranch,
@@ -72,7 +70,7 @@ func (s *staticStorage) NamespaceScoped() bool {
 }
 
 func (s *staticStorage) GetSingularName() string {
-	return "runtime"
+	return example.RuntimeResourceInfo.GetSingularName()
 }
 
 func (s *staticStorage) NewList() runtime.Object {

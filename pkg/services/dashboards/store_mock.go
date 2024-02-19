@@ -44,8 +44,8 @@ func (_m *FakeDashboardStore) Count(_a0 context.Context, _a1 *quota.ScopeParamet
 	return r0, r1
 }
 
-// CountDashboardsInFolder provides a mock function with given fields: ctx, request
-func (_m *FakeDashboardStore) CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error) {
+// CountDashboardsInFolders provides a mock function with given fields: ctx, request
+func (_m *FakeDashboardStore) CountDashboardsInFolders(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error) {
 	ret := _m.Called(ctx, request)
 
 	var r0 int64
@@ -75,6 +75,20 @@ func (_m *FakeDashboardStore) DeleteDashboard(ctx context.Context, cmd *DeleteDa
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, *DeleteDashboardCommand) error); ok {
 		r0 = rf(ctx, cmd)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteDashboardsInFolders provides a mock function with given fields: ctx, request
+func (_m *FakeDashboardStore) DeleteDashboardsInFolders(ctx context.Context, request *DeleteDashboardsInFolderRequest) error {
+	ret := _m.Called(ctx, request)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *DeleteDashboardsInFolderRequest) error); ok {
+		r0 = rf(ctx, request)
 	} else {
 		r0 = ret.Error(0)
 	}
