@@ -17,6 +17,7 @@ on:
 # target branch onto the source branch, to verify compatibility before merging.
 jobs:
   trigger_downstream_patch_check:
+    if: github.repository == 'grafana/grafana'
     uses: grafana/security-patch-actions/.github/workflows/test-patches.yml@main
     with:
       src_repo: "${{ github.repository }}"
