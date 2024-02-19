@@ -19,22 +19,19 @@ import { VariableNameConstraints } from 'app/features/variables/editor/types';
 import { VariableTypeSelect } from './components/VariableTypeSelect';
 import { EditableVariableType, getVariableEditor, hasVariableOptions, isEditableVariableType } from './utils';
 
-const RESERVED_GLOBAL_VARIABLE_NAME_REGEX = /^(?!__).*$/;
-const WORD_CHARACTERS_REGEX = /^\w+$/;
-
 interface VariableEditorFormProps {
   variable: SceneVariable;
   onTypeChange: (type: EditableVariableType) => void;
   onGoBack: () => void;
   onDelete: (variableName: string) => void;
-  isVariableNameTaken: (name: string, key: string | undefined) => boolean;
+  onValidateVariableName: (name: string, key: string | undefined) => [true, string] | [false, null];
 }
 export function VariableEditorForm({
   variable,
   onTypeChange,
   onGoBack,
   onDelete,
-  isVariableNameTaken,
+  onValidateVariableName,
 }: VariableEditorFormProps) {
   const styles = useStyles2(getStyles);
   const [nameError, setNameError] = useState<string | null>(null);
@@ -51,24 +48,12 @@ export function VariableEditorForm({
 
   const onNameChange = useCallback(
     (e: FormEvent<HTMLInputElement>) => {
-      let errorText = null;
-      if (!RESERVED_GLOBAL_VARIABLE_NAME_REGEX.test(e.currentTarget.value)) {
-        errorText = "Template names cannot begin with '__', that's reserved for Grafana's global variables";
-      }
-
-      if (!WORD_CHARACTERS_REGEX.test(e.currentTarget.value)) {
-        errorText = 'Only word characters are allowed in variable names';
-      }
-
-      if (isVariableNameTaken(e.currentTarget.value, key || '')) {
-        errorText = 'Variable with the same name already exists';
-      }
-
-      if (errorText !== nameError) {
-        setNameError(errorText);
+      const [, errorMessage] = onValidateVariableName(e.currentTarget.value, key);
+      if (nameError !== errorMessage) {
+        setNameError(errorMessage);
       }
     },
-    [isVariableNameTaken, key, nameError]
+    [key, nameError, onValidateVariableName]
   );
 
   const onNameBlur = (e: FormEvent<HTMLInputElement>) => {
