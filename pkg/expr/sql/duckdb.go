@@ -82,7 +82,7 @@ func (d *DuckDB) Query(ctx context.Context, query string) (*data.Frame, error) {
 // AppendAll converts all the data frames into DuckDB tables
 func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 	fieldLookup := fields(frames)
-	unknown, err := d.createTables(ctx, frames, fieldLookup)
+	unknown, err := d.createTables(ctx, fieldLookup)
 	if err != nil {
 		return err
 	}
@@ -95,8 +95,7 @@ func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 	return nil
 }
 
-//gocyclo:ignore
-func (d *DuckDB) createTables(ctx context.Context, frames data.Frames, fieldLookup TableFields) (Unknown, error) {
+func (d *DuckDB) createTables(ctx context.Context, fieldLookup TableFields) (Unknown, error) {
 	unknown := Unknown{}
 
 	for id, tableFields := range fieldLookup {
