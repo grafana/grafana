@@ -211,7 +211,7 @@ describe('Table', () => {
       await userEvent.click(screen.getByText('Ok'));
 
       // 3 + header row
-      expect(within(getTable()).getAllByRole('row')).toHaveLength(4);
+      expect(screen.getAllByRole('row')).toHaveLength(4);
     });
 
     it('should redo footer calculations', async () => {
