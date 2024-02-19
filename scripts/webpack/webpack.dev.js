@@ -57,6 +57,13 @@ module.exports = (env = {}) => {
             options: esbuildOptions,
           },
         },
+        {
+          test: /\.js?$/,
+          use: {
+            loader: 'esbuild-loader',
+            options: { ...esbuildOptions, loader: 'jsx' },
+          },
+        },
         require('./sass.rule.js')({
           sourceMap: false,
           preserveUrl: false,

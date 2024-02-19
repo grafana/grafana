@@ -3,7 +3,6 @@
  */
 module.exports = {
   icon: true,
-  typescript: true,
   jsxRuntime: 'automatic',
   outDir: './src/icons-generated',
   template: require('./templates/icon'),
@@ -13,6 +12,7 @@ module.exports = {
       'removeScriptElement',
     ],
   },
+  // ext: 'jsx',
   jsx: {
     babelConfig: {
       plugins: [

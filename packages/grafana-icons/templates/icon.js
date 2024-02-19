@@ -27,14 +27,14 @@ const comments = `
 const imports = `
 import React from 'react';
 
-import { IconBase, IconProps } from '../IconBase';
+import { IconBase } from '../IconBase';
 `;
 const template = ({ exports, jsx, componentName }, { tpl }) => {
   return tpl`
 ${comments}
 ${imports}
 
-const ${componentName} = (props: IconProps) => (
+const ${componentName} = (props) => (
   ${modifyJSX(jsx)}
 );
 
