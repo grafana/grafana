@@ -8,19 +8,19 @@
   },
   "spacing": {
     "0": {
-      "value": "{dimension.scale} * 0",
+      "value": "{dimension.scale}*0",
       "type": "spacing"
     },
     "25": {
-      "value": "{dimension.scale} * 0.25",
+      "value": "{dimension.scale}*0.25",
       "type": "spacing"
     },
     "50": {
-      "value": "{dimension.scale} * 0.5",
+      "value": "{dimension.scale}*0.5",
       "type": "spacing"
     },
     "75": {
-      "value": "{dimension.scale} * 0.75",
+      "value": "{dimension.scale}*0.75",
       "type": "spacing"
     },
     "100": {
@@ -28,39 +28,39 @@
       "type": "spacing"
     },
     "150": {
-      "value": "{dimension.scale} * 1.5",
+      "value": "{dimension.scale}*1.5",
       "type": "spacing"
     },
     "200": {
-      "value": "{dimension.scale} * 2",
+      "value": "{dimension.scale}*2",
       "type": "spacing"
     },
     "250": {
-      "value": "{dimension.scale} * 2.5",
+      "value": "{dimension.scale}*2.5",
       "type": "spacing"
     },
     "300": {
-      "value": "{dimension.scale} * 3",
+      "value": "{dimension.scale}*3",
       "type": "spacing"
     },
     "400": {
-      "value": "{dimension.scale} * 4",
+      "value": "{dimension.scale}*4",
       "type": "spacing"
     },
     "500": {
-      "value": "{dimension.scale} * 5",
+      "value": "{dimension.scale}*5",
       "type": "spacing"
     },
     "600": {
-      "value": "{dimension.scale} * 6",
+      "value": "{dimension.scale}*6",
       "type": "spacing"
     },
     "800": {
-      "value": "{dimension.scale} * 8",
+      "value": "{dimension.scale}*8",
       "type": "spacing"
     },
     "1000": {
-      "value": "{dimension.scale} * 10",
+      "value": "{dimension.scale}*10",
       "type": "spacing"
     }
   },
@@ -146,161 +146,161 @@
     },
     "fontSize": {
       "0": {
-        "value": "{font.fontSize.base} * 0.625",
+        "value": "{font.fontSize.base}*0.625",
         "type": "fontSizes"
       },
       "1": {
-        "value": "{font.fontSize.base} * 0.75",
+        "value": "{font.fontSize.base}*0.75",
         "type": "fontSizes"
       },
       "2": {
-        "value": "{font.fontSize.base} * 0.875",
+        "value": "{font.fontSize.base}*0.875",
         "type": "fontSizes"
       },
       "3": {
-        "value": "{font.fontSize.base} * 1",
+        "value": "{font.fontSize.base}*1",
         "type": "fontSizes"
       },
       "4": {
-        "value": "{font.fontSize.base} * 1.125",
+        "value": "{font.fontSize.base}*1.125",
         "type": "fontSizes"
       },
       "5": {
-        "value": "{font.fontSize.base} * 1.25",
+        "value": "{font.fontSize.base}*1.25",
         "type": "fontSizes"
       },
       "6": {
-        "value": "{font.fontSize.base} * 1.375",
+        "value": "{font.fontSize.base}*1.375",
         "type": "fontSizes"
       },
       "7": {
-        "value": "{font.fontSize.base} * 1.5",
+        "value": "{font.fontSize.base}*1.5",
         "type": "fontSizes"
       },
       "8": {
-        "value": "{font.fontSize.base} *1.75",
+        "value": "{font.fontSize.base}*1.75",
         "type": "fontSizes"
       },
       "9": {
-        "value": "{font.fontSize.base} *2",
+        "value": "{font.fontSize.base}*2",
         "type": "fontSizes"
       },
       "10": {
-        "value": "{font.fontSize.base} *2.5",
+        "value": "{font.fontSize.base}*2.5",
         "type": "fontSizes"
       },
       "11": {
-        "value": "{font.fontSize.base} *3",
+        "value": "{font.fontSize.base}*3",
         "type": "fontSizes"
       },
       "12": {
-        "value": "{font.fontSize.base} *3.5",
+        "value": "{font.fontSize.base}*3.5",
         "type": "fontSizes"
       },
       "13": {
-        "value": "{font.fontSize.base} *4",
+        "value": "{font.fontSize.base}*4",
         "type": "fontSizes"
       },
       "14": {
-        "value": "{font.fontSize.base} *5",
+        "value": "{font.fontSize.base}*5",
         "type": "fontSizes"
       },
       "15": {
-        "value": "{font.fontSize.base} *6",
+        "value": "{font.fontSize.base}*6",
         "type": "fontSizes"
       },
       "16": {
-        "value": "{font.fontSize.base} *7.5",
+        "value": "{font.fontSize.base}*7.5",
         "type": "fontSizes"
       },
       "17": {
-        "value": "{font.fontSize.base} *9",
+        "value": "{font.fontSize.base}*9",
         "type": "fontSizes"
       },
       "18": {
-        "value": "{font.fontSize.base} *10.5",
+        "value": "{font.fontSize.base}*10.5",
         "type": "fontSizes"
       },
       "19": {
-        "value": "{font.fontSize.base} *12",
+        "value": "{font.fontSize.base}*12",
         "type": "fontSizes"
       },
       "20": {
-        "value": "{font.fontSize.base} *14",
+        "value": "{font.fontSize.base}*14",
         "type": "fontSizes"
       },
       "base": {
-        "value": "{dimension.scale} * 2",
+        "value": "{dimension.scale}*2",
         "type": "fontSizes"
       }
     },
     "lineHeight": {
       "0": {
-        "value": "{dimension.scale} * 2",
+        "value": "{dimension.scale}*2",
         "type": "lineHeights"
       },
       "1": {
-        "value": "{dimension.scale} * 3",
+        "value": "{dimension.scale}*3",
         "type": "lineHeights"
       },
       "2": {
-        "value": "{dimension.scale} * 4",
+        "value": "{dimension.scale}*4",
         "type": "lineHeights"
       },
       "3": {
-        "value": "{dimension.scale} * 5",
+        "value": "{dimension.scale}*5",
         "type": "lineHeights"
       },
       "4": {
-        "value": "{dimension.scale} * 6",
+        "value": "{dimension.scale}*6",
         "type": "lineHeights"
       },
       "5": {
-        "value": "{dimension.scale} * 7",
+        "value": "{dimension.scale}*7",
         "type": "lineHeights"
       },
       "6": {
-        "value": "{dimension.scale} * 8",
+        "value": "{dimension.scale}*8",
         "type": "lineHeights"
       },
       "7": {
-        "value": "{dimension.scale} * 9",
+        "value": "{dimension.scale}*9",
         "type": "lineHeights"
       },
       "8": {
-        "value": "{dimension.scale} * 10",
+        "value": "{dimension.scale}*10",
         "type": "lineHeights"
       },
       "9": {
-        "value": "{dimension.scale} * 11",
+        "value": "{dimension.scale}*11",
         "type": "lineHeights"
       },
       "10": {
-        "value": "{dimension.scale} * 13",
+        "value": "{dimension.scale}*13",
         "type": "lineHeights"
       },
       "11": {
-        "value": "{dimension.scale} * 16",
+        "value": "{dimension.scale}*16",
         "type": "lineHeights"
       },
       "12": {
-        "value": "{dimension.scale} * 20",
+        "value": "{dimension.scale}*20",
         "type": "lineHeights"
       },
       "13": {
-        "value": "{dimension.scale} * 24",
+        "value": "{dimension.scale}*24",
         "type": "lineHeights"
       },
       "14": {
-        "value": "{dimension.scale} * 28",
+        "value": "{dimension.scale}*28",
         "type": "lineHeights"
       },
       "15": {
-        "value": "{dimension.scale} * 32",
+        "value": "{dimension.scale}*32",
         "type": "lineHeights"
       },
       "16": {
-        "value": "{dimension.scale} * 37",
+        "value": "{dimension.scale}*37",
         "type": "lineHeights"
       }
     },
@@ -364,7 +364,7 @@
   "border": {
     "borderRadius": {
       "default": {
-        "value": "{dimension.scale} *0.25",
+        "value": "{dimension.scale}*0.25",
         "type": "borderRadius",
         "description": "Standard Corner Radius used throughout Grafana."
       },
