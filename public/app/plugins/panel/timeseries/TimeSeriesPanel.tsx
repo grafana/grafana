@@ -51,7 +51,7 @@ export const TimeSeriesPanel = ({
   }, [frames, id]);
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
-  const showNewVizTooltips = config.featureToggles.newVizTooltips;
+  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
 
@@ -119,11 +119,7 @@ export const TimeSeriesPanel = ({
                     queryZoom={onChangeTimeRange}
                     clientZoom={true}
                     syncTooltip={syncTooltip}
-                    render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
-                      // if (viaSync) {
-                      //   return null;
-                      // }
-
+                    render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2) => {
                       if (enableAnnotationCreation && timeRange2 != null) {
                         setNewAnnotationRange(timeRange2);
                         dismiss();

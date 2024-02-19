@@ -1,12 +1,12 @@
 // this file is pretty much a copy-paste of TimeSeriesPanel.tsx :(
 // with some extra renderers passed to the <TimeSeries> component
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import uPlot from 'uplot';
 
-import { DashboardCursorSync, Field, getDisplayProcessor, getLinksSupplier, PanelProps } from '@grafana/data';
+import { Field, getDisplayProcessor, getLinksSupplier, PanelProps } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { TooltipDisplayMode } from '@grafana/schema';
+import { DashboardCursorSync, TooltipDisplayMode } from '@grafana/schema';
 import { TooltipPlugin, TooltipPlugin2, UPlotConfigBuilder, usePanelContext, useTheme2, ZoomPlugin } from '@grafana/ui';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
@@ -45,6 +45,12 @@ export const CandlestickPanel = ({
   const { sync, canAddAnnotations, onThresholdsChange, canEditThresholds, showThresholds } = usePanelContext();
 
   const theme = useTheme2();
+
+  const syncTooltip = useCallback(
+    () => sync != null && sync() === DashboardCursorSync.Tooltip,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
   const info = useMemo(() => {
     return prepareCandlestickFields(data.series, options, theme, timeRange);
@@ -233,9 +239,8 @@ export const CandlestickPanel = ({
     }
   }
 
-  const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
-  const showNewVizTooltips =
-    config.featureToggles.newVizTooltips && (sync == null || sync() !== DashboardCursorSync.Tooltip);
+  const enableAnnotationCreation = Boolean(canAddAnnotations?.());
+  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
 
   return (
     <TimeSeries
@@ -272,11 +277,8 @@ export const CandlestickPanel = ({
                 }
                 queryZoom={onChangeTimeRange}
                 clientZoom={true}
-                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
-                  if (viaSync) {
-                    return null;
-                  }
-
+                syncTooltip={syncTooltip}
+                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2) => {
                   if (enableAnnotationCreation && timeRange2 != null) {
                     setNewAnnotationRange(timeRange2);
                     dismiss();

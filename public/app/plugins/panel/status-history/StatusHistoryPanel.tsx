@@ -49,6 +49,12 @@ export const StatusHistoryPanel = ({
 }: TimelinePanelProps) => {
   const theme = useTheme2();
 
+  const syncTooltip = useCallback(
+    () => sync != null && sync() === DashboardCursorSync.Tooltip,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
   const oldConfig = useRef<UPlotConfigBuilder | undefined>(undefined);
   const isToolTipOpen = useRef<boolean>(false);
 
@@ -192,8 +198,7 @@ export const StatusHistoryPanel = ({
     );
   }
 
-  const showNewVizTooltips =
-    config.featureToggles.newVizTooltips && (sync == null || sync() !== DashboardCursorSync.Tooltip);
+  const showNewVizTooltips = Boolean(config.featureToggles.newVizTooltips);
 
   return (
     <TimelineChart
@@ -232,11 +237,8 @@ export const StatusHistoryPanel = ({
                     config={builder}
                     hoverMode={TooltipHoverMode.xyOne}
                     queryZoom={onChangeTimeRange}
-                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
-                      if (viaSync) {
-                        return null;
-                      }
-
+                    syncTooltip={syncTooltip}
+                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2) => {
                       if (enableAnnotationCreation && timeRange2 != null) {
                         setNewAnnotationRange(timeRange2);
                         dismiss();
