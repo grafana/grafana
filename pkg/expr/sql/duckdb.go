@@ -95,6 +95,7 @@ func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 	return nil
 }
 
+//gocyclo:ignore
 func (d *DuckDB) createTables(ctx context.Context, frames data.Frames, fieldLookup TableFields) (Unknown, error) {
 	unknown := Unknown{}
 
@@ -226,7 +227,6 @@ func connector(ctx context.Context, name string) (driver.Connector, error) {
 func (d *DuckDB) doAppend(c driver.Conn, frames data.Frames, u Unknown, fl TableFields) error {
 	tables, nullFields := buildTables(frames, fl, u)
 	for name, t := range tables {
-
 		appender, err := duckdb.NewAppenderFromConn(c, "", name)
 		if err != nil {
 			return err
