@@ -4,11 +4,13 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
+import { NodeGraph } from '@grafana/nodegraph';
 import { ThemeContext } from '@grafana/ui';
 
 import FlameGraph from './FlameGraph/FlameGraph';
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
+import { FlameNodeGraph } from './FlameNodeGraph';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from './constants';
 import { ClickedItemData, ColorScheme, ColorSchemeDiff, SelectedView, TextAlign } from './types';
@@ -185,11 +187,15 @@ const FlameGraphContainer = ({
     />
   );
 
+  const nodeGraph = <FlameNodeGraph dataContainer={dataContainer} />;
+
   let body;
   if (showFlameGraphOnly || selectedView === SelectedView.FlameGraph) {
     body = flameGraph;
   } else if (selectedView === SelectedView.TopTable) {
     body = <div className={styles.tableContainer}>{table}</div>;
+  } else if (selectedView === SelectedView.NodeGraph) {
+    body = <div className={styles.tableContainer}>{nodeGraph}</div>;
   } else if (selectedView === SelectedView.Both) {
     if (vertical) {
       body = (

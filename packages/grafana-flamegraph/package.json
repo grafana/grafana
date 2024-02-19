@@ -45,6 +45,7 @@
   "dependencies": {
     "@emotion/css": "11.11.2",
     "@grafana/data": "10.4.0-pre",
+    "@grafana/nodegraph": "10.4.0-pre",
     "@grafana/ui": "10.4.0-pre",
     "@leeoniya/ufuzzy": "1.0.14",
     "d3": "^7.8.5",

@@ -3752,6 +3752,7 @@ __metadata:
     "@babel/preset-react": "npm:7.23.3"
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:10.4.0-pre"
+    "@grafana/nodegraph": "npm:10.4.0-pre"
     "@grafana/tsconfig": "npm:^1.2.0-rc1"
     "@grafana/ui": "npm:10.4.0-pre"
     "@leeoniya/ufuzzy": "npm:1.0.14"
@@ -3836,7 +3837,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/nodegraph@workspace:packages/grafana-nodegraph":
+"@grafana/nodegraph@npm:10.4.0-pre, @grafana/nodegraph@workspace:packages/grafana-nodegraph":
   version: 0.0.0-use.local
   resolution: "@grafana/nodegraph@workspace:packages/grafana-nodegraph"
   dependencies:
