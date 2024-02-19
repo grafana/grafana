@@ -111,11 +111,11 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
 1. Turn on pause alert notifications, if required.
 
-   **Note**:
-
-   Pause alert rule evaluation to prevent noisy alerting while tuning your alerts. Pausing stops alert rule evaluation and does not create any alert instances. This is different to mute timings, which stop notifications from being delivered, but still allow for alert rule evaluation and the creation of alert instances.
-
-   You can pause alert rule evaluation to prevent noisy alerting while tuning your alerts. Pausing stops alert rule evaluation and does not create any alert instances. This is different to mute timings, which stop notifications from being delivered, but still allow for alert rule evaluation and the creation of alert instances.
+   {{< admonition type="note" >}}
+   You can pause alert rule evaluation to prevent noisy alerting while tuning your alerts.
+   Pausing stops alert rule evaluation and doesn't create any alert instances.
+   This is different to mute timings, which stop notifications from being delivered, but still allows for alert rule evaluation and the creation of alert instances.
+   {{< /admonition >}}
 
 1. In **Configure no data and error handling**, configure alerting behavior in the absence of data.
 
