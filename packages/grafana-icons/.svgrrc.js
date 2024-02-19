@@ -4,7 +4,7 @@
 module.exports = {
   icon: true,
   jsxRuntime: 'automatic',
-  outDir: './src/icons-generated',
+  outDir: './generated',
   template: require('./templates/icon'),
   svgoConfig: {
     plugins: [

@@ -1,1 +1,1 @@
-export * from './icons-generated/index';
+export * from '../generated/index';

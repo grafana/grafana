@@ -11,11 +11,11 @@
     "directory": "packages/grafana-icons"
   },
   "main": "src/index.js",
-  "types": "dist/types/index.d.ts",
+  "types": "dist/types/src/index.d.ts",
   "publishConfig": {
     "main": "dist/index.js",
     "module": "dist/esm/index.js",
-    "types": "dist/types/index.d.ts",
+    "types": "dist/types/src/index.d.ts",
     "access": "public"
   },
   "files": [
@@ -25,12 +25,12 @@
     "./LICENSE_APACHE2"
   ],
   "scripts": {
-    "clean": "rimraf ./dist ./compiled ./package.tgz ./src/icons-generated",
-    "generate": "rimraf ./src/icons-generated && npx @svgr/cli ./svg",
+    "clean": "rimraf ./dist ./compiled ./package.tgz ./generated",
+    "generate": "rimraf ./generated && npx @svgr/cli ./svg",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "lint": "eslint --ext .ts,.tsx ./src",
     "prettier:check": "prettier --check --list-different=false --log-level=warn \"**/*.{ts,tsx,scss,md,mdx,json}\"",
-    "build": "rollup -c rollup.config.js",
+    "build": "node esbuild.config.mjs",
     "bundle": "rollup -c rollup.config.js"
   },
   "devDependencies": {
