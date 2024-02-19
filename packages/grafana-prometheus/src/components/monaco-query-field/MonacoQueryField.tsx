@@ -14,6 +14,7 @@ import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
 import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 import { placeHolderScopedVars, validateQuery } from './monaco-completion-provider/validation';
+import { language, languageConfiguration } from './promql';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -65,13 +66,13 @@ let PROMQL_SETUP_STARTED = false;
 function ensurePromQL(monaco: Monaco) {
   if (PROMQL_SETUP_STARTED === false) {
     PROMQL_SETUP_STARTED = true;
-    const { aliases, extensions, mimetypes, loader } = promLanguageDefinition;
+    const { aliases, extensions, mimetypes } = promLanguageDefinition;
     monaco.languages.register({ id: PROMQL_LANG_ID, aliases, extensions, mimetypes });
 
-    loader().then((mod) => {
-      monaco.languages.setMonarchTokensProvider(PROMQL_LANG_ID, mod.language);
-      monaco.languages.setLanguageConfiguration(PROMQL_LANG_ID, mod.languageConfiguration);
-    });
+    // @ts-ignore
+    monaco.languages.setMonarchTokensProvider(PROMQL_LANG_ID, language);
+    // @ts-ignore
+    monaco.languages.setLanguageConfiguration(PROMQL_LANG_ID, languageConfiguration);
   }
 }
 

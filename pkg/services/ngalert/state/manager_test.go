@@ -34,8 +34,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestWarmStateCache(t *testing.T) {
 	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
@@ -1270,8 +1275,8 @@ func TestProcessEvalResults(t *testing.T) {
 			for evalTime := range tc.evalResults {
 				evals = append(evals, evalTime)
 			}
-			slices.SortFunc(evals, func(a, b time.Time) bool {
-				return a.Before(b)
+			slices.SortFunc(evals, func(a, b time.Time) int {
+				return a.Compare(b)
 			})
 			results := 0
 			for _, evalTime := range evals {
@@ -1375,7 +1380,7 @@ func TestProcessEvalResults(t *testing.T) {
 		require.NotEmpty(t, states)
 
 		savedStates := make(map[string]models.AlertInstance)
-		for _, op := range instanceStore.RecordedOps {
+		for _, op := range instanceStore.RecordedOps() {
 			switch q := op.(type) {
 			case models.AlertInstance:
 				cacheId, err := q.Labels.StringKey()
@@ -1664,7 +1669,7 @@ func TestStaleResults(t *testing.T) {
 	})
 
 	t.Run("should delete stale states from the database", func(t *testing.T) {
-		for _, op := range store.RecordedOps {
+		for _, op := range store.RecordedOps() {
 			switch q := op.(type) {
 			case state.FakeInstanceStoreOp:
 				keys, ok := q.Args[1].([]models.AlertInstanceKey)

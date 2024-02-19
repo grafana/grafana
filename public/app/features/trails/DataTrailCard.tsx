@@ -23,7 +23,7 @@ export function DataTrailCard({ trail, onSelect, onDelete }: Props) {
     return null;
   }
 
-  const filters = filtersVariable.state.set.state.filters;
+  const filters = filtersVariable.state.filters;
   const dsValue = getDataSource(trail);
 
   return (

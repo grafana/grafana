@@ -11,7 +11,6 @@ import {
   VizPanel,
   SceneDataTransformer,
   SceneVariableSet,
-  AdHocFilterSet,
   LocalValueVariable,
   SceneRefreshPicker,
 } from '@grafana/scenes';
@@ -23,6 +22,7 @@ import {
   defaultDashboard,
   defaultTimePickerConfig,
   FieldConfigSource,
+  GridPos,
   Panel,
   RowPanel,
   TimePickerConfig,
@@ -101,21 +101,14 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
         refreshIntervals = control.state.intervals;
       }
     }
-
-    const variableControls = state.controls[0].state.variableControls;
-    for (const control of variableControls) {
-      if (control instanceof AdHocFilterSet) {
-        variables.push({
-          name: control.state.name!,
-          type: 'adhoc',
-          datasource: control.state.datasource,
-        });
-      }
-    }
   }
 
-  if (state.$behaviors && state.$behaviors[0] instanceof behaviors.CursorSync) {
-    graphTooltip = state.$behaviors[0].state.sync;
+  if (state.$behaviors) {
+    for (const behavior of state.$behaviors!) {
+      if (behavior instanceof behaviors.CursorSync) {
+        graphTooltip = behavior.state.sync;
+      }
+    }
   }
 
   const timePickerWithoutDefaults = removeDefaults<TimePickerConfig>(
@@ -208,11 +201,22 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
     throw new Error('Unsupported grid item type');
   }
 
+  const panel: Panel = vizPanelToPanel(vizPanel, { x, y, h, w }, isSnapshot, gridItem);
+
+  return panel;
+}
+
+export function vizPanelToPanel(
+  vizPanel: VizPanel,
+  gridPos?: GridPos,
+  isSnapshot = false,
+  gridItem?: SceneGridItemLike
+) {
   const panel: Panel = {
     id: getPanelIdForVizPanel(vizPanel),
     type: vizPanel.state.pluginId,
     title: vizPanel.state.title,
-    gridPos: { x, y, w, h },
+    gridPos,
     options: vizPanel.state.options,
     fieldConfig: (vizPanel.state.fieldConfig as FieldConfigSource) ?? { defaults: {}, overrides: [] },
     transformations: [],
@@ -249,7 +253,6 @@ export function gridItemToPanel(gridItem: SceneGridItemLike, isSnapshot = false)
   if (!panel.transparent) {
     delete panel.transparent;
   }
-
   return panel;
 }
 
@@ -259,13 +262,24 @@ function vizPanelDataToPanel(
 ): Pick<Panel, 'datasource' | 'targets' | 'maxDataPoints' | 'transformations'> {
   const dataProvider = vizPanel.state.$data;
 
-  const panel: Pick<Panel, 'datasource' | 'targets' | 'maxDataPoints' | 'transformations'> = {};
+  const panel: Pick<
+    Panel,
+    'datasource' | 'targets' | 'maxDataPoints' | 'transformations' | 'cacheTimeout' | 'queryCachingTTL'
+  > = {};
   const queryRunner = getQueryRunnerFor(vizPanel);
 
   if (queryRunner) {
     panel.targets = queryRunner.state.queries;
     panel.maxDataPoints = queryRunner.state.maxDataPoints;
     panel.datasource = queryRunner.state.datasource;
+
+    if (queryRunner.state.cacheTimeout) {
+      panel.cacheTimeout = queryRunner.state.cacheTimeout;
+    }
+
+    if (queryRunner.state.queryCachingTTL) {
+      panel.queryCachingTTL = queryRunner.state.queryCachingTTL;
+    }
   }
 
   if (dataProvider instanceof SceneDataTransformer) {

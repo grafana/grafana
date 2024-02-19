@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import React, { useEffect, useReducer, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -13,11 +14,8 @@ import { QuerySuggestionContainer } from './QuerySuggestionContainer';
 // @ts-ignore until we can get these added for icons
 import AI_Logo_color from './resources/AI_Logo_color.svg';
 import { promQailExplain, promQailSuggest } from './state/helpers';
-import { initialState, stateSlice } from './state/state';
+import { createInteraction, initialState } from './state/state';
 import { Interaction, SuggestionType } from './types';
-
-// actions to update the state
-const { showStartingMessage, indicateCheckbox, addInteraction, updateInteraction } = stateSlice.actions;
 
 export type PromQailProps = {
   query: PromVisualQuery;
@@ -125,7 +123,7 @@ export const PromQail = (props: PromQailProps) => {
                   fill="solid"
                   variant="primary"
                   onClick={() => dispatch(showStartingMessage(false))}
-                  data-testid={testIds.securityInfoButton}
+                  data-testid={queryAssistanttestIds.securityInfoButton}
                 >
                   Continue
                 </Button>
@@ -181,7 +179,7 @@ export const PromQail = (props: PromQailProps) => {
                       className={styles.leftButton}
                       fill="solid"
                       variant="secondary"
-                      data-testid={testIds.clickForHistorical}
+                      data-testid={queryAssistanttestIds.clickForHistorical}
                       onClick={() => {
                         const isLoading = true;
                         const suggestionType = SuggestionType.Historical;
@@ -198,7 +196,7 @@ export const PromQail = (props: PromQailProps) => {
                     <Button
                       fill="solid"
                       variant="primary"
-                      data-testid={testIds.clickForAi}
+                      data-testid={queryAssistanttestIds.clickForAi}
                       onClick={() => {
                         reportInteraction('grafana_prometheus_promqail_know_what_you_want_to_query', {
                           promVisualQuery: query,
@@ -293,7 +291,7 @@ export const PromQail = (props: PromQailProps) => {
                                 <Button
                                   fill="solid"
                                   variant="primary"
-                                  data-testid={testIds.submitPrompt + idx}
+                                  data-testid={queryAssistanttestIds.submitPrompt + idx}
                                   onClick={() => {
                                     const newInteraction: Interaction = {
                                       ...interaction,
@@ -557,7 +555,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const testIds = {
+export const queryAssistanttestIds = {
   promQail: 'prom-qail',
   securityInfoButton: 'security-info-button',
   clickForHistorical: 'click-for-historical',
@@ -565,3 +563,54 @@ export const testIds = {
   submitPrompt: 'submit-prompt',
   refinePrompt: 'refine-prompt',
 };
+
+const stateSlice = createSlice({
+  name: 'metrics-modal-state',
+  initialState: initialState(),
+  reducers: {
+    showExplainer: (state, action: PayloadAction<boolean>) => {
+      state.showExplainer = action.payload;
+    },
+    showStartingMessage: (state, action: PayloadAction<boolean>) => {
+      state.showStartingMessage = action.payload;
+    },
+    indicateCheckbox: (state, action: PayloadAction<boolean>) => {
+      state.indicateCheckbox = action.payload;
+    },
+    askForQueryHelp: (state, action: PayloadAction<boolean>) => {
+      state.askForQueryHelp = action.payload;
+    },
+    /*
+     * start working on a collection of interactions
+     * {
+     *  askForhelp y n
+     *  prompt question
+     *  queries querySuggestions
+     * }
+     *
+     */
+    addInteraction: (state, action: PayloadAction<{ suggestionType: SuggestionType; isLoading: boolean }>) => {
+      // AI or Historical?
+      const interaction = createInteraction(action.payload.suggestionType, action.payload.isLoading);
+      const interactions = state.interactions;
+      state.interactions = interactions.concat([interaction]);
+    },
+    updateInteraction: (state, action: PayloadAction<{ idx: number; interaction: Interaction }>) => {
+      // update the interaction by index
+      // will most likely be the last interaction but we might update previous by giving them cues of helpful or not
+      const index = action.payload.idx;
+      const updInteraction = action.payload.interaction;
+
+      state.interactions = state.interactions.map((interaction: Interaction, idx: number) => {
+        if (idx === index) {
+          return updInteraction;
+        }
+
+        return interaction;
+      });
+    },
+  },
+});
+
+// actions to update the state
+export const { showStartingMessage, indicateCheckbox, addInteraction, updateInteraction } = stateSlice.actions;

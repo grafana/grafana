@@ -12,6 +12,7 @@ node_modules
 pkg
 public/lib/monaco
 public/sass/*.generated.scss
+scripts/cli/bettererIssueTemplate.md
 scripts/grafana-server/tmp
 vendor
 
@@ -37,4 +38,5 @@ kinds/report.json
 # Generated schema docs
 docs/sources/developers/kinds/
 
-scripts/cli/bettererIssueTemplate.md
+# Crowdin files
+public/locales/**/*.json

@@ -173,8 +173,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		AllowOrgCreate:                      (hs.Cfg.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		AuthProxyEnabled:                    hs.Cfg.AuthProxyEnabled,
 		LdapEnabled:                         hs.Cfg.LDAPAuthEnabled,
-		JwtHeaderName:                       hs.Cfg.JWTAuthHeaderName,
-		JwtUrlLogin:                         hs.Cfg.JWTAuthURLLogin,
+		JwtHeaderName:                       hs.Cfg.JWTAuth.HeaderName,
+		JwtUrlLogin:                         hs.Cfg.JWTAuth.URLLogin,
 		AlertingErrorOrTimeout:              hs.Cfg.AlertingErrorOrTimeout,
 		AlertingNoDataOrNullValues:          hs.Cfg.AlertingNoDataOrNullValues,
 		AlertingMinInterval:                 hs.Cfg.AlertingMinInterval,
@@ -219,6 +219,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		PublicDashboardAccessToken:          c.PublicDashboardAccessToken,
 		PublicDashboardsEnabled:             hs.Cfg.PublicDashboardsEnabled,
 		SharedWithMeFolderUID:               folder.SharedWithMeFolderUID,
+		RootFolderUID:                       accesscontrol.GeneralFolderUID,
 
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
 			HideVersion:   hideVersion,
@@ -321,7 +322,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
 		SAMLSkipOrgRoleSync:         hs.Cfg.SAMLSkipOrgRoleSync,
 		LDAPSkipOrgRoleSync:         hs.Cfg.LDAPSkipOrgRoleSync,
-		JWTAuthSkipOrgRoleSync:      hs.Cfg.JWTAuthSkipOrgRoleSync,
+		JWTAuthSkipOrgRoleSync:      hs.Cfg.JWTAuth.SkipOrgRoleSync,
 		GoogleSkipOrgRoleSync:       parseSkipOrgRoleSyncEnabled(oauthProviders[social.GoogleProviderName]),
 		GrafanaComSkipOrgRoleSync:   parseSkipOrgRoleSyncEnabled(oauthProviders[social.GrafanaComProviderName]),
 		GenericOAuthSkipOrgRoleSync: parseSkipOrgRoleSyncEnabled(oauthProviders[social.GenericOAuthProviderName]),
