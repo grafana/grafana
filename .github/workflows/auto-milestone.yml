@@ -32,6 +32,11 @@ jobs:
           app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
 
+      - name: Print
+        shell: bash
+        run: |
+          echo ${{ github.event.pull_request.base.ref }}
+
       - name: Run auto-milestone
         uses: grafana/grafana-github-actions-go/auto-milestone@main
         if: github.event.pull_request.base.ref == 'refs/head/main'
