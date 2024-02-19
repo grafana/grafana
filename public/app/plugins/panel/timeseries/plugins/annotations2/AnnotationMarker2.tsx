@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React, { useState, useRef, useReducer } from 'react';
 import { createPortal } from 'react-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
-import {  useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import { AnnotationEditor2 } from './AnnotationEditor2';
 import { AnnotationTooltip2 } from './AnnotationTooltip2';
@@ -35,15 +35,32 @@ export const AnnotationMarker2 = ({
   const styles = useStyles2(getStyles);
 
   const [state, setState] = useState(exitWipEdit != null ? STATE_EDITING : STATE_DEFAULT);
+  const [_, forceUpdate] = useReducer((x) => x + 1, 0);
 
-  const domRef = React.createRef<HTMLDivElement>();
+  const domRef = useRef<HTMLDivElement>(null);
 
-  const containerStyle: React.CSSProperties = {
-    transform: 'translateX(300px) translateY(300px)',
-  };
+  let posStyle = useRef<React.CSSProperties>({
+    transform: undefined,
+  });
+
+  // this is cheaper than an unconditional useLayoutEffect in every marker
+  if (state !== STATE_DEFAULT) {
+    if (domRef.current != null) {
+      let domRect = domRef.current.getBoundingClientRect();
+
+      posStyle.current.transform = `translate(${domRect.left}px, ${domRect.top}px)`;
+    } else {
+      setTimeout(() => {
+        forceUpdate();
+      }, 0);
+    }
+  } else {
+    posStyle.current.transform = undefined;
+  }
 
   const contents =
-    state === STATE_HOVERED ? (
+    posStyle.current.transform &&
+    (state === STATE_HOVERED ? (
       <AnnotationTooltip2
         annoIdx={annoIdx}
         annoVals={annoVals}
@@ -60,7 +77,7 @@ export const AnnotationMarker2 = ({
           setState(STATE_DEFAULT);
         }}
       />
-    ) : null;
+    ) : null);
 
   return (
     <div
@@ -72,7 +89,7 @@ export const AnnotationMarker2 = ({
     >
       {contents &&
         createPortal(
-          <div className={styles.annoBox} style={containerStyle}>
+          <div className={styles.annoBox} style={posStyle.current}>
             {contents}
           </div>,
           portalRoot
