@@ -76,7 +76,7 @@ func GetPreferencesFor(ctx context.Context,
 		}
 	}
 
-	dto := preferences.Spec{}
+	dto := preferences.Preferences{}
 
 	if preference.WeekStart != nil && *preference.WeekStart != "" {
 		dto.WeekStart = preference.WeekStart
