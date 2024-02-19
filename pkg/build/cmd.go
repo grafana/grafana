@@ -11,11 +11,14 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/build/fsutil"
 )
 
 const (
 	GoOSWindows = "windows"
 	GoOSLinux   = "linux"
+	GoOSDarwin  = "darwin"
 
 	BackendBinary = "grafana"
 	ServerBinary  = "grafana-server"
@@ -182,6 +185,7 @@ func doBuild(binaryName, pkg string, opts BuildOpts) error {
 		args = append(args, "-buildmode=exe")
 	}
 
+	opts.buildTags = append(opts.buildTags, "duckdb_use_libdb")
 	if len(opts.buildTags) > 0 {
 		args = append(args, "-tags", strings.Join(opts.buildTags, ","))
 	}
@@ -285,6 +289,38 @@ func setBuildEnv(opts BuildOpts) error {
 		if err := os.Setenv("CGO_ENABLED", "1"); err != nil {
 			return err
 		}
+		wd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		cgoLibs := filepath.Join(wd, "lib", opts.goos)
+		cgoLDFlags := fmt.Sprintf("-L%s", cgoLibs)
+		if err := os.Setenv("CGO_LDFLAGS", cgoLDFlags); err != nil {
+			return err
+		}
+
+		// TODO - why doesn't this work?
+		// if err := os.Setenv("DYLD_LIBRARY_PATH", cgoLibs); err != nil {
+		// 	return err
+		// }
+		// if err := os.Setenv("LD_LIBRARY_PATH", cgoLibs); err != nil {
+		// 	return err
+		// }
+
+		// TODO - since LD_LIBRARY_PATH doesn't seem to work, copy the libs to the root
+		libs, err := os.ReadDir(cgoLibs)
+		if err != nil {
+			return err
+		}
+
+		for _, lib := range libs {
+			src := filepath.Join(cgoLibs, lib.Name())
+			dest := filepath.Join(wd, lib.Name())
+			if err := fsutil.CopyFile(src, dest); err != nil {
+				return err
+			}
+		}
+
 	}
 
 	if opts.gocc == "" {
