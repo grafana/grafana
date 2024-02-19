@@ -39,7 +39,7 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
 function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardControls>) {
   const { variableControls, refreshPicker, timePicker, hideTimeControls } = model.useState();
   const dashboard = getDashboardSceneFor(model);
-  const { links, meta } = dashboard.useState();
+  const { links, meta, editPanel } = dashboard.useState();
   const styles = useStyles2(getStyles);
   const showDebugger = location.search.includes('scene-debugger');
 
@@ -50,7 +50,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           <c.Component model={c} key={c.state.key} />
         ))}
         <Box grow={1} />
-        <DashboardLinksControls links={links} uid={dashboard.state.uid} />
+        {!editPanel && <DashboardLinksControls links={links} uid={dashboard.state.uid} />}
       </Stack>
       {!hideTimeControls && (
         <Stack justifyContent={'flex-end'}>
