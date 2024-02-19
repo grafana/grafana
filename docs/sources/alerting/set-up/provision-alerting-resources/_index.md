@@ -45,9 +45,9 @@ Currently, provisioning for Grafana Alerting supports alert rules, contact point
 [Grafana Alerting provisioning API][alerting_provisioning]
 
 {{% docs/reference %}}
-[alerting_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/alerting_provisioning"
-[alerting_provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/developers/http_api/alerting_provisioning"
+[alerting_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/developers/http_api/alerting_provisioning"
+[alerting_provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/developers/http_api/alerting_provisioning"
 
-[provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning"
-[provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/provisioning"
+[provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/administration/provisioning"
+[provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/administration/provisioning"
 {{% /docs/reference %}}

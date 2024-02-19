@@ -144,6 +144,6 @@ The waiting time to resend an alert after they have successfully been sent. This
 **Default** 4 hours
 
 {{% docs/reference %}}
-[labels-and-label-matchers]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label/labels-and-label-matchers"
+[labels-and-label-matchers]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/annotation-label/labels-and-label-matchers"
 [labels-and-label-matchers]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label/labels-and-label-matchers"
 {{% /docs/reference %}}

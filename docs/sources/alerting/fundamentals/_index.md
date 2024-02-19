@@ -65,6 +65,6 @@ Add silences to stop notifications from one or more alert instances or use mute 
 The difference between the two being that a silence only lasts for only a specified window of time whereas a mute timing recurs on a schedule, for example, during a maintenance period.
 
 {{% docs/reference %}}
-[notification-policies]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/notification-policies"
+[notification-policies]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notification-policies"
 [notification-policies]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notification-policies"
 {{% /docs/reference %}}
