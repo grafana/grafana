@@ -159,6 +159,7 @@ const dashboard = {
     folderId: 1,
     folderTitle: 'super folder',
   },
+  isSnapshot: () => false,
 } as unknown as DashboardModel;
 
 const panel = new PanelModel({
