@@ -12,7 +12,6 @@ module.exports = {
       'removeScriptElement',
     ],
   },
-  // ext: 'jsx',
   jsx: {
     babelConfig: {
       plugins: [

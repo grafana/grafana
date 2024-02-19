@@ -3965,9 +3965,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@grafana/icons@workspace:packages/grafana-icons"
   dependencies:
-    "@grafana/tsconfig": "npm:^1.3.0-rc1"
-    "@rollup/plugin-node-resolve": "npm:^15.2.3"
-    "@rollup/plugin-typescript": "npm:^11.1.6"
     "@svgr/babel-plugin-remove-jsx-attribute": "npm:^8.0.0"
     "@svgr/cli": "npm:^8.1.0"
     "@svgr/plugin-jsx": "npm:^8.1.0"
@@ -3981,11 +3978,6 @@ __metadata:
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
     rimraf: "npm:^5.0.5"
-    rollup: "npm:2.79.1"
-    rollup-plugin-dts: "npm:^6.1.0"
-    rollup-plugin-esbuild: "npm:5.0.0"
-    rollup-plugin-node-externals: "npm:5.0.0"
-    ts-node: "npm:^10.9.2"
     typescript: "npm:^5.3.3"
   peerDependencies:
     react: ^17.0.0 || ^18.0.0
@@ -7171,7 +7163,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@rollup/plugin-node-resolve@npm:15.2.3, @rollup/plugin-node-resolve@npm:^15.2.3":
+"@rollup/plugin-node-resolve@npm:15.2.3":
   version: 15.2.3
   resolution: "@rollup/plugin-node-resolve@npm:15.2.3"
   dependencies:
@@ -7187,25 +7179,6 @@ __metadata:
     rollup:
       optional: true
   checksum: 10/d36a6792fbe9d8673d3a7c7dc88920be669ac54fba02ac0093d3c00fc9463fce2e87da1906a2651016742709c3d202b367fb49a62acd0d98f18409343f27b8b4
-  languageName: node
-  linkType: hard
-
-"@rollup/plugin-typescript@npm:^11.1.6":
-  version: 11.1.6
-  resolution: "@rollup/plugin-typescript@npm:11.1.6"
-  dependencies:
-    "@rollup/pluginutils": "npm:^5.1.0"
-    resolve: "npm:^1.22.1"
-  peerDependencies:
-    rollup: ^2.14.0||^3.0.0||^4.0.0
-    tslib: "*"
-    typescript: ">=3.7.0"
-  peerDependenciesMeta:
-    rollup:
-      optional: true
-    tslib:
-      optional: true
-  checksum: 10/4ae4d6cfc929393171288df2f18b5eb837fa53d8689118d9661b3064567341f6f6cf8389af55f1d5f015e3682abf30a64ab609fdf75ecb5a84224505e407eb69
   languageName: node
   linkType: hard
 
@@ -22405,15 +22378,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"magic-string@npm:^0.30.4":
-  version: 0.30.7
-  resolution: "magic-string@npm:0.30.7"
-  dependencies:
-    "@jridgewell/sourcemap-codec": "npm:^1.4.15"
-  checksum: 10/883eaaf6792a3263e44f4bcdcd35ace272268e4b98ed5a770ad711947958d2f9fc683e474945e306e2bdc152b7e44d369ee312690d87025b9879fc63fbe1409c
-  languageName: node
-  linkType: hard
-
 "make-dir@npm:4.0.0":
   version: 4.0.0
   resolution: "make-dir@npm:4.0.0"
@@ -27858,22 +27822,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup-plugin-dts@npm:^6.1.0":
-  version: 6.1.0
-  resolution: "rollup-plugin-dts@npm:6.1.0"
-  dependencies:
-    "@babel/code-frame": "npm:^7.22.13"
-    magic-string: "npm:^0.30.4"
-  peerDependencies:
-    rollup: ^3.29.4 || ^4
-    typescript: ^4.5 || ^5.0
-  dependenciesMeta:
-    "@babel/code-frame":
-      optional: true
-  checksum: 10/2ecbda8eb0644ce98ee3a795bf5b99368d80e357972c227b07c382c4af34e03fe681c0f6674e1967330b69e79f2ddf288a672f8964441d5f98e9998c50f41a01
-  languageName: node
-  linkType: hard
-
 "rollup-plugin-esbuild@npm:5.0.0":
   version: 5.0.0
   resolution: "rollup-plugin-esbuild@npm:5.0.0"
@@ -27887,15 +27835,6 @@ __metadata:
     esbuild: ">=0.10.1"
     rollup: ^1.20.0 || ^2.0.0 || ^3.0.0
   checksum: 10/94b8dcad27eada7a7422aa8dbee4784452d2598fccc60555a3639d86e8872e9d440b5debcd26883389695cf03d61891ba8b076a7a35c6bf4beddbdd0be404642
-  languageName: node
-  linkType: hard
-
-"rollup-plugin-node-externals@npm:5.0.0":
-  version: 5.0.0
-  resolution: "rollup-plugin-node-externals@npm:5.0.0"
-  peerDependencies:
-    rollup: ^2.60.0
-  checksum: 10/745df84e554dc8b779ade79d88e1e21b30780653b9e454f8591163d87d55519bc71219a7f7a994ed32a3f2d5f9eb498be0649a78b42992806c272597bf49f207
   languageName: node
   linkType: hard
 
@@ -30345,7 +30284,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-node@npm:10.9.2, ts-node@npm:^10.2.1, ts-node@npm:^10.9.2":
+"ts-node@npm:10.9.2, ts-node@npm:^10.2.1":
   version: 10.9.2
   resolution: "ts-node@npm:10.9.2"
   dependencies:
