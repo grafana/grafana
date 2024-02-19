@@ -1,5 +1,7 @@
 import { css } from '@emotion/css';
-import React, { useState, useRef, useReducer } from 'react';
+import { flip, shift, autoUpdate } from '@floating-ui/dom';
+import { useFloating } from '@floating-ui/react';
+import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -35,32 +37,29 @@ export const AnnotationMarker2 = ({
   const styles = useStyles2(getStyles);
 
   const [state, setState] = useState(exitWipEdit != null ? STATE_EDITING : STATE_DEFAULT);
-  const [_, forceUpdate] = useReducer((x) => x + 1, 0);
-
-  const domRef = useRef<HTMLDivElement>(null);
-
-  let posStyle = useRef<React.CSSProperties>({
-    transform: undefined,
+  const { refs, floatingStyles } = useFloating({
+    open: true,
+    placement: 'bottom',
+    // onOpenChange: (open) => {
+    //   if (!open) {
+    //     onDismiss();
+    //   }
+    // },
+    middleware: [
+      flip({
+        fallbackAxisSideDirection: 'end',
+        // see https://floating-ui.com/docs/flip#combining-with-shift
+        crossAxis: false,
+        boundary: document.body,
+      }),
+      shift(),
+    ],
+    whileElementsMounted: autoUpdate,
+    strategy: 'fixed',
   });
 
-  // this is cheaper than an unconditional useLayoutEffect in every marker
-  if (state !== STATE_DEFAULT) {
-    if (domRef.current != null) {
-      let domRect = domRef.current.getBoundingClientRect();
-
-      posStyle.current.transform = `translate(${domRect.left}px, ${domRect.top}px)`;
-    } else {
-      setTimeout(() => {
-        forceUpdate();
-      }, 0);
-    }
-  } else {
-    posStyle.current.transform = undefined;
-  }
-
   const contents =
-    posStyle.current.transform &&
-    (state === STATE_HOVERED ? (
+    state === STATE_HOVERED ? (
       <AnnotationTooltip2
         annoIdx={annoIdx}
         annoVals={annoVals}
@@ -77,11 +76,11 @@ export const AnnotationMarker2 = ({
           setState(STATE_DEFAULT);
         }}
       />
-    ) : null);
+    ) : null;
 
   return (
     <div
-      ref={domRef}
+      ref={refs.setReference}
       className={className}
       style={style!}
       onMouseEnter={() => state !== STATE_EDITING && setState(STATE_HOVERED)}
@@ -89,7 +88,7 @@ export const AnnotationMarker2 = ({
     >
       {contents &&
         createPortal(
-          <div className={styles.annoBox} style={posStyle.current}>
+          <div ref={refs.setFloating} className={styles.annoBox} style={floatingStyles}>
             {contents}
           </div>,
           portalRoot
