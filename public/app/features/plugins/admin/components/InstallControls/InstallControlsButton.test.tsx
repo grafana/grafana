@@ -17,6 +17,7 @@ const plugin: CatalogPlugin = {
   id: 'test-plugin',
   info: {
     logos: { small: '', large: '' },
+    keywords: ['test', 'plugin'],
   },
   name: 'Testing Plugin',
   orgName: 'Test',
@@ -93,35 +94,35 @@ describe('InstallControlsButton', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  describe('uninstall button on prem', () => {
+  describe('update button on prem', () => {
     const store = configureStore({
       plugins: getPluginsStateMock([]),
     });
 
-    it('should be disable when is Installing', () => {
-      store.dispatch({ type: 'plugins/uninstall/pending' });
+    it('should be disabled when is Installing', () => {
+      store.dispatch({ type: 'plugins/install/pending' });
       render(
         <TestProvider store={store}>
-          <InstallControlsButton plugin={{ ...plugin }} pluginStatus={PluginStatus.UNINSTALL} />
+          <InstallControlsButton plugin={{ ...plugin }} pluginStatus={PluginStatus.UPDATE} />
         </TestProvider>
       );
-      const button = screen.getByText('Uninstalling').closest('button');
+      const button = screen.getByText('Updating').closest('button');
       expect(button).toBeDisabled();
     });
 
-    it('should be enabled when not is Installing', () => {
-      store.dispatch({ type: 'plugins/uninstall/fulfilled', payload: { id: '', changes: {} } });
+    it('should be enabled when it is not Installing', () => {
+      store.dispatch({ type: 'plugins/install/fulfilled', payload: { id: '', changes: {} } });
       render(
         <TestProvider store={store}>
-          <InstallControlsButton plugin={{ ...plugin }} pluginStatus={PluginStatus.UNINSTALL} />
+          <InstallControlsButton plugin={{ ...plugin }} pluginStatus={PluginStatus.UPDATE} />
         </TestProvider>
       );
-      const button = screen.getByText('Uninstall').closest('button');
+      const button = screen.getByText('Update').closest('button');
       expect(button).toBeEnabled();
     });
   });
 
-  describe('uninstall button on manage instance', () => {
+  describe('update button on managed instance', () => {
     const oldFeatureTogglesManagedPluginsInstall = config.featureToggles.managedPluginsInstall;
     const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
 
@@ -139,31 +140,31 @@ describe('InstallControlsButton', () => {
       plugins: getPluginsStateMock([]),
     });
 
-    it('should be disabled when is Installing=false but isUninstallingFromInstance=true', () => {
-      store.dispatch({ type: 'plugins/uninstall/fulfilled', payload: { id: '', changes: {} } });
+    it('should be disabled when isInstalling=false but isUpdatingFromInstance=true', () => {
+      store.dispatch({ type: 'plugins/install/fulfilled', payload: { id: '', changes: {} } });
       render(
         <TestProvider store={store}>
           <InstallControlsButton
-            plugin={{ ...plugin, isUninstallingFromInstance: true }}
-            pluginStatus={PluginStatus.UNINSTALL}
+            plugin={{ ...plugin, isUpdatingFromInstance: true }}
+            pluginStatus={PluginStatus.UPDATE}
           />
         </TestProvider>
       );
-      const button = screen.getByText('Uninstall').closest('button');
+      const button = screen.getByText('Update').closest('button');
       expect(button).toBeDisabled();
     });
 
-    it('should be disabled when is Installing=false but isUninstallingFromInstance=false', () => {
-      store.dispatch({ type: 'plugins/uninstall/fulfilled', payload: { id: '', changes: {} } });
+    it('should be enabled when isInstalling=false and isUpdatingFromInstance=false', () => {
+      store.dispatch({ type: 'plugins/install/fulfilled', payload: { id: '', changes: {} } });
       render(
         <TestProvider store={store}>
           <InstallControlsButton
-            plugin={{ ...plugin, isUninstallingFromInstance: false }}
-            pluginStatus={PluginStatus.UNINSTALL}
+            plugin={{ ...plugin, isUpdatingFromInstance: false }}
+            pluginStatus={PluginStatus.UPDATE}
           />
         </TestProvider>
       );
-      const button = screen.getByText('Uninstall').closest('button');
+      const button = screen.getByText('Update').closest('button');
       expect(button).toBeEnabled();
     });
   });

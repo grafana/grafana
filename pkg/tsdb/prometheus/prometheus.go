@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/instrumentation"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
@@ -34,19 +33,19 @@ type instance struct {
 	versionCache *cache.Cache
 }
 
-func ProvideService(httpClientProvider *httpclient.Provider, cfg *setting.Cfg) *Service {
+func ProvideService(httpClientProvider *httpclient.Provider) *Service {
 	plog := backend.NewLoggerWith("logger", "tsdb.prometheus")
 	plog.Debug("Initializing")
 	return &Service{
-		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, cfg, plog)),
+		im:     datasource.NewInstanceManager(newInstanceSettings(httpClientProvider, plog)),
 		logger: plog,
 	}
 }
 
-func newInstanceSettings(httpClientProvider *httpclient.Provider, cfg *setting.Cfg, log log.Logger) datasource.InstanceFactoryFunc {
+func newInstanceSettings(httpClientProvider *httpclient.Provider, log log.Logger) datasource.InstanceFactoryFunc {
 	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		// Creates a http roundTripper.
-		opts, err := client.CreateTransportOptions(ctx, settings, cfg, log)
+		opts, err := client.CreateTransportOptions(ctx, settings, log)
 		if err != nil {
 			return nil, fmt.Errorf("error creating transport options: %v", err)
 		}

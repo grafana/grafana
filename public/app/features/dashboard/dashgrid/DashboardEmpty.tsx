@@ -8,13 +8,15 @@ import { Button, useStyles2, Text, Box, Stack } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { onAddLibraryPanel, onCreateNewPanel, onImportDashboard } from 'app/features/dashboard/utils/dashboard';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { onCreateNewPanel as onCreateNewPanelScene } from 'app/features/dashboard-scene/utils/utils';
 import { useDispatch, useSelector } from 'app/types';
 
 import { setInitialDatasource } from '../state/reducers';
 
 export interface Props {
-  dashboard: DashboardModel;
+  dashboard: DashboardModel | DashboardScene;
   canCreate: boolean;
 }
 
@@ -22,6 +24,20 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const initialDatasource = useSelector((state) => state.dashboard.initialDatasource);
+  const isDashboardScene = dashboard instanceof DashboardScene;
+
+  const onAddVisualization = () => {
+    let id;
+    if (isDashboardScene) {
+      id = onCreateNewPanelScene(dashboard);
+    } else {
+      id = onCreateNewPanel(dashboard, initialDatasource);
+      dispatch(setInitialDatasource(undefined));
+    }
+
+    locationService.partial({ editPanel: id, firstPanel: true });
+    DashboardInteractions.emptyDashboardButtonClicked({ item: 'add_visualization' });
+  };
 
   return (
     <Stack alignItems="center" justifyContent="center">
@@ -46,13 +62,7 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                 size="lg"
                 icon="plus"
                 data-testid={selectors.pages.AddDashboard.itemButton('Create new panel button')}
-                onClick={() => {
-                  const id = onCreateNewPanel(dashboard, initialDatasource);
-                  DashboardInteractions.emptyDashboardButtonClicked({ item: 'add_visualization' });
-
-                  locationService.partial({ editPanel: id, firstPanel: true });
-                  dispatch(setInitialDatasource(undefined));
-                }}
+                onClick={onAddVisualization}
                 disabled={!canCreate}
               >
                 <Trans i18nKey="dashboard.empty.add-visualization-button">Add visualization</Trans>
@@ -104,7 +114,11 @@ const DashboardEmpty = ({ dashboard, canCreate }: Props) => {
                   data-testid={selectors.pages.AddDashboard.itemButton('Add a panel from the panel library button')}
                   onClick={() => {
                     DashboardInteractions.emptyDashboardButtonClicked({ item: 'import_from_library' });
-                    onAddLibraryPanel(dashboard);
+                    if (isDashboardScene) {
+                      // TODO: dashboard scene logic for adding a library panel
+                    } else {
+                      onAddLibraryPanel(dashboard);
+                    }
                   }}
                   disabled={!canCreate}
                 >
