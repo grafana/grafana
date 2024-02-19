@@ -353,15 +353,15 @@ When the alert fires, Grafana routes a notification through the policy you defin
 For example, if you chose Slack as a contact point, Grafana’s embedded [Alertmanager](https://github.com/prometheus/alertmanager) automatically posts a message to Slack.
 
 {{% docs/reference %}}
-[alerting-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/alerting-rules"
+[alerting-rules]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules"
 [alerting-rules]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules"
 
-[api-keys]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/api-keys"
-[api-keys]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/api-keys"
+[api-keys]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/administration/api-keys"
+[api-keys]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/administration/api-keys"
 
-[service-accounts]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/service-accounts"
-[service-accounts]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/service-accounts"
+[service-accounts]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts"
+[service-accounts]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/administration/service-accounts"
 
-[testdata]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/datasources/testdata"
-[testdata]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/datasources/testdata"
+[testdata]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/testdata"
+[testdata]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/datasources/testdata"
 {{% /docs/reference %}}
