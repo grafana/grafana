@@ -24,9 +24,11 @@ func (jenny *K8StatusJenny) Generate(data DataForGen) (codejen.Files, error) {
 			return nil, fmt.Errorf("file %s doesn't have name field set: %s", data.Files[i], err)
 		}
 
+		pkg = strings.ToLower(pkg)
+
 		buf := new(bytes.Buffer)
 		if err := tmpls.Lookup("core_status.tmpl").Execute(buf, tvars_status{
-			PackageName: strings.ToLower(pkg),
+			PackageName: pkg,
 		}); err != nil {
 			return nil, fmt.Errorf("failed executing core resource template: %w", err)
 		}

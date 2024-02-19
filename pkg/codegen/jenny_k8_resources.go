@@ -29,9 +29,11 @@ func (jenny *K8ResourcesJenny) Generate(data DataForGen) (codejen.Files, error) 
 			return nil, fmt.Errorf("file %s doesn't have name field set: %s", data.Files[i], err)
 		}
 
+		pkgName := strings.ToLower(pkg)
+
 		buf := new(bytes.Buffer)
 		if err := tmpls.Lookup("core_resource.tmpl").Execute(buf, tvars_resource{
-			PackageName: strings.ToLower(pkg),
+			PackageName: pkgName,
 			KindName:    pkg,
 			Version:     version,
 		}); err != nil {
@@ -43,7 +45,7 @@ func (jenny *K8ResourcesJenny) Generate(data DataForGen) (codejen.Files, error) 
 			return nil, err
 		}
 
-		files[i] = *codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_metadata_gen.go", pkg, pkg), content, jenny)
+		files[i] = *codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_metadata_gen.go", pkgName, pkgName), content, jenny)
 	}
 
 	return files, nil
