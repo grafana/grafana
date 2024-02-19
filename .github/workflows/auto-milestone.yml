@@ -39,7 +39,6 @@ jobs:
 
       - name: Run auto-milestone
         uses: grafana/grafana-github-actions-go/auto-milestone@main
-        if: github.event.pull_request.base.ref == 'refs/head/main'
         with:
           pr: ${{ github.event.pull_request.number }}
           token: ${{ steps.generate_token.outputs.token }}
