@@ -753,7 +753,14 @@ func (dr DashboardServiceImpl) CountInFolders(ctx context.Context, orgID int64, 
 }
 
 func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) error {
-	return dr.dashboardStore.SoftDeleteDashboardsInFolder(ctx, orgID, folderUIDs)
+	for _, folderUID := range folderUIDs {
+		// only hard delete the folder representation in the dashboard store
+		// nolint:staticcheck
+		if err := dr.dashboardStore.SoftDeleteDashboardsInFolder(ctx, orgID, folderUID); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (dr *DashboardServiceImpl) Kind() string { return entity.StandardKindDashboard }

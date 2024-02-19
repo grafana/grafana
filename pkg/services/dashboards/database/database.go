@@ -1109,10 +1109,6 @@ func (d *dashboardStore) DeleteDashboardsInFolders(
 		}
 		return nil
 	})
-	if err != nil {
-		return nil, err
-	}
-	return dashboards, nil
 }
 
 func (d *dashboardStore) GetSoftDeletedExpiredDashboards(ctx context.Context, duration time.Duration) ([]*dashboards.Dashboard, error) {
