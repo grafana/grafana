@@ -112,9 +112,6 @@ export function NestedFolderPicker({
     });
   }, [search]);
 
-  // const rootCollection = useSelector(rootItemsSelector);
-  // const childrenCollections = useSelector(childrenByParentUIDSelector);
-
   // the order of middleware is important!
   const middleware = [
     flip({
@@ -149,9 +146,7 @@ export function NestedFolderPicker({
       setFolderOpenState((old) => ({ ...old, [uid]: newOpenState }));
 
       if (newOpenState && !folderOpenState[uid]) {
-        console.log('Fetching folder', { parentUID: uid, pageSize: PAGE_SIZE });
         fetchFolderPage(uid);
-        // dispatch(fetchNextChildrenPage({ parentUID: uid, pageSize: PAGE_SIZE, excludeKinds: EXCLUDED_KINDS }));
       }
     },
     [fetchFolderPage, folderOpenState]
@@ -180,7 +175,6 @@ export function NestedFolderPicker({
 
   const handleCloseOverlay = useCallback(() => setOverlayOpen(false), [setOverlayOpen]);
 
-  // const baseHandleLoadMore = useLoadNextChildrenPage(EXCLUDED_KINDS);
   const handleLoadMore = useCallback(
     (folderUID: string | undefined) => {
       if (search) {
@@ -192,57 +186,7 @@ export function NestedFolderPicker({
     [search, fetchFolderPage]
   );
 
-  // const flatTree = useMemo(() => {
-  //   if (search && searchResults) {
-  //     const searchCollection: DashboardViewItemCollection = {
-  //       isFullyLoaded: true, //searchResults.items.length === searchResults.totalRows,
-  //       lastKindHasMoreItems: false, // TODO: paginate search
-  //       lastFetchedKind: 'folder', // TODO: paginate search
-  //       lastFetchedPage: 1, // TODO: paginate search
-  //       items: searchResults.items ?? [],
-  //     };
-
-  //     return createFlatTree(undefined, searchCollection, childrenCollections, {}, 0, EXCLUDED_KINDS, excludeUIDs);
-  //   }
-
-  //   const allExcludedUIDs = config.sharedWithMeFolderUID
-  //     ? [...(excludeUIDs || []), config.sharedWithMeFolderUID]
-  //     : excludeUIDs;
-
-  //   let flatTree = createFlatTree(
-  //     undefined,
-  //     rootCollection,
-  //     childrenCollections,
-  //     folderOpenState,
-  //     0,
-  //     EXCLUDED_KINDS,
-  //     allExcludedUIDs
-  //   );
-
-  //   if (showRootFolder) {
-  //     // Increase the level of each item to 'make way' for the fake root Dashboards item
-  //     for (const item of flatTree) {
-  //       item.level += 1;
-  //     }
-
-  //     flatTree.unshift({
-  //       isOpen: true,
-  //       level: 0,
-  //       item: {
-  //         kind: 'folder',
-  //         title: 'Dashboards',
-  //         uid: '',
-  //       },
-  //     });
-  //   }
-
-  //   // If the root collection hasn't loaded yet, create loading placeholders
-  //   if (!rootCollection) {
-  //     flatTree = flatTree.concat(getPaginationPlaceholders(PAGE_SIZE, undefined, 0));
-  //   }
-
-  //   return flatTree;
-  // }, [search, searchResults, rootCollection, childrenCollections, folderOpenState, excludeUIDs, showRootFolder]);
+  // JOSH TODO: return search results as a flat tree
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {
