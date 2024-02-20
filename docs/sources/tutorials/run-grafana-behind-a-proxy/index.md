@@ -34,7 +34,7 @@ domain = example.com
 
 - Restart Grafana for the new changes to take effect.
 
-## Configure Reverse Proxy
+## Configure reverse proxy
 
 ### Configure NGINX
 
