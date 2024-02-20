@@ -112,7 +112,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'flex-end',
       paddingLeft: theme.spacing(1),
       flexGrow: 1,
-      gap: theme.spacing(0.5),
+      gap: theme.spacing(1),
       minWidth: 0,
 
       '.body-drawer-open &': {

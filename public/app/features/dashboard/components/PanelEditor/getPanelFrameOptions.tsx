@@ -4,6 +4,7 @@ import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataLinksInlineEditor, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
 import { VizPanelManager, VizPanelManagerState } from 'app/features/dashboard-scene/panel-edit/VizPanelManager';
+import { VizPanelLinks } from 'app/features/dashboard-scene/scene/PanelLinks';
 import { dashboardSceneGraph } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
@@ -250,17 +251,7 @@ export function getPanelFrameCategory2(panelManager: VizPanelManager): OptionsPa
       }).addItem(
         new OptionsPaneItemDescriptor({
           title: 'Panel links',
-          render: function renderLinks() {
-            const { rawLinks: links } = panelLinksObject.useState();
-            return (
-              <DataLinksInlineEditor
-                links={links}
-                onChange={(links) => panelLinksObject.setState({ rawLinks: links })}
-                getSuggestions={getPanelLinksVariableSuggestions}
-                data={[]}
-              />
-            );
-          },
+          render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject} />,
         })
       )
     )
@@ -329,4 +320,21 @@ export function getPanelFrameCategory2(panelManager: VizPanelManager): OptionsPa
           })
         )
     );
+}
+
+interface ScenePanelLinksEditorProps {
+  panelLinks: VizPanelLinks;
+}
+
+function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
+  const { rawLinks: links } = panelLinks.useState();
+
+  return (
+    <DataLinksInlineEditor
+      links={links}
+      onChange={(links) => panelLinks.setState({ rawLinks: links })}
+      getSuggestions={getPanelLinksVariableSuggestions}
+      data={[]}
+    />
+  );
 }
