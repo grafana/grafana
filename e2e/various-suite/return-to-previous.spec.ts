@@ -7,20 +7,20 @@ describe('ReturnToPrevious button', () => {
 
   beforeEach(() => {
     // TODO: Remove both delete processes after finishing beforeEach
-    // // Delete alert rule
-    // cy.visit('/alerting/list?search=');
-    // cy.get('[data-testid="group-collapse-toggle"]').click();
-    // cy.get('[data-testid="row"]').find('[type="button"]').last().click();
-    // cy.get('[role="menuitem"]').last().click();
-    // cy.get('[data-testid="data-testid Confirm Modal Danger Button"]').click();
-    //
-    // // Delete test folder for clean up reasons
-    // cy.visit('/dashboards');
-    // cy.get('[data-testid="data-testid browse dashboards row test folder"]').find('a').click();
-    // cy.get('[data-testid="data-testid folder actions button"]').click();
-    // cy.get('[id="grafana-portal-container"]').find('button').last().click();
-    // cy.get('[role="dialog"]').find('input').type('Delete');
-    // cy.get('[data-testid="data-testid Confirm Modal Danger Button"]').click();
+    // Delete alert rule
+    cy.visit('/alerting/list?search=');
+    cy.get('[data-testid="group-collapse-toggle"]').click();
+    cy.get('[data-testid="row"]').find('[type="button"]').last().click();
+    cy.get('[role="menuitem"]').last().click();
+    cy.get('[data-testid="data-testid Confirm Modal Danger Button"]').click();
+
+    // Delete test folder for clean up reasons
+    cy.visit('/dashboards');
+    cy.get('[data-testid="data-testid browse dashboards row test folder"]').find('a').click();
+    cy.get('[data-testid="data-testid folder actions button"]').click();
+    cy.get('[id="grafana-portal-container"]').find('button').last().click();
+    cy.get('[role="dialog"]').find('input').type('Delete');
+    cy.get('[data-testid="data-testid Confirm Modal Danger Button"]').click();
 
     // Create a new alert rule with linked dashboard
     cy.visit('/alerting/list?search=');
@@ -45,19 +45,22 @@ describe('ReturnToPrevious button', () => {
     cy.get('[data-testid="data-testid Call to action button Create Dashboard"]').click();
     cy.get('[aria-label="Save dashboard"]').click();
     cy.get('[aria-label="Save dashboard button"]').click();
+    cy.wait(600); // TODO: use await instead?
     cy.get('[data-testid="data-testid Create new panel button"]').click();
-    cy.get('[role="dialog"]').find('[data-testid="data-source-card"]');
-    // TODO: create a panel as well
+    cy.get('[role="dialog"]').find('[data-testid="data-source-card"]').first().click();
+    cy.get('[title="Apply changes and save dashboard"]').click();
+    cy.get('[aria-label="Dashboard settings Save Dashboard Modal Save button"]').click();
 
-    // // Link alert rule to dashboard
-    // cy.visit('/alerting/list?search=');
-    // cy.get('[data-testid="group-collapse-toggle"]').click();
-    // cy.get('[data-testid="row"]').find('a[title="Edit"]').click();
-    // cy.get('[data-testid="data-testid link dashboard and panel"]').click();
+    // Link alert rule to dashboard
+    cy.visit('/alerting/list?search=');
+    cy.get('[data-testid="group-collapse-toggle"]').click();
+    cy.get('[data-testid="row"]').find('a[title="Edit"]').click();
+    cy.get('[data-testid="data-testid link dashboard and panel"]').click();
 
-    // cy.get('[role="dialog"]').find('input[title="Search dashboard"]').type('New dashboard')
-    // cy.get('[title="Alert list"]').click()
-    // cy.get('[data-testid="data-testid confirm button"]').click();
+    cy.get('[role="dialog"]').find('input[title="Search dashboard"]').type('New dashboard');
+    cy.get('[title="New dashboard"]').click();
+    cy.get('[title="Panel Title"]').click();
+    cy.get('[type="button"]').last().click(); // TODO: find the confirm button in a better way?
   });
 
   // afterEach(() => {
