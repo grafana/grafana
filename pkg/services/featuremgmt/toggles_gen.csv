@@ -161,5 +161,6 @@ nodeGraphDotLayout,experimental,@grafana/observability-traces-and-profiling,fals
 groupToNestedTableTransformation,preview,@grafana/dataviz-squad,false,false,true
 newPDFRendering,experimental,@grafana/sharing-squad,false,false,false
 kubernetesAggregator,experimental,@grafana/grafana-app-platform-squad,false,true,false
+expressionParser,experimental,@grafana/grafana-app-platform-squad,false,true,false
 groupByVariable,experimental,@grafana/dashboards-squad,false,false,false
 alertingUpgradeDryrunOnStart,GA,@grafana/alerting-squad,false,true,false
