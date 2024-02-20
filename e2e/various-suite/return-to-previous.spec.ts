@@ -65,5 +65,10 @@ describe('ReturnToPrevious button', () => {
     cy.get('[data-testid="data-testid Confirm Modal Danger Button"]').click();
   });
 
-  it('should appear when changing the context', () => {});
+  it('should appear when changing the context', () => {
+    cy.visit('/alerting/list?search=');
+    cy.get('[data-testid="group-collapse-toggle"]').click();
+    cy.get('[data-testid="collapse-toggle"]').click();
+    cy.get('[data-testid="expanded-content"]').find('[data-testid="data-testid go to dashboard"]').click();
+  });
 });

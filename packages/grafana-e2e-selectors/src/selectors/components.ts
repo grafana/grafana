@@ -292,6 +292,9 @@ export const Components = {
   AlertTab: {
     content: 'data-testid Alert editor tab content',
   },
+  AlertRules: {
+    toDashboard: 'data-testid go to dashboard',
+  },
   AlertRuleCreation: {
     save: 'data-testid save rule exit',
     newFolder: 'data-testid create folder',
@@ -542,5 +545,8 @@ export const Components = {
   },
   Tooltip: {
     container: 'data-testid tooltip',
+  },
+  ReturnToPrevious: {
+    dismissableButton: 'data-testid dismissable button',
   },
 };
