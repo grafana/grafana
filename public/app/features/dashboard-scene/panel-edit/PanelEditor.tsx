@@ -63,6 +63,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const panelManager = this.state.vizManager;
     const panel = panelManager.state.panel;
 
+    const newPanel = panelManager.state.panel.clone();
+    newPanel.setState({ ...newPanel, pluginId: 'table', title: '' });
+    this.state.vizManagerTableView?.setState({ panel: newPanel });
+
     this._subs.add(
       panelManager.subscribeToState((n, p) => {
         if (n.panel.state.pluginId !== p.panel.state.pluginId) {
@@ -169,16 +173,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   };
 
   public toggleTableView() {
-    const currentPluginId = this.state.vizManager.state.panel.state.pluginId;
-    const defaultPluginId = this.state.initialPanelPluginId;
-
-    const newPluginId = currentPluginId === 'table' ? defaultPluginId : 'table';
-    const newPanelTitle = currentPluginId === 'table' ? this.state.initialPanelTitle : '';
-
-    const newPanel = this.state.vizManager.state.panel.clone();
-    newPanel.setState({ ...newPanel, pluginId: newPluginId, title: newPanelTitle });
-    this.state.vizManagerTableView?.setState({ panel: newPanel });
-
     this.setState({ tableViewEnabled: !this.state.tableViewEnabled });
   }
 }
@@ -211,7 +205,8 @@ export function buildPanelEditScene(panel: VizPanel): PanelEditor {
       id="table-view"
       value={panelEditor.state.tableViewEnabled}
       onClick={() => panelEditor.toggleTableView()}
-      aria-label={selectors.components.PanelEditor.toggleTableView}
+      aria-label="toggle-table-view"
+      data-testid={selectors.components.PanelEditor.toggleTableView}
     />
   );
 
