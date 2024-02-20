@@ -60,10 +60,10 @@ export const LogsPanel = ({
   const [scrollTop, setScrollTop] = useState(0);
   const logsContainerRef = useRef<HTMLDivElement>(null);
   const [contextRow, setContextRow] = useState<LogRowModel | null>(null);
-  const [closeCallback, setCloseCallback] = useState<(() => void) | null>(null);
   const timeRange = data.timeRange;
   const dataSourcesMap = useDatasourcesFromTargets(data.request?.targets);
   const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null);
+  let closeCallback = useRef<() => void>();
 
   const { eventBus } = usePanelContext();
   const onLogRowHover = useCallback(
@@ -85,15 +85,18 @@ export const LogsPanel = ({
 
   const onCloseContext = useCallback(() => {
     setContextRow(null);
-    if (closeCallback) {
-      closeCallback();
+    if (closeCallback.current) {
+      closeCallback.current();
     }
   }, [closeCallback]);
 
-  const onOpenContext = useCallback((row: LogRowModel, onClose: () => void) => {
-    setContextRow(row);
-    setCloseCallback(onClose);
-  }, []);
+  const onOpenContext = useCallback(
+    (row: LogRowModel, onClose: () => void) => {
+      setContextRow(row);
+      closeCallback.current = onClose;
+    },
+    [closeCallback]
+  );
 
   const onPermalinkClick = useCallback(
     async (row: LogRowModel) => {
