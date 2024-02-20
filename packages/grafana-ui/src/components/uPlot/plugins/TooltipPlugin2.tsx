@@ -158,8 +158,11 @@ export const TooltipPlugin2 = ({
     let _style = style;
 
     const updateHovering = () => {
-      let canHover = !viaSync || syncTooltip();
-      _isHovering = canHover && (closestSeriesIdx != null || (hoverMode === TooltipHoverMode.xAll && _someSeriesIdx));
+      if (viaSync) {
+        _isHovering = _someSeriesIdx && syncTooltip();
+      } else {
+        _isHovering = closestSeriesIdx != null || (hoverMode === TooltipHoverMode.xAll && _someSeriesIdx);
+      }
     };
 
     let offsetX = 0;

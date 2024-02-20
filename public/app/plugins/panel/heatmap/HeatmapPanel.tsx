@@ -60,8 +60,9 @@ export const HeatmapPanel = ({
   const styles = useStyles2(getStyles);
   const { sync, canAddAnnotations } = usePanelContext();
 
+  // TODO: we should just re-init when this changes, and have this be a static setting
   const syncTooltip = useCallback(
-    () => sync != null && sync() === DashboardCursorSync.Tooltip,
+    () => sync?.() === DashboardCursorSync.Tooltip,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
@@ -249,7 +250,7 @@ export const HeatmapPanel = ({
                     hoverMode={TooltipHoverMode.xyOne}
                     queryZoom={onChangeTimeRange}
                     syncTooltip={syncTooltip}
-                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2) => {
+                    render={(u, dataIdxs, seriesIdx, isPinned, dismiss, timeRange2, viaSync) => {
                       if (enableAnnotationCreation && timeRange2 != null) {
                         setNewAnnotationRange(timeRange2);
                         dismiss();
@@ -265,7 +266,7 @@ export const HeatmapPanel = ({
 
                       return (
                         <HeatmapHoverView
-                          mode={options.tooltip.mode}
+                          mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
                           dataIdxs={dataIdxs}
                           seriesIdx={seriesIdx}
                           dataRef={dataRef}

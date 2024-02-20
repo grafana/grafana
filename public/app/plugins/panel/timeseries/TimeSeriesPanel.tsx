@@ -55,8 +55,9 @@ export const TimeSeriesPanel = ({
   // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
 
+  // TODO: we should just re-init when this changes, and have this be a static setting
   const syncTooltip = useCallback(
-    () => sync != null && sync() === DashboardCursorSync.Tooltip,
+    () => sync?.() === DashboardCursorSync.Tooltip,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
@@ -107,7 +108,7 @@ export const TimeSeriesPanel = ({
 
         return (
           <>
-            {!showNewVizTooltips && <KeyboardPlugin config={uplotConfig} />}
+            <KeyboardPlugin config={uplotConfig} />
             {options.tooltip.mode === TooltipDisplayMode.None || (
               <>
                 {showNewVizTooltips ? (
@@ -119,7 +120,7 @@ export const TimeSeriesPanel = ({
                     queryZoom={onChangeTimeRange}
                     clientZoom={true}
                     syncTooltip={syncTooltip}
-                    render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2) => {
+                    render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
                       if (enableAnnotationCreation && timeRange2 != null) {
                         setNewAnnotationRange(timeRange2);
                         dismiss();
@@ -140,7 +141,7 @@ export const TimeSeriesPanel = ({
                           seriesFrame={alignedDataFrame}
                           dataIdxs={dataIdxs}
                           seriesIdx={seriesIdx}
-                          mode={options.tooltip.mode}
+                          mode={viaSync ? TooltipDisplayMode.Multi : options.tooltip.mode}
                           sortOrder={options.tooltip.sort}
                           isPinned={isPinned}
                           annotate={enableAnnotationCreation ? annotate : undefined}
