@@ -220,7 +220,8 @@ http:
 ```
 
 ## Alternative for serving Grafana under a sub path
-**Warning:** You only need this if you don't handle the sub path serving via your reverse proxy configuration.
+
+**Warning:** You only need this, if you do not handle the sub path serving via your reverse proxy configuration.
 
 If you don't want or can't use the reverse proxy to handle serving Grafana from a _sub path_, you can set the config variable `server_from_sub_path` to `true`.
 
