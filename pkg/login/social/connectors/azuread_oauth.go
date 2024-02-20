@@ -18,10 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
+	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -185,24 +187,30 @@ func (s *SocialAzureAD) Reload(ctx context.Context, settings ssoModels.SSOSettin
 	return nil
 }
 
-func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSettings) error {
+func (s *SocialAzureAD) Validate(ctx context.Context, settings ssoModels.SSOSettings, requester identity.Requester) error {
 	info, err := CreateOAuthInfoFromKeyValues(settings.Settings)
 	if err != nil {
 		return ssosettings.ErrInvalidSettings.Errorf("SSO settings map cannot be converted to OAuthInfo: %v", err)
 	}
 
-	err = validateInfo(info)
+	err = validateInfo(info, requester)
 	if err != nil {
 		return err
 	}
 
+	return validation.Validate(info, requester,
+		validateAllowedGroups,
+		validation.RequiredUrlValidator(info.AuthUrl, "Auth URL"),
+		validation.RequiredUrlValidator(info.TokenUrl, "Token URL"))
+}
+
+func validateAllowedGroups(info *social.OAuthInfo, requester identity.Requester) error {
 	for _, groupId := range info.AllowedGroups {
 		_, err := uuid.Parse(groupId)
 		if err != nil {
 			return ssosettings.ErrInvalidOAuthConfig("One or more of the Allowed groups are not in the correct format. Allowed groups should be a list of Object Ids.")
 		}
 	}
-
 	return nil
 }
 

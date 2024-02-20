@@ -15,6 +15,8 @@ weight: 130
 
 # Variables
 
+{{< youtube id="mMUJ3iwIYwc" >}}
+
 The following topics describe how to add and manage variables in your dashboards:
 
 {{< section >}}

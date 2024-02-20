@@ -91,8 +91,24 @@ func ProvideService(cfg *setting.Cfg,
 	return s, nil
 }
 
-func ProvideServiceForTests(cfg *setting.Cfg, features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator) (*SQLStore, error) {
-	return initTestDB(cfg, features, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
+func ProvideServiceForTests(t sqlutil.ITestDB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, migrations registry.DatabaseMigrator) (*SQLStore, error) {
+	return initTestDB(t, cfg, features, migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
+}
+
+// NewSQLStoreWithoutSideEffects creates a new *SQLStore without side-effects such as
+// running database migrations and/or ensuring main org and admin user exists.
+func NewSQLStoreWithoutSideEffects(cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	bus bus.Bus, tracer tracing.Tracer) (*SQLStore, error) {
+	s, err := newSQLStore(cfg, nil, nil, bus, tracer)
+	if err != nil {
+		return nil, err
+	}
+
+	s.features = features
+	s.tracer = tracer
+
+	return s, nil
 }
 
 func newSQLStore(cfg *setting.Cfg, engine *xorm.Engine,
@@ -143,11 +159,6 @@ func (ss *SQLStore) Migrate(isDatabaseLockingEnabled bool) error {
 	ss.migrations.AddMigration(migrator)
 
 	return migrator.Start(isDatabaseLockingEnabled, ss.dbCfg.MigrationLockAttemptTimeout)
-}
-
-// Sync syncs changes to the database.
-func (ss *SQLStore) Sync() error {
-	return ss.engine.Sync2()
 }
 
 // Reset resets database state.
@@ -215,7 +226,7 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 			if _, err := ss.createUser(ctx, sess, user.CreateUserCommand{
 				Login:    ss.Cfg.AdminUser,
 				Email:    ss.Cfg.AdminEmail,
-				Password: ss.Cfg.AdminPassword,
+				Password: user.Password(ss.Cfg.AdminPassword),
 				IsAdmin:  true,
 			}); err != nil {
 				return fmt.Errorf("failed to create admin user: %s", err)
@@ -388,16 +399,10 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 	return *ss.recursiveQueriesAreSupported, nil
 }
 
-// ITestDB is an interface of arguments for testing db
-type ITestDB interface {
-	Helper()
-	Fatalf(format string, args ...any)
-	Logf(format string, args ...any)
-	Log(args ...any)
-}
-
+var testSQLStoreSetup = false
 var testSQLStore *SQLStore
 var testSQLStoreMutex sync.Mutex
+var testSQLStoreCleanup []func()
 
 // InitTestDBOpt contains options for InitTestDB.
 type InitTestDBOpt struct {
@@ -407,10 +412,10 @@ type InitTestDBOpt struct {
 }
 
 // InitTestDBWithMigration initializes the test DB given custom migrations.
-func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
+func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
-	store, err := initTestDB(setting.NewCfg(), features, migration, opts...)
+	store, err := initTestDB(t, setting.NewCfg(), features, migration, opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
@@ -418,20 +423,46 @@ func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opt
 }
 
 // InitTestDB initializes the test DB.
-func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
+func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
 
-	store, err := initTestDB(setting.NewCfg(), features, migrations.ProvideOSSMigrations(features), opts...)
+	store, err := initTestDB(t, setting.NewCfg(), features, migrations.ProvideOSSMigrations(features), opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
 	}
 	return store
 }
 
-func InitTestDBWithCfg(t ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
-	store := InitTestDB(t, opts...)
-	return store, store.Cfg
+func SetupTestDB() {
+	testSQLStoreMutex.Lock()
+	defer testSQLStoreMutex.Unlock()
+	if testSQLStoreSetup {
+		fmt.Printf("ERROR: Test DB already set up, SetupTestDB called twice\n")
+		os.Exit(1)
+	}
+	testSQLStoreSetup = true
+}
+
+func CleanupTestDB() {
+	testSQLStoreMutex.Lock()
+	defer testSQLStoreMutex.Unlock()
+	if !testSQLStoreSetup {
+		fmt.Printf("ERROR: Test DB not set up, SetupTestDB not called\n")
+		os.Exit(1)
+	}
+	if testSQLStore != nil {
+		if err := testSQLStore.GetEngine().Close(); err != nil {
+			fmt.Printf("Failed to close testSQLStore engine: %s\n", err)
+		}
+
+		for _, cleanup := range testSQLStoreCleanup {
+			cleanup()
+		}
+
+		testSQLStoreCleanup = []func(){}
+		testSQLStore = nil
+	}
 }
 
 func getFeaturesForTesting(opts ...InitTestDBOpt) featuremgmt.FeatureToggles {
@@ -450,24 +481,43 @@ func getFeaturesForTesting(opts ...InitTestDBOpt) featuremgmt.FeatureToggles {
 }
 
 //nolint:gocyclo
-func initTestDB(testCfg *setting.Cfg,
+func initTestDB(t sqlutil.ITestDB, testCfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	migration registry.DatabaseMigrator,
 	opts ...InitTestDBOpt) (*SQLStore, error) {
 	testSQLStoreMutex.Lock()
 	defer testSQLStoreMutex.Unlock()
+	if !testSQLStoreSetup {
+		t.Fatalf(`
+
+ERROR: Test DB not set up, are you missing TestMain?
+
+https://github.com/grafana/grafana/blob/main/contribute/backend/style-guide.md
+
+Example:
+
+package mypkg
+
+import (
+	"testing"
+
+	"github.com/grafana/grafana/pkg/tests/testsuite"
+)
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
+
+`)
+		os.Exit(1)
+	}
 
 	if len(opts) == 0 {
 		opts = []InitTestDBOpt{{EnsureDefaultOrgAndUser: false, FeatureFlags: []string{}}}
 	}
 
 	if testSQLStore == nil {
-		dbType := migrator.SQLite
-
-		// environment variable present for test db?
-		if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-			dbType = db
-		}
+		dbType := sqlutil.GetTestDBType()
 
 		// set test db config
 		cfg := setting.NewCfg()
@@ -482,20 +532,20 @@ func initTestDB(testCfg *setting.Cfg,
 		if _, err := sec.NewKey("type", dbType); err != nil {
 			return nil, err
 		}
-		switch dbType {
-		case "mysql":
-			if _, err := sec.NewKey("connection_string", sqlutil.MySQLTestDB().ConnStr); err != nil {
-				return nil, err
-			}
-		case "postgres":
-			if _, err := sec.NewKey("connection_string", sqlutil.PostgresTestDB().ConnStr); err != nil {
-				return nil, err
-			}
-		default:
-			if _, err := sec.NewKey("connection_string", sqlutil.SQLite3TestDB().ConnStr); err != nil {
-				return nil, err
-			}
+
+		testDB, err := sqlutil.GetTestDB(dbType)
+		if err != nil {
+			return nil, err
 		}
+
+		if _, err := sec.NewKey("connection_string", testDB.ConnStr); err != nil {
+			return nil, err
+		}
+		if _, err := sec.NewKey("path", testDB.Path); err != nil {
+			return nil, err
+		}
+
+		testSQLStoreCleanup = append(testSQLStoreCleanup, testDB.Cleanup)
 
 		// useful if you already have a database that you want to use for tests.
 		// cannot just set it on testSQLStore as it overrides the config in Init
@@ -539,24 +589,6 @@ func initTestDB(testCfg *setting.Cfg,
 		if err := testSQLStore.Migrate(false); err != nil {
 			return nil, err
 		}
-
-		if err := testSQLStore.Dialect.TruncateDBTables(engine); err != nil {
-			return nil, err
-		}
-
-		if err := testSQLStore.Reset(); err != nil {
-			return nil, err
-		}
-
-		// Make sure the changes are synced, so they get shared with eventual other DB connections
-		// XXX: Why is this only relevant when not skipping migrations?
-		if !testSQLStore.dbCfg.SkipMigrations {
-			if err := testSQLStore.Sync(); err != nil {
-				return nil, err
-			}
-		}
-
-		return testSQLStore, nil
 	}
 
 	// nolint:staticcheck

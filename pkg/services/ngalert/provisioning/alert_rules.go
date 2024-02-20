@@ -9,20 +9,27 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type NotificationSettingsValidatorProvider interface {
+	Validator(ctx context.Context, orgID int64) (notifier.NotificationSettingsValidator, error)
+}
+
 type AlertRuleService struct {
 	defaultIntervalSeconds int64
 	baseIntervalSeconds    int64
+	rulesPerRuleGroupLimit int64
 	ruleStore              RuleStore
 	provenanceStore        ProvisioningStore
 	dashboardService       dashboards.DashboardService
 	quotas                 QuotaChecker
 	xact                   TransactionManager
 	log                    log.Logger
+	nsValidatorProvider    NotificationSettingsValidatorProvider
 }
 
 func NewAlertRuleService(ruleStore RuleStore,
@@ -32,16 +39,21 @@ func NewAlertRuleService(ruleStore RuleStore,
 	xact TransactionManager,
 	defaultIntervalSeconds int64,
 	baseIntervalSeconds int64,
-	log log.Logger) *AlertRuleService {
+	rulesPerRuleGroupLimit int64,
+	log log.Logger,
+	ns NotificationSettingsValidatorProvider,
+) *AlertRuleService {
 	return &AlertRuleService{
 		defaultIntervalSeconds: defaultIntervalSeconds,
 		baseIntervalSeconds:    baseIntervalSeconds,
+		rulesPerRuleGroupLimit: rulesPerRuleGroupLimit,
 		ruleStore:              ruleStore,
 		provenanceStore:        provenanceStore,
 		dashboardService:       dashboardService,
 		quotas:                 quotas,
 		xact:                   xact,
 		log:                    log,
+		nsValidatorProvider:    ns,
 	}
 }
 
@@ -134,6 +146,17 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 		return models.AlertRule{}, err
 	}
 	rule.Updated = time.Now()
+	if len(rule.NotificationSettings) > 0 {
+		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
+		if err != nil {
+			return models.AlertRule{}, err
+		}
+		for _, setting := range rule.NotificationSettings {
+			if err := validator.Validate(setting); err != nil {
+				return models.AlertRule{}, err
+			}
+		}
+	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		ids, err := service.ruleStore.InsertAlertRules(ctx, []models.AlertRule{
 			rule,
@@ -228,6 +251,32 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 		return err
 	}
 
+	delta, err := service.calcDelta(ctx, orgID, group)
+	if err != nil {
+		return err
+	}
+
+	if len(delta.New) == 0 && len(delta.Update) == 0 && len(delta.Delete) == 0 {
+		return nil
+	}
+
+	newOrUpdatedNotificationSettings := delta.NewOrUpdatedNotificationSettings()
+	if len(newOrUpdatedNotificationSettings) > 0 {
+		validator, err := service.nsValidatorProvider.Validator(ctx, delta.GroupKey.OrgID)
+		if err != nil {
+			return err
+		}
+		for _, s := range newOrUpdatedNotificationSettings {
+			if err := validator.Validate(s); err != nil {
+				return errors.Join(models.ErrAlertRuleFailedValidation, err)
+			}
+		}
+	}
+
+	return service.persistDelta(ctx, orgID, delta, userID, provenance)
+}
+
+func (service *AlertRuleService) calcDelta(ctx context.Context, orgID int64, group models.AlertRuleGroup) (*store.GroupDelta, error) {
 	// If the provided request did not provide the rules list at all, treat it as though it does not wish to change rules.
 	// This is done for backwards compatibility. Requests which specify only the interval must update only the interval.
 	if group.Rules == nil {
@@ -238,7 +287,7 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 		}
 		ruleList, err := service.ruleStore.ListAlertRules(ctx, &listRulesQuery)
 		if err != nil {
-			return fmt.Errorf("failed to list alert rules: %w", err)
+			return nil, fmt.Errorf("failed to list alert rules: %w", err)
 		}
 		group.Rules = make([]models.AlertRule, 0, len(ruleList))
 		for _, r := range ruleList {
@@ -246,6 +295,10 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 				group.Rules = append(group.Rules, *r)
 			}
 		}
+	}
+
+	if err := service.checkGroupLimits(group); err != nil {
+		return nil, fmt.Errorf("write rejected due to exceeded limits: %w", err)
 	}
 
 	key := models.AlertRuleGroupKey{
@@ -257,22 +310,20 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 	group = *syncGroupRuleFields(&group, orgID)
 	for i := range group.Rules {
 		if err := group.Rules[i].SetDashboardAndPanelFromAnnotations(); err != nil {
-			return err
+			return nil, err
 		}
 		rules = append(rules, &models.AlertRuleWithOptionals{AlertRule: group.Rules[i], HasPause: true})
 	}
 	delta, err := store.CalculateChanges(ctx, service.ruleStore, key, rules)
 	if err != nil {
-		return fmt.Errorf("failed to calculate diff for alert rules: %w", err)
+		return nil, fmt.Errorf("failed to calculate diff for alert rules: %w", err)
 	}
 
 	// Refresh all calculated fields across all rules.
-	delta = store.UpdateCalculatedRuleFields(delta)
+	return store.UpdateCalculatedRuleFields(delta), nil
+}
 
-	if len(delta.New) == 0 && len(delta.Update) == 0 && len(delta.Delete) == 0 {
-		return nil
-	}
-
+func (service *AlertRuleService) persistDelta(ctx context.Context, orgID int64, delta *store.GroupDelta, userID int64, provenance models.Provenance) error {
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		// Delete first as this could prevent future unique constraint violations.
 		if len(delta.Delete) > 0 {
@@ -307,7 +358,7 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 					New:      *update.New,
 				})
 			}
-			if err = service.ruleStore.UpdateAlertRules(ctx, updates); err != nil {
+			if err := service.ruleStore.UpdateAlertRules(ctx, updates); err != nil {
 				return fmt.Errorf("failed to update alert rules: %w", err)
 			}
 			for _, update := range delta.Update {
@@ -329,7 +380,7 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 			}
 		}
 
-		if err = service.checkLimitsTransactionCtx(ctx, orgID, userID); err != nil {
+		if err := service.checkLimitsTransactionCtx(ctx, orgID, userID); err != nil {
 			return err
 		}
 
@@ -345,6 +396,17 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 	}
 	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
 		return models.AlertRule{}, fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
+	}
+	if len(rule.NotificationSettings) > 0 {
+		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
+		if err != nil {
+			return models.AlertRule{}, err
+		}
+		for _, setting := range rule.NotificationSettings {
+			if err := validator.Validate(setting); err != nil {
+				return models.AlertRule{}, err
+			}
+		}
 	}
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID
@@ -532,4 +594,16 @@ func withoutNilAlertRules(ptrs []*models.AlertRule) []models.AlertRule {
 		}
 	}
 	return result
+}
+
+func (service *AlertRuleService) checkGroupLimits(group models.AlertRuleGroup) error {
+	if service.rulesPerRuleGroupLimit > 0 && int64(len(group.Rules)) > service.rulesPerRuleGroupLimit {
+		service.log.Warn("Large rule group was edited. Large groups are discouraged and may be rejected in the future.",
+			"limit", service.rulesPerRuleGroupLimit,
+			"actual", len(group.Rules),
+			"group", group.Title,
+		)
+	}
+
+	return nil
 }

@@ -5,15 +5,29 @@ import {
   PluginExtensionPanelContext,
   PluginExtensionPoints,
   getTimeZone,
+  urlUtil,
 } from '@grafana/data';
 import { config, getPluginLinkExtensions, locationService } from '@grafana/runtime';
-import { LocalValueVariable, SceneGridRow, VizPanel, VizPanelMenu, sceneGraph } from '@grafana/scenes';
-import { DataQuery } from '@grafana/schema';
+import {
+  LocalValueVariable,
+  SceneFlexLayout,
+  SceneGridLayout,
+  SceneGridRow,
+  SceneObject,
+  VizPanel,
+  VizPanelMenu,
+  sceneGraph,
+} from '@grafana/scenes';
+import { DataQuery, OptionsWithLegend } from '@grafana/schema';
+import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
+import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
+import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
 import { addDataTrailPanelAction } from 'app/features/trails/dashboardIntegration';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
@@ -39,7 +53,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     const panelId = getPanelIdForVizPanel(panel);
     const dashboard = getDashboardSceneFor(panel);
     const { isEmbedded } = dashboard.state.meta;
-
     const exploreMenuItem = await getExploreMenuItem(panel);
 
     // For embedded dashboards we only have explore action for now
@@ -80,21 +93,65 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       shortcut: 'p s',
     });
 
+    moreSubMenu.push({
+      text: t('panel.header-menu.duplicate', `Duplicate`),
+      onClick: () => {
+        DashboardInteractions.panelMenuItemClicked('duplicate');
+        dashboard.duplicatePanel(panel);
+      },
+      shortcut: 'p d',
+    });
+
+    moreSubMenu.push({
+      text: t('panel.header-menu.copy', `Copy`),
+      onClick: () => {
+        DashboardInteractions.panelMenuItemClicked('copy');
+        dashboard.copyPanel(panel);
+      },
+    });
+
     if (panel.parent instanceof LibraryVizPanel) {
       // TODO: Implement lib panel unlinking
     } else {
       moreSubMenu.push({
         text: t('panel.header-menu.create-library-panel', `Create library panel`),
-        iconClassName: 'share-alt',
         onClick: () => {
           DashboardInteractions.panelMenuItemClicked('createLibraryPanel');
           dashboard.showModal(
             new ShareModal({
               panelRef: panel.getRef(),
               dashboardRef: dashboard.getRef(),
-              activeTab: 'Library panel',
+              activeTab: shareDashboardType.libraryPanel,
             })
           );
+        },
+      });
+    }
+
+    moreSubMenu.push({
+      text: t('panel.header-menu.new-alert-rule', `New alert rule`),
+      onClick: (e) => onCreateAlert(panel),
+    });
+
+    if (hasLegendOptions(panel.state.options)) {
+      moreSubMenu.push({
+        text: panel.state.options.legend.showLegend
+          ? t('panel.header-menu.hide-legend', 'Hide legend')
+          : t('panel.header-menu.show-legend', 'Show legend'),
+        onClick: (e) => {
+          e.preventDefault();
+          toggleVizPanelLegend(panel);
+        },
+        shortcut: 'p l',
+      });
+    }
+
+    if (dashboard.canEditDashboard() && plugin && !plugin.meta.skipDataQuery) {
+      moreSubMenu.push({
+        text: t('panel.header-menu.get-help', 'Get help'),
+        onClick: (e: React.MouseEvent) => {
+          e.preventDefault();
+          onInspectPanel(panel, InspectTab.Help);
         },
       });
     }
@@ -135,6 +192,21 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         },
       });
     }
+
+    items.push({
+      text: '',
+      type: 'divider',
+    });
+
+    items.push({
+      text: t('panel.header-menu.remove', `Remove`),
+      iconClassName: 'trash-alt',
+      onClick: () => {
+        DashboardInteractions.panelMenuItemClicked('remove');
+        removePanel(dashboard, panel, true);
+      },
+      shortcut: 'p r',
+    });
 
     menu.setState({ items });
   };
@@ -304,3 +376,88 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
     data: queryRunner?.state.data,
   };
 }
+
+export function removePanel(dashboard: DashboardScene, panel: VizPanel, ask: boolean) {
+  const vizPanelData = sceneGraph.getData(panel);
+  let panelHasAlert = false;
+
+  if (vizPanelData.state.data?.alertState) {
+    panelHasAlert = true;
+  }
+
+  if (ask !== false) {
+    const text2 =
+      panelHasAlert && !config.unifiedAlertingEnabled
+        ? 'Panel includes an alert rule. removing the panel will also remove the alert rule'
+        : undefined;
+    const confirmText = panelHasAlert ? 'YES' : undefined;
+
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: 'Remove panel',
+        text: 'Are you sure you want to remove this panel?',
+        text2: text2,
+        icon: 'trash-alt',
+        confirmText: confirmText,
+        yesText: 'Remove',
+        onConfirm: () => removePanel(dashboard, panel, false),
+      })
+    );
+
+    return;
+  }
+
+  const panels: SceneObject[] = [];
+  dashboard.state.body.forEachChild((child: SceneObject) => {
+    if (child.state.key !== panel.parent?.state.key) {
+      panels.push(child);
+    }
+  });
+
+  const layout = dashboard.state.body;
+
+  if (layout instanceof SceneGridLayout || SceneFlexLayout) {
+    layout.setState({
+      children: panels,
+    });
+  }
+}
+
+const onCreateAlert = async (panel: VizPanel) => {
+  DashboardInteractions.panelMenuItemClicked('create-alert');
+
+  const formValues = await scenesPanelToRuleFormValues(panel);
+  const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
+    defaults: JSON.stringify(formValues),
+    returnTo: location.pathname + location.search,
+  });
+
+  locationService.push(ruleFormUrl);
+
+  DashboardInteractions.panelMenuItemClicked('create-alert');
+};
+
+export function toggleVizPanelLegend(vizPanel: VizPanel): void {
+  const options = vizPanel.state.options;
+  if (hasLegendOptions(options) && typeof options.legend.showLegend === 'boolean') {
+    vizPanel.onOptionsChange({
+      legend: {
+        showLegend: options.legend.showLegend ? false : true,
+      },
+    });
+  }
+
+  DashboardInteractions.panelMenuItemClicked('toggleLegend');
+}
+
+function hasLegendOptions(optionsWithLegend: unknown): optionsWithLegend is OptionsWithLegend {
+  return optionsWithLegend != null && typeof optionsWithLegend === 'object' && 'legend' in optionsWithLegend;
+}
+
+const onInspectPanel = (vizPanel: VizPanel, tab?: InspectTab) => {
+  locationService.partial({
+    inspect: vizPanel.state.key,
+    inspectTab: tab,
+  });
+  DashboardInteractions.panelMenuInspectClicked(tab ?? InspectTab.Data);
+};

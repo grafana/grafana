@@ -5,7 +5,7 @@ import { usePrevious } from 'react-use';
 import { DataSourceApi, getDefaultTimeRange, LoadingState, PanelData, SelectableValue, TimeRange } from '@grafana/data';
 import {
   EditorRow,
-  // LabelFilters, this is broken in @grafana/experimental so we need to use the one from prometheus
+  LabelFilters,
   OperationExplainedBox,
   OperationList,
   OperationListExplained,
@@ -16,7 +16,6 @@ import {
   QueryBuilderOperation,
 } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
 
 import { testIds } from '../../components/LokiQueryEditor';
 import { LokiDatasource } from '../../datasource';
@@ -59,7 +58,10 @@ export const LokiQueryBuilder = React.memo<Props>(
     const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<string[]> => {
       const labelsToConsider = query.labels.filter((x) => x !== forLabel);
 
-      if (labelsToConsider.length === 0) {
+      const hasEqualityOperation = labelsToConsider.find(
+        (filter) => filter.op === '=' || (filter.op === '=~' && new RegExp(filter.value).test('') === false)
+      );
+      if (labelsToConsider.length === 0 || !hasEqualityOperation) {
         return await datasource.languageProvider.fetchLabels({ timeRange });
       }
 
@@ -82,7 +84,11 @@ export const LokiQueryBuilder = React.memo<Props>(
 
       let values;
       const labelsToConsider = query.labels.filter((x) => x !== forLabel);
-      if (labelsToConsider.length === 0) {
+      // If we have no equality/regex operation with .*, we can't fetch series as it will throw an error, so we fetch label values
+      const hasEqualityOperation = labelsToConsider.find(
+        (filter) => filter.op === '=' || (filter.op === '=~' && new RegExp(filter.value).test('') === false)
+      );
+      if (labelsToConsider.length === 0 || !hasEqualityOperation) {
         values = await datasource.languageProvider.fetchLabelValues(forLabel.label, { timeRange });
       } else {
         const expr = lokiQueryModeller.renderLabels(labelsToConsider);

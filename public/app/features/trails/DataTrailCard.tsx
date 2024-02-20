@@ -3,11 +3,11 @@ import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
 import { AdHocFiltersVariable, sceneGraph } from '@grafana/scenes';
-import { useStyles2, Stack, Card, IconButton, Badge } from '@grafana/ui';
+import { Badge, Card, IconButton, Stack, useStyles2 } from '@grafana/ui';
 
 import { DataTrail } from './DataTrail';
-import { LOGS_METRIC, VAR_FILTERS } from './shared';
-import { getDataSource, getDataSourceName } from './utils';
+import { VAR_FILTERS } from './shared';
+import { getDataSource, getDataSourceName, getMetricName } from './utils';
 
 export interface Props {
   trail: DataTrail;
@@ -23,7 +23,7 @@ export function DataTrailCard({ trail, onSelect, onDelete }: Props) {
     return null;
   }
 
-  const filters = filtersVariable.state.set.state.filters;
+  const filters = filtersVariable.state.filters;
   const dsValue = getDataSource(trail);
 
   return (
@@ -61,18 +61,6 @@ export function DataTrailCard({ trail, onSelect, onDelete }: Props) {
       )}
     </Card>
   );
-}
-
-function getMetricName(metric?: string) {
-  if (!metric) {
-    return 'Select metric';
-  }
-
-  if (metric === LOGS_METRIC) {
-    return 'Logs';
-  }
-
-  return metric;
 }
 
 function getStyles(theme: GrafanaTheme2) {

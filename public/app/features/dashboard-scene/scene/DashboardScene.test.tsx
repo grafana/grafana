@@ -3,7 +3,6 @@ import {
   sceneGraph,
   SceneGridItem,
   SceneGridLayout,
-  SceneRefreshPicker,
   SceneTimeRange,
   SceneQueryRunner,
   SceneVariableSet,
@@ -22,7 +21,6 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 
 import { DashboardControls } from './DashboardControls';
-import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 
 jest.mock('../settings/version-history/HistorySrv');
@@ -57,7 +55,7 @@ describe('DashboardScene', () => {
 
         expect(scene.state.isDirty).toBe(true);
 
-        scene.onDiscard();
+        scene.exitEditMode({ skipConfirm: true });
         const gridItem2 = sceneGraph.findObject(scene, (p) => p.state.key === 'griditem-1') as SceneGridItem;
         expect(gridItem2.state.x).toBe(0);
       });
@@ -71,13 +69,13 @@ describe('DashboardScene', () => {
         ${'links'}       | ${[]}
       `(
         'A change to $prop should set isDirty true',
-        ({ prop, value }: { prop: keyof DashboardSceneState; value: any }) => {
+        ({ prop, value }: { prop: keyof DashboardSceneState; value: unknown }) => {
           const prevState = scene.state[prop];
           scene.setState({ [prop]: value });
 
           expect(scene.state.isDirty).toBe(true);
 
-          scene.onDiscard();
+          scene.exitEditMode({ skipConfirm: true });
           expect(scene.state[prop]).toEqual(prevState);
         }
       );
@@ -89,19 +87,19 @@ describe('DashboardScene', () => {
 
         expect(scene.state.isDirty).toBe(true);
 
-        scene.onDiscard();
+        scene.exitEditMode({ skipConfirm: true });
         expect(dashboardSceneGraph.getRefreshPicker(scene)!.state.intervals).toEqual(prevState);
       });
 
       it('A change to time picker visibility settings should set isDirty true', () => {
-        const dashboardControls = dashboardSceneGraph.getDashboardControls(scene)!;
+        const dashboardControls = scene.state.controls!;
         const prevState = dashboardControls.state.hideTimeControls;
         dashboardControls.setState({ hideTimeControls: true });
 
         expect(scene.state.isDirty).toBe(true);
 
-        scene.onDiscard();
-        expect(dashboardSceneGraph.getDashboardControls(scene)!.state.hideTimeControls).toEqual(prevState);
+        scene.exitEditMode({ skipConfirm: true });
+        expect(scene.state.controls!.state.hideTimeControls).toEqual(prevState);
       });
 
       it('A change to time zone should set isDirty true', () => {
@@ -111,7 +109,7 @@ describe('DashboardScene', () => {
 
         expect(scene.state.isDirty).toBe(true);
 
-        scene.onDiscard();
+        scene.exitEditMode({ skipConfirm: true });
         expect(sceneGraph.getTimeRange(scene)!.state.timeZone).toBe(prevState);
       });
     });
@@ -217,17 +215,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
     $timeRange: new SceneTimeRange({
       timeZone: 'browser',
     }),
-    controls: [
-      new DashboardControls({
-        variableControls: [],
-        linkControls: new DashboardLinksControls({}),
-        timeControls: [
-          new SceneRefreshPicker({
-            intervals: ['1s'],
-          }),
-        ],
-      }),
-    ],
+    controls: new DashboardControls({}),
     body: new SceneGridLayout({
       children: [
         new SceneGridItem({
