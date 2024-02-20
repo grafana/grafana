@@ -13,7 +13,6 @@
 
 # Documentation
 /.changelog-archive @grafana/grafana-release-guild
-/.codespellignore @grafana/docs-tooling
 /CHANGELOG.md @grafana/grafana-release-guild
 /CODE_OF_CONDUCT.md @grafana/grafana-community-support
 /CONTRIBUTING.md @grafana/grafana-community-support
@@ -30,6 +29,7 @@
 /WORKFLOW.md @torkelo
 /contribute/ @grafana/grafana-community-support
 /contribute/UPGRADING_DEPENDENCIES.md @grafana/docs-grafana
+contribute/.codespellignore @grafana/docs-tooling
 /devenv/README.md @grafana/docs-grafana
 
 # Technical documentation
