@@ -55,6 +55,9 @@ export function arrayToDataFrame(source: Array<Record<string, unknown>> | unknow
   }
 
   const firstDefined = source.find((v) => v); // first not null|undefined
+  // This means if the source is lots of null/undefined values we throw that away and return empty dataFrame. This is
+  // different to how we preserve null/undefined values if there is some defined rows. Not sure this inconsistency
+  // is by design or not.
   if (firstDefined === null) {
     return df;
   }
