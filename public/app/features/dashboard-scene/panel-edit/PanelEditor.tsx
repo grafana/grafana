@@ -12,7 +12,6 @@ import {
   SceneRefreshPicker,
   SceneTimePicker,
   VizPanel,
-  sceneUtils,
 } from '@grafana/scenes';
 import { InlineSwitch } from '@grafana/ui';
 
@@ -38,6 +37,7 @@ export interface PanelEditorState extends SceneObjectState {
   optionsPaneSize: number;
   dataPane?: PanelDataPane;
   vizManager: VizPanelManager;
+  vizManagerTableView: VizPanelManager;
   tableViewEnabled?: boolean;
   initialPanelPluginId?: string;
   initialPanelTitle?: string;
@@ -48,11 +48,12 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   private _discardChanges = false;
 
-  public constructor(state: PanelEditorState) {
+  public constructor(state: Omit<PanelEditorState, 'vizManagerTableView'>) {
     super({
       ...state,
       initialPanelPluginId: state.vizManager.state.panel.state.pluginId,
       initialPanelTitle: state.vizManager.state.panel.state.title,
+      vizManagerTableView: state.vizManager.clone(),
     });
 
     this.addActivationHandler(this._activationHandler.bind(this));
@@ -174,12 +175,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const newPluginId = currentPluginId === 'table' ? defaultPluginId : 'table';
     const newPanelTitle = currentPluginId === 'table' ? this.state.initialPanelTitle : '';
 
-    const newPanelState = sceneUtils.cloneSceneObjectState(this.state.vizManager.state.panel.state);
-
-    const newPanel = new VizPanel(newPanelState);
-    newPanel.setState({ pluginId: newPluginId, title: newPanelTitle });
-
-    this.state.vizManager.setState({ panel: newPanel });
+    const newPanel = this.state.vizManager.state.panel.clone();
+    newPanel.setState({ ...newPanel, pluginId: newPluginId, title: newPanelTitle });
+    this.state.vizManagerTableView?.setState({ panel: newPanel });
 
     this.setState({ tableViewEnabled: !this.state.tableViewEnabled });
   }
