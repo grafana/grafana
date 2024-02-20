@@ -26,8 +26,6 @@ import {
   SceneGridLayout,
   SceneGridRow,
   SceneQueryRunner,
-  SceneRefreshPicker,
-  SceneTimePicker,
   VizPanel,
 } from '@grafana/scenes';
 import {
@@ -44,7 +42,6 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard';
 import { DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/types';
 import { DashboardDataDTO } from 'app/types';
 
-import { DashboardControls } from '../scene/DashboardControls';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { RowRepeaterBehavior } from '../scene/RowRepeaterBehavior';
@@ -112,7 +109,7 @@ describe('transformSaveModelToScene', () => {
       const oldModel = new DashboardModel(dash);
 
       const scene = createDashboardSceneFromDashboardModel(oldModel);
-      const dashboardControls = scene.state.controls![0] as DashboardControls;
+      const dashboardControls = scene.state.controls!;
 
       expect(scene.state.title).toBe('test');
       expect(scene.state.uid).toBe('test-uid');
@@ -127,13 +124,8 @@ describe('transformSaveModelToScene', () => {
       expect(scene.state?.$variables?.getByName('constant')).toBeInstanceOf(ConstantVariable);
       expect(scene.state?.$variables?.getByName('CoolFilters')).toBeInstanceOf(AdHocFiltersVariable);
       expect(dashboardControls).toBeDefined();
-      expect(dashboardControls).toBeInstanceOf(DashboardControls);
-      expect(dashboardControls.state.timeControls).toHaveLength(2);
-      expect(dashboardControls.state.timeControls[0]).toBeInstanceOf(SceneTimePicker);
-      expect(dashboardControls.state.timeControls[1]).toBeInstanceOf(SceneRefreshPicker);
-      expect((dashboardControls.state.timeControls[1] as SceneRefreshPicker).state.intervals).toEqual(
-        defaultTimePickerConfig.refresh_intervals
-      );
+
+      expect(dashboardControls.state.refreshPicker.state.intervals).toEqual(defaultTimePickerConfig.refresh_intervals);
       expect(dashboardControls.state.hideTimeControls).toBe(true);
     });
 
@@ -1039,9 +1031,7 @@ describe('transformSaveModelToScene', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
-      expect((scene.state.controls![0] as DashboardControls)!.state.variableControls[1]).toBeInstanceOf(
-        SceneDataLayerControls
-      );
+      expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
       const dataLayers = scene.state.$data as SceneDataLayers;
       expect(dataLayers.state.layers).toHaveLength(4);
@@ -1069,9 +1059,7 @@ describe('transformSaveModelToScene', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
-      expect((scene.state.controls![0] as DashboardControls)!.state.variableControls[1]).toBeInstanceOf(
-        SceneDataLayerControls
-      );
+      expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
       const dataLayers = scene.state.$data as SceneDataLayers;
       expect(dataLayers.state.layers).toHaveLength(5);
@@ -1085,9 +1073,7 @@ describe('transformSaveModelToScene', () => {
       const scene = transformSaveModelToScene({ dashboard: dashboard_to_load1 as any, meta: {} });
 
       expect(scene.state.$data).toBeInstanceOf(SceneDataLayers);
-      expect((scene.state.controls![0] as DashboardControls)!.state.variableControls[1]).toBeInstanceOf(
-        SceneDataLayerControls
-      );
+      expect(scene.state.controls!.state.variableControls[1]).toBeInstanceOf(SceneDataLayerControls);
 
       const dataLayers = scene.state.$data as SceneDataLayers;
       expect(dataLayers.state.layers).toHaveLength(5);

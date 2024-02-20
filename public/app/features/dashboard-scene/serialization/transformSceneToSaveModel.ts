@@ -12,7 +12,6 @@ import {
   SceneDataTransformer,
   SceneVariableSet,
   LocalValueVariable,
-  SceneRefreshPicker,
 } from '@grafana/scenes';
 import {
   AnnotationQuery,
@@ -34,7 +33,6 @@ import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
-import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelRepeaterGridItem } from '../scene/PanelRepeaterGridItem';
@@ -53,9 +51,6 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
   const data = state.$data;
   const variablesSet = state.$variables;
   const body = state.body;
-
-  let refreshIntervals: string[] | undefined;
-  let hideTimePicker: boolean | undefined;
 
   let panels: Panel[] = [];
   let graphTooltip = defaultDashboard.graphTooltip;
@@ -92,16 +87,7 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
     variables = sceneVariablesSetToVariables(variablesSet);
   }
 
-  if (state.controls && state.controls[0] instanceof DashboardControls) {
-    hideTimePicker = state.controls[0].state.hideTimeControls;
-
-    const timeControls = state.controls[0].state.timeControls;
-    for (const control of timeControls) {
-      if (control instanceof SceneRefreshPicker && control.state.intervals) {
-        refreshIntervals = control.state.intervals;
-      }
-    }
-  }
+  const controlsState = state.controls?.state;
 
   if (state.$behaviors) {
     for (const behavior of state.$behaviors!) {
@@ -113,8 +99,8 @@ export function transformSceneToSaveModel(scene: DashboardScene, isSnapshot = fa
 
   const timePickerWithoutDefaults = removeDefaults<TimePickerConfig>(
     {
-      refresh_intervals: refreshIntervals,
-      hidden: hideTimePicker,
+      refresh_intervals: controlsState?.refreshPicker.state.intervals,
+      hidden: controlsState?.hideTimeControls,
       nowDelay: timeRange.UNSAFE_nowDelay,
     },
     defaultTimePickerConfig

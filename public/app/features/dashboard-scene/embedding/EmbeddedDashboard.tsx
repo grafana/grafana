@@ -65,13 +65,7 @@ function EmbeddedDashboardRenderer({ model, initialState, onStateChange }: Rende
 
   return (
     <div className={styles.canvas}>
-      {controls && (
-        <div className={styles.controls}>
-          {controls.map((control) => (
-            <control.Component key={control.state.key} model={control} />
-          ))}
-        </div>
-      )}
+      {controls && <controls.Component model={controls} />}
       <div className={styles.body}>
         <body.Component model={body} />
       </div>
