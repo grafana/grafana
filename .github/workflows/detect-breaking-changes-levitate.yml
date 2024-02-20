@@ -338,8 +338,8 @@ jobs:
         run: exit ${{ steps.levitate-run.outputs.exit_code }}
         shell: bash
 
-  Foo:
-    name: Foo test
+  preventUseOfWorkspaces:
+    name: Prevent use of workspaces
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -349,17 +349,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: './pr'
-
-      - name: pwd
-        id: foo_pwd_step
-        shell: bash
-        run: pwd
-      - name: ls
-        id: foo_ls_step
-        shell: bash
-        run: ls -al
-      - name: Foo step
-        id: foo_step
+      - name: Prevent use of workspaces
         shell: bash
         run: |
           if [ ! -z "$(grep "workspace:*" packages/grafana-o11y-ds-frontend/package.json)" ]; then
