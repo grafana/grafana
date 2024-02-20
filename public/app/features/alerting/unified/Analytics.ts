@@ -6,6 +6,8 @@ import { contextSrv } from 'app/core/core';
 import { RuleNamespace } from '../../../types/unified-alerting';
 import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
+import { RuleFormType } from './types/rule-form';
+
 export const USER_CREATION_MIN_DAYS = 7;
 
 export const LogMessages = {
@@ -150,27 +152,17 @@ export const trackRuleListNavigation = async (
   reportInteraction('grafana_alerting_navigation', props);
 };
 
-export const trackNewAlerRuleFormSaved = async (props: AlertRuleTrackingProps) => {
-  const isNew = await isNewUser();
-  if (isNew) {
-    return;
-  }
+export const trackAlertRuleFormSaved = (props: { formAction: 'create' | 'update'; ruleType?: RuleFormType }) => {
   reportInteraction('grafana_alerting_rule_creation', props);
 };
 
-export const trackNewAlerRuleFormCancelled = async (props: AlertRuleTrackingProps) => {
-  const isNew = await isNewUser();
-  if (isNew) {
-    return;
-  }
+export const trackAlertRuleFormCancelled = (props: { formAction: 'create' | 'update' }) => {
   reportInteraction('grafana_alerting_rule_aborted', props);
 };
 
-export const trackNewAlerRuleFormError = async (props: AlertRuleTrackingProps & { error: string }) => {
-  const isNew = await isNewUser();
-  if (isNew) {
-    return;
-  }
+export const trackAlertRuleFormError = (
+  props: AlertRuleTrackingProps & { error: string; formAction: 'create' | 'update' }
+) => {
   reportInteraction('grafana_alerting_rule_form_error', props);
 };
 
