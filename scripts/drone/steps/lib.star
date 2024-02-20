@@ -385,14 +385,16 @@ def playwright_e2e_report_upload():
             "gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json",
             "gsutil cp -r ./playwright-report/. gs://releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report",
             "export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html",
-            'E2E Playwright report uploaded to:',
-            'echo "$E2E_PLAYWRIGHT_REPORT_URL"',
+            'echo "E2E Playwright report uploaded to: \n ${E2E_PLAYWRIGHT_REPORT_URL}"',
+            # if the trace folder exists, it means that there are failed tests. then add a PR comment with a link to the Playwright report
+            'if [ ! -d "./playwright-report/trace" ]; then exit 1; fi',
             "curl -L " +
-            "-X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments " +
+            "-X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments" +
             '-H "Accept: application/vnd.github+json" ' +
-            '-H "Authorization: Bearer $${GITHUB_TOKEN}" ' +
-            '-H "X-GitHub-Api-Version: 2022-11-28" -d ' +
-            '"{\\"body\\":\\"<h3>❌ Failed to run Playwright plugin e2e tests</h3> <br />Click <a href="https://storage.googleapis.com/releng-pipeline-artifacts-dev/161658/playwright-report/index.html">here</a> to browse the Playwright report.<br />For information on how to run Playwright tests locally, refer to the <a href="https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests"> Developer guide</a>.\\"}"'
+            '-H "Authorization: Bearer ${GITHUB_TOKEN}" ' +
+            '-H "X-GitHub-Api-Version: 2022-11-28" ' +
+            "https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments" +
+            '"{\\"state\\":\\"success\\", \\"target_url\\":\\"$${E2E_PLAYWRIGHT_REPORT_URL}\\", \\"description\\": \\"Click on the details to see the Playwright report\\", \\"context\\": \\"e2e_artifacts\\"}"',
         ],
     }
 
@@ -835,7 +837,10 @@ def playwright_e2e_tests_step():
         "depends_on": [
             "grafana-server",
         ],
-        "commands": ["sleep 15s", "yarn e2e:playwright"],
+        "commands": [
+            "sleep 10s",  # it seems sometimes that grafana-server is not actually ready when the step starts, so waiting for a few seconds before running the tests
+            "yarn e2e:playwright",
+        ],
     }
 
 def build_docs_website_step():
