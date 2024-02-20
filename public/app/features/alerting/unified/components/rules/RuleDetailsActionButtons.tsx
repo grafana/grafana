@@ -135,6 +135,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
   }
   if (rule.annotations[Annotation.dashboardUID]) {
     const dashboardUID = rule.annotations[Annotation.dashboardUID];
+    const isReturnToPreviousEnabled = config.featureToggles.returnToPrevious;
     if (dashboardUID) {
       buttons.push(
         <LinkButton
@@ -142,6 +143,7 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
           key="dashboard"
           variant="primary"
           icon="apps"
+          target={isReturnToPreviousEnabled ? undefined : '_blank'}
           href={`d/${encodeURIComponent(dashboardUID)}`}
           onClick={() => {
             setReturnToPrevious(rule.name);
