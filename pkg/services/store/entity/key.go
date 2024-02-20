@@ -15,8 +15,9 @@ type Key struct {
 
 func ParseKey(key string) (*Key, error) {
 
-	// /<group>/<resource>
-	parts := strings.SplitN(key, "/", 4)
+	// Everything after resource is optional
+	// /<group>/<resource>/[<namespace>]/[<name>]/[<subresource>]
+	parts := strings.SplitN(key, "/", 6)
 	if len(parts) < 3 {
 		return nil, fmt.Errorf("invalid key (expecting at least 2 parts): %s", key)
 	}
@@ -26,26 +27,18 @@ func ParseKey(key string) (*Key, error) {
 	}
 
 	if len(parts) > 3 {
-		// NOTE: no leading slash in the leftover segment
-		// <namespace>(/<name>(/<subresource>))
-		partsAfterResource := strings.SplitN(parts[3], "/", 3)
-
-		if len(partsAfterResource) == 0 {
-			return nil, fmt.Errorf("invalid key (expecting at least 1 part in a namespaced operation): %s", parts[3])
-		}
-
 		k := &Key{
 			Group:     parts[1],
 			Resource:  parts[2],
-			Namespace: partsAfterResource[0],
+			Namespace: parts[3],
 		}
 
-		if len(partsAfterResource) > 1 {
-			k.Name = partsAfterResource[1]
+		if len(parts) > 4 {
+			k.Name = parts[4]
 		}
 
-		if len(partsAfterResource) > 2 {
-			k.Subresource = partsAfterResource[2]
+		if len(parts) > 5 {
+			k.Subresource = parts[5]
 		}
 
 		return k, nil
