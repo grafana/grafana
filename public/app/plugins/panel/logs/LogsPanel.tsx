@@ -9,6 +9,7 @@ import {
   Field,
   GrafanaTheme2,
   hasLogsContextSupport,
+  hasLogsContextUiSupport,
   Labels,
   LogRowContextOptions,
   LogRowModel,
@@ -153,6 +154,31 @@ export const LogsPanel = ({
     [data.request?.targets, dataSourcesMap]
   );
 
+  const getLogRowContextUi = useCallback(
+    (origRow: LogRowModel, runContextQuery?: () => void): React.ReactNode => {
+      if (!origRow.dataFrame.refId || !dataSourcesMap) {
+        return <></>;
+      }
+
+      const query = data.request?.targets[0];
+      if (!query) {
+        return <></>;
+      }
+
+      const dataSource = dataSourcesMap.get(origRow.dataFrame.refId);
+      if (!hasLogsContextUiSupport(dataSource)) {
+        return <></>;
+      }
+
+      if (!dataSource.getLogRowContextUi) {
+        return <></>;
+      }
+
+      return dataSource.getLogRowContextUi(origRow, runContextQuery, query);
+    },
+    [data.request?.targets, dataSourcesMap]
+  );
+
   // Important to memoize stuff here, as panel rerenders a lot for example when resizing.
   const [logRows, deduplicatedRows, commonLabels] = useMemo(() => {
     const logs = data
@@ -213,6 +239,7 @@ export const LogsPanel = ({
           getRowContext={(row, options) => getLogRowContext(row, contextRow, options)}
           logsSortOrder={sortOrder}
           timeZone={timeZone}
+          getLogRowContextUi={getLogRowContextUi}
         />
       )}
       <CustomScrollbar
