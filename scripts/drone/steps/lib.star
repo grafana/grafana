@@ -387,7 +387,7 @@ def playwright_e2e_report_upload():
             "export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html",
             'echo "E2E Playwright report uploaded to: \n $${E2E_PLAYWRIGHT_REPORT_URL}"',
             # if the trace folder exists, it means that there are failed tests. then add a PR comment with a link to the Playwright report
-            "if [ ! -d ./playwright-report/trace ]; then false; fi",
+            "if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; false; fi",
             "curl -L " +
             "-X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments " +
             '-H "Accept: application/vnd.github+json" ' +
