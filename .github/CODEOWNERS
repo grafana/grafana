@@ -29,13 +29,13 @@
 /WORKFLOW.md @torkelo
 /contribute/ @grafana/grafana-community-support
 /contribute/UPGRADING_DEPENDENCIES.md @grafana/docs-grafana
-contribute/.codespellignore @grafana/docs-tooling
 /devenv/README.md @grafana/docs-grafana
 
 # Technical documentation
 # `make docs` procedure and related workflows are owned @grafana/docs-tooling. Slack #docs.
 # Documentation sources might have different owners.
 /docs/                                                                       @grafana/docs-tooling
+/docs/.codespellignore @grafana/docs-tooling
 /docs/sources/                                                               @Eve832
 /docs/sources/administration/                                                @jdbaldry
 /docs/sources/alerting/                                                      @brendamuir
