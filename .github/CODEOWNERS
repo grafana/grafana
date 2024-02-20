@@ -13,7 +13,6 @@
 
 # Documentation
 /.changelog-archive @grafana/grafana-release-guild
-/.codespellignore @grafana/docs-tooling
 /CHANGELOG.md @grafana/grafana-release-guild
 /CODE_OF_CONDUCT.md @grafana/grafana-community-support
 /CONTRIBUTING.md @grafana/grafana-community-support
@@ -36,6 +35,7 @@
 # `make docs` procedure and related workflows are owned @grafana/docs-tooling. Slack #docs.
 # Documentation sources might have different owners.
 /docs/                                                                       @grafana/docs-tooling
+/docs/.codespellignore @grafana/docs-tooling
 /docs/sources/                                                               @Eve832
 /docs/sources/administration/                                                @jdbaldry
 /docs/sources/alerting/                                                      @brendamuir
