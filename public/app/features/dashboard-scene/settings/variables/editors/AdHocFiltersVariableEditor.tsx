@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAsync } from 'react-use';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, MetricFindValue } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable } from '@grafana/scenes';
 import { DataSourceRef } from '@grafana/schema';
@@ -15,11 +15,18 @@ interface AdHocFiltersVariableEditorProps {
 
 export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProps) {
   const { variable } = props;
-  const datasourceRef = variable.useState().datasource ?? undefined;
+  const { datasource: datasourceRef, getTagKeysProvider } = variable.useState();
 
   const { value: datasourceSettings } = useAsync(async () => {
     return await getDataSourceSrv().get(datasourceRef);
   }, [datasourceRef]);
+
+  const { value: getTagKeysResult } = useAsync(async () => {
+    if (getTagKeysProvider) {
+      return await getTagKeysProvider(variable, null);
+    }
+    return undefined;
+  }, [getTagKeysProvider]);
 
   const message = datasourceSettings?.getTagKeys
     ? 'Ad hoc filters are applied automatically to all queries that target this data source'
@@ -36,5 +43,19 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     });
   };
 
-  return <AdHocVariableForm datasource={datasourceRef} infoText={message} onDataSourceChange={onDataSourceChange} />;
+  const onStaticKeysChange = async (staticKeys?: MetricFindValue[]) => {
+    variable.setState({
+      getTagKeysProvider: staticKeys ? () => Promise.resolve({ values: staticKeys, replace: true }) : undefined,
+    });
+  };
+
+  return (
+    <AdHocVariableForm
+      datasource={datasourceRef ?? undefined}
+      infoText={message}
+      onDataSourceChange={onDataSourceChange}
+      staticKeys={getTagKeysResult?.values}
+      onStaticKeysChange={onStaticKeysChange}
+    />
+  );
 }

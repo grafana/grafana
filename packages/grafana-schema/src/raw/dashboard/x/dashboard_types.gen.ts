@@ -188,6 +188,11 @@ export interface VariableModel {
    */
   sort?: VariableSort;
   /**
+   * Optionally provide static keys for adhoc variables
+   * TODO do we need this?
+   */
+  staticKeys?: Array<VariableOption>;
+  /**
    * Type of variable
    */
   type: VariableType;
@@ -198,6 +203,7 @@ export const defaultVariableModel: Partial<VariableModel> = {
   multi: false,
   options: [],
   skipUrlSync: false,
+  staticKeys: [],
 };
 
 /**
