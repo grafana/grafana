@@ -36,22 +36,14 @@ class LegacyAPI implements PlaylistAPI {
   }
 }
 
-interface K8sPlaylistList {
-  items: K8sPlaylist[];
+interface PlaylistSpec {
+  title: string;
+  interval: string;
+  items: PlaylistItem[];
 }
 
-interface K8sPlaylist {
-  apiVersion: string;
-  kind: 'Playlist';
-  metadata: {
-    name: string;
-  };
-  spec: {
-    title: string;
-    interval: string;
-    items: PlaylistItem[];
-  };
-}
+type K8sPlaylist = Resource<PlaylistSpec>;
+type K8sPlaylistList = ResourceList<PlaylistSpec>;
 
 class K8sAPI implements PlaylistAPI {
   readonly apiVersion = 'playlist.grafana.app/v0alpha1';
@@ -87,10 +79,8 @@ class K8sAPI implements PlaylistAPI {
     await withErrorHandling(() => getBackendSrv().delete(`${this.url}/${uid}`), 'Playlist deleted');
   }
 
-  playlistAsK8sResource = (playlist: Playlist): K8sPlaylist => {
+  playlistAsK8sResource = (playlist: Playlist): ResourceForCreate<PlaylistSpec> => {
     return {
-      apiVersion: this.apiVersion,
-      kind: 'Playlist',
       metadata: {
         name: playlist.uid, // uid as k8s name
       },
