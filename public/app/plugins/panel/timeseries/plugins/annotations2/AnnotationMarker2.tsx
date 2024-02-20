@@ -40,11 +40,6 @@ export const AnnotationMarker2 = ({
   const { refs, floatingStyles } = useFloating({
     open: true,
     placement: 'bottom',
-    // onOpenChange: (open) => {
-    //   if (!open) {
-    //     onDismiss();
-    //   }
-    // },
     middleware: [
       flip({
         fallbackAxisSideDirection: 'end',

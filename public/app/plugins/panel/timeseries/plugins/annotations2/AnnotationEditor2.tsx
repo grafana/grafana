@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import React, { useContext, useEffect } from 'react';
-import { useAsyncFn } from 'react-use';
+import React, { useContext, useEffect, useRef } from 'react';
+import { useAsyncFn, useClickAway } from 'react-use';
 
 import { AnnotationEventUIModel, GrafanaTheme2, dateTimeFormat, systemDateFormats } from '@grafana/data';
 import {
@@ -33,13 +33,9 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
   const styles = useStyles2(getStyles);
   const { onAnnotationCreate, onAnnotationUpdate } = usePanelContext();
 
-  // const clickAwayRef = useRef(null);
+  const clickAwayRef = useRef(null);
 
-  // useClickAway(clickAwayRef, () => {
-  //   if (state === STATE_EDITING) {
-  //     setIsEditingWrap(false);
-  //   }
-  // });
+  useClickAway(clickAwayRef, dismiss);
 
   const layoutCtx = useContext(LayoutItemContext);
   useEffect(() => layoutCtx.boostZIndex(), [layoutCtx]);
@@ -82,7 +78,7 @@ export const AnnotationEditor2 = ({ annoVals, annoIdx, dismiss, timeZone, ...oth
 
   // Annotation editor
   return (
-    <div className={styles.editor} {...otherProps}>
+    <div ref={clickAwayRef} className={styles.editor} {...otherProps}>
       <div className={styles.header}>
         <HorizontalGroup justify={'space-between'} align={'center'}>
           <div>{isUpdatingAnnotation ? 'Edit annotation' : 'Add annotation'}</div>
