@@ -3429,17 +3429,17 @@ __metadata:
   resolution: "@grafana-plugins/tempo@workspace:public/app/plugins/datasource/tempo"
   dependencies:
     "@emotion/css": "npm:11.11.2"
-    "@grafana/data": "workspace:*"
-    "@grafana/e2e-selectors": "workspace:*"
+    "@grafana/data": "npm:11.0.0-pre"
+    "@grafana/e2e-selectors": "npm:11.0.0-pre"
     "@grafana/experimental": "npm:1.7.10"
     "@grafana/lezer-logql": "npm:0.2.3"
     "@grafana/lezer-traceql": "npm:0.0.15"
     "@grafana/monaco-logql": "npm:^0.0.7"
-    "@grafana/o11y-ds-frontend": "workspace:*"
+    "@grafana/o11y-ds-frontend": "npm:11.0.0-pre"
     "@grafana/plugin-configs": "npm:11.0.0-pre"
-    "@grafana/runtime": "workspace:*"
-    "@grafana/schema": "workspace:*"
-    "@grafana/ui": "workspace:*"
+    "@grafana/runtime": "npm:11.0.0-pre"
+    "@grafana/schema": "npm:11.0.0-pre"
+    "@grafana/ui": "npm:11.0.0-pre"
     "@lezer/common": "npm:1.2.1"
     "@lezer/lr": "npm:1.3.3"
     "@opentelemetry/api": "npm:1.7.0"
@@ -3901,7 +3901,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/o11y-ds-frontend@workspace:*, @grafana/o11y-ds-frontend@workspace:packages/grafana-o11y-ds-frontend":
+"@grafana/o11y-ds-frontend@npm:11.0.0-pre, @grafana/o11y-ds-frontend@workspace:*, @grafana/o11y-ds-frontend@workspace:packages/grafana-o11y-ds-frontend":
   version: 0.0.0-use.local
   resolution: "@grafana/o11y-ds-frontend@workspace:packages/grafana-o11y-ds-frontend"
   dependencies:
