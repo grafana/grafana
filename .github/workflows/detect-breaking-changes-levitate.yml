@@ -341,9 +341,6 @@ jobs:
   Foo:
     name: Foo test
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: 'packages'
 
     steps:
       - name: Echo
