@@ -359,7 +359,6 @@
 /.vim @zoltanbedi
 /jest.config.js @grafana/frontend-ops
 /latest.json @grafana/frontend-ops
-/metadata.md @grafana/plugins-platform
 /stylelint.config.js @grafana/frontend-ops
 /tools/ @grafana/frontend-ops
 /lefthook.yml @grafana/frontend-ops
