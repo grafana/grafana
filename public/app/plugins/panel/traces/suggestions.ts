@@ -19,7 +19,7 @@ export class TracesSuggestionsSupplier {
       return;
     }
 
-    if (builder.data.series.some((dataFrame) => dataFrame.meta?.preferredVisualisationType === 'trace')) {
+    if (builder.data.series[0].meta?.preferredVisualisationType === 'trace') {
       this.getListWithDefaults(builder).append({
         name: SuggestionName.Trace,
         score: VisualizationSuggestionScore.Best,
