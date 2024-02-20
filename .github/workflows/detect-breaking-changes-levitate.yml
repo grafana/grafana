@@ -160,7 +160,6 @@ jobs:
           name: levitate
           path: levitate/
 
-
   Report:
     name: Report breaking changes in PR
     runs-on: ubuntu-latest
@@ -338,3 +337,16 @@ jobs:
       - name: Exit
         run: exit ${{ steps.levitate-run.outputs.exit_code }}
         shell: bash
+
+  Foo:
+    name: Foo test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Foo step
+        id: foo_stp
+        run: |
+          if [ ! -z "$(grep "workspace:*" package.json)" ]; then
+            echo "\"workspace:*\" is not allowed in Grafana pacakges"
+            exit 1
+          fi

@@ -21,7 +21,7 @@
     "@grafana/data": "10.4.0-pre",
     "@grafana/e2e-selectors": "10.4.0-pre",
     "@grafana/experimental": "1.7.10",
-    "@grafana/runtime": "10.4.0-pre",
+    "@grafana/runtime": "workspace:*",
     "@grafana/schema": "10.4.0-pre",
     "@grafana/ui": "10.4.0-pre",
     "react": "18.2.0",
