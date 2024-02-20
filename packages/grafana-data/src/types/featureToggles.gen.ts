@@ -33,6 +33,11 @@ export interface FeatureToggles {
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
   autoMigrateOldPanels?: boolean;
+  autoMigrateGraphPanel?: boolean;
+  autoMigrateTablePanel?: boolean;
+  autoMigratePiechartPanel?: boolean;
+  autoMigrateWorldmapPanel?: boolean;
+  autoMigrateStatPanel?: boolean;
   disableAngular?: boolean;
   canvasPanelNesting?: boolean;
   newVizTooltips?: boolean;
@@ -63,7 +68,6 @@ export interface FeatureToggles {
   influxdbBackendMigration?: boolean;
   influxqlStreamingParser?: boolean;
   influxdbRunQueriesInParallel?: boolean;
-  clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
   lokiMetricDataplane?: boolean;
   lokiLogsDataplane?: boolean;
@@ -145,6 +149,7 @@ export interface FeatureToggles {
   annotationPermissionUpdate?: boolean;
   extractFieldsNameDeduplication?: boolean;
   dashboardSceneForViewers?: boolean;
+  dashboardSceneSolo?: boolean;
   dashboardScene?: boolean;
   panelFilterVariable?: boolean;
   pdfTables?: boolean;
@@ -167,7 +172,6 @@ export interface FeatureToggles {
   cloudRBACRoles?: boolean;
   alertingQueryOptimization?: boolean;
   newFolderPicker?: boolean;
-  jitterAlertRules?: boolean;
   jitterAlertRulesWithinGroups?: boolean;
   onPremToCloudMigrations?: boolean;
   alertingSaveStatePeriodic?: boolean;
@@ -175,4 +179,8 @@ export interface FeatureToggles {
   nodeGraphDotLayout?: boolean;
   groupToNestedTableTransformation?: boolean;
   newPDFRendering?: boolean;
+  kubernetesAggregator?: boolean;
+  expressionParser?: boolean;
+  groupByVariable?: boolean;
+  alertingUpgradeDryrunOnStart?: boolean;
 }

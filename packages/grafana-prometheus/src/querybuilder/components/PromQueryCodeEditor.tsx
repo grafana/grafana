@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
 
-import PromQueryField from '../../components/PromQueryField';
+import { PromQueryField } from '../../components/PromQueryField';
 import { PromQueryEditorProps } from '../../components/types';
 
 import { PromQueryBuilderExplained } from './PromQueryBuilderExplained';

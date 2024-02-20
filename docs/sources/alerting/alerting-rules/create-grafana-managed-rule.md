@@ -111,11 +111,11 @@ To do this, you need to make sure that your alert rule is in the right evaluatio
 
 1. Turn on pause alert notifications, if required.
 
-   **Note**:
-
-   Pause alert rule evaluation to prevent noisy alerting while tuning your alerts. Pausing stops alert rule evaluation and does not create any alert instances. This is different to mute timings, which stop notifications from being delivered, but still allow for alert rule evaluation and the creation of alert instances.
-
-   You can pause alert rule evaluation to prevent noisy alerting while tuning your alerts. Pausing stops alert rule evaluation and does not create any alert instances. This is different to mute timings, which stop notifications from being delivered, but still allow for alert rule evaluation and the creation of alert instances.
+   {{< admonition type="note" >}}
+   You can pause alert rule evaluation to prevent noisy alerting while tuning your alerts.
+   Pausing stops alert rule evaluation and doesn't create any alert instances.
+   This is different to mute timings, which stop notifications from being delivered, but still allows for alert rule evaluation and the creation of alert instances.
+   {{< /admonition >}}
 
 1. In **Configure no data and error handling**, configure alerting behavior in the absence of data.
 
@@ -224,21 +224,21 @@ Create alerts from any panel type. This means you can reuse the queries in the p
 This will open the alert rule form, allowing you to configure and create your alert based on the current panel's query.
 
 {{% docs/reference %}}
-[add-a-query]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data#add-a-query"
-[add-a-query]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data#add-a-query"
+[add-a-query]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data#add-a-query"
+[add-a-query]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data#add-a-query"
 
-[alerting-on-numeric-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/evaluate-grafana-alerts#alerting-on-numeric-data-1"
+[alerting-on-numeric-data]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/evaluate-grafana-alerts#alerting-on-numeric-data-1"
 [alerting-on-numeric-data]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/evaluate-grafana-alerts#alerting-on-numeric-data-1"
 
-[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/annotation-label"
+[annotation-label]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/annotation-label"
 [annotation-label]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/annotation-label"
 
-[expression-queries]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/expression-queries"
-[expression-queries]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/panels-visualizations/query-transform-data/expression-queries"
+[expression-queries]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/expression-queries"
+[expression-queries]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/expression-queries"
 
-[fundamentals]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals"
+[fundamentals]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals"
 [fundamentals]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals"
 
-[time-units-and-relative-ranges]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/use-dashboards#time-units-and-relative-ranges"
-[time-units-and-relative-ranges]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/use-dashboards#time-units-and-relative-ranges"
+[time-units-and-relative-ranges]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/dashboards/use-dashboards#time-units-and-relative-ranges"
+[time-units-and-relative-ranges]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/visualizations/dashboards/use-dashboards#time-units-and-relative-ranges"
 {{% /docs/reference %}}
