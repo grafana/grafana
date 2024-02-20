@@ -673,7 +673,7 @@ steps:
   - gsutil cp -r ./playwright-report/. gs://releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report
   - export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html
   - "echo \"E2E Playwright report uploaded to: \n ${E2E_PLAYWRIGHT_REPORT_URL}\""
-  - if [ ! -d "./playwright-report/trace" ]; then exit 1; fi
+  - if [ -d "./playwright-report/trace" ]; then
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
     -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"<h3>❌ Failed to run Playwright
@@ -681,6 +681,7 @@ steps:
     to browse the Playwright report.<br />For information on how to run Playwright
     tests locally, refer to the <a href="https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests">
     Developer guide</a>.\"}"'
+  - fi
   depends_on:
   - playwright-plugin-e2e
   environment:
@@ -1991,7 +1992,7 @@ steps:
   - gsutil cp -r ./playwright-report/. gs://releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report
   - export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html
   - "echo \"E2E Playwright report uploaded to: \n ${E2E_PLAYWRIGHT_REPORT_URL}\""
-  - if [ ! -d "./playwright-report/trace" ]; then exit 1; fi
+  - if [ -d "./playwright-report/trace" ]; then
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
     -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"<h3>❌ Failed to run Playwright
@@ -1999,6 +2000,7 @@ steps:
     to browse the Playwright report.<br />For information on how to run Playwright
     tests locally, refer to the <a href="https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests">
     Developer guide</a>.\"}"'
+  - fi
   depends_on:
   - playwright-plugin-e2e
   environment:
@@ -4888,6 +4890,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 8c6b7044c7482a402cc711dfbea623ce22c6421cbfca2ff68e18ee679406bd00
+hmac: b1c15ceca6434616db6c44ddef81021b605db8423de0effb264f444e8910bea1
 
 ...
