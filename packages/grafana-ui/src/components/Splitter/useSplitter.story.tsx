@@ -31,12 +31,9 @@ interface StoryOptions extends UseSplitterOptions {
 export const Basic: StoryFn<StoryOptions> = (options) => {
   const theme = useTheme2();
   const paneStyles = css({
-    display: 'flex',
-    flexGrow: 1,
     background: theme.colors.background.primary,
     padding: theme.spacing(2),
     border: `1px solid ${theme.colors.border.weak}`,
-    height: '100%',
   });
 
   const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({

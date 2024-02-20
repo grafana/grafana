@@ -264,9 +264,9 @@ export { Avatar } from './UsersIndicator/Avatar';
 // Export this until we've figured out a good approach to inline form styles.
 export { InlineFormLabel } from './FormLabel/FormLabel';
 export { Divider } from './Divider/Divider';
-export { getDragStyles } from './DragHandle/DragHandle';
+export { getDragStyles, type DragHandlePosition } from './DragHandle/DragHandle';
 export { useSplitter } from './Splitter/useSplitter';
-export { useSnappingSplitter } from './Splitter/useSnappingSpitter';
+export { useSnappingSplitter } from '../../../../public/app/features/dashboard-scene/panel-edit/splitter/useSnappingSpitter';
 
 export { LayoutItemContext, type LayoutItemContextProps } from './Layout/LayoutItemContext';
 
