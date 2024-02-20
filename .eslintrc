@@ -100,6 +100,8 @@
         "public/app/plugins/datasource/azuremonitor/**/*.{ts,tsx}",
         "public/app/plugins/datasource/cloud-monitoring/*.{ts,tsx}",
         "public/app/plugins/datasource/cloud-monitoring/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/cloudwatch/*.{ts,tsx}",
+        "public/app/plugins/datasource/cloudwatch/**/*.{ts,tsx}",
         "public/app/plugins/datasource/elasticsearch/*.{ts,tsx}",
         "public/app/plugins/datasource/elasticsearch/**/*.{ts,tsx}",
         "public/app/plugins/datasource/grafana-postgresql-datasource/*.{ts,tsx}",
@@ -118,8 +120,6 @@
         "public/app/plugins/datasource/tempo/**/*.{ts,tsx}",
         "public/app/plugins/datasource/zipkin/*.{ts,tsx}",
         "public/app/plugins/datasource/zipkin/**/*.{ts,tsx}",
-        "public/app/plugins/datasource/cloudwatch/*.{ts,tsx}",
-        "public/app/plugins/datasource/cloudwatch/**/*.{ts,tsx}",
       ],
       "settings": {
         "import/resolver": {
