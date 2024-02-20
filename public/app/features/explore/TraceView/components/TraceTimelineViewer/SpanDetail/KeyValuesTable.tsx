@@ -19,6 +19,7 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
 
+import { EntityLink } from '../../../../../entities/EntityLink';
 import { autoColor } from '../../Theme';
 import CopyIcon from '../../common/CopyIcon';
 import { TraceKeyValuePair, TraceLink, TNil } from '../../types';
@@ -141,7 +142,9 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
                 <td className={styles.keyColumn} data-testid="KeyValueTable--keyColumn">
                   {row.key}
                 </td>
-                <td>{valueMarkup}</td>
+                <td>
+                  <EntityLink context={{ key: row.key, value: row.value }}>{valueMarkup}</EntityLink>
+                </td>
                 <td className={styles.copyColumn}>
                   <CopyIcon
                     className={copyIconClassName}
