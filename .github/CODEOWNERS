@@ -19,7 +19,6 @@
 /CONTRIBUTING.md @grafana/grafana-community-support
 /GOVERNANCE.md @RichiH
 /HALL_OF_FAME.md @grafana/grafana-community-support
-/ISSUE_TRIAGE.md @grafana/grafana-community-support
 /LICENSE @torkelo
 /LICENSING.md @torkelo
 /MAINTAINERS.md @RichiH
@@ -28,9 +27,9 @@
 /ROADMAP.md @torkelo
 /SECURITY.md @grafana/security-team
 /SUPPORT.md @torkelo
-/UPGRADING_DEPENDENCIES.md @grafana/docs-grafana
 /WORKFLOW.md @torkelo
 /contribute/ @grafana/grafana-community-support
+/contribute/UPGRADING_DEPENDENCIES.md @grafana/docs-grafana
 /devenv/README.md @grafana/docs-grafana
 
 # Technical documentation
