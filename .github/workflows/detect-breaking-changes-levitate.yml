@@ -343,13 +343,13 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: './pr'
+        working-directory: '/packages'
 
     steps:
       - name: Foo step
         id: foo_stp
         run: |
-          if [ ! -z "$(grep "workspace:*" packages/grafana-o11y-ds-frontend/package.json)" ]; then
+          if [ ! -z "$(grep "workspace:*" grafana-o11y-ds-frontend/package.json)" ]; then
             echo "\"workspace:*\" is not allowed in Grafana pacakges"
             exit 1
           fi
