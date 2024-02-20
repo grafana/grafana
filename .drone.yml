@@ -681,7 +681,6 @@ steps:
     to browse the Playwright report.<br />For information on how to run Playwright
     tests locally, refer to the <a href="https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests">
     Developer guide</a>.\"}"'
-  - fi
   depends_on:
   - playwright-plugin-e2e
   environment:
@@ -2000,7 +1999,6 @@ steps:
     to browse the Playwright report.<br />For information on how to run Playwright
     tests locally, refer to the <a href="https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests">
     Developer guide</a>.\"}"'
-  - fi
   depends_on:
   - playwright-plugin-e2e
   environment:
@@ -4890,6 +4888,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d7371163308b14b9838fe89b34bfa1ef7891b637266285f93eaae183cb532f78
+hmac: b2e68cd7d69b931d69d5503830014ea37a80fdf81e95cb97b438b1bcb38c8e17
 
 ...
