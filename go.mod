@@ -496,6 +496,7 @@ require (
 	github.com/mithrandie/go-file/v2 v2.1.0 // indirect
 	github.com/mithrandie/go-text v1.5.4 // indirect
 	github.com/mithrandie/ternary v1.1.1 // indirect
+	github.com/phpdave11/gofpdi v1.0.13 // indirect
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
