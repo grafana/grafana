@@ -820,7 +820,6 @@ func TestService_GetConfigMap_concurrentQueryCount(t *testing.T) {
 		s := &Service{
 			cfg: &config.Cfg{},
 		}
-		// require.Equal(t, map[string]string{}, s.GetConfigMap(context.Background(), "", nil))
 		require.NotContains(t, s.GetConfigMap(context.Background(), "", nil), "GF_CONCURRENT_QUERY_COUNT")
 	})
 
