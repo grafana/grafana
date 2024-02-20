@@ -27,13 +27,9 @@ func ProvideSecretsStore(db db.DB) *SecretsStoreImpl {
 	return store
 }
 
-func ProvideSecretsStoreForTable(db db.DB, table string) *SecretsStoreImpl {
-	store := &SecretsStoreImpl{
-		db:    db,
-		log:   log.New("secrets.store"),
-		table: table,
-	}
-
+func NewSecretsStoreForTable(db db.DB, table string) *SecretsStoreImpl {
+	store := ProvideSecretsStore(db)
+	store.table = table
 	return store
 }
 
