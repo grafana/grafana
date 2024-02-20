@@ -16,7 +16,9 @@ labels:
 
 <!-- # Trace to profiles  -->
 
-{{< docs/experimental product="Trace to profiles" featureFlag="traceToProfiles" >}}
+{{% admonition type="note" %}}
+Trace to profiles is an experimental feature. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `traceToProfiles` feature toggle in Grafana to use this feature. This feature is already available in Grafana Cloud.
+{{% /admonition %}}
 
 Using Trace to profiles, you can use Grafana’s ability to correlate different signals by adding the functionality to link between traces and profiles.
 

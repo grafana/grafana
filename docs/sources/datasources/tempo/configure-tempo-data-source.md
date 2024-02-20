@@ -102,8 +102,7 @@ The following table describes the ways in which you can configure your trace to 
 ## Trace to metrics
 
 {{% admonition type="note" %}}
-This feature is behind the `traceToMetrics` [feature toggle][configure-grafana-feature-toggles].
-If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
+This feature is behind the `traceToMetrics` [feature toggle](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles). This feature is already available in Grafana Cloud.
 {{% /admonition %}}
 
 The **Trace to metrics** setting configures the [trace to metrics feature](/blog/2022/08/18/new-in-grafana-9.1-trace-to-metrics-allows-users-to-navigate-from-a-trace-span-to-a-selected-data-source/) available when integrating Grafana with Tempo.
@@ -116,7 +115,7 @@ To configure trace to metrics:
 
    You can also click **Open advanced data source picker** to see more options, including adding a data source.
 
-1. Create any desired linked queries.
+2. Create any desired linked queries.
 
 | Setting name    | Description                                                                                                                                                                                                                                                     |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -244,9 +243,6 @@ datasources:
 {{% docs/reference %}}
 [build-dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
 [build-dashboards]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards"
-
-[configure-grafana-feature-toggles]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
-[configure-grafana-feature-toggles]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/setup-grafana/configure-grafana#feature_toggles"
 
 [data-source-management]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
 [data-source-management]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/administration/data-source-management"
