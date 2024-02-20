@@ -3490,12 +3490,12 @@ __metadata:
   resolution: "@grafana-plugins/zipkin@workspace:public/app/plugins/datasource/zipkin"
   dependencies:
     "@emotion/css": "npm:11.11.2"
-    "@grafana/data": "workspace:*"
+    "@grafana/data": "npm:11.0.0-pre"
     "@grafana/experimental": "npm:1.7.8"
-    "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-configs": "workspace:*"
-    "@grafana/runtime": "workspace:*"
-    "@grafana/ui": "workspace:*"
+    "@grafana/o11y-ds-frontend": "npm:11.0.0-pre"
+    "@grafana/plugin-configs": "npm:11.0.0-pre"
+    "@grafana/runtime": "npm:11.0.0-pre"
+    "@grafana/ui": "npm:11.0.0-pre"
     "@testing-library/jest-dom": "npm:6.3.0"
     "@testing-library/react": "npm:14.1.2"
     "@types/jest": "npm:29.5.11"
@@ -3901,7 +3901,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/o11y-ds-frontend@workspace:*, @grafana/o11y-ds-frontend@workspace:packages/grafana-o11y-ds-frontend":
+"@grafana/o11y-ds-frontend@npm:11.0.0-pre, @grafana/o11y-ds-frontend@workspace:*, @grafana/o11y-ds-frontend@workspace:packages/grafana-o11y-ds-frontend":
   version: 0.0.0-use.local
   resolution: "@grafana/o11y-ds-frontend@workspace:packages/grafana-o11y-ds-frontend"
   dependencies:
@@ -3934,7 +3934,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-configs@npm:11.0.0-pre, @grafana/plugin-configs@workspace:*, @grafana/plugin-configs@workspace:packages/grafana-plugin-configs":
+"@grafana/plugin-configs@npm:11.0.0-pre, @grafana/plugin-configs@workspace:packages/grafana-plugin-configs":
   version: 0.0.0-use.local
   resolution: "@grafana/plugin-configs@workspace:packages/grafana-plugin-configs"
   dependencies:

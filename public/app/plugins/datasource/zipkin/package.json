@@ -5,11 +5,11 @@
   "version": "11.0.0-pre",
   "dependencies": {
     "@emotion/css": "11.11.2",
-    "@grafana/data": "workspace:*",
+    "@grafana/data": "11.0.0-pre",
     "@grafana/experimental": "1.7.8",
-    "@grafana/o11y-ds-frontend": "workspace:*",
-    "@grafana/runtime": "workspace:*",
-    "@grafana/ui": "workspace:*",
+    "@grafana/o11y-ds-frontend": "11.0.0-pre",
+    "@grafana/runtime": "11.0.0-pre",
+    "@grafana/ui": "11.0.0-pre",
     "lodash": "4.17.21",
     "react": "18.2.0",
     "react-use": "17.5.0",
@@ -17,7 +17,7 @@
     "tslib": "2.6.2"
   },
   "devDependencies": {
-    "@grafana/plugin-configs": "workspace:*",
+    "@grafana/plugin-configs": "11.0.0-pre",
     "@testing-library/jest-dom": "6.3.0",
     "@testing-library/react": "14.1.2",
     "@types/jest": "29.5.11",
