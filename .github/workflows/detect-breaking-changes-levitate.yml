@@ -341,11 +341,15 @@ jobs:
   Foo:
     name: Foo test
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: './pr'
 
     steps:
       - uses: actions/checkout@v4
         with:
           path: './pr'
+
       - name: pwd
         id: foo_pwd_step
         shell: bash
