@@ -23,6 +23,7 @@ import {
   sceneGraph,
   SceneDataProvider,
   SceneDataTransformer,
+  PanelBuilders,
 } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
@@ -40,6 +41,14 @@ interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
+  displayMode: DisplayMode;
+  tableView?: VizPanel;
+}
+
+export enum DisplayMode {
+  Fill = 0,
+  Fit = 1,
+  Exact = 2,
 }
 
 // VizPanelManager serves as an API to manipulate VizPanel state from the outside. It allows panel type, options and  data manipulation.
@@ -50,8 +59,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   > = {};
 
   public constructor(panel: VizPanel) {
-    super({ panel });
-
+    super({ panel, displayMode: DisplayMode.Fill });
     this.addActivationHandler(() => this._onActivate());
   }
 
@@ -155,6 +163,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       id: 1,
       type: pluginType,
     };
+
     const newOptions = newPlugin?.onPanelTypeChanged?.(panel, prevPluginId, prevOptions, prevFieldConfig);
     if (newOptions) {
       newPanel.onOptionsChange(newOptions, true);
@@ -284,15 +293,29 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     return this.state.panel.state.$data!;
   }
 
+  public toggleTableView() {
+    if (this.state.tableView) {
+      this.setState({ tableView: undefined });
+      return;
+    }
+
+    this.setState({
+      tableView: PanelBuilders.table()
+        .setTitle('')
+        .setOption('showTypeIcons', true)
+        .setOption('showHeader', true)
+        .setData(this.state.panel.state.$data?.clone())
+        .build(),
+    });
+  }
+
   public static Component = ({ model }: SceneComponentProps<VizPanelManager>) => {
-    const { panel } = model.useState();
+    const { panel, tableView } = model.useState();
     const styles = useStyles2(getStyles);
 
-    return (
-      <div className={styles.wrapper}>
-        <panel.Component model={panel} />
-      </div>
-    );
+    const panelToShow = tableView ?? panel;
+
+    return <div className={styles.wrapper}>{<panelToShow.Component model={panelToShow} />}</div>;
   };
 }
 

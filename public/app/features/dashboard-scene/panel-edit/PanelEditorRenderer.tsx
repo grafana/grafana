@@ -12,9 +12,10 @@ import { PanelEditor } from './PanelEditor';
 
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
-  const { optionsPane, vizManager, vizManagerTableView, dataPane, optionsPaneSize } = model.useState();
-  const { controls } = model.useState();
+  const controls = dashboard.state.controls;
+  const { optionsPane, vizManager, dataPane, optionsPaneSize } = model.useState();
   const styles = useStyles2(getStyles);
+
   const [vizPaneStyles, optionsPaneStyles] = useMemo(() => {
     if (optionsPaneSize > 0) {
       return [{ flexGrow: 1 - optionsPaneSize }, { minWidth: 'unset', overflow: 'hidden', flexGrow: optionsPaneSize }];
@@ -22,8 +23,6 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
       return [{ flexGrow: 1 }, { minWidth: 'unset', flexGrow: 0 }];
     }
   }, [optionsPaneSize]);
-
-  const { tableViewEnabled } = model.useState();
 
   return (
     <>
@@ -46,11 +45,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
               secondaryPaneStyles={{ minHeight: 0, overflow: 'hidden' }}
               dragPosition="start"
             >
-              {tableViewEnabled ? (
-                <vizManager.Component model={vizManagerTableView} />
-              ) : (
-                <vizManager.Component model={vizManager} />
-              )}
+              <vizManager.Component model={vizManager} />
               {dataPane && <dataPane.Component model={dataPane} />}
             </Splitter>
           </div>

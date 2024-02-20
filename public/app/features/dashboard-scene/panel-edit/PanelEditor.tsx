@@ -1,21 +1,9 @@
 import * as H from 'history';
-import React from 'react';
 
 import { NavIndex } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
-import {
-  SceneGridItem,
-  SceneObject,
-  SceneObjectBase,
-  SceneObjectState,
-  SceneRefreshPicker,
-  SceneTimePicker,
-  VizPanel,
-} from '@grafana/scenes';
-import { InlineSwitch } from '@grafana/ui';
+import { SceneGridItem, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
-import { PanelControls } from '../scene/PanelControls';
 import {
   findVizPanelByKey,
   getDashboardSceneFor,
@@ -29,7 +17,6 @@ import { PanelOptionsPane } from './PanelOptionsPane';
 import { VizPanelManager } from './VizPanelManager';
 
 export interface PanelEditorState extends SceneObjectState {
-  controls?: SceneObject[];
   isDirty?: boolean;
   panelId: number;
   optionsPane: PanelOptionsPane;
@@ -37,10 +24,6 @@ export interface PanelEditorState extends SceneObjectState {
   optionsPaneSize: number;
   dataPane?: PanelDataPane;
   vizManager: VizPanelManager;
-  vizManagerTableView: VizPanelManager;
-  tableViewEnabled?: boolean;
-  initialPanelPluginId?: string;
-  initialPanelTitle?: string;
 }
 
 export class PanelEditor extends SceneObjectBase<PanelEditorState> {
@@ -48,24 +31,14 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   private _discardChanges = false;
 
-  public constructor(state: Omit<PanelEditorState, 'vizManagerTableView'>) {
-    super({
-      ...state,
-      initialPanelPluginId: state.vizManager.state.panel.state.pluginId,
-      initialPanelTitle: state.vizManager.state.panel.state.title,
-      vizManagerTableView: state.vizManager.clone(),
-    });
-
+  public constructor(state: PanelEditorState) {
+    super(state);
     this.addActivationHandler(this._activationHandler.bind(this));
   }
 
   private _activationHandler() {
     const panelManager = this.state.vizManager;
     const panel = panelManager.state.panel;
-
-    const newPanel = panelManager.state.panel.clone();
-    newPanel.setState({ ...newPanel, pluginId: 'table', title: '' });
-    this.state.vizManagerTableView?.setState({ panel: newPanel });
 
     this._subs.add(
       panelManager.subscribeToState((n, p) => {
@@ -171,10 +144,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       this.setState({ optionsPaneSize: optionsPaneSize });
     }
   };
-
-  public toggleTableView() {
-    this.setState({ tableViewEnabled: !this.state.tableViewEnabled });
-  }
 }
 
 export const OPTIONS_PANE_PIXELS_MIN = 300;
@@ -186,37 +155,10 @@ export function buildPanelEditScene(panel: VizPanel): PanelEditor {
   const vizPanelMgr = new VizPanelManager(panelClone);
 
   const panelEditor = new PanelEditor({
-    controls: [
-      new PanelControls({
-        otherControls: [],
-        timeControls: [new SceneTimePicker({}), new SceneRefreshPicker({ withText: true })],
-      }),
-    ],
     panelId: getPanelIdForVizPanel(panel),
     optionsPane: new PanelOptionsPane({}),
     vizManager: vizPanelMgr,
     optionsPaneSize: OPTIONS_PANE_FLEX_DEFAULT,
-  });
-
-  const controls = (
-    <InlineSwitch
-      label="Table view"
-      showLabel={true}
-      id="table-view"
-      value={panelEditor.state.tableViewEnabled}
-      onClick={() => panelEditor.toggleTableView()}
-      aria-label="toggle-table-view"
-      data-testid={selectors.components.PanelEditor.toggleTableView}
-    />
-  );
-
-  panelEditor.setState({
-    controls: [
-      new PanelControls({
-        otherControls: [controls],
-        timeControls: [new SceneTimePicker({}), new SceneRefreshPicker({})],
-      }),
-    ],
   });
 
   return panelEditor;
