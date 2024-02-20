@@ -132,21 +132,7 @@ type Header struct {
 // IAM allows the plugin to get a service account with tailored permissions and a token
 // (or to use the client_credentials grant if the token provider is the OAuth2 Server)
 type IAM struct {
-	Impersonation *Impersonation `json:"impersonation,omitempty"`
-
 	// Permissions are the permissions that the external service needs its associated service account to have.
-	Permissions []Permission `json:"permissions,omitempty"`
-}
-
-// Impersonation defines model for Impersonation.
-type Impersonation struct {
-	// Groups allows the service to list the impersonated user's teams.
-	// Defaults to true.
-	Groups *bool `json:"groups,omitempty"`
-
-	// Permissions are the permissions that the external service needs when impersonating a user.
-	// The intersection of this set with the impersonated user's permission guarantees that the client will not
-	// gain more privileges than the impersonated user has.
 	Permissions []Permission `json:"permissions,omitempty"`
 }
 

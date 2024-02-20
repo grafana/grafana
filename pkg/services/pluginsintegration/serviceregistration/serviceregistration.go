@@ -23,7 +23,7 @@ type Service struct {
 
 func ProvideService(cfg *config.Cfg, reg extsvcauth.ExternalServiceRegistry, settingsSvc pluginsettings.Service) *Service {
 	s := &Service{
-		featureEnabled: cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAuth) || cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
+		featureEnabled: cfg.Features.IsEnabledGlobally(featuremgmt.FlagExternalServiceAccounts),
 		log:            log.New("plugins.external.registration"),
 		reg:            reg,
 		settingsSvc:    settingsSvc,
@@ -58,18 +58,6 @@ func (s *Service) RegisterExternalService(ctx context.Context, pluginID string, 
 
 		enabled = (settings != nil) && settings.Enabled
 	}
-
-	impersonation := extsvcauth.ImpersonationCfg{}
-	if svc.Impersonation != nil {
-		impersonation.Permissions = toAccessControlPermissions(svc.Impersonation.Permissions)
-		impersonation.Enabled = enabled
-		if svc.Impersonation.Groups != nil {
-			impersonation.Groups = *svc.Impersonation.Groups
-		} else {
-			impersonation.Groups = true
-		}
-	}
-
 	self := extsvcauth.SelfCfg{}
 	self.Enabled = enabled
 	if len(svc.Permissions) > 0 {
@@ -77,16 +65,9 @@ func (s *Service) RegisterExternalService(ctx context.Context, pluginID string, 
 	}
 
 	registration := &extsvcauth.ExternalServiceRegistration{
-		Name:          pluginID,
-		Impersonation: impersonation,
-		Self:          self,
-	}
-
-	// Default authProvider now is ServiceAccounts
-	registration.AuthProvider = extsvcauth.ServiceAccounts
-	if svc.Impersonation != nil {
-		registration.AuthProvider = extsvcauth.OAuth2Server
-		registration.OAuthProviderCfg = &extsvcauth.OAuthProviderCfg{Key: &extsvcauth.KeyOption{Generate: true}}
+		Name:         pluginID,
+		Self:         self,
+		AuthProvider: extsvcauth.ServiceAccounts,
 	}
 
 	extSvc, err := s.reg.SaveExternalService(ctx, registration)

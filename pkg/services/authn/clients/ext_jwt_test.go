@@ -17,8 +17,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver"
-	"github.com/grafana/grafana/pkg/services/extsvcauth/oauthserver/oastest"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystest"
@@ -268,27 +266,6 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
-		{
-			name: "should return error when the client was not found",
-			payload: ExtendedJWTClaims{
-				Claims: jwt.Claims{
-					Issuer:   "http://localhost:3000",
-					Subject:  "user:id:2",
-					Audience: jwt.Audience{"http://localhost:3000"},
-					ID:       "1234567890",
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-				},
-				ClientID: "unknown-client-id",
-				Scopes:   []string{"profile", "groups"},
-			},
-			initTestEnv: func(env *testEnv) {
-				env.oauthSvc.ExpectedErr = oauthserver.ErrClientNotFoundFn("unknown-client-id")
-			},
-			orgID:   1,
-			want:    nil,
-			wantErr: true,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -521,21 +498,18 @@ func setupTestCtx(t *testing.T, cfg *setting.Cfg) *testEnv {
 	}
 
 	userSvc := &usertest.FakeUserService{}
-	oauthSvc := &oastest.FakeService{}
 
-	extJwtClient := ProvideExtendedJWT(userSvc, cfg, signingKeysSvc, oauthSvc)
+	extJwtClient := ProvideExtendedJWT(userSvc, cfg, signingKeysSvc)
 
 	return &testEnv{
-		oauthSvc: oauthSvc,
-		userSvc:  userSvc,
-		s:        extJwtClient,
+		userSvc: userSvc,
+		s:       extJwtClient,
 	}
 }
 
 type testEnv struct {
-	oauthSvc *oastest.FakeService
-	userSvc  *usertest.FakeUserService
-	s        *ExtendedJWT
+	userSvc *usertest.FakeUserService
+	s       *ExtendedJWT
 }
 
 func generateToken(payload ExtendedJWTClaims, signingKey any, alg jose.SignatureAlgorithm) string {
