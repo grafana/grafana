@@ -1,7 +1,9 @@
 import { config } from '@grafana/runtime';
 
 import {
+  AadCurrentUserCredentials,
   AzureAuthType,
+  AzureClientSecretCredentials,
   AzureCloud,
   AzureCredentials,
   AzureDataSourceInstanceSettings,
@@ -89,8 +91,19 @@ export function isCredentialsComplete(credentials: AzureCredentials): boolean {
   }
 }
 
+export function instanceOfAzureCredential<T extends AzureCredentials>(
+  authType: AzureAuthType,
+  object?: AzureCredentials
+): object is T {
+  if (!object) {
+    return false;
+  }
+  return object.authType === authType;
+}
+
 export function getCredentials(options: AzureDataSourceSettings): AzureCredentials {
   const authType = getAuthType(options);
+  const credentials = options.jsonData.azureCredentials;
   switch (authType) {
     case 'msi':
     case 'workloadidentity':
@@ -109,7 +122,6 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
           azureCloud: getDefaultAzureCloud(),
         };
       }
-    case 'currentuser':
     case 'clientsecret':
       return {
         authType,
@@ -119,6 +131,17 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
         clientSecret: getSecret(options),
       };
   }
+  if (instanceOfAzureCredential<AadCurrentUserCredentials>(authType, credentials)) {
+    return {
+      authType,
+      serviceCredentialsEnabled: credentials.serviceCredentialsEnabled,
+      serviceCredentials: credentials.serviceCredentials,
+    };
+  }
+  return {
+    authType: 'clientsecret',
+    azureCloud: getDefaultAzureCloud(),
+  };
 }
 
 export function updateCredentials(
@@ -146,7 +169,6 @@ export function updateCredentials(
       return options;
 
     case 'clientsecret':
-    case 'currentuser':
       options = {
         ...options,
         jsonData: {
@@ -155,7 +177,6 @@ export function updateCredentials(
           cloudName: credentials.azureCloud || getDefaultAzureCloud(),
           tenantId: credentials.tenantId,
           clientId: credentials.clientId,
-          oauthPassThru: credentials.authType === 'currentuser',
         },
         secureJsonData: {
           ...options.secureJsonData,
@@ -166,7 +187,35 @@ export function updateCredentials(
           clientSecret: typeof credentials.clientSecret === 'symbol',
         },
       };
-
-      return options;
   }
+  if (instanceOfAzureCredential<AadCurrentUserCredentials>(credentials.authType, credentials)) {
+    const serviceCredentials = credentials.serviceCredentials;
+    options = {
+      ...options,
+      jsonData: {
+        ...options.jsonData,
+        azureAuthType: credentials.authType,
+        azureCredentials: {
+          authType: 'currentuser',
+          serviceCredentialsEnabled: credentials.serviceCredentialsEnabled,
+          serviceCredentials,
+        },
+      },
+      secureJsonData: {
+        ...options.secureJsonData,
+        clientSecret:
+          instanceOfAzureCredential<AzureClientSecretCredentials>('clientsecret', credentials.serviceCredentials) &&
+          typeof credentials.serviceCredentials.clientSecret === 'string'
+            ? credentials.serviceCredentials.clientSecret
+            : undefined,
+      },
+      secureJsonFields: {
+        ...options.secureJsonFields,
+        clientSecret:
+          instanceOfAzureCredential<AzureClientSecretCredentials>('clientsecret', credentials.serviceCredentials) &&
+          typeof credentials.serviceCredentials.clientSecret === 'symbol',
+      },
+    };
+  }
+  return options;
 }

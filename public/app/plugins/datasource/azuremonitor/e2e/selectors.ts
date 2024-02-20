@@ -23,6 +23,9 @@ export const components = {
     defaultSubscription: {
       input: 'data-testid default-subscription',
     },
+    serviceCredentialsEnabled: {
+      button: 'data-testid service-credentials-enabled',
+    },
   },
   queryEditor: {
     header: {

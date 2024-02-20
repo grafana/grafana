@@ -8,6 +8,7 @@ import { selectors } from '../../e2e/selectors';
 import { AzureAuthType, AzureCredentials } from '../../types';
 
 import { AppRegistrationCredentials } from './AppRegistrationCredentials';
+import CurrentUserFallbackCredentials from './CurrentUserFallbackCredentials';
 
 export interface Props {
   managedIdentityEnabled: boolean;
@@ -67,10 +68,10 @@ export const AzureCredentialsForm = (props: Props) => {
     const defaultAuthType = managedIdentityEnabled
       ? 'msi'
       : workloadIdentityEnabled
-      ? 'workloadidentity'
-      : userIdentityEnabled
-      ? 'currentuser'
-      : 'clientsecret';
+        ? 'workloadidentity'
+        : userIdentityEnabled
+          ? 'currentuser'
+          : 'clientsecret';
     const updated: AzureCredentials = {
       ...credentials,
       authType: selected.value || defaultAuthType,
@@ -96,7 +97,7 @@ export const AzureCredentialsForm = (props: Props) => {
           />
         </Field>
       )}
-      {(credentials.authType === 'clientsecret' || credentials.authType === 'currentuser') && (
+      {credentials.authType === 'clientsecret' && (
         <AppRegistrationCredentials
           credentials={credentials}
           azureCloudOptions={azureCloudOptions}
@@ -105,6 +106,17 @@ export const AzureCredentialsForm = (props: Props) => {
         />
       )}
       {props.children}
+      {credentials.authType === 'currentuser' && (
+        <CurrentUserFallbackCredentials
+          credentials={credentials}
+          azureCloudOptions={azureCloudOptions}
+          onCredentialsChange={onCredentialsChange}
+          disabled={disabled}
+          managedIdentityEnabled={managedIdentityEnabled}
+          workloadIdentityEnabled={workloadIdentityEnabled}
+          userIdentityEnabled={userIdentityEnabled}
+        />
+      )}
     </ConfigSection>
   );
 };
