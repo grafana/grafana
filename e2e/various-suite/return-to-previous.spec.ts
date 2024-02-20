@@ -3,24 +3,6 @@ import { e2e } from '../utils';
 describe('ReturnToPrevious button', () => {
   before(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
-  });
-
-  beforeEach(() => {
-    // TODO: Remove both delete processes after finishing beforeEach
-    // Delete alert rule
-    cy.visit('/alerting/list?search=');
-    cy.get('[data-testid="group-collapse-toggle"]').click();
-    cy.get('[data-testid="row"]').find('[type="button"]').last().click();
-    cy.get('[role="menuitem"]').last().click();
-    cy.get('[data-testid="data-testid Confirm Modal Danger Button"]').click();
-
-    // Delete test folder for clean up reasons
-    cy.visit('/dashboards');
-    cy.get('[data-testid="data-testid browse dashboards row test folder"]').find('a').click();
-    cy.get('[data-testid="data-testid folder actions button"]').click();
-    cy.get('[id="grafana-portal-container"]').find('button').last().click();
-    cy.get('[role="dialog"]').find('input').type('Delete');
-    cy.get('[data-testid="data-testid Confirm Modal Danger Button"]').click();
 
     // Create a new alert rule with linked dashboard
     cy.visit('/alerting/list?search=');
@@ -46,6 +28,7 @@ describe('ReturnToPrevious button', () => {
     cy.get('[aria-label="Save dashboard"]').click();
     cy.get('[aria-label="Save dashboard button"]').click();
     cy.wait(600); // TODO: use await instead?
+
     cy.get('[data-testid="data-testid Create new panel button"]').click();
     cy.get('[role="dialog"]').find('[data-testid="data-source-card"]').first().click();
     cy.get('[title="Apply changes and save dashboard"]').click();
@@ -61,24 +44,26 @@ describe('ReturnToPrevious button', () => {
     cy.get('[title="New dashboard"]').click();
     cy.get('[title="Panel Title"]').click();
     cy.get('[type="button"]').last().click(); // TODO: find the confirm button in a better way?
+    cy.get('[data-testid="data-testid save rule exit"]').click();
+    cy.wait(600); // TODO: use await instead?
   });
 
-  // afterEach(() => {
-  //     // Delete alert rule
-  //     cy.visit('/alerting/list?search=');
-  //     cy.get('[data-testid="group-collapse-toggle"]').click();
-  //     cy.get('[data-testid="row"]').find('[type="button"]').last().click();
-  //     cy.get('[role="menuitem"]').last().click();
-  //     cy.get('[data-testid="data-testid Confirm Modal Danger Button"]').click();
-  //
-  //     // Delete test folder for clean up reasons
-  //     cy.visit('/dashboards');
-  //     cy.get('[data-testid="data-testid browse dashboards row test folder"]').find('a').click();
-  //     cy.get('[data-testid="data-testid folder actions button"]').click();
-  //     cy.get('[id="grafana-portal-container"]').find('button').last().click();
-  //     cy.get('[role="dialog"]').find('input').type('Delete');
-  //     cy.get('[data-testid="data-testid Confirm Modal Danger Button"]').click();
-  // });
+  after(() => {
+    // Delete alert rule
+    cy.visit('/alerting/list?search=');
+    cy.get('[data-testid="group-collapse-toggle"]').click();
+    cy.get('[data-testid="row"]').find('[type="button"]').last().click();
+    cy.get('[role="menuitem"]').last().click();
+    cy.get('[data-testid="data-testid Confirm Modal Danger Button"]').click();
+
+    // Delete test folder for clean up reasons
+    cy.visit('/dashboards');
+    cy.get('[data-testid="data-testid browse dashboards row test folder"]').find('a').click();
+    cy.get('[data-testid="data-testid folder actions button"]').click();
+    cy.get('[id="grafana-portal-container"]').find('button').last().click();
+    cy.get('[role="dialog"]').find('input').type('Delete');
+    cy.get('[data-testid="data-testid Confirm Modal Danger Button"]').click();
+  });
 
   it('should appear when changing the context', () => {});
 });
