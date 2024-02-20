@@ -343,14 +343,14 @@ steps:
   name: wire-install
 - commands:
   - apk add --update build-base shared-mime-info shared-mime-info-lang
-  - go test -tags requires_buildifer,duckdb_use_lib -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer,duckdb_use_lib,tests -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: golang:1.21.6-alpine
   name: test-backend
 - commands:
   - apk add --update build-base
-  - go test -tags=duckdb_use_lib -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
+  - go test -tags=duckdb_use_lib,tests -count=1 -covermode=atomic -timeout=5m -run '^TestIntegration' $(find
     ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+'
     | grep -o '\(.*\)/' | sort -u)
   depends_on:

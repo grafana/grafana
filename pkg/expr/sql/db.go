@@ -1,4 +1,4 @@
-//go:build requires_buildifer
+//go:build tests
 
 package sql
 

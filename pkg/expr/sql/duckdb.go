@@ -1,5 +1,5 @@
-//go:build !requires_buildifer
-// +build !requires_buildifer
+//go:build !tests
+// +build !tests
 
 package sql
 
