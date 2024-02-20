@@ -388,14 +388,15 @@ def playwright_e2e_report_upload():
             'echo "E2E Playwright report uploaded to: \n $${E2E_PLAYWRIGHT_REPORT_URL}"',
             "ls ./playwright-report/",
             # if the trace folder exists, it means that there are failed tests. then add a PR comment with a link to the Playwright report
-            "if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; false; fi",
-            # "if [ -z `find ! ./playwright-report/trace -type f -name index.html` ]; then echo 'all tests passed'; false; fi",
+            # "if [ ! -d ./playwright-report/trace ]; then",
+            "if [ ! -d ./playwright-report/trace ]; then " +
             "curl -L " +
             "-X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments " +
             '-H "Accept: application/vnd.github+json" ' +
             '-H "Authorization: Bearer $${GITHUB_TOKEN}" ' +
             '-H "X-GitHub-Api-Version: 2022-11-28" -d ' +
-            '"{\\"body\\":\\"<h3>❌ Failed to run Playwright plugin e2e tests</h3> <br />Click <a href="https://storage.googleapis.com/releng-pipeline-artifacts-dev/161658/playwright-report/index.html">here</a> to browse the Playwright report.<br />For information on how to run Playwright tests locally, refer to the <a href="https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests"> Developer guide</a>.\\"}"',
+            '"{\\"body\\":\\"<h3>❌ Failed to run Playwright plugin e2e tests</h3> <br />Click <a href="https://storage.googleapis.com/releng-pipeline-artifacts-dev/161658/playwright-report/index.html">here</a> to browse the Playwright report.<br />For information on how to run Playwright tests locally, refer to the <a href="https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests"> Developer guide</a>.\\"}"' + 
+            "fi;",
         ],
     }
 
