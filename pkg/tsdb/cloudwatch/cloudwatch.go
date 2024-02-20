@@ -122,7 +122,7 @@ func NewInstanceSettings(httpClientProvider *httpclient.Provider) datasource.Ins
 	}
 }
 
-// cloudWatchExecutor executes CloudWatch requests.
+// cloudWatchExecutor executes CloudWatch requests
 type cloudWatchExecutor struct {
 	im          instancemgmt.InstanceManager
 	sessions    SessionCache
