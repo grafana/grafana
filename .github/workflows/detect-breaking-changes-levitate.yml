@@ -346,7 +346,7 @@ jobs:
       - name: Foo step
         id: foo_stp
         run: |
-          pwd
+          echo $(pwd)
           if [ ! -z "$(grep "workspace:*" ./grafana-o11y-ds-frontend/package.json)" ]; then
             echo "\"workspace:*\" is not allowed in Grafana pacakges"
             exit 1
