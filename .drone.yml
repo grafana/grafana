@@ -1190,10 +1190,10 @@ steps:
   - apk add --update git make
   - make swagger-clean && make openapi3-gen
   - for f in public/api-merged.json public/openapi3.json; do git add $f; done
-  - if [ -z "$(git diff --name-only --cached)" ]; then echo "Everything seems up to
-    date!"; else echo "Please ensure the branch is up-to-date, then regenerate the
-    specification by running make swagger-clean && make openapi3-gen" && return 1;
-    fi
+  - git config --local user.email bot@grafana.com
+  - git config --local user.name grafanabot
+  - git commit --message 'Update swagger'
+  - git push origin
   depends_on:
   - clone-enterprise
   environment:
@@ -4804,6 +4804,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 2a70d8442b85841e1b882c9562e8cc42b0c4b697a49ee03d086218f79cdff660
+hmac: 4f2479da30dc36aa723e9502ceec43b408bd11cc2af355179ae22b521f72e32a
 
 ...

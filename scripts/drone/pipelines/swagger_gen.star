@@ -33,7 +33,10 @@ def swagger_gen_step(ver_mode):
             "apk add --update git make",
             "make swagger-clean && make openapi3-gen",
             "for f in public/api-merged.json public/openapi3.json; do git add $f; done",
-            'if [ -z "$(git diff --name-only --cached)" ]; then echo "Everything seems up to date!"; else echo "Please ensure the branch is up-to-date, then regenerate the specification by running make swagger-clean && make openapi3-gen" && return 1; fi',
+            "git config --local user.email bot@grafana.com",
+            "git config --local user.name grafanabot",
+            "git commit --message 'Update swagger'",
+            "git push origin"
         ],
         "depends_on": [
             "clone-enterprise",
