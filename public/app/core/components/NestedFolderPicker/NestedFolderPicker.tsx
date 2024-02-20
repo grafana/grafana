@@ -50,35 +50,12 @@ async function getSearchResults(searchQuery: string) {
   return { ...queryResponse, items };
 }
 
-// interface FolderPickerOptionsOptions {
-//   isOpen: boolean;
-//   folderOpenState: Record<string, boolean>;
-// }
-
-// interface FolderPickerOptionsReturn {
-//   searchTerm: string;
-//   setSearchTerm: (term: string) => void;
-
-//   folderPickerOptions: Array<DashboardsTreeItem<DashboardViewItemWithUIItems>>;
-// }
-
-// function useFolderPickerOptions({ isOpen, folderOpenState }: FolderPickerOptionsOptions) {
-//   const [search, setSearch] = useState('');
-//   const [isSearching, setIsSearching] = useState(false);
-//   const [searchResults, setSearchResults] = useState<DashboardViewItem[] | null>(null);
-
-//   const handleSearch = useCallback((term: string) => {
-//     setSearch(term);
-//     setIsSearching(true);
-//   }, []);
-// }
-
 export function NestedFolderPicker({
   value,
   invalid,
-  showRootFolder = true,
+  showRootFolder = true, // JOSH TODO: Restore this
   clearable = false,
-  excludeUIDs,
+  excludeUIDs, // JOSH TODO: Restore this (or not, if it's not needed)
   onChange,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
@@ -194,8 +171,6 @@ export function NestedFolderPicker({
     },
     [search, fetchFolderPage]
   );
-
-  // JOSH TODO: return search results as a flat tree
 
   const flatTree = useMemo(() => {
     if (isBrowsing) {

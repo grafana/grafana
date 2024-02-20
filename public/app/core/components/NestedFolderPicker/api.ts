@@ -4,7 +4,7 @@ import { QueryActionCreatorResult } from '@reduxjs/toolkit/dist/query/core/build
 import { RequestOptions } from 'http';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { ListFolderArgs, browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { ListFolderQueryArgs, browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { getPaginationPlaceholders } from 'app/features/browse-dashboards/state/utils';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
@@ -12,16 +12,20 @@ import { RootState } from 'app/store/configureStore';
 import { FolderDTO } from 'app/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
-type TODOFolderListPage = ReturnType<typeof listFoldersSelector>;
-type TODORequestPromise = QueryActionCreatorResult<
-  QueryDefinition<ListFolderArgs, BaseQueryFn<RequestOptions>, 'getFolder', FolderDTO[], 'browseDashboardsAPI'>
+type ListFoldersQuery = ReturnType<ReturnType<typeof browseDashboardsAPI.endpoints.listFolders.select>>;
+type ListFoldersRequest = QueryActionCreatorResult<
+  QueryDefinition<ListFolderQueryArgs, BaseQueryFn<RequestOptions>, 'getFolder', FolderDTO[], 'browseDashboardsAPI'>
 >;
 
 const createListFoldersSelector = createSelector(
   [
-    (parentUid: ListFolderArgs['parentUid']) => parentUid,
-    (parentUid: ListFolderArgs['parentUid'], page: ListFolderArgs['page']) => page,
-    (parentUid: ListFolderArgs['parentUid'], page: ListFolderArgs['page'], limit: ListFolderArgs['limit']) => limit,
+    (parentUid: ListFolderQueryArgs['parentUid']) => parentUid,
+    (parentUid: ListFolderQueryArgs['parentUid'], page: ListFolderQueryArgs['page']) => page,
+    (
+      parentUid: ListFolderQueryArgs['parentUid'],
+      page: ListFolderQueryArgs['page'],
+      limit: ListFolderQueryArgs['limit']
+    ) => limit,
   ],
   (parentUid, page, limit) => {
     return browseDashboardsAPI.endpoints.listFolders.select({ parentUid, page, limit });
@@ -32,20 +36,20 @@ const listFoldersSelector = createSelector(
   (state: RootState) => state,
   (
     state: RootState,
-    parentUid: ListFolderArgs['parentUid'],
-    page: ListFolderArgs['page'],
-    limit: ListFolderArgs['limit']
+    parentUid: ListFolderQueryArgs['parentUid'],
+    page: ListFolderQueryArgs['page'],
+    limit: ListFolderQueryArgs['limit']
   ) => createListFoldersSelector(parentUid, page, limit),
   (state, selectFolderList) => selectFolderList(state)
 );
 
 const listAllFoldersSelector = createSelector(
-  [(state: RootState) => state, (state: RootState, requests: TODORequestPromise[]) => requests],
-  (state: RootState, requests: TODORequestPromise[]) => {
+  [(state: RootState) => state, (state: RootState, requests: ListFoldersRequest[]) => requests],
+  (state: RootState, requests: ListFoldersRequest[]) => {
     const seenRequests = new Set<string>();
 
-    const rootPages: TODOFolderListPage[] = [];
-    const pagesByParent: Record<string, TODOFolderListPage[]> = {};
+    const rootPages: ListFoldersQuery[] = [];
+    const pagesByParent: Record<string, ListFoldersQuery[]> = {};
     let isLoading = false;
 
     for (const req of requests) {
@@ -81,7 +85,7 @@ const listAllFoldersSelector = createSelector(
 /**
  * Returns the whether the set of pages are 'fully loaded', and the last page number
  */
-function getPagesLoadStatus(pages: TODOFolderListPage[]): [boolean, number | undefined] {
+function getPagesLoadStatus(pages: ListFoldersQuery[]): [boolean, number | undefined] {
   const lastPage = pages.at(-1);
   const lastPageNumber = lastPage?.originalArgs?.page;
 
@@ -102,7 +106,7 @@ export function useFolderList(isBrowsing: boolean, openFolders: Record<string, b
   // Keep a list of all requests so we can
   //   a) unsubscribe from them when the component is unmounted
   //   b) use them to select the responses out of the state
-  const requestsRef = useRef<TODORequestPromise[]>([]);
+  const requestsRef = useRef<ListFoldersRequest[]>([]);
 
   const state = useSelector((rootState: RootState) => {
     return listAllFoldersSelector(rootState, requestsRef.current);
@@ -138,7 +142,6 @@ export function useFolderList(isBrowsing: boolean, openFolders: Record<string, b
 
   // Convert the individual responses into a flat list of folders, with level indicating
   // the depth in the hierarchy.
-  // TODO: this will probably go up in the parent component so it can also do search
   const treeList = useMemo(() => {
     if (!isBrowsing) {
       return [];
@@ -146,7 +149,7 @@ export function useFolderList(isBrowsing: boolean, openFolders: Record<string, b
 
     function createFlatList(
       parentUid: string | undefined,
-      pages: TODOFolderListPage[],
+      pages: ListFoldersQuery[],
       level: number
     ): Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> {
       const flatList = pages.flatMap((page) => {

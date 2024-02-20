@@ -69,8 +69,7 @@ function createBackendSrvBaseQuery({ baseURL }: { baseURL: string }): BaseQueryF
   return backendSrvBaseQuery;
 }
 
-// TODO: put this somewhere better :)
-export interface ListFolderArgs {
+export interface ListFolderQueryArgs {
   page: number;
   parentUid: string | undefined;
   limit: number;
@@ -81,8 +80,8 @@ export const browseDashboardsAPI = createApi({
   reducerPath: 'browseDashboardsAPI',
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
-    listFolders: builder.query<FolderDTO[], ListFolderArgs>({
-      // TODO: provides tags
+    listFolders: builder.query<FolderDTO[], ListFolderQueryArgs>({
+      providesTags: (result) => result?.map((folder) => ({ type: 'getFolder', id: folder.uid })) ?? [],
       query: ({ page, parentUid, limit }) => ({ url: '/folders', params: { page, parentUid, limit } }),
     }),
 
@@ -362,7 +361,6 @@ export const browseDashboardsAPI = createApi({
 
 export const {
   endpoints,
-  useLazyListFoldersQuery,
   useDeleteFolderMutation,
   useDeleteItemsMutation,
   useGetAffectedItemsQuery,
@@ -373,4 +371,5 @@ export const {
   useSaveDashboardMutation,
   useSaveFolderMutation,
 } = browseDashboardsAPI;
+
 export { skipToken } from '@reduxjs/toolkit/query/react';
