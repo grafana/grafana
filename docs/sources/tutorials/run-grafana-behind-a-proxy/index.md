@@ -225,7 +225,7 @@ http:
 If you don't want or can not use the reverse proxy to handle serving Grafana from a _sub path_, you can set the config variable `server_from_sub_path` to `true`
 
 1. Include the sub path at the end of the `root_url`.
-2. Set `serve_from_sub_path` to `true`
+2. Set `serve_from_sub_path` to `true`:
 
 ```bash
 [server]
