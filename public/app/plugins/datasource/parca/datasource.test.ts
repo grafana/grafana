@@ -1,5 +1,5 @@
 import { DataSourceInstanceSettings, PluginMetaInfo, PluginType } from '@grafana/data';
-import { setPluginExtensionGetter, getBackendSrv, setBackendSrv, getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv } from '@grafana/runtime';
 
 import { defaultParcaQueryType } from './dataquery.gen';
 import { ParcaDataSource } from './datasource';
