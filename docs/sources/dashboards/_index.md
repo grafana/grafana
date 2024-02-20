@@ -28,7 +28,8 @@ Before you begin, ensure that you have configured a data source. See also:
 - [Playlist][]
 - [Reporting][]
 - [Version history][]
-- [Export and import][]
+- [Import][]
+- [Export and share][]
 - [JSON model][]
 
 {{% docs/reference %}}
@@ -56,8 +57,11 @@ Before you begin, ensure that you have configured a data source. See also:
 [JSON model]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/view-dashboard-json-model"
 [JSON model]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/view-dashboard-json-model"
 
-[Export and import]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards#export-and-import-dashboards"
-[Export and import]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards#export-and-import-dashboards"
+[Import]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/import-dashboards"
+[Import]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/build-dashboards/import-dashboards"
+
+[Export and share]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/share-dashboards-panels"
+[Export and share]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/share-dashboards-panels"
 
 [Manage dashboards]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards"
 [Manage dashboards]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA VERSION>/dashboards/manage-dashboards"
