@@ -117,7 +117,9 @@
         "public/app/plugins/datasource/elasticsearch/*.{ts,tsx}",
         "public/app/plugins/datasource/elasticsearch/**/*.{ts,tsx}",
         "public/app/plugins/datasource/cloudwatch/*.{ts,tsx}",
-        "public/app/plugins/datasource/cloudwatch/**/*.{ts,tsx}"
+        "public/app/plugins/datasource/cloudwatch/**/*.{ts,tsx}",
+        "public/app/plugins/datasource/zipkin/*.{ts,tsx}",
+        "public/app/plugins/datasource/zipkin/**/*.{ts,tsx}"
       ],
       "settings": {
         "import/resolver": {
