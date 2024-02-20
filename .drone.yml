@@ -680,7 +680,7 @@ steps:
     plugin e2e tests</h3> <br />Click <a href="https://storage.googleapis.com/releng-pipeline-artifacts-dev/161658/playwright-report/index.html">here</a>
     to browse the Playwright report.<br />For information on how to run Playwright
     tests locally, refer to the <a href="https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests">
-    Developer guide</a>.\"}"fi;'
+    Developer guide</a>.\"}"'
   depends_on:
   - playwright-plugin-e2e
   environment:
@@ -1998,7 +1998,7 @@ steps:
     plugin e2e tests</h3> <br />Click <a href="https://storage.googleapis.com/releng-pipeline-artifacts-dev/161658/playwright-report/index.html">here</a>
     to browse the Playwright report.<br />For information on how to run Playwright
     tests locally, refer to the <a href="https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests">
-    Developer guide</a>.\"}"fi;'
+    Developer guide</a>.\"}"'
   depends_on:
   - playwright-plugin-e2e
   environment:
@@ -4888,6 +4888,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 98901353053919c50e6ac0b82641015812fc3105038547aa411fd4196ce9db2a
+hmac: 50324c600f3882a6c21729f52ed8fe6fb913315bb7be03028e477c590329fe87
 
 ...
