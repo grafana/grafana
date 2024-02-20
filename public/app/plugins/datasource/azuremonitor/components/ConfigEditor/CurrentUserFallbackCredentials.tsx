@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { ConfigSection } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { Select, Field, RadioButtonGroup, Alert, VerticalGroup } from '@grafana/ui';
 
 import { instanceOfAzureCredential } from '../../credentials';
@@ -87,6 +88,18 @@ export const CurrentUserFallbackCredentials = (props: Props) => {
       onCredentialsChange({ ...credentials, serviceCredentials: serviceCredentials });
     }
   };
+
+  if (!config.azure.userIdentityFallbackCredentialsEnabled) {
+    return (
+      <Alert severity="info" title="Fallback Credentials Disabled">
+        <>
+          Fallback credentials have been disabled. As user-based authentication does not inherently support requests
+          without a user in scope, features such as alerting, recorded queries, or reporting will not function as
+          expected. Please review the documentation for more details.
+        </>
+      </Alert>
+    );
+  }
 
   return (
     <ConfigSection title="Fallback Service Credentials" isCollapsible={true}>
