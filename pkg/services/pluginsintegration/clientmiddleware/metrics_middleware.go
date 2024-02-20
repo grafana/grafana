@@ -118,13 +118,9 @@ func (m *MetricsMiddleware) instrumentPluginRequest(ctx context.Context, pluginC
 
 	statusSource := pluginrequestmeta.StatusSourceFromContext(ctx)
 
-	pluginRequestDurationLabels := []string{pluginCtx.PluginID, endpoint, target, string(statusSource)}
-	pluginRequestCounterLabels := []string{pluginCtx.PluginID, endpoint, status.String(), target, string(statusSource)}
-	pluginRequestDurationSecondsLabels := []string{"grafana-backend", pluginCtx.PluginID, endpoint, status.String(), target, string(statusSource)}
-
-	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginRequestDurationLabels...)
-	pluginRequestCounterWithLabels := m.pluginRequestCounter.WithLabelValues(pluginRequestCounterLabels...)
-	pluginRequestDurationSecondsWithLabels := m.pluginRequestDurationSeconds.WithLabelValues(pluginRequestDurationSecondsLabels...)
+	pluginRequestDurationWithLabels := m.pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint, target, string(statusSource))
+	pluginRequestCounterWithLabels := m.pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status.String(), target, string(statusSource))
+	pluginRequestDurationSecondsWithLabels := m.pluginRequestDurationSeconds.WithLabelValues("grafana-backend", pluginCtx.PluginID, endpoint, status.String(), target, string(statusSource))
 
 	if traceID := tracing.TraceIDFromContext(ctx, true); traceID != "" {
 		pluginRequestDurationWithLabels.(prometheus.ExemplarObserver).ObserveWithExemplar(
