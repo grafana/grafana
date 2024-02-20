@@ -388,8 +388,7 @@ def playwright_e2e_report_upload():
             'echo "E2E Playwright report uploaded to: \n $${E2E_PLAYWRIGHT_REPORT_URL}"',
             "ls ./playwright-report/",
             # if the trace folder exists, it means that there are failed tests. then add a PR comment with a link to the Playwright report
-            # "if [ ! -d ./playwright-report/trace ]; then",
-            "if [ -d ./playwright-report/trace ]; then " +
+            "if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; false; fi",
             "curl -L " +
             "-X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments " +
             '-H "Accept: application/vnd.github+json" ' +
