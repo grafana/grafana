@@ -1,5 +1,5 @@
-//go:build sqlexpressions
-// +build sqlexpressions
+//go:build !requires_buildifer
+// +build !requires_buildifer
 
 package sql
 

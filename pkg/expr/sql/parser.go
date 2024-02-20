@@ -1,3 +1,6 @@
+//go:build !requires_buildifer
+// +build !requires_buildifer
+
 package sql
 
 import (

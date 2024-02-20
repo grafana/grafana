@@ -1,3 +1,6 @@
+//go:build !requires_buildifer
+// +build !requires_buildifer
+
 package sql
 
 import (
@@ -95,6 +98,7 @@ func (d *DuckDB) AppendAll(ctx context.Context, frames data.Frames) error {
 	return nil
 }
 
+//gocyclo:ignore
 func (d *DuckDB) createTables(ctx context.Context, fieldLookup TableFields) (Unknown, error) {
 	unknown := Unknown{}
 
