@@ -9,6 +9,7 @@ on:
         type: choice
         options:
           - grafana-azure-monitor-datasource
+          - grafana-pyroscope-datasource
           - grafana-testdata-datasource
           - parca
           - stackdriver

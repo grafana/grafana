@@ -224,16 +224,16 @@ export const StateTimelinePanel = ({
 
                       return (
                         <StateTimelineTooltip2
-                          data={frames ?? []}
+                          frames={frames ?? []}
+                          seriesFrame={alignedFrame}
                           dataIdxs={dataIdxs}
-                          alignedData={alignedFrame}
                           seriesIdx={seriesIdx}
-                          timeZone={timeZone}
                           mode={options.tooltip.mode}
                           sortOrder={options.tooltip.sort}
                           isPinned={isPinned}
                           timeRange={timeRange}
                           annotate={enableAnnotationCreation ? annotate : undefined}
+                          withDuration={true}
                         />
                       );
                     }}
