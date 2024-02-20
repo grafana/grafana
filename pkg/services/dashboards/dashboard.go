@@ -2,6 +2,7 @@ package dashboards
 
 import (
 	"context"
+	"time"
 
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/auth/identity"
@@ -29,6 +30,10 @@ type DashboardService interface {
 	SearchDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) (model.HitList, error)
 	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
 	GetDashboardsSharedWithUser(ctx context.Context, user identity.Requester) ([]*Dashboard, error)
+	SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUid string) error
+	RestoreDashboard(ctx context.Context, orgID int64, dashboardUid string) error
+	CleanUpDeletedDashboards(ctx context.Context) (int64, error)
+	GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error)
 }
 
 // PluginService is a service for operating on plugin dashboards.
@@ -79,4 +84,9 @@ type Store interface {
 	// the given parent folder ID.
 	CountDashboardsInFolders(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
 	DeleteDashboardsInFolders(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
+	GetSoftDeletedExpiredDashboards(ctx context.Context, duration time.Duration) ([]*Dashboard, error)
+	SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUid string) error
+	SoftDeleteDashboardsInFolder(ctx context.Context, orgID int64, folderUid string) error
+	RestoreDashboard(ctx context.Context, orgID int64, dashboardUid string) error
+	GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*Dashboard, error)
 }

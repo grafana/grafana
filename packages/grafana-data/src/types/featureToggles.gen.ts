@@ -183,4 +183,5 @@ export interface FeatureToggles {
   expressionParser?: boolean;
   groupByVariable?: boolean;
   alertingUpgradeDryrunOnStart?: boolean;
+  dashboardRestore?: boolean;
 }

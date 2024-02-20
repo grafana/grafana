@@ -136,7 +136,7 @@ func TestServiceRevert(t *testing.T) {
 		}
 		setupLegacyAlertsTables(t, x, channels, alerts, folders, dashes)
 
-		dashCount, err := x.Table("dashboard").Count(&dashboards.Dashboard{})
+		dashCount, err := x.Table("dashboard").Where("deleted IS NULL").Count(&dashboards.Dashboard{})
 		require.NoError(t, err)
 		require.Equal(t, int64(4), dashCount)
 
@@ -159,7 +159,7 @@ func TestServiceRevert(t *testing.T) {
 		checkMigrationStatus(t, ctx, service, 1, true)
 
 		// Verify we created some folders.
-		newDashCount, err := x.Table("dashboard").Count(&dashboards.Dashboard{})
+		newDashCount, err := x.Table("dashboard").Where("deleted IS NULL").Count(&dashboards.Dashboard{})
 		require.NoError(t, err)
 		require.Truef(t, newDashCount > dashCount, "newDashCount: %d should be greater than dashCount: %d", newDashCount, dashCount)
 
@@ -186,7 +186,7 @@ func TestServiceRevert(t *testing.T) {
 		checkMigrationStatus(t, ctx, service, 1, false)
 
 		// Verify we are back to the original count.
-		newDashCount, err = x.Table("dashboard").Count(&dashboards.Dashboard{})
+		newDashCount, err = x.Table("dashboard").Where("deleted IS NULL").Count(&dashboards.Dashboard{})
 		require.NoError(t, err)
 		require.Equalf(t, dashCount, newDashCount, "newDashCount: %d should be equal to dashCount: %d after revert", newDashCount, dashCount)
 

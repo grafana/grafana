@@ -42,6 +42,8 @@ var (
 	_ dashboards.DashboardService             = (*DashboardServiceImpl)(nil)
 	_ dashboards.DashboardProvisioningService = (*DashboardServiceImpl)(nil)
 	_ dashboards.PluginService                = (*DashboardServiceImpl)(nil)
+
+	daysInTrash = 24 * 30 * time.Hour
 )
 
 type DashboardServiceImpl struct {
@@ -415,6 +417,22 @@ func (dr *DashboardServiceImpl) SaveDashboard(ctx context.Context, dto *dashboar
 
 	return dash, nil
 }
+func (dr *DashboardServiceImpl) GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*dashboards.Dashboard, error) {
+	return dr.dashboardStore.GetSoftDeletedDashboard(ctx, orgID, uid)
+}
+
+func (dr *DashboardServiceImpl) RestoreDashboard(ctx context.Context, orgID int64, dashboardUID string) error {
+	return dr.dashboardStore.RestoreDashboard(ctx, orgID, dashboardUID)
+}
+
+func (dr *DashboardServiceImpl) SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUID string) error {
+	provisionedData, _ := dr.GetProvisionedDashboardDataByDashboardUID(ctx, orgID, dashboardUID)
+	if provisionedData != nil && provisionedData.ID != 0 {
+		return dashboards.ErrDashboardCannotDeleteProvisionedDashboard
+	}
+
+	return dr.dashboardStore.SoftDeleteDashboard(ctx, orgID, dashboardUID)
+}
 
 // DeleteDashboard removes dashboard from the DB. Errors out if the dashboard was provisioned. Should be used for
 // operations by the user where we want to make sure user does not delete provisioned dashboard.
@@ -719,6 +737,9 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 		if len(item.Term) > 0 {
 			hit.Tags = append(hit.Tags, item.Term)
 		}
+		if item.Deleted != nil {
+			hit.RemainingTrashAtAge = util.RemainingDaysUntil((*item.Deleted).Add(daysInTrash))
+		}
 	}
 	return hitList
 }
@@ -732,7 +753,32 @@ func (dr DashboardServiceImpl) CountInFolders(ctx context.Context, orgID int64, 
 }
 
 func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) error {
-	return dr.dashboardStore.DeleteDashboardsInFolders(ctx, &dashboards.DeleteDashboardsInFolderRequest{FolderUIDs: folderUIDs, OrgID: orgID})
+	for _, folderUID := range folderUIDs {
+		// only hard delete the folder representation in the dashboard store
+		// nolint:staticcheck
+		if err := dr.dashboardStore.SoftDeleteDashboardsInFolder(ctx, orgID, folderUID); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (dr *DashboardServiceImpl) Kind() string { return entity.StandardKindDashboard }
+
+func (dr *DashboardServiceImpl) CleanUpDeletedDashboards(ctx context.Context) (int64, error) {
+	var deletedDashboardsCount int64
+	deletedDashboards, err := dr.dashboardStore.GetSoftDeletedExpiredDashboards(ctx, daysInTrash)
+	if err != nil {
+		return 0, err
+	}
+	for _, dashboard := range deletedDashboards {
+		err = dr.DeleteDashboard(ctx, dashboard.ID, dashboard.OrgID)
+		if err != nil {
+			dr.log.Warn("Failed to cleanup deleted dashboard", "dashboardUid", dashboard.UID, "error", err)
+			break
+		}
+		deletedDashboardsCount++
+	}
+
+	return deletedDashboardsCount, nil
+}

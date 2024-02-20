@@ -1230,6 +1230,14 @@ var (
 			RequiresRestart: true,
 			Expression:      "true", // enabled by default
 		},
+		{
+			Name:              "dashboardRestore",
+			Description:       "Enables deleted dashboard restore feature",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaFrontendPlatformSquad,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
 	}
 )
 

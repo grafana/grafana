@@ -237,8 +237,7 @@ func TestDashboardService(t *testing.T) {
 		})
 
 		t.Run("Delete dashboards in folder", func(t *testing.T) {
-			args := &dashboards.DeleteDashboardsInFolderRequest{OrgID: 1, FolderUIDs: []string{"uid"}}
-			fakeStore.On("DeleteDashboardsInFolders", mock.Anything, args).Return(nil).Once()
+			fakeStore.On("SoftDeleteDashboardsInFolder", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 			err := service.DeleteInFolders(context.Background(), 1, []string{"uid"}, nil)
 			require.NoError(t, err)
 		})

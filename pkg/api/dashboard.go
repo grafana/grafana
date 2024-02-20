@@ -273,6 +273,69 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id in
 	return queryResult, nil
 }
 
+func (hs *HTTPServer) RestoreDashboard(c *contextmodel.ReqContext) response.Response {
+	uid := web.Params(c.Req)[":uid"]
+
+	dash, err := hs.DashboardService.GetSoftDeletedDashboard(c.Req.Context(), c.SignedInUser.GetOrgID(), uid)
+	if err != nil {
+		return response.Error(http.StatusNotFound, "Dashboard not found", err)
+	}
+
+	guardian, err := guardian.NewByDashboard(c.Req.Context(), dash, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	if err != nil {
+		return response.Err(err)
+	}
+
+	if canRestore, err := guardian.CanDelete(); err != nil || !canRestore {
+		return dashboardGuardianResponse(err)
+	}
+
+	err = hs.DashboardService.RestoreDashboard(c.Req.Context(), c.SignedInUser.GetOrgID(), uid)
+	if err != nil {
+		return response.Error(http.StatusNotFound, "Dashboard cannot be restored", err)
+	}
+
+	return response.JSON(http.StatusOK, util.DynMap{
+		"title":   dash.Title,
+		"message": fmt.Sprintf("Dashboard %s restored", dash.Title),
+		"id":      dash.ID,
+	})
+}
+
+func (hs *HTTPServer) SoftDeleteDashboard(c *contextmodel.ReqContext) response.Response {
+	uid := web.Params(c.Req)[":uid"]
+	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, uid)
+	if rsp != nil {
+		return rsp
+	}
+
+	guardian, err := guardian.NewByDashboard(c.Req.Context(), dash, c.SignedInUser.GetOrgID(), c.SignedInUser)
+	if err != nil {
+		return response.Err(err)
+	}
+
+	if canDelete, err := guardian.CanDelete(); err != nil || !canDelete {
+		return dashboardGuardianResponse(err)
+	}
+
+	err = hs.DashboardService.SoftDeleteDashboard(c.Req.Context(), c.SignedInUser.GetOrgID(), uid)
+	if err != nil {
+		var dashboardErr dashboards.DashboardErr
+		if ok := errors.As(err, &dashboardErr); ok {
+			if errors.Is(err, dashboards.ErrDashboardCannotDeleteProvisionedDashboard) {
+				return response.Error(dashboardErr.StatusCode, dashboardErr.Error(), err)
+			}
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to delete dashboard", err)
+	}
+
+	return response.JSON(http.StatusOK, util.DynMap{
+		"title":   dash.Title,
+		"message": fmt.Sprintf("Dashboard %s moved to trash", dash.Title),
+		"id":      dash.ID,
+	})
+}
+
 // DeleteDashboardByUID swagger:route DELETE /dashboards/uid/{uid} dashboards deleteDashboardByUID
 //
 // Delete dashboard by uid.
@@ -290,10 +353,23 @@ func (hs *HTTPServer) DeleteDashboardByUID(c *contextmodel.ReqContext) response.
 }
 
 func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Response {
-	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, web.Params(c.Req)[":uid"])
-	if rsp != nil {
-		return rsp
+	uid := web.Params(c.Req)[":uid"]
+
+	var dash *dashboards.Dashboard
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
+		var err error
+		dash, err = hs.DashboardService.GetSoftDeletedDashboard(c.Req.Context(), c.SignedInUser.GetOrgID(), uid)
+		if err != nil {
+			return response.Error(http.StatusNotFound, "Dashboard not found", err)
+		}
+	} else {
+		var rsp response.Response
+		dash, rsp = hs.getDashboardHelper(c.Req.Context(), c.SignedInUser.GetOrgID(), 0, web.Params(c.Req)[":uid"])
+		if rsp != nil {
+			return rsp
+		}
 	}
+
 	guardian, err := guardian.NewByDashboard(c.Req.Context(), dash, c.SignedInUser.GetOrgID(), c.SignedInUser)
 	if err != nil {
 		return response.Err(err)

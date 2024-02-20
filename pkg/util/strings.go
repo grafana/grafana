@@ -104,6 +104,21 @@ func GetAgeString(t time.Time) string {
 	return "< 1 minute"
 }
 
+func RemainingDaysUntil(expiration time.Time) string {
+	currentTime := time.Now()
+	durationUntil := expiration.Sub(currentTime)
+
+	daysUntil := int(durationUntil.Hours() / 24)
+
+	if daysUntil == 0 {
+		return "Today"
+	} else if daysUntil == 1 {
+		return "Tomorrow"
+	} else {
+		return fmt.Sprintf("%d days", daysUntil)
+	}
+}
+
 // ToCamelCase changes kebab case, snake case or mixed strings to camel case. See unit test for examples.
 func ToCamelCase(str string) string {
 	var finalParts []string

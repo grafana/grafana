@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/xorm"
-
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -650,6 +648,45 @@ func (d *dashboardStore) GetDashboardsByPluginID(ctx context.Context, query *das
 	}
 	return dashboards, nil
 }
+func (d *dashboardStore) GetSoftDeletedDashboard(ctx context.Context, orgID int64, uid string) (*dashboards.Dashboard, error) {
+	var queryResult *dashboards.Dashboard
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		dashboard := dashboards.Dashboard{OrgID: orgID, UID: uid}
+		has, err := sess.Where("deleted IS NOT NULL").Get(&dashboard)
+
+		if err != nil {
+			return err
+		} else if !has {
+			return dashboards.ErrDashboardNotFound
+		}
+
+		queryResult = &dashboard
+		return nil
+	})
+
+	return queryResult, err
+}
+
+func (d *dashboardStore) RestoreDashboard(ctx context.Context, orgID int64, dashboardUID string) error {
+	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Exec("UPDATE dashboard SET deleted=NULL WHERE org_id=? AND uid=?", orgID, dashboardUID)
+		return err
+	})
+}
+
+func (d *dashboardStore) SoftDeleteDashboard(ctx context.Context, orgID int64, dashboardUID string) error {
+	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Exec("UPDATE dashboard SET deleted=?, folder_id=0, folder_uid=NULL WHERE org_id=? AND uid=?", time.Now(), orgID, dashboardUID)
+		return err
+	})
+}
+
+func (d *dashboardStore) SoftDeleteDashboardsInFolder(ctx context.Context, orgID int64, folderUid string) error {
+	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Exec("UPDATE dashboard SET deleted=?, folder_id=0, folder_uid=NULL WHERE org_id=? AND folder_uid=? AND is_folder=?", time.Now(), orgID, folderUid, d.store.GetDialect().BooleanStr(false))
+		return err
+	})
+}
 
 func (d *dashboardStore) DeleteDashboard(ctx context.Context, cmd *dashboards.DeleteDashboardCommand) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -848,7 +885,7 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 		}
 
-		has, err := sess.MustCols(mustCols...).Nullable("folder_uid").Get(&dashboard)
+		has, err := sess.Where("deleted IS NULL").MustCols(mustCols...).Nullable("folder_uid").Get(&dashboard)
 		if err != nil {
 			return err
 		} else if !has {
@@ -888,17 +925,20 @@ func (d *dashboardStore) GetDashboards(ctx context.Context, query *dashboards.Ge
 		if len(query.DashboardIDs) == 0 && len(query.DashboardUIDs) == 0 {
 			return star.ErrCommandValidationFailed
 		}
-		var session *xorm.Session
+
+		// remove soft deleted dashboards from the response
+		sess.Where("deleted IS NULL")
+
 		if len(query.DashboardIDs) > 0 {
-			session = sess.In("id", query.DashboardIDs)
+			sess.In("id", query.DashboardIDs)
 		} else {
-			session = sess.In("uid", query.DashboardUIDs)
+			sess.In("uid", query.DashboardUIDs)
 		}
 		if query.OrgID > 0 {
-			session = sess.Where("org_id = ?", query.OrgID)
+			sess.Where("org_id = ?", query.OrgID)
 		}
 
-		err := session.Find(&dashboards)
+		err := sess.Find(&dashboards)
 		return err
 	})
 	if err != nil {
@@ -963,6 +1003,8 @@ func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 			NestedFoldersEnabled: d.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders),
 		})
 	}
+
+	filters = append(filters, searchstore.DeletedFilter{Deleted: query.IsDeleted})
 
 	var res []dashboards.DashboardSearchProjection
 	sb := &searchstore.Builder{Dialect: d.store.GetDialect(), Filters: filters, Features: d.features}
@@ -1067,6 +1109,18 @@ func (d *dashboardStore) DeleteDashboardsInFolders(
 		}
 		return nil
 	})
+}
+
+func (d *dashboardStore) GetSoftDeletedExpiredDashboards(ctx context.Context, duration time.Duration) ([]*dashboards.Dashboard, error) {
+	var dashboards = make([]*dashboards.Dashboard, 0)
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
+		err := sess.Where("deleted IS NOT NULL AND deleted < ?", time.Now().Add(-duration)).Find(&dashboards)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return dashboards, nil
 }
 
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
