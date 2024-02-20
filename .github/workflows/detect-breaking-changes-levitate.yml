@@ -346,8 +346,12 @@ jobs:
         working-directory: 'packages'
 
     steps:
+      - name: Echo
+        id: foo_echo_step
+        shell: bash
+        run: pwd
       - name: Foo step
-        id: foo_stp
+        id: foo_step
         shell: bash
         run: |
           if [ ! -z "$(grep "workspace:*" grafana-o11y-ds-frontend/package.json)" ]; then
