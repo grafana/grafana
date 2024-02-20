@@ -350,7 +350,7 @@ jobs:
       - name: ls
         id: foo_ls_step
         shell: bash
-        run: ls
+        run: ls -al
       - name: Foo step
         id: foo_step
         shell: bash
