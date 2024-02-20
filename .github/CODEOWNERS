@@ -28,8 +28,8 @@
 /ROADMAP.md @torkelo
 /SECURITY.md @grafana/security-team
 /SUPPORT.md @torkelo
-/UPGRADING_DEPENDENCIES.md @grafana/docs-grafana
 /WORKFLOW.md @torkelo
+/contribute/UPGRADING_DEPENDENCIES.md @grafana/docs-grafana
 /contribute/ @grafana/grafana-community-support
 /devenv/README.md @grafana/docs-grafana
 
