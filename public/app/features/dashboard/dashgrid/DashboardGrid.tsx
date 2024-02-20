@@ -169,6 +169,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
       overrideCols = rowResize;
     }
     let overrideWidth = GRID_COLUMN_COUNT / overrideCols;
+    let overrideHeight = 8; // TODO Replace with variable
 
     let x = 0;
     let y = 0;
@@ -227,12 +228,13 @@ export class DashboardGrid extends PureComponent<Props, State> {
             continue
           }
 
-          lastPanelHeight = panelPos.h;
-
+          panelPos.h = overrideHeight;
           panelPos.w = overrideWidth;
           panelPos.x = x;
           panelPos.y = y;
-          x += overrideWidth;
+
+          x += panelPos.w;
+          lastPanelHeight = panelPos.h;
           if (x >= GRID_COLUMN_COUNT) {
             x = 0;
             y += lastPanelHeight;
