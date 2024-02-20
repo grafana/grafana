@@ -421,6 +421,8 @@ export function removePanel(dashboard: DashboardScene, panel: VizPanel, ask: boo
       children: panels,
     });
   }
+
+  dashboard.runIsEmptyCheck();
 }
 
 const onCreateAlert = async (panel: VizPanel) => {

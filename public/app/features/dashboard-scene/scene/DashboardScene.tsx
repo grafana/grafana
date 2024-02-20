@@ -94,6 +94,7 @@ export interface DashboardSceneState extends SceneObjectState {
   editPanel?: PanelEditor;
   /** Scene object that handles the current drawer or modal */
   overlay?: SceneObject;
+  isEmpty?: boolean;
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -140,6 +141,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   private _activationHandler() {
+    this.runIsEmptyCheck();
+
     let prevSceneContext = window.__grafanaSceneContext;
 
     window.__grafanaSceneContext = this;
@@ -522,15 +525,21 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     locationService.partial({ editview: 'settings' });
   };
 
-  public isEmpty = (): boolean => {
+  public runIsEmptyCheck = () => {
     const { body, viewPanelScene } = this.state;
 
     if (!!viewPanelScene) {
-      return !!viewPanelScene.state.body;
+      this.setState({ isEmpty: !!viewPanelScene.state.body });
+      return;
     }
 
     if (body instanceof SceneFlexLayout || body instanceof SceneGridLayout) {
-      return body.state.children.length === 0;
+      if (body.state.children.length === 0) {
+        this.setState({ isEmpty: true });
+      } else {
+        this.setState({ isEmpty: false });
+      }
+      return;
     }
 
     throw new Error('Invalid body type');
