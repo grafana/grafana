@@ -137,31 +137,18 @@ export const RuleDetailsActionButtons = ({ rule, rulesSource, isViewMode }: Prop
     const dashboardUID = rule.annotations[Annotation.dashboardUID];
     if (dashboardUID) {
       buttons.push(
-        config.featureToggles.returnToPrevious ? (
-          <LinkButton
-            size="sm"
-            key="dashboard"
-            variant="primary"
-            icon="apps"
-            href={`d/${encodeURIComponent(dashboardUID)}`}
-            onClick={() => {
-              setReturnToPrevious(rule.name);
-            }}
-          >
-            Go to dashboard
-          </LinkButton>
-        ) : (
-          <LinkButton
-            size="sm"
-            key="dashboard"
-            variant="primary"
-            icon="apps"
-            target="_blank"
-            href={`d/${encodeURIComponent(dashboardUID)}`}
-          >
-            Go to dashboard
-          </LinkButton>
-        )
+        <LinkButton
+          size="sm"
+          key="dashboard"
+          variant="primary"
+          icon="apps"
+          href={`d/${encodeURIComponent(dashboardUID)}`}
+          onClick={() => {
+            setReturnToPrevious(rule.name);
+          }}
+        >
+          Go to dashboard
+        </LinkButton>
       );
       const panelId = rule.annotations[Annotation.panelID];
       if (panelId) {
