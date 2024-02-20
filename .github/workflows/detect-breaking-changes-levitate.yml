@@ -343,6 +343,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v4
+        with:
+          path: './pr'
       - name: pwd
         id: foo_pwd_step
         shell: bash
@@ -355,7 +358,7 @@ jobs:
         id: foo_step
         shell: bash
         run: |
-          if [ ! -z "$(grep "workspace:*" grafana-o11y-ds-frontend/package.json)" ]; then
+          if [ ! -z "$(grep "workspace:*" packages/grafana-o11y-ds-frontend/package.json)" ]; then
             echo "\"workspace:*\" is not allowed in Grafana pacakges"
             exit 1
           fi
