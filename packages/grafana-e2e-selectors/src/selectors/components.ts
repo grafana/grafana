@@ -547,6 +547,8 @@ export const Components = {
     container: 'data-testid tooltip',
   },
   ReturnToPrevious: {
-    dismissableButton: 'data-testid dismissable button',
+    buttonGroup: 'data-testid dismissable button group',
+    backButton: 'data-testid back',
+    dismissButton: 'data-testid dismiss',
   },
 };

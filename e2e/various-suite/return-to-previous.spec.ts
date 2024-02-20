@@ -3,6 +3,9 @@ import { e2e } from '../utils';
 describe('ReturnToPrevious button', () => {
   before(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+    cy.window().then((win) => {
+      win.localStorage.setItem('grafana.featureToggles', 'returnToPrevious=1');
+    });
 
     // Create a new alert rule with linked dashboard
     cy.visit('/alerting/list?search=');
@@ -65,10 +68,24 @@ describe('ReturnToPrevious button', () => {
     cy.get('[data-testid="data-testid Confirm Modal Danger Button"]').click();
   });
 
-  it('should appear when changing the context', () => {
+  it('expected behaviour: appear when changing context, go back to alert rule when clicking "Back", remove when clicking "Dismiss"', () => {
     cy.visit('/alerting/list?search=');
     cy.get('[data-testid="group-collapse-toggle"]').click();
     cy.get('[data-testid="collapse-toggle"]').click();
     cy.get('[data-testid="expanded-content"]').find('[data-testid="data-testid go to dashboard"]').click();
+
+    // check whether all elements of RTP are available
+    cy.get('[data-testid="data-testid dismissable button group"]').should('be.visible');
+    cy.get('[data-testid="data-testid back"]').should('be.visible');
+    cy.get('[data-testid="data-testid dismiss"]').should('be.visible');
+
+    cy.get('[data-testid="data-testid back"]').click();
+    // TODO: check this again
+    cy.get('[data-testid="group-collapse-toggle"]').click();
+    cy.get('[data-testid="collapse-toggle"]').click();
+    cy.get('[data-testid="expanded-content"]'); // TODO: check for exact alert rule name
   });
+  // TODO: check whether the data on the session storage are deleted
+  // it('should remove the DismissableButton when clicking close', () => {
+  // })
 });

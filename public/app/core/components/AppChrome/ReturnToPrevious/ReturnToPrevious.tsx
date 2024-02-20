@@ -30,12 +30,11 @@ export const ReturnToPrevious = ({ href, title }: ReturnToPreviousProps) => {
   }, [href, chrome]);
 
   return (
-    <div className={styles.returnToPrevious}>
+    <div className={styles.returnToPrevious} data-testid={selectors.components.ReturnToPrevious.buttonGroup}>
       <DismissableButton
         label={t('return-to-previous.button.label', 'Back to {{title}}', { title })}
         onClick={handleOnClick}
         onDismiss={handleOnDismiss}
-        data-testid={selectors.components.ReturnToPrevious.dismissableButton}
       />
     </div>
   );
