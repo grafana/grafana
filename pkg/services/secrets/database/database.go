@@ -11,8 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
-const dataKeysTable = "data_keys"
-
 type SecretsStoreImpl struct {
 	db    db.DB
 	log   log.Logger
@@ -23,7 +21,7 @@ func ProvideSecretsStore(db db.DB) *SecretsStoreImpl {
 	store := &SecretsStoreImpl{
 		db:    db,
 		log:   log.New("secrets.store"),
-		table: dataKeysTable,
+		table: "data_keys",
 	}
 
 	return store
