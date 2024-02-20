@@ -343,10 +343,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Echo
-        id: foo_echo_step
+      - name: pwd
+        id: foo_pwd_step
         shell: bash
         run: pwd
+      - name: ls
+        id: foo_ls_step
+        shell: bash
+        run: ls
       - name: Foo step
         id: foo_step
         shell: bash
