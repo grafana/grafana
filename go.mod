@@ -60,7 +60,7 @@ require (
 	github.com/google/wire v0.5.0 // @grafana/backend-platform
 	github.com/gorilla/websocket v1.5.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20240213130827-92f64f0f2a12 // @grafana/alerting-squad-backend
-	github.com/grafana/cog v0.0.0-20240216130230-a57320b28241
+	github.com/grafana/cog v0.0.0-20240220164129-52e9d7f6af64
 	github.com/grafana/cuetsy v0.1.11 // @grafana/grafana-as-code
 	github.com/grafana/grafana-aws-sdk v0.23.1 // @grafana/aws-datasources
 	github.com/grafana/grafana-azure-sdk-go v1.12.0 // @grafana/partner-datasources

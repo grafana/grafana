@@ -2512,8 +2512,8 @@ github.com/grafana/alerting v0.0.0-20240213130827-92f64f0f2a12 h1:QepaY7wUP3U1hF
 github.com/grafana/alerting v0.0.0-20240213130827-92f64f0f2a12/go.mod h1:brTFeACal/cSZAR8XO/4LPKs7rzNfS86okl6QjSP1eY=
 github.com/grafana/codejen v0.0.4-0.20230321061741-77f656893a3d h1:hrXbGJ5jgp6yNITzs5o+zXq0V5yT3siNJ+uM8LGwWKk=
 github.com/grafana/codejen v0.0.4-0.20230321061741-77f656893a3d/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
-github.com/grafana/cog v0.0.0-20240216130230-a57320b28241 h1:cUWW7ioCVFY6MVmNwKHkpZL/JLR2NurBrhuzgAYqvT0=
-github.com/grafana/cog v0.0.0-20240216130230-a57320b28241/go.mod h1:G5ACNkRjS5jZOZg2TkPxFg9gcPNCTfJxACCWaO7hTnw=
+github.com/grafana/cog v0.0.0-20240220164129-52e9d7f6af64 h1:+kKTAa+xZSCBnpc1EA5QM5ESeHVKx+a1mBYWxv/PH/4=
+github.com/grafana/cog v0.0.0-20240220164129-52e9d7f6af64/go.mod h1:G5ACNkRjS5jZOZg2TkPxFg9gcPNCTfJxACCWaO7hTnw=
 github.com/grafana/cue v0.0.0-20230926092038-971951014e3f h1:TmYAMnqg3d5KYEAaT6PtTguL2GjLfvr6wnAX8Azw6tQ=
 github.com/grafana/cue v0.0.0-20230926092038-971951014e3f/go.mod h1:okjJBHFQFer+a41sAe2SaGm1glWS8oEb6CmJvn5Zdws=
 github.com/grafana/cuetsy v0.1.11 h1:I3IwBhF+UaQxRM79HnImtrAn8REGdb5M3+C4QrYHoWk=

@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// K8ResourcesJenny generates the resource information for each core kind.
+// K8ResourcesJenny generates resource, metadata and status for each file.
 type K8ResourcesJenny struct {
 }
 
@@ -18,38 +18,94 @@ func (jenny *K8ResourcesJenny) JennyName() string {
 }
 
 func (jenny *K8ResourcesJenny) Generate(data DataForGen) (codejen.Files, error) {
-	files := make(codejen.Files, len(data.CueFiles))
-	for i, val := range data.CueFiles {
-		version, err := getVersion(val)
+	files := make(codejen.Files, 0)
+	for _, val := range data.CueFiles {
+		pkg, err := getPackageName(val)
 		if err != nil {
 			return nil, err
 		}
 
-		pkg, err := val.LookupPath(cue.ParsePath("name")).String()
-		if err != nil {
-			return nil, fmt.Errorf("file %s doesn't have name field set: %s", data.Files[i], err)
-		}
-
-		pkgName := strings.ToLower(pkg)
-
-		buf := new(bytes.Buffer)
-		if err := tmpls.Lookup("core_resource.tmpl").Execute(buf, tvars_resource{
-			PackageName: pkgName,
-			KindName:    pkg,
-			Version:     version,
-		}); err != nil {
-			return nil, fmt.Errorf("failed executing core resource template: %w", err)
-		}
-
-		content, err := format.Source(buf.Bytes())
+		resource, err := jenny.genResource(pkg, val)
 		if err != nil {
 			return nil, err
 		}
 
-		files[i] = *codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_gen.go", pkgName, pkgName), content, jenny)
+		metadata, err := jenny.genMetadata(pkg)
+		if err != nil {
+			return nil, err
+		}
+
+		status, err := jenny.genStatus(pkg)
+		if err != nil {
+			return nil, err
+		}
+
+		files = append(files, resource)
+		files = append(files, metadata)
+		files = append(files, status)
 	}
 
 	return files, nil
+}
+
+func (jenny *K8ResourcesJenny) genResource(pkg string, val cue.Value) (codejen.File, error) {
+	version, err := getVersion(val)
+	if err != nil {
+		return codejen.File{}, err
+	}
+
+	pkgName := strings.ToLower(pkg)
+
+	buf := new(bytes.Buffer)
+	if err := tmpls.Lookup("core_resource.tmpl").Execute(buf, tvars_resource{
+		PackageName: pkgName,
+		KindName:    pkg,
+		Version:     version,
+	}); err != nil {
+		return codejen.File{}, fmt.Errorf("failed executing core resource template: %w", err)
+	}
+
+	content, err := format.Source(buf.Bytes())
+	if err != nil {
+		return codejen.File{}, err
+	}
+
+	return *codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_gen.go", pkgName, pkgName), content, jenny), nil
+}
+
+func (jenny *K8ResourcesJenny) genMetadata(pkg string) (codejen.File, error) {
+	pkg = strings.ToLower(pkg)
+
+	buf := new(bytes.Buffer)
+	if err := tmpls.Lookup("core_metadata.tmpl").Execute(buf, tvars_metadata{
+		PackageName: pkg,
+	}); err != nil {
+		return codejen.File{}, fmt.Errorf("failed executing core resource template: %w", err)
+	}
+
+	return *codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_metadata_gen.go", pkg, pkg), buf.Bytes(), jenny), nil
+}
+
+func (jenny *K8ResourcesJenny) genStatus(pkg string) (codejen.File, error) {
+	pkg = strings.ToLower(pkg)
+
+	buf := new(bytes.Buffer)
+	if err := tmpls.Lookup("core_status.tmpl").Execute(buf, tvars_status{
+		PackageName: pkg,
+	}); err != nil {
+		return codejen.File{}, fmt.Errorf("failed executing core resource template: %w", err)
+	}
+
+	return *codejen.NewFile(fmt.Sprintf("pkg/kinds/%s/%s_status_gen.go", pkg, pkg), buf.Bytes(), jenny), nil
+}
+
+func getPackageName(val cue.Value) (string, error) {
+	name := val.LookupPath(cue.ParsePath("name"))
+	pkg, err := name.String()
+	if err != nil {
+		return "", fmt.Errorf("file doesn't have name field set: %s", err)
+	}
+	return pkg, nil
 }
 
 func getVersion(val cue.Value) (string, error) {

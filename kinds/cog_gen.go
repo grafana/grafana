@@ -50,9 +50,8 @@ func main() {
 
 	jennies.Append(
 		&codegen.K8ResourcesJenny{},
-		&codegen.K8MetadataJenny{},
-		&codegen.K8StatusJenny{},
 		&codegen.GoTypesJenny{},
+		&codegen.TSResources{},
 	)
 
 	header := codegen.SlashHeaderMapper("kinds/cog_gen.go")

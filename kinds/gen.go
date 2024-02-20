@@ -44,10 +44,6 @@ func main() {
 
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
-		codegen.LatestMajorsOrXJenny(
-			TSCoreKindParentPath,
-			true, // forcing group so that we ignore the top level resource (for now)
-			codegen.TSResourceJenny{}),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
 		codegen.DocsJenny(filepath.Join("docs", "sources", "developers", "kinds", "core")),
 	)
