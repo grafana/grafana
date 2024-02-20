@@ -341,6 +341,9 @@ jobs:
   Foo:
     name: Foo test
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: './pr'
 
     steps:
       - name: Foo step
