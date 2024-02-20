@@ -8,7 +8,6 @@ import { config } from '@grafana/runtime';
 import { Alert, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { useBrowseLoadingStatus } from 'app/features/browse-dashboards/state';
 import { QueryResponse, getGrafanaSearcher } from 'app/features/search/service';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
@@ -85,7 +84,6 @@ export function NestedFolderPicker({
   const styles = useStyles2(getStyles);
   const selectedFolder = useGetFolderQuery(value || skipToken);
 
-  const rootStatus = useBrowseLoadingStatus(undefined);
   const nestedFoldersEnabled = Boolean(config.featureToggles.nestedFolders);
 
   const [search, setSearch] = useState('');
@@ -98,8 +96,8 @@ export function NestedFolderPicker({
   const [error] = useState<Error | undefined>(undefined); // TODO: error not populated anymore
   const lastSearchTimestamp = useRef<number>(0);
 
-  const isBrowsing = Boolean(overlayOpen && search && searchResults);
-  const [browseFlatTree, fetchFolderPage] = useFolderList(isBrowsing, foldersOpenState);
+  const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
+  const [browseFlatTree, isBrowseLoading, fetchFolderPage] = useFolderList(isBrowsing, foldersOpenState);
 
   useEffect(() => {
     if (!search) {
@@ -233,7 +231,7 @@ export function NestedFolderPicker({
     [flatTree]
   );
 
-  const isLoading = rootStatus === 'pending' || isFetchingSearchResults;
+  const isLoading = isBrowseLoading || isFetchingSearchResults;
 
   const { focusedItemIndex, handleKeyDown } = useTreeInteractions({
     tree: flatTree,

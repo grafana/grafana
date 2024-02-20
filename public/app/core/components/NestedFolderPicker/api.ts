@@ -46,6 +46,7 @@ const listAllFoldersSelector = createSelector(
 
     const rootPages: TODOFolderListPage[] = [];
     const pagesByParent: Record<string, TODOFolderListPage[]> = {};
+    let isLoading = false;
 
     for (const req of requests) {
       if (seenRequests.has(req.requestId)) {
@@ -53,6 +54,9 @@ const listAllFoldersSelector = createSelector(
       }
 
       const page = listFoldersSelector(state, req.arg.parentUid, req.arg.page, req.arg.limit);
+      if (page.status === 'pending') {
+        isLoading = true;
+      }
 
       const parentUid = page.originalArgs?.parentUid;
       if (parentUid) {
@@ -67,6 +71,7 @@ const listAllFoldersSelector = createSelector(
     }
 
     return {
+      isLoading,
       rootPages,
       pagesByParent,
     };
@@ -76,11 +81,16 @@ const listAllFoldersSelector = createSelector(
 /**
  * Returns the whether the set of pages are 'fully loaded', and the last page number
  */
-function getPagesLoadStatus(pages: TODOFolderListPage[]): [boolean, number] {
+function getPagesLoadStatus(pages: TODOFolderListPage[]): [boolean, number | undefined] {
   const lastPage = pages.at(-1);
-  const fullyLoaded = lastPage && (lastPage.data?.length ?? 0) < (lastPage.originalArgs?.limit ?? 0);
+  const lastPageNumber = lastPage?.originalArgs?.page;
 
-  return [Boolean(fullyLoaded), lastPage?.originalArgs?.page ?? 1];
+  if (!lastPage?.data) {
+    // If there's no pages yet, or the last page is still loading
+    return [false, lastPageNumber];
+  } else {
+    return [lastPage.data.length < lastPage.originalArgs.limit, lastPageNumber];
+  }
 }
 
 /**
@@ -103,12 +113,12 @@ export function useFolderList(isBrowsing: boolean, openFolders: Record<string, b
   const requestNextPage = useCallback(
     (parentUid: string | undefined) => {
       const pages = parentUid ? state.pagesByParent[parentUid] : state.rootPages;
-      const [fullyLoaded, pageNumber] = getPagesLoadStatus(pages);
+      const [fullyLoaded, pageNumber] = getPagesLoadStatus(pages ?? []);
       if (fullyLoaded) {
         return;
       }
 
-      const args = { parentUid, page: pageNumber + 1, limit: PAGE_SIZE };
+      const args = { parentUid, page: (pageNumber ?? 0) + 1, limit: PAGE_SIZE };
       const promise = dispatch(browseDashboardsAPI.endpoints.listFolders.initiate(args));
 
       // It's important that we create a new array so we can correctly memoize with it
@@ -130,15 +140,15 @@ export function useFolderList(isBrowsing: boolean, openFolders: Record<string, b
   // the depth in the hierarchy.
   // TODO: this will probably go up in the parent component so it can also do search
   const treeList = useMemo(() => {
+    if (!isBrowsing) {
+      return [];
+    }
+
     function createFlatList(
       parentUid: string | undefined,
       pages: TODOFolderListPage[],
       level: number
     ): Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> {
-      if (!isBrowsing) {
-        return [];
-      }
-
       const flatList = pages.flatMap((page) => {
         const pageItems = page.data ?? [];
 
@@ -179,7 +189,7 @@ export function useFolderList(isBrowsing: boolean, openFolders: Record<string, b
     return rootFlatTree;
   }, [state, isBrowsing, openFolders]);
 
-  return [treeList, requestNextPage] as const;
+  return [treeList, state.isLoading, requestNextPage] as const;
 }
 
 const ROOT_FOLDER_ITEM = {
