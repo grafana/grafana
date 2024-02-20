@@ -445,6 +445,5 @@ example.com:8080
 ```
 
 {{% docs/reference %}}
-[explore]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/explore"
-[explore]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/explore"
+[explore]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/explore"
 {{% /docs/reference %}}
