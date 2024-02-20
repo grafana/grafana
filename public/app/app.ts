@@ -203,6 +203,20 @@ export class GrafanaApp {
       const modalManager = new ModalManager();
       modalManager.init();
 
+      // TODO: we need an internal subject to hold the latest registry.
+      // TODO: we need expose a way to emit/next items to the registry.
+
+      // create registry with core configurations only.
+      // const extensionRegistry = ...
+
+      // preload app plugins without await pass the registry to the preload function.
+      // TODO: we need a way to append things to the registry after it is created.
+
+      // expose getPluginExtension function pass the registry to it
+      // expose the registry observable via runtime
+
+      // TODO: add a usePluginExtenion hook in runtime that subscribes to the registry observable.
+
       let preloadResults: PluginPreloadResult[] = [];
 
       if (contextSrv.user.orgRole !== '') {
@@ -375,5 +389,7 @@ function reportMetricPerformanceMark(metricName: string, prefix = '', suffix = '
     reportPerformance(`${prefix}${metricName}${suffix}`, Math.round(metric.startTime) / 1000);
   }
 }
+
+async function preloadPluginsAndRegistryExtensions(): Promise<void> {}
 
 export default new GrafanaApp();
