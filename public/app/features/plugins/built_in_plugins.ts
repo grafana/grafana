@@ -41,6 +41,11 @@ const pyroscopePlugin = async () =>
   await import(/* webpackChunkName: "pyroscopePlugin" */ 'app/plugins/datasource/grafana-pyroscope-datasource/module');
 const parcaPlugin = async () =>
   await import(/* webpackChunkName: "parcaPlugin" */ 'app/plugins/datasource/parca/module');
+// @PERCONA
+const pmmPTSummaryDatasource = async () =>
+  await import(
+    /* webpackChunkName: "pmmPTSummaryDatasource" */ 'app/plugins/datasource/pmm-pt-summary-datasource/module'
+  );
 
 import * as alertGroupsPanel from 'app/plugins/panel/alertGroups/module';
 import * as alertListPanel from 'app/plugins/panel/alertlist/module';
@@ -62,6 +67,7 @@ import * as nodeGraph from 'app/plugins/panel/nodeGraph/module';
 import * as pieChartPanel from 'app/plugins/panel/piechart/module';
 // @PERCONA
 import * as pmmCheckPanel from 'app/plugins/panel/pmm-check/module';
+import * as pmmPTSummaryPanel from 'app/plugins/panel/pmm-pt-summary-panel/module';
 import * as pmmUpdatePanel from 'app/plugins/panel/pmm-update/module';
 import * as statPanel from 'app/plugins/panel/stat/module';
 import * as stateTimelinePanel from 'app/plugins/panel/state-timeline/module';
@@ -107,6 +113,8 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/alertmanager': alertmanagerPlugin,
   'core:plugin/grafana-pyroscope-datasource': pyroscopePlugin,
   'core:plugin/parca': parcaPlugin,
+  // @PERCONA
+  'core:plugin/pmm-pt-summary-datasource': pmmPTSummaryDatasource,
   // panels
   'core:plugin/text': textPanel,
   'core:plugin/timeseries': timeseriesPanel,
@@ -144,6 +152,7 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   // @PERCONA
   'core:plugin/pmm-check': pmmCheckPanel,
   'core:plugin/pmm-update': pmmUpdatePanel,
+  'core:plugin/pmm-pt-summary-panel': pmmPTSummaryPanel,
 };
 
 export default builtInPlugins;
