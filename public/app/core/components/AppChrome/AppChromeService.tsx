@@ -91,13 +91,18 @@ export class AppChromeService {
 
   public setReturnToPrevious = (returnToPrevious: ReturnToPreviousProps) => {
     const previousPage = this.state.getValue().returnToPrevious;
-    reportInteraction('grafana_return_to_previous_button_created', {
-      page: returnToPrevious.href,
-      previousPage: previousPage?.href,
-    });
+    const isReturnToPreviousEnabled = config.featureToggles.returnToPrevious;
+    if (isReturnToPreviousEnabled) {
+      reportInteraction('grafana_return_to_previous_button_created', {
+        page: returnToPrevious.href,
+        previousPage: previousPage?.href,
+      });
 
-    this.update({ returnToPrevious });
-    window.sessionStorage.setItem('returnToPrevious', JSON.stringify(returnToPrevious));
+      this.update({ returnToPrevious });
+      window.sessionStorage.setItem('returnToPrevious', JSON.stringify(returnToPrevious));
+    } else {
+      locationService.push(returnToPrevious.href);
+    }
   };
 
   public clearReturnToPrevious = (interactionAction: 'clicked' | 'dismissed' | 'auto_dismissed') => {
