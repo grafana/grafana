@@ -76,13 +76,7 @@ function VizAndDataPane({ model }: SceneComponentProps<PanelEditor>) {
 
   return (
     <>
-      {controls && (
-        <div className={styles.controls}>
-          {controls.map((control) => (
-            <control.Component key={control.state.key} model={control} />
-          ))}
-        </div>
-      )}
+      {controls && <controls.Component model={controls} />}
       <div {...containerProps}>
         <div {...primaryProps}>
           <vizManager.Component model={vizManager} />
