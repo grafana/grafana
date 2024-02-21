@@ -21,7 +21,6 @@ import {
   DeepPartial,
   SceneQueryRunner,
   sceneGraph,
-  SceneDataProvider,
   SceneDataTransformer,
   PanelBuilders,
 } from '@grafana/scenes';
@@ -37,11 +36,12 @@ import { QueryGroupOptions } from 'app/types';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
+import { ShareDataProvider } from './ShareDataProvider';
+
 interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
-  displayMode: DisplayMode;
   tableView?: VizPanel;
 }
 
@@ -58,8 +58,8 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     { options: DeepPartial<{}>; fieldConfig: FieldConfigSource<DeepPartial<{}>> } | undefined
   > = {};
 
-  public constructor(panel: VizPanel) {
-    super({ panel, displayMode: DisplayMode.Fill });
+  public constructor(state: VizPanelManagerState) {
+    super(state);
     this.addActivationHandler(() => this._onActivate());
   }
 
@@ -199,6 +199,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       },
       queries,
     });
+
     if (defaultQueries) {
       queryRunner.runQueries();
     }
@@ -217,14 +218,17 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     if (options.maxDataPoints !== dataObj.state.maxDataPoints) {
       dataObjStateUpdate.maxDataPoints = options.maxDataPoints ?? undefined;
     }
+
     if (options.minInterval !== dataObj.state.minInterval && options.minInterval !== null) {
       dataObjStateUpdate.minInterval = options.minInterval;
     }
+
     if (options.timeRange) {
       timeRangeObjStateUpdate.timeFrom = options.timeRange.from ?? undefined;
       timeRangeObjStateUpdate.timeShift = options.timeRange.shift ?? undefined;
       timeRangeObjStateUpdate.hideTimeOverride = options.timeRange.hide;
     }
+
     if (timeRangeObj instanceof PanelTimeRange) {
       if (timeRangeObjStateUpdate.timeFrom !== undefined || timeRangeObjStateUpdate.timeShift !== undefined) {
         // update time override
@@ -278,6 +282,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     if (!runner) {
       throw new Error('Query runner not found');
     }
+
     return runner;
   }
 
@@ -287,10 +292,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       throw new Error('Could not find SceneDataTransformer for panel');
     }
     return provider;
-  }
-
-  get panelData(): SceneDataProvider {
-    return this.state.panel.state.$data!;
   }
 
   public toggleTableView() {
@@ -304,7 +305,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         .setTitle('')
         .setOption('showTypeIcons', true)
         .setOption('showHeader', true)
-        .setData(this.state.panel.state.$data?.clone())
+        .setData(new ShareDataProvider(this.queryRunner))
         .build(),
     });
   }

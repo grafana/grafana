@@ -97,7 +97,11 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     }
 
     if (sourcePanel!.parent instanceof SceneGridItem) {
-      sourcePanel!.parent.setState({ body: this.state.vizManager.state.panel.clone() });
+      sourcePanel!.parent.setState({
+        body: this.state.vizManager.state.panel.clone({
+          $data: this.state.vizManager.state.$data?.clone(),
+        }),
+      });
     }
   }
 
@@ -151,13 +155,12 @@ export const OPTIONS_PANE_PIXELS_SNAP = 400;
 export const OPTIONS_PANE_FLEX_DEFAULT = 0.25;
 
 export function buildPanelEditScene(panel: VizPanel): PanelEditor {
-  const panelClone = panel.clone();
-  const vizPanelMgr = new VizPanelManager(panelClone);
-
   const panelEditor = new PanelEditor({
     panelId: getPanelIdForVizPanel(panel),
     optionsPane: new PanelOptionsPane({}),
-    vizManager: vizPanelMgr,
+    vizManager: new VizPanelManager({
+      panel: panel.clone(),
+    }),
     optionsPaneSize: OPTIONS_PANE_FLEX_DEFAULT,
   });
 
