@@ -571,7 +571,7 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 					"GF_VERSION=", "GF_EDITION=", "GF_ENTERPRISE_LICENSE_PATH=",
 					"GF_ENTERPRISE_APP_URL=", "GF_ENTERPRISE_LICENSE_TEXT=", "GF_APP_URL=",
 					"GF_PLUGIN_APP_CLIENT_ID=client-id", "GF_PLUGIN_APP_CLIENT_SECRET=secretz",
-					"GF_INSTANCE_FEATURE_TOGGLES_ENABLE=externalServiceAuth",
+					"GF_INSTANCE_FEATURE_TOGGLES_ENABLE=externalServiceAccounts",
 				}, env())
 				return &fakes.FakeBackendPlugin{}, nil
 			}
