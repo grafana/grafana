@@ -9,12 +9,18 @@ import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
 import { getPaginationPlaceholders } from 'app/features/browse-dashboards/state/utils';
 import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { RootState } from 'app/store/configureStore';
-import { FolderDTO } from 'app/types';
+import { FolderListItemDTO } from 'app/types';
 import { useDispatch, useSelector } from 'app/types/store';
 
 type ListFoldersQuery = ReturnType<ReturnType<typeof browseDashboardsAPI.endpoints.listFolders.select>>;
 type ListFoldersRequest = QueryActionCreatorResult<
-  QueryDefinition<ListFolderQueryArgs, BaseQueryFn<RequestOptions>, 'getFolder', FolderDTO[], 'browseDashboardsAPI'>
+  QueryDefinition<
+    ListFolderQueryArgs,
+    BaseQueryFn<RequestOptions>,
+    'getFolder',
+    FolderListItemDTO[],
+    'browseDashboardsAPI'
+  >
 >;
 
 const createListFoldersSelector = createSelector(
@@ -192,7 +198,11 @@ export function useFolderList(isBrowsing: boolean, openFolders: Record<string, b
     return rootFlatTree;
   }, [state, isBrowsing, openFolders]);
 
-  return [treeList, state.isLoading, requestNextPage] as const;
+  return {
+    items: treeList,
+    isLoading: state.isLoading,
+    requestNextPage,
+  };
 }
 
 const ROOT_FOLDER_ITEM = {

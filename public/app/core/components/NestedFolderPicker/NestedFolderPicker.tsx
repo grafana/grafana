@@ -74,7 +74,11 @@ export function NestedFolderPicker({
   const lastSearchTimestamp = useRef<number>(0);
 
   const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
-  const [browseFlatTree, isBrowseLoading, fetchFolderPage] = useFolderList(isBrowsing, foldersOpenState);
+  const {
+    items: browseFlatTree,
+    isLoading: isBrowseLoading,
+    requestNextPage: fetchFolderPage,
+  } = useFolderList(isBrowsing, foldersOpenState);
 
   useEffect(() => {
     if (!search) {
