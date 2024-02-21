@@ -15,7 +15,6 @@ const influxdbPlugin = async () =>
 const lokiPlugin = async () => await import(/* webpackChunkName: "lokiPlugin" */ 'app/plugins/datasource/loki/module');
 const jaegerPlugin = async () =>
   await import(/* webpackChunkName: "jaegerPlugin" */ 'app/plugins/datasource/jaeger/module');
-const zipkinPlugin = async () => await import(/* webpackChunkName: "zipkinPlugin" */ '@grafana-plugins/zipkin/module');
 const mixedPlugin = async () =>
   await import(/* webpackChunkName: "mixedPlugin" */ 'app/plugins/datasource/mixed/module');
 const mysqlPlugin = async () =>
@@ -80,7 +79,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/influxdb': influxdbPlugin,
   'core:plugin/loki': lokiPlugin,
   'core:plugin/jaeger': jaegerPlugin,
-  'core:plugin/zipkin': zipkinPlugin,
   'core:plugin/mixed': mixedPlugin,
   'core:plugin/mysql': mysqlPlugin,
   'core:plugin/grafana-postgresql-datasource': postgresPlugin,
