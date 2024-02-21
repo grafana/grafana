@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { FormEvent } from 'react';
 import { of } from 'rxjs';
@@ -16,6 +16,7 @@ import { setRunRequest } from '@grafana/runtime';
 import { VariableRefresh, VariableSort } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
+import { getVariableQueryEditor } from 'app/features/variables/editor/getVariableQueryEditor';
 
 import { QueryVariableEditorForm } from './QueryVariableForm';
 
@@ -61,7 +62,7 @@ setRunRequest(runRequestMock);
 
 jest.mock('app/features/variables/editor/getVariableQueryEditor', () => ({
   ...jest.requireActual('app/features/variables/editor/getVariableQueryEditor'),
-  getVariableQueryEditor: jest.fn().mockResolvedValue(LegacyVariableQueryEditor),
+  getVariableQueryEditor: jest.fn(),
 }));
 
 describe('QueryVariableEditorForm', () => {
@@ -96,9 +97,10 @@ describe('QueryVariableEditorForm', () => {
     onAllValueChange: mockOnAllValueChange,
   };
 
-  function setup(props?: React.ComponentProps<typeof QueryVariableEditorForm>) {
+  async function setup(props?: React.ComponentProps<typeof QueryVariableEditorForm>) {
+    jest.mocked(getVariableQueryEditor).mockResolvedValue(LegacyVariableQueryEditor);
     return {
-      renderer: render(<QueryVariableEditorForm {...defaultProps} {...props} />),
+      renderer: await act(() => render(<QueryVariableEditorForm {...defaultProps} {...props} />)),
       user: userEvent.setup(),
     };
   }
@@ -107,10 +109,10 @@ describe('QueryVariableEditorForm', () => {
     jest.clearAllMocks();
   });
 
-  it('should render the component with initializing the components correctly', () => {
+  it('should render the component with initializing the components correctly', async () => {
     const {
       renderer: { getByTestId, getByRole },
-    } = setup();
+    } = await setup();
     const dataSourcePicker = getByTestId(selectors.components.DataSourcePicker.inputV2);
     //const queryEditor = getByTestId('query-editor');
     const regexInput = getByTestId(
@@ -152,7 +154,7 @@ describe('QueryVariableEditorForm', () => {
   it('should call onDataSourceChange when changing the datasource', async () => {
     const {
       renderer: { getByTestId },
-    } = setup();
+    } = await setup();
     const dataSourcePicker = getByTestId(selectors.components.DataSourcePicker.inputV2);
     await userEvent.click(dataSourcePicker);
     await userEvent.click(screen.getByText(/prometheus/i));
@@ -164,7 +166,7 @@ describe('QueryVariableEditorForm', () => {
   it('should call onQueryChange when changing the query', async () => {
     const {
       renderer: { getByTestId },
-    } = setup();
+    } = await setup();
     const queryEditor = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput
     );
@@ -181,7 +183,7 @@ describe('QueryVariableEditorForm', () => {
   it('should call onRegExChange when changing the regex', async () => {
     const {
       renderer: { getByTestId },
-    } = setup();
+    } = await setup();
     const regexInput = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2
     );
@@ -196,7 +198,7 @@ describe('QueryVariableEditorForm', () => {
   it('should call onSortChange when changing the sort', async () => {
     const {
       renderer: { getByTestId },
-    } = setup();
+    } = await setup();
     const sortSelect = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelectV2
     );
@@ -214,7 +216,7 @@ describe('QueryVariableEditorForm', () => {
   it('should call onRefreshChange when changing the refresh', async () => {
     const {
       renderer: { getByTestId },
-    } = setup();
+    } = await setup();
     const refreshSelect = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelectV2
     );
@@ -229,7 +231,7 @@ describe('QueryVariableEditorForm', () => {
   it('should call onMultiChange when changing the multi switch', async () => {
     const {
       renderer: { getByTestId },
-    } = setup();
+    } = await setup();
     const multiSwitch = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch
     );
@@ -243,7 +245,7 @@ describe('QueryVariableEditorForm', () => {
   it('should call onIncludeAllChange when changing the include all switch', async () => {
     const {
       renderer: { getByTestId },
-    } = setup();
+    } = await setup();
     const includeAllSwitch = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch
     );
@@ -257,7 +259,7 @@ describe('QueryVariableEditorForm', () => {
   it('should call onAllValueChange when changing the all value', async () => {
     const {
       renderer: { getByTestId },
-    } = setup();
+    } = await setup();
     const allValueInput = getByTestId(
       selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput
     );
