@@ -46,14 +46,37 @@ describe('NestedFolderPicker', () => {
 
   beforeAll(() => {
     window.HTMLElement.prototype.scrollIntoView = function () {};
+
     server = setupServer(
       http.get('/api/folders/:uid', () => {
         return HttpResponse.json({
           title: folderA.item.title,
           uid: folderA.item.uid,
         });
+      }),
+
+      http.get('/api/folders', ({ request }) => {
+        const url = new URL(request.url);
+        const parentUid = url.searchParams.get('parentUid') ?? undefined;
+
+        const limit = parseInt(url.searchParams.get('limit') ?? '1000', 10);
+        const page = parseInt(url.searchParams.get('page') ?? '1', 10);
+
+        // reconstruct a folder API response from the flat tree fixture
+        const folders = mockTree
+          .filter((v) => v.item.kind === 'folder' && v.item.parentUID === parentUid)
+          .map((folder) => {
+            return {
+              uid: folder.item.uid,
+              title: folder.item.kind === 'folder' ? folder.item.title : "invalid - this shouldn't happen",
+            };
+          })
+          .slice(limit * (page - 1), limit * page);
+
+        return HttpResponse.json(folders);
       })
     );
+
     server.listen();
   });
 

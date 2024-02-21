@@ -14,6 +14,7 @@ import {
   DescendantCount,
   DescendantCountDTO,
   FolderDTO,
+  FolderListItemDTO,
   ImportDashboardResponseDTO,
   SaveDashboardResponseDTO,
 } from 'app/types';
@@ -80,7 +81,7 @@ export const browseDashboardsAPI = createApi({
   reducerPath: 'browseDashboardsAPI',
   baseQuery: createBackendSrvBaseQuery({ baseURL: '/api' }),
   endpoints: (builder) => ({
-    listFolders: builder.query<FolderDTO[], ListFolderQueryArgs>({
+    listFolders: builder.query<FolderListItemDTO[], ListFolderQueryArgs>({
       providesTags: (result) => result?.map((folder) => ({ type: 'getFolder', id: folder.uid })) ?? [],
       query: ({ page, parentUid, limit }) => ({ url: '/folders', params: { page, parentUid, limit } }),
     }),
