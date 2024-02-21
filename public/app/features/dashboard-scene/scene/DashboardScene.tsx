@@ -1,12 +1,9 @@
 import * as H from 'history';
-import { Unsubscribable } from 'rxjs';
 
 import { AppEvents, CoreApp, DataQueryRequest, NavIndex, NavModelItem, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import {
-  dataLayers,
   getUrlSyncManager,
-  SceneDataLayers,
   SceneFlexLayout,
   sceneGraph,
   SceneGridItem,
@@ -14,13 +11,9 @@ import {
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
-  SceneObjectStateChangedEvent,
-  SceneRefreshPicker,
-  SceneTimeRange,
   sceneUtils,
   SceneVariable,
   SceneVariableDependencyConfigLike,
-  SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
 import { Dashboard, DashboardLink } from '@grafana/schema';
@@ -30,28 +23,25 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import store from 'app/core/store';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { createWorker } from 'app/features/dashboard-scene/scene/workers/createDetectChangesWorker';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { PanelEditor } from '../panel-edit/PanelEditor';
+import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
-import { DashboardChangeInfo } from '../saving/shared';
 import { DashboardSceneRenderer } from '../scene/DashboardSceneRenderer';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
-import { transformSceneToSaveModel, gridItemToPanel } from '../serialization/transformSceneToSaveModel';
+import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { DashboardEditView } from '../settings/utils';
-import { isSceneVariableInstance } from '../settings/variables/utils';
 import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/urlBuilders';
 import { forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel, isPanelClone } from '../utils/utils';
 
-import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DashboardControls } from './DashboardControls';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { PanelRepeaterGridItem } from './PanelRepeaterGridItem';
@@ -127,11 +117,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    */
   private _initialUrlState?: H.Location;
   /**
-   * change tracking subscription
+   * Dashboard changes tracker
    */
-  private _changeTrackerSub?: Unsubscribable;
-
-  private _changesWorker: Worker;
+  private _changeTracker: DashboardSceneChangeTracker;
 
   public constructor(state: Partial<DashboardSceneState>) {
     super({
@@ -143,7 +131,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       ...state,
     });
 
-    this._changesWorker = createWorker();
+    this._changeTracker = new DashboardSceneChangeTracker(this);
+
     this.addActivationHandler(() => this._activationHandler());
   }
 
@@ -153,7 +142,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     window.__grafanaSceneContext = this;
 
     if (this.state.isEditing) {
-      this.startTrackingChanges();
+      this._changeTracker.startTrackingChanges();
     }
 
     if (!this.state.meta.isEmbedded && this.state.uid) {
@@ -166,19 +155,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // @ts-expect-error
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
-    this._changesWorker.onmessage = (e: MessageEvent<DashboardChangeInfo>) => {
-      this.detectChanges(e.data);
-    };
-
     // Deactivation logic
     return () => {
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
-      this.stopTrackingChanges();
+      this._changeTracker?.stopTrackingChanges();
       this.stopUrlSync();
       oldDashboardWrapper.destroy();
       dashboardWatcher.leave();
-      this._changesWorker.terminate();
     };
   }
 
@@ -203,7 +187,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     // Propagate change edit mode change to children
     this.propagateEditModeChange();
 
-    this.startTrackingChanges();
+    this._changeTracker.startTrackingChanges();
   };
 
   public saveCompleted(saveModel: Dashboard, result: SaveDashboardResponseDTO, folderUid?: string) {
@@ -214,7 +198,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
       version: result.version,
     };
 
-    this.stopTrackingChanges();
+    this._changeTracker.stopTrackingChanges();
     this.setState({
       version: result.version,
       isDirty: false,
@@ -228,7 +212,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
         folderUid: folderUid,
       },
     });
-    this.startTrackingChanges();
+    this._changeTracker.startTrackingChanges();
   }
 
   private propagateEditModeChange() {
@@ -262,7 +246,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 
   private exitEditModeConfirmed() {
     // No need to listen to changes anymore
-    this.stopTrackingChanges();
+    this._changeTracker.stopTrackingChanges();
     // Stop url sync before updating url
     this.stopUrlSync();
 
@@ -375,74 +359,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
    */
   public getBodyToRender(): SceneObject {
     return this.state.viewPanelScene ?? this.state.body;
-  }
-
-  private startTrackingChanges() {
-    this._changeTrackerSub = this.subscribeToEvent(
-      SceneObjectStateChangedEvent,
-      (event: SceneObjectStateChangedEvent) => {
-        if (event.payload.changedObject instanceof SceneRefreshPicker) {
-          if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'intervals')) {
-            this.postChangesMessage();
-          }
-        }
-        if (event.payload.changedObject instanceof SceneDataLayers) {
-          this.postChangesMessage();
-        }
-        if (event.payload.changedObject instanceof dataLayers.AnnotationsDataLayer) {
-          if (!Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'data')) {
-            this.postChangesMessage();
-          }
-        }
-        if (event.payload.changedObject instanceof SceneGridItem) {
-          this.postChangesMessage();
-        }
-        if (event.payload.changedObject instanceof DashboardScene) {
-          if (Object.keys(event.payload.partialUpdate).some((key) => PERSISTED_PROPS.includes(key))) {
-            this.postChangesMessage();
-          }
-        }
-        if (event.payload.changedObject instanceof SceneTimeRange) {
-          this.postChangesMessage();
-        }
-        if (event.payload.changedObject instanceof DashboardControls) {
-          if (Object.prototype.hasOwnProperty.call(event.payload.partialUpdate, 'hideTimeControls')) {
-            this.postChangesMessage();
-          }
-        }
-        if (event.payload.changedObject instanceof SceneVariableSet) {
-          this.postChangesMessage();
-        }
-        if (event.payload.changedObject instanceof DashboardAnnotationsDataLayer) {
-          this.postChangesMessage();
-        }
-        if (isSceneVariableInstance(event.payload.changedObject)) {
-          this.postChangesMessage();
-        }
-      }
-    );
-  }
-
-  private postChangesMessage() {
-    this._changesWorker?.postMessage({ changed: transformSceneToSaveModel(this), initial: this._initialSaveModel });
-  }
-
-  private detectChanges(changes: DashboardChangeInfo) {
-    const { hasChanges } = changes;
-
-    if (hasChanges) {
-      if (!this.state.isDirty) {
-        this.setState({ isDirty: true });
-      }
-    } else {
-      if (this.state.isDirty) {
-        this.setState({ isDirty: false });
-      }
-    }
-  }
-
-  private stopTrackingChanges() {
-    this._changeTrackerSub?.unsubscribe();
   }
 
   public getInitialState(): DashboardSceneState | undefined {

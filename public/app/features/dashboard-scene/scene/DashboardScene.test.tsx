@@ -14,6 +14,7 @@ import appEvents from 'app/core/app_events';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { VariablesChanged } from 'app/features/variables/types';
 
+import { createWorker } from '../saving/workers/createDetectChangesWorker';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { historySrv } from '../settings/version-history/HistorySrv';
@@ -22,7 +23,6 @@ import { djb2Hash } from '../utils/djb2Hash';
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
-import { createWorker } from './workers/createDetectChangesWorker';
 
 jest.mock('../settings/version-history/HistorySrv');
 jest.mock('../serialization/transformSaveModelToScene');
@@ -40,8 +40,6 @@ jest.mock('./getDashboardChangesFromScene', () => ({
     hasVariableValueChanges: false,
   })),
 }));
-
-jest.mock('./workers/createDetectChangesWorker');
 
 const worker = createWorker();
 mockResultsOfDetectChangesWorker({ hasChanges: true, hasTimeChanges: false, hasVariableValueChanges: false });

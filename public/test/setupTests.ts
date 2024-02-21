@@ -22,4 +22,4 @@ i18next.use(initReactI18next).init({
 });
 
 // Mock out the worker that detects changes in the dashboard
-jest.mock('app/features/dashboard-scene/scene/workers/createDetectChangesWorker.ts');
+jest.mock('app/features/dashboard-scene/saving/workers/createDetectChangesWorker.ts');

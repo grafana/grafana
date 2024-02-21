@@ -1,6 +1,6 @@
+import { DashboardScene } from '../scene/DashboardScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 
-import { DashboardScene } from './DashboardScene';
 import { getDashboardChanges } from './getDashboardChanges';
 
 export function getDashboardChangesFromScene(scene: DashboardScene, saveTimeRange?: boolean, saveVariables?: boolean) {
