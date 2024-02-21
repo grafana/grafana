@@ -139,7 +139,7 @@ def download_grabpl_step():
                 grabpl_version,
             ),
             "chmod +x bin/grabpl",
-            "if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; false; fi",
+            "if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi",
             "curl -L " +
             "-X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments " +
             '-H "Accept: application/vnd.github+json" ' +
