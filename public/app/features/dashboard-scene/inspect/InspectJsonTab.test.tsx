@@ -3,10 +3,10 @@ import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { setPluginImportUtils } from '@grafana/runtime';
 import {
   SceneCanvasText,
-  SceneDataNode,
   SceneDataTransformer,
   SceneGridItem,
   SceneGridLayout,
+  SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
 import * as libpanels from 'app/features/library-panels/state/api';
@@ -34,6 +34,12 @@ jest.mock('@grafana/runtime', () => ({
   getPluginLinkExtensions: jest.fn(() => ({
     extensions: [],
   })),
+  getDataSourceSrv: () => {
+    return {
+      get: jest.fn().mockResolvedValue({}),
+      getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+    };
+  },
 }));
 
 describe('InspectJsonTab', () => {
@@ -121,7 +127,9 @@ function buildTestPanel() {
           },
         },
       ],
-      $data: new SceneDataNode({
+      $data: new SceneQueryRunner({
+        datasource: { uid: 'abcdef' },
+        queries: [{ refId: 'A' }],
         data: {
           state: LoadingState.Done,
           series: [
