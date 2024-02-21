@@ -244,7 +244,48 @@ describe('createPluginExtensionsRegistry', () => {
   
   it('should be possible to asynchronously register extensions for a different placement (same plugin)', async () => {});
 
-  it('should notify subscribers when the registry changes', async () => {});
+  it('should notify subscribers when the registry changes', async () => {
+    const pluginId = 'grafana-basic-app';
+    const reactiveRegistry = new ReactivePluginExtenionRegistry();
+    const observable = reactiveRegistry.asObservable();
+    const subscribeCallback = jest.fn();
+
+    observable.subscribe(subscribeCallback);
+
+    // Register extensions for the first plugin
+    reactiveRegistry.registerPlugin({
+      pluginId: pluginId,
+      extensionConfigs: [
+        {
+          type: PluginExtensionTypes.link,
+          title: 'Link 1',
+          description: 'Link 1 description',
+          path: `/a/${pluginId}/declare-incident`,
+          extensionPointId: 'grafana/dashboard/panel/menu',
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
+
+    expect(subscribeCallback).toHaveBeenCalledTimes(2);
+
+    // Register extensions for the first plugin
+    reactiveRegistry.registerPlugin({
+      pluginId: 'another-plugin',
+      extensionConfigs: [
+        {
+          type: PluginExtensionTypes.link,
+          title: 'Link 1',
+          description: 'Link 1 description',
+          path: `/a/${pluginId}/declare-incident`,
+          extensionPointId: 'grafana/dashboard/panel/menu',
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
+
+    expect(subscribeCallback).toHaveBeenCalledTimes(3);
+  });
 
   it('should give the last version of the registry for new subscribers', async () => {});
 

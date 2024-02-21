@@ -14,6 +14,8 @@ export class ReactivePluginExtenionRegistry {
 
   constructor() {
     this.resultSubject = new Subject<PluginPreloadResult>();
+    // This is the subject that we expose.
+    // (It will buffer the last value on the stream - the registry - and emit it to new subscribers immediately.)
     this.registrySubject = new ReplaySubject<PluginExtensionRegistry>(1);
 
     this.resultSubject
@@ -21,10 +23,12 @@ export class ReactivePluginExtenionRegistry {
         tap((v) => console.log('emitted value', v)),
         createRegistryResults(),
         tap((v) => console.log('Registry created', v)),
+        // Emit an empty object to start the stream (it is only going to do it once during construction, and then just passes down the values)
         startWith({}),
         map((registry) => deepFreeze(registry)),
         tap((v) => console.log('Deep freeze registry', v))
       )
+      // Emitting the new registry to `this.registrySubject`
       .subscribe(this.registrySubject);
   }
 
