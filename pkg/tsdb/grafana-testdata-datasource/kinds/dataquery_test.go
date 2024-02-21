@@ -8,8 +8,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/schema"
 	"github.com/stretchr/testify/require"
-
-	schemaex "github.com/grafana/grafana/pkg/registry/apis/query/schema"
 )
 
 func TestQueryTypeDefinitions(t *testing.T) {
@@ -47,7 +45,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 
 	qt, err := NewQueryHandler()
 	require.NoError(t, err)
-	s, err := schemaex.GetQuerySchema(qt.QueryTypeDefinitionList())
+	s, err := schema.GetQuerySchema(qt.QueryTypeDefinitionList())
 	require.NoError(t, err)
 
 	out, err := json.MarshalIndent(s, "", "  ")
