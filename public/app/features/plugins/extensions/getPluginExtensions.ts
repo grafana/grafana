@@ -49,8 +49,6 @@ export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, 
   const extensions: PluginExtension[] = [];
   const extensionsByPlugin: Record<string, number> = {};
 
-  console.log({ registryItems });
-
   for (const registryItem of registryItems) {
     try {
       const extensionConfig = registryItem.config;
