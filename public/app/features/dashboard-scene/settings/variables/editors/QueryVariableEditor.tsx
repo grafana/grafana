@@ -1,11 +1,8 @@
 import React, { FormEvent } from 'react';
-import { useAsync } from 'react-use';
 
 import { SelectableValue, DataSourceInstanceSettings } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryVariable, sceneGraph } from '@grafana/scenes';
 import { DataSourceRef, VariableRefresh, VariableSort } from '@grafana/schema';
-import { getVariableQueryEditor } from 'app/features/variables/editor/getVariableQueryEditor';
 
 import { QueryVariableEditorForm } from '../components/QueryVariableForm';
 
@@ -16,16 +13,8 @@ interface QueryVariableEditorProps {
 type VariableQueryType = QueryVariable['state']['query'];
 
 export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEditorProps) {
-  const { datasource: datasourceRef, regex, sort, refresh, isMulti, includeAll, allValue, query } = variable.useState();
+  const { datasource, regex, sort, refresh, isMulti, includeAll, allValue, query } = variable.useState();
   const { value: timeRange } = sceneGraph.getTimeRange(variable).useState();
-
-  const { value: dsConfig } = useAsync(async () => {
-    const datasource = await getDataSourceSrv().get(datasourceRef ?? '');
-    const VariableQueryEditor = await getVariableQueryEditor(datasource);
-
-    return { datasource, VariableQueryEditor };
-  }, [datasourceRef]);
-  const { datasource, VariableQueryEditor } = dsConfig ?? {};
 
   const onRegExChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
     variable.setState({ regex: event.currentTarget.value });
@@ -56,12 +45,11 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
 
   return (
     <QueryVariableEditorForm
-      datasource={datasource}
+      datasource={datasource ?? undefined}
       onDataSourceChange={onDataSourceChange}
       query={query}
       onQueryChange={onQueryChange}
       onLegacyQueryChange={onQueryChange}
-      VariableQueryEditor={VariableQueryEditor}
       timeRange={timeRange}
       regex={regex}
       onRegExChange={onRegExChange}

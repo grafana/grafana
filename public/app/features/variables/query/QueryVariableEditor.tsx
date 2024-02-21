@@ -125,23 +125,19 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
   render() {
     const { extended, variable } = this.props;
-
     if (!extended || !extended.dataSource || !extended.VariableQueryEditor) {
       return null;
     }
 
-    const datasource = extended.dataSource;
-    const VariableQueryEditor = extended.VariableQueryEditor;
     const timeRange = getTimeSrv().timeRange();
 
     return (
       <QueryVariableEditorForm
-        datasource={datasource}
+        datasource={variable.datasource ?? undefined}
         onDataSourceChange={this.onDataSourceChange}
         query={variable.query}
         onQueryChange={this.onQueryChange}
         onLegacyQueryChange={this.onLegacyQueryChange}
-        VariableQueryEditor={VariableQueryEditor}
         timeRange={timeRange}
         regex={variable.regex}
         onRegExChange={this.onRegExBlur}
