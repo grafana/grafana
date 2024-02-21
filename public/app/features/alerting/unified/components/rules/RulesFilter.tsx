@@ -8,7 +8,7 @@ import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
-import { logInfo, LogMessages } from '../../Analytics';
+import { logInfo, LogMessages, trackRulesListViewChange, trackRulesSearchInteraction } from '../../Analytics';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RuleHealth } from '../../search/rulesSearchParser';
 import { alertStateToReadable } from '../../utils/rules';
@@ -90,10 +90,12 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
     });
 
     setFilterKey((key) => key + 1);
+    trackRulesSearchInteraction({ filter: 'dataSourceNames', triggeredBy: 'component' });
   };
 
   const handleDashboardChange = (dashboardUid: string | undefined) => {
     updateFilters({ ...filterState, dashboardUid });
+    trackRulesSearchInteraction({ filter: 'dashboardUid', triggeredBy: 'component' });
   };
 
   const clearDataSource = () => {
@@ -104,18 +106,17 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
   const handleAlertStateChange = (value: PromAlertingRuleState) => {
     logInfo(LogMessages.clickingAlertStateFilters);
     updateFilters({ ...filterState, ruleState: value });
-  };
-
-  const handleViewChange = (view: string) => {
-    setQueryParams({ view });
+    trackRulesSearchInteraction({ filter: 'ruleState', triggeredBy: 'component' });
   };
 
   const handleRuleTypeChange = (ruleType: PromRuleType) => {
     updateFilters({ ...filterState, ruleType });
+    trackRulesSearchInteraction({ filter: 'ruleType', triggeredBy: 'component' });
   };
 
   const handleRuleHealthChange = (ruleHealth: RuleHealth) => {
     updateFilters({ ...filterState, ruleHealth });
+    trackRulesSearchInteraction({ filter: 'ruleHealth', triggeredBy: 'component' });
   };
 
   const handleClearFiltersClick = () => {
@@ -123,6 +124,11 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
     onFilterCleared();
 
     setTimeout(() => setFilterKey(filterKey + 1), 100);
+  };
+
+  const handleViewChange = (view: string) => {
+    setQueryParams({ view });
+    trackRulesListViewChange({ view });
   };
 
   const searchIcon = <Icon name={'search'} />;

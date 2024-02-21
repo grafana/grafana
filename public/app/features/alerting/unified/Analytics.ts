@@ -6,6 +6,7 @@ import { contextSrv } from 'app/core/core';
 import { RuleNamespace } from '../../../types/unified-alerting';
 import { RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
+import { RulesFilter } from './search/rulesSearchParser';
 import { RuleFormType } from './types/rule-form';
 
 export const USER_CREATION_MIN_DAYS = 7;
@@ -174,6 +175,19 @@ export const trackInsightsFeedback = async (props: { useful: boolean; panel: str
   };
   reportInteraction('grafana_alerting_insights', { ...defaults, ...props });
 };
+
+interface RulesSearchInteractionPayload {
+  filter: keyof RulesFilter;
+  triggeredBy: 'typing' | 'component';
+}
+
+export function trackRulesSearchInteraction(payload: RulesSearchInteractionPayload) {
+  reportInteraction('grafana_alerting_rules_search', { ...payload });
+}
+
+export function trackRulesListViewChange(payload: { view: string }) {
+  reportInteraction('grafana_alerting_rules_list_mode', { ...payload });
+}
 
 export type AlertRuleTrackingProps = {
   user_id: number;
