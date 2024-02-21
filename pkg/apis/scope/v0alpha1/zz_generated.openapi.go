@@ -178,7 +178,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref common.ReferenceCallback) comm
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"name": {
+					"title": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
 							Type:    []string{"string"},
@@ -220,7 +220,7 @@ func schema_pkg_apis_scope_v0alpha1_ScopeSpec(ref common.ReferenceCallback) comm
 						},
 					},
 				},
-				Required: []string{"name", "type", "description", "category", "filters"},
+				Required: []string{"title", "type", "description", "category", "filters"},
 			},
 		},
 		Dependencies: []string{

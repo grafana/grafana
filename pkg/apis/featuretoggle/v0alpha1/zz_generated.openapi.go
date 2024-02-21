@@ -391,6 +391,14 @@ func schema_pkg_apis_featuretoggle_v0alpha1_ToggleStatus(ref common.ReferenceCal
 							Format:      "",
 						},
 					},
+					"stage": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The feature toggle stage",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"enabled": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Is the flag enabled",
@@ -421,7 +429,7 @@ func schema_pkg_apis_featuretoggle_v0alpha1_ToggleStatus(ref common.ReferenceCal
 						},
 					},
 				},
-				Required: []string{"name", "enabled", "writeable"},
+				Required: []string{"name", "stage", "enabled", "writeable"},
 			},
 		},
 		Dependencies: []string{
