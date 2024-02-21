@@ -265,7 +265,6 @@ func TestIntegrationFolderService(t *testing.T) {
 				dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 					actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
 				}).Return(nil).Once()
-				service.features = featuremgmt.WithFeatures("dashboardRestore")
 
 				expectedForceDeleteRules := rand.Int63()%2 == 0
 				err := service.Delete(context.Background(), &folder.DeleteFolderCommand{
@@ -311,6 +310,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			})
 
 			t.Cleanup(func() {
+				service.features = featuremgmt.WithFeatures()
 				guardian.New = origNewGuardian
 			})
 		})
