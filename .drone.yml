@@ -673,7 +673,7 @@ steps:
   - gsutil cp -r ./playwright-report/. gs://releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report
   - export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html
   - "echo \"E2E Playwright report uploaded to: \n $${E2E_PLAYWRIGHT_REPORT_URL}\""
-  - if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; false; fi
+  - if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
     -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"❌ Failed to run Playwright
@@ -1991,7 +1991,7 @@ steps:
   - gsutil cp -r ./playwright-report/. gs://releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report
   - export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html
   - "echo \"E2E Playwright report uploaded to: \n $${E2E_PLAYWRIGHT_REPORT_URL}\""
-  - if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; false; fi
+  - if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
     -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"❌ Failed to run Playwright
@@ -4888,6 +4888,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 993177abe0af78c59f028789e7bfcfbf1abd9ea4705aaba9032a7f08e218bf5a
+hmac: f642357518594553fbc8c33520ed5ff372fa032e780e4daeec144f542db6a091
 
 ...
