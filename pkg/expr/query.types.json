@@ -1,0 +1,419 @@
+{
+  "kind": "QueryTypeDefinitionList",
+  "apiVersion": "query.grafana.app/v0alpha1",
+  "metadata": {
+    "resourceVersion": "1708553366066"
+  },
+  "items": [
+    {
+      "metadata": {
+        "name": "math",
+        "resourceVersion": "1708553693855",
+        "creationTimestamp": "2024-02-21T22:09:26Z"
+      },
+      "spec": {
+        "discriminators": [
+          {
+            "field": "queryType",
+            "value": "math"
+          }
+        ],
+        "querySchema": {
+          "$schema": "https://json-schema.org/draft-04/schema",
+          "properties": {
+            "expression": {
+              "type": "string",
+              "minLength": 1,
+              "description": "General math expression",
+              "examples": [
+                "$A + 1",
+                "$A/$B"
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "expression"
+          ]
+        },
+        "examples": [
+          {
+            "name": "constant addition",
+            "queryPayload": {
+              "expression": "$A + 10"
+            }
+          },
+          {
+            "name": "math with two queries",
+            "queryPayload": {
+              "expression": "$A - $B"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "reduce",
+        "resourceVersion": "1708553693855",
+        "creationTimestamp": "2024-02-21T22:09:26Z"
+      },
+      "spec": {
+        "discriminators": [
+          {
+            "field": "queryType",
+            "value": "reduce"
+          }
+        ],
+        "querySchema": {
+          "$schema": "https://json-schema.org/draft-04/schema",
+          "properties": {
+            "expression": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Reference to single query result",
+              "examples": [
+                "$A"
+              ]
+            },
+            "reducer": {
+              "type": "string",
+              "enum": [
+                "sum",
+                "mean",
+                "min",
+                "max",
+                "count",
+                "last"
+              ],
+              "description": "The reducer\n\n\nPossible enum values:\n - `\"sum\"` \n - `\"mean\"` \n - `\"min\"` \n - `\"max\"` \n - `\"count\"` \n - `\"last\"` ",
+              "x-enum-description": {}
+            },
+            "settings": {
+              "properties": {
+                "mode": {
+                  "type": "string",
+                  "enum": [
+                    "dropNN",
+                    "replaceNN"
+                  ],
+                  "description": "Non-number reduce behavior\n\n\nPossible enum values:\n - `\"dropNN\"` Drop non-numbers\n - `\"replaceNN\"` Replace non-numbers",
+                  "x-enum-description": {
+                    "dropNN": "Drop non-numbers",
+                    "replaceNN": "Replace non-numbers"
+                  }
+                },
+                "replaceWithValue": {
+                  "type": "number",
+                  "description": "Only valid when mode is replace"
+                }
+              },
+              "additionalProperties": false,
+              "type": "object",
+              "required": [
+                "mode"
+              ],
+              "description": "Reducer Options"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "expression",
+            "reducer"
+          ]
+        },
+        "examples": [
+          {
+            "name": "get max value",
+            "queryPayload": {
+              "expression": "$A",
+              "reducer": "max",
+              "settings": {
+                "mode": "dropNN"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "resample",
+        "resourceVersion": "1708553693855",
+        "creationTimestamp": "2024-02-21T22:09:26Z"
+      },
+      "spec": {
+        "discriminators": [
+          {
+            "field": "queryType",
+            "value": "resample"
+          }
+        ],
+        "querySchema": {
+          "$schema": "https://json-schema.org/draft-04/schema",
+          "properties": {
+            "expression": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The math expression",
+              "examples": [
+                "$A + 1",
+                "$A"
+              ]
+            },
+            "window": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The time durration",
+              "examples": [
+                "1w",
+                "10m"
+              ]
+            },
+            "downsampler": {
+              "type": "string",
+              "description": "The downsample function"
+            },
+            "upsampler": {
+              "type": "string",
+              "description": "The upsample function"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "expression",
+            "window",
+            "downsampler",
+            "upsampler"
+          ],
+          "description": "QueryType = resample"
+        },
+        "examples": [
+          {
+            "name": "resample at a every day",
+            "queryPayload": {
+              "expression": "$A",
+              "window": "1d",
+              "downsampler": "",
+              "upsampler": ""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "classic_conditions",
+        "resourceVersion": "1708553693855",
+        "creationTimestamp": "2024-02-21T22:09:26Z"
+      },
+      "spec": {
+        "discriminators": [
+          {
+            "field": "queryType",
+            "value": "classic_conditions"
+          }
+        ],
+        "querySchema": {
+          "$schema": "https://json-schema.org/draft-04/schema",
+          "properties": {
+            "conditions": {
+              "items": {
+                "properties": {
+                  "evaluator": {
+                    "properties": {
+                      "params": {
+                        "items": {
+                          "type": "number"
+                        },
+                        "type": "array"
+                      },
+                      "type": {
+                        "type": "string",
+                        "description": "e.g. \"gt\""
+                      }
+                    },
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "params",
+                      "type"
+                    ]
+                  },
+                  "operator": {
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ]
+                  },
+                  "query": {
+                    "properties": {
+                      "params": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "params"
+                    ]
+                  },
+                  "reducer": {
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "evaluator",
+                  "operator",
+                  "query",
+                  "reducer"
+                ],
+                "description": "ConditionJSON is the JSON model for a single condition in ConditionsCmd."
+              },
+              "type": "array"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "conditions"
+          ]
+        },
+        "examples": [
+          {
+            "name": "do classic query (TODO)",
+            "queryPayload": {
+              "conditions": []
+            }
+          }
+        ]
+      }
+    },
+    {
+      "metadata": {
+        "name": "threshold",
+        "resourceVersion": "1708553693855",
+        "creationTimestamp": "2024-02-21T22:09:26Z"
+      },
+      "spec": {
+        "discriminators": [
+          {
+            "field": "queryType",
+            "value": "threshold"
+          }
+        ],
+        "querySchema": {
+          "$schema": "https://json-schema.org/draft-04/schema",
+          "properties": {
+            "expression": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Reference to single query result",
+              "examples": [
+                "$A"
+              ]
+            },
+            "conditions": {
+              "items": {
+                "properties": {
+                  "evaluator": {
+                    "properties": {
+                      "params": {
+                        "items": {
+                          "type": "number"
+                        },
+                        "type": "array"
+                      },
+                      "type": {
+                        "type": "string",
+                        "description": "e.g. \"gt\""
+                      }
+                    },
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "params",
+                      "type"
+                    ]
+                  },
+                  "unloadEvaluator": {
+                    "properties": {
+                      "params": {
+                        "items": {
+                          "type": "number"
+                        },
+                        "type": "array"
+                      },
+                      "type": {
+                        "type": "string",
+                        "description": "e.g. \"gt\""
+                      }
+                    },
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "params",
+                      "type"
+                    ]
+                  },
+                  "loadedDimensions": {
+                    "additionalProperties": true,
+                    "type": "object",
+                    "x-grafana-type": "data.DataFrame"
+                  }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "evaluator",
+                  "unloadEvaluator",
+                  "loadedDimensions"
+                ]
+              },
+              "type": "array",
+              "description": "Threshold Conditions"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "expression",
+            "conditions"
+          ]
+        },
+        "examples": [
+          {
+            "name": "TODO... a threshold query",
+            "queryPayload": {
+              "expression": "$A",
+              "conditions": null
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
