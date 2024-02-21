@@ -19,7 +19,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestIntegrationUserGet(t *testing.T) {
 	testCases := []struct {
@@ -204,7 +209,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Equal(t, result.Email, "usertest@test.com")
-		require.Equal(t, result.Password, "")
+		require.Equal(t, string(result.Password), "")
 		require.Len(t, result.Rands, 10)
 		require.Len(t, result.Salt, 10)
 		require.False(t, result.IsDisabled)
@@ -213,7 +218,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Equal(t, result.Email, "usertest@test.com")
-		require.Equal(t, result.Password, "")
+		require.Equal(t, string(result.Password), "")
 		require.Len(t, result.Rands, 10)
 		require.Len(t, result.Salt, 10)
 		require.False(t, result.IsDisabled)
@@ -225,7 +230,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			require.Nil(t, err)
 
 			require.Equal(t, result.Email, "usertest@test.com")
-			require.Equal(t, result.Password, "")
+			require.Equal(t, string(result.Password), "")
 			require.Len(t, result.Rands, 10)
 			require.Len(t, result.Salt, 10)
 			require.False(t, result.IsDisabled)
@@ -238,7 +243,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			require.Nil(t, err)
 
 			require.Equal(t, result.Email, "usertest@test.com")
-			require.Equal(t, result.Password, "")
+			require.Equal(t, string(result.Password), "")
 			require.Len(t, result.Rands, 10)
 			require.Len(t, result.Salt, 10)
 			require.False(t, result.IsDisabled)
@@ -247,7 +252,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 			require.Nil(t, err)
 
 			require.Equal(t, result.Email, "usertest@test.com")
-			require.Equal(t, result.Password, "")
+			require.Equal(t, string(result.Password), "")
 			require.Len(t, result.Rands, 10)
 			require.Len(t, result.Salt, 10)
 			require.False(t, result.IsDisabled)

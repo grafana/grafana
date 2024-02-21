@@ -827,7 +827,7 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 		// nolint:staticcheck
-		if query.ID == 0 && len(query.UID) == 0 && (query.Title == nil || (query.FolderID == nil && query.FolderUID == "")) {
+		if query.ID == 0 && len(query.UID) == 0 && (query.Title == nil || (query.FolderID == nil && query.FolderUID == nil)) {
 			return dashboards.ErrDashboardIdentifierNotSet
 		}
 
@@ -838,8 +838,8 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 			mustCols = append(mustCols, "title")
 		}
 
-		if query.FolderUID != "" {
-			dashboard.FolderUID = query.FolderUID
+		if query.FolderUID != nil {
+			dashboard.FolderUID = *query.FolderUID
 			mustCols = append(mustCols, "folder_uid")
 		} else if query.FolderID != nil { // nolint:staticcheck
 			// nolint:staticcheck
@@ -848,7 +848,7 @@ func (d *dashboardStore) GetDashboard(ctx context.Context, query *dashboards.Get
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.Dashboard).Inc()
 		}
 
-		has, err := sess.MustCols(mustCols...).Get(&dashboard)
+		has, err := sess.MustCols(mustCols...).Nullable("folder_uid").Get(&dashboard)
 		if err != nil {
 			return err
 		} else if !has {

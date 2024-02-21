@@ -39,6 +39,7 @@ function grafana::codegen::gen_openapi() {
     local out_base=""
     local report="/dev/null"
     local update_report=""
+    local include_common_input_dirs=""
     local boilerplate="${KUBE_CODEGEN_ROOT}/hack/boilerplate.go.txt"
     local v="${KUBE_VERBOSE:-0}"
 
@@ -46,6 +47,14 @@ function grafana::codegen::gen_openapi() {
         case "$1" in
             "--input-pkg-single")
                 in_pkg_single="$2"
+                shift 2
+                ;;
+            "--include-common-input-dirs")
+                if [ "$2" == "true" ]; then
+                  COMMON_INPUT_DIRS='--input-dirs "k8s.io/apimachinery/pkg/apis/meta/v1" --input-dirs "k8s.io/apimachinery/pkg/runtime" --input-dirs "k8s.io/apimachinery/pkg/version"'
+                else
+                  COMMON_INPUT_DIRS=""
+                fi
                 shift 2
                 ;;
             "--output-base")
@@ -143,6 +152,7 @@ function grafana::codegen::gen_openapi() {
             --output-base "${out_base}" \
             --output-package "${in_pkg_single}" \
             --report-filename "${new_report}" \
+            ${COMMON_INPUT_DIRS}  \
             "${inputs[@]}"
     fi
 

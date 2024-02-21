@@ -110,7 +110,6 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
         "y": 1,
       },
       "id": 15,
-      "links": [],
       "options": {
         "code": {
           "language": "plaintext",
@@ -124,9 +123,8 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
 </div>",
         "mode": "markdown",
       },
+      "pluginVersion": "10.2.0-pre",
       "title": "",
-      "transformations": [],
-      "transparent": false,
       "type": "text",
     },
     {
@@ -165,7 +163,6 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
             "y": 26,
           },
           "id": 30,
-          "links": [],
           "options": {
             "code": {
               "language": "plaintext",
@@ -177,9 +174,8 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
 </div>",
             "mode": "markdown",
           },
+          "pluginVersion": "10.2.0-pre",
           "title": "Text panel in collapsed row",
-          "transformations": [],
-          "transparent": false,
           "type": "text",
         },
       ],
@@ -236,32 +232,7 @@ exports[`transformSceneToSaveModel Given a scene with rows Should transform back
     "from": "now-6h",
     "to": "now",
   },
-  "timepicker": {
-    "hidden": false,
-    "refresh_intervals": [
-      "5s",
-      "10s",
-      "30s",
-      "1m",
-      "5m",
-      "15m",
-      "30m",
-      "1h",
-      "2h",
-      "1d",
-    ],
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "6h",
-      "12h",
-      "24h",
-      "2d",
-      "7d",
-      "30d",
-    ],
-  },
+  "timepicker": {},
   "timezone": "",
   "title": "Repeating rows",
   "uid": "Repeating-rows-uid",
@@ -336,7 +307,7 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
   "description": "My custom description",
   "editable": false,
   "fiscalYearStartMonth": 1,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": 1351,
   "links": [
     {
@@ -378,7 +349,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "y": 0,
       },
       "id": 28,
-      "links": [],
       "options": {
         "legend": {
           "calcs": [],
@@ -404,8 +374,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         },
       ],
       "title": "Simple time series graph ",
-      "transformations": [],
-      "transparent": false,
       "type": "timeseries",
     },
     {
@@ -437,7 +405,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "y": 9,
       },
       "id": 29,
-      "links": [],
       "options": {},
       "targets": [
         {
@@ -452,8 +419,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         },
       ],
       "title": "panel inside row",
-      "transformations": [],
-      "transparent": false,
       "type": "timeseries",
     },
     {
@@ -468,7 +433,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "y": 9,
       },
       "id": 25,
-      "links": [],
       "options": {
         "code": {
           "language": "plaintext",
@@ -478,8 +442,8 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "content": "content",
         "mode": "markdown",
       },
+      "pluginVersion": "10.2.0-pre",
       "title": "Transparent text panel",
-      "transformations": [],
       "transparent": true,
       "type": "text",
     },
@@ -491,6 +455,16 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
   ],
   "templating": {
     "list": [
+      {
+        "baseFilters": [],
+        "datasource": {
+          "type": "prometheus",
+          "uid": "wc2AL7L7k",
+        },
+        "filters": [],
+        "name": "Filters",
+        "type": "adhoc",
+      },
       {
         "auto": true,
         "auto_count": 30,
@@ -561,14 +535,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
         "skipUrlSync": true,
         "type": "constant",
       },
-      {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "wc2AL7L7k",
-        },
-        "name": "Filters",
-        "type": "adhoc",
-      },
     ],
   },
   "time": {
@@ -582,17 +548,6 @@ exports[`transformSceneToSaveModel Given a simple scene with custom settings Sho
       "15m",
       "30m",
       "1h",
-    ],
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "6h",
-      "12h",
-      "24h",
-      "2d",
-      "7d",
-      "30d",
     ],
   },
   "timezone": "America/New_York",
@@ -668,7 +623,7 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
   },
   "editable": true,
   "fiscalYearStartMonth": 1,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": 1351,
   "links": [],
   "panels": [
@@ -697,7 +652,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "y": 0,
       },
       "id": 28,
-      "links": [],
       "options": {
         "legend": {
           "calcs": [],
@@ -723,8 +677,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         },
       ],
       "title": "Simple time series graph ",
-      "transformations": [],
-      "transparent": false,
       "type": "timeseries",
     },
     {
@@ -756,7 +708,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "y": 9,
       },
       "id": 29,
-      "links": [],
       "options": {},
       "targets": [
         {
@@ -771,8 +722,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         },
       ],
       "title": "panel inside row",
-      "transformations": [],
-      "transparent": false,
       "type": "timeseries",
     },
     {
@@ -787,7 +736,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "y": 9,
       },
       "id": 25,
-      "links": [],
       "options": {
         "code": {
           "language": "plaintext",
@@ -797,8 +745,8 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "content": "content",
         "mode": "markdown",
       },
+      "pluginVersion": "10.2.0-pre",
       "title": "Transparent text panel",
-      "transformations": [],
       "transparent": true,
       "type": "text",
     },
@@ -811,6 +759,16 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
   ],
   "templating": {
     "list": [
+      {
+        "baseFilters": [],
+        "datasource": {
+          "type": "prometheus",
+          "uid": "wc2AL7L7k",
+        },
+        "filters": [],
+        "name": "Filters",
+        "type": "adhoc",
+      },
       {
         "auto": true,
         "auto_count": 30,
@@ -881,14 +839,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
         "skipUrlSync": true,
         "type": "constant",
       },
-      {
-        "datasource": {
-          "type": "prometheus",
-          "uid": "wc2AL7L7k",
-        },
-        "name": "Filters",
-        "type": "adhoc",
-      },
     ],
   },
   "time": {
@@ -896,7 +846,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
     "to": "now",
   },
   "timepicker": {
-    "hidden": false,
     "refresh_intervals": [
       "10s",
       "30s",
@@ -907,17 +856,6 @@ exports[`transformSceneToSaveModel Given a simple scene with variables Should tr
       "1h",
       "2h",
       "1d",
-    ],
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "6h",
-      "12h",
-      "24h",
-      "2d",
-      "7d",
-      "30d",
     ],
   },
   "timezone": "America/New_York",

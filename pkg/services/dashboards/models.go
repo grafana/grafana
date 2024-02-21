@@ -252,7 +252,7 @@ type GetDashboardQuery struct {
 	Title *string
 	// Deprecated: use FolderUID instead
 	FolderID  *int64
-	FolderUID string
+	FolderUID *string
 	OrgID     int64
 }
 
@@ -397,27 +397,6 @@ type DashboardACLInfoDTO struct {
 	IsFolder       bool                           `json:"isFolder"`
 	URL            string                         `json:"url" xorm:"url"`
 	Inherited      bool                           `json:"inherited"`
-}
-
-func (dto *DashboardACLInfoDTO) hasSameRoleAs(other *DashboardACLInfoDTO) bool {
-	if dto.Role == nil || other.Role == nil {
-		return false
-	}
-
-	return dto.UserID <= 0 && dto.TeamID <= 0 && dto.UserID == other.UserID && dto.TeamID == other.TeamID && *dto.Role == *other.Role
-}
-
-func (dto *DashboardACLInfoDTO) hasSameUserAs(other *DashboardACLInfoDTO) bool {
-	return dto.UserID > 0 && dto.UserID == other.UserID
-}
-
-func (dto *DashboardACLInfoDTO) hasSameTeamAs(other *DashboardACLInfoDTO) bool {
-	return dto.TeamID > 0 && dto.TeamID == other.TeamID
-}
-
-// IsDuplicateOf returns true if other item has same role, same user or same team
-func (dto *DashboardACLInfoDTO) IsDuplicateOf(other *DashboardACLInfoDTO) bool {
-	return dto.hasSameRoleAs(other) || dto.hasSameUserAs(other) || dto.hasSameTeamAs(other)
 }
 
 type FindPersistedDashboardsQuery struct {
