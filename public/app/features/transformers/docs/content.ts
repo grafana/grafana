@@ -628,6 +628,65 @@ export const transformationDocsContent: TransformationDocsContentType = {
   `;
     },
   },
+  groupToNestedTable: {
+    name: 'Group to nested table',
+    getHelperDocs: function() {
+      return `
+      Use this transformation to group the data by a specified field (column) value, process calculations on each group, and have records that share the same grouped field value to be displayed in a nested table.
+
+      Click to see a list of calculation choices. For information about available calculations, refer to [Calculation types][].
+
+      Here's an example of original data.
+
+  | Time                | Server ID | CPU Temperature | Server Status |
+  | ------------------- | --------- | --------------- | ------------- |
+  | 2020-07-07 11:34:20 | server 1  | 80              | Shutdown      |
+  | 2020-07-07 11:34:20 | server 3  | 62              | OK            |
+  | 2020-07-07 10:32:20 | server 2  | 90              | Overload      |
+  | 2020-07-07 10:31:22 | server 3  | 55              | OK            |
+  | 2020-07-07 09:30:57 | server 3  | 62              | Rebooting     |
+  | 2020-07-07 09:30:05 | server 2  | 88              | OK            |
+  | 2020-07-07 09:28:06 | server 1  | 80              | OK            |
+  | 2020-07-07 09:25:05 | server 2  | 88              | OK            |
+  | 2020-07-07 09:23:07 | server 1  | 86              | OK            |
+
+  This transformation goes in two steps. First you specify one or multiple fields to group the data by. This will group all the same values of those fields together, as if you sorted them. For instance if we group by the Server ID field, then it would group the data this way:
+
+  | Server ID      |  |
+  | -------------- | ------------- |
+  | server 1 |
+  | server 2 |
+  | server 3 |
+  
+    <table>
+      <th>
+        <tr><td>Time</td><td>CPU Temperature</td><td>Server Status</td></tr>
+      </th>
+      <tbody>
+        <tr><td>2020-07-07 11:34:20</td><td>80</td><td>Shutdown</td></tr>
+        <tr><td>2020-07-07 09:28:06</td><td>80</td><td>OK</td></tr>
+        <tr><td>2020-07-07 09:23:07</td><td>86</td><td>OK</td></tr>
+      </tbody>
+    </table>
+      
+  
+  
+  | 2020-07-07 10:32:20 | server 2       | 90              | Overload      |
+  | 2020-07-07 09:30:05 | server 2       | 88              | OK            |
+  | 2020-07-07 09:25:05 | server 2       | 88              | OK            |
+  | 2020-07-07 11:34:20 | **_server 3_** | 62              | OK            |
+  | 2020-07-07 10:31:22 | **_server 3_** | 55              | OK            |
+  | 2020-07-07 09:30:57 | **_server 3_** | 62              | Rebooting     |
+
+      `;
+    },
+    links: [
+      {
+        title: 'Calculation types',
+        url: 'https://grafana.com/docs/grafana/latest/panels-visualizations/calculation-types/',
+      },
+    ],
+  },
   heatmap: {
     name: 'Create heatmap',
     getHelperDocs: function () {
