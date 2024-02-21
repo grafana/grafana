@@ -72,7 +72,7 @@ export function QueryVariableEditorForm({
     <>
       <VariableLegend>Query options</VariableLegend>
       <Field label="Data source" htmlFor="data-source-picker">
-        <DataSourcePicker current={datasourceRef} onChange={onDataSourceChange} variables={true} width={30} noDefault />
+        <DataSourcePicker current={datasourceRef} onChange={onDataSourceChange} variables={true} width={30} />
       </Field>
 
       {datasource && VariableQueryEditor && (
