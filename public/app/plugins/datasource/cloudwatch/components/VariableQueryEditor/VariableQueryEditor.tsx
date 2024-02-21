@@ -267,7 +267,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
               }
             >
               <MultiFilter
-                filters={parsedQuery.ec2Filters}
+                filters={parsedQuery.ec2Filters ?? {}}
                 onChange={(filters) => {
                   onChange({ ...parsedQuery, ec2Filters: filters });
                 }}
@@ -294,7 +294,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
               }
             >
               <MultiFilter
-                filters={parsedQuery.ec2Filters}
+                filters={parsedQuery.ec2Filters ?? {}}
                 onChange={(filters) => {
                   onChange({ ...parsedQuery, ec2Filters: filters });
                 }}
