@@ -7,11 +7,12 @@ import { useTheme2 } from '@grafana/ui';
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 
 import { UseSplitterOptions, useSplitter } from './useSplitter';
+import mdx from './useSplitter.mdx';
 
 const meta: Meta = {
   title: 'General/Layout/useSplitter',
   parameters: {
-    docs: {},
+    docs: { page: mdx },
     controls: {
       exclude: [],
     },

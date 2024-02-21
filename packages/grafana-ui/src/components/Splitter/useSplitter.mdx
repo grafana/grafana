@@ -1,0 +1,30 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { Box, useSplitter, Text } from '@grafana/ui';
+
+# useSplitter
+
+The splitter creates two resizable panes, either horizontally or vertically.
+
+### Usage
+
+```tsx
+import { useSplitter } from '@grafana/ui';
+
+const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
+  ...options,
+});
+
+const styles = useStyles2(getStyles);
+
+return (
+  <div {...containerProps}>
+    <div {...primaryProps} className={cx(primaryProps.className, styles.myPaneStyle)}>
+      Primary
+    </div>
+    <div {...splitterProps} />
+    <div {...secondaryProps} className={cx(secondaryProps.className, styles.myPaneStyle)}>
+      Secondary
+    </div>
+  </div>
+);
+```
