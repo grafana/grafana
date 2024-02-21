@@ -15,7 +15,7 @@ import { DashboardViewItem } from 'app/features/search/types';
 
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
-import { ROOT_FOLDER_ITEM, useFolderQuery } from './useFolderQuery';
+import { ROOT_FOLDER_ITEM, useFoldersQuery } from './useFoldersQuery';
 import { useTreeInteractions } from './useTreeInteractions';
 
 export interface NestedFolderPickerProps {
@@ -79,7 +79,7 @@ export function NestedFolderPicker({
     items: browseFlatTree,
     isLoading: isBrowseLoading,
     requestNextPage: fetchFolderPage,
-  } = useFolderQuery(isBrowsing, foldersOpenState);
+  } = useFoldersQuery(isBrowsing, foldersOpenState);
 
   useEffect(() => {
     if (!search) {
