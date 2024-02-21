@@ -1,4 +1,4 @@
-import { render, waitFor, fireEvent, within } from '@testing-library/react';
+import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -10,7 +10,7 @@ import { AccessControlAction } from 'app/types';
 
 import MuteTimings from './MuteTimings';
 import { fetchAlertManagerConfig, updateAlertManagerConfig } from './api/alertmanager';
-import { grantUserPermissions, mockDataSource, MockDataSourceSrv } from './mocks';
+import { MockDataSourceSrv, grantUserPermissions, mockDataSource } from './mocks';
 import { DataSourceType } from './utils/datasource';
 
 jest.mock('./api/alertmanager');
@@ -90,7 +90,24 @@ const defaultConfig: AlertManagerCortexConfig = {
   },
   template_files: {},
 };
-
+const defaultConfigWithNewTimeIntervalsField: AlertManagerCortexConfig = {
+  alertmanager_config: {
+    receivers: [{ name: 'default' }, { name: 'critical' }],
+    route: {
+      receiver: 'default',
+      group_by: ['alertname'],
+      routes: [
+        {
+          matchers: ['env=prod', 'region!=EU'],
+          mute_time_intervals: [muteTimeInterval.name],
+        },
+      ],
+    },
+    templates: [],
+    time_intervals: [muteTimeInterval],
+  },
+  template_files: {},
+};
 const resetMocks = () => {
   jest.resetAllMocks();
 
@@ -110,7 +127,7 @@ describe('Mute timings', () => {
     grantUserPermissions(Object.values(AccessControlAction));
   });
 
-  it('creates a new mute timing', async () => {
+  it('creates a new mute timing, with mute_time_intervals in config', async () => {
     renderMuteTimings();
 
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
@@ -125,11 +142,61 @@ describe('Mute timings', () => {
     fireEvent.submit(ui.form.get());
 
     await waitFor(() => expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled());
+
+    const { mute_time_intervals: _, ...configWithoutMuteTimings } = defaultConfig.alertmanager_config;
     expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith('grafana', {
       ...defaultConfig,
       alertmanager_config: {
-        ...defaultConfig.alertmanager_config,
-        mute_time_intervals: [
+        ...configWithoutMuteTimings,
+        time_intervals: [
+          muteTimeInterval,
+          {
+            name: 'maintenance period',
+            time_intervals: [
+              {
+                days_of_month: ['-1'],
+                months: ['january', 'july'],
+                times: [
+                  {
+                    start_time: '22:00',
+                    end_time: '24:00',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+  });
+
+  it('creates a new mute timing, with time_intervals in config', async () => {
+    mocks.api.fetchAlertManagerConfig.mockImplementation(() => {
+      return Promise.resolve({
+        ...defaultConfigWithNewTimeIntervalsField,
+      });
+    });
+    renderMuteTimings();
+
+    await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
+    expect(ui.nameField.get()).toBeInTheDocument();
+
+    await userEvent.type(ui.nameField.get(), 'maintenance period');
+    await userEvent.type(ui.startsAt.get(), '22:00');
+    await userEvent.type(ui.endsAt.get(), '24:00');
+    await userEvent.type(ui.days.get(), '-1');
+    await userEvent.type(ui.months.get(), 'january, july');
+
+    fireEvent.submit(ui.form.get());
+
+    await waitFor(() => expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalled());
+
+    const { mute_time_intervals: _, ...configWithoutMuteTimings } = defaultConfig.alertmanager_config;
+    expect(mocks.api.updateAlertManagerConfig).toHaveBeenCalledWith('grafana', {
+      ...defaultConfig,
+      alertmanager_config: {
+        ...configWithoutMuteTimings,
+        time_intervals: [
           muteTimeInterval,
           {
             name: 'maintenance period',
@@ -195,7 +262,7 @@ describe('Mute timings', () => {
           ],
         },
         templates: [],
-        mute_time_intervals: [
+        time_intervals: [
           {
             name: 'default-mute',
             time_intervals: [
@@ -264,7 +331,7 @@ describe('Mute timings', () => {
           ],
         },
         templates: [],
-        mute_time_intervals: [
+        time_intervals: [
           {
             name: 'Lunch breaks',
             time_intervals: [
