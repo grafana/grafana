@@ -2170,7 +2170,7 @@ which this setting can help protect against by only allowing a certain number of
 
 ### default_image_width
 
-To configure the width of the rendered image. The default width is 1000.
+Configures the width of the rendered image. The default width is `1000`.
 
 ### default_image_height
 
