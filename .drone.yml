@@ -504,8 +504,8 @@ steps:
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
     -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"### ❌ Failed to run Playwright
-    plugin e2e tests \&nbsp\; Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse
-    the Playwright report and trace viewer \"}"'
+    plugin e2e tests <br /> <p>Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse
+    the Playwright report and trace viewer</p> \"}"'
   environment:
     E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
     GITHUB_TOKEN:
@@ -905,8 +905,8 @@ steps:
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
     -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"### ❌ Failed to run Playwright
-    plugin e2e tests \&nbsp\; Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse
-    the Playwright report and trace viewer \"}"'
+    plugin e2e tests <br /> <p>Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse
+    the Playwright report and trace viewer</p> \"}"'
   environment:
     E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
     GITHUB_TOKEN:
@@ -1837,8 +1837,8 @@ steps:
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
     -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"### ❌ Failed to run Playwright
-    plugin e2e tests \&nbsp\; Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse
-    the Playwright report and trace viewer \"}"'
+    plugin e2e tests <br /> <p>Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse
+    the Playwright report and trace viewer</p> \"}"'
   environment:
     E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
     GITHUB_TOKEN:
@@ -2335,8 +2335,8 @@ steps:
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
     -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"### ❌ Failed to run Playwright
-    plugin e2e tests \&nbsp\; Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse
-    the Playwright report and trace viewer \"}"'
+    plugin e2e tests <br /> <p>Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse
+    the Playwright report and trace viewer</p> \"}"'
   environment:
     E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
     GITHUB_TOKEN:
@@ -2676,8 +2676,8 @@ steps:
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
     -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"### ❌ Failed to run Playwright
-    plugin e2e tests \&nbsp\; Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse
-    the Playwright report and trace viewer \"}"'
+    plugin e2e tests <br /> <p>Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse
+    the Playwright report and trace viewer</p> \"}"'
   environment:
     E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
     GITHUB_TOKEN:
@@ -4147,8 +4147,8 @@ steps:
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
     -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"### ❌ Failed to run Playwright
-    plugin e2e tests \&nbsp\; Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse
-    the Playwright report and trace viewer \"}"'
+    plugin e2e tests <br /> <p>Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse
+    the Playwright report and trace viewer</p> \"}"'
   environment:
     E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
     GITHUB_TOKEN:
@@ -4934,6 +4934,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: a2ac7de0507430c3d1ceadc76d68d03d1037400a43ea55f0514ea65499a2090b
+hmac: 332b16e1b059c2d84a6f51188aac2c2e153ad5baf6d502b0ba748f4e0a302d1c
 
 ...
