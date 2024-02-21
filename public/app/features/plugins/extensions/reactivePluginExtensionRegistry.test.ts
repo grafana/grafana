@@ -72,7 +72,88 @@ describe('createPluginExtensionsRegistry', () => {
     });
   });
 
-  it('should be possible to asynchronously register extensions for the same placement (different plugins)', async () => {});
+  it('should be possible to asynchronously register extensions for the same placement (different plugins)', async () => {
+    const pluginId1 = 'grafana-basic-app';
+    const pluginId2 = 'grafana-basic-app2';
+    const reactiveRegistry = new ReactivePluginExtenionRegistry();
+
+    // Register extensions for the first plugin
+    reactiveRegistry.registerPlugin({
+      pluginId: pluginId1,
+      extensionConfigs: [
+        {
+          type: PluginExtensionTypes.link,
+          title: 'Link 1',
+          description: 'Link 1 description',
+          path: `/a/${pluginId1}/declare-incident`,
+          extensionPointId: 'grafana/dashboard/panel/menu',
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
+
+    const registry1 = await reactiveRegistry.getRegistry();
+
+    expect(registry1).toEqual({
+      'grafana/dashboard/panel/menu': [
+        {
+          pluginId: pluginId1,
+          config: {
+            type: PluginExtensionTypes.link,
+            title: 'Link 1',
+            description: 'Link 1 description',
+            path: `/a/${pluginId1}/declare-incident`,
+            extensionPointId: 'grafana/dashboard/panel/menu',
+            configure: expect.any(Function),
+          },
+        },
+      ],
+    });
+
+    // Register extensions for the second plugin to a different placement
+    reactiveRegistry.registerPlugin({
+      pluginId: pluginId2,
+      extensionConfigs: [
+        {
+          type: PluginExtensionTypes.link,
+          title: 'Link 2',
+          description: 'Link 2 description',
+          path: `/a/${pluginId2}/declare-incident`,
+          extensionPointId: 'grafana/dashboard/panel/menu',
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
+
+    const registry2 = await reactiveRegistry.getRegistry();
+
+    expect(registry2).toEqual({
+      'grafana/dashboard/panel/menu': [
+        {
+          pluginId: pluginId1,
+          config: {
+            type: PluginExtensionTypes.link,
+            title: 'Link 1',
+            description: 'Link 1 description',
+            path: `/a/${pluginId1}/declare-incident`,
+            extensionPointId: 'grafana/dashboard/panel/menu',
+            configure: expect.any(Function),
+          },
+        },
+        {
+          pluginId: pluginId2,
+          config: {
+            type: PluginExtensionTypes.link,
+            title: 'Link 2',
+            description: 'Link 2 description',
+            path: `/a/${pluginId2}/declare-incident`,
+            extensionPointId: 'grafana/dashboard/panel/menu',
+            configure: expect.any(Function),
+          },
+        },
+      ],
+    });
+  });
 
   it('should be possible to asynchronously register extensions for the same placement (same plugin)', async () => {});
 
