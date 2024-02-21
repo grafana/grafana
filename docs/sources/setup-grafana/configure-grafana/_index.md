@@ -2174,7 +2174,7 @@ Configures the width of the rendered image. The default width is `1000`.
 
 ### default_image_height
 
-To configure the height of the rendered image. The default height is 500.
+Configures the height of the rendered image. The default height is `500`.
 
 ### default_image_scale
 
