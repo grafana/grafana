@@ -59,9 +59,9 @@ type Cfg struct {
 
 	DataProxyRowLimit int64
 
-	SqlDatasourceMaxOpenConnsDefault    int
-	SqlDatasourceMaxIdleConnsDefault    int
-	SqlDatasourceMaxConnLifetimeDefault int
+	SQLDatasourceMaxOpenConnsDefault    int
+	SQLDatasourceMaxIdleConnsDefault    int
+	SQLDatasourceMaxConnLifetimeDefault int
 }
 
 func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSettings, pluginsAllowUnsigned []string,
@@ -101,8 +101,8 @@ func NewCfg(devMode bool, pluginsPath string, pluginSettings setting.PluginSetti
 		AzureAuthEnabled:                    azureAuthEnabled,
 		UserFacingDefaultError:              userFacingDefaultError,
 		DataProxyRowLimit:                   dataProxyRowLimit,
-		SqlDatasourceMaxOpenConnsDefault:    sqlDatasourceMaxOpenConnsDefault,
-		SqlDatasourceMaxIdleConnsDefault:    sqlDatasourceMaxIdleConnsDefault,
-		SqlDatasourceMaxConnLifetimeDefault: sqlDatasourceMaxConnLifetimeDefault,
+		SQLDatasourceMaxOpenConnsDefault:    sqlDatasourceMaxOpenConnsDefault,
+		SQLDatasourceMaxIdleConnsDefault:    sqlDatasourceMaxIdleConnsDefault,
+		SQLDatasourceMaxConnLifetimeDefault: sqlDatasourceMaxConnLifetimeDefault,
 	}
 }

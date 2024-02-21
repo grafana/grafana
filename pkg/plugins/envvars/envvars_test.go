@@ -823,9 +823,9 @@ func TestService_GetConfigMap_SQL(t *testing.T) {
 		s := &Service{
 			cfg: &config.Cfg{
 				DataProxyRowLimit:                   23,
-				SqlDatasourceMaxOpenConnsDefault:    24,
-				SqlDatasourceMaxIdleConnsDefault:    25,
-				SqlDatasourceMaxConnLifetimeDefault: 26,
+				SQLDatasourceMaxOpenConnsDefault:    24,
+				SQLDatasourceMaxIdleConnsDefault:    25,
+				SQLDatasourceMaxConnLifetimeDefault: 26,
 			},
 		}
 
@@ -840,9 +840,9 @@ func TestService_GetConfigMap_SQL(t *testing.T) {
 	t.Run("Uses the configured max-default-values, even when they are zero", func(t *testing.T) {
 		s := &Service{
 			cfg: &config.Cfg{
-				SqlDatasourceMaxOpenConnsDefault:    0,
-				SqlDatasourceMaxIdleConnsDefault:    0,
-				SqlDatasourceMaxConnLifetimeDefault: 0,
+				SQLDatasourceMaxOpenConnsDefault:    0,
+				SQLDatasourceMaxIdleConnsDefault:    0,
+				SQLDatasourceMaxConnLifetimeDefault: 0,
 			},
 		}
 

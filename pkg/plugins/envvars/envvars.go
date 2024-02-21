@@ -120,9 +120,9 @@ func (s *Service) GetConfigMap(ctx context.Context, pluginID string, _ *auth.Ext
 		m[backend.SQLRowLimit] = strconv.FormatInt(s.cfg.DataProxyRowLimit, 10)
 	}
 
-	m[backend.SQLMaxOpenConnsDefault] = strconv.Itoa(s.cfg.SqlDatasourceMaxOpenConnsDefault)
-	m[backend.SQLMaxIdleConnsDefault] = strconv.Itoa(s.cfg.SqlDatasourceMaxIdleConnsDefault)
-	m[backend.SQLMaxConnLifetimeSecondsDefault] = strconv.Itoa(s.cfg.SqlDatasourceMaxConnLifetimeDefault)
+	m[backend.SQLMaxOpenConnsDefault] = strconv.Itoa(s.cfg.SQLDatasourceMaxOpenConnsDefault)
+	m[backend.SQLMaxIdleConnsDefault] = strconv.Itoa(s.cfg.SQLDatasourceMaxIdleConnsDefault)
+	m[backend.SQLMaxConnLifetimeSecondsDefault] = strconv.Itoa(s.cfg.SQLDatasourceMaxConnLifetimeDefault)
 
 	// TODO add support via plugin SDK
 	// if externalService != nil {
