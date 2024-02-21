@@ -1,5 +1,3 @@
-// import { PluginExtensionLinkConfig, PluginExtensionTypes } from '@grafana/data';
-
 import { firstValueFrom } from 'rxjs';
 
 import { PluginExtensionTypes } from '@grafana/data';
@@ -241,7 +239,7 @@ describe('createPluginExtensionsRegistry', () => {
   });
 
   it('should be possible to asynchronously register extensions for the same placement (same plugin)', async () => {});
-  
+
   it('should be possible to asynchronously register extensions for a different placement (same plugin)', async () => {});
 
   it('should notify subscribers when the registry changes', async () => {
@@ -316,150 +314,155 @@ describe('createPluginExtensionsRegistry', () => {
     });
   });
 
-  it('should give the last version of the registry for new subscribers', async () => {});
+  it('should give the last version of the registry for new subscribers', async () => {
+    const pluginId = 'grafana-basic-app';
+    const reactiveRegistry = new ReactivePluginExtenionRegistry();
+    const observable = reactiveRegistry.asObservable();
+    const subscribeCallback = jest.fn();
 
-  it('should not register extensions for a plugin that had errors', () => {});
+    reactiveRegistry.registerPlugin({
+      pluginId: pluginId,
+      extensionConfigs: [
+        {
+          type: PluginExtensionTypes.link,
+          title: 'Link 1',
+          description: 'Link 1 description',
+          path: `/a/${pluginId}/declare-incident`,
+          extensionPointId: 'grafana/dashboard/panel/menu',
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
 
-  it('should not register an extension if it has an invalid configure() function', () => {});
+    observable.subscribe(subscribeCallback);
+    expect(subscribeCallback).toHaveBeenCalledTimes(1);
 
-  it('should not register an extension if it has invalid properties (empty title / description)', () => {});
+    const registry = subscribeCallback.mock.calls[0][0];
 
-  it('should not register link extensions with invalid path configured', () => {});
+    expect(registry).toEqual({
+      'grafana/dashboard/panel/menu': [
+        {
+          pluginId: pluginId,
+          config: {
+            type: PluginExtensionTypes.link,
+            title: 'Link 1',
+            description: 'Link 1 description',
+            path: `/a/${pluginId}/declare-incident`,
+            extensionPointId: 'grafana/dashboard/panel/menu',
+            configure: expect.any(Function),
+          },
+        },
+      ],
+    });
+  });
+
+  it('should not register extensions for a plugin that had errors', () => {
+    const pluginId = 'grafana-basic-app';
+    const reactiveRegistry = new ReactivePluginExtenionRegistry();
+    const observable = reactiveRegistry.asObservable();
+    const subscribeCallback = jest.fn();
+
+    reactiveRegistry.registerPlugin({
+      error: new Error('Something is broken'),
+      pluginId: pluginId,
+      extensionConfigs: [
+        {
+          type: PluginExtensionTypes.link,
+          title: 'Link 1',
+          description: 'Link 1 description',
+          path: `/a/${pluginId}/declare-incident`,
+          extensionPointId: 'grafana/dashboard/panel/menu',
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
+
+    observable.subscribe(subscribeCallback);
+    expect(subscribeCallback).toHaveBeenCalledTimes(1);
+
+    const registry = subscribeCallback.mock.calls[0][0];
+    expect(registry).toEqual({});
+  });
+
+  it('should not register an extension if it has an invalid configure() function', () => {
+    const pluginId = 'grafana-basic-app';
+    const reactiveRegistry = new ReactivePluginExtenionRegistry();
+    const observable = reactiveRegistry.asObservable();
+    const subscribeCallback = jest.fn();
+
+    reactiveRegistry.registerPlugin({
+      pluginId: pluginId,
+      extensionConfigs: [
+        {
+          type: PluginExtensionTypes.link,
+          title: 'Link 1',
+          description: 'Link 1 description',
+          path: `/a/${pluginId}/declare-incident`,
+          extensionPointId: 'grafana/dashboard/panel/menu',
+          //@ts-ignore
+          configure: '...',
+        },
+      ],
+    });
+
+    observable.subscribe(subscribeCallback);
+    expect(subscribeCallback).toHaveBeenCalledTimes(1);
+
+    const registry = subscribeCallback.mock.calls[0][0];
+    expect(registry).toEqual({});
+  });
+
+  it('should not register an extension if it has invalid properties (empty title / description)', () => {
+    const pluginId = 'grafana-basic-app';
+    const reactiveRegistry = new ReactivePluginExtenionRegistry();
+    const observable = reactiveRegistry.asObservable();
+    const subscribeCallback = jest.fn();
+
+    reactiveRegistry.registerPlugin({
+      pluginId: pluginId,
+      extensionConfigs: [
+        {
+          type: PluginExtensionTypes.link,
+          title: '',
+          description: '',
+          path: `/a/${pluginId}/declare-incident`,
+          extensionPointId: 'grafana/dashboard/panel/menu',
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
+
+    observable.subscribe(subscribeCallback);
+    expect(subscribeCallback).toHaveBeenCalledTimes(1);
+
+    const registry = subscribeCallback.mock.calls[0][0];
+    expect(registry).toEqual({});
+  });
+
+  it('should not register link extensions with invalid path configured', () => {
+    const pluginId = 'grafana-basic-app';
+    const reactiveRegistry = new ReactivePluginExtenionRegistry();
+    const observable = reactiveRegistry.asObservable();
+    const subscribeCallback = jest.fn();
+
+    reactiveRegistry.registerPlugin({
+      pluginId: pluginId,
+      extensionConfigs: [
+        {
+          type: PluginExtensionTypes.link,
+          title: 'Title 1',
+          description: 'Description 1',
+          path: `/a/another-plugin/declare-incident`,
+          extensionPointId: 'grafana/dashboard/panel/menu',
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
+
+    observable.subscribe(subscribeCallback);
+    expect(subscribeCallback).toHaveBeenCalledTimes(1);
+
+    const registry = subscribeCallback.mock.calls[0][0];
+    expect(registry).toEqual({});
+  });
 });
-
-// describe('createRegistry()', () => {
-//   const placement1 = 'grafana/dashboard/panel/menu';
-//   const placement2 = 'plugins/myorg-basic-app/start';
-//   const pluginId = 'grafana-basic-app';
-//   let link1: PluginExtensionLinkConfig, link2: PluginExtensionLinkConfig;
-
-//   beforeEach(() => {
-//     link1 = {
-//       type: PluginExtensionTypes.link,
-//       title: 'Link 1',
-//       description: 'Link 1 description',
-//       path: `/a/${pluginId}/declare-incident`,
-//       extensionPointId: placement1,
-//       configure: jest.fn().mockReturnValue({}),
-//     };
-//     link2 = {
-//       type: PluginExtensionTypes.link,
-//       title: 'Link 2',
-//       description: 'Link 2 description',
-//       path: `/a/${pluginId}/declare-incident`,
-//       extensionPointId: placement2,
-//       configure: jest.fn().mockImplementation((context) => ({ title: context?.title })),
-//     };
-
-//     global.console.warn = jest.fn();
-//   });
-
-//   it('should be possible to register extensions', () => {
-//     const registry = createPluginExtensionRegistry([{ pluginId, extensionConfigs: [link1, link2] }]);
-
-//     expect(Object.getOwnPropertyNames(registry)).toEqual([placement1, placement2]);
-
-//     // Placement 1
-//     expect(registry[placement1]).toHaveLength(1);
-//     expect(registry[placement1]).toEqual(
-//       expect.arrayContaining([
-//         expect.objectContaining({
-//           pluginId,
-//           config: {
-//             ...link1,
-//             configure: expect.any(Function),
-//           },
-//         }),
-//       ])
-//     );
-
-//     // Placement 2
-//     expect(registry[placement2]).toHaveLength(1);
-//     expect(registry[placement2]).toEqual(
-//       expect.arrayContaining([
-//         expect.objectContaining({
-//           pluginId,
-//           config: {
-//             ...link2,
-//             configure: expect.any(Function),
-//           },
-//         }),
-//       ])
-//     );
-//   });
-
-//   it('should not register link extensions with invalid path configured', () => {
-//     const registry = createPluginExtensionRegistry([
-//       { pluginId, extensionConfigs: [{ ...link1, path: 'invalid-path' }, link2] },
-//     ]);
-
-//     expect(Object.getOwnPropertyNames(registry)).toEqual([placement2]);
-
-//     // Placement 2
-//     expect(registry[placement2]).toHaveLength(1);
-//     expect(registry[placement2]).toEqual(
-//       expect.arrayContaining([
-//         expect.objectContaining({
-//           pluginId,
-//           config: {
-//             ...link2,
-//             configure: expect.any(Function),
-//           },
-//         }),
-//       ])
-//     );
-//   });
-
-//   it('should not register extensions for a plugin that had errors', () => {
-//     const registry = createPluginExtensionRegistry([
-//       { pluginId, extensionConfigs: [link1, link2], error: new Error('Plugin failed to load') },
-//     ]);
-
-//     expect(Object.getOwnPropertyNames(registry)).toEqual([]);
-//   });
-
-//   it('should not register an extension if it has an invalid configure() function', () => {
-//     const registry = createPluginExtensionRegistry([
-//       // @ts-ignore (We would like to provide an invalid configure function on purpose)
-//       { pluginId, extensionConfigs: [{ ...link1, configure: '...' }, link2] },
-//     ]);
-
-//     expect(Object.getOwnPropertyNames(registry)).toEqual([placement2]);
-
-//     // Placement 2 (checking if it still registers the extension with a valid configuration)
-//     expect(registry[placement2]).toHaveLength(1);
-//     expect(registry[placement2]).toEqual(
-//       expect.arrayContaining([
-//         expect.objectContaining({
-//           pluginId,
-//           config: {
-//             ...link2,
-//             configure: expect.any(Function),
-//           },
-//         }),
-//       ])
-//     );
-//   });
-
-//   it('should not register an extension if it has invalid properties (empty title / description)', () => {
-//     const registry = createPluginExtensionRegistry([
-//       { pluginId, extensionConfigs: [{ ...link1, title: '', description: '' }, link2] },
-//     ]);
-
-//     expect(Object.getOwnPropertyNames(registry)).toEqual([placement2]);
-
-//     // Placement 2 (checking if it still registers the extension with a valid configuration)
-//     expect(registry[placement2]).toHaveLength(1);
-//     expect(registry[placement2]).toEqual(
-//       expect.arrayContaining([
-//         expect.objectContaining({
-//           pluginId,
-//           config: {
-//             ...link2,
-//             configure: expect.any(Function),
-//           },
-//         }),
-//       ])
-//     );
-//   });
-// });

@@ -46,6 +46,7 @@ export class ReactivePluginExtenionRegistry {
 }
 
 function createRegistryResults(): OperatorFunction<PluginPreloadResult, PluginExtensionRegistry> {
+  // TODO: move the scan to the pipeline to simplify the createRegistryResult function
   return scan<PluginPreloadResult, PluginExtensionRegistry>((registry, result) => {
     const { pluginId, extensionConfigs, error } = result;
 
