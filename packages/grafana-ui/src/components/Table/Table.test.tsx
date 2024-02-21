@@ -673,4 +673,29 @@ describe('Table', () => {
       expect(selected).toBeVisible();
     });
   });
+
+  describe('when mounted with row specific styles', () => {
+    it('the row should have the style', async () => {
+      const rowStyles = new Map();
+      rowStyles.set(3, {
+        backgroundColor: 'green',
+      });
+      rowStyles.set(0, {
+        backgroundColor: 'red',
+      });
+      getTestContext({
+        rowStyles,
+      });
+      expect(getTable()).toBeInTheDocument();
+
+      const rows = within(getTable()).getAllByRole('row');
+      expect(rows).toHaveLength(5);
+      expect(rows[1]).toHaveStyle({
+        'background-color': 'red',
+      });
+      expect(rows[4]).toHaveStyle({
+        'background-color': 'green',
+      });
+    });
+  });
 });
