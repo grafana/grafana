@@ -408,6 +408,30 @@ describe('VizPanelManager', () => {
           expect(dataObj.state.minInterval).toBe('1s');
         });
       });
+
+      describe('query caching', () => {
+        it('updates cacheTimeout and queryCachingTTL', async () => {
+          const { vizPanelManager } = setupTest('panel-1');
+          vizPanelManager.activate();
+          await Promise.resolve();
+
+          const dataObj = vizPanelManager.queryRunner;
+
+          vizPanelManager.changeQueryOptions({
+            cacheTimeout: '60',
+            queryCachingTTL: 200000,
+            dataSource: {
+              name: 'grafana-testdata',
+              type: 'grafana-testdata-datasource',
+              default: true,
+            },
+            queries: [],
+          });
+
+          expect(dataObj.state.cacheTimeout).toBe('60');
+          expect(dataObj.state.queryCachingTTL).toBe(200000);
+        });
+      });
     });
 
     describe('query inspection', () => {
@@ -597,7 +621,7 @@ describe('VizPanelManager', () => {
 });
 
 const setupTest = (panelId: string) => {
-  const scene = transformSaveModelToScene({ dashboard: testDashboard as any, meta: {} });
+  const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
   const panel = findVizPanelByKey(scene, panelId)!;
 
   const vizPanelManager = new VizPanelManager(panel.clone());

@@ -130,6 +130,34 @@ var (
 			Owner:        grafanaDatavizSquad,
 		},
 		{
+			Name:         "autoMigrateTablePanel",
+			Description:  "Migrate old table panel to supported table panel - broken out from autoMigrateOldPanels to enable granular tracking",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
+			Name:         "autoMigratePiechartPanel",
+			Description:  "Migrate old piechart panel to supported piechart panel - broken out from autoMigrateOldPanels to enable granular tracking",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
+			Name:         "autoMigrateWorldmapPanel",
+			Description:  "Migrate old worldmap panel to supported geomap panel - broken out from autoMigrateOldPanels to enable granular tracking",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
+			Name:         "autoMigrateStatPanel",
+			Description:  "Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking",
+			Stage:        FeatureStagePublicPreview,
+			FrontendOnly: true,
+			Owner:        grafanaDatavizSquad,
+		},
+		{
 			Name:              "disableAngular",
 			Description:       "Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.",
 			Stage:             FeatureStagePublicPreview,
@@ -193,7 +221,7 @@ var (
 		{
 			Name:         "returnToPrevious",
 			Description:  "Enables the return to previous context functionality",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: true,
 			Owner:        grafanaFrontendPlatformSquad,
 		},
@@ -353,14 +381,6 @@ var (
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
 			Owner:        grafanaObservabilityMetricsSquad,
-		},
-		{
-			Name:           "clientTokenRotation",
-			Description:    "Replaces the current in-request token rotation so that the client initiates the rotation",
-			Stage:          FeatureStageGeneralAvailability,
-			Expression:     "true",
-			Owner:          identityAccessTeam,
-			AllowSelfServe: false,
 		},
 		{
 			Name:           "prometheusDataplane",
@@ -690,10 +710,11 @@ var (
 		},
 		{
 			Name:         "angularDeprecationUI",
-			Description:  "Display new Angular deprecation-related UI features",
-			Stage:        FeatureStageExperimental,
+			Description:  "Display Angular warnings in dashboards and panels",
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: true,
 			Owner:        grafanaPluginsPlatformSquad,
+			Expression:   "true", // Enabled by default
 		},
 		{
 			Name:         "dashgpt",
@@ -785,7 +806,8 @@ var (
 		{
 			Name:         "panelMonitoring",
 			Description:  "Enables panel monitoring through logs and measurements",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
+			Expression:   "true", // enabled by default
 			Owner:        grafanaDatavizSquad,
 			FrontendOnly: true,
 		},
@@ -850,9 +872,10 @@ var (
 		{
 			Name:         "lokiStructuredMetadata",
 			Description:  "Enables the loki data source to request structured metadata from the Loki server",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			FrontendOnly: false,
 			Owner:        grafanaObservabilityLogsSquad,
+			Expression:   "true",
 		},
 		{
 			Name:         "teamHttpHeaders",
@@ -881,13 +904,6 @@ var (
 			RequiresDevMode: true,
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaBackendPlatformSquad,
-		},
-		{
-			Name:         "pluginsInstrumentationStatusSource",
-			Description:  "Include a status source label for plugin request metrics and logs",
-			FrontendOnly: false,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:            "managedPluginsInstall",
@@ -980,8 +996,8 @@ var (
 		},
 		{
 			Name:         "ssoSettingsApi",
-			Description:  "Enables the SSO settings API",
-			Stage:        FeatureStageExperimental,
+			Description:  "Enables the SSO settings API and the OAuth configuration UIs in Grafana",
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        identityAccessTeam,
 		},
@@ -1024,11 +1040,10 @@ var (
 		},
 		{
 			Name:         "alertingSimplifiedRouting",
-			Description:  "Enables the simplified routing for alerting",
-			Stage:        FeatureStageExperimental,
+			Description:  "Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",
+			Stage:        FeatureStagePublicPreview,
 			FrontendOnly: false,
 			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
 		},
 		{
 			Name:         "logRowsPopoverMenu",
@@ -1182,6 +1197,31 @@ var (
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaAppPlatformSquad,
 			RequiresRestart: true,
+		},
+		{
+			Name:            "expressionParser",
+			Description:     "Enable new expression parser",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+		},
+		{
+			Name:              "groupByVariable",
+			Description:       "Enable groupBy variable support in scenes dashboards",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
+		{
+			Name:            "alertingUpgradeDryrunOnStart",
+			Description:     "When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.",
+			FrontendOnly:    false,
+			Stage:           FeatureStageGeneralAvailability,
+			Owner:           grafanaAlertingSquad,
+			RequiresRestart: true,
+			Expression:      "true", // enabled by default
 		},
 	}
 )
