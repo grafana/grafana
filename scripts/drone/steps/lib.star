@@ -385,16 +385,7 @@ def playwright_e2e_report_upload():
             "gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json",
             "gsutil cp -r ./playwright-report/. gs://releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report",
             "export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html",
-            'echo "E2E Playwright report uploaded to: \n ${E2E_PLAYWRIGHT_REPORT_URL}"',
-            # if the trace doesn't folder exists, it means that there are no failed tests. 
-            # if it exists, we will post a comment on the PR with the link to the report
-            # 'if [ ! -d "./playwright-report/trace" ]; then exit 0; fi',
-            # "curl -L " +
-            # "-X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments " +
-            # '-H "Accept: application/vnd.github+json" ' +
-            # '-H "Authorization: Bearer $${GITHUB_TOKEN}" ' +
-            # '-H "X-GitHub-Api-Version: 2022-11-28" -d ' +
-            # '"{\\"body\\":\\"<h3>❌ Failed to run Playwright plugin e2e tests</h3> <br />Click <a href="https://storage.googleapis.com/releng-pipeline-artifacts-dev/161658/playwright-report/index.html">here</a> to browse the Playwright report.<br />For information on how to run Playwright tests locally, refer to the <a href="https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests"> Developer guide</a>.\\"}"',
+            'echo "E2E Playwright report uploaded to: \n $${E2E_PLAYWRIGHT_REPORT_URL}"',
         ],
     }
 

@@ -672,7 +672,7 @@ steps:
   - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
   - gsutil cp -r ./playwright-report/. gs://releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report
   - export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html
-  - "echo \"E2E Playwright report uploaded to: \n ${E2E_PLAYWRIGHT_REPORT_URL}\""
+  - "echo \"E2E Playwright report uploaded to: \n $${E2E_PLAYWRIGHT_REPORT_URL}\""
   depends_on:
   - playwright-plugin-e2e
   environment:
@@ -1982,7 +1982,7 @@ steps:
   - gcloud auth activate-service-account --key-file=/tmp/gcpkey_upload_artifacts.json
   - gsutil cp -r ./playwright-report/. gs://releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report
   - export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html
-  - "echo \"E2E Playwright report uploaded to: \n ${E2E_PLAYWRIGHT_REPORT_URL}\""
+  - "echo \"E2E Playwright report uploaded to: \n $${E2E_PLAYWRIGHT_REPORT_URL}\""
   depends_on:
   - playwright-plugin-e2e
   environment:
@@ -4872,6 +4872,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: c38dcc7df29f519060b94d6f14c9010df45a6ea0b452941f4e41013beab65e13
+hmac: edbfe6f3ff93863c48402d610f4d76e95923c945c4cc598e6d06abba17654c65
 
 ...
