@@ -301,13 +301,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     };
 
     if (variable.staticKeys) {
-      const values = variable.staticKeys;
-      // args.getTagKeysProvider = () =>
-      //   Promise.resolve({
-      //     replace: true,
-      //     values,
-      //   });
-      args.staticKeys = values;
+      args.staticKeys = variable.staticKeys;
     }
     return new AdHocFiltersVariable(args);
   }

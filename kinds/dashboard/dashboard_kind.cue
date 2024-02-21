@@ -207,9 +207,6 @@ lineage: schemas: [{
 			includeAll?: bool | *false
 			// Custom all value
 			allValue?: string
-			// Optionally provide static keys for adhoc variables
-			// TODO do we need this?
-			staticKeys?: [...#VariableOption]
 			// Optional field, if you want to extract part of a series name or metric node segment.
 			// Named capture groups can be used to separate the display text and value.
 			regex?: string

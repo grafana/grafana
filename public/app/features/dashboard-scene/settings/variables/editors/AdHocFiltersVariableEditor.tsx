@@ -15,18 +15,11 @@ interface AdHocFiltersVariableEditorProps {
 
 export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProps) {
   const { variable } = props;
-  const { datasource: datasourceRef, getTagKeysProvider, staticKeys } = variable.useState();
+  const { datasource: datasourceRef, staticKeys } = variable.useState();
 
   const { value: datasourceSettings } = useAsync(async () => {
     return await getDataSourceSrv().get(datasourceRef);
   }, [datasourceRef]);
-
-  // const { value: getTagKeysResult } = useAsync(async () => {
-  //   if (getTagKeysProvider) {
-  //     return await getTagKeysProvider(variable, null);
-  //   }
-  //   return undefined;
-  // }, [getTagKeysProvider]);
 
   const message = datasourceSettings?.getTagKeys
     ? 'Ad hoc filters are applied automatically to all queries that target this data source'
@@ -45,7 +38,6 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
 
   const onStaticKeysChange = async (staticKeys?: MetricFindValue[]) => {
     variable.setState({
-      // getTagKeysProvider: staticKeys ? () => Promise.resolve({ values: staticKeys, replace: true }) : undefined,
       staticKeys,
     });
   };

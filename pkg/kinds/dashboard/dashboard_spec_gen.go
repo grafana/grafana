@@ -967,10 +967,6 @@ type VariableModel struct {
 	// `8`: Natural DESC
 	Sort *VariableSort `json:"sort,omitempty"`
 
-	// Optionally provide static keys for adhoc variables
-	// TODO do we need this?
-	StaticKeys []VariableOption `json:"staticKeys,omitempty"`
-
 	// Dashboard variable type
 	// `query`: Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.
 	// `adhoc`: Key/value filters that are automatically added to all metric queries for a data source (Prometheus, Loki, InfluxDB, and Elasticsearch only).
