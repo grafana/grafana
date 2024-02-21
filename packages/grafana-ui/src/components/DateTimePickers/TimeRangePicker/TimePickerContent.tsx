@@ -294,8 +294,7 @@ const getStyles = (
     flexDirection: 'column',
     borderRight: `${isReversed ? 'none' : `1px solid ${theme.colors.border.weak}`}`,
     width: `${!hideQuickRanges ? '60%' : '100%'}`,
-    overflowY: 'scroll',
-    overflowX: 'hidden',
+    overflow: 'auto',
     order: isReversed ? 1 : 0,
   }),
   rightSide: css({
