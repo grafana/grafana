@@ -61,7 +61,7 @@ func ProvideService(cfg *setting.Cfg, db db.DB, routeRegister routing.RouteRegis
 	return service, nil
 }
 
-func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService, features featuremgmt.FeatureToggles) *Service {
+func ProvideOSSService(cfg *setting.Cfg, store accesscontrol.Store, cache *localcache.CacheService, features featuremgmt.FeatureToggles) *Service {
 	s := &Service{
 		cache:    cache,
 		cfg:      cfg,
@@ -74,16 +74,6 @@ func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheSer
 	return s
 }
 
-//go:generate  mockery --name store --structname MockStore --outpkg actest --filename store_mock.go --output ../actest/
-type store interface {
-	GetUserPermissions(ctx context.Context, query accesscontrol.GetUserPermissionsQuery) ([]accesscontrol.Permission, error)
-	SearchUsersPermissions(ctx context.Context, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error)
-	GetUsersBasicRoles(ctx context.Context, userFilter []int64, orgID int64) (map[int64][]string, error)
-	DeleteUserPermissions(ctx context.Context, orgID, userID int64) error
-	SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error
-	DeleteExternalServiceRole(ctx context.Context, externalServiceID string) error
-}
-
 // Service is the service implementing role based access control.
 type Service struct {
 	cache         *localcache.CacheService
@@ -92,7 +82,7 @@ type Service struct {
 	log           log.Logger
 	registrations accesscontrol.RegistrationList
 	roles         map[string]*accesscontrol.RoleDTO
-	store         store
+	store         accesscontrol.Store
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]any {
