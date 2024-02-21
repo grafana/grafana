@@ -131,12 +131,11 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
       return null;
     }
 
-    const datasource: DataSourceRef = { uid: variable.datasource?.uid, type: variable.datasource?.type };
     const timeRange = getTimeSrv().timeRange();
 
     return (
       <QueryVariableEditorForm
-        datasource={datasource}
+        datasource={variable.datasource ?? undefined}
         onDataSourceChange={this.onDataSourceChange}
         query={variable.query}
         onQueryChange={this.onQueryChange}
