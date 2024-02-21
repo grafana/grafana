@@ -145,7 +145,7 @@ To try out a simplified version of routing your alerts, enable the alertingSimpl
 
 1. Click **Save rule**.
 
-## Configure notifications (simplifed)
+## Configure notifications (simplified)
 
 {{< admonition type="note" >}}
 To try this out, enable the alertingSimplifiedRouting feature toggle.
