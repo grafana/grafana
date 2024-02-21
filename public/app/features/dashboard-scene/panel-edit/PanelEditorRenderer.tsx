@@ -37,13 +37,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
       >
         <div className={styles.body}>
           <div className={styles.canvasContent}>
-            {controls && (
-              <div className={styles.controls}>
-                {controls.map((control) => (
-                  <control.Component key={control.state.key} model={control} />
-                ))}
-              </div>
-            )}
+            {controls && <controls.Component model={controls} />}
             <Splitter
               direction="column"
               primaryPaneStyles={{ minHeight: 0, paddingBottom: !dataPane ? 16 : 0 }}

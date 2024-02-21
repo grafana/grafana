@@ -1,6 +1,6 @@
 import React from 'react';
 
-import PromQueryField from './PromQueryField';
+import { PromQueryField } from './PromQueryField';
 import { PromQueryEditorProps } from './types';
 
 export function PromQueryEditorForAlerting(props: PromQueryEditorProps) {
