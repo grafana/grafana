@@ -205,7 +205,7 @@ export function useFolderList(isBrowsing: boolean, openFolders: Record<string, b
   };
 }
 
-const ROOT_FOLDER_ITEM = {
+export const ROOT_FOLDER_ITEM = {
   isOpen: true,
   level: 0,
   item: {

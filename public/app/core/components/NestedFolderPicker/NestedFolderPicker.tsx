@@ -8,13 +8,14 @@ import { config } from '@grafana/runtime';
 import { Alert, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
+import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { QueryResponse, getGrafanaSearcher } from 'app/features/search/service';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
 
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
-import { useFolderList } from './api';
+import { ROOT_FOLDER_ITEM, useFolderList } from './api';
 import { useTreeInteractions } from './hooks';
 
 export interface NestedFolderPickerProps {
@@ -177,23 +178,41 @@ export function NestedFolderPicker({
   );
 
   const flatTree = useMemo(() => {
+    let flatTree: Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> = [];
+
     if (isBrowsing) {
-      return browseFlatTree;
+      flatTree = browseFlatTree;
+    } else {
+      flatTree =
+        searchResults?.items.map((item) => ({
+          isOpen: false,
+          level: 0,
+          item: {
+            kind: 'folder' as const,
+            title: item.title,
+            uid: item.uid,
+          },
+        })) ?? [];
     }
 
-    const searchFlatTree =
-      searchResults?.items.map((item) => ({
-        isOpen: false,
-        level: 0,
-        item: {
-          kind: 'folder' as const,
-          title: item.title,
-          uid: item.uid,
-        },
-      })) ?? [];
+    // It's not super optimal to filter these in an additional iteration, but
+    // these options are used infrequently that its not a big deal
+    if (!showRootFolder || excludeUIDs?.length) {
+      flatTree = flatTree.filter((item) => {
+        if (!showRootFolder && item === ROOT_FOLDER_ITEM) {
+          return false;
+        }
 
-    return searchFlatTree;
-  }, [browseFlatTree, isBrowsing, searchResults]);
+        if (excludeUIDs?.includes(item.item.uid)) {
+          return false;
+        }
+
+        return true;
+      });
+    }
+
+    return flatTree;
+  }, [browseFlatTree, excludeUIDs, isBrowsing, searchResults?.items, showRootFolder]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {

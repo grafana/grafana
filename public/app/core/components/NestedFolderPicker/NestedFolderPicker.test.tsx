@@ -150,6 +150,40 @@ describe('NestedFolderPicker', () => {
     expect(mockOnChange).toHaveBeenCalledWith(folderA.item.uid, folderA.item.title);
   });
 
+  it('shows the root folder by default', async () => {
+    render(<NestedFolderPicker onChange={mockOnChange} />);
+
+    // Open the picker and wait for children to load
+    const button = await screen.findByRole('button', { name: 'Select folder' });
+    await userEvent.click(button);
+    await screen.findByLabelText(folderA.item.title);
+
+    await userEvent.click(screen.getByLabelText('Dashboards'));
+    expect(mockOnChange).toHaveBeenCalledWith('', 'Dashboards');
+  });
+
+  it('hides the root folder if the prop says so', async () => {
+    render(<NestedFolderPicker showRootFolder={false} onChange={mockOnChange} />);
+
+    // Open the picker and wait for children to load
+    const button = await screen.findByRole('button', { name: 'Select folder' });
+    await userEvent.click(button);
+    await screen.findByLabelText(folderA.item.title);
+
+    expect(screen.queryByLabelText('Dashboards')).not.toBeInTheDocument();
+  });
+
+  it('hides folders specififed by UID', async () => {
+    render(<NestedFolderPicker excludeUIDs={[folderA.item.uid]} onChange={mockOnChange} />);
+
+    // Open the picker and wait for children to load
+    const button = await screen.findByRole('button', { name: 'Select folder' });
+    await userEvent.click(button);
+    await screen.findByLabelText(folderB.item.title);
+
+    expect(screen.queryByLabelText(folderA.item.title)).not.toBeInTheDocument();
+  });
+
   describe('when nestedFolders is enabled', () => {
     let originalToggles = { ...config.featureToggles };
 
