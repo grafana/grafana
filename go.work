@@ -1,0 +1,6 @@
+go 1.21.0
+
+use (
+	.
+	./pkg/util/xorm
+)
