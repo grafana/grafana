@@ -80,12 +80,12 @@ import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
-import { createPluginExtensionRegistry } from './features/plugins/extensions/createPluginExtensionRegistry';
 import { getCoreExtensionConfigurations } from './features/plugins/extensions/getCoreExtensionConfigurations';
 import { getPluginExtensions } from './features/plugins/extensions/getPluginExtensions';
 import { ReactivePluginExtenionRegistry } from './features/plugins/extensions/reactivePluginExtensionRegistry';
+import { PluginExtensionRegistry } from './features/plugins/extensions/types';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
-import { PluginPreloadResult, preloadPlugins } from './features/plugins/pluginPreloader';
+import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
@@ -221,22 +221,17 @@ export class GrafanaApp {
 
       // TODO: add a usePluginExtenion hook in runtime that subscribes to the registry observable.
 
-      let preloadResults: PluginPreloadResult[] = [];
-
       if (contextSrv.user.orgRole !== '') {
-        // Preload selected app plugins
-        preloadResults = await preloadPlugins(config.apps);
+        preloadPlugins(config.apps, extensionsRegistry);
       }
 
-      // Create extension registry out of preloaded plugins and core extensions
-      const extensionRegistry = createPluginExtensionRegistry([
-        { pluginId: 'grafana', extensionConfigs: getCoreExtensionConfigurations() },
-        ...preloadResults,
-      ]);
-
       // Expose the getPluginExtension function via grafana-runtime
-      const pluginExtensionGetter: GetPluginExtensions = (options) =>
-        getPluginExtensions({ ...options, registry: extensionRegistry });
+      let registry: PluginExtensionRegistry;
+      extensionsRegistry.asObservable().subscribe((r) => {
+        registry = r;
+      });
+
+      const pluginExtensionGetter: GetPluginExtensions = (options) => getPluginExtensions({ ...options, registry });
 
       setPluginExtensionGetter(pluginExtensionGetter);
 
@@ -393,7 +388,5 @@ function reportMetricPerformanceMark(metricName: string, prefix = '', suffix = '
     reportPerformance(`${prefix}${metricName}${suffix}`, Math.round(metric.startTime) / 1000);
   }
 }
-
-async function preloadPluginsAndRegistryExtensions(): Promise<void> {}
 
 export default new GrafanaApp();
