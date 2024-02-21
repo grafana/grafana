@@ -54,9 +54,9 @@ async function getSearchResults(searchQuery: string) {
 export function NestedFolderPicker({
   value,
   invalid,
-  showRootFolder = true, // JOSH TODO: Restore this
+  showRootFolder = true,
   clearable = false,
-  excludeUIDs, // JOSH TODO: Restore this (or not, if it's not needed)
+  excludeUIDs,
   onChange,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
@@ -86,6 +86,7 @@ export function NestedFolderPicker({
       setSearchResults(null);
       return;
     }
+
     const timestamp = Date.now();
     setIsFetchingSearchResults(true);
 
