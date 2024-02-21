@@ -371,7 +371,6 @@ function measureElement<T extends HTMLElement>(ref: T): MeasureResult {
   ref.style.width = savedWidth;
   ref.style.height = savedHeight;
   ref.style.flexGrow = savedFlex;
-  console.log('width', minWidth);
 
   return { minWidth, maxWidth, minHeight, maxHeight };
 }
