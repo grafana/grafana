@@ -2,7 +2,6 @@ import React, { useCallback, useContext } from 'react';
 
 import { GrafanaConfig } from '@grafana/data';
 import { LocationService, locationService, BackendSrv } from '@grafana/runtime';
-import { ReactivePluginExtenionRegistry } from 'app/features/plugins/extensions/reactivePluginExtensionRegistry';
 
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
 import { NewFrontendAssetsChecker } from '../services/NewFrontendAssetsChecker';
