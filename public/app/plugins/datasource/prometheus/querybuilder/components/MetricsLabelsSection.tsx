@@ -242,13 +242,8 @@ async function getMetrics(
     datasource.languageProvider.metricsMetadata = {};
   }
 
-  let metrics: string[];
-  if (query.labels.length > 0) {
-    const expr = promQueryModeller.renderLabels(query.labels);
-    metrics = (await datasource.languageProvider.getSeries(expr, true))['__name__'] ?? [];
-  } else {
-    metrics = (await datasource.languageProvider.getLabelValues('__name__')) ?? [];
-  }
+  // Ignore filters when querying metrics list for good performance.
+  let metrics = (await datasource.languageProvider.getLabelValues('__name__')) ?? [];
 
   return metrics.map((m) => ({
     value: m,
