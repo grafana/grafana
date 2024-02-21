@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Route, Redirect, Switch, useRouteMatch } from 'react-router-dom';
+import { Redirect, Route, Switch, useRouteMatch } from 'react-router-dom';
 
 import { NavModelItem } from '@grafana/data';
 import { Alert } from '@grafana/ui';
@@ -22,7 +22,8 @@ const MuteTimings = () => {
 
   const getMuteTimingByName = useCallback(
     (id: string): MuteTimeInterval | undefined => {
-      const timing = config?.mute_time_intervals?.find(({ name }: MuteTimeInterval) => name === id);
+      const time_intervals = config?.mute_time_intervals ?? config?.time_intervals;
+      const timing = time_intervals?.find(({ name }: MuteTimeInterval) => name === id);
 
       if (timing) {
         const provenance = config?.muteTimeProvenances?.[timing.name];

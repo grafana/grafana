@@ -60,6 +60,8 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) =
   const { currentData: result } = useAlertmanagerConfig(selectedAlertmanager);
   const config = result?.alertmanager_config;
 
+  const time_intervals = config?.mute_time_intervals ?? config?.time_intervals;
+
   const defaultValues = useDefaultValues(muteTiming);
   const formApi = useForm({ defaultValues });
 
@@ -70,9 +72,7 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) =
 
     const newMuteTiming = createMuteTiming(values);
 
-    const muteTimings = muteTiming
-      ? config?.mute_time_intervals?.filter(({ name }) => name !== muteTiming.name)
-      : config?.mute_time_intervals;
+    const muteTimings = muteTiming ? time_intervals?.filter(({ name }) => name !== muteTiming.name) : time_intervals;
 
     const newConfig: AlertManagerCortexConfig = {
       ...result,
@@ -82,7 +82,7 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) =
           muteTiming && newMuteTiming.name !== muteTiming.name
             ? renameMuteTimings(newMuteTiming.name, muteTiming.name, config?.route ?? {})
             : config?.route,
-        mute_time_intervals: [...(muteTimings || []), newMuteTiming],
+        time_intervals: [...(muteTimings || []), newMuteTiming],
       },
     };
 
@@ -125,7 +125,7 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) =
                     required: true,
                     validate: (value) => {
                       if (!muteTiming) {
-                        const existingMuteTiming = config?.mute_time_intervals?.find(({ name }) => value === name);
+                        const existingMuteTiming = time_intervals?.find(({ name }) => value === name);
                         return existingMuteTiming ? `Mute timing already exists for "${value}"` : true;
                       }
                       return;
