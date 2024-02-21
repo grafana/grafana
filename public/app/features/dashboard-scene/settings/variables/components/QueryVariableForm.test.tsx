@@ -2,7 +2,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { FormEvent } from 'react';
 import { of } from 'rxjs';
-import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import {
   LoadingState,
@@ -42,7 +41,7 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => ({
       },
     }),
     getList: () => [defaultDatasource, promDatasource],
-    getInstanceSettings: () => ({ ...defaultDatasource }),
+    getInstanceSettings: (uid: string) => (uid === promDatasource.uid ? promDatasource : defaultDatasource),
   }),
 }));
 
@@ -60,6 +59,11 @@ const runRequestMock = jest.fn().mockReturnValue(
 
 setRunRequest(runRequestMock);
 
+jest.mock('app/features/variables/editor/getVariableQueryEditor', () => ({
+  ...jest.requireActual('app/features/variables/editor/getVariableQueryEditor'),
+  getVariableQueryEditor: jest.fn().mockResolvedValue(LegacyVariableQueryEditor),
+}));
+
 describe('QueryVariableEditorForm', () => {
   const mockOnDataSourceChange = jest.fn();
   const mockOnQueryChange = jest.fn();
@@ -71,14 +75,13 @@ describe('QueryVariableEditorForm', () => {
   const mockOnIncludeAllChange = jest.fn();
   const mockOnAllValueChange = jest.fn();
 
-  const defaultProps = {
-    datasource: new MockDataSourceApi(promDatasource.name, undefined, promDatasource.meta),
+  const defaultProps: React.ComponentProps<typeof QueryVariableEditorForm> = {
+    datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
     onDataSourceChange: mockOnDataSourceChange,
     query: 'my-query',
     onQueryChange: mockOnQueryChange,
     onLegacyQueryChange: mockOnLegacyQueryChange,
     timeRange: getDefaultTimeRange(),
-    VariableQueryEditor: LegacyVariableQueryEditor,
     regex: '.*',
     onRegExChange: mockOnRegExChange,
     sort: VariableSort.alphabeticalAsc,
