@@ -144,7 +144,7 @@ def download_grabpl_step():
             '-H "Accept: application/vnd.github+json" ' +
             '-H "Authorization: Bearer $${GITHUB_TOKEN}" ' +
             '-H "X-GitHub-Api-Version: 2022-11-28" -d ' +
-            '"{\\"body\\":\\"##❌ Failed to run Playwright plugin e2e tests $${E2E_PLAYWRIGHT_REPORT_URL}\\"}"',
+            '"{\\"body\\":\\"## ❌ Failed to run Playwright plugin e2e tests \n $${E2E_PLAYWRIGHT_REPORT_URL}\\"}"',
         ],
     }
 
