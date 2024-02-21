@@ -30,7 +30,6 @@
     "prismjs": "1.29.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-router": "6.21.3",
     "react-use": "17.5.0",
     "redux": "4.2.1",
     "rxjs": "7.8.1",

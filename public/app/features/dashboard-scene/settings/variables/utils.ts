@@ -218,3 +218,6 @@ export function isSceneVariableInstance(sceneObject: SceneObject): sceneObject i
     sceneUtils.isGroupByVariable(sceneObject)
   );
 }
+
+export const RESERVED_GLOBAL_VARIABLE_NAME_REGEX = /^(?!__).*$/;
+export const WORD_CHARACTERS_REGEX = /^\w+$/;
