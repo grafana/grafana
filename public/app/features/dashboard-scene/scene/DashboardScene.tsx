@@ -50,6 +50,7 @@ import {
   NEW_PANEL_WIDTH,
   forceRenderChildren,
   getClosestVizPanel,
+  getDefaultVizPanel,
   getPanelIdForVizPanel,
   isPanelClone,
 } from '../utils/utils';
@@ -538,6 +539,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public onOpenSettings = () => {
     locationService.partial({ editview: 'settings' });
   };
+
+  public onCreateNewPanel(): number {
+    const vizPanel = getDefaultVizPanel(this);
+
+    this.addPanel(vizPanel);
+
+    return getPanelIdForVizPanel(vizPanel);
+  }
 
   public isEmpty = (): boolean => {
     const { body, viewPanelScene } = this.state;

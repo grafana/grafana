@@ -13,7 +13,6 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { ShareModal } from '../sharing/ShareModal';
 import { DashboardInteractions } from '../utils/interactions';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
-import { onCreateNewPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
@@ -54,7 +53,7 @@ export function ToolbarActions({ dashboard }: Props) {
         tooltip={'Add visualization'}
         icon="graph-bar"
         onClick={() => {
-          const id = onCreateNewPanel(dashboard);
+          const id = dashboard.onCreateNewPanel();
           DashboardInteractions.toolbarAddButtonClicked({ item: 'add_visualization' });
           locationService.partial({ editPanel: id });
         }}
