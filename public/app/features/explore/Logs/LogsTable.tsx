@@ -18,7 +18,7 @@ import {
   ValueLinkConfig,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { AdHocFilterItem, Icon, Table } from '@grafana/ui';
+import { AdHocFilterItem, Table } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
 import { LogsFrame } from 'app/features/logs/logsFrame';
 
@@ -167,12 +167,8 @@ export function LogsTable(props: Props) {
     }
   };
 
-  const map = new Map();
-  map.set(0, <Icon name={'ellipsis-v'} />);
-
   return (
     <Table
-      columnHeaders={map}
       data={tableFrame}
       width={width}
       onCellFilterAdded={props.onClickFilterLabel && props.onClickFilterOutLabel ? onCellFilterAdded : undefined}
