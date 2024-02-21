@@ -1,4 +1,4 @@
-import { Observable, OperatorFunction, ReplaySubject, Subject, firstValueFrom, map, scan, startWith, tap } from 'rxjs';
+import { Observable, OperatorFunction, ReplaySubject, Subject, firstValueFrom, map, scan, startWith } from 'rxjs';
 
 import { logWarning } from '@grafana/runtime';
 
@@ -20,13 +20,10 @@ export class ReactivePluginExtenionRegistry {
 
     this.resultSubject
       .pipe(
-        tap((v) => console.log('emitted value', v)),
         createRegistryResults(),
-        tap((v) => console.log('Registry created', v)),
         // Emit an empty object to start the stream (it is only going to do it once during construction, and then just passes down the values)
         startWith({}),
-        map((registry) => deepFreeze(registry)),
-        tap((v) => console.log('Deep freeze registry', v))
+        map((registry) => deepFreeze(registry))
       )
       // Emitting the new registry to `this.registrySubject`
       .subscribe(this.registrySubject);

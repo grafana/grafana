@@ -42,11 +42,14 @@ type GetExtensions = ({
 
 // Returns with a list of plugin extensions for the given extension point
 export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, limitPerPlugin, registry }) => {
+
   const frozenContext = context ? getReadOnlyProxy(context) : {};
   const registryItems = registry[extensionPointId] ?? [];
   // We don't return the extensions separated by type, because in that case it would be much harder to define a sort-order for them.
   const extensions: PluginExtension[] = [];
   const extensionsByPlugin: Record<string, number> = {};
+
+  console.log({ registryItems });
 
   for (const registryItem of registryItems) {
     try {
