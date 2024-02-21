@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Modal, useStyles2 } from '@grafana/ui';
+import { Grid, Modal, useStyles2, Text } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { getModKey } from 'app/core/utils/browser';
 
@@ -36,7 +36,10 @@ const getShortcuts = (modKey: string) => {
     {
       category: t('help-modal.shortcuts-category.dashboard', 'Dashboard'),
       shortcuts: [
-        { keys: [`${modKey}+s`], description: t('help-modal.shortcuts-description.save-dashboard', 'Save dashboard') },
+        {
+          keys: [`${modKey} + s`],
+          description: t('help-modal.shortcuts-description.save-dashboard', 'Save dashboard'),
+        },
         {
           keys: ['d', 'r'],
           description: t('help-modal.shortcuts-description.refresh-all-panels', 'Refresh all panels'),
@@ -140,86 +143,74 @@ export interface HelpModalProps {
 
 export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
   const styles = useStyles2(getStyles);
+
+  console.log(styles);
   const modKey = useMemo(() => getModKey(), []);
   const shortcuts = useMemo(() => getShortcuts(modKey), [modKey]);
   return (
     <Modal title={t('help-modal.title', 'Shortcuts')} isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
-      <div className={styles.categories}>
-        {Object.values(shortcuts).map(({ category, shortcuts }, i) => (
-          <div className={styles.shortcutCategory} key={i}>
-            <table className={styles.shortcutTable}>
-              <tbody>
-                <tr>
-                  <th className={styles.shortcutTableCategoryHeader} colSpan={2}>
-                    {category}
-                  </th>
-                </tr>
-                {shortcuts.map((shortcut, j) => (
-                  <tr key={`${i}-${j}`}>
-                    <td className={styles.shortcutTableKeys}>
-                      {shortcut.keys.map((key, k) => (
-                        <span className={styles.shortcutTableKey} key={`${i}-${j}-${k}`}>
-                          {key}
-                        </span>
-                      ))}
-                    </td>
-                    <td className={styles.shortcutTableDescription}>{shortcut.description}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      <Grid columns={{ xs: 1, sm: 2 }} gap={3}>
+        {Object.values(shortcuts).map(({ category, shortcuts }) => (
+          <section key={category}>
+            <div className={styles.categoryHeader}>
+              <Text element="h3" variant="h5">
+                {category}
+              </Text>
+            </div>
+            <dl className={styles.keysAndDescriptions}>
+              {shortcuts.map(({ keys, description }) => (
+                <>
+                  <dt key={keys.join()} className={styles.keys}>
+                    {keys.map((key) => (
+                      <Key key={key}>{key}</Key>
+                    ))}
+                  </dt>
+                  <dd key={description}>
+                    <Text variant="bodySmall">{description}</Text>
+                  </dd>
+                </>
+              ))}
+            </dl>
+          </section>
         ))}
-      </div>
+      </Grid>
     </Modal>
+  );
+};
+
+interface KeyProps {
+  children: string;
+}
+
+const Key = ({ children }: KeyProps) => {
+  const styles = useStyles2(getStyles);
+  return (
+    <span className={styles.shortcutTableKey}>
+      <Text variant="code">{children}</Text>
+    </span>
   );
 };
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    titleDescription: css({
-      fontSize: theme.typography.bodySmall.fontSize,
-      fontWeight: theme.typography.bodySmall.fontWeight,
-      color: theme.colors.text.disabled,
-      paddingBottom: theme.spacing(2),
-    }),
-    categories: css({
-      fontSize: theme.typography.bodySmall.fontSize,
-      display: 'flex',
-      flexFlow: 'row wrap',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-    }),
-    shortcutCategory: css({
-      width: '50%',
-      fontSize: theme.typography.bodySmall.fontSize,
-    }),
-    shortcutTable: css({
+    categoryHeader: css({
       marginBottom: theme.spacing(2),
     }),
-    shortcutTableCategoryHeader: css({
-      fontWeight: 'normal',
-      fontSize: theme.typography.h6.fontSize,
-      textAlign: 'left',
+    keysAndDescriptions: css({
+      display: 'grid',
+      gridTemplateColumns: 'minmax(75px, max-content) 1fr',
+      gap: theme.spacing(2),
+      alignItems: 'center',
+      alignSelf: 'baseline',
     }),
-    shortcutTableDescription: css({
-      textAlign: 'left',
-      color: theme.colors.text.disabled,
-      width: '99%',
-      padding: theme.spacing(1, 2),
-    }),
-    shortcutTableKeys: css({
-      whiteSpace: 'nowrap',
-      width: '1%',
-      textAlign: 'right',
-      color: theme.colors.text.primary,
+    keys: css({
+      justifySelf: 'end',
     }),
     shortcutTableKey: css({
       display: 'inline-block',
       textAlign: 'center',
       marginRight: theme.spacing(0.5),
       padding: '3px 5px',
-      font: "11px Consolas, 'Liberation Mono', Menlo, Courier, monospace",
       lineHeight: '10px',
       verticalAlign: 'middle',
       border: `solid 1px ${theme.colors.border.medium}`,
