@@ -49,6 +49,7 @@ export const Table = memo((props: Props) => {
     timeRange,
     enableSharedCrosshair = false,
     initialRowIndex = undefined,
+    columnHeaders = new Map(),
   } = props;
 
   const listRef = useRef<VariableSizeList>(null);
@@ -296,7 +297,12 @@ export const Table = memo((props: Props) => {
       <CustomScrollbar hideVerticalTrack={true}>
         <div className={tableStyles.tableContentWrapper(totalColumnsWidth)}>
           {!noHeader && (
-            <HeaderRow headerGroups={headerGroups} showTypeIcons={showTypeIcons} tableStyles={tableStyles} />
+            <HeaderRow
+              headerGroups={headerGroups}
+              showTypeIcons={showTypeIcons}
+              tableStyles={tableStyles}
+              columnHeaders={columnHeaders}
+            />
           )}
           {itemCount > 0 ? (
             <div data-testid={selectors.components.Panels.Visualization.Table.body} ref={variableSizeListScrollbarRef}>

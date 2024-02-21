@@ -13,10 +13,11 @@ export interface HeaderRowProps {
   headerGroups: HeaderGroup[];
   showTypeIcons?: boolean;
   tableStyles: TableStyles;
+  columnHeaders: Map<number, React.ReactElement>;
 }
 
 export const HeaderRow = (props: HeaderRowProps) => {
-  const { headerGroups, showTypeIcons, tableStyles } = props;
+  const { headerGroups, showTypeIcons, tableStyles, columnHeaders } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
 
   return (
@@ -31,9 +32,12 @@ export const HeaderRow = (props: HeaderRowProps) => {
             aria-label={e2eSelectorsTable.header}
             role="row"
           >
-            {headerGroup.headers.map((column: Column, index: number) =>
-              renderHeaderCell(column, tableStyles, showTypeIcons)
-            )}
+            {headerGroup.headers.map((column: Column, index: number) => {
+              if (columnHeaders && columnHeaders.has(index)) {
+                return renderHeaderCell(column, tableStyles, showTypeIcons, columnHeaders.get(index));
+              }
+              return renderHeaderCell(column, tableStyles, showTypeIcons);
+            })}
           </div>
         );
       })}
@@ -41,7 +45,12 @@ export const HeaderRow = (props: HeaderRowProps) => {
   );
 };
 
-function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?: boolean) {
+function renderHeaderCell(
+  column: any,
+  tableStyles: TableStyles,
+  showTypeIcons?: boolean,
+  CustomHeaderComponent?: React.ReactElement
+) {
   const headerProps = column.getHeaderProps();
   const field = column.field ?? null;
 
@@ -51,6 +60,7 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?:
 
   headerProps.style.position = 'absolute';
   headerProps.style.justifyContent = column.justifyContent;
+  console.log('customHeaderComponent', CustomHeaderComponent);
 
   return (
     <div className={tableStyles.headerCell} {...headerProps} role="columnheader">
@@ -74,6 +84,7 @@ function renderHeaderCell(column: any, tableStyles: TableStyles, showTypeIcons?:
       {!column.canSort && column.render('Header')}
       {!column.canSort && column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
       {column.canResize && <div {...column.getResizerProps()} className={tableStyles.resizeHandle} />}
+      {CustomHeaderComponent && CustomHeaderComponent}
     </div>
   );
 }
