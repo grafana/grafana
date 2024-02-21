@@ -2,6 +2,7 @@ import React, { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { DataSourceInstanceSettings, getDataSourceRef, SelectableValue } from '@grafana/data';
+import { DataSourceRef } from '@grafana/schema';
 import { QueryVariableEditorForm } from 'app/features/dashboard-scene/settings/variables/components/QueryVariableForm';
 
 import { StoreState } from '../../../types';
@@ -130,8 +131,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
       return null;
     }
 
-    const datasource = extended.dataSource;
-    const VariableQueryEditor = extended.VariableQueryEditor;
+    const datasource: DataSourceRef = { uid: variable.datasource?.uid, type: variable.datasource?.type };
     const timeRange = getTimeSrv().timeRange();
 
     return (
@@ -141,7 +141,6 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
         query={variable.query}
         onQueryChange={this.onQueryChange}
         onLegacyQueryChange={this.onLegacyQueryChange}
-        VariableQueryEditor={VariableQueryEditor}
         timeRange={timeRange}
         regex={variable.regex}
         onRegExChange={this.onRegExBlur}
