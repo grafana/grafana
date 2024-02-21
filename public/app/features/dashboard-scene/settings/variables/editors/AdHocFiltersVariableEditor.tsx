@@ -36,7 +36,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     });
   };
 
-  const onStaticKeysChange = async (staticKeys?: MetricFindValue[]) => {
+  const onStaticKeysChange = (staticKeys?: MetricFindValue[]) => {
     variable.setState({
       staticKeys,
     });
