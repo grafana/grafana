@@ -1,13 +1,13 @@
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
-import { VAR_FILTERS_EXPR, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../../shared';
-import { heatmapGraphBuilder } from '../../graph-builders/heatmap';
-import { percentilesGraphBuilder } from '../../graph-builders/percentiles';
-import { simpleGraphBuilder } from '../../graph-builders/simple';
-import { AutoQueryDef } from '../../types';
-import { getUnit } from '../../units';
+import { VAR_FILTERS_EXPR, VAR_GROUP_BY_EXP, VAR_METRIC_EXPR } from '../../shared';
+import { heatmapGraphBuilder } from '../graph-builders/heatmap';
+import { percentilesGraphBuilder } from '../graph-builders/percentiles';
+import { simpleGraphBuilder } from '../graph-builders/simple';
+import { AutoQueryDef } from '../types';
+import { getUnit } from '../units';
 
-function generator(metricParts: string[]) {
+export function createHistogramQueryDefs(metricParts: string[]) {
   const title = `${VAR_METRIC_EXPR}`;
 
   const unitSuffix = metricParts.at(-2);
@@ -58,8 +58,6 @@ function fixRefIds(queryDef: PromQuery, index: number): PromQuery {
     refId: String.fromCharCode('A'.charCodeAt(0) + index),
   };
 }
-
-export default { generator };
 
 const BASE_QUERY = `rate(${VAR_METRIC_EXPR}${VAR_FILTERS_EXPR}[$__rate_interval])`;
 
