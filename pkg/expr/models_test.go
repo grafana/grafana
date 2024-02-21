@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/schema"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/spec"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/expr/classic"
@@ -12,9 +12,9 @@ import (
 )
 
 func TestQueryTypeDefinitions(t *testing.T) {
-	builder, err := schema.NewSchemaBuilder(
-		schema.BuilderOptions{
-			BasePackage: "github.com/grafana/grafana/pkg/registry/apis/query/expr",
+	builder, err := spec.NewSchemaBuilder(
+		spec.BuilderOptions{
+			BasePackage: "github.com/grafana/grafana/pkg/expr",
 			CodePath:    "./",
 			// We need to identify the enum fields explicitly :(
 			// *AND* have the +enum common for this to work
@@ -25,10 +25,10 @@ func TestQueryTypeDefinitions(t *testing.T) {
 		})
 	require.NoError(t, err)
 	err = builder.AddQueries(
-		schema.QueryTypeInfo{
-			Discriminators: schema.NewDiscriminators("queryType", QueryTypeMath),
+		spec.QueryTypeInfo{
+			Discriminators: spec.NewDiscriminators("queryType", QueryTypeMath),
 			GoType:         reflect.TypeOf(&MathQuery{}),
-			Examples: []schema.QueryExample{
+			Examples: []spec.QueryExample{
 				{
 					Name: "constant addition",
 					QueryPayload: MathQuery{
@@ -43,10 +43,10 @@ func TestQueryTypeDefinitions(t *testing.T) {
 				},
 			},
 		},
-		schema.QueryTypeInfo{
-			Discriminators: schema.NewDiscriminators("queryType", QueryTypeReduce),
+		spec.QueryTypeInfo{
+			Discriminators: spec.NewDiscriminators("queryType", QueryTypeReduce),
 			GoType:         reflect.TypeOf(&ReduceQuery{}),
-			Examples: []schema.QueryExample{
+			Examples: []spec.QueryExample{
 				{
 					Name: "get max value",
 					QueryPayload: ReduceQuery{
@@ -59,10 +59,10 @@ func TestQueryTypeDefinitions(t *testing.T) {
 				},
 			},
 		},
-		schema.QueryTypeInfo{
-			Discriminators: schema.NewDiscriminators("queryType", QueryTypeResample),
+		spec.QueryTypeInfo{
+			Discriminators: spec.NewDiscriminators("queryType", QueryTypeResample),
 			GoType:         reflect.TypeOf(&ResampleQuery{}),
-			Examples: []schema.QueryExample{
+			Examples: []spec.QueryExample{
 				{
 					Name: "resample at a every day",
 					QueryPayload: ResampleQuery{
@@ -72,10 +72,10 @@ func TestQueryTypeDefinitions(t *testing.T) {
 				},
 			},
 		},
-		schema.QueryTypeInfo{
-			Discriminators: schema.NewDiscriminators("queryType", QueryTypeClassic),
+		spec.QueryTypeInfo{
+			Discriminators: spec.NewDiscriminators("queryType", QueryTypeClassic),
 			GoType:         reflect.TypeOf(&ClassicQuery{}),
-			Examples: []schema.QueryExample{
+			Examples: []spec.QueryExample{
 				{
 					Name: "do classic query (TODO)",
 					QueryPayload: ClassicQuery{
@@ -85,10 +85,10 @@ func TestQueryTypeDefinitions(t *testing.T) {
 				},
 			},
 		},
-		schema.QueryTypeInfo{
-			Discriminators: schema.NewDiscriminators("queryType", QueryTypeThreshold),
+		spec.QueryTypeInfo{
+			Discriminators: spec.NewDiscriminators("queryType", QueryTypeThreshold),
 			GoType:         reflect.TypeOf(&ThresholdQuery{}),
-			Examples: []schema.QueryExample{
+			Examples: []spec.QueryExample{
 				{
 					Name: "TODO... a threshold query",
 					QueryPayload: ThresholdQuery{
@@ -100,16 +100,16 @@ func TestQueryTypeDefinitions(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	builder.UpdateQueryDefinition(t, "models.types.json")
+	builder.UpdateQueryDefinition(t, "./")
 
 	// qt, err := NewExpressionQueryReader(featuremgmt.WithFeatures())
 	// require.NoError(t, err)
-	// s, err := schema.GetQuerySchema(qt.QueryTypeDefinitionList())
+	// s, err := spec.GetQuerySchema(qt.QueryTypeDefinitionList())
 	// require.NoError(t, err)
 
 	// out, err := json.MarshalIndent(s, "", "  ")
 	// require.NoError(t, err)
 
-	// err = os.WriteFile("schema.jsonschema", out, 0644)
+	// err = os.WriteFile("spec.jsonschema", out, 0644)
 	// require.NoError(t, err, "error writing file")
 }

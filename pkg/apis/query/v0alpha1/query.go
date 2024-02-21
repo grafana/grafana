@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/schema"
+	schema "github.com/grafana/grafana-plugin-sdk-go/experimental/spec"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	openapi "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"

@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	schemaex "github.com/grafana/grafana-plugin-sdk-go/experimental/schema"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental/spec"
 
 	"github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -51,8 +51,8 @@ func TestSimpleQuery(t *testing.T) {
 		})
 
 		q := v0alpha1.GenericDataQuery{
-			CommonQueryProperties: schemaex.CommonQueryProperties{
-				Datasource: &schemaex.DataSourceRef{
+			CommonQueryProperties: spec.CommonQueryProperties{
+				Datasource: &spec.DataSourceRef{
 					Type: "grafana-testdata-datasource",
 					UID:  ds.UID,
 				},
