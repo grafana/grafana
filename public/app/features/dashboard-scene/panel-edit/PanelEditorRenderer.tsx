@@ -3,12 +3,13 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneComponentProps } from '@grafana/scenes';
-import { Button, ToolbarButton, useSnappingSplitter, useStyles2 } from '@grafana/ui';
+import { Button, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { PanelEditor } from './PanelEditor';
+import { useSnappingSplitter } from './splitter/useSnappingSplitter';
 
 export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>) {
   const dashboard = getDashboardSceneFor(model);
