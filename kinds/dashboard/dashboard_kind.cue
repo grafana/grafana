@@ -591,7 +591,7 @@ lineage: schemas: [{
 			// Dynamically load the panel
 			libraryPanel?: #LibraryPanelRef
 
-			// Sets panel queries cache timeout.
+			// Sets panel queries cache timeout. 
 			cacheTimeout?: string
 
 			// Overrides the data source configured time-to-live for a query cache item in milliseconds
