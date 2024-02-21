@@ -10,6 +10,7 @@ import { ReactivePluginExtenionRegistry } from './reactivePluginExtensionRegistr
 // Alternatives:
 // - ProviderContext
 // - Hoc
+// - Set it in runtime as a singleton
 const reactiveRegistry = new ReactivePluginExtenionRegistry();
 
 // We should probably also provide hooks to fetch specific types of extensions
