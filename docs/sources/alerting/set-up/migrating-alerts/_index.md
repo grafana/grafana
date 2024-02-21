@@ -196,9 +196,9 @@ There are some differences between Grafana Alerting and legacy dashboard alerts,
 1. Since `Hipchat` and `Sensu` notification channels are no longer supported, legacy alerts associated with these channels are not automatically upgraded to Grafana Alerting. Assign the legacy alerts to a supported notification channel so that you continue to receive notifications for those alerts.
 
 {{% docs/reference %}}
-[alerting_config_error_handling]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling"
-[alerting_config_error_handling]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling"
+[alerting_config_error_handling]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule#configure-no-data-and-error-handling"
+[alerting_config_error_handling]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule#configure-no-data-and-error-handling"
 
-[special_alert]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/state-and-health/#special-alerts-for-nodata-and-error"
-[special_alert]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting/fundamentals/alert-rules/state-and-health/#special-alerts-for-nodata-and-error"
+[special_alert]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/state-and-health#special-alerts-for-nodata-and-error"
+[special_alert]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/state-and-health#special-alerts-for-nodata-and-error"
 {{% /docs/reference %}}
