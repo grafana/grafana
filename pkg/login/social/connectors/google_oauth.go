@@ -17,6 +17,7 @@ import (
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -37,6 +38,7 @@ type googleUserData struct {
 	Email         string `json:"email"`
 	Name          string `json:"name"`
 	EmailVerified bool   `json:"email_verified"`
+	HD            string `json:"hd"`
 	rawJSON       []byte `json:"-"`
 }
 
@@ -113,6 +115,10 @@ func (s *SocialGoogle) UserInfo(ctx context.Context, client *http.Client, token 
 
 	if !data.EmailVerified {
 		return nil, fmt.Errorf("user email is not verified")
+	}
+
+	if err := s.isHDAllowed(data.HD); err != nil {
+		return nil, err
 	}
 
 	groups, errPage := s.retrieveGroups(ctx, client, data)
@@ -289,4 +295,18 @@ func (s *SocialGoogle) getGroupsPage(ctx context.Context, client *http.Client, u
 	}
 
 	return &data, nil
+}
+
+func (s *SocialGoogle) isHDAllowed(hd string) error {
+	if len(s.info.AllowedDomains) == 0 {
+		return nil
+	}
+
+	for _, allowedDomain := range s.info.AllowedDomains {
+		if hd == allowedDomain {
+			return nil
+		}
+	}
+
+	return errutil.Forbidden("the hd claim found in the ID token is not present in the allowed domains", errutil.WithPublicMessage("Invalid domain"))
 }
