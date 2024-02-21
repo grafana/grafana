@@ -83,6 +83,7 @@ import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { createPluginExtensionRegistry } from './features/plugins/extensions/createPluginExtensionRegistry';
 import { getCoreExtensionConfigurations } from './features/plugins/extensions/getCoreExtensionConfigurations';
 import { getPluginExtensions } from './features/plugins/extensions/getPluginExtensions';
+import { ReactivePluginExtenionRegistry } from './features/plugins/extensions/reactivePluginExtensionRegistry';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { PluginPreloadResult, preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
@@ -202,6 +203,9 @@ export class GrafanaApp {
       // init modal manager
       const modalManager = new ModalManager();
       modalManager.init();
+
+      const extensionsRegistry = new ReactivePluginExtenionRegistry();
+      extensionsRegistry.registerPlugin({ pluginId: 'grafana', extensionConfigs: getCoreExtensionConfigurations() });
 
       // TODO: we need an internal subject to hold the latest registry.
       // TODO: we need expose a way to emit/next items to the registry.
