@@ -663,7 +663,7 @@ steps:
     PORT: "3001"
     PROV_DIR: /grafana/scripts/grafana-server/tmp/conf/provisioning
   failure: ignore
-  image: mcr.microsoft.com/playwright:v1.40.0-jammy
+  image: mcr.microsoft.com/playwright:v1.41.2-jammy
   name: playwright-plugin-e2e
 - commands:
   - apt-get update
@@ -1104,7 +1104,7 @@ steps:
   name: yarn-install
 - commands:
   - pip3 install codespell
-  - codespell -I .codespellignore docs/
+  - codespell -I docs/.codespellignore docs/
   image: python:3.8
   name: codespell
 - commands:
@@ -1464,7 +1464,7 @@ steps:
   name: yarn-install
 - commands:
   - pip3 install codespell
-  - codespell -I .codespellignore docs/
+  - codespell -I docs/.codespellignore docs/
   image: python:3.8
   name: codespell
 - commands:
@@ -1981,7 +1981,7 @@ steps:
     PORT: "3001"
     PROV_DIR: /grafana/scripts/grafana-server/tmp/conf/provisioning
   failure: ignore
-  image: mcr.microsoft.com/playwright:v1.40.0-jammy
+  image: mcr.microsoft.com/playwright:v1.41.2-jammy
   name: playwright-plugin-e2e
 - commands:
   - apt-get update
@@ -4888,6 +4888,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 060fa0be997497ebc952f37276d5d19a367d35752583ad3f02d8509f3ffb75e6
+hmac: 71108a84f3b0c65a764ca23224f3be057f6ede1d30ecfcf7dd9a54591428de13
 
 ...

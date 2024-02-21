@@ -59,7 +59,7 @@ export class TimelineChart extends React.Component<TimelineProps> {
       rowHeight: alignedFrame.fields.length > 2 ? this.props.rowHeight : 1,
       getValueColor: this.getValueColor,
       // @ts-ignore
-      hoverMulti: this.props.tooltip.mode === TooltipDisplayMode.Multi,
+      hoverMulti: this.props.tooltip?.mode === TooltipDisplayMode.Multi,
     });
   };
 

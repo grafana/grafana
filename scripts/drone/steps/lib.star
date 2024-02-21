@@ -725,7 +725,7 @@ def codespell_step():
         "image": images["python"],
         "commands": [
             "pip3 install codespell",
-            "codespell -I .codespellignore docs/",
+            "codespell -I docs/.codespellignore docs/",
         ],
     }
 
