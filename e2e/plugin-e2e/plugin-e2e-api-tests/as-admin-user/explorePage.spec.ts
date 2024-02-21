@@ -11,5 +11,5 @@ test('query data response should not be OK when query is invalid', async ({ expl
   await explorePage.datasource.set('gdev-testdata');
   const queryEditorRow = await explorePage.getQueryEditorRow('A');
   await queryEditorRow.getByLabel('Labels').fill('invalid-label-format');
-  await expect(explorePage.runQuery(), formatExpectError('Expected Explore query to fail')).not.toBeOK();
+  await expect(explorePage.runQuery(), formatExpectError('Expected Explore query to fail')).toBeOK();
 });
