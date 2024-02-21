@@ -3,7 +3,6 @@ import {
   sceneGraph,
   SceneGridItem,
   SceneGridLayout,
-  SceneRefreshPicker,
   SceneTimeRange,
   SceneQueryRunner,
   SceneVariableSet,
@@ -22,7 +21,6 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 
 import { DashboardControls } from './DashboardControls';
-import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { createWorker } from './workers/createDetectChangesWorker';
 
@@ -151,14 +149,14 @@ describe('DashboardScene', () => {
       });
 
       it('A change to time picker visibility settings should set isDirty true', () => {
-        const dashboardControls = dashboardSceneGraph.getDashboardControls(scene)!;
+        const dashboardControls = scene.state.controls!;
         const prevState = dashboardControls.state.hideTimeControls;
         dashboardControls.setState({ hideTimeControls: true });
 
         expect(scene.state.isDirty).toBe(true);
 
         scene.exitEditMode({ skipConfirm: true });
-        expect(dashboardSceneGraph.getDashboardControls(scene)!.state.hideTimeControls).toEqual(prevState);
+        expect(scene.state.controls!.state.hideTimeControls).toEqual(prevState);
       });
 
       it('A change to time zone should set isDirty true', () => {
@@ -349,17 +347,7 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
     $timeRange: new SceneTimeRange({
       timeZone: 'browser',
     }),
-    controls: [
-      new DashboardControls({
-        variableControls: [],
-        linkControls: new DashboardLinksControls({}),
-        timeControls: [
-          new SceneRefreshPicker({
-            intervals: ['1s'],
-          }),
-        ],
-      }),
-    ],
+    controls: new DashboardControls({}),
     body: new SceneGridLayout({
       children: [
         new SceneGridItem({
