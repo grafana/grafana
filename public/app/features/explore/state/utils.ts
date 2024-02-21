@@ -131,8 +131,6 @@ export async function loadAndInitDatasource(
     search: '',
     sortOrder: SortOrder.Ascending,
     datasourceFilters: [instance.name],
-    from: 0,
-    to: MAX_HISTORY_AUTOCOMPLETE_ITEMS,
     starred: false,
   });
 
@@ -151,8 +149,6 @@ export async function loadAndInitDatasource(
       search: '',
       sortOrder: SortOrder.Ascending,
       datasourceFilters: [MIXED_DATASOURCE_NAME],
-      from: 0,
-      to: MAX_HISTORY_AUTOCOMPLETE_ITEMS,
       starred: false,
     });
 
