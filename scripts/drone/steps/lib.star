@@ -139,13 +139,13 @@ def download_grabpl_step():
                 grabpl_version,
             ),
             "chmod +x bin/grabpl",
-            "if [ -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi",
-            "curl -L " +
-            "-X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments " +
-            '-H "Accept: application/vnd.github+json" ' +
-            '-H "Authorization: Bearer $${GITHUB_TOKEN}" ' +
-            '-H "X-GitHub-Api-Version: 2022-11-28" -d ' +
-            '"{\\"body\\":\\"❌ Failed to run Playwright plugin e2e tests. <br /> <br /> Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse the Playwright report and trace viewer. <br /> For information on how to run Playwright tests locally, refer to the [Developer guide](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests). \\"}"',
+            # "if [ -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi",
+            # "curl -L " +
+            # "-X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments " +
+            # '-H "Accept: application/vnd.github+json" ' +
+            # '-H "Authorization: Bearer $${GITHUB_TOKEN}" ' +
+            # '-H "X-GitHub-Api-Version: 2022-11-28" -d ' +
+            # '"{\\"body\\":\\"❌ Failed to run Playwright plugin e2e tests. <br /> <br /> Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse the Playwright report and trace viewer. <br /> For information on how to run Playwright tests locally, refer to the [Developer guide](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests). \\"}"',
         ],
     }
 
@@ -398,8 +398,8 @@ def playwright_e2e_report_upload():
             "export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html",
             'echo "E2E Playwright report uploaded to: \n $${E2E_PLAYWRIGHT_REPORT_URL}"',
             # if the trace doesn't folder exists, it means that there are no failed tests.
-            "if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi",
-            "echo 'Failed tests found in the Playwright report'",
+            # "if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi",
+            # "echo 'Failed tests found in the Playwright report'",
             # if it exists, we will post a comment on the PR with the link to the report
             "curl -L " +
             "-X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments " +
