@@ -15,5 +15,7 @@ export {
   getPluginLinkExtensions,
   getPluginComponentExtensions,
   type GetPluginExtensions,
+  type GetPluginExtensionsOptions,
+  type GetPluginExtensionsResult,
 } from './pluginExtensions/getPluginExtensions';
 export { isPluginExtensionLink, isPluginExtensionComponent } from './pluginExtensions/utils';
