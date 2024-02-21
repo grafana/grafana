@@ -187,9 +187,9 @@ There are some differences between Grafana Alerting and legacy dashboard alerts,
 
 1. Unlike legacy dashboard alerts where images in notifications are enabled per contact point, images in notifications for Grafana Alerting must be enabled in the Grafana configuration, either in the configuration file or environment variables, and are enabled for either all or no contact points.
 
-4. The JSON format for webhook notifications has changed in Grafana Alerting and uses the format from [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config).
+1. The JSON format for webhook notifications has changed in Grafana Alerting and uses the format from [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config).
 
-5. Alerting on Prometheus `Both` type queries is not supported in Grafana Alerting. Existing legacy alerts with `Both` type queries are upgraded to Grafana Alerting as alerts with `Range` type queries.
+1. Alerting on Prometheus `Both` type queries is not supported in Grafana Alerting. Existing legacy alerts with `Both` type queries are upgraded to Grafana Alerting as alerts with `Range` type queries.
 
 **Limitations**
 
@@ -202,4 +202,3 @@ There are some differences between Grafana Alerting and legacy dashboard alerts,
 [special_alert]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/state-and-health/#special-alerts-for-nodata-and-error"
 [special_alert]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting/fundamentals/alert-rules/state-and-health/#special-alerts-for-nodata-and-error"
 {{% /docs/reference %}}
-
