@@ -82,7 +82,8 @@
       "metadata": {
         "name": "pluginsInstrumentationStatusSource",
         "resourceVersion": "1708108588074",
-        "creationTimestamp": "2024-02-16T18:36:28Z"
+        "creationTimestamp": "2024-02-16T18:36:28Z",
+        "deletionTimestamp": "2024-02-19T14:18:02Z"
       },
       "spec": {
         "description": "Include a status source label for plugin request metrics and logs",

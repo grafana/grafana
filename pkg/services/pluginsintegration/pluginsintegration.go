@@ -153,12 +153,8 @@ func NewClientDecorator(
 }
 
 func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer, cachingService caching.CachingService, features *featuremgmt.FeatureManager, promRegisterer prometheus.Registerer, registry registry.Service) []plugins.ClientMiddleware {
-	var middlewares []plugins.ClientMiddleware
-
-	if features.IsEnabledGlobally(featuremgmt.FlagPluginsInstrumentationStatusSource) {
-		middlewares = []plugins.ClientMiddleware{
-			clientmiddleware.NewPluginRequestMetaMiddleware(),
-		}
+	middlewares := []plugins.ClientMiddleware{
+		clientmiddleware.NewPluginRequestMetaMiddleware(),
 	}
 
 	skipCookiesNames := []string{cfg.LoginCookieName}
@@ -189,11 +185,9 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 
 	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())
 
-	if features.IsEnabledGlobally(featuremgmt.FlagPluginsInstrumentationStatusSource) {
-		// StatusSourceMiddleware should be at the very bottom, or any middlewares below it won't see the
-		// correct status source in their context.Context
-		middlewares = append(middlewares, clientmiddleware.NewStatusSourceMiddleware())
-	}
+	// StatusSourceMiddleware should be at the very bottom, or any middlewares below it won't see the
+	// correct status source in their context.Context
+	middlewares = append(middlewares, clientmiddleware.NewStatusSourceMiddleware())
 
 	return middlewares
 }
