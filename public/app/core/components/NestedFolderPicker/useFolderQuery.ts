@@ -106,7 +106,7 @@ function getPagesLoadStatus(pages: ListFoldersQuery[]): [boolean, number | undef
 /**
  * Returns a loaded folder hierarchy as a flat list and a function to load more pages.
  */
-export function useFolderList(isBrowsing: boolean, openFolders: Record<string, boolean>) {
+export function useFolderQuery(isBrowsing: boolean, openFolders: Record<string, boolean>) {
   const dispatch = useDispatch();
 
   // Keep a list of all requests so we can
