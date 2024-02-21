@@ -277,7 +277,7 @@ describe('createPluginExtensionsRegistry', () => {
           type: PluginExtensionTypes.link,
           title: 'Link 1',
           description: 'Link 1 description',
-          path: `/a/${pluginId}/declare-incident`,
+          path: `/a/another-plugin/declare-incident`,
           extensionPointId: 'grafana/dashboard/panel/menu',
           configure: jest.fn().mockReturnValue({}),
         },
@@ -285,6 +285,35 @@ describe('createPluginExtensionsRegistry', () => {
     });
 
     expect(subscribeCallback).toHaveBeenCalledTimes(3);
+
+    const registry = subscribeCallback.mock.calls[2][0];
+
+    expect(registry).toEqual({
+      'grafana/dashboard/panel/menu': [
+        {
+          pluginId: pluginId,
+          config: {
+            type: PluginExtensionTypes.link,
+            title: 'Link 1',
+            description: 'Link 1 description',
+            path: `/a/${pluginId}/declare-incident`,
+            extensionPointId: 'grafana/dashboard/panel/menu',
+            configure: expect.any(Function),
+          },
+        },
+        {
+          pluginId: 'another-plugin',
+          config: {
+            type: PluginExtensionTypes.link,
+            title: 'Link 1',
+            description: 'Link 1 description',
+            path: `/a/another-plugin/declare-incident`,
+            extensionPointId: 'grafana/dashboard/panel/menu',
+            configure: expect.any(Function),
+          },
+        },
+      ],
+    });
   });
 
   it('should give the last version of the registry for new subscribers', async () => {});
