@@ -20,7 +20,7 @@ export interface PanelEditorState extends SceneObjectState {
   controls?: SceneObject[];
   isDirty?: boolean;
   panelId: number;
-  optionsPane?: PanelOptionsPane;
+  optionsPane: PanelOptionsPane;
   dataPane?: PanelDataPane;
   vizManager: VizPanelManager;
 }
@@ -60,11 +60,13 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _initDataPane(pluginId: string) {
     const skipDataQuery = config.panels[pluginId].skipDataQuery;
 
-    if (!skipDataQuery && !this.state.dataPane) {
-      this.setState({ dataPane: new PanelDataPane(this.state.vizManager) });
-    } else if (this.state.dataPane) {
+    if (skipDataQuery && this.state.dataPane) {
       locationService.partial({ tab: null }, true);
       this.setState({ dataPane: undefined });
+    }
+
+    if (!skipDataQuery && !this.state.dataPane) {
+      this.setState({ dataPane: new PanelDataPane(this.state.vizManager) });
     }
   }
 
@@ -96,18 +98,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     if (sourcePanel!.parent instanceof SceneGridItem) {
       sourcePanel!.parent.setState({ body: this.state.vizManager.state.panel.clone() });
-    }
-  }
-
-  public toggleOptionsPane(withOpenVizPicker?: boolean) {
-    if (this.state.optionsPane) {
-      this.setState({ optionsPane: undefined });
-    } else {
-      this.setState({
-        optionsPane: new PanelOptionsPane({
-          isVizPickerOpen: withOpenVizPicker,
-        }),
-      });
     }
   }
 }

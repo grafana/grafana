@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { intersectionBy, isEqual } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
@@ -16,7 +15,11 @@ import { useGetContactPointsState } from './api/receiversApi';
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import { MuteTimingsTable } from './components/mute-timings/MuteTimingsTable';
-import { NotificationPoliciesFilter, findRoutesMatchingPredicate } from './components/notification-policies/Filters';
+import {
+  NotificationPoliciesFilter,
+  findRoutesByMatchers,
+  findRoutesMatchingPredicate,
+} from './components/notification-policies/Filters';
 import {
   useAddPolicyModal,
   useAlertGroupsModal,
@@ -30,7 +33,6 @@ import { updateAlertManagerConfigAction } from './state/actions';
 import { FormAmRoute } from './types/amroutes';
 import { useRouteGroupsMatcher } from './useRouteGroupsMatcher';
 import { addUniqueIdentifierToRoute } from './utils/amroutes';
-import { normalizeMatchers } from './utils/matchers';
 import { computeInheritedTree } from './utils/notification-policies';
 import { initialAsyncRequestState } from './utils/redux';
 import { addRouteToParentRoute, mergePartialAmRouteWithRouteTree, omitRouteFromRouteTree } from './utils/routeTree';
@@ -100,8 +102,14 @@ const AmRoutes = () => {
   // these are computed from the contactPoint and labels matchers filter
   const routesMatchingFilters = useMemo(() => {
     if (!rootRoute) {
-      return [];
+      const emptyResult: RoutesMatchingFilters = {
+        filtersApplied: false,
+        matchedRoutesWithPath: new Map(),
+      };
+
+      return emptyResult;
     }
+
     return findRoutesMatchingFilters(rootRoute, { contactPointFilter, labelMatchersFilter });
   }, [contactPointFilter, labelMatchersFilter, rootRoute]);
 
@@ -231,6 +239,7 @@ const AmRoutes = () => {
                       receivers={receivers}
                       onChangeMatchers={setLabelMatchersFilter}
                       onChangeReceiver={setContactPointFilter}
+                      matchingCount={routesMatchingFilters.matchedRoutesWithPath.size}
                     />
                   )}
                   {rootRoute && (
@@ -274,40 +283,84 @@ type RouteFilters = {
   labelMatchersFilter?: ObjectMatcher[];
 };
 
-export const findRoutesMatchingFilters = (rootRoute: RouteWithID, filters: RouteFilters): RouteWithID[] => {
+type FilterResult = Map<RouteWithID, RouteWithID[]>;
+
+export interface RoutesMatchingFilters {
+  filtersApplied: boolean;
+  matchedRoutesWithPath: FilterResult;
+}
+
+export const findRoutesMatchingFilters = (rootRoute: RouteWithID, filters: RouteFilters): RoutesMatchingFilters => {
   const { contactPointFilter, labelMatchersFilter = [] } = filters;
   const hasFilter = contactPointFilter || labelMatchersFilter.length > 0;
+  const havebothFilters = Boolean(contactPointFilter) && labelMatchersFilter.length > 0;
 
   // if filters are empty we short-circuit this function
   if (!hasFilter) {
-    return [];
+    return { filtersApplied: false, matchedRoutesWithPath: new Map() };
   }
 
+  // we'll collect all of the routes matching the filters
+  // we track an array of matching routes, each item in the array is for 1 type of filter
+  //
+  // [contactPointMatches, labelMatcherMatches] -> [[{ a: [], b: [] }], [{ a: [], c: [] }]]
+  // later we'll use intersection to find results in all sets of filter matchers
   let matchedRoutes: RouteWithID[][] = [];
 
+  // compute fully inherited tree so all policies have their inherited receiver
   const fullRoute = computeInheritedTree(rootRoute);
 
-  const routesMatchingContactPoint = contactPointFilter
+  // find all routes for our contact point filter
+  const matchingRoutesForContactPoint = contactPointFilter
     ? findRoutesMatchingPredicate(fullRoute, (route) => route.receiver === contactPointFilter)
-    : undefined;
+    : new Map();
 
+  const routesMatchingContactPoint = Array.from(matchingRoutesForContactPoint.keys());
   if (routesMatchingContactPoint) {
     matchedRoutes.push(routesMatchingContactPoint);
   }
 
-  const routesMatchingLabelMatchers = labelMatchersFilter.length
-    ? findRoutesMatchingPredicate(fullRoute, (route) => {
-        const routeMatchers = normalizeMatchers(route);
-        return labelMatchersFilter.every((filter) => routeMatchers.some((matcher) => isEqual(filter, matcher)));
-      })
-    : undefined;
+  // find all routes matching our label matchers
+  const matchingRoutesForLabelMatchers = labelMatchersFilter.length
+    ? findRoutesMatchingPredicate(fullRoute, (route) => findRoutesByMatchers(route, labelMatchersFilter))
+    : new Map();
 
-  if (routesMatchingLabelMatchers) {
-    matchedRoutes.push(routesMatchingLabelMatchers);
+  const routesMatchingLabelFilters = Array.from(matchingRoutesForLabelMatchers.keys());
+  if (matchingRoutesForLabelMatchers.size > 0) {
+    matchedRoutes.push(routesMatchingLabelFilters);
   }
 
-  return intersectionBy(...matchedRoutes, 'id');
+  // now that we have our maps for all filters, we just need to find the intersection of all maps by route if we have both filters
+  const routesForAllFilterResults = havebothFilters
+    ? findMapIntersection(matchingRoutesForLabelMatchers, matchingRoutesForContactPoint)
+    : new Map([...matchingRoutesForLabelMatchers, ...matchingRoutesForContactPoint]);
+
+  return {
+    filtersApplied: true,
+    matchedRoutesWithPath: routesForAllFilterResults,
+  };
 };
+
+// this function takes multiple maps and creates a new map with routes that exist in all maps
+//
+// map 1: { a: [], b: [] }
+// map 2: { a: [], c: [] }
+// return: { a: [] }
+function findMapIntersection(...matchingRoutes: FilterResult[]): FilterResult {
+  const result = new Map<RouteWithID, RouteWithID[]>();
+
+  // Iterate through the keys of the first map'
+  for (const key of matchingRoutes[0].keys()) {
+    // Check if the key exists in all other maps
+    if (matchingRoutes.every((map) => map.has(key))) {
+      // If yes, add the key to the result map
+      // @ts-ignore
+      result.set(key, matchingRoutes[0].get(key));
+    }
+  }
+
+  return result;
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   tabContent: css`
