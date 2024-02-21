@@ -698,6 +698,7 @@ export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimin
     const muteIntervals = time_intervals?.filter(({ name }) => name !== muteTimingName) ?? [];
 
     if (config) {
+      const { mute_time_intervals: _, ...configWithoutMuteTimings } = config?.alertmanager_config ?? {};
       withAppEvents(
         dispatch(
           updateAlertManagerConfigAction({
@@ -706,7 +707,7 @@ export const deleteMuteTimingAction = (alertManagerSourceName: string, muteTimin
             newConfig: {
               ...config,
               alertmanager_config: {
-                ...config.alertmanager_config,
+                ...configWithoutMuteTimings,
                 route: config.alertmanager_config.route
                   ? removeMuteTimingFromRoute(muteTimingName, config.alertmanager_config?.route)
                   : undefined,

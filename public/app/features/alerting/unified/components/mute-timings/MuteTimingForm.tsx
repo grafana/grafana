@@ -73,11 +73,12 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provenance }: Props) =
     const newMuteTiming = createMuteTiming(values);
 
     const muteTimings = muteTiming ? time_intervals?.filter(({ name }) => name !== muteTiming.name) : time_intervals;
+    const { mute_time_intervals: _, ...configWithoutMuteTimings } = config ?? {};
 
     const newConfig: AlertManagerCortexConfig = {
       ...result,
       alertmanager_config: {
-        ...config,
+        ...configWithoutMuteTimings,
         route:
           muteTiming && newMuteTiming.name !== muteTiming.name
             ? renameMuteTimings(newMuteTiming.name, muteTiming.name, config?.route ?? {})
