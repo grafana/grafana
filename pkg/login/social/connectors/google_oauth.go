@@ -17,6 +17,7 @@ import (
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/validation"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -307,5 +308,5 @@ func (s *SocialGoogle) isHDAllowed(hd string) error {
 		}
 	}
 
-	return fmt.Errorf("the HD claim found in the ID token is not whitelisted by the allowed domains")
+	return errutil.Forbidden("the hd claim found in the ID token is not present in the allowed domains")
 }

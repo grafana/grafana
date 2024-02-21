@@ -914,7 +914,7 @@ func TestIsHDAllowed(t *testing.T) {
 			name:                 "should fail if email is not from allowed domain",
 			email:                "mycompany.com",
 			allowedDomains:       []string{"grafana.com", "example.com"},
-			expectedErrorMessage: "the HD claim found in the ID token is not whitelisted by the allowed domains",
+			expectedErrorMessage: "the hd claim found in the ID token is not present in the allowed domains",
 		},
 	}
 
