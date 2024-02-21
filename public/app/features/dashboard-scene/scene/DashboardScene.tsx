@@ -30,6 +30,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import store from 'app/core/store';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
+import { createWorker } from 'app/features/dashboard-scene/scene/workers/createDetectChangesWorker';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { VariablesChanged } from 'app/features/variables/types';
 import { DashboardDTO, DashboardMeta, SaveDashboardResponseDTO } from 'app/types';
@@ -56,7 +57,6 @@ import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { PanelRepeaterGridItem } from './PanelRepeaterGridItem';
 import { ViewPanelScene } from './ViewPanelScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
-import { createWorker } from './workers/createDetectChangesWorker';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta'];
 

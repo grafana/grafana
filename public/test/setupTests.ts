@@ -21,25 +21,5 @@ i18next.use(initReactI18next).init({
   lng: 'en-US', // this should be the locale of the phrases in our source JSX
 });
 
-// Mocks for browser APIs that are not available in JSDOM
-if (typeof Worker === 'undefined') {
-  global.Worker = class {
-    addEventListener() {}
-
-    removeEventListener() {}
-
-    dispatchEvent() {
-      return false;
-    }
-
-    onmessage() {}
-
-    onmessageerror() {}
-
-    onerror() {}
-
-    postMessage() {}
-
-    terminate() {}
-  };
-}
+// Mock out the worker that detects changes in the dashboard
+jest.mock('app/features/dashboard-scene/scene/workers/createDetectChangesWorker.ts');
