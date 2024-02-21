@@ -7,137 +7,19 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '../../themes';
 import { DragHandlePosition, getDragStyles } from '../DragHandle/DragHandle';
 
-export interface Props {
+export interface UseSplitterOptions {
   /**
    * The initial size of the primary pane between 0-1, defaults to 0.5
    */
   initialSize?: number;
-  direction?: 'row' | 'column';
+  direction: 'row' | 'column';
   dragPosition?: DragHandlePosition;
-  primaryPaneStyles?: React.CSSProperties;
-  secondaryPaneStyles?: React.CSSProperties;
   /**
    * Called when ever the size of the primary pane changes
    * @param flexSize (float from 0-1)
    */
   onSizeChanged?: (flexSize: number, pixelSize: number) => void;
   onResizing?: (flexSize: number, pixelSize: number) => void;
-  children: [React.ReactNode, React.ReactNode];
-}
-
-/**
- * Splits two children into two resizable panes
- * @alpha
- */
-export function Splitter(props: Props) {
-  const {
-    direction = 'row',
-    initialSize = 0.5,
-    primaryPaneStyles,
-    secondaryPaneStyles,
-    onSizeChanged,
-    onResizing,
-    dragPosition = 'middle',
-    children,
-  } = props;
-
-  const { containerRef, firstPaneRef, minDimProp, splitterProps, secondPaneRef } = useSplitter(
-    direction,
-    onSizeChanged,
-    onResizing
-  );
-
-  const kids = React.Children.toArray(children);
-  const styles = useStyles2(getStyles, direction);
-  const dragStyles = useStyles2(getDragStyles, dragPosition);
-  const dragHandleStyle = direction === 'column' ? dragStyles.dragHandleHorizontal : dragStyles.dragHandleVertical;
-  const id = useId();
-
-  const secondAvailable = kids.length === 2;
-  const visibilitySecond = secondAvailable ? 'visible' : 'hidden';
-  let firstChildSize = initialSize;
-
-  // If second child is missing let first child have all the space
-  if (!children[1]) {
-    firstChildSize = 1;
-  }
-
-  return (
-    <div ref={containerRef} className={styles.container}>
-      <div
-        ref={firstPaneRef}
-        className={styles.panel}
-        style={{
-          flexGrow: clamp(firstChildSize, 0, 1),
-          [minDimProp]: 'min-content',
-          ...primaryPaneStyles,
-        }}
-        id={`start-panel-${id}`}
-      >
-        {kids[0]}
-      </div>
-
-      {kids[1] && (
-        <>
-          <div
-            className={dragHandleStyle}
-            {...splitterProps}
-            role="separator"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={initialSize * 100}
-            aria-controls={`start-panel-${id}`}
-            aria-label="Pane resize widget"
-            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
-            tabIndex={0}
-          ></div>
-
-          <div
-            ref={secondPaneRef}
-            className={styles.panel}
-            style={{
-              flexGrow: clamp(1 - initialSize, 0, 1),
-              [minDimProp]: 'min-content',
-              visibility: `${visibilitySecond}`,
-              ...secondaryPaneStyles,
-            }}
-            id={`end-panel-${id}`}
-          >
-            {kids[1]}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-function getStyles(theme: GrafanaTheme2, direction: Props['direction']) {
-  return {
-    container: css({
-      display: 'flex',
-      flexDirection: direction === 'row' ? 'row' : 'column',
-      width: '100%',
-      flexGrow: 1,
-      overflow: 'hidden',
-    }),
-    panel: css({ display: 'flex', position: 'relative', flexBasis: 0 }),
-    dragEdge: {
-      second: css({
-        top: 0,
-        left: theme.spacing(-1),
-        bottom: 0,
-        position: 'absolute',
-        zIndex: theme.zIndex.modal,
-      }),
-      first: css({
-        top: 0,
-        left: theme.spacing(-1),
-        bottom: 0,
-        position: 'absolute',
-        zIndex: theme.zIndex.modal,
-      }),
-    },
-  };
 }
 
 const PIXELS_PER_MS = 0.3 as const;
@@ -159,11 +41,9 @@ const propsForDirection = {
   },
 } as const;
 
-function useSplitter(
-  direction: 'row' | 'column',
-  onSizeChanged: Props['onSizeChanged'],
-  onResizing: Props['onResizing']
-) {
+export function useSplitter(options: UseSplitterOptions) {
+  const { direction, initialSize = 0.5, dragPosition = 'middle', onResizing, onSizeChanged } = options;
+
   const handleSize = 16;
   const splitterRef = useRef<HTMLDivElement | null>(null);
   const firstPaneRef = useRef<HTMLDivElement | null>(null);
@@ -171,7 +51,6 @@ function useSplitter(
   const containerRef = useRef<HTMLDivElement | null>(null);
   const containerSize = useRef<number | null>(null);
   const primarySizeRef = useRef<'1fr' | number>('1fr');
-
   const firstPaneMeasurements = useRef<MeasureResult | undefined>(undefined);
   const savedPos = useRef<string | undefined>(undefined);
 
@@ -197,11 +76,7 @@ function useSplitter(
         const curSize = firstPaneRef.current!.getBoundingClientRect()[measurementProp];
         const newDims = measureElement(firstPaneRef.current);
 
-        splitterRef.current!.ariaValueNow = `${clamp(
-          ((curSize - newDims[minDimProp]) / (newDims[maxDimProp] - newDims[minDimProp])) * 100,
-          0,
-          100
-        )}`;
+        splitterRef.current!.ariaValueNow = ariaValue(curSize, newDims[minDimProp], newDims[maxDimProp]);
       }
     },
     500,
@@ -239,10 +114,8 @@ function useSplitter(
 
         firstPaneRef.current!.style.flexGrow = `${newFlex}`;
         secondPaneRef.current!.style.flexGrow = `${1 - newFlex}`;
+        splitterRef.current!.ariaValueNow = ariaValue(newSize, dims[minDimProp], dims[maxDimProp]);
 
-        const ariaValueNow = ariaValue(newSize, dims[minDimProp], dims[maxDimProp] - dims[minDimProp]);
-
-        splitterRef.current!.ariaValueNow = `${ariaValueNow}`;
         onResizing?.(newFlex, newSize);
       }
     },
@@ -406,7 +279,7 @@ function useSplitter(
     const dim = measureElement(firstPaneRef.current);
     firstPaneMeasurements.current = dim;
     primarySizeRef.current = firstPaneRef.current!.getBoundingClientRect()[measurementProp];
-    splitterRef.current!.ariaValueNow = `${((primarySizeRef.current - dim[minDimProp]) / (dim[maxDimProp] - dim[minDimProp])) * 100}`;
+    splitterRef.current!.ariaValueNow = `${ariaValue(primarySizeRef.current, dim[minDimProp], dim[maxDimProp])}`;
   }, [maxDimProp, measurementProp, minDimProp]);
 
   const onBlur = useCallback(() => {
@@ -421,10 +294,32 @@ function useSplitter(
     }
   }, [onSizeChanged]);
 
+  const styles = useStyles2(getStyles, direction);
+  const dragStyles = useStyles2(getDragStyles, dragPosition);
+  const dragHandleStyle = direction === 'column' ? dragStyles.dragHandleHorizontal : dragStyles.dragHandleVertical;
+  const id = useId();
+
   return {
-    containerRef,
-    firstPaneRef,
-    minDimProp,
+    containerProps: {
+      ref: containerRef,
+      className: styles.container,
+    },
+    primaryProps: {
+      ref: firstPaneRef,
+      className: styles.panel,
+      style: {
+        [minDimProp]: 'min-content',
+        flexGrow: clamp(initialSize ?? 0.5, 0, 1),
+      },
+    },
+    secondaryProps: {
+      ref: secondPaneRef,
+      className: styles.panel,
+      style: {
+        flexGrow: clamp(1 - initialSize, 0, 1),
+        [minDimProp]: 'min-content',
+      },
+    },
     splitterProps: {
       onPointerUp,
       onPointerDown,
@@ -435,8 +330,15 @@ function useSplitter(
       onBlur,
       ref: splitterRef,
       style: { [measurementProp]: `${handleSize}px` },
+      role: 'separator',
+      'aria-valuemin': 0,
+      'aria-valuemax': 100,
+      'aria-valuenow': initialSize * 100,
+      'aria-controls': `start-panel-${id}`,
+      'aria-label': 'Pane resize widget',
+      tabIndex: 0,
+      className: dragHandleStyle,
     },
-    secondPaneRef,
   };
 }
 
@@ -456,8 +358,10 @@ function measureElement<T extends HTMLElement>(ref: T): MeasureResult {
   const savedWidth = ref.style.width;
   const savedHeight = ref.style.height;
   const savedFlex = ref.style.flexGrow;
+
   document.body.style.overflow = 'hidden';
   ref.style.flexGrow = '0';
+
   const { width: minWidth, height: minHeight } = ref.getBoundingClientRect();
 
   ref.style.flexGrow = '100';
@@ -490,4 +394,17 @@ function useResizeObserver(
     return () => resizeObserver.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
+}
+
+function getStyles(theme: GrafanaTheme2, direction: UseSplitterOptions['direction']) {
+  return {
+    container: css({
+      display: 'flex',
+      flexDirection: direction === 'row' ? 'row' : 'column',
+      width: '100%',
+      flexGrow: 1,
+      overflow: 'hidden',
+    }),
+    panel: css({ display: 'flex', position: 'relative', flexBasis: 0 }),
+  };
 }

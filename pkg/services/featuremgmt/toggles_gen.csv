@@ -120,7 +120,6 @@ teamHttpHeaders,experimental,@grafana/identity-access-team,false,false,false
 awsDatasourcesNewFormStyling,preview,@grafana/aws-datasources,false,false,true
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 panelTitleSearchInV1,experimental,@grafana/backend-platform,true,false,false
-pluginsInstrumentationStatusSource,experimental,@grafana/plugins-platform-backend,false,false,false
 managedPluginsInstall,preview,@grafana/plugins-platform-backend,false,false,false
 prometheusPromQAIL,experimental,@grafana/observability-metrics,false,false,true
 addFieldFromCalculationStatFunctions,preview,@grafana/dataviz-squad,false,false,true
