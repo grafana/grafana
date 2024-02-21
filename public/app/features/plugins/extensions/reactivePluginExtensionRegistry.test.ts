@@ -14,7 +14,7 @@ describe('createPluginExtensionsRegistry', () => {
     expect(registry).toEqual({});
   });
 
-  it('should be possible to register extensions in registry', async () => {
+  it('should be possible to register extensions in the registry', async () => {
     const pluginId = 'grafana-basic-app';
     const reactiveRegistry = new ReactivePluginExtenionRegistry();
 
@@ -71,6 +71,88 @@ describe('createPluginExtensionsRegistry', () => {
       ],
     });
   });
+
+  it('should be possible to asynchronously register extensions for the same plugin', async () => {
+  //   const pluginId = 'grafana-basic-app';
+  //   const reactiveRegistry = new ReactivePluginExtenionRegistry();
+
+  //   const extension1 = {
+  //     type: PluginExtensionTypes.link,
+  //     title: 'Link 1',
+  //     description: 'Link 1 description',
+  //     path: `/a/${pluginId}/declare-incident`,
+  //     extensionPointId: 'grafana/dashboard/panel/menu',
+  //     configure: jest.fn().mockReturnValue({}),
+  //   };
+
+  //   const extension2 = {
+  //     type: PluginExtensionTypes.link,
+  //     title: 'Link 2',
+  //     description: 'Link 2 description',
+  //     path: `/a/${pluginId}/declare-incident`,
+  //     extensionPointId: 'plugins/myorg-basic-app/start',
+  //     configure: expect.any(Function),
+  //   };
+
+  //   reactiveRegistry.registerPlugin({
+  //     pluginId,
+  //     extensionConfigs: [extension1],
+  //   });
+
+  //   const registry1 = await reactiveRegistry.getRegistry();
+
+  //   expect(registry1).toEqual({
+  //     'grafana/dashboard/panel/menu': [
+  //       {
+  //         pluginId: pluginId,
+  //         config: {
+  //           ...extension1,
+  //           configure: expect.any(Function),
+  //         },
+  //       },
+  //     ],
+  //   });
+
+  //   reactiveRegistry.registerPlugin({
+  //     pluginId: 'another-plugin',
+  //     extensionConfigs: [extension2],
+  //   });
+
+  //   const registry2 = await reactiveRegistry.getRegistry();
+
+  //   expect(registry2).toEqual({
+  //     'grafana/dashboard/panel/menu': [
+  //       {
+  //         pluginId: pluginId,
+  //         config: {
+  //           ...extension1,
+  //           configure: expect.any(Function),
+  //         },
+  //       },
+  //     ],
+  //     'plugins/myorg-basic-app/start': [
+  //       {
+  //         pluginId: 'another-plugin',
+  //         config: {
+  //           ...extension2,
+  //           configure: expect.any(Function),
+  //         },
+  //       },
+  //     ],
+  //   });
+  });
+
+  it('should be possible to asynchronously register extensions for the same placement (different plugins)', async () => {});
+  it('should be possible to asynchronously register extensions for the same placement (same plugin)', async () => {});
+  it('should be possible to asynchronously register extensions for a different placement (different plugin)', async () => {});
+  it('should be possible to asynchronously register extensions for a different placement (same plugin)', async () => {});
+  it('should notify subscribers when the registry changes', async () => {});
+  it('should give the last version of the registry for new subscribers', async () => {});
+
+  it('should not register extensions for a plugin that had errors', () => {});
+  it('should not register an extension if it has an invalid configure() function', () => {});
+  it('should not register an extension if it has invalid properties (empty title / description)', () => {});
+  it('should not register link extensions with invalid path configured', () => {});
 });
 
 // describe('createRegistry()', () => {
