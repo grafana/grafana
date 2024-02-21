@@ -45,7 +45,14 @@ import { historySrv } from '../settings/version-history';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/urlBuilders';
-import { forceRenderChildren, getClosestVizPanel, getPanelIdForVizPanel, isPanelClone } from '../utils/utils';
+import {
+  NEW_PANEL_HEIGHT,
+  NEW_PANEL_WIDTH,
+  forceRenderChildren,
+  getClosestVizPanel,
+  getPanelIdForVizPanel,
+  isPanelClone,
+} from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
@@ -415,20 +422,30 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   }
 
   public addPanel(vizPanel: VizPanel): void {
-    // TODO: need logic for adding a panel when other panels exist
-    // This is the logic when dashboard is empty
-    this.setState({
-      body: new SceneGridLayout({
-        children: [
-          new SceneGridItem({
-            height: 10,
-            width: 10,
-            x: 0.2,
-            y: 0,
-            body: vizPanel,
-          }),
-        ],
-      }),
+    if (!(this.state.body instanceof SceneGridLayout)) {
+      console.error('Trying to add a panel in a layout that is not SceneGridLayout ');
+      return;
+    }
+
+    const sceneGridLayout = this.state.body;
+
+    // move all gridItems below the new one
+    for (const child of sceneGridLayout.state.children) {
+      child.setState({
+        y: NEW_PANEL_HEIGHT + (child.state.y ?? 0),
+      });
+    }
+
+    const newGridItem = new SceneGridItem({
+      height: NEW_PANEL_HEIGHT,
+      width: NEW_PANEL_WIDTH,
+      x: 0,
+      y: 0,
+      body: vizPanel,
+    });
+
+    sceneGridLayout.setState({
+      children: [newGridItem, ...sceneGridLayout.state.children],
     });
   }
 
