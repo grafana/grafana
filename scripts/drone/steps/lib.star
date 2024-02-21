@@ -393,7 +393,7 @@ def playwright_e2e_report_upload():
             '-H "Accept: application/vnd.github+json" ' +
             '-H "Authorization: Bearer $${GITHUB_TOKEN}" ' +
             '-H "X-GitHub-Api-Version: 2022-11-28" -d ' +
-            '"{\\"state\\":\\"body\\":\\"❌ Failed to run Playwright plugin e2e tests $${E2E_PLAYWRIGHT_REPORT_URL}\\"}"',
+            '"{\\"body\\":\\"❌ Failed to run Playwright plugin e2e tests $${E2E_PLAYWRIGHT_REPORT_URL}\\"}"',
             # '"{\\"body\\":\\"\\<h3\\>❌ Failed to run Playwright plugin e2e tests\\<\\/h3\\>\\"}"',
             # '"{\\"target_url\\":\\"$${E2E_PLAYWRIGHT_REPORT_URL}\\", \\"description\\": \\"Click on the details to see the Playwright report\\", \\"context\\": \\"e2e_artifacts\\"}"',
             # "curl -L " +
