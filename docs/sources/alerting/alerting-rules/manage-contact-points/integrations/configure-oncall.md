@@ -69,6 +69,6 @@ To set up the Grafana OnCall integration using the Grafana Alerting application,
 [oncall-integration]: "/docs/grafana/ -> /docs/oncall/latest/integrations/grafana-alerting"
 [oncall-integration]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/oncall/integrations/grafana-alerting"
 
-[escalation-chain]: "/docs/grafana/ -> /docs/oncall/latest/escalation-chains-and-routes"
-[escalation-chain]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/oncall/escalation-chains-and-routes"
+[escalation-chain]: "/docs/grafana/ -> /docs/oncall/latest/configure/escalation-chains-and-routes"
+[escalation-chain]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/oncall/configure/escalation-chains-and-routes"
 {{% /docs/reference %}}
