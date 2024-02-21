@@ -30,7 +30,7 @@ You cannot edit imported alerting resources in the Grafana UI in the same way as
 
 Choose from the options below to import (or provision) your Grafana Alerting resources.
 
-1. [Use configuration files to provision your alerting resources](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning), such as alert rules and contact points, through files on disk.
+1. [Use configuration files to provision your alerting resources][alerting_file_provisioning], such as alert rules and contact points, through files on disk.
 
    {{< admonition type="note" >}}
    File provisioning is not available in Grafana Cloud instances.
@@ -67,15 +67,16 @@ Provisioned resources are labeled **Provisioned**, so that it is clear that they
 
 {{% docs/reference %}}
 [alerting_tf_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning"
-[alerting_tf_provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning"
+[alerting_tf_provisioning]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/terraform-provisioning"
 [alerting_http_provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning"
-[alerting_http_provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning"
+[alerting_http_provisioning]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/http-api-provisioning"
 [alerting_export]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources"
-[alerting_export]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources"
+[alerting_export]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources"
 
 [alerting_export_http]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources#export-api-endpoints"
-[alerting_export_http]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources#export-api-endpoints"
+[alerting_export_http]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources#export-api-endpoints"
 
-[provisioning]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/administration/provisioning"
-[provisioning]: "/docs/grafana-cloud/ -> /docs/grafana/<GRAFANA_VERSION>/administration/provisioning"
+[alerting_file_provisioning]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning"
+
+[provisioning]: "/docs/ -> /docs/grafana/<GRAFANA_VERSION>/administration/provisioning"
 {{% /docs/reference %}}
