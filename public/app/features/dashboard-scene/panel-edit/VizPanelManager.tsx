@@ -61,6 +61,17 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     this.addActivationHandler(() => this._onActivate());
   }
 
+  /**
+   * Will clone the source panel and move the data provider to
+   * live on the VizPanelManager level instead of the VizPanel level
+   */
+  public static createFor(sourcePanel: VizPanel) {
+    return new VizPanelManager({
+      panel: sourcePanel.clone({ $data: undefined }),
+      $data: sourcePanel.state.$data?.clone(),
+    });
+  }
+
   private _onActivate() {
     this.loadDataSource();
   }
@@ -133,14 +144,14 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     });
 
     // When changing from non-data to data panel, we need to add a new data provider
-    if (!restOfOldState.$data && !config.panels[pluginType].skipDataQuery) {
+    if (!this.state.$data && !config.panels[pluginType].skipDataQuery) {
       let ds = getLastUsedDatasourceFromStorage(getDashboardSceneFor(this).state.uid!)?.datasourceUid;
 
       if (!ds) {
         ds = config.defaultDatasource;
       }
 
-      newPanel.setState({
+      this.setState({
         $data: new SceneDataTransformer({
           $data: new SceneQueryRunner({
             datasource: {

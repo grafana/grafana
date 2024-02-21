@@ -163,6 +163,11 @@ export function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQu
     return getQueryRunnerFor(sceneObject.state.$data);
   }
 
+  // Check 1 level up as well
+  if (sceneObject.parent?.state.$data) {
+    return getQueryRunnerFor(sceneObject.parent);
+  }
+
   return undefined;
 }
 

@@ -158,10 +158,7 @@ export function buildPanelEditScene(panel: VizPanel): PanelEditor {
   const panelEditor = new PanelEditor({
     panelId: getPanelIdForVizPanel(panel),
     optionsPane: new PanelOptionsPane({}),
-    vizManager: new VizPanelManager({
-      panel: panel.clone({ $data: undefined }),
-      $data: panel.state.$data?.clone(),
-    }),
+    vizManager: VizPanelManager.createFor(panel),
     optionsPaneSize: OPTIONS_PANE_FLEX_DEFAULT,
   });
 

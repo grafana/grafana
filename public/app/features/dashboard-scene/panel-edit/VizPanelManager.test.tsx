@@ -622,10 +622,7 @@ const setupTest = (panelId: string) => {
   const scene = transformSaveModelToScene({ dashboard: testDashboard, meta: {} });
   const panel = findVizPanelByKey(scene, panelId)!;
 
-  const vizPanelManager = new VizPanelManager({
-    panel: panel.clone(),
-  });
-
+  const vizPanelManager = VizPanelManager.createFor(panel);
   // The following happens on DahsboardScene activation. For the needs of this test this activation aint needed hence we hand-call it
   // @ts-expect-error
   getDashboardSrv().setCurrent(new DashboardModelCompatibilityWrapper(scene));
