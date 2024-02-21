@@ -238,9 +238,135 @@ describe('createPluginExtensionsRegistry', () => {
     });
   });
 
-  it('should be possible to asynchronously register extensions for the same placement (same plugin)', async () => {});
+  it('should be possible to asynchronously register extensions for the same placement (same plugin)', async () => {
+    const pluginId = 'grafana-basic-app';
+    const reactiveRegistry = new ReactivePluginExtenionRegistry();
 
-  it('should be possible to asynchronously register extensions for a different placement (same plugin)', async () => {});
+    // Register extensions for the first extension point
+    reactiveRegistry.registerPlugin({
+      pluginId: pluginId,
+      extensionConfigs: [
+        {
+          type: PluginExtensionTypes.link,
+          title: 'Link 1',
+          description: 'Link 1 description',
+          path: `/a/${pluginId}/declare-incident-1`,
+          extensionPointId: 'grafana/dashboard/panel/menu',
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
+
+    // Register extensions to a different extension point
+    reactiveRegistry.registerPlugin({
+      pluginId: pluginId,
+      extensionConfigs: [
+        {
+          type: PluginExtensionTypes.link,
+          title: 'Link 2',
+          description: 'Link 2 description',
+          path: `/a/${pluginId}/declare-incident-2`,
+          extensionPointId: 'grafana/dashboard/panel/menu',
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
+
+    const registry2 = await reactiveRegistry.getRegistry();
+
+    expect(registry2).toEqual({
+      'grafana/dashboard/panel/menu': [
+        {
+          pluginId: pluginId,
+          config: {
+            type: PluginExtensionTypes.link,
+            title: 'Link 1',
+            description: 'Link 1 description',
+            path: `/a/${pluginId}/declare-incident-1`,
+            extensionPointId: 'grafana/dashboard/panel/menu',
+            configure: expect.any(Function),
+          },
+        },
+        {
+          pluginId: pluginId,
+          config: {
+            type: PluginExtensionTypes.link,
+            title: 'Link 2',
+            description: 'Link 2 description',
+            path: `/a/${pluginId}/declare-incident-2`,
+            extensionPointId: 'grafana/dashboard/panel/menu',
+            configure: expect.any(Function),
+          },
+        },
+      ],
+    });
+  });
+
+  it('should be possible to asynchronously register extensions for a different placement (same plugin)', async () => {
+    const pluginId = 'grafana-basic-app';
+    const reactiveRegistry = new ReactivePluginExtenionRegistry();
+
+    // Register extensions for the first extension point
+    reactiveRegistry.registerPlugin({
+      pluginId: pluginId,
+      extensionConfigs: [
+        {
+          type: PluginExtensionTypes.link,
+          title: 'Link 1',
+          description: 'Link 1 description',
+          path: `/a/${pluginId}/declare-incident`,
+          extensionPointId: 'grafana/dashboard/panel/menu',
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
+
+    // Register extensions to a different extension point
+    reactiveRegistry.registerPlugin({
+      pluginId: pluginId,
+      extensionConfigs: [
+        {
+          type: PluginExtensionTypes.link,
+          title: 'Link 2',
+          description: 'Link 2 description',
+          path: `/a/${pluginId}/declare-incident`,
+          extensionPointId: 'plugins/myorg-basic-app/start',
+          configure: jest.fn().mockReturnValue({}),
+        },
+      ],
+    });
+
+    const registry2 = await reactiveRegistry.getRegistry();
+
+    expect(registry2).toEqual({
+      'grafana/dashboard/panel/menu': [
+        {
+          pluginId: pluginId,
+          config: {
+            type: PluginExtensionTypes.link,
+            title: 'Link 1',
+            description: 'Link 1 description',
+            path: `/a/${pluginId}/declare-incident`,
+            extensionPointId: 'grafana/dashboard/panel/menu',
+            configure: expect.any(Function),
+          },
+        },
+      ],
+      'plugins/myorg-basic-app/start': [
+        {
+          pluginId: pluginId,
+          config: {
+            type: PluginExtensionTypes.link,
+            title: 'Link 2',
+            description: 'Link 2 description',
+            path: `/a/${pluginId}/declare-incident`,
+            extensionPointId: 'plugins/myorg-basic-app/start',
+            configure: expect.any(Function),
+          },
+        },
+      ],
+    });
+  });
 
   it('should notify subscribers when the registry changes', async () => {
     const pluginId = 'grafana-basic-app';
