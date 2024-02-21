@@ -23,21 +23,6 @@ type ListFoldersRequest = QueryActionCreatorResult<
   >
 >;
 
-const createListFoldersSelector = createSelector(
-  [
-    (parentUid: ListFolderQueryArgs['parentUid']) => parentUid,
-    (parentUid: ListFolderQueryArgs['parentUid'], page: ListFolderQueryArgs['page']) => page,
-    (
-      parentUid: ListFolderQueryArgs['parentUid'],
-      page: ListFolderQueryArgs['page'],
-      limit: ListFolderQueryArgs['limit']
-    ) => limit,
-  ],
-  (parentUid, page, limit) => {
-    return browseDashboardsAPI.endpoints.listFolders.select({ parentUid, page, limit });
-  }
-);
-
 const listFoldersSelector = createSelector(
   (state: RootState) => state,
   (
@@ -45,7 +30,7 @@ const listFoldersSelector = createSelector(
     parentUid: ListFolderQueryArgs['parentUid'],
     page: ListFolderQueryArgs['page'],
     limit: ListFolderQueryArgs['limit']
-  ) => createListFoldersSelector(parentUid, page, limit),
+  ) => browseDashboardsAPI.endpoints.listFolders.select({ parentUid, page, limit }),
   (state, selectFolderList) => selectFolderList(state)
 );
 
