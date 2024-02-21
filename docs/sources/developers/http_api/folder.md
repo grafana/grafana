@@ -160,7 +160,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 {
   "uid": "nErXDvCkzz",
-  "title": "Department ABC"
+  "title": "Department ABC",
+  "parentUid": "fgnj5e52gel76g"
 }
 ```
 
@@ -168,6 +169,7 @@ JSON Body schema:
 
 - **uid** – Optional [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}).
 - **title** – The title of the folder.
+- **parentUid** - Optional field, the unique identifier of the parent folder under which the folder should be created. Requires nested folders to be enabled.
 
 **Example Response**:
 

@@ -22,6 +22,8 @@ export const Components = {
     fromField: 'data-testid Time Range from field',
     toField: 'data-testid Time Range to field',
     applyTimeRange: 'data-testid TimePicker submit button',
+    copyTimeRange: 'data-testid TimePicker copy button',
+    pasteTimeRange: 'data-testid TimePicker paste button',
     calendar: {
       label: 'data-testid Time Range calendar',
       openButton: 'data-testid Open time range calendar',
@@ -60,11 +62,83 @@ export const Components = {
     },
     Prometheus: {
       configPage: {
-        connectionSettings: 'Data source connection URL',
+        connectionSettings: 'Data source connection URL', // aria-label in grafana experimental
+        manageAlerts: 'prometheus-alerts-manager', // id for switch component
+        scrapeInterval: 'data-testid scrape interval',
+        queryTimeout: 'data-testid query timeout',
+        defaultEditor: 'data-testid default editor',
+        disableMetricLookup: 'disable-metric-lookup', // id for switch component
+        prometheusType: 'data-testid prometheus type',
+        prometheusVersion: 'data-testid prometheus version',
+        cacheLevel: 'data-testid cache level',
+        incrementalQuerying: 'prometheus-incremental-querying', // id for switch component
+        queryOverlapWindow: 'data-testid query overlap window',
+        disableRecordingRules: 'disable-recording-rules', // id for switch component
+        customQueryParameters: 'data-testid custom query parameters',
+        httpMethod: 'data-testid http method',
         exemplarsAddButton: 'data-testid Add exemplar config button',
         internalLinkSwitch: 'data-testid Internal link switch',
       },
+      queryEditor: {
+        // kickstart: '', see QueryBuilder queryPatterns below
+        explain: 'data-testid prometheus explain switch wrapper',
+        editorToggle: 'data-testid QueryEditorModeToggle', // wrapper for toggle
+        options: 'data-testid prometheus options', // wrapper for options group
+        legend: 'data-testid prometheus legend wrapper', // wrapper for multiple compomnents
+        format: 'data-testid prometheus format',
+        step: 'prometheus-step', // id for autosize component
+        type: 'data-testid prometheus type', //wrapper for radio button group
+        exemplars: 'prometheus-exemplars', // id for editor switch component
+        builder: {
+          // see QueryBuilder below for commented selectors
+          // labelSelect: 'data-testid Select label',
+          // valueSelect: 'data-testid Select value',
+          // matchOperatorSelect: 'data-testid Select match operator',
+          metricSelect: 'data-testid metric select',
+          hints: 'data-testid prometheus hints', // wrapper for hints component
+          metricsExplorer: 'data-testid metrics explorer',
+          queryAdvisor: 'data-testid query advisor',
+        },
+        code: {
+          queryField: 'data-testid prometheus query field',
+          metricsBrowser: {
+            openButton: 'data-testid open metrics browser',
+            selectMetric: 'data-testid select a metric',
+            metricList: 'data-testid metric list',
+            labelNamesFilter: 'data-testid label names filter',
+            labelValuesFilter: 'data-testid label values filter',
+            useQuery: 'data-testid use query',
+            useAsRateQuery: 'data-testid use as rate query',
+            validateSelector: 'data-testid validate selector',
+            clear: 'data-testid clear',
+          },
+        },
+      },
       exemplarMarker: 'data-testid Exemplar marker',
+      variableQueryEditor: {
+        queryType: 'data-testid query type',
+        labelnames: {
+          metricRegex: 'data-testid label names metric regex',
+        },
+        labelValues: {
+          labelSelect: 'data-testid label values label select',
+          // metric select see queryEditor: builder for more context
+          // label select for metric filtering see queryEditor: builder for more context
+        },
+        metricNames: {
+          metricRegex: 'data-testid metric names metric regex',
+        },
+        varQueryResult: 'data-testid variable query result',
+        seriesQuery: 'data-testid prometheus series query',
+        classicQuery: 'data-testid prometheus classic query',
+      },
+      annotations: {
+        minStep: 'prometheus-annotation-min-step', // id for autosize input
+        title: 'data-testid prometheus annotation title',
+        tags: 'data-testid prometheus annotation tags',
+        text: 'data-testid prometheus annotation text',
+        seriesValueAsTimestamp: 'data-testid prometheus annotation series value as timestamp',
+      },
     },
   },
   Menu: {
@@ -90,6 +164,7 @@ export const Components = {
         container: 'data-testid hover-header-container',
         dragIcon: 'data-testid drag-icon',
       },
+      PanelDataErrorMessage: 'data-testid Panel data error message',
     },
     Visualization: {
       Graph: {
@@ -135,6 +210,7 @@ export const Components = {
       contract: 'Drawer contract',
       close: 'data-testid Drawer close',
       rcContentWrapper: () => '.rc-drawer-content-wrapper',
+      subtitle: 'data-testid drawer subtitle',
     },
   },
   PanelEditor: {
@@ -209,7 +285,7 @@ export const Components = {
     rows: 'Query editor row',
   },
   QueryEditorRow: {
-    actionButton: (title: string) => `${title}`,
+    actionButton: (title: string) => `data-testid ${title}`,
     title: (refId: string) => `Query editor row title ${refId}`,
     container: (refId: string) => `Query editor row ${refId}`,
   },
@@ -231,6 +307,7 @@ export const Components = {
   },
   Transforms: {
     card: (name: string) => `data-testid New transform ${name}`,
+    disableTransformationButton: 'data-testid Disable transformation button',
     Reduce: {
       modeLabel: 'data-testid Transform mode label',
       calculationsLabel: 'data-testid Transform calculations label',
@@ -259,6 +336,7 @@ export const Components = {
     searchInput: 'data-testid search transformations',
     noTransformationsMessage: 'data-testid no transformations message',
     addTransformationButton: 'data-testid add transformation button',
+    removeAllTransformationsButton: 'data-testid remove all transformations button',
   },
   NavBar: {
     Configuration: {
@@ -314,7 +392,7 @@ export const Components = {
      */
     container: 'Folder picker select container',
     containerV2: 'data-testid Folder picker select container',
-    input: 'Select a folder',
+    input: 'data-testid folder-picker-input',
   },
   ReadonlyFolderPicker: {
     container: 'data-testid Readonly folder picker select container',
@@ -326,6 +404,11 @@ export const Components = {
      */
     input: () => 'input[id="data-source-picker"]',
     inputV2: 'data-testid Select a data source',
+    dataSourceList: 'data-testid Data source list dropdown',
+    advancedModal: {
+      dataSourceList: 'data-testid Data source list',
+      builtInDataSourceList: 'data-testid Built in data source list',
+    },
   },
   TimeZonePicker: {
     /**
@@ -382,7 +465,7 @@ export const Components = {
     link: 'data-testid Dashboard link',
   },
   LoadingIndicator: {
-    icon: 'Loading indicator',
+    icon: 'data-testid Loading indicator',
   },
   CallToActionCard: {
     /**

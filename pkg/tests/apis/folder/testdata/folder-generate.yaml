@@ -1,0 +1,7 @@
+apiVersion: folder.grafana.app/v0alpha1
+kind: Folder
+metadata:
+  generateName: x # anything is ok here... except yes or true -- they become boolean!
+spec:
+  title: Generated folder title (${RAND})
+  description: A description from here

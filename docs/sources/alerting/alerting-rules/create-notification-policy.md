@@ -111,6 +111,6 @@ An example of an alert configuration.
 - Create specific routes for particular teams that handle their own on-call rotations.
 
 {{% docs/reference %}}
-[notification-policies]: "/docs/grafana/ -> /docs/grafana/<GRAFANA VERSION>/alerting/fundamentals/notification-policies"
-[notification-policies]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notification-policies"
+[notification-policies]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notification-policies/notifications"
+[notification-policies]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notification-policies/notifications"
 {{% /docs/reference %}}

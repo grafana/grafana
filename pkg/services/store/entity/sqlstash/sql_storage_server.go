@@ -3,39 +3,32 @@ package sqlstash
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
+	"slices"
 	"strings"
 	"time"
-
-	"xorm.io/xorm"
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/google/uuid"
 
-	foldersV0 "github.com/grafana/grafana/pkg/apis/folders/v0alpha1"
+	folder "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/store/entity/db"
 )
-
-type EntityDB interface {
-	Init() error
-	GetSession() (*session.SessionDB, error)
-	GetEngine() (*xorm.Engine, error)
-	GetCfg() *setting.Cfg
-}
 
 // Make sure we implement both store + admin
 var _ entity.EntityStoreServer = &sqlEntityServer{}
 
-func ProvideSQLEntityServer(db EntityDB /*, cfg *setting.Cfg */) (entity.EntityStoreServer, error) {
+func ProvideSQLEntityServer(db db.EntityDBInterface /*, cfg *setting.Cfg */) (entity.EntityStoreServer, error) {
 	snode, err := snowflake.NewNode(rand.Int63n(1024))
 	if err != nil {
 		return nil, err
@@ -52,7 +45,7 @@ func ProvideSQLEntityServer(db EntityDB /*, cfg *setting.Cfg */) (entity.EntityS
 
 type sqlEntityServer struct {
 	log       log.Logger
-	db        EntityDB // needed to keep xorm engine in scope
+	db        db.EntityDBInterface // needed to keep xorm engine in scope
 	sess      *session.SessionDB
 	dialect   migrator.Dialect
 	snowflake *snowflake.Node
@@ -98,6 +91,7 @@ func (s *sqlEntityServer) getReadFields(r *entity.ReadEntityRequest) []string {
 		"origin", "origin_key", "origin_ts",
 		"meta",
 		"title", "slug", "description", "labels", "fields",
+		"message",
 	}
 
 	if r.WithBody {
@@ -143,6 +137,7 @@ func (s *sqlEntityServer) rowToEntity(ctx context.Context, rows *sql.Rows, r *en
 		&raw.Origin.Source, &raw.Origin.Key, &raw.Origin.Time,
 		&raw.Meta,
 		&raw.Title, &raw.Slug, &raw.Description, &labels, &fields,
+		&raw.Message,
 	}
 	if r.WithBody {
 		args = append(args, &raw.Body)
@@ -156,15 +151,22 @@ func (s *sqlEntityServer) rowToEntity(ctx context.Context, rows *sql.Rows, r *en
 		return nil, err
 	}
 
-	if raw.Origin.Source == "" {
-		raw.Origin = nil
-	}
-
 	// unmarshal json labels
 	if labels != "" {
 		if err := json.Unmarshal([]byte(labels), &raw.Labels); err != nil {
 			return nil, err
 		}
+	}
+
+	// set empty body, meta or status to nil
+	if raw.Body != nil && len(raw.Body) == 0 {
+		raw.Body = nil
+	}
+	if raw.Meta != nil && len(raw.Meta) == 0 {
+		raw.Meta = nil
+	}
+	if raw.Status != nil && len(raw.Status) == 0 {
+		raw.Status = nil
 	}
 
 	return raw, nil
@@ -287,6 +289,10 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 	}
 
 	createdAt := r.Entity.CreatedAt
+	if createdAt < 1000 {
+		createdAt = time.Now().UnixMilli()
+	}
+
 	createdBy := r.Entity.CreatedBy
 	if createdBy == "" {
 		modifier, err := appcontext.User(ctx)
@@ -298,6 +304,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		}
 		createdBy = store.GetUserIDString(modifier)
 	}
+
 	updatedAt := r.Entity.UpdatedAt
 	updatedBy := r.Entity.UpdatedBy
 
@@ -323,6 +330,10 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 
 		// generate guid for new entity
 		current.Guid = uuid.New().String()
+
+		// set created at/by
+		current.CreatedAt = createdAt
+		current.CreatedBy = createdBy
 
 		// parse provided key
 		key, err := entity.ParseKey(r.Entity.Key)
@@ -359,6 +370,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 
 		etag := createContentsHash(current.Body, current.Meta, current.Status)
 		current.ETag = etag
+
 		current.UpdatedAt = updatedAt
 		current.UpdatedBy = updatedBy
 
@@ -374,18 +386,21 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 			s.log.Error("error marshalling labels", "msg", err.Error())
 			return err
 		}
+		current.Labels = r.Entity.Labels
 
 		fields, err := json.Marshal(r.Entity.Fields)
 		if err != nil {
 			s.log.Error("error marshalling fields", "msg", err.Error())
 			return err
 		}
+		current.Fields = r.Entity.Fields
 
 		errors, err := json.Marshal(r.Entity.Errors)
 		if err != nil {
 			s.log.Error("error marshalling errors", "msg", err.Error())
 			return err
 		}
+		current.Errors = r.Entity.Errors
 
 		if current.Origin == nil {
 			current.Origin = &entity.EntityOriginInfo{}
@@ -418,13 +433,13 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 			"group":            current.Group,
 			"resource":         current.Resource,
 			"name":             current.Name,
-			"created_at":       createdAt,
-			"created_by":       createdBy,
+			"created_at":       current.CreatedAt,
+			"created_by":       current.CreatedBy,
 			"group_version":    current.GroupVersion,
 			"folder":           current.Folder,
 			"slug":             current.Slug,
-			"updated_at":       updatedAt,
-			"updated_by":       updatedBy,
+			"updated_at":       current.UpdatedAt,
+			"updated_by":       current.UpdatedBy,
 			"body":             current.Body,
 			"meta":             current.Meta,
 			"status":           current.Status,
@@ -455,9 +470,9 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 		}
 
 		switch current.Group {
-		case foldersV0.GROUP:
+		case folder.GROUP:
 			switch current.Resource {
-			case foldersV0.RESOURCE:
+			case folder.RESOURCE:
 				err = s.updateFolderTree(ctx, tx, current.Namespace)
 				if err != nil {
 					s.log.Error("error updating folder tree", "msg", err.Error())
@@ -468,7 +483,7 @@ func (s *sqlEntityServer) Create(ctx context.Context, r *entity.CreateEntityRequ
 
 		rsp.Entity = current
 
-		return nil // s.writeSearchInfo(ctx, tx, current)
+		return s.setLabels(ctx, tx, current.Guid, current.Labels)
 	})
 	if err != nil {
 		s.log.Error("error creating entity", "msg", err.Error())
@@ -484,8 +499,11 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		return nil, err
 	}
 
-	timestamp := time.Now().UnixMilli()
 	updatedAt := r.Entity.UpdatedAt
+	if updatedAt < 1000 {
+		updatedAt = time.Now().UnixMilli()
+	}
+
 	updatedBy := r.Entity.UpdatedBy
 	if updatedBy == "" {
 		modifier, err := appcontext.User(ctx)
@@ -496,9 +514,6 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			return nil, fmt.Errorf("can not find user in context")
 		}
 		updatedBy = store.GetUserIDString(modifier)
-	}
-	if updatedAt < 1000 {
-		updatedAt = timestamp
 	}
 
 	rsp := &entity.UpdateEntityResponse{
@@ -528,10 +543,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 
 		rsp.Entity.Guid = current.Guid
 
-		// Clear the labels+refs
-		if _, err := tx.Exec(ctx, "DELETE FROM entity_labels WHERE guid=?", rsp.Entity.Guid); err != nil {
-			return err
-		}
+		// Clear the refs
 		if _, err := tx.Exec(ctx, "DELETE FROM entity_ref WHERE guid=?", rsp.Entity.Guid); err != nil {
 			return err
 		}
@@ -562,6 +574,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 
 		etag := createContentsHash(current.Body, current.Meta, current.Status)
 		current.ETag = etag
+
 		current.UpdatedAt = updatedAt
 		current.UpdatedBy = updatedBy
 
@@ -577,18 +590,21 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			s.log.Error("error marshalling labels", "msg", err.Error())
 			return err
 		}
+		current.Labels = r.Entity.Labels
 
 		fields, err := json.Marshal(r.Entity.Fields)
 		if err != nil {
 			s.log.Error("error marshalling fields", "msg", err.Error())
 			return err
 		}
+		current.Fields = r.Entity.Fields
 
 		errors, err := json.Marshal(r.Entity.Errors)
 		if err != nil {
 			s.log.Error("error marshalling errors", "msg", err.Error())
 			return err
 		}
+		current.Errors = r.Entity.Errors
 
 		if current.Origin == nil {
 			current.Origin = &entity.EntityOriginInfo{}
@@ -628,8 +644,8 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 			"group_version":    current.GroupVersion,
 			"folder":           current.Folder,
 			"slug":             current.Slug,
-			"updated_at":       updatedAt,
-			"updated_by":       updatedBy,
+			"updated_at":       current.UpdatedAt,
+			"updated_by":       current.UpdatedBy,
 			"body":             current.Body,
 			"meta":             current.Meta,
 			"status":           current.Status,
@@ -680,9 +696,9 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 		}
 
 		switch current.Group {
-		case foldersV0.GROUP:
+		case folder.GROUP:
 			switch current.Resource {
-			case foldersV0.RESOURCE:
+			case folder.RESOURCE:
 				err = s.updateFolderTree(ctx, tx, current.Namespace)
 				if err != nil {
 					s.log.Error("error updating folder tree", "msg", err.Error())
@@ -693,7 +709,7 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 
 		rsp.Entity = current
 
-		return nil // s.writeSearchInfo(ctx, tx, current)
+		return s.setLabels(ctx, tx, current.Guid, current.Labels)
 	})
 	if err != nil {
 		s.log.Error("error updating entity", "msg", err.Error())
@@ -703,23 +719,22 @@ func (s *sqlEntityServer) Update(ctx context.Context, r *entity.UpdateEntityRequ
 	return rsp, err
 }
 
-/*
-func (s *sqlEntityServer) writeSearchInfo(
-	ctx context.Context,
-	tx *session.SessionTx,
-	current *entity.Entity,
-) error {
-	// parent_key := current.getParentKey()
+func (s *sqlEntityServer) setLabels(ctx context.Context, tx *session.SessionTx, guid string, labels map[string]string) error {
+	s.log.Debug("setLabels", "guid", guid, "labels", labels)
 
-	// Add the labels rows
-	for k, v := range current.Labels {
+	// Clear the old labels
+	if _, err := tx.Exec(ctx, "DELETE FROM entity_labels WHERE guid=?", guid); err != nil {
+		return err
+	}
+
+	// Add the new labels
+	for k, v := range labels {
 		query, args, err := s.dialect.InsertQuery(
 			"entity_labels",
 			map[string]any{
-				"key":   current.Key,
+				"guid":  guid,
 				"label": k,
 				"value": v,
-				// "parent_key": parent_key,
 			},
 		)
 		if err != nil {
@@ -734,7 +749,6 @@ func (s *sqlEntityServer) writeSearchInfo(
 
 	return nil
 }
-*/
 
 func (s *sqlEntityServer) Delete(ctx context.Context, r *entity.DeleteEntityRequest) (*entity.DeleteEntityResponse, error) {
 	if err := s.Init(); err != nil {
@@ -798,9 +812,9 @@ func (s *sqlEntityServer) doDelete(ctx context.Context, tx *session.SessionTx, e
 	}
 
 	switch ent.Group {
-	case foldersV0.GROUP:
+	case folder.GROUP:
 		switch ent.Resource {
-		case foldersV0.RESOURCE:
+		case folder.RESOURCE:
 			err = s.updateFolderTree(ctx, tx, ent.Namespace)
 			if err != nil {
 				s.log.Error("error updating folder tree", "msg", err.Error())
@@ -825,7 +839,7 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 	rr := &entity.ReadEntityRequest{
 		Key:        r.Key,
 		WithBody:   true,
-		WithStatus: false,
+		WithStatus: true,
 	}
 
 	query, err := s.getReadSelect(rr)
@@ -888,6 +902,75 @@ func (s *sqlEntityServer) History(ctx context.Context, r *entity.EntityHistoryRe
 	return rsp, err
 }
 
+type ContinueToken struct {
+	Sort        []string `json:"s"`
+	StartOffset int64    `json:"o"`
+}
+
+func (c *ContinueToken) String() string {
+	b, _ := json.Marshal(c)
+	return base64.StdEncoding.EncodeToString(b)
+}
+
+func GetContinueToken(r *entity.EntityListRequest) (*ContinueToken, error) {
+	if r.NextPageToken == "" {
+		return nil, nil
+	}
+
+	continueVal, err := base64.StdEncoding.DecodeString(r.NextPageToken)
+	if err != nil {
+		return nil, fmt.Errorf("error decoding continue token")
+	}
+
+	t := &ContinueToken{}
+	err = json.Unmarshal(continueVal, t)
+	if err != nil {
+		return nil, err
+	}
+
+	if !slices.Equal(t.Sort, r.Sort) {
+		return nil, fmt.Errorf("sort order changed")
+	}
+
+	return t, nil
+}
+
+var sortByFields = []string{
+	"guid",
+	"key",
+	"namespace", "group", "group_version", "resource", "name", "folder",
+	"resource_version", "size", "etag",
+	"created_at", "created_by",
+	"updated_at", "updated_by",
+	"origin", "origin_key", "origin_ts",
+	"title", "slug", "description",
+}
+
+type SortBy struct {
+	Field     string
+	Direction Direction
+}
+
+func ParseSortBy(sort string) (*SortBy, error) {
+	sortBy := &SortBy{
+		Field:     "guid",
+		Direction: Ascending,
+	}
+
+	if strings.HasSuffix(sort, "_desc") {
+		sortBy.Field = sort[:len(sort)-5]
+		sortBy.Direction = Descending
+	} else {
+		sortBy.Field = sort
+	}
+
+	if !slices.Contains(sortByFields, sortBy.Field) {
+		return nil, fmt.Errorf("invalid sort field '%s', valid fields: %v", sortBy.Field, sortByFields)
+	}
+
+	return sortBy, nil
+}
+
 func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest) (*entity.EntityListResponse, error) {
 	if err := s.Init(); err != nil {
 		return nil, err
@@ -899,10 +982,6 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 	}
 	if user == nil {
 		return nil, fmt.Errorf("missing user in context")
-	}
-
-	if r.NextPageToken != "" || len(r.Sort) > 0 {
-		return nil, fmt.Errorf("not yet supported")
 	}
 
 	rr := &entity.ReadEntityRequest{
@@ -918,6 +997,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		from:     "entity", // the table
 		args:     []any{},
 		limit:    r.Limit,
+		offset:   0,
 		oneExtra: true, // request one more than the limit (and show next token if it exists)
 	}
 
@@ -960,8 +1040,13 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 		entityQuery.addWhere("folder", r.Folder)
 	}
 
-	if r.NextPageToken != "" {
-		entityQuery.addWhere("guid>?", r.NextPageToken)
+	// if we have a page token, use that to specify the first record
+	continueToken, err := GetContinueToken(r)
+	if err != nil {
+		return nil, err
+	}
+	if continueToken != nil {
+		entityQuery.offset = continueToken.StartOffset
 	}
 
 	if len(r.Labels) > 0 {
@@ -980,6 +1065,14 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 
 		entityQuery.addWhereInSubquery("guid", query, args)
 	}
+	for _, sort := range r.Sort {
+		sortBy, err := ParseSortBy(sort)
+		if err != nil {
+			return nil, err
+		}
+		entityQuery.addOrderBy(sortBy.Field, sortBy.Direction)
+	}
+	entityQuery.addOrderBy("guid", Ascending)
 
 	query, args := entityQuery.toQuery()
 
@@ -999,8 +1092,11 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 
 		// found more than requested
 		if int64(len(rsp.Results)) >= entityQuery.limit {
-			// TODO? this only works if we sort by guid
-			rsp.NextPageToken = result.Guid
+			continueToken := &ContinueToken{
+				Sort:        r.Sort,
+				StartOffset: entityQuery.offset + entityQuery.limit,
+			}
+			rsp.NextPageToken = continueToken.String()
 			break
 		}
 

@@ -41,8 +41,13 @@ import (
 	secretsmng "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+func TestMain(m *testing.M) {
+	testsuite.Run(m)
+}
 
 func TestParseMetricRequest(t *testing.T) {
 	t.Run("Test a simple single datasource query", func(t *testing.T) {
@@ -476,7 +481,7 @@ func setup(t *testing.T) *testContext {
 				{JSONData: plugins.JSONData{ID: "testdata"}},
 				{JSONData: plugins.JSONData{ID: "mysql"}},
 			},
-		}, fakeDatasourceService,
+		}, &fakeDatasources.FakeCacheService{}, fakeDatasourceService,
 		pluginSettings.ProvideService(sqlStore, secretsService), pluginFakes.NewFakeLicensingService(), &config.Cfg{},
 	)
 	exprService := expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, pc, pCtxProvider,

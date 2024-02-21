@@ -113,18 +113,10 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
       migrationResult,
     } = this.props;
 
-    if (!hasFetched) {
-      return (
-        <Page {...defaultPageProps}>
-          <Page.Contents isLoading={true}>{}</Page.Contents>
-        </Page>
-      );
-    }
-
     const showTable = apiKeysCount > 0;
     return (
       <Page {...defaultPageProps}>
-        <Page.Contents isLoading={false}>
+        <Page.Contents isLoading={!hasFetched}>
           <>
             <MigrateToServiceAccountsCard onMigrate={this.onMigrateApiKeys} apikeysCount={apiKeysCount} />
             {showTable ? (

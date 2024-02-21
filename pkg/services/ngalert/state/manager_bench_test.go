@@ -26,12 +26,11 @@ func BenchmarkProcessEvalResults(b *testing.B) {
 	store := historian.NewAnnotationStore(&as, nil, metrics)
 	hist := historian.NewAnnotationBackend(store, nil, metrics)
 	cfg := state.ManagerCfg{
-		Historian:               hist,
-		MaxStateSaveConcurrency: 1,
-		Tracer:                  tracing.InitializeTracerForTest(),
-		Log:                     log.New("ngalert.state.manager"),
+		Historian: hist,
+		Tracer:    tracing.InitializeTracerForTest(),
+		Log:       log.New("ngalert.state.manager"),
 	}
-	sut := state.NewManager(cfg)
+	sut := state.NewManager(cfg, state.NewNoopPersister())
 	now := time.Now().UTC()
 	rule := makeBenchRule()
 	results := makeBenchResults(100)

@@ -2,27 +2,8 @@ package v0alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtime "k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/grafana/grafana/pkg/apis"
-)
-
-const (
-	GROUP      = "dashboard.grafana.app"
-	VERSION    = "v0alpha1"
-	APIVERSION = GROUP + "/" + VERSION
-)
-
-var DashboardResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
-	"dashboards", "dashboard", "Dashboard",
-	func() runtime.Object { return &Dashboard{} },
-	func() runtime.Object { return &DashboardList{} },
-)
-
-var DashboardSummaryResourceInfo = apis.NewResourceInfo(GROUP, VERSION,
-	"summary", "summary", "DashboardSummary",
-	func() runtime.Object { return &DashboardSummary{} },
-	func() runtime.Object { return &DashboardSummaryList{} },
+	common "github.com/grafana/grafana/pkg/apis/common/v0alpha1"
 )
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -34,7 +15,7 @@ type Dashboard struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// The dashboard body (unstructured for now)
-	Spec Unstructured `json:"spec"`
+	Spec common.Unstructured `json:"spec"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

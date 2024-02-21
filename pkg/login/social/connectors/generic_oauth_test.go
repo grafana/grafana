@@ -13,214 +13,15 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 	ssoModels "github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-func TestSearchJSONForEmail(t *testing.T) {
-	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := NewGenericOAuthProvider(social.NewOAuthInfo(), &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
-
-		tests := []struct {
-			Name                 string
-			UserInfoJSONResponse []byte
-			EmailAttributePath   string
-			ExpectedResult       string
-			ExpectedError        string
-		}{
-			{
-				Name:                 "Given an invalid user info JSON response",
-				UserInfoJSONResponse: []byte("{"),
-				EmailAttributePath:   "attributes.email",
-				ExpectedResult:       "",
-				ExpectedError:        "failed to unmarshal user info JSON response: unexpected end of JSON input",
-			},
-			{
-				Name:                 "Given an empty user info JSON response and empty JMES path",
-				UserInfoJSONResponse: []byte{},
-				EmailAttributePath:   "",
-				ExpectedResult:       "",
-				ExpectedError:        "no attribute path specified",
-			},
-			{
-				Name:                 "Given an empty user info JSON response and valid JMES path",
-				UserInfoJSONResponse: []byte{},
-				EmailAttributePath:   "attributes.email",
-				ExpectedResult:       "",
-				ExpectedError:        "empty user info JSON response provided",
-			},
-			{
-				Name: "Given a simple user info JSON response and valid JMES path",
-				UserInfoJSONResponse: []byte(`{
-	"attributes": {
-		"email": "grafana@localhost"
-	}
-}`),
-				EmailAttributePath: "attributes.email",
-				ExpectedResult:     "grafana@localhost",
-			},
-			{
-				Name: "Given a user info JSON response with e-mails array and valid JMES path",
-				UserInfoJSONResponse: []byte(`{
-	"attributes": {
-		"emails": ["grafana@localhost", "admin@localhost"]
-	}
-}`),
-				EmailAttributePath: "attributes.emails[0]",
-				ExpectedResult:     "grafana@localhost",
-			},
-			{
-				Name: "Given a nested user info JSON response and valid JMES path",
-				UserInfoJSONResponse: []byte(`{
-	"identities": [
-		{
-			"userId": "grafana@localhost"
-		},
-		{
-			"userId": "admin@localhost"
-		}
-	]
-}`),
-				EmailAttributePath: "identities[0].userId",
-				ExpectedResult:     "grafana@localhost",
-			},
-		}
-
-		for _, test := range tests {
-			provider.emailAttributePath = test.EmailAttributePath
-			t.Run(test.Name, func(t *testing.T) {
-				actualResult, err := provider.searchJSONForStringAttr(test.EmailAttributePath, test.UserInfoJSONResponse)
-				if test.ExpectedError == "" {
-					require.NoError(t, err, "Testing case %q", test.Name)
-				} else {
-					require.EqualError(t, err, test.ExpectedError, "Testing case %q", test.Name)
-				}
-				require.Equal(t, test.ExpectedResult, actualResult)
-			})
-		}
-	})
-}
-
-func TestSearchJSONForGroups(t *testing.T) {
-	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := NewGenericOAuthProvider(social.NewOAuthInfo(), &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
-
-		tests := []struct {
-			Name                 string
-			UserInfoJSONResponse []byte
-			GroupsAttributePath  string
-			ExpectedResult       []string
-			ExpectedError        string
-		}{
-			{
-				Name:                 "Given an invalid user info JSON response",
-				UserInfoJSONResponse: []byte("{"),
-				GroupsAttributePath:  "attributes.groups",
-				ExpectedResult:       []string{},
-				ExpectedError:        "failed to unmarshal user info JSON response: unexpected end of JSON input",
-			},
-			{
-				Name:                 "Given an empty user info JSON response and empty JMES path",
-				UserInfoJSONResponse: []byte{},
-				GroupsAttributePath:  "",
-				ExpectedResult:       []string{},
-				ExpectedError:        "no attribute path specified",
-			},
-			{
-				Name:                 "Given an empty user info JSON response and valid JMES path",
-				UserInfoJSONResponse: []byte{},
-				GroupsAttributePath:  "attributes.groups",
-				ExpectedResult:       []string{},
-				ExpectedError:        "empty user info JSON response provided",
-			},
-			{
-				Name: "Given a simple user info JSON response and valid JMES path",
-				UserInfoJSONResponse: []byte(`{
-		"attributes": {
-			"groups": ["foo", "bar"]
-		}
-}`),
-				GroupsAttributePath: "attributes.groups[]",
-				ExpectedResult:      []string{"foo", "bar"},
-			},
-		}
-
-		for _, test := range tests {
-			provider.groupsAttributePath = test.GroupsAttributePath
-			t.Run(test.Name, func(t *testing.T) {
-				actualResult, err := provider.searchJSONForStringArrayAttr(test.GroupsAttributePath, test.UserInfoJSONResponse)
-				if test.ExpectedError == "" {
-					require.NoError(t, err, "Testing case %q", test.Name)
-				} else {
-					require.EqualError(t, err, test.ExpectedError, "Testing case %q", test.Name)
-				}
-				require.Equal(t, test.ExpectedResult, actualResult)
-			})
-		}
-	})
-}
-
-func TestSearchJSONForRole(t *testing.T) {
-	t.Run("Given a generic OAuth provider", func(t *testing.T) {
-		provider := NewGenericOAuthProvider(social.NewOAuthInfo(), &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
-
-		tests := []struct {
-			Name                 string
-			UserInfoJSONResponse []byte
-			RoleAttributePath    string
-			ExpectedResult       string
-			ExpectedError        string
-		}{
-			{
-				Name:                 "Given an invalid user info JSON response",
-				UserInfoJSONResponse: []byte("{"),
-				RoleAttributePath:    "attributes.role",
-				ExpectedResult:       "",
-				ExpectedError:        "failed to unmarshal user info JSON response: unexpected end of JSON input",
-			},
-			{
-				Name:                 "Given an empty user info JSON response and empty JMES path",
-				UserInfoJSONResponse: []byte{},
-				RoleAttributePath:    "",
-				ExpectedResult:       "",
-				ExpectedError:        "no attribute path specified",
-			},
-			{
-				Name:                 "Given an empty user info JSON response and valid JMES path",
-				UserInfoJSONResponse: []byte{},
-				RoleAttributePath:    "attributes.role",
-				ExpectedResult:       "",
-				ExpectedError:        "empty user info JSON response provided",
-			},
-			{
-				Name: "Given a simple user info JSON response and valid JMES path",
-				UserInfoJSONResponse: []byte(`{
-	"attributes": {
-		"role": "admin"
-	}
-}`),
-				RoleAttributePath: "attributes.role",
-				ExpectedResult:    "admin",
-			},
-		}
-
-		for _, test := range tests {
-			provider.info.RoleAttributePath = test.RoleAttributePath
-			t.Run(test.Name, func(t *testing.T) {
-				actualResult, err := provider.searchJSONForStringAttr(test.RoleAttributePath, test.UserInfoJSONResponse)
-				if test.ExpectedError == "" {
-					require.NoError(t, err, "Testing case %q", test.Name)
-				} else {
-					require.EqualError(t, err, test.ExpectedError, "Testing case %q", test.Name)
-				}
-				require.Equal(t, test.ExpectedResult, actualResult)
-			})
-		}
-	})
-}
 
 func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 	provider := NewGenericOAuthProvider(&social.OAuthInfo{
@@ -919,18 +720,35 @@ func TestSocialGenericOAuth_InitializeExtraFields(t *testing.T) {
 
 func TestSocialGenericOAuth_Validate(t *testing.T) {
 	testCases := []struct {
-		name        string
-		settings    ssoModels.SSOSettings
-		expectError bool
+		name      string
+		settings  ssoModels.SSOSettings
+		requester identity.Requester
+		wantErr   error
 	}{
 		{
 			name: "SSOSettings is valid",
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{
-					"client_id": "client-id",
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
+					"teams_url":                  "https://example.com/teams",
+					"auth_url":                   "https://example.com/auth",
+					"token_url":                  "https://example.com/token",
 				},
 			},
-			expectError: false,
+			requester: &user.SignedInUser{IsGrafanaAdmin: true},
+		},
+		{
+			name: "passes when team_url is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"teams_url": "",
+					"auth_url":  "https://example.com/auth",
+					"token_url": "https://example.com/token",
+				},
+			},
+			wantErr: nil,
 		},
 		{
 			name: "fails if settings map contains an invalid field",
@@ -940,7 +758,7 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 					"invalid_field": []int{1, 2, 3},
 				},
 			},
-			expectError: true,
+			wantErr: ssosettings.ErrInvalidSettings,
 		},
 		{
 			name: "fails if client id is empty",
@@ -949,14 +767,104 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 					"client_id": "",
 				},
 			},
-			expectError: true,
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
 		{
 			name: "fails if client id does not exist",
 			settings: ssoModels.SSOSettings{
 				Settings: map[string]any{},
 			},
-			expectError: true,
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if both allow assign grafana admin and skip org role sync are enabled",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
+					"skip_org_role_sync":         "true",
+					"auth_url":                   "https://example.com/auth",
+					"token_url":                  "https://example.com/token",
+				},
+			},
+			requester: &user.SignedInUser{IsGrafanaAdmin: true},
+			wantErr:   ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if the user is not allowed to update allow assign grafana admin",
+			requester: &user.SignedInUser{
+				IsGrafanaAdmin: false,
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":                  "client-id",
+					"allow_assign_grafana_admin": "true",
+					"skip_org_role_sync":         "true",
+					"auth_url":                   "https://example.com/auth",
+					"token_url":                  "https://example.com/token",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if auth url is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"teams_url": "https://example.com/teams",
+					"auth_url":  "",
+					"token_url": "https://example.com/token",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if token url is empty",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"teams_url": "https://example.com/teams",
+					"auth_url":  "https://example.com/auth",
+					"token_url": "",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if auth url is invalid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"teams_url": "https://example.com/teams",
+					"auth_url":  "invalid_url",
+					"token_url": "https://example.com/token",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if token url is invalid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"teams_url": "https://example.com/teams",
+					"auth_url":  "https://example.com/auth",
+					"token_url": "/path",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
+		},
+		{
+			name: "fails if teams url is invalid",
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id": "client-id",
+					"teams_url": "file://teams",
+					"auth_url":  "https://example.com/auth",
+					"token_url": "https://example.com/token",
+				},
+			},
+			wantErr: ssosettings.ErrBaseInvalidOAuthConfig,
 		},
 	}
 
@@ -964,23 +872,27 @@ func TestSocialGenericOAuth_Validate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := NewGenericOAuthProvider(&social.OAuthInfo{}, &setting.Cfg{}, &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
 
-			err := s.Validate(context.Background(), tc.settings)
-			if tc.expectError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
+			if tc.requester == nil {
+				tc.requester = &user.SignedInUser{IsGrafanaAdmin: false}
 			}
+			err := s.Validate(context.Background(), tc.settings, tc.requester)
+			if tc.wantErr != nil {
+				require.ErrorIs(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
 		})
 	}
 }
 
 func TestSocialGenericOAuth_Reload(t *testing.T) {
 	testCases := []struct {
-		name         string
-		info         *social.OAuthInfo
-		settings     ssoModels.SSOSettings
-		expectError  bool
-		expectedInfo *social.OAuthInfo
+		name           string
+		info           *social.OAuthInfo
+		settings       ssoModels.SSOSettings
+		expectError    bool
+		expectedInfo   *social.OAuthInfo
+		expectedConfig *oauth2.Config
 	}{
 		{
 			name: "SSO provider successfully updated",
@@ -1001,6 +913,14 @@ func TestSocialGenericOAuth_Reload(t *testing.T) {
 				ClientSecret: "new-client-secret",
 				AuthUrl:      "some-new-url",
 			},
+			expectedConfig: &oauth2.Config{
+				ClientID:     "new-client-id",
+				ClientSecret: "new-client-secret",
+				Endpoint: oauth2.Endpoint{
+					AuthURL: "some-new-url",
+				},
+				RedirectURL: "/login/generic_oauth",
+			},
 		},
 		{
 			name: "fails if settings contain invalid values",
@@ -1020,6 +940,11 @@ func TestSocialGenericOAuth_Reload(t *testing.T) {
 				ClientId:     "client-id",
 				ClientSecret: "client-secret",
 			},
+			expectedConfig: &oauth2.Config{
+				ClientID:     "client-id",
+				ClientSecret: "client-secret",
+				RedirectURL:  "/login/generic_oauth",
+			},
 		},
 	}
 
@@ -1030,10 +955,116 @@ func TestSocialGenericOAuth_Reload(t *testing.T) {
 			err := s.Reload(context.Background(), tc.settings)
 			if tc.expectError {
 				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
+				return
 			}
+			require.NoError(t, err)
+
 			require.EqualValues(t, tc.expectedInfo, s.info)
+			require.EqualValues(t, tc.expectedConfig, s.Config)
+		})
+	}
+}
+
+func TestGenericOAuth_Reload_ExtraFields(t *testing.T) {
+	testCases := []struct {
+		name                         string
+		settings                     ssoModels.SSOSettings
+		info                         *social.OAuthInfo
+		expectError                  bool
+		expectedInfo                 *social.OAuthInfo
+		expectedTeamsUrl             string
+		expectedEmailAttributeName   string
+		expectedEmailAttributePath   string
+		expectedNameAttributePath    string
+		expectedGroupsAttributePath  string
+		expectedLoginAttributePath   string
+		expectedIdTokenAttributeName string
+		expectedTeamIdsAttributePath string
+		expectedTeamIds              []string
+		expectedAllowedOrganizations []string
+	}{
+		{
+			name: "successfully reloads the settings",
+			info: &social.OAuthInfo{
+				ClientId:             "client-id",
+				ClientSecret:         "client-secret",
+				TeamsUrl:             "https://host/users",
+				EmailAttributePath:   "email-attr-path",
+				EmailAttributeName:   "email-attr-name",
+				GroupsAttributePath:  "groups-attr-path",
+				TeamIdsAttributePath: "team-ids-attr-path",
+				Extra: map[string]string{
+					teamIdsKey:              "team1",
+					allowedOrganizationsKey: "org1",
+					loginAttributePathKey:   "login-attr-path",
+					idTokenAttributeNameKey: "id-token-attr-name",
+					nameAttributePathKey:    "name-attr-path",
+				},
+			},
+			settings: ssoModels.SSOSettings{
+				Settings: map[string]any{
+					"client_id":               "new-client-id",
+					"client_secret":           "new-client-secret",
+					"teams_url":               "https://host/v2/users",
+					"email_attribute_path":    "new-email-attr-path",
+					"email_attribute_name":    "new-email-attr-name",
+					"groups_attribute_path":   "new-group-attr-path",
+					"team_ids_attribute_path": "new-team-ids-attr-path",
+					teamIdsKey:                "team1,team2",
+					allowedOrganizationsKey:   "org1,org2",
+					loginAttributePathKey:     "new-login-attr-path",
+					idTokenAttributeNameKey:   "new-id-token-attr-name",
+					nameAttributePathKey:      "new-name-attr-path",
+				},
+			},
+			expectedInfo: &social.OAuthInfo{
+				ClientId:             "new-client-id",
+				ClientSecret:         "new-client-secret",
+				TeamsUrl:             "https://host/v2/users",
+				EmailAttributePath:   "new-email-attr-path",
+				EmailAttributeName:   "new-email-attr-name",
+				GroupsAttributePath:  "new-group-attr-path",
+				TeamIdsAttributePath: "new-team-ids-attr-path",
+				Extra: map[string]string{
+					teamIdsKey:              "team1,team2",
+					allowedOrganizationsKey: "org1,org2",
+					loginAttributePathKey:   "new-login-attr-path",
+					idTokenAttributeNameKey: "new-id-token-attr-name",
+					nameAttributePathKey:    "new-name-attr-path",
+				},
+			},
+			expectedTeamsUrl:             "https://host/v2/users",
+			expectedEmailAttributeName:   "new-email-attr-name",
+			expectedEmailAttributePath:   "new-email-attr-path",
+			expectedGroupsAttributePath:  "new-group-attr-path",
+			expectedTeamIdsAttributePath: "new-team-ids-attr-path",
+			expectedTeamIds:              []string{"team1", "team2"},
+			expectedAllowedOrganizations: []string{"org1", "org2"},
+			expectedLoginAttributePath:   "new-login-attr-path",
+			expectedIdTokenAttributeName: "new-id-token-attr-name",
+			expectedNameAttributePath:    "new-name-attr-path",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			s := NewGenericOAuthProvider(tc.info, setting.NewCfg(), &ssosettingstests.MockService{}, featuremgmt.WithFeatures())
+
+			err := s.Reload(context.Background(), tc.settings)
+			require.NoError(t, err)
+
+			require.EqualValues(t, tc.expectedInfo, s.info)
+
+			require.EqualValues(t, tc.expectedTeamsUrl, s.teamsUrl)
+			require.EqualValues(t, tc.expectedEmailAttributeName, s.emailAttributeName)
+			require.EqualValues(t, tc.expectedEmailAttributePath, s.emailAttributePath)
+			require.EqualValues(t, tc.expectedGroupsAttributePath, s.groupsAttributePath)
+			require.EqualValues(t, tc.expectedTeamIdsAttributePath, s.teamIdsAttributePath)
+			require.EqualValues(t, tc.expectedTeamIds, s.teamIds)
+			require.EqualValues(t, tc.expectedAllowedOrganizations, s.allowedOrganizations)
+			require.EqualValues(t, tc.expectedLoginAttributePath, s.loginAttributePath)
+			require.EqualValues(t, tc.expectedIdTokenAttributeName, s.idTokenAttributeName)
+			require.EqualValues(t, tc.expectedNameAttributePath, s.nameAttributePath)
 		})
 	}
 }

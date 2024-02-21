@@ -178,6 +178,7 @@ export const generateColumns = (
                   return info ? (
                     <a key={p} href={info.url} className={styles.locationItem}>
                       <Icon name={getIconForKind(info.kind)} />
+
                       <Text variant="body" truncate>
                         {info.name}
                       </Text>

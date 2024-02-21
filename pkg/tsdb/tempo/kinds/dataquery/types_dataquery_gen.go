@@ -126,8 +126,8 @@ type TempoQuery struct {
 	// Use service.namespace in addition to service.name to uniquely identify a service.
 	ServiceMapIncludeNamespace *bool `json:"serviceMapIncludeNamespace,omitempty"`
 
-	// Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}
-	ServiceMapQuery *string `json:"serviceMapQuery,omitempty"`
+	// Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}. Providing multiple values will produce union of results for each filter, using PromQL OR operator internally.
+	ServiceMapQuery *any `json:"serviceMapQuery,omitempty"`
 
 	// @deprecated Query traces by service name
 	ServiceName *string `json:"serviceName,omitempty"`

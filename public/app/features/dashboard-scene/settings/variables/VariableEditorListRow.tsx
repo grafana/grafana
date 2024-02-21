@@ -5,9 +5,10 @@ import { Draggable } from 'react-beautiful-dnd';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { QueryVariable, SceneVariable } from '@grafana/scenes';
+import { SceneVariable } from '@grafana/scenes';
 import { Button, ConfirmModal, Icon, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
-import { hasOptions } from 'app/features/variables/guard';
+
+import { getDefinition } from './utils';
 
 export interface VariableEditorListRowProps {
   index: number;
@@ -119,20 +120,6 @@ export function VariableEditorListRow({
       )}
     </Draggable>
   );
-}
-
-function getDefinition(model: SceneVariable): string {
-  let definition = '';
-  if (model instanceof QueryVariable) {
-    if (model.state.definition) {
-      definition = model.state.definition;
-    } else if (typeof model.state.query === 'string') {
-      definition = model.state.query;
-    }
-  } else if (hasOptions(model.state)) {
-    definition = model.state.query;
-  }
-  return definition;
 }
 
 function getStyles(theme: GrafanaTheme2) {

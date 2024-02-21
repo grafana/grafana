@@ -1,8 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+import { select } from 'react-select-event';
 
+import { TimeRange, dateTime } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 
 import { createLokiDatasource } from '../__mocks__/datasource';
@@ -34,8 +35,7 @@ describe('LokiVariableQueryEditor', () => {
     render(<LokiVariableQueryEditor {...props} onChange={onChange} />);
 
     expect(onChange).not.toHaveBeenCalled();
-
-    await selectOptionInTest(screen.getByLabelText('Query type'), 'Label names');
+    await select(screen.getByLabelText('Query type'), 'Label names', { container: document.body });
 
     expect(onChange).toHaveBeenCalledWith({
       type: LokiVariableQueryType.LabelNames,
@@ -51,8 +51,8 @@ describe('LokiVariableQueryEditor', () => {
 
     expect(onChange).not.toHaveBeenCalled();
 
-    await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
-    await selectOptionInTest(screen.getByLabelText('Label'), 'luna');
+    await waitFor(() => select(screen.getByLabelText('Query type'), 'Label values', { container: document.body }));
+    await select(screen.getByLabelText('Label'), 'luna', { container: document.body });
     await userEvent.type(screen.getByLabelText('Stream selector'), 'stream');
 
     await waitFor(() => expect(screen.getByDisplayValue('stream')).toBeInTheDocument());
@@ -72,8 +72,8 @@ describe('LokiVariableQueryEditor', () => {
     render(<LokiVariableQueryEditor {...props} onChange={onChange} />);
 
     expect(onChange).not.toHaveBeenCalled();
+    await waitFor(() => select(screen.getByLabelText('Query type'), 'Label values', { container: document.body }));
 
-    await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
     await userEvent.type(screen.getByLabelText('Label'), 'sol{enter}');
     await userEvent.type(screen.getByLabelText('Stream selector'), 'stream');
 
@@ -120,9 +120,8 @@ describe('LokiVariableQueryEditor', () => {
 
   test('Label options are not lost when selecting one', async () => {
     const { rerender } = render(<LokiVariableQueryEditor {...props} onChange={() => {}} />);
-
-    await selectOptionInTest(screen.getByLabelText('Query type'), 'Label values');
-    await selectOptionInTest(screen.getByLabelText('Label'), 'luna');
+    await waitFor(() => select(screen.getByLabelText('Query type'), 'Label values', { container: document.body }));
+    await select(screen.getByLabelText('Label'), 'luna', { container: document.body });
 
     const updatedQuery = {
       refId: 'test',
@@ -131,8 +130,136 @@ describe('LokiVariableQueryEditor', () => {
     };
     rerender(<LokiVariableQueryEditor {...props} query={updatedQuery} onChange={() => {}} />);
 
-    await selectOptionInTest(screen.getByLabelText('Label'), 'moon');
-    await selectOptionInTest(screen.getByLabelText('Label'), 'luna');
+    await select(screen.getByLabelText('Label'), 'moon', { container: document.body });
+    await select(screen.getByLabelText('Label'), 'luna', { container: document.body });
     await screen.findByText('luna');
+  });
+
+  test('Calls language provider fetchLabels with the time range received in props', async () => {
+    const now = dateTime('2023-09-16T21:26:00Z');
+    const range: TimeRange = {
+      from: dateTime(now).subtract(2, 'days'),
+      to: now,
+      raw: {
+        from: 'now-2d',
+        to: 'now',
+      },
+    };
+    props.range = range;
+    props.query = {
+      refId: 'test',
+      type: LokiVariableQueryType.LabelValues,
+      label: 'luna',
+    };
+
+    render(<LokiVariableQueryEditor {...props} />);
+    await waitFor(() =>
+      expect(props.datasource.languageProvider.fetchLabels).toHaveBeenCalledWith({ timeRange: range })
+    );
+  });
+
+  test('does not re-run fetch labels when type does not change', async () => {
+    const now = dateTime('2023-09-16T21:26:00Z');
+    const range: TimeRange = {
+      from: dateTime(now).subtract(2, 'days'),
+      to: now,
+      raw: {
+        from: 'now-2d',
+        to: 'now',
+      },
+    };
+    props.range = range;
+    props.query = {
+      refId: 'test',
+      type: LokiVariableQueryType.LabelValues,
+    };
+
+    props.datasource.languageProvider.fetchLabels = jest.fn().mockResolvedValue([]);
+    const { rerender } = render(<LokiVariableQueryEditor {...props} />);
+    rerender(
+      <LokiVariableQueryEditor {...props} query={{ ...props.query, type: LokiVariableQueryType.LabelValues }} />
+    );
+
+    await waitFor(() => {
+      expect(props.datasource.languageProvider.fetchLabels).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  test('runs fetch labels when type changes to from LabelNames to LabelValues', async () => {
+    const now = dateTime('2023-09-16T21:26:00Z');
+    const range: TimeRange = {
+      from: dateTime(now).subtract(2, 'days'),
+      to: now,
+      raw: {
+        from: 'now-2d',
+        to: 'now',
+      },
+    };
+    props.range = range;
+    props.query = {
+      refId: 'test',
+      type: LokiVariableQueryType.LabelNames,
+    };
+
+    props.datasource.languageProvider.fetchLabels = jest.fn().mockResolvedValue([]);
+    const { rerender } = render(<LokiVariableQueryEditor {...props} />);
+    rerender(
+      <LokiVariableQueryEditor {...props} query={{ ...props.query, type: LokiVariableQueryType.LabelValues }} />
+    );
+
+    await waitFor(() => {
+      expect(props.datasource.languageProvider.fetchLabels).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  test('runs fetch labels when type changes to LabelValues', async () => {
+    const now = dateTime('2023-09-16T21:26:00Z');
+    const range: TimeRange = {
+      from: dateTime(now).subtract(2, 'days'),
+      to: now,
+      raw: {
+        from: 'now-2d',
+        to: 'now',
+      },
+    };
+    props.range = range;
+    props.query = {
+      refId: 'test',
+      type: LokiVariableQueryType.LabelNames,
+    };
+
+    props.datasource.languageProvider.fetchLabels = jest.fn().mockResolvedValue([]);
+    // Starting with LabelNames
+    const { rerender } = render(<LokiVariableQueryEditor {...props} />);
+
+    // Changing to LabelValues, should run fetchLabels
+    rerender(
+      <LokiVariableQueryEditor {...props} query={{ ...props.query, type: LokiVariableQueryType.LabelValues }} />
+    );
+    await waitFor(() => {
+      expect(props.datasource.languageProvider.fetchLabels).toHaveBeenCalledTimes(1);
+    });
+
+    // Keeping the type of LabelValues, should not run additional fetchLabels
+    rerender(
+      <LokiVariableQueryEditor {...props} query={{ ...props.query, type: LokiVariableQueryType.LabelValues }} />
+    );
+    await waitFor(() => {
+      expect(props.datasource.languageProvider.fetchLabels).toHaveBeenCalledTimes(1);
+    });
+
+    // Changing to LabelNames, should not run additional fetchLabels
+    rerender(<LokiVariableQueryEditor {...props} query={{ ...props.query, type: LokiVariableQueryType.LabelNames }} />);
+    await waitFor(() => {
+      expect(props.datasource.languageProvider.fetchLabels).toHaveBeenCalledTimes(1);
+    });
+
+    // Changing to LabelValues, should run additional fetchLabels
+    rerender(
+      <LokiVariableQueryEditor {...props} query={{ ...props.query, type: LokiVariableQueryType.LabelValues }} />
+    );
+    await waitFor(() => {
+      expect(props.datasource.languageProvider.fetchLabels).toHaveBeenCalledTimes(2);
+    });
   });
 });

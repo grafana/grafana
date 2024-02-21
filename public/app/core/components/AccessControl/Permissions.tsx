@@ -3,8 +3,7 @@ import { sortBy } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Space } from '@grafana/experimental';
-import { Text, Box, Button, useStyles2 } from '@grafana/ui';
+import { Text, Box, Button, useStyles2, Space } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { Trans, t } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -38,6 +37,7 @@ export type Props = {
   resourceId: ResourceId;
   canSetPermissions: boolean;
   getWarnings?: (items: ResourcePermission[]) => ResourcePermission[];
+  epilogue?: (items: ResourcePermission[]) => React.ReactNode;
 };
 
 export const Permissions = ({
@@ -49,6 +49,7 @@ export const Permissions = ({
   canSetPermissions,
   addPermissionTitle,
   getWarnings,
+  epilogue,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [isAdding, setIsAdding] = useState(false);
@@ -158,87 +159,90 @@ export const Permissions = ({
   const titleTeam = t('access-control.permissions.team', 'Team');
 
   return (
-    <div>
-      {canSetPermissions && (
-        <>
-          {resource === 'folders' && (
-            <>
-              <Trans i18nKey="access-control.permissions.permissions-change-warning">
-                This will change permissions for this folder and all its descendants. In total, this will affect:
-              </Trans>
-              <DescendantCount
-                selectedItems={{
-                  folder: { [resourceId]: true },
-                  dashboard: {},
-                  panel: {},
-                  $all: false,
-                }}
-              />
-              <Space v={2} />
-            </>
-          )}
-          <Button
-            className={styles.addPermissionButton}
-            variant={'primary'}
-            key="add-permission"
-            onClick={() => setIsAdding(true)}
-          >
-            {buttonLabel}
-          </Button>
-          <SlideDown in={isAdding}>
-            <AddPermission
-              title={addPermissionTitle}
-              onAdd={onAdd}
-              permissions={desc.permissions}
-              assignments={desc.assignments}
-              onCancel={() => setIsAdding(false)}
+    <>
+      <div>
+        {canSetPermissions && resource === 'folders' && (
+          <>
+            <Trans i18nKey="access-control.permissions.permissions-change-warning">
+              This will change permissions for this folder and all its descendants. In total, this will affect:
+            </Trans>
+            <DescendantCount
+              selectedItems={{
+                folder: { [resourceId]: true },
+                dashboard: {},
+                panel: {},
+                $all: false,
+              }}
             />
-          </SlideDown>
-        </>
-      )}
-      {items.length === 0 && (
-        <Box>
-          <Text>{emptyLabel}</Text>
-        </Box>
-      )}
-      <PermissionList
-        title={titleRole}
-        items={builtInRoles}
-        compareKey={'builtInRole'}
-        permissionLevels={desc.permissions}
-        onChange={onChange}
-        onRemove={onRemove}
-        canSet={canSetPermissions}
-      />
-      <PermissionList
-        title={titleUser}
-        items={users}
-        compareKey={'userLogin'}
-        permissionLevels={desc.permissions}
-        onChange={onChange}
-        onRemove={onRemove}
-        canSet={canSetPermissions}
-      />
-      <PermissionList
-        title={titleServiceAccount}
-        items={serviceAccounts}
-        compareKey={'userLogin'}
-        permissionLevels={desc.permissions}
-        onChange={onChange}
-        onRemove={onRemove}
-        canSet={canSetPermissions}
-      />
-
-      <PermissionList
-        title={titleTeam}
-        items={teams}
-        compareKey={'team'}
-        permissionLevels={desc.permissions}
-        onChange={onChange}
-        onRemove={onRemove}
-        canSet={canSetPermissions}
-      />
-    </div>
+            <Space v={2} />
+          </>
+        )}
+        {items.length === 0 && (
+          <Box>
+            <Text>{emptyLabel}</Text>
+          </Box>
+        )}
+        <PermissionList
+          title={titleRole}
+          items={builtInRoles}
+          compareKey={'builtInRole'}
+          permissionLevels={desc.permissions}
+          onChange={onChange}
+          onRemove={onRemove}
+          canSet={canSetPermissions}
+        />
+        <PermissionList
+          title={titleUser}
+          items={users}
+          compareKey={'userLogin'}
+          permissionLevels={desc.permissions}
+          onChange={onChange}
+          onRemove={onRemove}
+          canSet={canSetPermissions}
+        />
+        <PermissionList
+          title={titleServiceAccount}
+          items={serviceAccounts}
+          compareKey={'userLogin'}
+          permissionLevels={desc.permissions}
+          onChange={onChange}
+          onRemove={onRemove}
+          canSet={canSetPermissions}
+        />
+        <PermissionList
+          title={titleTeam}
+          items={teams}
+          compareKey={'team'}
+          permissionLevels={desc.permissions}
+          onChange={onChange}
+          onRemove={onRemove}
+          canSet={canSetPermissions}
+        />
+        {canSetPermissions && (
+          <>
+            <Button
+              className={styles.addPermissionButton}
+              variant={'primary'}
+              key="add-permission"
+              onClick={() => setIsAdding(true)}
+              icon="plus"
+            >
+              {buttonLabel}
+            </Button>
+            <SlideDown in={isAdding}>
+              <AddPermission
+                title={addPermissionTitle}
+                onAdd={onAdd}
+                permissions={desc.permissions}
+                assignments={desc.assignments}
+                onCancel={() => setIsAdding(false)}
+              />
+            </SlideDown>
+          </>
+        )}
+      </div>
+      {epilogue && epilogue(items)}
+    </>
   );
 };
 
