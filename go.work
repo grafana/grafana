@@ -4,3 +4,5 @@ use (
 	.
 	./pkg/util/xorm
 )
+
+replace xorm.io/xorm => ./pkg/util/xorm

@@ -1,4 +1,4 @@
-module xorm.io/xorm
+module github.com/grafana/grafana/pkg/util/xorm
 
 go 1.21
 
