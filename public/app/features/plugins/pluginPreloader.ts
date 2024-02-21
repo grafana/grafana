@@ -18,14 +18,13 @@ export async function preloadPlugins(
   registry: ReactivePluginExtenionRegistry
 ) {
   startMeasure('frontend_plugins_preload');
-  const pluginsToPreload = Object.values(apps).filter((app) => app.preload);
-
-  pluginsToPreload.map(async (config: AppPluginConfig) => {
+  for (const config of Object.values(apps)) {
+    if (!config.preload) {
+      continue;
+    }
     const result = await preload(config);
-
-    registry.registerPlugin(result);
-  });
-
+    registry.register(result);
+  }
   stopMeasure('frontend_plugins_preload');
 }
 

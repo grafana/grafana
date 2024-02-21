@@ -26,7 +26,7 @@ describe('createPluginExtensionsRegistry', () => {
     const pluginId = 'grafana-basic-app';
     const reactiveRegistry = new ReactivePluginExtenionRegistry();
 
-    reactiveRegistry.registerPlugin({
+    reactiveRegistry.register({
       pluginId,
       extensionConfigs: [
         {
@@ -86,7 +86,7 @@ describe('createPluginExtensionsRegistry', () => {
     const reactiveRegistry = new ReactivePluginExtenionRegistry();
 
     // Register extensions for the first plugin
-    reactiveRegistry.registerPlugin({
+    reactiveRegistry.register({
       pluginId: pluginId1,
       extensionConfigs: [
         {
@@ -119,7 +119,7 @@ describe('createPluginExtensionsRegistry', () => {
     });
 
     // Register extensions for the second plugin to a different placement
-    reactiveRegistry.registerPlugin({
+    reactiveRegistry.register({
       pluginId: pluginId2,
       extensionConfigs: [
         {
@@ -169,7 +169,7 @@ describe('createPluginExtensionsRegistry', () => {
     const reactiveRegistry = new ReactivePluginExtenionRegistry();
 
     // Register extensions for the first plugin
-    reactiveRegistry.registerPlugin({
+    reactiveRegistry.register({
       pluginId: pluginId1,
       extensionConfigs: [
         {
@@ -202,7 +202,7 @@ describe('createPluginExtensionsRegistry', () => {
     });
 
     // Register extensions for the second plugin to a different placement
-    reactiveRegistry.registerPlugin({
+    reactiveRegistry.register({
       pluginId: pluginId2,
       extensionConfigs: [
         {
@@ -253,7 +253,7 @@ describe('createPluginExtensionsRegistry', () => {
     const reactiveRegistry = new ReactivePluginExtenionRegistry();
 
     // Register extensions for the first extension point
-    reactiveRegistry.registerPlugin({
+    reactiveRegistry.register({
       pluginId: pluginId,
       extensionConfigs: [
         {
@@ -268,7 +268,7 @@ describe('createPluginExtensionsRegistry', () => {
     });
 
     // Register extensions to a different extension point
-    reactiveRegistry.registerPlugin({
+    reactiveRegistry.register({
       pluginId: pluginId,
       extensionConfigs: [
         {
@@ -317,7 +317,7 @@ describe('createPluginExtensionsRegistry', () => {
     const reactiveRegistry = new ReactivePluginExtenionRegistry();
 
     // Register extensions for the first extension point
-    reactiveRegistry.registerPlugin({
+    reactiveRegistry.register({
       pluginId: pluginId,
       extensionConfigs: [
         {
@@ -332,7 +332,7 @@ describe('createPluginExtensionsRegistry', () => {
     });
 
     // Register extensions to a different extension point
-    reactiveRegistry.registerPlugin({
+    reactiveRegistry.register({
       pluginId: pluginId,
       extensionConfigs: [
         {
@@ -387,7 +387,7 @@ describe('createPluginExtensionsRegistry', () => {
     observable.subscribe(subscribeCallback);
 
     // Register extensions for the first plugin
-    reactiveRegistry.registerPlugin({
+    reactiveRegistry.register({
       pluginId: pluginId,
       extensionConfigs: [
         {
@@ -404,7 +404,7 @@ describe('createPluginExtensionsRegistry', () => {
     expect(subscribeCallback).toHaveBeenCalledTimes(2);
 
     // Register extensions for the first plugin
-    reactiveRegistry.registerPlugin({
+    reactiveRegistry.register({
       pluginId: 'another-plugin',
       extensionConfigs: [
         {
@@ -456,7 +456,7 @@ describe('createPluginExtensionsRegistry', () => {
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
-    reactiveRegistry.registerPlugin({
+    reactiveRegistry.register({
       pluginId: pluginId,
       extensionConfigs: [
         {
@@ -498,7 +498,7 @@ describe('createPluginExtensionsRegistry', () => {
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
-    reactiveRegistry.registerPlugin({
+    reactiveRegistry.register({
       error: new Error('Something is broken'),
       pluginId: pluginId,
       extensionConfigs: [
@@ -526,7 +526,7 @@ describe('createPluginExtensionsRegistry', () => {
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
-    reactiveRegistry.registerPlugin({
+    reactiveRegistry.register({
       pluginId: pluginId,
       extensionConfigs: [
         {
@@ -554,7 +554,7 @@ describe('createPluginExtensionsRegistry', () => {
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
-    reactiveRegistry.registerPlugin({
+    reactiveRegistry.register({
       pluginId: pluginId,
       extensionConfigs: [
         {
@@ -581,7 +581,7 @@ describe('createPluginExtensionsRegistry', () => {
     const observable = reactiveRegistry.asObservable();
     const subscribeCallback = jest.fn();
 
-    reactiveRegistry.registerPlugin({
+    reactiveRegistry.register({
       pluginId: pluginId,
       extensionConfigs: [
         {

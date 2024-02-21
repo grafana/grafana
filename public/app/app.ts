@@ -36,7 +36,7 @@ import {
   setEmbeddedDashboard,
   setAppEvents,
   setReturnToPreviousHook,
-  type GetPluginExtensions,
+  setPluginExtensionsHook,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -81,9 +81,9 @@ import { PanelDataErrorView } from './features/panel/components/PanelDataErrorVi
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import { getCoreExtensionConfigurations } from './features/plugins/extensions/getCoreExtensionConfigurations';
-import { getPluginExtensions } from './features/plugins/extensions/getPluginExtensions';
+import { createPluginExtensionsGetter } from './features/plugins/extensions/getPluginExtensions';
 import { ReactivePluginExtenionRegistry } from './features/plugins/extensions/reactivePluginExtensionRegistry';
-import { PluginExtensionRegistry } from './features/plugins/extensions/types';
+import { createPluginExtensionsHook } from './features/plugins/extensions/usePluginExtensions';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
@@ -204,36 +204,19 @@ export class GrafanaApp {
       const modalManager = new ModalManager();
       modalManager.init();
 
+      // Initialize plugin extensions
       const extensionsRegistry = new ReactivePluginExtenionRegistry();
-      extensionsRegistry.registerPlugin({ pluginId: 'grafana', extensionConfigs: getCoreExtensionConfigurations() });
-
-      // TODO: we need an internal subject to hold the latest registry.
-      // TODO: we need expose a way to emit/next items to the registry.
-
-      // create registry with core configurations only.
-      // const extensionRegistry = ...
-
-      // preload app plugins without await pass the registry to the preload function.
-      // TODO: we need a way to append things to the registry after it is created.
-
-      // expose getPluginExtension function pass the registry to it
-      // expose the registry observable via runtime
-
-      // TODO: add a usePluginExtenion hook in runtime that subscribes to the registry observable.
+      extensionsRegistry.register({
+        pluginId: 'grafana',
+        extensionConfigs: getCoreExtensionConfigurations(),
+      });
 
       if (contextSrv.user.orgRole !== '') {
         preloadPlugins(config.apps, extensionsRegistry);
       }
 
-      // Expose the getPluginExtension function via grafana-runtime
-      let registry: PluginExtensionRegistry;
-      extensionsRegistry.asObservable().subscribe((r) => {
-        registry = r;
-      });
-
-      const pluginExtensionGetter: GetPluginExtensions = (options) => getPluginExtensions({ ...options, registry });
-
-      setPluginExtensionGetter(pluginExtensionGetter);
+      setPluginExtensionGetter(createPluginExtensionsGetter(extensionsRegistry));
+      setPluginExtensionsHook(createPluginExtensionsHook(extensionsRegistry));
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();
@@ -259,7 +242,6 @@ export class GrafanaApp {
         keybindings: keybindingsService,
         newAssetsChecker,
         config,
-        extensionsRegistry,
       };
 
       setReturnToPreviousHook(useReturnToPreviousInternal);

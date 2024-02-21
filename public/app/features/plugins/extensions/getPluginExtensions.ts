@@ -8,8 +8,9 @@ import {
   type PluginExtensionComponent,
   urlUtil,
 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { GetPluginExtensions, reportInteraction } from '@grafana/runtime';
 
+import { ReactivePluginExtenionRegistry } from './reactivePluginExtensionRegistry';
 import type { PluginExtensionRegistry } from './types';
 import {
   isPluginExtensionLinkConfig,
@@ -40,9 +41,20 @@ type GetExtensions = ({
   registry: PluginExtensionRegistry;
 }) => { extensions: PluginExtension[] };
 
+let registry: PluginExtensionRegistry = {};
+
+export function createPluginExtensionsGetter(extensionRegistry: ReactivePluginExtenionRegistry): GetPluginExtensions {
+  // Create a subscription to keep an copy of the registry state for use in the non-async
+  // plugin extensions getter.
+  extensionRegistry.asObservable().subscribe((r) => {
+    registry = r;
+  });
+
+  return (options) => getPluginExtensions({ ...options, registry });
+}
+
 // Returns with a list of plugin extensions for the given extension point
 export const getPluginExtensions: GetExtensions = ({ context, extensionPointId, limitPerPlugin, registry }) => {
-
   const frozenContext = context ? getReadOnlyProxy(context) : {};
   const registryItems = registry[extensionPointId] ?? [];
   // We don't return the extensions separated by type, because in that case it would be much harder to define a sort-order for them.

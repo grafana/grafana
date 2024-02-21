@@ -15,7 +15,6 @@ export interface GrafanaContextType {
   chrome: AppChromeService;
   keybindings: KeybindingSrv;
   newAssetsChecker: NewFrontendAssetsChecker;
-  extensionsRegistry: ReactivePluginExtenionRegistry;
 }
 
 export const GrafanaContext = React.createContext<GrafanaContextType | undefined>(undefined);

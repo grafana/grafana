@@ -29,7 +29,7 @@ export class ReactivePluginExtenionRegistry {
       .subscribe(this.registrySubject);
   }
 
-  registerPlugin(result: PluginPreloadResult): void {
+  register(result: PluginPreloadResult): void {
     this.resultSubject.next(result);
   }
 
