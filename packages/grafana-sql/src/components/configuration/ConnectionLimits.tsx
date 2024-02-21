@@ -26,6 +26,7 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
   const { onOptionsChange, options } = props;
   const jsonData = options.jsonData;
   const autoIdle = jsonData.maxIdleConnsAuto !== undefined ? jsonData.maxIdleConnsAuto : false;
+  const [connMaxLifetimeEmpty, setConnMaxLifetimeEmpty] = React.useState(false);
 
   // Update JSON data with new values
   const updateJsonData = (values: {}) => {
@@ -92,6 +93,8 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
 
   const labelWidth = 40;
 
+  const defaultMaxLifetime = 14400;
+
   return (
     <ConfigSubSection title="Connection limits">
       <Field
@@ -118,7 +121,7 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
         <Input
           type="number"
           placeholder="unlimited"
-          value={jsonData.maxOpenConns}
+          defaultValue={jsonData.maxOpenConns}
           onChange={(e) => {
             const newVal = toNumber(e.currentTarget.value);
             if (!Number.isNaN(newVal)) {
@@ -179,7 +182,7 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
           <Input
             type="number"
             placeholder="2"
-            value={jsonData.maxIdleConns}
+            defaultValue={jsonData.maxIdleConns}
             onChange={(e) => {
               const newVal = toNumber(e.currentTarget.value);
               if (!Number.isNaN(newVal)) {
@@ -213,9 +216,16 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
       >
         <Input
           type="number"
-          placeholder="14400"
-          value={jsonData.connMaxLifetime}
+          placeholder={String(defaultMaxLifetime)}
+          value={connMaxLifetimeEmpty ? '' : jsonData.connMaxLifetime}
           onChange={(e) => {
+            if (e.currentTarget.value === '') {
+              setConnMaxLifetimeEmpty(true);
+              onJSONDataNumberChanged('connMaxLifetime')(defaultMaxLifetime);
+            } else {
+              setConnMaxLifetimeEmpty(false);
+            }
+
             const newVal = toNumber(e.currentTarget.value);
             if (!Number.isNaN(newVal)) {
               onJSONDataNumberChanged('connMaxLifetime')(newVal);
