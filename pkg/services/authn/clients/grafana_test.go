@@ -171,7 +171,7 @@ func TestGrafana_AuthenticatePassword(t *testing.T) {
 			hashed, _ := util.EncodePassword("password", "salt")
 			userService := &usertest.FakeUserService{
 				ExpectedSignedInUser: tt.expectedSignedInUser,
-				ExpectedUser:         &user.User{Password: hashed, Salt: "salt"},
+				ExpectedUser:         &user.User{Password: user.Password(hashed), Salt: "salt"},
 			}
 
 			if !tt.findUser {

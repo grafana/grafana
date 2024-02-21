@@ -130,6 +130,7 @@ type Info struct {
 	Screenshots []Screenshots `json:"screenshots"`
 	Version     string        `json:"version"`
 	Updated     string        `json:"updated"`
+	Keywords    []string      `json:"keywords"`
 }
 
 type InfoLink struct {

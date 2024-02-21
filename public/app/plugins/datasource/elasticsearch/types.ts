@@ -1,4 +1,5 @@
 import { DataSourceJsonData } from '@grafana/data';
+import { DataSourceRef } from '@grafana/schema';
 
 import {
   BucketAggregationType,
@@ -131,6 +132,7 @@ export interface ElasticsearchAnnotationQuery {
   titleField?: string;
   timeEndField?: string;
   query?: string;
+  datasource: DataSourceRef;
   tagsField?: string;
   textField?: string;
   // @deprecated index is deprecated and will be removed in the future

@@ -1,8 +1,8 @@
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
 import { DataSourceInstanceSettings, ThresholdsMode } from '@grafana/data';
-import { BackendSrv, setBackendSrv } from '@grafana/runtime';
 import { defaultDashboard, FieldColorModeId } from '@grafana/schema';
+import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
 import { PanelModel } from '../../dashboard/state';
@@ -20,6 +20,15 @@ const mocks = {
 
 describe('importDashboard', () => {
   it('Should send data source uid', async () => {
+    // note: the actual action returned is more complicated
+    // but we don't really care about the return type in this test
+    // we're only testing that the correct data is passed to initiate
+    const mockAction = jest.fn().mockImplementation(() => ({
+      type: 'foo',
+    }));
+    const importDashboardRtkQueryMock = jest
+      .spyOn(browseDashboardsAPI.endpoints.importDashboard, 'initiate')
+      .mockImplementation(mockAction);
     const form: ImportDashboardDTO = {
       title: 'Asda',
       uid: '12',
@@ -40,17 +49,6 @@ describe('importDashboard', () => {
       },
     };
 
-    let postArgs: unknown;
-
-    setBackendSrv({
-      post: (url, args) => {
-        postArgs = args;
-        return Promise.resolve({
-          importedUrl: '/my/dashboard',
-        });
-      },
-    } as BackendSrv);
-
     await thunkTester({
       importDashboard: {
         ...initialImportDashboardState,
@@ -70,7 +68,7 @@ describe('importDashboard', () => {
       .givenThunk(importDashboard)
       .whenThunkIsDispatched(form);
 
-    expect(postArgs).toEqual({
+    expect(importDashboardRtkQueryMock).toHaveBeenCalledWith({
       dashboard: {
         title: 'Asda',
         uid: '12',

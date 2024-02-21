@@ -10,11 +10,12 @@ import {
   isBooleanUnit,
   SortedVector,
   TimeRange,
+  cacheFieldDisplayNames,
 } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import { applyNullInsertThreshold } from '@grafana/data/src/transformations/transformers/nulls/nullInsertThreshold';
 import { nullToValue } from '@grafana/data/src/transformations/transformers/nulls/nullToValue';
-import { GraphFieldConfig, LineInterpolation } from '@grafana/schema';
+import { GraphFieldConfig, LineInterpolation, TooltipDisplayMode, VizTooltipOptions } from '@grafana/schema';
 import { buildScaleKey } from '@grafana/ui/src/components/uPlot/internal';
 
 type ScaleKey = string;
@@ -81,6 +82,8 @@ export function prepareGraphableFields(
   if (!series?.length) {
     return null;
   }
+
+  cacheFieldDisplayNames(series);
 
   let useNumericX = xNumFieldIdx != null;
 
@@ -310,3 +313,7 @@ export function regenerateLinksSupplier(
 
   return alignedDataFrame;
 }
+
+export const isTooltipScrollable = (tooltipOptions: VizTooltipOptions) => {
+  return tooltipOptions.mode === TooltipDisplayMode.Multi && tooltipOptions.maxHeight != null;
+};

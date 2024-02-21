@@ -48,6 +48,7 @@ export const Table = memo((props: Props) => {
     cellHeight = TableCellHeight.Sm,
     timeRange,
     enableSharedCrosshair = false,
+    initialRowIndex = undefined,
     rowBackgroundColors = {},
   } = props;
 
@@ -237,6 +238,17 @@ export const Table = memo((props: Props) => {
     setPageSize(pageSize);
   }, [pageSize, setPageSize]);
 
+  useEffect(() => {
+    // Reset page index when data changes
+    // This is needed because react-table does not do this automatically
+    // autoResetPage is set to false because setting it to true causes the issue described in
+    // https://github.com/grafana/grafana/pull/67477
+    if (data.length / pageSize < state.pageIndex) {
+      gotoPage(0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
+
   useResetVariableListSizeCache(extendedState, listRef, data, hasUniqueId);
   useFixScrollbarContainer(variableSizeListScrollbarRef, tableDivRef);
 
@@ -308,6 +320,7 @@ export const Table = memo((props: Props) => {
                 tableStyles={tableStyles}
                 footerPaginationEnabled={Boolean(enablePagination)}
                 enableSharedCrosshair={enableSharedCrosshair}
+                initialRowIndex={initialRowIndex}
                 rowBackgroundColors={rowBackgroundColors}
               />
             </div>

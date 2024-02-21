@@ -97,6 +97,8 @@ export interface Props {
   /** @alpha Used by SparklineCell when provided */
   timeRange?: TimeRange;
   enableSharedCrosshair?: boolean;
+  // The index of the field value that the table will initialize scrolled to
+  initialRowIndex?: number;
   // Row index (field value index) to background color provided by parent component
   rowBackgroundColors: Record<number, string>;
 }
