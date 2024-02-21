@@ -248,7 +248,7 @@ export class GraphiteDatasource
 
   addTracingHeaders(
     httpOptions: { headers: any },
-    options: { dashboardId?: number; panelId?: number; panelPluginType?: string }
+    options: { dashboardId?: number; panelId?: number; panelPluginId?: string }
   ) {
     const proxyMode = !this.url.match(/^http/);
     if (proxyMode) {
@@ -258,8 +258,8 @@ export class GraphiteDatasource
       if (options.panelId) {
         httpOptions.headers['X-Panel-Id'] = options.panelId;
       }
-      if (options.panelPluginType) {
-        httpOptions.headers['X-Panel-Plugin-Id'] = options.panelPluginType;
+      if (options.panelPluginId) {
+        httpOptions.headers['X-Panel-Plugin-Id'] = options.panelPluginId;
       }
     }
   }
