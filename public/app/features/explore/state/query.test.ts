@@ -216,8 +216,8 @@ describe('runQueries', () => {
     jest.spyOn(richHistory, 'addToRichHistory');
     await dispatch(runQueries({ exploreId: 'left' }));
     expect((richHistory.addToRichHistory as jest.Mock).mock.calls).toHaveLength(2);
-    expect((richHistory.addToRichHistory as jest.Mock).mock.calls[0][0]).toBeTruthy();
-    expect((richHistory.addToRichHistory as jest.Mock).mock.calls[1][0]).toBeFalsy();
+    expect((richHistory.addToRichHistory as jest.Mock).mock.calls[0][0].localOverride).toBeTruthy();
+    expect((richHistory.addToRichHistory as jest.Mock).mock.calls[1][0].localOverride).toBeFalsy();
   });
 
   it('should add history items to local storage only with the flag disabled', async () => {
@@ -225,7 +225,7 @@ describe('runQueries', () => {
     jest.spyOn(richHistory, 'addToRichHistory');
     await dispatch(runQueries({ exploreId: 'left' }));
     expect((richHistory.addToRichHistory as jest.Mock).mock.calls).toHaveLength(1);
-    expect((richHistory.addToRichHistory as jest.Mock).mock.calls[0][0]).toBeTruthy();
+    expect((richHistory.addToRichHistory as jest.Mock).mock.calls[0][0].localOverride).toBeTruthy();
   });
 });
 
