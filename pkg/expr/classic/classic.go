@@ -275,21 +275,12 @@ type ConditionReducerJSON struct {
 	// Params []any `json:"params"` (Unused)
 }
 
-// UnmarshalConditionsCmd creates a new ConditionsCmd.
-func UnmarshalConditionsCmd(rawQuery map[string]any, refID string) (*ConditionsCmd, error) {
-	jsonFromM, err := json.Marshal(rawQuery["conditions"])
-	if err != nil {
-		return nil, fmt.Errorf("failed to remarshal classic condition body: %w", err)
-	}
-	var ccj []ConditionJSON
-	if err = json.Unmarshal(jsonFromM, &ccj); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal remarshaled classic condition body: %w", err)
-	}
-
+func NewConditionCmd(refID string, ccj []ConditionJSON) (*ConditionsCmd, error) {
 	c := &ConditionsCmd{
 		RefID: refID,
 	}
 
+	var err error
 	for i, cj := range ccj {
 		cond := condition{}
 
@@ -316,6 +307,18 @@ func UnmarshalConditionsCmd(rawQuery map[string]any, refID string) (*ConditionsC
 
 		c.Conditions = append(c.Conditions, cond)
 	}
-
 	return c, nil
+}
+
+// UnmarshalConditionsCmd creates a new ConditionsCmd.
+func UnmarshalConditionsCmd(rawQuery map[string]any, refID string) (*ConditionsCmd, error) {
+	jsonFromM, err := json.Marshal(rawQuery["conditions"])
+	if err != nil {
+		return nil, fmt.Errorf("failed to remarshal classic condition body: %w", err)
+	}
+	var ccj []ConditionJSON
+	if err = json.Unmarshal(jsonFromM, &ccj); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal remarshaled classic condition body: %w", err)
+	}
+	return NewConditionCmd(refID, ccj)
 }

@@ -1,14 +1,7 @@
 import React from 'react';
 
 import { NavModel, NavModelItem, PageLayoutType } from '@grafana/data';
-import {
-  SceneComponentProps,
-  SceneObjectBase,
-  SceneVariable,
-  SceneVariables,
-  sceneGraph,
-  AdHocFilterSet,
-} from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneVariable, SceneVariables, sceneGraph } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -46,7 +39,7 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     return variables.findIndex((variable) => variable.state.name === identifier);
   };
 
-  private replaceEditVariable = (newVariable: SceneVariable | AdHocFilterSet) => {
+  private replaceEditVariable = (newVariable: SceneVariable) => {
     // Find the index of the variable to be deleted
     const variableIndex = this.state.editIndex ?? -1;
     const { variables } = this.getVariableSet().state;
@@ -58,18 +51,10 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
       return;
     }
 
-    if (newVariable instanceof AdHocFilterSet) {
-      // TODO: Update controls in adding this fiter set to the dashboard
-    } else {
-      const updatedVariables = [
-        ...variables.slice(0, variableIndex),
-        newVariable,
-        ...variables.slice(variableIndex + 1),
-      ];
+    const updatedVariables = [...variables.slice(0, variableIndex), newVariable, ...variables.slice(variableIndex + 1)];
 
-      // Update the state or the variables array
-      this.getVariableSet().setState({ variables: updatedVariables });
-    }
+    // Update the state or the variables array
+    this.getVariableSet().setState({ variables: updatedVariables });
   };
 
   public onDelete = (identifier: string) => {
@@ -158,12 +143,9 @@ export class VariablesEditView extends SceneObjectBase<VariablesEditViewState> i
     const variableIndex = variables.length;
     //add the new variable to the end of the array
     const defaultNewVariable = getVariableDefault(variables);
-    if (defaultNewVariable instanceof AdHocFilterSet) {
-      // TODO: Update controls in adding this fiter set to the dashboard
-    } else {
-      this.getVariableSet().setState({ variables: [...this.getVariables(), defaultNewVariable] });
-      this.setState({ editIndex: variableIndex });
-    }
+
+    this.getVariableSet().setState({ variables: [...this.getVariables(), defaultNewVariable] });
+    this.setState({ editIndex: variableIndex });
   };
 
   public onTypeChange = (type: EditableVariableType) => {
@@ -207,6 +189,7 @@ function VariableEditorSettingsListView({ model }: SceneComponentProps<Variables
           pageNav={pageNav}
           navModel={navModel}
           dashboard={dashboard}
+          onDelete={onDelete}
         />
       );
     }
@@ -234,6 +217,7 @@ interface VariableEditorSettingsEditViewProps {
   dashboard: DashboardScene;
   onTypeChange: (variableType: EditableVariableType) => void;
   onGoBack: () => void;
+  onDelete: (variableName: string) => void;
 }
 
 function VariableEditorSettingsView({
@@ -243,6 +227,7 @@ function VariableEditorSettingsView({
   dashboard,
   onTypeChange,
   onGoBack,
+  onDelete,
 }: VariableEditorSettingsEditViewProps) {
   const parentTab = pageNav.children!.find((p) => p.active)!;
   parentTab.parentItem = pageNav;
@@ -255,7 +240,7 @@ function VariableEditorSettingsView({
   return (
     <Page navModel={navModel} pageNav={editVariablePageNav} layout={PageLayoutType.Standard}>
       <NavToolbarActions dashboard={dashboard} />
-      <VariableEditorForm variable={variable} onTypeChange={onTypeChange} onGoBack={onGoBack} />
+      <VariableEditorForm variable={variable} onTypeChange={onTypeChange} onGoBack={onGoBack} onDelete={onDelete} />
     </Page>
   );
 }
