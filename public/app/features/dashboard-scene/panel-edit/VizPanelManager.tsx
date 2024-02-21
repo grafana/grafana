@@ -36,8 +36,6 @@ import { QueryGroupOptions } from 'app/types';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
-import { ShareDataProvider } from './ShareDataProvider';
-
 interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
   datasource?: DataSourceApi;
@@ -68,7 +66,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   }
 
   private async loadDataSource() {
-    const dataObj = this.state.panel.state.$data;
+    const dataObj = this.state.$data;
 
     if (!dataObj) {
       return;
@@ -199,7 +197,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       },
       queries,
     });
-
     if (defaultQueries) {
       queryRunner.runQueries();
     }
@@ -277,7 +274,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
 
   get queryRunner(): SceneQueryRunner {
     // Panel data object is always SceneQueryRunner wrapped in a SceneDataTransformer
-    const runner = getQueryRunnerFor(this.state.panel);
+    const runner = getQueryRunnerFor(this);
 
     if (!runner) {
       throw new Error('Query runner not found');
@@ -287,7 +284,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
   }
 
   get dataTransformer(): SceneDataTransformer {
-    const provider = this.state.panel.state.$data;
+    const provider = this.state.$data;
     if (!provider || !(provider instanceof SceneDataTransformer)) {
       throw new Error('Could not find SceneDataTransformer for panel');
     }
@@ -305,7 +302,6 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         .setTitle('')
         .setOption('showTypeIcons', true)
         .setOption('showHeader', true)
-        .setData(new ShareDataProvider(this.queryRunner))
         .build(),
     });
   }
