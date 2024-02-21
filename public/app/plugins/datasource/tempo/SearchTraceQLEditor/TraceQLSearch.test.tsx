@@ -137,8 +137,8 @@ describe('TraceQLSearch', () => {
     expect(screen.queryAllByLabelText(/Remove tag/).length).toBe(1); // filled in the default tag, so can remove values
 
     await user.click(screen.getAllByLabelText(/Remove tag/)[0]);
-    jest.advanceTimersByTime(1000);
     await act(async () => {
+      jest.advanceTimersByTime(1000);
       expect(screen.queryAllByLabelText('Add tag').length).toBe(0); // not filled in the default tag, so no need to add another one
       expect(screen.queryAllByLabelText(/Remove tag/).length).toBe(0); // mot filled in the default tag, so no values to remove
     });
