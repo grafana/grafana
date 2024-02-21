@@ -289,7 +289,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     description: variable.description,
   };
   if (variable.type === 'adhoc') {
-    const args: ConstructorParameters<typeof AdHocFiltersVariable>[0] = {
+    return new AdHocFiltersVariable({
       ...commonProperties,
       description: variable.description,
       skipUrlSync: variable.skipUrlSync,
@@ -298,12 +298,8 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       applyMode: 'auto',
       filters: variable.filters ?? [],
       baseFilters: variable.baseFilters ?? [],
-    };
-
-    if (variable.staticKeys) {
-      args.staticKeys = variable.staticKeys;
-    }
-    return new AdHocFiltersVariable(args);
+      staticKeys: variable.staticKeys,
+    });
   }
   if (variable.type === 'custom') {
     return new CustomVariable({
