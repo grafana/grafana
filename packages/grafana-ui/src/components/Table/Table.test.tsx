@@ -673,4 +673,34 @@ describe('Table', () => {
       expect(selected).toBeVisible();
     });
   });
+
+  describe('when mounted with table cell callback', () => {
+    it('the row/column index attributes should be in the document', async () => {
+      const callback = jest.fn();
+      getTestContext({
+        onCellClick: callback,
+      });
+      expect(getTable()).toBeInTheDocument();
+
+      const rows = within(getTable()).getAllByRole('row');
+      expect(rows).toHaveLength(5);
+
+      rows.forEach((row, index) => {
+        // First row is column headers
+        if (index !== 0) {
+          expect(row).toHaveAttribute('data-row-index');
+        }
+      });
+
+      const cells = within(getTable()).getAllByRole('cell');
+      cells.forEach((cell) => {
+        expect(cell).toHaveAttribute('data-column-index');
+      });
+
+      // e.target.role is undefined so the function doesn't actually fire in tests :/
+      // expect(callback).toHaveBeenCalledTimes(0)
+      // await userEvent.click(cells[0])
+      // expect(callback).toHaveBeenCalledTimes(1)
+    });
+  });
 });

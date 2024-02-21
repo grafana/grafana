@@ -45,6 +45,8 @@ interface RowsListProps {
   timeRange?: TimeRange;
   footerPaginationEnabled: boolean;
   initialRowIndex?: number;
+  // Boolean to specify if a data attribute containing row index is added to each row
+  showDataIndices: boolean;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -68,6 +70,7 @@ export const RowsList = (props: RowsListProps) => {
     listRef,
     enableSharedCrosshair = false,
     initialRowIndex = undefined,
+    showDataIndices = false,
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
@@ -220,7 +223,7 @@ export const RowsList = (props: RowsListProps) => {
       return (
         <div
           {...row.getRowProps({ style, ...additionalProps })}
-          data-row-index={row.index}
+          data-row-index={showDataIndices ? row.index : null}
           className={cx(tableStyles.row, expandedRowStyle)}
           onMouseEnter={() => onRowHover(index, data)}
           onMouseLeave={onRowLeave}
@@ -245,6 +248,7 @@ export const RowsList = (props: RowsListProps) => {
               columnCount={row.cells.length}
               timeRange={timeRange}
               frame={data}
+              showDataIndices={showDataIndices}
             />
           ))}
         </div>
@@ -265,6 +269,7 @@ export const RowsList = (props: RowsListProps) => {
       theme.components.table.rowHoverBackground,
       timeRange,
       width,
+      showDataIndices,
     ]
   );
 

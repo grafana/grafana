@@ -148,6 +148,7 @@ export const SearchResultsTable = React.memo(
                   columnCount={row.cells.length}
                   userProps={{ href: url, onClick: onClickItem }}
                   frame={response.view.dataFrame}
+                  showDataIndices={false}
                 />
               );
             })}

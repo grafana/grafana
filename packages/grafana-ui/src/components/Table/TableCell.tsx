@@ -15,6 +15,7 @@ export interface Props {
   timeRange?: TimeRange;
   userProps?: object;
   frame: DataFrame;
+  showDataIndices: boolean;
 }
 
 export const TableCell = ({
@@ -25,6 +26,7 @@ export const TableCell = ({
   userProps,
   frame,
   columnIndex,
+  showDataIndices,
 }: Props) => {
   const cellProps = cell.getCellProps();
   const field = (cell.column as unknown as GrafanaTableColumn).field;
@@ -46,7 +48,7 @@ export const TableCell = ({
         field,
         tableStyles,
         onCellFilterAdded,
-        cellProps: { ...cellProps, 'data-column-index': columnIndex },
+        cellProps: showDataIndices ? { ...cellProps, 'data-column-index': columnIndex } : cellProps,
         innerWidth,
         timeRange,
         userProps,

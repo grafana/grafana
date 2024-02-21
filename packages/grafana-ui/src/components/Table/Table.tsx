@@ -329,6 +329,7 @@ export const Table = memo((props: Props) => {
                 footerPaginationEnabled={Boolean(enablePagination)}
                 enableSharedCrosshair={enableSharedCrosshair}
                 initialRowIndex={initialRowIndex}
+                showDataIndices={props.onCellClick !== undefined}
               />
             </div>
           ) : (
