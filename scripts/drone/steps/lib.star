@@ -393,8 +393,8 @@ def playwright_e2e_report_upload():
             '-H "Accept: application/vnd.github+json" ' +
             '-H "Authorization: Bearer $${GITHUB_TOKEN}" ' +
             '-H "X-GitHub-Api-Version: 2022-11-28" -d ' +
-            '"{\\"body\\":\\"\\<a href=\\"$${E2E_PLAYWRIGHT_REPORT_URL}\\"\\>here\\<\\/a\\>\\"}"',
             # '"{\\"body\\":\\"<h3>❌ Failed to run Playwright plugin e2e tests</h3> <br />Click <a href="$${E2E_PLAYWRIGHT_REPORT_URL}">here</a> to browse the Playwright report.<br />For information on how to run Playwright tests locally, refer to the <a href="https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests"> Developer guide</a>.\\"}"',
+            '"{\\"state\\":\\"success\\",\\"target_url\\":\\"$${E2E_PLAYWRIGHT_REPORT_URL}\\", \\"description\\": \\"Click on the details to see the Playwright report\\", \\"context\\": \\"e2e_artifacts\\"}"',
             # "curl -L " +
             # "-X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments " +
             # '-H "Accept: application/vnd.github+json" ' +
