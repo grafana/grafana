@@ -1,8 +1,7 @@
-import { css, cx } from '@emotion/css';
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
 
-import { useTheme2 } from '@grafana/ui';
+import { Box } from '@grafana/ui';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 
@@ -30,13 +29,6 @@ interface StoryOptions extends UseSplitterOptions {
 }
 
 export const Basic: StoryFn<StoryOptions> = (options) => {
-  const theme = useTheme2();
-  const paneStyles = css({
-    background: theme.colors.background.primary,
-    padding: theme.spacing(2),
-    border: `1px solid ${theme.colors.border.weak}`,
-  });
-
   const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
     ...options,
   });
@@ -49,14 +41,18 @@ export const Basic: StoryFn<StoryOptions> = (options) => {
     <DashboardStoryCanvas>
       <div style={{ display: 'flex', width: '700px', height: '500px' }}>
         <div {...containerProps}>
-          <div {...primaryProps} className={cx(primaryProps.className, paneStyles)}>
-            Primary
+          <div {...primaryProps}>
+            <Box display="flex" grow={1} backgroundColor="primary" padding={2}>
+              Primary
+            </Box>
           </div>
           {options.hasSecondPane && (
             <>
               <div {...splitterProps} />
-              <div {...secondaryProps} className={cx(secondaryProps.className, paneStyles)}>
-                Secondary
+              <div {...secondaryProps}>
+                <Box display="flex" grow={1} backgroundColor="primary" padding={2}>
+                  Secondary
+                </Box>
               </div>
             </>
           )}

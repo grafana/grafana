@@ -11,19 +11,23 @@ The splitter creates two resizable panes, either horizontally or vertically.
 import { useSplitter } from '@grafana/ui';
 
 const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
-  ...options,
+  direction: 'row',
+  initialSize: 0.5,
+  dragPosition: 'end',
 });
-
-const styles = useStyles2(getStyles);
 
 return (
   <div {...containerProps}>
-    <div {...primaryProps} className={cx(primaryProps.className, styles.myPaneStyle)}>
-      Primary
+    <div {...primaryProps}>
+      <Box display="flex" grow={1} backgroundColor="primary" padding={2}>
+        Primary
+      </Box>
     </div>
     <div {...splitterProps} />
-    <div {...secondaryProps} className={cx(secondaryProps.className, styles.myPaneStyle)}>
-      Secondary
+    <div {...secondaryProps}>
+      <Box display="flex" grow={1} backgroundColor="primary" padding={2}>
+        Secondary
+      </Box>
     </div>
   </div>
 );
