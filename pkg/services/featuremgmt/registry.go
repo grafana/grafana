@@ -1197,6 +1197,17 @@ var (
 			RequiresRestart: true,
 			Expression:      "true", // enabled by default
 		},
+		{
+			Name:              "scopeFilters",
+			Description:       "enables scope filters",
+			FrontendOnly:      false,
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaDashboardsSquad,
+			RequiresRestart:   false,
+			AllowSelfServe:    false,
+			HideFromDocs:      true,
+			HideFromAdminPage: true,
+		},
 	}
 )
 
