@@ -501,6 +501,14 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
   - chmod +x bin/grabpl
+  - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
+    -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
+    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"\##❌ Failed to run Playwright
+    plugin e2e tests \<br \/\> $${E2E_PLAYWRIGHT_REPORT_URL}\"}"'
+  environment:
+    E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
@@ -893,6 +901,14 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
   - chmod +x bin/grabpl
+  - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
+    -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
+    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"\##❌ Failed to run Playwright
+    plugin e2e tests \<br \/\> $${E2E_PLAYWRIGHT_REPORT_URL}\"}"'
+  environment:
+    E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
@@ -1816,6 +1832,14 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
   - chmod +x bin/grabpl
+  - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
+    -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
+    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"\##❌ Failed to run Playwright
+    plugin e2e tests \<br \/\> $${E2E_PLAYWRIGHT_REPORT_URL}\"}"'
+  environment:
+    E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
@@ -2305,6 +2329,14 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
   - chmod +x bin/grabpl
+  - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
+    -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
+    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"\##❌ Failed to run Playwright
+    plugin e2e tests \<br \/\> $${E2E_PLAYWRIGHT_REPORT_URL}\"}"'
+  environment:
+    E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
@@ -2637,6 +2669,14 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
   - chmod +x bin/grabpl
+  - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
+    -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
+    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"\##❌ Failed to run Playwright
+    plugin e2e tests \<br \/\> $${E2E_PLAYWRIGHT_REPORT_URL}\"}"'
+  environment:
+    E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
@@ -4099,6 +4139,14 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
   - chmod +x bin/grabpl
+  - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
+    -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
+    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"\##❌ Failed to run Playwright
+    plugin e2e tests \<br \/\> $${E2E_PLAYWRIGHT_REPORT_URL}\"}"'
+  environment:
+    E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
+    GITHUB_TOKEN:
+      from_secret: github_token
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
@@ -4880,6 +4928,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: c55b2b0be8da114160a80076cae68d9a14bdcfe16ed0386d16880f17f2a025ea
+hmac: b59427553940cb50bc13aba285daf5202fa84638a6827af41e413c649e14bc7a
 
 ...

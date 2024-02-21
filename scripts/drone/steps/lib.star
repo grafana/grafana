@@ -129,12 +129,22 @@ def download_grabpl_step():
     return {
         "name": "grabpl",
         "image": images["curl"],
+        "environment": {
+            "GITHUB_TOKEN": from_secret("github_token"),
+            "E2E_PLAYWRIGHT_REPORT_URL": "https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html",
+        },
         "commands": [
             "mkdir -p bin",
             "curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/{}/grabpl".format(
                 grabpl_version,
             ),
             "chmod +x bin/grabpl",
+            "curl -L " +
+            "-X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments " +
+            '-H "Accept: application/vnd.github+json" ' +
+            '-H "Authorization: Bearer $${GITHUB_TOKEN}" ' +
+            '-H "X-GitHub-Api-Version: 2022-11-28" -d ' +
+            '"{\\"body\\":\\"\\##❌ Failed to run Playwright plugin e2e tests \\<br \\/\\> $${E2E_PLAYWRIGHT_REPORT_URL}\\"}"',
         ],
     }
 
