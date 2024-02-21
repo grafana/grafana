@@ -677,9 +677,7 @@ steps:
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
     -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"<h3>❌ Failed to run Playwright
     plugin e2e tests</h3> <br />Click <a href=\"$${E2E_PLAYWRIGHT_REPORT_URL}\">here</a>
-    to browse the Playwright report.<br />For information on how to run Playwright
-    tests locally, refer to the <a href=\"https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests\">
-    Developer guide</a>.\"}"'
+    to browse the Playwright report.\"}'
   depends_on:
   - playwright-plugin-e2e
   environment:
@@ -1994,9 +1992,7 @@ steps:
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
     -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"<h3>❌ Failed to run Playwright
     plugin e2e tests</h3> <br />Click <a href=\"$${E2E_PLAYWRIGHT_REPORT_URL}\">here</a>
-    to browse the Playwright report.<br />For information on how to run Playwright
-    tests locally, refer to the <a href=\"https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests\">
-    Developer guide</a>.\"}"'
+    to browse the Playwright report.\"}'
   depends_on:
   - playwright-plugin-e2e
   environment:
@@ -4886,6 +4882,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: b313208219720930274a20e7f752f731fb473157de587797918e96b99f73ddfa
+hmac: 847b524eff0f688159dd85bbb1fe47271ec55ad54024b9b056b49064e59472ef
 
 ...
