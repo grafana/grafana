@@ -675,8 +675,8 @@ steps:
   - "echo \"E2E Playwright report uploaded to: \n $${E2E_PLAYWRIGHT_REPORT_URL}\""
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
-    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"\<h3\>❌ Failed to run Playwright
-    plugin e2e tests\<\/h3\>\"}"'
+    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"state\":\"success\",\"body\":\"❌
+    Failed to run Playwright plugin e2e tests $${E2E_ARTIFACTS_VIDEO_ZIP}\"}"'
   depends_on:
   - playwright-plugin-e2e
   environment:
@@ -1989,8 +1989,8 @@ steps:
   - "echo \"E2E Playwright report uploaded to: \n $${E2E_PLAYWRIGHT_REPORT_URL}\""
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
-    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"\<h3\>❌ Failed to run Playwright
-    plugin e2e tests\<\/h3\>\"}"'
+    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"state\":\"success\",\"body\":\"❌
+    Failed to run Playwright plugin e2e tests $${E2E_ARTIFACTS_VIDEO_ZIP}\"}"'
   depends_on:
   - playwright-plugin-e2e
   environment:
@@ -4880,6 +4880,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: d473b93cf3eace794b02b9f0af7df5246ad28aa35e1631b269265bd44ea3cce9
+hmac: 61d9825d40f76363da49ad646e6d245c22e2908c5fd218d8aeeedf5515bf6168
 
 ...
