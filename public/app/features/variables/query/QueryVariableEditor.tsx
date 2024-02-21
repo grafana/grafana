@@ -2,7 +2,6 @@ import React, { FormEvent, PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { DataSourceInstanceSettings, getDataSourceRef, SelectableValue } from '@grafana/data';
-import { DataSourceRef } from '@grafana/schema';
 import { QueryVariableEditorForm } from 'app/features/dashboard-scene/settings/variables/components/QueryVariableForm';
 
 import { StoreState } from '../../../types';
