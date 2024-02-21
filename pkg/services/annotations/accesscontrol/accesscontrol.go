@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/auth/identity"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
@@ -40,7 +39,8 @@ func NewAuthService(db db.DB, features featuremgmt.FeatureToggles) *AuthService 
 }
 
 // Authorize checks if the user has permission to read annotations, then returns a struct containing dashboards and scope types that the user has access to.
-func (authz *AuthService) Authorize(ctx context.Context, orgID int64, user identity.Requester) (*AccessResources, error) {
+func (authz *AuthService) Authorize(ctx context.Context, orgID int64, query *annotations.ItemQuery) (*AccessResources, error) {
+	user := query.SignedInUser
 	if user == nil || user.IsNil() {
 		return nil, ErrReadForbidden.Errorf("missing user")
 	}
@@ -59,7 +59,7 @@ func (authz *AuthService) Authorize(ctx context.Context, orgID int64, user ident
 	var visibleDashboards map[string]int64
 	var err error
 	if canAccessDashAnnotations {
-		visibleDashboards, err = authz.dashboardsWithVisibleAnnotations(ctx, user, orgID)
+		visibleDashboards, err = authz.dashboardsWithVisibleAnnotations(ctx, query, orgID)
 		if err != nil {
 			return nil, ErrAccessControlInternal.Errorf("failed to fetch dashboards: %w", err)
 		}
@@ -72,7 +72,7 @@ func (authz *AuthService) Authorize(ctx context.Context, orgID int64, user ident
 	}, nil
 }
 
-func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, user identity.Requester, orgID int64) (map[string]int64, error) {
+func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, query *annotations.ItemQuery, orgID int64) (map[string]int64, error) {
 	recursiveQueriesSupported, err := authz.db.RecursiveQueriesAreSupported()
 	if err != nil {
 		return nil, err
@@ -84,8 +84,19 @@ func (authz *AuthService) dashboardsWithVisibleAnnotations(ctx context.Context, 
 	}
 
 	filters := []any{
-		permissions.NewAccessControlDashboardPermissionFilter(user, dashboardaccess.PERMISSION_VIEW, filterType, authz.features, recursiveQueriesSupported),
+		permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, dashboardaccess.PERMISSION_VIEW, filterType, authz.features, recursiveQueriesSupported),
 		searchstore.OrgFilter{OrgId: orgID},
+	}
+
+	if query.DashboardUID != "" {
+		filters = append(filters, searchstore.DashboardFilter{
+			UIDs: []string{query.DashboardUID},
+		})
+	}
+	if query.DashboardID != 0 {
+		filters = append(filters, searchstore.DashboardIDFilter{
+			IDs: []int64{query.DashboardID},
+		})
 	}
 
 	sb := &searchstore.Builder{Dialect: authz.db.GetDialect(), Filters: filters, Features: authz.features}
