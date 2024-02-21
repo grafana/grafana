@@ -17,7 +17,7 @@ module.exports = {
     publicPath: 'public/build/',
   },
   resolve: {
-    extensions: ['.ts', '.tsx', '.es6', '.js', '.json', '.svg'],
+    extensions: ['.ts', '.tsx', '.es6', '.js', '.jsx', '.json', '.svg'],
     alias: {
       // some of data source plugins use global Prism object to add the language definition
       // we want to have same Prism object in core and in grafana/ui

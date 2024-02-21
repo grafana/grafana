@@ -45,7 +45,7 @@ export function BreadcrumbItem({ href, isCurrent, text, index, flexGrow }: Props
             {text}
           </a>
           <div className={styles.separator} aria-hidden={true}>
-            <AngleRight />
+            <AngleRight size={'sm'} />
           </div>
         </>
       )}
