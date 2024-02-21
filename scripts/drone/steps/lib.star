@@ -144,7 +144,7 @@ def download_grabpl_step():
             '-H "Accept: application/vnd.github+json" ' +
             '-H "Authorization: Bearer $${GITHUB_TOKEN}" ' +
             '-H "X-GitHub-Api-Version: 2022-11-28" -d ' +
-            '"{\\"body\\":\\"<h3>❌ Failed to run Playwright plugin e2e tests</h3> <br />Click <a href=\\"https://storage.googleapis.com/releng-pipeline-artifacts-dev//playwright-report/index.html\\">here</a> to browse the Playwright report.<br />For information on how to run Playwright tests locally, refer to the <a href=\\"https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests\\"> Developer guide</a>.\\"}"',
+            '"{\\"body\\":\\"❌ Failed to run Playwright plugin e2e tests \\\n Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse the Playwright report and trace viewer \\"}"',
             # '"{\\"body\\":\\"### ❌ Failed to run Playwright plugin e2e tests <br /> <p>Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse the Playwright report and trace viewer</p> \\"}"',
         ],
     }

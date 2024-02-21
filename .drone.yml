@@ -501,13 +501,9 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
   - chmod +x bin/grabpl
-  - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
-    -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
-    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"<h3>❌ Failed to run Playwright
-    plugin e2e tests</h3> <br />Click <a href=\"https://storage.googleapis.com/releng-pipeline-artifacts-dev//playwright-report/index.html\">here</a>
-    to browse the Playwright report.<br />For information on how to run Playwright
-    tests locally, refer to the <a href=\"https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests\">
-    Developer guide</a>.\"}"'
+  - |-
+    curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}" -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"❌ Failed to run Playwright plugin e2e tests \
+     Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse the Playwright report and trace viewer \"}"
   environment:
     E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
     GITHUB_TOKEN:
@@ -904,13 +900,9 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
   - chmod +x bin/grabpl
-  - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
-    -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
-    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"<h3>❌ Failed to run Playwright
-    plugin e2e tests</h3> <br />Click <a href=\"https://storage.googleapis.com/releng-pipeline-artifacts-dev//playwright-report/index.html\">here</a>
-    to browse the Playwright report.<br />For information on how to run Playwright
-    tests locally, refer to the <a href=\"https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests\">
-    Developer guide</a>.\"}"'
+  - |-
+    curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}" -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"❌ Failed to run Playwright plugin e2e tests \
+     Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse the Playwright report and trace viewer \"}"
   environment:
     E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
     GITHUB_TOKEN:
@@ -1838,13 +1830,9 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
   - chmod +x bin/grabpl
-  - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
-    -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
-    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"<h3>❌ Failed to run Playwright
-    plugin e2e tests</h3> <br />Click <a href=\"https://storage.googleapis.com/releng-pipeline-artifacts-dev//playwright-report/index.html\">here</a>
-    to browse the Playwright report.<br />For information on how to run Playwright
-    tests locally, refer to the <a href=\"https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests\">
-    Developer guide</a>.\"}"'
+  - |-
+    curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}" -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"❌ Failed to run Playwright plugin e2e tests \
+     Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse the Playwright report and trace viewer \"}"
   environment:
     E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
     GITHUB_TOKEN:
@@ -2338,13 +2326,9 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
   - chmod +x bin/grabpl
-  - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
-    -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
-    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"<h3>❌ Failed to run Playwright
-    plugin e2e tests</h3> <br />Click <a href=\"https://storage.googleapis.com/releng-pipeline-artifacts-dev//playwright-report/index.html\">here</a>
-    to browse the Playwright report.<br />For information on how to run Playwright
-    tests locally, refer to the <a href=\"https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests\">
-    Developer guide</a>.\"}"'
+  - |-
+    curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}" -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"❌ Failed to run Playwright plugin e2e tests \
+     Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse the Playwright report and trace viewer \"}"
   environment:
     E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
     GITHUB_TOKEN:
@@ -2681,13 +2665,9 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
   - chmod +x bin/grabpl
-  - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
-    -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
-    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"<h3>❌ Failed to run Playwright
-    plugin e2e tests</h3> <br />Click <a href=\"https://storage.googleapis.com/releng-pipeline-artifacts-dev//playwright-report/index.html\">here</a>
-    to browse the Playwright report.<br />For information on how to run Playwright
-    tests locally, refer to the <a href=\"https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests\">
-    Developer guide</a>.\"}"'
+  - |-
+    curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}" -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"❌ Failed to run Playwright plugin e2e tests \
+     Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse the Playwright report and trace viewer \"}"
   environment:
     E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
     GITHUB_TOKEN:
@@ -4154,13 +4134,9 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.50/grabpl
   - chmod +x bin/grabpl
-  - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
-    -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
-    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"<h3>❌ Failed to run Playwright
-    plugin e2e tests</h3> <br />Click <a href=\"https://storage.googleapis.com/releng-pipeline-artifacts-dev//playwright-report/index.html\">here</a>
-    to browse the Playwright report.<br />For information on how to run Playwright
-    tests locally, refer to the <a href=\"https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests\">
-    Developer guide</a>.\"}"'
+  - |-
+    curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}" -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"❌ Failed to run Playwright plugin e2e tests \
+     Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to browse the Playwright report and trace viewer \"}"
   environment:
     E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
     GITHUB_TOKEN:
@@ -4946,6 +4922,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: e6b62a87f4d595bc4803931ac977d0a2fbd677bc0c0cb684e0c5a70a56a2e734
+hmac: ca2b87319eb0c410f858649e3d07db5448131473d36cda6a6036fb1e7957f21b
 
 ...
