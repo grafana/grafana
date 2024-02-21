@@ -265,6 +265,31 @@ func TestIntegrationFolderService(t *testing.T) {
 				dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 					actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
 				}).Return(nil).Once()
+				service.features = featuremgmt.WithFeatures("dashboardRestore")
+
+				expectedForceDeleteRules := rand.Int63()%2 == 0
+				err := service.Delete(context.Background(), &folder.DeleteFolderCommand{
+					UID:              f.UID,
+					OrgID:            orgID,
+					ForceDeleteRules: expectedForceDeleteRules,
+					SignedInUser:     usr,
+				})
+				require.NoError(t, err)
+				require.NotNil(t, actualCmd)
+				require.Equal(t, orgID, actualCmd.OrgID)
+				require.Equal(t, expectedForceDeleteRules, actualCmd.ForceDeleteFolderRules)
+			})
+
+			t.Run("When deleting folder by uid with dashboard Restore turned on should not return access denied error", func(t *testing.T) {
+				f := folder.NewFolder(util.GenerateShortUID(), "")
+				f.UID = util.GenerateShortUID()
+				folderStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
+
+				var actualCmd *dashboards.DeleteDashboardCommand
+				dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+					actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
+				}).Return(nil).Once()
+				service.features = featuremgmt.WithFeatures("dashboardRestore")
 
 				var folderUid string
 				dashStore.On("SoftDeleteDashboardsInFolder", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
