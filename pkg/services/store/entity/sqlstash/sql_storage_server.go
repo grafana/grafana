@@ -1025,7 +1025,7 @@ func (s *sqlEntityServer) List(ctx context.Context, r *entity.EntityListRequest)
 			whereclause := "(" + s.dialect.Quote("group") + "=? AND " + s.dialect.Quote("resource") + "=?"
 
 			if key.Namespace != "" {
-				args = append(args, key.Namespace, key.Group, key.Resource)
+				args = append(args, key.Namespace)
 				whereclause += " AND " + s.dialect.Quote("namespace") + "=?"
 			}
 
