@@ -21,12 +21,9 @@ import {
   withTheme,
   IconButton,
   ButtonGroup,
-  Box,
-  Text,
-  Stack,
 } from '@grafana/ui';
 import config from 'app/core/config';
-import { Trans } from 'app/core/internationalization';
+import { EmptyTransformationsMessage } from 'app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage';
 
 import { PanelModel } from '../../state';
 import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
@@ -40,7 +37,7 @@ interface TransformationsEditorProps extends Themeable {
   panel: PanelModel;
 }
 
-const VIEW_ALL_VALUE = 'viewAll';
+export const VIEW_ALL_VALUE = 'viewAll';
 export type viewAllType = 'viewAll';
 export type FilterCategory = TransformerCategory | viewAllType;
 
@@ -258,36 +255,11 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
 
   renderEmptyMessage = () => {
     return (
-      <Box alignItems="center" padding={4}>
-        <Stack direction="column" alignItems="center" gap={2}>
-          <Text element="h3" textAlignment="center">
-            <Trans key="transformations.empty.add-transformation-header">Start transforming data</Trans>
-          </Text>
-          <Text
-            element="p"
-            textAlignment="center"
-            data-testid={selectors.components.Transforms.noTransformationsMessage}
-          >
-            <Trans key="transformations.empty.add-transformation-body">
-              Transformations allow data to be changed in various ways before your visualization is shown.
-              <br />
-              This includes joining data together, renaming fields, making calculations, formatting data for display,
-              and more.
-            </Trans>
-          </Text>
-          <Button
-            icon="plus"
-            variant="primary"
-            size="md"
-            onClick={() => {
-              this.setState({ showPicker: true });
-            }}
-            data-testid={selectors.components.Transforms.addTransformationButton}
-          >
-            Add transformation
-          </Button>
-        </Stack>
-      </Box>
+      <EmptyTransformationsMessage
+        onShowPicker={() => {
+          this.setState({ showPicker: true });
+        }}
+      ></EmptyTransformationsMessage>
     );
   };
 
@@ -387,7 +359,9 @@ class UnThemedTransformationsEditor extends React.PureComponent<TransformationsE
           search={search}
           suffix={suffix}
           xforms={xforms}
-          setState={this.setState.bind(this)}
+          onClose={() => this.setState({ showPicker: false })}
+          onSelectedFilterChange={(filter) => this.setState({ selectedFilter: filter })}
+          onShowIllustrationsChange={(showIllustrations) => this.setState({ showIllustrations })}
           onSearchChange={this.onSearchChange}
           onSearchKeyDown={this.onSearchKeyDown}
           onTransformationAdd={this.onTransformationAdd}

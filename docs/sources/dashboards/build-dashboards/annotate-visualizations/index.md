@@ -44,7 +44,10 @@ Annotations are supported for the following visualization types:
 
 Grafana comes with the ability to add annotation events directly from a panel using the [built-in annotation query](#built-in-query) that exists on all dashboards. Annotations that you create this way are stored in Grafana.
 
-To add annotations directly in the panel, the built-in query must be enabled. Learn more in [Built-in query](#built-in-query)
+To add annotations directly in the panel:
+
+- The dashboard must already be saved.
+- The built-in query must be enabled. Learn more in [Built-in query](#built-in-query).
 
 ### Add an annotation
 

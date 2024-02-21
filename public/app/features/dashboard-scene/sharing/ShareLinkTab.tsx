@@ -73,6 +73,7 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
 
     let shareUrl = getDashboardUrl({
       uid: dashboard.state.uid,
+      slug: dashboard.state.meta.slug,
       currentQueryParams: location.search,
       updateQuery: urlParamsUpdate,
       absolute: true,
@@ -82,12 +83,20 @@ export class ShareLinkTab extends SceneObjectBase<ShareLinkTabState> {
       shareUrl = await createShortLink(shareUrl);
     }
 
+    // the image panel solo route uses panelId instead of viewPanel
+    let imageQueryParams = urlParamsUpdate;
+    if (panel) {
+      delete imageQueryParams.viewPanel;
+      imageQueryParams.panelId = panel.state.key;
+      // force solo route to use scenes
+      imageQueryParams['__feature.dashboardSceneSolo'] = true;
+    }
+
     const imageUrl = getDashboardUrl({
       uid: dashboard.state.uid,
       currentQueryParams: location.search,
-      updateQuery: urlParamsUpdate,
+      updateQuery: { ...urlParamsUpdate, panelId: panel?.state.key },
       absolute: true,
-
       soloRoute: true,
       render: true,
       timeZone: getRenderTimeZone(timeRange.getTimeZone()),

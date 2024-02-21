@@ -239,7 +239,7 @@ func TestSchedulableAlertRulesRegistry(t *testing.T) {
 	assert.Len(t, rules, 0)
 	assert.Len(t, folders, 0)
 
-	expectedFolders := map[string]string{"test-uid": "test-title"}
+	expectedFolders := map[models.FolderKey]string{{OrgID: 1, UID: "test-uid"}: "test-title"}
 	// replace all rules in the registry with foo
 	r.set([]*models.AlertRule{{OrgID: 1, UID: "foo", Version: 1}}, expectedFolders)
 	rules, folders = r.all()
@@ -308,7 +308,7 @@ func TestSchedulableAlertRulesRegistry_set(t *testing.T) {
 		for _, rule := range initialRules {
 			newRules = append(newRules, models.CopyRule(rule))
 		}
-		diff := r.set(newRules, map[string]string{})
+		diff := r.set(newRules, map[models.FolderKey]string{})
 		require.Truef(t, diff.IsEmpty(), "Diff is not empty. Probably we check something else than key + version")
 	})
 	t.Run("should return empty diff if version does not change", func(t *testing.T) {
@@ -324,7 +324,7 @@ func TestSchedulableAlertRulesRegistry_set(t *testing.T) {
 			newRules = append(newRules, rule)
 		}
 
-		diff := r.set(newRules, map[string]string{})
+		diff := r.set(newRules, map[models.FolderKey]string{})
 		require.Truef(t, diff.IsEmpty(), "Diff is not empty. Probably we check something else than key + version")
 	})
 	t.Run("should return key in diff if version changes", func(t *testing.T) {
@@ -340,7 +340,7 @@ func TestSchedulableAlertRulesRegistry_set(t *testing.T) {
 		}
 		require.NotEmptyf(t, expectedUpdated, "Input parameters have changed. Nothing to assert")
 
-		diff := r.set(newRules, map[string]string{})
+		diff := r.set(newRules, map[models.FolderKey]string{})
 		require.Falsef(t, diff.IsEmpty(), "Diff is empty but should not be")
 		require.Equal(t, expectedUpdated, diff.updated)
 	})
@@ -415,6 +415,9 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 				"key-label": "value-label",
 			},
 			IsPaused: false,
+			NotificationSettings: []models.NotificationSettings{
+				models.NotificationSettingsGen()(),
+			},
 		}
 		r2 := &models.AlertRule{
 			ID:        2,
@@ -450,6 +453,9 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 				"key-label": "value-label23",
 			},
 			IsPaused: true,
+			NotificationSettings: []models.NotificationSettings{
+				models.NotificationSettingsGen()(),
+			},
 		}
 
 		excludedFields := map[string]struct{}{

@@ -21,13 +21,17 @@ import { Icon, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import { TraceKeyValuePair, TraceLink, TNil } from '../../types';
-import { uAlignIcon, uTxEllipsis } from '../../uberUtilityStyles';
 
 import * as markers from './AccordianKeyValues.markers';
 import KeyValuesTable from './KeyValuesTable';
 
+import { alignIcon } from '.';
+
 export const getStyles = (theme: GrafanaTheme2) => {
   return {
+    container: css({
+      textOverflow: 'ellipsis',
+    }),
     header: css`
       label: header;
       cursor: pointer;
@@ -125,7 +129,7 @@ export default function AccordianKeyValues(props: AccordianKeyValuesProps) {
   const { className, data, highContrast, interactive, isOpen, label, linksGetter, onToggle } = props;
   const isEmpty = !Array.isArray(data) || !data.length;
   const styles = useStyles2(getStyles);
-  const iconCls = cx(uAlignIcon, { [styles.emptyIcon]: isEmpty });
+  const iconCls = cx(alignIcon, { [styles.emptyIcon]: isEmpty });
   let arrow: React.ReactNode | null = null;
   let headerProps: {} | null = null;
   if (interactive) {
@@ -142,7 +146,7 @@ export default function AccordianKeyValues(props: AccordianKeyValuesProps) {
   }
 
   return (
-    <div className={cx(className, uTxEllipsis)}>
+    <div className={cx(className, styles.container)}>
       <div
         className={cx(styles.header, {
           [styles.headerEmpty]: isEmpty,

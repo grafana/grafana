@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	ngfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -64,7 +64,8 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 			}
 			// We won't be handling files on disk, we can pass an empty string as workingDirPath.
 			stateStore := notifier.NewFileStore(orgID, kvStore, "")
-			remoteAM, err := remote.NewAlertmanager(externalAMCfg, stateStore)
+			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
+			remoteAM, err := remote.NewAlertmanager(externalAMCfg, stateStore, m)
 			require.NoError(t, err)
 
 			// Use both Alertmanager implementations in the forked Alertmanager.
@@ -92,12 +93,13 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		configStore,
 		notifier.NewFakeOrgStore(t, []int64{1}),
 		kvStore,
-		provisioning.NewFakeProvisioningStore(),
+		ngfakes.NewFakeProvisioningStore(),
 		secretsService.GetDecryptedValue,
 		m.GetMultiOrgAlertmanagerMetrics(),
 		nil,
 		nopLogger,
 		secretsService,
+		&featuremgmt.FeatureManager{},
 		override,
 	)
 	require.NoError(t, err)

@@ -22,7 +22,7 @@ import {
   AxisPlacement,
   GraphDrawStyle,
   GraphFieldConfig,
-  GraphTresholdsStyleMode,
+  GraphThresholdsStyleMode,
   VisibilityMode,
   ScaleDirection,
   ScaleOrientation,
@@ -89,6 +89,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   tweakScale = (opts) => opts,
   tweakAxis = (opts) => opts,
   eventsScope = '__global_',
+  hoverProximity,
 }) => {
   const builder = new UPlotConfigBuilder(timeZones[0]);
 
@@ -260,16 +261,16 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
                   return [dataMin, dataMax];
                 }
               : field.type === FieldType.enum
-              ? (u: uPlot, dataMin: number, dataMax: number) => {
-                  // this is the exhaustive enum (stable)
-                  let len = field.config.type!.enum!.text!.length;
+                ? (u: uPlot, dataMin: number, dataMax: number) => {
+                    // this is the exhaustive enum (stable)
+                    let len = field.config.type!.enum!.text!.length;
 
-                  return [-1, len];
+                    return [-1, len];
 
-                  // these are only values that are present
-                  // return [dataMin - 1, dataMax + 1]
-                }
-              : undefined,
+                    // these are only values that are present
+                    // return [dataMin - 1, dataMax + 1]
+                  }
+                : undefined,
           decimals: field.config.decimals,
         },
         field
@@ -520,8 +521,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
     // Render thresholds in graph
     if (customConfig.thresholdsStyle && config.thresholds) {
-      const thresholdDisplay = customConfig.thresholdsStyle.mode ?? GraphTresholdsStyleMode.Off;
-      if (thresholdDisplay !== GraphTresholdsStyleMode.Off) {
+      const thresholdDisplay = customConfig.thresholdsStyle.mode ?? GraphThresholdsStyleMode.Off;
+      if (thresholdDisplay !== GraphThresholdsStyleMode.Off) {
         builder.addThresholds({
           config: customConfig.thresholdsStyle,
           thresholds: config.thresholds,
@@ -558,54 +559,31 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   builder.scaleKeys = [xScaleKey, yScaleKey];
 
   // if hovered value is null, how far we may scan left/right to hover nearest non-null
-  const hoverProximityPx = 15;
+  const DEFAULT_HOVER_NULL_PROXIMITY = 15;
+  const DEFAULT_FOCUS_PROXIMITY = 30;
 
   let cursor: Partial<uPlot.Cursor> = {
-    // this scans left and right from cursor position to find nearest data index with value != null
-    // TODO: do we want to only scan past undefined values, but halt at explicit null values?
-    dataIdx: (self, seriesIdx, hoveredIdx, cursorXVal) => {
-      let seriesData = self.data[seriesIdx];
-
-      if (seriesData[hoveredIdx] == null) {
-        let nonNullLft = null,
-          nonNullRgt = null,
-          i;
-
-        i = hoveredIdx;
-        while (nonNullLft == null && i-- > 0) {
-          if (seriesData[i] != null) {
-            nonNullLft = i;
-          }
+    // horizontal proximity / point hover behavior
+    hover: {
+      prox: (self, seriesIdx, hoveredIdx) => {
+        if (hoverProximity != null) {
+          return hoverProximity;
         }
 
-        i = hoveredIdx;
-        while (nonNullRgt == null && i++ < seriesData.length) {
-          if (seriesData[i] != null) {
-            nonNullRgt = i;
-          }
+        // when hovering null values, scan data left/right up to 15px
+        const yVal = self.data[seriesIdx][hoveredIdx];
+        if (yVal === null) {
+          return DEFAULT_HOVER_NULL_PROXIMITY;
         }
 
-        let xVals = self.data[0];
-
-        let curPos = self.valToPos(cursorXVal, 'x');
-        let rgtPos = nonNullRgt == null ? Infinity : self.valToPos(xVals[nonNullRgt], 'x');
-        let lftPos = nonNullLft == null ? -Infinity : self.valToPos(xVals[nonNullLft], 'x');
-
-        let lftDelta = curPos - lftPos;
-        let rgtDelta = rgtPos - curPos;
-
-        if (lftDelta <= rgtDelta) {
-          if (lftDelta <= hoverProximityPx) {
-            hoveredIdx = nonNullLft!;
-          }
-        } else {
-          if (rgtDelta <= hoverProximityPx) {
-            hoveredIdx = nonNullRgt!;
-          }
-        }
-      }
-
-      return hoveredIdx;
+        // no proximity limit
+        return null;
+      },
+      skip: [null],
+    },
+    // vertical proximity / series focus behavior
+    focus: {
+      prox: hoverProximity ?? DEFAULT_FOCUS_PROXIMITY,
     },
   };
 
@@ -618,7 +596,9 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       data: frame,
     };
 
-    const hoverEvent = new DataHoverEvent(payload);
+    const hoverEvent = new DataHoverEvent(payload).setTags(['uplot']);
+    const clearEvent = new DataHoverClearEvent().setTags(['uplot']);
+
     cursor.sync = {
       key: eventsScope,
       filters: {
@@ -629,9 +609,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
 
           payload.rowIndex = dataIdx;
           if (x < 0 && y < 0) {
-            payload.point[xScaleUnit] = null;
-            payload.point[yScaleKey] = null;
-            eventBus.publish(new DataHoverClearEvent());
+            eventBus.publish(clearEvent);
           } else {
             // convert the points
             payload.point[xScaleUnit] = src.posToVal(x, xScaleKey);
@@ -643,8 +621,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           return true;
         },
       },
-      scales: [xScaleKey, yScaleKey],
-      // match: [() => true, (a, b) => a === b],
+      scales: [xScaleKey, null],
+      // match: [() => true, () => false],
     };
   }
 

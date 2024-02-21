@@ -78,4 +78,41 @@ func TestSources_List(t *testing.T) {
 		require.False(t, exists)
 		require.Equal(t, plugins.Signature{}, sig)
 	})
+
+	t.Run("Plugin sources are populated with symbolic links", func(t *testing.T) {
+		testdata, err := filepath.Abs("../testdata")
+		require.NoError(t, err)
+
+		cfg := &setting.Cfg{
+			StaticRootPath:     testdata,
+			PluginsPath:        filepath.Join(testdata, "symbolic-plugin-dirs"),
+			BundledPluginsPath: filepath.Join(testdata, "unsigned-panel"),
+		}
+		s := ProvideService(cfg)
+		ctx := context.Background()
+		srcs := s.List(ctx)
+		uris := map[plugins.Class]map[string]struct{}{}
+		for _, s := range srcs {
+			class := s.PluginClass(ctx)
+			if _, exists := uris[class]; !exists {
+				uris[class] = map[string]struct{}{}
+			}
+			for _, uri := range s.PluginURIs(ctx) {
+				uris[class][uri] = struct{}{}
+			}
+		}
+
+		require.Equal(t, uris[plugins.ClassCore], map[string]struct{}{
+			filepath.Join(testdata, "app", "plugins", "datasource"): {},
+			filepath.Join(testdata, "app", "plugins", "panel"):      {},
+		}, "should include core plugins")
+
+		require.Equal(t, uris[plugins.ClassBundled], map[string]struct{}{
+			filepath.Join(testdata, "unsigned-panel"): {},
+		}, "should include bundle plugin")
+
+		require.Equal(t, uris[plugins.ClassExternal], map[string]struct{}{
+			filepath.Join(testdata, "symbolic-plugin-dirs", "plugin"): {},
+		}, "should include external symlinked plugin")
+	})
 }

@@ -134,7 +134,7 @@ export const AmRoutesExpandedForm = ({
                               error={errors.object_matchers?.[index]?.value?.message}
                             >
                               <Input
-                                {...register(`object_matchers.${index}.value`, { required: 'Field is required' })}
+                                {...register(`object_matchers.${index}.value`)}
                                 defaultValue={field.value}
                                 placeholder="value"
                               />
@@ -322,6 +322,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     noMatchersWarning: css`
       padding: ${theme.spacing(1)} ${theme.spacing(2)};
+      margin-bottom: ${theme.spacing(1)};
     `,
   };
 };

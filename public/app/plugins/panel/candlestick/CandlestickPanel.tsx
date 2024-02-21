@@ -1,7 +1,7 @@
 // this file is pretty much a copy-paste of TimeSeriesPanel.tsx :(
 // with some extra renderers passed to the <TimeSeries> component
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import uPlot from 'uplot';
 
 import { DashboardCursorSync, Field, getDisplayProcessor, getLinksSupplier, PanelProps } from '@grafana/data';
@@ -10,17 +10,19 @@ import { TooltipDisplayMode } from '@grafana/schema';
 import { TooltipPlugin, TooltipPlugin2, UPlotConfigBuilder, usePanelContext, useTheme2, ZoomPlugin } from '@grafana/ui';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
-import { TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
+import { AnnotationsPlugin2 } from '../timeseries/plugins/AnnotationsPlugin2';
 import { ContextMenuPlugin } from '../timeseries/plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from '../timeseries/plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from '../timeseries/plugins/ThresholdControlsPlugin';
+import { isTooltipScrollable } from '../timeseries/utils';
 
 import { prepareCandlestickFields } from './fields';
 import { Options, defaultCandlestickColors, VizDisplayMode } from './types';
@@ -47,6 +49,9 @@ export const CandlestickPanel = ({
   const info = useMemo(() => {
     return prepareCandlestickFields(data.series, options, theme, timeRange);
   }, [data.series, options, theme, timeRange]);
+
+  // temp range set for adding new annotation set by TooltipPlugin2, consumed by AnnotationPlugin2
+  const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
 
   const { renderers, tweakScale, tweakAxis, shouldRenderPrice } = useMemo(() => {
     let tweakScale = (opts: ScaleProps, forField: Field) => opts;
@@ -229,7 +234,8 @@ export const CandlestickPanel = ({
   }
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
-  const showNewVizTooltips = config.featureToggles.newVizTooltips && sync && sync() === DashboardCursorSync.Off;
+  const showNewVizTooltips =
+    config.featureToggles.newVizTooltips && (sync == null || sync() !== DashboardCursorSync.Tooltip);
 
   return (
     <TimeSeries
@@ -261,21 +267,45 @@ export const CandlestickPanel = ({
             {showNewVizTooltips ? (
               <TooltipPlugin2
                 config={uplotConfig}
-                hoverMode={TooltipHoverMode.xAll}
+                hoverMode={
+                  options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
+                }
                 queryZoom={onChangeTimeRange}
                 clientZoom={true}
-                render={(u, dataIdxs, seriesIdx, isPinned = false) => {
+                render={(u, dataIdxs, seriesIdx, isPinned = false, dismiss, timeRange2, viaSync) => {
+                  if (viaSync) {
+                    return null;
+                  }
+
+                  if (enableAnnotationCreation && timeRange2 != null) {
+                    setNewAnnotationRange(timeRange2);
+                    dismiss();
+                    return;
+                  }
+
+                  const annotate = () => {
+                    let xVal = u.posToVal(u.cursor.left!, 'x');
+
+                    setNewAnnotationRange({ from: xVal, to: xVal });
+                    dismiss();
+                  };
+
                   return (
                     <TimeSeriesTooltip
                       frames={[info.frame]}
                       seriesFrame={alignedDataFrame}
                       dataIdxs={dataIdxs}
                       seriesIdx={seriesIdx}
-                      mode={TooltipDisplayMode.Multi}
+                      mode={options.tooltip.mode}
+                      sortOrder={options.tooltip.sort}
                       isPinned={isPinned}
+                      annotate={enableAnnotationCreation ? annotate : undefined}
+                      scrollable={isTooltipScrollable(options.tooltip)}
                     />
                   );
                 }}
+                maxWidth={options.tooltip.maxWidth}
+                maxHeight={options.tooltip.maxHeight}
               />
             ) : (
               <>
@@ -290,8 +320,18 @@ export const CandlestickPanel = ({
               </>
             )}
             {/* Renders annotation markers*/}
-            {data.annotations && (
-              <AnnotationsPlugin annotations={data.annotations} config={uplotConfig} timeZone={timeZone} />
+            {showNewVizTooltips ? (
+              <AnnotationsPlugin2
+                annotations={data.annotations ?? []}
+                config={uplotConfig}
+                timeZone={timeZone}
+                newRange={newAnnotationRange}
+                setNewRange={setNewAnnotationRange}
+              />
+            ) : (
+              data.annotations && (
+                <AnnotationsPlugin annotations={data.annotations} config={uplotConfig} timeZone={timeZone} />
+              )
             )}
             {/* Enables annotations creation*/}
             {!showNewVizTooltips ? (

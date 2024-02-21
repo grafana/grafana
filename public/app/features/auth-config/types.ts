@@ -1,8 +1,8 @@
+import { ReactElement } from 'react';
 import { Validate } from 'react-hook-form';
 
 import { IconName, SelectableValue } from '@grafana/data';
 import { Settings } from 'app/types';
-
 export interface AuthProviderInfo {
   id: string;
   type: string;
@@ -17,7 +17,6 @@ export type GetStatusHook = () => Promise<AuthProviderStatus>;
 export type SSOProviderSettingsBase = {
   allowAssignGrafanaAdmin?: boolean;
   allowSignUp?: boolean;
-
   apiUrl?: string;
   authStyle?: string;
   authUrl?: string;
@@ -45,13 +44,22 @@ export type SSOProviderSettingsBase = {
   tlsSkipVerify?: boolean;
   tokenUrl?: string;
   type: string;
-  usePKCE?: boolean;
+  usePkce?: boolean;
   useRefreshToken?: boolean;
+  nameAttributePath?: string;
+  loginAttributePath?: string;
+  idTokenAttributeName?: string;
+  defineAllowedGroups?: boolean;
+  defineAllowedTeamsIds?: boolean;
+  configureTLS?: boolean;
+  tlsSkipVerifyInsecure?: boolean;
 };
 
 // SSO data received from the API and sent to it
 export type SSOProvider = {
+  id: string;
   provider: string;
+  source: string;
   settings: SSOProviderSettingsBase & {
     teamIds: string;
     allowedOrganizations: string;
@@ -96,6 +104,7 @@ export interface SettingsError {
 export type FieldData = {
   label: string;
   type: string;
+  description?: string | ReactElement;
   validation?: {
     required?: boolean;
     message?: string;
@@ -105,4 +114,10 @@ export type FieldData = {
   allowCustomValue?: boolean;
   options?: Array<SelectableValue<string>>;
   placeholder?: string;
+  defaultValue?: SelectableValue<string>;
+  hidden?: boolean;
 };
+
+export type SSOSettingsField =
+  | keyof SSOProvider['settings']
+  | { name: keyof SSOProvider['settings']; dependsOn: keyof SSOProvider['settings']; hidden?: boolean };

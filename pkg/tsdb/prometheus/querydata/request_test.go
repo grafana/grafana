@@ -15,7 +15,6 @@ import (
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
 
 	"github.com/grafana/kindsys"
@@ -25,7 +24,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
@@ -442,8 +440,7 @@ func setup() (*testContext, error) {
 		JSONData: json.RawMessage(`{"timeInterval": "15s"}`),
 	}
 
-	features := featuremgmt.WithFeatures()
-	opts, err := client.CreateTransportOptions(context.Background(), settings, &setting.Cfg{}, log.New())
+	opts, err := client.CreateTransportOptions(context.Background(), settings, log.New())
 	if err != nil {
 		return nil, err
 	}
@@ -453,7 +450,7 @@ func setup() (*testContext, error) {
 		return nil, err
 	}
 
-	queryData, _ := querydata.New(httpClient, features, settings, log.New())
+	queryData, _ := querydata.New(httpClient, settings, log.New())
 
 	return &testContext{
 		httpProvider: httpProvider,

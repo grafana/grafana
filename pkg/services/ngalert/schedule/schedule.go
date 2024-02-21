@@ -81,6 +81,7 @@ type schedule struct {
 
 	appURL               *url.URL
 	disableGrafanaFolder bool
+	jitterEvaluations    JitterStrategy
 
 	metrics *metrics.Scheduler
 
@@ -104,6 +105,7 @@ type SchedulerCfg struct {
 	MinRuleInterval      time.Duration
 	DisableGrafanaFolder bool
 	AppURL               *url.URL
+	JitterEvaluations    JitterStrategy
 	EvaluatorFactory     eval.EvaluatorFactory
 	RuleStore            RulesStore
 	Metrics              *metrics.Scheduler
@@ -114,6 +116,12 @@ type SchedulerCfg struct {
 
 // NewScheduler returns a new schedule.
 func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
+	const minMaxAttempts = int64(1)
+	if cfg.MaxAttempts < minMaxAttempts {
+		cfg.Log.Warn("Invalid scheduler maxAttempts, using a safe minimum", "configured", cfg.MaxAttempts, "actual", minMaxAttempts)
+		cfg.MaxAttempts = minMaxAttempts
+	}
+
 	sch := schedule{
 		registry:              alertRuleInfoRegistry{alertRuleInfo: make(map[ngmodels.AlertRuleKey]*alertRuleInfo)},
 		maxAttempts:           cfg.MaxAttempts,
@@ -125,6 +133,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		metrics:               cfg.Metrics,
 		appURL:                cfg.AppURL,
 		disableGrafanaFolder:  cfg.DisableGrafanaFolder,
+		jitterEvaluations:     cfg.JitterEvaluations,
 		stateManager:          stateManager,
 		minRuleInterval:       cfg.MinRuleInterval,
 		schedulableAlertRules: alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
@@ -136,7 +145,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 }
 
 func (sch *schedule) Run(ctx context.Context) error {
-	sch.log.Info("Starting scheduler", "tickInterval", sch.baseInterval)
+	sch.log.Info("Starting scheduler", "tickInterval", sch.baseInterval, "maxAttempts", sch.maxAttempts)
 	t := ticker.New(sch.clock, sch.baseInterval, sch.metrics.Ticker)
 	defer t.Stop()
 
@@ -144,6 +153,13 @@ func (sch *schedule) Run(ctx context.Context) error {
 		sch.log.Error("Failure while running the rule evaluation loop", "error", err)
 	}
 	return nil
+}
+
+// Rules fetches the entire set of rules considered for evaluation by the scheduler on the next tick.
+// Such rules are not guaranteed to have been evaluated by the scheduler.
+// Rules returns all supplementary metadata for the rules that is stored by the scheduler - namely, the set of folder titles.
+func (sch *schedule) Rules() ([]*ngmodels.AlertRule, map[ngmodels.FolderKey]string) {
+	return sch.schedulableAlertRules.all()
 }
 
 // deleteAlertRule stops evaluation of the rule, deletes it from active rules, and cleans up state cache.
@@ -195,28 +211,6 @@ func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
 type readyToRunItem struct {
 	ruleInfo *alertRuleInfo
 	evaluation
-}
-
-func (sch *schedule) updateRulesMetrics(alertRules []*ngmodels.AlertRule) {
-	orgs := make(map[int64]int64, len(alertRules))
-	orgsPaused := make(map[int64]int64, len(alertRules))
-	for _, rule := range alertRules {
-		orgs[rule.OrgID]++
-		if rule.IsPaused {
-			orgsPaused[rule.OrgID]++
-		}
-	}
-
-	for orgID, numRules := range orgs {
-		numRulesPaused := orgsPaused[orgID]
-		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRuleActiveLabelValue).Set(float64(numRules - numRulesPaused))
-		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRulePausedLabelValue).Set(float64(numRulesPaused))
-	}
-
-	// While these are the rules that we iterate over, at the moment there's no 100% guarantee that they'll be
-	// scheduled as rules could be removed before we get a chance to evaluate them.
-	sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
-	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
 }
 
 // TODO refactor to accept a callback for tests that will be called with things that are returned currently, and return nothing.
@@ -274,11 +268,12 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		}
 
 		itemFrequency := item.IntervalSeconds / int64(sch.baseInterval.Seconds())
-		isReadyToRun := item.IntervalSeconds != 0 && tickNum%itemFrequency == 0
+		offset := jitterOffsetInTicks(item, sch.baseInterval, sch.jitterEvaluations)
+		isReadyToRun := item.IntervalSeconds != 0 && (tickNum%itemFrequency)-offset == 0
 
 		var folderTitle string
 		if !sch.disableGrafanaFolder {
-			title, ok := folderTitles[item.NamespaceUID]
+			title, ok := folderTitles[item.GetFolderKey()]
 			if ok {
 				folderTitle = title
 			} else {
@@ -287,6 +282,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		}
 
 		if isReadyToRun {
+			sch.log.Debug("Rule is ready to run on the current tick", "uid", item.UID, "tick", tickNum, "frequency", itemFrequency, "offset", offset)
 			readyToRun = append(readyToRun, readyToRunItem{ruleInfo: ruleInfo, evaluation: evaluation{
 				scheduledAt: tick,
 				rule:        item,
@@ -383,6 +379,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		start := sch.clock.Now()
 
 		evalCtx := eval.NewContextWithPreviousResults(ctx, SchedulerUserFor(e.rule.OrgID), sch.newLoadedMetricsReader(e.rule))
+		if sch.evaluatorFactory == nil {
+			panic("evalfactory nil")
+		}
 		ruleEval, err := sch.evaluatorFactory.Create(evalCtx, e.rule.GetEvalCondition())
 		var results eval.Results
 		var dur time.Duration
@@ -451,7 +450,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			e.scheduledAt,
 			e.rule,
 			results,
-			state.GetRuleExtraLabels(e.rule, e.folderTitle, !sch.disableGrafanaFolder),
+			state.GetRuleExtraLabels(logger, e.rule, e.folderTitle, !sch.disableGrafanaFolder),
 		)
 		processDuration.Observe(sch.clock.Now().Sub(start).Seconds())
 
@@ -551,7 +550,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 						return
 					}
 
-					logger.Error("Failed to evaluate rule", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt)
+					logger.Error("Failed to evaluate rule", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt, "error", err)
 					select {
 					case <-tracingCtx.Done():
 						logger.Error("Context has been cancelled while backing off", "version", ctx.rule.Version, "fingerprint", f, "attempt", attempt, "now", ctx.scheduledAt)

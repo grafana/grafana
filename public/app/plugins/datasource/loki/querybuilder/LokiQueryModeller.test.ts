@@ -254,7 +254,7 @@ describe('LokiQueryModeller', () => {
         operations: [],
       };
 
-      const def = modeller.getOperationDef('sum')!;
+      const def = modeller.getOperationDefinition('sum')!;
       const result = def.addOperationHandler(def, query, modeller);
       expect(result.operations[0].id).toBe('rate');
       expect(result.operations[1].id).toBe('sum');
@@ -266,7 +266,7 @@ describe('LokiQueryModeller', () => {
         operations: [{ id: LokiOperationId.Json, params: [] }],
       };
 
-      const def = modeller.getOperationDef('sum')!;
+      const def = modeller.getOperationDefinition('sum')!;
       const result = def.addOperationHandler(def, query, modeller);
       expect(result.operations[0].id).toBe(LokiOperationId.Json);
       expect(result.operations[1].id).toBe('rate');
@@ -279,7 +279,7 @@ describe('LokiQueryModeller', () => {
         operations: [{ id: 'rate', params: [] }],
       };
 
-      const def = modeller.getOperationDef(LokiOperationId.Json)!;
+      const def = modeller.getOperationDefinition(LokiOperationId.Json)!;
       const result = def.addOperationHandler(def, query, modeller);
       expect(result.operations[0].id).toBe(LokiOperationId.Json);
       expect(result.operations[1].id).toBe('rate');
@@ -291,7 +291,7 @@ describe('LokiQueryModeller', () => {
         operations: [{ id: LokiOperationId.LineContains, params: ['error'] }],
       };
 
-      const def = modeller.getOperationDef(LokiOperationId.Json)!;
+      const def = modeller.getOperationDefinition(LokiOperationId.Json)!;
       const result = def.addOperationHandler(def, query, modeller);
       expect(result.operations[0].id).toBe(LokiOperationId.LineContains);
       expect(result.operations[1].id).toBe(LokiOperationId.Json);
@@ -303,7 +303,7 @@ describe('LokiQueryModeller', () => {
         operations: [{ id: LokiOperationId.Json, params: [] }],
       };
 
-      const def = modeller.getOperationDef(LokiOperationId.LineContains)!;
+      const def = modeller.getOperationDefinition(LokiOperationId.LineContains)!;
       const result = def.addOperationHandler(def, query, modeller);
       expect(result.operations[0].id).toBe(LokiOperationId.LineContains);
       expect(result.operations[1].id).toBe(LokiOperationId.Json);
@@ -315,7 +315,7 @@ describe('LokiQueryModeller', () => {
         operations: [{ id: LokiOperationId.Rate, params: [] }],
       };
 
-      const def = modeller.getOperationDef(LokiOperationId.Rate)!;
+      const def = modeller.getOperationDefinition(LokiOperationId.Rate)!;
       const result = def.addOperationHandler(def, query, modeller);
       expect(result.operations.length).toBe(1);
     });
@@ -329,7 +329,7 @@ describe('LokiQueryModeller', () => {
         ],
       };
 
-      const def = modeller.getOperationDef(LokiOperationId.Unwrap)!;
+      const def = modeller.getOperationDefinition(LokiOperationId.Unwrap)!;
       const result = def.addOperationHandler(def, query, modeller);
       expect(result.operations[1].id).toBe(LokiOperationId.Unwrap);
     });

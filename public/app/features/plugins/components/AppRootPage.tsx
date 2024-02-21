@@ -13,7 +13,7 @@ import {
   PluginType,
   PluginContextProvider,
 } from '@grafana/data';
-import { config, locationSearchToObject, logError } from '@grafana/runtime';
+import { config, locationSearchToObject } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -25,7 +25,7 @@ import { getMessageFromError } from 'app/core/utils/errors';
 
 import { getPluginSettings } from '../pluginSettings';
 import { importAppPlugin } from '../plugin_loader';
-import { buildPluginSectionNav } from '../utils';
+import { buildPluginSectionNav, pluginsLogger } from '../utils';
 
 import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
 
@@ -101,7 +101,7 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
   // if the user has permissions to see the plugin page.
   const userHasPermissionsToPluginPage = () => {
     // Check if plugin does not have any configurations or the user is Grafana Admin
-    if (!plugin.meta?.includes || contextSrv.isGrafanaAdmin || contextSrv.user.orgRole === OrgRole.Admin) {
+    if (!plugin.meta?.includes) {
       return true;
     }
 
@@ -110,6 +110,16 @@ export function AppRootPage({ pluginId, pluginNavSection }: Props) {
     if (!pluginInclude) {
       return true;
     }
+
+    // Check if action exists and give access if user has the required permission.
+    if (pluginInclude?.action && config.featureToggles.accessControlOnCall) {
+      return contextSrv.hasPermission(pluginInclude.action);
+    }
+
+    if (contextSrv.isGrafanaAdmin || contextSrv.user.orgRole === OrgRole.Admin) {
+      return true;
+    }
+
     const pathRole: string = pluginInclude?.role || '';
     // Check if role exists  and give access to Editor to be able to see Viewer pages
     if (!pathRole || (contextSrv.isEditor && pathRole === OrgRole.Viewer)) {
@@ -193,7 +203,7 @@ async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyActio
       })
     );
     const error = err instanceof Error ? err : new Error(getMessageFromError(err));
-    logError(error);
+    pluginsLogger.logError(error);
     console.error(error);
   }
 }

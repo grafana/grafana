@@ -13,14 +13,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
-	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
+	"github.com/lib/pq"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
-	"github.com/grafana/grafana/pkg/tsdb/sqleng/proxyutil"
 )
 
 func ProvideService(cfg *setting.Cfg) *Service {
@@ -56,9 +55,58 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	return dsInfo.QueryData(ctx, req)
 }
 
+func newPostgres(ctx context.Context, cfg *setting.Cfg, dsInfo sqleng.DataSourceInfo, cnnstr string, logger log.Logger, settings backend.DataSourceInstanceSettings) (*sql.DB, *sqleng.DataSourceHandler, error) {
+	connector, err := pq.NewConnector(cnnstr)
+	if err != nil {
+		logger.Error("postgres connector creation failed", "error", err)
+		return nil, nil, fmt.Errorf("postgres connector creation failed")
+	}
+
+	proxyClient, err := settings.ProxyClient(ctx)
+	if err != nil {
+		logger.Error("postgres proxy creation failed", "error", err)
+		return nil, nil, fmt.Errorf("postgres proxy creation failed")
+	}
+
+	if proxyClient.SecureSocksProxyEnabled() {
+		dialer, err := proxyClient.NewSecureSocksProxyContextDialer()
+		if err != nil {
+			logger.Error("postgres proxy creation failed", "error", err)
+			return nil, nil, fmt.Errorf("postgres proxy creation failed")
+		}
+		postgresDialer := newPostgresProxyDialer(dialer)
+		// update the postgres dialer with the proxy dialer
+		connector.Dialer(postgresDialer)
+	}
+
+	config := sqleng.DataPluginConfiguration{
+		DSInfo:            dsInfo,
+		MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
+		RowLimit:          cfg.DataProxyRowLimit,
+	}
+
+	queryResultTransformer := postgresQueryResultTransformer{}
+
+	db := sql.OpenDB(connector)
+
+	db.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
+	db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
+	db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
+
+	handler, err := sqleng.NewQueryDataHandler(cfg.UserFacingDefaultError, db, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
+		logger)
+	if err != nil {
+		logger.Error("Failed connecting to Postgres", "err", err)
+		return nil, nil, err
+	}
+
+	logger.Debug("Successfully connected to Postgres")
+	return db, handler, nil
+}
+
 func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 	logger := s.logger
-	return func(_ context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return func(ctx context.Context, settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		logger.Debug("Creating Postgres query endpoint")
 		jsonData := sqleng.JsonData{
 			MaxOpenConns:        cfg.SqlDatasourceMaxOpenConnsDefault,
@@ -95,39 +143,8 @@ func (s *Service) newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFacto
 			return nil, err
 		}
 
-		if cfg.Env == setting.Dev {
-			logger.Debug("GetEngine", "connection", cnnstr)
-		}
+		_, handler, err := newPostgres(ctx, cfg, dsInfo, cnnstr, logger, settings)
 
-		driverName := "postgres"
-		// register a proxy driver if the secure socks proxy is enabled
-		proxyOpts := proxyutil.GetSQLProxyOptions(cfg.SecureSocksDSProxy, dsInfo)
-		if sdkproxy.New(proxyOpts).SecureSocksProxyEnabled() {
-			driverName, err = createPostgresProxyDriver(cnnstr, proxyOpts)
-			if err != nil {
-				return "", nil
-			}
-		}
-
-		config := sqleng.DataPluginConfiguration{
-			DSInfo:            dsInfo,
-			MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
-			RowLimit:          cfg.DataProxyRowLimit,
-		}
-
-		queryResultTransformer := postgresQueryResultTransformer{}
-
-		db, err := sql.Open(driverName, cnnstr)
-		if err != nil {
-			return nil, err
-		}
-
-		db.SetMaxOpenConns(config.DSInfo.JsonData.MaxOpenConns)
-		db.SetMaxIdleConns(config.DSInfo.JsonData.MaxIdleConns)
-		db.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
-
-		handler, err := sqleng.NewQueryDataHandler(cfg, db, config, &queryResultTransformer, newPostgresMacroEngine(dsInfo.JsonData.Timescaledb),
-			logger)
 		if err != nil {
 			logger.Error("Failed connecting to Postgres", "err", err)
 			return nil, err

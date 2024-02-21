@@ -1,7 +1,6 @@
 import { render, screen, waitFor, findAllByRole } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { getSelectParent } from 'test/helpers/selectOptionInTest';
 
 import { createLokiDatasource } from '../../__mocks__/datasource';
 
@@ -51,16 +50,16 @@ describe('LokiQueryBuilderContainer', () => {
     const labels = screen.getByText(/Label filters/);
     const selects = await findAllByRole(getSelectParent(labels)!, 'combobox');
     await userEvent.click(selects[3]);
-    userEvent.click(await screen.findByText('job'));
+    await userEvent.click(await screen.findByText('job'));
 
     await userEvent.click(selects[4]);
-    userEvent.click(await screen.findByText('=~'));
+    await userEvent.click(await screen.findByText('=~'));
 
     await userEvent.click(selects[5]);
-    userEvent.click(await screen.findByText('grafana'));
+    await userEvent.click(await screen.findByText('grafana'));
 
     await userEvent.click(selects[5]);
-    userEvent.click(await screen.findByText('loki'));
+    await userEvent.click(await screen.findByText('loki'));
 
     await waitFor(() => {
       expect(props.onChange).toBeCalledWith({ expr: '{app="app1", job=~"grafana|loki"}', refId: 'A' });
@@ -138,3 +137,6 @@ async function addOperation(section: string, op: string) {
   // anywhere when debugging so not sure what style is it picking up.
   await userEvent.click(opItem, { pointerEventsCheck: 0 });
 }
+
+const getSelectParent = (input: HTMLElement) =>
+  input.parentElement?.parentElement?.parentElement?.parentElement?.parentElement;

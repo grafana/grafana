@@ -31,7 +31,52 @@ First, you need to create a Google OAuth Client:
 1. Click Create
 1. Copy the Client ID and Client Secret from the 'OAuth Client' modal
 
-## Enable Google OAuth in Grafana
+## Configure Google authentication client using the Grafana UI
+
+{{% admonition type="note" %}}
+Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle.
+{{% /admonition %}}
+
+As a Grafana Admin, you can configure Google OAuth2 client from within Grafana using the Google UI. To do this, navigate to **Administration > Authentication > Google** page and fill in the form. If you have a current configuration in the Grafana configuration file then the form will be pre-populated with those values otherwise the form will contain default values.
+
+After you have filled in the form, click **Save**. If the save was successful, Grafana will apply the new configurations.
+
+If you need to reset changes made in the UI back to the default values, click **Reset**. After you have reset the changes, Grafana will apply the configuration from the Grafana configuration file (if there is any configuration) or the default values.
+
+{{% admonition type="note" %}}
+If you run Grafana in high availability mode, configuration changes may not get applied to all Grafana instances immediately. You may need to wait a few minutes for the configuration to propagate to all Grafana instances.
+{{% /admonition %}}
+
+## Configure Google authentication client using the Terraform provider
+
+{{% admonition type="note" %}}
+Available in Public Preview in Grafana 10.4 behind the `ssoSettingsApi` feature toggle. Supported in the Terraform provider since v2.12.0.
+{{% /admonition %}}
+
+```terraform
+resource "grafana_sso_settings" "google_sso_settings" {
+  provider_name = "google"
+  oauth2_settings {
+    name            = "Google"
+    client_id       = "CLIENT_ID"
+    client_secret   = "CLIENT_SECRET"
+    allow_sign_up   = true
+    auto_login      = false
+    scopes          = "openid email profile"
+    allowed_domains = "mycompany.com mycompany.org"
+    hosted_domain   = "mycompany.com"
+    use_pkce        = true
+  }
+}
+```
+
+Go to [Terraform Registry](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/sso_settings) for a complete reference on using the `grafana_sso_settings` resource.
+
+## Configure Google authentication client using the Grafana configuration file
+
+Ensure that you have access to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}).
+
+### Enable Google OAuth in Grafana
 
 Specify the Client ID and Secret in the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}). For example:
 
@@ -66,7 +111,7 @@ automatically signed up.
 You may specify a domain to be passed as `hd` query parameter accepted by Google's
 OAuth 2.0 authentication API. Refer to Google's OAuth [documentation](https://developers.google.com/identity/openid-connect/openid-connect#hd-param).
 
-### PKCE
+#### PKCE
 
 IETF's [RFC 7636](https://datatracker.ietf.org/doc/html/rfc7636)
 introduces "proof key for code exchange" (PKCE) which provides
@@ -75,7 +120,7 @@ interception attacks. PKCE will be required in [OAuth 2.1](https://datatracker.i
 
 > You can disable PKCE in Grafana by setting `use_pkce` to `false` in the`[auth.google]` section.
 
-### Configure refresh token
+#### Configure refresh token
 
 > Available in Grafana v9.3 and later versions.
 
@@ -91,7 +136,7 @@ Refresh token fetching and access token expiration check is enabled by default f
 The `accessTokenExpirationCheck` feature toggle has been removed in Grafana v10.3.0 and the `use_refresh_token` configuration value will be used instead for configuring refresh token fetching and access token expiration check.
 {{% /admonition %}}
 
-### Configure automatic login
+#### Configure automatic login
 
 Set `auto_login` option to true to attempt login automatically, skipping the login screen.
 This setting is ignored if multiple auth providers are configured to use auto login.
@@ -123,7 +168,7 @@ With team sync, you can easily add users to teams by utilizing their Google grou
 
 To learn more about Team Sync, refer to [Configure Team Sync]({{< relref "../../configure-team-sync" >}}).
 
-### Configure allowed groups
+#### Configure allowed groups
 
 > Available in Grafana v10.2.0 and later versions.
 
@@ -134,7 +179,7 @@ Google groups are referenced by the group email key. For example, `developers@go
 
 > Note: Add the `https://www.googleapis.com/auth/cloud-identity.groups.readonly` scope to your Grafana `[auth.google]` scopes configuration to retrieve groups
 
-## Configure role mapping
+#### Configure role mapping
 
 > Available in Grafana v10.2.0 and later versions.
 
@@ -151,11 +196,11 @@ To ease configuration of a proper JMESPath expression, go to [JMESPath](http://j
 
 > By default skip_org_role_sync is enabled. skip_org_role_sync will default to false in Grafana v10.3.0 and later versions.
 
-### Role mapping examples
+##### Role mapping examples
 
 This section includes examples of JMESPath expressions used for role mapping.
 
-#### Map roles using user information from OAuth token
+###### Map roles using user information from OAuth token
 
 In this example, the user with email `admin@company.com` has been granted the `Admin` role.
 All other users are granted the `Viewer` role.
@@ -165,7 +210,7 @@ role_attribute_path = email=='admin@company.com' && 'Admin' || 'Viewer'
 skip_org_role_sync = false
 ```
 
-#### Map roles using groups
+###### Map roles using groups
 
 In this example, the user from Google group 'example-group@google.com' have been granted the `Editor` role.
 All other users are granted the `Viewer` role.
@@ -177,7 +222,7 @@ skip_org_role_sync = false
 
 > Note: Add the `https://www.googleapis.com/auth/cloud-identity.groups.readonly` scope to your Grafana `[auth.google]` scopes configuration to retrieve groups
 
-#### Map server administrator role
+###### Map server administrator role
 
 In this example, the user with email `admin@company.com` has been granted the `Admin` organization role as well as the Grafana server admin role.
 All other users are granted the `Viewer` role.
@@ -188,7 +233,7 @@ skip_org_role_sync = false
 role_attribute_path = email=='admin@company.com' && 'GrafanaAdmin' || 'Viewer'
 ```
 
-#### Map one role to all users
+###### Map one role to all users
 
 In this example, all users will be assigned `Viewer` role regardless of the user information received from the identity provider.
 

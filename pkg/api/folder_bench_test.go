@@ -95,7 +95,7 @@ func BenchmarkFolderListAndSearch(b *testing.B) {
 		desc        string
 		url         string
 		expectedLen int
-		features    *featuremgmt.FeatureManager
+		features    featuremgmt.FeatureToggles
 	}{
 		{
 			desc:        "impl=default nested_folders=on get root folders",
@@ -206,7 +206,8 @@ func setupDB(b testing.TB) benchScenario {
 	quotaService := quotatest.New(false, nil)
 	cfg := setting.NewCfg()
 
-	teamSvc := teamimpl.ProvideService(db, cfg)
+	teamSvc, err := teamimpl.ProvideService(db, cfg)
+	require.NoError(b, err)
 	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(b, err)
 
@@ -329,6 +330,7 @@ func setupDB(b testing.TB) benchScenario {
 				OrgID:     signedInUser.OrgID,
 				IsFolder:  false,
 				UID:       str,
+				FolderID:  f0.ID,
 				FolderUID: f0.UID,
 				Slug:      str,
 				Title:     str,
@@ -356,6 +358,7 @@ func setupDB(b testing.TB) benchScenario {
 					OrgID:     signedInUser.OrgID,
 					IsFolder:  false,
 					UID:       str,
+					FolderID:  f1.ID,
 					FolderUID: f1.UID,
 					Slug:      str,
 					Title:     str,
@@ -383,6 +386,7 @@ func setupDB(b testing.TB) benchScenario {
 						OrgID:     signedInUser.OrgID,
 						IsFolder:  false,
 						UID:       str,
+						FolderID:  f1.ID,
 						FolderUID: f2.UID,
 						Slug:      str,
 						Title:     str,
@@ -423,7 +427,7 @@ func setupDB(b testing.TB) benchScenario {
 	}
 }
 
-func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureManager) *web.Macaron {
+func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureToggles) *web.Macaron {
 	b.Helper()
 
 	m := web.New()
@@ -451,11 +455,12 @@ func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureMa
 	ac := acimpl.ProvideAccessControl(sc.cfg)
 	folderServiceWithFlagOn := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sc.cfg, dashStore, folderStore, sc.db, features, nil)
 
+	cfg := setting.NewCfg()
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
 	require.NoError(b, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, &dashboards.FakeDashboardStore{}, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc)
 	require.NoError(b, err)
 
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
@@ -489,7 +494,7 @@ func setupServer(b testing.TB, sc benchScenario, features *featuremgmt.FeatureMa
 }
 
 type f struct {
-	// ID          int64   `xorm:"pk autoincr 'id'"`
+	ID          int64   `xorm:"pk autoincr 'id'"`
 	OrgID       int64   `xorm:"org_id"`
 	UID         string  `xorm:"uid"`
 	ParentUID   *string `xorm:"parent_uid"`
@@ -506,8 +511,8 @@ func (f *f) TableName() string {
 
 // SQL bean helper to save tags
 type dashboardTag struct {
-	ID          int64
-	DashboardID int64
+	ID          int64 `xorm:"pk autoincr 'id'"`
+	DashboardID int64 `xorm:"dashboard_id"`
 	Term        string
 }
 
@@ -515,10 +520,10 @@ func addFolder(orgID int64, id int64, uid string, parentUID *string) (*f, *dashb
 	now := time.Now()
 	title := uid
 	f := &f{
-		OrgID: orgID,
-		UID:   uid,
-		Title: title,
-		// ID:        id,
+		OrgID:     orgID,
+		UID:       uid,
+		Title:     title,
+		ID:        id,
 		Created:   now,
 		Updated:   now,
 		ParentUID: parentUID,
