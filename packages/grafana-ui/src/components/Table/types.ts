@@ -100,7 +100,7 @@ export interface Props {
   // The index of the field value that the table will initialize scrolled to
   initialRowIndex?: number;
   // Map of react elements to render within column headers, index is field id
-  columnHeaders: Map<number, React.ReactElement>;
+  columnHeaders?: Map<number, React.ReactElement>;
 }
 
 /**
