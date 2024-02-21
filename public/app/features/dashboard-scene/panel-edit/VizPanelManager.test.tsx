@@ -169,7 +169,7 @@ describe('VizPanelManager', () => {
         },
       });
 
-      const vizPanelManager = new VizPanelManager({ panel: vizPanel });
+      const vizPanelManager = VizPanelManager.createFor(vizPanel);
 
       expect(vizPanelManager.state.panel.state.fieldConfig.defaults.custom).toBe('Custom');
       expect(vizPanelManager.state.panel.state.fieldConfig.overrides).toBe(overrides);
@@ -193,7 +193,7 @@ describe('VizPanelManager', () => {
         fieldConfig: { defaults: { custom: 'Custom' }, overrides: [] },
       });
 
-      const vizPanelManager = new VizPanelManager({ panel: vizPanel });
+      const vizPanelManager = VizPanelManager.createFor(vizPanel);
 
       vizPanelManager.changePluginType('timeseries');
       //@ts-ignore

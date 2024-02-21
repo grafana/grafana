@@ -2,14 +2,9 @@ import * as H from 'history';
 
 import { NavIndex } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { SceneGridItem, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import { SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
-import {
-  findVizPanelByKey,
-  getDashboardSceneFor,
-  getPanelIdForVizPanel,
-  getVizPanelKeyForPanelId,
-} from '../utils/utils';
+import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
@@ -88,19 +83,12 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   public commitChanges() {
     const dashboard = getDashboardSceneFor(this);
-    const sourcePanel = findVizPanelByKey(dashboard.state.body, getVizPanelKeyForPanelId(this.state.panelId));
 
     if (!dashboard.state.isEditing) {
       dashboard.onEnterEditMode();
     }
 
-    if (sourcePanel!.parent instanceof SceneGridItem) {
-      sourcePanel!.parent.setState({
-        body: this.state.vizManager.state.panel.clone({
-          $data: this.state.vizManager.state.$data?.clone(),
-        }),
-      });
-    }
+    this.state.vizManager.commitChanges();
   }
 }
 

@@ -23,6 +23,8 @@ import {
   sceneGraph,
   SceneDataTransformer,
   PanelBuilders,
+  SceneGridItem,
+  SceneObjectRef,
 } from '@grafana/scenes';
 import { DataQuery, DataTransformerConfig } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
@@ -38,6 +40,7 @@ import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '
 
 interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
+  sourcePanel: SceneObjectRef<VizPanel>;
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
   tableView?: VizPanel;
@@ -69,6 +72,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     return new VizPanelManager({
       panel: sourcePanel.clone({ $data: undefined }),
       $data: sourcePanel.state.$data?.clone(),
+      sourcePanel: sourcePanel.getRef(),
     });
   }
 
@@ -318,6 +322,18 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         .setOption('showHeader', true)
         .build(),
     });
+  }
+
+  public commitChanges() {
+    const sourcePanel = this.state.sourcePanel.resolve();
+
+    if (sourcePanel.parent instanceof SceneGridItem) {
+      sourcePanel.parent.setState({
+        body: this.state.panel.clone({
+          $data: this.state.$data?.clone(),
+        }),
+      });
+    }
   }
 
   public static Component = ({ model }: SceneComponentProps<VizPanelManager>) => {
