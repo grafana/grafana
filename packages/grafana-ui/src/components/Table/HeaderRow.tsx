@@ -49,7 +49,7 @@ function renderHeaderCell(
   column: any,
   tableStyles: TableStyles,
   showTypeIcons?: boolean,
-  CustomHeaderComponent?: React.ReactElement
+  customHeaderComponent?: React.ReactElement
 ) {
   const headerProps = column.getHeaderProps();
   const field = column.field ?? null;
@@ -60,7 +60,6 @@ function renderHeaderCell(
 
   headerProps.style.position = 'absolute';
   headerProps.style.justifyContent = column.justifyContent;
-  console.log('customHeaderComponent', CustomHeaderComponent);
 
   return (
     <div className={tableStyles.headerCell} {...headerProps} role="columnheader">
@@ -84,7 +83,7 @@ function renderHeaderCell(
       {!column.canSort && column.render('Header')}
       {!column.canSort && column.canFilter && <Filter column={column} tableStyles={tableStyles} field={field} />}
       {column.canResize && <div {...column.getResizerProps()} className={tableStyles.resizeHandle} />}
-      {CustomHeaderComponent && CustomHeaderComponent}
+      {customHeaderComponent && customHeaderComponent}
     </div>
   );
 }

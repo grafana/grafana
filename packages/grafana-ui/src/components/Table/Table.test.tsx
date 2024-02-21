@@ -673,4 +673,22 @@ describe('Table', () => {
       expect(selected).toBeVisible();
     });
   });
+
+  describe('when mounted with custom header icons', () => {
+    it('the custom icons should be rendered in the right field', async () => {
+      const headerIconMap = new Map();
+      headerIconMap.set(2, <span role={'menuitem'}>Icon!</span>);
+      getTestContext({
+        columnHeaders: headerIconMap,
+      });
+      expect(getTable()).toBeInTheDocument();
+
+      const rows = within(getTable()).getAllByRole('row');
+      expect(rows).toHaveLength(5);
+
+      let selected = within(within(getTable()).getAllByRole('columnheader')[2]).getByRole('menuitem');
+      expect(selected).toBeVisible();
+      expect(within(selected).getByText('Icon!')).toBeInTheDocument();
+    });
+  });
 });
