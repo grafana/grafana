@@ -48,20 +48,20 @@ func TestRegistry_CleanUpOrphanedExternalServices(t *testing.T) {
 			name: "should not clean up when every service registered",
 			init: func(te *TestEnv) {
 				// Have registered two services one requested a service account, the other requested to be an oauth client
-				te.r.extSvcProviders = map[string]extsvcauth.AuthProvider{"sa-svc": extsvcauth.ServiceAccounts, "oauth-svc": extsvcauth.OAuth2Server}
+				te.r.extSvcProviders = map[string]extsvcauth.AuthProvider{"sa-svc": extsvcauth.ServiceAccounts}
 
 				// Also return the external service account attached to the OAuth Server
-				te.saReg.On("GetExternalServiceNames", mock.Anything).Return([]string{"sa-svc", "oauth-svc"}, nil)
+				te.saReg.On("GetExternalServiceNames", mock.Anything).Return([]string{"sa-svc"}, nil)
 			},
 		},
 		{
 			name: "should clean up an orphaned service account",
 			init: func(te *TestEnv) {
 				// Have registered two services one requested a service account, the other requested to be an oauth client
-				te.r.extSvcProviders = map[string]extsvcauth.AuthProvider{"sa-svc": extsvcauth.ServiceAccounts, "oauth-svc": extsvcauth.OAuth2Server}
+				te.r.extSvcProviders = map[string]extsvcauth.AuthProvider{"sa-svc": extsvcauth.ServiceAccounts}
 
 				// Also return the external service account attached to the OAuth Server
-				te.saReg.On("GetExternalServiceNames", mock.Anything).Return([]string{"sa-svc", "orphaned-sa-svc", "oauth-svc"}, nil)
+				te.saReg.On("GetExternalServiceNames", mock.Anything).Return([]string{"sa-svc", "orphaned-sa-svc"}, nil)
 
 				te.saReg.On("RemoveExternalService", mock.Anything, "orphaned-sa-svc").Return(nil)
 			},
