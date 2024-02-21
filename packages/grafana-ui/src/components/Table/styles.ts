@@ -75,7 +75,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
         alignItems: 'center',
         height: '100%',
         padding: theme.spacing(1, 0.5, 1, 0.5),
-        //background: background ? 'none' : theme.colors.emphasize(theme.colors.background.primary, 0.03),
+        background: background ? 'none' : theme.colors.emphasize(theme.colors.background.primary, 0.03),
 
         svg: {
           color,

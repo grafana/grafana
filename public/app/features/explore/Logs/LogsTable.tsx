@@ -174,11 +174,6 @@ export function LogsTable(props: Props) {
       onCellFilterAdded={props.onClickFilterLabel && props.onClickFilterOutLabel ? onCellFilterAdded : undefined}
       height={props.height}
       footerOptions={{ show: true, reducer: ['count'], countRows: true }}
-      rowBackgroundColors={{
-        0: 'red',
-        10: 'blue',
-        15: '#ff00ff',
-      }}
     />
   );
 }

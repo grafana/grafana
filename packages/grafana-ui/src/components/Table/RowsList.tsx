@@ -45,7 +45,7 @@ interface RowsListProps {
   timeRange?: TimeRange;
   footerPaginationEnabled: boolean;
   initialRowIndex?: number;
-  rowBackgroundColors: Record<number, string>;
+  rowStyles?: Map<number, React.CSSProperties>;
 }
 
 export const RowsList = (props: RowsListProps) => {
@@ -69,7 +69,7 @@ export const RowsList = (props: RowsListProps) => {
     listRef,
     enableSharedCrosshair = false,
     initialRowIndex = undefined,
-    rowBackgroundColors = {},
+    rowStyles = new Map(),
   } = props;
 
   const [rowHighlightIndex, setRowHighlightIndex] = useState<number | undefined>(initialRowIndex);
@@ -219,8 +219,8 @@ export const RowsList = (props: RowsListProps) => {
           'aria-selected': 'true',
         };
       }
-      if (rowBackgroundColors[row.index]) {
-        style = { ...style, backgroundColor: rowBackgroundColors[row.index] };
+      if (rowStyles.has(row.index)) {
+        style = { ...style, ...rowStyles.get(row.index) };
       }
       return (
         <div
@@ -269,6 +269,7 @@ export const RowsList = (props: RowsListProps) => {
       theme.components.table.rowHoverBackground,
       timeRange,
       width,
+      rowStyles,
     ]
   );
 
