@@ -180,17 +180,26 @@ There are some differences between Grafana Alerting and legacy dashboard alerts,
 
 1. `NoData` and `Error` settings are upgraded as is to the corresponding settings in Grafana Alerting, except in two situations:
 
-   - As there is no `Keep Last State` option in Grafana Alerting, this option becomes either [`NoData` or `Error`](/docs/sources/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling). If using the `Simple Upgrade Method` Grafana automatically creates a 1 year silence for each alert rule with this configuration. If the alert evaluation returns no data or fails (error or timeout), then it creates a [special alert](/docs/sources/alerting/fundamentals/alert-rules/state-and-health/#special-alerts-for-nodata-and-error), which will be silenced by the silence created during the upgrade.
-   - Due to lack of validation, legacy alert rules imported via JSON or provisioned along with dashboards can contain arbitrary values for [`NoData` or `Error`](/docs/sources/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling). In this situation, Grafana will use the default setting: `NoData` for No data, and `Error` for Error.
+   - As there is no `Keep Last State` option in Grafana Alerting, this option becomes either [`NoData` or `Error`][alerting_config_error_handling]. If using the `Simple Upgrade Method` Grafana automatically creates a 1 year silence for each alert rule with this configuration. If the alert evaluation returns no data or fails (error or timeout), then it creates a [special alert][special_alert], which will be silenced by the silence created during the upgrade.
+   - Due to lack of validation, legacy alert rules imported via JSON or provisioned along with dashboards can contain arbitrary values for [`NoData` or `Error`][alerting_config_error_handling]. In this situation, Grafana will use the default setting: `NoData` for No data, and `Error` for Error.
 
-1. Notification channels are upgraded to an Alertmanager configuration with the appropriate routes and receivers.
+2. Notification channels are upgraded to an Alertmanager configuration with the appropriate routes and receivers.
 
-1. Unlike legacy dashboard alerts where images in notifications are enabled per contact point, images in notifications for Grafana Alerting must be enabled in the Grafana configuration, either in the configuration file or environment variables, and are enabled for either all or no contact points.
+3. Unlike legacy dashboard alerts where images in notifications are enabled per contact point, images in notifications for Grafana Alerting must be enabled in the Grafana configuration, either in the configuration file or environment variables, and are enabled for either all or no contact points.
 
-1. The JSON format for webhook notifications has changed in Grafana Alerting and uses the format from [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config).
+4. The JSON format for webhook notifications has changed in Grafana Alerting and uses the format from [Prometheus Alertmanager](https://prometheus.io/docs/alerting/latest/configuration/#webhook_config).
 
-1. Alerting on Prometheus `Both` type queries is not supported in Grafana Alerting. Existing legacy alerts with `Both` type queries are upgraded to Grafana Alerting as alerts with `Range` type queries.
+5. Alerting on Prometheus `Both` type queries is not supported in Grafana Alerting. Existing legacy alerts with `Both` type queries are upgraded to Grafana Alerting as alerts with `Range` type queries.
 
 **Limitations**
 
 1. Since `Hipchat` and `Sensu` notification channels are no longer supported, legacy alerts associated with these channels are not automatically upgraded to Grafana Alerting. Assign the legacy alerts to a supported notification channel so that you continue to receive notifications for those alerts.
+
+{{% docs/reference %}}
+[alerting_config_error_handling]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling"
+[alerting_config_error_handling]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling"
+
+[special_alert]: "/docs/grafana/ -> /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/state-and-health/#special-alerts-for-nodata-and-error"
+[special_alert]: "/docs/grafana-cloud/ -> /docs/grafana-cloud/alerting-and-irm/alerting/alerting/fundamentals/alert-rules/state-and-health/#special-alerts-for-nodata-and-error"
+{{% /docs/reference %}}
+
