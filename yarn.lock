@@ -4009,7 +4009,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/icons@workspace:*, @grafana/icons@workspace:^, @grafana/icons@workspace:packages/grafana-icons":
+"@grafana/icons@npm:0.0.0, @grafana/icons@workspace:*, @grafana/icons@workspace:packages/grafana-icons":
   version: 0.0.0-use.local
   resolution: "@grafana/icons@workspace:packages/grafana-icons"
   dependencies:
@@ -4381,7 +4381,7 @@ __metadata:
     "@grafana/data": "npm:11.0.0-pre"
     "@grafana/e2e-selectors": "npm:11.0.0-pre"
     "@grafana/faro-web-sdk": "npm:^1.3.6"
-    "@grafana/icons": "workspace:^"
+    "@grafana/icons": "npm:0.0.0"
     "@grafana/schema": "npm:11.0.0-pre"
     "@grafana/tsconfig": "npm:^1.2.0-rc1"
     "@leeoniya/ufuzzy": "npm:1.0.14"
@@ -8795,6 +8795,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@swc/core-darwin-arm64@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@swc/core-darwin-arm64@npm:1.4.0"
+  conditions: os=darwin & cpu=arm64
+  languageName: node
+  linkType: hard
+
 "@swc/core-darwin-arm64@npm:1.4.1":
   version: 1.4.1
   resolution: "@swc/core-darwin-arm64@npm:1.4.1"
@@ -10168,7 +10175,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:20.11.19, @types/node@npm:^20.11.16":
+"@types/node@npm:20.11.19, @types/node@npm:^20.11.10, @types/node@npm:^20.11.16":
   version: 20.11.19
   resolution: "@types/node@npm:20.11.19"
   dependencies:
