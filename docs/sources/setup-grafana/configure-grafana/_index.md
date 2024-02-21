@@ -2178,7 +2178,7 @@ Configures the height of the rendered image. The default height is `500`.
 
 ### default_image_scale
 
-To configure the scale of the rendered image. The default scale is 1.
+Configures the scale of the rendered image. The default scale is `1`.
 
 ## [panels]
 
