@@ -18,7 +18,7 @@ type PrometheusQueyHandler struct {
 	field string
 }
 
-//go:embed dataquery.json
+//go:embed dataquery.types.json
 var f embed.FS
 
 func NewQueryHandler() (*PrometheusQueyHandler, error) {
@@ -50,7 +50,7 @@ func NewQueryHandler() (*PrometheusQueyHandler, error) {
 
 // QueryTypes implements query.TypedQueryHandler.
 func (h *PrometheusQueyHandler) QueryTypeDefinitionsJSON() (json.RawMessage, error) {
-	return f.ReadFile("dataquery.json")
+	return f.ReadFile("dataquery.types.json")
 }
 
 // QueryTypes implements query.TypedQueryHandler.

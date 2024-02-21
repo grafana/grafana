@@ -14,9 +14,8 @@ import (
 func TestQueryTypeDefinitions(t *testing.T) {
 	builder, err := schema.NewSchemaBuilder(
 		schema.BuilderOptions{
-			BasePackage:        "github.com/grafana/grafana/pkg/registry/apis/query/expr",
-			CodePath:           "./",
-			DiscriminatorField: "queryType",
+			BasePackage: "github.com/grafana/grafana/pkg/registry/apis/query/expr",
+			CodePath:    "./",
 			// We need to identify the enum fields explicitly :(
 			// *AND* have the +enum common for this to work
 			Enums: []reflect.Type{
@@ -27,8 +26,8 @@ func TestQueryTypeDefinitions(t *testing.T) {
 	require.NoError(t, err)
 	err = builder.AddQueries(
 		schema.QueryTypeInfo{
-			Discriminator: string(QueryTypeMath),
-			GoType:        reflect.TypeOf(&MathQuery{}),
+			Discriminators: schema.NewDiscriminators("queryType", QueryTypeMath),
+			GoType:         reflect.TypeOf(&MathQuery{}),
 			Examples: []schema.QueryExample{
 				{
 					Name: "constant addition",
@@ -45,8 +44,8 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			},
 		},
 		schema.QueryTypeInfo{
-			Discriminator: string(QueryTypeReduce),
-			GoType:        reflect.TypeOf(&ReduceQuery{}),
+			Discriminators: schema.NewDiscriminators("queryType", QueryTypeReduce),
+			GoType:         reflect.TypeOf(&ReduceQuery{}),
 			Examples: []schema.QueryExample{
 				{
 					Name: "get max value",
@@ -61,8 +60,8 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			},
 		},
 		schema.QueryTypeInfo{
-			Discriminator: string(QueryTypeResample),
-			GoType:        reflect.TypeOf(&ResampleQuery{}),
+			Discriminators: schema.NewDiscriminators("queryType", QueryTypeResample),
+			GoType:         reflect.TypeOf(&ResampleQuery{}),
 			Examples: []schema.QueryExample{
 				{
 					Name: "resample at a every day",
@@ -74,8 +73,8 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			},
 		},
 		schema.QueryTypeInfo{
-			Discriminator: string(QueryTypeClassic),
-			GoType:        reflect.TypeOf(&ClassicQuery{}),
+			Discriminators: schema.NewDiscriminators("queryType", QueryTypeClassic),
+			GoType:         reflect.TypeOf(&ClassicQuery{}),
 			Examples: []schema.QueryExample{
 				{
 					Name: "do classic query (TODO)",
@@ -87,8 +86,8 @@ func TestQueryTypeDefinitions(t *testing.T) {
 			},
 		},
 		schema.QueryTypeInfo{
-			Discriminator: string(QueryTypeThreshold),
-			GoType:        reflect.TypeOf(&ThresholdQuery{}),
+			Discriminators: schema.NewDiscriminators("queryType", QueryTypeThreshold),
+			GoType:         reflect.TypeOf(&ThresholdQuery{}),
 			Examples: []schema.QueryExample{
 				{
 					Name: "TODO... a threshold query",
@@ -101,7 +100,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	builder.UpdateQueryDefinition(t, "models.json")
+	builder.UpdateQueryDefinition(t, "models.types.json")
 
 	// qt, err := NewExpressionQueryReader(featuremgmt.WithFeatures())
 	// require.NoError(t, err)

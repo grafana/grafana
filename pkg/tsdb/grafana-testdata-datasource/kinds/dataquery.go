@@ -18,7 +18,7 @@ type TestdataQueryHandler struct {
 	field string
 }
 
-//go:embed dataquery.json
+//go:embed dataquery.types.json
 var f embed.FS
 
 func NewQueryHandler() (*TestdataQueryHandler, error) {
@@ -50,7 +50,7 @@ func NewQueryHandler() (*TestdataQueryHandler, error) {
 
 // QueryTypes implements query.TypedQueryHandler.
 func (h *TestdataQueryHandler) QueryTypeDefinitionsJSON() (json.RawMessage, error) {
-	return f.ReadFile("dataquery.json")
+	return f.ReadFile("dataquery.types.json")
 }
 
 // QueryTypes implements query.TypedQueryHandler.

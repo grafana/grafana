@@ -43,7 +43,7 @@ func TestQueryTypeDefinitions(t *testing.T) {
 	)
 
 	require.NoError(t, err)
-	builder.UpdateQueryDefinition(t, "dataquery.json")
+	builder.UpdateQueryDefinition(t, "dataquery.types.json")
 
 	qt, err := NewQueryHandler()
 	require.NoError(t, err)

@@ -110,6 +110,11 @@ export function preparePlotFrame(frames: DataFrame[], dimFields: XYFieldMatchers
     joinBy: dimFields.x,
     keep: dimFields.y,
     keepOriginIndices: true,
+
+    // the join transformer force-deletes our state.displayName cache unless keepDisplayNames: true
+    // https://github.com/grafana/grafana/pull/31121
+    // https://github.com/grafana/grafana/pull/71806
+    keepDisplayNames: true,
   });
 
   if (alignedFrame) {

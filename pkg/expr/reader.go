@@ -148,11 +148,11 @@ func (h *ExpressionQueryReader) ReadQuery(
 	return eq, err
 }
 
-//go:embed models.json
+//go:embed models.types.json
 var f embed.FS
 
 func (h *ExpressionQueryReader) QueryTypeDefinitionListJSON() ([]byte, error) {
-	return f.ReadFile("models.json")
+	return f.ReadFile("models.types.json")
 }
 
 func getReferenceVar(exp string, refId string) (string, error) {
