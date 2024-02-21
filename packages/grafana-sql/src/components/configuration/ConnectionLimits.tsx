@@ -118,7 +118,7 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
         <Input
           type="number"
           placeholder="unlimited"
-          defaultValue={jsonData.maxOpenConns}
+          value={jsonData.maxOpenConns}
           onChange={(e) => {
             const newVal = toNumber(e.currentTarget.value);
             if (!Number.isNaN(newVal)) {
@@ -179,7 +179,7 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
           <Input
             type="number"
             placeholder="2"
-            defaultValue={jsonData.maxIdleConns}
+            value={jsonData.maxIdleConns}
             onChange={(e) => {
               const newVal = toNumber(e.currentTarget.value);
               if (!Number.isNaN(newVal)) {
@@ -214,7 +214,7 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
         <Input
           type="number"
           placeholder="14400"
-          defaultValue={jsonData.connMaxLifetime}
+          value={jsonData.connMaxLifetime}
           onChange={(e) => {
             const newVal = toNumber(e.currentTarget.value);
             if (!Number.isNaN(newVal)) {
