@@ -503,7 +503,7 @@ steps:
   - chmod +x bin/grabpl
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
-    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"\##❌ Failed to run Playwright
+    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"##❌ Failed to run Playwright
     plugin e2e tests $${E2E_PLAYWRIGHT_REPORT_URL}\"}"'
   environment:
     E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
@@ -903,7 +903,7 @@ steps:
   - chmod +x bin/grabpl
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
-    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"\##❌ Failed to run Playwright
+    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"##❌ Failed to run Playwright
     plugin e2e tests $${E2E_PLAYWRIGHT_REPORT_URL}\"}"'
   environment:
     E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
@@ -1834,7 +1834,7 @@ steps:
   - chmod +x bin/grabpl
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
-    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"\##❌ Failed to run Playwright
+    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"##❌ Failed to run Playwright
     plugin e2e tests $${E2E_PLAYWRIGHT_REPORT_URL}\"}"'
   environment:
     E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
@@ -2331,7 +2331,7 @@ steps:
   - chmod +x bin/grabpl
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
-    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"\##❌ Failed to run Playwright
+    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"##❌ Failed to run Playwright
     plugin e2e tests $${E2E_PLAYWRIGHT_REPORT_URL}\"}"'
   environment:
     E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
@@ -2671,7 +2671,7 @@ steps:
   - chmod +x bin/grabpl
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
-    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"\##❌ Failed to run Playwright
+    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"##❌ Failed to run Playwright
     plugin e2e tests $${E2E_PLAYWRIGHT_REPORT_URL}\"}"'
   environment:
     E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
@@ -4141,7 +4141,7 @@ steps:
   - chmod +x bin/grabpl
   - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
     -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
-    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"\##❌ Failed to run Playwright
+    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"##❌ Failed to run Playwright
     plugin e2e tests $${E2E_PLAYWRIGHT_REPORT_URL}\"}"'
   environment:
     E2E_PLAYWRIGHT_REPORT_URL: https://storage.googleapis.com/releng-pipeline-artifacts-dev/162160/playwright-report/index.html
@@ -4928,6 +4928,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: f104e48f5913b0e85ee8fa1cbcdc6d7fd01acb44b7e3fdf90f0c9e08ce69e50d
+hmac: afe058c6723e1374fa3ac5ace1bdb225fb7fc354e9e6afe4ee31f64cf0215fb8
 
 ...
