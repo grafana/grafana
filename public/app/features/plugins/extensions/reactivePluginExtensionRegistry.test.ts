@@ -155,8 +155,6 @@ describe('createPluginExtensionsRegistry', () => {
     });
   });
 
-  it('should be possible to asynchronously register extensions for the same placement (same plugin)', async () => {});
-
   it('should be possible to asynchronously register extensions for a different placement (different plugin)', async () => {
     const pluginId1 = 'grafana-basic-app';
     const pluginId2 = 'grafana-basic-app2';
@@ -242,6 +240,8 @@ describe('createPluginExtensionsRegistry', () => {
     });
   });
 
+  it('should be possible to asynchronously register extensions for the same placement (same plugin)', async () => {});
+  
   it('should be possible to asynchronously register extensions for a different placement (same plugin)', async () => {});
 
   it('should notify subscribers when the registry changes', async () => {});
