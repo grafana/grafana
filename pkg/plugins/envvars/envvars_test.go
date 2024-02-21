@@ -677,7 +677,6 @@ func TestService_GetConfigMap_Defaults(t *testing.T) {
 	}
 
 	require.Equal(t, map[string]string{
-		"GF_SQL_ROW_LIMIT":                         "0",
 		"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "0",
 		"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "0",
 		"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "0",
@@ -838,10 +837,9 @@ func TestService_GetConfigMap_SQL(t *testing.T) {
 		})
 	})
 
-	t.Run("Uses the configured values, even when they are zero", func(t *testing.T) {
+	t.Run("Uses the configured max-default-values, even when they are zero", func(t *testing.T) {
 		s := &Service{
 			cfg: &config.Cfg{
-				DataProxyRowLimit:                   0,
 				SqlDatasourceMaxOpenConnsDefault:    0,
 				SqlDatasourceMaxIdleConnsDefault:    0,
 				SqlDatasourceMaxConnLifetimeDefault: 0,
@@ -849,7 +847,6 @@ func TestService_GetConfigMap_SQL(t *testing.T) {
 		}
 
 		require.Equal(t, map[string]string{
-			"GF_SQL_ROW_LIMIT":                         "0",
 			"GF_SQL_MAX_OPEN_CONNS_DEFAULT":            "0",
 			"GF_SQL_MAX_IDLE_CONNS_DEFAULT":            "0",
 			"GF_SQL_MAX_CONN_LIFETIME_SECONDS_DEFAULT": "0",
