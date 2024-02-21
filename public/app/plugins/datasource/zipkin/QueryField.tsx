@@ -5,7 +5,6 @@ import { useAsyncFn, useMount, useMountedState } from 'react-use';
 import { AsyncState } from 'react-use/lib/useAsyncFn';
 
 import { GrafanaTheme2, QueryEditorProps } from '@grafana/data';
-import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import {
   ButtonCascader,
   CascaderOption,
@@ -20,6 +19,9 @@ import {
   HorizontalGroup,
   Button,
 } from '@grafana/ui';
+import { notifyApp } from 'app/core/actions';
+import { createErrorNotification } from 'app/core/copy/appNotification';
+import { dispatch } from 'app/store/store';
 
 import { apiPrefix } from './constants';
 import { ZipkinDatasource } from './datasource';
@@ -38,11 +40,10 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 export const ZipkinQueryField = ({ query, onChange, onRunQuery, datasource }: Props) => {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [alertText, setAlertText] = useState('');
-  const serviceOptions = useServices(datasource, setAlertText);
+  const serviceOptions = useServices(datasource);
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { onLoadOptions, allOptions } = useLoadOptions(datasource, setAlertText);
+  const { onLoadOptions, allOptions } = useLoadOptions(datasource);
 
   const onSelectTrace = useCallback(
     (values: string[], selectedOptions: CascaderOption[]) => {
@@ -137,16 +138,12 @@ export const ZipkinQueryField = ({ query, onChange, onRunQuery, datasource }: Pr
           </div>
         </InlineFieldRow>
       )}
-      {alertText && <TemporaryAlert text={alertText} severity={'error'} />}
     </>
   );
 };
 
 // Exported for tests
-export function useServices(
-  datasource: ZipkinDatasource,
-  setErrorText: (text: string) => void
-): AsyncState<CascaderOption[]> {
+export function useServices(datasource: ZipkinDatasource): AsyncState<CascaderOption[]> {
   const url = `${apiPrefix}/services`;
 
   const [servicesOptions, fetch] = useAsyncFn(async (): Promise<CascaderOption[]> => {
@@ -162,8 +159,7 @@ export function useServices(
       return [];
     } catch (error) {
       const errorToShow = error instanceof Error ? error : 'An unknown error occurred';
-      const errorText = `Failed to load spans from Zipkin: ${errorToShow.toString()}`;
-      setErrorText(errorText);
+      dispatch(notifyApp(createErrorNotification('Failed to load services from Zipkin', errorToShow)));
       throw error;
     }
   }, [datasource]);
@@ -185,7 +181,7 @@ type OptionsState = {
 };
 
 // Exported for tests
-export function useLoadOptions(datasource: ZipkinDatasource, setErrorText: (text: string) => void) {
+export function useLoadOptions(datasource: ZipkinDatasource) {
   const isMounted = useMountedState();
   const [allOptions, setAllOptions] = useState<OptionsState>({});
 
@@ -208,8 +204,7 @@ export function useLoadOptions(datasource: ZipkinDatasource, setErrorText: (text
         }
       } catch (error) {
         const errorToShow = error instanceof Error ? error : 'An unknown error occurred';
-        const errorText = `Failed to load spans from Zipkin: ${errorToShow.toString()}`;
-        setErrorText(errorText);
+        dispatch(notifyApp(createErrorNotification('Failed to load spans from Zipkin', errorToShow)));
         throw error;
       }
     },
@@ -251,8 +246,7 @@ export function useLoadOptions(datasource: ZipkinDatasource, setErrorText: (text
         }
       } catch (error) {
         const errorToShow = error instanceof Error ? error : 'An unknown error occurred';
-        const errorText = `Failed to load spans from Zipkin: ${errorToShow.toString()}`;
-        setErrorText(errorText);
+        dispatch(notifyApp(createErrorNotification('Failed to load spans from Zipkin', errorToShow)));
         throw error;
       }
     },
