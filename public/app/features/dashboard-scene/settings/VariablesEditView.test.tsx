@@ -201,6 +201,24 @@ describe('VariablesEditView', () => {
       expect(variableView.getVariables()[3].state.type).toBe('query');
     });
 
+    it('should validate variable name', () => {
+      const variables = variableView.getVariables();
+      const variable1 = variables[0].state;
+      const variable2 = variables[1].state;
+      // should return false if name and key matches
+      expect(variableView.onValidateVariableName(variable1.name, variable1.key)[0]).toBe(false);
+      // should return false if name is unique
+      expect(variableView.onValidateVariableName('uniqueVariableName', variable1.key)[0]).toBe(false);
+      // should return true if name starts with __ (reserved for global variable)
+      expect(variableView.onValidateVariableName('__', variable1.key)[0]).toBe(true);
+      // should return true if name is empty
+      expect(variableView.onValidateVariableName('', variable1.key)[0]).toBe(true);
+      // should return true if non word characters are used
+      expect(variableView.onValidateVariableName('-', variable1.key)[0]).toBe(true);
+      // should return true if variable name is taken
+      expect(variableView.onValidateVariableName(variable2.name, variable1.key)[0]).toBe(true);
+    });
+
     afterEach(() => {
       jest.clearAllMocks();
     });
