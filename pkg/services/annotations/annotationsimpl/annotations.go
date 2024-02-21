@@ -51,7 +51,7 @@ func (r *RepositoryImpl) Update(ctx context.Context, item *annotations.Item) err
 }
 
 func (r *RepositoryImpl) Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
-	resources, err := r.authZ.Authorize(ctx, query.OrgID, query.SignedInUser)
+	resources, err := r.authZ.Authorize(ctx, query.OrgID, query)
 	if err != nil {
 		return make([]*annotations.ItemDTO, 0), err
 	}
