@@ -140,7 +140,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('VizPanelManager', () => {
-  describe('changePluginType', () => {
+  describe('When changing plugin', () => {
     it('Should successfully change from one viz type to another', () => {
       const { vizPanelManager } = setupTest('panel-1');
       expect(vizPanelManager.state.panel.state.pluginId).toBe('timeseries');

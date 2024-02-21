@@ -113,7 +113,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     }
   }
 
-  public changePluginType(pluginType: string) {
+  public changePluginType(pluginId: string) {
     const {
       options: prevOptions,
       fieldConfig: prevFieldConfig,
@@ -122,16 +122,19 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     } = sceneUtils.cloneSceneObjectState(this.state.panel.state);
 
     // clear custom options
-    let newFieldConfig = { ...prevFieldConfig };
-    newFieldConfig.defaults = {
-      ...newFieldConfig.defaults,
-      custom: {},
+    let newFieldConfig: FieldConfigSource = {
+      defaults: {
+        ...prevFieldConfig.defaults,
+        custom: {},
+      },
+      overrides: filterFieldConfigOverrides(prevFieldConfig.overrides, isStandardFieldProp),
     };
-    newFieldConfig.overrides = filterFieldConfigOverrides(newFieldConfig.overrides, isStandardFieldProp);
 
     this._cachedPluginOptions[prevPluginId] = { options: prevOptions, fieldConfig: prevFieldConfig };
-    const cachedOptions = this._cachedPluginOptions[pluginType]?.options;
-    const cachedFieldConfig = this._cachedPluginOptions[pluginType]?.fieldConfig;
+
+    const cachedOptions = this._cachedPluginOptions[pluginId]?.options;
+    const cachedFieldConfig = this._cachedPluginOptions[pluginId]?.fieldConfig;
+
     if (cachedFieldConfig) {
       newFieldConfig = restoreCustomOverrideRules(newFieldConfig, cachedFieldConfig);
     }
@@ -139,12 +142,12 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     const newPanel = new VizPanel({
       options: cachedOptions ?? {},
       fieldConfig: newFieldConfig,
-      pluginId: pluginType,
+      pluginId: pluginId,
       ...restOfOldState,
     });
 
     // When changing from non-data to data panel, we need to add a new data provider
-    if (!this.state.$data && !config.panels[pluginType].skipDataQuery) {
+    if (!this.state.$data && !config.panels[pluginId].skipDataQuery) {
       let ds = getLastUsedDatasourceFromStorage(getDashboardSceneFor(this).state.uid!)?.datasourceUid;
 
       if (!ds) {
@@ -170,7 +173,7 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
       options: newPanel.state.options,
       fieldConfig: newPanel.state.fieldConfig,
       id: 1,
-      type: pluginType,
+      type: pluginId,
     };
 
     const newOptions = newPlugin?.onPanelTypeChanged?.(panel, prevPluginId, prevOptions, prevFieldConfig);
