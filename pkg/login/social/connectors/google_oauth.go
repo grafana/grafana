@@ -308,5 +308,5 @@ func (s *SocialGoogle) isHDAllowed(hd string) error {
 		}
 	}
 
-	return errutil.Forbidden("the hd claim found in the ID token is not present in the allowed domains")
+	return errutil.Forbidden("the hd claim found in the ID token is not present in the allowed domains", errutil.WithPublicMessage("Invalid domain"))
 }
