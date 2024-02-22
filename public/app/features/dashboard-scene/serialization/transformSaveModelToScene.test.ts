@@ -49,6 +49,7 @@ import { NEW_LINK } from '../settings/links/utils';
 import { getQueryRunnerFor } from '../utils/utils';
 
 import { buildNewDashboardSaveModel } from './buildNewDashboardSaveModel';
+import { GRAFANA_DATASOURCE_REF } from './const';
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
 import repeatingRowsAndPanelsDashboardJson from './testfiles/repeating_rows_and_panels.json';
 import {
@@ -56,6 +57,7 @@ import {
   buildGridItemForPanel,
   createSceneVariableFromVariableModel,
   transformSaveModelToScene,
+  convertOldSnapshotToScenesSnapshot,
 } from './transformSaveModelToScene';
 
 describe('transformSaveModelToScene', () => {
@@ -1078,6 +1080,52 @@ describe('transformSaveModelToScene', () => {
       const dataLayers = scene.state.$data as SceneDataLayers;
       expect(dataLayers.state.layers).toHaveLength(5);
       expect(dataLayers.state.layers[4].state.name).toBe('Alert States');
+    });
+  });
+
+  describe('when rendering a legacy snapshot as scene', () => {
+    it('should convert snapshotData to snapshot inside targets', () => {
+      const panel = createPanelSaveModel({
+        title: 'test',
+        gridPos: { x: 1, y: 0, w: 12, h: 8 },
+        // @ts-ignore
+        snapshotData: [
+          {
+            fields: [
+              {
+                name: 'Field 1',
+                type: 'time',
+                values: ['value1', 'value2'],
+                config: {},
+              },
+              {
+                name: 'Field 2',
+                type: 'number',
+                values: [1],
+                config: {},
+              },
+            ],
+          },
+        ],
+      }) as Panel;
+
+      const oldPanelModel = new PanelModel(panel);
+      convertOldSnapshotToScenesSnapshot(oldPanelModel);
+
+      expect(oldPanelModel.snapshotData?.length).toStrictEqual(0);
+      expect(oldPanelModel.targets.length).toStrictEqual(1);
+      expect(oldPanelModel.datasource).toStrictEqual(GRAFANA_DATASOURCE_REF);
+      expect(oldPanelModel.targets[0].datasource).toStrictEqual(GRAFANA_DATASOURCE_REF);
+      expect(oldPanelModel.targets[0].queryType).toStrictEqual('snapshot');
+      // @ts-ignore
+      expect(oldPanelModel.targets[0].snapshot.length).toBe(1);
+      // @ts-ignore
+      expect(oldPanelModel.targets[0].snapshot[0].data.values).toStrictEqual([['value1', 'value2'], [1]]);
+      // @ts-ignore
+      expect(oldPanelModel.targets[0].snapshot[0].schema.fields).toStrictEqual([
+        { config: {}, name: 'Field 1', type: 'time' },
+        { config: {}, name: 'Field 2', type: 'number' },
+      ]);
     });
   });
 });
