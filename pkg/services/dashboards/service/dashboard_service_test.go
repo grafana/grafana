@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -13,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
