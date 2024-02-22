@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import {get, groupBy, maxBy} from 'lodash';
+import { get, groupBy } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
