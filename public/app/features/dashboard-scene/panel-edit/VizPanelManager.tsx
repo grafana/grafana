@@ -26,7 +26,7 @@ import {
   SceneGridItem,
   SceneObjectRef,
 } from '@grafana/scenes';
-import { DataQuery, DataTransformerConfig } from '@grafana/schema';
+import { DataQuery, DataTransformerConfig, Panel } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { getPluginVersion } from 'app/features/dashboard/state/PanelModel';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
@@ -36,6 +36,7 @@ import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
+import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
 interface VizPanelManagerState extends SceneObjectState {
@@ -334,6 +335,25 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
         }),
       });
     }
+  }
+
+  /**
+   * Used from inspect json tab to view the current persisted model
+   */
+  public getPanelSaveModel(): Panel | object {
+    const sourcePanel = this.state.sourcePanel.resolve();
+
+    if (sourcePanel.parent instanceof SceneGridItem) {
+      const parentClone = sourcePanel.parent.clone({
+        body: this.state.panel.clone({
+          $data: this.state.$data?.clone(),
+        }),
+      });
+
+      return gridItemToPanel(parentClone);
+    }
+
+    return { error: 'Unsupported panel parent' };
   }
 
   public static Component = ({ model }: SceneComponentProps<VizPanelManager>) => {
