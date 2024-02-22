@@ -708,6 +708,27 @@ steps:
     - success
     - failure
 - commands:
+  - if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi
+  - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
+    -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
+    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"❌ Failed to run Playwright
+    plugin e2e tests. <br /> <br /> Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to
+    browse the Playwright report and trace viewer. <br /> For information on how to
+    run Playwright tests locally, refer to the [Developer guide](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests).
+    \"}"'
+  depends_on:
+  - playwright-e2e-report-upload
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: byrnedo/alpine-curl:0.1.8
+  name: playwright-e2e-report-post-comment
+  when:
+    status:
+    - success
+    - failure
+- commands:
   - if [ -z `find ./e2e -type f -name *spec.ts.mp4` ]; then echo 'missing videos';
     false; fi
   - apt-get update
@@ -2045,6 +2066,27 @@ steps:
   failure: ignore
   image: google/cloud-sdk:431.0.0
   name: playwright-e2e-report-upload
+  when:
+    status:
+    - success
+    - failure
+- commands:
+  - if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi
+  - 'curl -L -X POST https://api.github.com/repos/grafana/grafana/issues/${DRONE_PULL_REQUEST}/comments
+    -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $${GITHUB_TOKEN}"
+    -H "X-GitHub-Api-Version: 2022-11-28" -d "{\"body\":\"❌ Failed to run Playwright
+    plugin e2e tests. <br /> <br /> Click [here]($${E2E_PLAYWRIGHT_REPORT_URL}) to
+    browse the Playwright report and trace viewer. <br /> For information on how to
+    run Playwright tests locally, refer to the [Developer guide](https://github.com/grafana/grafana/blob/main/contribute/developer-guide.md#to-run-the-playwright-tests).
+    \"}"'
+  depends_on:
+  - playwright-e2e-report-upload
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: byrnedo/alpine-curl:0.1.8
+  name: playwright-e2e-report-post-comment
   when:
     status:
     - success
@@ -4960,6 +5002,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 8c5613c19cfc21be92371c771b75455de274786d5148d0b66089d9f0aeedadeb
+hmac: a5a6c760ba9a2fc2ad1556d71de7416e8650c47fccdd605ec5fc1ddb17c79dcf
 
 ...
