@@ -376,7 +376,6 @@ def playwright_e2e_report_upload():
         },
         "environment": {
             "GCP_GRAFANA_UPLOAD_ARTIFACTS_KEY": from_secret(gcp_upload_artifacts_key),
-            "GITHUB_TOKEN": from_secret("github_token"),
         },
         "commands": [
             "apt-get update",
@@ -386,6 +385,27 @@ def playwright_e2e_report_upload():
             "gsutil cp -r ./playwright-report/. gs://releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report",
             "export E2E_PLAYWRIGHT_REPORT_URL=https://storage.googleapis.com/releng-pipeline-artifacts-dev/${DRONE_BUILD_NUMBER}/playwright-report/index.html",
             'echo "E2E Playwright report uploaded to: \n $${E2E_PLAYWRIGHT_REPORT_URL}"',
+        ],
+    }
+
+def playwright_e2e_report_post_link():
+    return {
+        "name": "playwright-e2e-report-post-link",
+        "image": images["curl"],
+        "depends_on": [
+            "playwright-e2e-report-upload",
+        ],
+        "failure": "ignore",
+        "when": {
+            "status": [
+                "success",
+                "failure",
+            ],
+        },
+        "environment": {
+            "GITHUB_TOKEN": from_secret("github_token"),
+        },
+        "commands": [
             # if the trace doesn't folder exists, it means that there are no failed tests.
             "if [ ! -d ./playwright-report/trace ]; then echo 'all tests passed'; exit 0; fi",
             # if it exists, we will post a comment on the PR with the link to the report
@@ -832,7 +852,7 @@ def playwright_e2e_tests_step():
             "PROV_DIR": "/grafana/scripts/grafana-server/tmp/conf/provisioning",
         },
         "name": "playwright-plugin-e2e",
-        "image": "mcr.microsoft.com/playwright:v1.41.2-jammy",
+        "image": "mcr.microsoft.com/playwright:v1.40.0-jammy",
         "failure": "ignore",
         "depends_on": [
             "grafana-server",
