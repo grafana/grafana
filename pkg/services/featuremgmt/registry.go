@@ -109,13 +109,6 @@ var (
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:         "traceToMetrics",
-			Description:  "Enable trace to metrics links",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: true,
-			Owner:        grafanaObservabilityTracesAndProfilingSquad,
-		},
-		{
 			Name:         "autoMigrateOldPanels",
 			Description:  "Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)",
 			Stage:        FeatureStagePublicPreview,
@@ -995,11 +988,12 @@ var (
 			Owner:        grafanaSharingSquad,
 		},
 		{
-			Name:         "ssoSettingsApi",
-			Description:  "Enables the SSO settings API and the OAuth configuration UIs in Grafana",
-			Stage:        FeatureStagePublicPreview,
-			FrontendOnly: false,
-			Owner:        identityAccessTeam,
+			Name:           "ssoSettingsApi",
+			Description:    "Enables the SSO settings API and the OAuth configuration UIs in Grafana",
+			Stage:          FeatureStagePublicPreview,
+			AllowSelfServe: true,
+			FrontendOnly:   false,
+			Owner:          identityAccessTeam,
 		},
 		{
 			Name:         "canvasPanelPanZoom",

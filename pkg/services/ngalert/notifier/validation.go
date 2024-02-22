@@ -20,14 +20,15 @@ type NotificationSettingsValidator interface {
 
 // staticValidator is a NotificationSettingsValidator that uses static pre-fetched values for available receivers and mute timings.
 type staticValidator struct {
-	availableReceivers   map[string]struct{}
-	availableMuteTimings map[string]struct{}
+	availableReceivers     map[string]struct{}
+	availableTimeIntervals map[string]struct{}
 }
 
 // apiAlertingConfig contains the methods required to validate NotificationSettings and create autogen routes.
 type apiAlertingConfig[R receiver] interface {
 	GetReceivers() []R
 	GetMuteTimeIntervals() []config.MuteTimeInterval
+	GetTimeIntervals() []config.TimeInterval
 	GetRoute() *definitions.Route
 }
 
@@ -42,14 +43,17 @@ func NewNotificationSettingsValidator[R receiver](am apiAlertingConfig[R]) Notif
 		availableReceivers[receiver.GetName()] = struct{}{}
 	}
 
-	availableMuteTimings := make(map[string]struct{})
+	availableTimeIntervals := make(map[string]struct{})
 	for _, interval := range am.GetMuteTimeIntervals() {
-		availableMuteTimings[interval.Name] = struct{}{}
+		availableTimeIntervals[interval.Name] = struct{}{}
+	}
+	for _, interval := range am.GetTimeIntervals() {
+		availableTimeIntervals[interval.Name] = struct{}{}
 	}
 
 	return staticValidator{
-		availableReceivers:   availableReceivers,
-		availableMuteTimings: availableMuteTimings,
+		availableReceivers:     availableReceivers,
+		availableTimeIntervals: availableTimeIntervals,
 	}
 }
 
@@ -63,7 +67,7 @@ func (n staticValidator) Validate(settings models.NotificationSettings) error {
 		errs = append(errs, fmt.Errorf("receiver '%s' does not exist", settings.Receiver))
 	}
 	for _, interval := range settings.MuteTimeIntervals {
-		if _, ok := n.availableMuteTimings[interval]; !ok {
+		if _, ok := n.availableTimeIntervals[interval]; !ok {
 			errs = append(errs, fmt.Errorf("mute time interval '%s' does not exist", interval))
 		}
 	}
