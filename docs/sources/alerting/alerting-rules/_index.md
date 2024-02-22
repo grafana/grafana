@@ -47,7 +47,7 @@ Create, manage, view, and adjust alert rules to alert on your metrics data or lo
 [Create recording rules][create-mimir-loki-managed-recording-rule]
 
 {{< admonition type="note" >}}
-Recording rules are only available for compatible Prometheus or Loki data sources.
+Recording rules are only available external Grafana Mimir or Loki data sources.
 {{< /admonition >}}
 
 {{% docs/reference %}}
