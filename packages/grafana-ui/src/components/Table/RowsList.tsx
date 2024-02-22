@@ -211,7 +211,6 @@ export const RowsList = (props: RowsListProps) => {
     if (fieldOptions.cellOptions?.type === TableCellDisplayMode.ColorBackground) {
       rowBg = (rowIndex: number) => {
         const display = field.display!(field.values.get(rowIndex));
-        console.log('display', display);
         return display.color;
       };
     }
