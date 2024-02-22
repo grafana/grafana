@@ -4,7 +4,6 @@ import { NavIndex } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { SceneGridItem, SceneObject, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import {
   findVizPanelByKey,
   getDashboardSceneFor,

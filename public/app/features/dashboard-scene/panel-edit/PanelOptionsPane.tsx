@@ -43,7 +43,6 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
     const { isVizPickerOpen, searchQuery, listMode } = model.useState();
     const vizManager = sceneGraph.getAncestor(model, PanelEditor).state.vizManager;
     const { pluginId } = vizManager.state.panel.useState();
-    const libraryPanel = vizManager.state.libraryPanel?.useState();
     const styles = useStyles2(getStyles);
 
     return (
@@ -60,12 +59,7 @@ export class PanelOptionsPane extends SceneObjectBase<PanelOptionsPaneState> {
               />
             </div>
             <div className={styles.listOfOptions}>
-              {
-                !libraryPanel?.isLoading && (
-                  <PanelOptions vizManager={vizManager} searchQuery={searchQuery} listMode={listMode} />
-                )
-                //TODO: Some kind of loading spinner?
-              }
+              <PanelOptions vizManager={vizManager} searchQuery={searchQuery} listMode={listMode} />
             </div>
           </>
         )}
