@@ -1,12 +1,9 @@
-//go:build !tests
-// +build !tests
-
 package sql
 
 import (
 	"errors"
 
-	"github.com/blastrain/vitess-sqlparser/sqlparser"
+	"github.com/xwb1989/sqlparser"
 )
 
 // TablesList returns a list of tables for the sql statement

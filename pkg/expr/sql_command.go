@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/scottlepp/go-duck/duck"
 )
 
 // SQLCommand is an expression to run SQL over results
@@ -64,29 +66,22 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	_, span := tracer.Start(ctx, "SSE.ExecuteSQL")
 	defer span.End()
 
-	// TODO - how to avoid initializing DuckDB every time
-	// create a unique schema per request to store the tables?
-	db, err := sql.NewInMemoryDB(ctx)
-	if err != nil {
-		return mathexp.Results{}, err
-	}
-
-	// insert all referenced results into duckdb. TODO: multi-thread this?
+	allFrames := []*data.Frame{}
 	for _, ref := range gr.varsToQuery {
 		results := vars[ref]
 		frames := results.Values.AsDataFrames(ref)
-		err := db.AppendAll(ctx, frames)
-		if err != nil {
-			return mathexp.Results{}, err
-		}
+		allFrames = append(frames, frames...)
 	}
 
 	rsp := mathexp.Results{}
-	frame, err := db.Query(ctx, gr.query)
+
+	duckDB := duck.NewInMemoryDB()
+	frame := &data.Frame{}
+	_, err := duckDB.QueryFramesInto(gr.refID, gr.query, allFrames, frame)
 	if frame != nil {
 		frame.RefID = gr.refID
 		rsp.Values = mathexp.Values{
-			mathexp.Scalar{Frame: frame}, // TODO?? can we detect the type??
+			mathexp.Scalar{Frame: frame},
 		}
 	}
 	if err != nil {
