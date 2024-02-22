@@ -207,6 +207,10 @@ export function isPanelClone(key: string) {
   return key.includes('clone');
 }
 
+export function isLibraryPanelChild(vizPanel: VizPanel) {
+  return vizPanel.parent instanceof LibraryVizPanel;
+}
+
 export function onCreateNewPanel(dashboard: DashboardScene): number {
   const vizPanel = new VizPanel({
     title: 'Panel Title',

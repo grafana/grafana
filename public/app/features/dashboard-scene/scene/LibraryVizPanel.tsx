@@ -25,6 +25,7 @@ interface LibraryVizPanelState extends SceneObjectState {
   name: string;
   panel?: VizPanel;
   isLoading?: boolean;
+  panelKey: string;
   _loadedVersion?: number;
 }
 
@@ -33,7 +34,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
 
   constructor(state: LibraryVizPanelState) {
     super({
-      panel: state.panel ?? getLoadingPanel(state.title),
+      panel: state.panel ?? getLoadingPanel(state.title, state.panelKey),
       ...state,
     });
 
@@ -60,6 +61,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
 
       const panel = new VizPanel({
         title: this.state.title,
+        key: this.state.panelKey,
         options: libPanelModel.options ?? {},
         fieldConfig: libPanelModel.fieldConfig,
         pluginId: libPanelModel.type,
@@ -86,8 +88,9 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
   }
 }
 
-function getLoadingPanel(title: string) {
+function getLoadingPanel(title: string, panelKey: string) {
   return new VizPanel({
+    key: panelKey,
     title,
     $data: new SceneDataTransformer({ transformations: [], $data: new SceneQueryRunner({ queries: [] }) }),
     menu: new VizPanelMenu({

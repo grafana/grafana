@@ -14,7 +14,7 @@ import appEvents from 'app/core/app_events';
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
-import { findLibraryPanelByKey, findVizPanelByKey, getDashboardSceneFor, isPanelClone } from '../utils/utils';
+import { findVizPanelByKey, getDashboardSceneFor, isLibraryPanelChild, isPanelClone } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
 import { LibraryVizPanel } from './LibraryVizPanel';
@@ -78,6 +78,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     // Handle view panel state
     if (typeof values.viewPanel === 'string') {
       const panel = findVizPanelByKey(this._scene, values.viewPanel);
+
       if (!panel) {
         // // If we are trying to view a repeat clone that can't be found it might be that the repeats have not been processed yet
         if (isPanelClone(values.viewPanel)) {
@@ -90,6 +91,11 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
+      if (isLibraryPanelChild(panel)) {
+        this._handleLibraryPanel(panel, (p) => this._buildLibraryPanelViewScene(p));
+        return;
+      }
+
       update.viewPanelScene = new ViewPanelScene({ panelRef: panel.getRef() });
     } else if (viewPanelScene && values.viewPanel === null) {
       update.viewPanelScene = undefined;
@@ -97,11 +103,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
     // Handle edit panel state
     if (typeof values.editPanel === 'string') {
-      let panel: VizPanel | LibraryVizPanel | null;
-      panel = findVizPanelByKey(this._scene, values.editPanel);
-      if (!panel) {
-        panel = findLibraryPanelByKey(this._scene, values.editPanel);
-      }
+      const panel = findVizPanelByKey(this._scene, values.editPanel);
       if (!panel) {
         console.warn(`Panel ${values.editPanel} not found`);
         return;
@@ -111,6 +113,11 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       if (!isEditing) {
         this._scene.onEnterEditMode();
       }
+      if (isLibraryPanelChild(panel)) {
+        this._handleLibraryPanel(panel, (p) => {
+          this._scene.setState({ editPanel: buildPanelEditScene(p) });
+        });
+      }
       update.editPanel = buildPanelEditScene(panel);
     } else if (editPanel && values.editPanel === null) {
       update.editPanel = undefined;
@@ -119,6 +126,21 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     if (Object.keys(update).length > 0) {
       this._scene.setState(update);
     }
+  }
+
+  private _buildLibraryPanelViewScene(vizPanel: VizPanel) {
+    this._scene.setState({ viewPanelScene: new ViewPanelScene({ panelRef: vizPanel.getRef() }) });
+  }
+
+  private _handleLibraryPanel(vizPanel: VizPanel, cb: (p: VizPanel) => void): void {
+    if (!(vizPanel.parent instanceof LibraryVizPanel)) {
+      throw new Error('Panel is not a child of a LibraryVizPanel');
+    }
+    const libraryPanel = vizPanel.parent;
+    libraryPanel.subscribeToState((n) => {
+      cb(n.panel!);
+    });
+    libraryPanel.activate();
   }
 
   private _handleViewRepeatClone(viewPanel: string) {

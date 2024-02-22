@@ -33,7 +33,6 @@ import { updateQueries } from 'app/features/query/state/updateQueries';
 import { GrafanaQuery } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupOptions } from 'app/types';
 
-import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { PanelTimeRange, PanelTimeRangeState } from '../scene/PanelTimeRange';
 import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
@@ -41,7 +40,6 @@ interface VizPanelManagerState extends SceneObjectState {
   panel: VizPanel;
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
-  libraryPanel?: LibraryVizPanel;
 }
 
 // VizPanelManager serves as an API to manipulate VizPanel state from the outside. It allows panel type, options and  data manipulation.
@@ -51,19 +49,13 @@ export class VizPanelManager extends SceneObjectBase<VizPanelManagerState> {
     { options: DeepPartial<{}>; fieldConfig: FieldConfigSource<DeepPartial<{}>> } | undefined
   > = {};
 
-  public constructor(panel: VizPanel, libraryPanel?: LibraryVizPanel) {
-    super({ panel, libraryPanel });
+  public constructor(panel: VizPanel) {
+    super({ panel });
 
     this.addActivationHandler(() => this._onActivate());
   }
 
   private _onActivate() {
-    this.state.libraryPanel?.subscribeToState((n) => {
-      this.setState({ panel: n.panel?.clone() });
-      this.loadDataSource();
-    });
-    this.state.libraryPanel?.activate();
-
     this.loadDataSource();
   }
 

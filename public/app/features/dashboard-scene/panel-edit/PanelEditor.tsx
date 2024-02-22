@@ -103,19 +103,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   }
 }
 
-export function buildPanelEditScene(panel: VizPanel | LibraryVizPanel): PanelEditor {
-  let panelClone: VizPanel;
-  let libraryPanel: LibraryVizPanel | undefined;
-  if (panel instanceof LibraryVizPanel) {
-    if (!panel.state.panel) {
-      throw new Error('Library panel has no VizPanel');
-    }
-    panelClone = panel.state.panel.clone();
-    libraryPanel = panel.clone();
-  } else {
-    panelClone = panel.clone();
-  }
-  const vizPanelMgr = new VizPanelManager(panelClone, libraryPanel);
+export function buildPanelEditScene(panel: VizPanel): PanelEditor {
+  const vizPanelMgr = new VizPanelManager(panel.clone());
 
   return new PanelEditor({
     panelId: getPanelIdForVizPanel(panel),
