@@ -3,30 +3,20 @@ import React from 'react';
 import { DataSourceSettings } from '@grafana/data';
 import { ConfigSubSection, Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Field, Icon, InlineLabel, Input, Label, Switch, Tooltip } from '@grafana/ui';
+import { Field, Icon, InlineLabel, Label, Switch, Tooltip } from '@grafana/ui';
 
 import { SQLConnectionLimits, SQLOptions } from '../../types';
+import { NumberInput } from '../NumberInput';
 
 interface Props<T> {
   onOptionsChange: Function;
   options: DataSourceSettings<SQLOptions>;
 }
 
-function toNumber(text: string): number {
-  if (text.trim() === '') {
-    // calling `Number('')` returns zero,
-    // so we have to handle this case
-    return NaN;
-  }
-
-  return Number(text);
-}
-
 export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>) => {
   const { onOptionsChange, options } = props;
   const jsonData = options.jsonData;
   const autoIdle = jsonData.maxIdleConnsAuto !== undefined ? jsonData.maxIdleConnsAuto : false;
-  const [connMaxLifetimeEmpty, setConnMaxLifetimeEmpty] = React.useState(false);
 
   // Update JSON data with new values
   const updateJsonData = (values: {}) => {
@@ -93,8 +83,6 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
 
   const labelWidth = 40;
 
-  const defaultMaxLifetime = 14400;
-
   return (
     <ConfigSubSection title="Connection limits">
       <Field
@@ -118,15 +106,12 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
           </Label>
         }
       >
-        <Input
-          type="number"
+        <NumberInput
+          value={jsonData.maxOpenConns}
+          defaultValue={0}
           placeholder="unlimited"
-          defaultValue={jsonData.maxOpenConns}
-          onChange={(e) => {
-            const newVal = toNumber(e.currentTarget.value);
-            if (!Number.isNaN(newVal)) {
-              onMaxConnectionsChanged(newVal);
-            }
+          onChange={(value) => {
+            onMaxConnectionsChanged(value);
           }}
           width={labelWidth}
         />
@@ -179,15 +164,11 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
         {autoIdle ? (
           <InlineLabel width={labelWidth}>{options.jsonData.maxIdleConns}</InlineLabel>
         ) : (
-          <Input
-            type="number"
-            placeholder="2"
-            defaultValue={jsonData.maxIdleConns}
-            onChange={(e) => {
-              const newVal = toNumber(e.currentTarget.value);
-              if (!Number.isNaN(newVal)) {
-                onJSONDataNumberChanged('maxIdleConns')(newVal);
-              }
+          <NumberInput
+            value={jsonData.maxIdleConns}
+            defaultValue={2}
+            onChange={(value) => {
+              onJSONDataNumberChanged('maxIdleConns')(value);
             }}
             width={labelWidth}
             disabled={autoIdle}
@@ -214,22 +195,11 @@ export const ConnectionLimits = <T extends SQLConnectionLimits>(props: Props<T>)
           </Label>
         }
       >
-        <Input
-          type="number"
-          placeholder={String(defaultMaxLifetime)}
-          value={connMaxLifetimeEmpty ? '' : jsonData.connMaxLifetime}
-          onChange={(e) => {
-            if (e.currentTarget.value === '') {
-              setConnMaxLifetimeEmpty(true);
-              onJSONDataNumberChanged('connMaxLifetime')(defaultMaxLifetime);
-            } else {
-              setConnMaxLifetimeEmpty(false);
-            }
-
-            const newVal = toNumber(e.currentTarget.value);
-            if (!Number.isNaN(newVal)) {
-              onJSONDataNumberChanged('connMaxLifetime')(newVal);
-            }
+        <NumberInput
+          value={jsonData.connMaxLifetime}
+          defaultValue={14400}
+          onChange={(value) => {
+            onJSONDataNumberChanged('connMaxLifetime')(value);
           }}
           width={labelWidth}
         />
