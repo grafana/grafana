@@ -59,10 +59,6 @@ const (
 	// Introduce HTTP 207 Multi Status for api/ds/query
 	FlagDatasourceQueryMultiStatus = "datasourceQueryMultiStatus"
 
-	// FlagTraceToMetrics
-	// Enable trace to metrics links
-	FlagTraceToMetrics = "traceToMetrics"
-
 	// FlagAutoMigrateOldPanels
 	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
 	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
@@ -490,10 +486,6 @@ const (
 	// FlagPanelTitleSearchInV1
 	// Enable searching for dashboards using panel title in search v1
 	FlagPanelTitleSearchInV1 = "panelTitleSearchInV1"
-
-	// FlagPluginsInstrumentationStatusSource
-	// Include a status source label for plugin request metrics and logs
-	FlagPluginsInstrumentationStatusSource = "pluginsInstrumentationStatusSource"
 
 	// FlagManagedPluginsInstall
 	// Install managed plugins directly from plugins catalog

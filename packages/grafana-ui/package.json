@@ -111,7 +111,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.23.9",
-    "@grafana/tsconfig": "^1.2.0-rc1",
+    "@grafana/tsconfig": "^1.3.0-rc1",
     "@rollup/plugin-node-resolve": "15.2.3",
     "@storybook/addon-a11y": "7.4.5",
     "@storybook/addon-actions": "7.4.5",
