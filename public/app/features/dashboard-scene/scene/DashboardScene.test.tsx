@@ -20,6 +20,7 @@ import { DecoratedRevisionModel } from '../settings/VersionsEditView';
 import { historySrv } from '../settings/version-history/HistorySrv';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
+import { NEW_PANEL_HEIGHT } from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
@@ -125,7 +126,7 @@ describe('DashboardScene', () => {
       it('Should add a new panel to the dashboard', () => {
         const vizPanel = new VizPanel({
           title: 'Panel Title',
-          key: 'panel-4',
+          key: 'panel-5',
           pluginId: 'timeseries',
           $data: new SceneQueryRunner({ key: 'data-query-runner', queries: [{ refId: 'A' }] }),
         });
@@ -134,10 +135,13 @@ describe('DashboardScene', () => {
 
         const body = scene.state.body as SceneGridLayout;
         const gridItem = body.state.children[0] as SceneGridItem;
+        const nextChild = body.state.children[1] as SceneGridItem;
 
         expect(scene.state.isDirty).toBe(true);
         expect(body.state.children.length).toBe(5);
-        expect(gridItem.state.body!.state.key).toBe('panel-4');
+        expect(gridItem.state.body!.state.key).toBe('panel-5');
+        expect(gridItem.state.y).toBe(0);
+        expect(nextChild.state.y).toBe(NEW_PANEL_HEIGHT);
       });
 
       it('Should create and add a new panel to the dashboard', () => {
@@ -148,7 +152,7 @@ describe('DashboardScene', () => {
 
         expect(scene.state.isDirty).toBe(true);
         expect(body.state.children.length).toBe(5);
-        expect(gridItem.state.body!.state.key).toBe('panel-4');
+        expect(gridItem.state.body!.state.key).toBe('panel-5');
       });
     });
   });
@@ -274,12 +278,12 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
           }),
         }),
         new SceneGridRow({
-          key: 'gridrow-1',
+          key: 'panel-3',
           children: [
             new SceneGridItem({
               body: new VizPanel({
                 title: 'Panel C',
-                key: 'panel-3',
+                key: 'panel-4',
                 pluginId: 'table',
               }),
             }),

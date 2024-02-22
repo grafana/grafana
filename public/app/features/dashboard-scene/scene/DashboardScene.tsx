@@ -11,6 +11,7 @@ import {
   sceneGraph,
   SceneGridItem,
   SceneGridLayout,
+  SceneGridRow,
   SceneObject,
   SceneObjectBase,
   SceneObjectState,
@@ -50,9 +51,11 @@ import {
   NEW_PANEL_WIDTH,
   forceRenderChildren,
   getClosestVizPanel,
+  getDefaultRow,
   getDefaultVizPanel,
   getPanelIdForVizPanel,
   isPanelClone,
+  shiftAllPanelHeights,
 } from '../utils/utils';
 
 import { DashboardControls } from './DashboardControls';
@@ -422,6 +425,28 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     return this._initialState;
   }
 
+  public addRow(row: SceneGridRow) {
+    if (!(this.state.body instanceof SceneGridLayout)) {
+      console.error('Trying to add a row in a layout that is not SceneGridLayout ');
+      return;
+    }
+
+    const sceneGridLayout = this.state.body;
+
+    const indexTillNextRow = sceneGridLayout.state.children.findIndex((child) => child instanceof SceneGridRow);
+    const rowChildren = sceneGridLayout.state.children
+      .splice(0, indexTillNextRow === -1 ? sceneGridLayout.state.children.length : indexTillNextRow)
+      .map((child) => child.clone());
+
+    row.setState({
+      children: rowChildren,
+    });
+
+    sceneGridLayout.setState({
+      children: [row, ...sceneGridLayout.state.children],
+    });
+  }
+
   public addPanel(vizPanel: VizPanel): void {
     if (!(this.state.body instanceof SceneGridLayout)) {
       console.error('Trying to add a panel in a layout that is not SceneGridLayout ');
@@ -431,11 +456,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
     const sceneGridLayout = this.state.body;
 
     // move all gridItems below the new one
-    for (const child of sceneGridLayout.state.children) {
-      child.setState({
-        y: NEW_PANEL_HEIGHT + (child.state.y ?? 0),
-      });
-    }
+    shiftAllPanelHeights(sceneGridLayout);
 
     const newGridItem = new SceneGridItem({
       height: NEW_PANEL_HEIGHT,
@@ -539,6 +560,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
   public onOpenSettings = () => {
     locationService.partial({ editview: 'settings' });
   };
+
+  public onCreateNewRow() {
+    const row = getDefaultRow(this);
+
+    this.addRow(row);
+
+    return getPanelIdForVizPanel(row);
+  }
 
   public onCreateNewPanel(): number {
     const vizPanel = getDefaultVizPanel(this);

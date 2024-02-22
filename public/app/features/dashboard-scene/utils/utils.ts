@@ -217,6 +217,13 @@ export function getNextPanelId(dashboard: DashboardScene) {
       }
 
       if (child instanceof SceneGridRow) {
+        //rows follow the same key pattern --- e.g.: `panel-6`
+        const panelId = getPanelIdForVizPanel(child);
+
+        if (panelId > max) {
+          max = panelId;
+        }
+
         for (const rowChild of child.state.children) {
           if (rowChild instanceof SceneGridItem) {
             const vizPanel = rowChild.state.body;
@@ -237,6 +244,22 @@ export function getNextPanelId(dashboard: DashboardScene) {
   return max + 1;
 }
 
+export function shiftAllPanelHeights(layout: SceneGridLayout) {
+  for (const child of layout.state.children) {
+    child.setState({
+      y: NEW_PANEL_HEIGHT + (child.state.y ?? 0),
+    });
+
+    if (child instanceof SceneGridRow) {
+      for (const rowChild of child.state.children) {
+        rowChild.setState({
+          y: NEW_PANEL_HEIGHT + (rowChild.state.y ?? 0),
+        });
+      }
+    }
+  }
+}
+
 export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
   const panelId = getNextPanelId(dashboard);
 
@@ -255,5 +278,15 @@ export function getDefaultVizPanel(dashboard: DashboardScene): VizPanel {
       }),
       transformations: [],
     }),
+  });
+}
+
+export function getDefaultRow(dashboard: DashboardScene): SceneGridRow {
+  const id = getNextPanelId(dashboard);
+
+  return new SceneGridRow({
+    key: getVizPanelKeyForPanelId(id),
+    title: 'Row title',
+    y: 0,
   });
 }

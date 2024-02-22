@@ -63,6 +63,22 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
+    condition: isEditing && !editview && !meta.isNew && !isViewingPanel && !isEditingPanel,
+    render: () => (
+      <ToolbarButton
+        key="add-row"
+        tooltip={'Add row'}
+        icon="wrap-text"
+        onClick={() => {
+          dashboard.onCreateNewRow();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
+        }}
+      />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'icon-actions',
     condition: uid && !editview && Boolean(meta.canStar) && !isEditingPanel && !isEditing,
     render: () => {
       let desc = meta.isStarred
