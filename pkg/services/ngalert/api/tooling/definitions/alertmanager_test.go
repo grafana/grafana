@@ -688,7 +688,7 @@ func Test_ConfigUnmashaling(t *testing.T) {
 		},
 		{
 			desc: "duplicate time and mute time interval names should error",
-			err:  errors.New("mute time interval \"test1\" is not unique"),
+			err:  errors.New("time interval \"test1\" is not unique"),
 			input: `
 				{
 				  "route": {
