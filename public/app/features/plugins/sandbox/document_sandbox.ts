@@ -2,7 +2,7 @@ import { isNearMembraneProxy, ProxyTarget } from '@locker/near-membrane-shared';
 import { cloneDeep } from 'lodash';
 import Prism from 'prismjs';
 
-import { DataSourceApi } from '@grafana/data';
+import { CustomVariableSupport, DataSourceApi } from '@grafana/data';
 import { config } from '@grafana/runtime';
 
 import { forbiddenElements } from './constants';
@@ -138,7 +138,7 @@ export function patchObjectAsLiveTarget(obj: unknown) {
     !(obj instanceof Function) &&
     // conditions for allowed objects
     // react class components
-    (isReactClassComponent(obj) || obj instanceof DataSourceApi)
+    (isReactClassComponent(obj) || obj instanceof DataSourceApi || obj instanceof CustomVariableSupport)
   ) {
     Reflect.defineProperty(obj, SANDBOX_LIVE_VALUE, {});
   } else {
