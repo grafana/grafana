@@ -1366,7 +1366,6 @@ export class DashboardModel implements TimeModel {
       }
       return isAngularPanel || isAngularDs;
     });
-    return false;
   }
 }
 
