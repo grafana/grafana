@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { PropsWithChildren, useCallback, useEffect, useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import {
@@ -18,8 +18,12 @@ import {
   ValueLinkConfig,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { AdHocFilterItem, Table } from '@grafana/ui';
-import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
+import { AdHocFilterItem, CustomCellRendererProps, Table, TableCellDisplayMode } from '@grafana/ui';
+import {
+  FILTER_FOR_OPERATOR,
+  FILTER_OUT_OPERATOR,
+  TableCustomCellWrapperOptions,
+} from '@grafana/ui/src/components/Table/types';
 import { LogsFrame } from 'app/features/logs/logsFrame';
 
 import { getFieldLinksForExplore } from '../utils/links';
@@ -38,6 +42,22 @@ interface Props {
   onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
   onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
   logsFrame: LogsFrame | null;
+}
+
+const CellComponent = (props: PropsWithChildren<CustomCellRendererProps>) => {
+  // eslint-disable-next-line jsx-a11y/anchor-is-valid
+  return (
+    <a role={'button'} onClick={() => console.log('hello interaction!')}>
+      {props.children}
+    </a>
+  );
+};
+
+function getTableCellOptions(field: Field): TableCustomCellWrapperOptions {
+  return {
+    cellWrapperComponent: CellComponent,
+    type: TableCellDisplayMode.CustomWrapper,
+  };
 }
 
 export function LogsTable(props: Props) {
@@ -79,6 +99,7 @@ export function LogsTable(props: Props) {
         field.config = {
           ...field.config,
           custom: {
+            cellOptions: getTableCellOptions(field),
             inspect: true,
             filterable: true, // This sets the columns to be filterable
             width: getInitialFieldWidth(field),
