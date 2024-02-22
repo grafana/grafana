@@ -5,7 +5,7 @@ module.exports = {
   icon: true,
   typescript: true,
   jsxRuntime: 'automatic',
-  outDir: './src/icons-generated',
+  outDir: './icons-gen',
   template: require('./templates/icon'),
   svgoConfig: {
     plugins: [

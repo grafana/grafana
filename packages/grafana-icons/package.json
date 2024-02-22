@@ -25,8 +25,8 @@
     "./LICENSE_APACHE2"
   ],
   "scripts": {
-    "clean": "rimraf ./dist ./compiled ./package.tgz ./src/icons-generated",
-    "generate": "rimraf ./src/icons-generated && npx @svgr/cli ./svg",
+    "clean": "rimraf ./dist ./compiled ./package.tgz ./icons-gen",
+    "generate": "rimraf ./icons-gen && npx @svgr/cli ./svg",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "lint": "eslint --ext .ts,.tsx ./src",
     "prettier:check": "prettier --check --list-different=false --log-level=warn \"**/*.{ts,tsx,scss,md,mdx,json}\"",

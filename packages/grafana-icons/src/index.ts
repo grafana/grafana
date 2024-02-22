@@ -1,2 +1,2 @@
 export { type IconProps } from './IconBase';
-export * from './icons-generated/index';
+export * from '../icons-gen/index';
