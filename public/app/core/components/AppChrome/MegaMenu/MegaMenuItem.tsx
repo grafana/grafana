@@ -48,12 +48,12 @@ export function MegaMenuItem({ link, activeItem, level = 0, onClick }: Props) {
 
   // scroll active element into center if it's offscreen
   useEffect(() => {
-    if (menuIsDocked && isActive && item.current && isElementOffscreen(item.current)) {
+    if (isActive && item.current && isElementOffscreen(item.current)) {
       item.current.scrollIntoView({
         block: 'center',
       });
     }
-  }, [isActive, menuIsDocked]);
+  }, [isActive]);
 
   if (!link.url) {
     return null;
