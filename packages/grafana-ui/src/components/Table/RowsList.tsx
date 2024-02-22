@@ -13,16 +13,17 @@ import {
   TimeRange,
   hasTimeField,
 } from '@grafana/data';
-import { TableCellHeight } from '@grafana/schema';
+import { TableCellDisplayMode, TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes';
+import { getTextColorForAlphaBackground } from '../../utils';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 import { usePanelContext } from '../PanelChrome';
 
 import { ExpandedRow, getExpandedRowHeight } from './ExpandedRow';
 import { TableCell } from './TableCell';
 import { TableStyles } from './styles';
-import { TableFilterActionCallback } from './types';
+import { TableFieldOptions, TableFilterActionCallback } from './types';
 import { calculateAroundPointThreshold, isPointTimeValAroundTableTimeVal } from './utils';
 
 interface RowsListProps {
@@ -201,6 +202,18 @@ export const RowsList = (props: RowsListProps) => {
     [tableState.pageIndex, tableState.pageSize]
   );
 
+  let rowBg: (rowIndex: number) => string | undefined;
+
+  for (const field of data.fields) {
+    const fieldOptions = field.config.custom as TableFieldOptions;
+    if (fieldOptions.cellOptions?.type === TableCellDisplayMode.ColorBackground) {
+      rowBg = (rowIndex: number) => {
+        const display = field.display!(field.values.get(rowIndex));
+        return display.color;
+      };
+    }
+  }
+
   const RenderRow = useCallback(
     ({ index, style, rowHighlightIndex }: { index: number; style: CSSProperties; rowHighlightIndex?: number }) => {
       const indexForPagination = rowIndexForPagination(index);
@@ -217,6 +230,12 @@ export const RowsList = (props: RowsListProps) => {
           'aria-selected': 'true',
         };
       }
+
+      if (rowBg) {
+        style.backgroundColor = rowBg(indexForPagination);
+        style.color = getTextColorForAlphaBackground(style.backgroundColor!, tableStyles.theme.isDark);
+      }
+
       return (
         <div
           {...row.getRowProps({ style, ...additionalProps })}
