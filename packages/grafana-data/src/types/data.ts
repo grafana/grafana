@@ -64,6 +64,11 @@ export interface QueryResultMeta {
    */
   preferredVisualisationPluginId?: string;
 
+  /**
+   * The height of the panel when displayed in Explore.
+   */
+  preferredVisualisationPanelHeight?: number;
+
   /** The path for live stream updates for this frame */
   channel?: string;
 

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { get, groupBy } from 'lodash';
+import {get, groupBy, maxBy} from 'lodash';
 import memoizeOne from 'memoize-one';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
@@ -367,6 +367,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     const { timeZone, queryResponse, absoluteRange, eventBus } = this.props;
 
     const groupedByPlugin = groupBy(queryResponse?.customFrames, 'meta.preferredVisualisationPluginId');
+    const height = maxBy(queryResponse?.customFrames, 'meta.preferredVisualisationPanelHeight')?.meta?.preferredVisualisationPanelHeight ?? 400
 
     return Object.entries(groupedByPlugin).map(([pluginId, frames], index) => {
       return (
@@ -378,7 +379,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
             frames={frames}
             state={queryResponse.state}
             absoluteRange={absoluteRange}
-            height={400}
+            height={height}
             width={width}
             splitOpenFn={this.onSplitOpen(pluginId)}
             eventBus={eventBus}
