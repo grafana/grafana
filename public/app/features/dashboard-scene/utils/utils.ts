@@ -55,9 +55,9 @@ function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizP
   if (panel) {
     if (panel instanceof VizPanel) {
       return panel;
+    } else {
+      throw new Error(`Found panel with key ${key} but it was not a VizPanel`);
     }
-  } else {
-    throw new Error(`Found panel with key ${key} but it was not a VizPanel`);
   }
 
   return null;
