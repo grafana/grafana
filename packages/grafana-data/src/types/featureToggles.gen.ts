@@ -67,7 +67,6 @@ export interface FeatureToggles {
   influxdbBackendMigration?: boolean;
   influxqlStreamingParser?: boolean;
   influxdbRunQueriesInParallel?: boolean;
-  clientTokenRotation?: boolean;
   prometheusDataplane?: boolean;
   lokiMetricDataplane?: boolean;
   lokiLogsDataplane?: boolean;
@@ -180,5 +179,7 @@ export interface FeatureToggles {
   groupToNestedTableTransformation?: boolean;
   newPDFRendering?: boolean;
   kubernetesAggregator?: boolean;
+  expressionParser?: boolean;
   groupByVariable?: boolean;
+  alertingUpgradeDryrunOnStart?: boolean;
 }

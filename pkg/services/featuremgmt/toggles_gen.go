@@ -203,10 +203,6 @@ const (
 	// Enables running InfluxDB Influxql queries in parallel
 	FlagInfluxdbRunQueriesInParallel = "influxdbRunQueriesInParallel"
 
-	// FlagClientTokenRotation
-	// Replaces the current in-request token rotation so that the client initiates the rotation
-	FlagClientTokenRotation = "clientTokenRotation"
-
 	// FlagPrometheusDataplane
 	// Changes responses to from Prometheus to be compliant with the dataplane specification. In particular, when this feature toggle is active, the numeric `Field.Name` is set from &#39;Value&#39; to the value of the `__name__` label.
 	FlagPrometheusDataplane = "prometheusDataplane"
@@ -384,7 +380,7 @@ const (
 	FlagAlertingNoDataErrorExecution = "alertingNoDataErrorExecution"
 
 	// FlagAngularDeprecationUI
-	// Display new Angular deprecation-related UI features
+	// Display Angular warnings in dashboards and panels
 	FlagAngularDeprecationUI = "angularDeprecationUI"
 
 	// FlagDashgpt
@@ -548,7 +544,7 @@ const (
 	FlagPdfTables = "pdfTables"
 
 	// FlagSsoSettingsApi
-	// Enables the SSO settings API
+	// Enables the SSO settings API and the OAuth configuration UIs in Grafana
 	FlagSsoSettingsApi = "ssoSettingsApi"
 
 	// FlagCanvasPanelPanZoom
@@ -655,7 +651,15 @@ const (
 	// Enable grafana aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
 
+	// FlagExpressionParser
+	// Enable new expression parser
+	FlagExpressionParser = "expressionParser"
+
 	// FlagGroupByVariable
 	// Enable groupBy variable support in scenes dashboards
 	FlagGroupByVariable = "groupByVariable"
+
+	// FlagAlertingUpgradeDryrunOnStart
+	// When activated in legacy alerting mode, this initiates a dry-run of the Unified Alerting upgrade during each startup. It logs any issues detected without implementing any actual changes.
+	FlagAlertingUpgradeDryrunOnStart = "alertingUpgradeDryrunOnStart"
 )
