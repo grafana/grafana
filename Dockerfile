@@ -3,13 +3,13 @@ ARG GF_VERSION
 
 ARG BASE_IMAGE=alpine:3.18.3
 ARG JS_IMAGE=node:18-alpine3.18
-ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.20.8-alpine3.18
+ARG BUILDPLATFORM=linux/amd64
+ARG GO_IMAGE=golang:1.20.8
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
 
-FROM --platform=${JS_PLATFORM} ${JS_IMAGE} as js-builder
+FROM --platform=${BUILDPLATFORM} ${JS_IMAGE} as js-builder
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
@@ -30,7 +30,7 @@ COPY emails emails
 ENV NODE_ENV production
 RUN yarn build
 
-FROM ${GO_IMAGE} as go-builder
+FROM --platform=${BUILDPLATFORM} ${GO_IMAGE} as go-builder
 
 ARG COMMIT_SHA=""
 ARG BUILD_BRANCH=""
@@ -70,6 +70,18 @@ COPY LICENSE ./
 ENV COMMIT_SHA=${COMMIT_SHA}
 ENV BUILD_BRANCH=${BUILD_BRANCH}
 
+RUN make gen-go WIRE_TAGS=${WIRE_TAGS}
+
+FROM ${GO_SRC} as go-build-amd64
+RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
+
+FROM ${GO_SRC} as go-build-arm64
+
+RUN apt-get update && \
+    apt-get -y install gcc-aarch64-linux-gnu;
+
+ENV GOARCH=arm64
+ENV CC=aarch64-linux-gnu-gcc
 RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 
 FROM ${BASE_IMAGE} as tgz-builder
@@ -88,7 +100,8 @@ COPY ./scripts ./scripts
 COPY ./plugins-bundled ./plugins-bundled
 
 # helpers for COPY --from
-FROM ${GO_SRC} as go-src
+ARG TARGETARCH
+FROM go-build-${TARGETARCH} as go-src
 FROM ${JS_SRC} as js-src
 
 # Final stage
@@ -182,7 +195,7 @@ COPY ${RUN_SH} /run.sh
 USER "$GF_UID"
 ENTRYPOINT [ "/run.sh" ]
 
-FROM grafana/grafana:${GF_VERSION} as groundcover
+FROM grafana/grafana:${GF_VERSION}-ubuntu as groundcover
 
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
 COPY --from=js-src /tmp/grafana/public ./public
@@ -192,9 +205,10 @@ USER 0
 ENV GF_PLUGIN_DIR="/usr/share/grafana/plugins" \
     GF_PATHS_PLUGINS="/usr/share/grafana/plugins"
 
+ENV GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=grafana-clickhouse-datasource
 RUN mkdir -p ${GF_PLUGIN_DIR} && \
     chmod -R 777 ${GF_PLUGIN_DIR} && \
-    grafana cli --pluginUrl https://github.com/groundcover-com/clickhouse-datasource/releases/download/v4.0.2-custom-gc/grafana-clickhouse-datasource-4.0.2-custom.linux_amd64.zip plugins install grafana-clickhouse-datasource && \
+    grafana cli --pluginUrl https://github.com/groundcover-com/clickhouse-datasource/releases/download/v4.0.2-custom-gc/grafana-clickhouse-datasource-4.0.2.linux.zip plugins install grafana-clickhouse-datasource && \
     grafana cli plugins install marcusolsson-treemap-panel
-ENV GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=grafana-clickhouse-datasource
+
 USER "$GF_UID"

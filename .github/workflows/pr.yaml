@@ -15,24 +15,24 @@ jobs:
         uses: actions/checkout@v3
       -
         name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
       -
         name: Get Grafana Version
         run: echo "GF_VERSION=$(npm pkg get version | tr -d '"')" >> $GITHUB_ENV
       -
         name: Build Docker Image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           context: .
           push: false
           target: groundcover
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           build-args: GF_VERSION=${{ env.GF_VERSION }}
           tags: grafana-groundcover
