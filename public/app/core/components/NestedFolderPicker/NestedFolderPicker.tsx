@@ -8,25 +8,15 @@ import { config } from '@grafana/runtime';
 import { Alert, Icon, Input, LoadingBar, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { skipToken, useGetFolderQuery } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
-import { PAGE_SIZE } from 'app/features/browse-dashboards/api/services';
-import {
-  childrenByParentUIDSelector,
-  createFlatTree,
-  fetchNextChildrenPage,
-  rootItemsSelector,
-  useBrowseLoadingStatus,
-  useLoadNextChildrenPage,
-} from 'app/features/browse-dashboards/state';
-import { getPaginationPlaceholders } from 'app/features/browse-dashboards/state/utils';
-import { DashboardViewItemCollection } from 'app/features/browse-dashboards/types';
+import { DashboardViewItemWithUIItems, DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { QueryResponse, getGrafanaSearcher } from 'app/features/search/service';
 import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { DashboardViewItem } from 'app/features/search/types';
-import { useDispatch, useSelector } from 'app/types/store';
 
 import { getDOMId, NestedFolderList } from './NestedFolderList';
 import Trigger from './Trigger';
-import { useTreeInteractions } from './hooks';
+import { ROOT_FOLDER_ITEM, useFoldersQuery } from './useFoldersQuery';
+import { useTreeInteractions } from './useTreeInteractions';
 
 export interface NestedFolderPickerProps {
   /* Folder UID to show as selected */
@@ -47,8 +37,6 @@ export interface NestedFolderPickerProps {
   /* Whether the picker should be clearable */
   clearable?: boolean;
 }
-
-const EXCLUDED_KINDS = ['empty-folder' as const, 'dashboard' as const];
 
 const debouncedSearch = debounce(getSearchResults, 300);
 
@@ -72,10 +60,8 @@ export function NestedFolderPicker({
   onChange,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
-  const dispatch = useDispatch();
   const selectedFolder = useGetFolderQuery(value || skipToken);
 
-  const rootStatus = useBrowseLoadingStatus(undefined);
   const nestedFoldersEnabled = Boolean(config.featureToggles.nestedFolders);
 
   const [search, setSearch] = useState('');
@@ -83,18 +69,27 @@ export function NestedFolderPicker({
   const [isFetchingSearchResults, setIsFetchingSearchResults] = useState(false);
   const [autoFocusButton, setAutoFocusButton] = useState(false);
   const [overlayOpen, setOverlayOpen] = useState(false);
-  const [folderOpenState, setFolderOpenState] = useState<Record<string, boolean>>({});
+  const [foldersOpenState, setFoldersOpenState] = useState<Record<string, boolean>>({});
   const overlayId = useId();
   const [error] = useState<Error | undefined>(undefined); // TODO: error not populated anymore
   const lastSearchTimestamp = useRef<number>(0);
+
+  const isBrowsing = Boolean(overlayOpen && !(search && searchResults));
+  const {
+    items: browseFlatTree,
+    isLoading: isBrowseLoading,
+    requestNextPage: fetchFolderPage,
+  } = useFoldersQuery(isBrowsing, foldersOpenState);
 
   useEffect(() => {
     if (!search) {
       setSearchResults(null);
       return;
     }
+
     const timestamp = Date.now();
     setIsFetchingSearchResults(true);
+
     debouncedSearch(search).then((queryResponse) => {
       // Only keep the results if it's was issued after the most recently resolved search.
       // This prevents results showing out of order if first request is slower than later ones.
@@ -108,9 +103,6 @@ export function NestedFolderPicker({
       }
     });
   }, [search]);
-
-  const rootCollection = useSelector(rootItemsSelector);
-  const childrenCollections = useSelector(childrenByParentUIDSelector);
 
   // the order of middleware is important!
   const middleware = [
@@ -143,13 +135,13 @@ export function NestedFolderPicker({
 
   const handleFolderExpand = useCallback(
     async (uid: string, newOpenState: boolean) => {
-      setFolderOpenState((old) => ({ ...old, [uid]: newOpenState }));
+      setFoldersOpenState((old) => ({ ...old, [uid]: newOpenState }));
 
-      if (newOpenState && !folderOpenState[uid]) {
-        dispatch(fetchNextChildrenPage({ parentUID: uid, pageSize: PAGE_SIZE, excludeKinds: EXCLUDED_KINDS }));
+      if (newOpenState && !foldersOpenState[uid]) {
+        fetchFolderPage(uid);
       }
     },
-    [dispatch, folderOpenState]
+    [fetchFolderPage, foldersOpenState]
   );
 
   const handleFolderSelect = useCallback(
@@ -175,69 +167,53 @@ export function NestedFolderPicker({
 
   const handleCloseOverlay = useCallback(() => setOverlayOpen(false), [setOverlayOpen]);
 
-  const baseHandleLoadMore = useLoadNextChildrenPage(EXCLUDED_KINDS);
   const handleLoadMore = useCallback(
     (folderUID: string | undefined) => {
       if (search) {
         return;
       }
 
-      baseHandleLoadMore(folderUID);
+      fetchFolderPage(folderUID);
     },
-    [search, baseHandleLoadMore]
+    [search, fetchFolderPage]
   );
 
   const flatTree = useMemo(() => {
-    if (search && searchResults) {
-      const searchCollection: DashboardViewItemCollection = {
-        isFullyLoaded: true, //searchResults.items.length === searchResults.totalRows,
-        lastKindHasMoreItems: false, // TODO: paginate search
-        lastFetchedKind: 'folder', // TODO: paginate search
-        lastFetchedPage: 1, // TODO: paginate search
-        items: searchResults.items ?? [],
-      };
+    let flatTree: Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> = [];
 
-      return createFlatTree(undefined, searchCollection, childrenCollections, {}, 0, EXCLUDED_KINDS, excludeUIDs);
+    if (isBrowsing) {
+      flatTree = browseFlatTree;
+    } else {
+      flatTree =
+        searchResults?.items.map((item) => ({
+          isOpen: false,
+          level: 0,
+          item: {
+            kind: 'folder' as const,
+            title: item.title,
+            uid: item.uid,
+          },
+        })) ?? [];
     }
 
-    const allExcludedUIDs = config.sharedWithMeFolderUID
-      ? [...(excludeUIDs || []), config.sharedWithMeFolderUID]
-      : excludeUIDs;
+    // It's not super optimal to filter these in an additional iteration, but
+    // these options are used infrequently that its not a big deal
+    if (!showRootFolder || excludeUIDs?.length) {
+      flatTree = flatTree.filter((item) => {
+        if (!showRootFolder && item === ROOT_FOLDER_ITEM) {
+          return false;
+        }
 
-    let flatTree = createFlatTree(
-      undefined,
-      rootCollection,
-      childrenCollections,
-      folderOpenState,
-      0,
-      EXCLUDED_KINDS,
-      allExcludedUIDs
-    );
+        if (excludeUIDs?.includes(item.item.uid)) {
+          return false;
+        }
 
-    if (showRootFolder) {
-      // Increase the level of each item to 'make way' for the fake root Dashboards item
-      for (const item of flatTree) {
-        item.level += 1;
-      }
-
-      flatTree.unshift({
-        isOpen: true,
-        level: 0,
-        item: {
-          kind: 'folder',
-          title: 'Dashboards',
-          uid: '',
-        },
+        return true;
       });
     }
 
-    // If the root collection hasn't loaded yet, create loading placeholders
-    if (!rootCollection) {
-      flatTree = flatTree.concat(getPaginationPlaceholders(PAGE_SIZE, undefined, 0));
-    }
-
     return flatTree;
-  }, [search, searchResults, rootCollection, childrenCollections, folderOpenState, excludeUIDs, showRootFolder]);
+  }, [browseFlatTree, excludeUIDs, isBrowsing, searchResults?.items, showRootFolder]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {
@@ -245,6 +221,7 @@ export function NestedFolderPicker({
       if (!treeItem) {
         return false;
       }
+
       const item = treeItem.item;
       const result = !(item.kind === 'ui' && item.uiKind === 'pagination-placeholder');
 
@@ -253,7 +230,7 @@ export function NestedFolderPicker({
     [flatTree]
   );
 
-  const isLoading = rootStatus === 'pending' || isFetchingSearchResults;
+  const isLoading = isBrowseLoading || isFetchingSearchResults;
 
   const { focusedItemIndex, handleKeyDown } = useTreeInteractions({
     tree: flatTree,
