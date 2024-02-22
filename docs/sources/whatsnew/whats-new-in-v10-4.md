@@ -64,7 +64,7 @@ We’ve made a number of small improvements to the data visualization experience
 
 #### Geomap geojson layer now supports styling
 
-You can now visualize geojson styles such as polygons, point color/size, and line strings. To learn more, [refer to the documentation](https://grafana.com/docs/grafana-cloud/visualizations/panels-visualizations/visualizations/geomap/#geojson-layer).
+You can now visualize geojson styles such as polygons, point color/size, and line strings. To learn more, [refer to the documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/geomap/#geojson-layer).
 
 ![Geomap marker symbol alignment](/media/docs/grafana/screenshot-grafana-10-4-geomap-geojson-styling-support.png)
 
