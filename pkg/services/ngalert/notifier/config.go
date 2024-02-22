@@ -111,6 +111,10 @@ func (a AlertingConfiguration) InhibitRules() []alertingNotify.InhibitRule {
 	return a.alertmanagerConfig.InhibitRules
 }
 
+func (a AlertingConfiguration) TimeIntervals() []alertingNotify.TimeInterval {
+	return a.alertmanagerConfig.TimeIntervals
+}
+
 func (a AlertingConfiguration) MuteTimeIntervals() []alertingNotify.MuteTimeInterval {
 	return a.alertmanagerConfig.MuteTimeIntervals
 }
