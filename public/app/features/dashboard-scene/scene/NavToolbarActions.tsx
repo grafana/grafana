@@ -37,16 +37,17 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel } = dashboard.useState();
+  const { isEditing, viewPanelScene, isDirty, uid, meta, editview, editPanel, copiedPanel } = dashboard.useState();
   const canSaveAs = contextSrv.hasEditPermissionInFolders;
   const toolbarActions: ToolbarAction[] = [];
   const buttonWithExtraMargin = useStyles2(getStyles);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanelScene);
+  const hasCopiedPanel = Boolean(copiedPanel);
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: isEditing && !editview && !meta.isNew && !isViewingPanel && !isEditingPanel,
+    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
     render: () => (
       <ToolbarButton
         key="add-visualization"
@@ -63,7 +64,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'icon-actions',
-    condition: isEditing && !editview && !meta.isNew && !isViewingPanel && !isEditingPanel,
+    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
     render: () => (
       <ToolbarButton
         key="add-row"
@@ -72,6 +73,23 @@ export function ToolbarActions({ dashboard }: Props) {
         onClick={() => {
           dashboard.onCreateNewRow();
           DashboardInteractions.toolbarAddButtonClicked({ item: 'add_row' });
+        }}
+      />
+    ),
+  });
+
+  toolbarActions.push({
+    group: 'icon-actions',
+    condition: isEditing && !editview && !isViewingPanel && !isEditingPanel,
+    render: () => (
+      <ToolbarButton
+        key="paste-panel"
+        disabled={!hasCopiedPanel}
+        tooltip={'Paste panel'}
+        icon="copy"
+        onClick={() => {
+          dashboard.pastePanel();
+          DashboardInteractions.toolbarAddButtonClicked({ item: 'paste_panel' });
         }}
       />
     ),
