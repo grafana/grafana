@@ -9,11 +9,11 @@ describe('ReturnToPrevious button', () => {
 
     // TODO: move to after() when I'm done with the tests
     // Delete alert rule
-    cy.visit('/alerting/list?search=');
-    cy.get('[data-testid="group-collapse-toggle"]').click();
-    cy.get('[data-testid="row"]').find('[type="button"]').last().click();
-    cy.get('[role="menuitem"]').last().click();
-    cy.get('[data-testid="data-testid Confirm Modal Danger Button"]').click();
+    // cy.visit('/alerting/list?search=');
+    // cy.get('[data-testid="group-collapse-toggle"]').click();
+    // cy.get('[data-testid="row"]').find('[type="button"]').last().click();
+    // cy.get('[role="menuitem"]').last().click();
+    // cy.get('[data-testid="data-testid Confirm Modal Danger Button"]').click();
     //TODO
 
     // Create a new alert rule with linked dashboard
@@ -36,6 +36,8 @@ describe('ReturnToPrevious button', () => {
     cy.get('[type="button"]').last().click(); // TODO: find the confirm button in a better way?
     cy.get('[data-testid="data-testid save rule exit"]').click();
     cy.wait(600); // TODO: use await instead?
+
+    // TODO: is provisioned alert rule available?
   });
 
   // after(() => {
