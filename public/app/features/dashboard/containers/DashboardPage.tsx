@@ -142,9 +142,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
     if (dashboard && !prevProps.dashboard) {
       // If we have a dashboard, await dashboard.hasAngularPlugins and set hasAngularPlugins in the state.
       // The angular state takes some times to populate as "plugin" props are populated asynchronously.
-      (async () => {
-        this.setState({ hasAngularPlugins: await dashboard.hasAngularPlugins() });
-      })();
+      dashboard.hasAngularPlugins().then((hasAngularPlugins) => {
+        this.setState({ hasAngularPlugins });
+      });
     }
 
     if (
