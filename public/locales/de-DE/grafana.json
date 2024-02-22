@@ -876,6 +876,10 @@
     "manage-folder": {
       "subtitle": "Ordner-Dashboards und Berechtigungen verwalten"
     },
+    "migrate-to-cloud": {
+      "subtitle": "",
+      "title": ""
+    },
     "monitoring": {
       "subtitle": "Überwachungs- und Infrastruktur-Apps",
       "title": "Beobachtbarkeit"
