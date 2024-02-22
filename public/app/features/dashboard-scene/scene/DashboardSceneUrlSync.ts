@@ -2,15 +2,22 @@ import { Unsubscribable } from 'rxjs';
 
 import { AppEvents } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { SceneObjectBase, SceneObjectState, SceneObjectUrlSyncHandler, SceneObjectUrlValues } from '@grafana/scenes';
+import {
+  SceneObjectBase,
+  SceneObjectState,
+  SceneObjectUrlSyncHandler,
+  SceneObjectUrlValues,
+  VizPanel,
+} from '@grafana/scenes';
 import appEvents from 'app/core/app_events';
 
 import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { createDashboardEditViewFor } from '../settings/utils';
-import { findVizPanelByKey, getDashboardSceneFor, isPanelClone } from '../utils/utils';
+import { findLibraryPanelByKey, findVizPanelByKey, getDashboardSceneFor, isPanelClone } from '../utils/utils';
 
 import { DashboardScene, DashboardSceneState } from './DashboardScene';
+import { LibraryVizPanel } from './LibraryVizPanel';
 import { ViewPanelScene } from './ViewPanelScene';
 import { DashboardRepeatsProcessedEvent } from './types';
 
@@ -90,8 +97,13 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
 
     // Handle edit panel state
     if (typeof values.editPanel === 'string') {
-      const panel = findVizPanelByKey(this._scene, values.editPanel);
+      let panel: VizPanel | LibraryVizPanel | null;
+      panel = findVizPanelByKey(this._scene, values.editPanel);
       if (!panel) {
+        panel = findLibraryPanelByKey(this._scene, values.editPanel);
+      }
+      if (!panel) {
+        console.warn(`Panel ${values.editPanel} not found`);
         return;
       }
 

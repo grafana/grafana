@@ -46,11 +46,11 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     // hm.. add another generic param to SceneObject to specify parent type?
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const panel = menu.parent as VizPanel;
+    const libraryPanel = panel.parent instanceof LibraryVizPanel ? panel.parent : null;
     const plugin = panel.getPlugin();
 
     const items: PanelMenuItem[] = [];
     const moreSubMenu: PanelMenuItem[] = [];
-    const panelId = getPanelIdForVizPanel(panel);
     const dashboard = getDashboardSceneFor(panel);
     const { isEmbedded } = dashboard.state.meta;
     const exploreMenuItem = await getExploreMenuItem(panel);
@@ -79,7 +79,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         iconClassName: 'eye',
         shortcut: 'e',
         onClick: () => DashboardInteractions.panelMenuItemClicked('edit'),
-        href: getEditPanelUrl(panelId),
+        href: getEditPanelUrl(getPanelIdForVizPanel(libraryPanel || panel)),
       });
     }
 

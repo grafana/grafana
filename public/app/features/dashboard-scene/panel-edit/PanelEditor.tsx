@@ -4,6 +4,7 @@ import { NavIndex } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { SceneGridItem, SceneObject, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
 
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import {
   findVizPanelByKey,
   getDashboardSceneFor,
@@ -152,9 +153,19 @@ export const OPTIONS_PANE_PIXELS_MIN = 300;
 export const OPTIONS_PANE_PIXELS_SNAP = 400;
 export const OPTIONS_PANE_FLEX_DEFAULT = 0.25;
 
-export function buildPanelEditScene(panel: VizPanel): PanelEditor {
-  const panelClone = panel.clone();
-  const vizPanelMgr = new VizPanelManager(panelClone);
+export function buildPanelEditScene(panel: VizPanel | LibraryVizPanel): PanelEditor {
+  let panelClone: VizPanel;
+  let libraryPanel: LibraryVizPanel | undefined;
+  if (panel instanceof LibraryVizPanel) {
+    if (!panel.state.panel) {
+      throw new Error('Library panel has no VizPanel');
+    }
+    panelClone = panel.state.panel.clone();
+    libraryPanel = panel.clone();
+  } else {
+    panelClone = panel.clone();
+  }
+  const vizPanelMgr = new VizPanelManager(panelClone, libraryPanel);
 
   return new PanelEditor({
     panelId: getPanelIdForVizPanel(panel),

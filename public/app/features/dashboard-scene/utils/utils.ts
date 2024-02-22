@@ -12,6 +12,7 @@ import {
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardScene } from '../scene/DashboardScene';
+import { LibraryVizPanel } from '../scene/LibraryVizPanel';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
 
@@ -31,7 +32,7 @@ export function findVizPanelByKey(scene: SceneObject, key: string | undefined): 
     return null;
   }
 
-  const panel = findVizPanelInternal(scene, key);
+  const panel = findVizPanelInternal(scene, key, VizPanel);
   if (panel) {
     return panel;
   }
@@ -42,20 +43,41 @@ export function findVizPanelByKey(scene: SceneObject, key: string | undefined): 
     return null;
   }
 
-  return findVizPanelInternal(scene, getVizPanelKeyForPanelId(id));
+  return findVizPanelInternal(scene, getVizPanelKeyForPanelId(id), VizPanel);
 }
 
-function findVizPanelInternal(scene: SceneObject, key: string | undefined): VizPanel | null {
+export function findLibraryPanelByKey(scene: SceneObject, key: string | undefined): LibraryVizPanel | null {
+  if (!key) {
+    return null;
+  }
+
+  const panel = findVizPanelInternal(scene, key, LibraryVizPanel);
+  if (panel) {
+    return panel;
+  }
+
+  // Also try to find by panel id
+  const id = parseInt(key, 10);
+  if (isNaN(id)) {
+    return null;
+  }
+
+  return findVizPanelInternal(scene, getVizPanelKeyForPanelId(id), LibraryVizPanel);
+}
+
+function findVizPanelInternal<PanelType>(
+  scene: SceneObject,
+  key: string | undefined,
+  panelType: { new (...args: never[]): PanelType }
+): PanelType | null {
   if (!key) {
     return null;
   }
 
   const panel = sceneGraph.findObject(scene, (obj) => obj.state.key === key);
   if (panel) {
-    if (panel instanceof VizPanel) {
+    if (panel instanceof panelType) {
       return panel;
-    } else {
-      throw new Error(`Found panel with key ${key} but it was not a VizPanel`);
     }
   }
 

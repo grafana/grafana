@@ -1,6 +1,14 @@
 import React from 'react';
 
-import { SceneComponentProps, SceneObjectBase, SceneObjectState, VizPanel, VizPanelMenu } from '@grafana/scenes';
+import {
+  SceneComponentProps,
+  SceneDataTransformer,
+  SceneObjectBase,
+  SceneObjectState,
+  SceneQueryRunner,
+  VizPanel,
+  VizPanelMenu,
+} from '@grafana/scenes';
 import { PanelModel } from 'app/features/dashboard/state';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
@@ -16,6 +24,7 @@ interface LibraryVizPanelState extends SceneObjectState {
   uid: string;
   name: string;
   panel?: VizPanel;
+  isLoading: boolean;
   _loadedVersion?: number;
 }
 
@@ -36,12 +45,14 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
   };
 
   private async loadLibraryPanelFromPanelModel() {
+    this.setState({ isLoading: true });
     let vizPanel = this.state.panel!;
 
     try {
       const libPanel = await getLibraryPanel(this.state.uid, true);
 
       if (this.state._loadedVersion === libPanel.version) {
+        this.setState({ isLoading: false });
         return;
       }
 
@@ -66,7 +77,7 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
         ],
       });
 
-      this.setState({ panel, _loadedVersion: libPanel.version });
+      this.setState({ panel, _loadedVersion: libPanel.version, isLoading: false });
     } catch (err) {
       vizPanel.setState({
         _pluginLoadError: 'Unable to load library panel: ' + this.state.uid,
@@ -78,9 +89,17 @@ export class LibraryVizPanel extends SceneObjectBase<LibraryVizPanelState> {
 function getLoadingPanel(title: string) {
   return new VizPanel({
     title,
+    $data: new SceneDataTransformer({ transformations: [], $data: new SceneQueryRunner({ queries: [] }) }),
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
+    titleItems: [
+      new VizPanelLinks({
+        rawLinks: [],
+        menu: new VizPanelLinksMenu({ $behaviors: [panelLinksBehavior] }),
+      }),
+      new PanelNotices(),
+    ],
   });
 }
 

@@ -18,7 +18,7 @@ export const PanelOptions = React.memo<Props>(({ vizManager, searchQuery, listMo
   const { panel } = vizManager.state;
   const { data } = sceneGraph.getData(panel).useState();
   const { options, fieldConfig } = panel.useState();
-
+  const libraryPanel = vizManager.state.libraryPanel?.useState();
   const panelFrameOptions = useMemo(() => getPanelFrameCategory2(panel), [panel]);
 
   const visualizationOptions = useMemo(() => {
