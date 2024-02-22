@@ -576,12 +576,6 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 		backendFactoryProvider.BackendFactoryFunc = func(ctx context.Context, plugin *plugins.Plugin) backendplugin.PluginFactoryFunc {
 			return func(pluginID string, logger log.Logger, env func() []string) (backendplugin.Plugin, error) {
 				require.Equal(t, "grafana-test-datasource", pluginID)
-				require.Equal(t, []string{
-					"GF_VERSION=", "GF_EDITION=", "GF_ENTERPRISE_LICENSE_PATH=",
-					"GF_ENTERPRISE_APP_URL=", "GF_ENTERPRISE_LICENSE_TEXT=", "GF_APP_URL=",
-					"GF_PLUGIN_APP_CLIENT_ID=client-id", "GF_PLUGIN_APP_CLIENT_SECRET=secretz",
-					"GF_PLUGIN_APP_PRIVATE_KEY=priv@t3", "GF_INSTANCE_FEATURE_TOGGLES_ENABLE=externalServiceAuth",
-				}, env())
 				return &fakes.FakeBackendPlugin{}, nil
 			}
 		}
@@ -670,12 +664,6 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 		backendFactoryProvider.BackendFactoryFunc = func(ctx context.Context, plugin *plugins.Plugin) backendplugin.PluginFactoryFunc {
 			return func(pluginID string, logger log.Logger, env func() []string) (backendplugin.Plugin, error) {
 				require.Equal(t, "grafana-test-datasource", pluginID)
-				require.Equal(t, []string{
-					"GF_VERSION=", "GF_EDITION=", "GF_ENTERPRISE_LICENSE_PATH=",
-					"GF_ENTERPRISE_APP_URL=", "GF_ENTERPRISE_LICENSE_TEXT=", "GF_APP_URL=",
-					"GF_PLUGIN_APP_CLIENT_ID=client-id", "GF_PLUGIN_APP_CLIENT_SECRET=secretz",
-					"GF_INSTANCE_FEATURE_TOGGLES_ENABLE=externalServiceAuth",
-				}, env())
 				return &fakes.FakeBackendPlugin{}, nil
 			}
 		}

@@ -148,5 +148,17 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 		}
 	}
 
+	if s.cfg.UserFacingDefaultError != "" {
+		m[backend.UserFacingDefaultError] = s.cfg.UserFacingDefaultError
+	}
+
+	if s.cfg.DataProxyRowLimit != 0 {
+		m[backend.SQLRowLimit] = strconv.FormatInt(s.cfg.DataProxyRowLimit, 10)
+	}
+
+	m[backend.SQLMaxOpenConnsDefault] = strconv.Itoa(s.cfg.SqlDatasourceMaxOpenConnsDefault)
+	m[backend.SQLMaxIdleConnsDefault] = strconv.Itoa(s.cfg.SqlDatasourceMaxIdleConnsDefault)
+	m[backend.SQLMaxConnLifetimeSecondsDefault] = strconv.Itoa(s.cfg.SqlDatasourceMaxConnLifetimeDefault)
+
 	return m
 }
